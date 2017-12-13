@@ -311,7 +311,7 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	static D3D12_INPUT_ELEMENT_DESC* fillVertexDecl(D3D12_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
+	static D3D12_INPUT_ELEMENT_DESC* fillVertexDecl(uint8_t _stream, D3D12_INPUT_ELEMENT_DESC* _out, const VertexDecl& _decl)
 	{
 		D3D12_INPUT_ELEMENT_DESC* elem = _out;
 
@@ -320,6 +320,8 @@ namespace bgfx { namespace d3d12
 			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				bx::memCopy(elem, &s_attrib[attr], sizeof(D3D12_INPUT_ELEMENT_DESC) );
+
+				elem->InputSlot = _stream;
 
 				if (0 == _decl.m_attributes[attr])
 				{
@@ -1130,6 +1132,7 @@ namespace bgfx { namespace d3d12
 									);
 				g_caps.limits.maxTextureSize   = 16384;
 				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+				g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
@@ -1831,9 +1834,11 @@ namespace bgfx { namespace d3d12
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
+			const VertexDecl* decls[1] = { &m_vertexDecls[_blitter.m_vb->decl.idx] };
 			ID3D12PipelineState* pso = getPipelineState(state
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
-				, _blitter.m_vb->decl.idx
+				, 1
+				, decls
 				, _blitter.m_program.idx
 				, 0
 				);
@@ -2373,20 +2378,38 @@ data.NumQualityLevels = 0;
 			_desc.BackFace.StencilFunc         = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK) >> BGFX_STENCIL_TEST_SHIFT];
 		}
 
-		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, const VertexDecl& _vertexDecl, const ProgramD3D12& _program, uint8_t _numInstanceData)
+		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, uint8_t _numStreams, const VertexDecl** _vertexDecls, const ProgramD3D12& _program, uint16_t _numInstanceData)
 		{
-			VertexDecl decl;
-			bx::memCopy(&decl, &_vertexDecl, sizeof(VertexDecl) );
-			const uint16_t* attrMask = _program.m_vsh->m_attrMask;
+			uint16_t attrMask[Attrib::Count];
+			bx::memCopy(attrMask, _program.m_vsh->m_attrMask, sizeof(attrMask));
 
-			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+			D3D12_INPUT_ELEMENT_DESC* elem = _vertexElements;
+
+			for (uint8_t stream = 0; stream < _numStreams; ++stream)
 			{
-				uint16_t mask = attrMask[ii];
-				uint16_t attr = (decl.m_attributes[ii] & mask);
-				decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
+				VertexDecl decl;
+				bx::memCopy(&decl, _vertexDecls[stream], sizeof(VertexDecl));
+
+				const bool last = stream == _numStreams-1;
+
+				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+				{
+					uint16_t mask = attrMask[ii];
+					uint16_t attr = (decl.m_attributes[ii] & mask);
+					if (0          == attr
+					||  UINT16_MAX == attr)
+					{
+						decl.m_attributes[ii] = last ? ~attr : UINT16_MAX;
+					}
+					else
+					{
+						attrMask[ii] = 0;
+					}
+				}
+
+				elem = fillVertexDecl(stream, elem, decl);
 			}
 
-			D3D12_INPUT_ELEMENT_DESC* elem = fillVertexDecl(_vertexElements, decl);
 			uint32_t num = uint32_t(elem-_vertexElements);
 
 			const D3D12_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
@@ -2420,6 +2443,12 @@ data.NumQualityLevels = 0;
 			}
 
 			return uint32_t(elem-_vertexElements);
+		}
+
+		uint32_t setInputLayout(D3D12_INPUT_ELEMENT_DESC* _vertexElements, const VertexDecl& _vertexDecl, const ProgramD3D12& _program, uint16_t _numInstanceData)
+		{
+			const VertexDecl* decls[1] = { &_vertexDecl };
+			return setInputLayout(_vertexElements, BX_COUNTOF(decls), decls, _program, _numInstanceData);
 		}
 
 		static void patchCb0(DxbcInstruction& _instruction, void* _userData)
@@ -2471,7 +2500,7 @@ data.NumQualityLevels = 0;
 			return pso;
 		}
 
-		ID3D12PipelineState* getPipelineState(uint64_t _state, uint64_t _stencil, uint16_t _declIdx, uint16_t _programIdx, uint8_t _numInstanceData)
+		ID3D12PipelineState* getPipelineState(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexDecl** _vertexDecls, uint16_t _programIdx, uint8_t _numInstanceData)
 		{
 			ProgramD3D12& program = m_program[_programIdx];
 
@@ -2494,7 +2523,7 @@ data.NumQualityLevels = 0;
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
 
 			VertexDecl decl;
-			bx::memCopy(&decl, &m_vertexDecls[_declIdx], sizeof(VertexDecl) );
+			bx::memCopy(&decl, _vertexDecls[0], sizeof(VertexDecl) );
 			const uint16_t* attrMask = program.m_vsh->m_attrMask;
 
 			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -2511,7 +2540,10 @@ data.NumQualityLevels = 0;
 			murmur.add(program.m_vsh->m_hash);
 			murmur.add(program.m_vsh->m_attrMask, sizeof(program.m_vsh->m_attrMask) );
 			murmur.add(program.m_fsh->m_hash);
-			murmur.add(m_vertexDecls[_declIdx].m_hash);
+			for (uint32_t ii = 0; ii < _numStreams; ++ii)
+			{
+				murmur.add(_vertexDecls[ii]->m_hash);
+			}
 			murmur.add(decl.m_attributes, sizeof(decl.m_attributes) );
 			murmur.add(m_fbh.idx);
 			murmur.add(_numInstanceData);
@@ -2615,7 +2647,7 @@ data.NumQualityLevels = 0;
 			setDepthStencilState(desc.DepthStencilState, _state, _stencil);
 
 			D3D12_INPUT_ELEMENT_DESC vertexElements[Attrib::Count + 1 + BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
-			desc.InputLayout.NumElements = setInputLayout(vertexElements, m_vertexDecls[_declIdx], program, _numInstanceData);
+			desc.InputLayout.NumElements = setInputLayout(vertexElements, _numStreams, _vertexDecls, program, _numInstanceData);
 			desc.InputLayout.pInputElementDescs = vertexElements;
 
 			uint8_t primIndex = uint8_t( (_state&BGFX_STATE_PT_MASK) >> BGFX_STATE_PT_SHIFT);
@@ -3525,6 +3557,9 @@ data.NumQualityLevels = 0;
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { { Rdt::CBV } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 0        } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 1        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 2        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 3        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 4        } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,                 { { 0        } } },
 		};
 
@@ -3547,6 +3582,9 @@ data.NumQualityLevels = 0;
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW, { { Rdt::CBV } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 0        } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 1        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 2        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 3        } } },
+			{ D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,   { { 4        } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,    { { 0        } } },
 			{ D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,         { { 0        } } },
 		};
@@ -3568,13 +3606,14 @@ data.NumQualityLevels = 0;
 		m_cmds[Draw       ] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
 		m_cmds[DrawIndexed] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
 
+		uint32_t cmdSize = bx::max<uint32_t>(sizeof(DrawIndirectCommand), sizeof(DrawIndexedIndirectCommand) );
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_indirect); ++ii)
 		{
-			m_indirect[ii].create(m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand)
+			m_indirect[ii].create(m_maxDrawPerBatch*cmdSize
 				, NULL
 				, BGFX_BUFFER_DRAW_INDIRECT
 				, false
-				, sizeof(DrawIndexedIndirectCommand)
+				, cmdSize
 				);
 		}
 	}
@@ -3607,40 +3646,64 @@ data.NumQualityLevels = 0;
 	{
 		Enum type = Enum(!!isValid(_draw.m_indexBuffer) );
 
-		VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[_draw.m_stream[0].m_handle.idx];
-		vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-		uint16_t declIdx = !isValid(vb.m_decl) ? _draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-		const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[declIdx];
 		uint32_t numIndices = 0;
 
 		if (Draw == type)
 		{
-			const uint32_t numVertices = UINT32_MAX == _draw.m_numVertices
-				? vb.m_size / vertexDecl.m_stride
-				: _draw.m_numVertices
-				;
-
 			DrawIndirectCommand& cmd = getCmd<DrawIndirectCommand>(Draw);
 			cmd.cbv = _cbv;
-			cmd.vbv[0].BufferLocation = vb.m_gpuVA;
-			cmd.vbv[0].StrideInBytes  = vertexDecl.m_stride;
-			cmd.vbv[0].SizeInBytes    = vb.m_size;
+
+			uint32_t numVertices = _draw.m_numVertices;
+			uint8_t  numStreams = 0;
+			for (uint32_t idx = 0, streamMask = _draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+				; 0 != streamMask
+				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+				)
+			{
+				streamMask >>= ntz;
+				idx += ntz;
+
+				const Stream& stream = _draw.m_stream[idx];
+
+				uint16_t handle = stream.m_handle.idx;
+				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
+				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+				uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
+				const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[decl];
+				uint32_t stride = vertexDecl.m_stride;
+
+				D3D12_VERTEX_BUFFER_VIEW& vbv = cmd.vbv[numStreams];
+				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+				vbv.StrideInBytes  = vertexDecl.m_stride;
+				vbv.SizeInBytes    = vb.m_size;
+
+				numVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
+					? vb.m_size/stride
+					: _draw.m_numVertices
+					, numVertices
+					);
+			}
+
 			if (isValid(_draw.m_instanceDataBuffer) )
 			{
 				VertexBufferD3D12& inst = s_renderD3D12->m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
 				inst.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-				cmd.vbv[1].BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
-				cmd.vbv[1].StrideInBytes  = _draw.m_instanceDataStride;
-				cmd.vbv[1].SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
+				D3D12_VERTEX_BUFFER_VIEW& vbv = cmd.vbv[numStreams++];
+				vbv.BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
+				vbv.StrideInBytes  = _draw.m_instanceDataStride;
+				vbv.SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
 			}
-			else
+
+			for (; numStreams < BX_COUNTOF(cmd.vbv); ++numStreams)
 			{
-				bx::memSet(&cmd.vbv[1], 0, sizeof(cmd.vbv[1]) );
+				D3D12_VERTEX_BUFFER_VIEW* vbv = &cmd.vbv[numStreams];
+				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 			}
-			cmd.draw.InstanceCount = _draw.m_numInstances;
+
+			cmd.draw.InstanceCount          = _draw.m_numInstances;
 			cmd.draw.VertexCountPerInstance = numVertices;
-			cmd.draw.StartVertexLocation    = _draw.m_stream[0].m_startVertex;
+			cmd.draw.StartVertexLocation    = 0;
 			cmd.draw.StartInstanceLocation  = 0;
 		}
 		else
@@ -3664,25 +3727,59 @@ data.NumQualityLevels = 0;
 				? DXGI_FORMAT_R16_UINT
 				: DXGI_FORMAT_R32_UINT
 				;
-			cmd.vbv[0].BufferLocation = vb.m_gpuVA;
-			cmd.vbv[0].StrideInBytes  = vertexDecl.m_stride;
-			cmd.vbv[0].SizeInBytes    = vb.m_size;
+
+			uint32_t numVertices = _draw.m_numVertices;
+			uint8_t  numStreams = 0;
+			for (uint32_t idx = 0, streamMask = _draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+				; 0 != streamMask
+				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+				)
+			{
+				streamMask >>= ntz;
+				idx += ntz;
+
+				const Stream& stream = _draw.m_stream[idx];
+
+				uint16_t handle = stream.m_handle.idx;
+				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
+				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+				uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
+				const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[decl];
+				uint32_t stride = vertexDecl.m_stride;
+
+				D3D12_VERTEX_BUFFER_VIEW& vbv = cmd.vbv[numStreams];
+				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+				vbv.StrideInBytes  = stride;
+				vbv.SizeInBytes    = vb.m_size;
+
+				numVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
+					? vb.m_size/stride
+					: _draw.m_numVertices
+					, numVertices
+					);
+			}
+
 			if (isValid(_draw.m_instanceDataBuffer) )
 			{
 				VertexBufferD3D12& inst = s_renderD3D12->m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
 				inst.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-				cmd.vbv[1].BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
-				cmd.vbv[1].StrideInBytes  = _draw.m_instanceDataStride;
-				cmd.vbv[1].SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
+				D3D12_VERTEX_BUFFER_VIEW& vbv = cmd.vbv[numStreams++];
+				vbv.BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
+				vbv.StrideInBytes  = _draw.m_instanceDataStride;
+				vbv.SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
 			}
-			else
+
+			for (; numStreams < BX_COUNTOF(cmd.vbv); ++numStreams)
 			{
-				bx::memSet(&cmd.vbv[1], 0, sizeof(cmd.vbv[1]) );
+				D3D12_VERTEX_BUFFER_VIEW* vbv = &cmd.vbv[numStreams];
+				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 			}
+
 			cmd.drawIndexed.IndexCountPerInstance = numIndices;
-			cmd.drawIndexed.InstanceCount = _draw.m_numInstances;
-			cmd.drawIndexed.StartIndexLocation = _draw.m_startIndex;
-			cmd.drawIndexed.BaseVertexLocation = _draw.m_stream[0].m_startVertex;
+			cmd.drawIndexed.InstanceCount         = _draw.m_numInstances;
+			cmd.drawIndexed.StartIndexLocation    = _draw.m_startIndex;
+			cmd.drawIndexed.BaseVertexLocation    = 0;
 			cmd.drawIndexed.StartInstanceLocation = 0;
 		}
 
@@ -3746,7 +3843,7 @@ data.NumQualityLevels = 0;
 						{
 							bx::memCopy(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) );
 							_commandList->IASetVertexBuffers(0
-								, 0 == cmd.vbv[1].BufferLocation ? 1 : 2
+								, BGFX_CONFIG_MAX_VERTEX_STREAMS+1
 								, cmd.vbv
 								);
 						}
@@ -3776,7 +3873,7 @@ data.NumQualityLevels = 0;
 						{
 							bx::memCopy(m_current.vbv, cmd.vbv, sizeof(cmd.vbv) );
 							_commandList->IASetVertexBuffers(0
-								, 0 == cmd.vbv[1].BufferLocation ? 1 : 2
+								, BGFX_CONFIG_MAX_VERTEX_STREAMS+1
 								, cmd.vbv
 								);
 						}
@@ -5482,8 +5579,15 @@ data.NumQualityLevels = 0;
 
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
-				if (isValid(draw.m_stream[0].m_handle) )
+//				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
+
+				if (0 != draw.m_streamMask)
 				{
+					currentState.m_streamMask             = draw.m_streamMask;
+					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
+					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
+					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
+
 					const uint64_t state = draw.m_stateFlags;
 					bool hasFactor = 0
 						|| f0 == (state & f0)
@@ -5492,13 +5596,34 @@ data.NumQualityLevels = 0;
 						|| f3 == (state & f3)
 						;
 
-					const VertexBufferD3D12& vb = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
-					uint16_t declIdx = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
+					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+
+					uint8_t  numStreams = 0;
+					for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+						; 0 != streamMask
+						; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+						)
+					{
+						streamMask >>= ntz;
+						idx += ntz;
+
+						currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
+						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
+						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+
+						uint16_t handle = draw.m_stream[idx].m_handle.idx;
+						const VertexBufferD3D12& vb = m_vertexBuffers[handle];
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+						const VertexDecl& vertexDecl = m_vertexDecls[decl];
+
+						decls[numStreams] = &vertexDecl;
+					}
 
 					ID3D12PipelineState* pso =
 						getPipelineState(state
 							, draw.m_stencil
-							, declIdx
+							, numStreams
+							, decls
 							, key.m_program
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
