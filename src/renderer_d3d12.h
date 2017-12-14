@@ -419,16 +419,16 @@ namespace bgfx { namespace d3d12
 
 		struct DrawIndirectCommand
 		{
-			D3D12_GPU_VIRTUAL_ADDRESS cbv;
 			D3D12_VERTEX_BUFFER_VIEW vbv[BGFX_CONFIG_MAX_VERTEX_STREAMS+1];
+			D3D12_GPU_VIRTUAL_ADDRESS cbv;
 			D3D12_DRAW_ARGUMENTS draw;
 		};
 
 		struct DrawIndexedIndirectCommand
 		{
-			D3D12_GPU_VIRTUAL_ADDRESS cbv;
 			D3D12_VERTEX_BUFFER_VIEW vbv[BGFX_CONFIG_MAX_VERTEX_STREAMS+1];
 			D3D12_INDEX_BUFFER_VIEW ibv;
+			D3D12_GPU_VIRTUAL_ADDRESS cbv;
 			D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
 		};
 
