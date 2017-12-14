@@ -8,6 +8,13 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D12
 #	include "renderer_d3d12.h"
 
+#if !BX_PLATFORM_WINDOWS
+#	include <inspectable.h>
+#	if BX_PLATFORM_WINRT
+#		include <windows.ui.xaml.media.dxinterop.h>
+#	endif // BX_PLATFORM_WINRT
+#endif // !BX_PLATFORM_WINDOWS
+
 namespace bgfx { namespace d3d12
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -357,7 +364,6 @@ namespace bgfx { namespace d3d12
 		_commandList->ResourceBarrier(1, &barrier);
 	}
 
-#if USE_D3D12_DYNAMIC_LIB
 	static const GUID IID_ID3D12CommandAllocator    = { 0x6102dee4, 0xaf59, 0x4b09, { 0xb9, 0x99, 0xb4, 0x4d, 0x73, 0xf0, 0x9b, 0x24 } };
 	static const GUID IID_ID3D12CommandQueue        = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
 	static const GUID IID_ID3D12CommandSignature    = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
@@ -372,11 +378,12 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12Resource            = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
 	static const GUID IID_ID3D12RootSignature       = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
 	static const GUID IID_ID3D12QueryHeap           = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
+	static const GUID IID_IDXGIDevice0              = { 0x54ec77fa, 0x1377, 0x44e6, { 0x8c, 0x32, 0x88, 0xfd, 0x5f, 0x44, 0xc8, 0x4c } };
+	static const GUID IID_IDXGIDevice1              = { 0x77db970f, 0x6276, 0x48ba, { 0xba, 0x28, 0x07, 0x01, 0x43, 0xb4, 0x39, 0x2c } };
+	static const GUID IID_IDXGIDevice2              = { 0x05008617, 0xfbfd, 0x4051, { 0xa7, 0x90, 0x14, 0x48, 0x84, 0xb4, 0xf6, 0xa9 } };
+	static const GUID IID_IDXGIDevice3              = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
+	static const GUID IID_IDXGIFactory2             = { 0x50c83a1c, 0xe072, 0x4c48, { 0x87, 0xb0, 0x36, 0x30, 0xfa, 0x36, 0xa6, 0xd0 } };
 	static const GUID IID_IDXGIFactory4             = { 0x1bc6ea02, 0xef36, 0x464f, { 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a } };
-#else
-	static const GUID IID_ID3D12CommandSignature    = { 0xc36a797c, 0xec80, 0x4f0a, { 0x89, 0x85, 0xa7, 0xb2, 0x47, 0x50, 0x82, 0xd1 } };
-	static const GUID IID_ID3D12QueryHeap           = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
-#endif // USE_D3D12_DYNAMIC_LIB
 
 	struct HeapProperty
 	{
@@ -670,7 +677,7 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 			hr = CreateDXGIFactory1(IID_IDXGIFactory4, (void**)&m_factory);
 #else
 			hr = S_OK;
@@ -690,7 +697,7 @@ namespace bgfx { namespace d3d12
 
 			if (NULL != m_factory)
 			{
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 				IDXGIAdapter3* adapter;
 #else
 				IDXGIAdapter* adapter;
@@ -875,7 +882,7 @@ namespace bgfx { namespace d3d12
 					goto error;
 				}
 
-				hr = m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory);
+				hr = m_adapter->GetParent(IID_IDXGIFactory4, (void**)&m_factory);
 
 				if (FAILED(hr) )
 				{
@@ -903,7 +910,7 @@ namespace bgfx { namespace d3d12
 			{
 #if !BX_PLATFORM_WINDOWS
 				hr = m_adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
-				DX_RELEASE(m_adapter, 1);
+				DX_RELEASE(m_adapter, 0);
 				if (FAILED(hr) )
 				{
 					BX_TRACE("Init error: Unable to create Direct3D11 device.");
@@ -924,13 +931,18 @@ namespace bgfx { namespace d3d12
 
 				if (NULL == g_platformData.ndt)
 				{
-					hr = m_factory->CreateSwapChainForCoreWindow(m_device
+					hr = m_factory->CreateSwapChainForCoreWindow(m_cmd.m_commandQueue
 						, (::IUnknown*)g_platformData.nwh
 						, &m_scd
 						, NULL
 						, &m_swapChain
 						);
-					BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to create Direct3D11 swap chain.");
+
+					if (FAILED(hr) )
+					{
+						BX_TRACE("Init error: Unable to create Direct3D12 swap chain.");
+						goto error;
+					}
 				}
 				else
 				{
@@ -3016,7 +3028,7 @@ data.NumQualityLevels = 0;
 		ID3D12InfoQueue* m_infoQueue;
 #else
 		IDXGIAdapter*    m_adapter;
-		IDXGIFactory2*   m_factory;
+		IDXGIFactory4*   m_factory;
 		IDXGISwapChain1* m_swapChain;
 #endif // BX_PLATFORM_WINDOWS
 

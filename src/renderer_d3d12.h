@@ -13,6 +13,7 @@
 #	include <d3d12_x.h>
 #else
 #	include <d3d12.h>
+#	include <dxgi1_6.h>
 #endif // BX_PLATFORM_XBOXONE
 
 #if defined(__MINGW32__) // BK - temp workaround for MinGW until I nuke d3dx12 usage.

@@ -676,7 +676,7 @@ Args::Args(int _argc, const char* const* _argv)
 	{
 		m_type = bgfx::RendererType::Noop;
 	}
-	else if (BX_ENABLED(BX_PLATFORM_WINDOWS) )
+	else if (BX_ENABLED(BX_PLATFORM_WINDOWS|BX_PLATFORM_WINRT|BX_PLATFORM_XBOXONE) )
 	{
 		if (cmdLine.hasArg("d3d9") )
 		{
