@@ -5083,12 +5083,27 @@ data.NumQualityLevels = 0;
 
 	void RendererContextD3D12::submitBlit(BlitState& _bs, uint16_t _view)
 	{
+		TextureHandle currentSrc = { kInvalidHandle };
+		D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATES(UINT32_MAX);
+
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
 
-			const TextureD3D12& src = m_textures[blit.m_src.idx];
+			TextureD3D12& src = m_textures[blit.m_src.idx];
 			const TextureD3D12& dst = m_textures[blit.m_dst.idx];
+
+			if (currentSrc.idx != blit.m_src.idx)
+			{
+				if (D3D12_RESOURCE_STATES(UINT32_MAX) != state)
+				{
+					m_textures[currentSrc.idx].setState(m_commandList, state);
+				}
+
+				currentSrc = blit.m_src;
+
+				state = src.setState(m_commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+			}
 
  			uint32_t srcWidth  = bx::uint32_min(src.m_width,  blit.m_srcX + blit.m_width)  - blit.m_srcX;
  			uint32_t srcHeight = bx::uint32_min(src.m_height, blit.m_srcY + blit.m_height) - blit.m_srcY;
@@ -5157,6 +5172,12 @@ data.NumQualityLevels = 0;
 					, depthStencil ? NULL : &box
 					);
 			}
+		}
+
+		if (isValid(currentSrc)
+		&&  D3D12_RESOURCE_STATES(UINT32_MAX) != state)
+		{
+			m_textures[currentSrc.idx].setState(m_commandList, state);
 		}
 	}
 
