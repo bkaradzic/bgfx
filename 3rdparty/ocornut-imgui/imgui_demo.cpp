@@ -779,12 +779,19 @@ void ImGui::ShowTestWindow(bool* p_open)
             ImGui::ColorEdit4("MyColor##3", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | misc_flags);
 
             ImGui::Text("Color button with Custom Picker Popup:");
+
+            // Generate a dummy palette
             static bool saved_palette_inited = false;
             static ImVec4 saved_palette[32];
-            static ImVec4 backup_color;
             if (!saved_palette_inited)
                 for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+                {
                     ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f, saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+                    saved_palette[n].w = 1.0f; // Alpha
+                }
+            saved_palette_inited = true;
+
+            static ImVec4 backup_color;
             bool open_popup = ImGui::ColorButton("MyColor##3b", color, misc_flags);
             ImGui::SameLine();
             open_popup |= ImGui::Button("Palette");
@@ -813,8 +820,18 @@ void ImGui::ShowTestWindow(bool* p_open)
                     ImGui::PushID(n);
                     if ((n % 8) != 0)
                         ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
-                    if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
+                    if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
                         color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
+
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+                            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+                        if (const ImGuiPayload* payload = AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+                            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 4);
+                        EndDragDropTarget();
+                    }
+
                     ImGui::PopID();
                 }
                 ImGui::EndGroup();
@@ -1886,6 +1903,41 @@ void ImGui::ShowTestWindow(bool* p_open)
     ImGui::End();
 }
 
+bool ImGui::ShowStyleSelector(const char* label)
+{
+    static int style_idx = 0;
+    if (ImGui::Combo(label, &style_idx, "Classic\0Dark\0Light\0"))
+    {
+        switch (style_idx)
+        {
+        case 0: ImGui::StyleColorsClassic(); break;
+        case 1: ImGui::StyleColorsDark(); break;
+        case 2: ImGui::StyleColorsLight(); break;
+        }
+        return true;
+    }
+    return false;
+}
+
+void ImGui::ShowFontSelector(const char* label)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImFont* font_current = ImGui::GetFont();
+    if (ImGui::BeginCombo(label, font_current->GetDebugName()))
+    {
+        for (int n = 0; n < io.Fonts->Fonts.Size; n++)
+            if (ImGui::Selectable(io.Fonts->Fonts[n]->GetDebugName(), io.Fonts->Fonts[n] == font_current))
+                io.FontDefault = io.Fonts->Fonts[n];
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine(); 
+    ShowHelpMarker(
+        "- Load additional fonts with io.Fonts->AddFontFromFileTTF().\n"
+        "- The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().\n"
+        "- Read FAQ and documentation in extra_fonts/ for more details.\n"
+        "- If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().");
+}
+
 void ImGui::ShowStyleEditor(ImGuiStyle* ref)
 {
     // You can pass in a reference ImGuiStyle structure to compare to, revert to and save to (else it compares to an internally stored reference)
@@ -1902,18 +1954,9 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
 
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
 
-    // Default Styles Selector
-    static int style_idx = 0;
-    if (ImGui::Combo("Colors##Selector", &style_idx, "Classic\0Dark\0Light\0"))
-    {
-        switch (style_idx)
-        {
-        case 0: ImGui::StyleColorsClassic(); break;
-        case 1: ImGui::StyleColorsDark(); break;
-        case 2: ImGui::StyleColorsLight(); break;
-        }
+    if (ImGui::ShowStyleSelector("Colors##Selector"))
         ref_saved_style = style;
-    }
+    ImGui::ShowFontSelector("Fonts##Selector");
 
     // Simplified Settings
     if (ImGui::SliderFloat("FrameRounding", &style.FrameRounding, 0.0f, 12.0f, "%.0f")) 
@@ -2033,7 +2076,6 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
     }
 
     bool fonts_opened = ImGui::TreeNode("Fonts", "Fonts (%d)", ImGui::GetIO().Fonts->Fonts.Size);
-    ImGui::SameLine(); ShowHelpMarker("Tip: Load fonts with io.Fonts->AddFontFromFileTTF()\nbefore calling io.Fonts->GetTex* functions.");
     if (fonts_opened)
     {
         ImFontAtlas* atlas = ImGui::GetIO().Fonts;
@@ -2521,7 +2563,8 @@ struct ExampleAppConsole
         ImGui::PopStyleVar();
         ImGui::Separator();
 
-        ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetStyle().ItemSpacing.y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
+        const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing(); // 1 separator, 1 input text
+        ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
         if (ImGui::BeginPopupContextWindow())
         {
             if (ImGui::Selectable("Clear")) ClearLog();
