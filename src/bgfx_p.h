@@ -76,34 +76,34 @@ namespace bgfx
 	inline bool operator==(const UniformHandle& _lhs,    const UniformHandle&    _rhs) { return _lhs.idx == _rhs.idx; }
 }
 
-#define _BX_TRACE(_format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
+#define _BX_TRACE(_format, ...)                                                                     \
+				BX_MACRO_BLOCK_BEGIN                                                                \
 					bgfx::trace(__FILE__, uint16_t(__LINE__), "BGFX " _format "\n", ##__VA_ARGS__); \
 				BX_MACRO_BLOCK_END
 
-#define _BX_WARN(_condition, _format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (!BX_IGNORE_C4127(_condition) ) \
-					{ \
+#define _BX_WARN(_condition, _format, ...)                        \
+				BX_MACRO_BLOCK_BEGIN                              \
+					if (!BX_IGNORE_C4127(_condition) )            \
+					{                                             \
 						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
-					} \
+					}                                             \
 				BX_MACRO_BLOCK_END
 
-#define _BX_CHECK(_condition, _format, ...) \
-				BX_MACRO_BLOCK_BEGIN \
-					if (!BX_IGNORE_C4127(_condition) ) \
-					{ \
-						BX_TRACE("CHECK " _format, ##__VA_ARGS__); \
+#define _BX_CHECK(_condition, _format, ...)                                           \
+				BX_MACRO_BLOCK_BEGIN                                                  \
+					if (!BX_IGNORE_C4127(_condition) )                                \
+					{                                                                 \
+						BX_TRACE("CHECK " _format, ##__VA_ARGS__);                    \
 						bgfx::fatal(bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
-					} \
+					}                                                                 \
 				BX_MACRO_BLOCK_END
 
-#define BGFX_FATAL(_condition, _err, _format, ...) \
-			BX_MACRO_BLOCK_BEGIN \
-				if (!BX_IGNORE_C4127(_condition) ) \
-				{ \
+#define BGFX_FATAL(_condition, _err, _format, ...)       \
+			BX_MACRO_BLOCK_BEGIN                         \
+				if (!BX_IGNORE_C4127(_condition) )       \
+				{                                        \
 					fatal(_err, _format, ##__VA_ARGS__); \
-				} \
+				}                                        \
 			BX_MACRO_BLOCK_END
 
 #include <bx/allocator.h>
@@ -114,7 +114,6 @@ namespace bgfx
 #include <bx/float4x4_t.h>
 #include <bx/handlealloc.h>
 #include <bx/hash.h>
-#include <bx/maputil.h>
 #include <bx/math.h>
 #include <bx/mutex.h>
 #include <bx/os.h>
