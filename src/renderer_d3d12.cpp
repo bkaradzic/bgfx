@@ -1323,6 +1323,7 @@ namespace bgfx { namespace d3d12
 
 		void shutdown()
 		{
+			m_cmd.finish();
 			m_batch.destroy();
 
 			preReset();
