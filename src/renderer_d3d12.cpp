@@ -3026,9 +3026,13 @@ data.NumQualityLevels = 0;
 		IDXGIFactory4*   m_factory;
 		IDXGISwapChain3* m_swapChain;
 		ID3D12InfoQueue* m_infoQueue;
-#else
+#elif BX_PLATFORM_WINRT
 		IDXGIAdapter*    m_adapter;
 		IDXGIFactory4*   m_factory;
+		IDXGISwapChain1* m_swapChain;
+#else
+		IDXGIAdapter*    m_adapter;
+		IDXGIFactory2*   m_factory;
 		IDXGISwapChain1* m_swapChain;
 #endif // BX_PLATFORM_WINDOWS
 
@@ -4322,30 +4326,33 @@ data.NumQualityLevels = 0;
 					{
 						if (convert)
 						{
-							const uint32_t pitch = bx::strideAlign(width*bpp / 8,  D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(pitch * height, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t pitch = bx::strideAlign(bx::max<uint32_t>(width,  4)*bpp/8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(height, 4)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t size  = slice*depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice);
+							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
 							bimg::imageDecodeToBgra8(temp
 									, mip.m_data
 									, mip.m_width
 									, mip.m_height
-									, pitch, mip.m_format
+									, pitch
+									, mip.m_format
 									);
 
 							srd[kk].pData      = temp;
 							srd[kk].RowPitch   = pitch;
 							srd[kk].SlicePitch = slice;
-							totalSize += slice;
+							totalSize += size;
 						}
 						else if (compressed)
 						{
-							uint32_t pitch = bx::strideAlign( (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t pitch = bx::strideAlign( (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+							const uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t size  = slice*depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice);
+							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
 							bimg::imageCopy(temp
-									, mip.m_height/blockInfo.blockHeight
+									,  mip.m_height/blockInfo.blockHeight
 									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
 									, mip.m_data
 									, pitch
@@ -4354,17 +4361,18 @@ data.NumQualityLevels = 0;
 							srd[kk].pData      = temp;
 							srd[kk].RowPitch   = pitch;
 							srd[kk].SlicePitch = slice;
-							totalSize += slice;
+							totalSize += size;
 						}
 						else
 						{
 							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(pitch * mip.m_height,      D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t slice = bx::strideAlign(mip.m_height*pitch,        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t size  = slice*depth;
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice);
+							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*depth);
 							bimg::imageCopy(temp
 									, mip.m_height
-									, mip.m_width*mip.m_bpp / 8
+									, mip.m_width*mip.m_bpp/8
 									, mip.m_data
 									, pitch
 									);
@@ -4372,16 +4380,15 @@ data.NumQualityLevels = 0;
 							srd[kk].pData = temp;
 							srd[kk].RowPitch   = pitch;
 							srd[kk].SlicePitch = slice;
-							totalSize += slice;
+							totalSize += size;
 						}
 
-						srd[kk].SlicePitch = mip.m_height*srd[kk].RowPitch;
 						++kk;
 					}
 					else
 					{
 						const uint32_t pitch = bx::strideAlign(width*bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-						const uint32_t slice = bx::strideAlign(pitch * height, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+						const uint32_t slice = bx::strideAlign(height*pitch,  D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 						totalSize += slice;
 					}
 
@@ -4579,7 +4586,7 @@ data.NumQualityLevels = 0;
 			{
 				ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalSize);
 
-				setState(commandList,D3D12_RESOURCE_STATE_COPY_DEST);
+				setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
 				uint64_t result = UpdateSubresources(commandList
 					, m_ptr
@@ -4635,7 +4642,7 @@ data.NumQualityLevels = 0;
 
 	void TextureD3D12::update(ID3D12GraphicsCommandList* _commandList, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
+		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
 		const uint32_t subres = _mip + (_side * m_numMips);
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
@@ -4684,7 +4691,7 @@ data.NumQualityLevels = 0;
 		D3D12_TEXTURE_COPY_LOCATION src = { staging, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,  { layout } };
 		_commandList->CopyTextureRegion(&dst, _rect.m_x, _rect.m_y, 0, &src, &box);
 
-		setState(_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		setState(_commandList, state);
 
 		s_renderD3D12->m_cmd.release(staging);
 	}
