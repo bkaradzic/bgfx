@@ -13,7 +13,7 @@
 #include "entry.h"
 
 #ifndef ENTRY_CONFIG_USE_NOOP
-#	define ENTRY_CONFIG_USE_NOOP (BX_PLATFORM_QNX)
+#	define ENTRY_CONFIG_USE_NOOP 0
 #endif // ENTRY_CONFIG_USE_NOOP
 
 #ifndef ENTRY_CONFIG_USE_SDL

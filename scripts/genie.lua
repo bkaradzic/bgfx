@@ -232,7 +232,7 @@ function exampleProjectDefaults()
 			"kernelx",
 		}
 
-	configuration { "winphone* or winstore*" }
+	configuration { "winstore*" }
 		removelinks {
 			"DelayImp",
 			"gdi32",
@@ -248,15 +248,15 @@ function exampleProjectDefaults()
 		}
 
 	-- WinRT targets need their own output directories or build files stomp over each other
-	configuration { "x32", "winphone* or winstore*" }
+	configuration { "x32", "winstore*" }
 		targetdir (path.join(BGFX_BUILD_DIR, "win32_" .. _ACTION, "bin", _name))
 		objdir (path.join(BGFX_BUILD_DIR, "win32_" .. _ACTION, "obj", _name))
 
-	configuration { "x64", "winphone* or winstore*" }
+	configuration { "x64", "winstore*" }
 		targetdir (path.join(BGFX_BUILD_DIR, "win64_" .. _ACTION, "bin", _name))
 		objdir (path.join(BGFX_BUILD_DIR, "win64_" .. _ACTION, "obj", _name))
 
-	configuration { "ARM", "winphone* or winstore*" }
+	configuration { "ARM", "winstore*" }
 		targetdir (path.join(BGFX_BUILD_DIR, "arm_" .. _ACTION, "bin", _name))
 		objdir (path.join(BGFX_BUILD_DIR, "arm_" .. _ACTION, "obj", _name))
 

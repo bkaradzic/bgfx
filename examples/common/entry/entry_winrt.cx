@@ -24,7 +24,7 @@ using namespace Windows::Graphics::Display;
 #endif // BX_PLATFORM_WINRT
 using namespace Platform;
 
-static const char* const g_emptyArgs[] = { "" };
+static const char* const g_emptyArgs[] = { "app.exe", "--d3d12", "02" };
 static entry::WindowHandle g_defaultWindow = { 0 };
 static entry::EventQueue g_eventQueue;
 
@@ -146,7 +146,7 @@ private:
 
 	static int32_t MainThreadFunc(bx::Thread*, void*)
 	{
-		return entry::main(0, g_emptyArgs);
+		return entry::main(BX_COUNTOF(g_emptyArgs), g_emptyArgs);
 	}
 };
 

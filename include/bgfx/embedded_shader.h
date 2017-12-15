@@ -34,7 +34,6 @@
 		|| BX_PLATFORM_IOS              \
 		|| BX_PLATFORM_LINUX            \
 		|| BX_PLATFORM_OSX              \
-		|| BX_PLATFORM_QNX              \
 		|| BX_PLATFORM_RPI              \
 		|| BX_PLATFORM_STEAMLINK        \
 		|| BX_PLATFORM_WINDOWS          \

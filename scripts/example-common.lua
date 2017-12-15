@@ -90,7 +90,7 @@ project ("example-common")
 			path.join(BGFX_DIR, "examples/common/**.mm"),
 		}
 
-	configuration { "winphone* or winstore* or durango"}
+	configuration { "winstore* or durango"}
 		files {
 			path.join(BGFX_DIR, "examples/common/**.cx"),
 		}

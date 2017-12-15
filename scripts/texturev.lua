@@ -132,7 +132,7 @@ project ("texturev")
 			"psapi",
 		}
 
-	configuration { "winphone* or winstore*" }
+	configuration { "winstore*" }
 		removelinks {
 			"DelayImp",
 			"gdi32",
