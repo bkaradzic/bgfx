@@ -650,14 +650,18 @@ public:
         layoutXfbOffset = layoutXfbOffsetEnd;
     }
 
-    bool hasLayout() const
+    bool hasNonXfbLayout() const
     {
         return hasUniformLayout() ||
                hasAnyLocation() ||
                hasStream() ||
-               hasXfb() ||
                hasFormat() ||
                layoutPushConstant;
+    }
+    bool hasLayout() const
+    {
+        return hasNonXfbLayout() ||
+               hasXfb();
     }
     TLayoutMatrix  layoutMatrix  : 3;
     TLayoutPacking layoutPacking : 4;

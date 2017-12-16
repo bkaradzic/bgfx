@@ -80,10 +80,9 @@ ERROR: node is still EOpNull!
 0:?         'cpid' ( in uint InvocationID)
 0:39      Sequence
 0:39        move second child to first child ( temp 4-component vector of float)
-0:39          direct index ( out 4-component vector of float Position)
+0:39          indirect index ( out 4-component vector of float Position)
 0:?             '@entryPointOutput.m_Position' ( out 3-element array of 4-component vector of float Position)
-0:39            Constant:
-0:39              0 (const int)
+0:?             'cpid' ( in uint InvocationID)
 0:39          m_Position: direct index for structure ( temp 4-component vector of float)
 0:39            Function Call: @main(u1; ( temp structure{ temp 4-component vector of float m_Position})
 0:?               'cpid' ( temp uint)
@@ -174,10 +173,9 @@ ERROR: node is still EOpNull!
 0:?         'cpid' ( in uint InvocationID)
 0:39      Sequence
 0:39        move second child to first child ( temp 4-component vector of float)
-0:39          direct index ( out 4-component vector of float Position)
+0:39          indirect index ( out 4-component vector of float Position)
 0:?             '@entryPointOutput.m_Position' ( out 3-element array of 4-component vector of float Position)
-0:39            Constant:
-0:39              0 (const int)
+0:?             'cpid' ( in uint InvocationID)
 0:39          m_Position: direct index for structure ( temp 4-component vector of float)
 0:39            Function Call: @main(u1; ( temp structure{ temp 4-component vector of float m_Position})
 0:?               'cpid' ( temp uint)

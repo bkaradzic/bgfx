@@ -174,6 +174,12 @@ out layout(xfb_buffer=7, xfb_offset=0) bblck10 {  // link ERROR, implicit stride
     float f;
 } bbinst10;
 
+layout(xfb_buffer = 3) out;
+layout(xfb_offset = 32) out gl_PerVertex {
+    layout(xfb_buffer = 2) float gl_PointSize; // ERROR, change in xfb_buffer
+    vec4 gl_Position;
+};
+
 int drawParamsBad()
 {
     return gl_BaseVertexARB + gl_BaseInstanceARB + gl_DrawIDARB; // ERROR, extension not requested

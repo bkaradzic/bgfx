@@ -187,6 +187,17 @@ $REMAPEXE --do-everything -i remap.invalid-spirv-2.spv -o $TARGETDIR > $TARGETDI
 diff -b $BASEDIR/remap.invalid-spirv-2.out $TARGETDIR/remap.invalid-spirv-2.out || HASERROR=1
 
 #
+# Testing position Y inversion
+#
+echo "Testing position Y inversion"
+$EXE -H -e main -V -D -H -i --iy hlsl.y-negate-1.vert > $TARGETDIR/hlsl.y-negate-1.vert.out
+diff -b $BASEDIR/hlsl.y-negate-1.vert.out $TARGETDIR/hlsl.y-negate-1.vert.out || HASERROR=1
+$EXE -H -e main -V -D -H -i --invert-y hlsl.y-negate-2.vert > $TARGETDIR/hlsl.y-negate-2.vert.out
+diff -b $BASEDIR/hlsl.y-negate-2.vert.out $TARGETDIR/hlsl.y-negate-2.vert.out || HASERROR=1
+$EXE -H -e main -V -D -H -i --invert-y hlsl.y-negate-3.vert > $TARGETDIR/hlsl.y-negate-3.vert.out
+diff -b $BASEDIR/hlsl.y-negate-3.vert.out $TARGETDIR/hlsl.y-negate-3.vert.out || HASERROR=1
+
+#
 # Final checking
 #
 if [ $HASERROR -eq 0 ]

@@ -183,6 +183,7 @@ const char* const E_GL_NV_viewport_array2                       = "GL_NV_viewpor
 const char* const E_GL_NV_stereo_view_rendering                 = "GL_NV_stereo_view_rendering";
 const char* const E_GL_NVX_multiview_per_view_attributes        = "GL_NVX_multiview_per_view_attributes";
 const char* const E_GL_NV_shader_atomic_int64                   = "GL_NV_shader_atomic_int64";
+const char* const E_GL_NV_conservative_raster_underestimation   = "GL_NV_conservative_raster_underestimation";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

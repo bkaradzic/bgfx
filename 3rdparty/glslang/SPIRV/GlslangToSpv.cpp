@@ -44,6 +44,7 @@
 namespace spv {
     #include "GLSL.std.450.h"
     #include "GLSL.ext.KHR.h"
+    #include "GLSL.ext.EXT.h"
 #ifdef AMD_EXTENSIONS
     #include "GLSL.ext.AMD.h"
 #endif
@@ -646,6 +647,10 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
             builder.addCapability(spv::CapabilityPerViewAttributesNV);
         }
         return spv::BuiltInViewportMaskPerViewNV;
+    case glslang::EbvFragFullyCoveredNV:
+        builder.addExtension(spv::E_SPV_EXT_fragment_fully_covered);
+        builder.addCapability(spv::CapabilityFragmentFullyCoveredEXT);
+        return spv::BuiltInFullyCoveredEXT;
 #endif 
     default:
         return spv::BuiltInMax;
@@ -2655,13 +2660,6 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
     if (type.getQualifier().hasStream() && glslangIntermediate->isMultiStream()) {
         builder.addCapability(spv::CapabilityGeometryStreams);
         builder.addDecoration(spvType, spv::DecorationStream, type.getQualifier().layoutStream);
-    }
-    if (glslangIntermediate->getXfbMode()) {
-        builder.addCapability(spv::CapabilityTransformFeedback);
-        if (type.getQualifier().hasXfbStride())
-            builder.addDecoration(spvType, spv::DecorationXfbStride, type.getQualifier().layoutXfbStride);
-        if (type.getQualifier().hasXfbBuffer())
-            builder.addDecoration(spvType, spv::DecorationXfbBuffer, type.getQualifier().layoutXfbBuffer);
     }
 }
 
@@ -5503,15 +5501,6 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
             builder.addDecoration(id, spv::DecorationIndex, symbol->getQualifier().layoutIndex);
         if (symbol->getQualifier().hasComponent())
             builder.addDecoration(id, spv::DecorationComponent, symbol->getQualifier().layoutComponent);
-        if (glslangIntermediate->getXfbMode()) {
-            builder.addCapability(spv::CapabilityTransformFeedback);
-            if (symbol->getQualifier().hasXfbStride())
-                builder.addDecoration(id, spv::DecorationXfbStride, symbol->getQualifier().layoutXfbStride);
-            if (symbol->getQualifier().hasXfbBuffer())
-                builder.addDecoration(id, spv::DecorationXfbBuffer, symbol->getQualifier().layoutXfbBuffer);
-            if (symbol->getQualifier().hasXfbOffset())
-                builder.addDecoration(id, spv::DecorationOffset, symbol->getQualifier().layoutXfbOffset);
-        }
         // atomic counters use this:
         if (symbol->getQualifier().hasOffset())
             builder.addDecoration(id, spv::DecorationOffset, symbol->getQualifier().layoutOffset);
@@ -5538,8 +5527,14 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
         builder.addCapability(spv::CapabilityTransformFeedback);
         if (symbol->getQualifier().hasXfbStride())
             builder.addDecoration(id, spv::DecorationXfbStride, symbol->getQualifier().layoutXfbStride);
-        if (symbol->getQualifier().hasXfbBuffer())
+        if (symbol->getQualifier().hasXfbBuffer()) {
             builder.addDecoration(id, spv::DecorationXfbBuffer, symbol->getQualifier().layoutXfbBuffer);
+            unsigned stride = glslangIntermediate->getXfbStride(symbol->getQualifier().layoutXfbBuffer);
+            if (stride != glslang::TQualifier::layoutXfbStrideEnd)
+                builder.addDecoration(id, spv::DecorationXfbStride, stride);
+        }
+        if (symbol->getQualifier().hasXfbOffset())
+            builder.addDecoration(id, spv::DecorationOffset, symbol->getQualifier().layoutXfbOffset);
     }
 
     if (symbol->getType().isImage()) {

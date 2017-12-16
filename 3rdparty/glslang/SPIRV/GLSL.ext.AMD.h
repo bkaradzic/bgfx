@@ -104,14 +104,7 @@ static const char* const E_SPV_AMD_gpu_shader_int16 = "SPV_AMD_gpu_shader_int16"
 // SPV_AMD_shader_image_load_store_lod
 static const char* const E_SPV_AMD_shader_image_load_store_lod = "SPV_AMD_shader_image_load_store_lod";
 
-static const Capability CapabilityImageReadWriteLodAMD = static_cast<Capability>(5015);
-
 // SPV_AMD_shader_fragment_mask
 static const char* const E_SPV_AMD_shader_fragment_mask = "SPV_AMD_shader_fragment_mask";
-
-static const Capability CapabilityFragmentMaskAMD = static_cast<Capability>(5010);
-
-static const Op OpFragmentMaskFetchAMD = static_cast<Op>(5011);
-static const Op OpFragmentFetchAMD     = static_cast<Op>(5012);
 
 #endif  // #ifndef GLSLextAMD_H

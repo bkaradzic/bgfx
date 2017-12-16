@@ -1,7 +1,7 @@
 400.geom
 ERROR: 0:12: 'invocations' : can only apply to a standalone qualifier 
 ERROR: 0:20: 'patch' : not supported in this stage: geometry
-ERROR: 0:20: 'gl_PointSize' : cannot add layout to redeclared block member 
+ERROR: 0:20: 'gl_PointSize' : cannot add non-XFB layout to redeclared block member 
 ERROR: 0:20: 'gl_PointSize' : cannot add patch to redeclared block member 
 ERROR: 0:25: 'length' :  array must first be sized by a redeclaration or layout qualifier
 ERROR: 0:36: 'length' :  array must first be sized by a redeclaration or layout qualifier
