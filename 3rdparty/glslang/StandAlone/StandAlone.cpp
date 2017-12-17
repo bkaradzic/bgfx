@@ -98,6 +98,7 @@ enum TOptions {
     EOptionStdin                = (1 << 27),
     EOptionOptimizeDisable      = (1 << 28),
     EOptionOptimizeSize         = (1 << 29),
+    EOptionInvertY              = (1 << 30),
 };
 
 //
@@ -519,6 +520,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         variableName = argv[1];
                         bumpArg();
                         break;
+                    } else if (lowerword == "invert-y" ||  // synonyms
+                               lowerword == "iy") {
+                        Options |= EOptionInvertY;
                     } else {
                         usage();
                     }
@@ -839,6 +843,9 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
         if (Options & EOptionAutoMapLocations)
             shader->setAutoMapLocations(true);
+
+        if (Options & EOptionInvertY)
+            shader->setInvertY(true);
 
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
@@ -1359,6 +1366,7 @@ void usage()
            "                                       uint32_t array named <name>\n"
            "                                       initialized with the shader binary code.\n"
            "  --vn <name>                          synonym for --variable-name <name>\n"
+           "  --invert-y | --iy                    invert position.Y output in vertex shader\n"
            );
 
     exit(EFailUsage);

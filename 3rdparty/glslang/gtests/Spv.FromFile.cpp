@@ -232,6 +232,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.bool.vert",
         "spv.boolInBlock.frag",
         "spv.branch-return.vert",
+        "spv.builtInXFB.vert",
         "spv.conditionalDiscard.frag",
         "spv.conversion.frag",
         "spv.dataOut.frag",
@@ -249,6 +250,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.flowControl.frag",
         "spv.forLoop.frag",
         "spv.forwardFun.frag",
+        "spv.fullyCovered.frag",
         "spv.functionCall.frag",
         "spv.functionNestedOpaque.vert",
         "spv.functionSemantics.frag",
@@ -327,6 +329,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.storageBuffer.vert",
         "spv.precise.tese",
         "spv.precise.tesc",
+        "spv.xfb.vert",
     })),
     FileNameAsCustomTestSuffix
 );

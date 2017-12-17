@@ -49,6 +49,7 @@ namespace spv {
     extern "C" {
         // Include C-based headers that don't have a namespace
         #include "GLSL.ext.KHR.h"
+        #include "GLSL.ext.EXT.h"
 #ifdef AMD_EXTENSIONS
         #include "GLSL.ext.AMD.h"
 #endif
@@ -350,6 +351,8 @@ const char* BuiltInString(int builtIn)
     case 5261: return "PositionPerViewNV";
     case 5262: return "ViewportMaskPerViewNV";
 #endif
+
+    case 5264: return "FullyCoveredEXT";
 
     case BuiltInCeiling:
     default: return "Bad";
@@ -861,6 +864,8 @@ const char* CapabilityString(int info)
     case 5259: return "ShaderStereoViewNV";
     case 5260: return "PerViewAttributesNV";
 #endif
+
+    case 5265: return "FragmentFullyCoveredEXT";
 
     case CapabilityCeiling:
     default: return "Bad";

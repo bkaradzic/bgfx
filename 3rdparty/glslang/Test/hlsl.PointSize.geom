@@ -1,5 +1,5 @@
 struct S {
-    [[vk::builtin("PointSize")]] float ps;
+    [[vk::builtin("PointSize")]] float ps : PSIZE;
 };
 
 [maxvertexcount(4)]

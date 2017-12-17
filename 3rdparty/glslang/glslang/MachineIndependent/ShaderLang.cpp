@@ -1686,6 +1686,8 @@ void TShader::setShiftUavBinding(unsigned int base)     { setShiftBinding(EResUa
 void TShader::setShiftSsboBinding(unsigned int base)    { setShiftBinding(EResSsbo, base); }
 // Enables binding automapping using TIoMapper
 void TShader::setAutoMapBindings(bool map)              { intermediate->setAutoMapBindings(map); }
+// Enables position.Y output negation in vertex shader
+void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
 // Fragile: currently within one stage: simple auto-assignment of location
 void TShader::setAutoMapLocations(bool map)             { intermediate->setAutoMapLocations(map); }
 // See comment above TDefaultHlslIoMapper in iomapper.cpp:

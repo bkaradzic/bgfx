@@ -2968,7 +2968,7 @@ error:
 		const Context::UniformRef& uniform = s_ctx->m_uniformRef[_handle.idx];
 		BX_CHECK(isValid(_handle) && 0 < uniform.m_refCount, "Setting invalid uniform (handle %3d)!", _handle.idx);
 		BX_CHECK(_num == UINT16_MAX || uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
-		BGFX_ENCODER(setUniform(uniform.m_type, _handle, _value, _num) );
+		BGFX_ENCODER(setUniform(uniform.m_type, _handle, _value, UINT16_MAX != _num ? _num : uniform.m_num) );
 	}
 
 	void Encoder::setIndexBuffer(IndexBufferHandle _handle)
