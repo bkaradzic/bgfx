@@ -909,7 +909,7 @@ namespace bgfx { namespace d3d12
 			if (NULL == g_platformData.backBuffer)
 			{
 #if !BX_PLATFORM_WINDOWS
-				hr = m_adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
+				hr = m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory);
 				DX_RELEASE(m_adapter, 0);
 				if (FAILED(hr) )
 				{
@@ -917,6 +917,7 @@ namespace bgfx { namespace d3d12
 					goto error;
 				}
 
+				bx::memSet(&m_scd, 0, sizeof(m_scd) );
 				m_scd.Width  = _init.resolution.m_width;
 				m_scd.Height = _init.resolution.m_height;
 				m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -927,7 +928,10 @@ namespace bgfx { namespace d3d12
 				m_scd.BufferCount  = bx::uint32_min(BX_COUNTOF(m_backBufferColor), 4);
 				m_scd.Scaling      = DXGI_SCALING_STRETCH;
 				m_scd.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+				m_scd.AlphaMode    = DXGI_ALPHA_MODE_IGNORE;
 				m_scd.Flags        = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+				m_backBufferColorIdx = m_scd.BufferCount-1;
 
 				if (NULL == g_platformData.ndt)
 				{
@@ -1416,7 +1420,7 @@ namespace bgfx { namespace d3d12
 			{
 				int64_t start = bx::getHPCounter();
 
-				HRESULT hr = 0;
+				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_resolution.m_flags & BGFX_RESET_VSYNC);
 				uint32_t flags = 0 == syncInterval ? DXGI_PRESENT_RESTART : 0;
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
@@ -2082,25 +2086,35 @@ data.NumQualityLevels = 0;
 				preReset();
 
 				BX_UNUSED(resize);
-#if BX_PLATFORM_WINDOWS
 				if (resize)
 				{
+#if BX_PLATFORM_WINDOWS
 					uint32_t nodeMask[] = { 1, 1, 1, 1 };
 					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(nodeMask) );
 					IUnknown* presentQueue[] ={ m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue };
 					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
 
-					DX_CHECK(m_swapChain->ResizeBuffers1(m_scd.BufferCount
-							, m_scd.BufferDesc.Width
-							, m_scd.BufferDesc.Height
-							, m_scd.BufferDesc.Format
-							, m_scd.Flags
-							, nodeMask
-							, presentQueue
-							) );
+					DX_CHECK(m_swapChain->ResizeBuffers1(
+						  m_scd.BufferCount
+						, m_scd.BufferDesc.Width
+						, m_scd.BufferDesc.Height
+						, m_scd.BufferDesc.Format
+						, m_scd.Flags
+						, nodeMask
+						, presentQueue
+						) );
+#else
+					DX_CHECK(m_swapChain->ResizeBuffers(
+						  m_scd.BufferCount
+						, m_scd.Width
+						, m_scd.Height
+						, m_scd.Format
+						, m_scd.Flags
+						) );
+					m_backBufferColorIdx = m_scd.BufferCount-1;
+#endif // BX_PLATFORM_WINDOWS
 				}
 				else
-#endif // BX_PLATFORM_WINDOWS
 				{
 					updateMsaa();
 					m_scd.SampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
@@ -3028,7 +3042,7 @@ data.NumQualityLevels = 0;
 		ID3D12InfoQueue* m_infoQueue;
 #elif BX_PLATFORM_WINRT
 		IDXGIAdapter*    m_adapter;
-		IDXGIFactory4*   m_factory;
+		IDXGIFactory2*   m_factory;
 		IDXGISwapChain1* m_swapChain;
 #else
 		IDXGIAdapter*    m_adapter;
@@ -3543,6 +3557,8 @@ data.NumQualityLevels = 0;
 			CloseHandle(commandList.m_event);
 			commandList.m_event = NULL;
 			m_completedFence = m_fence->GetCompletedValue();
+			BX_WARN(UINT64_MAX != m_completedFence, "D3D12: Device lost.");
+
 			m_commandQueue->Wait(m_fence, m_completedFence);
 
 			ResourceArray& ra = m_release[m_control.m_read];
@@ -5284,6 +5300,8 @@ data.NumQualityLevels = 0;
 
 #if BX_PLATFORM_WINDOWS
 		m_backBufferColorIdx = m_swapChain->GetCurrentBackBufferIndex();
+#else
+		m_backBufferColorIdx = (m_backBufferColorIdx+1) % m_scd.BufferCount;
 #endif // BX_PLATFORM_WINDOWS
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;

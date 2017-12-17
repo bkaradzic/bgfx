@@ -1252,7 +1252,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				if (NULL == g_platformData.backBuffer)
 				{
 #if !BX_PLATFORM_WINDOWS
-					hr = adapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_factory);
+					hr = adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory);
 					DX_RELEASE(adapter, 2);
 					if (FAILED(hr) )
 					{
@@ -1274,6 +1274,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						: DXGI_SCALING_STRETCH;
 					m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 					m_scd.AlphaMode  = DXGI_ALPHA_MODE_IGNORE;
+					m_scd.Flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 					if (NULL == g_platformData.ndt)
 					{

@@ -79,6 +79,8 @@ public:
 
 	virtual void Run()
 	{
+		bgfx::renderFrame();
+
 		bx::Thread thread;
 		thread.init(MainThreadFunc, nullptr);
 
@@ -104,9 +106,13 @@ public:
 			{
 				window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
 			}
+
+			bgfx::renderFrame();
 		}
 
 		g_eventQueue.postExitEvent();
+
+		while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 
 		thread.shutdown();
 	}
