@@ -39,23 +39,24 @@ clean: ## Clean all intermediate files.
 	@mkdir .build
 
 projgen: ## Generate project files for all configurations.
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                     vs2015
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                     vs2017
-	$(GENIE) --with-tools --with-combined-examples                   --vs=wwinstore100   vs2017
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc     gmake
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc     gmake
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx           gmake
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx         xcode4
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios         xcode4
-	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd       gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-arm   gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-mips  gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-x86   gmake
-	$(GENIE)              --with-combined-examples                   --gcc=asmjs         gmake
-	$(GENIE)              --with-combined-examples                   --gcc=ios-arm       gmake
-	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64     gmake
-	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator gmake
-	$(GENIE)              --with-combined-examples                   --gcc=rpi           gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2015
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2017
+	$(GENIE) --with-tools --with-combined-examples                   --vs=wwinstore100     vs2017
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx             gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode4
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode4
+	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
+	$(GENIE)              --with-combined-examples                   --gcc=android-arm     gmake
+	$(GENIE)              --with-combined-examples                   --gcc=android-mips    gmake
+	$(GENIE)              --with-combined-examples                   --gcc=android-x86     gmake
+	$(GENIE)              --with-combined-examples                   --gcc=asmjs           gmake
+	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
+	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64       gmake
+	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator   gmake
+	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator64 gmake
+	$(GENIE)              --with-combined-examples                   --gcc=rpi             gmake
 
 .build/projects/gmake-android-arm:
 	$(GENIE) --gcc=android-arm gmake
@@ -208,6 +209,14 @@ ios-simulator-debug: .build/projects/gmake-ios-simulator ## Build - iOS Simulato
 ios-simulator-release: .build/projects/gmake-ios-simulator ## Build - iOS Simulator Release
 	$(MAKE) -R -C .build/projects/gmake-ios-simulator config=release
 ios-simulator: ios-simulator-debug ios-simulator-release ## Build - iOS Simulator Debug and Release
+
+.build/projects/gmake-ios-simulator64:
+	$(GENIE) --gcc=ios-simulator64 gmake
+ios-simulator64-debug: .build/projects/gmake-ios-simulator64 ## Build - iOS Simulator Debug
+	$(MAKE) -R -C .build/projects/gmake-ios-simulator64 config=debug
+ios-simulator64-release: .build/projects/gmake-ios-simulator64 ## Build - iOS Simulator Release
+	$(MAKE) -R -C .build/projects/gmake-ios-simulator64 config=release
+ios-simulator64: ios-simulator64-debug ios-simulator64-release ## Build - iOS Simulator Debug and Release
 
 .build/projects/gmake-rpi:
 	$(GENIE) --gcc=rpi gmake
