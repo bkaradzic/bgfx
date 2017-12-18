@@ -362,18 +362,18 @@ namespace bgfx
 
 	static const uint16_t kInvalidHandle = UINT16_MAX;
 
-	BGFX_HANDLE(DynamicIndexBufferHandle);
-	BGFX_HANDLE(DynamicVertexBufferHandle);
-	BGFX_HANDLE(FrameBufferHandle);
-	BGFX_HANDLE(IndexBufferHandle);
-	BGFX_HANDLE(IndirectBufferHandle);
-	BGFX_HANDLE(OcclusionQueryHandle);
-	BGFX_HANDLE(ProgramHandle);
-	BGFX_HANDLE(ShaderHandle);
-	BGFX_HANDLE(TextureHandle);
-	BGFX_HANDLE(UniformHandle);
-	BGFX_HANDLE(VertexBufferHandle);
-	BGFX_HANDLE(VertexDeclHandle);
+	BGFX_HANDLE(DynamicIndexBufferHandle)
+	BGFX_HANDLE(DynamicVertexBufferHandle)
+	BGFX_HANDLE(FrameBufferHandle)
+	BGFX_HANDLE(IndexBufferHandle)
+	BGFX_HANDLE(IndirectBufferHandle)
+	BGFX_HANDLE(OcclusionQueryHandle)
+	BGFX_HANDLE(ProgramHandle)
+	BGFX_HANDLE(ShaderHandle)
+	BGFX_HANDLE(TextureHandle)
+	BGFX_HANDLE(UniformHandle)
+	BGFX_HANDLE(VertexBufferHandle)
+	BGFX_HANDLE(VertexDeclHandle)
 
 	/// Callback interface to implement application specific behavior.
 	/// Cached items are currently used for OpenGL and Direct3D 12 binary
