@@ -5297,7 +5297,7 @@ namespace bgfx { namespace gl
 
 			if (!unpackRowLength)
 			{
-				bimg::imageCopy(temp, width, height, bpp, srcpitch, data);
+				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
 				data = temp;
 			}
 
@@ -5328,7 +5328,7 @@ namespace bgfx { namespace gl
 			if (!unpackRowLength
 			&&  !convert)
 			{
-				bimg::imageCopy(temp, width, height, bpp, srcpitch, data);
+				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
 				data = temp;
 			}
 

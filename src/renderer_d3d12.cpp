@@ -4376,6 +4376,7 @@ data.NumQualityLevels = 0;
 							bimg::imageCopy(temp
 									,  mip.m_height/blockInfo.blockHeight
 									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
+									, depth
 									, mip.m_data
 									, pitch
 									);
@@ -4395,6 +4396,7 @@ data.NumQualityLevels = 0;
 							bimg::imageCopy(temp
 									, mip.m_height
 									, mip.m_width*mip.m_bpp/8
+									, depth
 									, mip.m_data
 									, pitch
 									);
