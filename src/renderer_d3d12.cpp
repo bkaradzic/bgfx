@@ -5234,6 +5234,11 @@ data.NumQualityLevels = 0;
 			return;
 		}
 
+		if (_render->m_capture)
+		{
+			renderDocTriggerCapture();
+		}
+
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
@@ -5743,6 +5748,8 @@ data.NumQualityLevels = 0;
 										case Binding::IndexBuffer:
 										case Binding::VertexBuffer:
 											{
+												samplerFlags[stage] = 0;
+
 												BufferD3D12& buffer = Binding::IndexBuffer == bind.m_type
 													? m_indexBuffers[bind.m_idx]
 													: m_vertexBuffers[bind.m_idx]
@@ -5782,6 +5789,7 @@ data.NumQualityLevels = 0;
 								}
 
 								m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle[0]);
+								m_commandList->SetGraphicsRootDescriptorTable(Rdt::UAV, srvHandle[0]);
 
 								Bind bind;
 								bind.m_srvHandle = srvHandle[0];
@@ -5797,7 +5805,9 @@ data.NumQualityLevels = 0;
 								currentSamplerStateIdx = samplerStateIdx;
 								m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 							}
+
 							m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, bindCached->m_srvHandle);
+							m_commandList->SetGraphicsRootDescriptorTable(Rdt::UAV, bindCached->m_srvHandle);
 						}
 					}
 
