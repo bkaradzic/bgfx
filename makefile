@@ -41,7 +41,7 @@ clean: ## Clean all intermediate files.
 projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2015
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2017
-	$(GENIE) --with-tools --with-combined-examples                   --vs=wwinstore100     vs2017
+	$(GENIE) --with-tools --with-combined-examples                   --vs=winstore100      vs2017
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx             gmake
