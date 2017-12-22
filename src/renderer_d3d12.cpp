@@ -1823,8 +1823,12 @@ namespace bgfx { namespace d3d12
 			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
-		void setMarker(const char* /*_marker*/, uint32_t /*_size*/) override
+		void setMarker(const char* _marker, uint32_t /*_size*/) override
 		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX))
+			{
+				PIX3_SETMARKER(m_commandList, D3DCOLOR_MARKER, _marker);
+			}
 		}
 
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
@@ -4349,6 +4353,7 @@ data.NumQualityLevels = 0;
 			const bool writeOnly    = 0 != (m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite = 0 != (m_flags&BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+			const bool blit         = 0 != (m_flags&BGFX_TEXTURE_BLIT_DST);
 
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
 				, this - s_renderD3D12->m_textures
@@ -4522,6 +4527,11 @@ data.NumQualityLevels = 0;
 			if (computeWrite)
 			{
 				resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			}
+
+			if (blit)
+			{
+				state = D3D12_RESOURCE_STATE_COPY_DEST;
 			}
 
 			switch (m_type)
