@@ -15,9 +15,11 @@
 #	endif // BX_PLATFORM_WINRT
 #endif // !BX_PLATFORM_WINDOWS
 
+PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
+PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
+
 namespace bgfx { namespace d3d12
 {
-	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
 	struct PrimInfo
@@ -572,12 +574,26 @@ namespace bgfx { namespace d3d12
 #endif // BX_COMPILER_MSVC
 	}
 
+	static PIXEventsThreadInfo temp;
+
+	PIXEventsThreadInfo* WINAPI stubPIXGetThreadInfo()
+	{
+		return &temp;
+	}
+
+	uint64_t WINAPI stubPIXEventsReplaceBlock(bool _getEarliestTime)
+	{
+		BX_UNUSED(_getEarliestTime);
+		return 0;
+	}
+
 	struct RendererContextD3D12 : public RendererContextI
 	{
 		RendererContextD3D12()
 			: m_d3d12dll(NULL)
 			, m_dxgidll(NULL)
 			, m_renderdocdll(NULL)
+			, m_winPixEvent(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_wireframe(false)
 			, m_lost(false)
@@ -612,8 +628,23 @@ namespace bgfx { namespace d3d12
 			ErrorState::Enum errorState = ErrorState::Default;
 			LUID luid;
 
+			m_winPixEvent = bx::dlopen("WinPixEventRuntime.dll");
+
+			if (NULL != m_winPixEvent)
+			{
+				bgfx_PIXGetThreadInfo      = (PFN_PIX_GET_THREAD_INFO     )bx::dlsym(m_winPixEvent, "PIXGetThreadInfo");
+				bgfx_PIXEventsReplaceBlock = (PFN_PIX_EVENTS_REPLACE_BLOCK)bx::dlsym(m_winPixEvent, "PIXEventsReplaceBlock");
+			}
+
+			if (NULL == bgfx_PIXGetThreadInfo
+			||  NULL == bgfx_PIXEventsReplaceBlock)
+			{
+				bgfx_PIXGetThreadInfo      = stubPIXGetThreadInfo;
+				bgfx_PIXEventsReplaceBlock = stubPIXEventsReplaceBlock;
+			}
+
 			m_renderdocdll = loadRenderDoc();
-			setGraphicsDebuggerPresent(NULL != m_renderdocdll);
+			setGraphicsDebuggerPresent(NULL != m_renderdocdll || NULL != m_winPixEvent);
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
@@ -1304,7 +1335,6 @@ namespace bgfx { namespace d3d12
 				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 				{
 					bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED + 1, "%3d   ", ii);
-					mbstowcs(s_viewNameW[ii], s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 				}
 
 				postReset();
@@ -1337,6 +1367,8 @@ namespace bgfx { namespace d3d12
 			case ErrorState::Default:
 			default:
 				unloadRenderDoc(m_renderdocdll);
+				bx::dlclose(m_winPixEvent);
+				m_winPixEvent = NULL;
 				break;
 			}
 
@@ -1396,6 +1428,9 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_factory, 0);
 
 			unloadRenderDoc(m_renderdocdll);
+
+			bx::dlclose(m_winPixEvent);
+			m_winPixEvent = NULL;
 
 #if USE_D3D12_DYNAMIC_LIB
 			bx::dlclose(m_dxgidll);
@@ -1777,14 +1812,6 @@ namespace bgfx { namespace d3d12
 
 		void updateViewName(ViewId _id, const char* _name) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-			{
-				mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-					, _name
-					, BX_COUNTOF(s_viewNameW[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-					);
-			}
-
 			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
 				, BX_COUNTOF(s_viewName[0]) - BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
 				, _name
@@ -2750,6 +2777,9 @@ data.NumQualityLevels = 0;
 						, (void**)&pso
 						) );
 			}
+
+			BGFX_FATAL(NULL != pso, Fatal::InvalidShader, "Failed to create PSO!");
+
 			m_pipelineStateCache.add(hash, pso);
 
 			release(temp);
@@ -3033,6 +3063,7 @@ data.NumQualityLevels = 0;
 		void* m_d3d12dll;
 		void* m_dxgidll;
 		void* m_renderdocdll;
+		void* m_winPixEvent;
 
 		D3D_FEATURE_LEVEL m_featureLevel;
 
@@ -3160,7 +3191,8 @@ data.NumQualityLevels = 0;
 
 		m_upload = createCommittedResource(device, HeapProperty::Upload, desc.NumDescriptors * 1024);
 		m_gpuVA  = m_upload->GetGPUVirtualAddress();
-		m_upload->Map(0, NULL, (void**)&m_data);
+		D3D12_RANGE range = { 0, 0 };
+		m_upload->Map(0, &range, (void**)&m_data);
 
 		reset(m_gpuHandle);
 	}
@@ -3188,15 +3220,15 @@ data.NumQualityLevels = 0;
 
 		m_pos += BX_ALIGN_256(_size);
 
-// 		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
-// 		desc.BufferLocation = _gpuAddress;
-// 		desc.SizeInBytes    = _size;
-// 		ID3D12Device* device = s_renderD3D12->m_device;
-// 		device->CreateConstantBufferView(&desc
-// 			, m_cpuHandle
-// 			);
-// 		m_cpuHandle.ptr += m_incrementSize;
-// 		m_gpuHandle.ptr += m_incrementSize;
+//		D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
+//		desc.BufferLocation = _gpuAddress;
+//		desc.SizeInBytes    = _size;
+//		ID3D12Device* device = s_renderD3D12->m_device;
+//		device->CreateConstantBufferView(&desc
+//			, m_cpuHandle
+//			);
+//		m_cpuHandle.ptr += m_incrementSize;
+//		m_gpuHandle.ptr += m_incrementSize;
 
 		return data;
 	}
@@ -4070,7 +4102,9 @@ data.NumQualityLevels = 0;
 	{
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
 		uint8_t* data;
-		DX_CHECK(staging->Map(0, NULL, (void**)&data) );
+
+		D3D12_RANGE range = { 0, 0 };
+		DX_CHECK(staging->Map(0, &range, (void**)&data) );
 		bx::memCopy(data, _data, _size);
 		staging->Unmap(0, NULL);
 
@@ -4695,7 +4729,8 @@ data.NumQualityLevels = 0;
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
 		uint8_t* data;
 
-		DX_CHECK(staging->Map(0, NULL, (void**)&data) );
+		D3D12_RANGE range = { 0, 0 };
+		DX_CHECK(staging->Map(0, &range, (void**)&data) );
 		for (uint32_t ii = 0, height = _rect.m_height; ii < height; ++ii)
 		{
 			bx::memCopy(&data[ii*rowPitch], &_mem->data[ii*srcpitch], srcpitch);
@@ -5226,7 +5261,7 @@ data.NumQualityLevels = 0;
 
 	void RendererContextD3D12::submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
-//		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
+		PIX3_BEGINEVENT(m_commandList, D3DCOLOR_FRAME, "rendererSubmit");
 
 		if (m_lost
 		||  updateResolution(_render->m_resolution) )
@@ -5424,6 +5459,14 @@ data.NumQualityLevels = 0;
 					{
 						wasCompute = true;
 
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							char* viewName = s_viewName[view];
+							viewName[3] = L'C';
+							PIX3_ENDEVENT(m_commandList);
+							PIX3_BEGINEVENT(m_commandList, D3DCOLOR_COMPUTE, viewName);
+						}
+
 						m_commandList->SetComputeRootSignature(m_rootSignature);
 						ID3D12DescriptorHeap* heaps[] = {
 							m_samplerAllocator.getHeap(),
@@ -5611,11 +5654,11 @@ data.NumQualityLevels = 0;
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 					{
-						BX_UNUSED(s_viewNameW);
-// 						wchar_t* viewNameW = s_viewNameW[view];
-// 						viewNameW[3] = L' ';
-// 						PIX_ENDEVENT();
-// 						PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
+						BX_UNUSED(s_viewName);
+ 						char* viewName = s_viewName[view];
+ 						viewName[3] = ' ';
+ 						PIX3_ENDEVENT(m_commandList);
+ 						PIX3_BEGINEVENT(m_commandList, D3DCOLOR_DRAW, viewName);
 					}
 
 					commandListChanged = true;
@@ -5649,9 +5692,8 @@ data.NumQualityLevels = 0;
 					primIndex = uint8_t(pt>>BGFX_STATE_PT_SHIFT);
 				}
 
+				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
-
-//				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
 
 				if (0 != draw.m_streamMask)
 				{
@@ -5883,8 +5925,7 @@ data.NumQualityLevels = 0;
 						m_commandList->SetPipelineState(pso);
 					}
 
-					bool constantsChanged = false;
-					if (draw.m_uniformBegin < draw.m_uniformEnd
+					if (constantsChanged
 					||  currentProgramIdx != key.m_program
 					||  BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
@@ -5938,6 +5979,17 @@ data.NumQualityLevels = 0;
 			m_batch.end(m_commandList);
 			kick();
 
+			if (wasCompute)
+			{
+				if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+				{
+					char* viewName = s_viewName[view];
+					viewName[3] = L'C';
+					PIX3_ENDEVENT(m_commandList);
+					PIX3_BEGINEVENT(m_commandList, D3DCOLOR_DRAW, viewName);
+				}
+			}
+
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			if (0 < _render->m_numRenderItems)
@@ -5954,6 +6006,8 @@ data.NumQualityLevels = 0;
 				profiler.end();
 			}
 		}
+
+		PIX3_ENDEVENT(m_commandList);
 
 		int64_t timeEnd   = bx::getHPCounter();
 		int64_t frameTime = timeEnd - timeBegin;
@@ -6013,7 +6067,7 @@ data.NumQualityLevels = 0;
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
+			PIX3_BEGINEVENT(m_commandList, D3DCOLOR_FRAME, "debugstats");
 
 //			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -6180,15 +6234,15 @@ data.NumQualityLevels = 0;
 
 			blit(this, _textVideoMemBlitter, tvm);
 
-//			PIX_ENDEVENT();
+			PIX3_ENDEVENT(m_commandList);
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugtext");
+			PIX3_BEGINEVENT(m_commandList, D3DCOLOR_FRAME, "debugtext");
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
-//			PIX_ENDEVENT();
+			PIX3_ENDEVENT(m_commandList);
 		}
 
 		setResourceBarrier(m_commandList

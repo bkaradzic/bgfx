@@ -19,6 +19,14 @@
 #	define DX_CHECK_EXTRA_ARGS
 #endif // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9
 
+#ifndef D3DCOLOR_ARGB
+#	define D3DCOLOR_ARGB(_a, _r, _g, _b) ( (DWORD)( ( ( (_a)&0xff)<<24)|( ( (_r)&0xff)<<16)|( ( (_g)&0xff)<<8)|( (_b)&0xff) ) )
+#endif // D3DCOLOR_ARGB
+
+#ifndef D3DCOLOR_RGBA
+#	define D3DCOLOR_RGBA(_r, _g, _b, _a) D3DCOLOR_ARGB(_a, _r, _g, _b)
+#endif // D3DCOLOR_RGBA
+
 namespace bgfx
 {
 #if BX_PLATFORM_XBOXONE
@@ -82,14 +90,14 @@ namespace bgfx
 	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE)(REFIID _riid, void** _debug);
 	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE1)(UINT _flags, REFIID _riid, void** _debug);
 
-#define _PIX_SETMARKER(_col, _name) D3DPERF_SetMarker(_col, _name)
+#define _PIX_SETMARKER(_col, _name)  D3DPERF_SetMarker(_col, _name)
 #define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT() D3DPERF_EndEvent()
+#define _PIX_ENDEVENT()              D3DPERF_EndEvent()
 
 #if BGFX_CONFIG_DEBUG_PIX
 #	define PIX_SETMARKER(_color, _name)  _PIX_SETMARKER(_color, _name)
 #	define PIX_BEGINEVENT(_color, _name) _PIX_BEGINEVENT(_color, _name)
-#	define PIX_ENDEVENT() _PIX_ENDEVENT()
+#	define PIX_ENDEVENT()                _PIX_ENDEVENT()
 #else
 #	define PIX_SETMARKER(_color, _name)  BX_UNUSED(_name)
 #	define PIX_BEGINEVENT(_color, _name) BX_UNUSED(_name)

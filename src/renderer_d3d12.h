@@ -52,6 +52,30 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #include "shader_dxbc.h"
 #include "debug_renderdoc.h"
 
+typedef struct PIXEventsThreadInfo* (WINAPI* PFN_PIX_GET_THREAD_INFO)();
+typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(bool _getEarliestTime);
+
+extern PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
+extern PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
+
+#define PIXGetThreadInfo      bgfx_PIXGetThreadInfo
+#define PIXEventsReplaceBlock bgfx_PIXEventsReplaceBlock
+#include <pix3.h>
+
+#define _PIX3_BEGINEVENT(_commandList, _color, _name) PIXBeginEvent(_commandList, _color, _name)
+#define _PIX3_SETMARKER(_commandList, _color, _name)  PIXSetMarker(_commandList, _color, _name)
+#define _PIX3_ENDEVENT(_commandList)                  PIXEndEvent(_commandList)
+
+#if BGFX_CONFIG_DEBUG_PIX
+#	define PIX3_BEGINEVENT(_commandList, _color, _name) _PIX3_BEGINEVENT(_commandList, _color, _name)
+#	define PIX3_SETMARKER(_commandList, _color, _name)  _PIX3_SETMARKER(_commandList, _color, _name)
+#	define PIX3_ENDEVENT(_commandList)                  _PIX3_ENDEVENT(_commandList)
+#else
+#	define PIX3_BEGINEVENT(_commandList, _color, _name) BX_UNUSED(_commandList, _color, _name)
+#	define PIX3_SETMARKER(_commandList, _color, _name)  BX_UNUSED(_commandList, _color, _name)
+#	define PIX3_ENDEVENT(_commandList)                  BX_UNUSED(_commandList)
+#endif // BGFX_CONFIG_DEBUG_PIX
+
 namespace bgfx { namespace d3d12
 {
 	struct Rdt
