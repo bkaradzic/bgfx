@@ -576,6 +576,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_COMPILER_MSVC
 	}
 
+#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 	static PIXEventsThreadInfo temp;
 
 	PIXEventsThreadInfo* WINAPI stubPIXGetThreadInfo()
@@ -588,6 +589,7 @@ namespace bgfx { namespace d3d12
 		BX_UNUSED(_getEarliestTime);
 		return 0;
 	}
+#endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 
 	struct RendererContextD3D12 : public RendererContextI
 	{
