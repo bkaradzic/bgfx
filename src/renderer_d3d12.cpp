@@ -15,10 +15,10 @@
 #	endif // BX_PLATFORM_WINRT
 #endif // !BX_PLATFORM_WINDOWS
 
-#if BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
 PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 
 namespace bgfx { namespace d3d12
 {
@@ -630,7 +630,7 @@ namespace bgfx { namespace d3d12
 			ErrorState::Enum errorState = ErrorState::Default;
 			LUID luid;
 
-#if BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 			m_winPixEvent = bx::dlopen("WinPixEventRuntime.dll");
 
 			if (NULL != m_winPixEvent)
@@ -645,7 +645,7 @@ namespace bgfx { namespace d3d12
 				bgfx_PIXGetThreadInfo      = stubPIXGetThreadInfo;
 				bgfx_PIXEventsReplaceBlock = stubPIXEventsReplaceBlock;
 			}
-#endif // BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 
 			m_renderdocdll = loadRenderDoc();
 			setGraphicsDebuggerPresent(NULL != m_renderdocdll || NULL != m_winPixEvent);
