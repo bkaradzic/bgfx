@@ -1177,13 +1177,6 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
-				if (NULL != m_renderdocdll)
-				{
-					// RenderDoc doesn't support ID3D11Device3 yet:
-					// https://github.com/baldurk/renderdoc/issues/235
-					m_deviceInterfaceVersion = bx::uint32_min(m_deviceInterfaceVersion, 1);
-				}
-
 				IDXGIDevice*  device  = NULL;
 				IDXGIAdapter* adapter = NULL;
 				hr = E_FAIL;
