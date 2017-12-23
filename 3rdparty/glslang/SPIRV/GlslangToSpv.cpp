@@ -1762,8 +1762,9 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
     case glslang::EOpMemoryBarrierImage:
     case glslang::EOpMemoryBarrierShared:
     case glslang::EOpGroupMemoryBarrier:
+    case glslang::EOpDeviceMemoryBarrier:
     case glslang::EOpAllMemoryBarrierWithGroupSync:
-    case glslang::EOpGroupMemoryBarrierWithGroupSync:
+    case glslang::EOpDeviceMemoryBarrierWithGroupSync:
     case glslang::EOpWorkgroupMemoryBarrier:
     case glslang::EOpWorkgroupMemoryBarrierWithGroupSync:
         noReturnValue = true;
@@ -5429,40 +5430,65 @@ spv::Id TGlslangToSpvTraverser::createNoArgOperation(glslang::TOperator op, spv:
         builder.createNoResultOp(spv::OpEndPrimitive);
         return 0;
     case glslang::EOpBarrier:
-        builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeDevice, spv::MemorySemanticsMaskNone);
+        if (glslangIntermediate->getStage() == EShLangTessControl) {
+            builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeInvocation, spv::MemorySemanticsMaskNone);
+            // TODO: prefer the following, when available:
+            // builder.createControlBarrier(spv::ScopePatch, spv::ScopePatch,
+            //                                 spv::MemorySemanticsPatchMask |
+            //                                 spv::MemorySemanticsAcquireReleaseMask);
+        } else {
+            builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeWorkgroup,
+                                            spv::MemorySemanticsWorkgroupMemoryMask |
+                                            spv::MemorySemanticsAcquireReleaseMask);
+        }
         return 0;
     case glslang::EOpMemoryBarrier:
-        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsAllMemory);
+        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsAllMemory |
+                                                      spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpMemoryBarrierAtomicCounter:
-        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsAtomicCounterMemoryMask);
+        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsAtomicCounterMemoryMask |
+                                                      spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpMemoryBarrierBuffer:
-        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsUniformMemoryMask);
+        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsUniformMemoryMask |
+                                                      spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpMemoryBarrierImage:
-        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsImageMemoryMask);
+        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsImageMemoryMask |
+                                                      spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpMemoryBarrierShared:
-        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsWorkgroupMemoryMask);
+        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsWorkgroupMemoryMask |
+                                                      spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpGroupMemoryBarrier:
-        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsCrossWorkgroupMemoryMask);
+        builder.createMemoryBarrier(spv::ScopeWorkgroup, spv::MemorySemanticsAllMemory |
+                                                         spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpAllMemoryBarrierWithGroupSync:
-        // Control barrier with non-"None" semantic is also a memory barrier.
-        builder.createControlBarrier(spv::ScopeDevice, spv::ScopeDevice, spv::MemorySemanticsAllMemory);
+        builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeDevice,
+                                        spv::MemorySemanticsAllMemory |
+                                        spv::MemorySemanticsAcquireReleaseMask);
         return 0;
-    case glslang::EOpGroupMemoryBarrierWithGroupSync:
-        // Control barrier with non-"None" semantic is also a memory barrier.
-        builder.createControlBarrier(spv::ScopeDevice, spv::ScopeDevice, spv::MemorySemanticsCrossWorkgroupMemoryMask);
+    case glslang::EOpDeviceMemoryBarrier:
+        builder.createMemoryBarrier(spv::ScopeDevice, spv::MemorySemanticsUniformMemoryMask |
+                                                      spv::MemorySemanticsImageMemoryMask |
+                                                      spv::MemorySemanticsAcquireReleaseMask);
+        return 0;
+    case glslang::EOpDeviceMemoryBarrierWithGroupSync:
+        builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeDevice, spv::MemorySemanticsUniformMemoryMask |
+                                                                            spv::MemorySemanticsImageMemoryMask |
+                                                                            spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpWorkgroupMemoryBarrier:
-        builder.createMemoryBarrier(spv::ScopeWorkgroup, spv::MemorySemanticsWorkgroupMemoryMask);
+        builder.createMemoryBarrier(spv::ScopeWorkgroup, spv::MemorySemanticsWorkgroupMemoryMask |
+                                                         spv::MemorySemanticsAcquireReleaseMask);
         return 0;
     case glslang::EOpWorkgroupMemoryBarrierWithGroupSync:
-        // Control barrier with non-"None" semantic is also a memory barrier.
-        builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeWorkgroup, spv::MemorySemanticsWorkgroupMemoryMask);
+        builder.createControlBarrier(spv::ScopeWorkgroup, spv::ScopeWorkgroup,
+                                        spv::MemorySemanticsWorkgroupMemoryMask |
+                                        spv::MemorySemanticsAcquireReleaseMask);
         return 0;
 #ifdef AMD_EXTENSIONS
     case glslang::EOpTime:
@@ -5959,7 +5985,9 @@ void GetSpirvVersion(std::string& version)
 // or a different instruction sequence to do something gets used).
 int GetSpirvGeneratorVersion()
 {
-    return 2;
+    // return 1; // start
+    // return 2; // EOpAtomicCounterDecrement gets a post decrement, to map between GLSL -> SPIR-V
+    return 3;    // change/correct barrier-instruction operands, to match memory model group decisions
 }
 
 // Write SPIR-V out to a binary file
@@ -6058,6 +6086,8 @@ void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsign
         });
 
         optimizer.RegisterPass(CreateInlineExhaustivePass());
+        optimizer.RegisterPass(CreateEliminateDeadFunctionsPass());
+        optimizer.RegisterPass(CreateScalarReplacementPass());
         optimizer.RegisterPass(CreateLocalAccessChainConvertPass());
         optimizer.RegisterPass(CreateLocalSingleBlockLoadStoreElimPass());
         optimizer.RegisterPass(CreateLocalSingleStoreElimPass());

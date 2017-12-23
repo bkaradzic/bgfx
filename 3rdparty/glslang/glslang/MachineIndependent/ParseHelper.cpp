@@ -1378,6 +1378,8 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         arg0 = unaryArg;
     }
 
+    TString featureString;
+    const char* feature = nullptr;
     switch (callNode.getOp()) {
     case EOpTextureGather:
     case EOpTextureGatherOffset:
@@ -1386,8 +1388,9 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         // Figure out which variants are allowed by what extensions,
         // and what arguments must be constant for which situations.
 
-        TString featureString = fnCandidate.getName() + "(...)";
-        const char* feature = featureString.c_str();
+        featureString = fnCandidate.getName();
+        featureString += "(...)";
+        feature = featureString.c_str();
         profileRequires(loc, EEsProfile, 310, nullptr, feature);
         int compArg = -1;  // track which argument, if any, is the constant component argument
         switch (callNode.getOp()) {
@@ -1443,8 +1446,9 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             bias = fnCandidate.getParamCount() > 4;
 
         if (bias) {
-            TString biasFeatureString = fnCandidate.getName() + "with bias argument";
-            const char* feature = biasFeatureString.c_str();
+            featureString = fnCandidate.getName();
+            featureString += "with bias argument";
+            feature = featureString.c_str();
             profileRequires(loc, ~EEsProfile, 450, nullptr, feature);
             requireExtensions(loc, 1, &E_GL_AMD_texture_gather_bias_lod, feature);
         }
@@ -1466,8 +1470,9 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             bias = fnCandidate.getParamCount() > 5;
 
         if (bias) {
-            TString featureString = fnCandidate.getName() + "with bias argument";
-            const char* feature = featureString.c_str();
+            featureString = fnCandidate.getName();
+            featureString += "with bias argument";
+            feature = featureString.c_str();
             profileRequires(loc, ~EEsProfile, 450, nullptr, feature);
             requireExtensions(loc, 1, &E_GL_AMD_texture_gather_bias_lod, feature);
         }
@@ -4567,6 +4572,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
             break;
         case EvqUniform:
         case EvqBuffer:
+            if (type.getBasicType() == EbtBlock)
+                error(loc, "cannot apply to uniform or buffer block", "location", "");
             break;
         default:
             error(loc, "can only apply to uniform, buffer, in, or out storage qualifiers", "location", "");

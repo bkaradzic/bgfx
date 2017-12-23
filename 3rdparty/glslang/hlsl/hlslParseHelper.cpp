@@ -3302,7 +3302,13 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
                 const TOperator idxOp = (offsetIdx->getQualifier().storage == EvqConst) ? EOpIndexDirect
                                                                                         : EOpIndexIndirect;
 
-                vec = intermediate.growAggregate(vec, intermediate.addIndex(idxOp, argArray, offsetIdx, loc));
+                TIntermTyped* indexVal = intermediate.addIndex(idxOp, argArray, offsetIdx, loc);
+
+                TType derefType(argArray->getType(), 0);
+                derefType.getQualifier().makeTemporary();
+                indexVal->setType(derefType);
+
+                vec = intermediate.growAggregate(vec, indexVal);
             }
 
             vec->setType(TType(argArray->getBasicType(), EvqTemporary, size));
@@ -3366,8 +3372,14 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
                 const TType derefType(argArray->getType(), 0);
                 lValue->setType(derefType);
 
-                TIntermTyped* rValue = (size == 1) ? argValue :
-                    intermediate.addIndex(EOpIndexDirect, argValue, idxConst, loc);
+                TIntermTyped* rValue;
+                if (size == 1) {
+                    rValue = argValue;
+                } else {
+                    rValue = intermediate.addIndex(EOpIndexDirect, argValue, idxConst, loc);
+                    const TType indexType(argValue->getType(), 0);
+                    rValue->setType(indexType);
+                }
                     
                 TIntermTyped* assign = intermediate.addAssign(EOpAssign, lValue, rValue, loc); 
 

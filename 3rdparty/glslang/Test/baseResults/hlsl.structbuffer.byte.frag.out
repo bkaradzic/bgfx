@@ -41,13 +41,13 @@ gl_FragCoord origin is upper left
 0:10                        Constant:
 0:10                          2 (const int)
 0:?                     Construct vec2 ( temp 2-component vector of uint)
-0:10                      indirect index ( temp float)
+0:10                      indirect index ( temp uint)
 0:10                        @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:10                          'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:10                          Constant:
 0:10                            0 (const uint)
 0:10                        'byteAddrTemp' ( temp int)
-0:10                      indirect index ( temp float)
+0:10                      indirect index ( temp uint)
 0:10                        @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:10                          'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:10                          Constant:
@@ -73,13 +73,13 @@ gl_FragCoord origin is upper left
 0:11                      Constant:
 0:11                        2 (const int)
 0:?                   Construct vec3 ( temp 3-component vector of uint)
-0:11                    indirect index ( temp float)
+0:11                    indirect index ( temp uint)
 0:11                      @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:11                        'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:11                        Constant:
 0:11                          0 (const uint)
 0:11                      'byteAddrTemp' ( temp int)
-0:11                    indirect index ( temp float)
+0:11                    indirect index ( temp uint)
 0:11                      @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:11                        'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:11                        Constant:
@@ -88,7 +88,7 @@ gl_FragCoord origin is upper left
 0:11                        'byteAddrTemp' ( temp int)
 0:11                        Constant:
 0:11                          1 (const int)
-0:11                    indirect index ( temp float)
+0:11                    indirect index ( temp uint)
 0:11                      @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:11                        'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:11                        Constant:
@@ -111,13 +111,13 @@ gl_FragCoord origin is upper left
 0:12                  Constant:
 0:12                    2 (const int)
 0:?               Construct vec4 ( temp 4-component vector of uint)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
 0:12                      0 (const uint)
 0:12                  'byteAddrTemp' ( temp int)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
@@ -126,7 +126,7 @@ gl_FragCoord origin is upper left
 0:12                    'byteAddrTemp' ( temp int)
 0:12                    Constant:
 0:12                      1 (const int)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
@@ -135,7 +135,7 @@ gl_FragCoord origin is upper left
 0:12                    'byteAddrTemp' ( temp int)
 0:12                    Constant:
 0:12                      2 (const int)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
@@ -205,13 +205,13 @@ gl_FragCoord origin is upper left
 0:10                        Constant:
 0:10                          2 (const int)
 0:?                     Construct vec2 ( temp 2-component vector of uint)
-0:10                      indirect index ( temp float)
+0:10                      indirect index ( temp uint)
 0:10                        @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:10                          'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:10                          Constant:
 0:10                            0 (const uint)
 0:10                        'byteAddrTemp' ( temp int)
-0:10                      indirect index ( temp float)
+0:10                      indirect index ( temp uint)
 0:10                        @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:10                          'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:10                          Constant:
@@ -237,13 +237,13 @@ gl_FragCoord origin is upper left
 0:11                      Constant:
 0:11                        2 (const int)
 0:?                   Construct vec3 ( temp 3-component vector of uint)
-0:11                    indirect index ( temp float)
+0:11                    indirect index ( temp uint)
 0:11                      @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:11                        'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:11                        Constant:
 0:11                          0 (const uint)
 0:11                      'byteAddrTemp' ( temp int)
-0:11                    indirect index ( temp float)
+0:11                    indirect index ( temp uint)
 0:11                      @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:11                        'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:11                        Constant:
@@ -252,7 +252,7 @@ gl_FragCoord origin is upper left
 0:11                        'byteAddrTemp' ( temp int)
 0:11                        Constant:
 0:11                          1 (const int)
-0:11                    indirect index ( temp float)
+0:11                    indirect index ( temp uint)
 0:11                      @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:11                        'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:11                        Constant:
@@ -275,13 +275,13 @@ gl_FragCoord origin is upper left
 0:12                  Constant:
 0:12                    2 (const int)
 0:?               Construct vec4 ( temp 4-component vector of uint)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
 0:12                      0 (const uint)
 0:12                  'byteAddrTemp' ( temp int)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
@@ -290,7 +290,7 @@ gl_FragCoord origin is upper left
 0:12                    'byteAddrTemp' ( temp int)
 0:12                    Constant:
 0:12                      1 (const int)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
@@ -299,7 +299,7 @@ gl_FragCoord origin is upper left
 0:12                    'byteAddrTemp' ( temp int)
 0:12                    Constant:
 0:12                      2 (const int)
-0:12                indirect index ( temp float)
+0:12                indirect index ( temp uint)
 0:12                  @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
 0:12                    'sbuf' (layout( row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
 0:12                    Constant:
@@ -324,7 +324,7 @@ gl_FragCoord origin is upper left
 0:?     'pos' (layout( location=0) flat in uint)
 
 // Module Version 10000
-// Generated by (magic number): 80002
+// Generated by (magic number): 80003
 // Id's are bound by 114
 
                               Capability Shader

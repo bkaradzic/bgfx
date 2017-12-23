@@ -37,4 +37,6 @@ void main()
     outnames.va[gl_LocalInvocationID.x] = vec4(s);
     outnames.s = outbname.uns.length();
     gl_DeviceIndex;
+    memoryBarrierShared();
+    groupMemoryBarrier();
 }

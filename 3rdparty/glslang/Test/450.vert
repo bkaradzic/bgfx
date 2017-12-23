@@ -46,3 +46,11 @@ void foo()
     allInvocationsEqual(b1);  // ERROR, need 4.6
 }
 ; // ERROR: no extraneous semicolons
+
+layout(location = 0) uniform locBlock {        // ERROR, no location uniform block
+    int a;
+};
+
+layout(location = 0) buffer locBuffBlock {     // ERROR, no location on buffer block
+    int b;
+};

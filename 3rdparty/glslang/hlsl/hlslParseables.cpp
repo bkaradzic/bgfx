@@ -1087,8 +1087,8 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator("ddy_fine",                    EOpDPdyFine);
     symbolTable.relateToOperator("degrees",                     EOpDegrees);
     symbolTable.relateToOperator("determinant",                 EOpDeterminant);
-    symbolTable.relateToOperator("DeviceMemoryBarrier",         EOpGroupMemoryBarrier);
-    symbolTable.relateToOperator("DeviceMemoryBarrierWithGroupSync", EOpGroupMemoryBarrierWithGroupSync); // ...
+    symbolTable.relateToOperator("DeviceMemoryBarrier",         EOpDeviceMemoryBarrier);
+    symbolTable.relateToOperator("DeviceMemoryBarrierWithGroupSync", EOpDeviceMemoryBarrierWithGroupSync);
     symbolTable.relateToOperator("distance",                    EOpDistance);
     symbolTable.relateToOperator("dot",                         EOpDot);
     symbolTable.relateToOperator("dst",                         EOpDst);

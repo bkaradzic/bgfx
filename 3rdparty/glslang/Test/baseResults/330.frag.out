@@ -16,6 +16,7 @@ ERROR: 0:57: 'location on block member' : not supported for this version or the 
 ERROR: 0:62: 'location on block member' : can only use in an in/out block 
 ERROR: 0:62: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions 
 ERROR: 0:60: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions 
+ERROR: 0:60: 'location' : cannot apply to uniform or buffer block 
 ERROR: 0:68: 'layout-id value' : cannot be negative 
 ERROR: 0:69: 'layout-id value' : cannot be negative 
 ERROR: 0:76: 'f2' : cannot use layout qualifiers on structure members 
@@ -23,6 +24,7 @@ ERROR: 0:91: 'location on block member' : can only use in an in/out block
 ERROR: 0:91: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions 
 ERROR: 0:91: 'location' : overlapping use of location 3
 ERROR: 0:89: 'location qualifier on uniform or buffer' : not supported for this version or the enabled extensions 
+ERROR: 0:89: 'location' : cannot apply to uniform or buffer block 
 ERROR: 0:94: 'location' : either the block needs a location, or all members need a location, or no members have a location 
 ERROR: 0:108: 'A' : cannot use layout qualifiers on structure members 
 ERROR: 0:119: 'location' : overlapping use of location 44
@@ -38,7 +40,7 @@ ERROR: 0:140: 'assign' :  cannot convert from ' const float' to ' temp 2-compone
 ERROR: 0:141: 'textureQueryLod' : no matching overloaded function found 
 ERROR: 0:141: 'assign' :  cannot convert from ' const float' to ' temp 2-component vector of float'
 ERROR: 0:152: 'index' : value must be 0 or 1 
-ERROR: 39 compilation errors.  No code generated.
+ERROR: 41 compilation errors.  No code generated.
 
 
 Shader version: 330

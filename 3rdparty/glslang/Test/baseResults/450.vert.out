@@ -19,7 +19,9 @@ ERROR: 0:44: 'anyInvocation' : no matching overloaded function found
 ERROR: 0:45: 'allInvocations' : no matching overloaded function found 
 ERROR: 0:46: 'allInvocationsEqual' : no matching overloaded function found 
 ERROR: 0:48: 'extraneous semicolon' : not supported for this version or the enabled extensions 
-ERROR: 20 compilation errors.  No code generated.
+ERROR: 0:50: 'location' : cannot apply to uniform or buffer block 
+ERROR: 0:54: 'location' : cannot apply to uniform or buffer block 
+ERROR: 22 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -77,6 +79,8 @@ ERROR: node is still EOpNull!
 0:?     'outSS' ( smooth out structure{ global float f,  global structure{ global float f} s})
 0:?     'aui' (layout( binding=0 offset=0) uniform atomic_uint)
 0:?     'ui' ( global uint)
+0:?     'anon@1' (layout( location=0 column_major shared) uniform block{layout( column_major shared) uniform int a})
+0:?     'anon@2' (layout( location=0 column_major shared) buffer block{layout( column_major shared) buffer int b})
 0:?     'gl_VertexID' ( gl_VertexId int VertexId)
 0:?     'gl_InstanceID' ( gl_InstanceId int InstanceId)
 
@@ -112,6 +116,8 @@ ERROR: node is still EOpNull!
 0:?     'outSS' ( smooth out structure{ global float f,  global structure{ global float f} s})
 0:?     'aui' (layout( binding=0 offset=0) uniform atomic_uint)
 0:?     'ui' ( global uint)
+0:?     'anon@1' (layout( location=0 column_major shared) uniform block{layout( column_major shared) uniform int a})
+0:?     'anon@2' (layout( location=0 column_major shared) buffer block{layout( column_major shared) buffer int b})
 0:?     'gl_VertexID' ( gl_VertexId int VertexId)
 0:?     'gl_InstanceID' ( gl_InstanceId int InstanceId)
 

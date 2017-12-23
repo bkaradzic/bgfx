@@ -189,6 +189,7 @@ INSTANTIATE_TEST_CASE_P(
         // Test looping constructs.
         // No tests yet for making sure break and continue from a nested loop
         // goes to the innermost target.
+        "spv.barrier.vert",
         "spv.do-simple.vert",
         "spv.do-while-continue-break.vert",
         "spv.for-complex-condition.vert",

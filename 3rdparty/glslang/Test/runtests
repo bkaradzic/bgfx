@@ -32,11 +32,11 @@ diff -b $BASEDIR/badMacroArgs.frag.out $TARGETDIR/badMacroArgs.frag.out || HASER
 echo Running reflection...
 $EXE -l -q -C reflection.vert > $TARGETDIR/reflection.vert.out
 diff -b $BASEDIR/reflection.vert.out $TARGETDIR/reflection.vert.out || HASERROR=1
-$EXE -D -e flizv -l -q -C -V -Od hlsl.reflection.vert > $TARGETDIR/hlsl.reflection.vert.out
+$EXE -D -Od -e flizv -l -q -C -V -Od hlsl.reflection.vert > $TARGETDIR/hlsl.reflection.vert.out
 diff -b $BASEDIR/hlsl.reflection.vert.out $TARGETDIR/hlsl.reflection.vert.out || HASERROR=1
-$EXE -D -e main -l -q -C -V -Od hlsl.reflection.binding.frag > $TARGETDIR/hlsl.reflection.binding.frag.out
+$EXE -D -Od -e main -l -q -C -V -Od hlsl.reflection.binding.frag > $TARGETDIR/hlsl.reflection.binding.frag.out
 diff -b $BASEDIR/hlsl.reflection.binding.frag.out $TARGETDIR/hlsl.reflection.binding.frag.out || HASERROR=1
-$EXE -D -e main -l -q --hlsl-iomap --auto-map-bindings --stb 10 --sbb 20 --ssb 30 --suavb 40 --scb 50 -D -V -e main -Od hlsl.automap.frag > $TARGETDIR/hlsl.automap.frag.out
+$EXE -D -Od -e main -l -q --hlsl-iomap --auto-map-bindings --stb 10 --sbb 20 --ssb 30 --suavb 40 --scb 50 -D -V -e main -Od hlsl.automap.frag > $TARGETDIR/hlsl.automap.frag.out
 diff -b $BASEDIR/hlsl.automap.frag.out $TARGETDIR/hlsl.automap.frag.out || HASERROR=1
 
 #
@@ -56,14 +56,14 @@ fi
 # entry point renaming tests
 #
 echo Running entry-point renaming tests
-$EXE -i -H -V -D -e main_in_spv --ku --source-entrypoint main -Od hlsl.entry.rename.frag > $TARGETDIR/hlsl.entry.rename.frag.out
+$EXE -i -H -V -D -Od -e main_in_spv --ku --source-entrypoint main -Od hlsl.entry.rename.frag > $TARGETDIR/hlsl.entry.rename.frag.out
 diff -b $BASEDIR/hlsl.entry.rename.frag.out $TARGETDIR/hlsl.entry.rename.frag.out || HASERROR=1
 
 #
 # Testing ill-defined uncalled function
 #
 echo Running ill-defined uncalled function
-$EXE -D -e main -H -Od hlsl.deadFunctionMissingBody.vert > $TARGETDIR/hlsl.deadFunctionMissingBody.vert.out
+$EXE -D -Od -e main -H -Od hlsl.deadFunctionMissingBody.vert > $TARGETDIR/hlsl.deadFunctionMissingBody.vert.out
 diff -b $BASEDIR/hlsl.deadFunctionMissingBody.vert.out $TARGETDIR/hlsl.deadFunctionMissingBody.vert.out || HASERROR=1
 
 if [ $HASERROR -eq 0 ]
@@ -88,27 +88,27 @@ $EXE -i --hlsl-offsets -H spv.hlslOffsets.vert > $TARGETDIR/spv.hlslOffsets.vert
 diff -b $BASEDIR/spv.hlslOffsets.vert.out $TARGETDIR/spv.hlslOffsets.vert.out || HASERROR=1
 
 echo Running hlsl offsets
-$EXE -i  --hlsl-offsets -D -e main -H -Od hlsl.hlslOffset.vert > $TARGETDIR/hlsl.hlslOffset.vert.out
+$EXE -i  --hlsl-offsets -D -Od -e main -H -Od hlsl.hlslOffset.vert > $TARGETDIR/hlsl.hlslOffset.vert.out
 diff -b $BASEDIR/hlsl.hlslOffset.vert.out $TARGETDIR/hlsl.hlslOffset.vert.out || HASERROR=1
 
 #
 # Testing --resource-set-binding
 #
 echo Configuring HLSL descriptor set and binding number manually
-$EXE -V -D -e main -H -Od hlsl.multiDescriptorSet.frag --rsb frag t0 0 0 t1 1 0 s0 0 1 s1 1 1 b0 2 0 b1 2 1 b2 2 2 > $TARGETDIR/hlsl.multiDescriptorSet.frag.out
+$EXE -V -D -Od -e main -H -Od hlsl.multiDescriptorSet.frag --rsb frag t0 0 0 t1 1 0 s0 0 1 s1 1 1 b0 2 0 b1 2 1 b2 2 2 > $TARGETDIR/hlsl.multiDescriptorSet.frag.out
 diff -b $BASEDIR/hlsl.multiDescriptorSet.frag.out $TARGETDIR/hlsl.multiDescriptorSet.frag.out || HASERROR=1
 
-$EXE -V -D -e main -H -Od hlsl.explicitDescriptorSet.frag --hlsl-iomap --amb --ssb 10 --stb 20 --rsb 4 > $TARGETDIR/hlsl.explicitDescriptorSet.frag.out
+$EXE -V -D -Od -e main -H -Od hlsl.explicitDescriptorSet.frag --hlsl-iomap --amb --ssb 10 --stb 20 --rsb 4 > $TARGETDIR/hlsl.explicitDescriptorSet.frag.out
 diff -b $BASEDIR/hlsl.explicitDescriptorSet.frag.out $TARGETDIR/hlsl.explicitDescriptorSet.frag.out || HASERROR=1
 
-$EXE -V -D -e main -H -Od hlsl.explicitDescriptorSet.frag --hlsl-iomap --amb --ssb 10 --stb 20 --rsb frag 3 > $TARGETDIR/hlsl.explicitDescriptorSet-2.frag.out
+$EXE -V -D -Od -e main -H -Od hlsl.explicitDescriptorSet.frag --hlsl-iomap --amb --ssb 10 --stb 20 --rsb frag 3 > $TARGETDIR/hlsl.explicitDescriptorSet-2.frag.out
 diff -b $BASEDIR/hlsl.explicitDescriptorSet-2.frag.out $TARGETDIR/hlsl.explicitDescriptorSet-2.frag.out || HASERROR=1
 
 #
 # Testing per-descriptor-set IO map shift
 #
 echo 'Testing per-descriptor-set IO map shift'
-$EXE -e main --hlsl-iomap --ssb 10 1 15 2 --stb 20 --stb 25 2 --suavb 30 --suavb 40 2 --sub 50 6 -i -q -D -V hlsl.shift.per-set.frag > $TARGETDIR/hlsl.shift.per-set.frag.out || HASERROR=1
+$EXE -e main --hlsl-iomap --ssb 10 1 15 2 --stb 20 --stb 25 2 --suavb 30 --suavb 40 2 --sub 50 6 -i -q -D -Od -V hlsl.shift.per-set.frag > $TARGETDIR/hlsl.shift.per-set.frag.out || HASERROR=1
 diff -b $BASEDIR/hlsl.shift.per-set.frag.out $TARGETDIR/hlsl.shift.per-set.frag.out || HASERROR=1
 
 #
@@ -129,7 +129,7 @@ echo Testing SPV Debug Information
 $EXE -g --relaxed-errors --suppress-warnings --aml --hlsl-offsets --nsf \
      -G -H spv.debugInfo.frag --rsb frag 3 > $TARGETDIR/spv.debugInfo.frag.out
 diff -b $BASEDIR/spv.debugInfo.frag.out $TARGETDIR/spv.debugInfo.frag.out || HASERROR=1
-$EXE -g -D -e newMain -g --amb --aml --fua --hlsl-iomap --nsf --sib 1 --ssb 2 --sbb 3 --stb 4 --suavb 5 --sub 6 \
+$EXE -g -D -Od -e newMain -g --amb --aml --fua --hlsl-iomap --nsf --sib 1 --ssb 2 --sbb 3 --stb 4 --suavb 5 --sub 6 \
      --sep origMain -H -Od spv.hlslDebugInfo.vert --rsb vert t0 0 0 > $TARGETDIR/spv.hlslDebugInfo.frag.out
 diff -b $BASEDIR/spv.hlslDebugInfo.frag.out $TARGETDIR/spv.hlslDebugInfo.frag.out || HASERROR=1
 
@@ -137,13 +137,13 @@ diff -b $BASEDIR/spv.hlslDebugInfo.frag.out $TARGETDIR/spv.hlslDebugInfo.frag.ou
 # Testing Includer
 #
 echo Testing Includer
-$EXE -D -e main -H -Od ../Test/hlsl.include.vert > $TARGETDIR/hlsl.include.vert.out
+$EXE -D -Od -e main -H -Od ../Test/hlsl.include.vert > $TARGETDIR/hlsl.include.vert.out
 diff -b $BASEDIR/hlsl.include.vert.out $TARGETDIR/hlsl.include.vert.out || HASERROR=1
-$EXE -D -e main -H -Od hlsl.includeNegative.vert > $TARGETDIR/hlsl.includeNegative.vert.out
+$EXE -D -Od -e main -H -Od hlsl.includeNegative.vert > $TARGETDIR/hlsl.includeNegative.vert.out
 diff -b $BASEDIR/hlsl.includeNegative.vert.out $TARGETDIR/hlsl.includeNegative.vert.out || HASERROR=1
 $EXE -l -i include.vert > $TARGETDIR/include.vert.out
 diff -b $BASEDIR/include.vert.out $TARGETDIR/include.vert.out || HASERROR=1
-$EXE -D -e main -H -Od -Iinc1/path1 -Iinc1/path2 hlsl.dashI.vert > $TARGETDIR/hlsl.dashI.vert.out
+$EXE -D -Od -e main -H -Od -Iinc1/path1 -Iinc1/path2 hlsl.dashI.vert > $TARGETDIR/hlsl.dashI.vert.out
 diff -b $BASEDIR/hlsl.dashI.vert.out $TARGETDIR/hlsl.dashI.vert.out || HASERROR=1
 
 #
@@ -152,7 +152,7 @@ diff -b $BASEDIR/hlsl.dashI.vert.out $TARGETDIR/hlsl.dashI.vert.out || HASERROR=
 echo "Testing -D and -U"
 $EXE -DUNDEFED -UIN_SHADER -DFOO=200 -i -l -UUNDEFED -DMUL=FOO*2 glsl.-D-U.frag > $TARGETDIR/glsl.-D-U.frag.out
 diff -b $BASEDIR/glsl.-D-U.frag.out $TARGETDIR/glsl.-D-U.frag.out || HASERROR=1
-$EXE -D -e main -V -i -DUNDEFED -UIN_SHADER -DFOO=200 -UUNDEFED -Od hlsl.-D-U.frag > $TARGETDIR/hlsl.-D-U.frag.out
+$EXE -D -Od -e main -V -i -DUNDEFED -UIN_SHADER -DFOO=200 -UUNDEFED -Od hlsl.-D-U.frag > $TARGETDIR/hlsl.-D-U.frag.out
 diff -b $BASEDIR/hlsl.-D-U.frag.out $TARGETDIR/hlsl.-D-U.frag.out || HASERROR=1
 
 #
@@ -190,11 +190,11 @@ diff -b $BASEDIR/remap.invalid-spirv-2.out $TARGETDIR/remap.invalid-spirv-2.out 
 # Testing position Y inversion
 #
 echo "Testing position Y inversion"
-$EXE -H -e main -V -D -H -i --iy hlsl.y-negate-1.vert > $TARGETDIR/hlsl.y-negate-1.vert.out
+$EXE -H -e main -V -D -Od -H -i --iy hlsl.y-negate-1.vert > $TARGETDIR/hlsl.y-negate-1.vert.out
 diff -b $BASEDIR/hlsl.y-negate-1.vert.out $TARGETDIR/hlsl.y-negate-1.vert.out || HASERROR=1
-$EXE -H -e main -V -D -H -i --invert-y hlsl.y-negate-2.vert > $TARGETDIR/hlsl.y-negate-2.vert.out
+$EXE -H -e main -V -D -Od -H -i --invert-y hlsl.y-negate-2.vert > $TARGETDIR/hlsl.y-negate-2.vert.out
 diff -b $BASEDIR/hlsl.y-negate-2.vert.out $TARGETDIR/hlsl.y-negate-2.vert.out || HASERROR=1
-$EXE -H -e main -V -D -H -i --invert-y hlsl.y-negate-3.vert > $TARGETDIR/hlsl.y-negate-3.vert.out
+$EXE -H -e main -V -D -Od -H -i --invert-y hlsl.y-negate-3.vert > $TARGETDIR/hlsl.y-negate-3.vert.out
 diff -b $BASEDIR/hlsl.y-negate-3.vert.out $TARGETDIR/hlsl.y-negate-3.vert.out || HASERROR=1
 
 #

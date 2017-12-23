@@ -1,5 +1,5 @@
 #version 310 es
-layout (location=0) uniform Block {
+layout (binding=0) uniform Block {
   highp int a[];
 } uni;
 layout (location=0) out highp int o;
