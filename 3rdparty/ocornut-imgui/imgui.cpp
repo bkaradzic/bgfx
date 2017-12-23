@@ -213,6 +213,8 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2017/12/21 (1.53) - renamed style.AntiAliasedShapes to style.AntiAliasedFill for consistency and as a way to explicitly break code that manipulate those flag at runtime. You can now manipulate ImDrawList::Flags
+ - 2017/12/21 (1.53) - removed 'bool anti_aliased = true' final parameter of ImDrawList::AddPolyline() and ImDrawList::AddConvexPolyFilled(). Prefer manipulating ImDrawList::Flags.
  - 2017/12/14 (1.53) - using the ImGuiWindowFlags_NoScrollWithMouse flag on a child window forwards the mouse wheel event to the parent window, unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set.
  - 2017/12/13 (1.53) - renamed GetItemsLineHeightWithSpacing() to GetFrameHeightWithSpacing(). Kept redirection function (will obsolete).
  - 2017/12/13 (1.53) - obsoleted IsRootWindowFocused() in favor of using IsWindowFocused(ImGuiFocusedFlags_RootWindow). Kept redirection function (will obsolete).
@@ -584,7 +586,6 @@
 
 #include "imgui.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
-#define IMGUI_DEFINE_PLACEMENT_NEW
 #include "imgui_internal.h"
 
 #include <ctype.h>      // toupper, isprint
@@ -613,10 +614,8 @@
 #pragma clang diagnostic ignored "-Wexit-time-destructors"  // warning : declaration requires an exit-time destructor       // exit-time destruction order is undefined. if MemFree() leads to users code that has been disabled before exit it might cause problems. ImGui coding style welcomes static/globals.
 #pragma clang diagnostic ignored "-Wglobal-constructors"    // warning : declaration requires a global destructor           // similar to above, not sure what the exact difference it.
 #pragma clang diagnostic ignored "-Wsign-conversion"        // warning : implicit conversion changes signedness             //
-#pragma clang diagnostic ignored "-Wmissing-noreturn"       // warning : function xx could be declared with attribute 'noreturn' warning    // GetDefaultFontData() asserts which some implementation makes it never return.
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"// warning : 'xx' is deprecated: The POSIX name for this item.. // for strdup used in demo code (so user can copy & paste the code)
-#pragma clang diagnostic ignored "-Wint-to-void-pointer-cast" // warning : cast to 'void *' from smaller integer type 'int'
-#pragma clang diagnostic ignored "-Wunused-function"          // warning: 'xxxx' defined but not used
+#pragma clang diagnostic ignored "-Wunused-function"        // warning : 'xxxx' defined but not used
 #pragma clang diagnostic ignored "-Wformat-pedantic"        // warning : format specifies type 'void *' but the argument has type 'xxxx *' // unreasonable, would lead to casting every %p arg to void*. probably enabled by -pedantic. 
 #pragma clang diagnostic ignored "-Wint-to-void-pointer-cast" // warning : cast to 'void *' from smaller integer type 'int' //
 #elif defined(__GNUC__)
@@ -739,8 +738,8 @@ ImGuiStyle::ImGuiStyle()
     DisplayWindowPadding    = ImVec2(22,22);    // Window positions are clamped to be visible within the display area by at least this amount. Only covers regular windows.
     DisplaySafeAreaPadding  = ImVec2(4,4);      // If you cannot see the edge of your screen (e.g. on a TV) increase the safe area padding. Covers popups/tooltips as well regular windows.
     AntiAliasedLines        = true;             // Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.
-    AntiAliasedShapes       = true;             // Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)
-    CurveTessellationTol    = 1.25f;            // Tessellation tolerance. Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality.
+    AntiAliasedFill         = true;             // Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)
+    CurveTessellationTol    = 1.25f;            // Tessellation tolerance when using PathBezierCurveTo() without a specific number of segments. Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality.
 
     ImGui::StyleColorsClassic(this);
 }
@@ -914,17 +913,17 @@ int ImStricmp(const char* str1, const char* str2)
     return d;
 }
 
-int ImStrnicmp(const char* str1, const char* str2, int count)
+int ImStrnicmp(const char* str1, const char* str2, size_t count)
 {
     int d = 0;
     while (count > 0 && (d = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; count--; }
     return d;
 }
 
-void ImStrncpy(char* dst, const char* src, int count)
+void ImStrncpy(char* dst, const char* src, size_t count)
 {
     if (count < 1) return;
-    strncpy(dst, src, (size_t)count);
+    strncpy(dst, src, count);
     dst[count-1] = 0;
 }
 
@@ -995,7 +994,7 @@ static const char* ImAtoi(const char* src, int* output)
 // Ideally we would test for only one of those limits at runtime depending on the behavior the vsnprintf(), but trying to deduct it at compile time sounds like a pandora can of worm.
 // B) When buf==NULL vsnprintf() will return the output size.
 #ifndef IMGUI_DISABLE_FORMAT_STRING_FUNCTIONS
-int ImFormatString(char* buf, int buf_size, const char* fmt, ...)
+int ImFormatString(char* buf, size_t buf_size, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -1003,19 +1002,19 @@ int ImFormatString(char* buf, int buf_size, const char* fmt, ...)
     va_end(args);
     if (buf == NULL)
         return w;
-    if (w == -1 || w >= buf_size)
-        w = buf_size - 1;
+    if (w == -1 || w >= (int)buf_size)
+        w = (int)buf_size - 1;
     buf[w] = 0;
     return w;
 }
 
-int ImFormatStringV(char* buf, int buf_size, const char* fmt, va_list args)
+int ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args)
 {
     int w = vsnprintf(buf, buf_size, fmt, args);
     if (buf == NULL)
         return w;
-    if (w == -1 || w >= buf_size)
-        w = buf_size - 1;
+    if (w == -1 || w >= (int)buf_size)
+        w = (int)buf_size - 1;
     buf[w] = 0;
     return w;
 }
@@ -1823,7 +1822,7 @@ bool ImGuiListClipper::Step()
 // ImGuiWindow
 //-----------------------------------------------------------------------------
 
-ImGuiWindow::ImGuiWindow(const char* name)
+ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name)
 {
     Name = ImStrdup(name);
     ID = ImHash(name, 0);
@@ -1863,8 +1862,7 @@ ImGuiWindow::ImGuiWindow(const char* name)
     ItemWidthDefault = 0.0f;
     FontWindowScale = 1.0f;
 
-    DrawList = (ImDrawList*)ImGui::MemAlloc(sizeof(ImDrawList));
-    IM_PLACEMENT_NEW(DrawList) ImDrawList();
+    DrawList = IM_NEW(ImDrawList)(&context->DrawListSharedData);
     DrawList->_OwnerName = Name;
     ParentWindow = NULL;
     RootWindow = NULL;
@@ -1877,11 +1875,8 @@ ImGuiWindow::ImGuiWindow(const char* name)
 
 ImGuiWindow::~ImGuiWindow()
 {
-    DrawList->~ImDrawList();
-    ImGui::MemFree(DrawList);
-    DrawList = NULL;
-    ImGui::MemFree(Name);
-    Name = NULL;
+    IM_DELETE(DrawList);
+    IM_DELETE(Name);
 }
 
 ImGuiID ImGuiWindow::GetID(const char* str, const char* str_end)
@@ -1925,7 +1920,7 @@ static void SetCurrentWindow(ImGuiWindow* window)
     ImGuiContext& g = *GImGui;
     g.CurrentWindow = window;
     if (window)
-        g.FontSize = window->CalcFontSize();
+        g.FontSize = g.DrawListSharedData.FontSize = window->CalcFontSize();
 }
 
 void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
@@ -2259,6 +2254,11 @@ ImDrawList* ImGui::GetOverlayDrawList()
     return &GImGui->OverlayDrawList;
 }
 
+ImDrawListSharedData* ImGui::GetDrawListSharedData()
+{
+    return &GImGui->DrawListSharedData;
+}
+
 void ImGui::NewFrame()
 {
     ImGuiContext& g = *GImGui;
@@ -2279,6 +2279,8 @@ void ImGui::NewFrame()
 
     SetCurrentFont(GetDefaultFont());
     IM_ASSERT(g.Font->IsLoaded());
+    g.DrawListSharedData.ClipRectFullscreen = ImVec4(0.0f, 0.0f, g.IO.DisplaySize.x, g.IO.DisplaySize.y);
+    g.DrawListSharedData.CurveTessellationTol = g.Style.CurveTessellationTol;
 
     g.Time += g.IO.DeltaTime;
     g.FrameCount += 1;
@@ -2287,6 +2289,7 @@ void ImGui::NewFrame()
     g.OverlayDrawList.Clear();
     g.OverlayDrawList.PushTextureID(g.IO.Fonts->TexID);
     g.OverlayDrawList.PushClipRectFullScreen();
+    g.OverlayDrawList.Flags = (g.Style.AntiAliasedLines ? ImDrawListFlags_AntiAliasedLines : 0) | (g.Style.AntiAliasedFill ? ImDrawListFlags_AntiAliasedFill : 0);
 
     // Mark rendering data as invalid to prevent user who may have a handle on it to use it
     g.RenderDrawData.Valid = false;
@@ -2451,8 +2454,9 @@ void ImGui::NewFrame()
     g.OsImePosRequest = ImVec2(1.0f, 1.0f); // OS Input Method Editor showing on top-left of our window by default
 
     // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
-    // FIXME: For patterns of drag and drop between "application" and "imgui" we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
-    if (!mouse_avail_to_imgui)
+    // FIXME: For patterns of drag and drop across OS windows, we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
+    bool mouse_dragging_extern_payload = g.DragDropActive && (g.DragDropSourceFlags & ImGuiDragDropFlags_SourceExtern) != 0;
+    if (!mouse_avail_to_imgui && !mouse_dragging_extern_payload)
         g.HoveredWindow = g.HoveredRootWindow = NULL;
 
     // Scale & Scrolling
@@ -2574,8 +2578,7 @@ static void SettingsHandlerWindow_WriteAll(ImGuiContext& g, ImGuiTextBuffer* buf
 void ImGui::Initialize()
 {
     ImGuiContext& g = *GImGui;
-    g.LogClipboard = (ImGuiTextBuffer*)ImGui::MemAlloc(sizeof(ImGuiTextBuffer));
-    IM_PLACEMENT_NEW(g.LogClipboard) ImGuiTextBuffer();
+    g.LogClipboard = IM_NEW(ImGuiTextBuffer)();
 
     // Add .ini handle for ImGuiWindow type
     ImGuiSettingsHandler ini_handler;
@@ -2608,10 +2611,7 @@ void ImGui::Shutdown()
     SaveIniSettingsToDisk(g.IO.IniFilename);
 
     for (int i = 0; i < g.Windows.Size; i++)
-    {
-        g.Windows[i]->~ImGuiWindow();
-        ImGui::MemFree(g.Windows[i]);
-    }
+        IM_DELETE(g.Windows[i]);
     g.Windows.clear();
     g.WindowsSortBuffer.clear();
     g.CurrentWindow = NULL;
@@ -2623,7 +2623,7 @@ void ImGui::Shutdown()
     g.ActiveIdWindow = NULL;
     g.MovingWindow = NULL;
     for (int i = 0; i < g.SettingsWindows.Size; i++)
-        ImGui::MemFree(g.SettingsWindows[i].Name);
+        IM_DELETE(g.SettingsWindows[i].Name);
     g.ColorModifiers.clear();
     g.StyleModifiers.clear();
     g.FontStack.clear();
@@ -2648,10 +2648,7 @@ void ImGui::Shutdown()
         g.LogFile = NULL;
     }
     if (g.LogClipboard)
-    {
-        g.LogClipboard->~ImGuiTextBuffer();
-        ImGui::MemFree(g.LogClipboard);
-    }
+        IM_DELETE(g.LogClipboard);
 
     g.Initialized = false;
 }
@@ -2720,8 +2717,8 @@ static void LoadIniSettingsFromMemory(const char* buf_readonly)
         if (line[0] == '[' && line_end > line && line_end[-1] == ']')
         {
             // Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with the current format and parsing code.
-            char* name_end = line_end - 1; 
-            *name_end = 0;
+            line_end[-1] = 0;
+            const char* name_end = line_end - 1;
             const char* type_start = line + 1;
             char* type_end = ImStrchrRange(type_start, name_end, ']');
             const char* name_start = type_end ? ImStrchrRange(type_end + 1, name_end, '[') : NULL;
@@ -2841,15 +2838,17 @@ static void AddDrawListToRenderList(ImVector<ImDrawList*>& out_render_list, ImDr
     IM_ASSERT(draw_list->IdxBuffer.Size == 0 || draw_list->_IdxWritePtr == draw_list->IdxBuffer.Data + draw_list->IdxBuffer.Size);
     IM_ASSERT((int)draw_list->_VtxCurrentIdx == draw_list->VtxBuffer.Size);
 
-    // Check that draw_list doesn't use more vertices than indexable in a single draw call (default ImDrawIdx = unsigned short = 2 bytes = 64K vertices per window)
-    // If this assert triggers because you are drawing lots of stuff manually, you can:
-    // A) Add '#define ImDrawIdx unsigned int' in imconfig.h to set the index size to 4 bytes. You'll need to handle the 4-bytes indices to your renderer.
-    //    For example, the OpenGL example code detect index size at compile-time by doing:
-    //    'glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);'
+    // Check that draw_list doesn't use more vertices than indexable in a single draw call (default ImDrawIdx = unsigned short = 2 bytes = 64K vertices per ImDrawList = per window)
+    // If this assert triggers because you are drawing lots of stuff manually:
+    // A) Make sure you are coarse clipping, because ImDrawList let all your vertices pass. You can use thre Metrics window to inspect draw list contents.
+    // B) If you need/want meshes with more than 64K vertices, uncomment the '#define ImDrawIdx unsigned int' line in imconfig.h to set the index size to 4 bytes. 
+    //    You'll need to handle the 4-bytes indices to your renderer. For example, the OpenGL example code detect index size at compile-time by doing:
+    //      glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
     //    Your own engine or render API may use different parameters or function calls to specify index sizes. 2 and 4 bytes indices are generally supported by most API.
-    // B) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call BeginChild()/EndChild() before reaching the 64K limit to split your draw commands in multiple draw lists.
-    IM_ASSERT(((ImU64)draw_list->_VtxCurrentIdx >> (sizeof(ImDrawIdx)*8)) == 0);  // Too many vertices in same ImDrawList. See comment above.
-    
+    // C) If for some reason you cannot use 4 bytes indices or don't want to, a workaround is to call BeginChild()/EndChild() before reaching the 64K limit to split your draw commands in multiple draw lists.
+    if (sizeof(ImDrawIdx) == 2)
+        IM_ASSERT(draw_list->_VtxCurrentIdx < (1 << 16) && "Too many vertices in ImDrawList using 16-bit indices. Read comment above");
+
     out_render_list.push_back(draw_list);
     GImGui->IO.MetricsRenderVertices += draw_list->VtxBuffer.Size;
     GImGui->IO.MetricsRenderIndices += draw_list->IdxBuffer.Size;
@@ -3266,22 +3265,23 @@ void ImGui::RenderTriangle(ImVec2 p_min, ImGuiDir dir, float scale)
     switch (dir)
     {
     case ImGuiDir_Up:
-        r = -r; // ...fall through, no break!
     case ImGuiDir_Down:
+        if (dir == ImGuiDir_Up) r = -r;
         center.y -= r * 0.25f;
         a = ImVec2(0,1) * r;
         b = ImVec2(-0.866f,-0.5f) * r;
         c = ImVec2(+0.866f,-0.5f) * r;
         break;
     case ImGuiDir_Left:
-        r = -r; // ...fall through, no break!
     case ImGuiDir_Right:
+        if (dir == ImGuiDir_Left) r = -r;
         center.x -= r * 0.25f;
         a = ImVec2(1,0) * r;
         b = ImVec2(-0.500f,+0.866f) * r;
         c = ImVec2(-0.500f,-0.866f) * r;
         break;
-    default:
+    case ImGuiDir_None: 
+    case ImGuiDir_Count_: 
         IM_ASSERT(0);
         break;
     }
@@ -4149,8 +4149,7 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
     ImGuiContext& g = *GImGui;
 
     // Create window the first time
-    ImGuiWindow* window = (ImGuiWindow*)ImGui::MemAlloc(sizeof(ImGuiWindow));
-    IM_PLACEMENT_NEW(window) ImGuiWindow(name);
+    ImGuiWindow* window = IM_NEW(ImGuiWindow)(&g, name);
     window->Flags = flags;
     g.WindowsById.SetVoidPtr(window->ID, window);
 
@@ -4472,8 +4471,9 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->LastFrameActive = current_frame;
         window->IDStack.resize(1);
 
-        // Clear draw list, setup texture, outer clipping rectangle
+        // Setup draw list and outer clipping rectangle
         window->DrawList->Clear();
+        window->DrawList->Flags = (g.Style.AntiAliasedLines ? ImDrawListFlags_AntiAliasedLines : 0) | (g.Style.AntiAliasedFill ? ImDrawListFlags_AntiAliasedFill : 0);
         window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
         ImRect fullscreen_rect(GetVisibleRect());
         if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_Popup))
@@ -4658,15 +4658,15 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->Scroll = CalcNextScrollFromScrollTargetAndClamp(window);
         window->ScrollTarget = ImVec2(FLT_MAX, FLT_MAX);
 
-        // Modal window darkens what is behind them
-        if ((flags & ImGuiWindowFlags_Modal) != 0 && window == GetFrontMostModalRootWindow())
-            window->DrawList->AddRectFilled(fullscreen_rect.Min, fullscreen_rect.Max, GetColorU32(ImGuiCol_ModalWindowDarkening, g.ModalWindowDarkeningRatio));
-
         // Apply focus, new windows appears in front
         bool want_focus = false;
         if (window_just_activated_by_user && !(flags & ImGuiWindowFlags_NoFocusOnAppearing))
             if (!(flags & (ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_Tooltip)) || (flags & ImGuiWindowFlags_Popup))
                 want_focus = true;
+
+        // Draw modal window background (darkens what is behind them)
+        if ((flags & ImGuiWindowFlags_Modal) != 0 && window == GetFrontMostModalRootWindow())
+            window->DrawList->AddRectFilled(fullscreen_rect.Min, fullscreen_rect.Max, GetColorU32(ImGuiCol_ModalWindowDarkening, g.ModalWindowDarkeningRatio));
 
         // Draw window + handle manual resize
         ImRect title_bar_rect = window->TitleBarRect();
@@ -5248,7 +5248,11 @@ static void SetCurrentFont(ImFont* font)
     g.Font = font;
     g.FontBaseSize = g.IO.FontGlobalScale * g.Font->FontSize * g.Font->Scale;
     g.FontSize = g.CurrentWindow ? g.CurrentWindow->CalcFontSize() : 0.0f;
-    g.FontTexUvWhitePixel = g.Font->ContainerAtlas->TexUvWhitePixel;
+
+    ImFontAtlas* atlas = g.Font->ContainerAtlas;
+    g.DrawListSharedData.TexUvWhitePixel = atlas->TexUvWhitePixel;
+    g.DrawListSharedData.Font = g.Font;
+    g.DrawListSharedData.FontSize = g.FontSize;
 }
 
 void ImGui::PushFont(ImFont* font)
@@ -5826,7 +5830,7 @@ float ImGui::GetFontSize()
 
 ImVec2 ImGui::GetFontTexUvWhitePixel()
 {
-    return GImGui->FontTexUvWhitePixel;
+    return GImGui->DrawListSharedData.TexUvWhitePixel;
 }
 
 void ImGui::SetWindowFontScale(float scale)
@@ -5834,7 +5838,7 @@ void ImGui::SetWindowFontScale(float scale)
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = GetCurrentWindow();
     window->FontWindowScale = scale;
-    g.FontSize = window->CalcFontSize();
+    g.FontSize = g.DrawListSharedData.FontSize = window->CalcFontSize();
 }
 
 // User generally sees positions in window coordinates. Internally we store CursorPos in absolute screen coordinates because it is more convenient.
@@ -10244,7 +10248,7 @@ static void RenderArrow(ImDrawList* draw_list, ImVec2 pos, ImVec2 half_sz, ImGui
     case ImGuiDir_Right: draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), pos, col); return;
     case ImGuiDir_Up:    draw_list->AddTriangleFilled(ImVec2(pos.x + half_sz.x, pos.y + half_sz.y), ImVec2(pos.x - half_sz.x, pos.y + half_sz.y), pos, col); return;
     case ImGuiDir_Down:  draw_list->AddTriangleFilled(ImVec2(pos.x - half_sz.x, pos.y - half_sz.y), ImVec2(pos.x + half_sz.x, pos.y - half_sz.y), pos, col); return;
-    default: return; // Fix warning for ImGuiDir_None
+    case ImGuiDir_None: case ImGuiDir_Count_: break; // Fix warnings
     }
 }
 
@@ -10495,7 +10499,7 @@ bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags fl
         ImVec2 tra = wheel_center + ImRotate(triangle_pa, cos_hue_angle, sin_hue_angle);
         ImVec2 trb = wheel_center + ImRotate(triangle_pb, cos_hue_angle, sin_hue_angle);
         ImVec2 trc = wheel_center + ImRotate(triangle_pc, cos_hue_angle, sin_hue_angle);
-        ImVec2 uv_white = g.FontTexUvWhitePixel;
+        ImVec2 uv_white = GetFontTexUvWhitePixel();
         draw_list->PrimReserve(6, 6);
         draw_list->PrimVtx(tra, uv_white, hue_color32);
         draw_list->PrimVtx(trb, uv_white, hue_color32);
@@ -10854,8 +10858,10 @@ static float OffsetNormToPixels(const ImGuiColumnsSet* columns, float offset_nor
 
 static float PixelsToOffsetNorm(const ImGuiColumnsSet* columns, float offset)
 {
-    return (offset - columns->MinX) / (columns->MaxX - columns->MinX);
+    return offset / (columns->MaxX - columns->MinX);
 }
+
+static inline float GetColumnsRectHalfWidth() { return 4.0f; }
 
 static float GetDraggedColumnOffset(ImGuiColumnsSet* columns, int column_index)
 {
@@ -10866,7 +10872,7 @@ static float GetDraggedColumnOffset(ImGuiColumnsSet* columns, int column_index)
     IM_ASSERT(column_index > 0); // We cannot drag column 0. If you get this assert you may have a conflict between the ID of your columns and another widgets.
     IM_ASSERT(g.ActiveId == columns->ID + ImGuiID(column_index));
 
-    float x = g.IO.MousePos.x - g.ActiveIdClickOffset.x - window->Pos.x;
+    float x = g.IO.MousePos.x - g.ActiveIdClickOffset.x + GetColumnsRectHalfWidth() - window->Pos.x;
     x = ImMax(x, ImGui::GetColumnOffset(column_index - 1) + g.Style.ColumnsMinSpacing);
     if ((columns->Flags & ImGuiColumnsFlags_NoPreserveWidths))
         x = ImMin(x, ImGui::GetColumnOffset(column_index + 1) - g.Style.ColumnsMinSpacing);
@@ -10939,7 +10945,7 @@ void ImGui::SetColumnOffset(int column_index, float offset)
 
     if (!(columns->Flags & ImGuiColumnsFlags_NoForceWithinWindow))
         offset = ImMin(offset, columns->MaxX - g.Style.ColumnsMinSpacing * (columns->Count - column_index));
-    columns->Columns[column_index].OffsetNorm = PixelsToOffsetNorm(columns, offset);
+    columns->Columns[column_index].OffsetNorm = PixelsToOffsetNorm(columns, offset - columns->MinX);
 
     if (preserve_width)
         SetColumnOffset(column_index + 1, offset + ImMax(g.Style.ColumnsMinSpacing, width));
@@ -11003,7 +11009,7 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
     // Set state for first column
     const float content_region_width = (window->SizeContentsExplicit.x != 0.0f) ? (window->SizeContentsExplicit.x) : (window->Size.x -window->ScrollbarSizes.x);
     columns->MinX = window->DC.IndentX - g.Style.ItemSpacing.x; // Lock our horizontal range
-    //column->ColumnsMaxX = content_region_width - window->Scroll.x -((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
+    //column->MaxX = content_region_width - window->Scroll.x - ((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
     columns->MaxX = content_region_width - window->Scroll.x;
     columns->StartPosY = window->DC.CursorPos.y;
     columns->StartMaxPosX = window->DC.CursorMaxPos.x;
@@ -11031,7 +11037,7 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
         ImGuiColumnData* column = &columns->Columns[n];
         float t = column->OffsetNorm;
         if (!(columns->Flags & ImGuiColumnsFlags_NoForceWithinWindow))
-            t = ImMin(t, PixelsToOffsetNorm(columns, columns->MaxX - g.Style.ColumnsMinSpacing * (columns->Count - n)));
+            t = ImMin(t, PixelsToOffsetNorm(columns, (columns->MaxX - columns->MinX) - g.Style.ColumnsMinSpacing * (columns->Count - n)));
         column->OffsetNorm = t;
 
         if (n == columns_count)
@@ -11076,7 +11082,7 @@ void ImGui::EndColumns()
         {
             float x = window->Pos.x + GetColumnOffset(n);
             const ImGuiID column_id = columns->ID + ImGuiID(n);
-            const float column_hw = 4.0f; // Half-width for interaction
+            const float column_hw = GetColumnsRectHalfWidth(); // Half-width for interaction
             const ImRect column_rect(ImVec2(x - column_hw, y1), ImVec2(x + column_hw, y2));
             KeepAliveID(column_id);
             if (IsClippedEx(column_rect, column_id, false))
@@ -11088,8 +11094,6 @@ void ImGui::EndColumns()
                 ButtonBehavior(column_rect, column_id, &hovered, &held);
                 if (hovered || held)
                     g.MouseCursor = ImGuiMouseCursor_ResizeEW;
-                if (held && g.ActiveIdIsJustActivated)
-                    g.ActiveIdClickOffset.x -= column_hw; // Store from center of column line (we used a 8 wide rect for columns clicking). This is used by GetDraggedColumnOffset().
                 if (held && !(columns->Columns[n].Flags & ImGuiColumnsFlags_NoResize))
                     dragging_column = n;
             }
@@ -11481,7 +11485,7 @@ void ImGui::EndDragDropTarget()
 #if defined(_WIN32) && !defined(_WINDOWS_) && (!defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS) || !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS))
 #undef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 // Win32 API clipboard implementation
@@ -11615,7 +11619,6 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     return;
 
                 ImDrawList* overlay_draw_list = &GImGui->OverlayDrawList;   // Render additional visuals into the top-most draw list
-                overlay_draw_list->PushClipRectFullScreen();
                 int elem_offset = 0;
                 for (const ImDrawCmd* pcmd = draw_list->CmdBuffer.begin(); pcmd < draw_list->CmdBuffer.end(); elem_offset += pcmd->ElemCount, pcmd++)
                 {
@@ -11639,6 +11642,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     }
                     if (!pcmd_node_open)
                         continue;
+
+                    // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     ImGuiListClipper clipper(pcmd->ElemCount/3); // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     while (clipper.Step())
                         for (int prim = clipper.DisplayStart, vtx_i = elem_offset + clipper.DisplayStart*3; prim < clipper.DisplayEnd; prim++)
@@ -11654,11 +11659,15 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                             }
                             ImGui::Selectable(buf, false);
                             if (ImGui::IsItemHovered())
-                                overlay_draw_list->AddPolyline(triangles_pos, 3, IM_COL32(255,255,0,255), true, 1.0f, false);  // Add triangle without AA, more readable for large-thin triangle
+                            {
+                                ImDrawListFlags backup_flags = overlay_draw_list->Flags;
+                                overlay_draw_list->Flags &= ~ImDrawListFlags_AntiAliasedLines; // Disable AA on triangle outlines at is more readable for very large and thin triangles.
+                                overlay_draw_list->AddPolyline(triangles_pos, 3, IM_COL32(255,255,0,255), true, 1.0f);
+                                overlay_draw_list->Flags = backup_flags;
+                            }
                         }
                     ImGui::TreePop();
                 }
-                overlay_draw_list->PopClipRect();
                 ImGui::TreePop();
             }
 
