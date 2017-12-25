@@ -1,4 +1,4 @@
-// dear imgui, v1.53 WIP
+// dear imgui, v1.53
 // (main code and documentation)
 
 // Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp for demo code.
@@ -2382,9 +2382,10 @@ void ImGui::NewFrame()
         IM_ASSERT(g.MovingWindow->MoveId == g.MovingWindowMoveId);
         if (g.IO.MouseDown[0])
         {
-            g.MovingWindow->RootWindow->PosFloat += g.IO.MouseDelta;
-            if (g.IO.MouseDelta.x != 0.0f || g.IO.MouseDelta.y != 0.0f)
+            ImVec2 pos = g.IO.MousePos - g.ActiveIdClickOffset;
+            if (g.MovingWindow->RootWindow->PosFloat.x != pos.x || g.MovingWindow->RootWindow->PosFloat.y != pos.y)
                 MarkIniSettingsDirty(g.MovingWindow->RootWindow);
+            g.MovingWindow->RootWindow->PosFloat = pos;
             FocusWindow(g.MovingWindow);
         }
         else
@@ -2933,6 +2934,7 @@ void ImGui::EndFrame()
                         g.MovingWindow = g.HoveredWindow;
                         g.MovingWindowMoveId = g.MovingWindow->MoveId;
                         SetActiveID(g.MovingWindowMoveId, g.HoveredRootWindow);
+                        g.ActiveIdClickOffset = g.IO.MousePos - g.MovingWindow->RootWindow->Pos;
                     }
                 }
                 else if (g.NavWindow != NULL && GetFrontMostModalRootWindow() == NULL)

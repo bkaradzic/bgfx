@@ -1,4 +1,4 @@
-// dear imgui, v1.53 WIP
+// dear imgui, v1.53
 // (headers)
 
 // See imgui.cpp file for documentation.
@@ -16,7 +16,7 @@
 #include <stddef.h>         // ptrdiff_t, NULL
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.53 WIP"
+#define IMGUI_VERSION       "1.53"
 
 // Define attributes of all API symbols declarations, e.g. for DLL under Windows.
 #ifndef IMGUI_API
@@ -300,6 +300,7 @@ namespace ImGui
 
     // Widgets: Combo Box
     // The new BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it. 
+    // The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose.
     IMGUI_API bool          BeginCombo(const char* label, const char* preview_value, ImGuiComboFlags flags = 0);
     IMGUI_API void          EndCombo();
     IMGUI_API bool          Combo(const char* label, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items = -1);
