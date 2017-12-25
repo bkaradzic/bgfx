@@ -490,7 +490,7 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
-		m_debug  = BGFX_DEBUG_NONE;
+		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -758,11 +758,12 @@ public:
 			bgfx::submit(0, m_program);
 
 			// Display stats.
-			bgfx::dbgTextPrintf(1, 4, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
-			bgfx::dbgTextPrintf(1, 5, 0x0f, "      Update: % 7.3f[ms]", double(profUpdate)*toMs);
-			bgfx::dbgTextPrintf(1, 6, 0x0f, "Calc normals: % 7.3f[ms]", double(profNormal)*toMs);
-			bgfx::dbgTextPrintf(1, 7, 0x0f, " Triangulate: % 7.3f[ms]", double(profTriangulate)*toMs);
-			bgfx::dbgTextPrintf(1, 8, 0x0f, "       Frame: % 7.3f[ms]", double(frameTime)*toMs);
+			int row = 18;
+			bgfx::dbgTextPrintf(1, row++, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
+			bgfx::dbgTextPrintf(1, row++, 0x0f, "      Update: % 7.3f[ms]", double(profUpdate)*toMs);
+			bgfx::dbgTextPrintf(1, row++, 0x0f, "Calc normals: % 7.3f[ms]", double(profNormal)*toMs);
+			bgfx::dbgTextPrintf(1, row++, 0x0f, " Triangulate: % 7.3f[ms]", double(profTriangulate)*toMs);
+			bgfx::dbgTextPrintf(1, row++, 0x0f, "       Frame: % 7.3f[ms]", double(frameTime)*toMs);
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.

@@ -1882,7 +1882,7 @@ public:
 		m_viewState   = ViewState(_width, _height);
 		m_clearValues = { 0x00000000, 1.0f, 0 };
 
-		m_debug = BGFX_DEBUG_NONE;
+		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -2341,7 +2341,7 @@ public:
 
 			if (m_showHelp)
 			{
-				uint8_t row = 5;
+				uint8_t row = 18;
 				bgfx::dbgTextPrintf(3, row++, 0x0f, "Stencil buffer implementation:");
 				bgfx::dbgTextPrintf(8, row++, 0x0f, "Depth fail - Robust, but slower than 'Depth pass'. Requires computing and drawing of shadow volume caps.");
 				bgfx::dbgTextPrintf(8, row++, 0x0f, "Depth pass - Faster, but not stable. Shadows are wrong when camera is in the shadow.");
@@ -2356,6 +2356,10 @@ public:
 				bgfx::dbgTextPrintf(3, row++, 0x0f, "Stencil:");
 				bgfx::dbgTextPrintf(8, row++, 0x0f, "Stencil buffer     - Faster, but capable only of +1 incr.");
 				bgfx::dbgTextPrintf(8, row++, 0x0f, "Texture as stencil - Slower, but capable of +2 incr.");
+			}
+			else
+			{
+				bgfx::dbgTextClear();
 			}
 
 			// Setup instances
