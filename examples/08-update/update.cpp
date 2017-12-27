@@ -549,7 +549,7 @@ public:
 
 			for (uint32_t ii = 0; ii < m_numTextures3d; ++ii)
 			{
-				bx::mtxTranslate(mtx, xpos + ii*2.1f, -size+6.5f, 0.0f);
+				bx::mtxTranslate(mtx, xpos + (ii+3)*2.1f, -size+6.5f, 0.0f);
 
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);

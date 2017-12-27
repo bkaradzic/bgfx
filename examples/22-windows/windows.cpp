@@ -80,7 +80,7 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
-		m_debug  = BGFX_DEBUG_NONE;
+		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -167,17 +167,16 @@ public:
 
 	bool update() override
 	{
-		entry::WindowState state;
-		if (!entry::processWindowEvents(state, m_debug, m_reset) )
+		if ( !entry::processWindowEvents(m_state, m_debug, m_reset) )
 		{
-			m_mouseState = state.m_mouse;
+			entry::MouseState mouseState = m_state.m_mouse;
 
-			imguiBeginFrame(m_mouseState.m_mx
-				,  m_mouseState.m_my
-				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-				,  m_mouseState.m_mz
+			imguiBeginFrame(mouseState.m_mx
+				,  mouseState.m_my
+				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				,  mouseState.m_mz
 				, uint16_t(m_width)
 				, uint16_t(m_height)
 				);
@@ -186,21 +185,21 @@ public:
 
 			imguiEndFrame();
 
-			if (isValid(state.m_handle) )
+			if (isValid(m_state.m_handle) )
 			{
-				if (0 == state.m_handle.idx)
+				if (0 == m_state.m_handle.idx)
 				{
-					m_width  = state.m_width;
-					m_height = state.m_height;
+					m_width  = m_state.m_width;
+					m_height = m_state.m_height;
 				}
 				else
 				{
-					uint8_t viewId = (uint8_t)state.m_handle.idx;
+					uint8_t viewId = (uint8_t)m_state.m_handle.idx;
 					entry::WindowState& win = m_windows[viewId];
 
-					if (win.m_nwh    != state.m_nwh
-					|| (win.m_width  != state.m_width
-					||  win.m_height != state.m_height) )
+					if (win.m_nwh    != m_state.m_nwh
+					|| (win.m_width  != m_state.m_width
+					||  win.m_height != m_state.m_height) )
 					{
 						// When window changes size or native window handle changed
 						// frame buffer must be recreated.
@@ -210,9 +209,9 @@ public:
 							m_fbh[viewId].idx = bgfx::kInvalidHandle;
 						}
 
-						win.m_nwh    = state.m_nwh;
-						win.m_width  = state.m_width;
-						win.m_height = state.m_height;
+						win.m_nwh    = m_state.m_nwh;
+						win.m_width  = m_state.m_width;
+						win.m_height = m_state.m_height;
 
 						if (NULL != win.m_nwh)
 						{
@@ -270,7 +269,7 @@ public:
 
 			if (NULL != m_bindings)
 			{
-				bgfx::dbgTextPrintf(0, 5, 0x2f, "Press 'c' to create or 'd' to destroy window.");
+				bgfx::dbgTextPrintf(0, 1, 0x2f, "Press 'c' to create or 'd' to destroy window.");
 			}
 			else
 			{
@@ -352,7 +351,7 @@ public:
 		}
 	}
 
-	entry::MouseState m_mouseState;
+	entry::WindowState m_state;
 
 	uint32_t m_width;
 	uint32_t m_height;
