@@ -1337,7 +1337,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						, &m_scd
 						, &m_swapChain
 						);
-					if (FAILED(hr))
+					if (FAILED(hr) )
 					{
 						// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL is not available on win7
 						// Try again with DXGI_SWAP_EFFECT_DISCARD
@@ -1345,8 +1345,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						hr = m_factory->CreateSwapChain(m_device
 							, &m_scd
 							, &m_swapChain
-						);
+							);
 					}
+
 					DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh, 0
 						| DXGI_MWA_NO_WINDOW_CHANGES
 						| DXGI_MWA_NO_ALT_ENTER
