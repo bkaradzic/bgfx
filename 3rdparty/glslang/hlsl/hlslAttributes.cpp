@@ -62,6 +62,10 @@ namespace glslang {
                 return EatGlobalBinding;
             else if (lowername == "builtin")
                 return EatBuiltIn;
+            else if (lowername == "constant_id")
+                return EatConstantId;
+            else if (lowername == "push_constant")
+                return EatPushConstant;
         } else if (lowernameSpace.size() > 0)
             return EatNone;
 

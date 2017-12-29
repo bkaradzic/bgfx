@@ -67,7 +67,9 @@ namespace glslang {
         EatGlobalBinding,
         EatLocation,
         EatInputAttachment,
-        EatBuiltIn
+        EatBuiltIn,
+        EatPushConstant,
+        EatConstantId
     };
 }
 

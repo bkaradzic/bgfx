@@ -2,42 +2,45 @@ hlsl.attributeC11.frag
 Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
-0:16  Function Definition: @main(vf4; ( temp 4-component vector of float)
-0:16    Function Parameters: 
-0:16      'input' ( in 4-component vector of float)
+0:20  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:20    Function Parameters: 
+0:20      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:17      Branch: Return with expression
-0:17        add ( temp 4-component vector of float)
-0:17          'input' ( in 4-component vector of float)
-0:17          textureFetch ( temp 4-component vector of float)
-0:17            'attach' ( uniform texture2D)
-0:17            vector swizzle ( temp int)
-0:17              Constant:
-0:17                0 (const int)
-0:17                0 (const int)
-0:17              Sequence
-0:17                Constant:
-0:17                  0 (const int)
-0:17            direct index ( temp int)
-0:17              Constant:
-0:17                0 (const int)
-0:17                0 (const int)
-0:17              Constant:
-0:17                1 (const int)
-0:16  Function Definition: main( ( temp void)
-0:16    Function Parameters: 
+0:21      Branch: Return with expression
+0:21        add ( temp 4-component vector of float)
+0:21          'input' ( in 4-component vector of float)
+0:21          textureFetch ( temp 4-component vector of float)
+0:21            'attach' ( uniform texture2D)
+0:21            vector swizzle ( temp int)
+0:21              Constant:
+0:21                0 (const int)
+0:21                0 (const int)
+0:21              Sequence
+0:21                Constant:
+0:21                  0 (const int)
+0:21            direct index ( temp int)
+0:21              Constant:
+0:21                0 (const int)
+0:21                0 (const int)
+0:21              Constant:
+0:21                1 (const int)
+0:20  Function Definition: main( ( temp void)
+0:20    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child ( temp 4-component vector of float)
+0:20      move second child to first child ( temp 4-component vector of float)
 0:?         'input' ( temp 4-component vector of float)
 0:?         'input' (layout( location=8) in 4-component vector of float)
-0:16      move second child to first child ( temp 4-component vector of float)
+0:20      move second child to first child ( temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout( location=7) out 4-component vector of float)
-0:16        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:20        Function Call: @main(vf4; ( temp 4-component vector of float)
 0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
 0:?     'buffer1' (layout( set=0 binding=1 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
 0:?     'buffer3' (layout( set=2 binding=3 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
 0:?     'attach' ( uniform texture2D)
+0:?     'ci' ( specialization-constant const int)
+0:?       11 (const int)
+0:?     'anon@0' (layout( row_major std430 push_constant) uniform block{layout( row_major std430 offset=0) uniform int a})
 0:?     '@entryPointOutput' (layout( location=7) out 4-component vector of float)
 0:?     'input' (layout( location=8) in 4-component vector of float)
 
@@ -48,48 +51,51 @@ Linked fragment stage:
 Shader version: 500
 gl_FragCoord origin is upper left
 0:? Sequence
-0:16  Function Definition: @main(vf4; ( temp 4-component vector of float)
-0:16    Function Parameters: 
-0:16      'input' ( in 4-component vector of float)
+0:20  Function Definition: @main(vf4; ( temp 4-component vector of float)
+0:20    Function Parameters: 
+0:20      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:17      Branch: Return with expression
-0:17        add ( temp 4-component vector of float)
-0:17          'input' ( in 4-component vector of float)
-0:17          textureFetch ( temp 4-component vector of float)
-0:17            'attach' ( uniform texture2D)
-0:17            vector swizzle ( temp int)
-0:17              Constant:
-0:17                0 (const int)
-0:17                0 (const int)
-0:17              Sequence
-0:17                Constant:
-0:17                  0 (const int)
-0:17            direct index ( temp int)
-0:17              Constant:
-0:17                0 (const int)
-0:17                0 (const int)
-0:17              Constant:
-0:17                1 (const int)
-0:16  Function Definition: main( ( temp void)
-0:16    Function Parameters: 
+0:21      Branch: Return with expression
+0:21        add ( temp 4-component vector of float)
+0:21          'input' ( in 4-component vector of float)
+0:21          textureFetch ( temp 4-component vector of float)
+0:21            'attach' ( uniform texture2D)
+0:21            vector swizzle ( temp int)
+0:21              Constant:
+0:21                0 (const int)
+0:21                0 (const int)
+0:21              Sequence
+0:21                Constant:
+0:21                  0 (const int)
+0:21            direct index ( temp int)
+0:21              Constant:
+0:21                0 (const int)
+0:21                0 (const int)
+0:21              Constant:
+0:21                1 (const int)
+0:20  Function Definition: main( ( temp void)
+0:20    Function Parameters: 
 0:?     Sequence
-0:16      move second child to first child ( temp 4-component vector of float)
+0:20      move second child to first child ( temp 4-component vector of float)
 0:?         'input' ( temp 4-component vector of float)
 0:?         'input' (layout( location=8) in 4-component vector of float)
-0:16      move second child to first child ( temp 4-component vector of float)
+0:20      move second child to first child ( temp 4-component vector of float)
 0:?         '@entryPointOutput' (layout( location=7) out 4-component vector of float)
-0:16        Function Call: @main(vf4; ( temp 4-component vector of float)
+0:20        Function Call: @main(vf4; ( temp 4-component vector of float)
 0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
 0:?     'buffer1' (layout( set=0 binding=1 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
 0:?     'buffer3' (layout( set=2 binding=3 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
 0:?     'attach' ( uniform texture2D)
+0:?     'ci' ( specialization-constant const int)
+0:?       11 (const int)
+0:?     'anon@0' (layout( row_major std430 push_constant) uniform block{layout( row_major std430 offset=0) uniform int a})
 0:?     '@entryPointOutput' (layout( location=7) out 4-component vector of float)
 0:?     'input' (layout( location=8) in 4-component vector of float)
 
 // Module Version 10000
 // Generated by (magic number): 80003
-// Id's are bound by 47
+// Id's are bound by 51
 
                               Capability Shader
                1:             ExtInstImport  "GLSL.std.450"
@@ -111,6 +117,10 @@ gl_FragCoord origin is upper left
                               MemberName 43(buffer1) 0  "@data"
                               Name 45  "buffer1"
                               Name 46  "buffer3"
+                              Name 47  "ci"
+                              Name 48  "pcBuf"
+                              MemberName 48(pcBuf) 0  "a"
+                              Name 50  ""
                               Decorate 16(attach) DescriptorSet 0
                               Decorate 16(attach) InputAttachmentIndex 4
                               Decorate 33(input) Location 8
@@ -124,6 +134,9 @@ gl_FragCoord origin is upper left
                               Decorate 45(buffer1) Binding 1
                               Decorate 46(buffer3) DescriptorSet 2
                               Decorate 46(buffer3) Binding 3
+                              Decorate 47(ci) SpecId 13
+                              MemberDecorate 48(pcBuf) 0 Offset 0
+                              Decorate 48(pcBuf) Block
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32
@@ -151,6 +164,10 @@ gl_FragCoord origin is upper left
               44:             TypePointer Uniform 43(buffer1)
      45(buffer1):     44(ptr) Variable Uniform
      46(buffer3):     44(ptr) Variable Uniform
+          47(ci):     18(int) SpecConstant 11
+       48(pcBuf):             TypeStruct 18(int)
+              49:             TypePointer PushConstant 48(pcBuf)
+              50:     49(ptr) Variable PushConstant
          4(main):           2 Function None 3
                5:             Label
        31(input):      8(ptr) Variable Function
