@@ -1328,7 +1328,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					m_scd.SampleDesc.Count   = 1;
 					m_scd.SampleDesc.Quality = 0;
 					m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-					m_scd.BufferCount  = 1;
+					m_scd.BufferCount  = 2;
+					m_scd.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 					m_scd.OutputWindow = (HWND)g_platformData.nwh;
 					m_scd.Windowed     = true;
 
@@ -1336,6 +1337,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						, &m_scd
 						, &m_swapChain
 						);
+					if (FAILED(hr) )
+					{
+						// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL is not available on win7
+						// Try again with DXGI_SWAP_EFFECT_DISCARD
+						m_scd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+						hr = m_factory->CreateSwapChain(m_device
+							, &m_scd
+							, &m_swapChain
+							);
+					}
 
 					DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh, 0
 						| DXGI_MWA_NO_WINDOW_CHANGES
@@ -5968,7 +5979,6 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						profiler.end();
 					}
-
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
