@@ -207,7 +207,7 @@
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_init</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_type</span></code> - <p>Select rendering backend. When set to RendererType::Count default rendering backend will be selected. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_renderer_type"><span class="std std-ref"><span class="pre">bgfx::RendererType</span></span></a></code></p>
+<li><code class="first docutils literal"><span class="pre">_type</span></code> - <p>Select rendering backend. When set to RendererType::Count a default rendering backend will be selected appropriate to the platform. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_renderer_type"><span class="std std-ref"><span class="pre">bgfx::RendererType</span></span></a></code></p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_vendorId</span></code> - <p>Vendor PCI id. If set to <code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> it will select the first device.<ul class="simple">
 <li><code class="docutils literal"><span class="pre">BGFX_PCI_ID_NONE</span></code> - Autoselect adapter.</li>
@@ -222,7 +222,7 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">_callback</span></code> - <p>Provide application specific callback interface. See: <code class="docutils literal"><a class="reference internal" href="#bgfxstructbgfx_1_1_callback_i"><span class="std std-ref"><span class="pre">bgfx::CallbackI</span></span></a></code></p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_allocator</span></code> - <p>Custom allocator. When custom allocator is not specified, library uses default CRT allocator. The library assumes custom allocator is thread safe.</p>
+<li><code class="first docutils literal"><span class="pre">_allocator</span></code> - <p>Custom allocator. When a custom allocator is not specified, bgfx uses the CRT allocator. Bgfx assumes custom allocator is thread safe.</p>
 </li>
 </ul>
 </dd>
@@ -276,7 +276,7 @@
 <dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI5fatalEN5Fatal4EnumEPKc">
 <span id="bgfx::CallbackI::fatal__Fatal::Enum.cCP"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1af750c41067cd6ee600d841cf557065aa"></span>void <code class="descname">fatal</code><span class="sig-paren">(</span>Fatal::Enum <em>_code</em>, <em class="property">const</em> char *<em>_str</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI5fatalEN5Fatal4EnumEPKc" title="Permalink to this definition">¶</a></dt>
-<dd><p>If fatal code code is not Fatal::DebugCheck this callback is called on unrecoverable error. It&#8217;s not safe to continue, inform user and terminate application from this call. </p>
+<dd><p>This callback is called on unrecoverable errors. It&#8217;s not safe to continue (Exluding _code <code class="docutils literal"><span class="pre">Fatal::DebugCheck</span></code>), inform the user and terminate the application. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd>Not thread safe and it can be called from any thread.</dd>
@@ -334,9 +334,9 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">_abgr</span></code> - <p>Color of profiler region. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>File path where profilerBegin was called. </p>
+<li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>File path where <code class="docutils literal"><span class="pre">profilerBegin</span></code> was called. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_line</span></code> - <p>Line where profilerBegin was called.</p>
+<li><code class="first docutils literal"><span class="pre">_line</span></code> - <p>Line where <code class="docutils literal"><span class="pre">profilerBegin</span></code> was called.</p>
 </li>
 </ul>
 </dd>
@@ -359,9 +359,9 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">_abgr</span></code> - <p>Color of profiler region. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>File path where profilerBeginLiteral was called. </p>
+<li><code class="first docutils literal"><span class="pre">_filePath</span></code> - <p>File path where <code class="docutils literal"><span class="pre">profilerBeginLiteral</span></code> was called. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_line</span></code> - <p>Line where profilerBeginLiteral was called.</p>
+<li><code class="first docutils literal"><span class="pre">_line</span></code> - <p>Line where <code class="docutils literal"><span class="pre">profilerBeginLiteral</span></code> was called.</p>
 </li>
 </ul>
 </dd>
@@ -385,7 +385,7 @@
 <dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI13cacheReadSizeE8uint64_t">
 <span id="bgfx::CallbackI::cacheReadSize__uint64_t"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1a0e42c49e7a21b94a8866f4ad0e76a317"></span>uint32_t <code class="descname">cacheReadSize</code><span class="sig-paren">(</span>uint64_t <em>_id</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI13cacheReadSizeE8uint64_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return size of for cached item. Return 0 if no cached item was found. </p>
+<dd><p>Returns the size of a cached item. Returns 0 if no cached item was found. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Number of bytes to read.</dd>
@@ -460,13 +460,13 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Image height. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_pitch</span></code> - <p>Number of bytes to skip to next line. </p>
+<li><code class="first docutils literal"><span class="pre">_pitch</span></code> - <p>Number of bytes to skip between the start of each horizontal line of the image. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_data</span></code> - <p>Image data. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_size</span></code> - <p>Image size. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_yflip</span></code> - <p>If true image origin is bottom left.</p>
+<li><code class="first docutils literal"><span class="pre">_yflip</span></code> - <p>If true, image origin is bottom left.</p>
 </li>
 </ul>
 </dd>
@@ -477,7 +477,7 @@
 <dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb">
 <span id="bgfx::CallbackI::captureBegin__uint32_t.uint32_t.uint32_t.TextureFormat::Enum.b"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1afbf52f537e1bf54a4c20f6efb2654231"></span>void <code class="descname">captureBegin</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_pitch</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, bool <em>_yflip</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI12captureBeginE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumEb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called when capture begins. </p>
+<dd><p>Called when a video capture begins. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.capture_begin</span></code>. </dd>
@@ -488,7 +488,7 @@
 <dl class="function">
 <dt id="_CPPv2N4bgfx9CallbackI10captureEndEv">
 <span id="bgfx::CallbackI::captureEnd"></span>virtual <span class="target" id="bgfxstructbgfx_1_1_callback_i_1af4a233dccba408ad9c0c1fa3a8491c4b"></span>void <code class="descname">captureEnd</code><span class="sig-paren">(</span><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI10captureEndEv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called when capture ends. </p>
+<dd><p>Called when a video capture ends. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.capture_end</span></code>. </dd>
@@ -711,8 +711,8 @@
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_debug</span></code> - <p>Available flags:<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_DEBUG_IFH</span></code> - Infinitely fast hardware. When this flag is set all rendering calls will be skipped. It&#8217;s useful when profiling to quickly assess bottleneck between CPU and GPU.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_DEBUG_PROFILER</span></code> - Enabled profiler.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_DEBUG_IFH</span></code> - Infinitely fast hardware. When this flag is set all rendering calls will be skipped. This is useful when profiling to quickly assess potential bottlenecks between CPU and GPU.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_DEBUG_PROFILER</span></code> - Enable profiler.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_DEBUG_STATS</span></code> - Display internal statistics.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_DEBUG_TEXT</span></code> - Display debug text.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_DEBUG_WIREFRAME</span></code> - Wireframe rendering. All rendering primitives will be rendered as lines.</li>
@@ -1005,7 +1005,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Caps16homogeneousDepthE">
 <span id="bgfx::Caps::homogeneousDepth__b"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1af44dfe9ca7538e9e8cf6feecc37656f0"></span>bool <code class="descname">homogeneousDepth</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps16homogeneousDepthE" title="Permalink to this definition">¶</a></dt>
-<dd><p>True when NDC depth is in [-1, 1] range. </p>
+<dd><p>True when NDC depth is in [-1, 1] range, otherwise its [0, 1]. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1335,7 +1335,9 @@
 <dd><p>Renderer statistics data. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_stats_t</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_stats_t</span></code>.</dd>
+<dt><strong>Remark</strong></dt>
+<dd>All time values are high-resolution timestamps, while time frequencies define timestamps-per-second for that hardware. </dd>
 </dl>
 </p>
 <div class="breathe-sectiondef container">
@@ -1361,7 +1363,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats12cpuTimerFreqE">
 <span id="bgfx::Stats::cpuTimerFreq__int64_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1a0ca3b1b43511aa10c9f2ff0f30680ef0"></span>int64_t <code class="descname">cpuTimerFreq</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12cpuTimerFreqE" title="Permalink to this definition">¶</a></dt>
-<dd><p>CPU timer frequency. </p>
+<dd><p>CPU timer frequency. Timestamps-per-second. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1487,7 +1489,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats13gpuMemoryUsedE">
 <span id="bgfx::Stats::gpuMemoryUsed__int64_t"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1aa936cf20a5da4419936958f67a594bc1"></span>int64_t <code class="descname">gpuMemoryUsed</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats13gpuMemoryUsedE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Amount of GPU memory used. </p>
+<dd><p>Amount of GPU memory used by the application. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1523,7 +1525,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats9viewStatsE">
 <span id="bgfx::Stats::viewStats__ViewStatsP"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1ae16496ef386b462267436e1bbd3d5f72"></span>ViewStats *<code class="descname">viewStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats9viewStatsE" title="Permalink to this definition">¶</a></dt>
-<dd><p>View stats. </p>
+<dd><p>Array of View stats. </p>
 </dd></dl>
 
 <dl class="member">
@@ -1535,7 +1537,7 @@
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats12encoderStatsE">
 <span id="bgfx::Stats::encoderStats__EncoderStatsP"></span><span class="target" id="bgfxstructbgfx_1_1_stats_1abf32715c9e2f41f01545fa0f0f5dd821"></span>EncoderStats *<code class="descname">encoderStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12encoderStatsE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a> stats. </p>
+<dd><p>Array of encoder stats. </p>
 </dd></dl>
 
 </div>
@@ -2632,7 +2634,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dl class="class">
 <dt id="_CPPv2N4bgfx7EncoderE">
 <span id="bgfx::Encoder"></span><span class="target" id="bgfxstructbgfx_1_1_encoder"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Encoder</code><a class="headerlink" href="#_CPPv2N4bgfx7EncoderE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#bgfxstructbgfx_1_1_encoder"><span class="std std-ref">Encoder</span></a> for submitting draw calls from multiple threads. Use <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1ad9800f61a086fe35076e141c1198fc80"><span class="std std-ref"><span class="pre">bgfx::begin()</span></span></a></code> to obtain encoder for thread. </p>
+<dd><p>Encoders are used for submitting draw calls from multiple threads, so one encoder per thread. Use <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1ad9800f61a086fe35076e141c1198fc80"><span class="std std-ref"><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder</span></code>. </dd>
@@ -2643,7 +2645,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dl class="function">
 <dt id="_CPPv2N4bgfx7Encoder9setMarkerEPKc">
 <span id="bgfx::Encoder::setMarker__cCP"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a29db6cb6d4cabce115dae0f6c8b0be6d"></span>void <code class="descname">setMarker</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_marker</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder9setMarkerEPKc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets debug marker. </p>
+<dd><p>Sets a debug marker. This allows you to group graphics calls together for easy browsing in graphics debugging tools. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_marker</span></code>. </dd>
@@ -2658,7 +2660,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
 <dd><ol class="arabic simple">
-<li>To setup more complex states use: <code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_REF(_ref)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_POINT_SIZE(_size)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC(_src,</span> <span class="pre">_dst)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB,</span> <span class="pre">_dstRGB,</span> <span class="pre">_srcA,</span> <span class="pre">_dstA)</span></code> <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION(_equation)</span></code> <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB,</span> <span class="pre">_equationA)</span></code></li>
+<li>To setup more complex states use: <code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_REF(_ref)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_POINT_SIZE(_size)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC(_src,</span> <span class="pre">_dst)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB,</span> <span class="pre">_dstRGB,</span> <span class="pre">_srcA,</span> <span class="pre">_dstA)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION(_equation)</span></code>, <code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB,</span> <span class="pre">_equationA)</span></code></li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_ADD</span></code> is set when no other blend equation is specified.</li>
 </ol>
 </dd>
@@ -2674,7 +2676,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_*</span></code> - See remark 2.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_CULL_*</span></code> - Backface culling mode.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_RGB_WRITE</span></code> - Enable RGB write.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_MSAA</span></code> - Enable MSAA.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_MSAA</span></code> - Enable hardware multisample antialiasing.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]</span></code> - Primitive type.</li>
 </ul>
 </p>
@@ -2728,7 +2730,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dl class="function">
 <dt id="_CPPv2N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::Encoder::setScissor__uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a37472617364a0c6db4f2229bcfe8ea62"></span>uint16_t <code class="descname">setScissor</code><span class="sig-paren">(</span>uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setScissorE8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set scissor for draw primitive. For scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a4c5184c35ba92387e4609f4919a35e05"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
+<dd><p>Set scissor for draw primitive. To scissor for all primitives in view see <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a4c5184c35ba92387e4609f4919a35e05"><span class="std std-ref"><span class="pre">bgfx::setViewScissor</span></span></a></code>. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Scissor cache index.</dd>
@@ -2736,9 +2738,9 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_scissor</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>Position x from the left corner of the window. </p>
+<li><code class="first docutils literal"><span class="pre">_x</span></code> - <p>Position x from the left side of the window. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Position y from the top corner of the window. </p>
+<li><code class="first docutils literal"><span class="pre">_y</span></code> - <p>Position y from the top of the window. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of scissor region. </p>
 </li>
@@ -2759,7 +2761,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_scissor_cached</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
-<li><code class="first docutils literal"><span class="pre">_cache</span></code> - <p>Index in scissor cache. Passing UINT16_MAX unset primitive scissor and primitive will use view scissor instead.</p>
+<li><code class="first docutils literal"><span class="pre">_cache</span></code> - <p>Index in scissor cache. Pass UINT16_MAX to have primitive use view scissor instead.</p>
 </li>
 </ul>
 </dd>
@@ -2770,10 +2772,10 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dl class="function">
 <dt id="_CPPv2N4bgfx7Encoder12setTransformEPKv8uint16_t">
 <span id="bgfx::Encoder::setTransform__voidCP.uint16_t"></span><span class="target" id="bgfxstructbgfx_1_1_encoder_1a429104d3ae2e43ca7f9fecd947427c76"></span>uint32_t <code class="descname">setTransform</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>_mtx</em>, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder12setTransformEPKv8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set model matrix for draw primitive. If it is not called model will be rendered with identity model matrix. </p>
+<dd><p>Set model matrix for draw primitive. If it is not called, model will be rendered with identity model matrix. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd>index into matrix cache in case the same model matrix has to be used for other draw primitive call.</dd>
+<dd>Index into matrix cache in case the same model matrix has to be used for other draw primitive call.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transform</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -2794,7 +2796,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd><p>Reserve <code class="docutils literal"><span class="pre">_num</span></code> matrices in internal matrix cache. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
-<dd>index into matrix cache.</dd>
+<dd>Index into matrix cache.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>Pointer returned can be modifed until <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> is called. </dd>
 <dt><strong>Attention</strong></dt>
@@ -3493,7 +3495,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd><p>Blit texture 2D region between two 2D textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
+<dd>Destination texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
@@ -3530,7 +3532,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dd><p>Blit texture region between two textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
+<dd>Destination texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
@@ -3547,7 +3549,7 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </li>
 <li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
+<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represents destination texture cube face. For 3D texture this argument represents destination texture Z position. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
 </li>
@@ -3557,13 +3559,13 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </li>
 <li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represent source texture cube face. For 3D texture this argument represent source texture Z position. </p>
+<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represents source texture cube face. For 3D texture this argument represents source texture Z position. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represent depth of region, otherwise is unused.</p>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represents depth of region, otherwise it&#8217;s unused.</p>
 </li>
 </ul>
 </dd>
@@ -3804,7 +3806,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx12setTransformEPKv8uint16_t">
 <span id="bgfx::setTransform__voidCP.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a1a8cda55b0d751df8cdd5c1d6080f622"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">setTransform</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>_mtx</em>, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setTransformEPKv8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set model matrix for draw primitive. If it is not called model will be rendered with identity model matrix. </p>
+<dd><p>Set model matrix for draw primitive. If it is not called, the model will be rendered with an identity model matrix. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>index into matrix cache in case the same model matrix has to be used for other draw primitive call.</dd>
@@ -4531,10 +4533,10 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t">
 <span id="bgfx::blit__ViewId.TextureHandle.uint16_t.uint16_t.TextureHandle.uint16_t.uint16_t.uint16_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1aebd5560001cdeb76b4fa88ac04b660d6"></span>void <code class="descclassname">bgfx::</code><code class="descname">blit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, TextureHandle <em>_dst</em>, uint16_t <em>_dstX</em>, uint16_t <em>_dstY</em>, TextureHandle <em>_src</em>, uint16_t <em>_srcX</em> = 0, uint16_t <em>_srcY</em> = 0, uint16_t <em>_width</em> = UINT16_MAX, uint16_t <em>_height</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx4blitE6ViewId13TextureHandle8uint16_t8uint16_t13TextureHandle8uint16_t8uint16_t8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Blit texture 2D region between two 2D textures. </p>
+<dd><p>Blit 2D texture region between two 2D textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
+<dd>Destination texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
@@ -4571,7 +4573,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><p>Blit texture region between two textures. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>Destination texture must be create with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
+<dd>Destination texture must be created with <code class="docutils literal"><span class="pre">BGFX_TEXTURE_BLIT_DST</span></code> flag. </dd>
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
@@ -4588,7 +4590,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_dstY</span></code> - <p>Destination texture Y position. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represent destination texture cube face. For 3D texture this argument represent destination texture Z position. </p>
+<li><code class="first docutils literal"><span class="pre">_dstZ</span></code> - <p>If texture is 2D this argument should be 0. If destination texture is cube this argument represents destination texture cube face. For 3D texture this argument represents destination texture Z position. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_src</span></code> - <p>Source texture handle. </p>
 </li>
@@ -4598,13 +4600,13 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_srcY</span></code> - <p>Source texture Y position. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represent source texture cube face. For 3D texture this argument represent source texture Z position. </p>
+<li><code class="first docutils literal"><span class="pre">_srcZ</span></code> - <p>If texture is 2D this argument should be 0. If source texture is cube this argument represents source texture cube face. For 3D texture this argument represents source texture Z position. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_width</span></code> - <p>Width of region. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_height</span></code> - <p>Height of region. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represent depth of region, otherwise is unused.</p>
+<li><code class="first docutils literal"><span class="pre">_depth</span></code> - <p>If texture is 3D this argument represents depth of region, otherwise it&#8217;s unused.</p>
 </li>
 </ul>
 </dd>
@@ -4675,7 +4677,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx7makeRefEPKv8uint32_t9ReleaseFnPv">
 <span id="bgfx::makeRef__voidCP.uint32_t.ReleaseFn.voidP"></span><span class="target" id="bgfxnamespacebgfx_1a8dc7bf9f26afcc6f61dc602dfed09044"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<code class="descclassname">bgfx::</code><code class="descname">makeRef</code><span class="sig-paren">(</span><em class="property">const</em> void *<em>_data</em>, uint32_t <em>_size</em>, ReleaseFn <em>_releaseFn</em> = NULL, void *<em>_userData</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7makeRefEPKv8uint32_t9ReleaseFnPv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make reference to data to pass to bgfx. Unlike <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span class="std std-ref"><span class="pre">bgfx::alloc</span></span></a></code> this call doesn&#8217;t allocate memory for data. It just copies pointer to data. You can pass <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function pointer to release this memory after it&#8217;s consumed, or you must make sure data is available for at least 2 <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> calls. <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function must be able to be called from any thread. </p>
+<dd><p>Make reference to data to pass to bgfx. Unlike <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span class="std std-ref"><span class="pre">bgfx::alloc</span></span></a></code>, this call doesn&#8217;t allocate memory for data. It just copies the _data pointer. You can pass <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function pointer to release this memory after it&#8217;s consumed, otherwise you must make sure _data is available for at least 2 <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> calls. <code class="docutils literal"><span class="pre">ReleaseFn</span></code> function must be able to be called from any thread. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>Data passed must be available for at least 2 <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span class="std std-ref"><span class="pre">bgfx::frame</span></span></a></code> calls. </dd>
@@ -4701,7 +4703,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t">
 <span id="bgfx::getShaderUniforms__ShaderHandle.UniformHandleP.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1a2e9de394b0d4aac971efa7b7f2fa3d3e"></span>uint16_t <code class="descclassname">bgfx::</code><code class="descname">getShaderUniforms</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em>, UniformHandle *<em>_uniforms</em> = NULL, uint16_t <em>_max</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17getShaderUniformsE12ShaderHandleP13UniformHandle8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns num of uniforms, and uniform handles used inside shader. </p>
+<dd><p>Returns the number of uniforms and uniform handles used inside a shader. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>Number of uniforms used by shader.</dd>
@@ -4726,7 +4728,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx7destroyE12ShaderHandle">
 <span id="bgfx::destroy__ShaderHandle"></span><span class="target" id="bgfxnamespacebgfx_1aee6eab22226f936cc82291b261792597"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE12ShaderHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Destroy shader. Once program is created with shader it is safe to destroy shader. </p>
+<dd><p>Destroy shader. Once a shader program is created with _handle, it is safe to destroy that shader. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_shader</span></code>. </dd>
@@ -4815,7 +4817,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd><ol class="arabic simple">
 <li>Uniform names are unique. It&#8217;s valid to call <code class="docutils literal"><a class="reference internal" href="#bgfxnamespacebgfx_1a45614b96172b438fd644c858e2c434b2"><span class="std std-ref"><span class="pre">bgfx::createUniform</span></span></a></code> multiple times with the same uniform name. The library will always return the same handle, but the handle reference count will be incremented. This means that the same number of <code class="docutils literal"><span class="pre">bgfx::destroyUniform</span></code> must be called to properly destroy the uniform.</li>
 <li>Predefined uniforms (declared in <code class="docutils literal"><span class="pre">bgfx_shader.sh</span></code>):<ul>
-<li><code class="docutils literal"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view.</li>
+<li><code class="docutils literal"><span class="pre">u_viewRect</span> <span class="pre">vec4(x,</span> <span class="pre">y,</span> <span class="pre">width,</span> <span class="pre">height)</span></code> - view rectangle for current view, in pixels.</li>
 <li><code class="docutils literal"><span class="pre">u_viewTexel</span> <span class="pre">vec4(1.0/width,</span> <span class="pre">1.0/height,</span> <span class="pre">undef,</span> <span class="pre">undef)</span></code> - inverse width and height</li>
 <li><code class="docutils literal"><span class="pre">u_view</span> <span class="pre">mat4</span></code> - view matrix</li>
 <li><code class="docutils literal"><span class="pre">u_invView</span> <span class="pre">mat4</span></code> - inverted view matrix</li>
@@ -4994,7 +4996,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if a different amount of data is passed. If this flag is not specified, and more data is passed on update, the buffer will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
@@ -5097,11 +5099,6 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt id="_CPPv2N4bgfx10VertexDecl6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb">
 <span id="bgfx::VertexDecl::decode__Attrib::Enum.uint8_tR.AttribType::EnumR.bR.bR"></span><span class="target" id="bgfxstructbgfx_1_1_vertex_decl_1a915f65137652582b4e6be86b28dc1e25"></span>void <code class="descname">decode</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em>, uint8_t &amp;<em>_num</em>, AttribType::Enum &amp;<em>_type</em>, bool &amp;<em>_normalized</em>, bool &amp;<em>_asInt</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N4bgfx10VertexDecl6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decode attribute. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is ``. </dd>
-</dl>
-</p>
 </dd></dl>
 
 <dl class="function">
@@ -5145,7 +5142,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="type">
 <dt id="_CPPv2N4bgfx6Attrib4EnumE">
 <span id="bgfx::Attrib::Enum"></span><span class="target" id="bgfxstructbgfx_1_1_attrib_1a1c2416ba7a7a1bbd4d6e74bf57f03804"></span><em class="property">enum </em><code class="descname">Enum</code><a class="headerlink" href="#_CPPv2N4bgfx6Attrib4EnumE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Corresponds to vertex shader attribute. Attributes: </p>
+<dd><p>Corresponds to vertex shader attribute. </p>
 <p><em>Values:</em></p>
 <dl class="member">
 <dt id="_CPPv2N4bgfx6Attrib8PositionE">
@@ -5285,7 +5282,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if a different amount of data is passed. If this flag is not specified, and more data is passed on update, the buffer will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
@@ -5316,7 +5313,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if a different amount of data is passed. If this flag is not specified, and more data is passed on update, the buffer will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
@@ -5424,7 +5421,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if a different amount of data is passed. If this flag is not specified, and more data is passed on update, the buffer will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers.</li>
 </ul>
 </p>
@@ -5470,7 +5467,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if a different amount of data is passed. If this flag is not specified, and more data is passed on update, the buffer will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
@@ -5499,7 +5496,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> - Buffer will be written into by compute shader. When buffer is created with <code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_WRITE</span></code> flag it cannot be updated from CPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_COMPUTE_READ_WRITE</span></code> - Buffer will be used for read/write by compute shader.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if different amount of data is passed. If this flag is not specified if more data is passed on update buffer will be trimmed to fit existing buffer size. This flag has effect only on dynamic buffers.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_BUFFER_ALLOW_RESIZE</span></code> - Buffer will resize on buffer update if a different amount of data is passed. If this flag is not specified, and more data is passed on update, the buffer will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_BUFFER_INDEX32</span></code> - Buffer is using 32-bit indices. This flag has effect only on index buffers. </li>
 </ul>
 </p>
@@ -6535,7 +6532,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="class">
 <dt id="_CPPv2N4bgfx10AttachmentE">
 <span id="bgfx::Attachment"></span><span class="target" id="bgfxstructbgfx_1_1_attachment"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Attachment</code><a class="headerlink" href="#_CPPv2N4bgfx10AttachmentE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Frame buffer texture attachemnt info. </p>
+<dd><p>Frame buffer texture attachment info. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_attachment_t</span></code>. </dd>
