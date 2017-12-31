@@ -14,10 +14,10 @@
 //  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
+#include <stdint.h>
 #include <assert.h>
 #include <math.h>
 #include <vector>
-#include <limits>
 #include <algorithm>
 
 namespace Forsyth
