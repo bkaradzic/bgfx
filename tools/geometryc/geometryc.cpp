@@ -126,7 +126,7 @@ long int fsize(FILE* _file)
 void triangleReorder(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVertices, uint16_t _cacheSize)
 {
 	uint16_t* newIndexList = new uint16_t[_numIndices];
-	Forsyth::OptimizeFaces(_indices, _numIndices, _numVertices, newIndexList, _cacheSize);
+	Forsyth::OptimizeFaces(_indices, _numIndices, _numVertices, 0, newIndexList, _cacheSize);
 	bx::memCopy(_indices, newIndexList, _numIndices*2);
 	delete [] newIndexList;
 }
