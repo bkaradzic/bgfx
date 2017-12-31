@@ -138,6 +138,7 @@ public:
 
     void setLayoutQualifier(const TSourceLoc&, TQualifier&, TString&);
     void setLayoutQualifier(const TSourceLoc&, TQualifier&, TString&, const TIntermTyped*);
+    void setSpecConstantId(const TSourceLoc&, TQualifier&, int value);
     void mergeObjectLayoutQualifiers(TQualifier& dest, const TQualifier& src, bool inheritOnly);
     void checkNoShaderLayouts(const TSourceLoc&, const TShaderQualifiers&);
 

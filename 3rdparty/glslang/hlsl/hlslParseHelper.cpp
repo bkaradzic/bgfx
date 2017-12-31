@@ -1890,6 +1890,17 @@ void HlslParseContext::transferTypeAttributes(const TAttributeMap& attributes, T
         if (builtInString == "PointSize")
             type.getQualifier().builtIn = EbvPointSize;
     }
+
+    // push_constant
+    if (attributes.contains(EatPushConstant))
+        type.getQualifier().layoutPushConstant = true;
+
+    // specialization constant
+    if (attributes.getInt(EatConstantId, value)) {
+        TSourceLoc loc;
+        loc.init();
+        setSpecConstantId(loc, type.getQualifier(), value);
+    }
 }
 
 //
@@ -7041,15 +7052,7 @@ void HlslParseContext::setLayoutQualifier(const TSourceLoc& loc, TQualifier& qua
         return;
     }
     if (id == "constant_id") {
-        requireSpv(loc, "constant_id");
-        if (value >= (int)TQualifier::layoutSpecConstantIdEnd) {
-            error(loc, "specialization-constant id is too large", id.c_str(), "");
-        } else {
-            qualifier.layoutSpecConstantId = value;
-            qualifier.specConstant = true;
-            if (! intermediate.addUsedConstantId(value))
-                error(loc, "specialization-constant id already used", id.c_str(), "");
-        }
+        setSpecConstantId(loc, qualifier, value);
         return;
     }
 
@@ -7142,6 +7145,19 @@ void HlslParseContext::setLayoutQualifier(const TSourceLoc& loc, TQualifier& qua
     }
 
     error(loc, "there is no such layout identifier for this stage taking an assigned value", id.c_str(), "");
+}
+
+void HlslParseContext::setSpecConstantId(const TSourceLoc& loc, TQualifier& qualifier, int value)
+{
+    if (value >= (int)TQualifier::layoutSpecConstantIdEnd) {
+        error(loc, "specialization-constant id is too large", "constant_id", "");
+    } else {
+        qualifier.layoutSpecConstantId = value;
+        qualifier.specConstant = true;
+        if (! intermediate.addUsedConstantId(value))
+            error(loc, "specialization-constant id already used", "constant_id", "");
+    }
+    return;
 }
 
 // Merge any layout qualifier information from src into dst, leaving everything else in dst alone

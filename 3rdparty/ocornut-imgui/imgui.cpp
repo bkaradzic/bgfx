@@ -1,4 +1,4 @@
-// dear imgui, v1.53 WIP
+// dear imgui, v1.54 WIP
 // (main code and documentation)
 
 // Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp for demo code.
@@ -213,6 +213,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2017/12/29 (1.54) - removed CalcItemRectClosestPoint() which was weird and not really used by anyone except demo code. If you need it it's easy to replicate on your side.
  - 2017/12/24 (1.53) - renamed the emblematic ShowTestWindow() function to ShowDemoWindow(). Kept redirection function (will obsolete).
  - 2017/12/21 (1.53) - ImDrawList: renamed style.AntiAliasedShapes to style.AntiAliasedFill for consistency and as a way to explicitly break code that manipulate those flag at runtime. You can now manipulate ImDrawList::Flags
  - 2017/12/21 (1.53) - ImDrawList: removed 'bool anti_aliased = true' final parameter of ImDrawList::AddPolyline() and ImDrawList::AddConvexPolyFilled(). Prefer manipulating ImDrawList::Flags if you need to toggle them during the frame.
@@ -2382,9 +2383,10 @@ void ImGui::NewFrame()
         IM_ASSERT(g.MovingWindow->MoveId == g.MovingWindowMoveId);
         if (g.IO.MouseDown[0])
         {
-            g.MovingWindow->RootWindow->PosFloat += g.IO.MouseDelta;
-            if (g.IO.MouseDelta.x != 0.0f || g.IO.MouseDelta.y != 0.0f)
+            ImVec2 pos = g.IO.MousePos - g.ActiveIdClickOffset;
+            if (g.MovingWindow->RootWindow->PosFloat.x != pos.x || g.MovingWindow->RootWindow->PosFloat.y != pos.y)
                 MarkIniSettingsDirty(g.MovingWindow->RootWindow);
+            g.MovingWindow->RootWindow->PosFloat = pos;
             FocusWindow(g.MovingWindow);
         }
         else
@@ -2916,7 +2918,7 @@ void ImGui::EndFrame()
     IM_ASSERT(g.CurrentWindowStack.Size == 1);    // Mismatched Begin()/End() calls
     if (g.CurrentWindow && !g.CurrentWindow->WriteAccessed)
         g.CurrentWindow->Active = false;
-    ImGui::End();
+    End();
 
     if (g.ActiveId == 0 && g.HoveredId == 0)
     {
@@ -2933,6 +2935,7 @@ void ImGui::EndFrame()
                         g.MovingWindow = g.HoveredWindow;
                         g.MovingWindowMoveId = g.MovingWindow->MoveId;
                         SetActiveID(g.MovingWindowMoveId, g.HoveredRootWindow);
+                        g.ActiveIdClickOffset = g.IO.MousePos - g.MovingWindow->RootWindow->Pos;
                     }
                 }
                 else if (g.NavWindow != NULL && GetFrontMostModalRootWindow() == NULL)
@@ -3659,14 +3662,6 @@ ImVec2 ImGui::GetItemRectSize()
     return window->DC.LastItemRect.GetSize();
 }
 
-ImVec2 ImGui::CalcItemRectClosestPoint(const ImVec2& pos, bool on_edge, float outward)
-{
-    ImGuiWindow* window = GetCurrentWindowRead();
-    ImRect rect = window->DC.LastItemRect;
-    rect.Expand(outward);
-    return rect.GetClosestPoint(pos, on_edge);
-}
-
 static ImRect GetVisibleRect()
 {
     ImGuiContext& g = *GImGui;
@@ -3716,7 +3711,7 @@ void ImGui::BeginTooltip()
 void ImGui::EndTooltip()
 {
     IM_ASSERT(GetCurrentWindowRead()->Flags & ImGuiWindowFlags_Tooltip);   // Mismatched BeginTooltip()/EndTooltip() calls
-    ImGui::End();
+    End();
 }
 
 // Mark popup as open (toggle toward open state).
@@ -3886,7 +3881,7 @@ bool ImGui::BeginPopupModal(const char* name, bool* p_open, ImGuiWindowFlags ext
     }
 
     // Center modal windows by default
-    if ((window->SetWindowPosAllowFlags & g.SetNextWindowPosCond) == 0)
+    if (g.SetNextWindowPosCond == 0)
         SetNextWindowPos(g.IO.DisplaySize * 0.5f, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
     ImGuiWindowFlags flags = extra_flags|ImGuiWindowFlags_Popup|ImGuiWindowFlags_Modal|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoSavedSettings;
@@ -4012,7 +4007,7 @@ void ImGui::EndChild()
     IM_ASSERT(window->Flags & ImGuiWindowFlags_ChildWindow);   // Mismatched BeginChild()/EndChild() callss
     if (window->BeginCount > 1)
     {
-        ImGui::End();
+        End();
     }
     else
     {
@@ -4022,7 +4017,7 @@ void ImGui::EndChild()
             sz.x = ImMax(4.0f, sz.x);
         if (window->AutoFitChildAxises & (1 << ImGuiAxis_Y))
             sz.y = ImMax(4.0f, sz.y);
-        ImGui::End();
+        End();
 
         ImGuiWindow* parent_window = GetCurrentWindow();
         ImRect bb(parent_window->DC.CursorPos, parent_window->DC.CursorPos + sz);
@@ -6704,7 +6699,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     // - OpenOnArrow .................... single-click on arrow to open
     // - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open
     ImGuiButtonFlags button_flags = ImGuiButtonFlags_NoKeyModifiers | ((flags & ImGuiTreeNodeFlags_AllowItemOverlap) ? ImGuiButtonFlags_AllowItemOverlap : 0);
-    button_flags |= ImGuiButtonFlags_PressedOnDragDropHold;
+    if (!(flags & ImGuiTreeNodeFlags_Leaf))
+        button_flags |= ImGuiButtonFlags_PressedOnDragDropHold;
     if (flags & ImGuiTreeNodeFlags_OpenOnDoubleClick)
         button_flags |= ImGuiButtonFlags_PressedOnDoubleClick | ((flags & ImGuiTreeNodeFlags_OpenOnArrow) ? ImGuiButtonFlags_PressedOnClickRelease : 0);
 
@@ -9231,14 +9227,15 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
 
     // Peak into expected window size so we can position it
     if (ImGuiWindow* popup_window = FindWindowByName(name))
-    {
-        ImVec2 size_contents = CalcSizeContents(popup_window);
-        ImVec2 size_expected = CalcSizeAfterConstraint(popup_window, CalcSizeAutoFit(popup_window, size_contents));
-        if (flags & ImGuiComboFlags_PopupAlignLeft)
-            popup_window->AutoPosLastDirection = ImGuiDir_Left;
-        ImVec2 pos = FindBestWindowPosForPopup(frame_bb.GetBL(), size_expected, &popup_window->AutoPosLastDirection, frame_bb, ImGuiPopupPositionPolicy_ComboBox);
-        SetNextWindowPos(pos);
-    }
+        if (popup_window->WasActive)
+        {
+            ImVec2 size_contents = CalcSizeContents(popup_window);
+            ImVec2 size_expected = CalcSizeAfterConstraint(popup_window, CalcSizeAutoFit(popup_window, size_contents));
+            if (flags & ImGuiComboFlags_PopupAlignLeft)
+                popup_window->AutoPosLastDirection = ImGuiDir_Left;
+            ImVec2 pos = FindBestWindowPosForPopup(frame_bb.GetBL(), size_expected, &popup_window->AutoPosLastDirection, frame_bb, ImGuiPopupPositionPolicy_ComboBox);
+            SetNextWindowPos(pos);
+        }
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_Popup | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
     if (!Begin(name, NULL, window_flags))
@@ -9504,7 +9501,7 @@ void ImGui::ListBoxFooter()
     EndGroup();
 }
 
-bool ImGui::ListBox(const char* label, int* current_item, const char* const* items, int items_count, int height_items)
+bool ImGui::ListBox(const char* label, int* current_item, const char* const items[], int items_count, int height_items)
 {
     const bool value_changed = ListBox(label, current_item, Items_ArrayGetter, (void*)items, items_count, height_items);
     return value_changed;
@@ -9632,7 +9629,7 @@ bool ImGui::BeginMenuBar()
     // We remove 1 worth of rounding to Max.x to that text in long menus don't tend to display over the lower-right rounded area, which looks particularly glitchy.
     ImRect bar_rect = window->MenuBarRect();
     ImRect clip_rect(ImFloor(bar_rect.Min.x + 0.5f), ImFloor(bar_rect.Min.y + window->WindowBorderSize + 0.5f), ImFloor(ImMax(bar_rect.Min.x, bar_rect.Max.x - window->WindowRounding) + 0.5f), ImFloor(bar_rect.Max.y + 0.5f));
-    clip_rect.ClipWith(window->Rect());
+    clip_rect.ClipWith(window->WindowRectClipped);
     PushClipRect(clip_rect.Min, clip_rect.Max, false);
 
     window->DC.CursorPos = ImVec2(bar_rect.Min.x + window->DC.MenuBarOffsetX, bar_rect.Min.y);// + g.Style.FramePadding.y);
@@ -11479,6 +11476,12 @@ void ImGui::EndDragDropTarget()
     IM_ASSERT(g.DragDropActive);
 }
 
+bool ImGui::IsDragDropActive()
+{
+    ImGuiContext& g = *GImGui;
+    return g.DragDropActive;
+}
+
 //-----------------------------------------------------------------------------
 // PLATFORM DEPENDENT HELPERS
 //-----------------------------------------------------------------------------
@@ -11724,6 +11727,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             ImGui::Text("ActiveId: 0x%08X/0x%08X (%.2f sec)", g.ActiveId, g.ActiveIdPreviousFrame, g.ActiveIdTimer);
             ImGui::Text("ActiveIdWindow: '%s'", g.ActiveIdWindow ? g.ActiveIdWindow->Name : "NULL");
             ImGui::Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
+            ImGui::Text("DragDrop: %d, SourceId = 0x%08X, Payload \"%s\" (%d bytes)", g.DragDropActive, g.DragDropPayload.SourceId, g.DragDropPayload.DataType, g.DragDropPayload.DataSize);
             ImGui::TreePop();
         }
     }

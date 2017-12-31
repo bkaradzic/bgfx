@@ -11,8 +11,8 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.8
-    - g++-4.8
+    - gcc-5
+    - g++-5
     - clang
 
 before_script:
@@ -20,7 +20,7 @@ before_script:
   - git clone --depth 1 https://github.com/bkaradzic/bimg ../bimg
 
 script:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make build CXX="g++-4.8" CC="gcc-4.8"; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make build CXX="g++-5" CC="gcc-5"; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then make build; fi
 
 branches:
@@ -30,4 +30,4 @@ branches:
 notifications:
   email: false
 
-osx_image: xcode7.3
+osx_image: xcode9.3

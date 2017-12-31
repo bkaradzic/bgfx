@@ -76,7 +76,7 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
-		m_debug  = BGFX_DEBUG_NONE;
+		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -286,12 +286,12 @@ public:
 
 				for (uint16_t xx = 0; xx < CUBES_DIM; ++xx)
 				{
-					bgfx::dbgTextImage(5 + xx*2, 5, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
+					bgfx::dbgTextImage(5 + xx*2, 20, 1, CUBES_DIM, img + xx*2, CUBES_DIM*2);
 				}
 
 				int32_t numPixels = 0;
 				bgfx::getResult(m_occlusionQueries[0], &numPixels);
-				bgfx::dbgTextPrintf(5, 5 + CUBES_DIM + 1, 0xf, "%d", numPixels);
+				bgfx::dbgTextPrintf(5, 20 + CUBES_DIM + 1, 0xf, "Passing pixels count: %d", numPixels);
 			}
 
 			// Advance to next frame. Rendering thread will be kicked to

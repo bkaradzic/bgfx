@@ -21,23 +21,27 @@
 
 namespace Forsyth
 {
-	//-----------------------------------------------------------------------------
-	//  OptimizeFaces
-	//-----------------------------------------------------------------------------
-	//  Parameters:
-	//      indexList
-	//          input index list
-	//      indexCount
-	//          the number of indices in the list
-	//      vertexCount
-	//          the largest index value in indexList
-	//      newIndexList
-	//          a pointer to a preallocated buffer the same size as indexList to
-	//          hold the optimized index list
-	//      lruCacheSize
-	//          the size of the simulated post-transform cache (max:64)
-	//-----------------------------------------------------------------------------
-	void OptimizeFaces(const uint16_t* indexList, uint32_t indexCount, uint32_t vertexCount, uint16_t* newIndexList, uint16_t lruCacheSize);
+    //-----------------------------------------------------------------------------
+    //  OptimizeFaces
+    //-----------------------------------------------------------------------------
+    //  Parameters:
+    //      indexList
+    //          input index list
+    //      indexCount
+    //          the number of indices in the list
+    //      vertexCount
+    //          the largest index value in indexList
+    //      vertexBaseIndex
+    //          starting vertex index subtracted from each index in indexList to
+    //          allow safe operation on multiple objects in a single index buffer
+    //      newIndexList
+    //          a pointer to a preallocated buffer the same size as indexList to
+    //          hold the optimized index list
+    //      lruCacheSize
+    //          the size of the simulated post-transform cache (max:64)
+    //-----------------------------------------------------------------------------
+    void OptimizeFaces(const uint16_t* indexList, uint32_t indexCount, uint32_t vertexCount, uint16_t vertexBaseIndex, uint16_t* newIndexList, uint16_t lruCacheSize);
+    void OptimizeFaces(const uint32_t* indexList, uint32_t indexCount, uint32_t vertexCount, uint32_t vertexBaseIndex, uint32_t* newIndexList, uint16_t lruCacheSize);
 
 } // namespace Forsyth
 
