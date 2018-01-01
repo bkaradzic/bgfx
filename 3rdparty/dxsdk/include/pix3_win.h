@@ -11,7 +11,7 @@
 #pragma once
 
 #ifndef _PIX3_H_
-#error Don't include this file directly - use pix3.h
+#error "Don't include this file directly - use pix3.h"
 #endif
 
 #ifndef _PIX3_WIN_H_

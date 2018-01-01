@@ -577,11 +577,11 @@ namespace bgfx { namespace d3d12
 	}
 
 #if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
-	static PIXEventsThreadInfo temp;
+	static PIXEventsThreadInfo s_pixEventsThreadInfo;
 
 	PIXEventsThreadInfo* WINAPI stubPIXGetThreadInfo()
 	{
-		return &temp;
+		return &s_pixEventsThreadInfo;
 	}
 
 	uint64_t WINAPI stubPIXEventsReplaceBlock(bool _getEarliestTime)
