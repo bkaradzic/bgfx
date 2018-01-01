@@ -24,7 +24,7 @@ using namespace Windows::Graphics::Display;
 #endif // BX_PLATFORM_WINRT
 using namespace Platform;
 
-static const char* const g_emptyArgs[] = { "app.exe", "--d3d12", "09" };
+static const char* const g_emptyArgs[] = { "app.exe", "", "" };
 static entry::WindowHandle g_defaultWindow = { 0 };
 static entry::EventQueue g_eventQueue;
 
