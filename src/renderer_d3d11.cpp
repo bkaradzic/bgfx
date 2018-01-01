@@ -1319,7 +1319,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						goto error;
 					}
 
-					m_swapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+					m_swapBufferCount = 2;
 
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.BufferDesc.Width  = _init.resolution.m_width;
@@ -1330,7 +1331,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					m_scd.SampleDesc.Count   = 1;
 					m_scd.SampleDesc.Quality = 0;
 					m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-					m_scd.BufferCount  = 1;
+					m_scd.BufferCount  = m_swapBufferCount;
 					m_scd.SwapEffect   = m_swapEffect;
 					m_scd.OutputWindow = (HWND)g_platformData.nwh;
 					m_scd.Windowed     = true;
@@ -1343,8 +1344,10 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					{
 						// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL is not available on win7
 						// Try again with DXGI_SWAP_EFFECT_DISCARD
-						m_swapEffect = DXGI_SWAP_EFFECT_DISCARD;
-						m_scd.BufferCount = 1;
+						m_swapEffect      = DXGI_SWAP_EFFECT_DISCARD;
+						m_swapBufferCount = 1;
+
+						m_scd.BufferCount = m_swapBufferCount;
 						m_scd.SwapEffect  = m_swapEffect;
 						hr = m_factory->CreateSwapChain(m_device
 							, &m_scd
@@ -2696,7 +2699,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					if (resize)
 					{
 						m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
-						DX_CHECK(m_swapChain->ResizeBuffers(2
+						DX_CHECK(m_swapChain->ResizeBuffers(
+							  m_swapBufferCount
 							, getBufferWidth()
 							, getBufferHeight()
 							, getBufferFormat()
@@ -2710,10 +2714,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 						DX_RELEASE(m_swapChain, 0);
 
-						m_scd.SwapEffect = m_scd.SampleDesc.Count != 1
-							? DXGI_SWAP_EFFECT_DISCARD
-							: m_swapEffect
-							;
+						if (m_scd.SampleDesc.Count != 1)
+						{
+							m_scd.SwapEffect  = DXGI_SWAP_EFFECT_DISCARD;
+							m_scd.BufferCount = 1;
+						}
+						else
+						{
+							m_scd.SwapEffect  = m_swapEffect;
+							m_scd.BufferCount = m_swapBufferCount;
+						}
 
 						SwapChainDesc* scd = &m_scd;
 						SwapChainDesc swapChainScd;
@@ -3880,6 +3890,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 		SwapChainDesc m_scd;
 		DXGI_SWAP_EFFECT m_swapEffect;
+		uint32_t m_swapBufferCount;
 		uint32_t m_maxAnisotropy;
 		bool m_depthClamp;
 		bool m_wireframe;
@@ -6917,7 +6928,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			PIX_ENDEVENT();
 		}
 
-		m_deviceCtx->OMSetRenderTargets(0, NULL, NULL);
+		m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
 	}
 } /* namespace d3d11 */ } // namespace bgfx
 
