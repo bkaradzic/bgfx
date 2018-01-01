@@ -1319,8 +1319,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						goto error;
 					}
 
+#if 0
 					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 					m_swapBufferCount = 2;
+#else
+					m_swapEffect      = DXGI_SWAP_EFFECT_DISCARD;
+					m_swapBufferCount = 1;
+#endif // 0
 
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.BufferDesc.Width  = _init.resolution.m_width;
