@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -370,7 +370,7 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
-		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2018 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_GEOMETRYC_VERSION_MAJOR
 		, BGFX_GEOMETRYC_VERSION_MINOR

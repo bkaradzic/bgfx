@@ -291,7 +291,7 @@ width="640" height="480" border="0" /></a>
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 </a>
 
-	Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+	Copyright 2010-2018 Branimir Karadzic. All rights reserved.
 	
 	https://github.com/bkaradzic/bgfx
 	

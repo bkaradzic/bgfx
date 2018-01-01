@@ -1,7 +1,7 @@
 $input v_wpos, v_view, v_normal, v_tangent, v_bitangent, v_texcoord0 // in...
 
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
