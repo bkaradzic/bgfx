@@ -35,7 +35,7 @@ struct ImRect;
 struct ImGuiColMod;
 struct ImGuiStyleMod;
 struct ImGuiGroupData;
-struct ImGuiSimpleColumns;
+struct ImGuiMenuColumns;
 struct ImGuiDrawContext;
 struct ImGuiTextEditState;
 struct ImGuiMouseCursorData;
@@ -323,14 +323,14 @@ struct ImGuiGroupData
 };
 
 // Simple column measurement currently used for MenuItem() only. This is very short-sighted/throw-away code and NOT a generic helper.
-struct IMGUI_API ImGuiSimpleColumns
+struct IMGUI_API ImGuiMenuColumns
 {
     int         Count;
     float       Spacing;
     float       Width, NextWidth;
-    float       Pos[8], NextWidths[8];
+    float       Pos[4], NextWidths[4];
 
-    ImGuiSimpleColumns();
+    ImGuiMenuColumns();
     void        Update(int count, float spacing, bool clear);
     float       DeclColumns(float w0, float w1, float w2);
     float       CalcExtraSpace(float avail_w);
@@ -459,6 +459,41 @@ struct ImDrawListSharedData
     ImDrawListSharedData();
 };
 
+// Storage for SetNexWindow** functions
+struct ImGuiNextWindowData
+{
+    ImGuiCond               PosCond;
+    ImGuiCond               SizeCond;
+    ImGuiCond               ContentSizeCond;
+    ImGuiCond               CollapsedCond;
+    ImGuiCond               SizeConstraintCond;
+    ImGuiCond               FocusCond;
+    ImVec2                  PosVal;
+    ImVec2                  PosPivotVal;
+    ImVec2                  SizeVal;
+    ImVec2                  ContentSizeVal;
+    bool                    CollapsedVal;
+    ImRect                  SizeConstraintRect;                 // Valid if 'SetNextWindowSizeConstraint' is true
+    ImGuiSizeCallback       SizeCallback;
+    void*                   SizeCallbackUserData;
+
+    ImGuiNextWindowData()
+    {
+        PosCond = SizeCond = ContentSizeCond = CollapsedCond = SizeConstraintCond = FocusCond = 0;
+        PosVal = PosPivotVal = SizeVal = ImVec2(0.0f, 0.0f);
+        ContentSizeVal = ImVec2(0.0f, 0.0f);
+        CollapsedVal = false;
+        SizeConstraintRect = ImRect();
+        SizeCallback = NULL;
+        SizeCallbackUserData = NULL;
+    }
+
+    void    Clear()
+    {
+        PosCond = SizeCond = ContentSizeCond = CollapsedCond = SizeConstraintCond = FocusCond = 0;
+    }
+};
+
 // Main state for ImGui
 struct ImGuiContext
 {
@@ -502,24 +537,9 @@ struct ImGuiContext
     ImVector<ImFont*>       FontStack;                          // Stack for PushFont()/PopFont()
     ImVector<ImGuiPopupRef> OpenPopupStack;                     // Which popups are open (persistent)
     ImVector<ImGuiPopupRef> CurrentPopupStack;                  // Which level of BeginPopup() we are in (reset every frame)
-
-    // Storage for SetNexWindow** and SetNextTreeNode*** functions
-    ImVec2                  SetNextWindowPosVal;
-    ImVec2                  SetNextWindowPosPivot;
-    ImVec2                  SetNextWindowSizeVal;
-    ImVec2                  SetNextWindowContentSizeVal;
-    bool                    SetNextWindowCollapsedVal;
-    ImGuiCond               SetNextWindowPosCond;
-    ImGuiCond               SetNextWindowSizeCond;
-    ImGuiCond               SetNextWindowContentSizeCond;
-    ImGuiCond               SetNextWindowCollapsedCond;
-    ImRect                  SetNextWindowSizeConstraintRect;           // Valid if 'SetNextWindowSizeConstraint' is true
-    ImGuiSizeConstraintCallback SetNextWindowSizeConstraintCallback;
-    void*                   SetNextWindowSizeConstraintCallbackUserData;
-    bool                    SetNextWindowSizeConstraint;
-    bool                    SetNextWindowFocus;
-    bool                    SetNextTreeNodeOpenVal;
-    ImGuiCond               SetNextTreeNodeOpenCond;
+    ImGuiNextWindowData     NextWindowData;                     // Storage for SetNextWindow** functions
+    bool                    NextTreeNodeOpenVal;                // Storage for SetNextTreeNode** functions
+    ImGuiCond               NextTreeNodeOpenCond;
 
     // Render
     ImDrawData              RenderDrawData;                     // Main ImDrawData instance to pass render information to the user
@@ -609,20 +629,8 @@ struct ImGuiContext
         MovingWindow = NULL;
         MovingWindowMoveId = 0;
 
-        SetNextWindowPosVal = ImVec2(0.0f, 0.0f);
-        SetNextWindowSizeVal = ImVec2(0.0f, 0.0f);
-        SetNextWindowCollapsedVal = false;
-        SetNextWindowPosCond = 0;
-        SetNextWindowSizeCond = 0;
-        SetNextWindowContentSizeCond = 0;
-        SetNextWindowCollapsedCond = 0;
-        SetNextWindowSizeConstraintRect = ImRect();
-        SetNextWindowSizeConstraintCallback = NULL;
-        SetNextWindowSizeConstraintCallbackUserData = NULL;
-        SetNextWindowSizeConstraint = false;
-        SetNextWindowFocus = false;
-        SetNextTreeNodeOpenVal = false;
-        SetNextTreeNodeOpenCond = 0;
+        NextTreeNodeOpenVal = false;
+        NextTreeNodeOpenCond = 0;
 
         DragDropActive = false;
         DragDropSourceFlags = 0;
@@ -793,7 +801,7 @@ struct IMGUI_API ImGuiWindow
     ImRect                  InnerRect;
     int                     LastFrameActive;
     float                   ItemWidthDefault;
-    ImGuiSimpleColumns      MenuColumns;                        // Simplified columns storage for menu items
+    ImGuiMenuColumns        MenuColumns;                        // Simplified columns storage for menu items
     ImGuiStorage            StateStorage;
     ImVector<ImGuiColumnsSet> ColumnsStorage;
     float                   FontWindowScale;                    // Scale multiplier per-window
