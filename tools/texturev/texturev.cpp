@@ -1462,7 +1462,7 @@ int _main_(int _argc, char** _argv)
 			if (view.m_info)
 			{
 				ImGui::SetNextWindowSize(
-					  ImVec2(300.0f, 240.0f)
+					  ImVec2(300.0f, 300.0f)
 					, ImGuiCond_FirstUseEver
 					);
 
@@ -1479,19 +1479,19 @@ int _main_(int _argc, char** _argv)
 							, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
 							);
 
-						ImGui::Text("Layers: %d / %d"
-							, view.m_layer
-							, view.m_textureInfo.numLayers - 1
-							);
+						ImGui::SliderInt("Layer", (int32_t*)&view.m_layer, 0, view.m_textureInfo.numLayers - 1);
+						ImGui::SliderInt("Mip",   (int32_t*)&view.m_mip,   0, view.m_textureInfo.numMips   - 1);
 
-						ImGui::Text("Mips: %d / %d"
-							, view.m_mip
-							, view.m_textureInfo.numMips - 1
-							);
+						ImGui::Separator();
 
 						ImGui::Checkbox("Input linear", &view.m_inLinear);
 						ImGui::RangeSliderFloat("EV range", &view.m_evMin, &view.m_evMax, kEvMin, kEvMax);
 						ImGui::SliderFloat("EV", &view.m_ev, view.m_evMin, view.m_evMax);
+
+						ImGui::Separator();
+
+						ImGui::Checkbox("Fit to window", &view.m_fit);
+						ImGui::SliderFloat("Scale", &view.m_zoom, 0.01f, 10.0f);
 
 						ImGui::EndChild();
 					}
