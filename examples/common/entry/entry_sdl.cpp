@@ -281,6 +281,7 @@ namespace entry
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
+			, m_flagsEnabled(false)
 		{
 		}
 
@@ -290,6 +291,7 @@ namespace entry
 		uint32_t m_height;
 		uint32_t m_flags;
 		tinystl::string m_title;
+		bool m_flagsEnabled;
 	};
 
 	static uint32_t s_userEventStart;
@@ -299,6 +301,7 @@ namespace entry
 		SDL_USER_WINDOW_CREATE,
 		SDL_USER_WINDOW_DESTROY,
 		SDL_USER_WINDOW_SET_TITLE,
+		SDL_USER_WINDOW_SET_FLAGS,
 		SDL_USER_WINDOW_SET_POS,
 		SDL_USER_WINDOW_SET_SIZE,
 		SDL_USER_WINDOW_TOGGLE_FRAME,
@@ -859,6 +862,23 @@ namespace entry
 								}
 								break;
 
+							case SDL_USER_WINDOW_SET_FLAGS:
+								{
+									Msg* msg = (Msg*)_lparam;
+
+									if (msg->m_flagsEnabled)
+									{
+										m_flags[_wparam] |= msg->m_flags;
+									}
+									else
+									{
+										m_flags[_wparam] &= ~msg->m_flags;
+									}
+
+									delete msg;
+								}
+								break;
+
 							case SDL_USER_WINDOW_SET_POS:
 								{
 									WindowHandle handle = getWindowHandle(uev);
@@ -1075,9 +1095,12 @@ namespace entry
 		sdlPostEvent(SDL_USER_WINDOW_SET_TITLE, _handle, msg);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		sdlPostEvent(SDL_USER_WINDOW_TOGGLE_FRAME, _handle);
+		Msg* msg = new Msg;
+		msg->m_flags = _flags;
+		msg->m_flagsEnabled = _enabled;
+		sdlPostEvent(SDL_USER_WINDOW_SET_FLAGS, _handle, msg);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

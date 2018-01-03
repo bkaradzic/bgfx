@@ -252,7 +252,7 @@ namespace entry
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y);
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height);
 	void setWindowTitle(WindowHandle _handle, const char* _title);
-	void toggleWindowFrame(WindowHandle _handle);
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled);
 	void toggleFullscreen(WindowHandle _handle);
 	void setMouseLock(WindowHandle _handle, bool _lock);
 	void setCurrentDir(const char* _dir);

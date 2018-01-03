@@ -758,9 +758,9 @@ namespace entry
 		XStoreName(display, window, _title);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		BX_UNUSED(_handle);
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

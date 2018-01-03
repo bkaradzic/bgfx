@@ -593,16 +593,9 @@ namespace entry
 		}
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		if (s_ctx.isValid(_handle) )
-		{
-			s_ctx.m_style ^= NSTitledWindowMask;
-			dispatch_async(dispatch_get_main_queue()
-			, ^{
-				[s_ctx.m_window[_handle.idx] setStyleMask: s_ctx.m_style];
-			});
-		}
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

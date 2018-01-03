@@ -266,6 +266,7 @@ namespace entry
 		WM_USER_WINDOW_CREATE = WM_USER,
 		WM_USER_WINDOW_DESTROY,
 		WM_USER_WINDOW_SET_TITLE,
+		WM_USER_WINDOW_SET_FLAGS,
 		WM_USER_WINDOW_SET_POS,
 		WM_USER_WINDOW_SET_SIZE,
 		WM_USER_WINDOW_TOGGLE_FRAME,
@@ -324,6 +325,7 @@ namespace entry
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
+			, m_flagsEnabled(false)
 		{
 		}
 
@@ -333,6 +335,7 @@ namespace entry
 		uint32_t m_height;
 		uint32_t m_flags;
 		tinystl::string m_title;
+		bool m_flagsEnabled;
 	};
 
 	static void mouseCapture(HWND _hwnd, bool _capture)
@@ -586,6 +589,23 @@ namespace entry
 					{
 						Msg* msg = (Msg*)_lparam;
 						SetWindowTextA(m_hwnd[_wparam], msg->m_title.c_str() );
+						delete msg;
+					}
+					break;
+
+				case WM_USER_WINDOW_SET_FLAGS:
+					{
+						Msg* msg = (Msg*)_lparam;
+
+						if (msg->m_flagsEnabled)
+						{
+							m_flags[_wparam] |= msg->m_flags;
+						}
+						else
+						{
+							m_flags[_wparam] &= ~msg->m_flags;
+						}
+
 						delete msg;
 					}
 					break;
@@ -1081,9 +1101,12 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
+		Msg* msg = new Msg;
+		msg->m_flags = _flags;
+		msg->m_flagsEnabled = _enabled;
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_FLAGS, _handle.idx, (LPARAM)msg);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

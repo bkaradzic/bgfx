@@ -813,12 +813,9 @@ namespace entry
 		glfwPostEmptyEvent();
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		Msg* msg = new Msg(GLFW_WINDOW_TOGGLE_FRAME);
-		msg->m_handle = _handle;
-		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)

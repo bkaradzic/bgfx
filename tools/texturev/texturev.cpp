@@ -1145,6 +1145,8 @@ int _main_(int _argc, char** _argv)
 	View view;
 	cmdAdd("view", cmdView, &view);
 
+	entry::setWindowFlags(entry::WindowHandle{0}, ENTRY_WINDOW_FLAG_ASPECT_RATIO, false);
+
 	bgfx::init();
 	bgfx::reset(width, height, reset);
 
