@@ -817,13 +817,13 @@ namespace entry
 									Msg* msg = (Msg*)uev.data2;
 
 									m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
-																, msg->m_x
-																, msg->m_y
-																, msg->m_width
-																, msg->m_height
-																, SDL_WINDOW_SHOWN
-																| SDL_WINDOW_RESIZABLE
-																);
+										, msg->m_x
+										, msg->m_y
+										, msg->m_width
+										, msg->m_height
+										, SDL_WINDOW_SHOWN
+										| SDL_WINDOW_RESIZABLE
+										);
 
 									m_flags[handle.idx] = msg->m_flags;
 
@@ -864,15 +864,16 @@ namespace entry
 
 							case SDL_USER_WINDOW_SET_FLAGS:
 								{
-									Msg* msg = (Msg*)_lparam;
+									WindowHandle handle = getWindowHandle(uev);
+									Msg* msg = (Msg*)uev.data2;
 
 									if (msg->m_flagsEnabled)
 									{
-										m_flags[_wparam] |= msg->m_flags;
+										m_flags[handle.idx] |= msg->m_flags;
 									}
 									else
 									{
-										m_flags[_wparam] &= ~msg->m_flags;
+										m_flags[handle.idx] &= ~msg->m_flags;
 									}
 
 									delete msg;
