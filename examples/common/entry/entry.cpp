@@ -745,6 +745,9 @@ restart:
 				case Event::Suspend:
 					break;
 
+				case Event::DropFile:
+					break;
+
 				default:
 					break;
 				}
@@ -898,6 +901,9 @@ restart:
 					break;
 
 				case Event::Suspend:
+					break;
+
+				case Event::DropFile:
 					break;
 
 				default:

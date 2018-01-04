@@ -1472,28 +1472,35 @@ int _main_(int _argc, char** _argv)
 				{
 					if (ImGui::BeginChild("##info", ImVec2(0.0f, 0.0f) ) )
 					{
-						ImGui::Text("Dimensions: %d x %d"
-							, view.m_textureInfo.width
-							, view.m_textureInfo.height
-							);
+						if (!bgfx::isValid(texture) )
+						{
+							ImGui::Text("Texture is not loaded.");
+						}
+						else
+						{
+							ImGui::Text("Dimensions: %d x %d"
+								, view.m_textureInfo.width
+								, view.m_textureInfo.height
+								);
 
-						ImGui::Text("Format: %s"
-							, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
-							);
+							ImGui::Text("Format: %s"
+								, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
+								);
 
-						ImGui::SliderInt("Layer", (int32_t*)&view.m_layer, 0, view.m_textureInfo.numLayers - 1);
-						ImGui::SliderInt("Mip",   (int32_t*)&view.m_mip,   0, view.m_textureInfo.numMips   - 1);
+							ImGui::SliderInt("Layer", (int32_t*)&view.m_layer, 0, view.m_textureInfo.numLayers - 1);
+							ImGui::SliderInt("Mip",   (int32_t*)&view.m_mip,   0, view.m_textureInfo.numMips   - 1);
 
-						ImGui::Separator();
+							ImGui::Separator();
 
-						ImGui::Checkbox("Input linear", &view.m_inLinear);
-						ImGui::RangeSliderFloat("EV range", &view.m_evMin, &view.m_evMax, kEvMin, kEvMax);
-						ImGui::SliderFloat("EV", &view.m_ev, view.m_evMin, view.m_evMax);
+							ImGui::Checkbox("Input linear", &view.m_inLinear);
+							ImGui::RangeSliderFloat("EV range", &view.m_evMin, &view.m_evMax, kEvMin, kEvMax);
+							ImGui::SliderFloat("EV", &view.m_ev, view.m_evMin, view.m_evMax);
 
-						ImGui::Separator();
+							ImGui::Separator();
 
-						ImGui::Checkbox("Fit to window", &view.m_fit);
-						ImGui::SliderFloat("Scale", &view.m_zoom, 0.01f, 10.0f);
+							ImGui::Checkbox("Fit to window", &view.m_fit);
+							ImGui::SliderFloat("Scale", &view.m_zoom, 0.01f, 10.0f);
+						}
 
 						ImGui::EndChild();
 					}
@@ -1636,8 +1643,8 @@ int _main_(int _argc, char** _argv)
 
 			imguiEndFrame();
 
-			if (!bgfx::isValid(texture)
-			||  view.m_fileIndex != fileIndex)
+			if ( (!bgfx::isValid(texture) || view.m_fileIndex != fileIndex)
+			&&  0 != view.m_fileList.size() )
 			{
 				if (bgfx::isValid(texture) )
 				{
@@ -1745,7 +1752,7 @@ int _main_(int _argc, char** _argv)
 				, 0
 				, width
 				, height
-				, view.m_alpha ? UINT32_MAX : 0
+				, view.m_alpha || !bgfx::isValid(texture) ? UINT32_MAX : 0
 				, float(width )/float(checkerBoardSize)
 				, float(height)/float(checkerBoardSize)
 				);
@@ -1885,7 +1892,14 @@ int _main_(int _argc, char** _argv)
 				}
 			}
 
-			bgfx::submit(IMAGE_VIEW_ID, program);
+			if (bgfx::isValid(texture) )
+			{
+				bgfx::submit(IMAGE_VIEW_ID, program);
+			}
+			else
+			{
+				bgfx::discard();
+			}
 
 			bgfx::frame();
 		}

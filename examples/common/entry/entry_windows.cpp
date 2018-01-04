@@ -469,7 +469,9 @@ namespace entry
 			RegisterClassExA(&wnd);
 
 			m_windowAlloc.alloc();
-			m_hwnd[0] = CreateWindowA("bgfx"
+			m_hwnd[0] = CreateWindowExA(
+				  WS_EX_ACCEPTFILES
+				, "bgfx"
 				, "BGFX"
 				, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 				, 0
@@ -855,6 +857,16 @@ namespace entry
 							WindowHandle handle = findHandle(_hwnd);
 							m_eventQueue.postCharEvent(handle, len, utf8);
 						}
+					}
+					break;
+
+				case WM_DROPFILES:
+					{
+						HDROP drop = (HDROP)_wparam;
+						char tmp[bx::kMaxFilePath];
+						uint32_t result = DragQueryFileA(drop, 0, tmp, sizeof(tmp) );
+						WindowHandle handle = findHandle(_hwnd);
+						m_eventQueue.postDropFileEvent(handle, tmp);
 					}
 					break;
 
