@@ -488,6 +488,8 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
+			SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+
 			bx::FileReaderI* reader = NULL;
 			while (NULL == reader)
 			{
@@ -802,6 +804,18 @@ namespace entry
 								m_gamepad[handle.idx].destroy();
 								m_gamepadAlloc.free(handle.idx);
 								m_eventQueue.postGamepadEvent(defaultWindow, handle, false);
+							}
+						}
+						break;
+
+					case SDL_DROPFILE:
+						{
+							const SDL_DropEvent& dev = event.drop;
+							WindowHandle handle = defaultWindow; //findHandle(dev.windowID);
+							if (isValid(handle) )
+							{
+								m_eventQueue.postDropFileEvent(handle, dev.file);
+								SDL_free(dev.file);
 							}
 						}
 						break;

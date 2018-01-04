@@ -746,6 +746,10 @@ restart:
 					break;
 
 				case Event::DropFile:
+					{
+						const DropFileEvent* drop = static_cast<const DropFileEvent*>(ev);
+						DBG("%s", drop->m_filePath.get() );
+					}
 					break;
 
 				default:
@@ -904,6 +908,10 @@ restart:
 					break;
 
 				case Event::DropFile:
+					{
+						const DropFileEvent* drop = static_cast<const DropFileEvent*>(ev);
+						DBG("%s", drop->m_filePath.get() );
+					}
 					break;
 
 				default:
