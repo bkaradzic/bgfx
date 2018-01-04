@@ -1257,27 +1257,22 @@ int _main_(int _argc, char** _argv)
 	int exitcode = bx::kExitSuccess;
 	bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
 
-	if (view.m_fileList.empty() )
-	{
-		exitcode = bx::kExitFailure;
-		if (2 > _argc)
-		{
-			help("File path is not specified.");
-		}
-		else
-		{
-			fprintf(stderr, "Unable to load '%s' texture.\n", filePath);
-		}
-	}
-	else
 	{
 		uint32_t fileIndex = 0;
 		bool dragging = false;
 
+		entry::WindowState windowState;
 		entry::MouseState mouseStatePrev;
-		entry::MouseState mouseState;
-		while (!entry::processEvents(width, height, debug, reset, &mouseState) )
+		while (!entry::processWindowEvents(windowState, debug, reset) )
 		{
+			const entry::MouseState& mouseState = windowState.m_mouse;
+
+			if (!windowState.m_dropFile.isEmpty() )
+			{
+				view.updateFileList(windowState.m_dropFile);
+				windowState.m_dropFile.clear();
+			}
+
 			imguiBeginFrame(mouseState.m_mx
 				,  mouseState.m_my
 				, (mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)

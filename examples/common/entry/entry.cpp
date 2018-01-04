@@ -787,6 +787,7 @@ restart:
 		WindowHandle handle = { UINT16_MAX };
 
 		bool mouseLock = inputIsMouseLocked();
+		bool clearDropFile = true;
 
 		const Event* ev;
 		do
@@ -910,7 +911,8 @@ restart:
 				case Event::DropFile:
 					{
 						const DropFileEvent* drop = static_cast<const DropFileEvent*>(ev);
-						DBG("%s", drop->m_filePath.get() );
+						win.m_dropFile = drop->m_filePath;
+						clearDropFile = false;
 					}
 					break;
 
@@ -925,7 +927,12 @@ restart:
 
 		if (isValid(handle) )
 		{
-			const WindowState& win = s_window[handle.idx];
+			WindowState& win = s_window[handle.idx];
+			if (clearDropFile)
+			{
+				win.m_dropFile.clear();
+			}
+
 			_state = win;
 
 			if (handle.idx == 0)

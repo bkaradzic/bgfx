@@ -8,6 +8,7 @@
 
 #include "dbg.h"
 #include <bx/bx.h>
+#include <bx/filepath.h>
 #include <bx/string.h>
 
 namespace bx { struct FileReaderI; struct FileWriterI; struct AllocatorI; }
@@ -272,6 +273,7 @@ namespace entry
 		uint32_t     m_height;
 		MouseState   m_mouse;
 		void*        m_nwh;
+		bx::FilePath m_dropFile;
 	};
 
 	bool processWindowEvents(WindowState& _state, uint32_t& _debug, uint32_t& _reset);
