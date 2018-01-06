@@ -1266,6 +1266,8 @@ int _main_(int _argc, char** _argv)
 		while (!entry::processWindowEvents(windowState, debug, reset) )
 		{
 			const entry::MouseState& mouseState = windowState.m_mouse;
+			width  = windowState.m_width;
+			height = windowState.m_height;
 
 			if (!windowState.m_dropFile.isEmpty() )
 			{
