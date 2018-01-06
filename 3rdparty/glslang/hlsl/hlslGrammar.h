@@ -72,7 +72,7 @@ namespace glslang {
         bool acceptSamplerDeclarationDX9(TType&);
         bool acceptSamplerState();
         bool acceptFullySpecifiedType(TType&, const TAttributeMap&);
-        bool acceptFullySpecifiedType(TType&, TIntermNode*& nodeList, const TAttributeMap&);
+        bool acceptFullySpecifiedType(TType&, TIntermNode*& nodeList, const TAttributeMap&, bool forbidDeclarators = false);
         bool acceptQualifier(TQualifier&);
         bool acceptLayoutQualifierList(TQualifier&);
         bool acceptType(TType&);
