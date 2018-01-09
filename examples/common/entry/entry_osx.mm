@@ -472,7 +472,10 @@ namespace entry
 			thread.init(mte.threadFunc, &mte);
 
 			WindowHandle handle = { 0 };
-			m_eventQueue.postSizeEvent(handle, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
+			NSRect contentRect = [window contentRectForFrameRect: m_windowFrame];
+			uint32_t width = uint32_t(contentRect.size.width);
+			uint32_t height = uint32_t(contentRect.size.height);
+			m_eventQueue.postSizeEvent(handle, width, height);
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
