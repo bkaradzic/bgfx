@@ -758,7 +758,7 @@ public:
 			bgfx::submit(0, m_program);
 
 			// Display stats.
-			int row = 18;
+			uint16_t row = 18;
 			bgfx::dbgTextPrintf(1, row++, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
 			bgfx::dbgTextPrintf(1, row++, 0x0f, "      Update: % 7.3f[ms]", double(profUpdate)*toMs);
 			bgfx::dbgTextPrintf(1, row++, 0x0f, "Calc normals: % 7.3f[ms]", double(profNormal)*toMs);
