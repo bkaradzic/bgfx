@@ -21,6 +21,11 @@ struct Axis
 	};
 };
 
+struct DdVertex
+{
+	float x, y, z;
+};
+
 struct SpriteHandle { uint16_t idx; };
 
 inline bool isValid(SpriteHandle _handle) { return _handle.idx != UINT16_MAX; }
@@ -108,6 +113,9 @@ void ddDraw(const Sphere& _sphere);
 
 ///
 void ddDraw(const Cone& _cone);
+
+///
+void ddDraw(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
 
 ///
 void ddDrawFrustum(const void* _viewProj);

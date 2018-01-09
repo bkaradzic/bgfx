@@ -82,6 +82,25 @@ struct DebugShapeVertex
 
 bgfx::VertexDecl DebugShapeVertex::ms_decl;
 
+struct DebugMeshVertex
+{
+	float m_x;
+	float m_y;
+	float m_z;
+
+	static void init()
+	{
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.end();
+	}
+
+	static bgfx::VertexDecl ms_decl;
+};
+
+bgfx::VertexDecl DebugMeshVertex::ms_decl;
+
 static DebugShapeVertex s_cubeVertices[8] =
 {
 	{-1.0f,  1.0f,  1.0f, { 0, 0, 0, 0 } },
@@ -299,8 +318,10 @@ void getPoint(float* _result, Axis::Enum _axis, float _x, float _y)
 #include "vs_debugdraw_lines_stipple.bin.h"
 #include "fs_debugdraw_lines_stipple.bin.h"
 #include "vs_debugdraw_fill.bin.h"
+#include "vs_debugdraw_fill_mesh.bin.h"
 #include "fs_debugdraw_fill.bin.h"
 #include "vs_debugdraw_fill_lit.bin.h"
+#include "vs_debugdraw_fill_lit_mesh.bin.h"
 #include "fs_debugdraw_fill_lit.bin.h"
 #include "vs_debugdraw_fill_texture.bin.h"
 #include "fs_debugdraw_fill_texture.bin.h"
@@ -312,8 +333,10 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 	BGFX_EMBEDDED_SHADER(vs_debugdraw_lines_stipple),
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_lines_stipple),
 	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill),
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_mesh),
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill),
 	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_lit),
+	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_lit_mesh),
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill_lit),
 	BGFX_EMBEDDED_SHADER(vs_debugdraw_fill_texture),
 	BGFX_EMBEDDED_SHADER(fs_debugdraw_fill_texture),
@@ -387,6 +410,7 @@ struct DebugDraw
 		DebugVertex::init();
 		DebugUvVertex::init();
 		DebugShapeVertex::init();
+		DebugMeshVertex::init();
 
 		bgfx::RendererType::Enum type = bgfx::getRendererType();
 
@@ -408,8 +432,20 @@ struct DebugDraw
 			, true
 			);
 
+		m_program[Program::FillMesh] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_mesh")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill")
+			, true
+			);
+
 		m_program[Program::FillLit] = bgfx::createProgram(
 			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_lit")
+			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_lit")
+			, true
+			);
+
+		m_program[Program::FillLitMesh] = bgfx::createProgram(
+			  bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_debugdraw_fill_lit_mesh")
 			, bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_debugdraw_fill_lit")
 			, true
 			);
@@ -1209,6 +1245,74 @@ struct DebugDraw
 		draw(Mesh::Enum(Mesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
 	}
 
+	void draw(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	{
+		flush();
+
+		if (_numVertices == bgfx::getAvailTransientVertexBuffer(_numVertices, DebugMeshVertex::ms_decl) )
+		{
+			bgfx::TransientVertexBuffer tvb;
+			bgfx::allocTransientVertexBuffer(&tvb, _numVertices, DebugMeshVertex::ms_decl);
+			bx::memCopy(tvb.data, _vertices, _numVertices * DebugMeshVertex::ms_decl.m_stride);
+			bgfx::setVertexBuffer(0, &tvb);
+
+			if (0 < _numIndices)
+			{
+				bgfx::TransientIndexBuffer tib;
+				bgfx::allocTransientIndexBuffer(&tib, _numIndices);
+				bx::memCopy(tib.data, _indices, _numIndices * sizeof(uint16_t) );
+				bgfx::setIndexBuffer(&tib);
+			}
+
+			const Attrib& attrib = m_attrib[m_stack];
+			const bool wireframe = false; // attrib.m_wireframe;
+
+			const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
+			const uint8_t alpha = attrib.m_abgr >> 24;
+
+			float params[4][4] =
+			{
+				{ // lightDir
+					 0.0f * flip,
+					-1.0f * flip,
+					 0.0f * flip,
+					 3.0f, // shininess
+				},
+				{ // skyColor
+					1.0f,
+					0.9f,
+					0.8f,
+					0.0f, // unused
+				},
+				{ // groundColor.xyz0
+					0.2f,
+					0.22f,
+					0.5f,
+					0.0f, // unused
+				},
+				{ // matColor
+					( (attrib.m_abgr)       & 0xff) / 255.0f,
+					( (attrib.m_abgr >> 8)  & 0xff) / 255.0f,
+					( (attrib.m_abgr >> 16) & 0xff) / 255.0f,
+					(alpha) / 255.0f,
+				},
+			};
+
+			bx::vec3Norm(params[0], params[0]);
+
+			bgfx::setUniform(u_params, params, 4);
+
+			bgfx::setState(0
+				| attrib.m_state
+				| (wireframe ? BGFX_STATE_PT_LINES | BGFX_STATE_LINEAA | BGFX_STATE_BLEND_ALPHA
+				: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
+				);
+			bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
+			bgfx::ProgramHandle program = m_program[wireframe ? Program::FillMesh : Program::FillLitMesh];
+			bgfx::submit(m_viewId, program);
+		}
+	}
+
 	void drawFrustum(const float* _viewProj)
 	{
 		Plane planes[6];
@@ -1817,7 +1921,9 @@ private:
 			Lines,
 			LinesStipple,
 			Fill,
+			FillMesh,
 			FillLit,
+			FillLitMesh,
 			FillTexture,
 
 			Count
@@ -2195,6 +2301,11 @@ void ddDraw(const Sphere& _sphere)
 void ddDraw(const Cone& _cone)
 {
 	ddDrawCone(_cone.m_pos, _cone.m_end, _cone.m_radius);
+}
+
+void ddDraw(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+{
+	s_dd.draw(_numVertices, _vertices, _numIndices, _indices);
 }
 
 void ddDrawFrustum(const void* _viewProj)
