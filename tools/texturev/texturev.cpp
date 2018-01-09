@@ -1916,6 +1916,7 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroy(textureCubeProgram);
 	bgfx::destroy(textureCube2Program);
 	bgfx::destroy(textureSdfProgram);
+	bgfx::destroy(textureMsdfProgram);
 	bgfx::destroy(texture3DProgram);
 
 	imguiDestroy();
