@@ -115,7 +115,10 @@ void ddDraw(const Sphere& _sphere);
 void ddDraw(const Cone& _cone);
 
 ///
-void ddDraw(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
+void ddDrawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
+
+///
+void ddDrawTriList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
 
 ///
 void ddDrawFrustum(const void* _viewProj);

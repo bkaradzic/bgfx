@@ -1245,7 +1245,7 @@ struct DebugDraw
 		draw(Mesh::Enum(Mesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
 	}
 
-	void draw(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	void draw(bool _lineList, uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
 	{
 		flush();
 
@@ -1265,7 +1265,7 @@ struct DebugDraw
 			}
 
 			const Attrib& attrib = m_attrib[m_stack];
-			const bool wireframe = false; // attrib.m_wireframe;
+			const bool wireframe = _lineList;
 
 			const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
 			const uint8_t alpha = attrib.m_abgr >> 24;
@@ -2303,9 +2303,14 @@ void ddDraw(const Cone& _cone)
 	ddDrawCone(_cone.m_pos, _cone.m_end, _cone.m_radius);
 }
 
-void ddDraw(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+void ddDrawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
 {
-	s_dd.draw(_numVertices, _vertices, _numIndices, _indices);
+	s_dd.draw(true, _numVertices, _vertices, _numIndices, _indices);
+}
+
+void ddDrawTriList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+{
+	s_dd.draw(false, _numVertices, _vertices, _numIndices, _indices);
 }
 
 void ddDrawFrustum(const void* _viewProj)
