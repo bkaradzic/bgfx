@@ -1550,7 +1550,7 @@ namespace bgfx
 										, "%d + %s%d"
 										, operand.regIndex[jj]
 										, s_dxbcOperandType[operand.subOperand[jj].type]
-										, operand.regIndex[jj]
+										, operand.subOperand[jj].regIndex
 										);
 					break;
 

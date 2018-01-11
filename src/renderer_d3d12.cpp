@@ -2536,6 +2536,10 @@ data.NumQualityLevels = 0;
 					{
 						operand.regIndex[1] += cast.offset;
 					}
+					else if (DxbcOperandAddrMode::RegImm32 == operand.addrMode[1])
+					{
+						operand.regIndex[1] += cast.offset;
+					}
 				}
 			}
 		}
