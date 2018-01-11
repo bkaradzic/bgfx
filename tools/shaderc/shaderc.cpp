@@ -2188,11 +2188,11 @@ namespace bgfx
 			}
 		}
 
-		bool depends = cmdLine.hasArg("depends");
+		options.depends = cmdLine.hasArg("depends");
 		options.preprocessOnly = cmdLine.hasArg("preprocess");
 		const char* includeDir = cmdLine.findOption('i');
 
-		BX_TRACE("depends: %d", depends);
+		BX_TRACE("depends: %d", options.depends);
 		BX_TRACE("preprocessOnly: %d", options.preprocessOnly);
 		BX_TRACE("includeDir: %s", includeDir);
 
