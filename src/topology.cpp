@@ -52,9 +52,9 @@ namespace bgfx
 			if (i0 > i1) { bx::xchg(i0, i1); }
 			BX_CHECK(i0 < i1 && i1 < i2, "");
 
-			dst[0] = i0; dst[1] = i1;
-			dst[2] = i1; dst[3] = i2;
-			dst[4] = i0; dst[5] = i2;
+			dst[1] = i0; dst[0] = i1;
+			dst[3] = i1; dst[2] = i2;
+			dst[5] = i0; dst[4] = i2;
 			dst += 6;
 		}
 
@@ -83,24 +83,24 @@ namespace bgfx
 			dst = (IndexT*)_dst;
 			IndexT* end = &dst[_dstSize/sizeof(IndexT)];
 			SortT  last = sorted[0];
+
+			{
+				union Un { SortT key; struct { IndexT i0; IndexT i1; } u16; } un = { sorted[0] };
+				dst[0] = un.u16.i0;
+				dst[1] = un.u16.i1;
+				dst += 2;
+			}
+
 			for (uint32_t ii = 1; ii < _numIndices && dst < end; ++ii)
 			{
 				if (last != sorted[ii])
 				{
-					union Un { SortT key; struct { IndexT i0; IndexT i1; } u16; } un = { last };
+					union Un { SortT key; struct { IndexT i0; IndexT i1; } u16; } un = { sorted[ii] };
 					dst[0] = un.u16.i0;
 					dst[1] = un.u16.i1;
 					dst += 2;
 					last = sorted[ii];
 				}
-			}
-
-			if (dst < end)
-			{
-				union Un { SortT key; struct { IndexT i0; IndexT i1; } u16; } un = { last };
-				dst[0] = un.u16.i0;
-				dst[1] = un.u16.i1;
-				dst += 2;
 			}
 
 			num = uint32_t(dst - (IndexT*)_dst);

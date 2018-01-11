@@ -27,8 +27,10 @@ struct DdVertex
 };
 
 struct SpriteHandle { uint16_t idx; };
-
 inline bool isValid(SpriteHandle _handle) { return _handle.idx != UINT16_MAX; }
+
+struct GeometryHandle { uint16_t idx; };
+inline bool isValid(GeometryHandle _handle) { return _handle.idx != UINT16_MAX; }
 
 ///
 void ddInit(bool _depthTestLess = true, bx::AllocatorI* _allocator = NULL);
@@ -41,6 +43,12 @@ SpriteHandle ddCreateSprite(uint16_t _width, uint16_t _height, const void* _data
 
 ///
 void ddDestroy(SpriteHandle _handle);
+
+///
+GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
+
+///
+void ddDestroy(GeometryHandle _handle);
 
 ///
 void ddBegin(uint8_t _viewId);
@@ -113,6 +121,9 @@ void ddDraw(const Sphere& _sphere);
 
 ///
 void ddDraw(const Cone& _cone);
+
+///
+void ddDraw(GeometryHandle _handle);
 
 ///
 void ddDrawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);

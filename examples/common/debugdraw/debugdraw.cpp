@@ -364,7 +364,15 @@ struct SpriteT
 			if (m_ra.find(_width, _height, pack) )
 			{
 				handle.idx = m_handleAlloc.alloc();
-				m_pack[handle.idx] = pack;
+
+				if (isValid(handle) )
+				{
+					m_pack[handle.idx] = pack;
+				}
+				else
+				{
+					m_ra.clear(pack);
+				}
 			}
 		}
 
@@ -386,6 +394,101 @@ struct SpriteT
 	bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
 	Pack2D                        m_pack[MaxHandlesT];
 	RectPack2DT<256>              m_ra;
+};
+
+template<uint16_t MaxHandlesT = 256>
+struct GeometryT
+{
+	GeometryT()
+	{
+	}
+
+	GeometryHandle create(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	{
+		BX_UNUSED(_numVertices, _vertices, _numIndices, _indices);
+
+		GeometryHandle handle = { m_handleAlloc.alloc() };
+
+		if (isValid(handle) )
+		{
+			Geometry& geometry = m_geometry[handle.idx];
+			geometry.m_vbh = bgfx::createVertexBuffer(
+				  bgfx::copy(_vertices, _numVertices*sizeof(DdVertex) )
+				, DebugMeshVertex::ms_decl
+				);
+
+			geometry.m_topologyNumIndices[0] = _numIndices;
+			geometry.m_topologyNumIndices[1] = bgfx::topologyConvert(
+				  bgfx::TopologyConvert::TriListToLineList
+				, NULL
+				, 0
+				, _indices
+				, _numIndices
+				, false
+				);
+
+			const uint32_t numIndices = 0
+				+ geometry.m_topologyNumIndices[0]
+				+ geometry.m_topologyNumIndices[1]
+				;
+			const bgfx::Memory* mem = bgfx::alloc(numIndices*sizeof(uint16_t) );
+			uint16_t* indices = (uint16_t*)mem->data;
+
+			bx::memCopy(&indices[0], _indices, _numIndices*sizeof(uint16_t) );
+
+			bgfx::topologyConvert(
+				  bgfx::TopologyConvert::TriListToLineList
+				, &indices[geometry.m_topologyNumIndices[0] ]
+				, geometry.m_topologyNumIndices[1]*sizeof(uint16_t)
+				, _indices
+				, _numIndices
+				, false
+				);
+
+			geometry.m_ibh = bgfx::createIndexBuffer(mem);
+		}
+
+		return handle;
+	}
+
+	void destroy(GeometryHandle _handle)
+	{
+		Geometry& geometry = m_geometry[_handle.idx];
+		bgfx::destroy(geometry.m_vbh);
+		bgfx::destroy(geometry.m_ibh);
+
+		m_handleAlloc.free(_handle.idx);
+	}
+
+	struct Geometry
+	{
+		Geometry()
+		{
+			m_vbh.idx = bx::kInvalidHandle;
+			m_ibh.idx = bx::kInvalidHandle;
+			m_topologyNumIndices[0] = 0;
+			m_topologyNumIndices[1] = 0;
+		}
+
+		bgfx::VertexBufferHandle m_vbh;
+		bgfx::IndexBufferHandle  m_ibh;
+		uint32_t m_topologyNumIndices[2];
+	};
+
+	bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
+	Geometry m_geometry[MaxHandlesT];
+};
+
+struct Attrib
+{
+	uint64_t m_state;
+	float    m_offset;
+	float    m_scale;
+	float    m_spin;
+	uint32_t m_abgr;
+	bool     m_stipple;
+	bool     m_wireframe;
+	uint8_t  m_lod;
 };
 
 struct DebugDraw
@@ -807,6 +910,16 @@ struct DebugDraw
 	void destroy(SpriteHandle _handle)
 	{
 		m_sprite.destroy(_handle);
+	}
+
+	GeometryHandle createGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	{
+		return m_geometry.create(_numVertices, _vertices, _numIndices, _indices);
+	}
+
+	void destroy(GeometryHandle _handle)
+	{
+		m_geometry.destroy(_handle);
 	}
 
 	void begin(uint8_t _viewId)
@@ -1239,10 +1352,84 @@ struct DebugDraw
 			, _sphere.m_center[2]
 			);
 		uint8_t lod = attrib.m_lod > Mesh::SphereMaxLod
-					? uint8_t(Mesh::SphereMaxLod)
-					: attrib.m_lod
-					;
+			? uint8_t(Mesh::SphereMaxLod)
+			: attrib.m_lod
+			;
 		draw(Mesh::Enum(Mesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
+	}
+
+	void setUParams(const Attrib& _attrib, bool _wireframe)
+	{
+		const float flip = 0 == (_attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
+		const uint8_t alpha = _attrib.m_abgr >> 24;
+
+		float params[4][4] =
+		{
+			{ // lightDir
+				 0.0f * flip,
+				-1.0f * flip,
+				 0.0f * flip,
+				 3.0f, // shininess
+			},
+			{ // skyColor
+				1.0f,
+				0.9f,
+				0.8f,
+				0.0f, // unused
+			},
+			{ // groundColor.xyz0
+				0.2f,
+				0.22f,
+				0.5f,
+				0.0f, // unused
+			},
+			{ // matColor
+				( (_attrib.m_abgr)       & 0xff) / 255.0f,
+				( (_attrib.m_abgr >> 8)  & 0xff) / 255.0f,
+				( (_attrib.m_abgr >> 16) & 0xff) / 255.0f,
+				(alpha) / 255.0f,
+			},
+		};
+
+		bx::vec3Norm(params[0], params[0]);
+		bgfx::setUniform(u_params, params, 4);
+
+		bgfx::setState(0
+			| _attrib.m_state
+			| (_wireframe ? BGFX_STATE_PT_LINES | BGFX_STATE_LINEAA | BGFX_STATE_BLEND_ALPHA
+			: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
+			);
+	}
+
+	void draw(GeometryHandle _handle)
+	{
+		Geometry::Geometry& geometry = m_geometry.m_geometry[_handle.idx];
+		bgfx::setVertexBuffer(0, geometry.m_vbh);
+
+		const Attrib& attrib = m_attrib[m_stack];
+		const bool wireframe = attrib.m_wireframe;
+		setUParams(attrib, wireframe);
+
+		if (wireframe)
+		{
+			bgfx::setIndexBuffer(
+				  geometry.m_ibh
+				, geometry.m_topologyNumIndices[0]
+				, geometry.m_topologyNumIndices[1]
+				);
+		}
+		else if (0 != geometry.m_topologyNumIndices[0])
+		{
+			bgfx::setIndexBuffer(
+				  geometry.m_ibh
+				, 0
+				, geometry.m_topologyNumIndices[0]
+				);
+		}
+
+		bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
+		bgfx::ProgramHandle program = m_program[wireframe ? Program::FillMesh : Program::FillLitMesh];
+		bgfx::submit(m_viewId, program);
 	}
 
 	void draw(bool _lineList, uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
@@ -1266,47 +1453,8 @@ struct DebugDraw
 
 			const Attrib& attrib = m_attrib[m_stack];
 			const bool wireframe = _lineList;
+			setUParams(attrib, wireframe);
 
-			const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
-			const uint8_t alpha = attrib.m_abgr >> 24;
-
-			float params[4][4] =
-			{
-				{ // lightDir
-					 0.0f * flip,
-					-1.0f * flip,
-					 0.0f * flip,
-					 3.0f, // shininess
-				},
-				{ // skyColor
-					1.0f,
-					0.9f,
-					0.8f,
-					0.0f, // unused
-				},
-				{ // groundColor.xyz0
-					0.2f,
-					0.22f,
-					0.5f,
-					0.0f, // unused
-				},
-				{ // matColor
-					( (attrib.m_abgr)       & 0xff) / 255.0f,
-					( (attrib.m_abgr >> 8)  & 0xff) / 255.0f,
-					( (attrib.m_abgr >> 16) & 0xff) / 255.0f,
-					(alpha) / 255.0f,
-				},
-			};
-
-			bx::vec3Norm(params[0], params[0]);
-
-			bgfx::setUniform(u_params, params, 4);
-
-			bgfx::setState(0
-				| attrib.m_state
-				| (wireframe ? BGFX_STATE_PT_LINES | BGFX_STATE_LINEAA | BGFX_STATE_BLEND_ALPHA
-				: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
-				);
 			bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 			bgfx::ProgramHandle program = m_program[wireframe ? Program::FillMesh : Program::FillLitMesh];
 			bgfx::submit(m_viewId, program);
@@ -1664,9 +1812,9 @@ struct DebugDraw
 		if (_capsule)
 		{
 			uint8_t lod = attrib.m_lod > Mesh::CapsuleMaxLod
-						? uint8_t(Mesh::CapsuleMaxLod)
-						: attrib.m_lod
-						;
+				? uint8_t(Mesh::CapsuleMaxLod)
+				: attrib.m_lod
+				;
 			draw(Mesh::Enum(Mesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
 
 			Sphere sphere;
@@ -1680,9 +1828,9 @@ struct DebugDraw
 		else
 		{
 			uint8_t lod = attrib.m_lod > Mesh::CylinderMaxLod
-						? uint8_t(Mesh::CylinderMaxLod)
-						: attrib.m_lod
-						;
+				? uint8_t(Mesh::CylinderMaxLod)
+				: attrib.m_lod
+				;
 			draw(Mesh::Enum(Mesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
 		}
 	}
@@ -1936,8 +2084,6 @@ private:
 
 		const Mesh& mesh = m_mesh[_mesh];
 
-		const Attrib& attrib = m_attrib[m_stack];
-
 		if (0 != mesh.m_numIndices[_wireframe])
 		{
 			bgfx::setIndexBuffer(m_ibh
@@ -1946,50 +2092,13 @@ private:
 				);
 		}
 
-		const float flip = 0 == (attrib.m_state & BGFX_STATE_CULL_CCW) ? 1.0f : -1.0f;
-		const uint8_t alpha = attrib.m_abgr>>24;
-
-		float params[4][4] =
-		{
-			{ // lightDir
-				 0.0f * flip,
-				-1.0f * flip,
-				 0.0f * flip,
-				 3.0f, // shininess
-			},
-			{ // skyColor
-				1.0f,
-				0.9f,
-				0.8f,
-				0.0f, // unused
-			},
-			{ // groundColor.xyz0
-				0.2f,
-				0.22f,
-				0.5f,
-				0.0f, // unused
-			},
-			{ // matColor
-				( (attrib.m_abgr    )&0xff)/255.0f,
-				( (attrib.m_abgr>> 8)&0xff)/255.0f,
-				( (attrib.m_abgr>>16)&0xff)/255.0f,
-				(  alpha                  )/255.0f,
-			},
-		};
-
-		bx::vec3Norm(params[0], params[0]);
-
-		bgfx::setUniform(u_params, params, 4);
+		const Attrib& attrib = m_attrib[m_stack];
+		setUParams(attrib, _wireframe);
 
 		MatrixStack& stack = m_mtxStack[m_mtxStackCurrent];
 		bgfx::setTransform(stack.mtx, stack.num);
 
 		bgfx::setVertexBuffer(0, m_vbh, mesh.m_startVertex, mesh.m_numVertices);
-		bgfx::setState(0
-			| attrib.m_state
-			| (_wireframe ? BGFX_STATE_PT_LINES|BGFX_STATE_LINEAA|BGFX_STATE_BLEND_ALPHA
-			: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
-			);
 		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
 
 		popTransform();
@@ -2129,18 +2238,6 @@ private:
 	uint8_t  m_stack;
 	bool     m_depthTestLess;
 
-	struct Attrib
-	{
-		uint64_t m_state;
-		float    m_offset;
-		float    m_scale;
-		float    m_spin;
-		uint32_t m_abgr;
-		bool     m_stipple;
-		bool     m_wireframe;
-		uint8_t  m_lod;
-	};
-
 	Attrib m_attrib[stackSize];
 
 	State::Enum m_state;
@@ -2149,6 +2246,9 @@ private:
 
 	typedef SpriteT<256, SPRITE_TEXTURE_SIZE> Sprite;
 	Sprite m_sprite;
+
+	typedef GeometryT<256> Geometry;
+	Geometry m_geometry;
 
 	bgfx::UniformHandle s_texColor;
 	bgfx::TextureHandle m_texture;
@@ -2179,6 +2279,16 @@ SpriteHandle ddCreateSprite(uint16_t _width, uint16_t _height, const void* _data
 }
 
 void ddDestroy(SpriteHandle _handle)
+{
+	s_dd.destroy(_handle);
+}
+
+GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+{
+	return s_dd.createGeometry(_numVertices, _vertices, _numIndices, _indices);
+}
+
+void ddDestroy(GeometryHandle _handle)
 {
 	s_dd.destroy(_handle);
 }
@@ -2301,6 +2411,11 @@ void ddDraw(const Sphere& _sphere)
 void ddDraw(const Cone& _cone)
 {
 	ddDrawCone(_cone.m_pos, _cone.m_end, _cone.m_radius);
+}
+
+void ddDraw(GeometryHandle _handle)
+{
+	s_dd.draw(_handle);
 }
 
 void ddDrawLineList(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
