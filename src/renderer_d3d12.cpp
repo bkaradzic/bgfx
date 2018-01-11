@@ -2025,7 +2025,7 @@ namespace bgfx { namespace d3d12
 			m_backBufferDepthStencil = createCommittedResource(m_device, HeapProperty::Default, &resourceDesc, &clearValue);
 
 			D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-			ZeroMemory(&dsvDesc, sizeof(dsvDesc) );
+			bx::memSet(&dsvDesc, 0, sizeof(dsvDesc) );
 			dsvDesc.Format        = resourceDesc.Format;
 			dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Flags         = D3D12_DSV_FLAGS(0)
@@ -4853,7 +4853,7 @@ data.NumQualityLevels = 0;
 						BX_UNUSED(blockInfo);
 
 						D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-						ZeroMemory(&dsvDesc, sizeof(dsvDesc) );
+						bx::memSet(&dsvDesc, 0, sizeof(dsvDesc) );
 						dsvDesc.Format        = s_textureFormat[texture.m_textureFormat].m_fmtDsv;
 						dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 						dsvDesc.Flags         = D3D12_DSV_FLAG_NONE
@@ -4870,8 +4870,53 @@ data.NumQualityLevels = 0;
 					{
 						m_texture[m_num] = handle;
 						D3D12_CPU_DESCRIPTOR_HANDLE rtv = { rtvDescriptor.ptr + m_num * rtvDescriptorSize };
+
+						D3D12_RENDER_TARGET_VIEW_DESC desc;
+						desc.Format = texture.m_srvd.Format;
+
+						switch (texture.m_type)
+						{
+						default:
+						case TextureD3D12::Texture2D:
+//							if (1 < msaa.Count)
+//							{
+//								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+//							}
+//							else
+							{
+								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+								desc.Texture2D.MipSlice   = m_attachment[ii].mip;
+								desc.Texture2D.PlaneSlice = 0;
+							}
+							break;
+
+						case TextureD3D12::TextureCube:
+//							if (1 < msaa.Count)
+//							{
+//								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+//								desc.Texture2DMSArray.ArraySize       = 1;
+//								desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
+//							}
+//							else
+							{
+								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+								desc.Texture2DArray.ArraySize       = 1;
+								desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
+								desc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
+								desc.Texture2DArray.PlaneSlice      = 0;
+							}
+							break;
+
+						case TextureD3D12::Texture3D:
+							desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
+							desc.Texture3D.MipSlice = m_attachment[ii].mip;
+							desc.Texture3D.WSize = 1;
+							desc.Texture3D.FirstWSlice = m_attachment[ii].layer;
+							break;
+						}
+
 						device->CreateRenderTargetView(texture.m_ptr
-							, NULL
+							, &desc
 							, rtv
 							);
 						m_num++;
@@ -5223,8 +5268,8 @@ data.NumQualityLevels = 0;
  				box.bottom = blit.m_srcY + height;;
  				box.back   = blit.m_srcZ + bx::uint32_imax(1, depth);
 
-				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{0,{DXGI_FORMAT_UNKNOWN,0,0,0,0}}} };
-				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, {{0,{DXGI_FORMAT_UNKNOWN,0,0,0,0}}} };
+				D3D12_TEXTURE_COPY_LOCATION dstLocation = { dst.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { { 0, { DXGI_FORMAT_UNKNOWN, 0, 0, 0, 0 } } } };
+				D3D12_TEXTURE_COPY_LOCATION srcLocation = { src.m_ptr, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, { { 0, { DXGI_FORMAT_UNKNOWN, 0, 0, 0, 0 } } } };
 				m_commandList->CopyTextureRegion(&dstLocation
 					, blit.m_dstX
 					, blit.m_dstY

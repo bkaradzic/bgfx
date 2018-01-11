@@ -5433,7 +5433,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							}
 
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
-									NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
+								  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
 								, &desc
 								, &m_rtv[m_num]
 								) );
