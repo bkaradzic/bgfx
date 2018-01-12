@@ -133,7 +133,7 @@ namespace ImGui
 	{
 		return false
 			|| ImGui::IsAnyItemHovered()
-			|| ImGui::IsAnyWindowHovered()
+			|| ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)
 			;
 	}
 
