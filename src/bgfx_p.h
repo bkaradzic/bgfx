@@ -1195,9 +1195,11 @@ namespace bgfx
 	public:
 		static UniformBuffer* create(uint32_t _size = 1<<20)
 		{
-			uint32_t size = BX_ALIGN_16(bx::uint32_max(_size, sizeof(UniformBuffer) ) );
-			void*    data = BX_ALLOC(g_allocator, size);
-			return BX_PLACEMENT_NEW(data, UniformBuffer)(_size);
+			const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
+
+			uint32_t size = BX_ALIGN_16(_size);
+			void*    data = BX_ALLOC(g_allocator, size+structSize);
+			return BX_PLACEMENT_NEW(data, UniformBuffer)(size);
 		}
 
 		static void destroy(UniformBuffer* _uniformBuffer)
@@ -1211,8 +1213,9 @@ namespace bgfx
 			UniformBuffer* uniformBuffer = *_uniformBuffer;
 			if (_treshold >= uniformBuffer->m_size - uniformBuffer->m_pos)
 			{
-				uint32_t size = BX_ALIGN_16(bx::uint32_max(uniformBuffer->m_size + _grow, sizeof(UniformBuffer) ) );
-				void*    data = BX_REALLOC(g_allocator, uniformBuffer, size);
+				const uint32_t structSize = sizeof(UniformBuffer)-sizeof(UniformBuffer::m_buffer);
+				uint32_t size = BX_ALIGN_16(uniformBuffer->m_size + _grow);
+				void*    data = BX_REALLOC(g_allocator, uniformBuffer, size+structSize);
 				uniformBuffer = reinterpret_cast<UniformBuffer*>(data);
 				uniformBuffer->m_size = size;
 
@@ -1300,7 +1303,7 @@ namespace bgfx
 
 	private:
 		UniformBuffer(uint32_t _size)
-			: m_size(_size-sizeof(m_buffer) )
+			: m_size(_size)
 			, m_pos(0)
 		{
 			finish();
@@ -1312,7 +1315,7 @@ namespace bgfx
 
 		uint32_t m_size;
 		uint32_t m_pos;
-		char m_buffer[8];
+		char m_buffer[INT32_MAX];
 	};
 
 	struct UniformRegInfo
