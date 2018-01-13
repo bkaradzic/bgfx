@@ -170,6 +170,10 @@ struct glslopt_shader
 	{
 		for (unsigned i = 0; i < MESA_SHADER_STAGES; i++)
 			ralloc_free(whole_program->_LinkedShaders[i]);
+		for(GLuint i =0;i< whole_program->NumShaders;i++)
+			ralloc_free(whole_program->Shaders[i]);
+		ralloc_free(whole_program->Shaders);
+		ralloc_free(whole_program->InfoLog);
 		ralloc_free(whole_program);
 		ralloc_free(rawOutput);
 		ralloc_free(optimizedOutput);

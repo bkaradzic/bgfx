@@ -62,6 +62,7 @@ namespace bgfx { namespace glsl
 
 			printCode(_code.c_str(), line, start, end, column);
 			fprintf(stderr, "Error: %s\n", log);
+			glslopt_shader_delete(shader);
 			glslopt_cleanup(ctx);
 			return false;
 		}
@@ -298,6 +299,7 @@ namespace bgfx { namespace glsl
 			writeFile(disasmfp.c_str(), optimizedShader, shaderSize);
 		}
 
+		glslopt_shader_delete(shader);
 		glslopt_cleanup(ctx);
 
 		return true;
