@@ -9,11 +9,14 @@
 #define USE_D3D12_DYNAMIC_LIB BX_PLATFORM_WINDOWS
 
 #include <sal.h>
-#if BX_PLATFORM_XBOXONE
-#	include <d3d12_x.h>
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#   include <d3d12.h>
+#   include <dxgi1_6.h>
 #else
-#	include <d3d12.h>
-#	include <dxgi1_6.h>
+#   if !BGFX_CONFIG_DEBUG
+#      define D3DCOMPILE_NO_DEBUG 1
+#   endif // !BGFX_CONFIG_DEBUG
+#   include <d3d12_x.h>
 #endif // BX_PLATFORM_XBOXONE
 
 #if defined(__MINGW32__) // BK - temp workaround for MinGW until I nuke d3dx12 usage.

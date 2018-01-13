@@ -10,8 +10,8 @@
 #define USE_D3D11_STAGING_BUFFER 0
 
 #if !USE_D3D11_DYNAMIC_LIB
-#	undef  BGFX_CONFIG_DEBUG_PIX
-#	define BGFX_CONFIG_DEBUG_PIX 0
+#   undef  BGFX_CONFIG_DEBUG_PIX
+#   define BGFX_CONFIG_DEBUG_PIX 0
 #endif // !USE_D3D11_DYNAMIC_LIB
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
@@ -21,13 +21,16 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinitio
 #include <sal.h>
 #define D3D11_NO_HELPERS
 #if BX_PLATFORM_WINDOWS
-#	include <d3d11_3.h>
-#	include <dxgi1_6.h>
+#   include <d3d11_3.h>
+#   include <dxgi1_6.h>
 #elif BX_PLATFORM_WINRT
-#	define __D3D10_1SHADER_H__ // BK - not used keep quiet!
-#	include <d3d11_3.h>
+#   define __D3D10_1SHADER_H__ // BK - not used keep quiet!
+#   include <d3d11_3.h>
 #else
-#	include <d3d11_x.h>
+#   if !BGFX_CONFIG_DEBUG
+#      define D3DCOMPILE_NO_DEBUG_AND_ALL_FAST_SEMANTICS 1
+#   endif // !BGFX_CONFIG_DEBUG
+#   include <d3d11_x.h>
 #endif // BX_PLATFORM_*
 BX_PRAGMA_DIAGNOSTIC_POP()
 

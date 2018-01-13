@@ -284,6 +284,7 @@ namespace bgfx { namespace d3d12
 		"", // DXGI_COLOR_SPACE_RGB_STUDIO_G2084_NONE_P2020
 		"", // DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_TOPLEFT_P2020
 		"", // DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020
+#if BX_PLATFORM_WINDOWS
 		"", // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P2020
 		"", // DXGI_COLOR_SPACE_YCBCR_STUDIO_GHLG_TOPLEFT_P2020
 		"", // DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020
@@ -292,9 +293,17 @@ namespace bgfx { namespace d3d12
 //		"", // DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P709
 //		"", // DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P2020
 //		"", // DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_TOPLEFT_P2020
+#endif // BX_PLATFORM_WINDOWS
 		"Custom",
 	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_colorSpace) == DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020+2);
+	static const char kDxgiLastColorSpace =
+#if BX_PLATFORM_WINDOWS
+		DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020
+#else
+		DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020
+#endif // BX_PLATFORM_WINDOWS
+		;
+	BX_STATIC_ASSERT(BX_COUNTOF(s_colorSpace) == kDxgiLastColorSpace+2);
 
 	static const D3D12_INPUT_ELEMENT_DESC s_attrib[] =
 	{
@@ -1089,6 +1098,7 @@ namespace bgfx { namespace d3d12
 				hr = m_swapChain->GetContainingOutput(&output);
 				if (SUCCEEDED(hr) )
 				{
+#if BX_PLATFORM_WINDOWS
 					IDXGIOutput6* output6;
 					hr = output->QueryInterface(IID_IDXGIOutput6, (void**)&output6);
 					if (SUCCEEDED(hr) )
@@ -1100,7 +1110,7 @@ namespace bgfx { namespace d3d12
 							BX_TRACE("Display specs:")
 							BX_TRACE("\t         BitsPerColor: %d", desc.BitsPerColor);
 							BX_TRACE("\t          Color space: %s (colorspace, range, gamma, sitting, primaries, transform)"
-								, s_colorSpace[bx::min<uint32_t>(desc.ColorSpace, DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020+1)]
+								, s_colorSpace[bx::min<uint32_t>(desc.ColorSpace, kDxgiLastColorSpace+1)]
 								);
 							BX_TRACE("\t           RedPrimary: %f, %f", desc.RedPrimary[0],   desc.RedPrimary[1]);
 							BX_TRACE("\t         GreenPrimary: %f, %f", desc.GreenPrimary[0], desc.GreenPrimary[1]);
@@ -1113,6 +1123,7 @@ namespace bgfx { namespace d3d12
 
 						DX_RELEASE(output6, 1);
 					}
+#endif // BX_PLATFORM_WINDOWS
 
 					DX_RELEASE(output, 0);
 				}

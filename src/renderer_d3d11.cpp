@@ -1253,6 +1253,9 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						goto error;
 					}
 
+					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+					m_swapBufferCount = 2;
+
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.Width  = _init.resolution.m_width;
 					m_scd.Height = _init.resolution.m_height;
@@ -1261,11 +1264,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					m_scd.SampleDesc.Count   = 1;
 					m_scd.SampleDesc.Quality = 0;
 					m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-					m_scd.BufferCount = 2;
+					m_scd.BufferCount = m_swapBufferCount;
 					m_scd.Scaling = 0 == g_platformData.ndt
 						? DXGI_SCALING_NONE
 						: DXGI_SCALING_STRETCH;
-					m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+					m_scd.SwapEffect = m_swapEffect;
 					m_scd.AlphaMode  = DXGI_ALPHA_MODE_IGNORE;
 					m_scd.Flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
