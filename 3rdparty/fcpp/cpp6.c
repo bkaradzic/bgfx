@@ -619,12 +619,35 @@ DEFBUF *defendel(struct Global *global,
 }
 
 
+void delalldefines(struct Global *global)
+{
+  /*
+   * Delete all the defines in the tables and free memory
+   */
+
+  DEFBUF *dp;
+  DEFBUF *prevp;
+  int i;
+
+  for (i = 0; i < SBSIZE; ++i)
+  {
+    prevp = global->symtab[i];
+    while ((dp = prevp) != (DEFBUF *)NULL) {
+      prevp = dp->link;
+      free(dp->repl);                /* Free the replacement */
+      free((char *)dp);              /* Free the symbol      */
+    }
+    global->symtab[i] = NULL;
+  }
+}
+
+
 void outdefines(struct Global *global)
 {
   DEFBUF *dp;
   DEFBUF **syp;
 
-  deldefines(global);                   /* Delete built-in #defines     */
+  delbuiltindefines(global);                   /* Delete built-in #defines     */
   for (syp = global->symtab; syp < &global->symtab[SBSIZE]; syp++) {
     if ((dp = *syp) != (DEFBUF *) NULL) {
       do {

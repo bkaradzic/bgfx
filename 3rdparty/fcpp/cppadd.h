@@ -407,7 +407,8 @@ void dumpadef(char *, register DEFBUF *);
 #endif
 ReturnCode openfile(struct Global *,char *);
 int cget(struct Global *);
-void deldefines(struct Global *);
+void delbuiltindefines(struct Global *);
+void delalldefines(struct Global *);
 char *Getmem(struct Global *, int);
 ReturnCode openinclude(struct Global *, char *, int);
 ReturnCode expstuff(struct Global *, char *, char *);
