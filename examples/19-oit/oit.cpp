@@ -402,7 +402,7 @@ public:
 							if (m_fadeInOut
 							&&  zz == 1)
 							{
-								color[3] = bx::fsin(time*3.0f)*0.49f+0.5f;
+								color[3] = bx::sin(time*3.0f)*0.49f+0.5f;
 							}
 
 							bgfx::setUniform(u_color, color);

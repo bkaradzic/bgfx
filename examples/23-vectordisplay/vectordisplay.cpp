@@ -47,7 +47,7 @@ bgfx::VertexDecl PosColorUvVertex::ms_decl;
 
 inline float normalizef(float _a)
 {
-	return bx::fwrap(_a, 2.0f * bx::kPi);
+	return bx::wrap(_a, 2.0f * bx::kPi);
 }
 
 VectorDisplay::VectorDisplay()
@@ -187,7 +187,7 @@ void VectorDisplay::endFrame()
 			}
 			else
 			{
-				alpha = bx::fpow(m_decayValue, stepi - 1.0f) * m_initialDecay;
+				alpha = bx::pow(m_decayValue, stepi - 1.0f) * m_initialDecay;
 			}
 
 			float params[4] = { 0.0f, 0.0f, 0.0f, alpha };
@@ -343,8 +343,10 @@ void VectorDisplay::endDraw()
 	Line* lines = (Line*)alloca(nlines * sizeof(Line) );
 
 	float t = effectiveThickness();
-	int first_last_same = bx::fabs(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.size() - 1].x) < 0.1
-	                      && bx::fabs(m_pendingPoints[0].y - m_pendingPoints[m_pendingPoints.size() - 1].y) < 0.1;
+	int first_last_same = true
+		&& bx::abs(m_pendingPoints[0].x - m_pendingPoints[m_pendingPoints.size() - 1].x) < 0.1
+		&& bx::abs(m_pendingPoints[0].y - m_pendingPoints[m_pendingPoints.size() - 1].y) < 0.1
+		;
 
 	// compute basics
 	for (size_t i = 1; i < m_pendingPoints.size(); i++)
@@ -358,10 +360,10 @@ void VectorDisplay::endDraw()
 		line->y0 = m_pendingPoints[i - 1].y;
 		line->x1 = m_pendingPoints[i].x;
 		line->y1 = m_pendingPoints[i].y;
-		line->a = bx::fatan2(line->y1 - line->y0, line->x1 - line->x0); // angle from positive x axis, increasing ccw, [-pi, pi]
-		line->sin_a = bx::fsin(line->a);
-		line->cos_a = bx::fcos(line->a);
-		line->len = bx::fsqrt( (line->x1 - line->x0) * (line->x1 - line->x0) + (line->y1 - line->y0) * (line->y1 - line->y0) );
+		line->a     = bx::atan2(line->y1 - line->y0, line->x1 - line->x0); // angle from positive x axis, increasing ccw, [-pi, pi]
+		line->sin_a = bx::sin(line->a);
+		line->cos_a = bx::cos(line->a);
+		line->len   = bx::sqrt( (line->x1 - line->x0) * (line->x1 - line->x0) + (line->y1 - line->y0) * (line->y1 - line->y0) );
 
 		// figure out what connections we have
 		line->has_prev = (!line->is_first
@@ -391,12 +393,12 @@ void VectorDisplay::endDraw()
 			{
 				if (a2pa < pa2a)
 				{
-					float shorten = t * bx::fsin(a2pa / 2.0f) / bx::fcos(a2pa / 2.0f);
+					float shorten = t * bx::sin(a2pa / 2.0f) / bx::cos(a2pa / 2.0f);
 					float a = (bx::kPi - a2pa) / 2.0f;
 					if (shorten > maxshorten)
 					{
 						line->s0 = pline->s1 = maxshorten;
-						line->tr0 = pline->tr1 = maxshorten * bx::fsin(a) / bx::fcos(a);
+						line->tr0 = pline->tr1 = maxshorten * bx::sin(a) / bx::cos(a);
 					}
 					else
 					{
@@ -407,12 +409,13 @@ void VectorDisplay::endDraw()
 				}
 				else
 				{
-					float shorten = t * bx::fsin(pa2a / 2.0f) / bx::fcos(pa2a / 2.0f);
+					float shorten = t * bx::sin(pa2a / 2.0f) / bx::cos(pa2a / 2.0f);
 					float a = (bx::kPi - pa2a) / 2.0f;
 					if (shorten > maxshorten)
 					{
-						line->s0 = pline->s1 = maxshorten;
-						line->tl0 = pline->tl1 = maxshorten * bx::fsin(a) / bx::fcos(a);
+						line->s0  = pline->s1 = maxshorten;
+						line->tl0 =
+							pline->tl1 = maxshorten * bx::sin(a) / bx::cos(a);
 					}
 					else
 					{
@@ -495,12 +498,12 @@ void VectorDisplay::drawCircle(float _x, float _y, float _radius, float _steps)
 
 	float step = bx::kPi * 2.0f / _steps;
 
-	beginDraw(_x + _radius * bx::fsin(edgeangle + angadjust),
-	          _y - _radius * bx::fcos(edgeangle + angadjust) );
+	beginDraw(_x + _radius * bx::sin(edgeangle + angadjust),
+	          _y - _radius * bx::cos(edgeangle + angadjust) );
 	for (edgeangle = 0; edgeangle < 2.0f * bx::kPi - 0.001; edgeangle += step)
 	{
-		drawTo(_x + _radius * bx::fsin(edgeangle + step - angadjust),
-		       _y - _radius * bx::fcos(edgeangle + step - angadjust) );
+		drawTo(_x + _radius * bx::sin(edgeangle + step - angadjust),
+		       _y - _radius * bx::cos(edgeangle + step - angadjust) );
 	}
 
 	endDraw();
@@ -510,32 +513,39 @@ void VectorDisplay::drawWheel(float _angle, float _x, float _y, float _radius)
 {
 	float spokeradius = _radius - 2.0f;
 	// draw spokes
-	drawLine(_x + spokeradius * bx::fsin(_angle),
-	         _y - spokeradius * bx::fcos(_angle),
-	         _x - spokeradius * bx::fsin(_angle),
-	         _y + spokeradius * bx::fcos(_angle) );
-	drawLine(_x + spokeradius * bx::fsin(_angle + bx::kPi / 4.0f),
-	         _y - spokeradius * bx::fcos(_angle + bx::kPi / 4.0f),
-	         _x - spokeradius * bx::fsin(_angle + bx::kPi / 4.0f),
-	         _y + spokeradius * bx::fcos(_angle + bx::kPi / 4.0f) );
-	drawLine(_x + spokeradius * bx::fsin(_angle + bx::kPi / 2.0f),
-	         _y - spokeradius * bx::fcos(_angle + bx::kPi / 2.0f),
-	         _x - spokeradius * bx::fsin(_angle + bx::kPi / 2.0f),
-	         _y + spokeradius * bx::fcos(_angle + bx::kPi / 2.0f) );
-	drawLine(_x + spokeradius * bx::fsin(_angle + 3.0f * bx::kPi / 4.0f),
-	         _y - spokeradius * bx::fcos(_angle + 3.0f * bx::kPi / 4.0f),
-	         _x - spokeradius * bx::fsin(_angle + 3.0f * bx::kPi / 4.0f),
-	         _y + spokeradius * bx::fcos(_angle + 3.0f * bx::kPi / 4.0f) );
+	drawLine(_x + spokeradius * bx::sin(_angle),
+	         _y - spokeradius * bx::cos(_angle),
+	         _x - spokeradius * bx::sin(_angle),
+	         _y + spokeradius * bx::cos(_angle)
+	         );
+	drawLine(_x + spokeradius * bx::sin(_angle +        bx::kPi / 4.0f),
+	         _y - spokeradius * bx::cos(_angle +        bx::kPi / 4.0f),
+	         _x - spokeradius * bx::sin(_angle +        bx::kPi / 4.0f),
+	         _y + spokeradius * bx::cos(_angle +        bx::kPi / 4.0f)
+	         );
+	drawLine(_x + spokeradius * bx::sin(_angle +        bx::kPi / 2.0f),
+	         _y - spokeradius * bx::cos(_angle +        bx::kPi / 2.0f),
+	         _x - spokeradius * bx::sin(_angle +        bx::kPi / 2.0f),
+	         _y + spokeradius * bx::cos(_angle +        bx::kPi / 2.0f)
+	         );
+	drawLine(_x + spokeradius * bx::sin(_angle + 3.0f * bx::kPi / 4.0f),
+	         _y - spokeradius * bx::cos(_angle + 3.0f * bx::kPi / 4.0f),
+	         _x - spokeradius * bx::sin(_angle + 3.0f * bx::kPi / 4.0f),
+	         _y + spokeradius * bx::cos(_angle + 3.0f * bx::kPi / 4.0f)
+	         );
 
 	float edgeangle = 0.0f;
 	float angadjust = 0.0f;
 
-	beginDraw(_x + _radius * bx::fsin(_angle + edgeangle + angadjust),
-	          _y - _radius * bx::fcos(_angle + edgeangle + angadjust) );
+	beginDraw(
+		  _x + _radius * bx::sin(_angle + edgeangle + angadjust)
+		, _y - _radius * bx::cos(_angle + edgeangle + angadjust)
+		);
+
 	for (edgeangle = 0; edgeangle < 2.0f * bx::kPi - 0.001f; edgeangle += bx::kPi / 4.0f)
 	{
-		drawTo(_x + _radius * bx::fsin(_angle + edgeangle + bx::kPi / 4.0f - angadjust),
-		       _y - _radius * bx::fcos(_angle + edgeangle + bx::kPi / 4.0f - angadjust) );
+		drawTo(_x + _radius * bx::sin(_angle + edgeangle + bx::kPi / 4.0f - angadjust),
+		       _y - _radius * bx::cos(_angle + edgeangle + bx::kPi / 4.0f - angadjust) );
 	}
 
 	endDraw();
@@ -547,12 +557,10 @@ float VectorDisplay::effectiveThickness()
 	{
 		return m_thickness * m_drawScale / 2.0f;
 	}
-	else
-	{
-		// this makes thickness=16 at 2048x1536
-		float vv = (0.01f * (m_screenWidth + m_screenHeight) / 2.0f) * m_drawScale / 2.0f;
-		return bx::max(vv, 6.0f);
-	}
+
+	// this makes thickness=16 at 2048x1536
+	float vv = (0.01f * (m_screenWidth + m_screenHeight) / 2.0f) * m_drawScale / 2.0f;
+	return bx::max(vv, 6.0f);
 }
 
 void VectorDisplay::setTransform(float _offsetX, float _offsetY, float _scale)
@@ -622,7 +630,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	if (a2pa < pa2a)
 	{
 		_t = -_t;
-		nsteps = (int32_t)bx::max(1.0f, bx::fround(a2pa / (bx::kPi / 8.0f) ) );
+		nsteps = (int32_t)bx::max(1.0f, bx::round(a2pa / (bx::kPi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
@@ -631,7 +639,7 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 	}
 	else
 	{
-		nsteps = (int32_t)bx::max(1.0f, bx::fround(pa2a / (bx::kPi / 8.0f) ) );
+		nsteps = (int32_t)bx::max(1.0f, bx::round(pa2a / (bx::kPi / 8.0f) ) );
 		angles = (float*)alloca(sizeof(float) * (nsteps + 1) );
 		for (i = 0; i <= nsteps; i++)
 		{
@@ -641,9 +649,9 @@ void VectorDisplay::drawFan(float _cx, float _cy, float _pa, float _a, float _t,
 
 	for (i = 1; i <= nsteps; i++)
 	{
-		appendTexpoint(_cx + _t * bx::fsin(angles[i - 1]), _cy - _t * bx::fcos(angles[i - 1]), _e, (float)HALF_TEXTURE_SIZE);
+		appendTexpoint(_cx + _t * bx::sin(angles[i - 1]), _cy - _t * bx::cos(angles[i - 1]), _e, (float)HALF_TEXTURE_SIZE);
 		appendTexpoint(_cx, _cy, _s, (float)HALF_TEXTURE_SIZE);
-		appendTexpoint(_cx + _t * bx::fsin(angles[i]), _cy - _t * bx::fcos(angles[i]), _e, (float)HALF_TEXTURE_SIZE);
+		appendTexpoint(_cx + _t * bx::sin(angles[i]), _cy - _t * bx::cos(angles[i]), _e, (float)HALF_TEXTURE_SIZE);
 	}
 }
 
@@ -854,11 +862,11 @@ void VectorDisplay::genLinetex()                                    // generate 
 		for (y = 0; y < TEXTURE_SIZE; y++)
 		{
 			float distance = bx::min(1.0f
-				, bx::fsqrt( (float)( (x - HALF_TEXTURE_SIZE) * (x - HALF_TEXTURE_SIZE) + (y - HALF_TEXTURE_SIZE) * (y - HALF_TEXTURE_SIZE) ) ) / (float)HALF_TEXTURE_SIZE
+				, bx::sqrt( (float)( (x - HALF_TEXTURE_SIZE) * (x - HALF_TEXTURE_SIZE) + (y - HALF_TEXTURE_SIZE) * (y - HALF_TEXTURE_SIZE) ) ) / (float)HALF_TEXTURE_SIZE
 				);
 
-			float line = bx::fpow(16.0f, -2.0f * distance);
-			float glow = bx::fpow( 2.0f, -4.0f * distance) / 10.0f;
+			float line = bx::pow(16.0f, -2.0f * distance);
+			float glow = bx::pow( 2.0f, -4.0f * distance) / 10.0f;
 			glow = 0;
 			float val = bx::clamp(line + glow, 0.0f, 1.0f);
 

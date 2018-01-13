@@ -361,7 +361,7 @@ public:
 			{
 				union { uint32_t color; uint8_t bgra[4]; } cast = { m_lumBgra8 };
 				float exponent = cast.bgra[3]/255.0f * 255.0f - 128.0f;
-				float lumAvg   = cast.bgra[2]/255.0f * bx::fexp2(exponent);
+				float lumAvg   = cast.bgra[2]/255.0f * bx::exp2(exponent);
 				ImGui::SliderFloat("Lum Avg", &lumAvg, 0.0f, 1.0f);
 			}
 
@@ -483,7 +483,7 @@ public:
 			// Set view and projection matrix for view hdrMesh.
 			bgfx::setViewTransform(hdrMesh, view, proj);
 
-			float tonemap[4] = { m_middleGray, bx::fsq(m_white), m_threshold, m_time };
+			float tonemap[4] = { m_middleGray, bx::square(m_white), m_threshold, m_time };
 
 			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);

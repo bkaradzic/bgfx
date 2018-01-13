@@ -275,9 +275,9 @@ public:
 
 			// Setup lights.
 			float lightPos[4];
-			lightPos[0] = -bx::fcos(time);
+			lightPos[0] = -bx::cos(time);
 			lightPos[1] = -1.0f;
-			lightPos[2] = -bx::fsin(time);
+			lightPos[2] = -bx::sin(time);
 			lightPos[3] = 0.0f;
 
 			bgfx::setUniform(u_lightPos, lightPos);

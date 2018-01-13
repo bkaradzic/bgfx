@@ -253,7 +253,7 @@ namespace bgfx
 	{
 		float tmp[3];
 		bx::vec3Sub(tmp, _pos, vertexPos(_vertices, _stride, _index) );
-		return bx::fsqrt(bx::vec3Dot(tmp, tmp) );
+		return bx::sqrt(bx::vec3Dot(tmp, tmp) );
 	}
 
 	typedef float (*KeyFn)(float, float, float);

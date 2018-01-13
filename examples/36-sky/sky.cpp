@@ -279,21 +279,21 @@ namespace
 			float day = 30.0f * m_month + 15.0f;
 			float lambda = 280.46f + 0.9856474f * day;
 			lambda = bx::toRad(lambda);
-			m_delta = bx::fasin(bx::fsin(m_eclipticObliquity) * bx::fsin(lambda));
+			m_delta = bx::asin(bx::sin(m_eclipticObliquity) * bx::sin(lambda));
 		}
 
 		void UpdateSunPosition(float hour)
 		{
 			float latitude = bx::toRad(m_latitude);
 			float h = hour * bx::kPi / 12.0f;
-			float azimuth = bx::fatan2(
-				bx::fsin(h),
-				bx::fcos(h) * bx::fsin(latitude) - bx::ftan(m_delta) * bx::fcos(latitude)
+			float azimuth = bx::atan2(
+				bx::sin(h),
+				bx::cos(h) * bx::sin(latitude) - bx::tan(m_delta) * bx::cos(latitude)
 			);
 
-			float altitude = bx::fasin(
-				bx::fsin(latitude) * bx::fsin(m_delta) + bx::fcos(latitude) * bx::fcos(m_delta) * bx::fcos(h)
-			);
+			float altitude = bx::asin(
+				bx::sin(latitude) * bx::sin(m_delta) + bx::cos(latitude) * bx::cos(m_delta) * bx::cos(h)
+				);
 			float rotation[4];
 			bx::quatRotateAxis(rotation, m_upvector, -azimuth);
 			float direction[3];
@@ -544,25 +544,25 @@ namespace
 				const double freq = double(bx::getHPFrequency());
 				const float deltaTime = float(frameTime / freq);
 				m_time += m_timeScale * deltaTime;
-				m_time = bx::fmod(m_time, 24.0f);
+				m_time = bx::mod(m_time, 24.0f);
 				m_sun.Update(m_time);
 
 				imguiBeginFrame(m_mouseState.m_mx
 					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
+					, (m_mouseState.m_buttons[entry::MouseButton::Left]   ? IMGUI_MBUT_LEFT   : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Right]  ? IMGUI_MBUT_RIGHT  : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					, m_mouseState.m_mz
 					, uint16_t(m_width)
 					, uint16_t(m_height)
-				);
+					);
 
 				showExampleDialog(this);
 
 				ImGui::SetNextWindowPos(
 					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 					, ImGuiCond_FirstUseEver
-				);
+					);
 
 				imgui(m_width / 5.0f - 10.0f);
 

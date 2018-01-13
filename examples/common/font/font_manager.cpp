@@ -617,6 +617,11 @@ const GlyphInfo* FontManager::getGlyphInfo(FontHandle _handle, CodePoint _codePo
 
 bool FontManager::addBitmap(GlyphInfo& _glyphInfo, const uint8_t* _data)
 {
-	_glyphInfo.regionIndex = m_atlas->addRegion( (uint16_t)bx::fceil(_glyphInfo.width), (uint16_t)bx::fceil(_glyphInfo.height), _data, AtlasRegion::TYPE_GRAY);
+	_glyphInfo.regionIndex = m_atlas->addRegion(
+		  (uint16_t)bx::ceil(_glyphInfo.width)
+		, (uint16_t)bx::ceil(_glyphInfo.height)
+		, _data
+		, AtlasRegion::TYPE_GRAY
+		);
 	return true;
 }

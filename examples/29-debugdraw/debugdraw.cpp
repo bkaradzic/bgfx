@@ -692,7 +692,7 @@ public:
 				bx::mtxSRT(bunny, 0.03f, 0.03f, 0.03f, 0.0f, 0.0f, 0.0f, -3.0f, 0.0f, 0.0f);
 
 				ddSetTransform(bunny);
-				const bool wireframe = bx::fmod(time, 2.0f) > 1.0f;
+				const bool wireframe = bx::mod(time, 2.0f) > 1.0f;
 				ddSetWireframe(wireframe);
 				ddSetColor(wireframe ? 0xffff00ff : 0xff00ff00);
 				ddDraw(m_bunny);
@@ -738,7 +738,7 @@ public:
 				ddPush();
 					ddSetStipple(true, 1.0f, time*0.1f);
 					ddSetColor(0xff0000ff);
-					ddDrawCircle(normal, center, 1.0f, 0.5f + bx::fsin(time*10.0f) );
+					ddDrawCircle(normal, center, 1.0f, 0.5f + bx::sin(time*10.0f) );
 				ddPop();
 
 				ddSetSpin(time);

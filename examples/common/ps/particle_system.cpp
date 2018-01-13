@@ -294,18 +294,18 @@ namespace ps
 
 				float start[3];
 				float end[3];
-				const float startOffset = bx::flerp(m_uniforms.m_offsetStart[0], m_uniforms.m_offsetStart[1], bx::frnd(&m_rng) );
+				const float startOffset = bx::lerp(m_uniforms.m_offsetStart[0], m_uniforms.m_offsetStart[1], bx::frnd(&m_rng) );
 				bx::vec3Mul(start, pos, startOffset);
 
-				const float endOffset = bx::flerp(m_uniforms.m_offsetEnd[0], m_uniforms.m_offsetEnd[1], bx::frnd(&m_rng) );
+				const float endOffset = bx::lerp(m_uniforms.m_offsetEnd[0], m_uniforms.m_offsetEnd[1], bx::frnd(&m_rng) );
 				float tmp1[3];
 				bx::vec3Mul(tmp1, dir, endOffset);
 				bx::vec3Add(end, tmp1, start);
 
 				particle.life = time;
-				particle.lifeSpan = bx::flerp(m_uniforms.m_lifeSpan[0], m_uniforms.m_lifeSpan[1], bx::frnd(&m_rng) );
+				particle.lifeSpan = bx::lerp(m_uniforms.m_lifeSpan[0], m_uniforms.m_lifeSpan[1], bx::frnd(&m_rng) );
 
-				float gravity[3] = { 0.0f, -9.81f * m_uniforms.m_gravityScale * bx::fsq(particle.lifeSpan), 0.0f };
+				float gravity[3] = { 0.0f, -9.81f * m_uniforms.m_gravityScale * bx::square(particle.lifeSpan), 0.0f };
 
 				bx::vec3MulMtx(particle.start,  start, mtx);
 				bx::vec3MulMtx(particle.end[0], end,   mtx);
@@ -313,11 +313,11 @@ namespace ps
 
 				bx::memCopy(particle.rgba, m_uniforms.m_rgba, BX_COUNTOF(m_uniforms.m_rgba)*sizeof(uint32_t) );
 
-				particle.blendStart = bx::flerp(m_uniforms.m_blendStart[0], m_uniforms.m_blendStart[1], bx::frnd(&m_rng) );
-				particle.blendEnd   = bx::flerp(m_uniforms.m_blendEnd[0],   m_uniforms.m_blendEnd[1],   bx::frnd(&m_rng) );
+				particle.blendStart = bx::lerp(m_uniforms.m_blendStart[0], m_uniforms.m_blendStart[1], bx::frnd(&m_rng) );
+				particle.blendEnd   = bx::lerp(m_uniforms.m_blendEnd[0],   m_uniforms.m_blendEnd[1],   bx::frnd(&m_rng) );
 
-				particle.scaleStart = bx::flerp(m_uniforms.m_scaleStart[0], m_uniforms.m_scaleStart[1], bx::frnd(&m_rng) );
-				particle.scaleEnd   = bx::flerp(m_uniforms.m_scaleEnd[0],   m_uniforms.m_scaleEnd[1],   bx::frnd(&m_rng) );
+				particle.scaleStart = bx::lerp(m_uniforms.m_scaleStart[0], m_uniforms.m_scaleStart[1], bx::frnd(&m_rng) );
+				particle.scaleEnd   = bx::lerp(m_uniforms.m_scaleEnd[0],   m_uniforms.m_scaleEnd[1],   bx::frnd(&m_rng) );
 
 				time += timePerParticle;
 			}
@@ -360,21 +360,21 @@ namespace ps
 				ParticleSort& sort = _outSort[current];
 				float tmp[3];
 				bx::vec3Sub(tmp, _eye, pos);
-				sort.dist = bx::fsqrt(bx::vec3Dot(tmp, tmp) );
+				sort.dist = bx::sqrt(bx::vec3Dot(tmp, tmp) );
 				sort.idx  = current;
 
 				uint32_t idx = uint32_t(ttRgba*4);
-				float ttmod = bx::fmod(ttRgba, 0.25f)/0.25f;
+				float ttmod = bx::mod(ttRgba, 0.25f)/0.25f;
 				uint32_t rgbaStart = particle.rgba[idx];
 				uint32_t rgbaEnd   = particle.rgba[idx+1];
 
-				float rr = bx::flerp( ( (uint8_t*)&rgbaStart)[0], ( (uint8_t*)&rgbaEnd)[0], ttmod)/255.0f;
-				float gg = bx::flerp( ( (uint8_t*)&rgbaStart)[1], ( (uint8_t*)&rgbaEnd)[1], ttmod)/255.0f;
-				float bb = bx::flerp( ( (uint8_t*)&rgbaStart)[2], ( (uint8_t*)&rgbaEnd)[2], ttmod)/255.0f;
-				float aa = bx::flerp( ( (uint8_t*)&rgbaStart)[3], ( (uint8_t*)&rgbaEnd)[3], ttmod)/255.0f;
+				float rr = bx::lerp( ( (uint8_t*)&rgbaStart)[0], ( (uint8_t*)&rgbaEnd)[0], ttmod)/255.0f;
+				float gg = bx::lerp( ( (uint8_t*)&rgbaStart)[1], ( (uint8_t*)&rgbaEnd)[1], ttmod)/255.0f;
+				float bb = bx::lerp( ( (uint8_t*)&rgbaStart)[2], ( (uint8_t*)&rgbaEnd)[2], ttmod)/255.0f;
+				float aa = bx::lerp( ( (uint8_t*)&rgbaStart)[3], ( (uint8_t*)&rgbaEnd)[3], ttmod)/255.0f;
 
-				float blend = bx::flerp(particle.blendStart, particle.blendEnd, ttBlend);
-				float scale = bx::flerp(particle.scaleStart, particle.scaleEnd, ttScale);
+				float blend = bx::lerp(particle.blendStart, particle.blendEnd, ttBlend);
+				float scale = bx::lerp(particle.scaleStart, particle.scaleEnd, ttScale);
 
 				uint32_t abgr = toAbgr(rr, gg, bb, aa);
 

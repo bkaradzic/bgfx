@@ -296,12 +296,12 @@ struct Camera
 
 		consumeOrbit(amount);
 
-		m_target.curr[0] = bx::flerp(m_target.curr[0], m_target.dest[0], amount);
-		m_target.curr[1] = bx::flerp(m_target.curr[1], m_target.dest[1], amount);
-		m_target.curr[2] = bx::flerp(m_target.curr[2], m_target.dest[2], amount);
-		m_pos.curr[0] = bx::flerp(m_pos.curr[0], m_pos.dest[0], amount);
-		m_pos.curr[1] = bx::flerp(m_pos.curr[1], m_pos.dest[1], amount);
-		m_pos.curr[2] = bx::flerp(m_pos.curr[2], m_pos.dest[2], amount);
+		m_target.curr[0] = bx::lerp(m_target.curr[0], m_target.dest[0], amount);
+		m_target.curr[1] = bx::lerp(m_target.curr[1], m_target.dest[1], amount);
+		m_target.curr[2] = bx::lerp(m_target.curr[2], m_target.dest[2], amount);
+		m_pos.curr[0] = bx::lerp(m_pos.curr[0], m_pos.dest[0], amount);
+		m_pos.curr[1] = bx::lerp(m_pos.curr[1], m_pos.dest[1], amount);
+		m_pos.curr[2] = bx::lerp(m_pos.curr[2], m_pos.dest[2], amount);
 	}
 
 	void envViewMtx(float* _mtx)
@@ -356,10 +356,10 @@ struct Camera
 		const float phi   = _u * 2.0f*bx::kPi;
 		const float theta = _v * bx::kPi;
 
-		const float st = bx::fsin(theta);
-		const float sp = bx::fsin(phi);
-		const float ct = bx::fcos(theta);
-		const float cp = bx::fcos(phi);
+		const float st = bx::sin(theta);
+		const float sp = bx::sin(phi);
+		const float ct = bx::cos(theta);
+		const float cp = bx::cos(phi);
 
 		_vec[0] = -st*sp;
 		_vec[1] = ct;
@@ -368,8 +368,8 @@ struct Camera
 
 	static inline void latLongFromVec(float& _u, float& _v, const float _vec[3])
 	{
-		const float phi = bx::fatan2(_vec[0], _vec[2]);
-		const float theta = bx::facos(_vec[1]);
+		const float phi   = bx::atan2(_vec[0], _vec[2]);
+		const float theta = bx::acos(_vec[1]);
 
 		_u = (bx::kPi + phi)*bx::kInvPi*0.5f;
 		_v = theta*bx::kInvPi;
@@ -830,7 +830,7 @@ public:
 
 			// Env rotation.
 			const float amount = bx::min(deltaTimeSec/0.12f, 1.0f);
-			m_settings.m_envRotCurr = bx::flerp(m_settings.m_envRotCurr, m_settings.m_envRotDest, amount);
+			m_settings.m_envRotCurr = bx::lerp(m_settings.m_envRotCurr, m_settings.m_envRotDest, amount);
 
 			// Env mtx.
 			float mtxEnvView[16];

@@ -1469,7 +1469,7 @@ namespace bgfx { namespace gl
 		if (_array)
 		{
 			glTexStorage3D(target
-				, 1 + GLsizei(bx::flog2(float(_dim) ) )
+				, 1 + GLsizei(bx::log2(float(_dim) ) )
 				, internalFmt
 				, _dim
 				, _dim

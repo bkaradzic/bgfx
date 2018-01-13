@@ -23,10 +23,10 @@ struct PosColorVertex
 	static void init()
 	{
 		ms_decl
-		.begin()
-		.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-		.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-		.end();
+			.begin()
+			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+			.end();
 	}
 
 	static bgfx::VertexDecl ms_decl;
@@ -182,8 +182,9 @@ public:
 			// draw moving shape
 			static float counter = 0.0f;
 			counter += 0.01f;
-			float posX = m_width  / 2.0f + bx::fsin(counter * 3.18378f) * (m_width / 2.0f);
-			float posY = m_height / 2.0f + bx::fcos(counter) * (m_height / 2.0f);
+
+			const float posX = m_width  / 2.0f + bx::sin(counter * 3.18378f) * (m_width / 2.0f);
+			const float posY = m_height / 2.0f + bx::cos(counter) * (m_height / 2.0f);
 			m_vd.drawCircle(posX, posY, 5.0f, 10.0f);
 
 			m_vd.endFrame();

@@ -146,18 +146,18 @@ static uint8_t getCircleLod(uint8_t _lod)
 
 static void circle(float* _out, float _angle)
 {
-	float sa = bx::fsin(_angle);
-	float ca = bx::fcos(_angle);
+	float sa = bx::sin(_angle);
+	float ca = bx::cos(_angle);
 	_out[0] = sa;
 	_out[1] = ca;
 }
 
 static void squircle(float* _out, float _angle)
 {
-	float sa = bx::fsin(_angle);
-	float ca = bx::fcos(_angle);
-	_out[0] = bx::fsqrt(bx::fabs(sa) ) * bx::fsign(sa);
-	_out[1] = bx::fsqrt(bx::fabs(ca) ) * bx::fsign(ca);
+	float sa = bx::sin(_angle);
+	float ca = bx::cos(_angle);
+	_out[0] = bx::sqrt(bx::abs(sa) ) * bx::sign(sa);
+	_out[1] = bx::sqrt(bx::abs(ca) ) * bx::sign(ca);
 }
 
 uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 0, void* _normals0 = NULL, uint16_t _normalStride0 = 0)
@@ -174,7 +174,7 @@ uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 
 			{
 				static const float scale = 1.0f;
 				static const float golden = 1.6180339887f;
-				static const float len = bx::fsqrt(golden*golden + 1.0f);
+				static const float len = bx::sqrt(golden*golden + 1.0f);
 				static const float ss = 1.0f/len * scale;
 				static const float ll = ss*golden;
 
@@ -285,7 +285,7 @@ uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 
 		} gen(_pos0, _posStride0, _normals0, _normalStride0, _subdiv0);
 	}
 
-	uint32_t numVertices = 20*3*bx::uint32_max(1, (uint32_t)bx::fpow(4.0f, _subdiv0) );
+	uint32_t numVertices = 20*3*bx::uint32_max(1, (uint32_t)bx::pow(4.0f, _subdiv0) );
 	return numVertices;
 }
 
@@ -1512,12 +1512,12 @@ struct DebugDraw
 		const uint32_t num = getCircleLod(attrib.m_lod);
 		const float step = bx::kPi * 2.0f / num;
 
-		_degrees = bx::fwrap(_degrees, 360.0f);
+		_degrees = bx::wrap(_degrees, 360.0f);
 
 		float pos[3];
 		getPoint(pos, _axis
-			, bx::fsin(step * 0)*_radius
-			, bx::fcos(step * 0)*_radius
+			, bx::sin(step * 0)*_radius
+			, bx::cos(step * 0)*_radius
 			);
 
 		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
@@ -1527,22 +1527,22 @@ struct DebugDraw
 		for (uint32_t ii = 1; ii < n+1; ++ii)
 		{
 			getPoint(pos, _axis
-				, bx::fsin(step * ii)*_radius
-				, bx::fcos(step * ii)*_radius
+				, bx::sin(step * ii)*_radius
+				, bx::cos(step * ii)*_radius
 				);
 			lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		}
 
 		moveTo(_x, _y, _z);
 		getPoint(pos, _axis
-			, bx::fsin(step * 0)*_radius
-			, bx::fcos(step * 0)*_radius
+			, bx::sin(step * 0)*_radius
+			, bx::cos(step * 0)*_radius
 			);
 		lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 
 		getPoint(pos, _axis
-			, bx::fsin(step * n)*_radius
-			, bx::fcos(step * n)*_radius
+			, bx::sin(step * n)*_radius
+			, bx::cos(step * n)*_radius
 			);
 		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		lineTo(_x, _y, _z);
@@ -1568,8 +1568,8 @@ struct DebugDraw
 		circle(xy0, 0.0f);
 		squircle(xy1, 0.0f);
 
-		bx::vec3Mul(pos,  udir, bx::flerp(xy0[0], xy1[0], _weight)*_radius);
-		bx::vec3Mul(tmp0, vdir, bx::flerp(xy0[1], xy1[1], _weight)*_radius);
+		bx::vec3Mul(pos,  udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
+		bx::vec3Mul(tmp0, vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
 		bx::vec3Add(tmp1, pos,  tmp0);
 		bx::vec3Add(pos,  tmp1, _center);
 		moveTo(pos);
@@ -1580,8 +1580,8 @@ struct DebugDraw
 			circle(xy0, angle);
 			squircle(xy1, angle);
 
-			bx::vec3Mul(pos,  udir, bx::flerp(xy0[0], xy1[0], _weight)*_radius);
-			bx::vec3Mul(tmp0, vdir, bx::flerp(xy0[1], xy1[1], _weight)*_radius);
+			bx::vec3Mul(pos,  udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
+			bx::vec3Mul(tmp0, vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
 			bx::vec3Add(tmp1, pos,  tmp0);
 			bx::vec3Add(pos,  tmp1, _center);
 			lineTo(pos);
@@ -1609,8 +1609,8 @@ struct DebugDraw
 
 		float pos[3];
 		getPoint(pos, _axis
-			, bx::flerp(xy0[0], xy1[0], _weight)*_radius
-			, bx::flerp(xy0[1], xy1[1], _weight)*_radius
+			, bx::lerp(xy0[0], xy1[0], _weight)*_radius
+			, bx::lerp(xy0[1], xy1[1], _weight)*_radius
 			);
 
 		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
@@ -1621,8 +1621,8 @@ struct DebugDraw
 			squircle(xy1, angle);
 
 			getPoint(pos, _axis
-				, bx::flerp(xy0[0], xy1[0], _weight)*_radius
-				, bx::flerp(xy0[1], xy1[1], _weight)*_radius
+				, bx::lerp(xy0[0], xy1[0], _weight)*_radius
+				, bx::lerp(xy0[1], xy1[1], _weight)*_radius
 				);
 			lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
 		}

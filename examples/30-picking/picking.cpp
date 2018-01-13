@@ -236,9 +236,9 @@ public:
 				float eyeDist = 2.5f;
 				float eye[3] =
 				{
-					-eyeDist * bx::fsin(time*cameraSpin*camSpeed),
+					-eyeDist * bx::sin(time*cameraSpin*camSpeed),
 					0.0f,
-					-eyeDist * bx::fcos(time*cameraSpin*camSpeed),
+					-eyeDist * bx::cos(time*cameraSpin*camSpeed),
 				};
 				float at[3] = { 0.0f, 0.0f, 0.0f };
 

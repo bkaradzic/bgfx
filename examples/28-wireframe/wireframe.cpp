@@ -140,12 +140,12 @@ struct Camera
 
 		consumeOrbit(amount);
 
-		m_target.curr[0] = bx::flerp(m_target.curr[0], m_target.dest[0], amount);
-		m_target.curr[1] = bx::flerp(m_target.curr[1], m_target.dest[1], amount);
-		m_target.curr[2] = bx::flerp(m_target.curr[2], m_target.dest[2], amount);
-		m_pos.curr[0] = bx::flerp(m_pos.curr[0], m_pos.dest[0], amount);
-		m_pos.curr[1] = bx::flerp(m_pos.curr[1], m_pos.dest[1], amount);
-		m_pos.curr[2] = bx::flerp(m_pos.curr[2], m_pos.dest[2], amount);
+		m_target.curr[0] = bx::lerp(m_target.curr[0], m_target.dest[0], amount);
+		m_target.curr[1] = bx::lerp(m_target.curr[1], m_target.dest[1], amount);
+		m_target.curr[2] = bx::lerp(m_target.curr[2], m_target.dest[2], amount);
+		m_pos.curr[0]    = bx::lerp(m_pos.curr[0], m_pos.dest[0], amount);
+		m_pos.curr[1]    = bx::lerp(m_pos.curr[1], m_pos.dest[1], amount);
+		m_pos.curr[2]    = bx::lerp(m_pos.curr[2], m_pos.dest[2], amount);
 	}
 
 	struct Interp3f

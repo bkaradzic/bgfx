@@ -91,8 +91,8 @@ public:
 		auto dpi = DisplayInformation::GetForCurrentView()->LogicalDpi;
 		static const float dipsPerInch = 96.0f;
 		g_eventQueue.postSizeEvent(g_defaultWindow
-			, lround(bx::ffloor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
-			, lround(bx::ffloor(bounds.Height * dpi / dipsPerInch + 0.5f) )
+			, lround(bx::floor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
+			, lround(bx::floor(bounds.Height * dpi / dipsPerInch + 0.5f) )
 			);
 #endif // BX_PLATFORM_WINRT
 

@@ -432,7 +432,7 @@ struct View
 						m_angle = bx::toRad(angle);
 					}
 
-					m_angle = bx::fwrap(m_angle, bx::kPi*2.0f);
+					m_angle = bx::wrap(m_angle, bx::kPi*2.0f);
 				}
 				else
 				{
@@ -974,9 +974,9 @@ struct InterpolatorT
 	}
 };
 
-typedef InterpolatorT<bx::flerp,     bx::easeInOutQuad>  Interpolator;
+typedef InterpolatorT<bx::lerp,      bx::easeInOutQuad>  Interpolator;
 typedef InterpolatorT<bx::angleLerp, bx::easeInOutCubic> InterpolatorAngle;
-typedef InterpolatorT<bx::flerp,     bx::easeLinear>     InterpolatorLinear;
+typedef InterpolatorT<bx::lerp,      bx::easeLinear>     InterpolatorLinear;
 
 void keyBindingHelp(const char* _bindings, const char* _description)
 {
@@ -1523,7 +1523,7 @@ int _main_(int _argc, char** _argv)
 						ImGui::PushFont(ImGui::Font::Mono);
 						const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
 						const float listHeight =
-							std::max(1.0f, bx::ffloor(ImGui::GetWindowHeight()/itemHeight) )
+							  bx::max(1.0f, bx::floor(ImGui::GetWindowHeight()/itemHeight) )
 							* itemHeight
 							;
 
@@ -1791,8 +1791,8 @@ int _main_(int _argc, char** _argv)
 				float wh[3] = { float(view.m_textureInfo.width), float(view.m_textureInfo.height), 0.0f };
 				float result[3];
 				bx::vec3MulMtx(result, wh, orientation);
-				result[0] = bx::fround(bx::fabs(result[0]) );
-				result[1] = bx::fround(bx::fabs(result[1]) );
+				result[0] = bx::round(bx::abs(result[0]) );
+				result[1] = bx::round(bx::abs(result[1]) );
 
 				scale.set(bx::min(float(width)  / result[0]
 					,             float(height) / result[1])

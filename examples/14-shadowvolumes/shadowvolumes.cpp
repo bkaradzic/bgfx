@@ -1713,7 +1713,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	// -1.0f - behind near plane
 	float lightSide = float( (d > delta) - (d < -delta) );
 
-	float t = bx::ftan(bx::toRad(_fovy)*0.5f) * _near;
+	float t = bx::tan(bx::toRad(_fovy)*0.5f) * _near;
 	float b = -t;
 	float r = t * _aspect;
 	float l = -r;
@@ -1752,7 +1752,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		normal[1] *= lightSide;
 		normal[2] *= lightSide;
 
-		float lenInv = 1.0f / bx::fsqrt(bx::vec3Dot(normal, normal) );
+		float lenInv = 1.0f / bx::sqrt(bx::vec3Dot(normal, normal) );
 
 		plane[0] = normal[0] * lenInv;
 		plane[1] = normal[1] * lenInv;
@@ -1775,7 +1775,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	bx::vec3MulMtx(tmp, lightPlaneNormal, mtxViewInv);
 	bx::vec3Sub(lightPlaneNormal, tmp, _lightPos);
 
-	float lenInv = 1.0f / bx::fsqrt(bx::vec3Dot(lightPlaneNormal, lightPlaneNormal) );
+	float lenInv = 1.0f / bx::sqrt(bx::vec3Dot(lightPlaneNormal, lightPlaneNormal) );
 
 	lightPlane[0] = lightPlaneNormal[0] * lenInv;
 	lightPlane[1] = lightPlaneNormal[1] * lenInv;
@@ -2322,9 +2322,9 @@ public:
 			{
 				for (uint8_t ii = 0; ii < m_numLights; ++ii)
 				{
-					lightPosRadius[ii][0] = bx::fcos(2.0f*bx::kPi/float(m_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+					lightPosRadius[ii][0] = bx::cos(2.0f*bx::kPi/float(m_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 					lightPosRadius[ii][1] = 20.0f;
-					lightPosRadius[ii][2] = bx::fsin(2.0f*bx::kPi/float(m_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+					lightPosRadius[ii][2] = bx::sin(2.0f*bx::kPi/float(m_numLights) * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 					lightPosRadius[ii][3] = 20.0f;
 				}
 			}
@@ -2332,9 +2332,9 @@ public:
 			{
 				for (uint8_t ii = 0; ii < m_numLights; ++ii)
 				{
-					lightPosRadius[ii][0] = bx::fcos(float(ii) * 2.0f/float(m_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
+					lightPosRadius[ii][0] = bx::cos(float(ii) * 2.0f/float(m_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
 					lightPosRadius[ii][1] = 20.0f;
-					lightPosRadius[ii][2] = bx::fsin(float(ii) * 2.0f/float(m_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
+					lightPosRadius[ii][2] = bx::sin(float(ii) * 2.0f/float(m_numLights) + lightTimeAccumulator * 1.3f + bx::kPi) * 40.0f;
 					lightPosRadius[ii][3] = 20.0f;
 				}
 			}
@@ -2406,9 +2406,9 @@ public:
 				inst.m_rotation[0] = 0.0f;
 				inst.m_rotation[1] = 0.0f;
 				inst.m_rotation[2] = 0.0f;
-				inst.m_pos[0]      = bx::fsin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+				inst.m_pos[0]      = bx::sin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 				inst.m_pos[1]      = 6.0f;
-				inst.m_pos[2]      = bx::fcos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+				inst.m_pos[2]      = bx::cos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 				inst.m_model       = &m_cubeModel;
 			}
 
@@ -2423,9 +2423,9 @@ public:
 				inst.m_rotation[0] = 0.0f;
 				inst.m_rotation[1] = 0.0f;
 				inst.m_rotation[2] = 0.0f;
-				inst.m_pos[0]      = bx::fsin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+				inst.m_pos[0]      = bx::sin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 				inst.m_pos[1]      = 22.0f;
-				inst.m_pos[2]      = bx::fcos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+				inst.m_pos[2]      = bx::cos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 				inst.m_model       = &m_cubeModel;
 			}
 
