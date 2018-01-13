@@ -865,6 +865,7 @@ namespace entry
 						HDROP drop = (HDROP)_wparam;
 						char tmp[bx::kMaxFilePath];
 						uint32_t result = DragQueryFileA(drop, 0, tmp, sizeof(tmp) );
+						BX_UNUSED(result);
 						WindowHandle handle = findHandle(_hwnd);
 						m_eventQueue.postDropFileEvent(handle, tmp);
 					}
