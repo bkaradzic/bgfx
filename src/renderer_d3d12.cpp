@@ -15,7 +15,7 @@
 #	endif // BX_PLATFORM_WINRT
 #endif // !BX_PLATFORM_WINDOWS
 
-#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
 PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
 #endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
@@ -619,7 +619,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_COMPILER_MSVC
 	}
 
-#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 	static PIXEventsThreadInfo s_pixEventsThreadInfo;
 
 	PIXEventsThreadInfo* WINAPI stubPIXGetThreadInfo()
@@ -675,7 +675,7 @@ namespace bgfx { namespace d3d12
 			ErrorState::Enum errorState = ErrorState::Default;
 			LUID luid;
 
-#if BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 			m_winPixEvent = bx::dlopen("WinPixEventRuntime.dll");
 
 			if (NULL != m_winPixEvent)
@@ -887,6 +887,10 @@ namespace bgfx { namespace d3d12
 			if (FAILED(hr) )
 			{
 				BX_TRACE("Init error: Unable to create Direct3D12 device.");
+				if (BX_ENABLED(BX_PLATFORM_WINRT) )
+				{
+					BX_TRACE("Hint: Change UWP app to game?");
+				}
 				goto error;
 			}
 
@@ -1714,13 +1718,15 @@ namespace bgfx { namespace d3d12
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_width >>_mip);
 			uint32_t srcHeight = bx::uint32_max(1, texture.m_height>>_mip);
 			uint8_t* src;
-			readback->Map(0, NULL, (void**)&src);
 
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 			uint8_t* dst      = (uint8_t*)_data;
 			uint32_t dstPitch = srcWidth*bpp/8;
 
 			uint32_t pitch = bx::uint32_min(uint32_t(srcPitch), dstPitch);
+
+			D3D12_RANGE readRange = { 0, dstPitch*srcHeight };
+			readback->Map(0, &readRange, (void**)&src);
 
 			for (uint32_t yy = 0, height = srcHeight; yy < height; ++yy)
 			{
@@ -1730,7 +1736,8 @@ namespace bgfx { namespace d3d12
 				dst += dstPitch;
 			}
 
-			readback->Unmap(0, NULL);
+			D3D12_RANGE writeRange = { 0, 0 };
+			readback->Unmap(0, &writeRange);
 
 			DX_RELEASE(readback, 0);
 		}
@@ -3284,15 +3291,16 @@ data.NumQualityLevels = 0;
 
 		m_upload = createCommittedResource(device, HeapProperty::Upload, desc.NumDescriptors * 1024);
 		m_gpuVA  = m_upload->GetGPUVirtualAddress();
-		D3D12_RANGE range = { 0, 0 };
-		m_upload->Map(0, &range, (void**)&m_data);
+		D3D12_RANGE readRange = { 0, 0 };
+		m_upload->Map(0, &readRange, (void**)&m_data);
 
 		reset(m_gpuHandle);
 	}
 
 	void ScratchBufferD3D12::destroy()
 	{
-		m_upload->Unmap(0, NULL);
+		D3D12_RANGE writeRange = { 0, 0 };
+		m_upload->Unmap(0, &writeRange);
 
 		DX_RELEASE(m_upload, 0);
 		DX_RELEASE(m_heap, 0);
@@ -4196,10 +4204,11 @@ data.NumQualityLevels = 0;
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, _size);
 		uint8_t* data;
 
-		D3D12_RANGE range = { 0, 0 };
-		DX_CHECK(staging->Map(0, &range, (void**)&data) );
+		D3D12_RANGE readRange = { 0, 0 };
+		DX_CHECK(staging->Map(0, &readRange, (void**)&data) );
 		bx::memCopy(data, _data, _size);
-		staging->Unmap(0, NULL);
+		D3D12_RANGE writeRange = { 0, _size };
+		staging->Unmap(0, &writeRange);
 
 		D3D12_RESOURCE_STATES state = setState(_commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 		_commandList->CopyBufferRegion(m_ptr, _offset, staging, 0, _size);
@@ -4788,7 +4797,8 @@ data.NumQualityLevels = 0;
 		{
 			if (NULL != m_directAccessPtr)
 			{
-				m_ptr->Unmap(0, NULL);
+				D3D12_RANGE writeRange = { 0, 0 };
+				m_ptr->Unmap(0, &writeRange);
 				m_directAccessPtr = NULL;
 			}
 
@@ -4828,13 +4838,14 @@ data.NumQualityLevels = 0;
 		ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalBytes);
 		uint8_t* data;
 
-		D3D12_RANGE range = { 0, 0 };
-		DX_CHECK(staging->Map(0, &range, (void**)&data) );
+		D3D12_RANGE readRange = { 0, 0 };
+		DX_CHECK(staging->Map(0, &readRange, (void**)&data) );
 		for (uint32_t ii = 0, height = _rect.m_height; ii < height; ++ii)
 		{
 			bx::memCopy(&data[ii*rowPitch], &_mem->data[ii*srcpitch], srcpitch);
 		}
-		staging->Unmap(0, NULL);
+		D3D12_RANGE writeRange = { 0, _rect.m_height*srcpitch };
+		staging->Unmap(0, &writeRange);
 
 		D3D12_BOX box;
 		box.left   = 0;

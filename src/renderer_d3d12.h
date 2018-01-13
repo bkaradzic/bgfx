@@ -56,7 +56,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #include "debug_renderdoc.h"
 
 #if BGFX_CONFIG_DEBUG_PIX
-#	if BX_PLATFORM_WINDOWS
+#	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 typedef struct PIXEventsThreadInfo* (WINAPI* PFN_PIX_GET_THREAD_INFO)();
 typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(bool _getEarliestTime);
 
@@ -66,8 +66,8 @@ extern PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
 #		define PIXGetThreadInfo      bgfx_PIXGetThreadInfo
 #		define PIXEventsReplaceBlock bgfx_PIXEventsReplaceBlock
 #	else
-extern "C" struct PIXEventsThreadInfo* WINAPI PIXGetThreadInfo();
-extern "C" uint64_t                    WINAPI PIXEventsReplaceBlock(bool _getEarliestTime);
+extern "C" struct PIXEventsThreadInfo* WINAPI bgfx_PIXGetThreadInfo();
+extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _getEarliestTime);
 #	endif // BX_PLATFORM_WINDOWS
 
 #	include <pix3.h>
