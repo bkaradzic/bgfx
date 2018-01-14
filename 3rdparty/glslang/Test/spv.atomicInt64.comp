@@ -22,7 +22,7 @@ shared Struct s;
 void main()
 {
     const int64_t  i64c = -24;
-    const uint64_t u64c = 0xF00000000F; 
+    const uint64_t u64c = 0xF00000000Ful; 
 
     // Test shader storage block
     int64_t  i64 = 0;

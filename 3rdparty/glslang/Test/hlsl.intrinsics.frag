@@ -13,7 +13,7 @@ groupshared uint4 gs_ua4;
 groupshared uint4 gs_ub4;
 groupshared uint4 gs_uc4;
 
-float PixelShaderFunctionS(float inF0, float inF1, float inF2, uint inU0, uint inU1)
+float PixelShaderFunctionS(float inF0, float inF1, float inF2, uint inU0, int inU1)
 {
     uint out_u1;
 
@@ -23,7 +23,7 @@ float PixelShaderFunctionS(float inF0, float inF1, float inF2, uint inU0, uint i
     bool r003 = any(inF0);
     float r004 = asin(inF0);
     int r005 = asint(inF0);
-    uint r006 = asuint(inF0);
+    uint r006 = asuint(inU1);
     float r007 = asfloat(inU0);
     // asdouble(inU0, inU1);  // TODO: enable when HLSL parser used for intrinsics
     float r009 = atan(inF0);

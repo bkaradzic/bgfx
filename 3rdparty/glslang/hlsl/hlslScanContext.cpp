@@ -565,10 +565,15 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
         case EndOfInput:               return EHTokNone;
 
         default:
-            char buf[2];
-            buf[0] = (char)token;
-            buf[1] = 0;
-            parseContext.error(loc, "unexpected token", buf, "");
+            if (token < PpAtomMaxSingle) {
+                char buf[2];
+                buf[0] = (char)token;
+                buf[1] = 0;
+                parseContext.error(loc, "unexpected token", buf, "");
+            } else if (tokenText[0] != 0)
+                parseContext.error(loc, "unexpected token", tokenText, "");
+            else
+                parseContext.error(loc, "unexpected token", "", "");
             break;
         }
     } while (true);

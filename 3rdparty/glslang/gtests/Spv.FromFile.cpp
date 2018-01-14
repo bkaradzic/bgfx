@@ -331,6 +331,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.precise.tese",
         "spv.precise.tesc",
         "spv.xfb.vert",
+        "spv.xfb2.vert",
+        "spv.xfb3.vert",
     })),
     FileNameAsCustomTestSuffix
 );

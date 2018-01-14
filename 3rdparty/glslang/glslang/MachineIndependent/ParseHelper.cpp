@@ -3486,7 +3486,8 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
     // Fix XFB stuff up, it applies to the order of the redeclaration, not
     // the order of the original members.
     if (currentBlockQualifier.storage == EvqVaryingOut && globalOutputDefaults.hasXfbBuffer()) {
-        currentBlockQualifier.layoutXfbBuffer = globalOutputDefaults.layoutXfbBuffer;
+        if (!currentBlockQualifier.hasXfbBuffer())
+            currentBlockQualifier.layoutXfbBuffer = globalOutputDefaults.layoutXfbBuffer;
         fixBlockXfbOffsets(currentBlockQualifier, newTypeList);
     }
 
@@ -3545,7 +3546,8 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
                 error(memberLoc, "cannot add non-XFB layout to redeclared block member", member->type->getFieldName().c_str(), "");
             if (newType.getQualifier().patch)
                 error(memberLoc, "cannot add patch to redeclared block member", member->type->getFieldName().c_str(), "");
-            if (newType.getQualifier().hasXfbBuffer() && newType.getQualifier().layoutXfbBuffer != currentBlockQualifier.layoutXfbBuffer)
+            if (newType.getQualifier().hasXfbBuffer() &&
+                newType.getQualifier().layoutXfbBuffer != currentBlockQualifier.layoutXfbBuffer)
                 error(memberLoc, "member cannot contradict block (or what block inherited from global)", "xfb_buffer", "");
             oldType.getQualifier().centroid = newType.getQualifier().centroid;
             oldType.getQualifier().sample = newType.getQualifier().sample;
@@ -3555,10 +3557,19 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
             oldType.getQualifier().flat = newType.getQualifier().flat;
             oldType.getQualifier().nopersp = newType.getQualifier().nopersp;
             oldType.getQualifier().layoutXfbOffset = newType.getQualifier().layoutXfbOffset;
-            if (oldType.getQualifier().layoutXfbOffset != TQualifier::layoutXfbBufferEnd)
+            oldType.getQualifier().layoutXfbBuffer = newType.getQualifier().layoutXfbBuffer;
+            oldType.getQualifier().layoutXfbStride = newType.getQualifier().layoutXfbStride;
+            if (oldType.getQualifier().layoutXfbOffset != TQualifier::layoutXfbBufferEnd) {
+                // if any member as an xfb_offset, then the block's xfb_buffer inherents current xfb_buffer,
+                // and for xfb processing, the member needs it as well, along with xfb_stride
                 type.getQualifier().layoutXfbBuffer = currentBlockQualifier.layoutXfbBuffer;
+                oldType.getQualifier().layoutXfbBuffer = currentBlockQualifier.layoutXfbBuffer;
+            }
             if (oldType.isImplicitlySizedArray() && newType.isExplicitlySizedArray())
                 oldType.changeOuterArraySize(newType.getOuterArraySize());
+
+            //  check and process the member's type, which will include managing xfb information
+            layoutTypeCheck(loc, oldType);
 
             // go to next member
             ++member;
@@ -4803,11 +4814,11 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
             error(loc, "requires uniform or buffer storage qualifier", "binding", "");
     }
     if (qualifier.hasStream()) {
-        if (qualifier.storage != EvqVaryingOut)
+        if (!qualifier.isPipeOutput())
             error(loc, "can only be used on an output", "stream", "");
     }
     if (qualifier.hasXfb()) {
-        if (qualifier.storage != EvqVaryingOut)
+        if (!qualifier.isPipeOutput())
             error(loc, "can only be used on an output", "xfb layout qualifier", "");
     }
     if (qualifier.hasUniformLayout()) {

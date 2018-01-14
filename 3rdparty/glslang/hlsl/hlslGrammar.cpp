@@ -3051,6 +3051,8 @@ bool HlslGrammar::acceptPostfixExpression(TIntermTyped*& node)
         }
         if (! peekTokenClass(EHTokLeftParen)) {
             node = parseContext.handleVariable(idToken.loc, fullName);
+            if (node == nullptr)
+                return false;
         } else if (acceptFunctionCall(idToken.loc, *fullName, node, nullptr)) {
             // function_call (nothing else to do yet)
         } else {
@@ -3784,9 +3786,17 @@ bool HlslGrammar::acceptJumpStatement(TIntermNode*& statement)
     switch (jump) {
     case EHTokContinue:
         statement = intermediate.addBranch(EOpContinue, token.loc);
+        if (parseContext.loopNestingLevel == 0) {
+            expected("loop");
+            return false;
+        }
         break;
     case EHTokBreak:
         statement = intermediate.addBranch(EOpBreak, token.loc);
+        if (parseContext.loopNestingLevel == 0 && parseContext.switchSequenceStack.size() == 0) {
+            expected("loop or switch");
+            return false;
+        }
         break;
     case EHTokDiscard:
         statement = intermediate.addBranch(EOpKill, token.loc);

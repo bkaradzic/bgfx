@@ -50,7 +50,7 @@ spv.atomicInt64.comp
               24:     22(int) Constant 0
               28:     17(int) Constant 1
               29:             TypePointer Uniform 10(int)
-              31:     10(int) Constant 15 0
+              31:     10(int) Constant 15 240
       84(Struct):             TypeStruct 6(int) 10(int)
               85:             TypePointer Workgroup 84(Struct)
            86(s):     85(ptr) Variable Workgroup

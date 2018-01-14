@@ -51,7 +51,7 @@ ERROR: node is still EOpNull!
 0:13    move second child to first child ( temp highp int)
 0:13      'OE' ( global highp int)
 0:13      Constant:
-0:13        1073741823 (const int)
+0:13        -1 (const int)
 0:14  Sequence
 0:14    move second child to first child ( temp highp int)
 0:14      'HE' ( global highp int)
@@ -92,7 +92,7 @@ ERROR: node is still EOpNull!
 0:34    move second child to first child ( temp highp int)
 0:34      'superO' ( global highp int)
 0:34      Constant:
-0:34        1073741823 (const int)
+0:34        -1 (const int)
 0:35  Sequence
 0:35    move second child to first child ( temp highp int)
 0:35      'superI' ( global highp int)
@@ -147,7 +147,7 @@ ERROR: node is still EOpNull!
 0:13    move second child to first child ( temp highp int)
 0:13      'OE' ( global highp int)
 0:13      Constant:
-0:13        1073741823 (const int)
+0:13        -1 (const int)
 0:14  Sequence
 0:14    move second child to first child ( temp highp int)
 0:14      'HE' ( global highp int)
@@ -188,7 +188,7 @@ ERROR: node is still EOpNull!
 0:34    move second child to first child ( temp highp int)
 0:34      'superO' ( global highp int)
 0:34      Constant:
-0:34        1073741823 (const int)
+0:34        -1 (const int)
 0:35  Sequence
 0:35    move second child to first child ( temp highp int)
 0:35      'superI' ( global highp int)

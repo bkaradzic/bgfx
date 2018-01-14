@@ -570,7 +570,8 @@ bool TParseVersions::checkExtensionsRequested(const TSourceLoc& loc, int numExte
 //
 void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[], const char* featureDesc)
 {
-    if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc)) return;
+    if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc))
+        return;
 
     // If we get this far, give errors explaining what extensions are needed
     if (numExtensions == 1)
@@ -588,7 +589,8 @@ void TParseVersions::requireExtensions(const TSourceLoc& loc, int numExtensions,
 //
 void TParseVersions::ppRequireExtensions(const TSourceLoc& loc, int numExtensions, const char* const extensions[], const char* featureDesc)
 {
-    if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc)) return;
+    if (checkExtensionsRequested(loc, numExtensions, extensions, featureDesc))
+        return;
 
     // If we get this far, give errors explaining what extensions are needed
     if (numExtensions == 1)
@@ -626,7 +628,8 @@ bool TParseVersions::extensionTurnedOn(const char* const extension)
 bool TParseVersions::extensionsTurnedOn(int numExtensions, const char* const extensions[])
 {
     for (int i = 0; i < numExtensions; ++i) {
-        if (extensionTurnedOn(extensions[i])) return true;
+        if (extensionTurnedOn(extensions[i]))
+            return true;
     }
     return false;
 }
