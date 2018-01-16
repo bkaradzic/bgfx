@@ -53,11 +53,13 @@ namespace bgfx
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETMEMORYINFO)(NvPhysicalGpuHandle* _handle, NvMemoryInfoV2* _memoryInfo);
 	typedef NvApiStatus (NVAPICALL* PFN_NVAPI_GPUGETFULLNAME)(NvPhysicalGpuHandle* _physicalGpu, char _name[64]);
 
-#define NVAPI_INITIALIZE       UINT32_C(0x0150e828)
-#define NVAPI_UNLOAD           UINT32_C(0xd22bdd7e)
-#define NVAPI_ENUMPHYSICALGPUS UINT32_C(0xe5ac921f)
-#define NVAPI_GPUGETMEMORYINFO UINT32_C(0x07f9b368)
-#define NVAPI_GPUGETFULLNAME   UINT32_C(0xceee8e9f)
+#define NVAPI_INITIALIZE                        UINT32_C(0x0150e828)
+#define NVAPI_UNLOAD                            UINT32_C(0xd22bdd7e)
+#define NVAPI_ENUMPHYSICALGPUS                  UINT32_C(0xe5ac921f)
+#define NVAPI_GPUGETMEMORYINFO                  UINT32_C(0x07f9b368)
+#define NVAPI_GPUGETFULLNAME                    UINT32_C(0xceee8e9f)
+#define NVAPI_MULTIDRAWINSTANCEDINDIRECT        UINT32_C(0xd4e26bbf)
+#define NVAPI_MULTIDRAWINDEXEDINSTANCEDINDIRECT UINT32_C(0x59e890f9)
 
 	static PFN_NVAPI_QUERYINTERFACE   nvApiQueryInterface;
 	static PFN_NVAPI_INITIALIZE       nvApiInitialize;
@@ -96,6 +98,9 @@ namespace bgfx
 				nvApiEnumPhysicalGPUs = (PFN_NVAPI_ENUMPHYSICALGPUS )nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
 				nvApiGpuGetMemoryInfo = (PFN_NVAPI_GPUGETMEMORYINFO )nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
 				nvApiGpuGetFullName   = (PFN_NVAPI_GPUGETFULLNAME   )nvApiQueryInterface(NVAPI_GPUGETFULLNAME);
+
+				nvApiD3D11MultiDrawInstancedIndirect        = (NvMultiDrawIndirectFn)nvApiQueryInterface(NVAPI_MULTIDRAWINSTANCEDINDIRECT);
+				nvApiD3D11MultiDrawIndexedInstancedIndirect = (NvMultiDrawIndirectFn)nvApiQueryInterface(NVAPI_MULTIDRAWINDEXEDINSTANCEDINDIRECT);
 
 				initialized = true
 					&& NULL != nvApiInitialize

@@ -674,6 +674,9 @@ namespace bgfx { namespace d3d11
 	void amdAgsMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
 	void amdAgsMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
 
+	void nvapiMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+	void nvapiMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride);
+
 	static MultiDrawIndirectFn multiDrawInstancedIndirect;
 	static MultiDrawIndirectFn multiDrawIndexedInstancedIndirect;
 
@@ -1241,6 +1244,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					: (uint16_t)m_adapterDesc.VendorId
 					;
 				g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+
+				if (BGFX_PCI_ID_NVIDIA != m_adapterDesc.VendorId)
+				{
+					m_nvapi.shutdown();
+				}
 
 				if (NULL == g_platformData.backBuffer)
 				{
@@ -1835,6 +1843,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							agsDeInit(m_ags);
 							m_ags = NULL;
 						}
+					}
+					else if (m_nvapi.isInitialized()
+						 &&  NULL != m_nvapi.nvApiD3D11MultiDrawInstancedIndirect
+						 &&  NULL != m_nvapi.nvApiD3D11MultiDrawIndexedInstancedIndirect)
+					{
+						multiDrawInstancedIndirect        = nvapiMultiDrawInstancedIndirect;
+						multiDrawIndexedInstancedIndirect = nvapiMultiDrawIndexedInstancedIndirect;
 					}
 				}
 
@@ -3991,6 +4006,16 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 	void amdAgsMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
 	{
 		agsDriverExtensions_MultiDrawIndexedInstancedIndirect(s_renderD3D11->m_ags, _numDrawIndirect, _ptr, _offset, _stride);
+	}
+
+	void nvapiMultiDrawInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
+	{
+		s_renderD3D11->m_nvapi.nvApiD3D11MultiDrawInstancedIndirect(s_renderD3D11->m_deviceCtx, _numDrawIndirect, _ptr, _offset, _stride);
+	}
+
+	void nvapiMultiDrawIndexedInstancedIndirect(uint32_t _numDrawIndirect, ID3D11Buffer* _ptr, uint32_t _offset, uint32_t _stride)
+	{
+		s_renderD3D11->m_nvapi.nvApiD3D11MultiDrawIndexedInstancedIndirect(s_renderD3D11->m_deviceCtx, _numDrawIndirect, _ptr, _offset, _stride);
 	}
 
 	int  WINAPI d3d11Annotation_BeginEvent(DWORD _color, LPCWSTR _name)
@@ -6609,7 +6634,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								: draw.m_numIndirect
 								;
 
-							multiDrawIndexedInstancedIndirect(numDrawIndirect
+							multiDrawIndexedInstancedIndirect(
+								  numDrawIndirect
 								, ptr
 								, draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
@@ -6622,7 +6648,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 								: draw.m_numIndirect
 								;
 
-							multiDrawInstancedIndirect(numDrawIndirect
+							multiDrawInstancedIndirect(
+								  numDrawIndirect
 								, ptr
 								, draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 								, BGFX_CONFIG_DRAW_INDIRECT_STRIDE
