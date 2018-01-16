@@ -1792,6 +1792,11 @@ namespace bgfx
 						{
 							std::string code;
 
+							if (NULL != bx::strFind(preprocessor.m_preprocessed.c_str(), "layout(std430") )
+							{
+								glsl = 430;
+							}
+
 							if (glsl < 400)
 							{
 								const bool usesTextureLod   = false
@@ -2004,6 +2009,15 @@ namespace bgfx
 							else
 							{
 								bx::stringPrintf(code, "#version %d\n", glsl);
+
+								bx::stringPrintf(code
+									, "#define texture2DLod      textureLod\n"
+									  "#define texture2DGrad     textureGrad\n"
+									  "#define texture2DProjLod  textureProjLod\n"
+									  "#define texture2DProjGrad textureProjGrad\n"
+									  "#define textureCubeLod    textureLod\n"
+									  "#define textureCubeGrad   textureGrad\n"
+									);
 							}
 
 							code += preprocessor.m_preprocessed;
