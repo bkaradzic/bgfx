@@ -1315,7 +1315,7 @@ namespace bgfx
 
 		uint32_t m_size;
 		uint32_t m_pos;
-		char m_buffer[INT32_MAX];
+		char m_buffer[256<<20];
 	};
 
 	struct UniformRegInfo

@@ -120,7 +120,7 @@ function bgfxProjectBase(_kind, _defines)
 				"BGFX_CONFIG_DEBUG=1",
 			}
 
-		configuration { "vs*", "not durango" }
+		configuration { "vs* or mingw-*", "not durango" }
 			includedirs {
 				path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 			}
