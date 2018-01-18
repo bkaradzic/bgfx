@@ -922,7 +922,7 @@ struct DebugDraw
 		m_geometry.destroy(_handle);
 	}
 
-	void begin(uint8_t _viewId)
+	void begin(bgfx::ViewId _viewId)
 	{
 		BX_CHECK(State::Count == m_state);
 
@@ -2234,9 +2234,9 @@ private:
 
 	MatrixStack m_mtxStack[32];
 
-	uint8_t  m_viewId;
-	uint8_t  m_stack;
-	bool     m_depthTestLess;
+	bgfx::ViewId m_viewId;
+	uint8_t m_stack;
+	bool    m_depthTestLess;
 
 	Attrib m_attrib[stackSize];
 
@@ -2293,7 +2293,7 @@ void ddDestroy(GeometryHandle _handle)
 	s_dd.destroy(_handle);
 }
 
-void ddBegin(uint8_t _viewId)
+void ddBegin(uint16_t _viewId)
 {
 	s_dd.begin(_viewId);
 }
