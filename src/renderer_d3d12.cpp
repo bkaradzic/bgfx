@@ -2391,11 +2391,12 @@ data.NumQualityLevels = 0;
 					texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 				}
 
-				m_commandList->OMSetRenderTargets(frameBuffer.m_num
-												, m_currentColor
-												, true
-												, m_currentDepthStencil
-												);
+				m_commandList->OMSetRenderTargets(
+					  frameBuffer.m_num
+					, m_currentColor
+					, true
+					, m_currentDepthStencil
+					);
 			}
 
 			m_fbh = _fbh;
@@ -3218,11 +3219,7 @@ data.NumQualityLevels = 0;
 		bool m_wireframe;
 		bool m_lost;
 
-#if BX_PLATFORM_WINDOWS
 		DXGI_SWAP_CHAIN_DESC m_scd;
-#else
-		DXGI_SWAP_CHAIN_DESC1 m_scd;
-#endif // BX_PLATFORM_WINDOWS
 		uint32_t m_maxAnisotropy;
 		bool m_depthClamp;
 
@@ -3719,7 +3716,7 @@ data.NumQualityLevels = 0;
 	{
 		m_maxDrawPerBatch = _maxDrawPerBatch;
 		setSeqMode(false);
-		setIndirectMode(true);
+		setIndirectMode(false);
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 		ID3D12RootSignature* rootSignature = s_renderD3D12->m_rootSignature;
@@ -4894,8 +4891,38 @@ data.NumQualityLevels = 0;
 		postReset();
 	}
 
-	void FrameBufferD3D12::create(uint16_t /*_denseIdx*/, void* /*_nwh*/, uint32_t /*_width*/, uint32_t /*_height*/, TextureFormat::Enum /*_depthFormat*/)
+	void FrameBufferD3D12::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
 	{
+		DXGI_SWAP_CHAIN_DESC scd;
+		bx::memCopy(&scd, &s_renderD3D12->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
+		scd.BufferDesc.Width  = _width;
+		scd.BufferDesc.Height = _height;
+		scd.OutputWindow = (HWND)_nwh;
+
+		HRESULT hr;
+		hr = s_renderD3D12->m_factory->CreateSwapChain(s_renderD3D12->m_cmd.m_commandQueue
+				, &scd
+				, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
+				);
+		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+		m_denseIdx = _denseIdx;
+		m_num      = 1;
+	}
+
+	uint16_t FrameBufferD3D12::destroy()
+	{
+		DX_RELEASE(m_swapChain, 0);
+
+		m_numTh = 0;
+		m_needPresent = false;
+
+		m_depth.idx = bgfx::kInvalidHandle;
+
+		uint16_t denseIdx = m_denseIdx;
+		m_denseIdx = UINT16_MAX;
+
+		return denseIdx;
 	}
 
 	void FrameBufferD3D12::preReset()
@@ -5014,18 +5041,6 @@ data.NumQualityLevels = 0;
 				}
 			}
 		}
-	}
-
-	uint16_t FrameBufferD3D12::destroy()
-	{
-		m_numTh = 0;
-
-		m_depth.idx = bgfx::kInvalidHandle;
-
-		uint16_t denseIdx = m_denseIdx;
-		m_denseIdx = UINT16_MAX;
-
-		return denseIdx;
 	}
 
 	void FrameBufferD3D12::resolve()

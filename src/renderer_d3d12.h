@@ -87,6 +87,12 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _g
 
 namespace bgfx { namespace d3d12
 {
+#if BX_PLATFORM_WINDOWS
+	typedef ::DXGI_SWAP_CHAIN_DESC  DXGI_SWAP_CHAIN_DESC;
+#else
+	typedef ::DXGI_SWAP_CHAIN_DESC1 DXGI_SWAP_CHAIN_DESC;
+#endif // BX_PLATFORM_WINDOWS
+
 	struct Rdt
 	{
 		enum Enum
@@ -341,6 +347,7 @@ namespace bgfx { namespace d3d12
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
 			, m_numTh(0)
+			, m_needPresent(false)
 		{
 			m_depth.idx = bgfx::kInvalidHandle;
 		}
@@ -362,6 +369,7 @@ namespace bgfx { namespace d3d12
 		uint8_t m_num;
 		uint8_t m_numTh;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+		bool m_needPresent;
 	};
 
 	struct CommandQueueD3D12
