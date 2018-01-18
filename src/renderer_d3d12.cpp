@@ -1429,6 +1429,8 @@ namespace bgfx { namespace d3d12
 				postReset();
 
 				m_batch.create(4<<10);
+				m_batch.setIndirectMode(BGFX_PCI_ID_NVIDIA != m_adapterDesc.VendorId);
+
 				m_gpuTimer.init();
 				m_occlusionQuery.init();
 			}
@@ -3716,7 +3718,7 @@ data.NumQualityLevels = 0;
 	{
 		m_maxDrawPerBatch = _maxDrawPerBatch;
 		setSeqMode(false);
-		setIndirectMode(false);
+		setIndirectMode(true);
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 		ID3D12RootSignature* rootSignature = s_renderD3D12->m_rootSignature;
@@ -4893,6 +4895,8 @@ data.NumQualityLevels = 0;
 
 	void FrameBufferD3D12::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
 	{
+		BX_UNUSED(_depthFormat);
+
 		DXGI_SWAP_CHAIN_DESC scd;
 		bx::memCopy(&scd, &s_renderD3D12->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
 		scd.BufferDesc.Width  = _width;
