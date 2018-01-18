@@ -167,7 +167,7 @@ public:
 
 	bool update() override
 	{
-		if ( !entry::processWindowEvents(m_state, m_debug, m_reset) )
+		if (!entry::processWindowEvents(m_state, m_debug, m_reset) )
 		{
 			entry::MouseState mouseState = m_state.m_mouse;
 

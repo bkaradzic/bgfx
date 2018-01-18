@@ -652,6 +652,8 @@ restart:
 		return result;
 	}
 
+	WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
+
 	bool processEvents(uint32_t& _width, uint32_t& _height, uint32_t& _debug, uint32_t& _reset, MouseState* _mouse)
 	{
 		s_debug = _debug;
@@ -732,6 +734,11 @@ restart:
 				case Event::Size:
 					{
 						const SizeEvent* size = static_cast<const SizeEvent*>(ev);
+						WindowState& win = s_window[0];
+						win.m_handle = size->m_handle;
+						win.m_width  = size->m_width;
+						win.m_height = size->m_height;
+
 						handle  = size->m_handle;
 						_width  = size->m_width;
 						_height = size->m_height;
@@ -776,8 +783,6 @@ restart:
 
 		return s_exit;
 	}
-
-	WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
 
 	bool processWindowEvents(WindowState& _state, uint32_t& _debug, uint32_t& _reset)
 	{
