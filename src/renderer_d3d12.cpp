@@ -1264,7 +1264,7 @@ namespace bgfx { namespace d3d12
 									| BGFX_CAPS_COMPUTE
 									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 //									| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
-//									| BGFX_CAPS_SWAP_CHAIN
+//									| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
 									| BGFX_CAPS_TEXTURE_BLIT
 									| BGFX_CAPS_TEXTURE_READ_BACK
 									| BGFX_CAPS_OCCLUSION_QUERY
@@ -4897,6 +4897,7 @@ data.NumQualityLevels = 0;
 	{
 		BX_UNUSED(_depthFormat);
 
+#if BX_PLATFORM_WINDOWS
 		DXGI_SWAP_CHAIN_DESC scd;
 		bx::memCopy(&scd, &s_renderD3D12->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
 		scd.BufferDesc.Width  = _width;
@@ -4909,6 +4910,7 @@ data.NumQualityLevels = 0;
 				, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
 				);
 		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+#endif // BX_PLATFORM_WINDOWS
 
 		m_denseIdx = _denseIdx;
 		m_num      = 1;
@@ -5937,10 +5939,10 @@ data.NumQualityLevels = 0;
 						Bind* bindCached = bindLru.find(bindHash);
 						if (NULL == bindCached)
 						{
+							uint32_t numSet = 0;
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 							uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 							{
-								srvHandle[0].ptr = 0;
 								for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 								{
 									const Binding& bind = renderBind.m_bind[stage];
@@ -5952,12 +5954,14 @@ data.NumQualityLevels = 0;
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[stage], texture);
+												scratchBuffer.allocSrv(srvHandle[numSet], texture);
 												samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
 													? bind.m_un.m_draw.m_textureFlags
 													: texture.m_flags
-													) & (BGFX_TEXTURE_SAMPLER_BITS_MASK | BGFX_TEXTURE_BORDER_COLOR_MASK)
+													) & (BGFX_TEXTURE_SAMPLER_BITS_MASK | BGFX_TEXTURE_BORDER_COLOR_MASK | BGFX_TEXTURE_COMPARE_MASK)
 													;
+
+												++numSet;
 											}
 											break;
 
@@ -5973,29 +5977,28 @@ data.NumQualityLevels = 0;
 
 												if (Access::Read != bind.m_un.m_compute.m_access)
 												{
-													// The api functions prevent binding with Access::Write,
-													// but might as well allow it in here for future-proofing
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[stage], buffer);
+													scratchBuffer.allocUav(srvHandle[numSet], buffer);
 												}
 												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[stage], buffer);
+													scratchBuffer.allocSrv(srvHandle[numSet], buffer);
 												}
+
+												++numSet;
 											}
 											break;
 										}
 									}
 									else
 									{
-										bx::memCopy(&srvHandle[stage], &srvHandle[0], sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) );
 										samplerFlags[stage] = 0;
 									}
 								}
 							}
 
-							if (srvHandle[0].ptr != 0)
+							if (0 != numSet)
 							{
 								uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, _render->m_colorPalette);
 								if (samplerStateIdx != currentSamplerStateIdx)
