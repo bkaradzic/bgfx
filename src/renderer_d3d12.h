@@ -121,6 +121,8 @@ namespace bgfx { namespace d3d12
 		void destroy();
 		void reset(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
 
+		void  allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle);
+
 		void* allocCbv(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size);
 
 		void  allocSrv(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle, struct TextureD3D12& _texture, uint8_t _mip = 0);

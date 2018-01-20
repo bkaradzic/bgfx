@@ -3313,6 +3313,14 @@ data.NumQualityLevels = 0;
 		_gpuHandle = m_gpuHandle;
 	}
 
+	void ScratchBufferD3D12::allocEmpty(D3D12_GPU_DESCRIPTOR_HANDLE& _gpuHandle)
+	{
+		m_cpuHandle.ptr += m_incrementSize;
+
+		_gpuHandle = m_gpuHandle;
+		m_gpuHandle.ptr += m_incrementSize;
+	}
+
 	void* ScratchBufferD3D12::allocCbv(D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress, uint32_t _size)
 	{
 		_gpuAddress = m_gpuVA + m_pos;
@@ -5954,7 +5962,7 @@ data.NumQualityLevels = 0;
 											{
 												TextureD3D12& texture = m_textures[bind.m_idx];
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[numSet], texture);
+												scratchBuffer.allocSrv(srvHandle[stage], texture);
 												samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
 													? bind.m_un.m_draw.m_textureFlags
 													: texture.m_flags
@@ -5978,12 +5986,12 @@ data.NumQualityLevels = 0;
 												if (Access::Read != bind.m_un.m_compute.m_access)
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-													scratchBuffer.allocUav(srvHandle[numSet], buffer);
+													scratchBuffer.allocUav(srvHandle[stage], buffer);
 												}
 												else
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-													scratchBuffer.allocSrv(srvHandle[numSet], buffer);
+													scratchBuffer.allocSrv(srvHandle[stage], buffer);
 												}
 
 												++numSet;
@@ -5993,6 +6001,7 @@ data.NumQualityLevels = 0;
 									}
 									else
 									{
+										scratchBuffer.allocEmpty(srvHandle[stage]);
 										samplerFlags[stage] = 0;
 									}
 								}
