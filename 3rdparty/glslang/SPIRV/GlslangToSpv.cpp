@@ -186,7 +186,9 @@ protected:
     bool isTrivialLeaf(const glslang::TIntermTyped* node);
     bool isTrivial(const glslang::TIntermTyped* node);
     spv::Id createShortCircuit(glslang::TOperator, glslang::TIntermTyped& left, glslang::TIntermTyped& right);
+#ifdef AMD_EXTENSIONS
     spv::Id getExtBuiltins(const char* name);
+#endif
 
     glslang::SpvOptions& options;
     spv::Function* shaderEntry;
@@ -5954,6 +5956,7 @@ spv::Id TGlslangToSpvTraverser::createShortCircuit(glslang::TOperator op, glslan
     return builder.createOp(spv::OpPhi, boolTypeId, phiOperands);
 }
 
+#ifdef AMD_EXTENSIONS
 // Return type Id of the imported set of extended instructions corresponds to the name.
 // Import this set if it has not been imported yet.
 spv::Id TGlslangToSpvTraverser::getExtBuiltins(const char* name)
@@ -5967,6 +5970,7 @@ spv::Id TGlslangToSpvTraverser::getExtBuiltins(const char* name)
         return extBuiltins;
     }
 }
+#endif
 
 };  // end anonymous namespace
 

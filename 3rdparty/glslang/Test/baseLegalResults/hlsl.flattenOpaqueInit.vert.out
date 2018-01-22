@@ -10,9 +10,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                               EntryPoint Vertex 4  "main" 80
                               Source HLSL 500
                               Name 4  "main"
-                              Name 9  "FxaaTex"
-                              MemberName 9(FxaaTex) 0  "smpl"
-                              MemberName 9(FxaaTex) 1  "tex"
                               Name 43  "g_tInputTexture_sampler"
                               Name 47  "g_tInputTexture"
                               Name 80  "@entryPointOutput"
@@ -24,7 +21,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                6:             TypeSampler
                7:             TypeFloat 32
                8:             TypeImage 7(float) 2D sampled format:Unknown
-      9(FxaaTex):             TypeStruct 6 8
               11:             TypeVector 7(float) 4
               31:             TypeSampledImage 8
               33:             TypeVector 7(float) 2

@@ -10,12 +10,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                               EntryPoint Vertex 4  "main" 83 86
                               Source HLSL 500
                               Name 4  "main"
-                              Name 22  "Packed"
-                              MemberName 22(Packed) 0  "tex"
-                              MemberName 22(Packed) 1  "pos"
-                              MemberName 22(Packed) 2  "uv"
-                              MemberName 22(Packed) 3  "x"
-                              MemberName 22(Packed) 4  "n"
                               Name 83  "pos"
                               Name 86  "@entryPointOutput"
                               Decorate 83(pos) Location 0
@@ -24,7 +18,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                3:             TypeFunction 2
                6:             TypeFloat 32
                7:             TypeVector 6(float) 4
-              13:             TypeImage 6(float) 2D sampled format:Unknown
               14:             TypeVector 6(float) 3
               15:             TypeInt 32 0
               16:     15(int) Constant 3
@@ -33,7 +26,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
               19:     15(int) Constant 2
               20:             TypeArray 18(fvec2) 19
               21:             TypeInt 32 1
-      22(Packed):             TypeStruct 13 17 20 6(float) 21(int)
               25:     21(int) Constant 0
               31:     21(int) Constant 1
               32:    6(float) Constant 0

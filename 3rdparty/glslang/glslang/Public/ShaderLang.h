@@ -334,11 +334,15 @@ enum TResourceType {
     EResCount
 };
 
-// Make one TShader per shader that you will link into a program.  Then provide
-// the shader through setStrings() or setStringsWithLengths(), then call parse(),
-// then query the info logs.
-// Optionally use setPreamble() to set a special shader string that will be
-// processed before all others but won't affect the validity of #version.
+// Make one TShader per shader that you will link into a program. Then
+//  - provide the shader through setStrings() or setStringsWithLengths()
+//  - optionally call setEnv*(), see below for more detail
+//  - optionally use setPreamble() to set a special shader string that will be
+//    processed before all others but won't affect the validity of #version
+//  - call parse(): source language and target environment must be selected
+//    either by correct setting of EShMessages sent to parse(), or by
+//    explicitly calling setEnv*()
+//  - query the info logs
 //
 // N.B.: Does not yet support having the same TShader instance being linked into
 // multiple programs.
@@ -377,7 +381,10 @@ public:
     void setNoStorageFormat(bool useUnknownFormat);
     void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
 
-    // For setting up the environment (initialized in the constructor):
+    // For setting up the environment (cleared to nothingness in the constructor).
+    // These must be called so that parsing is done for the right source language and
+    // target environment, either indirectly through TranslateEnvironment() based on
+    // EShMessages et. al., or directly by the user.
     void setEnvInput(EShSource lang, EShLanguage envStage, EShClient client, int version)
     {
         environment.input.languageFamily = lang;

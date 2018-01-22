@@ -11,10 +11,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"
-                              Name 9  "OS"
-                              MemberName 9(OS) 0  "ss"
-                              MemberName 9(OS) 1  "a"
-                              MemberName 9(OS) 2  "tex"
                               Name 47  "gss"
                               Name 51  "gtex"
                               Name 62  "@entryPointOutput"
@@ -26,7 +22,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                6:             TypeSampler
                7:             TypeFloat 32
                8:             TypeImage 7(float) 2D sampled format:Unknown
-           9(OS):             TypeStruct 6 7(float) 8
               11:             TypeVector 7(float) 4
               32:             TypeSampledImage 8
               34:             TypeVector 7(float) 2

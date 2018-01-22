@@ -11,11 +11,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"
-                              Name 7  "os"
-                              MemberName 7(os) 0  "s2D"
-                              Name 23  "os2"
-                              MemberName 23(os2) 0  "s2D"
-                              MemberName 23(os2) 1  "tex"
                               Name 38  "tex"
                               Name 82  "s.s2D"
                               Name 97  "s2.s2D"
@@ -29,12 +24,10 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeSampler
-           7(os):             TypeStruct 6
                9:             TypeFloat 32
               10:             TypeVector 9(float) 4
               15:             TypeVector 9(float) 2
               22:             TypeImage 9(float) 2D sampled format:Unknown
-         23(os2):             TypeStruct 6 22
               37:             TypePointer UniformConstant 22
          38(tex):     37(ptr) Variable UniformConstant
               45:             TypeSampledImage 22

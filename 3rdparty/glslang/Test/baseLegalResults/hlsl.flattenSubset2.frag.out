@@ -11,15 +11,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                               ExecutionMode 4 OriginUpperLeft
                               Source HLSL 500
                               Name 4  "main"
-                              Name 14  "Nested"
-                              MemberName 14(Nested) 0  "y"
-                              MemberName 14(Nested) 1  "texNested"
-                              Name 15  "A"
-                              MemberName 15(A) 0  "n"
-                              MemberName 15(A) 1  "x"
-                              Name 25  "B"
-                              MemberName 25(B) 0  "n"
-                              MemberName 25(B) 1  "tex"
                               Name 49  "vpos"
                               Name 52  "@entryPointOutput"
                               Decorate 49(vpos) Location 0
@@ -28,10 +19,6 @@ WARNING: AST will form illegal SPIR-V; need to transform to legalize
                3:             TypeFunction 2
                6:             TypeFloat 32
                7:             TypeVector 6(float) 4
-              13:             TypeImage 6(float) 2D sampled format:Unknown
-      14(Nested):             TypeStruct 6(float) 13
-           15(A):             TypeStruct 14(Nested) 6(float)
-           25(B):             TypeStruct 14(Nested) 13
               43:    6(float) Constant 0
               44:    7(fvec4) ConstantComposite 43 43 43 43
               48:             TypePointer Input 7(fvec4)
