@@ -2318,6 +2318,30 @@ data.NumQualityLevels = 0;
 			}
 		}
 
+		D3D12_CPU_DESCRIPTOR_HANDLE getRtv(FrameBufferHandle _fbh, uint8_t _attachment) const
+		{
+			if (NULL != m_frameBuffers[_fbh.idx].m_swapChain)
+			{
+				_attachment = m_backBufferColorIdx;
+			}
+
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(m_rtvDescriptorHeap);
+			uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			D3D12_CPU_DESCRIPTOR_HANDLE result =
+			{
+				rtvDescriptor.ptr + (BX_COUNTOF(m_backBufferColor) + _fbh.idx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS + _attachment) * rtvDescriptorSize
+			};
+			return result;
+		}
+
+		D3D12_CPU_DESCRIPTOR_HANDLE getDsv(FrameBufferHandle _fbh) const
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(m_dsvDescriptorHeap);
+			uint32_t dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+			D3D12_CPU_DESCRIPTOR_HANDLE result = { dsvDescriptor.ptr + (1 + _fbh.idx) * dsvDescriptorSize };
+			return result;
+		}
+
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			if (isValid(m_fbh)
@@ -2359,10 +2383,8 @@ data.NumQualityLevels = 0;
 
 				if (0 < frameBuffer.m_num)
 				{
-					D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(m_rtvDescriptorHeap);
-					uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-					m_rtvHandle.ptr = rtvDescriptor.ptr + (BX_COUNTOF(m_backBufferColor) + _fbh.idx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
-					m_currentColor  = &m_rtvHandle;
+					m_rtvHandle = getRtv(_fbh, 0);
+					m_currentColor = &m_rtvHandle;
 				}
 				else
 				{
@@ -2371,9 +2393,7 @@ data.NumQualityLevels = 0;
 
 				if (isValid(frameBuffer.m_depth) )
 				{
-					D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(m_dsvDescriptorHeap);
-					uint32_t dsvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-					m_dsvHandle.ptr = dsvDescriptor.ptr + (1 + _fbh.idx) * dsvDescriptorSize;
+					m_dsvHandle = getDsv(_fbh);
 					m_currentDepthStencil = &m_dsvHandle;
 				}
 				else
@@ -4918,6 +4938,22 @@ data.NumQualityLevels = 0;
 				, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
 				);
 		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+
+		ID3D12Device* device = s_renderD3D12->m_device;
+		FrameBufferHandle fbh = { uint16_t(this - s_renderD3D12->m_frameBuffers) };
+		uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+		for (uint32_t ii = 0, num = scd.BufferCount; ii < num; ++ii)
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = s_renderD3D12->getRtv(fbh, ii);
+
+			ID3D12Resource* colorBuffer;
+			DX_CHECK(m_swapChain->GetBuffer(ii
+				, IID_ID3D12Resource
+				, (void**)&colorBuffer
+				) );
+			device->CreateRenderTargetView(colorBuffer, NULL, rtvHandle);
+		}
 #endif // BX_PLATFORM_WINDOWS
 
 		m_denseIdx = _denseIdx;
