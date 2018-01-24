@@ -1265,7 +1265,7 @@ namespace bgfx { namespace d3d12
 									| BGFX_CAPS_COMPUTE
 									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 //									| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
-//									| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
+									| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
 									| BGFX_CAPS_TEXTURE_BLIT
 									| BGFX_CAPS_TEXTURE_READ_BACK
 									| BGFX_CAPS_OCCLUSION_QUERY
@@ -4965,11 +4965,10 @@ data.NumQualityLevels = 0;
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 		FrameBufferHandle fbh = { uint16_t(this - s_renderD3D12->m_frameBuffers) };
-		uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		for (uint32_t ii = 0, num = scd.BufferCount; ii < num; ++ii)
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = s_renderD3D12->getRtv(fbh, ii);
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = s_renderD3D12->getRtv(fbh, uint8_t(ii) );
 
 			ID3D12Resource* colorBuffer;
 			DX_CHECK(m_swapChain->GetBuffer(ii
