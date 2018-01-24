@@ -6,7 +6,7 @@
 #ifndef BGFX_CONFIG_H_HEADER_GUARD
 #define BGFX_CONFIG_H_HEADER_GUARD
 
-#include <bx/config.h>
+#include <bx/bx.h>
 
 #ifndef BGFX_CONFIG_DEBUG
 #	define BGFX_CONFIG_DEBUG 0
@@ -210,13 +210,14 @@
 #	define BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM 9
 #endif // BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM
 
-// Cannot be configured directly. Must must be power of 2.
+// Cannot be configured via compiler options.
 #define BGFX_CONFIG_MAX_PROGRAMS (1<<BGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM)
+BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_PROGRAMS), "BGFX_CONFIG_MAX_PROGRAMS must be power of 2.");
 
 #ifndef BGFX_CONFIG_MAX_VIEWS
-// Do not change. Must be power of 2.
 #	define BGFX_CONFIG_MAX_VIEWS 256
 #endif // BGFX_CONFIG_MAX_VIEWS
+BX_STATIC_ASSERT(bx::isPowerOf2(BGFX_CONFIG_MAX_VIEWS), "BGFX_CONFIG_MAX_VIEWS must be power of 2.");
 
 #define BGFX_CONFIG_MAX_VIEW_NAME_RESERVED 6
 
