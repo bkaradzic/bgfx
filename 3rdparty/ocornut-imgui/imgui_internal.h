@@ -467,6 +467,7 @@ struct ImGuiNextWindowData
     ImGuiCond               CollapsedCond;
     ImGuiCond               SizeConstraintCond;
     ImGuiCond               FocusCond;
+    ImGuiCond               BgAlphaCond;
     ImVec2                  PosVal;
     ImVec2                  PosPivotVal;
     ImVec2                  SizeVal;
@@ -475,21 +476,23 @@ struct ImGuiNextWindowData
     ImRect                  SizeConstraintRect;                 // Valid if 'SetNextWindowSizeConstraint' is true
     ImGuiSizeCallback       SizeCallback;
     void*                   SizeCallbackUserData;
+    float                   BgAlphaVal;
 
     ImGuiNextWindowData()
     {
-        PosCond = SizeCond = ContentSizeCond = CollapsedCond = SizeConstraintCond = FocusCond = 0;
+        PosCond = SizeCond = ContentSizeCond = CollapsedCond = SizeConstraintCond = FocusCond = BgAlphaCond = 0;
         PosVal = PosPivotVal = SizeVal = ImVec2(0.0f, 0.0f);
         ContentSizeVal = ImVec2(0.0f, 0.0f);
         CollapsedVal = false;
         SizeConstraintRect = ImRect();
         SizeCallback = NULL;
         SizeCallbackUserData = NULL;
+        BgAlphaVal = FLT_MAX;
     }
 
     void    Clear()
     {
-        PosCond = SizeCond = ContentSizeCond = CollapsedCond = SizeConstraintCond = FocusCond = 0;
+        PosCond = SizeCond = ContentSizeCond = CollapsedCond = SizeConstraintCond = FocusCond = BgAlphaCond = 0;
     }
 };
 
@@ -886,6 +889,8 @@ namespace ImGui
     IMGUI_API void          PushMultiItemsWidths(int components, float width_full = 0.0f);
     IMGUI_API void          PushItemFlag(ImGuiItemFlags option, bool enabled);
     IMGUI_API void          PopItemFlag();
+
+    IMGUI_API void          SetCurrentFont(ImFont* font);
 
     IMGUI_API void          OpenPopupEx(ImGuiID id);
     IMGUI_API void          ClosePopup(ImGuiID id);
