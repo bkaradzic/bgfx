@@ -853,6 +853,7 @@ namespace bgfx { namespace d3d12
 						if (SUCCEEDED(hr) )
 						{
 //							debug1->SetEnableGPUBasedValidation(true);
+//							debug1->SetEnableSynchronizedCommandQueueValidation(true);
 						}
 					}
 #endif // BX_PLATFORM_WINDOWS
@@ -1552,17 +1553,19 @@ namespace bgfx { namespace d3d12
 			{
 				int64_t start = bx::getHPCounter();
 
+				m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.BufferCount]);
+
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_resolution.m_flags & BGFX_RESET_VSYNC);
 				uint32_t flags = 0 == syncInterval ? DXGI_PRESENT_RESTART : 0;
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
-					hr = m_frameBuffers[m_windows[ii].idx].m_swapChain->Present(syncInterval, flags);
+					FrameBufferD3D12& frameBuffer = m_frameBuffers[m_windows[ii].idx];
+					hr = frameBuffer.present(syncInterval, flags);
 				}
 
 				if (SUCCEEDED(hr) )
 				{
-					m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.BufferCount]);
 					hr = m_swapChain->Present(syncInterval, flags);
 				}
 
@@ -1957,8 +1960,7 @@ namespace bgfx { namespace d3d12
 			const uint32_t width  = getBufferWidth();
 			const uint32_t height = getBufferHeight();
 
-			FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-			setFrameBuffer(fbh, false);
+			setFrameBuffer(BGFX_INVALID_HANDLE, false);
 
 			D3D12_VIEWPORT vp;
 			vp.TopLeftX = 0;
@@ -2318,13 +2320,22 @@ data.NumQualityLevels = 0;
 			}
 		}
 
-		D3D12_CPU_DESCRIPTOR_HANDLE getRtv(FrameBufferHandle _fbh, uint8_t _attachment) const
+		D3D12_CPU_DESCRIPTOR_HANDLE getRtv(FrameBufferHandle _fbh)
 		{
-			if (NULL != m_frameBuffers[_fbh.idx].m_swapChain)
+			FrameBufferD3D12& frameBuffer = m_frameBuffers[_fbh.idx];
+
+			if (NULL != frameBuffer.m_swapChain)
 			{
-				_attachment = m_backBufferColorIdx;
+				uint8_t idx = uint8_t(frameBuffer.m_swapChain->GetCurrentBackBufferIndex() );
+				frameBuffer.setState(m_commandList, idx, D3D12_RESOURCE_STATE_RENDER_TARGET);
+				return getRtv(_fbh, idx);
 			}
 
+			return getRtv(_fbh, 0);
+		}
+
+		D3D12_CPU_DESCRIPTOR_HANDLE getRtv(FrameBufferHandle _fbh, uint8_t _attachment)
+		{
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 			uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			D3D12_CPU_DESCRIPTOR_HANDLE result =
@@ -2349,19 +2360,22 @@ data.NumQualityLevels = 0;
 			{
 				const FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
 
-				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+				if (NULL == frameBuffer.m_swapChain)
 				{
-					TextureD3D12& texture = m_textures[frameBuffer.m_texture[ii].idx];
-					texture.setState(m_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-				}
-
-				if (isValid(frameBuffer.m_depth) )
-				{
-					TextureD3D12& texture = m_textures[frameBuffer.m_depth.idx];
-					const bool writeOnly  = 0 != (texture.m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
-					if (!writeOnly)
+					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
 					{
-						texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_READ);
+						TextureD3D12& texture = m_textures[frameBuffer.m_texture[ii].idx];
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+					}
+
+					if (isValid(frameBuffer.m_depth) )
+					{
+						TextureD3D12& texture = m_textures[frameBuffer.m_depth.idx];
+						const bool writeOnly  = 0 != (texture.m_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
+						if (!writeOnly)
+						{
+							texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_READ);
+						}
 					}
 				}
 			}
@@ -2379,11 +2393,11 @@ data.NumQualityLevels = 0;
 			}
 			else
 			{
-				const FrameBufferD3D12& frameBuffer = m_frameBuffers[_fbh.idx];
+				FrameBufferD3D12& frameBuffer = m_frameBuffers[_fbh.idx];
 
 				if (0 < frameBuffer.m_num)
 				{
-					m_rtvHandle = getRtv(_fbh, 0);
+					m_rtvHandle = getRtv(_fbh);
 					m_currentColor = &m_rtvHandle;
 				}
 				else
@@ -2401,16 +2415,23 @@ data.NumQualityLevels = 0;
 					m_currentDepthStencil = NULL;
 				}
 
-				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+				if (NULL != frameBuffer.m_swapChain)
 				{
-					TextureD3D12& texture = m_textures[frameBuffer.m_texture[ii].idx];
-					texture.setState(m_commandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+					frameBuffer.m_needPresent = true;
 				}
-
-				if (isValid(frameBuffer.m_depth) )
+				else
 				{
-					TextureD3D12& texture = m_textures[frameBuffer.m_depth.idx];
-					texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+					{
+						TextureD3D12& texture = m_textures[frameBuffer.m_texture[ii].idx];
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_RENDER_TARGET);
+					}
+
+					if (isValid(frameBuffer.m_depth) )
+					{
+						TextureD3D12& texture = m_textures[frameBuffer.m_depth.idx];
+						texture.setState(m_commandList, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+					}
 				}
 
 				m_commandList->OMSetRenderTargets(
@@ -2839,20 +2860,29 @@ data.NumQualityLevels = 0;
 			if (isValid(m_fbh) )
 			{
 				const FrameBufferD3D12& frameBuffer = m_frameBuffers[m_fbh.idx];
-				desc.NumRenderTargets = frameBuffer.m_num;
-
-				for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+				if (NULL == frameBuffer.m_swapChain)
 				{
-					desc.RTVFormats[ii] = m_textures[frameBuffer.m_texture[ii].idx].m_srvd.Format;
-				}
+					desc.NumRenderTargets = frameBuffer.m_num;
 
-				if (isValid(frameBuffer.m_depth) )
-				{
-					desc.DSVFormat = s_textureFormat[m_textures[frameBuffer.m_depth.idx].m_textureFormat].m_fmtDsv;
+					for (uint8_t ii = 0, num = frameBuffer.m_num; ii < num; ++ii)
+					{
+						desc.RTVFormats[ii] = m_textures[frameBuffer.m_texture[ii].idx].m_srvd.Format;
+					}
+
+					if (isValid(frameBuffer.m_depth) )
+					{
+						desc.DSVFormat = s_textureFormat[m_textures[frameBuffer.m_depth.idx].m_textureFormat].m_fmtDsv;
+					}
+					else
+					{
+						desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+					}
 				}
 				else
 				{
-					desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+					desc.NumRenderTargets = 1;
+					desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+					desc.DSVFormat     = DXGI_FORMAT_UNKNOWN;
 				}
 			}
 			else
@@ -3195,19 +3225,12 @@ data.NumQualityLevels = 0;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
+		AdapterI*   m_adapter;
+		FactoryI*   m_factory;
+		SwapChainI* m_swapChain;
+
 #if BX_PLATFORM_WINDOWS
-		IDXGIAdapter3*   m_adapter;
-		IDXGIFactory4*   m_factory;
-		IDXGISwapChain3* m_swapChain;
 		ID3D12InfoQueue* m_infoQueue;
-#elif BX_PLATFORM_WINRT
-		IDXGIAdapter*    m_adapter;
-		IDXGIFactory2*   m_factory;
-		IDXGISwapChain1* m_swapChain;
-#else
-		IDXGIAdapter*    m_adapter;
-		IDXGIFactory2*   m_factory;
-		IDXGISwapChain1* m_swapChain;
 #endif // BX_PLATFORM_WINDOWS
 
 		int64_t m_presentElapsed;
@@ -4938,6 +4961,7 @@ data.NumQualityLevels = 0;
 				, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
 				);
 		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
+		m_state = D3D12_RESOURCE_STATE_PRESENT;
 
 		ID3D12Device* device = s_renderD3D12->m_device;
 		FrameBufferHandle fbh = { uint16_t(this - s_renderD3D12->m_frameBuffers) };
@@ -4973,6 +4997,19 @@ data.NumQualityLevels = 0;
 		m_denseIdx = UINT16_MAX;
 
 		return denseIdx;
+	}
+
+	HRESULT FrameBufferD3D12::present(uint32_t _syncInterval, uint32_t _flags)
+	{
+		if (m_needPresent)
+		{
+			HRESULT hr = m_swapChain->Present(_syncInterval, _flags);
+			hr = !isLost(hr) ? S_OK : hr;
+			m_needPresent = false;
+			return hr;
+		}
+
+		return S_OK;
 	}
 
 	void FrameBufferD3D12::preReset()
@@ -5165,6 +5202,28 @@ data.NumQualityLevels = 0;
 				, _rect
 				);
 		}
+	}
+
+	D3D12_RESOURCE_STATES FrameBufferD3D12::setState(ID3D12GraphicsCommandList* _commandList, uint8_t _idx, D3D12_RESOURCE_STATES _state)
+	{
+		if (m_state != _state)
+		{
+			ID3D12Resource* colorBuffer;
+			DX_CHECK(m_swapChain->GetBuffer(_idx
+				, IID_ID3D12Resource
+				, (void**)&colorBuffer
+				) );
+
+			setResourceBarrier(_commandList
+				, colorBuffer
+				, m_state
+				, _state
+				);
+
+			bx::xchg(m_state, _state);
+		}
+
+		return _state;
 	}
 
 	void TimerQueryD3D12::init()
@@ -5593,6 +5652,8 @@ data.NumQualityLevels = 0;
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
+			setFrameBuffer(BGFX_INVALID_HANDLE, true);
+
 			m_batch.begin();
 
 // 			uint8_t eye = 0;
@@ -6472,6 +6533,14 @@ data.NumQualityLevels = 0;
 			, D3D12_RESOURCE_STATE_RENDER_TARGET
 			, D3D12_RESOURCE_STATE_PRESENT
 			);
+
+		for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
+		{
+			FrameBufferD3D12& frameBuffer = m_frameBuffers[m_windows[ii].idx];
+			uint8_t idx = uint8_t(frameBuffer.m_swapChain->GetCurrentBackBufferIndex() );
+			frameBuffer.setState(m_commandList, idx, D3D12_RESOURCE_STATE_PRESENT);
+		}
+
 		m_backBufferColorFence[m_backBufferColorIdx] = kick();
 	}
 
