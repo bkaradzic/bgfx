@@ -1265,7 +1265,7 @@ namespace bgfx { namespace d3d12
 									| BGFX_CAPS_COMPUTE
 									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 //									| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
-									| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
+//									| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
 									| BGFX_CAPS_TEXTURE_BLIT
 									| BGFX_CAPS_TEXTURE_READ_BACK
 									| BGFX_CAPS_OCCLUSION_QUERY
