@@ -653,25 +653,26 @@ namespace bgfx
 			float m_v;
 		};
 
-		static uint32_t palette[16] =
+		static uint32_t palette[] =
 		{
-			0x0,
-			0xff0000cc,
-			0xff069a4e,
-			0xff00a0c4,
-			0xffa46534,
-			0xff7b5075,
-			0xff9a9806,
-			0xffcfd7d3,
-			0xff535755,
-			0xff2929ef,
-			0xff34e28a,
-			0xff4fe9fc,
-			0xffcf9f72,
-			0xffa87fad,
-			0xffe2e234,
-			0xffeceeee,
+			0x0,        // Black
+			0xffa46534, // Blue
+			0xff069a4e, // Green
+			0xff9a9806, // Cyan
+			0xff0000cc, // Red
+			0xff7b5075, // Magenta
+			0xff00a0c4, // Brown
+			0xffcfd7d3, // Light Gray
+			0xff535755, // Dark Gray
+			0xffcf9f72, // Light Blue
+			0xff34e28a, // Light Green
+			0xffe2e234, // Light Cyan
+			0xff2929ef, // Light Red
+			0xffa87fad, // Light Magenta
+			0xff4fe9fc, // Yellow
+			0xffeceeee, // White
 		};
+		BX_STATIC_ASSERT(BX_COUNTOF(palette) == 16);
 
 		uint32_t yy = 0;
 		uint32_t xx = 0;

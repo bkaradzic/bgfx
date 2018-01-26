@@ -1941,7 +1941,7 @@ namespace bgfx
 	///
 	/// @param[in] _x, _y 2D position from top-left.
 	/// @param[in] _attr Color palette. Where top 4-bits represent index of background, and bottom
-	///   4-bits represent foreground color from standard VGA text palette.
+	///   4-bits represent foreground color from standard VGA text palette (ANSI escape codes).
 	/// @param[in] _format `printf` style format.
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_printf`.
@@ -1958,7 +1958,7 @@ namespace bgfx
 	///
 	/// @param[in] _x, _y 2D position from top-left.
 	/// @param[in] _attr Color palette. Where top 4-bits represent index of background, and bottom
-	///   4-bits represent foreground color from standard VGA text palette.
+	///   4-bits represent foreground color from standard VGA text palette (ANSI escape codes).
 	/// @param[in] _format `printf` style format.
 	/// @param[in] _argList additional arguments for format string
 	///

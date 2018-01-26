@@ -387,7 +387,7 @@ public:
 				// When multiple render targets (MRT) is not supported by GPU,
 				// implement alternative code path that doesn't use MRT.
 				bool blink = uint32_t(time*3.0f)&1;
-				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " MRT not supported by GPU. ");
+				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " MRT not supported by GPU. ");
 
 				// Set view 0 default viewport.
 				bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
