@@ -1275,7 +1275,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 					m_scd.BufferCount = m_swapBufferCount;
 					m_scd.Scaling = 0 == g_platformData.ndt
 						? DXGI_SCALING_NONE
-						: DXGI_SCALING_STRETCH;
+						: DXGI_SCALING_STRETCH
+						;
 					m_scd.SwapEffect = m_swapEffect;
 					m_scd.AlphaMode  = DXGI_ALPHA_MODE_IGNORE;
 					m_scd.Flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
