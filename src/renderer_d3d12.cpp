@@ -1269,7 +1269,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_COMPUTE
 					| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
 //					| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
-//					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
+					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
 					| BGFX_CAPS_OCCLUSION_QUERY
@@ -5167,15 +5167,13 @@ data.NumQualityLevels = 0;
 	void FrameBufferD3D12::clear(ID3D12GraphicsCommandList* _commandList, const Clear& _clear, const float _palette[][4], const D3D12_RECT* _rect, uint32_t _num)
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
-		const uint32_t fbhIdx = (uint32_t)(this - s_renderD3D12->m_frameBuffers);
+		FrameBufferHandle fbh = { (uint16_t)(this - s_renderD3D12->m_frameBuffers) };
+		D3D12_CPU_DESCRIPTOR_HANDLE rtv = s_renderD3D12->getRtv(fbh);
+		uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		if (BGFX_CLEAR_COLOR & _clear.m_flags
 		&&  0 != m_num)
 		{
-			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_rtvDescriptorHeap);
-			uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-			rtvDescriptor.ptr += (BX_COUNTOF(s_renderD3D12->m_backBufferColor) + fbhIdx * BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) * rtvDescriptorSize;
-
 			if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 			{
 				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
@@ -5183,12 +5181,12 @@ data.NumQualityLevels = 0;
 					uint8_t index = _clear.m_index[ii];
 					if (UINT8_MAX != index)
 					{
-						D3D12_CPU_DESCRIPTOR_HANDLE rtv = { rtvDescriptor.ptr + ii * rtvDescriptorSize };
 						_commandList->ClearRenderTargetView(rtv
 								, _palette[index]
 								, _num
 								, _rect
 								);
+						rtv.ptr += rtvDescriptorSize;
 					}
 				}
 			}
@@ -5203,12 +5201,12 @@ data.NumQualityLevels = 0;
 				};
 				for (uint32_t ii = 0, num = m_num; ii < num; ++ii)
 				{
-					D3D12_CPU_DESCRIPTOR_HANDLE rtv = { rtvDescriptor.ptr + ii * rtvDescriptorSize };
 					_commandList->ClearRenderTargetView(rtv
 						, frgba
 						, _num
 						, _rect
 						);
+					rtv.ptr += rtvDescriptorSize;
 				}
 			}
 		}
@@ -5218,7 +5216,7 @@ data.NumQualityLevels = 0;
 		{
 			D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
 			uint32_t dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-			dsvDescriptor.ptr += (1 + fbhIdx) * dsvDescriptorSize;
+			dsvDescriptor.ptr += (1 + fbh.idx) * dsvDescriptorSize;
 
 			DWORD flags = 0;
 			flags |= (_clear.m_flags & BGFX_CLEAR_DEPTH)   ? D3D12_CLEAR_FLAG_DEPTH   : 0;
