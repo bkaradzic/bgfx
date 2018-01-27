@@ -5270,7 +5270,7 @@ namespace bgfx { namespace gl
 			&& !s_textureFormat[m_requestedFormat].m_supported
 			&& !s_renderGL->m_textureSwizzleSupport
 			;
-		const bool unpackRowLength = BX_IGNORE_C4127(!!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported);
+		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
 		const bool compressed      = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat) );
 		const bool convert         = false
 			|| (compressed && m_textureFormat != m_requestedFormat)
@@ -5325,8 +5325,9 @@ namespace bgfx { namespace gl
 				srcpitch = rectpitch;
 			}
 
-			if (!unpackRowLength
-			&&  !convert)
+			if (BX_IGNORE_C4127(true
+			&&  !unpackRowLength
+			&&  !convert) )
 			{
 				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
 				data = temp;

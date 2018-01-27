@@ -484,13 +484,13 @@ namespace bgfx { namespace d3d12
 		const HeapProperty& heapProperty = s_heapProperties[_heapProperty];
 		ID3D12Resource* resource;
 		DX_CHECK(_device->CreateCommittedResource(&heapProperty.m_properties
-				, D3D12_HEAP_FLAG_NONE
-				, _resourceDesc
-				, heapProperty.m_state
-				, _clearValue
-				, IID_ID3D12Resource
-				, (void**)&resource
-				) );
+			, D3D12_HEAP_FLAG_NONE
+			, _resourceDesc
+			, heapProperty.m_state
+			, _clearValue
+			, IID_ID3D12Resource
+			, (void**)&resource
+			) );
 		BX_WARN(NULL != resource, "CreateCommittedResource failed (size: %d). Out of memory?"
 			, _resourceDesc->Width
 			);
@@ -800,16 +800,16 @@ namespace bgfx { namespace d3d12
 						wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
 						BX_TRACE("\tDescription: %s", description);
 						BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-								, desc.VendorId
-								, desc.DeviceId
-								, desc.SubSysId
-								, desc.Revision
-								);
+							, desc.VendorId
+							, desc.DeviceId
+							, desc.SubSysId
+							, desc.Revision
+							);
 						BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-								, desc.DedicatedVideoMemory
-								, desc.DedicatedSystemMemory
-								, desc.SharedSystemMemory
-								);
+							, desc.DedicatedVideoMemory
+							, desc.DedicatedSystemMemory
+							, desc.SharedSystemMemory
+							);
 
 						g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
 						g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
@@ -975,11 +975,11 @@ namespace bgfx { namespace d3d12
 					architecture.NodeIndex = ii;
 					DX_CHECK(m_device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture) ) );
 					BX_TRACE("\tNode % 2d: TileBasedRenderer %d, UMA %d, CacheCoherentUMA %d"
-							, ii
-							, architecture.TileBasedRenderer
-							, architecture.UMA
-							, architecture.CacheCoherentUMA
-							);
+						, ii
+						, architecture.TileBasedRenderer
+						, architecture.UMA
+						, architecture.CacheCoherentUMA
+						);
 					if (0 == ii)
 					{
 						bx::memCopy(&m_architecture, &architecture, sizeof(architecture) );
@@ -1087,13 +1087,13 @@ namespace bgfx { namespace d3d12
 				m_scd.Flags        = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 				BX_CHECK(m_scd.BufferCount <= BX_COUNTOF(m_backBufferColor), "Swap chain buffer count %d (max %d)."
-						, m_scd.BufferCount
-						, BX_COUNTOF(m_backBufferColor)
-						);
+					, m_scd.BufferCount
+					, BX_COUNTOF(m_backBufferColor)
+					);
 				hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
-						, &m_scd
-						, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
-						);
+					, &m_scd
+					, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
+					);
 #endif // BX_PLATFORM_*
 				if (FAILED(hr) )
 				{
@@ -1148,10 +1148,10 @@ namespace bgfx { namespace d3d12
 
 #if BX_PLATFORM_WINDOWS
 				DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
-						, 0
-						| DXGI_MWA_NO_WINDOW_CHANGES
-						| DXGI_MWA_NO_ALT_ENTER
-						) );
+					, 0
+					| DXGI_MWA_NO_WINDOW_CHANGES
+					| DXGI_MWA_NO_ALT_ENTER
+					) );
 
 				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 				{
@@ -1182,29 +1182,29 @@ namespace bgfx { namespace d3d12
 
 				D3D12_DESCRIPTOR_HEAP_DESC rtvDescHeap;
 				rtvDescHeap.NumDescriptors = 0
-						+ BX_COUNTOF(m_backBufferColor)
-						+ BGFX_CONFIG_MAX_FRAME_BUFFERS*BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
-						;
+					+ BX_COUNTOF(m_backBufferColor)
+					+ BGFX_CONFIG_MAX_FRAME_BUFFERS*BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
+					;
 				rtvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 				rtvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 				rtvDescHeap.NodeMask = 1;
 				DX_CHECK(m_device->CreateDescriptorHeap(&rtvDescHeap
-						, IID_ID3D12DescriptorHeap
-						, (void**)&m_rtvDescriptorHeap
-						) );
+					, IID_ID3D12DescriptorHeap
+					, (void**)&m_rtvDescriptorHeap
+					) );
 
 				D3D12_DESCRIPTOR_HEAP_DESC dsvDescHeap;
 				dsvDescHeap.NumDescriptors = 0
-						+ 1 // reserved for depth backbuffer.
-						+ BGFX_CONFIG_MAX_FRAME_BUFFERS
-						;
+					+ 1 // reserved for depth backbuffer.
+					+ BGFX_CONFIG_MAX_FRAME_BUFFERS
+					;
 				dsvDescHeap.Type     = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 				dsvDescHeap.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 				dsvDescHeap.NodeMask = 1;
 				DX_CHECK(m_device->CreateDescriptorHeap(&dsvDescHeap
-						, IID_ID3D12DescriptorHeap
-						, (void**)&m_dsvDescriptorHeap
-						) );
+					, IID_ID3D12DescriptorHeap
+					, (void**)&m_dsvDescriptorHeap
+					) );
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 				{
@@ -1246,37 +1246,37 @@ namespace bgfx { namespace d3d12
 				ID3DBlob* outBlob;
 				ID3DBlob* errorBlob;
 				DX_CHECK(D3D12SerializeRootSignature(&descRootSignature
-						, D3D_ROOT_SIGNATURE_VERSION_1
-						, &outBlob
-						, &errorBlob
-						) );
+					, D3D_ROOT_SIGNATURE_VERSION_1
+					, &outBlob
+					, &errorBlob
+					) );
 
 				DX_CHECK(m_device->CreateRootSignature(0
-						, outBlob->GetBufferPointer()
-						, outBlob->GetBufferSize()
-						, IID_ID3D12RootSignature
-						, (void**)&m_rootSignature
-						) );
+					, outBlob->GetBufferPointer()
+					, outBlob->GetBufferSize()
+					, IID_ID3D12RootSignature
+					, (void**)&m_rootSignature
+					) );
 
 				g_caps.supported |= ( 0
-									| BGFX_CAPS_TEXTURE_3D
-									| BGFX_CAPS_TEXTURE_COMPARE_ALL
-									| BGFX_CAPS_INSTANCING
-									| BGFX_CAPS_VERTEX_ATTRIB_HALF
-									| BGFX_CAPS_VERTEX_ATTRIB_UINT10
-									| BGFX_CAPS_FRAGMENT_DEPTH
-									| BGFX_CAPS_BLEND_INDEPENDENT
-									| BGFX_CAPS_COMPUTE
-									| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
-//									| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
-//									| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
-									| BGFX_CAPS_TEXTURE_BLIT
-									| BGFX_CAPS_TEXTURE_READ_BACK
-									| BGFX_CAPS_OCCLUSION_QUERY
-									| BGFX_CAPS_ALPHA_TO_COVERAGE
-									| BGFX_CAPS_TEXTURE_2D_ARRAY
-									| BGFX_CAPS_TEXTURE_CUBE_ARRAY
-									);
+					| BGFX_CAPS_TEXTURE_3D
+					| BGFX_CAPS_TEXTURE_COMPARE_ALL
+					| BGFX_CAPS_INSTANCING
+					| BGFX_CAPS_VERTEX_ATTRIB_HALF
+					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
+					| BGFX_CAPS_FRAGMENT_DEPTH
+					| BGFX_CAPS_BLEND_INDEPENDENT
+					| BGFX_CAPS_COMPUTE
+					| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
+//					| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
+//					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
+					| BGFX_CAPS_TEXTURE_BLIT
+					| BGFX_CAPS_TEXTURE_READ_BACK
+					| BGFX_CAPS_OCCLUSION_QUERY
+					| BGFX_CAPS_ALPHA_TO_COVERAGE
+					| BGFX_CAPS_TEXTURE_2D_ARRAY
+					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+					);
 				g_caps.limits.maxTextureSize   = 16384;
 				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 				g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
@@ -2096,9 +2096,9 @@ namespace bgfx { namespace d3d12
 				D3D12_CPU_DESCRIPTOR_HANDLE handle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 				handle.ptr += ii * rtvDescriptorSize;
 				DX_CHECK(m_swapChain->GetBuffer(ii
-						, IID_ID3D12Resource
-						, (void**)&m_backBufferColor[ii]
-						) );
+					, IID_ID3D12Resource
+					, (void**)&m_backBufferColor[ii]
+					) );
 				m_device->CreateRenderTargetView(m_backBufferColor[ii], NULL, handle);
 			}
 
@@ -2951,9 +2951,9 @@ data.NumQualityLevels = 0;
 			if (NULL == pso)
 			{
 				DX_CHECK(m_device->CreateGraphicsPipelineState(&desc
-						, IID_ID3D12PipelineState
-						, (void**)&pso
-						) );
+					, IID_ID3D12PipelineState
+					, (void**)&pso
+					) );
 			}
 
 			BGFX_FATAL(NULL != pso, Fatal::InvalidShader, "Failed to create PSO!");
@@ -3352,9 +3352,9 @@ data.NumQualityLevels = 0;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
-				, IID_ID3D12DescriptorHeap
-				, (void**)&m_heap
-				) );
+			, IID_ID3D12DescriptorHeap
+			, (void**)&m_heap
+			) );
 
 		m_upload = createCommittedResource(device, HeapProperty::Upload, desc.NumDescriptors * 1024);
 		m_gpuVA  = m_upload->GetGPUVirtualAddress();
@@ -3537,9 +3537,9 @@ data.NumQualityLevels = 0;
 		desc.Flags    = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		desc.NodeMask = 1;
 		DX_CHECK(device->CreateDescriptorHeap(&desc
-				, IID_ID3D12DescriptorHeap
-				, (void**)&m_heap
-				) );
+			, IID_ID3D12DescriptorHeap
+			, (void**)&m_heap
+			) );
 
 		m_cpuHandle = getCPUHandleHeapStart(m_heap);
 		m_gpuHandle = getGPUHandleHeapStart(m_heap);
@@ -3651,32 +3651,32 @@ data.NumQualityLevels = 0;
 		queueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		queueDesc.NodeMask = 1;
 		DX_CHECK(_device->CreateCommandQueue(&queueDesc
-				, IID_ID3D12CommandQueue
-				, (void**)&m_commandQueue
-				) );
+			, IID_ID3D12CommandQueue
+			, (void**)&m_commandQueue
+			) );
 
 		m_completedFence = 0;
 		m_currentFence   = 0;
 		DX_CHECK(_device->CreateFence(0
-				, D3D12_FENCE_FLAG_NONE
-				, IID_ID3D12Fence
-				, (void**)&m_fence
-				) );
+			, D3D12_FENCE_FLAG_NONE
+			, IID_ID3D12Fence
+			, (void**)&m_fence
+			) );
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandList); ++ii)
 		{
 			DX_CHECK(_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT
-					, IID_ID3D12CommandAllocator
-					, (void**)&m_commandList[ii].m_commandAllocator
-					) );
+				, IID_ID3D12CommandAllocator
+				, (void**)&m_commandList[ii].m_commandAllocator
+				) );
 
 			DX_CHECK(_device->CreateCommandList(0
-					, D3D12_COMMAND_LIST_TYPE_DIRECT
-					, m_commandList[ii].m_commandAllocator
-					, NULL
-					, IID_ID3D12GraphicsCommandList
-					, (void**)&m_commandList[ii].m_commandList
-					) );
+				, D3D12_COMMAND_LIST_TYPE_DIRECT
+				, m_commandList[ii].m_commandAllocator
+				, NULL
+				, IID_ID3D12GraphicsCommandList
+				, (void**)&m_commandList[ii].m_commandList
+				) );
 
 			DX_CHECK(m_commandList[ii].m_commandList->Close() );
 		}
@@ -3819,10 +3819,10 @@ data.NumQualityLevels = 0;
 		};
 
 		DX_CHECK(device->CreateCommandSignature(&drawCommandSignature
-				, rootSignature
-				, IID_ID3D12CommandSignature
-				, (void**)&m_commandSignature[Draw]
-				) );
+			, rootSignature
+			, IID_ID3D12CommandSignature
+			, (void**)&m_commandSignature[Draw]
+			) );
 
 		D3D12_INDIRECT_ARGUMENT_DESC drawIndexedArgDesc[] =
 		{
@@ -3845,10 +3845,10 @@ data.NumQualityLevels = 0;
 		};
 
 		DX_CHECK(device->CreateCommandSignature(&drawIndexedCommandSignature
-				, rootSignature
-				, IID_ID3D12CommandSignature
-				, (void**)&m_commandSignature[DrawIndexed]
-				) );
+			, rootSignature
+			, IID_ID3D12CommandSignature
+			, (void**)&m_commandSignature[DrawIndexed]
+			) );
 
 		m_cmds[Draw       ] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndirectCommand) );
 		m_cmds[DrawIndexed] = BX_ALLOC(g_allocator, m_maxDrawPerBatch*sizeof(DrawIndexedIndirectCommand) );
@@ -5391,9 +5391,9 @@ data.NumQualityLevels = 0;
 		queryHeapDesc.NodeMask = 1;
 		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_OCCLUSION;
 		DX_CHECK(s_renderD3D12->m_device->CreateQueryHeap(&queryHeapDesc
-				, IID_ID3D12QueryHeap
-				, (void**)&m_queryHeap
-				) );
+			, IID_ID3D12QueryHeap
+			, (void**)&m_queryHeap
+			) );
 
 		const uint32_t size = BX_COUNTOF(m_handle)*sizeof(uint64_t);
 		m_readback = createCommittedResource(s_renderD3D12->m_device
