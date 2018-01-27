@@ -2214,7 +2214,10 @@ data.NumQualityLevels = 0;
 			{
 				uint32_t flags = _resolution.m_flags & (~BGFX_RESET_INTERNAL_FORCE);
 
-				bool resize = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK);
+				bool resize = true
+					&& BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
+					&& (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK)
+					;
 
 				m_resolution = _resolution;
 				m_resolution.m_flags = flags;
@@ -2262,14 +2265,26 @@ data.NumQualityLevels = 0;
 
 					DX_RELEASE(m_swapChain, 0);
 
-#if BX_PLATFORM_WINDOWS
 					HRESULT hr;
+#if BX_PLATFORM_WINDOWS
 					hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
 							, &m_scd
 							, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
 							);
-					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
+#else
+					hr = m_factory->CreateSwapChainForCoreWindow(
+#	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+						  m_cmd.m_commandQueue
+#	else
+						  m_device
+#	endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+						, (::IUnknown*)g_platformData.nwh
+						, &m_scd
+						, NULL
+						, &m_swapChain
+						);
 #endif // BX_PLATFORM_WINDOWS
+					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 				}
 
 				postReset();
