@@ -429,8 +429,11 @@ public:
 			{
 				Aabb aabb;
 				psGetAabb(m_emitter[currentEmitter].m_handle, aabb);
-				ddSetColor(0xff0000ff);
-				ddDraw(aabb);
+				ddPush();
+					ddSetWireframe(true);
+					ddSetColor(0xff0000ff);
+					ddDraw(aabb);
+				ddPop();
 			}
 
 			ddEnd();
