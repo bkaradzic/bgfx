@@ -332,8 +332,8 @@ namespace ps
 
 			Aabb aabb =
 			{
-				{  bx::kHuge,  bx::kHuge,  bx::kHuge },
-				{ -bx::kHuge, -bx::kHuge, -bx::kHuge },
+				{  bx::kInfinity,  bx::kInfinity,  bx::kInfinity },
+				{ -bx::kInfinity, -bx::kInfinity, -bx::kInfinity },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
