@@ -1448,18 +1448,23 @@ namespace bgfx { namespace d3d12
 			{
 			case ErrorState::CreatedCommandQueue:
 				m_cmd.shutdown();
+			// FALLTHRU
 			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_device,  0);
 				DX_RELEASE(m_adapter, 0);
 				DX_RELEASE(m_factory, 0);
 #if USE_D3D12_DYNAMIC_LIB
+			// FALLTHRU
 			case ErrorState::LoadedDXGI:
 				bx::dlclose(m_dxgidll);
+			// FALLTHRU
 			case ErrorState::LoadedD3D12:
 				bx::dlclose(m_d3d12dll);
+			// FALLTHRU
 			case ErrorState::LoadedKernel32:
 				bx::dlclose(m_kernel32dll);
 #endif // USE_D3D12_DYNAMIC_LIB
+			// FALLTHRU
 			case ErrorState::Default:
 			default:
 				unloadRenderDoc(m_renderdocdll);
