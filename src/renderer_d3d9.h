@@ -241,6 +241,7 @@ namespace bgfx { namespace d3d9
 			switch (m_type)
 			{
 			case 0:  DX_RELEASE(m_vertexShader, 0);
+				BX_FALLTHROUGH;
 			default: DX_RELEASE(m_pixelShader,  0);
 			}
 		}
