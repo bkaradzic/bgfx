@@ -1767,11 +1767,13 @@ VK_IMPORT_DEVICE
 				vkDestroy(m_descriptorSetLayout);
 				vkDestroy(m_descriptorPool);
 
+			// FALLTHRU
 			case ErrorState::CommandBuffersCreated:
 				vkFreeCommandBuffers(m_device, m_commandPool, BX_COUNTOF(m_commandBuffers), m_commandBuffers);
 				vkDestroy(m_commandPool);
 				vkDestroy(m_fence);
 
+			// FALLTHRU
 			case ErrorState::SwapchainCreated:
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 				{
@@ -1792,15 +1794,19 @@ VK_IMPORT_DEVICE
 				}
 				vkDestroy(m_swapchain);
 
+			// FALLTHRU
 			case ErrorState::SurfaceCreated:
 				vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
 
+			// FALLTHRU
 			case ErrorState::RenderPassCreated:
 				vkDestroy(m_renderPass);
 
+			// FALLTHRU
 			case ErrorState::DeviceCreated:
 				vkDestroyDevice(m_device, m_allocatorCb);
 
+			// FALLTHRU
 			case ErrorState::InstanceCreated:
 				if (VK_NULL_HANDLE != m_debugReportCallback)
 				{
@@ -1809,12 +1815,14 @@ VK_IMPORT_DEVICE
 
 				vkDestroyInstance(m_instance, m_allocatorCb);
 
+			// FALLTHRU
 			case ErrorState::LoadedVulkan1:
 				bx::dlclose(m_vulkan1dll);
 				m_vulkan1dll  = NULL;
 				m_allocatorCb = NULL;
 				unloadRenderDoc(m_renderdocdll);
 
+			// FALLTHRU
 			case ErrorState::Default:
 				break;
 			};

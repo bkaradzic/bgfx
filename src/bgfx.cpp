@@ -2845,6 +2845,7 @@ error:
 			BX_ALIGNED_DELETE(g_allocator, s_ctx, 64);
 			s_ctx = NULL;
 
+		// FALLTHRU
 		case ErrorState::Default:
 			if (NULL != s_callbackStub)
 			{

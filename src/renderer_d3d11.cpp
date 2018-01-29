@@ -1872,6 +1872,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_RELEASE(m_factory, 0);
 
 #if USE_D3D11_DYNAMIC_LIB
+			// FALLTHRU
 			case ErrorState::LoadedDXGI:
 				if (NULL != m_dxgidebugdll)
 				{
@@ -1888,11 +1889,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				bx::dlclose(m_dxgidll);
 				m_dxgidll = NULL;
 
+			// FALLTHRU
 			case ErrorState::LoadedD3D11:
 				bx::dlclose(m_d3d11dll);
 				m_d3d11dll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 
+			// FALLTHRU
 			case ErrorState::Default:
 			default:
 				m_nvapi.shutdown();
