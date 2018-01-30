@@ -2844,6 +2844,7 @@ error:
 		case ErrorState::ContextAllocated:
 			BX_ALIGNED_DELETE(g_allocator, s_ctx, 64);
 			s_ctx = NULL;
+			BX_FALLTHROUGH;
 
 		case ErrorState::Default:
 			if (NULL != s_callbackStub)

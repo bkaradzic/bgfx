@@ -869,6 +869,7 @@ namespace bgfx { namespace d3d9
 				{
 					DX_RELEASE(m_device, 0);
 				}
+				BX_FALLTHROUGH;
 
 			case ErrorState::CreatedD3D9:
 				if (NULL != m_d3d9ex)
@@ -880,10 +881,12 @@ namespace bgfx { namespace d3d9
 				{
 					DX_RELEASE(m_d3d9, 0);
 				}
+				BX_FALLTHROUGH;
 
 			case ErrorState::LoadedD3D9:
 				m_nvapi.shutdown();
 				bx::dlclose(m_d3d9dll);
+				BX_FALLTHROUGH;
 
 			case ErrorState::Default:
 				break;

@@ -450,7 +450,16 @@ namespace bgfx
 
 	struct DxbcSubOperand
 	{
-		DxbcSubOperand() { /* not pod */ }
+		DxbcSubOperand()
+			: type(DxbcOperandType::Temp)
+			, mode(0)
+			, modeBits(0)
+			, num(0)
+			, numAddrModes(0)
+			, addrMode(0)
+			, regIndex(0)
+		{
+		}
 
 		DxbcOperandType::Enum type;
 		uint8_t mode;
@@ -463,7 +472,19 @@ namespace bgfx
 
 	struct DxbcOperand
 	{
-		DxbcOperand() { /* not pod */ }
+		DxbcOperand()
+			: type(DxbcOperandType::Temp)
+			, mode(DxbcOperandMode::Mask)
+			, modeBits(0)
+			, num(0)
+			, extended(false)
+			, extBits(0)
+			, numAddrModes(0)
+		{
+			bx::memSet(addrMode, 0, sizeof(addrMode) );
+			bx::memSet(regIndex, 0, sizeof(regIndex) );
+			bx::memSet(un.imm64, 0, sizeof(un.imm64) );
+		}
 
 		DxbcOperandType::Enum type;
 		DxbcOperandMode::Enum mode;

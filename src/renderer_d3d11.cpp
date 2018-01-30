@@ -1870,6 +1870,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				DX_RELEASE(m_deviceCtx, 0);
 				DX_RELEASE(m_device, 0);
 				DX_RELEASE(m_factory, 0);
+				BX_FALLTHROUGH;
 
 #if USE_D3D11_DYNAMIC_LIB
 			case ErrorState::LoadedDXGI:
@@ -1887,10 +1888,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 
 				bx::dlclose(m_dxgidll);
 				m_dxgidll = NULL;
+				BX_FALLTHROUGH;
 
 			case ErrorState::LoadedD3D11:
 				bx::dlclose(m_d3d11dll);
 				m_d3d11dll = NULL;
+				BX_FALLTHROUGH;
+
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::Default:
