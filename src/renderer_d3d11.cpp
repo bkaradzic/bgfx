@@ -1894,6 +1894,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				bx::dlclose(m_d3d11dll);
 				m_d3d11dll = NULL;
 				BX_FALLTHROUGH;
+
 #endif // USE_D3D11_DYNAMIC_LIB
 
 			case ErrorState::Default:

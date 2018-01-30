@@ -1912,6 +1912,8 @@ namespace bgfx
 		bx::MemoryBlock mb(g_allocator);
 		bx::MemoryWriter writer(&mb);
 
+		int32_t total = 0;
+
 		for (uint32_t token = 0, numTokens = uint32_t(_src.byteCode.size() / sizeof(uint32_t) ); token < numTokens;)
 		{
 			DxbcInstruction instruction;
@@ -1920,15 +1922,14 @@ namespace bgfx
 
 			_fn(instruction, _userData);
 
-			write(&writer, instruction, _err);
+			total += write(&writer, instruction, _err);
 
 			token += instruction.length;
 		}
 
 		uint8_t* data = (uint8_t*)mb.more();
-		uint32_t size = uint32_t(bx::getSize(&writer) );
-		_dst.byteCode.reserve(size);
-		bx::memCopy(_dst.byteCode.data(), data, size);
+		_dst.byteCode.resize(total);
+		bx::memCopy(_dst.byteCode.data(), data, total);
 	}
 
 } // namespace bgfx
