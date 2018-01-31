@@ -384,9 +384,8 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 					ImGui::EndChild();
 				}
 			}
-
-			ImGui::End();
 		}
+		ImGui::End();
 	}
 
 	ImGui::End();
