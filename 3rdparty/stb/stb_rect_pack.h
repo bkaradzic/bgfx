@@ -1,11 +1,18 @@
 #if defined(__GNUC__) || defined(__clang__)
-#   if defined(__clang__)
-#	    pragma clang diagnostic ignored "-Wunknown-pragmas"
-#   endif // defined(__clang__)
+#	if defined(__has_warning)
+#		define STB_HAS_WARNING __has_warning
+# 	else
+#		define STB_HAS_WARNING(w)	1
+#	endif
+#	if defined(__clang__)
+#		pragma clang diagnostic ignored "-Wunknown-pragmas"
+#	endif // defined(__clang__)
 #	pragma GCC diagnostic ignored "-Wtype-limits"
 #	pragma GCC diagnostic ignored "-Wunused-function"
 #	pragma GCC diagnostic ignored "-Wunused-parameter"
-#	pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#	if STB_HAS_WARNING("-Wunused-but-set-variable")
+#		pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#	endif
 #else
 #	pragma warning(disable:4100) // C4100: 'c': unreferenced formal parameter
 #endif
