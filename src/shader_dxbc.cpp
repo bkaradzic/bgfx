@@ -977,7 +977,7 @@ namespace bgfx
 
 		if (_operand.extended)
 		{
-			size += bx::write(_writer, _operand.extBits);
+			size += bx::write(_writer, _operand.extBits, _err);
 		}
 
 		switch (_operand.type)
@@ -1452,7 +1452,7 @@ namespace bgfx
 							, "%s%s%s"
 							, getName(_instruction.opcode)
 							, _instruction.saturate ? "_sat" : ""
-							, _instruction.testNZ ? "_nz" : ""
+							, _instruction.testNZ   ? "_nz"  : ""
 							);
 
 		if (DxbcResourceDim::Unknown != _instruction.srv)
@@ -1480,10 +1480,24 @@ namespace bgfx
 				|| DxbcOperandAddrMode::Imm32 != operand.addrMode[0]
 				;
 
+			const char* preOperand  = "";
+			const char* postOperand = "";
+
+			if (operand.extended)
+			{
+				switch(DxbcOperandModifier::Enum(operand.extBits & UINT32_C(0x00000003) ) )
+				{
+				case DxbcOperandModifier::Neg:    preOperand =     "-"; postOperand =  ""; break;
+				case DxbcOperandModifier::Abs:    preOperand =  "abs("; postOperand = ")"; break;
+				case DxbcOperandModifier::AbsNeg: preOperand = "-abs("; postOperand = ")"; break;
+				default: break;
+				}
+			}
+
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
 								, "%s%s%s"
 								, 0 == ii ? " " : ", "
-								, operand.extended ? "*" : ""
+								, preOperand
 								, s_dxbcOperandType[operand.type]
 								);
 
@@ -1604,6 +1618,10 @@ namespace bgfx
 				break;
 			}
 
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+								, "%s"
+								, postOperand
+								);
 		}
 
 		return size;

@@ -16,6 +16,7 @@ namespace bgfx
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
 		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
+		bx::write(writer, '\n');
 		return true;
 	}
 
@@ -25,6 +26,7 @@ namespace bgfx
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
 		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
+		bx::write(writer, '\n');
 		return true;
 	}
 
@@ -34,6 +36,7 @@ namespace bgfx
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
 		bx::write(writer, temp, (int32_t)bx::strLen(temp) );
+		bx::write(writer, '\n');
 		return true;
 	}
 

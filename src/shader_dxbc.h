@@ -448,6 +448,19 @@ namespace bgfx
 		};
 	};
 
+	struct DxbcOperandModifier
+	{
+		enum Enum
+		{
+			None,
+			Neg,
+			Abs,
+			AbsNeg,
+
+			Count
+		};
+	};
+
 	struct DxbcSubOperand
 	{
 		DxbcSubOperand()
