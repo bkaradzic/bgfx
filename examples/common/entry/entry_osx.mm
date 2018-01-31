@@ -227,7 +227,7 @@ namespace entry
 			*_pressedChar = (uint8_t)keyChar;
 
 			int keyCode = keyChar;
-			*specialKeys = translateModifiers([event modifierFlags]);
+			*specialKeys = translateModifiers(int([event modifierFlags]));
 
 			// if this is a unhandled key just return None
 			if (keyCode < 256)

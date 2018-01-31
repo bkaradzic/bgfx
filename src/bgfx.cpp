@@ -4663,7 +4663,7 @@ BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16
 		);
 }
 
-BGFX_C_API void bgfx_shutdown()
+BGFX_C_API void bgfx_shutdown(void)
 {
 	return bgfx::shutdown();
 }
@@ -4678,22 +4678,22 @@ BGFX_C_API uint32_t bgfx_frame(bool _capture)
 	return bgfx::frame(_capture);
 }
 
-BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type()
+BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type(void)
 {
 	return bgfx_renderer_type_t(bgfx::getRendererType() );
 }
 
-BGFX_C_API const bgfx_caps_t* bgfx_get_caps()
+BGFX_C_API const bgfx_caps_t* bgfx_get_caps(void)
 {
 	return (const bgfx_caps_t*)bgfx::getCaps();
 }
 
-BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd()
+BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd(void)
 {
 	return (const bgfx_hmd_t*)bgfx::getHMD();
 }
 
-BGFX_C_API const bgfx_stats_t* bgfx_get_stats()
+BGFX_C_API const bgfx_stats_t* bgfx_get_stats(void)
 {
 	return (const bgfx_stats_t*)bgfx::getStats();
 }
@@ -5084,7 +5084,7 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle)
 	bgfx::destroy(handle.cpp);
 }
 
-BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query()
+BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query(void)
 {
 	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle;
 	handle.cpp = bgfx::createOcclusionQuery();
@@ -5353,7 +5353,7 @@ BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t
 	bgfx::dispatch(_id, handle.cpp, indirectHandle.cpp, _start, _num, _flags);
 }
 
-BGFX_C_API void bgfx_discard()
+BGFX_C_API void bgfx_discard(void)
 {
 	bgfx::discard();
 }
