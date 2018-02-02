@@ -1051,9 +1051,10 @@ void ImGui::ShowDemoWindow(bool* p_open)
         if (ImGui::TreeNode("Child regions"))
         {
             static bool disable_mouse_wheel = false;
+            static bool disable_menu = false;
             ImGui::Checkbox("Disable Mouse Wheel", &disable_mouse_wheel);
+            ImGui::Checkbox("Disable Menu", &disable_menu);
 
-            ImGui::Text("Without border");
             static int line = 50;
             bool goto_line = ImGui::Button("Goto");
             ImGui::SameLine();
@@ -1080,8 +1081,16 @@ void ImGui::ShowDemoWindow(bool* p_open)
             // Child 2: rounded border
             {
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-                ImGui::BeginChild("Child2", ImVec2(0,300), true, (disable_mouse_wheel ? ImGuiWindowFlags_NoScrollWithMouse : 0));
-                ImGui::Text("With border");
+                ImGui::BeginChild("Child2", ImVec2(0,300), true, (disable_mouse_wheel ? ImGuiWindowFlags_NoScrollWithMouse : 0) | (disable_menu ? 0 : ImGuiWindowFlags_MenuBar));
+                if (!disable_menu && ImGui::BeginMenuBar())
+                {
+                    if (ImGui::BeginMenu("Menu"))
+                    {
+                        ShowExampleMenuFile();
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndMenuBar();
+                }
                 ImGui::Columns(2);
                 for (int i = 0; i < 100; i++)
                 {
@@ -2010,7 +2019,7 @@ void ImGui::ShowFontSelector(const char* label)
     ShowHelpMarker(
         "- Load additional fonts with io.Fonts->AddFontFromFileTTF().\n"
         "- The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().\n"
-        "- Read FAQ and documentation in extra_fonts/ for more details.\n"
+        "- Read FAQ and documentation in misc/fonts/ for more details.\n"
         "- If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().");
 }
 
@@ -2137,7 +2146,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
             if (memcmp(&style.Colors[i], &ref->Colors[i], sizeof(ImVec4)) != 0)
             {
                 // Tips: in a real user application, you may want to merge and use an icon font into the main font, so instead of "Save"/"Revert" you'd use icons.
-                // Read the FAQ and extra_fonts/README.txt about using icon fonts. It's really easy and super convenient!
+                // Read the FAQ and misc/fonts/README.txt about using icon fonts. It's really easy and super convenient!
                 ImGui::SameLine(0.0f, style.ItemInnerSpacing.x); if (ImGui::Button("Save")) ref->Colors[i] = style.Colors[i];
                 ImGui::SameLine(0.0f, style.ItemInnerSpacing.x); if (ImGui::Button("Revert")) style.Colors[i] = ref->Colors[i];
             }
