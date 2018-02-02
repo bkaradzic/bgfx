@@ -332,7 +332,8 @@ struct OcornutImguiContext
 			ImGui::StyleColorsLight(&style);
 		}
 
-		style.FrameRounding = 4.0f;
+		style.FrameRounding    = 4.0f;
+		style.WindowBorderSize = 0.0f;
 	}
 
 	void beginFrame(
