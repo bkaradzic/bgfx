@@ -789,7 +789,7 @@
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_x</span><span class="pre">_y</span></code> - <p>2D position from top-left. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette. </p>
+<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette (ANSI escape codes). </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_format</span></code> - <p><code class="docutils literal"><span class="pre">printf</span></code> style format.</p>
 </li>
@@ -810,7 +810,7 @@
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_x</span><span class="pre">_y</span></code> - <p>2D position from top-left. </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette. </p>
+<li><code class="first docutils literal"><span class="pre">_attr</span></code> - <p>Color palette. Where top 4-bits represent index of background, and bottom 4-bits represent foreground color from standard VGA text palette (ANSI escape codes). </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">_format</span></code> - <p><code class="docutils literal"><span class="pre">printf</span></code> style format. </p>
 </li>
@@ -5417,7 +5417,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx29getAvailTransientVertexBufferE8uint32_tRK10VertexDecl">
 <span id="bgfx::getAvailTransientVertexBuffer__uint32_t.VertexDeclCR"></span><span class="target" id="bgfxnamespacebgfx_1ae0e28bf67e70d4f7d7fa9d9f1740e2f8"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">getAvailTransientVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx29getAvailTransientVertexBufferE8uint32_tRK10VertexDecl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns number of available vertices. </p>
+<dd><p>Returns number of requested or maximum available vertices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_avail_transient_vertex_buffer</span></code>. </dd>
@@ -5600,7 +5600,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx28getAvailTransientIndexBufferE8uint32_t">
 <span id="bgfx::getAvailTransientIndexBuffer__uint32_t"></span><span class="target" id="bgfxnamespacebgfx_1a6f7d3cc2105f88d41cbc1f2f1d0c2bd6"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">getAvailTransientIndexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx28getAvailTransientIndexBufferE8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns number of available indices. </p>
+<dd><p>Returns number of requested or maximum available indices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_avail_transient_index_buffer</span></code>. </dd>
@@ -6678,7 +6678,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx26getAvailInstanceDataBufferE8uint32_t8uint16_t">
 <span id="bgfx::getAvailInstanceDataBuffer__uint32_t.uint16_t"></span><span class="target" id="bgfxnamespacebgfx_1abf9468e87a327e237d561229b5b917cb"></span>uint32_t <code class="descclassname">bgfx::</code><code class="descname">getAvailInstanceDataBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, uint16_t <em>_stride</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx26getAvailInstanceDataBufferE8uint32_t8uint16_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns number of available instance buffer slots. </p>
+<dd><p>Returns number of requested or maximum available instance buffer slots. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_avail_instance_data_buffer</span></code>. </dd>
