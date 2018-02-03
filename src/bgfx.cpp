@@ -3413,7 +3413,9 @@ error:
 		BX_CHECK(NULL != _tib, "_tib can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 indices.");
 		s_ctx->allocTransientIndexBuffer(_tib, _num);
-		BX_CHECK(_num == _tib->size/2, "Failed to allocate transient index buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
+		BX_CHECK(_num == _tib->size/2
+			, "Failed to allocate transient index buffer (requested %d, available %d). "
+			  "Use bgfx::getAvailTransient* functions to ensure availability."
 			, _num
 			, _tib->size/2
 			);
@@ -3426,7 +3428,9 @@ error:
 		BX_CHECK(UINT16_MAX >= _num, "Requesting %d vertices (max: %d).", _num, UINT16_MAX);
 		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
 		s_ctx->allocTransientVertexBuffer(_tvb, _num, _decl);
-		BX_CHECK(_num == _tvb->size / _decl.m_stride, "Failed to allocate transient vertex buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
+		BX_CHECK(_num == _tvb->size / _decl.m_stride
+			, "Failed to allocate transient vertex buffer (requested %d, available %d). "
+			  "Use bgfx::getAvailTransient* functions to ensure availability."
 			, _num
 			, _tvb->size / _decl.m_stride
 			);
@@ -3453,7 +3457,9 @@ error:
 		BX_CHECK(_stride == BX_ALIGN_16(_stride), "Stride must be multiple of 16.");
 		BX_CHECK(0 < _num, "Requesting 0 instanced data vertices.");
 		s_ctx->allocInstanceDataBuffer(_idb, _num, _stride);
-		BX_CHECK(_num == _idb->size / _stride, "Failed to allocate instance data buffer (requested %d, available %d). Use bgfx::checkAvailTransient* functions to ensure availability."
+		BX_CHECK(_num == _idb->size / _stride
+			, "Failed to allocate instance data buffer (requested %d, available %d). "
+			  "Use bgfx::getAvailTransient* functions to ensure availability."
 			, _num
 			, _idb->size / _stride
 			);

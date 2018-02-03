@@ -2199,7 +2199,7 @@ namespace bgfx
 	///
 	void destroy(DynamicVertexBufferHandle _handle);
 
-	/// Returns number of available indices.
+	/// Returns number of requested or maximum available indices.
 	///
 	/// @param[in] _num Number of required indices.
 	///
@@ -2207,7 +2207,7 @@ namespace bgfx
 	///
 	uint32_t getAvailTransientIndexBuffer(uint32_t _num);
 
-	/// Returns number of available vertices.
+	/// Returns number of requested or maximum available vertices.
 	///
 	/// @param[in] _num Number of required vertices.
 	/// @param[in] _decl Vertex declaration.
@@ -2219,7 +2219,7 @@ namespace bgfx
 		, const VertexDecl& _decl
 		);
 
-	/// Returns number of available instance buffer slots.
+	/// Returns number of requested or maximum available instance buffer slots.
 	///
 	/// @param[in] _num Number of required instances.
 	/// @param[in] _stride Stride per instance.
