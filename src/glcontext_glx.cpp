@@ -12,6 +12,9 @@
 #		define GLX_GLXEXT_PROTOTYPES
 #		include <glx/glxext.h>
 
+// will include X11 which #defines None...
+#undef None
+
 namespace bgfx { namespace gl
 {
 	typedef int (*PFNGLXSWAPINTERVALMESAPROC)(uint32_t _interval);
@@ -107,7 +110,7 @@ namespace bgfx { namespace gl
 				{
 					BX_TRACE("---");
 					bool valid = true;
-					for (uint32_t attr = 6; attr < BX_COUNTOF(attrsGlx)-1 && attrsGlx[attr] != None; attr += 2)
+					for (uint32_t attr = 6; attr < BX_COUNTOF(attrsGlx)-1 && attrsGlx[attr] != 0; attr += 2)
 					{
 						int value;
 						glXGetFBConfigAttrib( (::Display*)g_platformData.ndt, configs[ii], attrsGlx[attr], &value);
