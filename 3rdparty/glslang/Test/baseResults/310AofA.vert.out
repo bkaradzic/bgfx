@@ -317,6 +317,25 @@ ERROR: node is still EOpNull!
 0:99              0 (const int)
 0:99          Constant:
 0:99            1 (const int)
+0:117  Function Definition: func(mf33[3][2]; ( global highp 3-component vector of float)
+0:117    Function Parameters: 
+0:117      'x' ( in 3-element array of 2-element array of highp 3X3 matrix of float)
+0:119    Sequence
+0:119      Sequence
+0:119        move second child to first child ( temp highp 3X3 matrix of float)
+0:119          'a0' ( temp highp 3X3 matrix of float)
+0:119          direct index ( temp highp 3X3 matrix of float)
+0:119            direct index ( temp 2-element array of highp 3X3 matrix of float)
+0:119              'x' ( in 3-element array of 2-element array of highp 3X3 matrix of float)
+0:119              Constant:
+0:119                2 (const int)
+0:119            Constant:
+0:119              1 (const int)
+0:120      Branch: Return with expression
+0:120        direct index ( temp highp 3-component vector of float)
+0:120          'a0' ( temp highp 3X3 matrix of float)
+0:120          Constant:
+0:120            2 (const int)
 0:?   Linker Objects
 0:?     'name' (layout( column_major shared) buffer 3-element array of block{layout( column_major shared) buffer implicitly-sized array of highp float u, layout( column_major shared) buffer implicitly-sized array of highp 4-component vector of float v})
 0:?     'uname' (layout( column_major shared) uniform 3-element array of block{layout( column_major shared) uniform highp float u, layout( column_major shared) uniform implicitly-sized array of highp 4-component vector of float v})

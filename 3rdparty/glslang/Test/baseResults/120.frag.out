@@ -19,7 +19,7 @@ ERROR: 0:82: 'xr' : vector swizzle selectors not from the same set
 ERROR: 0:83: 'xyxyx' : vector swizzle too long 
 ERROR: 0:84: 'z' : vector swizzle selection out of range 
 ERROR: 0:85: 'assign' :  l-value required 
-ERROR: 0:91: 'int' : overloaded functions must have the same return type 
+ERROR: 0:91: 'main' : overloaded functions must have the same return type 
 ERROR: 0:91: 'main' : function already has a body 
 ERROR: 0:91: 'int' :  entry point cannot return a value
 ERROR: 0:92: 'main' : function cannot take any parameter(s) 

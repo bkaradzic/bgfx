@@ -235,6 +235,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.branch-return.vert",
         "spv.builtInXFB.vert",
         "spv.conditionalDiscard.frag",
+        "spv.controlFlowAttributes.frag",
         "spv.conversion.frag",
         "spv.dataOut.frag",
         "spv.dataOutIndirect.frag",

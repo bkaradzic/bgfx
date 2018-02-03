@@ -45,6 +45,7 @@
 #include "../Include/Types.h"
 #include "SymbolTable.h"
 #include "ParseHelper.h"
+#include "attribute.h"
 #include "glslang_tab.cpp.h"
 #include "ScanContext.h"
 #include "Scan.h"

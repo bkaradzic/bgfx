@@ -44,13 +44,15 @@
 #ifndef _PARSER_HELPER_INCLUDED_
 #define _PARSER_HELPER_INCLUDED_
 
+#include <cstdarg>
+#include <functional>
+
 #include "parseVersions.h"
 #include "../Include/ShHandle.h"
 #include "SymbolTable.h"
 #include "localintermediate.h"
 #include "Scan.h"
-#include <cstdarg>
-#include <functional>
+#include "attribute.h"
 
 namespace glslang {
 
@@ -409,6 +411,17 @@ public:
     TIntermNode* addSwitch(const TSourceLoc&, TIntermTyped* expression, TIntermAggregate* body);
 
     void updateImplicitArraySize(const TSourceLoc&, TIntermNode*, int index);
+    TAttributeType attributeFromName(const TString& name) const;
+    TAttributes* makeAttributes(const TString& identifier) const;
+    TAttributes* makeAttributes(const TString& identifier, TIntermNode* node) const;
+    TAttributes* mergeAttributes(TAttributes*, TAttributes*) const;
+
+    // Determine selection control from attributes
+    void handleSelectionAttributes(const TAttributes& attributes, TIntermNode*);
+    void handleSwitchAttributes(const TAttributes& attributes, TIntermNode*);
+
+    // Determine loop control from attributes
+    void handleLoopAttributes(const TAttributes& attributes, TIntermNode*);
 
 protected:
     void nonInitConstCheck(const TSourceLoc&, TString& identifier, TType& type);

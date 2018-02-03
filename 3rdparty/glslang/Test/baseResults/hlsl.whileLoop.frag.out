@@ -21,7 +21,7 @@ gl_FragCoord origin is upper left
 0:4        Constant:
 0:4          false (const bool)
 0:4        No loop body
-0:5      Loop with condition tested first
+0:5      Loop with condition tested first: Unroll
 0:5        Loop Condition
 0:5        Constant:
 0:5          false (const bool)
@@ -71,7 +71,7 @@ gl_FragCoord origin is upper left
 0:4        Constant:
 0:4          false (const bool)
 0:4        No loop body
-0:5      Loop with condition tested first
+0:5      Loop with condition tested first: Unroll
 0:5        Loop Condition
 0:5        Constant:
 0:5          false (const bool)

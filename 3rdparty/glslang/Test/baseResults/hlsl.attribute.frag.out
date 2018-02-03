@@ -6,7 +6,7 @@ gl_FragCoord origin is upper left
 0:2    Function Parameters: 
 0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:11      Test condition and select ( temp void)
+0:11      Test condition and select ( temp void): DontFlatten
 0:11        Condition
 0:11        Constant:
 0:11          false (const bool)
@@ -33,7 +33,7 @@ gl_FragCoord origin is upper left
 0:2    Function Parameters: 
 0:2      'input' ( in 4-component vector of float)
 0:?     Sequence
-0:11      Test condition and select ( temp void)
+0:11      Test condition and select ( temp void): DontFlatten
 0:11        Condition
 0:11        Constant:
 0:11          false (const bool)

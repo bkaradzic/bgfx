@@ -119,7 +119,8 @@ typedef enum {
 
 typedef enum {
     EShTargetNone,
-    EshTargetSpv,
+    EShTargetSpv,                 // preferred spelling
+    EshTargetSpv = EShTargetSpv,  // legacy spelling
 } EShTargetLanguage;
 
 struct TInputLanguage {

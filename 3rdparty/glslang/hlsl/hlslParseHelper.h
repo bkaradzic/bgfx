@@ -38,12 +38,12 @@
 
 #include "../glslang/MachineIndependent/parseVersions.h"
 #include "../glslang/MachineIndependent/ParseHelper.h"
+#include "../glslang/MachineIndependent/attribute.h"
 
 #include <array>
 
 namespace glslang {
 
-class TAttributeMap; // forward declare
 class TFunctionDeclarator;
 
 class HlslParseContext : public TParseContextBase {
@@ -80,10 +80,10 @@ public:
     bool isBuiltInMethod(const TSourceLoc&, TIntermTyped* base, const TString& field);
     void assignToInterface(TVariable& variable);
     void handleFunctionDeclarator(const TSourceLoc&, TFunction& function, bool prototype);
-    TIntermAggregate* handleFunctionDefinition(const TSourceLoc&, TFunction&, const TAttributeMap&, TIntermNode*& entryPointTree);
-    TIntermNode* transformEntryPoint(const TSourceLoc&, TFunction&, const TAttributeMap&);
-    void handleEntryPointAttributes(const TSourceLoc&, const TAttributeMap&);
-    void transferTypeAttributes(const TAttributeMap&, TType&);
+    TIntermAggregate* handleFunctionDefinition(const TSourceLoc&, TFunction&, const TAttributes&, TIntermNode*& entryPointTree);
+    TIntermNode* transformEntryPoint(const TSourceLoc&, TFunction&, const TAttributes&);
+    void handleEntryPointAttributes(const TSourceLoc&, const TAttributes&);
+    void transferTypeAttributes(const TSourceLoc&, const TAttributes&, TType&, bool allowEntry = false);
     void handleFunctionBody(const TSourceLoc&, TFunction&, TIntermNode* functionBody, TIntermNode*& node);
     void remapEntryPointIO(TFunction& function, TVariable*& returnValue, TVector<TVariable*>& inputs, TVector<TVariable*>& outputs);
     void remapNonEntryPointIO(TFunction& function);
@@ -163,7 +163,7 @@ public:
     void addQualifierToExisting(const TSourceLoc&, TQualifier, TIdentifierList&);
     void updateStandaloneQualifierDefaults(const TSourceLoc&, const TPublicType&);
     void wrapupSwitchSubsequence(TIntermAggregate* statements, TIntermNode* branchNode);
-    TIntermNode* addSwitch(const TSourceLoc&, TIntermTyped* expression, TIntermAggregate* body, TSelectionControl control);
+    TIntermNode* addSwitch(const TSourceLoc&, TIntermTyped* expression, TIntermAggregate* body, const TAttributes&);
 
     void updateImplicitArraySize(const TSourceLoc&, TIntermNode*, int index);
 
@@ -203,10 +203,11 @@ public:
     bool handleInputGeometry(const TSourceLoc&, const TLayoutGeometry& geometry);
 
     // Determine selection control from attributes
-    TSelectionControl handleSelectionControl(const TAttributeMap& attributes) const;
+    void handleSelectionAttributes(const TSourceLoc& loc, TIntermSelection*, const TAttributes& attributes);
+    void handleSwitchAttributes(const TSourceLoc& loc, TIntermSwitch*, const TAttributes& attributes);
 
     // Determine loop control from attributes
-    TLoopControl handleLoopControl(const TAttributeMap& attributes) const;
+    void handleLoopAttributes(const TSourceLoc& loc, TIntermLoop*, const TAttributes& attributes);
 
     // Share struct buffer deep types
     void shareStructBufferType(TType&);
@@ -216,6 +217,8 @@ public:
 
     // Obtain the sampler return type of the given sampler in retType.
     void getTextureReturnType(const TSampler& sampler, TType& retType) const;
+
+    TAttributeType attributeFromName(const TString& nameSpace, const TString& name) const;
 
 protected:
     struct TFlattenData {

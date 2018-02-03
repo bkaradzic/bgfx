@@ -6,12 +6,12 @@ gl_FragCoord origin is upper left
 0:2    Function Parameters: 
 0:2      'input' ( in float)
 0:?     Sequence
-0:3      Loop with condition not tested first
+0:3      Loop with condition not tested first: Unroll
 0:3        Loop Condition
 0:3        Constant:
 0:3          false (const bool)
 0:3        No loop body
-0:4      Loop with condition not tested first
+0:4      Loop with condition not tested first: Unroll
 0:4        Loop Condition
 0:4        Constant:
 0:4          false (const bool)
@@ -80,12 +80,12 @@ gl_FragCoord origin is upper left
 0:2    Function Parameters: 
 0:2      'input' ( in float)
 0:?     Sequence
-0:3      Loop with condition not tested first
+0:3      Loop with condition not tested first: Unroll
 0:3        Loop Condition
 0:3        Constant:
 0:3          false (const bool)
 0:3        No loop body
-0:4      Loop with condition not tested first
+0:4      Loop with condition not tested first: Unroll
 0:4        Loop Condition
 0:4        Constant:
 0:4          false (const bool)

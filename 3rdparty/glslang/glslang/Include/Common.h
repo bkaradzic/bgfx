@@ -155,7 +155,7 @@ inline TString* NewPoolTString(const char* s)
     return new(memory) TString(s);
 }
 
-template<class T> inline T* NewPoolObject(T)
+template<class T> inline T* NewPoolObject(T*)
 {
     return new(GetThreadPoolAllocator().allocate(sizeof(T))) T;
 }

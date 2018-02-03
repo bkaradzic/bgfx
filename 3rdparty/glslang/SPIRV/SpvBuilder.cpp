@@ -56,7 +56,8 @@
 
 namespace spv {
 
-Builder::Builder(unsigned int magicNumber, SpvBuildLogger* buildLogger) :
+Builder::Builder(unsigned int spvVersion, unsigned int magicNumber, SpvBuildLogger* buildLogger) :
+    spvVersion(spvVersion),
     source(SourceLanguageUnknown),
     sourceVersion(0),
     sourceFileStringId(NoResult),
@@ -2403,7 +2404,7 @@ void Builder::dump(std::vector<unsigned int>& out) const
 {
     // Header, before first instructions:
     out.push_back(MagicNumber);
-    out.push_back(Version);
+    out.push_back(spvVersion);
     out.push_back(builderNumber);
     out.push_back(uniqueId + 1);
     out.push_back(0);
@@ -2572,12 +2573,15 @@ void Builder::createSelectionMerge(Block* mergeBlock, unsigned int control)
     buildPoint->addInstruction(std::unique_ptr<Instruction>(merge));
 }
 
-void Builder::createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control)
+void Builder::createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control,
+                              unsigned int dependencyLength)
 {
     Instruction* merge = new Instruction(OpLoopMerge);
     merge->addIdOperand(mergeBlock->getId());
     merge->addIdOperand(continueBlock->getId());
     merge->addImmediateOperand(control);
+    if ((control & LoopControlDependencyLengthMask) != 0)
+        merge->addImmediateOperand(dependencyLength);
     buildPoint->addInstruction(std::unique_ptr<Instruction>(merge));
 }
 
@@ -2644,8 +2648,6 @@ void Builder::dumpInstructions(std::vector<unsigned int>& out, const std::vector
 void Builder::dumpModuleProcesses(std::vector<unsigned int>& out) const
 {
     for (int i = 0; i < (int)moduleProcesses.size(); ++i) {
-        // TODO: switch this out for the 1.1 headers
-        const spv::Op OpModuleProcessed = (spv::Op)330;
         Instruction moduleProcessed(OpModuleProcessed);
         moduleProcessed.addStringOperand(moduleProcesses[i]);
         moduleProcessed.dump(out);

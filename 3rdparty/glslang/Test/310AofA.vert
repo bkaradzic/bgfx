@@ -113,3 +113,9 @@ out float outArray[2][3];  // ERROR
 uniform ubaa {
     int a;
 } ubaaname[2][3];  // ERROR
+
+vec3 func(in mat3[2] x[3])
+{
+	mat3 a0 = x[2][1];
+    return a0[2];
+}

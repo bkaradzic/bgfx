@@ -159,7 +159,7 @@ std::vector<std::string> IncludeDirectoryList;
 int ClientInputSemanticsVersion = 100;   // maps to, say, #define VULKAN 100
 int VulkanClientVersion = 100;           // would map to, say, Vulkan 1.0
 int OpenGLClientVersion = 450;           // doesn't influence anything yet, but maps to OpenGL 4.50
-unsigned int TargetVersion = 0x00001000; // maps to, say, SPIR-V 1.0
+unsigned int TargetVersion = 0x00010000; // maps to, say, SPIR-V 1.0
 std::vector<std::string> Processes;      // what should be recorded by OpModuleProcessed, or equivalent
 
 // Per descriptor-set binding base data
@@ -855,7 +855,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                                                                 : glslang::EShSourceGlsl,
                                         compUnit.stage, glslang::EShClientVulkan, ClientInputSemanticsVersion);
                 shader->setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
-                shader->setEnvTarget(glslang::EshTargetSpv, TargetVersion);
+                shader->setEnvTarget(glslang::EShTargetSpv, TargetVersion);
             } else {
                 shader->setEnvInput((Options & EOptionReadHlsl) ? glslang::EShSourceHlsl
                                                                 : glslang::EShSourceGlsl,
