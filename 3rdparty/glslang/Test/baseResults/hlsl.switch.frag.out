@@ -36,7 +36,7 @@ gl_FragCoord origin is upper left
 0:17            Pre-Decrement ( temp 4-component vector of float)
 0:17              'input' ( in 4-component vector of float)
 0:18            Branch: Break
-0:21      switch
+0:21      switch: DontFlatten
 0:21      condition
 0:21        'c' ( in int)
 0:21      body
@@ -186,7 +186,7 @@ gl_FragCoord origin is upper left
 0:17            Pre-Decrement ( temp 4-component vector of float)
 0:17              'input' ( in 4-component vector of float)
 0:18            Branch: Break
-0:21      switch
+0:21      switch: DontFlatten
 0:21      condition
 0:21        'c' ( in int)
 0:21      body

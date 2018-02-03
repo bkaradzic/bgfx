@@ -42,7 +42,7 @@ gl_FragCoord origin is upper left
 0:14            'input' ( in 4-component vector of float)
 0:14            'input' ( in 4-component vector of float)
 0:14        true case is null
-0:19      Test condition and select ( temp void)
+0:19      Test condition and select ( temp void): Flatten
 0:19        Condition
 0:19        all ( temp bool)
 0:19          Equal ( temp 4-component vector of bool)
@@ -152,7 +152,7 @@ gl_FragCoord origin is upper left
 0:14            'input' ( in 4-component vector of float)
 0:14            'input' ( in 4-component vector of float)
 0:14        true case is null
-0:19      Test condition and select ( temp void)
+0:19      Test condition and select ( temp void): Flatten
 0:19        Condition
 0:19        all ( temp bool)
 0:19          Equal ( temp 4-component vector of bool)

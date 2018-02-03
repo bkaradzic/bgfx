@@ -34,7 +34,7 @@ ERROR: 0:51: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:52: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:53: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:56: 'out' : overloaded functions must have the same parameter storage qualifiers for argument 1
-ERROR: 0:57: 'float' : overloaded functions must have the same return type 
+ERROR: 0:57: 'overloadA' : overloaded functions must have the same return type 
 ERROR: 0:87: 'overloadC' : no matching overloaded function found 
 ERROR: 0:90: 'overloadC' : no matching overloaded function found 
 ERROR: 0:95: 'overloadD' : ambiguous function signature match: multiple signatures match under implicit type conversion 

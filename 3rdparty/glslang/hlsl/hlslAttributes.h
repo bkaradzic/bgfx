@@ -38,93 +38,22 @@
 
 #include <unordered_map>
 #include <functional>
+
+#include "../glslang/MachineIndependent/attribute.h"
+#include "../glslang/MachineIndependent/SymbolTable.h"
 #include "hlslScanContext.h"
-#include "../glslang/Include/Common.h"
 
 namespace glslang {
-    enum TAttributeType {
-        EatNone,
-        EatAllow_uav_condition,
-        EatBranch,
-        EatCall,
-        EatDomain,
-        EatEarlyDepthStencil,
-        EatFastOpt,
-        EatFlatten,
-        EatForceCase,
-        EatInstance,
-        EatMaxTessFactor,
-        EatNumThreads,
-        EatMaxVertexCount,
-        EatOutputControlPoints,
-        EatOutputTopology,
-        EatPartitioning,
-        EatPatchConstantFunc,
-        EatPatchSize,
-        EatUnroll,
-        EatLoop,
-        EatBinding,
-        EatGlobalBinding,
-        EatLocation,
-        EatInputAttachment,
-        EatBuiltIn,
-        EatPushConstant,
-        EatConstantId
-    };
-}
-
-namespace std {
-    // Allow use of TAttributeType enum in hash_map without calling code having to cast.
-    template <> struct hash<glslang::TAttributeType> {
-        std::size_t operator()(glslang::TAttributeType attr) const {
-            return std::hash<int>()(int(attr));
-        }
-    };
-} // end namespace std
-
-namespace glslang {
-    class TIntermAggregate;
-
-    class TAttributeMap {
-    public:
-        int size() const { return (int)attributes.size(); }
-
-        // Search for and potentially add the attribute into the map.  Return the
-        // attribute type enum for it, if found, else EatNone.
-        TAttributeType setAttribute(const TString& nameSpace, const TString* name, TIntermAggregate* value);
-
-        // Const lookup: search for (but do not modify) the attribute in the map.
-        const TIntermAggregate* operator[](TAttributeType) const;
-
-        // True if entry exists in map (even if value is nullptr)
-        bool contains(TAttributeType) const;
-
-        // Obtain attribute as integer
-        bool getInt(TAttributeType attr, int& value, int argNum = 0) const;
-
-        // Obtain attribute as string, with optional to-lower transform
-        bool getString(TAttributeType attr, TString& value, int argNum = 0, bool convertToLower = true) const;
-
-    protected:
-        // Helper to get attribute const union
-        const TConstUnion* getConstUnion(TAttributeType attr, TBasicType, int argNum) const;
-
-        // Find an attribute enum given its name.
-        static TAttributeType attributeFromName(const TString& nameSpace, const TString& name);
-
-        std::unordered_map<TAttributeType, TIntermAggregate*> attributes;
-    };
 
     class TFunctionDeclarator {
     public:
         TFunctionDeclarator() : function(nullptr), body(nullptr) { }
         TSourceLoc loc;
         TFunction* function;
-        TAttributeMap attributes;
+        TAttributes attributes;
         TVector<HlslToken>* body;
     };
 
 } // end namespace glslang
-
 
 #endif // HLSLATTRIBUTES_H_

@@ -247,7 +247,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.matrixindex.frag", "main"},
         {"hlsl.nonstaticMemberFunction.frag", "main"},
         {"hlsl.numericsuffixes.frag", "main"},
-        {"hlsl.numthreads.comp", "main_aux1"},
+        {"hlsl.numthreads.comp", "main_aux2"},
         {"hlsl.overload.frag", "PixelShaderFunction"},
         {"hlsl.opaque-type-bug.frag", "main"},
         {"hlsl.params.default.frag", "main"},

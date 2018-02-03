@@ -2558,6 +2558,7 @@ void Parameterize()
     InstructionDesc[OpLoopMerge].operands.push(OperandId, "'Merge Block'");
     InstructionDesc[OpLoopMerge].operands.push(OperandId, "'Continue Target'");
     InstructionDesc[OpLoopMerge].operands.push(OperandLoop, "");
+    InstructionDesc[OpLoopMerge].operands.push(OperandOptionalLiteral, "");
 
     InstructionDesc[OpSelectionMerge].operands.push(OperandId, "'Merge Block'");
     InstructionDesc[OpSelectionMerge].operands.push(OperandSelect, "");

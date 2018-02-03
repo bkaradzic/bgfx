@@ -10,7 +10,7 @@ gl_FragCoord origin is upper left
 0:5          'x' ( temp int)
 0:5          Constant:
 0:5            0 (const int)
-0:5        Loop with condition tested first
+0:5        Loop with condition tested first: Unroll
 0:5          Loop Condition
 0:5          Compare Less Than ( temp bool)
 0:5            'x' ( temp int)
@@ -25,7 +25,7 @@ gl_FragCoord origin is upper left
 0:8          'y' ( temp int)
 0:8          Constant:
 0:8            0 (const int)
-0:8        Loop with condition tested first
+0:8        Loop with condition tested first: DontUnroll
 0:8          Loop Condition
 0:8          Compare Less Than ( temp bool)
 0:8            'y' ( temp int)
@@ -80,7 +80,7 @@ gl_FragCoord origin is upper left
 0:5          'x' ( temp int)
 0:5          Constant:
 0:5            0 (const int)
-0:5        Loop with condition tested first
+0:5        Loop with condition tested first: Unroll
 0:5          Loop Condition
 0:5          Compare Less Than ( temp bool)
 0:5            'x' ( temp int)
@@ -95,7 +95,7 @@ gl_FragCoord origin is upper left
 0:8          'y' ( temp int)
 0:8          Constant:
 0:8            0 (const int)
-0:8        Loop with condition tested first
+0:8        Loop with condition tested first: DontUnroll
 0:8          Loop Condition
 0:8          Compare Less Than ( temp bool)
 0:8            'y' ( temp int)

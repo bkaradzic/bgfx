@@ -60,7 +60,7 @@ namespace spv {
 
 class Builder {
 public:
-    Builder(unsigned int userNumber, SpvBuildLogger* logger);
+    Builder(unsigned int spvVersion, unsigned int userNumber, SpvBuildLogger* logger);
     virtual ~Builder();
 
     static const int maxMatrixSize = 4;
@@ -561,7 +561,7 @@ public:
 
     void createBranch(Block* block);
     void createConditionalBranch(Id condition, Block* thenBlock, Block* elseBlock);
-    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control);
+    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control, unsigned int dependencyLength);
 
     // Sets to generate opcode for specialization constants.
     void setToSpecConstCodeGenMode() { generatingOpCodeForSpecConst = true; }
@@ -585,6 +585,7 @@ public:
     void dumpInstructions(std::vector<unsigned int>&, const std::vector<std::unique_ptr<Instruction> >&) const;
     void dumpModuleProcesses(std::vector<unsigned int>&) const;
 
+    unsigned int spvVersion;     // the version of SPIR-V to emit in the header
     SourceLanguage source;
     int sourceVersion;
     spv::Id sourceFileStringId;

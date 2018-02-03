@@ -17,7 +17,7 @@ gl_FragCoord origin is upper left
 0:4          No loop condition
 0:4          No loop body
 0:?       Sequence
-0:5        Loop with condition tested first
+0:5        Loop with condition tested first: Unroll
 0:5          Loop Condition
 0:5          any ( temp bool)
 0:5            NotEqual ( temp 4-component vector of bool)
@@ -220,7 +220,7 @@ gl_FragCoord origin is upper left
 0:4          No loop condition
 0:4          No loop body
 0:?       Sequence
-0:5        Loop with condition tested first
+0:5        Loop with condition tested first: Unroll
 0:5          Loop Condition
 0:5          any ( temp bool)
 0:5            NotEqual ( temp 4-component vector of bool)

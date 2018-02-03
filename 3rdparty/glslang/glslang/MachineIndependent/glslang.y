@@ -58,6 +58,7 @@ Jutta Degener, 1995
 #include "SymbolTable.h"
 #include "ParseHelper.h"
 #include "../Public/ShaderLang.h"
+#include "attribute.h"
 
 using namespace glslang;
 
@@ -86,6 +87,7 @@ using namespace glslang;
             TIntermNode* intermNode;
             glslang::TIntermNodePair nodePair;
             glslang::TIntermTyped* intermTypedNode;
+            glslang::TAttributes* attributes;
         };
         union {
             glslang::TPublicType type;
@@ -218,12 +220,12 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm.intermNode> translation_unit function_definition
 %type <interm.intermNode> statement simple_statement
 %type <interm.intermNode> statement_list switch_statement_list compound_statement
-%type <interm.intermNode> declaration_statement selection_statement expression_statement
-%type <interm.intermNode> switch_statement case_label
+%type <interm.intermNode> declaration_statement selection_statement selection_statement_nonattributed expression_statement
+%type <interm.intermNode> switch_statement switch_statement_nonattributed case_label
 %type <interm.intermNode> declaration external_declaration
 %type <interm.intermNode> for_init_statement compound_statement_no_new_scope
 %type <interm.nodePair> selection_rest_statement for_rest_statement
-%type <interm.intermNode> iteration_statement jump_statement statement_no_new_scope statement_scoped
+%type <interm.intermNode> iteration_statement iteration_statement_nonattributed jump_statement statement_no_new_scope statement_scoped
 %type <interm> single_declaration init_declarator_list
 
 %type <interm> parameter_declaration parameter_declarator parameter_type_specifier
@@ -245,6 +247,8 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm> function_call_or_method function_identifier function_call_header
 
 %type <interm.identifierList> identifier_list
+
+%type <interm.attributes> attribute attribute_list single_attribute
 
 %start translation_unit
 %%
@@ -898,9 +902,9 @@ parameter_declarator
         parseContext.arraySizeRequiredCheck($3.loc, *$3.arraySizes);
         parseContext.reservedErrorCheck($2.loc, *$2.string);
 
-        $1.arraySizes = $3.arraySizes;
-
         TParameter param = { $2.string, new TType($1)};
+        parseContext.arrayDimMerge(*param.type, $3.arraySizes);
+
         $$.loc = $2.loc;
         $$.param = param;
     }
@@ -2673,6 +2677,15 @@ expression_statement
     ;
 
 selection_statement
+    : selection_statement_nonattributed {
+        $$ = $1;
+    }
+    | attribute selection_statement_nonattributed {
+        parseContext.handleSelectionAttributes(*$1, $2);
+        $$ = $2;
+    }
+
+selection_statement_nonattributed
     : IF LEFT_PAREN expression RIGHT_PAREN selection_rest_statement {
         parseContext.boolCheck($1.loc, $3);
         $$ = parseContext.intermediate.addSelection($3, $5, $1.loc);
@@ -2709,6 +2722,15 @@ condition
     ;
 
 switch_statement
+    : switch_statement_nonattributed {
+        $$ = $1;
+    }
+    | attribute switch_statement_nonattributed {
+        parseContext.handleSwitchAttributes(*$1, $2);
+        $$ = $2;
+    }
+
+switch_statement_nonattributed
     : SWITCH LEFT_PAREN expression RIGHT_PAREN {
         // start new switch sequence on the switch stack
         ++parseContext.controlFlowNestingLevel;
@@ -2762,6 +2784,15 @@ case_label
     ;
 
 iteration_statement
+    : iteration_statement_nonattributed {
+        $$ = $1;
+    }
+    | attribute iteration_statement_nonattributed {
+        parseContext.handleLoopAttributes(*$1, $2);
+        $$ = $2;
+    }
+
+iteration_statement_nonattributed
     : WHILE LEFT_PAREN {
         if (! parseContext.limits.whileLoops)
             parseContext.error($1.loc, "while loops not available", "limitation", "");
@@ -2919,5 +2950,27 @@ function_definition
         $$->getAsAggregate()->setPragmaTable(parseContext.contextPragma.pragmaTable);
     }
     ;
+
+attribute
+    : LEFT_BRACKET LEFT_BRACKET attribute_list RIGHT_BRACKET RIGHT_BRACKET {
+        $$ = $3;
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_control_flow_attributes, "attribute");
+    }
+
+attribute_list
+    : single_attribute {
+        $$ = $1;
+    }
+    | attribute_list COMMA single_attribute {
+        $$ = parseContext.mergeAttributes($1, $3);
+    }
+
+single_attribute
+    : IDENTIFIER {
+        $$ = parseContext.makeAttributes(*$1.string);
+    }
+    | IDENTIFIER LEFT_PAREN constant_expression RIGHT_PAREN {
+        $$ = parseContext.makeAttributes(*$1.string, $3);
+    }
 
 %%

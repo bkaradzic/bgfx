@@ -776,7 +776,7 @@ TFunction* TParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunct
         if (prevDec->isPrototyped() && prototype)
             profileRequires(loc, EEsProfile, 300, nullptr, "multiple prototypes for same function");
         if (prevDec->getType() != function.getType())
-            error(loc, "overloaded functions must have the same return type", function.getType().getBasicTypeString().c_str(), "");
+            error(loc, "overloaded functions must have the same return type", function.getName().c_str(), "");
         for (int i = 0; i < prevDec->getParamCount(); ++i) {
             if ((*prevDec)[i].type->getQualifier().storage != function[i].type->getQualifier().storage)
                 error(loc, "overloaded functions must have the same parameter storage qualifiers for argument", function[i].type->getStorageQualifierString(), "%d", i+1);
@@ -3103,7 +3103,7 @@ void TParseContext::arrayDimCheck(const TSourceLoc& loc, const TType* type, cons
 //
 void TParseContext::arrayDimMerge(TType& type, const TArraySizes* sizes)
 {
-    if (sizes)
+    if (sizes != nullptr)
         type.addArrayOuterSizes(*sizes);
 }
 

@@ -10,7 +10,7 @@ local_size = (4, 6, 8)
 0:11          'x' ( temp int)
 0:11          Constant:
 0:11            0 (const int)
-0:11        Loop with condition tested first
+0:11        Loop with condition tested first: Unroll
 0:11          Loop Condition
 0:11          Compare Less Than ( temp bool)
 0:11            'x' ( temp int)
@@ -53,7 +53,7 @@ local_size = (4, 6, 8)
 0:11          'x' ( temp int)
 0:11          Constant:
 0:11            0 (const int)
-0:11        Loop with condition tested first
+0:11        Loop with condition tested first: Unroll
 0:11          Loop Condition
 0:11          Compare Less Than ( temp bool)
 0:11            'x' ( temp int)

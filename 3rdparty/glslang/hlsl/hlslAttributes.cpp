@@ -34,157 +34,73 @@
 //
 
 #include "hlslAttributes.h"
-#include <cstdlib>
-#include <cctype>
-#include <algorithm>
+#include "hlslParseHelper.h"
 
 namespace glslang {
     // Map the given string to an attribute enum from TAttributeType,
     // or EatNone if invalid.
-    TAttributeType TAttributeMap::attributeFromName(const TString& nameSpace, const TString& name)
+    TAttributeType HlslParseContext::attributeFromName(const TString& nameSpace, const TString& name) const
     {
-        // These are case insensitive.
-        TString lowername(name);
-        std::transform(lowername.begin(), lowername.end(), lowername.begin(), ::tolower);
-        TString lowernameSpace(nameSpace);
-        std::transform(lowernameSpace.begin(), lowernameSpace.end(), lowernameSpace.begin(), ::tolower);
-
         // handle names within a namespace
 
-        if (lowernameSpace == "vk") {
-            if (lowername == "input_attachment_index")
+        if (nameSpace == "vk") {
+            if (name == "input_attachment_index")
                 return EatInputAttachment;
-            else if (lowername == "location")
+            else if (name == "location")
                 return EatLocation;
-            else if (lowername == "binding")
+            else if (name == "binding")
                 return EatBinding;
-            else if (lowername == "global_cbuffer_binding")
+            else if (name == "global_cbuffer_binding")
                 return EatGlobalBinding;
-            else if (lowername == "builtin")
+            else if (name == "builtin")
                 return EatBuiltIn;
-            else if (lowername == "constant_id")
+            else if (name == "constant_id")
                 return EatConstantId;
-            else if (lowername == "push_constant")
+            else if (name == "push_constant")
                 return EatPushConstant;
-        } else if (lowernameSpace.size() > 0)
+        } else if (nameSpace.size() > 0)
             return EatNone;
 
         // handle names with no namespace
 
-        if (lowername == "allow_uav_condition")
+        if (name == "allow_uav_condition")
             return EatAllow_uav_condition;
-        else if (lowername == "branch")
+        else if (name == "branch")
             return EatBranch;
-        else if (lowername == "call")
+        else if (name == "call")
             return EatCall;
-        else if (lowername == "domain")
+        else if (name == "domain")
             return EatDomain;
-        else if (lowername == "earlydepthstencil")
+        else if (name == "earlydepthstencil")
             return EatEarlyDepthStencil;
-        else if (lowername == "fastopt")
+        else if (name == "fastopt")
             return EatFastOpt;
-        else if (lowername == "flatten")
+        else if (name == "flatten")
             return EatFlatten;
-        else if (lowername == "forcecase")
+        else if (name == "forcecase")
             return EatForceCase;
-        else if (lowername == "instance")
+        else if (name == "instance")
             return EatInstance;
-        else if (lowername == "maxtessfactor")
+        else if (name == "maxtessfactor")
             return EatMaxTessFactor;
-        else if (lowername == "maxvertexcount")
+        else if (name == "maxvertexcount")
             return EatMaxVertexCount;
-        else if (lowername == "numthreads")
+        else if (name == "numthreads")
             return EatNumThreads;
-        else if (lowername == "outputcontrolpoints")
+        else if (name == "outputcontrolpoints")
             return EatOutputControlPoints;
-        else if (lowername == "outputtopology")
+        else if (name == "outputtopology")
             return EatOutputTopology;
-        else if (lowername == "partitioning")
+        else if (name == "partitioning")
             return EatPartitioning;
-        else if (lowername == "patchconstantfunc")
+        else if (name == "patchconstantfunc")
             return EatPatchConstantFunc;
-        else if (lowername == "unroll")
+        else if (name == "unroll")
             return EatUnroll;
-        else if (lowername == "loop")
+        else if (name == "loop")
             return EatLoop;
         else
             return EatNone;
-    }
-
-    // Look up entry, inserting if it's not there, and if name is a valid attribute name
-    // as known by attributeFromName.
-    TAttributeType TAttributeMap::setAttribute(const TString& nameSpace, const TString* name, TIntermAggregate* value)
-    {
-        if (name == nullptr)
-            return EatNone;
-
-        const TAttributeType attr = attributeFromName(nameSpace, *name);
-
-        if (attr != EatNone)
-            attributes[attr] = value;
-
-        return attr;
-    }
-
-    // Look up entry (const version), and return aggregate node.  This cannot change the map.
-    const TIntermAggregate* TAttributeMap::operator[](TAttributeType attr) const
-    {
-        const auto entry = attributes.find(attr);
-
-        return (entry == attributes.end()) ? nullptr : entry->second;
-    }
-
-    // True if entry exists in map (even if value is nullptr)
-    bool TAttributeMap::contains(TAttributeType attr) const
-    {
-        return attributes.find(attr) != attributes.end();
-    }
-
-    // extract integers out of attribute arguments stored in attribute aggregate
-    bool TAttributeMap::getInt(TAttributeType attr, int& value, int argNum) const 
-    {
-        const TConstUnion* intConst = getConstUnion(attr, EbtInt, argNum);
-
-        if (intConst == nullptr)
-            return false;
-
-        value = intConst->getIConst();
-        return true;
-    };
-
-    // extract strings out of attribute arguments stored in attribute aggregate.
-    // convert to lower case if converToLower is true (for case-insensitive compare convenience)
-    bool TAttributeMap::getString(TAttributeType attr, TString& value, int argNum, bool convertToLower) const 
-    {
-        const TConstUnion* stringConst = getConstUnion(attr, EbtString, argNum);
-
-        if (stringConst == nullptr)
-            return false;
-
-        value = *stringConst->getSConst();
-
-        // Convenience.
-        if (convertToLower)
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-
-        return true;
-    };
-
-    // Helper to get attribute const union.  Returns nullptr on failure.
-    const TConstUnion* TAttributeMap::getConstUnion(TAttributeType attr, TBasicType basicType, int argNum) const
-    {
-        const TIntermAggregate* attrAgg = (*this)[attr];
-        if (attrAgg == nullptr)
-            return nullptr;
-
-        if (argNum >= int(attrAgg->getSequence().size()))
-            return nullptr;
-
-        const TConstUnion* constVal = &attrAgg->getSequence()[argNum]->getAsConstantUnion()->getConstArray()[0];
-        if (constVal == nullptr || constVal->getType() != basicType)
-            return nullptr;
-
-        return constVal;
     }
 
 } // end namespace glslang
