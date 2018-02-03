@@ -452,7 +452,7 @@ namespace bgfx
 	{
 		enum Enum
 		{
-			None,
+			NoModifier,
 			Neg,
 			Abs,
 			AbsNeg,
