@@ -550,6 +550,17 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcOperandType) == DxbcOperandType::Count);
 
+	static const char* s_dxbcCustomDataClass[] =
+	{
+		"Comment",
+		"DebugInfo",
+		"Opaque",
+		"dcl_immediateConstantBuffer",
+		"ShaderMessage",
+		"ClipPlaneConstantMappingsForDx9",
+	};
+	BX_STATIC_ASSERT(BX_COUNTOF(s_dxbcCustomDataClass) == DxbcCustomDataClass::Count);
+
 #define DXBC_MAX_NAME_STRING 512
 
 	int32_t readString(bx::ReaderSeekerI* _reader, int64_t _offset, char* _out, uint32_t _max, bx::Error* _err)
@@ -1028,7 +1039,7 @@ namespace bgfx
 
 	int32_t read(bx::ReaderI* _reader, DxbcInstruction& _instruction, bx::Error* _err)
 	{
-		uint32_t size = 0;
+		int32_t size = 0;
 
 		uint32_t token;
 		size += bx::read(_reader, token, _err);
@@ -1068,18 +1079,26 @@ namespace bgfx
 		_instruction.testNZ   = false;
 		_instruction.retType  = DxbcResourceReturnType::Unused;
 
+		_instruction.customDataClass = DxbcCustomDataClass::Comment;
+		_instruction.customData.clear();
+
 		switch (_instruction.opcode)
 		{
 			case DxbcOpcode::CUSTOMDATA:
 				{
-					_instruction.numOperands = 0;
-					size += bx::read(_reader, _instruction.length);
-					for (uint32_t ii = 0, num = (_instruction.length-2); ii < num; ++ii)
-					{
-						char temp[4];
-						size += bx::read(_reader, temp, 4, _err);
-					}
+					_instruction.customDataClass = DxbcCustomDataClass::Enum( (token & UINT32_C(0xfffff800) ) >> 11);
 
+					_instruction.numOperands = 0;
+					size += bx::read(_reader, _instruction.length, _err);
+					for (uint32_t ii = 0, num = (_instruction.length-2); ii < num && _err->isOk(); ++ii)
+					{
+						uint32_t temp;
+						size += bx::read(_reader, temp, _err);
+						if (_err->isOk() )
+						{
+							_instruction.customData.push_back(temp);
+						}
+					}
 				}
 				return size;
 
@@ -1315,10 +1334,22 @@ namespace bgfx
 			: 0
 			;
 
+		int32_t size =0;
+
 		switch (_instruction.opcode)
 		{
 			case DxbcOpcode::CUSTOMDATA:
-				return 0;
+				{
+					token &= UINT32_C(0x000007ff);
+					token |= _instruction.customDataClass << 11;
+
+					size += bx::write(_writer, token);
+
+					uint32_t len = uint32_t(_instruction.customData.size() );
+					size += bx::write(_writer, len/4+2, _err);
+					size += bx::write(_writer, _instruction.customData.data(), len, _err);
+				}
+				return size;
 
 			case DxbcOpcode::DCL_CONSTANT_BUFFER:
 				token |= _instruction.allowRefactoring ? UINT32_C(0x00000800) : 0;
@@ -1364,7 +1395,6 @@ namespace bgfx
 				break;
 		}
 
-		uint32_t size =0;
 		size += bx::write(_writer, token);
 
 		for (uint32_t ii = 0; _instruction.extended[ii] != DxbcInstruction::ExtendedType::Count; ++ii)
@@ -1444,31 +1474,88 @@ namespace bgfx
 		return size;
 	}
 
+	int32_t toString(char* _out, int32_t _size, DxbcOperandMode::Enum _mode, uint8_t _modeBits)
+	{
+		int32_t size = 0;
+
+		switch (_mode)
+		{
+		case DxbcOperandMode::Mask:
+			if (0xf > _modeBits
+			&&  0   < _modeBits)
+			{
+				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+							, ".%s%s%s%s"
+							, 0 == (_modeBits & 1) ? "" : "x"
+							, 0 == (_modeBits & 2) ? "" : "y"
+							, 0 == (_modeBits & 4) ? "" : "z"
+							, 0 == (_modeBits & 8) ? "" : "w"
+							);
+			}
+			break;
+
+		case DxbcOperandMode::Swizzle:
+			if (0xe4 != _modeBits)
+			{
+				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+							, ".%c%c%c%c"
+							, "xyzw"[(_modeBits   )&0x3]
+							, "xyzw"[(_modeBits>>2)&0x3]
+							, "xyzw"[(_modeBits>>4)&0x3]
+							, "xyzw"[(_modeBits>>6)&0x3]
+							);
+			}
+			break;
+
+		case DxbcOperandMode::Scalar:
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+						, ".%c"
+						, "xyzw"[_modeBits]
+						);
+			break;
+
+		default:
+			break;
+		}
+
+		return size;
+	}
+
 	int32_t toString(char* _out, int32_t _size, const DxbcInstruction& _instruction)
 	{
 		int32_t size = 0;
 
-		size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-							, "%s%s%s"
-							, getName(_instruction.opcode)
-							, _instruction.saturate ? "_sat" : ""
-							, _instruction.testNZ   ? "_nz"  : ""
-							);
+		if (DxbcOpcode::CUSTOMDATA == _instruction.opcode)
+		{
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+						, "%s"
+						, s_dxbcCustomDataClass[_instruction.customDataClass]
+						);
+		}
+		else
+		{
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+						, "%s%s%s"
+						, getName(_instruction.opcode)
+						, _instruction.saturate ? "_sat" : ""
+						, _instruction.testNZ   ? "_nz"  : ""
+						);
+		}
 
 		if (DxbcResourceDim::Unknown != _instruction.srv)
 		{
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-								, " %s<%x>"
-								, s_dxbcSrvType[_instruction.srv]
-								, _instruction.value[0]
-								);
+						, " %s<%x>"
+						, s_dxbcSrvType[_instruction.srv]
+						, _instruction.value[0]
+						);
 		}
 		else if (0 < s_dxbcOpcodeInfo[_instruction.opcode].numValues)
 		{
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-								, " %d"
-								, _instruction.value[0]
-								);
+						, " %d"
+						, _instruction.value[0]
+						);
 		}
 
 		for (uint32_t ii = 0; ii < _instruction.numOperands; ++ii)
@@ -1495,11 +1582,11 @@ namespace bgfx
 			}
 
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-								, "%s%s%s"
-								, 0 == ii ? " " : ", "
-								, preOperand
-								, s_dxbcOperandType[operand.type]
-								);
+						, "%s%s%s"
+						, 0 == ii ? " " : ", "
+						, preOperand
+						, s_dxbcOperandType[operand.type]
+						);
 
 			switch (operand.type)
 			{
@@ -1509,35 +1596,39 @@ namespace bgfx
 				{
 					union { uint32_t i; float f; } cast = { operand.un.imm32[jj] };
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-										, "%s%f"
-										, 0 == jj ? "(" : ", "
-										, cast.f
-										);
+								, "%s%f"
+								, 0 == jj ? "(" : ", "
+								, cast.f
+								);
 				}
 
 				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-									, ")"
-									);
+							, ")"
+							);
 				break;
 
 			default:
 				break;
 			}
 
-			const uint32_t first = DxbcOperandAddrMode::RegImm32 == operand.addrMode[0] ? 0 : 1;
+			const uint32_t first = false
+				|| DxbcOperandType::ImmConstantBuffer == operand.type
+				|| DxbcOperandAddrMode::RegImm32      == operand.addrMode[0]
+				? 0 : 1
+				;
 			if (0 == first)
 			{
 				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-									, "["
-									);
+							, "["
+							);
 			}
 			else
 			{
 				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-									, "%d%s"
-									, operand.regIndex[0]
-									, array ? "[" : ""
-									);
+							, "%d%s"
+							, operand.regIndex[0]
+							, array ? "[" : ""
+							);
 			}
 
 			for (uint32_t jj = first, num = bx::uint32_min(operand.numAddrModes, BX_COUNTOF(operand.addrMode) ); jj < num; ++jj)
@@ -1546,82 +1637,61 @@ namespace bgfx
 				{
 				case DxbcOperandAddrMode::Imm32:
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-										, "%d"
-										, operand.regIndex[jj]
-										);
+								, "%d"
+								, operand.regIndex[jj]
+								);
 					break;
 
 				case DxbcOperandAddrMode::Reg:
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-										, "%s%d"
-										, s_dxbcOperandType[operand.subOperand[jj].type]
-										, operand.regIndex[jj]
-										);
+								, "%s%d"
+								, s_dxbcOperandType[operand.subOperand[jj].type]
+								, operand.subOperand[jj].regIndex
+								);
+					size += toString(&_out[size], bx::uint32_imax(0, _size-size)
+								, DxbcOperandMode::Enum(operand.subOperand[jj].mode)
+								, operand.subOperand[jj].modeBits
+								);
 					break;
 
 				case DxbcOperandAddrMode::RegImm32:
 					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-										, "%d + %s%d"
-										, operand.regIndex[jj]
-										, s_dxbcOperandType[operand.subOperand[jj].type]
-										, operand.subOperand[jj].regIndex
-										);
+								, "%d + %s%d"
+								, operand.regIndex[jj]
+								, s_dxbcOperandType[operand.subOperand[jj].type]
+								, operand.subOperand[jj].regIndex
+								);
+					size += toString(&_out[size], bx::uint32_imax(0, _size-size)
+								, DxbcOperandMode::Enum(operand.subOperand[jj].mode)
+								, operand.subOperand[jj].modeBits
+								);
 					break;
 
 				default:
+					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size), "???");
 					break;
 				}
 			}
 
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-								, "%s"
-								, array ? "]" : ""
-								);
+						, "%s"
+						, array ? "]" : ""
+						);
 
-			switch (operand.mode)
-			{
-			case DxbcOperandMode::Mask:
-				if (0xf > operand.modeBits
-				&&  0   < operand.modeBits)
-				{
-					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-										, ".%s%s%s%s"
-										, 0 == (operand.modeBits & 1) ? "" : "x"
-										, 0 == (operand.modeBits & 2) ? "" : "y"
-										, 0 == (operand.modeBits & 4) ? "" : "z"
-										, 0 == (operand.modeBits & 8) ? "" : "w"
-										);
-				}
-				break;
-
-			case DxbcOperandMode::Swizzle:
-				if (0xe4 != operand.modeBits)
-				{
-					size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-										, ".%c%c%c%c"
-										, "xyzw"[(operand.modeBits   )&0x3]
-										, "xyzw"[(operand.modeBits>>2)&0x3]
-										, "xyzw"[(operand.modeBits>>4)&0x3]
-										, "xyzw"[(operand.modeBits>>6)&0x3]
-										);
-				}
-				break;
-
-			case DxbcOperandMode::Scalar:
-				size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-									, ".%c"
-									, "xyzw"[operand.modeBits]
-									);
-				break;
-
-			default:
-				break;
-			}
+			size += toString(&_out[size], bx::uint32_imax(0, _size-size), operand.mode, operand.modeBits);
 
 			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
-								, "%s"
-								, postOperand
-								);
+						, "%s"
+						, postOperand
+						);
+		}
+
+		if (_instruction.opcode == DxbcOpcode::DCL_CONSTANT_BUFFER
+		&&  _instruction.allowRefactoring)
+		{
+			size += bx::snprintf(&_out[size], bx::uint32_imax(0, _size-size)
+						, ", dynamicIndexed"
+						);
 		}
 
 		return size;

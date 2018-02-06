@@ -461,6 +461,21 @@ namespace bgfx
 		};
 	};
 
+	struct DxbcCustomDataClass
+	{
+		enum Enum
+		{
+			Comment,
+			DebugInfo,
+			Opaque,
+			ImmConstantBuffer,
+			ShaderMessage,
+			ClipPlaneConstantMappingsForDx9,
+
+			Count
+		};
+	};
+
 	struct DxbcSubOperand
 	{
 		DxbcSubOperand()
@@ -580,6 +595,9 @@ namespace bgfx
 		DxbcResourceReturnType::Enum resourceReturnTypes[4];
 
 		DxbcOperand operand[6];
+
+		DxbcCustomDataClass::Enum customDataClass;
+		stl::vector<uint32_t>     customData;
 	};
 
 	int32_t read(bx::ReaderI* _reader, DxbcInstruction& _instruction, bx::Error* _err);
