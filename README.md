@@ -16,7 +16,7 @@ Supported rendering backends:
 
  * Direct3D 9
  * Direct3D 11
- * Direct3D 12 (WIP)
+ * Direct3D 12
  * Metal (WIP)
  * OpenGL 2.1
  * OpenGL 3.1+
@@ -282,6 +282,17 @@ by Sega.
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=1Woak1Bl_KI" 
 target="_blank"><img src="http://img.youtube.com/vi/1Woak1Bl_KI/0.jpg" 
 alt="Match Engine | Football Manager 2018"
+width="640" height="480" border="0" /></a>
+
+## WonderWorlds
+
+http://wonderworlds.me/ - WonderWorlds is a place to play thousands
+of user-created levels and stories, make your own using the extensive in-game
+tools and share them with whomever you want.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=nY8y_dFolKo" 
+target="_blank"><img src="http://img.youtube.com/vi/nY8y_dFolKo/0.jpg" 
+alt="WonderWorlds"
 width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
