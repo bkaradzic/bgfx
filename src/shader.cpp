@@ -10,8 +10,9 @@
 
 namespace bgfx
 {
-	static bool printAsm(uint32_t, const DxbcInstruction& _instruction, void* _userData)
+	static bool printAsm(uint32_t _offset, const DxbcInstruction& _instruction, void* _userData)
 	{
+		BX_UNUSED(_offset);
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
@@ -20,8 +21,9 @@ namespace bgfx
 		return true;
 	}
 
-	static bool printAsm(uint32_t, const Dx9bcInstruction& _instruction, void* _userData)
+	static bool printAsm(uint32_t _offset, const Dx9bcInstruction& _instruction, void* _userData)
 	{
+		BX_UNUSED(_offset);
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
@@ -30,8 +32,9 @@ namespace bgfx
 		return true;
 	}
 
-	static bool printAsm(uint32_t, const SpvInstruction& _instruction, void* _userData)
+	static bool printAsm(uint32_t _offset, const SpvInstruction& _instruction, void* _userData)
 	{
+		BX_UNUSED(_offset);
 		bx::WriterI* writer = reinterpret_cast<bx::WriterI*>(_userData);
 		char temp[512];
 		toString(temp, sizeof(temp), _instruction);
