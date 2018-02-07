@@ -228,11 +228,15 @@ https://github.com/s1ddok/Fiber2D#fiber2d - Fiber2D - Cross-platform 2D Game
 Engine in pure Swift  
 ![Fiber2D Demo Gif](http://imgur.com/CP6d9kT.gif)
 
-## On the Hunt
+## On the Hunt / Lumix Engine
 
 http://www.indiedb.com/games/on-the-hunt - On the Hunt is an open world hunting
-game in development. It's a combination of FPS and stealth.  
-![On the Hunt](http://media.indiedb.com/images/downloads/1/120/119448/img.png)
+game in development. It's a combination of FPS and stealth.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=cAsqLbqSDBg" 
+target="_blank"><img src="http://img.youtube.com/vi/cAsqLbqSDBg/0.jpg" 
+alt="Lumix Engine - new features v0.29 & v0.30"
+width="640" height="480" border="0" /></a>
 
 ## FbxPipeline
 
