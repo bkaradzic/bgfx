@@ -4888,7 +4888,8 @@ data.NumQualityLevels = 0;
 			}
 
 			s_renderD3D12->m_cmd.release(m_ptr);
-			m_ptr = NULL;
+			m_ptr   = NULL;
+			m_state = D3D12_RESOURCE_STATE_COMMON;
 		}
 	}
 
