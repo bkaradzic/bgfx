@@ -23,10 +23,10 @@
 
 #if USE_ENTRY
 #	include "../entry/entry.h"
+#	include "../entry/input.h"
 #endif // USE_ENTRY
 
 #if defined(SCI_NAMESPACE)
-#	include "../entry/input.h"
 #	include "scintilla.h"
 #endif // defined(SCI_NAMESPACE)
 
@@ -218,16 +218,20 @@ struct OcornutImguiContext
 
 		setupStyle(true);
 
-#if defined(SCI_NAMESPACE)
+#if USE_ENTRY
 		io.KeyMap[ImGuiKey_Tab]        = (int)entry::Key::Tab;
 		io.KeyMap[ImGuiKey_LeftArrow]  = (int)entry::Key::Left;
 		io.KeyMap[ImGuiKey_RightArrow] = (int)entry::Key::Right;
 		io.KeyMap[ImGuiKey_UpArrow]    = (int)entry::Key::Up;
 		io.KeyMap[ImGuiKey_DownArrow]  = (int)entry::Key::Down;
+		io.KeyMap[ImGuiKey_PageUp]     = (int)entry::Key::PageUp;
+		io.KeyMap[ImGuiKey_PageDown]   = (int)entry::Key::PageDown;
 		io.KeyMap[ImGuiKey_Home]       = (int)entry::Key::Home;
 		io.KeyMap[ImGuiKey_End]        = (int)entry::Key::End;
+		io.KeyMap[ImGuiKey_Insert]     = (int)entry::Key::Insert;
 		io.KeyMap[ImGuiKey_Delete]     = (int)entry::Key::Delete;
 		io.KeyMap[ImGuiKey_Backspace]  = (int)entry::Key::Backspace;
+		io.KeyMap[ImGuiKey_Space]      = (int)entry::Key::Space;
 		io.KeyMap[ImGuiKey_Enter]      = (int)entry::Key::Return;
 		io.KeyMap[ImGuiKey_Escape]     = (int)entry::Key::Esc;
 		io.KeyMap[ImGuiKey_A]          = (int)entry::Key::KeyA;
@@ -236,7 +240,24 @@ struct OcornutImguiContext
 		io.KeyMap[ImGuiKey_X]          = (int)entry::Key::KeyX;
 		io.KeyMap[ImGuiKey_Y]          = (int)entry::Key::KeyY;
 		io.KeyMap[ImGuiKey_Z]          = (int)entry::Key::KeyZ;
-#endif // defined(SCI_NAMESPACE)
+
+		io.NavInputs[ImGuiNavInput_Activate]    = (int)entry::Key::GamepadA;
+		io.NavInputs[ImGuiNavInput_Cancel]      = (int)entry::Key::GamepadB;
+//		io.NavInputs[ImGuiNavInput_Input]       = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_Menu]        = (int)entry::Key::;
+		io.NavInputs[ImGuiNavInput_DpadLeft]    = (int)entry::Key::GamepadLeft;
+		io.NavInputs[ImGuiNavInput_DpadRight]   = (int)entry::Key::GamepadRight;
+		io.NavInputs[ImGuiNavInput_DpadUp]      = (int)entry::Key::GamepadUp;
+		io.NavInputs[ImGuiNavInput_DpadDown]    = (int)entry::Key::GamepadDown;
+//		io.NavInputs[ImGuiNavInput_LStickLeft]  = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_LStickRight] = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_LStickUp]    = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_LStickDown]  = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_FocusPrev]   = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_FocusNext]   = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_TweakSlow]   = (int)entry::Key::;
+//		io.NavInputs[ImGuiNavInput_TweakFast]   = (int)entry::Key::;
+#endif // USE_ENTRY
 
 		bgfx::RendererType::Enum type = bgfx::getRendererType();
 		m_program = bgfx::createProgram(
@@ -372,7 +393,7 @@ struct OcornutImguiContext
 		io.MouseWheel = (float)(_scroll - m_lastScroll);
 		m_lastScroll = _scroll;
 
-#if defined(SCI_NAMESPACE)
+#if USE_ENTRY
 		uint8_t modifiers = inputGetModifiersState();
 		io.KeyShift = 0 != (modifiers & (entry::Modifier::LeftShift | entry::Modifier::RightShift) );
 		io.KeyCtrl  = 0 != (modifiers & (entry::Modifier::LeftCtrl  | entry::Modifier::RightCtrl ) );
@@ -381,7 +402,7 @@ struct OcornutImguiContext
 		{
 			io.KeysDown[ii] = inputGetKeyState(entry::Key::Enum(ii) );
 		}
-#endif // defined(SCI_NAMESPACE)
+#endif // USE_ENTRY
 
 		ImGui::NewFrame();
 		ImGui::PushStyleVar(ImGuiStyleVar_ViewId, (float)_viewId);
