@@ -210,7 +210,7 @@ width="640" height="480" border="0" /></a>
 
 https://github.com/volcoma/EtherealEngine EtherealEngine C++ Game Engine and
 WYSIWYG Editor  
-![EtherealEngine screenshot](https://cloud.githubusercontent.com/assets/1499411/19988985/2a302204-a22c-11e6-98af-5f446d0c79ac.png)
+![EtherealEngine screenshot](https://user-images.githubusercontent.com/1499411/29488403-ff3c3df6-8512-11e7-869f-32a783530cc3.png)
 
 ## Go Rally
 
