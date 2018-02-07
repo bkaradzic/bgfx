@@ -243,7 +243,10 @@ struct OcornutImguiContext
 		io.KeyMap[ImGuiKey_Y]          = (int)entry::Key::KeyY;
 		io.KeyMap[ImGuiKey_Z]          = (int)entry::Key::KeyZ;
 
-		io.NavFlags |= ImGuiNavFlags_EnableKeyboard;
+		io.NavFlags |= 0
+			| ImGuiNavFlags_EnableGamepad
+			| ImGuiNavFlags_EnableKeyboard
+			;
 		io.NavInputs[ImGuiNavInput_Activate]    = (int)entry::Key::GamepadA;
 		io.NavInputs[ImGuiNavInput_Cancel]      = (int)entry::Key::GamepadB;
 //		io.NavInputs[ImGuiNavInput_Input]       = (int)entry::Key::;
