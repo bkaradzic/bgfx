@@ -935,6 +935,7 @@ namespace bgfx { namespace gl
 	{
 		"gl_VertexID",
 		"gl_InstanceID",
+		"uint",
 		NULL
 	};
 
