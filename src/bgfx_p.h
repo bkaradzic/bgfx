@@ -3402,9 +3402,9 @@ namespace bgfx
 
 			if (!err.isOk() )
 			{
-				ShaderHandle invalid = BGFX_INVALID_HANDLE;
+				BX_TRACE("Couldn't read shader signature!");
 				release(_mem);
-				return invalid;
+				return BGFX_INVALID_HANDLE;
 			}
 
 			if (BGFX_CHUNK_MAGIC_CSH != magic
@@ -3417,9 +3417,8 @@ namespace bgfx
 					, ( (uint8_t*)&magic)[2]
 					, ( (uint8_t*)&magic)[3]
 					);
-				ShaderHandle invalid = BGFX_INVALID_HANDLE;
 				release(_mem);
-				return invalid;
+				return BGFX_INVALID_HANDLE;
 			}
 
 			const uint32_t shaderHash = bx::hash<bx::HashMurmur2A>(_mem->data, _mem->size);
@@ -3432,73 +3431,79 @@ namespace bgfx
 				return handle;
 			}
 
+			uint32_t iohash;
+			bx::read(&reader, iohash, &err);
+
+			uint16_t count;
+			bx::read(&reader, count, &err);
+
+			if (!err.isOk() )
+			{
+				BX_TRACE("Corrupted shader binary!");
+				release(_mem);
+				return BGFX_INVALID_HANDLE;
+			}
+
 			ShaderHandle handle = { m_shaderHandle.alloc() };
 
-			BX_WARN(isValid(handle), "Failed to allocate shader handle.");
-			if (isValid(handle) )
+			if (!isValid(handle) )
 			{
-				bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
-				BX_CHECK(ok, "Shader already exists!"); BX_UNUSED(ok);
-
-				uint32_t iohash;
-				bx::read(&reader, iohash);
-
-				uint16_t count;
-				bx::read(&reader, count);
-
-				ShaderRef& sr = m_shaderRef[handle.idx];
-				sr.m_refCount = 1;
-				sr.m_hash     = iohash;
-				sr.m_num      = 0;
-				sr.m_uniforms = NULL;
-
-				UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
-
-				for (uint32_t ii = 0; ii < count; ++ii)
-				{
-					uint8_t nameSize = 0;
-					bx::read(&reader, nameSize);
-
-					char name[256];
-					bx::read(&reader, &name, nameSize);
-					name[nameSize] = '\0';
-
-					uint8_t type = 0;
-					bx::read(&reader, type);
-					type &= ~BGFX_UNIFORM_MASK;
-
-					uint8_t num;
-					bx::read(&reader, num);
-
-					uint16_t regIndex;
-					bx::read(&reader, regIndex);
-
-					uint16_t regCount;
-					bx::read(&reader, regCount);
-
-					PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
-					if (PredefinedUniform::Count == predefined)
-					{
-						uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), regCount);
-						sr.m_num++;
-					}
-				}
-
-				if (0 != sr.m_num)
-				{
-					uint32_t size = sr.m_num*sizeof(UniformHandle);
-					sr.m_uniforms = (UniformHandle*)BX_ALLOC(g_allocator, size);
-					bx::memCopy(sr.m_uniforms, uniforms, size);
-				}
-
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
-				cmdbuf.write(handle);
-				cmdbuf.write(_mem);
-			}
-			else
-			{
+				BX_TRACE("Failed to allocate shader handle.");
 				release(_mem);
+				return BGFX_INVALID_HANDLE;
 			}
+
+			bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
+			BX_CHECK(ok, "Shader already exists!"); BX_UNUSED(ok);
+
+			ShaderRef& sr = m_shaderRef[handle.idx];
+			sr.m_refCount = 1;
+			sr.m_hash     = iohash;
+			sr.m_num      = 0;
+			sr.m_uniforms = NULL;
+
+			UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
+
+			for (uint32_t ii = 0; ii < count; ++ii)
+			{
+				uint8_t nameSize = 0;
+				bx::read(&reader, nameSize, &err);
+
+				char name[256];
+				bx::read(&reader, &name, nameSize, &err);
+				name[nameSize] = '\0';
+
+				uint8_t type = 0;
+				bx::read(&reader, type, &err);
+				type &= ~BGFX_UNIFORM_MASK;
+
+				uint8_t num;
+				bx::read(&reader, num, &err);
+
+				uint16_t regIndex;
+				bx::read(&reader, regIndex, &err);
+
+				uint16_t regCount;
+				bx::read(&reader, regCount, &err);
+
+				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+				if (PredefinedUniform::Count == predefined)
+				{
+					uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), regCount);
+					sr.m_num++;
+				}
+			}
+
+			if (0 != sr.m_num)
+			{
+				uint32_t size = sr.m_num*sizeof(UniformHandle);
+				sr.m_uniforms = (UniformHandle*)BX_ALLOC(g_allocator, size);
+				bx::memCopy(sr.m_uniforms, uniforms, size);
+			}
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
+			cmdbuf.write(handle);
+			cmdbuf.write(_mem);
 
 			return handle;
 		}
