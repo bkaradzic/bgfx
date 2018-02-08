@@ -1529,7 +1529,7 @@ namespace bgfx { namespace d3d12
 
 			m_cmd.shutdown();
 
-			DX_RELEASE(m_device, 0);
+			DX_RELEASE(m_device,  0);
 			DX_RELEASE(m_adapter, 0);
 			DX_RELEASE(m_factory, 0);
 
@@ -4308,6 +4308,7 @@ data.NumQualityLevels = 0;
 		{
 			s_renderD3D12->m_cmd.release(m_ptr);
 			m_dynamic = false;
+			m_state   = D3D12_RESOURCE_STATE_COMMON;
 		}
 	}
 
