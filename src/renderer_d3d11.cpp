@@ -5159,7 +5159,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		box.left   = _rect.m_x;
 		box.top    = _rect.m_y;
 		box.right  = box.left + _rect.m_width;
-		box.bottom = box.top + _rect.m_height;
+		box.bottom = box.top  + _rect.m_height;
 
 		uint32_t layer = 0;
 
@@ -5176,6 +5176,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		}
 
 		const uint32_t subres = _mip + ( (layer + _side) * m_numMips);
+		const bool     depth  = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch  = _rect.m_width*bpp/8;
 		const uint32_t srcpitch   = UINT16_MAX == _pitch ? rectpitch : _pitch;
@@ -5196,7 +5197,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 		deviceCtx->UpdateSubresource(
 			  m_ptr
 			, subres
-			, &box
+			, depth ? NULL : &box
 			, data
 			, srcpitch
 			, TextureD3D11::Texture3D == m_type ? slicepitch : 0
