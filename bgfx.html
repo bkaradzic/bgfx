@@ -1102,6 +1102,12 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits16maxTextureLayersE">
+<span id="bgfx::Caps::Limits::maxTextureLayers__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1a47505cd12a2fb1172768b4dfdda3b98c"></span>uint32_t <code class="descname">maxTextureLayers</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits16maxTextureLayersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum texture layers. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx4Caps6Limits8maxViewsE">
 <span id="bgfx::Caps::Limits::maxViews__uint32_t"></span><span class="target" id="bgfxstructbgfx_1_1_caps_1_1_limits_1ab498589784aa6b1cf5b746994634171d"></span>uint32_t <code class="descname">maxViews</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits8maxViewsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum number of views. </p>
@@ -6370,7 +6376,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="first docutils literal"><span class="pre">_side</span></code> - <p>Cubemap side <code class="docutils literal"><span class="pre">BGFX_CUBE_MAP_&lt;POSITIVE</span> <span class="pre">or</span> <span class="pre">NEGATIVE&gt;_&lt;X,</span> <span class="pre">Y</span> <span class="pre">or</span> <span class="pre">Z&gt;</span></code>, where 0 is +X, 1 is -X, 2 is +Y, 3 is -Y, 4 is +Z, and 5 is -Z. <div class="highlight-default"><div class="highlight"><pre><span></span>           <span class="o">+----------+</span>
            <span class="o">|-</span><span class="n">z</span>       <span class="mi">2</span><span class="o">|</span>
            <span class="o">|</span> <span class="o">^</span>  <span class="o">+</span><span class="n">y</span>    <span class="o">|</span>
-           <span class="o">|</span> <span class="o">|</span>        <span class="o">|</span>
+           <span class="o">|</span> <span class="o">|</span>        <span class="o">|</span>    <span class="n">Unfolded</span> <span class="n">cube</span><span class="p">:</span>
            <span class="o">|</span> <span class="o">+----&gt;+</span><span class="n">x</span> <span class="o">|</span>
 <span class="o">+----------+----------+----------+----------+</span>
 <span class="o">|+</span><span class="n">y</span>       <span class="mi">1</span><span class="o">|+</span><span class="n">y</span>       <span class="mi">4</span><span class="o">|+</span><span class="n">y</span>       <span class="mi">0</span><span class="o">|+</span><span class="n">y</span>       <span class="mi">5</span><span class="o">|</span>
