@@ -525,6 +525,7 @@ namespace bgfx { namespace mtl
 				g_caps.limits.maxFBAttachments = 8;
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 			}
+			g_caps.limits.maxTextureLayers = 2048;
 
 			//todo: vendor id, device id, gpu enum
 
