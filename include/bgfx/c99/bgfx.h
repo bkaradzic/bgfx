@@ -495,6 +495,7 @@ typedef struct bgfx_caps_limits
     uint32_t maxDrawCalls;
     uint32_t maxBlits;
     uint32_t maxTextureSize;
+    uint32_t maxTextureLayers;
     uint32_t maxViews;
     uint32_t maxFrameBuffers;
     uint32_t maxFBAttachments;

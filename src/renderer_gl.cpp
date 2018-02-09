@@ -2316,7 +2316,8 @@ namespace bgfx { namespace gl
 					: 0
 					;
 
-				g_caps.limits.maxTextureSize = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
+				g_caps.limits.maxTextureSize   = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
+				g_caps.limits.maxTextureLayers = uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) );
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)

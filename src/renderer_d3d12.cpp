@@ -1277,7 +1277,8 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					);
-				g_caps.limits.maxTextureSize   = 16384;
+				g_caps.limits.maxTextureSize   = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.limits.maxTextureLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
 				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 				g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 

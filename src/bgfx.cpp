@@ -1249,6 +1249,7 @@ namespace bgfx
 		LIMITS(maxDrawCalls);
 		LIMITS(maxBlits);
 		LIMITS(maxTextureSize);
+		LIMITS(maxTextureLayers);
 		LIMITS(maxViews);
 		LIMITS(maxFrameBuffers);
 		LIMITS(maxFBAttachments);
@@ -2805,6 +2806,8 @@ namespace bgfx
 		bx::memSet(&g_caps, 0, sizeof(g_caps) );
 		g_caps.limits.maxDrawCalls            = BGFX_CONFIG_MAX_DRAW_CALLS;
 		g_caps.limits.maxBlits                = BGFX_CONFIG_MAX_BLIT_ITEMS;
+		g_caps.limits.maxTextureSize          = 0;
+		g_caps.limits.maxTextureLayers        = 1;
 		g_caps.limits.maxViews                = BGFX_CONFIG_MAX_VIEWS;
 		g_caps.limits.maxFrameBuffers         = BGFX_CONFIG_MAX_FRAME_BUFFERS;
 		g_caps.limits.maxPrograms             = BGFX_CONFIG_MAX_PROGRAMS;

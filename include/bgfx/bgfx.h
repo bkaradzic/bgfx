@@ -614,6 +614,7 @@ namespace bgfx
 			uint32_t maxDrawCalls;            //!< Maximum number of draw calls.
 			uint32_t maxBlits;                //!< Maximum number of blit calls.
 			uint32_t maxTextureSize;          //!< Maximum texture size.
+			uint32_t maxTextureLayers;        //!< Maximum texture layers.
 			uint32_t maxViews;                //!< Maximum number of views.
 			uint32_t maxFrameBuffers;         //!< Maximum number of frame buffer handles.
 			uint32_t maxFBAttachments;        //!< Maximum number of frame buffer attachments.

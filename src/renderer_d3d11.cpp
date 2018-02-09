@@ -1537,6 +1537,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				{
 					g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
 					g_caps.limits.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+					g_caps.limits.maxTextureLayers = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
 					g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(
 						  D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT
 						, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS
