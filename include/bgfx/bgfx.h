@@ -1059,9 +1059,6 @@ namespace bgfx
 		///
 		/// @param[in] _tib Transient index buffer.
 		///
-		/// @remarks
-		///   _tib pointer after this call is invalid.
-		///
 		/// @attention C99 equivalent is `bgfx_set_transient_index_buffer`.
 		///
 		void setIndexBuffer(const TransientIndexBuffer* _tib);
@@ -1071,9 +1068,6 @@ namespace bgfx
 		/// @param[in] _tib Transient index buffer.
 		/// @param[in] _firstIndex First index to render.
 		/// @param[in] _numIndices Number of indices to render.
-		///
-		/// @remarks
-		///   _tib pointer after this call is invalid.
 		///
 		/// @attention C99 equivalent is `bgfx_set_transient_index_buffer`.
 		///
@@ -1144,9 +1138,6 @@ namespace bgfx
 		/// @param[in] _stream Vertex stream.
 		/// @param[in] _tvb Transient vertex buffer.
 		///
-		/// @remarks
-		///   _tvb pointer after this call is invalid.
-		///
 		/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 		///
 		void setVertexBuffer(
@@ -1161,9 +1152,6 @@ namespace bgfx
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
 		///
-		/// @remarks
-		///   _tvb pointer after this call is invalid.
-		///
 		/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 		///
 		void setVertexBuffer(
@@ -1177,9 +1165,6 @@ namespace bgfx
 		///
 		/// @param[in] _idb Transient instance data buffer.
 		/// @param[in] _num Number of data instances.
-		///
-		/// @remarks
-		///   _idb pointer after this call is invalid.
 		///
 		/// @attention C99 equivalent is `bgfx_set_instance_data_buffer`.
 		///
@@ -3393,9 +3378,6 @@ namespace bgfx
 	///
 	/// @param[in] _tib Transient index buffer.
 	///
-	/// @remarks
-	///   _tib pointer after this call is invalid.
-	///
 	/// @attention C99 equivalent is `bgfx_set_transient_index_buffer`.
 	///
 	void setIndexBuffer(const TransientIndexBuffer* _tib);
@@ -3405,9 +3387,6 @@ namespace bgfx
 	/// @param[in] _tib Transient index buffer.
 	/// @param[in] _firstIndex First index to render.
 	/// @param[in] _numIndices Number of indices to render.
-	///
-	/// @remarks
-	///   _tib pointer after this call is invalid.
 	///
 	/// @attention C99 equivalent is `bgfx_set_transient_index_buffer`.
 	///
@@ -3478,9 +3457,6 @@ namespace bgfx
 	/// @param[in] _stream Vertex stream.
 	/// @param[in] _tvb Transient vertex buffer.
 	///
-	/// @remarks
-	///   _tvb pointer after this call is invalid.
-	///
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
 	void setVertexBuffer(
@@ -3495,9 +3471,6 @@ namespace bgfx
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
 	///
-	/// @remarks
-	///   _tvb pointer after this call is invalid.
-	///
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
 	void setVertexBuffer(
@@ -3511,9 +3484,6 @@ namespace bgfx
 	///
 	/// @param[in] _idb Transient instance data buffer.
 	/// @param[in] _num Number of data instances.
-	///
-	/// @remarks
-	///   _idb pointer after this call is invalid.
 	///
 	/// @attention C99 equivalent is `bgfx_set_instance_data_buffer`.
 	///
