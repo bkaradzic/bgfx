@@ -1727,6 +1727,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	};
 
 	float corners[4][3];
+	bx::memSet(corners, 0, sizeof(corners));
 	bx::vec3MulMtx(corners[0], cornersV[0], mtxViewInv);
 	bx::vec3MulMtx(corners[1], cornersV[1], mtxViewInv);
 	bx::vec3MulMtx(corners[2], cornersV[2], mtxViewInv);
