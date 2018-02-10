@@ -3048,10 +3048,15 @@ error:
 		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
 	}
 
-	void Encoder::setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
+	void Encoder::setInstanceDataBuffer(const InstanceDataBuffer* _idb)
+	{
+		setInstanceDataBuffer(_idb, 0, UINT32_MAX);
+	}
+
+	void Encoder::setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _start, uint32_t _num)
 	{
 		BX_CHECK(NULL != _idb, "_idb can't be NULL");
-		BGFX_ENCODER(setInstanceDataBuffer(_idb, _num) );
+		BGFX_ENCODER(setInstanceDataBuffer(_idb, _start, _num) );
 	}
 
 	void Encoder::setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
@@ -4210,10 +4215,16 @@ error:
 		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
 	}
 
-	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
 	{
 		BGFX_CHECK_API_THREAD();
-		s_ctx->m_encoder0->setInstanceDataBuffer(_idb, _num);
+		s_ctx->m_encoder0->setInstanceDataBuffer(_idb);
+	}
+
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _start, uint32_t _num)
+	{
+		BGFX_CHECK_API_THREAD();
+		s_ctx->m_encoder0->setInstanceDataBuffer(_idb, _start, _num);
 	}
 
 	void setInstanceDataBuffer(VertexBufferHandle _handle, uint32_t _startVertex, uint32_t _num)
@@ -5263,9 +5274,9 @@ BGFX_C_API void bgfx_set_transient_vertex_buffer(uint8_t _stream, const bgfx_tra
 	bgfx::setVertexBuffer(_stream, (const bgfx::TransientVertexBuffer*)_tvb, _startVertex, _numVertices);
 }
 
-BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t* _idb, uint32_t _num)
+BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num)
 {
-	bgfx::setInstanceDataBuffer( (const bgfx::InstanceDataBuffer*)_idb, _num);
+	bgfx::setInstanceDataBuffer( (const bgfx::InstanceDataBuffer*)_idb, _start, _num);
 }
 
 BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num)
@@ -5461,9 +5472,9 @@ BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder* _encoder,
 	BGFX_ENCODER(setVertexBuffer(_stream, (const bgfx::TransientVertexBuffer*)_tvb, _startVertex, _numVertices) );
 }
 
-BGFX_C_API void bgfx_encoder_set_instance_data_buffer(bgfx_encoder* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _num)
+BGFX_C_API void bgfx_encoder_set_instance_data_buffer(bgfx_encoder* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num)
 {
-	BGFX_ENCODER(setInstanceDataBuffer( (const bgfx::InstanceDataBuffer*)_idb, _num) );
+	BGFX_ENCODER(setInstanceDataBuffer( (const bgfx::InstanceDataBuffer*)_idb, _start, _num) );
 }
 
 BGFX_C_API void bgfx_encoder_set_instance_data_from_vertex_buffer(bgfx_encoder* _encoder, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num)

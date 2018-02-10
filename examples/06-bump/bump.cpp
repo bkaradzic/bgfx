@@ -284,7 +284,7 @@ public:
 						}
 
 						// Set instance data buffer.
-						bgfx::setInstanceDataBuffer(&idb, numInstances);
+						bgfx::setInstanceDataBuffer(&idb, 0, numInstances);
 
 						// Set vertex and index buffer.
 						bgfx::setVertexBuffer(0, m_vbh);

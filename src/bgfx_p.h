@@ -2177,11 +2177,13 @@ namespace bgfx
 			}
 		}
 
-		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _num)
+		void setInstanceDataBuffer(const InstanceDataBuffer* _idb, uint32_t _start, uint32_t _num)
 		{
-			m_draw.m_instanceDataOffset = _idb->offset;
+			const uint32_t start = bx::min(_start, _idb->num);
+			const uint32_t num   = bx::min(_idb->num - start, _num);
+			m_draw.m_instanceDataOffset = _idb->offset + start*_idb->stride;
 			m_draw.m_instanceDataStride = _idb->stride;
-			m_draw.m_numInstances       = bx::uint32_min(_idb->num, _num);
+			m_draw.m_numInstances       = num;
 			m_draw.m_instanceDataBuffer = _idb->handle;
 		}
 

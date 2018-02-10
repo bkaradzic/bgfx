@@ -1164,13 +1164,23 @@ namespace bgfx
 		/// Set instance data buffer for draw primitive.
 		///
 		/// @param[in] _idb Transient instance data buffer.
+		///
+		/// @attention C99 equivalent is `bgfx_set_instance_data_buffer`.
+		///
+		void setInstanceDataBuffer(const InstanceDataBuffer* _idb);
+
+		/// Set instance data buffer for draw primitive.
+		///
+		/// @param[in] _idb Transient instance data buffer.
+		/// @param[in] _start First instance data.
 		/// @param[in] _num Number of data instances.
 		///
 		/// @attention C99 equivalent is `bgfx_set_instance_data_buffer`.
 		///
 		void setInstanceDataBuffer(
 			  const InstanceDataBuffer* _idb
-			, uint32_t _num = UINT32_MAX
+			, uint32_t _start
+			, uint32_t _num
 			);
 
 		/// Set instance data buffer for draw primitive.
@@ -3483,13 +3493,23 @@ namespace bgfx
 	/// Set instance data buffer for draw primitive.
 	///
 	/// @param[in] _idb Transient instance data buffer.
+	///
+	/// @attention C99 equivalent is `bgfx_set_instance_data_buffer`.
+	///
+	void setInstanceDataBuffer(const InstanceDataBuffer* _idb);
+
+	/// Set instance data buffer for draw primitive.
+	///
+	/// @param[in] _idb Transient instance data buffer.
+	/// @param[in] _start First instance data.
 	/// @param[in] _num Number of data instances.
 	///
 	/// @attention C99 equivalent is `bgfx_set_instance_data_buffer`.
 	///
 	void setInstanceDataBuffer(
 		  const InstanceDataBuffer* _idb
-		, uint32_t _num = UINT32_MAX
+		, uint32_t _start
+		, uint32_t _num
 		);
 
 	/// Set instance data buffer for draw primitive.
