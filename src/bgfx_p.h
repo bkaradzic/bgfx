@@ -531,8 +531,8 @@ namespace bgfx
 			{
 				uint8_t* dst = &m_mem[(_y*m_width+_x)*2];
 				const uint8_t* src = (const uint8_t*)_data;
-				const uint32_t width  = (bx::uint32_min(m_width,  _width +_x)-_x)*2;
-				const uint32_t height =  bx::uint32_min(m_height, _height+_y)-_y;
+				const uint32_t width  = (bx::min<uint32_t>(m_width,  _width +_x)-_x)*2;
+				const uint32_t height =  bx::min<uint32_t>(m_height, _height+_y)-_y;
 				const uint32_t dstPitch = m_width*2;
 				bx::memCopy(dst, src, width, height, _pitch, dstPitch);
 			}
@@ -1111,7 +1111,7 @@ namespace bgfx
 			uint32_t num = *_num;
 			uint32_t first = bx::atomicFetchAndAddsat<uint32_t>(&m_num, num, BGFX_CONFIG_MAX_MATRIX_CACHE - 1);
 			BX_WARN(first+num < BGFX_CONFIG_MAX_MATRIX_CACHE, "Matrix cache overflow. %d (max: %d)", first+num, BGFX_CONFIG_MAX_MATRIX_CACHE);
-			num = bx::uint32_min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-1-first);
+			num = bx::min(num, BGFX_CONFIG_MAX_MATRIX_CACHE-1-first);
 			*_num = (uint16_t)num;
 			return first;
 		}
@@ -1786,7 +1786,7 @@ namespace bgfx
 		{
 			uint32_t offset   = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
 			uint32_t iboffset = offset + _num*sizeof(uint16_t);
-			iboffset = bx::uint32_min(iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
+			iboffset = bx::min<uint32_t>(iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
 			uint32_t num = (iboffset-offset)/sizeof(uint16_t);
 			return num;
 		}
@@ -1805,7 +1805,7 @@ namespace bgfx
 		{
 			uint32_t offset   = bx::strideAlign(m_vboffset, _stride);
 			uint32_t vboffset = offset + _num * _stride;
-			vboffset = bx::uint32_min(vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
+			vboffset = bx::min<uint32_t>(vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
 			uint32_t num = (vboffset-offset)/_stride;
 			return num;
 		}
@@ -2107,7 +2107,7 @@ namespace bgfx
 				, BGFX_CONFIG_MAX_MATRIX_CACHE
 				);
 			m_draw.m_startMatrix = _cache;
-			m_draw.m_numMatrices = uint16_t(bx::uint32_min(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
+			m_draw.m_numMatrices = uint16_t(bx::min<uint32_t>(_cache+_num, BGFX_CONFIG_MAX_MATRIX_CACHE-1) - _cache);
 		}
 
 		void setIndexBuffer(IndexBufferHandle _handle, uint32_t _firstIndex, uint32_t _numIndices)
@@ -2121,13 +2121,13 @@ namespace bgfx
 		{
 			const uint32_t indexSize = 0 == (_dib.m_flags & BGFX_BUFFER_INDEX32) ? 2 : 4;
 			m_draw.m_startIndex  = _dib.m_startIndex + _firstIndex;
-			m_draw.m_numIndices  = bx::uint32_min(_numIndices, _dib.m_size/indexSize);
+			m_draw.m_numIndices  = bx::min(_numIndices, _dib.m_size/indexSize);
 			m_draw.m_indexBuffer = _dib.m_handle;
 		}
 
 		void setIndexBuffer(const TransientIndexBuffer* _tib, uint32_t _firstIndex, uint32_t _numIndices)
 		{
-			const uint32_t numIndices = bx::uint32_min(_numIndices, _tib->size/2);
+			const uint32_t numIndices = bx::min(_numIndices, _tib->size/2);
 			m_draw.m_indexBuffer = _tib->handle;
 			m_draw.m_startIndex  = _tib->startIndex + _firstIndex;
 			m_draw.m_numIndices  = numIndices;
@@ -2157,7 +2157,7 @@ namespace bgfx
 				stream.m_handle        = _dvb.m_handle;
 				stream.m_decl          = _dvb.m_decl;
 				m_numVertices[_stream] =
-					bx::uint32_min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
+					bx::min(bx::uint32_imax(0, _dvb.m_numVertices - _startVertex), _numVertices)
 					;
 			}
 		}
@@ -2172,7 +2172,7 @@ namespace bgfx
 				stream.m_handle        = _tvb->handle;
 				stream.m_decl          = _tvb->decl;
 				m_numVertices[_stream] =
-					bx::uint32_min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices)
+					bx::min(bx::uint32_imax(0, _tvb->size/_tvb->stride - _startVertex), _numVertices)
 					;
 			}
 		}
@@ -2639,8 +2639,8 @@ namespace bgfx
 				, _width
 				, _height
 				);
-			m_resolution.m_width  = bx::uint32_clamp(_width,  1, g_caps.limits.maxTextureSize);
-			m_resolution.m_height = bx::uint32_clamp(_height, 1, g_caps.limits.maxTextureSize);
+			m_resolution.m_width  = bx::clamp(_width,  1u, g_caps.limits.maxTextureSize);
+			m_resolution.m_height = bx::clamp(_height, 1u, g_caps.limits.maxTextureSize);
 			m_resolution.m_flags  = 0
 				| _flags
 				| (g_platformDataChangedSinceReset ? BGFX_RESET_INTERNAL_FORCE : 0)
@@ -2971,9 +2971,9 @@ namespace bgfx
 				dib.m_startIndex = bx::strideAlign(dib.m_offset, indexSize)/indexSize;
 			}
 
-			uint32_t offset = (dib.m_startIndex + _startIndex)*indexSize;
-			uint32_t size   = bx::uint32_min(offset
-				+ bx::uint32_min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size)
+			const uint32_t offset = (dib.m_startIndex + _startIndex)*indexSize;
+			const uint32_t size   = bx::min<uint32_t>(offset
+				+ bx::min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size)
 				, BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE) - offset
 				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
@@ -3150,9 +3150,9 @@ namespace bgfx
 				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
 			}
 
-			uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
-			uint32_t size   = bx::uint32_min(offset
-				+ bx::uint32_min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
+			const uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
+			const uint32_t size   = bx::min<uint32_t>(offset
+				+ bx::min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
 				, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE) - offset
 				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
@@ -4051,7 +4051,7 @@ namespace bgfx
 			const FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
 			if (!ref.m_window)
 			{
-				uint32_t attachment = bx::uint32_min(_attachment, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+				const uint32_t attachment = bx::min<uint32_t>(_attachment, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
 				return ref.un.m_th[attachment];
 			}
 
@@ -4341,7 +4341,7 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewOrder(ViewId _id, uint16_t _num, const ViewId* _order) )
 		{
-			const uint32_t num = bx::uint32_min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
+			const uint32_t num = bx::min(_id + _num, BGFX_CONFIG_MAX_VIEWS) - _id;
 			if (NULL == _order)
 			{
 				for (uint32_t ii = 0; ii < num; ++ii)

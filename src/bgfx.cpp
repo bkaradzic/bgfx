@@ -938,7 +938,7 @@ namespace bgfx
 		{
 			streamMask >>= ntz;
 			idx         += ntz;
-			numVertices = bx::uint32_min(numVertices, m_numVertices[idx]);
+			numVertices = bx::min(numVertices, m_numVertices[idx]);
 		}
 		m_draw.m_numVertices = numVertices;
 
