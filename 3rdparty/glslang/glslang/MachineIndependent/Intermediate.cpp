@@ -376,7 +376,8 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
     return node;
 }
 
-TIntermTyped* TIntermediate::addBuiltInFunctionCall(const TSourceLoc& loc, TOperator op, bool unary, TIntermNode* childNode, const TType& returnType)
+TIntermTyped* TIntermediate::addBuiltInFunctionCall(const TSourceLoc& loc, TOperator op, bool unary,
+    TIntermNode* childNode, const TType& returnType)
 {
     if (unary) {
         //
@@ -420,7 +421,7 @@ TIntermTyped* TIntermediate::setAggregateOperator(TIntermNode* node, TOperator o
     //
     // Make sure we have an aggregate.  If not turn it into one.
     //
-    if (node) {
+    if (node != nullptr) {
         aggNode = node->getAsAggregate();
         if (aggNode == nullptr || aggNode->getOp() != EOpNull) {
             //

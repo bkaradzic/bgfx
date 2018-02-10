@@ -533,12 +533,15 @@ public:
     // push new swizzle onto the end of any existing swizzle, merging into a single swizzle
     void accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType);
 
-    // push a variable component selection onto the access chain; supporting only one, so unsided
+    // push a dynamic component selection onto the access chain, only applicable with a
+    // non-trivial swizzle or no swizzle
     void accessChainPushComponent(Id component, Id preSwizzleBaseType)
     {
-        accessChain.component = component;
-        if (accessChain.preSwizzleBaseType == NoType)
-            accessChain.preSwizzleBaseType = preSwizzleBaseType;
+        if (accessChain.swizzle.size() != 1) {
+            accessChain.component = component;
+            if (accessChain.preSwizzleBaseType == NoType)
+                accessChain.preSwizzleBaseType = preSwizzleBaseType;
+        }
     }
 
     // use accessChain and swizzle to store value
@@ -577,6 +580,7 @@ public:
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2) const;
     Id findCompositeConstant(Op typeClass, const std::vector<Id>& comps) const;
     Id collapseAccessChain();
+    void remapDynamicSwizzle();
     void transferAccessChainSwizzle(bool dynamic);
     void simplifyAccessChainSwizzle();
     void createAndSetNoPredecessorBlock(const char*);

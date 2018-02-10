@@ -912,7 +912,7 @@ bool ProcessDeferred(
 class SourceLineSynchronizer {
 public:
     SourceLineSynchronizer(const std::function<int()>& lastSourceIndex,
-                           std::stringstream* output)
+                           std::string* output)
       : getLastSourceIndex(lastSourceIndex), output(output), lastSource(-1), lastLine(0) {}
 //    SourceLineSynchronizer(const SourceLineSynchronizer&) = delete;
 //    SourceLineSynchronizer& operator=(const SourceLineSynchronizer&) = delete;
@@ -927,7 +927,7 @@ public:
             // used. We also need to output a newline to separate the output
             // from the previous source string (if there is one).
             if (lastSource != -1 || lastLine != 0)
-                *output << std::endl;
+                *output += '\n';
             lastSource = getLastSourceIndex();
             lastLine = -1;
             return true;
@@ -942,7 +942,7 @@ public:
         syncToMostRecentString();
         const bool newLineStarted = lastLine < tokenLine;
         for (; lastLine < tokenLine; ++lastLine) {
-            if (lastLine > 0) *output << std::endl;
+            if (lastLine > 0) *output += '\n';
         }
         return newLineStarted;
     }
@@ -956,8 +956,8 @@ private:
     // A function for getting the index of the last valid source string we've
     // read tokens from.
     const std::function<int()> getLastSourceIndex;
-    // output stream for newlines.
-    std::stringstream* output;
+    // output string for newlines.
+    std::string* output;
     // lastSource is the source string index (starting from 0) of the last token
     // processed. It is tracked in order for newlines to be inserted when a new
     // source string starts. -1 means we haven't started processing any source
@@ -988,27 +988,33 @@ struct DoPreprocessing {
         parseContext.setScanner(&input);
         ppContext.setInput(input, versionWillBeError);
 
-        std::stringstream outputStream;
+        std::string outputBuffer;
         SourceLineSynchronizer lineSync(
-            std::bind(&TInputScanner::getLastValidSourceIndex, &input), &outputStream);
+            std::bind(&TInputScanner::getLastValidSourceIndex, &input), &outputBuffer);
 
-        parseContext.setExtensionCallback([&lineSync, &outputStream](
+        parseContext.setExtensionCallback([&lineSync, &outputBuffer](
             int line, const char* extension, const char* behavior) {
                 lineSync.syncToLine(line);
-                outputStream << "#extension " << extension << " : " << behavior;
+                outputBuffer += "#extension ";
+                outputBuffer += extension;
+                outputBuffer += " : ";
+                outputBuffer += behavior;
         });
 
-        parseContext.setLineCallback([&lineSync, &outputStream, &parseContext](
+        parseContext.setLineCallback([&lineSync, &outputBuffer, &parseContext](
             int curLineNum, int newLineNum, bool hasSource, int sourceNum, const char* sourceName) {
             // SourceNum is the number of the source-string that is being parsed.
             lineSync.syncToLine(curLineNum);
-            outputStream << "#line " << newLineNum;
+            outputBuffer += "#line ";
+            outputBuffer += std::to_string(newLineNum);
             if (hasSource) {
-                outputStream << " ";
+                outputBuffer += ' ';
                 if (sourceName != nullptr) {
-                    outputStream << "\"" << sourceName << "\"";
+                    outputBuffer += '\"';
+                    outputBuffer += sourceName;
+                    outputBuffer += '\"';
                 } else {
-                    outputStream << sourceNum;
+                    outputBuffer += std::to_string(sourceNum);
                 }
             }
             if (parseContext.lineDirectiveShouldSetNextLine()) {
@@ -1016,33 +1022,36 @@ struct DoPreprocessing {
                 // directive. So the new line number for the current line is
                 newLineNum -= 1;
             }
-            outputStream << std::endl;
+            outputBuffer += '\n';
             // And we are at the next line of the #line directive now.
             lineSync.setLineNum(newLineNum + 1);
         });
 
         parseContext.setVersionCallback(
-            [&lineSync, &outputStream](int line, int version, const char* str) {
+            [&lineSync, &outputBuffer](int line, int version, const char* str) {
                 lineSync.syncToLine(line);
-                outputStream << "#version " << version;
+                outputBuffer += "#version ";
+                outputBuffer += std::to_string(version);
                 if (str) {
-                    outputStream << " " << str;
+                    outputBuffer += ' ';
+                    outputBuffer += str;
                 }
             });
 
-        parseContext.setPragmaCallback([&lineSync, &outputStream](
+        parseContext.setPragmaCallback([&lineSync, &outputBuffer](
             int line, const glslang::TVector<glslang::TString>& ops) {
                 lineSync.syncToLine(line);
-                outputStream << "#pragma ";
+                outputBuffer += "#pragma ";
                 for(size_t i = 0; i < ops.size(); ++i) {
-                    outputStream << ops[i];
+                    outputBuffer += ops[i].c_str();
                 }
         });
 
-        parseContext.setErrorCallback([&lineSync, &outputStream](
+        parseContext.setErrorCallback([&lineSync, &outputBuffer](
             int line, const char* errorMessage) {
                 lineSync.syncToLine(line);
-                outputStream << "#error " << errorMessage;
+                outputBuffer += "#error ";
+                outputBuffer += errorMessage;
         });
 
         int lastToken = EndOfInput; // lastToken records the last token processed.
@@ -1058,7 +1067,7 @@ struct DoPreprocessing {
                 // Don't emit whitespace onto empty lines.
                 // Copy any whitespace characters at the start of a line
                 // from the input to the output.
-                outputStream << std::string(ppToken.loc.column - 1, ' ');
+                outputBuffer += std::string(ppToken.loc.column - 1, ' ');
             }
 
             // Output a space in between tokens, but not at the start of a line,
@@ -1068,13 +1077,13 @@ struct DoPreprocessing {
                 (unNeededSpaceTokens.find((char)token) == std::string::npos) &&
                 (unNeededSpaceTokens.find((char)lastToken) == std::string::npos) &&
                 (noSpaceBeforeTokens.find((char)token) == std::string::npos)) {
-                outputStream << " ";
+                outputBuffer += ' ';
             }
             lastToken = token;
-            outputStream << ppToken.name;
+            outputBuffer += ppToken.name;
         } while (true);
-        outputStream << std::endl;
-        *outputString = outputStream.str();
+        outputBuffer += '\n';
+        *outputString = std::move(outputBuffer);
 
         bool success = true;
         if (parseContext.getNumErrors() > 0) {

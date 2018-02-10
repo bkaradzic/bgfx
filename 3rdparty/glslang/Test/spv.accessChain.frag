@@ -74,6 +74,11 @@ void GetColor13(const S i, int comp)
     OutColor.zy[comp] += i.color.x;
 }
 
+void GetColor14(const S i, int comp)
+{ 
+    OutColor.zyx[comp] = i.color.x;
+}
+
 void main()
 {
     S s;
@@ -91,4 +96,5 @@ void main()
     GetColor11(s, u);
     GetColor12(s, u);
     GetColor13(s, u);
+    GetColor14(s, u);
 }
