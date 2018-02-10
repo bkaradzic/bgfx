@@ -195,7 +195,7 @@ namespace bgfx
 					{
 						bx::MutexScope scope(m_mutex);
 						++m_numBlocks;
-						m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+						m_maxBlocks = bx::max(m_maxBlocks, m_numBlocks);
 					}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
@@ -212,7 +212,7 @@ namespace bgfx
 				{
 					bx::MutexScope scope(m_mutex);
 					++m_numBlocks;
-					m_maxBlocks = bx::uint32_max(m_maxBlocks, m_numBlocks);
+					m_maxBlocks = bx::max(m_maxBlocks, m_numBlocks);
 				}
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 
@@ -987,9 +987,9 @@ namespace bgfx
 
 		m_compute.m_startMatrix = m_draw.m_startMatrix;
 		m_compute.m_numMatrices = m_draw.m_numMatrices;
-		m_compute.m_numX   = bx::uint32_max(_numX, 1);
-		m_compute.m_numY   = bx::uint32_max(_numY, 1);
-		m_compute.m_numZ   = bx::uint32_max(_numZ, 1);
+		m_compute.m_numX   = bx::max(_numX, 1u);
+		m_compute.m_numY   = bx::max(_numY, 1u);
+		m_compute.m_numZ   = bx::max(_numZ, 1u);
 		m_compute.m_submitFlags = _flags;
 
 		m_key.m_program = _handle.idx;
