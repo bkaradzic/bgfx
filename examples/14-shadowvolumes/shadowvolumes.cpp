@@ -1736,10 +1736,10 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	for (uint8_t ii = 0; ii < 4; ++ii)
 	{
 		float* normal = planeNormals[ii];
-		float* plane = volumePlanes[ii];
+		float* plane  = volumePlanes[ii];
 
 		float planeVec[3];
-		bx::vec3Sub(planeVec, corners[ii], corners[(ii-1)%4]);
+		bx::vec3Sub(planeVec, corners[ii], corners[(ii-1)&3]);
 
 		float light[3];
 		float tmp[3];
