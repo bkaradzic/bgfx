@@ -836,28 +836,42 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG||BGFX_CONFIG_DEBUG_PIX) )
 			{
 				ID3D12Debug* debug0;
 				hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug0);
 
 				if (SUCCEEDED(hr) )
 				{
-					debug0->EnableDebugLayer();
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+					{
+						debug0->EnableDebugLayer();
 
 #if BX_PLATFORM_WINDOWS
-					{
-						ID3D12Debug1* debug1;
-						hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
-
-						if (SUCCEEDED(hr) )
 						{
-//							debug1->SetEnableGPUBasedValidation(true);
-//							debug1->SetEnableSynchronizedCommandQueueValidation(true);
+							ID3D12Debug1* debug1;
+							hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
+
+							if (SUCCEEDED(hr) )
+							{
+//								debug1->SetEnableGPUBasedValidation(true);
+//								debug1->SetEnableSynchronizedCommandQueueValidation(true);
+							}
 						}
-					}
+#elif BX_PLATFORM_XBOXONE
+						debug0->SetProcessDebugFlags(D3D12_PROCESS_DEBUG_FLAG_DEBUG_LAYER_ENABLED);
 #endif // BX_PLATFORM_WINDOWS
+					}
+
+#if BX_PLATFORM_XBOXONE
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					{
+						// https://github.com/Microsoft/Xbox-ATG-Samples/blob/76d236e3bd372aceec18b2ad0556a7879dbd9628/XDKSamples/IntroGraphics/SimpleTriangle12/DeviceResources.cpp#L67
+						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED);
+					}
+#endif // BX_PLATFORM_XBOXONE
 				}
+
 			}
 
 			{
@@ -4833,6 +4847,7 @@ data.NumQualityLevels = 0;
 					, numRows[0]
 					, rowSizeInBytes[0]
 					);
+				totalSize = uint32_t(uploadBufferSize);
 			}
 
 			if (kk != 0)
