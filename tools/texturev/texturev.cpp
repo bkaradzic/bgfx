@@ -1759,7 +1759,7 @@ int _main_(int _argc, char** _argv)
 				);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_A
 				);
 			bgfx::submit(BACKGROUND_VIEW_ID
 				, textureProgram
@@ -1857,7 +1857,7 @@ int _main_(int _argc, char** _argv)
 				);
 			bgfx::setState(0
 				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_A
 				| (view.m_alpha ? BGFX_STATE_BLEND_ALPHA : BGFX_STATE_NONE)
 				);
 

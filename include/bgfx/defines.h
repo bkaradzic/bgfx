@@ -6,12 +6,28 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(62)
+#define BGFX_API_VERSION UINT32_C(63)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
-#define BGFX_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.
-#define BGFX_STATE_ALPHA_WRITE             UINT64_C(0x0000000000000002) //!< Enable alpha write.
-#define BGFX_STATE_DEPTH_WRITE             UINT64_C(0x0000000000000004) //!< Enable depth write.
+#define BGFX_STATE_WRITE_R                 UINT64_C(0x0000000000000001) //!< Enable R write.
+#define BGFX_STATE_WRITE_G                 UINT64_C(0x0000000000000002) //!< Enable G write.
+#define BGFX_STATE_WRITE_B                 UINT64_C(0x0000000000000004) //!< Enable B write.
+#define BGFX_STATE_WRITE_A                 UINT64_C(0x0000000000000008) //!< Enable alpha write.
+#define BGFX_STATE_WRITE_Z                 UINT64_C(0x0000004000000000) //!< Enable depth write.
+
+/// Enable RGB write.
+#define BGFX_STATE_WRITE_RGB (0  \
+			| BGFX_STATE_WRITE_R \
+			| BGFX_STATE_WRITE_G \
+			| BGFX_STATE_WRITE_B \
+			)
+
+/// Write all channels mask.
+#define BGFX_STATE_WRITE_MASK (0   \
+			| BGFX_STATE_WRITE_RGB \
+			| BGFX_STATE_WRITE_A   \
+			| BGFX_STATE_WRITE_Z   \
+			)
 
 /// Depth test state. When `BGFX_STATE_DEPTH_` is not specified depth test will be disabled.
 #define BGFX_STATE_DEPTH_TEST_LESS         UINT64_C(0x0000000000000010) //!< Enable depth test, less.
@@ -93,10 +109,10 @@
 /// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
 /// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
 #define BGFX_STATE_DEFAULT (0            \
-			| BGFX_STATE_RGB_WRITE       \
-			| BGFX_STATE_ALPHA_WRITE     \
+			| BGFX_STATE_WRITE_RGB       \
+			| BGFX_STATE_WRITE_A         \
+			| BGFX_STATE_WRITE_Z         \
 			| BGFX_STATE_DEPTH_TEST_LESS \
-			| BGFX_STATE_DEPTH_WRITE     \
 			| BGFX_STATE_CULL_CW         \
 			| BGFX_STATE_MSAA            \
 			)

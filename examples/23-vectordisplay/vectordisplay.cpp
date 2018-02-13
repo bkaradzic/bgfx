@@ -198,8 +198,8 @@ void VectorDisplay::endFrame()
 			bgfx::setVertexBuffer(0, m_vertexBuffers[i], 0, m_vertexBuffersSize[i]); // explicitly feed vertex number!
 
 			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_DST_ALPHA)
 				| BGFX_STATE_BLEND_EQUATION_SEPARATE(BGFX_STATE_BLEND_EQUATION_ADD, BGFX_STATE_BLEND_EQUATION_MAX)
 				);
@@ -229,8 +229,8 @@ void VectorDisplay::endFrame()
 			bgfx::setViewFrameBuffer(viewCounter, m_glow0FrameBuffer);
 			bgfx::setViewRect(viewCounter, 0, 0, m_glowWidth, m_glowHeight);
 			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				);
 			params[0] = 1.0f / m_glowWidth;
 			params[1] = 0.0f;
@@ -257,8 +257,8 @@ void VectorDisplay::endFrame()
 			bgfx::setUniform(u_params, params);
 
 			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				);
 
 			bgfx::setViewName(viewCounter, "BlendPassB");
@@ -278,8 +278,8 @@ void VectorDisplay::endFrame()
 	bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
 	bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_sceneFrameBuffer) );
 	bgfx::setState(0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 		);
 
@@ -298,8 +298,8 @@ void VectorDisplay::endFrame()
 		bgfx::setViewRect(viewCounter, 0, 0, m_screenWidth, m_screenHeight);
 		bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_glow1FrameBuffer) );
 		bgfx::setState(0
-			| BGFX_STATE_RGB_WRITE
-			| BGFX_STATE_ALPHA_WRITE
+			| BGFX_STATE_WRITE_RGB
+			| BGFX_STATE_WRITE_A
 			| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 			);
 

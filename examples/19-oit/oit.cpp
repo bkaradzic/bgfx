@@ -424,16 +424,16 @@ public:
 
 							const uint64_t state = 0
 								| BGFX_STATE_CULL_CW
-								| BGFX_STATE_RGB_WRITE
-								| BGFX_STATE_ALPHA_WRITE
+								| BGFX_STATE_WRITE_RGB
+								| BGFX_STATE_WRITE_A
 								| BGFX_STATE_DEPTH_TEST_LESS
 								| BGFX_STATE_MSAA
 								;
 
 							const uint64_t stateNoDepth = 0
 								| BGFX_STATE_CULL_CW
-								| BGFX_STATE_RGB_WRITE
-								| BGFX_STATE_ALPHA_WRITE
+								| BGFX_STATE_WRITE_RGB
+								| BGFX_STATE_WRITE_A
 								| BGFX_STATE_DEPTH_TEST_ALWAYS
 								| BGFX_STATE_MSAA
 								;
@@ -486,7 +486,7 @@ public:
 					bgfx::setTexture(0, s_texColor0, m_fbtextures[0]);
 					bgfx::setTexture(1, s_texColor1, m_fbtextures[1]);
 					bgfx::setState(0
-						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_SRC_ALPHA, BGFX_STATE_BLEND_SRC_ALPHA)
 						);
 					screenSpaceQuad( (float)m_width, (float)m_height, s_flipV);

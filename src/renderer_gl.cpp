@@ -7009,10 +7009,10 @@ namespace bgfx { namespace gl
 
 				if ( (0
 					 | BGFX_STATE_CULL_MASK
-					 | BGFX_STATE_DEPTH_WRITE
+					 | BGFX_STATE_WRITE_Z
 					 | BGFX_STATE_DEPTH_TEST_MASK
-					 | BGFX_STATE_RGB_WRITE
-					 | BGFX_STATE_ALPHA_WRITE
+					 | BGFX_STATE_WRITE_RGB
+					 | BGFX_STATE_WRITE_A
 					 | BGFX_STATE_BLEND_MASK
 					 | BGFX_STATE_BLEND_EQUATION_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
@@ -7041,9 +7041,9 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					if (BGFX_STATE_DEPTH_WRITE & changedFlags)
+					if (BGFX_STATE_WRITE_Z & changedFlags)
 					{
-						GL_CHECK(glDepthMask(!!(BGFX_STATE_DEPTH_WRITE & newFlags) ) );
+						GL_CHECK(glDepthMask(!!(BGFX_STATE_WRITE_Z & newFlags) ) );
 					}
 
 					if (BGFX_STATE_DEPTH_TEST_MASK & changedFlags)
@@ -7057,7 +7057,7 @@ namespace bgfx { namespace gl
 						}
 						else
 						{
-							if (BGFX_STATE_DEPTH_WRITE & newFlags)
+							if (BGFX_STATE_WRITE_Z & newFlags)
 							{
 								GL_CHECK(glEnable(GL_DEPTH_TEST) );
 								GL_CHECK(glDepthFunc(GL_ALWAYS) );
@@ -7109,11 +7109,13 @@ namespace bgfx { namespace gl
 						}
 					}
 
-					if ( (BGFX_STATE_ALPHA_WRITE|BGFX_STATE_RGB_WRITE) & changedFlags)
+					if ( (BGFX_STATE_WRITE_A|BGFX_STATE_WRITE_RGB) & changedFlags)
 					{
-						GLboolean alpha = !!(newFlags&BGFX_STATE_ALPHA_WRITE);
-						GLboolean rgb = !!(newFlags&BGFX_STATE_RGB_WRITE);
-						GL_CHECK(glColorMask(rgb, rgb, rgb, alpha) );
+						const GLboolean rr = !!(newFlags&BGFX_STATE_WRITE_R);
+						const GLboolean gg = !!(newFlags&BGFX_STATE_WRITE_G);
+						const GLboolean bb = !!(newFlags&BGFX_STATE_WRITE_B);
+						const GLboolean aa = !!(newFlags&BGFX_STATE_WRITE_A);
+						GL_CHECK(glColorMask(rr, gg, bb, aa) );
 					}
 
 					if ( ( (0

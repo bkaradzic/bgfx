@@ -531,9 +531,9 @@ public:
 
 						// Set render states.
 						bgfx::setState(0
-								| BGFX_STATE_RGB_WRITE
-								| BGFX_STATE_ALPHA_WRITE
-								| BGFX_STATE_DEPTH_WRITE
+								| BGFX_STATE_WRITE_RGB
+								| BGFX_STATE_WRITE_A
+								| BGFX_STATE_WRITE_Z
 								| BGFX_STATE_DEPTH_TEST_LESS
 								| BGFX_STATE_MSAA
 								);
@@ -640,7 +640,7 @@ public:
 								bgfx::setVertexBuffer(0, &tvb);
 								bgfx::setIndexBuffer(&tib);
 								bgfx::setState(0
-										| BGFX_STATE_RGB_WRITE
+										| BGFX_STATE_WRITE_RGB
 										| BGFX_STATE_PT_LINES
 										| BGFX_STATE_BLEND_ALPHA
 										);
@@ -666,8 +666,8 @@ public:
 						bgfx::setTexture(0, s_normal, bgfx::getTexture(m_gbuffer, 1) );
 						bgfx::setTexture(1, s_depth,  bgfx::getTexture(m_gbuffer, 2) );
 						bgfx::setState(0
-								| BGFX_STATE_RGB_WRITE
-								| BGFX_STATE_ALPHA_WRITE
+								| BGFX_STATE_WRITE_RGB
+								| BGFX_STATE_WRITE_A
 								| BGFX_STATE_BLEND_ADD
 								);
 						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
@@ -679,8 +679,8 @@ public:
 				bgfx::setTexture(0, s_albedo, bgfx::getTexture(m_gbuffer,     0) );
 				bgfx::setTexture(1, s_light,  bgfx::getTexture(m_lightBuffer, 0) );
 				bgfx::setState(0
-						| BGFX_STATE_RGB_WRITE
-						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
 						);
 				screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
 				bgfx::submit(RENDER_PASS_COMBINE_ID, m_combineProgram);
@@ -703,7 +703,7 @@ public:
 						bgfx::setVertexBuffer(0, m_vbh);
 						bgfx::setIndexBuffer(m_ibh, 0, 6);
 						bgfx::setTexture(0, s_texColor, m_gbufferTex[ii]);
-						bgfx::setState(BGFX_STATE_RGB_WRITE);
+						bgfx::setState(BGFX_STATE_WRITE_RGB);
 						bgfx::submit(RENDER_PASS_DEBUG_GBUFFER_ID, m_debugProgram);
 					}
 				}

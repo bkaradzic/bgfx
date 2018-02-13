@@ -604,8 +604,8 @@ namespace ps
 					BX_FREE(m_allocator, particleSort);
 
 					bgfx::setState(0
-						| BGFX_STATE_RGB_WRITE
-						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
 						| BGFX_STATE_DEPTH_TEST_LESS
 						| BGFX_STATE_CULL_CW
 						| BGFX_STATE_BLEND_NORMAL

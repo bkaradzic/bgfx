@@ -393,7 +393,7 @@ namespace
 
 		void draw()
 		{
-			bgfx::setState(BGFX_STATE_RGB_WRITE | BGFX_STATE_DEPTH_TEST_EQUAL);
+			bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_EQUAL);
 			bgfx::setIndexBuffer(m_ibh);
 			bgfx::setVertexBuffer(0, m_vbh);
 			bgfx::submit(0, m_preventBanding ? m_skyProgram_colorBandingFix : m_skyProgram);

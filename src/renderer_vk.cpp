@@ -2385,16 +2385,11 @@ VK_IMPORT_DEVICE
 		{
 			VkPipelineColorBlendAttachmentState* bas = const_cast<VkPipelineColorBlendAttachmentState*>(_desc.pAttachments);
 
-			uint8_t writeMask = (_state & BGFX_STATE_ALPHA_WRITE)
-					? VK_COLOR_COMPONENT_A_BIT
-					: 0
-					;
-			writeMask |= (_state & BGFX_STATE_RGB_WRITE)
-					? VK_COLOR_COMPONENT_R_BIT
-					| VK_COLOR_COMPONENT_G_BIT
-					| VK_COLOR_COMPONENT_B_BIT
-					: 0
-					;
+			uint8_t writeMask = 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_R) ? VK_COLOR_COMPONENT_R_BIT : 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_G) ? VK_COLOR_COMPONENT_G_BIT : 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_B) ? VK_COLOR_COMPONENT_B_BIT : 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_A) ? VK_COLOR_COMPONENT_A_BIT : 0;
 
 			bas->blendEnable = !!(BGFX_STATE_BLEND_MASK & _state);
 
@@ -2501,7 +2496,7 @@ VK_IMPORT_DEVICE
 			_desc.pNext = NULL;
 			_desc.flags = 0;
 			_desc.depthTestEnable  = 0 != func;
-			_desc.depthWriteEnable = !!(BGFX_STATE_DEPTH_WRITE & _state);
+			_desc.depthWriteEnable = !!(BGFX_STATE_WRITE_Z & _state);
 			_desc.depthCompareOp   = s_cmpFunc[func];
 			_desc.depthBoundsTestEnable = VK_FALSE;
 
@@ -2581,9 +2576,9 @@ VK_IMPORT_DEVICE
 			ProgramVK& program = m_program[_programIdx];
 
 			_state &= 0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
+				| BGFX_STATE_WRITE_Z
 				| BGFX_STATE_DEPTH_TEST_MASK
 				| BGFX_STATE_BLEND_MASK
 				| BGFX_STATE_BLEND_EQUATION_MASK

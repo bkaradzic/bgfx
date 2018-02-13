@@ -932,10 +932,10 @@ struct DebugDraw
 
 		Attrib& attrib = m_attrib[0];
 		attrib.m_state = 0
-			| BGFX_STATE_RGB_WRITE
+			| BGFX_STATE_WRITE_RGB
 			| (m_depthTestLess ? BGFX_STATE_DEPTH_TEST_LESS : BGFX_STATE_DEPTH_TEST_GREATER)
 			| BGFX_STATE_CULL_CW
-			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_WRITE_Z
 			;
 		attrib.m_scale     = 1.0f;
 		attrib.m_spin      = 0.0f;
@@ -1068,7 +1068,7 @@ struct DebugDraw
 
 		uint64_t state = m_attrib[m_stack].m_state & ~(0
 			| BGFX_STATE_DEPTH_TEST_MASK
-			| BGFX_STATE_DEPTH_WRITE
+			| BGFX_STATE_WRITE_Z
 			| BGFX_STATE_CULL_CW
 			| BGFX_STATE_CULL_CCW
 			);
@@ -1079,7 +1079,7 @@ struct DebugDraw
 			;
 
 		state |= _depthWrite
-			? BGFX_STATE_DEPTH_WRITE
+			? BGFX_STATE_WRITE_Z
 			: 0
 			;
 
@@ -2131,7 +2131,7 @@ private:
 				bgfx::setVertexBuffer(0, &tvb);
 				bgfx::setIndexBuffer(&tib);
 				bgfx::setState(0
-					| BGFX_STATE_RGB_WRITE
+					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_PT_LINES
 					| attrib.m_state
 					| BGFX_STATE_LINEAA

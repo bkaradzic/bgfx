@@ -842,7 +842,7 @@ public:
 			// Submit view 0.
 			bgfx::setTexture(0, s_texCube, m_lightProbes[m_currentLightProbe].m_tex);
 			bgfx::setTexture(1, s_texCubeIrr, m_lightProbes[m_currentLightProbe].m_texIrr);
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad( (float)m_width, (float)m_height, true);
 			m_uniforms.submit();
 			bgfx::submit(0, m_programSky);

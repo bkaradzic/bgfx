@@ -777,8 +777,8 @@ namespace
 				struct GLNVGcall* call = &gl->calls[ii];
 				const GLNVGblend* blend = &call->blendFunc;
 				gl->state = BGFX_STATE_BLEND_FUNC_SEPARATE(blend->srcRGB, blend->dstRGB, blend->srcAlpha, blend->dstAlpha)
-					| BGFX_STATE_RGB_WRITE
-					| BGFX_STATE_ALPHA_WRITE
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
 					;
 				switch (call->type)
 				{

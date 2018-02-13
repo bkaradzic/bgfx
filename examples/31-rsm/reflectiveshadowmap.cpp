@@ -525,9 +525,9 @@ public:
 					bgfx::setUniform(u_sphereInfo, sphereInfo);
 
 					const uint64_t lightDrawState = 0
-						| BGFX_STATE_RGB_WRITE
+						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_BLEND_ADD   // <===  Overlapping lights contribute more
-						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_WRITE_A
 						| BGFX_STATE_CULL_CW     // <===  If we go into the lights, there will be problems, so we draw the far back face.
 						;
 
@@ -565,8 +565,8 @@ public:
 			// Set up state for combine pass
 			// point of this is to avoid doing depth test, which is in the default state
 			bgfx::setState(0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				);
 
 			// Set up transform matrix for fullscreen quad

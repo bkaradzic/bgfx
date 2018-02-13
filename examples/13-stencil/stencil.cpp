@@ -401,8 +401,8 @@ struct RenderState
 static RenderState s_renderStates[RenderState::Count] =
 {
 	{ // StencilReflection_CraftStencil
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
@@ -415,10 +415,10 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // StencilReflection_DrawReflected
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA)
-		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CW    //reflection matrix has inverted normals. using CCW instead of CW.
 		| BGFX_STATE_MSAA
@@ -432,8 +432,8 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // StencilReflection_BlendPlane
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_SRC_COLOR)
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
@@ -443,8 +443,8 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // StencilReflection_DrawScene
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -453,8 +453,8 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // ProjectionShadows_DrawAmbient
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_DEPTH_WRITE // write depth !
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_Z // write depth !
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -475,7 +475,7 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // ProjectionShadows_DrawDiffuse
-		BGFX_STATE_RGB_WRITE
+		BGFX_STATE_WRITE_RGB
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 		| BGFX_STATE_DEPTH_TEST_EQUAL
 		| BGFX_STATE_CULL_CCW
@@ -490,9 +490,9 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_BlendLightTexture
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_COLOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
 		| BGFX_STATE_CULL_CCW
@@ -502,7 +502,7 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_DrawPlaneBottom
-		BGFX_STATE_RGB_WRITE
+		BGFX_STATE_WRITE_RGB
 		| BGFX_STATE_CULL_CW
 		| BGFX_STATE_MSAA
 		, UINT32_MAX

@@ -2008,8 +2008,8 @@ namespace bgfx { namespace d3d12
 			m_commandList->RSSetScissorRects(1, &rc);
 
 			const uint64_t state = 0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
@@ -2526,16 +2526,11 @@ data.NumQualityLevels = 0;
 				drt->BlendOpAlpha   = s_blendEquation[equA];
 			}
 
-			uint8_t writeMask = (_state & BGFX_STATE_ALPHA_WRITE)
-					? D3D12_COLOR_WRITE_ENABLE_ALPHA
-					: 0
-					;
-			writeMask |= (_state & BGFX_STATE_RGB_WRITE)
-					? D3D12_COLOR_WRITE_ENABLE_RED
-					| D3D12_COLOR_WRITE_ENABLE_GREEN
-					| D3D12_COLOR_WRITE_ENABLE_BLUE
-					: 0
-					;
+			uint8_t writeMask = 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_R) ? D3D12_COLOR_WRITE_ENABLE_RED   : 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_G) ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_B) ? D3D12_COLOR_WRITE_ENABLE_BLUE  : 0;
+			writeMask |= (_state & BGFX_STATE_WRITE_A) ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0;
 
 			drt->LogicOp = D3D12_LOGIC_OP_CLEAR;
 			drt->RenderTargetWriteMask = writeMask;
@@ -2603,7 +2598,7 @@ data.NumQualityLevels = 0;
 			bx::memSet(&_desc, 0, sizeof(_desc) );
 			uint32_t func = (_state&BGFX_STATE_DEPTH_TEST_MASK)>>BGFX_STATE_DEPTH_TEST_SHIFT;
 			_desc.DepthEnable = 0 != func;
-			_desc.DepthWriteMask = !!(BGFX_STATE_DEPTH_WRITE & _state)
+			_desc.DepthWriteMask = !!(BGFX_STATE_WRITE_Z & _state)
 				? D3D12_DEPTH_WRITE_MASK_ALL
 				: D3D12_DEPTH_WRITE_MASK_ZERO
 				;
@@ -2759,9 +2754,9 @@ data.NumQualityLevels = 0;
 			ProgramD3D12& program = m_program[_programIdx];
 
 			_state &= 0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
-				| BGFX_STATE_DEPTH_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
+				| BGFX_STATE_WRITE_Z
 				| BGFX_STATE_DEPTH_TEST_MASK
 				| BGFX_STATE_BLEND_MASK
 				| BGFX_STATE_BLEND_EQUATION_MASK

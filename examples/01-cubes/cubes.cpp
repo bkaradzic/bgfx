@@ -80,6 +80,10 @@ class ExampleCubes : public entry::AppI
 public:
 	ExampleCubes(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
+		, m_r(true)
+		, m_g(true)
+		, m_b(true)
+		, m_a(true)
 	{
 	}
 
@@ -163,6 +167,27 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+				);
+
+			ImGui::Checkbox("Write R", &m_r);
+			ImGui::Checkbox("Write G", &m_g);
+			ImGui::Checkbox("Write B", &m_b);
+			ImGui::Checkbox("Write A", &m_a);
+
+			ImGui::End();
+
+
 			imguiEndFrame();
 
 			float time = (float)( (bx::getHPCounter()-m_timeOffset)/double(bx::getHPFrequency() ) );
@@ -221,7 +246,14 @@ public:
 
 					// Set render states.
 					bgfx::setState(0
-						| BGFX_STATE_DEFAULT
+						| (m_r	? BGFX_STATE_WRITE_R : 0)
+						| (m_g	? BGFX_STATE_WRITE_G : 0)
+						| (m_b	? BGFX_STATE_WRITE_B : 0)
+						| (m_a ? BGFX_STATE_WRITE_A : 0)
+						| BGFX_STATE_WRITE_Z
+						| BGFX_STATE_DEPTH_TEST_LESS
+						| BGFX_STATE_CULL_CW
+						| BGFX_STATE_MSAA
 						| BGFX_STATE_PT_TRISTRIP
 						);
 
@@ -250,6 +282,11 @@ public:
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
+
+	bool m_r;
+	bool m_g;
+	bool m_b;
+	bool m_a;
 };
 
 } // namespace

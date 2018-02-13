@@ -487,7 +487,7 @@ public:
 
 			// Render skybox into view hdrSkybox.
 			bgfx::setTexture(0, s_texCube, m_uffizi);
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			bgfx::setUniform(u_mtx, mtx);
 			screenSpaceQuad( (float)m_width, (float)m_height, true);
 			bgfx::submit(hdrSkybox, m_skyProgram);
@@ -500,35 +500,35 @@ public:
 			// Calculate luminance.
 			setOffsets2x2Lum(u_offset, 128, 128);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(128.0f, 128.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLuminance, m_lumProgram);
 
 			// Downscale luminance 0.
 			setOffsets4x4Lum(u_offset, 128, 128);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[0]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(64.0f, 64.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale0, m_lumAvgProgram);
 
 			// Downscale luminance 1.
 			setOffsets4x4Lum(u_offset, 64, 64);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[1]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(16.0f, 16.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale1, m_lumAvgProgram);
 
 			// Downscale luminance 2.
 			setOffsets4x4Lum(u_offset, 16, 16);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[2]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(4.0f, 4.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale2, m_lumAvgProgram);
 
 			// Downscale luminance 3.
 			setOffsets4x4Lum(u_offset, 4, 4);
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_lum[3]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad(1.0f, 1.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrLumScale3, m_lumAvgProgram);
 
@@ -536,14 +536,14 @@ public:
 			setOffsets4x4Lum(u_offset, m_width/2, m_height/2);
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad( (float)m_width/2.0f, (float)m_height/2.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrBrightness, m_brightProgram);
 
 			// m_blur m_bright pass vertically.
 			bgfx::setTexture(0, s_texColor, bgfx::getTexture(m_bright) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			bgfx::setUniform(u_tonemap, tonemap);
 			screenSpaceQuad( (float)m_width/8.0f, (float)m_height/8.0f, m_caps->originBottomLeft);
 			bgfx::submit(hdrVBlur, m_blurProgram);
@@ -552,7 +552,7 @@ public:
 			bgfx::setTexture(0, s_texColor, m_fbtextures[0]);
 			bgfx::setTexture(1, s_texLum, bgfx::getTexture(m_lum[4]) );
 			bgfx::setTexture(2, s_texBlur, bgfx::getTexture(m_blur) );
-			bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+			bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 			screenSpaceQuad( (float)m_width, (float)m_height, m_caps->originBottomLeft);
 			bgfx::submit(hdrHBlurTonemap, m_tonemapProgram);
 

@@ -872,13 +872,11 @@ namespace bgfx
 		///
 		/// @param[in] _state State flags. Default state for primitive type is
 		///   triangles. See: `BGFX_STATE_DEFAULT`.
-		///   - `BGFX_STATE_ALPHA_WRITE` - Enable alpha write.
-		///   - `BGFX_STATE_DEPTH_WRITE` - Enable depth write.
 		///   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.
 		///   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.
 		///   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.
 		///   - `BGFX_STATE_CULL_*` - Backface culling mode.
-		///   - `BGFX_STATE_RGB_WRITE` - Enable RGB write.
+		///   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.
 		///   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.
 		///   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.
 		///
@@ -3201,13 +3199,11 @@ namespace bgfx
 	///
 	/// @param[in] _state State flags. Default state for primitive type is
 	///   triangles. See: `BGFX_STATE_DEFAULT`.
-	///   - `BGFX_STATE_ALPHA_WRITE` - Enable alpha write.
-	///   - `BGFX_STATE_DEPTH_WRITE` - Enable depth write.
 	///   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.
 	///   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.
 	///   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.
 	///   - `BGFX_STATE_CULL_*` - Backface culling mode.
-	///   - `BGFX_STATE_RGB_WRITE` - Enable RGB write.
+	///   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.
 	///   - `BGFX_STATE_MSAA` - Enable MSAA.
 	///   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.
 	///

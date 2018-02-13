@@ -365,9 +365,9 @@ static void setRenderState(const RenderState& _renderState)
 static RenderState s_renderStates[RenderState::Count]  =
 {
 	{ // ShadowVolume_UsingStencilTexture_DrawAmbient
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -376,7 +376,7 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // ShadowVolume_UsingStencilTexture_BuildDepth
-		BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -385,8 +385,8 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // ShadowVolume_UsingStencilTexture_CraftStencil_DepthPass
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 		| BGFX_STATE_DEPTH_TEST_LEQUAL
 		| BGFX_STATE_MSAA
@@ -395,8 +395,8 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // ShadowVolume_UsingStencilTexture_CraftStencil_DepthFail
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 		| BGFX_STATE_DEPTH_TEST_GEQUAL
 		| BGFX_STATE_MSAA
@@ -405,10 +405,10 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 		},
 	{ // ShadowVolume_UsingStencilTexture_DrawDiffuse
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
-		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_EQUAL
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -417,9 +417,9 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // ShadowVolume_UsingStencilBuffer_DrawAmbient
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -462,8 +462,8 @@ static RenderState s_renderStates[RenderState::Count]  =
 		| BGFX_STENCIL_OP_PASS_Z_KEEP
 	},
 	{ // ShadowVolume_UsingStencilBuffer_DrawDiffuse
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
 		| BGFX_STATE_DEPTH_TEST_EQUAL
 		| BGFX_STATE_CULL_CCW
@@ -478,9 +478,9 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_Default
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -489,9 +489,9 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_BlendLightTexture
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_COLOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
 		| BGFX_STATE_CULL_CCW
@@ -501,9 +501,9 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_DrawPlaneBottom
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_CULL_CW
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
@@ -511,7 +511,7 @@ static RenderState s_renderStates[RenderState::Count]  =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_DrawShadowVolume_Lines
-		BGFX_STATE_RGB_WRITE
+		BGFX_STATE_WRITE_RGB
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_SRC_ALPHA)
 		| BGFX_STATE_PT_LINES

@@ -647,10 +647,10 @@ static RenderState s_renderStates[RenderState::Count] =
 {
 	{ // Default
 		0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
+		| BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
 		| BGFX_STATE_DEPTH_TEST_LESS
-		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
@@ -659,9 +659,9 @@ static RenderState s_renderStates[RenderState::Count] =
 	},
 	{ // ShadowMap_PackDepth
 		0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -671,9 +671,9 @@ static RenderState s_renderStates[RenderState::Count] =
 	},
 	{ // ShadowMap_PackDepthHoriz
 		0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -688,9 +688,9 @@ static RenderState s_renderStates[RenderState::Count] =
 	},
 	{ // ShadowMap_PackDepthVert
 		0
-		| BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		| BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_CULL_CCW
 		| BGFX_STATE_MSAA
@@ -704,9 +704,9 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_BlendLightTexture
-		BGFX_STATE_RGB_WRITE
-		| BGFX_STATE_ALPHA_WRITE
-		| BGFX_STATE_DEPTH_WRITE
+		BGFX_STATE_WRITE_RGB
+		| BGFX_STATE_WRITE_A
+		| BGFX_STATE_WRITE_Z
 		| BGFX_STATE_DEPTH_TEST_LESS
 		| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_COLOR, BGFX_STATE_BLEND_INV_SRC_COLOR)
 		| BGFX_STATE_CULL_CCW
@@ -716,7 +716,7 @@ static RenderState s_renderStates[RenderState::Count] =
 		, BGFX_STENCIL_NONE
 	},
 	{ // Custom_DrawPlaneBottom
-		BGFX_STATE_RGB_WRITE
+		BGFX_STATE_WRITE_RGB
 		| BGFX_STATE_CULL_CW
 		| BGFX_STATE_MSAA
 		, UINT32_MAX
@@ -2894,12 +2894,12 @@ public:
 				&&  currentSmSettings->m_doBlur)
 			{
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[0]) );
-				bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+				bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_VBLUR_0_ID, s_programs.m_vBlur[depthType]);
 
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
-				bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+				bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_HBLUR_0_ID, s_programs.m_hBlur[depthType]);
 
@@ -2910,12 +2910,12 @@ public:
 						const uint8_t viewId = RENDERVIEW_VBLUR_0_ID + jj;
 
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
-						bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+						bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(viewId, s_programs.m_vBlur[depthType]);
 
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtBlur) );
-						bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+						bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(viewId+1, s_programs.m_hBlur[depthType]);
 					}
@@ -3150,7 +3150,7 @@ public:
 			if (m_settings.m_drawDepthBuffer)
 			{
 				bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[0]) );
-				bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+				bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 				screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 				bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID, s_programs.m_drawDepth[depthType]);
 
@@ -3159,7 +3159,7 @@ public:
 					for (uint8_t ii = 1; ii < m_settings.m_numSplits; ++ii)
 					{
 						bgfx::setTexture(4, s_shadowMap[0], bgfx::getTexture(s_rtShadowMap[ii]) );
-						bgfx::setState(BGFX_STATE_RGB_WRITE|BGFX_STATE_ALPHA_WRITE);
+						bgfx::setState(BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A);
 						screenSpaceQuad(currentShadowMapSizef, currentShadowMapSizef, s_flipV);
 						bgfx::submit(RENDERVIEW_DRAWDEPTH_0_ID+ii, s_programs.m_drawDepth[depthType]);
 					}
