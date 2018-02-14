@@ -2675,13 +2675,11 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_state</span></code> - <p>State flags. Default state for primitive type is triangles. See: <code class="docutils literal"><span class="pre">BGFX_STATE_DEFAULT</span></code>.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_WRITE</span></code> - Enable alpha write.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_WRITE</span></code> - Enable depth write.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_TEST_*</span></code> - Depth test function.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_*</span></code> - See remark 1 about BGFX_STATE_BLEND_FUNC.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_*</span></code> - See remark 2.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_CULL_*</span></code> - Backface culling mode.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_RGB_WRITE</span></code> - Enable RGB write.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_WRITE_*</span></code> - Enable R, G, B, A or Z write.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_MSAA</span></code> - Enable hardware multisample antialiasing.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]</span></code> - Primitive type.</li>
 </ul>
@@ -3664,13 +3662,11 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">_state</span></code> - <p>State flags. Default state for primitive type is triangles. See: <code class="docutils literal"><span class="pre">BGFX_STATE_DEFAULT</span></code>.<ul class="simple">
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_ALPHA_WRITE</span></code> - Enable alpha write.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_WRITE</span></code> - Enable depth write.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_TEST_*</span></code> - Depth test function.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_*</span></code> - See remark 1 about BGFX_STATE_BLEND_FUNC.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_BLEND_EQUATION_*</span></code> - See remark 2.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_CULL_*</span></code> - Backface culling mode.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_STATE_RGB_WRITE</span></code> - Enable RGB write.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_STATE_WRITE_*</span></code> - Enable R, G, B, A or Z write.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_MSAA</span></code> - Enable MSAA.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]</span></code> - Primitive type.</li>
 </ul>
@@ -3687,25 +3683,18 @@ In graphics debugger view name will appear as: <div class="highlight-default"><d
 </div>
 <div class="section" id="state-flags">
 <h4>State Flags<a class="headerlink" href="#state-flags" title="Permalink to this headline">¶</a></h4>
-<dl class="macro">
-<dt id="c.BGFX_STATE_RGB_WRITE">
-<span class="target" id="bgfxdefines_8h_1aff0cc52a35c2c01f874bb283a6103f03"></span><code class="descname">BGFX_STATE_RGB_WRITE</code><a class="headerlink" href="#c.BGFX_STATE_RGB_WRITE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Color RGB/alpha/depth write. When it&#8217;s not specified write will be disabled. </p>
-<p>Enable RGB write. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_STATE_ALPHA_WRITE">
-<span class="target" id="bgfxdefines_8h_1aa6611f657f8f1b311dfc466b79c9290e"></span><code class="descname">BGFX_STATE_ALPHA_WRITE</code><a class="headerlink" href="#c.BGFX_STATE_ALPHA_WRITE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Enable alpha write. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_STATE_DEPTH_WRITE">
-<span class="target" id="bgfxdefines_8h_1acf5681b2e7477ac01186cc535ea59213"></span><code class="descname">BGFX_STATE_DEPTH_WRITE</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_WRITE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Enable depth write. </p>
-</dd></dl>
-
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_STATE_RGB_WRITE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_STATE_ALPHA_WRITE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_STATE_DEPTH_WRITE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
 <dl class="macro">
 <dt id="c.BGFX_STATE_DEFAULT">
 <span class="target" id="bgfxdefines_8h_1a7f87ba52187999ca674a61ccc27170db"></span><code class="descname">BGFX_STATE_DEFAULT</code><a class="headerlink" href="#c.BGFX_STATE_DEFAULT" title="Permalink to this definition">¶</a></dt>
