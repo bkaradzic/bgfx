@@ -87,6 +87,7 @@ typedef int ImGuiMouseCursor;       // enum: a mouse cursor identifier          
 typedef int ImGuiStyleVar;          // enum: a variable identifier for styling  // enum ImGuiStyleVar_
 typedef int ImDrawCornerFlags;      // flags: for ImDrawList::AddRect*() etc.   // enum ImDrawCornerFlags_
 typedef int ImDrawListFlags;        // flags: for ImDrawList                    // enum ImDrawListFlags_
+typedef int ImFontAtlasFlags;       // flags: for ImFontAtlas                   // enum ImFontAtlasFlags_
 typedef int ImGuiColorEditFlags;    // flags: for ColorEdit*(), ColorPicker*()  // enum ImGuiColorEditFlags_
 typedef int ImGuiColumnsFlags;      // flags: for *Columns*()                   // enum ImGuiColumnsFlags_
 typedef int ImGuiDragDropFlags;     // flags: for *DragDrop*()                  // enum ImGuiDragDropFlags_
@@ -1078,7 +1079,7 @@ namespace ImGui
     static inline float GetItemsLineHeightWithSpacing()       { return GetFrameHeightWithSpacing(); }
     // OBSOLETED in 1.52 (between Aug 2017 and Oct 2017)
     bool                Begin(const char* name, bool* p_open, const ImVec2& size_on_first_use, float bg_alpha_override = -1.0f, ImGuiWindowFlags flags = 0); // Use SetNextWindowSize(size, ImGuiCond_FirstUseEver) + SetNextWindowBgAlpha() instead.
-    static inline bool  IsRootWindowOrAnyChildHovered()       { return IsItemHovered(ImGuiHoveredFlags_RootAndChildWindows); }
+    static inline bool  IsRootWindowOrAnyChildHovered()       { return IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows); }
     static inline void  AlignFirstTextHeightToWidgets()       { AlignTextToFramePadding(); }
     static inline void  SetNextWindowPosCenter(ImGuiCond c=0) { ImGuiIO& io = GetIO(); SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), c, ImVec2(0.5f, 0.5f)); }
     // OBSOLETED in 1.51 (between Jun 2017 and Aug 2017)
@@ -1615,6 +1616,12 @@ struct ImFontGlyph
     float           U0, V0, U1, V1;     // Texture coordinates
 };
 
+enum ImFontAtlasFlags_
+{
+    ImFontAtlasFlags_NoPowerOfTwoHeight = 1 << 0,   // Don't round the height to next power of two
+    ImFontAtlasFlags_NoMouseCursors     = 1 << 1    // Don't build software mouse cursors into the atlas
+};
+
 // Load and rasterize multiple TTF/OTF fonts into a same texture.
 // Sharing a texture for multiple fonts allows us to reduce the number of draw calls during rendering.
 // We also add custom graphic data into the texture that serves for ImGui.
@@ -1703,6 +1710,7 @@ struct ImFontAtlas
     // Members
     //-------------------------------------------
 
+    ImFontAtlasFlags            Flags;              // Build flags (see ImFontAtlasFlags_)
     ImTextureID                 TexID;              // User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you during rendering via the ImDrawCmd structure.
     int                         TexDesiredWidth;    // Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have texture size restrictions you may want to increase texture width to decrease height.
     int                         TexGlyphPadding;    // Padding between glyphs within texture in pixels. Defaults to 1.
