@@ -650,6 +650,7 @@ namespace bgfx { namespace d3d12
 			, m_vsChanges(0)
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
+			, m_directAccessSupport(false)
 		{
 		}
 
@@ -1272,6 +1273,11 @@ namespace bgfx { namespace d3d12
 					, (void**)&m_rootSignature
 					) );
 
+				m_directAccessSupport = true
+					&& BX_ENABLED(BX_PLATFORM_XBOXONE)
+					&& m_architecture.UMA
+					;
+
 				g_caps.supported |= ( 0
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
@@ -1281,8 +1287,8 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_FRAGMENT_DEPTH
 					| BGFX_CAPS_BLEND_INDEPENDENT
 					| BGFX_CAPS_COMPUTE
-					| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING : 0)
-//					| (m_architecture.UMA ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
+					| (m_options.ROVsSupported ? BGFX_CAPS_FRAGMENT_ORDERING     : 0)
+					| (m_directAccessSupport   ? BGFX_CAPS_TEXTURE_DIRECT_ACCESS : 0)
 					| (BX_ENABLED(BX_PLATFORM_WINDOWS) ? BGFX_CAPS_SWAP_CHAIN : 0)
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
@@ -3337,6 +3343,7 @@ data.NumQualityLevels = 0;
 		FrameBufferHandle m_fbh;
 		uint32_t m_backBufferColorIdx;
 		bool m_rtMsaa;
+		bool m_directAccessSupport;
 	};
 
 	static RendererContextD3D12* s_renderD3D12;
@@ -4720,6 +4727,13 @@ data.NumQualityLevels = 0;
 				state = D3D12_RESOURCE_STATE_COPY_DEST;
 			}
 
+			const bool directAccess = s_renderD3D12->m_directAccessSupport
+				&& !renderTarget
+//				&& !readBack
+				&& !blit
+				&& !writeOnly
+				;
+
 			switch (m_type)
 			{
 			case Texture2D:
@@ -4807,10 +4821,9 @@ data.NumQualityLevels = 0;
 
 			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue);
 
-			if (kk != 0)
+			if (directAccess)
 			{
-//				void* directAccessPtr;
-//				DX_CHECK(m_ptr->Map(0, NULL, &directAccessPtr) );
+				DX_CHECK(m_ptr->Map(0, NULL, &m_directAccessPtr) );
 			}
 
 			if (kk != 0)

@@ -4932,7 +4932,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				srvd.Format = getSrvFormat();
 			}
 
-			bool directAccess = s_renderD3D11->m_directAccessSupport
+			const bool directAccess = s_renderD3D11->m_directAccessSupport
 				&& !renderTarget
 				&& !readBack
 				&& !blit
