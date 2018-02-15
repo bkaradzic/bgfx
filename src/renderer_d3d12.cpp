@@ -4562,8 +4562,6 @@ data.NumQualityLevels = 0;
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
 				);
 
-			uint32_t totalSize = 0;
-
 			for (uint8_t side = 0; side < numSides; ++side)
 			{
 				uint32_t width  = textureWidth;
@@ -4597,7 +4595,6 @@ data.NumQualityLevels = 0;
 							srd[kk].pData      = temp;
 							srd[kk].RowPitch   = pitch;
 							srd[kk].SlicePitch = slice;
-							totalSize += size;
 						}
 						else if (compressed)
 						{
@@ -4617,7 +4614,6 @@ data.NumQualityLevels = 0;
 							srd[kk].pData      = temp;
 							srd[kk].RowPitch   = pitch;
 							srd[kk].SlicePitch = slice;
-							totalSize += size;
 						}
 						else
 						{
@@ -4637,7 +4633,6 @@ data.NumQualityLevels = 0;
 							srd[kk].pData = temp;
 							srd[kk].RowPitch   = pitch;
 							srd[kk].SlicePitch = slice;
-							totalSize += size;
 						}
 
 						++kk;
@@ -4646,7 +4641,6 @@ data.NumQualityLevels = 0;
 					{
 						const uint32_t pitch = bx::strideAlign(width*bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 						const uint32_t slice = bx::strideAlign(height*pitch,  D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-						totalSize += slice;
 					}
 
 					width  >>= 1;
@@ -4654,8 +4648,6 @@ data.NumQualityLevels = 0;
 					depth  >>= 1;
 				}
 			}
-
-			BX_TRACE("texture total size: %d", totalSize);
 
 			const uint32_t msaaQuality = bx::uint32_satsub( (m_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
 			const DXGI_SAMPLE_DESC& msaa = s_msaa[msaaQuality];
@@ -4821,33 +4813,12 @@ data.NumQualityLevels = 0;
 //				DX_CHECK(m_ptr->Map(0, NULL, &directAccessPtr) );
 			}
 
-			{
-				uint64_t uploadBufferSize;
-				uint32_t* numRows        = (uint32_t*)alloca(sizeof(uint32_t)*numSrd);
-				uint64_t* rowSizeInBytes = (uint64_t*)alloca(sizeof(uint64_t)*numSrd);
-				D3D12_PLACED_SUBRESOURCE_FOOTPRINT* layouts = (D3D12_PLACED_SUBRESOURCE_FOOTPRINT*)alloca(sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT)*numSrd);
-
-				device->GetCopyableFootprints(&resourceDesc
-					, 0
-					, numSrd
-					, 0
-					, layouts
-					, numRows
-					, rowSizeInBytes
-					, &uploadBufferSize
-					);
-				BX_WARN(uploadBufferSize == totalSize, "uploadBufferSize %d (totalSize %d), numRows %d, rowSizeInBytes %d"
-					, uploadBufferSize
-					, totalSize
-					, numRows[0]
-					, rowSizeInBytes[0]
-					);
-				totalSize = uint32_t(uploadBufferSize);
-			}
-
 			if (kk != 0)
 			{
-				ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, totalSize);
+				uint64_t uploadBufferSize;
+				device->GetCopyableFootprints(&resourceDesc, 0, numSrd, 0, NULL, NULL, NULL, &uploadBufferSize);
+
+				ID3D12Resource* staging = createCommittedResource(s_renderD3D12->m_device, HeapProperty::Upload, uint32_t(uploadBufferSize) );
 
 				setState(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 
