@@ -468,7 +468,7 @@ namespace bgfx { namespace spirv
 		return true;
 	}
 
-#define DBG(...)
+#define DBG(...) // bx::debugPrintf(__VA_ARGS__)
 
 	void disassemble(bx::WriterI* _writer, bx::ReaderSeekerI* _reader, bx::Error* _err)
 	{
@@ -516,18 +516,6 @@ namespace bgfx { namespace spirv
 
 		}
 	}
-
-	struct DebugOutputWriter : public bx::WriterI
-	{
-		virtual int32_t write(const void* _data, int32_t _size, bx::Error*) override
-		{
-			char* out = (char*)alloca(_size + 1);
-			bx::memCopy(out, _data, _size);
-			out[_size] = '\0';
-			printf("%s", out);
-			return _size;
-		}
-	};
 
 	static EShLanguage getLang(char _p)
 	{
@@ -703,41 +691,12 @@ namespace bgfx { namespace spirv
 					| spv::spirvbin_t::DCE_ALL
 					| spv::spirvbin_t::OPT_ALL
 					| spv::spirvbin_t::MAP_ALL
-//					| spv::spirvbin_t::STRIP
 					);
 
 				bx::Error err;
-				DebugOutputWriter writer;
+				bx::WriterI* writer = bx::getDebugOut();
 				bx::MemoryReader reader(spirv.data(), uint32_t(spirv.size()*4) );
-				disassemble(&writer, &reader, &err);
-
-#if 0
-				spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_0);
-				tools.SetMessageConsumer(printError);
-				validated = tools.Validate(spirv);
-
-				if (!validated)
-				{
-					std::string out;
-					tools.Disassemble(spirv, &out);
-					printf("%s\n", out.c_str());
-				}
-
-				if (validated)
-				{
-					spvtools::Optimizer optm(SPV_ENV_VULKAN_1_0);
-					optm.SetMessageConsumer(printError);
-					optm
-						.RegisterPass(spvtools::CreateStripDebugInfoPass() )
-//						.RegisterPass(spvtools::CreateSetSpecConstantDefaultValuePass({ {1, "42" } }) )
-						.RegisterPass(spvtools::CreateFreezeSpecConstantValuePass() )
-						.RegisterPass(spvtools::CreateFoldSpecConstantOpAndCompositePass() )
-						.RegisterPass(spvtools::CreateEliminateDeadConstantPass() )
-						.RegisterPass(spvtools::CreateUnifyConstantPass() )
-						;
-					optimized = optm.Run(spirv.data(), spirv.size(), &spirv);
-				}
-#endif // 0
+				disassemble(writer, &reader, &err);
 
 				if (optimized)
 				{
