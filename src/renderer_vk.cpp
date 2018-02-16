@@ -2971,27 +2971,28 @@ VK_IMPORT_DEVICE
 //			VK_CHECK(vkWaitForFences(m_device, 1, &m_fence, true, INT64_MAX) );
 		}
 
-		uint32_t selectMemoryType(uint32_t memoryTypeBits, uint32_t propertyFlags)
+		uint32_t selectMemoryType(uint32_t _memoryTypeBits, uint32_t _propertyFlags) const
 		{
-			for (uint32_t ii = 0; ii < m_memoryProperties.memoryTypeCount; ++ii)
+			for (uint32_t ii = 0, num = m_memoryProperties.memoryTypeCount; ii < num; ++ii)
 			{
-				if ( ( ((1<<ii) & memoryTypeBits) != 0)
-				&& ( (m_memoryProperties.memoryTypes[ii].propertyFlags & propertyFlags) == propertyFlags) )
+				const VkMemoryType& memType = m_memoryProperties.memoryTypes[ii];
+				if ( (0 != ( (1<<ii) & _memoryTypeBits) )
+				&& ( (memType.propertyFlags & _propertyFlags) == _propertyFlags) )
 				{
 					return ii;
 				}
 			}
 
-			BX_TRACE("failed to find memory that supports flags 0x%08x", propertyFlags);
+			BX_TRACE("Failed to find memory that supports flags 0x%08x.", _propertyFlags);
 			return 0;
 		}
 
-		VkAllocationCallbacks* m_allocatorCb;
+		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
 		VkInstance       m_instance;
 		VkPhysicalDevice m_physicalDevice;
 
-		VkPhysicalDeviceProperties m_deviceProperties;
+		VkPhysicalDeviceProperties       m_deviceProperties;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
 		VkSwapchainCreateInfoKHR m_sci;
