@@ -244,13 +244,13 @@ public:
 			const double toMs = 1000.0 / freq;
 
 			// Use transient text to display debug information.
-			wchar_t fpsText[64];
-			bx::swnprintf(fpsText, BX_COUNTOF(fpsText), L"Frame: % 7.3f[ms]", double(frameTime) * toMs);
+			char fpsText[64];
+			bx::snprintf(fpsText, BX_COUNTOF(fpsText), "Frame: % 7.3f[ms]", double(frameTime) * toMs);
 
 			m_textBufferManager->clearTextBuffer(m_transientText);
 			m_textBufferManager->setPenPosition(m_transientText, m_width - 150.0f, 10.0f);
-			m_textBufferManager->appendText(m_transientText, m_visitor10, L"Transient\n");
-			m_textBufferManager->appendText(m_transientText, m_visitor10, L"text buffer\n");
+			m_textBufferManager->appendText(m_transientText, m_visitor10, "Transient\n");
+			m_textBufferManager->appendText(m_transientText, m_visitor10, "text buffer\n");
 			m_textBufferManager->appendText(m_transientText, m_visitor10, fpsText);
 
 			float at[3]  = { 0, 0,  0.0f };
