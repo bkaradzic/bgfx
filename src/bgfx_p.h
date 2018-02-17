@@ -2371,8 +2371,7 @@ namespace bgfx
 				}
 			}
 
-			VertexDeclHandle invalid = BGFX_INVALID_HANDLE;
-			return invalid;
+			return BGFX_INVALID_HANDLE;
 		}
 
 		VertexDeclHandle release(VertexBufferHandle _handle)
@@ -3612,8 +3611,7 @@ namespace bgfx
 			||  !isValid(_fsh) )
 			{
 				BX_TRACE("Vertex/fragment shader is invalid (vsh %d, fsh %d).", _vsh.idx, _fsh.idx);
-				ProgramHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
+				return BGFX_INVALID_HANDLE;
 			}
 
 			ProgramHandle handle = { m_programHashMap.find(uint32_t(_fsh.idx<<16)|_vsh.idx) };
@@ -3631,8 +3629,7 @@ namespace bgfx
 				if (vsr.m_hash != fsr.m_hash)
 				{
 					BX_TRACE("Vertex shader output doesn't match fragment shader input.");
-					ProgramHandle invalid = BGFX_INVALID_HANDLE;
-					return invalid;
+					return BGFX_INVALID_HANDLE;
 				}
 
 				handle.idx = m_programHandle.alloc();
@@ -3674,8 +3671,7 @@ namespace bgfx
 			if (!isValid(_vsh) )
 			{
 				BX_WARN(false, "Compute shader is invalid (vsh %d).", _vsh.idx);
-				ProgramHandle invalid = BGFX_INVALID_HANDLE;
-				return invalid;
+				return BGFX_INVALID_HANDLE;
 			}
 
 			ProgramHandle handle = { m_programHashMap.find(_vsh.idx) };
@@ -4055,8 +4051,7 @@ namespace bgfx
 				return ref.un.m_th[attachment];
 			}
 
-			TextureHandle invalid = BGFX_INVALID_HANDLE;
-			return invalid;
+			return BGFX_INVALID_HANDLE;
 		}
 
 		BGFX_API_FUNC(void destroyFrameBuffer(FrameBufferHandle _handle) )

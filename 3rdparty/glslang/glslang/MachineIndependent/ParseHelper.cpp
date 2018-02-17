@@ -266,6 +266,8 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         if (tokens.size() != 1)
             error(loc, "extra tokens", "#pragma", "");
         intermediate.setUseStorageBuffer();
+    } else if (tokens[0].compare("once") == 0) {
+        warn(loc, "not implemented", "#pragma once", "");
     }
 }
 
@@ -1583,6 +1585,9 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpInterpolateAtCentroid:
     case EOpInterpolateAtSample:
     case EOpInterpolateAtOffset:
+#ifdef AMD_EXTENSIONS
+    case EOpInterpolateAtVertex:
+#endif
         // Make sure the first argument is an interpolant, or an array element of an interpolant
         if (arg0->getType().getQualifier().storage != EvqVaryingIn) {
             // It might still be an array element.

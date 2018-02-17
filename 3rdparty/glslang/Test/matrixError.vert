@@ -19,4 +19,6 @@ void main()
     m23.xy;            // ERROR, can't use .
 
     gl_Position = vec4(m23 * m32 * v3, m24[2][4]);  // ERROR, 2 and 4 are out of range
+    m23 *= m23;        // ERROR, right side needs to be square
+    m23 *= m32;        // ERROR, left columns must match right rows
 }

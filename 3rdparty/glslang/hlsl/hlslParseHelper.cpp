@@ -550,6 +550,13 @@ void HlslParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString
             warn(loc, "unknown pack_matrix pragma value", tokens[2].c_str(), "");
             globalUniformDefaults.layoutMatrix = globalBufferDefaults.layoutMatrix = ElmRowMajor;
         }
+        return;
+    }
+
+    // Handle once
+    if (lowerTokens[0] == "once") {
+        warn(loc, "not implemented", "#pragma once", "");
+        return;
     }
 }
 

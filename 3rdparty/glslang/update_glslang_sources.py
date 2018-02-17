@@ -28,8 +28,12 @@ import sys
 
 KNOWN_GOOD_FILE = 'known_good.json'
 
+SITE_TO_KNOWN_GOOD_FILE = { 'github' : 'known_good.json',
+                            'gitlab' : 'known_good_khr.json' }
+
 # Maps a site name to its hostname.
-SITE_TO_HOST = { 'github' : 'github.com' }
+SITE_TO_HOST = { 'github' : 'https://github.com/',
+                 'gitlab' : 'git@gitlab.khronos.org:' }
 
 VERBOSE = True
 
@@ -82,14 +86,11 @@ class GoodCommit(object):
         self.subdir = json['subdir'] if ('subdir' in json) else '.'
         self.commit = json['commit']
 
-    def GetUrl(self, style='https'):
+    def GetUrl(self):
         """Returns the URL for the repository."""
         host = SITE_TO_HOST[self.site]
-        sep = '/' if (style is 'https') else ':'
-        return '{style}://{host}{sep}{subrepo}'.format(
-                    style=style,
+        return '{host}{subrepo}'.format(
                     host=host,
-                    sep=sep,
                     subrepo=self.subrepo)
 
     def AddRemote(self):
@@ -120,9 +121,10 @@ class GoodCommit(object):
         command_output(['git', 'checkout', self.commit], self.subdir)
 
 
-def GetGoodCommits():
+def GetGoodCommits(site):
     """Returns the latest list of GoodCommit objects."""
-    with open(KNOWN_GOOD_FILE) as known_good:
+    known_good_file = SITE_TO_KNOWN_GOOD_FILE[site]
+    with open(known_good_file) as known_good:
         return [GoodCommit(c) for c in json.loads(known_good.read())['commits']]
 
 
@@ -130,10 +132,12 @@ def main():
     parser = argparse.ArgumentParser(description='Get Glslang source dependencies at a known-good commit')
     parser.add_argument('--dir', dest='dir', default='.',
                         help="Set target directory for Glslang source root. Default is \'.\'.")
+    parser.add_argument('--site', dest='site', default='github',
+                        help="Set git server site. Default is github.")
 
     args = parser.parse_args()
 
-    commits = GetGoodCommits()
+    commits = GetGoodCommits(args.site)
 
     distutils.dir_util.mkpath(args.dir)
     print('Change directory to {d}'.format(d=args.dir))

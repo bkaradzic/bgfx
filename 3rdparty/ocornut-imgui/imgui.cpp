@@ -131,7 +131,6 @@
      ImGuiIO& io = ImGui::GetIO();
      io.DisplaySize.x = 1920.0f;
      io.DisplaySize.y = 1280.0f;
-     io.RenderDrawListsFn = MyRenderFunction;  // Setup a render function, or set to NULL and call GetDrawData() after Render() to access render data.
      // TODO: Fill others settings of the io structure later.
 
      // Load texture atlas (there is a default font so you don't need to care about choosing a font yet)
@@ -162,6 +161,7 @@
      
         // Render & swap video buffers
         ImGui::Render();
+        MyImGuiRenderFunction(ImGui::GetDrawData());
         SwapBuffers();
      }
 
@@ -250,6 +250,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2018/02/16 (1.60) - obsoleted the io.RenderDrawListsFn callback, you can call your graphics engine render function after ImGui::Render(). Use ImGui::GetDrawData() to retrieve the ImDrawData* to display.
  - 2018/02/07 (1.60) - reorganized context handling to be more explicit,
                        - YOU NOW NEED TO CALL ImGui::CreateContext() AT THE BEGINNING OF YOUR APP, AND CALL ImGui::DestroyContext() AT THE END.
                        - removed Shutdown() function, as DestroyContext() serve this purpose.
@@ -684,6 +685,7 @@
 #pragma GCC diagnostic ignored "-Wconversion"               // warning: conversion to 'xxxx' from 'xxxx' may alter its value
 #pragma GCC diagnostic ignored "-Wcast-qual"                // warning: cast from type 'xxxx' to type 'xxxx' casts away qualifiers
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"        // warning: format not a string literal, format string not checked
+#pragma GCC diagnostic ignored "-Wstrict-overflow"          // warning: assuming signed overflow does not occur when assuming that (X - c) > X is always false
 #endif
 
 // Enforce cdecl calling convention for functions called by the standard library, in case compilation settings changed the default to e.g. __vectorcall
@@ -884,14 +886,17 @@ ImGuiIO::ImGuiIO()
     OptMacOSXBehaviors = false;
 #endif
     OptCursorBlink = true;
-                                
+
     // Settings (User Functions)
-    RenderDrawListsFn = NULL;
     GetClipboardTextFn = GetClipboardTextFn_DefaultImpl;   // Platform dependent default implementations
     SetClipboardTextFn = SetClipboardTextFn_DefaultImpl;
     ClipboardUserData = NULL;
     ImeSetInputScreenPosFn = ImeSetInputScreenPosFn_DefaultImpl;
     ImeWindowHandle = NULL;
+
+#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+    RenderDrawListsFn = NULL;
+#endif
 
     // Input (NB: we already have memset zero the entire structure)
     MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
@@ -2659,7 +2664,7 @@ ImGuiStyle& ImGui::GetStyle()
     return GImGui->Style;
 }
 
-// Same value as passed to your RenderDrawListsFn() function. valid after Render() and until the next call to NewFrame()
+// Same value as passed to the old io.RenderDrawListsFn function. Valid after Render() and until the next call to NewFrame()
 ImDrawData* ImGui::GetDrawData()
 {
     return GImGui->DrawData.Valid ? &GImGui->DrawData : NULL;
@@ -4081,8 +4086,10 @@ void ImGui::Render()
         g.IO.MetricsRenderIndices = g.DrawData.TotalIdxCount;
 
         // Render. If user hasn't set a callback then they may retrieve the draw data via GetDrawData()
+#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
         if (g.DrawData.CmdListsCount > 0 && g.IO.RenderDrawListsFn != NULL)
             g.IO.RenderDrawListsFn(&g.DrawData);
+#endif
     }
 }
 
@@ -4879,6 +4886,7 @@ static ImGuiWindow* GetFrontMostModalRootWindow()
 
 static void ClosePopupToLevel(int remaining)
 {
+    IM_ASSERT(remaining >= 0);
     ImGuiContext& g = *GImGui;
     ImGuiWindow* focus_window = (remaining > 0) ? g.OpenPopupStack[remaining-1].Window : g.OpenPopupStack[0].ParentWindow;
     if (g.NavLayer == 0)
@@ -5994,11 +6002,15 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // Draw navigation selection/windowing rectangle border
         if (g.NavWindowingTarget == window)
         {
+            float rounding = ImMax(window->WindowRounding, g.Style.WindowRounding);
             ImRect bb = window->Rect();
             bb.Expand(g.FontSize);
-            if (bb.Contains(viewport_rect))
-                bb.Expand(-g.FontSize - 2.0f);
-            window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_NavWindowingHighlight, g.NavWindowingHighlightAlpha), g.Style.WindowRounding, ~0, 3.0f);
+            if (bb.Contains(viewport_rect)) // If a window fits the entire viewport, adjust its highlight inward
+            {
+                bb.Expand(-g.FontSize - 1.0f);
+                rounding = window->WindowRounding;
+            }
+            window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_NavWindowingHighlight, g.NavWindowingHighlightAlpha), rounding, ~0, 3.0f);
         }
 
         // Store a backup of SizeFull which we will use next frame to decide if we need scrollbars. 
@@ -9291,11 +9303,12 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
         }
 
         const float t_step = 1.0f / (float)res_w;
+        const float inv_scale = (scale_min == scale_max) ? 0.0f : (1.0f / (scale_max - scale_min));
 
         float v0 = values_getter(data, (0 + values_offset) % values_count);
         float t0 = 0.0f;
-        ImVec2 tp0 = ImVec2( t0, 1.0f - ImSaturate((v0 - scale_min) / (scale_max - scale_min)) );                       // Point in the normalized space of our target rectangle
-        float histogram_zero_line_t = (scale_min * scale_max < 0.0f) ? (-scale_min / (scale_max - scale_min)) : (scale_min < 0.0f ? 0.0f : 1.0f);   // Where does the zero line stands
+        ImVec2 tp0 = ImVec2( t0, 1.0f - ImSaturate((v0 - scale_min) * inv_scale) );                       // Point in the normalized space of our target rectangle
+        float histogram_zero_line_t = (scale_min * scale_max < 0.0f) ? (-scale_min * inv_scale) : (scale_min < 0.0f ? 0.0f : 1.0f);   // Where does the zero line stands
 
         const ImU32 col_base = GetColorU32((plot_type == ImGuiPlotType_Lines) ? ImGuiCol_PlotLines : ImGuiCol_PlotHistogram);
         const ImU32 col_hovered = GetColorU32((plot_type == ImGuiPlotType_Lines) ? ImGuiCol_PlotLinesHovered : ImGuiCol_PlotHistogramHovered);
@@ -9306,7 +9319,7 @@ void ImGui::PlotEx(ImGuiPlotType plot_type, const char* label, float (*values_ge
             const int v1_idx = (int)(t0 * item_count + 0.5f);
             IM_ASSERT(v1_idx >= 0 && v1_idx < values_count);
             const float v1 = values_getter(data, (v1_idx + values_offset + 1) % values_count);
-            const ImVec2 tp1 = ImVec2( t1, 1.0f - ImSaturate((v1 - scale_min) / (scale_max - scale_min)) );
+            const ImVec2 tp1 = ImVec2( t1, 1.0f - ImSaturate((v1 - scale_min) * inv_scale) );
 
             // NB: Draw calls are merged together by the DrawList system. Still, we should render our batch are lower level to save a bit of CPU.
             ImVec2 pos0 = ImLerp(inner_bb.Min, inner_bb.Max, tp0);
@@ -11218,7 +11231,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
     if (!enabled) // explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as 'if (BeginMenu("options", has_object)) { ..use object.. }'
         want_close = true;
     if (want_close && IsPopupOpen(id))
-        ClosePopupToLevel(GImGui->CurrentPopupStack.Size);
+        ClosePopupToLevel(g.CurrentPopupStack.Size);
 
     if (!menu_is_open && want_open && g.OpenPopupStack.Size > g.CurrentPopupStack.Size)
     {
