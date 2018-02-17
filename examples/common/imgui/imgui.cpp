@@ -70,8 +70,6 @@ static void memFree(void* _ptr, void* _userData);
 
 struct OcornutImguiContext
 {
-	static void renderDrawLists(ImDrawData* _drawData);
-
 	void render(ImDrawData* _drawData)
 	{
 		const ImGuiIO& io = ImGui::GetIO();
@@ -212,7 +210,6 @@ struct OcornutImguiContext
 		m_imgui = ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.RenderDrawListsFn = renderDrawLists;
 
 		io.DisplaySize = ImVec2(1280.0f, 720.0f);
 		io.DeltaTime   = 1.0f / 60.0f;
@@ -420,6 +417,7 @@ struct OcornutImguiContext
 	{
 		ImGui::PopStyleVar(1);
 		ImGui::Render();
+		render(ImGui::GetDrawData() );
 	}
 
 	ImGuiContext*       m_imgui;
@@ -448,11 +446,6 @@ static void memFree(void* _ptr, void* _userData)
 {
 	BX_UNUSED(_userData);
 	BX_FREE(s_ctx.m_allocator, _ptr);
-}
-
-void OcornutImguiContext::renderDrawLists(ImDrawData* _drawData)
-{
-	s_ctx.render(_drawData);
 }
 
 void imguiCreate(float _fontSize, bx::AllocatorI* _allocator)
