@@ -956,6 +956,15 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
+	static const char* s_intepolationQualifier[] =
+	{
+		"flat",
+		"smooth",
+		"noperspective",
+		"centroid",
+		NULL
+	};
+
 	static void GL_APIENTRY stubVertexAttribDivisor(GLuint /*_index*/, GLuint /*_divisor*/)
 	{
 	}
@@ -5796,9 +5805,15 @@ namespace bgfx { namespace gl
 					const bool usesTexture3D    = !!bx::findIdentifierMatch(code, s_texture3D);
 					const bool usesTextureMS    = !!bx::findIdentifierMatch(code, s_ARB_texture_multisample);
 					const bool usesPacking      = !!bx::findIdentifierMatch(code, s_ARB_shading_language_packing);
+					const bool usesInterpQ      = !!bx::findIdentifierMatch(code, s_intepolationQualifier);
 
 					uint32_t version = BX_ENABLED(BX_PLATFORM_OSX) ? 120
-						: usesTextureArray || usesTexture3D || usesIUsamplers|| usesTexelFetch || usesGpuShader5 ? 130
+						:  usesTextureArray
+						|| usesTexture3D
+						|| usesIUsamplers
+						|| usesTexelFetch
+						|| usesGpuShader5
+						|| usesInterpQ   ? 130
 						: usesTextureLod ? 120
 						: 120
 						;
@@ -5920,14 +5935,20 @@ namespace bgfx { namespace gl
 					}
 
 					writeString(&writer,
-							"#define lowp\n"
-							"#define mediump\n"
-							"#define highp\n"
+						"#define lowp\n"
+						"#define mediump\n"
+						"#define highp\n"
+						);
+
+					if (!usesInterpQ)
+					{
+						writeString(&writer,
 							"#define centroid\n"
 							"#define flat\n"
 							"#define noperspective\n"
 							"#define smooth\n"
 							);
+					}
 
 					bx::write(&writer, code, codeLen);
 					bx::write(&writer, '\0');
