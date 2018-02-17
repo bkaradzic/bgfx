@@ -6,7 +6,9 @@ ERROR: 0:18: 'assign' :  cannot convert from ' temp 2-component vector of float'
 ERROR: 0:19: 'xy' : does not apply to this type:  temp 2X3 matrix of float
 ERROR: 0:21: '[' :  matrix index out of range '2'
 ERROR: 0:21: '[' :  vector index out of range '4'
-ERROR: 7 compilation errors.  No code generated.
+ERROR: 0:22: 'assign' :  cannot convert from ' temp 2X3 matrix of float' to ' temp 2X3 matrix of float'
+ERROR: 0:23: 'assign' :  cannot convert from ' uniform 3X2 matrix of float' to ' temp 2X3 matrix of float'
+ERROR: 9 compilation errors.  No code generated.
 
 
 Shader version: 120
@@ -32,6 +34,8 @@ ERROR: node is still EOpNull!
 0:21                2 (const int)
 0:21            Constant:
 0:21              4 (const int)
+0:22      'm23' ( temp 2X3 matrix of float)
+0:23      'm23' ( temp 2X3 matrix of float)
 0:?   Linker Objects
 0:?     'v3' ( in 3-component vector of float)
 0:?     'm32' ( uniform 3X2 matrix of float)
@@ -64,6 +68,8 @@ ERROR: node is still EOpNull!
 0:21                2 (const int)
 0:21            Constant:
 0:21              4 (const int)
+0:22      'm23' ( temp 2X3 matrix of float)
+0:23      'm23' ( temp 2X3 matrix of float)
 0:?   Linker Objects
 0:?     'v3' ( in 3-component vector of float)
 0:?     'm32' ( uniform 3X2 matrix of float)

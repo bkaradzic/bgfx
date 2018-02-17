@@ -2706,7 +2706,7 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
                 node.setOp(op = EOpMatrixTimesScalarAssign);
             }
         } else if (left->isMatrix() && right->isMatrix()) {
-            if (left->getMatrixCols() != left->getMatrixRows() || left->getMatrixCols() != right->getMatrixCols() || left->getMatrixCols() != right->getMatrixRows())
+            if (left->getMatrixCols() != right->getMatrixCols() || left->getMatrixCols() != right->getMatrixRows())
                 return false;
             node.setOp(op = EOpMatrixTimesMatrixAssign);
         } else if (!left->isMatrix() && !right->isMatrix()) {

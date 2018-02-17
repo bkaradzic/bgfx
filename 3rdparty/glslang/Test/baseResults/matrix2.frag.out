@@ -158,6 +158,9 @@ Shader version: 150
 0:49            'FragColor' ( out 4-component vector of float)
 0:49            Constant:
 0:49              3 (const int)
+0:50      matrix mult second child into first child ( temp 3X4 matrix of float)
+0:50        'm34' ( temp 3X4 matrix of float)
+0:50        'colorTransform' ( uniform 3X3 matrix of float)
 0:?   Linker Objects
 0:?     'colorTransform' ( uniform 3X3 matrix of float)
 0:?     'Color' ( smooth in 3-component vector of float)
@@ -331,6 +334,9 @@ Shader version: 150
 0:49            'FragColor' ( out 4-component vector of float)
 0:49            Constant:
 0:49              3 (const int)
+0:50      matrix mult second child into first child ( temp 3X4 matrix of float)
+0:50        'm34' ( temp 3X4 matrix of float)
+0:50        'colorTransform' ( uniform 3X3 matrix of float)
 0:?   Linker Objects
 0:?     'colorTransform' ( uniform 3X3 matrix of float)
 0:?     'Color' ( smooth in 3-component vector of float)
