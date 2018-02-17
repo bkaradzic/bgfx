@@ -345,6 +345,8 @@ GL_IMPORT______(false, PFNGLGETUNIFORMLOCATIONPROC,                glGetUniformL
 #if BGFX_CONFIG_RENDERER_OPENGL || !(BGFX_CONFIG_RENDERER_OPENGLES < 30)
 GL_IMPORT______(true,  PFNGLGETSTRINGIPROC,                        glGetStringi);
 GL_IMPORT______(true,  PFNGLINVALIDATEFRAMEBUFFERPROC,             glInvalidateFramebuffer);
+GL_IMPORT______(true,  PFNGLTEXIMAGE2DMULTISAMPLEPROC,             glTexImage2DMultisample);
+GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DMultisample);
 #endif // !(BGFX_CONFIG_RENDERER_OPENGLES < 30)
 GL_IMPORT______(false, PFNGLLINKPROGRAMPROC,                       glLinkProgram);
 GL_IMPORT______(true,  PFNGLMEMORYBARRIERPROC,                     glMemoryBarrier);
@@ -577,6 +579,7 @@ GL_IMPORT______(true,  PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC,           glCompressedT
 GL_IMPORT______(true,  PFNGLTEXSTORAGE2DPROC,                      glTexStorage2D);
 GL_IMPORT______(true,  PFNGLTEXSTORAGE3DPROC,                      glTexStorage3D);
 GL_IMPORT______(true,  PFNGLTEXIMAGE2DMULTISAMPLEPROC,             glTexImage2DMultisample);
+GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DMultisample);
 
 GL_IMPORT______(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
 GL_IMPORT______(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
