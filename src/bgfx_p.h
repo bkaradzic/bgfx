@@ -3742,7 +3742,7 @@ namespace bgfx
 			}
 		}
 
-		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info, BackbufferRatio::Enum _ratio) )
+		BGFX_API_FUNC(TextureHandle createTexture(const Memory* _mem, uint32_t _flags, uint8_t _skip, TextureInfo* _info, BackbufferRatio::Enum _ratio, bool _immutable) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3782,7 +3782,12 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				TextureRef& ref = m_textureRef[handle.idx];
-				ref.init(_ratio, _info->format, imageContainer.m_numMips, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS) );
+				ref.init(_ratio
+					, _info->format
+					, imageContainer.m_numMips
+					, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
+					, _immutable
+					);
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
 				cmdbuf.write(handle);
@@ -3924,6 +3929,14 @@ namespace bgfx
 		) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			const TextureRef& textureRef = m_textureRef[_handle.idx];
+			if (textureRef.m_immutable)
+			{
+				BX_WARN(false, "Can't update immutable texture.");
+				release(_mem);
+				return;
+			}
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::UpdateTexture);
 			cmdbuf.write(_handle);
@@ -4547,14 +4560,21 @@ namespace bgfx
 
 		struct TextureRef
 		{
-			void init(BackbufferRatio::Enum _ratio, TextureFormat::Enum _format, uint8_t _numMips, bool _ptrPending)
+			void init(
+				  BackbufferRatio::Enum _ratio
+				, TextureFormat::Enum _format
+				, uint8_t _numMips
+				, bool _ptrPending
+				, bool _immutable
+				)
 			{
-				m_ptr      = _ptrPending ? (void*)UINTPTR_MAX : NULL;
-				m_refCount = 1;
-				m_bbRatio  = uint8_t(_ratio);
-				m_format   = uint8_t(_format);
-				m_numMips  = _numMips;
-				m_owned    = false;
+				m_ptr       = _ptrPending ? (void*)UINTPTR_MAX : NULL;
+				m_refCount  = 1;
+				m_bbRatio   = uint8_t(_ratio);
+				m_format    = uint8_t(_format);
+				m_numMips   = _numMips;
+				m_owned     = false;
+				m_immutable = _immutable;
 			}
 
 			String  m_name;
@@ -4564,6 +4584,7 @@ namespace bgfx
 			uint8_t m_format;
 			uint8_t m_numMips;
 			bool    m_owned;
+			bool    m_immutable;
 		};
 
 		struct FrameBufferRef
