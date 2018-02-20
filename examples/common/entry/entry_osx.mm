@@ -156,7 +156,7 @@ namespace entry
 		NSEvent* waitEvent()
 		{
 			return [NSApp
-				nextEventMatchingMask:NSAnyEventMask
+				nextEventMatchingMask:NSEventMaskAny
 				untilDate:[NSDate distantFuture] // wait for event
 				inMode:NSDefaultRunLoopMode
 				dequeue:YES
@@ -166,52 +166,38 @@ namespace entry
 		NSEvent* peekEvent()
 		{
 			return [NSApp
-				nextEventMatchingMask:NSAnyEventMask
+				nextEventMatchingMask:NSEventMaskAny
 				untilDate:[NSDate distantPast] // do not wait for event
 				inMode:NSDefaultRunLoopMode
 				dequeue:YES
 				];
 		}
 
-		void getMousePos(int* outX, int* outY)
+		void getMousePos(int32_t* outX, int32_t* outY)
 		{
 			WindowHandle handle = { 0 };
 			NSWindow* window = m_window[handle.idx];
-			NSRect originalFrame = [window frame];
-			NSPoint location = [window mouseLocationOutsideOfEventStream];
-			NSRect adjustFrame = [window contentRectForFrameRect: originalFrame];
 
-			int x = location.x;
-			int y = (int)adjustFrame.size.height - (int)location.y;
+			NSRect  originalFrame = [window frame];
+			NSPoint location      = [window mouseLocationOutsideOfEventStream];
+			NSRect  adjustFrame   = [window contentRectForFrameRect: originalFrame];
+
+			int32_t x = location.x;
+			int32_t y = int32_t(adjustFrame.size.height) - int32_t(location.y);
 
 			// clamp within the range of the window
-
-			if (x < 0) x = 0;
-			if (y < 0) y = 0;
-			if (x > (int)adjustFrame.size.width) x = (int)adjustFrame.size.width;
-			if (y > (int)adjustFrame.size.height) y = (int)adjustFrame.size.height;
-
-			*outX = x;
-			*outY = y;
+			*outX = bx::clamp(x, 0, int32_t(adjustFrame.size.width) );
+			*outY = bx::clamp(y, 0, int32_t(adjustFrame.size.height) );
 		}
 
 		uint8_t translateModifiers(int flags)
 		{
-			uint8_t mask = 0;
-
-			if (flags & NSShiftKeyMask)
-				mask |= Modifier::LeftShift | Modifier::RightShift;
-
-			if (flags & NSAlternateKeyMask)
-				mask |= Modifier::LeftAlt | Modifier::RightAlt;
-
-			if (flags & NSControlKeyMask)
-				mask |= Modifier::LeftCtrl | Modifier::RightCtrl;
-
-			if (flags & NSCommandKeyMask)
-				mask |= Modifier::LeftMeta | Modifier::RightMeta;
-
-			return mask;
+			return 0
+				| (0 != (flags & NSEventModifierFlagShift  ) ) ? Modifier::LeftShift | Modifier::RightShift : 0
+				| (0 != (flags & NSEventModifierFlagOption ) ) ? Modifier::LeftAlt   | Modifier::RightAlt   : 0
+				| (0 != (flags & NSEventModifierFlagControl) ) ? Modifier::LeftCtrl  | Modifier::RightCtrl  : 0
+				| (0 != (flags & NSEventModifierFlagCommand) ) ? Modifier::LeftMeta  | Modifier::RightMeta  : 0
+				;
 		}
 
 		Key::Enum handleKeyEvent(NSEvent* event, uint8_t* specialKeys, uint8_t* _pressedChar)
@@ -274,52 +260,55 @@ namespace entry
 
 				switch (eventType)
 				{
-				case NSMouseMoved:
-				case NSLeftMouseDragged:
-				case NSRightMouseDragged:
-				case NSOtherMouseDragged:
+				case NSEventTypeMouseMoved:
+				case NSEventTypeLeftMouseDragged:
+				case NSEventTypeRightMouseDragged:
+				case NSEventTypeOtherMouseDragged:
 					getMousePos(&m_mx, &m_my);
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
 					break;
 
-				case NSLeftMouseDown:
+				case NSEventTypeLeftMouseDown:
 					{
 						// Command + Left Mouse Button acts as middle! This just a temporary solution!
 						// This is because the average OSX user doesn't have middle mouse click.
-						MouseButton::Enum mb = ([event modifierFlags] & NSCommandKeyMask) ? MouseButton::Middle : MouseButton::Left;
+						MouseButton::Enum mb = ([event modifierFlags] & NSEventModifierFlagCommand)
+							? MouseButton::Middle
+							: MouseButton::Left
+							;
 						m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, mb, true);
 					}
 					break;
 
-				case NSLeftMouseUp:
+				case NSEventTypeLeftMouseUp:
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Left, false);
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
 					break;
 
-				case NSRightMouseDown:
+				case NSEventTypeRightMouseDown:
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, true);
 					break;
 
-				case NSRightMouseUp:
+				case NSEventTypeRightMouseUp:
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Right, false);
 					break;
 
-				case NSOtherMouseDown:
+				case NSEventTypeOtherMouseDown:
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, true);
 					break;
 
-				case NSOtherMouseUp:
+				case NSEventTypeOtherMouseUp:
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll, MouseButton::Middle, false);
 					break;
 
-				case NSScrollWheel:
+				case NSEventTypeScrollWheel:
 					m_scrollf += [event deltaY];
 
 					m_scroll = (int32_t)m_scrollf;
 					m_eventQueue.postMouseEvent(s_defaultWindow, m_mx, m_my, m_scroll);
 					break;
 
-				case NSKeyDown:
+				case NSEventTypeKeyDown:
 					{
 						uint8_t modifiers = 0;
 						uint8_t pressedChar[4];
@@ -343,7 +332,7 @@ namespace entry
 					}
 					break;
 
-				case NSKeyUp:
+				case NSEventTypeKeyUp:
 					{
 						uint8_t modifiers  = 0;
 						uint8_t pressedChar[4];
@@ -435,11 +424,11 @@ namespace entry
 			[NSApp setMainMenu:menubar];
 
 			m_style = 0
-					| NSTitledWindowMask
-					| NSClosableWindowMask
-					| NSMiniaturizableWindowMask
-					| NSResizableWindowMask
-					;
+				| NSWindowStyleMaskResizable
+				| NSWindowStyleMaskClosable
+				| NSWindowStyleMaskMiniaturizable
+				| NSWindowStyleMaskResizable
+				;
 
 			NSRect screenRect = [[NSScreen mainScreen] frame];
 			const float centerX = (screenRect.size.width  - (float)ENTRY_DEFAULT_WIDTH )*0.5f;
@@ -611,7 +600,7 @@ namespace entry
 
 			if (!s_ctx.m_fullscreen)
 			{
-				s_ctx.m_style &= ~NSTitledWindowMask;
+				s_ctx.m_style &= ~NSWindowStyleMaskResizable;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
 					[NSMenu setMenuBarVisible: false];
@@ -623,7 +612,7 @@ namespace entry
 			}
 			else
 			{
-				s_ctx.m_style |= NSTitledWindowMask;
+				s_ctx.m_style |= NSWindowStyleMaskResizable;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
 					[NSMenu setMenuBarVisible: true];
