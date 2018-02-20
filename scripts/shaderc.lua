@@ -53,6 +53,7 @@ project "glslang"
 		buildoptions {
 			"-Wno-c++11-extensions",
 			"-Wno-unused-const-variable",
+			"-Wno-deprecated-register",
 		}
 
 	configuration { "linux-*" }
