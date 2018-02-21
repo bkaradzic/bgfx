@@ -561,7 +561,7 @@ namespace bgfx
 			num = bx::vsnprintf(temp, num, _format, argListCopy);
 
 			uint8_t attr = _attr;
-			struct MemSlot* mem = &m_mem[_y*m_width+_x];
+			MemSlot* mem = &m_mem[_y*m_width+_x];
 			for (uint32_t ii = 0, xx = _x; ii < num && xx < m_width; ++ii)
 			{
 				char ch = temp[ii];
@@ -697,7 +697,7 @@ namespace bgfx
 			for (; yy < _mem.m_height && numIndices < numBatchIndices; ++yy)
 			{
 				xx = xx < _mem.m_width ? xx : 0;
-				const struct TextVideoMem::MemSlot* line = &_mem.m_mem[yy*_mem.m_width+xx];
+				const TextVideoMem::MemSlot* line = &_mem.m_mem[yy*_mem.m_width+xx];
 
 				for (; xx < _mem.m_width && numIndices < numBatchIndices; ++xx)
 				{
