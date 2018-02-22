@@ -6522,7 +6522,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 				if (programChanged
 				||  vertexStreamChanged)
 				{
-				    currentState.m_streamMask             = draw.m_streamMask;
+					currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
