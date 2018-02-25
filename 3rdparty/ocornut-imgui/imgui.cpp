@@ -250,7 +250,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
- - 2018/02/18 (1.60) - BeginDragDropSource(): temporarily removed the optional mouse_button=0 parameter because it is really usable in typical conditions at the moment. 
+ - 2018/02/18 (1.60) - BeginDragDropSource(): temporarily removed the optional mouse_button=0 parameter because it is not really usable in many situations at the moment. 
  - 2018/02/16 (1.60) - obsoleted the io.RenderDrawListsFn callback, you can call your graphics engine render function after ImGui::Render(). Use ImGui::GetDrawData() to retrieve the ImDrawData* to display.
  - 2018/02/07 (1.60) - reorganized context handling to be more explicit,
                        - YOU NOW NEED TO CALL ImGui::CreateContext() AT THE BEGINNING OF YOUR APP, AND CALL ImGui::DestroyContext() AT THE END.
@@ -6063,7 +6063,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->DC.TextWrapPosStack.resize(0);
         window->DC.ColumnsSet = NULL;
         window->DC.TreeDepth = 0;
-        window->DC.TreeDepthMayCloseOnPop = 0x00;
+        window->DC.TreeDepthMayJumpToParentOnPop = 0x00;
         window->DC.StateStorage = &window->StateStorage;
         window->DC.GroupStack.resize(0);
         window->MenuColumns.Update(3, style.ItemSpacing.x, window_just_activated_by_user);
@@ -8024,8 +8024,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     // Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child. 
     // For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
     // This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero.
-    if (is_open && !g.NavIdIsAlive && (flags & ImGuiTreeNodeFlags_NavCloseFromChild) && !(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen))
-        window->DC.TreeDepthMayCloseOnPop |= (1 << window->DC.TreeDepth);
+    if (is_open && !g.NavIdIsAlive && (flags & ImGuiTreeNodeFlags_NavLeftJumpsBackHere) && !(flags & ImGuiTreeNodeFlags_NoTreePushOnOpen))
+        window->DC.TreeDepthMayJumpToParentOnPop |= (1 << window->DC.TreeDepth);
 
     bool item_add = ItemAdd(interact_bb, id);
     window->DC.LastItemStatusFlags |= ImGuiItemStatusFlags_HasDisplayRect;
@@ -12693,12 +12693,12 @@ void ImGui::TreePop()
 
     window->DC.TreeDepth--;
     if (g.NavMoveDir == ImGuiDir_Left && g.NavWindow == window && NavMoveRequestButNoResultYet())
-        if (g.NavIdIsAlive && (window->DC.TreeDepthMayCloseOnPop & (1 << window->DC.TreeDepth)))
+        if (g.NavIdIsAlive && (window->DC.TreeDepthMayJumpToParentOnPop & (1 << window->DC.TreeDepth)))
         {
             SetNavID(window->IDStack.back(), g.NavLayer);
             NavMoveRequestCancel();
         }
-    window->DC.TreeDepthMayCloseOnPop &= (1 << window->DC.TreeDepth) - 1;
+    window->DC.TreeDepthMayJumpToParentOnPop &= (1 << window->DC.TreeDepth) - 1;
 
     PopID();
 }
