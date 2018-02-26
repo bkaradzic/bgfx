@@ -424,10 +424,10 @@ namespace entry
 			[NSApp setMainMenu:menubar];
 
 			m_style = 0
+				| NSWindowStyleMaskTitled
 				| NSWindowStyleMaskResizable
 				| NSWindowStyleMaskClosable
 				| NSWindowStyleMaskMiniaturizable
-				| NSWindowStyleMaskResizable
 				;
 
 			NSRect screenRect = [[NSScreen mainScreen] frame];
@@ -600,7 +600,7 @@ namespace entry
 
 			if (!s_ctx.m_fullscreen)
 			{
-				s_ctx.m_style &= ~NSWindowStyleMaskResizable;
+				s_ctx.m_style &= ~NSWindowStyleMaskTitled;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
 					[NSMenu setMenuBarVisible: false];
@@ -612,7 +612,7 @@ namespace entry
 			}
 			else
 			{
-				s_ctx.m_style |= NSWindowStyleMaskResizable;
+				s_ctx.m_style |= NSWindowStyleMaskTitled;
 				dispatch_async(dispatch_get_main_queue()
 				, ^{
 					[NSMenu setMenuBarVisible: true];
