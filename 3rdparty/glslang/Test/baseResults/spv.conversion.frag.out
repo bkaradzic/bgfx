@@ -119,8 +119,8 @@ spv.conversion.frag
              315:     13(int) Constant 1
              321:             TypePointer Output 95(fvec4)
 322(gl_FragColor):    321(ptr) Variable Output
-             337:     13(int) Constant 2
-             350:     13(int) Constant 3
+             336:     13(int) Constant 2
+             349:     13(int) Constant 3
              427:             TypePointer Private 6(bool)
         428(u_b):    427(ptr) Variable Private
              429:             TypePointer Private 23(bvec2)
@@ -163,9 +163,9 @@ spv.conversion.frag
          110(f2):    109(ptr) Variable Function
          114(f3):    113(ptr) Variable Function
          118(f4):    117(ptr) Variable Function
-             297:    105(ptr) Variable Function
-             307:    105(ptr) Variable Function
-             323:    117(ptr) Variable Function
+             298:    105(ptr) Variable Function
+             309:    105(ptr) Variable Function
+             353:    117(ptr) Variable Function
         417(cv2):     93(ptr) Variable Function
         418(cv5):     44(ptr) Variable Function
               12:      9(int) Load 11(u_i)
@@ -425,72 +425,72 @@ spv.conversion.frag
                               SelectionMerge 296 None
                               BranchConditional 294 295 296
              295:               Label
-             298:     6(bool)   Load 8(b)
+             297:     6(bool)   Load 8(b)
                                 SelectionMerge 300 None
-                                BranchConditional 298 299 303
+                                BranchConditional 297 299 303
              299:                 Label
              301:      9(int)     Load 58(i)
              302:   16(float)     ConvertSToF 301
-                                  Store 297 302
+                                  Store 298 302
                                   Branch 300
              303:                 Label
              304:    105(ptr)     AccessChain 110(f2) 14
              305:   16(float)     Load 304
-                                  Store 297 305
+                                  Store 298 305
                                   Branch 300
              300:               Label
-             306:   16(float)   Load 297
-             308:      7(ptr)   AccessChain 25(b2) 14
-             309:     6(bool)   Load 308
+             306:   16(float)   Load 298
+             307:      7(ptr)   AccessChain 25(b2) 14
+             308:     6(bool)   Load 307
                                 SelectionMerge 311 None
-                                BranchConditional 309 310 314
+                                BranchConditional 308 310 314
              310:                 Label
              312:    105(ptr)     AccessChain 114(f3) 14
              313:   16(float)     Load 312
-                                  Store 307 313
+                                  Store 309 313
                                   Branch 311
              314:                 Label
              316:     57(ptr)     AccessChain 68(i2) 315
              317:      9(int)     Load 316
              318:   16(float)     ConvertSToF 317
-                                  Store 307 318
+                                  Store 309 318
                                   Branch 311
              311:               Label
-             319:   16(float)   Load 307
+             319:   16(float)   Load 309
              320:   16(float)   FAdd 306 319
                                 Store 106(f) 320
                                 Branch 296
              296:             Label
-             324:     6(bool) Load 8(b)
-             325:      7(ptr) AccessChain 25(b2) 14
-             326:     6(bool) Load 325
-             327:     6(bool) LogicalOr 324 326
-             328:      7(ptr) AccessChain 25(b2) 315
-             329:     6(bool) Load 328
-             330:     6(bool) LogicalOr 327 329
-             331:      7(ptr) AccessChain 33(b3) 14
-             332:     6(bool) Load 331
-             333:     6(bool) LogicalOr 330 332
-             334:      7(ptr) AccessChain 33(b3) 315
-             335:     6(bool) Load 334
-             336:     6(bool) LogicalOr 333 335
-             338:      7(ptr) AccessChain 33(b3) 337
-             339:     6(bool) Load 338
-             340:     6(bool) LogicalOr 336 339
-             341:      7(ptr) AccessChain 45(b4) 14
-             342:     6(bool) Load 341
-             343:     6(bool) LogicalOr 340 342
-             344:      7(ptr) AccessChain 45(b4) 315
-             345:     6(bool) Load 344
-             346:     6(bool) LogicalOr 343 345
-             347:      7(ptr) AccessChain 45(b4) 337
-             348:     6(bool) Load 347
-             349:     6(bool) LogicalOr 346 348
-             351:      7(ptr) AccessChain 45(b4) 350
-             352:     6(bool) Load 351
-             353:     6(bool) LogicalOr 349 352
+             323:     6(bool) Load 8(b)
+             324:      7(ptr) AccessChain 25(b2) 14
+             325:     6(bool) Load 324
+             326:     6(bool) LogicalOr 323 325
+             327:      7(ptr) AccessChain 25(b2) 315
+             328:     6(bool) Load 327
+             329:     6(bool) LogicalOr 326 328
+             330:      7(ptr) AccessChain 33(b3) 14
+             331:     6(bool) Load 330
+             332:     6(bool) LogicalOr 329 331
+             333:      7(ptr) AccessChain 33(b3) 315
+             334:     6(bool) Load 333
+             335:     6(bool) LogicalOr 332 334
+             337:      7(ptr) AccessChain 33(b3) 336
+             338:     6(bool) Load 337
+             339:     6(bool) LogicalOr 335 338
+             340:      7(ptr) AccessChain 45(b4) 14
+             341:     6(bool) Load 340
+             342:     6(bool) LogicalOr 339 341
+             343:      7(ptr) AccessChain 45(b4) 315
+             344:     6(bool) Load 343
+             345:     6(bool) LogicalOr 342 344
+             346:      7(ptr) AccessChain 45(b4) 336
+             347:     6(bool) Load 346
+             348:     6(bool) LogicalOr 345 347
+             350:      7(ptr) AccessChain 45(b4) 349
+             351:     6(bool) Load 350
+             352:     6(bool) LogicalOr 348 351
                               SelectionMerge 355 None
-                              BranchConditional 353 354 415
+                              BranchConditional 352 354 415
              354:               Label
              356:      9(int)   Load 58(i)
              357:     57(ptr)   AccessChain 68(i2) 14
@@ -505,7 +505,7 @@ spv.conversion.frag
              366:     57(ptr)   AccessChain 81(i3) 315
              367:      9(int)   Load 366
              368:      9(int)   IAdd 365 367
-             369:     57(ptr)   AccessChain 81(i3) 337
+             369:     57(ptr)   AccessChain 81(i3) 336
              370:      9(int)   Load 369
              371:      9(int)   IAdd 368 370
              372:     57(ptr)   AccessChain 94(i4) 14
@@ -514,10 +514,10 @@ spv.conversion.frag
              375:     57(ptr)   AccessChain 94(i4) 315
              376:      9(int)   Load 375
              377:      9(int)   IAdd 374 376
-             378:     57(ptr)   AccessChain 94(i4) 337
+             378:     57(ptr)   AccessChain 94(i4) 336
              379:      9(int)   Load 378
              380:      9(int)   IAdd 377 379
-             381:     57(ptr)   AccessChain 94(i4) 350
+             381:     57(ptr)   AccessChain 94(i4) 349
              382:      9(int)   Load 381
              383:      9(int)   IAdd 380 382
              384:   16(float)   ConvertSToF 383
@@ -535,7 +535,7 @@ spv.conversion.frag
              396:    105(ptr)   AccessChain 114(f3) 315
              397:   16(float)   Load 396
              398:   16(float)   FAdd 395 397
-             399:    105(ptr)   AccessChain 114(f3) 337
+             399:    105(ptr)   AccessChain 114(f3) 336
              400:   16(float)   Load 399
              401:   16(float)   FAdd 398 400
              402:    105(ptr)   AccessChain 118(f4) 14
@@ -544,20 +544,20 @@ spv.conversion.frag
              405:    105(ptr)   AccessChain 118(f4) 315
              406:   16(float)   Load 405
              407:   16(float)   FAdd 404 406
-             408:    105(ptr)   AccessChain 118(f4) 337
+             408:    105(ptr)   AccessChain 118(f4) 336
              409:   16(float)   Load 408
              410:   16(float)   FAdd 407 409
-             411:    105(ptr)   AccessChain 118(f4) 350
+             411:    105(ptr)   AccessChain 118(f4) 349
              412:   16(float)   Load 411
              413:   16(float)   FAdd 410 412
              414:   95(fvec4)   CompositeConstruct 413 413 413 413
-                                Store 323 414
+                                Store 353 414
                                 Branch 355
              415:               Label
-                                Store 323 151
+                                Store 353 151
                                 Branch 355
              355:             Label
-             416:   95(fvec4) Load 323
+             416:   95(fvec4) Load 353
                               Store 322(gl_FragColor) 416
                               Store 417(cv2) 102
              419:   92(ivec4) Load 417(cv2)

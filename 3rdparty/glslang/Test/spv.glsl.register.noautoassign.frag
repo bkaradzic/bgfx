@@ -1,23 +1,23 @@
 #version 450
 
 uniform layout(binding=0) sampler       g_sSamp1;
-uniform sampler       g_sSamp2;
+uniform layout(binding=1) sampler       g_sSamp2;
 uniform layout(binding=2) sampler       g_sSamp3[2];
-uniform sampler       g_sSamp4[3];
-uniform sampler       g_sSamp5;
+uniform layout(binding=3) sampler       g_sSamp4[3];
+uniform layout(binding=4) sampler       g_sSamp5;
 
-uniform sampler       g_sSamp_unused1;
-uniform sampler       g_sSamp_unused2;
+uniform layout(binding=5) sampler       g_sSamp_unused1;
+uniform layout(binding=6) sampler       g_sSamp_unused2;
 
-uniform layout(binding=1) texture1D          g_tTex1;
-uniform texture1D  g_tTex2;
-uniform layout(binding=3) texture1D          g_tTex3[2];
-uniform texture1D          g_tTex4[3];
-uniform texture1D          g_tTex5;
+uniform layout(binding=7) texture1D          g_tTex1;
+uniform layout(binding=8) texture1D          g_tTex2;
+uniform layout(binding=9) texture1D          g_tTex3[2];
+uniform layout(binding=10) texture1D          g_tTex4[3];
+uniform layout(binding=11) texture1D          g_tTex5;
 
-uniform layout(binding=0)  texture1D          g_tTex_unused1;
-uniform layout(binding=2)  texture1D          g_tTex_unused2;
-uniform texture1D          g_tTex_unused3;
+uniform layout(binding=12) texture1D          g_tTex_unused1;
+uniform layout(binding=13) texture1D          g_tTex_unused2;
+uniform layout(binding=14) texture1D          g_tTex_unused3;
 
 struct MyStruct_t {
     int a;

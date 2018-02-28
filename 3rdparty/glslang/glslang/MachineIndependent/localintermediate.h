@@ -575,7 +575,7 @@ public:
     int checkLocationRange(int set, const TIoRange& range, const TType&, bool& typeCollision);
     int addUsedOffsets(int binding, int offset, int numOffsets);
     bool addUsedConstantId(int id);
-    int computeTypeLocationSize(const TType&) const;
+    static int computeTypeLocationSize(const TType&, EShLanguage);
 
     bool setXfbBufferStride(int buffer, unsigned stride)
     {

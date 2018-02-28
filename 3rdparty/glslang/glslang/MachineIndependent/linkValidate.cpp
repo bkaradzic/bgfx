@@ -773,9 +773,9 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         // Strip off the outer array dimension for those having an extra one.
         if (type.isArray() && qualifier.isArrayedIo(language)) {
             TType elementType(type, 0);
-            size = computeTypeLocationSize(elementType);
+            size = computeTypeLocationSize(elementType, language);
         } else
-            size = computeTypeLocationSize(type);
+            size = computeTypeLocationSize(type, language);
     }
 
     // Locations, and components within locations.
@@ -907,7 +907,7 @@ bool TIntermediate::addUsedConstantId(int id)
 
 // Recursively figure out how many locations are used up by an input or output type.
 // Return the size of type, as measured by "locations".
-int TIntermediate::computeTypeLocationSize(const TType& type) const
+int TIntermediate::computeTypeLocationSize(const TType& type, EShLanguage stage)
 {
     // "If the declared input is an array of size n and each element takes m locations, it will be assigned m * n
     // consecutive locations..."
@@ -916,9 +916,9 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
         TType elementType(type, 0);
         if (type.isImplicitlySizedArray()) {
             // TODO: are there valid cases of having an implicitly-sized array with a location?  If so, running this code too early.
-            return computeTypeLocationSize(elementType);
+            return computeTypeLocationSize(elementType, stage);
         } else
-            return type.getOuterArraySize() * computeTypeLocationSize(elementType);
+            return type.getOuterArraySize() * computeTypeLocationSize(elementType, stage);
     }
 
     // "The locations consumed by block and structure members are determined by applying the rules above
@@ -927,7 +927,7 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
         int size = 0;
         for (int member = 0; member < (int)type.getStruct()->size(); ++member) {
             TType memberType(type, member);
-            size += computeTypeLocationSize(memberType);
+            size += computeTypeLocationSize(memberType, stage);
         }
         return size;
     }
@@ -941,7 +941,7 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
     if (type.isScalar())
         return 1;
     if (type.isVector()) {
-        if (language == EShLangVertex && type.getQualifier().isPipeInput())
+        if (stage == EShLangVertex && type.getQualifier().isPipeInput())
             return 1;
         if (type.getBasicType() == EbtDouble && type.getVectorSize() > 2)
             return 2;
@@ -954,7 +954,7 @@ int TIntermediate::computeTypeLocationSize(const TType& type) const
     // for an n-element array of m-component vectors..."
     if (type.isMatrix()) {
         TType columnType(type, 0);
-        return type.getMatrixCols() * computeTypeLocationSize(columnType);
+        return type.getMatrixCols() * computeTypeLocationSize(columnType, stage);
     }
 
     assert(0);
@@ -1197,6 +1197,8 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, b
     if (type.isVector()) {
         int scalarAlign = getBaseAlignmentScalar(type, size);
         switch (type.getVectorSize()) {
+        case 1: // HLSL has this, GLSL does not
+            return scalarAlign;
         case 2:
             size *= 2;
             return 2 * scalarAlign;

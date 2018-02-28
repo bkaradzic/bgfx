@@ -41,19 +41,25 @@ spv.glsl.register.noautoassign.frag
                               Name 137  "FragColor"
                               Name 141  "g_tTex_unused3"
                               Decorate 17(g_tTex1) DescriptorSet 0
-                              Decorate 17(g_tTex1) Binding 11
+                              Decorate 17(g_tTex1) Binding 17
                               Decorate 21(g_sSamp1) DescriptorSet 0
                               Decorate 21(g_sSamp1) Binding 5
                               Decorate 27(g_tTex2) DescriptorSet 0
+                              Decorate 27(g_tTex2) Binding 18
                               Decorate 29(g_sSamp2) DescriptorSet 0
+                              Decorate 29(g_sSamp2) Binding 6
                               Decorate 39(g_tTex3) DescriptorSet 0
-                              Decorate 39(g_tTex3) Binding 13
+                              Decorate 39(g_tTex3) Binding 19
                               Decorate 46(g_sSamp3) DescriptorSet 0
                               Decorate 46(g_sSamp3) Binding 7
                               Decorate 64(g_tTex4) DescriptorSet 0
+                              Decorate 64(g_tTex4) Binding 20
                               Decorate 69(g_sSamp4) DescriptorSet 0
+                              Decorate 69(g_sSamp4) Binding 8
                               Decorate 84(g_tTex5) DescriptorSet 0
+                              Decorate 84(g_tTex5) Binding 21
                               Decorate 86(g_sSamp5) DescriptorSet 0
+                              Decorate 86(g_sSamp5) Binding 9
                               MemberDecorate 93(MyStruct_t) 0 Offset 0
                               MemberDecorate 93(MyStruct_t) 1 Offset 4
                               MemberDecorate 93(MyStruct_t) 2 Offset 16
@@ -65,13 +71,16 @@ spv.glsl.register.noautoassign.frag
                               Decorate 97 DescriptorSet 0
                               Decorate 97 Binding 19
                               Decorate 119(g_tTex_unused1) DescriptorSet 0
-                              Decorate 119(g_tTex_unused1) Binding 10
+                              Decorate 119(g_tTex_unused1) Binding 22
                               Decorate 121(g_sSamp_unused1) DescriptorSet 0
+                              Decorate 121(g_sSamp_unused1) Binding 10
                               Decorate 126(g_tTex_unused2) DescriptorSet 0
-                              Decorate 126(g_tTex_unused2) Binding 12
+                              Decorate 126(g_tTex_unused2) Binding 23
                               Decorate 128(g_sSamp_unused2) DescriptorSet 0
+                              Decorate 128(g_sSamp_unused2) Binding 11
                               Decorate 137(FragColor) Location 0
                               Decorate 141(g_tTex_unused3) DescriptorSet 0
+                              Decorate 141(g_tTex_unused3) Binding 24
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

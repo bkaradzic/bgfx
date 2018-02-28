@@ -11,6 +11,7 @@ spv.debugInfo.frag
                1:             String  "spv.debugInfo.frag"
                               Source GLSL 450 1  "// OpModuleProcessed no-storage-format
 // OpModuleProcessed resource-set-binding 3
+// OpModuleProcessed auto-map-bindings
 // OpModuleProcessed auto-map-locations
 // OpModuleProcessed client opengl100
 // OpModuleProcessed target-env opengl
@@ -95,7 +96,9 @@ void main()
                               MemberDecorate 54(ubuf) 0 Offset 0
                               Decorate 54(ubuf) Block
                               Decorate 56 DescriptorSet 3
+                              Decorate 56 Binding 0
                               Decorate 69(s2d) DescriptorSet 3
+                              Decorate 69(s2d) Binding 1
                3:             TypeVoid
                4:             TypeFunction 3
                7:             TypeInt 32 1
@@ -135,13 +138,13 @@ void main()
               77:             TypePointer Uniform 7(int)
              106:      7(int) Constant 10
              111:      7(int) Constant 1
-             114:             TypePointer Output 10(float)
-             117:   10(float) Constant 1092616192
+             113:             TypePointer Output 10(float)
+             116:   10(float) Constant 1092616192
          5(main):           3 Function None 4
                6:             Label
        59(param):     58(ptr) Variable Function
            99(i):     19(ptr) Variable Function
-             113:     16(ptr) Variable Function
+             118:     16(ptr) Variable Function
                               Line 1 30 0
               61:     60(ptr) AccessChain 56 18
               62:       53(S) Load 61
@@ -216,24 +219,24 @@ void main()
                                 Branch 100
              102:             Label
                               Line 1 49 0
-             115:    114(ptr) AccessChain 52(outv) 32
-             116:   10(float) Load 115
-             118:    37(bool) FOrdLessThan 116 117
+             114:    113(ptr) AccessChain 52(outv) 32
+             115:   10(float) Load 114
+             117:    37(bool) FOrdLessThan 115 116
                               SelectionMerge 120 None
-                              BranchConditional 118 119 123
+                              BranchConditional 117 119 123
              119:               Label
                                 Line 1 50 0
              121:   11(fvec4)   Load 52(outv)
              122:   11(fvec4)   ExtInst 2(GLSL.std.450) 13(Sin) 121
                                 Store 52(outv) 122
-                                Store 113 122
+                                Store 118 122
                                 Branch 120
              123:               Label
                                 Line 1 51 0
              124:   11(fvec4)   Load 52(outv)
              125:   11(fvec4)   ExtInst 2(GLSL.std.450) 14(Cos) 124
                                 Store 52(outv) 125
-                                Store 113 125
+                                Store 118 125
                                 Branch 120
              120:             Label
                               Return

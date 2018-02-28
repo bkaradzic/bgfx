@@ -182,14 +182,14 @@ spv.sparseTexture.frag
       414(i2DMS):    413(ptr) Variable UniformConstant
              422:             TypePointer Output 11(fvec4)
    423(outColor):    422(ptr) Variable Output
-             426:             TypeBool
+             425:             TypeBool
          4(main):           2 Function None 3
                5:             Label
      8(resident):      7(ptr) Variable Function
        13(texel):     12(ptr) Variable Function
       18(itexel):     17(ptr) Variable Function
       23(utexel):     22(ptr) Variable Function
-             424:     12(ptr) Variable Function
+             427:     12(ptr) Variable Function
                               Store 8(resident) 9
                               Store 13(texel) 15
                               Store 18(itexel) 19
@@ -565,13 +565,13 @@ spv.sparseTexture.frag
              420:      6(int) Load 8(resident)
              421:      6(int) BitwiseOr 420 419
                               Store 8(resident) 421
-             425:      6(int) Load 8(resident)
-             427:   426(bool) ImageSparseTexelsResident 425
+             424:      6(int) Load 8(resident)
+             426:   425(bool) ImageSparseTexelsResident 424
                               SelectionMerge 429 None
-                              BranchConditional 427 428 431
+                              BranchConditional 426 428 431
              428:               Label
              430:   11(fvec4)   Load 13(texel)
-                                Store 424 430
+                                Store 427 430
                                 Branch 429
              431:               Label
              432:   16(ivec4)   Load 18(itexel)
@@ -579,10 +579,10 @@ spv.sparseTexture.frag
              434:   21(ivec4)   Load 23(utexel)
              435:   11(fvec4)   ConvertUToF 434
              436:   11(fvec4)   FAdd 433 435
-                                Store 424 436
+                                Store 427 436
                                 Branch 429
              429:             Label
-             437:   11(fvec4) Load 424
+             437:   11(fvec4) Load 427
                               Store 423(outColor) 437
                               Return
                               FunctionEnd

@@ -101,7 +101,7 @@ TEST_P(VulkanSemantics, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::Vulkan,
-                            Target::Spv);
+                            Target::Spv, false);
 }
 
 // GLSL-level Vulkan semantics test. Expected to error out before generating
@@ -110,7 +110,7 @@ TEST_P(OpenGLSemantics, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::OpenGL,
-                            Target::Spv);
+                            Target::Spv, false);
 }
 
 // GLSL-level Vulkan semantics test that need to see the AST for validation.
@@ -168,8 +168,8 @@ TEST_P(CompileVulkanToSpirvTestAMD, FromFile)
 TEST_P(CompileVulkanToSpirvTestNV, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-        Source::GLSL, Semantics::Vulkan,
-        Target::Spv);
+                            Source::GLSL, Semantics::Vulkan,
+                            Target::Spv);
 }
 #endif
 
@@ -235,6 +235,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.branch-return.vert",
         "spv.builtInXFB.vert",
         "spv.conditionalDiscard.frag",
+        "spv.constStruct.vert",
         "spv.controlFlowAttributes.frag",
         "spv.conversion.frag",
         "spv.dataOut.frag",

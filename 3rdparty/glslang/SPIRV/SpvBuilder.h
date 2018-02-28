@@ -55,6 +55,7 @@
 #include <set>
 #include <sstream>
 #include <stack>
+#include <unordered_map>
 
 namespace spv {
 
@@ -149,7 +150,7 @@ public:
     bool isAggregate(Id resultId)    const { return isAggregateType(getTypeId(resultId)); }
     bool isSampledImage(Id resultId) const { return isSampledImageType(getTypeId(resultId)); }
 
-    bool isBoolType(Id typeId)         const { return groupedTypes[OpTypeBool].size() > 0 && typeId == groupedTypes[OpTypeBool].back()->getResultId(); }
+    bool isBoolType(Id typeId)               { return groupedTypes[OpTypeBool].size() > 0 && typeId == groupedTypes[OpTypeBool].back()->getResultId(); }
     bool isIntType(Id typeId)          const { return getTypeClass(typeId) == OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) != 0; }
     bool isUintType(Id typeId)         const { return getTypeClass(typeId) == OpTypeInt && module.getInstruction(typeId)->getImmediateOperand(1) == 0; }
     bool isFloatType(Id typeId)        const { return getTypeClass(typeId) == OpTypeFloat; }
@@ -576,9 +577,10 @@ public:
  protected:
     Id makeIntConstant(Id typeId, unsigned value, bool specConstant);
     Id makeInt64Constant(Id typeId, unsigned long long value, bool specConstant);
-    Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value) const;
-    Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2) const;
-    Id findCompositeConstant(Op typeClass, const std::vector<Id>& comps) const;
+    Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value);
+    Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2);
+    Id findCompositeConstant(Op typeClass, const std::vector<Id>& comps);
+    Id findStructConstant(Id typeId, const std::vector<Id>& comps);
     Id collapseAccessChain();
     void remapDynamicSwizzle();
     void transferAccessChainSwizzle(bool dynamic);
@@ -616,15 +618,15 @@ public:
     std::vector<std::unique_ptr<Instruction> > entryPoints;
     std::vector<std::unique_ptr<Instruction> > executionModes;
     std::vector<std::unique_ptr<Instruction> > names;
-    std::vector<std::unique_ptr<Instruction> > lines;
     std::vector<std::unique_ptr<Instruction> > decorations;
     std::vector<std::unique_ptr<Instruction> > constantsTypesGlobals;
     std::vector<std::unique_ptr<Instruction> > externals;
     std::vector<std::unique_ptr<Function> > functions;
 
      // not output, internally used for quick & dirty canonical (unique) creation
-    std::vector<Instruction*> groupedConstants[OpConstant];  // all types appear before OpConstant
-    std::vector<Instruction*> groupedTypes[OpConstant];
+    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedConstants;       // map type opcodes to constant inst.
+    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedStructConstants; // map struct-id to constant instructions
+    std::unordered_map<unsigned int, std::vector<Instruction*>> groupedTypes;           // map type opcodes to type instructions
 
     // stack of switches
     std::stack<Block*> switchMerges;

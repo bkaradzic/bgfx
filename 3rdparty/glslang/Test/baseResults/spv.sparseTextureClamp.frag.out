@@ -145,14 +145,14 @@ spv.sparseTextureClamp.frag
              310:  157(ivec2) ConstantComposite 143 143
              344:             TypePointer Output 11(fvec4)
    345(outColor):    344(ptr) Variable Output
-             348:             TypeBool
+             347:             TypeBool
          4(main):           2 Function None 3
                5:             Label
      8(resident):      7(ptr) Variable Function
        13(texel):     12(ptr) Variable Function
       18(itexel):     17(ptr) Variable Function
       23(utexel):     22(ptr) Variable Function
-             346:     12(ptr) Variable Function
+             349:     12(ptr) Variable Function
                               Store 8(resident) 9
                               Store 13(texel) 15
                               Store 18(itexel) 19
@@ -442,13 +442,13 @@ spv.sparseTextureClamp.frag
              342:   16(ivec4) Load 18(itexel)
              343:   16(ivec4) IAdd 342 341
                               Store 18(itexel) 343
-             347:      6(int) Load 8(resident)
-             349:   348(bool) ImageSparseTexelsResident 347
+             346:      6(int) Load 8(resident)
+             348:   347(bool) ImageSparseTexelsResident 346
                               SelectionMerge 351 None
-                              BranchConditional 349 350 353
+                              BranchConditional 348 350 353
              350:               Label
              352:   11(fvec4)   Load 13(texel)
-                                Store 346 352
+                                Store 349 352
                                 Branch 351
              353:               Label
              354:   16(ivec4)   Load 18(itexel)
@@ -456,10 +456,10 @@ spv.sparseTextureClamp.frag
              356:   21(ivec4)   Load 23(utexel)
              357:   11(fvec4)   ConvertUToF 356
              358:   11(fvec4)   FAdd 355 357
-                                Store 346 358
+                                Store 349 358
                                 Branch 351
              351:             Label
-             359:   11(fvec4) Load 346
+             359:   11(fvec4) Load 349
                               Store 345(outColor) 359
                               Return
                               FunctionEnd

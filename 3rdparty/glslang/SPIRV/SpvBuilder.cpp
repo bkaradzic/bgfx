@@ -622,7 +622,7 @@ Id Builder::getContainedTypeId(Id typeId) const
 
 // See if a scalar constant of this type has already been created, so it
 // can be reused rather than duplicated.  (Required by the specification).
-Id Builder::findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value) const
+Id Builder::findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value)
 {
     Instruction* constant;
     for (int i = 0; i < (int)groupedConstants[typeClass].size(); ++i) {
@@ -637,7 +637,7 @@ Id Builder::findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned valu
 }
 
 // Version of findScalarConstant (see above) for scalars that take two operands (e.g. a 'double' or 'int64').
-Id Builder::findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2) const
+Id Builder::findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2)
 {
     Instruction* constant;
     for (int i = 0; i < (int)groupedConstants[typeClass].size(); ++i) {
@@ -849,7 +849,7 @@ Id Builder::makeFloat16Constant(float f16, bool specConstant)
 }
 #endif
 
-Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps) const
+Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps)
 {
     Instruction* constant = 0;
     bool found = false;
@@ -859,6 +859,30 @@ Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps) co
         // same shape?
         if (constant->getNumOperands() != (int)comps.size())
             continue;
+
+        // same contents?
+        bool mismatch = false;
+        for (int op = 0; op < constant->getNumOperands(); ++op) {
+            if (constant->getIdOperand(op) != comps[op]) {
+                mismatch = true;
+                break;
+            }
+        }
+        if (! mismatch) {
+            found = true;
+            break;
+        }
+    }
+
+    return found ? constant->getResultId() : NoResult;
+}
+
+Id Builder::findStructConstant(Id typeId, const std::vector<Id>& comps)
+{
+    Instruction* constant = 0;
+    bool found = false;
+    for (int i = 0; i < (int)groupedStructConstants[typeId].size(); ++i) {
+        constant = groupedStructConstants[typeId][i];
 
         // same contents?
         bool mismatch = false;
@@ -887,25 +911,33 @@ Id Builder::makeCompositeConstant(Id typeId, const std::vector<Id>& members, boo
     switch (typeClass) {
     case OpTypeVector:
     case OpTypeArray:
-    case OpTypeStruct:
     case OpTypeMatrix:
+        if (! specConstant) {
+            Id existing = findCompositeConstant(typeClass, members);
+            if (existing)
+                return existing;
+        }
+        break;
+    case OpTypeStruct:
+        if (! specConstant) {
+            Id existing = findStructConstant(typeId, members);
+            if (existing)
+                return existing;
+        }
         break;
     default:
         assert(0);
         return makeFloatConstant(0.0);
     }
 
-    if (! specConstant) {
-        Id existing = findCompositeConstant(typeClass, members);
-        if (existing)
-            return existing;
-    }
-
     Instruction* c = new Instruction(getUniqueId(), typeId, opcode);
     for (int op = 0; op < (int)members.size(); ++op)
         c->addIdOperand(members[op]);
     constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(c));
-    groupedConstants[typeClass].push_back(c);
+    if (typeClass == OpTypeStruct)
+        groupedStructConstants[typeId].push_back(c);
+    else
+        groupedConstants[typeClass].push_back(c);
     module.mapInstruction(c);
 
     return c->getResultId();
@@ -2421,7 +2453,6 @@ void Builder::dump(std::vector<unsigned int>& out) const
 
     // Debug instructions
     dumpInstructions(out, strings);
-    dumpModuleProcesses(out);
     dumpSourceInstructions(out);
     for (int e = 0; e < (int)sourceExtensions.size(); ++e) {
         Instruction sourceExtInst(0, 0, OpSourceExtension);
@@ -2429,7 +2460,7 @@ void Builder::dump(std::vector<unsigned int>& out) const
         sourceExtInst.dump(out);
     }
     dumpInstructions(out, names);
-    dumpInstructions(out, lines);
+    dumpModuleProcesses(out);
 
     // Annotation instructions
     dumpInstructions(out, decorations);

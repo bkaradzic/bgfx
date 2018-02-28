@@ -141,7 +141,7 @@ spv.types.frag
          139(f2):    138(ptr) Variable Function
          148(f3):    147(ptr) Variable Function
          157(f4):    156(ptr) Variable Function
-             166:    156(ptr) Variable Function
+             194:    156(ptr) Variable Function
               11:     6(bool) Load 10(u_b)
               13:     6(bool) Load 12(i_b)
               14:     6(bool) LogicalAnd 11 13
@@ -235,36 +235,36 @@ spv.types.frag
              162:  155(fvec4) Load 161(i_f4)
              163:  155(fvec4) FAdd 160 162
                               Store 157(f4) 163
-             167:     6(bool) Load 8(b)
-             168:      7(ptr) AccessChain 17(b2) 21
-             169:     6(bool) Load 168
-             170:     6(bool) LogicalOr 167 169
-             171:      7(ptr) AccessChain 17(b2) 28
-             172:     6(bool) Load 171
-             173:     6(bool) LogicalOr 170 172
-             174:      7(ptr) AccessChain 38(b3) 21
-             175:     6(bool) Load 174
-             176:     6(bool) LogicalOr 173 175
-             177:      7(ptr) AccessChain 38(b3) 28
-             178:     6(bool) Load 177
-             179:     6(bool) LogicalOr 176 178
-             180:      7(ptr) AccessChain 38(b3) 53
-             181:     6(bool) Load 180
-             182:     6(bool) LogicalOr 179 181
-             183:      7(ptr) AccessChain 63(b4) 21
-             184:     6(bool) Load 183
-             185:     6(bool) LogicalOr 182 184
-             186:      7(ptr) AccessChain 63(b4) 28
-             187:     6(bool) Load 186
-             188:     6(bool) LogicalOr 185 187
-             189:      7(ptr) AccessChain 63(b4) 53
-             190:     6(bool) Load 189
-             191:     6(bool) LogicalOr 188 190
-             192:      7(ptr) AccessChain 63(b4) 84
-             193:     6(bool) Load 192
-             194:     6(bool) LogicalOr 191 193
+             166:     6(bool) Load 8(b)
+             167:      7(ptr) AccessChain 17(b2) 21
+             168:     6(bool) Load 167
+             169:     6(bool) LogicalOr 166 168
+             170:      7(ptr) AccessChain 17(b2) 28
+             171:     6(bool) Load 170
+             172:     6(bool) LogicalOr 169 171
+             173:      7(ptr) AccessChain 38(b3) 21
+             174:     6(bool) Load 173
+             175:     6(bool) LogicalOr 172 174
+             176:      7(ptr) AccessChain 38(b3) 28
+             177:     6(bool) Load 176
+             178:     6(bool) LogicalOr 175 177
+             179:      7(ptr) AccessChain 38(b3) 53
+             180:     6(bool) Load 179
+             181:     6(bool) LogicalOr 178 180
+             182:      7(ptr) AccessChain 63(b4) 21
+             183:     6(bool) Load 182
+             184:     6(bool) LogicalOr 181 183
+             185:      7(ptr) AccessChain 63(b4) 28
+             186:     6(bool) Load 185
+             187:     6(bool) LogicalOr 184 186
+             188:      7(ptr) AccessChain 63(b4) 53
+             189:     6(bool) Load 188
+             190:     6(bool) LogicalOr 187 189
+             191:      7(ptr) AccessChain 63(b4) 84
+             192:     6(bool) Load 191
+             193:     6(bool) LogicalOr 190 192
                               SelectionMerge 196 None
-                              BranchConditional 194 195 256
+                              BranchConditional 193 195 256
              195:               Label
              197:     92(int)   Load 94(i)
              198:     93(ptr)   AccessChain 103(i2) 21
@@ -325,13 +325,13 @@ spv.types.frag
              253:  128(float)   Load 252
              254:  128(float)   FAdd 251 253
              255:  155(fvec4)   CompositeConstruct 254 254 254 254
-                                Store 166 255
+                                Store 194 255
                                 Branch 196
              256:               Label
-                                Store 166 258
+                                Store 194 258
                                 Branch 196
              196:             Label
-             259:  155(fvec4) Load 166
+             259:  155(fvec4) Load 194
                               Store 165(gl_FragColor) 259
                               Return
                               FunctionEnd

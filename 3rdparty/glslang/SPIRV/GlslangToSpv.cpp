@@ -777,7 +777,7 @@ spv::LoopControlMask TGlslangToSpvTraverser::TranslateLoopControl(const glslang:
         control = control | spv::LoopControlDontUnrollMask;
     if (loopNode.getUnroll())
         control = control | spv::LoopControlUnrollMask;
-    if (loopNode.getLoopDependency() == glslang::TIntermLoop::dependencyInfinite)
+    if (unsigned(loopNode.getLoopDependency()) == glslang::TIntermLoop::dependencyInfinite)
         control = control | spv::LoopControlDependencyInfiniteMask;
     else if (loopNode.getLoopDependency() > 0) {
         control = control | spv::LoopControlDependencyLengthMask;
@@ -1973,16 +1973,27 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
 // next layer copies r-values into memory to use the access-chain mechanism
 bool TGlslangToSpvTraverser::visitSelection(glslang::TVisit /* visit */, glslang::TIntermSelection* node)
 {
-    // See if it simple and safe to generate OpSelect instead of using control flow.
-    // Crucially, side effects must be avoided, and there are performance trade-offs.
-    // Return true if good idea (and safe) for OpSelect, false otherwise.
-    const auto selectPolicy = [&]() -> bool {
-        if ((!node->getType().isScalar() && !node->getType().isVector()) ||
-            node->getBasicType() == glslang::EbtVoid)
-            return false;
-
+    // See if it simple and safe, or required, to execute both sides.
+    // Crucially, side effects must be either semantically required or avoided,
+    // and there are performance trade-offs.
+    // Return true if required or a good idea (and safe) to execute both sides,
+    // false otherwise.
+    const auto bothSidesPolicy = [&]() -> bool {
+        // do we have both sides?
         if (node->getTrueBlock()  == nullptr ||
             node->getFalseBlock() == nullptr)
+            return false;
+
+        // required? (unless we write additional code to look for side effects
+        // and make performance trade-offs if none are present)
+        if (!node->getShortCircuit())
+            return true;
+
+        // if not required to execute both, decide based on performance/practicality...
+
+        // see if OpSelect can handle it
+        if ((!node->getType().isScalar() && !node->getType().isVector()) ||
+            node->getBasicType() == glslang::EbtVoid)
             return false;
 
         assert(node->getType() == node->getTrueBlock() ->getAsTyped()->getType() &&
@@ -1997,10 +2008,14 @@ bool TGlslangToSpvTraverser::visitSelection(glslang::TVisit /* visit */, glslang
                operandOkay(node->getFalseBlock()->getAsTyped());
     };
 
-    // Emit OpSelect for this selection.
-    const auto handleAsOpSelect = [&]() {
-        node->getCondition()->traverse(this);
-        spv::Id condition = accessChainLoad(node->getCondition()->getType());
+    spv::Id result = spv::NoResult; // upcoming result selecting between trueValue and falseValue
+    // emit the condition before doing anything with selection
+    node->getCondition()->traverse(this);
+    spv::Id condition = accessChainLoad(node->getCondition()->getType());
+
+    // Find a way of executing both sides and selecting the right result.
+    const auto executeBothSides = [&]() -> void {
+        // execute both sides
         node->getTrueBlock()->traverse(this);
         spv::Id trueValue = accessChainLoad(node->getTrueBlock()->getAsTyped()->getType());
         node->getFalseBlock()->traverse(this);
@@ -2008,72 +2023,98 @@ bool TGlslangToSpvTraverser::visitSelection(glslang::TVisit /* visit */, glslang
 
         builder.setLine(node->getLoc().line);
 
-        // smear condition to vector, if necessary (AST is always scalar)
-        if (builder.isVector(trueValue))
-            condition = builder.smearScalar(spv::NoPrecision, condition, 
-                                            builder.makeVectorType(builder.makeBoolType(),
-                                                                   builder.getNumComponents(trueValue)));
+        // done if void
+        if (node->getBasicType() == glslang::EbtVoid)
+            return;
 
-        spv::Id select = builder.createTriOp(spv::OpSelect,
-                                             convertGlslangToSpvType(node->getType()), condition,
-                                                                     trueValue, falseValue);
-        builder.clearAccessChain();
-        builder.setAccessChainRValue(select);
+        // emit code to select between trueValue and falseValue
+
+        // see if OpSelect can handle it
+        if (node->getType().isScalar() || node->getType().isVector()) {
+            // Emit OpSelect for this selection.
+
+            // smear condition to vector, if necessary (AST is always scalar)
+            if (builder.isVector(trueValue))
+                condition = builder.smearScalar(spv::NoPrecision, condition, 
+                                                builder.makeVectorType(builder.makeBoolType(),
+                                                                       builder.getNumComponents(trueValue)));
+
+            // OpSelect
+            result = builder.createTriOp(spv::OpSelect,
+                                         convertGlslangToSpvType(node->getType()), condition,
+                                                                 trueValue, falseValue);
+
+            builder.clearAccessChain();
+            builder.setAccessChainRValue(result);
+        } else {
+            // We need control flow to select the result.
+            // TODO: Once SPIR-V OpSelect allows arbitrary types, eliminate this path.
+            result = builder.createVariable(spv::StorageClassFunction, convertGlslangToSpvType(node->getType()));
+
+            // Selection control:
+            const spv::SelectionControlMask control = TranslateSelectionControl(*node);
+
+            // make an "if" based on the value created by the condition
+            spv::Builder::If ifBuilder(condition, control, builder);
+
+            // emit the "then" statement
+            builder.createStore(trueValue, result);
+            ifBuilder.makeBeginElse();
+            // emit the "else" statement
+            builder.createStore(falseValue, result);
+
+            // finish off the control flow
+            ifBuilder.makeEndIf();
+
+            builder.clearAccessChain();
+            builder.setAccessChainLValue(result);
+        }
     };
 
-    // Try for OpSelect
+    // Execute the one side needed, as per the condition
+    const auto executeOneSide = [&]() {
+        // Always emit control flow.
+        if (node->getBasicType() != glslang::EbtVoid)
+            result = builder.createVariable(spv::StorageClassFunction, convertGlslangToSpvType(node->getType()));
 
-    if (selectPolicy()) {
+        // Selection control:
+        const spv::SelectionControlMask control = TranslateSelectionControl(*node);
+
+        // make an "if" based on the value created by the condition
+        spv::Builder::If ifBuilder(condition, control, builder);
+
+        // emit the "then" statement
+        if (node->getTrueBlock() != nullptr) {
+            node->getTrueBlock()->traverse(this);
+            if (result != spv::NoResult)
+                builder.createStore(accessChainLoad(node->getTrueBlock()->getAsTyped()->getType()), result);
+        }
+
+        if (node->getFalseBlock() != nullptr) {
+            ifBuilder.makeBeginElse();
+            // emit the "else" statement
+            node->getFalseBlock()->traverse(this);
+            if (result != spv::NoResult)
+                builder.createStore(accessChainLoad(node->getFalseBlock()->getAsTyped()->getType()), result);
+        }
+
+        // finish off the control flow
+        ifBuilder.makeEndIf();
+
+        if (result != spv::NoResult) {
+            builder.clearAccessChain();
+            builder.setAccessChainLValue(result);
+        }
+    };
+
+    // Try for OpSelect (or a requirement to execute both sides)
+    if (bothSidesPolicy()) {
         SpecConstantOpModeGuard spec_constant_op_mode_setter(&builder);
         if (node->getType().getQualifier().isSpecConstant())
             spec_constant_op_mode_setter.turnOnSpecConstantOpMode();
-
-        handleAsOpSelect();
-        return false;
-    }
-
-    // Instead, emit control flow...    
-    // Don't handle results as temporaries, because there will be two names
-    // and better to leave SSA to later passes.
-    spv::Id result = (node->getBasicType() == glslang::EbtVoid)
-                        ? spv::NoResult
-                        : builder.createVariable(spv::StorageClassFunction, convertGlslangToSpvType(node->getType()));
-
-    // emit the condition before doing anything with selection
-    node->getCondition()->traverse(this);
-
-    // Selection control:
-    const spv::SelectionControlMask control = TranslateSelectionControl(*node);
-
-    // make an "if" based on the value created by the condition
-    spv::Builder::If ifBuilder(accessChainLoad(node->getCondition()->getType()), control, builder);
-
-    // emit the "then" statement
-    if (node->getTrueBlock() != nullptr) {
-        node->getTrueBlock()->traverse(this);
-        if (result != spv::NoResult)
-             builder.createStore(accessChainLoad(node->getTrueBlock()->getAsTyped()->getType()), result);
-    }
-
-    if (node->getFalseBlock() != nullptr) {
-        ifBuilder.makeBeginElse();
-        // emit the "else" statement
-        node->getFalseBlock()->traverse(this);
-        if (result != spv::NoResult)
-            builder.createStore(accessChainLoad(node->getFalseBlock()->getAsTyped()->getType()), result);
-    }
-
-    // finish off the control flow
-    ifBuilder.makeEndIf();
-
-    if (result != spv::NoResult) {
-        // GLSL only has r-values as the result of a :?, but
-        // if we have an l-value, that can be more efficient if it will
-        // become the base of a complex r-value expression, because the
-        // next layer copies r-values into memory to use the access-chain mechanism
-        builder.clearAccessChain();
-        builder.setAccessChainLValue(result);
-    }
+        executeBothSides();
+    } else
+        executeOneSide();
 
     return false;
 }
@@ -2627,7 +2668,8 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
                 builder.addMemberDecoration(spvType, member, spv::DecorationLocation, memberQualifier.layoutLocation);
 
             if (qualifier.hasLocation())      // track for upcoming inheritance
-                locationOffset += glslangIntermediate->computeTypeLocationSize(glslangMember);
+                locationOffset += glslangIntermediate->computeTypeLocationSize(
+                                                glslangMember, glslangIntermediate->getStage());
 
             // component, XFB, others
             if (glslangMember.getQualifier().hasComponent())
@@ -3229,8 +3271,6 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
 
     builder.setLine(node->getLoc().line);
 
-    auto resultType = [&node,this]{ return convertGlslangToSpvType(node->getType()); };
-
     // Process a GLSL texturing op (will be SPV image)
     const glslang::TSampler sampler = node->getAsAggregate() ? node->getAsAggregate()->getSequence()[0]->getAsTyped()->getType().getSampler()
                                                              : node->getAsUnaryNode()->getOperand()->getAsTyped()->getType().getSampler();
@@ -3279,6 +3319,20 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
         }
     }
 
+    int components = node->getType().getVectorSize();
+
+    if (node->getOp() == glslang::EOpTextureFetch) {
+        // These must produce 4 components, per SPIR-V spec.  We'll add a conversion constructor if needed.
+        // This will only happen through the HLSL path for operator[], so we do not have to handle e.g.
+        // the EOpTexture/Proj/Lod/etc family.  It would be harmless to do so, but would need more logic
+        // here around e.g. which ones return scalars or other types.
+        components = 4;
+    }
+
+    glslang::TType returnType(node->getType().getBasicType(), glslang::EvqTemporary, components);
+
+    auto resultType = [&returnType,this]{ return convertGlslangToSpvType(returnType); };
+
     // Check for image functions other than queries
     if (node->isImage()) {
         std::vector<spv::Id> operands;
@@ -3325,9 +3379,14 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
             if (builder.getImageTypeFormat(builder.getImageType(operands.front())) == spv::ImageFormatUnknown)
                 builder.addCapability(spv::CapabilityStorageImageReadWithoutFormat);
 
-            spv::Id result = builder.createOp(spv::OpImageRead, resultType(), operands);
-            builder.setPrecision(result, precision);
-            return result;
+            std::vector<spv::Id> result = { builder.createOp(spv::OpImageRead, resultType(), operands) };
+            builder.setPrecision(result[0], precision);
+
+            // If needed, add a conversion constructor to the proper size.
+            if (components != node->getType().getVectorSize())
+                result[0] = builder.createConstructor(precision, result, convertGlslangToSpvType(node->getType()));
+
+            return result[0];
 #ifdef AMD_EXTENSIONS
         } else if (node->getOp() == glslang::EOpImageStore || node->getOp() == glslang::EOpImageStoreLod) {
 #else
@@ -3601,7 +3660,14 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
         }
     }
 
-    return builder.createTextureCall(precision, resultType(), sparse, cracked.fetch, cracked.proj, cracked.gather, noImplicitLod, params);
+    std::vector<spv::Id> result = { 
+        builder.createTextureCall(precision, resultType(), sparse, cracked.fetch, cracked.proj, cracked.gather, noImplicitLod, params)
+    };
+
+    if (components != node->getType().getVectorSize())
+        result[0] = builder.createConstructor(precision, result, convertGlslangToSpvType(node->getType()));
+
+    return result[0];
 }
 
 spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAggregate* node)

@@ -829,7 +829,9 @@ TIntermTyped* HlslParseContext::handleBracketDereference(const TSourceLoc& loc, 
     } else {
         // at least one of base and index is variable...
 
-        if (base->getAsSymbolNode() && wasFlattened(base)) {
+        if (base->getType().isScalarOrVec1())
+            result = base;
+        else if (base->getAsSymbolNode() && wasFlattened(base)) {
             if (index->getQualifier().storage != EvqConst)
                 error(loc, "Invalid variable index to flattened array", base->getAsSymbolNode()->getName().c_str(), "");
 
@@ -1254,7 +1256,7 @@ int HlslParseContext::addFlattenedMember(const TVariable& variable, const TType&
             // inherited locations must be auto bumped, not replicated
             if (flattenData.nextLocation != TQualifier::layoutLocationEnd) {
                 memberVariable->getWritableType().getQualifier().layoutLocation = flattenData.nextLocation;
-                flattenData.nextLocation += intermediate.computeTypeLocationSize(memberVariable->getType());
+                flattenData.nextLocation += intermediate.computeTypeLocationSize(memberVariable->getType(), language);
                 nextOutLocation = std::max(nextOutLocation, flattenData.nextLocation);
             }
         }
@@ -1534,9 +1536,9 @@ void HlslParseContext::assignToInterface(TVariable& variable)
                     int size;
                     if (type.isArray() && qualifier.isArrayedIo(language)) {
                         TType elementType(type, 0);
-                        size = intermediate.computeTypeLocationSize(elementType);
+                        size = intermediate.computeTypeLocationSize(elementType, language);
                     } else
-                        size = intermediate.computeTypeLocationSize(type);
+                        size = intermediate.computeTypeLocationSize(type, language);
 
                     if (qualifier.storage == EvqVaryingIn) {
                         variable.getWritableType().getQualifier().layoutLocation = nextInLocation;
@@ -8631,7 +8633,7 @@ void HlslParseContext::fixBlockLocations(const TSourceLoc& loc, TQualifier& qual
                     memberQualifier.layoutComponent = 0;
                 }
                 nextLocation = memberQualifier.layoutLocation +
-                               intermediate.computeTypeLocationSize(*typeList[member].type);
+                               intermediate.computeTypeLocationSize(*typeList[member].type, language);
             }
         }
     }

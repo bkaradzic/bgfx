@@ -819,6 +819,8 @@ bool TOutputTraverser::visitSelection(TVisit /* visit */, TIntermSelection* node
     out.debug << "Test condition and select";
     out.debug << " (" << node->getCompleteString() << ")";
 
+    if (node->getShortCircuit() == false)
+        out.debug << ": no shortcircuit";
     if (node->getFlatten())
         out.debug << ": Flatten";
     if (node->getDontFlatten())

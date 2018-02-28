@@ -19,7 +19,6 @@ ERROR: 0:85: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCount
 ERROR: 0:87: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
 ERROR: 0:89: 'binding' : atomic_uint binding is too large 
 ERROR: 0:91: 'bar' : redefinition 
-ERROR: 0:92: 'atomic_uint' : layout(binding=X) is required 
 ERROR: 0:94: 'a2' : redefinition 
 ERROR: 0:95: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
 ERROR: 0:96: 'binding' : atomic_uint binding is too large; see gl_MaxAtomicCounterBindings 
@@ -32,7 +31,7 @@ ERROR: 0:134: '' : function does not return a value: funcA
 ERROR: 0:136: '' : function does not return a value: funcB
 ERROR: 0:153: '' : function does not return a value: func3
 ERROR: 0:170: 'coherent' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 33 compilation errors.  No code generated.
+ERROR: 32 compilation errors.  No code generated.
 
 
 Shader version: 430

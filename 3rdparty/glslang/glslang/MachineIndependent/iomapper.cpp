@@ -353,7 +353,9 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 {
     TDefaultIoResolverBase(const TIntermediate &intermediate) :
         intermediate(intermediate),
-        nextUniformLocation(0)
+        nextUniformLocation(0),
+        nextInputLocation(0),
+        nextOutputLocation(0)
     { }
 
     int getBaseBinding(TResourceType res, unsigned int set) const {
@@ -446,7 +448,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     {
         return true;
     }
-    int resolveInOutLocation(EShLanguage /*stage*/, const char* /*name*/, const TType& type, bool /*is_live*/) override
+    int resolveInOutLocation(EShLanguage stage, const char* /*name*/, const TType& type, bool /*is_live*/) override
     {
         // kick out of not doing this
         if (!doAutoLocationMapping())
@@ -464,14 +466,15 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
                 return -1;
         }
 
-        // Placeholder.
-        // TODO: It would be nice to flesh this out using 
-        // intermediate->computeTypeLocationSize(type), or functions that call it like
-        // intermediate->addUsedLocation()
-        // These in turn would want the intermediate, which is not available here, but
-        // is available in many places, and a lot of copying from it could be saved if
-        // it were just available.
-        return 0;
+        // point to the right input or output location counter
+        int& nextLocation = type.getQualifier().isPipeInput() ? nextInputLocation : nextOutputLocation;
+
+        // Placeholder. This does not do proper cross-stage lining up, nor
+        // work with mixed location/no-location declarations.
+        int location = nextLocation;
+        nextLocation += TIntermediate::computeTypeLocationSize(type, stage);
+
+        return location;
     }
     int resolveInOutComponent(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {
@@ -492,6 +495,8 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 protected:
     const TIntermediate &intermediate;
     int nextUniformLocation;
+    int nextInputLocation;
+    int nextOutputLocation;
 
     // Return descriptor set specific base if there is one, and the generic base otherwise.
     int selectBaseBinding(int base, int descriptorSetBase) const {

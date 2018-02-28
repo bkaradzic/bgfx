@@ -5,8 +5,8 @@ layout(push_constant) uniform Material { int a; } mat;            // ERROR, can'
 layout(set = 0, binding = 0, std140) uniform Bt1 { int a; } bt1;
 layout(set = 1, binding = 0, std140) uniform Bt2 { int a; } bt2;  // ERROR, set has to be 0
 
-layout(shared) uniform Bt3 { int a; } bt3;                        // ERROR, no shared
-layout(packed) uniform Bt4 { int a; } bt4;                        // ERROR, no shared
+layout(shared) uniform Bt3 { int a; } bt3;                        // ERROR, no shared, no binding
+layout(packed) uniform Bt4 { int a; } bt4;                        // ERROR, no shared, no binding
 
 void main()
 {

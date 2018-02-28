@@ -67,7 +67,7 @@ TEST_P(HlslCompileTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
                             Source::HLSL, Semantics::Vulkan,
-                            Target::BothASTAndSpv, GetParam().entryPoint);
+                            Target::BothASTAndSpv, true, GetParam().entryPoint);
 }
 
 TEST_P(HlslCompileAndFlattenTest, FromFile)
@@ -83,7 +83,7 @@ TEST_P(HlslLegalizeTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam().fileName,
                             Source::HLSL, Semantics::Vulkan,
-                            Target::Spv, GetParam().entryPoint,
+                            Target::Spv, true, GetParam().entryPoint,
                             "/baseLegalResults/", false);
 }
 
@@ -189,6 +189,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.hull.ctrlpt-2.tesc", "main"},
         {"hlsl.identifier.sample.frag", "main"},
         {"hlsl.if.frag", "PixelShaderFunction"},
+        {"hlsl.imagefetch-subvec4.comp", "main"},
         {"hlsl.implicitBool.frag", "main"},
         {"hlsl.inf.vert", "main"},
         {"hlsl.inoutquals.frag", "main"},

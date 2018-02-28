@@ -20,12 +20,12 @@ gl_FragCoord origin is upper left
 0:7    Sequence
 0:7      Branch: Return with expression
 0:7        texture ( global highp 4-component vector of float)
-0:7          's2D' ( uniform highp sampler2D)
+0:7          's2D' (layout( binding=1) uniform highp sampler2D)
 0:7          Constant:
 0:7            0.500000
 0:7            0.500000
 0:?   Linker Objects
-0:?     's2D' ( uniform highp sampler2D)
+0:?     's2D' (layout( binding=1) uniform highp sampler2D)
 
 
 Linked fragment stage:
@@ -45,12 +45,12 @@ gl_FragCoord origin is upper left
 0:7    Sequence
 0:7      Branch: Return with expression
 0:7        texture ( global highp 4-component vector of float)
-0:7          's2D' ( uniform highp sampler2D)
+0:7          's2D' (layout( binding=1) uniform highp sampler2D)
 0:7          Constant:
 0:7            0.500000
 0:7            0.500000
 0:?   Linker Objects
 0:?     'color' ( out highp 4-component vector of float)
-0:?     's2D' ( uniform highp sampler2D)
+0:?     's2D' (layout( binding=1) uniform highp sampler2D)
 
 SPIR-V is not generated for failed compile or link

@@ -4663,12 +4663,23 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
                 return;
             }
         }
-    }
+    } else if (!intermediate.getAutoMapBindings()) {
+        // some types require bindings
 
-    // atomic_uint
-    if (type.getBasicType() == EbtAtomicUint) {
-        if (! type.getQualifier().hasBinding())
+        // atomic_uint
+        if (type.getBasicType() == EbtAtomicUint)
             error(loc, "layout(binding=X) is required", "atomic_uint", "");
+
+        // SPIR-V
+        if (spvVersion.spv > 0) {
+            if (qualifier.isUniformOrBuffer()) {
+                if (type.getBasicType() == EbtBlock && !qualifier.layoutPushConstant &&
+                                                       !qualifier.layoutAttachment)
+                    error(loc, "uniform/buffer blocks require layout(binding=X)", "binding", "");
+                else if (spvVersion.vulkan > 0 && type.getBasicType() == EbtSampler)
+                    error(loc, "sampler/texture/image requires layout(binding=X)", "binding", "");
+            }
+        }
     }
 
     // "The offset qualifier can only be used on block members of blocks..."
@@ -6072,7 +6083,8 @@ void TParseContext::fixBlockLocations(const TSourceLoc& loc, TQualifier& qualifi
                     memberQualifier.layoutLocation = nextLocation;
                     memberQualifier.layoutComponent = TQualifier::layoutComponentEnd;
                 }
-                nextLocation = memberQualifier.layoutLocation + intermediate.computeTypeLocationSize(*typeList[member].type);
+                nextLocation = memberQualifier.layoutLocation + intermediate.computeTypeLocationSize(
+                                    *typeList[member].type, language);
             }
         }
     }

@@ -1,6 +1,6 @@
 #version 450
 
-uniform sampler2D s2D;
+layout(binding=1) uniform sampler2D s2D;
 
 vec4 getColor()
 {

@@ -273,10 +273,10 @@ spv.400.frag
      439(bvec2v):    438(ptr) Variable Function
      448(bvec3v):    447(ptr) Variable Function
      457(bvec4v):    456(ptr) Variable Function
-             556:    429(ptr) Variable Function
-             565:    438(ptr) Variable Function
-             574:    447(ptr) Variable Function
-             583:    456(ptr) Variable Function
+             557:    429(ptr) Variable Function
+             566:    438(ptr) Variable Function
+             575:    447(ptr) Variable Function
+             584:    456(ptr) Variable Function
      739(dmat2v):    738(ptr) Variable Function
      745(dmat3v):    744(ptr) Variable Function
      751(dmat4v):    750(ptr) Variable Function
@@ -875,61 +875,61 @@ spv.400.frag
              554:   53(fvec4) Load 55(dvec4v)
              555:  455(bvec4) IsNan 554
                               Store 457(bvec4v) 555
-             557:   428(bool) Load 430(boolv)
+             556:   428(bool) Load 430(boolv)
                               SelectionMerge 559 None
-                              BranchConditional 557 558 562
+                              BranchConditional 556 558 562
              558:               Label
              560:   39(float)   Load 41(doublev)
              561:   428(bool)   IsInf 560
-                                Store 556 561
+                                Store 557 561
                                 Branch 559
              562:               Label
-                                Store 556 563
+                                Store 557 563
                                 Branch 559
              559:             Label
-             564:   428(bool) Load 556
+             564:   428(bool) Load 557
                               Store 430(boolv) 564
-             566:   428(bool) Load 430(boolv)
+             565:   428(bool) Load 430(boolv)
                               SelectionMerge 568 None
-                              BranchConditional 566 567 571
+                              BranchConditional 565 567 571
              567:               Label
              569:   43(fvec2)   Load 45(dvec2v)
              570:  437(bvec2)   IsInf 569
-                                Store 565 570
+                                Store 566 570
                                 Branch 568
              571:               Label
-                                Store 565 572
+                                Store 566 572
                                 Branch 568
              568:             Label
-             573:  437(bvec2) Load 565
+             573:  437(bvec2) Load 566
                               Store 439(bvec2v) 573
-             575:   428(bool) Load 430(boolv)
+             574:   428(bool) Load 430(boolv)
                               SelectionMerge 577 None
-                              BranchConditional 575 576 580
+                              BranchConditional 574 576 580
              576:               Label
              578:   48(fvec3)   Load 50(dvec3v)
              579:  446(bvec3)   IsInf 578
-                                Store 574 579
+                                Store 575 579
                                 Branch 577
              580:               Label
-                                Store 574 581
+                                Store 575 581
                                 Branch 577
              577:             Label
-             582:  446(bvec3) Load 574
+             582:  446(bvec3) Load 575
                               Store 448(bvec3v) 582
-             584:   428(bool) Load 430(boolv)
+             583:   428(bool) Load 430(boolv)
                               SelectionMerge 586 None
-                              BranchConditional 584 585 589
+                              BranchConditional 583 585 589
              585:               Label
              587:   53(fvec4)   Load 55(dvec4v)
              588:  455(bvec4)   IsInf 587
-                                Store 583 588
+                                Store 584 588
                                 Branch 586
              589:               Label
-                                Store 583 590
+                                Store 584 590
                                 Branch 586
              586:             Label
-             591:  455(bvec4) Load 583
+             591:  455(bvec4) Load 584
                               Store 457(bvec4v) 591
              592:   39(float) Load 41(doublev)
              593:   39(float) ExtInst 1(GLSL.std.450) 66(Length) 592
