@@ -240,6 +240,9 @@ void nvgReset(NVGcontext* ctx);
 //
 // Current render style can be saved and restored using nvgSave() and nvgRestore().
 
+// Sets whether to draw antialias for nvgStroke() and nvgFill(). It's enabled by default.
+void nvgShapeAntiAlias(NVGcontext* ctx, int enabled);
+
 // Sets current stroke style to a solid color.
 void nvgStrokeColor(NVGcontext* ctx, NVGcolor color);
 
@@ -268,7 +271,7 @@ void nvgLineCap(NVGcontext* ctx, int cap);
 void nvgLineJoin(NVGcontext* ctx, int join);
 
 // Sets the transparency applied to all rendered shapes.
-// Already transparent paths will get proportionally more transparent as well.
+// Alreade transparent paths will get proportionally more transparent as well.
 void nvgGlobalAlpha(NVGcontext* ctx, float alpha);
 
 //
@@ -392,7 +395,7 @@ NVGpaint nvgLinearGradient(NVGcontext* ctx, float sx, float sy, float ex, float 
 						   NVGcolor icol, NVGcolor ocol);
 
 // Creates and returns a box gradient. Box gradient is a feathered rounded rectangle, it is useful for rendering
-// drop shadows or highlights for boxes. Parameters (x,y) define the top-left corner of the rectangle,
+// drop shadows or hilights for boxes. Parameters (x,y) define the top-left corner of the rectangle,
 // (w,h) define the size of the rectangle, r defines the corner radius, and f feather. Feather defines how blurry
 // the border of the rectangle is. Parameter icol specifies the inner color and ocol the outer color of the gradient.
 // The gradient is transformed by the current transform when it is passed to nvgFillPaint() or nvgStrokePaint().

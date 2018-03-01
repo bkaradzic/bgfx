@@ -1144,12 +1144,12 @@ NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId) {
 	return nvgCreate(_edgeaa, _viewId, NULL);
 }
 
-void nvgDelete(struct NVGcontext* _ctx)
+void nvgDelete(NVGcontext* _ctx)
 {
 	nvgDeleteInternal(_ctx);
 }
 
-void nvgSetViewId(struct NVGcontext* _ctx, bgfx::ViewId _viewId)
+void nvgSetViewId(NVGcontext* _ctx, bgfx::ViewId _viewId)
 {
 	struct NVGparams* params = nvgInternalParams(_ctx);
 	struct GLNVGcontext* gl = (struct GLNVGcontext*)params->userPtr;

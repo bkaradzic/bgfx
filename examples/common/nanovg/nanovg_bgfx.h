@@ -27,10 +27,10 @@ NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId, bx::AllocatorI* _al
 NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId);
 
 ///
-void nvgDelete(struct NVGcontext* _ctx);
+void nvgDelete(NVGcontext* _ctx);
 
 ///
-void nvgSetViewId(struct NVGcontext* _ctx, bgfx::ViewId _viewId);
+void nvgSetViewId(NVGcontext* _ctx, bgfx::ViewId _viewId);
 
 ///
 uint16_t nvgGetViewId(struct NVGcontext* _ctx);
