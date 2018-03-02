@@ -903,7 +903,7 @@ int fonsAddFont(FONScontext* stash, const char* name, const char* path)
 	fp = 0;
 	if (readed != dataSize) goto error;
 
-	return fonsAddFontMem(stash, name, data, dataSize, 1);
+	return fonsAddFontMem(stash, name, data, int(dataSize), 1);
 
 error:
 	if (data) free(data);

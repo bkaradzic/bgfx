@@ -4626,7 +4626,6 @@ data.NumQualityLevels = 0;
 						{
 							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 							const uint32_t slice = bx::strideAlign(mip.m_height*pitch,        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-							const uint32_t size  = slice*depth;
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*depth);
 							bimg::imageCopy(temp
@@ -4643,11 +4642,6 @@ data.NumQualityLevels = 0;
 						}
 
 						++kk;
-					}
-					else
-					{
-						const uint32_t pitch = bx::strideAlign(width*bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-						const uint32_t slice = bx::strideAlign(height*pitch,  D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 					}
 
 					width  >>= 1;
