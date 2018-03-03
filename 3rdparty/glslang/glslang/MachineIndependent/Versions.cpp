@@ -204,6 +204,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_gpu_shader_int16]                     = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_image_load_store_lod]          = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_fragment_mask]                 = EBhDisable;
+    extensionBehavior[E_GL_AMD_gpu_shader_half_float_fetch]          = EBhDisable;
 #endif
 
 #ifdef NV_EXTENSIONS
@@ -341,6 +342,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_AMD_gpu_shader_int16 1\n"
             "#define GL_AMD_shader_image_load_store_lod 1\n"
             "#define GL_AMD_shader_fragment_mask 1\n"
+            "#define GL_AMD_gpu_shader_half_float_fetch 1\n"
 #endif
 
 #ifdef NV_EXTENSIONS
@@ -749,7 +751,7 @@ void TParseVersions::doubleCheck(const TSourceLoc& loc, const char* op)
 void TParseVersions::int16Check(const TSourceLoc& loc, const char* op, bool builtIn)
 {
     if (! builtIn) {
-        requireExtensions(loc, 1, &E_GL_AMD_gpu_shader_int16, "shader int16");
+        requireExtensions(loc, 1, &E_GL_AMD_gpu_shader_int16, op);
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
         profileRequires(loc, ECoreProfile, 450, nullptr, op);
         profileRequires(loc, ECompatibilityProfile, 450, nullptr, op);
@@ -760,7 +762,18 @@ void TParseVersions::int16Check(const TSourceLoc& loc, const char* op, bool buil
 void TParseVersions::float16Check(const TSourceLoc& loc, const char* op, bool builtIn)
 {
     if (! builtIn) {
-        requireExtensions(loc, 1, &E_GL_AMD_gpu_shader_half_float, "shader half float");
+        requireExtensions(loc, 1, &E_GL_AMD_gpu_shader_half_float, op);
+        requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
+        profileRequires(loc, ECoreProfile, 450, nullptr, op);
+        profileRequires(loc, ECompatibilityProfile, 450, nullptr, op);
+    }
+}
+
+// Call for any operation needing GLSL float16 opaque-type support
+void TParseVersions::float16OpaqueCheck(const TSourceLoc& loc, const char* op, bool builtIn)
+{
+    if (! builtIn) {
+        requireExtensions(loc, 1, &E_GL_AMD_gpu_shader_half_float_fetch, op);
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
         profileRequires(loc, ECoreProfile, 450, nullptr, op);
         profileRequires(loc, ECompatibilityProfile, 450, nullptr, op);
@@ -772,7 +785,7 @@ void TParseVersions::float16Check(const TSourceLoc& loc, const char* op, bool bu
 void TParseVersions::int64Check(const TSourceLoc& loc, const char* op, bool builtIn)
 {
     if (! builtIn) {
-        requireExtensions(loc, 1, &E_GL_ARB_gpu_shader_int64, "shader int64");
+        requireExtensions(loc, 1, &E_GL_ARB_gpu_shader_int64, op);
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
         profileRequires(loc, ECoreProfile, 450, nullptr, op);
         profileRequires(loc, ECompatibilityProfile, 450, nullptr, op);
@@ -789,7 +802,7 @@ void TParseVersions::spvRemoved(const TSourceLoc& loc, const char* op)
 // Call for any operation removed because Vulkan SPIR-V is being generated.
 void TParseVersions::vulkanRemoved(const TSourceLoc& loc, const char* op)
 {
-    if (spvVersion.vulkan >= 100)
+    if (spvVersion.vulkan > 0)
         error(loc, "not allowed when using GLSL for Vulkan", op, "");
 }
 

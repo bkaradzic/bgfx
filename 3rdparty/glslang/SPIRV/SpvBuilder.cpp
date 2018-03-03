@@ -1178,7 +1178,7 @@ Id Builder::createAccessChain(StorageClass storageClass, Id base, const std::vec
 
 Id Builder::createArrayLength(Id base, unsigned int member)
 {
-    spv::Id intType = makeIntType(32);
+    spv::Id intType = makeUintType(32);
     Instruction* length = new Instruction(getUniqueId(), intType, OpArrayLength);
     length->addIdOperand(base);
     length->addImmediateOperand(member);
@@ -1751,7 +1751,11 @@ Id Builder::createTextureQueryCall(Op opCode, const TextureParameters& parameter
         break;
     }
     case OpImageQueryLod:
+#ifdef AMD_EXTENSIONS
+        resultType = makeVectorType(getScalarTypeId(getTypeId(parameters.coords)), 2);
+#else
         resultType = makeVectorType(makeFloatType(32), 2);
+#endif
         break;
     case OpImageQueryLevels:
     case OpImageQuerySamples:

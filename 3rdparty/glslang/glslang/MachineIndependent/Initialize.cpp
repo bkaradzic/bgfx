@@ -82,7 +82,10 @@ TBuiltIns::TBuiltIns()
 {
     // Set up textual representations for making all the permutations
     // of texturing/imaging functions.
-    prefixes[EbtFloat] =  "";
+    prefixes[EbtFloat] = "";
+#ifdef AMD_EXTENSIONS
+    prefixes[EbtFloat16] = "f16";
+#endif
     prefixes[EbtInt]   = "i";
     prefixes[EbtUint]  = "u";
     postfixes[2] = "2";
@@ -3192,7 +3195,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
     // GL_AMD_shader_fragment_mask
-    if (profile != EEsProfile && version >= 450 && spvVersion.vulkan >= 100) {
+    if (profile != EEsProfile && version >= 450 && spvVersion.vulkan > 0) {
         stageBuiltins[EShLangFragment].append(
             "uint fragmentMaskFetchAMD(subpassInputMS);"
             "uint fragmentMaskFetchAMD(isubpassInputMS);"
@@ -3491,7 +3494,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             stageBuiltins[EShLangVertex].append(
                 "int gl_InstanceID;"          // needs qualifier fixed later
                 );
-        if (spvVersion.vulkan >= 100 && version >= 140)
+        if (spvVersion.vulkan > 0 && version >= 140)
             stageBuiltins[EShLangVertex].append(
                 "in int gl_VertexIndex;"
                 "in int gl_InstanceIndex;"
@@ -3541,7 +3544,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                     "in highp int gl_VertexID;"      // needs qualifier fixed later
                     "in highp int gl_InstanceID;"    // needs qualifier fixed later
                     );
-            if (spvVersion.vulkan >= 100)
+            if (spvVersion.vulkan > 0)
                 stageBuiltins[EShLangVertex].append(
                     "in highp int gl_VertexIndex;"
                     "in highp int gl_InstanceIndex;"
@@ -4059,8 +4062,11 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
     // In this function proper, enumerate the types, then calls the next set of functions
     // to enumerate all the uses for that type.
     //
-
+#ifdef AMD_EXTENSIONS
+    TBasicType bTypes[4] = { EbtFloat, EbtFloat16, EbtInt, EbtUint };
+#else
     TBasicType bTypes[3] = { EbtFloat, EbtInt, EbtUint };
+#endif
     bool skipBuffer = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 140);
     bool skipCubeArrayed = (profile == EEsProfile && version < 310) || (profile != EEsProfile && version < 130);
 
@@ -4100,12 +4106,20 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                             continue;
                         if (ms && arrayed && profile == EEsProfile && version < 310)
                             continue;
+#ifdef AMD_EXTENSIONS
+                        for (int bType = 0; bType < 4; ++bType) { // float, float16, int, uint results
 
+                            if (shadow && bType > 1)
+                                continue;
+
+                            if (bTypes[bType] == EbtFloat16 && (profile == EEsProfile ||version < 450))
+                                continue;
+#else
                         for (int bType = 0; bType < 3; ++bType) { // float, int, uint results
 
                             if (shadow && bType > 0)
                                 continue;
-
+#endif
                             if (dim == EsdRect && version < 140 && bType > 0)
                                 continue;
 
@@ -4223,15 +4237,37 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
     //
 
     if (profile != EEsProfile && version >= 400 && ! sampler.image && sampler.dim != EsdRect && ! sampler.ms && sampler.dim != EsdBuffer) {
-        stageBuiltins[EShLangFragment].append("vec2 textureQueryLod(");
-        stageBuiltins[EShLangFragment].append(typeName);
-        if (dimMap[sampler.dim] == 1)
-            stageBuiltins[EShLangFragment].append(", float");
-        else {
-            stageBuiltins[EShLangFragment].append(", vec");
-            stageBuiltins[EShLangFragment].append(postfixes[dimMap[sampler.dim]]);
+#ifdef AMD_EXTENSIONS
+        for (int f16TexAddr = 0; f16TexAddr < 2; ++f16TexAddr) {
+            if (f16TexAddr && sampler.type != EbtFloat16)
+                continue;
+#endif
+            stageBuiltins[EShLangFragment].append("vec2 textureQueryLod(");
+            stageBuiltins[EShLangFragment].append(typeName);
+            if (dimMap[sampler.dim] == 1)
+#ifdef AMD_EXTENSIONS
+                if (f16TexAddr)
+                    stageBuiltins[EShLangFragment].append(", float16_t");
+                else
+                    stageBuiltins[EShLangFragment].append(", float");
+#else
+                stageBuiltins[EShLangFragment].append(", float");
+#endif
+            else {
+#ifdef AMD_EXTENSIONS
+                if (f16TexAddr)
+                    stageBuiltins[EShLangFragment].append(", f16vec");
+                else
+                    stageBuiltins[EShLangFragment].append(", vec");
+#else
+                stageBuiltins[EShLangFragment].append(", vec");
+#endif
+                stageBuiltins[EShLangFragment].append(postfixes[dimMap[sampler.dim]]);
+            }
+            stageBuiltins[EShLangFragment].append(");\n");
+#ifdef AMD_EXTENSIONS
         }
-        stageBuiltins[EShLangFragment].append(");\n");
+#endif
     }
 
     //
@@ -4421,7 +4457,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 
                 if (bias && (lod || sampler.ms))
                     continue;
-                if (bias && sampler.dim == Esd2D && sampler.shadow && sampler.arrayed)
+                if (bias && (sampler.dim == Esd2D || sampler.dim == EsdCube) && sampler.shadow && sampler.arrayed)
                     continue;
                 if (bias && (sampler.dim == EsdRect || sampler.dim == EsdBuffer))
                     continue;
@@ -4470,149 +4506,237 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                                     continue;
                                 if (extraProj && (sampler.dim == Esd3D || sampler.shadow))
                                     continue;
+#ifdef AMD_EXTENSIONS
+                                for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr) { // loop over 16-bit floating-point texel addressing
 
-                                for (int lodClamp = 0; lodClamp <= 1 ;++lodClamp) { // loop over "bool" lod clamp
-
-                                    if (lodClamp && (profile == EEsProfile || version < 450))
+                                    if (f16TexAddr && sampler.type != EbtFloat16)
                                         continue;
-                                    if (lodClamp && (proj || lod || fetch))
-                                        continue;
-
-                                    for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
-
-                                        if (sparse && (profile == EEsProfile || version < 450))
-                                            continue;
-                                        // Sparse sampling is not for 1D/1D array texture, buffer texture, and projective texture
-                                        if (sparse && (sampler.dim == Esd1D || sampler.dim == EsdBuffer || proj))
-                                            continue;
-
-                                        TString s;
-
-                                        // return type
-                                        if (sparse)
-                                            s.append("int ");
-                                        else {
-                                            if (sampler.shadow)
-                                                s.append("float ");
-                                            else {
-                                                s.append(prefixes[sampler.type]);
-                                                s.append("vec4 ");
-                                            }
-                                        }
-
-                                        // name
-                                        if (sparse) {
-                                            if (fetch)
-                                                s.append("sparseTexel");
-                                            else
-                                                s.append("sparseTexture");
-                                        } else {
-                                            if (fetch)
-                                                s.append("texel");
-                                            else
-                                                s.append("texture");
-                                        }
-                                        if (proj)
-                                            s.append("Proj");
-                                        if (lod)
-                                            s.append("Lod");
-                                        if (grad)
-                                            s.append("Grad");
-                                        if (fetch)
-                                            s.append("Fetch");
-                                        if (offset)
-                                            s.append("Offset");
-                                        if (lodClamp)
-                                            s.append("Clamp");
-                                        if (lodClamp || sparse)
-                                            s.append("ARB");
-                                        s.append("(");
-
-                                        // sampler type
-                                        s.append(typeName);
-
-                                        // P coordinate
-                                        if (extraProj)
-                                            s.append(",vec4");
-                                        else {
-                                            s.append(",");
-                                            TBasicType t = fetch ? EbtInt : EbtFloat;
-                                            if (totalDims == 1)
-                                                s.append(TType::getBasicString(t));
-                                            else {
-                                                s.append(prefixes[t]);
-                                                s.append("vec");
-                                                s.append(postfixes[totalDims]);
-                                            }
-                                        }
-
-                                        if (bias && compare)
-                                            continue;
-
-                                        // non-optional lod argument (lod that's not driven by lod loop) or sample
-                                        if ((fetch && sampler.dim != EsdBuffer && sampler.dim != EsdRect && !sampler.ms) ||
-                                            (sampler.ms && fetch))
-                                            s.append(",int");
-
-                                        // non-optional lod
-                                        if (lod)
-                                            s.append(",float");
-
-                                        // gradient arguments
-                                        if (grad) {
-                                            if (dimMap[sampler.dim] == 1)
-                                                s.append(",float,float");
-                                            else {
-                                                s.append(",vec");
-                                                s.append(postfixes[dimMap[sampler.dim]]);
-                                                s.append(",vec");
-                                                s.append(postfixes[dimMap[sampler.dim]]);
-                                            }
-                                        }
-
-                                        // offset
-                                        if (offset) {
-                                            if (dimMap[sampler.dim] == 1)
-                                                s.append(",int");
-                                            else {
-                                                s.append(",ivec");
-                                                s.append(postfixes[dimMap[sampler.dim]]);
-                                            }
-                                        }
-
-                                        // non-optional compare
-                                        if (compare)
-                                            s.append(",float");
-
-                                        // lod clamp
-                                        if (lodClamp)
-                                            s.append(",float");
-
-                                        // texel out (for sparse texture)
-                                        if (sparse) {
-                                            s.append(",out ");
-                                            if (sampler.shadow)
-                                                s.append("float ");
-                                            else {
-                                                s.append(prefixes[sampler.type]);
-                                                s.append("vec4 ");
-                                            }
-                                        }
-
-                                        // optional bias
-                                        if (bias)
-                                            s.append(",float");
-
-                                        s.append(");\n");
-
-                                        // Add to the per-language set of built-ins
-
-                                        if (bias || lodClamp)
-                                            stageBuiltins[EShLangFragment].append(s);
-                                        else
-                                            commonBuiltins.append(s);
+                                    if (f16TexAddr && sampler.shadow && ! compare) {
+                                        compare = true; // compare argument is always present
+                                        totalDims--;
                                     }
+#endif
+                                    for (int lodClamp = 0; lodClamp <= 1 ;++lodClamp) { // loop over "bool" lod clamp
+
+                                        if (lodClamp && (profile == EEsProfile || version < 450))
+                                            continue;
+                                        if (lodClamp && (proj || lod || fetch))
+                                            continue;
+
+                                        for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
+
+                                            if (sparse && (profile == EEsProfile || version < 450))
+                                                continue;
+                                            // Sparse sampling is not for 1D/1D array texture, buffer texture, and projective texture
+                                            if (sparse && (sampler.dim == Esd1D || sampler.dim == EsdBuffer || proj))
+                                                continue;
+
+                                            TString s;
+
+                                            // return type
+                                            if (sparse)
+                                                s.append("int ");
+                                            else {
+                                                if (sampler.shadow)
+#ifdef AMD_EXTENSIONS
+                                                    if (sampler.type == EbtFloat16)
+                                                        s.append("float16_t ");
+                                                    else
+                                                        s.append("float ");
+#else
+                                                    s.append("float ");
+#endif
+                                                else {
+                                                    s.append(prefixes[sampler.type]);
+                                                    s.append("vec4 ");
+                                                }
+                                            }
+
+                                            // name
+                                            if (sparse) {
+                                                if (fetch)
+                                                    s.append("sparseTexel");
+                                                else
+                                                    s.append("sparseTexture");
+                                            }
+                                            else {
+                                                if (fetch)
+                                                    s.append("texel");
+                                                else
+                                                    s.append("texture");
+                                            }
+                                            if (proj)
+                                                s.append("Proj");
+                                            if (lod)
+                                                s.append("Lod");
+                                            if (grad)
+                                                s.append("Grad");
+                                            if (fetch)
+                                                s.append("Fetch");
+                                            if (offset)
+                                                s.append("Offset");
+                                            if (lodClamp)
+                                                s.append("Clamp");
+                                            if (lodClamp || sparse)
+                                                s.append("ARB");
+                                            s.append("(");
+
+                                            // sampler type
+                                            s.append(typeName);
+#ifdef AMD_EXTENSIONS
+                                            // P coordinate
+                                            if (extraProj) {
+                                                if (f16TexAddr)
+                                                    s.append(",f16vec4");
+                                                else
+                                                    s.append(",vec4");
+                                            } else {
+                                                s.append(",");
+                                                TBasicType t = fetch ? EbtInt : (f16TexAddr ? EbtFloat16 : EbtFloat);
+                                                if (totalDims == 1)
+                                                    s.append(TType::getBasicString(t));
+                                                else {
+                                                    s.append(prefixes[t]);
+                                                    s.append("vec");
+                                                    s.append(postfixes[totalDims]);
+                                                }
+                                            }
+#else
+                                            // P coordinate
+                                            if (extraProj)
+                                                s.append(",vec4");
+                                            else {
+                                                s.append(",");
+                                                TBasicType t = fetch ? EbtInt : EbtFloat;
+                                                if (totalDims == 1)
+                                                    s.append(TType::getBasicString(t));
+                                                else {
+                                                    s.append(prefixes[t]);
+                                                    s.append("vec");
+                                                    s.append(postfixes[totalDims]);
+                                                }
+                                            }
+#endif
+                                            // non-optional compare
+                                            if (compare)
+                                                s.append(",float");
+
+                                            // non-optional lod argument (lod that's not driven by lod loop) or sample
+                                            if ((fetch && sampler.dim != EsdBuffer && sampler.dim != EsdRect && !sampler.ms) ||
+                                                (sampler.ms && fetch))
+                                                s.append(",int");
+#ifdef AMD_EXTENSIONS
+                                            // non-optional lod
+                                            if (lod) {
+                                                if (f16TexAddr)
+                                                    s.append(",float16_t");
+                                                else
+                                                    s.append(",float");
+                                            }
+
+                                            // gradient arguments
+                                            if (grad) {
+                                                if (dimMap[sampler.dim] == 1) {
+                                                    if (f16TexAddr)
+                                                        s.append(",float16_t,float16_t");
+                                                    else
+                                                        s.append(",float,float");
+                                                } else {
+                                                    if (f16TexAddr)
+                                                        s.append(",f16vec");
+                                                    else
+                                                        s.append(",vec");
+                                                    s.append(postfixes[dimMap[sampler.dim]]);
+                                                    if (f16TexAddr)
+                                                        s.append(",f16vec");
+                                                    else
+                                                        s.append(",vec");
+                                                    s.append(postfixes[dimMap[sampler.dim]]);
+                                                }
+                                            }
+#else
+                                            // non-optional lod
+                                            if (lod)
+                                                s.append(",float");
+
+                                            // gradient arguments
+                                            if (grad) {
+                                                if (dimMap[sampler.dim] == 1)
+                                                    s.append(",float,float");
+                                                else {
+                                                    s.append(",vec");
+                                                    s.append(postfixes[dimMap[sampler.dim]]);
+                                                    s.append(",vec");
+                                                    s.append(postfixes[dimMap[sampler.dim]]);
+                                                }
+                                            }
+#endif
+                                            // offset
+                                            if (offset) {
+                                                if (dimMap[sampler.dim] == 1)
+                                                    s.append(",int");
+                                                else {
+                                                    s.append(",ivec");
+                                                    s.append(postfixes[dimMap[sampler.dim]]);
+                                                }
+                                            }
+
+#ifdef AMD_EXTENSIONS
+                                            // lod clamp
+                                            if (lodClamp) {
+                                                if (f16TexAddr)
+                                                    s.append(",float16_t");
+                                                else
+                                                    s.append(",float");
+                                            }
+#else
+                                            // lod clamp
+                                            if (lodClamp)
+                                                s.append(",float");
+#endif
+                                            // texel out (for sparse texture)
+                                            if (sparse) {
+                                                s.append(",out ");
+                                                if (sampler.shadow)
+#ifdef AMD_EXTENSIONS
+                                                    if (sampler.type == EbtFloat16)
+                                                        s.append("float16_t");
+                                                    else
+                                                        s.append("float");
+#else
+                                                    s.append("float");
+#endif
+                                                else {
+                                                    s.append(prefixes[sampler.type]);
+                                                    s.append("vec4");
+                                                }
+                                            }
+#ifdef AMD_EXTENSIONS
+                                            // optional bias
+                                            if (bias) {
+                                                if (f16TexAddr)
+                                                    s.append(",float16_t");
+                                                else
+                                                    s.append(",float");
+                                            }
+#else
+                                            // optional bias
+                                            if (bias)
+                                                s.append(",float");
+#endif
+                                            s.append(");\n");
+
+                                            // Add to the per-language set of built-ins
+                                            if (bias || lodClamp)
+                                                stageBuiltins[EShLangFragment].append(s);
+                                            else
+                                                commonBuiltins.append(s);
+
+                                        }
+                                    }
+#ifdef AMD_EXTENSIONS
                                 }
+#endif
                             }
                         }
                     }
@@ -4645,81 +4769,96 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
     if (version < 140 && sampler.dim == EsdRect && sampler.type != EbtFloat)
         return;
 
-    for (int offset = 0; offset < 3; ++offset) { // loop over three forms of offset in the call name:  none, Offset, and Offsets
+#ifdef AMD_EXTENSIONS
+    for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr) { // loop over 16-bit floating-point texel addressing
 
-        for (int comp = 0; comp < 2; ++comp) { // loop over presence of comp argument
+        if (f16TexAddr && sampler.type != EbtFloat16)
+            continue;
+#endif
+        for (int offset = 0; offset < 3; ++offset) { // loop over three forms of offset in the call name:  none, Offset, and Offsets
 
-            if (comp > 0 && sampler.shadow)
-                continue;
+            for (int comp = 0; comp < 2; ++comp) { // loop over presence of comp argument
 
-            if (offset > 0 && sampler.dim == EsdCube)
-                continue;
-
-            for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
-                if (sparse && (profile == EEsProfile || version < 450))
+                if (comp > 0 && sampler.shadow)
                     continue;
 
-                TString s;
+                if (offset > 0 && sampler.dim == EsdCube)
+                    continue;
 
-                // return type
-                if (sparse)
-                    s.append("int ");
-                else {
-                    s.append(prefixes[sampler.type]);
-                    s.append("vec4 ");
+                for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
+                    if (sparse && (profile == EEsProfile || version < 450))
+                        continue;
+
+                    TString s;
+
+                    // return type
+                    if (sparse)
+                        s.append("int ");
+                    else {
+                        s.append(prefixes[sampler.type]);
+                        s.append("vec4 ");
+                    }
+
+                    // name
+                    if (sparse)
+                        s.append("sparseTextureGather");
+                    else
+                        s.append("textureGather");
+                    switch (offset) {
+                    case 1:
+                        s.append("Offset");
+                        break;
+                    case 2:
+                        s.append("Offsets");
+                    default:
+                        break;
+                    }
+                    if (sparse)
+                        s.append("ARB");
+                    s.append("(");
+
+                    // sampler type argument
+                    s.append(typeName);
+
+                    // P coordinate argument
+#ifdef AMD_EXTENSIONS
+                    if (f16TexAddr)
+                        s.append(",f16vec");
+                    else
+                        s.append(",vec");
+#else
+                    s.append(",vec");
+#endif
+                    int totalDims = dimMap[sampler.dim] + (sampler.arrayed ? 1 : 0);
+                    s.append(postfixes[totalDims]);
+
+                    // refZ argument
+                    if (sampler.shadow)
+                        s.append(",float");
+
+                    // offset argument
+                    if (offset > 0) {
+                        s.append(",ivec2");
+                        if (offset == 2)
+                            s.append("[4]");
+                    }
+
+                    // texel out (for sparse texture)
+                    if (sparse) {
+                        s.append(",out ");
+                        s.append(prefixes[sampler.type]);
+                        s.append("vec4 ");
+                    }
+
+                    // comp argument
+                    if (comp)
+                        s.append(",int");
+
+                    s.append(");\n");
+                    commonBuiltins.append(s);
+#ifdef AMD_EXTENSIONS
                 }
-
-                // name
-                if (sparse)
-                    s.append("sparseTextureGather");
-                else
-                    s.append("textureGather");
-                switch (offset) {
-                case 1:
-                    s.append("Offset");
-                    break;
-                case 2:
-                    s.append("Offsets");
-                default:
-                    break;
-                }
-
-                if (sparse)
-                    s.append("ARB");
-                s.append("(");
-
-                // sampler type argument
-                s.append(typeName);
-
-                // P coordinate argument
-                s.append(",vec");
-                int totalDims = dimMap[sampler.dim] + (sampler.arrayed ? 1 : 0);
-                s.append(postfixes[totalDims]);
-
-                // refZ argument
-                if (sampler.shadow)
-                    s.append(",float");
-
-                // offset argument
-                if (offset > 0) {
-                    s.append(",ivec2");
-                    if (offset == 2)
-                        s.append("[4]");
-                }
-
-                // texel out (for sparse texture)
-                if (sparse) {
-                    s.append(",out ");
-                    s.append(prefixes[sampler.type]);
-                    s.append("vec4 ");
-                }
-
-                // comp argument
-                if (comp)
-                    s.append(",int");
-
-                s.append(");\n");
-                commonBuiltins.append(s);
+#endif
             }
         }
     }
@@ -4738,95 +4877,112 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
             if ((lod && bias) || (lod == 0 && bias == 0))
                 continue;
 
-            for (int offset = 0; offset < 3; ++offset) { // loop over three forms of offset in the call name:  none, Offset, and Offsets
+            for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr) { // loop over 16-bit floating-point texel addressing
 
-                for (int comp = 0; comp < 2; ++comp) { // loop over presence of comp argument
+                if (f16TexAddr && sampler.type != EbtFloat16)
+                    continue;
 
-                    if (comp == 0 && bias)
-                        continue;
+                for (int offset = 0; offset < 3; ++offset) { // loop over three forms of offset in the call name:  none, Offset, and Offsets
 
-                    if (offset > 0 && sampler.dim == EsdCube)
-                        continue;
+                    for (int comp = 0; comp < 2; ++comp) { // loop over presence of comp argument
 
-                    for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
-                        if (sparse && (profile == EEsProfile || version < 450))
+                        if (comp == 0 && bias)
                             continue;
 
-                        TString s;
+                        if (offset > 0 && sampler.dim == EsdCube)
+                            continue;
 
-                        // return type
-                        if (sparse)
-                            s.append("int ");
-                        else {
-                            s.append(prefixes[sampler.type]);
-                            s.append("vec4 ");
+                        for (int sparse = 0; sparse <= 1; ++sparse) { // loop over "bool" sparse or not
+                            if (sparse && (profile == EEsProfile || version < 450))
+                                continue;
+
+                            TString s;
+
+                            // return type
+                            if (sparse)
+                                s.append("int ");
+                            else {
+                                s.append(prefixes[sampler.type]);
+                                s.append("vec4 ");
+                            }
+
+                            // name
+                            if (sparse)
+                                s.append("sparseTextureGather");
+                            else
+                                s.append("textureGather");
+
+                            if (lod)
+                                s.append("Lod");
+
+                            switch (offset) {
+                            case 1:
+                                s.append("Offset");
+                                break;
+                            case 2:
+                                s.append("Offsets");
+                            default:
+                                break;
+                            }
+
+                            if (lod)
+                                s.append("AMD");
+                            else if (sparse)
+                                s.append("ARB");
+
+                            s.append("(");
+
+                            // sampler type argument
+                            s.append(typeName);
+
+                            // P coordinate argument
+                            if (f16TexAddr)
+                                s.append(",f16vec");
+                            else
+                                s.append(",vec");
+                            int totalDims = dimMap[sampler.dim] + (sampler.arrayed ? 1 : 0);
+                            s.append(postfixes[totalDims]);
+
+                            // lod argument
+                            if (lod) {
+                                if (f16TexAddr)
+                                    s.append(",float16_t");
+                                else
+                                    s.append(",float");
+                            }
+
+                            // offset argument
+                            if (offset > 0) {
+                                s.append(",ivec2");
+                                if (offset == 2)
+                                    s.append("[4]");
+                            }
+
+                            // texel out (for sparse texture)
+                            if (sparse) {
+                                s.append(",out ");
+                                s.append(prefixes[sampler.type]);
+                                s.append("vec4 ");
+                            }
+
+                            // comp argument
+                            if (comp)
+                                s.append(",int");
+
+                            // bias argument
+                            if (bias) {
+                                if (f16TexAddr)
+                                    s.append(",float16_t");
+                                else
+                                    s.append(",float");
+                            }
+
+                            s.append(");\n");
+                            if (bias)
+                                stageBuiltins[EShLangFragment].append(s);
+                            else
+                                commonBuiltins.append(s);
                         }
-
-                        // name
-                        if (sparse)
-                            s.append("sparseTextureGather");
-                        else
-                            s.append("textureGather");
-
-                        if (lod)
-                            s.append("Lod");
-
-                        switch (offset) {
-                        case 1:
-                            s.append("Offset");
-                            break;
-                        case 2:
-                            s.append("Offsets");
-                        default:
-                            break;
-                        }
-
-                        if (lod)
-                            s.append("AMD");
-                        else if (sparse)
-                            s.append("ARB");
-
-                        s.append("(");
-
-                        // sampler type argument
-                        s.append(typeName);
-
-                        // P coordinate argument
-                        s.append(",vec");
-                        int totalDims = dimMap[sampler.dim] + (sampler.arrayed ? 1 : 0);
-                        s.append(postfixes[totalDims]);
-
-                        // lod argument
-                        if (lod)
-                            s.append(",float");
-
-                        // offset argument
-                        if (offset > 0) {
-                            s.append(",ivec2");
-                            if (offset == 2)
-                                s.append("[4]");
-                        }
-
-                        // texel out (for sparse texture)
-                        if (sparse) {
-                            s.append(",out ");
-                            s.append(prefixes[sampler.type]);
-                            s.append("vec4 ");
-                        }
-
-                        // comp argument
-                        if (comp)
-                            s.append(",int");
-
-                        // bias argument
-                        if (bias)
-                            s.append(",float");
-
-                        s.append(");\n");
-                        if (bias)
-                            stageBuiltins[EShLangFragment].append(s);
-                        else
-                            commonBuiltins.append(s);
                     }
                 }
             }
@@ -5413,7 +5569,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubGroupLeMaskARB",     EbvSubGroupLeMask,     symbolTable);
             BuiltInVariable("gl_SubGroupLtMaskARB",     EbvSubGroupLtMask,     symbolTable);
 
-            if (spvVersion.vulkan >= 100)
+            if (spvVersion.vulkan > 0)
                 // Treat "gl_SubGroupSizeARB" as shader input instead of uniform for Vulkan
                 SpecialQualifier("gl_SubGroupSizeARB", EvqVaryingIn, EbvSubGroupSize, symbolTable);
 
@@ -5514,7 +5670,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             SpecialQualifier("gl_InstanceID", EvqInstanceId, EbvInstanceId, symbolTable);
         }
 
-        if (spvVersion.vulkan >= 100) {
+        if (spvVersion.vulkan > 0) {
             BuiltInVariable("gl_VertexIndex",   EbvVertexIndex,   symbolTable);
             BuiltInVariable("gl_InstanceIndex", EbvInstanceIndex, symbolTable);
         }
@@ -6355,8 +6511,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 #ifdef AMD_EXTENSIONS
         if (profile != EEsProfile)
             symbolTable.relateToOperator("interpolateAtVertexAMD", EOpInterpolateAtVertex);
-        break;
 #endif
+        break;
 
     case EShLangCompute:
         symbolTable.relateToOperator("memoryBarrierShared",     EOpMemoryBarrierShared);

@@ -1520,6 +1520,12 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         }
 
         if (arg > 0) {
+
+#ifdef AMD_EXTENSIONS
+            bool f16ShadowCompare = (*argp)[1]->getAsTyped()->getBasicType() == EbtFloat16 && arg0->getType().getSampler().shadow;
+            if (f16ShadowCompare)
+                ++arg;
+#endif
             if (! (*argp)[arg]->getAsConstantUnion())
                 error(loc, "argument must be compile-time constant", "texel offset", "");
             else {

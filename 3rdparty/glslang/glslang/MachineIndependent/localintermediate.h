@@ -378,7 +378,7 @@ public:
             processes.addProcess("client opengl100");
 
         // target-environment processes
-        if (spvVersion.vulkan == 100)
+        if (spvVersion.vulkan > 0)
             processes.addProcess("target-env vulkan1.0");
         else if (spvVersion.vulkan > 0)
             processes.addProcess("target-env vulkanUnknown");

@@ -14,6 +14,7 @@ set(HEADERS
     bitutils.h
     spirv.hpp
     GLSL.std.450.h
+    GLSL.ext.EXT.h
     GLSL.ext.KHR.h
     GlslangToSpv.h
     hex_float.h

@@ -579,6 +579,54 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["usubpassInput"] =           USUBPASSINPUT;
     (*KeywordMap)["usubpassInputMS"] =         USUBPASSINPUTMS;
 
+#ifdef AMD_EXTENSIONS
+    (*KeywordMap)["f16sampler1D"] =                 F16SAMPLER1D;
+    (*KeywordMap)["f16sampler2D"] =                 F16SAMPLER2D;
+    (*KeywordMap)["f16sampler3D"] =                 F16SAMPLER3D;
+    (*KeywordMap)["f16sampler2DRect"] =             F16SAMPLER2DRECT;
+    (*KeywordMap)["f16samplerCube"] =               F16SAMPLERCUBE;
+    (*KeywordMap)["f16sampler1DArray"] =            F16SAMPLER1DARRAY;
+    (*KeywordMap)["f16sampler2DArray"] =            F16SAMPLER2DARRAY;
+    (*KeywordMap)["f16samplerCubeArray"] =          F16SAMPLERCUBEARRAY;
+    (*KeywordMap)["f16samplerBuffer"] =             F16SAMPLERBUFFER;
+    (*KeywordMap)["f16sampler2DMS"] =               F16SAMPLER2DMS;
+    (*KeywordMap)["f16sampler2DMSArray"] =          F16SAMPLER2DMSARRAY;
+    (*KeywordMap)["f16sampler1DShadow"] =           F16SAMPLER1DSHADOW;
+    (*KeywordMap)["f16sampler2DShadow"] =           F16SAMPLER2DSHADOW;
+    (*KeywordMap)["f16sampler2DRectShadow"] =       F16SAMPLER2DRECTSHADOW;
+    (*KeywordMap)["f16samplerCubeShadow"] =         F16SAMPLERCUBESHADOW;
+    (*KeywordMap)["f16sampler1DArrayShadow"] =      F16SAMPLER1DARRAYSHADOW;
+    (*KeywordMap)["f16sampler2DArrayShadow"] =      F16SAMPLER2DARRAYSHADOW;
+    (*KeywordMap)["f16samplerCubeArrayShadow"] =    F16SAMPLERCUBEARRAYSHADOW;
+
+    (*KeywordMap)["f16image1D"] =                   F16IMAGE1D;
+    (*KeywordMap)["f16image2D"] =                   F16IMAGE2D;
+    (*KeywordMap)["f16image3D"] =                   F16IMAGE3D;
+    (*KeywordMap)["f16image2DRect"] =               F16IMAGE2DRECT;
+    (*KeywordMap)["f16imageCube"] =                 F16IMAGECUBE;
+    (*KeywordMap)["f16image1DArray"] =              F16IMAGE1DARRAY;
+    (*KeywordMap)["f16image2DArray"] =              F16IMAGE2DARRAY;
+    (*KeywordMap)["f16imageCubeArray"] =            F16IMAGECUBEARRAY;
+    (*KeywordMap)["f16imageBuffer"] =               F16IMAGEBUFFER;
+    (*KeywordMap)["f16image2DMS"] =                 F16IMAGE2DMS;
+    (*KeywordMap)["f16image2DMSArray"] =            F16IMAGE2DMSARRAY;
+
+    (*KeywordMap)["f16texture1D"] =                 F16TEXTURE1D;
+    (*KeywordMap)["f16texture2D"] =                 F16TEXTURE2D;
+    (*KeywordMap)["f16texture3D"] =                 F16TEXTURE3D;
+    (*KeywordMap)["f16texture2DRect"] =             F16TEXTURE2DRECT;
+    (*KeywordMap)["f16textureCube"] =               F16TEXTURECUBE;
+    (*KeywordMap)["f16texture1DArray"] =            F16TEXTURE1DARRAY;
+    (*KeywordMap)["f16texture2DArray"] =            F16TEXTURE2DARRAY;
+    (*KeywordMap)["f16textureCubeArray"] =          F16TEXTURECUBEARRAY;
+    (*KeywordMap)["f16textureBuffer"] =             F16TEXTUREBUFFER;
+    (*KeywordMap)["f16texture2DMS"] =               F16TEXTURE2DMS;
+    (*KeywordMap)["f16texture2DMSArray"] =          F16TEXTURE2DMSARRAY;
+
+    (*KeywordMap)["f16subpassInput"] =              F16SUBPASSINPUT;
+    (*KeywordMap)["f16subpassInputMS"] =            F16SUBPASSINPUTMS;
+#endif
+
     (*KeywordMap)["noperspective"] =           NOPERSPECTIVE;
     (*KeywordMap)["smooth"] =                  SMOOTH;
     (*KeywordMap)["flat"] =                    FLAT;
@@ -1029,6 +1077,7 @@ int TScanContext::tokenizeIdentifier()
             (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
              parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float)))
             return keyword;
+
         return identifierOrType();
 #endif
 
@@ -1195,7 +1244,7 @@ int TScanContext::tokenizeIdentifier()
     case TEXTURE1DARRAY:
     case SAMPLER:
     case SAMPLERSHADOW:
-        if (parseContext.spvVersion.vulkan >= 100)
+        if (parseContext.spvVersion.vulkan > 0)
             return keyword;
         else
             return identifierOrType();
@@ -1206,10 +1255,64 @@ int TScanContext::tokenizeIdentifier()
     case ISUBPASSINPUTMS:
     case USUBPASSINPUT:
     case USUBPASSINPUTMS:
-        if (parseContext.spvVersion.vulkan >= 100)
+        if (parseContext.spvVersion.vulkan > 0)
             return keyword;
         else
             return identifierOrType();
+
+#ifdef AMD_EXTENSIONS
+    case F16SAMPLER1D:
+    case F16SAMPLER2D:
+    case F16SAMPLER3D:
+    case F16SAMPLER2DRECT:
+    case F16SAMPLERCUBE:
+    case F16SAMPLER1DARRAY:
+    case F16SAMPLER2DARRAY:
+    case F16SAMPLERCUBEARRAY:
+    case F16SAMPLERBUFFER:
+    case F16SAMPLER2DMS:
+    case F16SAMPLER2DMSARRAY:
+    case F16SAMPLER1DSHADOW:
+    case F16SAMPLER2DSHADOW:
+    case F16SAMPLER1DARRAYSHADOW:
+    case F16SAMPLER2DARRAYSHADOW:
+    case F16SAMPLER2DRECTSHADOW:
+    case F16SAMPLERCUBESHADOW:
+    case F16SAMPLERCUBEARRAYSHADOW:
+
+    case F16IMAGE1D:
+    case F16IMAGE2D:
+    case F16IMAGE3D:
+    case F16IMAGE2DRECT:
+    case F16IMAGECUBE:
+    case F16IMAGE1DARRAY:
+    case F16IMAGE2DARRAY:
+    case F16IMAGECUBEARRAY:
+    case F16IMAGEBUFFER:
+    case F16IMAGE2DMS:
+    case F16IMAGE2DMSARRAY:
+
+    case F16TEXTURE1D:
+    case F16TEXTURE2D:
+    case F16TEXTURE3D:
+    case F16TEXTURE2DRECT:
+    case F16TEXTURECUBE:
+    case F16TEXTURE1DARRAY:
+    case F16TEXTURE2DARRAY:
+    case F16TEXTURECUBEARRAY:
+    case F16TEXTUREBUFFER:
+    case F16TEXTURE2DMS:
+    case F16TEXTURE2DMSARRAY:
+
+    case F16SUBPASSINPUT:
+    case F16SUBPASSINPUTMS:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float_fetch) &&
+             parseContext.profile != EEsProfile && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+#endif
 
     case NOPERSPECTIVE:
         return es30ReservedFromGLSL(130);

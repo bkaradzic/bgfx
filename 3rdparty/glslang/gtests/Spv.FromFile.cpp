@@ -419,6 +419,7 @@ INSTANTIATE_TEST_CASE_P(
     Glsl, CompileVulkanToSpirvTestAMD,
     ::testing::ValuesIn(std::vector<std::string>({
         "spv.float16.frag",
+        "spv.float16Fetch.frag",
         "spv.imageLoadStoreLod.frag",
         "spv.int16.frag",
         "spv.shaderBallotAMD.comp",

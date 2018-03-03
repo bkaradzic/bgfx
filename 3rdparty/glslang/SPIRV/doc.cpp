@@ -849,6 +849,7 @@ const char* CapabilityString(int info)
     case 5013: return "StencilExportEXT";
 
 #ifdef AMD_EXTENSIONS
+    case 5008: return "Float16ImageAMD";
     case 5009: return "ImageGatherBiasLodAMD";
     case 5010: return "FragmentMaskAMD";
     case 5015: return "ImageReadWriteLodAMD";
@@ -1197,7 +1198,7 @@ const char* OpcodeString(int op)
     case 319: return "OpAtomicFlagClear";
     case 320: return "OpImageSparseRead";
 
-    case OpModuleProcessed: return "OpModuleProcesses";
+    case OpModuleProcessed: return "OpModuleProcessed";
 
     case 4421: return "OpSubgroupBallotKHR";
     case 4422: return "OpSubgroupFirstInvocationKHR";

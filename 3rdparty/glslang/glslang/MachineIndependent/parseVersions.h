@@ -80,6 +80,7 @@ public:
 #ifdef AMD_EXTENSIONS
     virtual void int16Check(const TSourceLoc& loc, const char* op, bool builtIn = false);
     virtual void float16Check(const TSourceLoc&, const char* op, bool builtIn = false);
+    virtual void float16OpaqueCheck(const TSourceLoc&, const char* op, bool builtIn = false);
 #endif
     virtual void int64Check(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual void spvRemoved(const TSourceLoc&, const char* op);

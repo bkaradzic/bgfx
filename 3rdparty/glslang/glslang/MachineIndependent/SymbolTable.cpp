@@ -75,6 +75,9 @@ void TType::buildMangledName(TString& mangledName) const
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtSampler:
         switch (sampler.type) {
+#ifdef AMD_EXTENSIONS
+        case EbtFloat16: mangledName += "f16"; break;
+#endif
         case EbtInt:   mangledName += "i"; break;
         case EbtUint:  mangledName += "u"; break;
         default: break; // some compilers want this

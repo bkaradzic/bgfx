@@ -46,7 +46,7 @@
 #ifndef __INTERMEDIATE_H
 #define __INTERMEDIATE_H
 
-#if _MSC_VER >= 1900
+#if defined(_MSC_VER) && _MSC_VER >= 1900
     #pragma warning(disable : 4464) // relative include path contains '..'
     #pragma warning(disable : 5026) // 'glslang::TIntermUnary': move constructor was implicitly defined as deleted
 #endif

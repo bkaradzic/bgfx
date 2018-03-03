@@ -83,7 +83,7 @@ struct SpvVersion {
     SpvVersion() : spv(0), vulkanGlsl(0), vulkan(0), openGl(0) {}
     unsigned int spv; // the version of SPIR-V to target, as defined by "word 1" of the SPIR-V binary header
     int vulkanGlsl;   // the version of GLSL semantics for Vulkan, from GL_KHR_vulkan_glsl, for "#define VULKAN XXX"
-    int vulkan;       // the version of Vulkan, for which SPIR-V execution environment rules to use (100 means 1.0)
+    int vulkan;       // the version of Vulkan, for which SPIR-V execution environment rules to use
     int openGl;       // the version of GLSL semantics for OpenGL, from GL_ARB_gl_spirv, for "#define GL_SPIRV XXX"
 };
 
@@ -174,6 +174,7 @@ const char* const E_GL_AMD_texture_gather_bias_lod              = "GL_AMD_textur
 const char* const E_GL_AMD_gpu_shader_int16                     = "GL_AMD_gpu_shader_int16";
 const char* const E_GL_AMD_shader_image_load_store_lod          = "GL_AMD_shader_image_load_store_lod";
 const char* const E_GL_AMD_shader_fragment_mask                 = "GL_AMD_shader_fragment_mask";
+const char* const E_GL_AMD_gpu_shader_half_float_fetch          = "GL_AMD_gpu_shader_half_float_fetch";
 #endif
 
 #ifdef NV_EXTENSIONS

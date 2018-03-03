@@ -2340,6 +2340,12 @@ spv::Id TGlslangToSpvTraverser::getSampledType(const glslang::TSampler& sampler)
 {
     switch (sampler.type) {
         case glslang::EbtFloat:    return builder.makeFloatType(32);
+#ifdef AMD_EXTENSIONS
+        case glslang::EbtFloat16:
+            builder.addExtension(spv::E_SPV_AMD_gpu_shader_half_float_fetch);
+            builder.addCapability(spv::CapabilityFloat16ImageAMD);
+            return builder.makeFloatType(16);
+#endif
         case glslang::EbtInt:      return builder.makeIntType(32);
         case glslang::EbtUint:     return builder.makeUintType(32);
         default:
@@ -3159,9 +3165,15 @@ void TGlslangToSpvTraverser::translateArguments(const glslang::TIntermAggregate&
 
     glslang::TSampler sampler = {};
     bool cubeCompare = false;
+#ifdef AMD_EXTENSIONS
+    bool f16ShadowCompare = false;
+#endif
     if (node.isTexture() || node.isImage()) {
         sampler = glslangArguments[0]->getAsTyped()->getType().getSampler();
         cubeCompare = sampler.dim == glslang::EsdCube && sampler.arrayed && sampler.shadow;
+#ifdef AMD_EXTENSIONS
+        f16ShadowCompare = sampler.shadow && glslangArguments[1]->getAsTyped()->getType().getBasicType() == glslang::EbtFloat16;
+#endif
     }
 
     for (int i = 0; i < (int)glslangArguments.size(); ++i) {
@@ -3186,6 +3198,21 @@ void TGlslangToSpvTraverser::translateArguments(const glslang::TIntermAggregate&
             if ((sampler.ms && i == 3) || (! sampler.ms && i == 2))
                 lvalue = true;
             break;
+#ifdef AMD_EXTENSIONS
+        case glslang::EOpSparseTexture:
+            if (((cubeCompare || f16ShadowCompare) && i == 3) || (! (cubeCompare || f16ShadowCompare) && i == 2))
+                lvalue = true;
+            break;
+        case glslang::EOpSparseTextureClamp:
+            if (((cubeCompare || f16ShadowCompare) && i == 4) || (! (cubeCompare || f16ShadowCompare) && i == 3))
+                lvalue = true;
+            break;
+        case glslang::EOpSparseTextureLod:
+        case glslang::EOpSparseTextureOffset:
+            if  ((f16ShadowCompare && i == 4) || (! f16ShadowCompare && i == 3))
+                lvalue = true;
+            break;
+#else
         case glslang::EOpSparseTexture:
             if ((cubeCompare && i == 3) || (! cubeCompare && i == 2))
                 lvalue = true;
@@ -3199,6 +3226,7 @@ void TGlslangToSpvTraverser::translateArguments(const glslang::TIntermAggregate&
             if (i == 3)
                 lvalue = true;
             break;
+#endif
         case glslang::EOpSparseTextureFetch:
             if ((sampler.dim != glslang::EsdRect && i == 3) || (sampler.dim == glslang::EsdRect && i == 2))
                 lvalue = true;
@@ -3207,6 +3235,23 @@ void TGlslangToSpvTraverser::translateArguments(const glslang::TIntermAggregate&
             if ((sampler.dim != glslang::EsdRect && i == 4) || (sampler.dim == glslang::EsdRect && i == 3))
                 lvalue = true;
             break;
+#ifdef AMD_EXTENSIONS
+        case glslang::EOpSparseTextureLodOffset:
+        case glslang::EOpSparseTextureGrad:
+        case glslang::EOpSparseTextureOffsetClamp:
+            if ((f16ShadowCompare && i == 5) || (! f16ShadowCompare && i == 4))
+                lvalue = true;
+            break;
+        case glslang::EOpSparseTextureGradOffset:
+        case glslang::EOpSparseTextureGradClamp:
+            if ((f16ShadowCompare && i == 6) || (! f16ShadowCompare && i == 5))
+                lvalue = true;
+            break;
+        case glslang::EOpSparseTextureGradOffsetClamp:
+            if ((f16ShadowCompare && i == 7) || (! f16ShadowCompare && i == 6))
+                lvalue = true;
+            break;
+#else
         case glslang::EOpSparseTextureLodOffset:
         case glslang::EOpSparseTextureGrad:
         case glslang::EOpSparseTextureOffsetClamp:
@@ -3222,6 +3267,7 @@ void TGlslangToSpvTraverser::translateArguments(const glslang::TIntermAggregate&
             if (i == 6)
                 lvalue = true;
             break;
+#endif
         case glslang::EOpSparseTextureGather:
             if ((sampler.shadow && i == 3) || (! sampler.shadow && i == 2))
                 lvalue = true;
@@ -3274,6 +3320,12 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
     // Process a GLSL texturing op (will be SPV image)
     const glslang::TSampler sampler = node->getAsAggregate() ? node->getAsAggregate()->getSequence()[0]->getAsTyped()->getType().getSampler()
                                                              : node->getAsUnaryNode()->getOperand()->getAsTyped()->getType().getSampler();
+#ifdef AMD_EXTENSIONS
+    bool f16ShadowCompare = (sampler.shadow && node->getAsAggregate())
+                                ? node->getAsAggregate()->getSequence()[1]->getAsTyped()->getType().getBasicType() == glslang::EbtFloat16
+                                : false;
+#endif
+
     std::vector<spv::Id> arguments;
     if (node->getAsAggregate())
         translateArguments(*node->getAsAggregate(), arguments);
@@ -3517,6 +3569,9 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
 #ifdef AMD_EXTENSIONS
         if (cracked.gather)
             ++nonBiasArgCount; // comp argument should be present when bias argument is present
+
+        if (f16ShadowCompare)
+            ++nonBiasArgCount;
 #endif
         if (cracked.offset)
             ++nonBiasArgCount;
@@ -3560,7 +3615,11 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
     bool noImplicitLod = false;
 
     // sort out where Dref is coming from
+#ifdef AMD_EXTENSIONS
+    if (cubeCompare || f16ShadowCompare) {
+#else
     if (cubeCompare) {
+#endif
         params.Dref = arguments[2];
         ++extraArgs;
     } else if (sampler.shadow && cracked.gather) {
@@ -6075,7 +6134,8 @@ int GetSpirvGeneratorVersion()
     // return 1; // start
     // return 2; // EOpAtomicCounterDecrement gets a post decrement, to map between GLSL -> SPIR-V
     // return 3; // change/correct barrier-instruction operands, to match memory model group decisions
-       return 4; // some deeper access chains: for dynamic vector component, and local Boolean component
+    // return 4; // some deeper access chains: for dynamic vector component, and local Boolean component
+    return 5; // make OpArrayLength result type be an int with signedness of 0
 }
 
 // Write SPIR-V out to a binary file

@@ -117,6 +117,40 @@
 #define GL_SAMPLER_CUBE_MAP_ARRAY_ARB     0x900C
 #define GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW_ARB 0x900D
 
+#ifdef AMD_EXTENSIONS
+#define GL_FLOAT16_SAMPLER_1D_AMD                       0x91CE
+#define GL_FLOAT16_SAMPLER_2D_AMD                       0x91CF
+#define GL_FLOAT16_SAMPLER_3D_AMD                       0x91D0
+#define GL_FLOAT16_SAMPLER_CUBE_AMD                     0x91D1
+#define GL_FLOAT16_SAMPLER_2D_RECT_AMD                  0x91D2
+#define GL_FLOAT16_SAMPLER_1D_ARRAY_AMD                 0x91D3
+#define GL_FLOAT16_SAMPLER_2D_ARRAY_AMD                 0x91D4
+#define GL_FLOAT16_SAMPLER_CUBE_MAP_ARRAY_AMD           0x91D5
+#define GL_FLOAT16_SAMPLER_BUFFER_AMD                   0x91D6
+#define GL_FLOAT16_SAMPLER_2D_MULTISAMPLE_AMD           0x91D7
+#define GL_FLOAT16_SAMPLER_2D_MULTISAMPLE_ARRAY_AMD     0x91D8
+
+#define GL_FLOAT16_SAMPLER_1D_SHADOW_AMD                0x91D9
+#define GL_FLOAT16_SAMPLER_2D_SHADOW_AMD                0x91DA
+#define GL_FLOAT16_SAMPLER_2D_RECT_SHADOW_AMD           0x91DB
+#define GL_FLOAT16_SAMPLER_1D_ARRAY_SHADOW_AMD          0x91DC
+#define GL_FLOAT16_SAMPLER_2D_ARRAY_SHADOW_AMD          0x91DD
+#define GL_FLOAT16_SAMPLER_CUBE_SHADOW_AMD              0x91DE
+#define GL_FLOAT16_SAMPLER_CUBE_MAP_ARRAY_SHADOW_AMD    0x91DF
+
+#define GL_FLOAT16_IMAGE_1D_AMD                         0x91E0
+#define GL_FLOAT16_IMAGE_2D_AMD                         0x91E1
+#define GL_FLOAT16_IMAGE_3D_AMD                         0x91E2
+#define GL_FLOAT16_IMAGE_2D_RECT_AMD                    0x91E3
+#define GL_FLOAT16_IMAGE_CUBE_AMD                       0x91E4
+#define GL_FLOAT16_IMAGE_1D_ARRAY_AMD                   0x91E5
+#define GL_FLOAT16_IMAGE_2D_ARRAY_AMD                   0x91E6
+#define GL_FLOAT16_IMAGE_CUBE_MAP_ARRAY_AMD             0x91E7
+#define GL_FLOAT16_IMAGE_BUFFER_AMD                     0x91E8
+#define GL_FLOAT16_IMAGE_2D_MULTISAMPLE_AMD             0x91E9
+#define GL_FLOAT16_IMAGE_2D_MULTISAMPLE_ARRAY_AMD       0x91EA
+#endif
+
 #define GL_INT_SAMPLER_1D                 0x8DC9
 #define GL_INT_SAMPLER_2D                 0x8DCA
 #define GL_INT_SAMPLER_3D                 0x8DCB

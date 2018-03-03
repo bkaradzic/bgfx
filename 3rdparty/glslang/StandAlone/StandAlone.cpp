@@ -580,7 +580,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
             case 'V':
                 setVulkanSpv();
                 if (argv[0][2] != 0)
-                    ClientInputSemanticsVersion = getAttachedNumber("-G<num> client input semantics");
+                    ClientInputSemanticsVersion = getAttachedNumber("-V<num> client input semantics");
                 break;
             case 'c':
                 Options |= EOptionDumpConfig;

@@ -578,7 +578,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     if (spvVersion.spv != 0) {
         switch (profile) {
         case  EEsProfile:
-            if (spvVersion.vulkan >= 100 && version < 310) {
+            if (spvVersion.vulkan > 0 && version < 310) {
                 correct = false;
                 infoSink.info.message(EPrefixError, "#version: ES shaders for Vulkan SPIR-V require version 310 or higher");
                 version = 310;
@@ -593,7 +593,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
             infoSink.info.message(EPrefixError, "#version: compilation for SPIR-V does not support the compatibility profile");
             break;
         default:
-            if (spvVersion.vulkan >= 100 && version < 140) {
+            if (spvVersion.vulkan > 0 && version < 140) {
                 correct = false;
                 infoSink.info.message(EPrefixError, "#version: Desktop shaders for Vulkan SPIR-V require version 140 or higher");
                 version = 140;
@@ -814,7 +814,7 @@ bool ProcessDeferred(
     intermediate.setProfile(profile);
     intermediate.setSpv(spvVersion);
     RecordProcesses(intermediate, messages, sourceEntryPointName);
-    if (spvVersion.vulkan >= 100)
+    if (spvVersion.vulkan > 0)
         intermediate.setOriginUpperLeft();
     if ((messages & EShMsgHlslOffsets) || source == EShSourceHlsl)
         intermediate.setHlslOffsets();

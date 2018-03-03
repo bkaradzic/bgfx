@@ -27,13 +27,11 @@
 #ifndef GLSLextEXT_H
 #define GLSLextEXT_H
 
-enum BuiltIn;
-enum Op;
-enum Capability;
-
 static const int GLSLextEXTVersion = 100;
 static const int GLSLextEXTRevision = 1;
 
+static const char* const E_SPV_EXT_shader_stencil_export        = "SPV_EXT_shader_stencil_export";
+static const char* const E_SPV_EXT_shader_viewport_index_layer  = "SPV_EXT_shader_viewport_index_layer";
 static const char* const E_SPV_EXT_fragment_fully_covered = "SPV_EXT_fragment_fully_covered";
 
 #endif  // #ifndef GLSLextEXT_H
