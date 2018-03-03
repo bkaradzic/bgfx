@@ -7446,8 +7446,8 @@ const TFunction* HlslParseContext::findFunction(const TSourceLoc& loc, TFunction
             }
         };
 
-        return std::abs(linearize(to2.getBasicType()) - linearize(from.getBasicType())) <
-               std::abs(linearize(to1.getBasicType()) - linearize(from.getBasicType()));
+        return abs(linearize(to2.getBasicType()) - linearize(from.getBasicType())) <
+               abs(linearize(to1.getBasicType()) - linearize(from.getBasicType()));
     };
 
     // for ambiguity reporting
