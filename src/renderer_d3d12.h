@@ -95,11 +95,11 @@ namespace bgfx { namespace d3d12
 
 #if BX_PLATFORM_WINDOWS
 	typedef ::IDXGIAdapter3   AdapterI;
-	typedef ::IDXGIFactory4   FactoryI;
+	typedef ::IDXGIFactory5   FactoryI;
 	typedef ::IDXGISwapChain3 SwapChainI;
 #elif BX_PLATFORM_WINRT
 	typedef ::IDXGIAdapter    AdapterI;
-	typedef ::IDXGIFactory2   FactoryI;
+	typedef ::IDXGIFactory4   FactoryI;
 	typedef ::IDXGISwapChain1 SwapChainI;
 #else
 	typedef ::IDXGIAdapter    AdapterI;

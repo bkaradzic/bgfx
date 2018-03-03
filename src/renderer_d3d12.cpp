@@ -433,6 +433,7 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_IDXGIDevice3              = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
 	static const GUID IID_IDXGIFactory2             = { 0x50c83a1c, 0xe072, 0x4c48, { 0x87, 0xb0, 0x36, 0x30, 0xfa, 0x36, 0xa6, 0xd0 } };
 	static const GUID IID_IDXGIFactory4             = { 0x1bc6ea02, 0xef36, 0x464f, { 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a } };
+	static const GUID IID_IDXGIFactory5             = { 0x7632e1f5, 0xee65, 0x4dca, { 0x87, 0xfd, 0x84, 0xcd, 0x75, 0xf8, 0x83, 0x8d } };
 	static const GUID IID_IDXGIOutput6              = { 0x068346e8, 0xaaec, 0x4b84, { 0xad, 0xd7, 0x13, 0x7f, 0x51, 0x3f, 0x77, 0xa1 } };
 
 
@@ -651,6 +652,7 @@ namespace bgfx { namespace d3d12
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
+			, m_allowTearingSupport(false)
 		{
 		}
 
@@ -764,7 +766,9 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#if BX_PLATFORM_WINDOWS
+			hr = CreateDXGIFactory1(IID_IDXGIFactory5, (void**)&m_factory);
+#elif BX_PLATFORM_WINRT
 			hr = CreateDXGIFactory1(IID_IDXGIFactory4, (void**)&m_factory);
 #else
 			hr = S_OK;
@@ -1016,6 +1020,15 @@ namespace bgfx { namespace d3d12
 			m_cmd.init(m_device);
 			errorState = ErrorState::CreatedCommandQueue;
 
+#if BX_PLATFORM_WINDOWS
+			{
+				bool allowTearing;
+				hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
+				m_allowTearingSupport = SUCCEEDED(hr) ? allowTearing : false;
+				BX_TRACE("Allow tearing is %ssupported.", m_allowTearingSupport ? "" : "not ");
+			}
+#endif // BX_PLATFORM_WINDOWS
+
 			if (NULL == g_platformData.backBuffer)
 			{
 #if !BX_PLATFORM_WINDOWS
@@ -1034,7 +1047,12 @@ namespace bgfx { namespace d3d12
 					;
 				m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 				m_scd.AlphaMode  = DXGI_ALPHA_MODE_IGNORE;
-				m_scd.Flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+				m_scd.Flags      = 0
+					| DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+#if BX_PLATFORM_WINDOWS
+					| (m_allowTearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
+#endif // BX_PLATFORM_WINDOWS
+					;
 
 				m_backBufferColorIdx = m_scd.BufferCount-1;
 
@@ -1099,7 +1117,12 @@ namespace bgfx { namespace d3d12
 				m_scd.OutputWindow = (HWND)g_platformData.nwh;
 				m_scd.Windowed     = true;
 				m_scd.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-				m_scd.Flags        = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+				m_scd.Flags      = 0
+					| DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+#if BX_PLATFORM_WINDOWS
+					| (m_allowTearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
+#endif // BX_PLATFORM_WINDOWS
+					;
 
 				BX_CHECK(m_scd.BufferCount <= BX_COUNTOF(m_backBufferColor), "Swap chain buffer count %d (max %d)."
 					, m_scd.BufferCount
@@ -3344,6 +3367,7 @@ data.NumQualityLevels = 0;
 		uint32_t m_backBufferColorIdx;
 		bool m_rtMsaa;
 		bool m_directAccessSupport;
+		bool m_allowTearingSupport;
 	};
 
 	static RendererContextD3D12* s_renderD3D12;
