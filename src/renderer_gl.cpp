@@ -4241,6 +4241,7 @@ namespace bgfx { namespace gl
 
 		switch (_type)
 		{
+			GLSL_TYPE(GL_BOOL);
 			GLSL_TYPE(GL_INT);
 			GLSL_TYPE(GL_INT_VEC2);
 			GLSL_TYPE(GL_INT_VEC3);
