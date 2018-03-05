@@ -405,8 +405,8 @@ public:
 		m_height = _height;
 
 		//find largest pow of two dims less than backbuffer size
-		m_hiZwidth  = (uint32_t)bx::pow(2.0f, bx::floor(bx::log2(m_width ) ) );
-		m_hiZheight = (uint32_t)bx::pow(2.0f, bx::floor(bx::log2(m_height) ) );
+		m_hiZwidth  = (uint32_t)bx::pow(2.0f, bx::floor(bx::log2(float(m_width ) ) ) );
+		m_hiZheight = (uint32_t)bx::pow(2.0f, bx::floor(bx::log2(float(m_height) ) ) );
 
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
@@ -595,7 +595,7 @@ public:
 			m_hiZBuffer = bgfx::createFrameBuffer(1, &buffer, true);
 
 			//how many mip will the Hi Z buffer have?
-			m_noofHiZMips = (uint8_t)(1 + bx::floor(bx::log2(bx::max(m_hiZwidth, m_hiZheight))));
+			m_noofHiZMips = (uint8_t)(1 + bx::floor(bx::log2(float(bx::max(m_hiZwidth, m_hiZheight) ) ) ) );
 
 			// Setup compute shader buffers
 
