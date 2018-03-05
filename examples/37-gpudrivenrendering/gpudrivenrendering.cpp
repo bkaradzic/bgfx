@@ -1211,7 +1211,6 @@ public:
 	uint16_t m_totalInstancesCount;
 
 	static const uint16_t s_maxNoofProps = 10;
-	static const uint16_t s_maxNoofPerPropInstances = 200;
 
 	static const uint16_t s_maxNoofInstances = 2048;
 
