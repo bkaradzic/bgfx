@@ -359,14 +359,6 @@ struct Material
 	float m_colour[4];
 };
 
-//helpers to make setting vectors a bit tidier
-inline void setVector3(float* dest, float x, float y, float z)
-{
-	dest[0] = x;
-	dest[1] = y;
-	dest[2] = z;
-}
-
 inline void setVector4(float* dest, float x, float y, float z, float w)
 {
 	dest[0] = x;
