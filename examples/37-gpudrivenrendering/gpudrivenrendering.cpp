@@ -3,6 +3,16 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+/*
+ * References:
+ *
+ * Experiments in GPU-based occlusion culling
+ * https://interplayoflight.wordpress.com/2017/11/15/experiments-in-gpu-based-occlusion-culling/
+ *
+ * Experiments in GPU-based occlusion culling part 2: MultiDrawIndirect and mesh lodding
+ * https://interplayoflight.wordpress.com/2018/01/15/experiments-in-gpu-based-occlusion-culling-part-2-multidrawindirect-and-mesh-lodding/
+ */
+
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
