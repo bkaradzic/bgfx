@@ -418,6 +418,11 @@ public:
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
 
+		//create uniforms
+		u_inputRTSize   = bgfx::createUniform("u_inputRTSize", bgfx::UniformType::Vec4);
+		u_cullingConfig = bgfx::createUniform("u_cullingConfig", bgfx::UniformType::Vec4);
+		u_colour        = bgfx::createUniform("u_colour", bgfx::UniformType::Vec4);
+
 		//create props
 		{
 			m_totalInstancesCount = 0;
@@ -768,11 +773,6 @@ public:
 
 		//create samplers
 		s_texOcclusionDepthIn = bgfx::createUniform("s_texOcclusionDepthIn", bgfx::UniformType::Int1);
-
-		//create uniforms
-		u_inputRTSize = bgfx::createUniform("u_inputRTSize", bgfx::UniformType::Vec4);
-		u_cullingConfig = bgfx::createUniform("u_cullingConfig", bgfx::UniformType::Vec4);
-		u_colour = bgfx::createUniform("u_colour", bgfx::UniformType::Vec4);
 
 		m_timeOffset = bx::getHPCounter();
 

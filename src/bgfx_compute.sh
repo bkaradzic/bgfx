@@ -251,39 +251,16 @@ __IMAGE_IMPL_A(r32ui,       x,    uvec4, xxxx)
 __IMAGE_IMPL_A(rg32ui,      xy,   uvec4, xyyy)
 __IMAGE_IMPL_A(rgba32ui,    xyzw, uvec4, xyzw)
 
-#define __ATOMIC_IMPL_TYPE(_genType, _glFunc, _dxFunc)            \
-			_genType _glFunc(inout _genType _mem, _genType _data) \
-			{                                                     \
-				_genType result;                                  \
-				_dxFunc(_mem, _data, result);                     \
-				return result;                                    \
-			}
+#define atomicAdd(_mem, _data)      InterlockedAdd(_mem, _data)
+#define atomicAnd(_mem, _data)      InterlockedAnd(_mem, _data)
+#define atomicExchange(_mem, _data) InterlockedExchange(_mem, _data)
+#define atomicMax(_mem, _data)      InterlockedMax(_mem, _data)
+#define atomicMin(_mem, _data)      InterlockedMin(_mem, _data)
+#define atomicOr(_mem, _data)       InterlockedOr(_mem, _data)
+#define atomicXor(_mem, _data)      InterlockedXor(_mem, _data)
 
-#define __ATOMIC_IMPL(_glFunc, _dxFunc)                \
-			__ATOMIC_IMPL_TYPE(int,  _glFunc, _dxFunc) \
-			__ATOMIC_IMPL_TYPE(uint, _glFunc, _dxFunc)
-
-__ATOMIC_IMPL(atomicAdd,      InterlockedAdd);
-__ATOMIC_IMPL(atomicAnd,      InterlockedAnd);
-__ATOMIC_IMPL(atomicExchange, InterlockedExchange);
-__ATOMIC_IMPL(atomicMax,      InterlockedMax);
-__ATOMIC_IMPL(atomicMin,      InterlockedMin);
-__ATOMIC_IMPL(atomicOr,       InterlockedOr);
-__ATOMIC_IMPL(atomicXor,      InterlockedXor);
-
-int atomicCompSwap(inout int _mem, int _compare, int _data)
-{
-	int result;
-	InterlockedCompareExchange(_mem, _compare, _data, result);
-	return result;
-}
-
-uint atomicCompSwap(inout uint _mem, uint _compare, uint _data)
-{
-	uint result;
-	InterlockedCompareExchange(_mem, _compare, _data, result);
-	return result;
-}
+#define atomicCompSwap(_mem, _compare, _data) \
+	InterlockedCompareExchange(_mem,_compare, _data)
 
 // InterlockedCompareStore
 

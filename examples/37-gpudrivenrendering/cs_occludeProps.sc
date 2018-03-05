@@ -14,38 +14,39 @@ BUFFER_WR(instancePredicates, bool, 3);
 
 uniform vec4 u_inputRTSize;
 uniform vec4 u_cullingConfig;
- 
+
 NUM_THREADS(64, 1, 1)
 void main()
 {
 	bool predicate = false;
-	
+
 	//make sure that we not processing more instances than available
-	if (gl_GlobalInvocationID.x < (int)u_cullingConfig.x)
+	if (gl_GlobalInvocationID.x < uint(u_cullingConfig.x) )
 	{
 		//get the bounding box for this instance
 		vec4 bboxMin = instanceDataIn[2 * gl_GlobalInvocationID.x] ;
 		vec3 bboxMax = instanceDataIn[2 * gl_GlobalInvocationID.x + 1].xyz;
-		
-		int drawcallID = bboxMin.w;
-	
+
+		int drawcallID = int(bboxMin.w);
+
 		//Adapted from http://blog.selfshadow.com/publications/practical-visibility/
 		vec3 bboxSize = bboxMax.xyz - bboxMin.xyz;
 
-		vec3 boxCorners[] = { 	bboxMin.xyz,
-								bboxMin.xyz + vec3(bboxSize.x,0,0),
-								bboxMin.xyz + vec3(0, bboxSize.y,0),
-								bboxMin.xyz + vec3(0, 0, bboxSize.z),
-								bboxMin.xyz + vec3(bboxSize.xy,0),
-								bboxMin.xyz + vec3(0, bboxSize.yz),
-								bboxMin.xyz + vec3(bboxSize.x, 0, bboxSize.z),
-								bboxMin.xyz + bboxSize.xyz
-							 };
-		float minZ = 1;
-		vec2 minXY = vec2(1,1);
-		vec2 maxXY = vec2(0,0);
+		vec3 boxCorners[] = {
+			bboxMin.xyz,
+			bboxMin.xyz + vec3(bboxSize.x,0,0),
+			bboxMin.xyz + vec3(0, bboxSize.y,0),
+			bboxMin.xyz + vec3(0, 0, bboxSize.z),
+			bboxMin.xyz + vec3(bboxSize.xy,0),
+			bboxMin.xyz + vec3(0, bboxSize.yz),
+			bboxMin.xyz + vec3(bboxSize.x, 0, bboxSize.z),
+			bboxMin.xyz + bboxSize.xyz
+		};
+		float minZ = 1.0;
+		vec2 minXY = vec2(1.0, 1.0);
+		vec2 maxXY = vec2(0.0, 0.0);
 
-		[unroll]
+		UNROLL
 		for (int i = 0; i < 8; i++)
 		{
 			//transform World space aaBox to NDC
@@ -61,20 +62,20 @@ void main()
 			minXY = min(clipPos.xy, minXY);
 			maxXY = max(clipPos.xy, maxXY);
 
-			minZ = saturate(min(minZ, clipPos.z));		
+			minZ = saturate(min(minZ, clipPos.z));
 		}
 
 		vec4 boxUVs = vec4(minXY, maxXY);
 
 		// Calculate hi-Z buffer mip
-		ivec2 size = (maxXY - minXY) * u_inputRTSize.xy;
+		ivec2 size = ivec2( (maxXY - minXY) * u_inputRTSize.xy);
 		float mip = ceil(log2(max(size.x, size.y)));
 
 		mip = clamp(mip, 0, u_cullingConfig.z);
 
 		// Texel footprint for the lower (finer-grained) level
-		float  level_lower = max(mip - 1, 0);
-		vec2 scale = exp2(-level_lower);
+		float level_lower = max(mip - 1, 0);
+		vec2 scale = vec2_splat(exp2(-level_lower) );
 		vec2 a = floor(boxUVs.xy*scale);
 		vec2 b = ceil(boxUVs.zw*scale);
 		vec2 dims = b - a;
@@ -88,8 +89,8 @@ void main()
 						texture2DLod(s_texOcclusionDepth, boxUVs.zy, mip).x,
 						texture2DLod(s_texOcclusionDepth, boxUVs.xw, mip).x,
 						texture2DLod(s_texOcclusionDepth, boxUVs.zw, mip).x,
-					};		
-		
+					};
+
 		//find the max depth
 		float maxDepth = max( max(depth.x, depth.y), max(depth.z, depth.w) );
 
@@ -98,7 +99,7 @@ void main()
 			predicate = true;
 
 			//increase instance count for this particular prop type
-			InterlockedAdd( drawcallInstanceCount[ drawcallID ], 1);			
+			atomicAdd(drawcallInstanceCount[ drawcallID ], 1);
 		}
 	}
 

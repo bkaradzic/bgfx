@@ -11,14 +11,14 @@ uniform vec4 u_colour[50];
 
 void main()
 {
-	vec4 colour = u_colour[v_materialID.x];
-	
+	vec4 colour = u_colour[uint(v_materialID)];
+
 	if ( colour.w < 1.0f )
 	{
 		//render dithered alpha
-		if ( (gl_FragCoord.x % 2) == (gl_FragCoord.y % 2) )
+		if ( (int(gl_FragCoord.x) % 2) == (int(gl_FragCoord.y) % 2) )
 			discard;
 	}
-	
+
 	gl_FragColor = vec4( colour.xyz,1 );
 }
