@@ -588,7 +588,8 @@ public:
 				| BGFX_TEXTURE_MAG_POINT
 				| BGFX_TEXTURE_MIP_POINT
 				| BGFX_TEXTURE_U_CLAMP
-				| BGFX_TEXTURE_V_CLAMP;
+				| BGFX_TEXTURE_V_CLAMP
+				;
 
 			// Create buffers for the HiZ pass
 			m_hiZDepthBuffer = bgfx::createFrameBuffer(uint16_t(m_hiZwidth), uint16_t(m_hiZheight), bgfx::TextureFormat::D32, samplerFlags);
@@ -684,10 +685,10 @@ public:
 			m_indirectBuffer = bgfx::createIndirectBuffer(m_noofProps);
 
 			// Create programs from shaders for occlusion pass.
-			m_programOcclusionPass = loadProgram("vs_renderOcclusion", "fs_renderOcclusion");
-			m_programDownscaleHiZ = loadProgram("cs_downscaleHiZ", nullptr);
-			m_programOccludeProps = loadProgram("cs_occludeProps", nullptr);
-			m_programStreamCompaction = loadProgram("cs_streamCompaction", nullptr);
+			m_programOcclusionPass    = loadProgram("vs_gdr_render_occlusion", "fs_gdr_render_occlusion");
+			m_programDownscaleHiZ     = loadProgram("cs_gdr_downscale_hi_z", NULL);
+			m_programOccludeProps     = loadProgram("cs_gdr_occlude_props", NULL);
+			m_programStreamCompaction = loadProgram("cs_gdr_stream_compaction", NULL);
 
 			// Set view RENDER_PASS_HIZ_ID clear state.
 			bgfx::setViewClear(RENDER_PASS_HIZ_ID
@@ -709,7 +710,7 @@ public:
 			);
 
 			// Create program from shaders.
-			m_programMainPass = loadProgram("vs_instancedIndirectRendering", "fs_instancedIndirectRendering");
+			m_programMainPass = loadProgram("vs_gdr_instanced_indirect_rendering", "fs_gdr_instanced_indirect_rendering");
 		}
 
 		// Create static vertex buffer for all props.
@@ -725,7 +726,7 @@ public:
 			totalNoofIndices += prop.m_noofIndices;
 		}
 
-		//CPU data to fill the master buffers
+		// CPU data to fill the master buffers
 		m_allPropVerticesDataCPU = new PosVertex[totalNoofVertices];
 		m_allPropIndicesDataCPU = new uint16_t[totalNoofIndices];
 		m_indirectBufferDataCPU = new uint32_t[m_noofProps * 3];
@@ -891,7 +892,7 @@ public:
 		}
 	}
 
-	//downscale the occluder depth buffer to create a mipmap chain
+	// downscale the occluder depth buffer to create a mipmap chain
 	void renderDownscalePass()
 	{
 		uint32_t width = m_hiZwidth;
@@ -906,7 +907,7 @@ public:
 
 			if (i > 0)
 			{
-				//down scale mip 1 onwards
+				// down scale mip 1 onwards
 				width /= 2;
 				height /= 2;
 
@@ -915,8 +916,8 @@ public:
 			}
 			else
 			{
-				//copy mip zero over to the hi Z buffer.
-				//We can't currently use blit as it requires same format and CopyResource is not exposed.
+				// copy mip zero over to the hi Z buffer.
+				// We can't currently use blit as it requires same format and CopyResource is not exposed.
 				bgfx::setImage(0, getTexture(m_hiZDepthBuffer, 0), 0, bgfx::Access::Read);
 				bgfx::setImage(1, getTexture(m_hiZBuffer, 0), 0, bgfx::Access::Write);
 			}
@@ -925,10 +926,10 @@ public:
 		}
 	}
 
-	//perform the occlusion using the mip chain
+	// perform the occlusion using the mip chain
 	void renderOccludePropsPass()
 	{
-		//run the computer shader to determine visibility of each instance
+		// run the computer shader to determine visibility of each instance
 		bgfx::setTexture(0, s_texOcclusionDepthIn, bgfx::getTexture(m_hiZBuffer));
 
 		bgfx::setBuffer(1, m_instanceBoundingBoxes, bgfx::Access::Read);
@@ -938,7 +939,7 @@ public:
 		float inputRendertargetSize[4] = { (float)m_hiZwidth, (float)m_hiZheight, 1.0f/ m_hiZwidth, 1.0f/ m_hiZheight };
 		bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
 
-		//store a rounded-up, power of two instance count for the stream compaction step
+		// store a rounded-up, power of two instance count for the stream compaction step
 		float noofInstancesPowOf2 = bx::pow(2.0f, bx::floor(bx::log(m_totalInstancesCount) / bx::log(2.0f) ) + 1.0f);
 
 		float cullingConfig[4] = { (float)m_totalInstancesCount, noofInstancesPowOf2 , (float)m_noofHiZMips, (float)m_noofProps };
@@ -951,20 +952,20 @@ public:
 
 		bgfx::dispatch(RENDER_PASS_OCCLUDE_PROPS_ID, m_programOccludeProps, groupX, 1, 1);
 
-		//perform stream compaction to remove occluded instances
+		// perform stream compaction to remove occluded instances
 
-		//the per drawcall data that is constant (noof indices/vertices and offsets to vertex/index buffers)
+		// the per drawcall data that is constant (noof indices/vertices and offsets to vertex/index buffers)
 	 	bgfx::setBuffer(0, m_indirectBufferData, bgfx::Access::Read);
-		//instance data for all instances (pre culling)
+		// instance data for all instances (pre culling)
 		bgfx::setBuffer(1, m_instanceBuffer, bgfx::Access::Read);
-		//per instance visibility (output of culling pass)
+		// per instance visibility (output of culling pass)
 		bgfx::setBuffer(2, m_instancePredicates, bgfx::Access::Read);
 
-		//how many instances per drawcall
+		// how many instances per drawcall
 		bgfx::setBuffer(3, m_drawcallInstanceCounts, bgfx::Access::ReadWrite);
-		//drawcall data that will drive drawIndirect
+		// drawcall data that will drive drawIndirect
 		bgfx::setBuffer(4, m_indirectBuffer, bgfx::Access::ReadWrite);
-		//culled instance data
+		// culled instance data
 		bgfx::setBuffer(5, m_culledInstanceBuffer, bgfx::Access::Write);
 
 		bgfx::setUniform(u_cullingConfig, cullingConfig);
@@ -973,7 +974,7 @@ public:
 
 	}
 
-	//render the unoccluded props to the screen
+	// render the unoccluded props to the screen
 	void renderMainPass()
 	{
 		// Set view and projection matrix for view 0.
@@ -1222,7 +1223,6 @@ public:
 
 	Camera m_camera;
 	Mouse m_mouse;
-
 };
 
 } // namespace
