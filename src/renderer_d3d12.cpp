@@ -464,11 +464,20 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_heapProperties) == HeapProperty::Count);
 
+	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, UINT nodeMask, D3D12_HEAP_TYPE heapType)
+	{
+		// NOTICE: gcc trick for return struct
+		typedef void (STDMETHODCALLTYPE ID3D12Device::*GetCustomHeapProperties_f)(D3D12_HEAP_PROPERTIES *, UINT, D3D12_HEAP_TYPE);
+		D3D12_HEAP_PROPERTIES ret;
+		(device->*(GetCustomHeapProperties_f)(&ID3D12Device::GetCustomHeapProperties))(&ret, nodeMask, heapType);
+		return ret;
+	}
+
 	static void initHeapProperties(ID3D12Device* _device, D3D12_HEAP_PROPERTIES& _properties)
 	{
 		if (D3D12_HEAP_TYPE_CUSTOM != _properties.Type)
 		{
-			_properties = _device->GetCustomHeapProperties(1, _properties.Type);
+			_properties = ID3D12DeviceGetCustomHeapProperties(_device, 1, _properties.Type);
 		}
 	}
 
