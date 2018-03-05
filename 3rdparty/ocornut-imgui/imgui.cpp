@@ -6134,21 +6134,20 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->InnerRect.Max.y = window->Pos.y + window->Size.y - window->ScrollbarSizes.y - window->WindowBorderSize;
         //window->DrawList->AddRect(window->InnerRect.Min, window->InnerRect.Max, IM_COL32_WHITE);
 
+        // Inner clipping rectangle
+        // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
+        window->InnerClipRect.Min.x = ImFloor(0.5f + window->InnerRect.Min.x + ImMax(0.0f, ImFloor(window->WindowPadding.x*0.5f - window->WindowBorderSize)));
+        window->InnerClipRect.Min.y = ImFloor(0.5f + window->InnerRect.Min.y);
+        window->InnerClipRect.Max.x = ImFloor(0.5f + window->InnerRect.Max.x - ImMax(0.0f, ImFloor(window->WindowPadding.x*0.5f - window->WindowBorderSize)));
+        window->InnerClipRect.Max.y = ImFloor(0.5f + window->InnerRect.Max.y);
+
         // After Begin() we fill the last item / hovered data using the title bar data. Make that a standard behavior (to allow usage of context menus on title bar only, etc.).
         window->DC.LastItemId = window->MoveId;
         window->DC.LastItemStatusFlags = IsMouseHoveringRect(title_bar_rect.Min, title_bar_rect.Max, false) ? ImGuiItemStatusFlags_HoveredRect : 0;
         window->DC.LastItemRect = title_bar_rect;
     }
 
-    // Inner clipping rectangle
-    // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-    const float border_size = window->WindowBorderSize;
-    ImRect clip_rect;
-    clip_rect.Min.x = ImFloor(0.5f + window->InnerRect.Min.x + ImMax(0.0f, ImFloor(window->WindowPadding.x*0.5f - border_size)));
-    clip_rect.Min.y = ImFloor(0.5f + window->InnerRect.Min.y);
-    clip_rect.Max.x = ImFloor(0.5f + window->InnerRect.Max.x - ImMax(0.0f, ImFloor(window->WindowPadding.x*0.5f - border_size)));
-    clip_rect.Max.y = ImFloor(0.5f + window->InnerRect.Max.y);
-    PushClipRect(clip_rect.Min, clip_rect.Max, true);
+    PushClipRect(window->InnerClipRect.Min, window->InnerClipRect.Max, true);
 
     // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
     if (first_begin_of_the_frame)
@@ -12388,7 +12387,7 @@ static float GetDraggedColumnOffset(ImGuiColumnsSet* columns, int column_index)
     // window creates a feedback loop because we store normalized positions. So while dragging we enforce absolute positioning.
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    IM_ASSERT(column_index > 0); // We cannot drag column 0. If you get this assert you may have a conflict between the ID of your columns and another widgets.
+    IM_ASSERT(column_index > 0); // We are not supposed to drag column 0.
     IM_ASSERT(g.ActiveId == columns->ID + ImGuiID(column_index));
 
     float x = g.IO.MousePos.x - g.ActiveIdClickOffset.x + GetColumnsRectHalfWidth() - window->Pos.x;
@@ -12408,16 +12407,6 @@ float ImGui::GetColumnOffset(int column_index)
     if (column_index < 0)
         column_index = columns->Current;
     IM_ASSERT(column_index < columns->Columns.Size);
-
-    /*
-    if (g.ActiveId)
-    {
-        ImGuiContext& g = *GImGui;
-        const ImGuiID column_id = columns->ColumnsSetId + ImGuiID(column_index);
-        if (g.ActiveId == column_id)
-            return GetDraggedColumnOffset(columns, column_index);
-    }
-    */
 
     const float t = columns->Columns[column_index].OffsetNorm;
     const float x_offset = ImLerp(columns->MinX, columns->MaxX, t);
@@ -12526,10 +12515,9 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
     window->DC.ColumnsSet = columns;
 
     // Set state for first column
-    const float content_region_width = (window->SizeContentsExplicit.x != 0.0f) ? (window->SizeContentsExplicit.x) : (window->Size.x -window->ScrollbarSizes.x);
+    const float content_region_width = (window->SizeContentsExplicit.x != 0.0f) ? (window->SizeContentsExplicit.x) : (window->InnerClipRect.Max.x - window->Pos.x);
     columns->MinX = window->DC.IndentX - g.Style.ItemSpacing.x; // Lock our horizontal range
-    //column->MaxX = content_region_width - window->Scroll.x - ((window->Flags & ImGuiWindowFlags_NoScrollbar) ? 0 : g.Style.ScrollbarSize);// - window->WindowPadding().x;
-    columns->MaxX = content_region_width - window->Scroll.x;
+    columns->MaxX = ImMax(content_region_width - window->Scroll.x, columns->MinX + 1.0f);
     columns->StartPosY = window->DC.CursorPos.y;
     columns->StartMaxPosX = window->DC.CursorMaxPos.x;
     columns->CellMinY = columns->CellMaxY = window->DC.CursorPos.y;
@@ -12553,19 +12541,10 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
         }
     }
 
-    for (int n = 0; n < columns_count + 1; n++)
+    for (int n = 0; n < columns_count; n++)
     {
-        // Clamp position
-        ImGuiColumnData* column = &columns->Columns[n];
-        float t = column->OffsetNorm;
-        if (!(columns->Flags & ImGuiColumnsFlags_NoForceWithinWindow))
-            t = ImMin(t, PixelsToOffsetNorm(columns, (columns->MaxX - columns->MinX) - g.Style.ColumnsMinSpacing * (columns->Count - n)));
-        column->OffsetNorm = t;
-
-        if (n == columns_count)
-            continue;
-
         // Compute clipping rectangle
+        ImGuiColumnData* column = &columns->Columns[n];
         float clip_x1 = ImFloor(0.5f + window->Pos.x + GetColumnOffset(n) - 1.0f);
         float clip_x2 = ImFloor(0.5f + window->Pos.x + GetColumnOffset(n + 1) - 1.0f);
         column->ClipRect = ImRect(clip_x1, -FLT_MAX, clip_x2, +FLT_MAX);
@@ -12644,7 +12623,7 @@ void ImGui::EndColumns()
     window->DC.CursorPos.x = (float)(int)(window->Pos.x + window->DC.IndentX + window->DC.ColumnsOffsetX);
 }
 
-// [2017/12: This is currently the only public API, while we are working on making BeginColumns/EndColumns user-facing]
+// [2018-03: This is currently the only public API, while we are working on making BeginColumns/EndColumns user-facing]
 void ImGui::Columns(int columns_count, const char* id, bool border)
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -13241,6 +13220,21 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     ImGui::BulletText("NavRectRel[0]: <None>");
                 if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
                 if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");
+                if (window->ColumnsStorage.Size > 0 && ImGui::TreeNode("Columns", "Columns sets (%d)", window->ColumnsStorage.Size))
+                {
+                    for (int n = 0; n < window->ColumnsStorage.Size; n++)
+                    {
+                        const ImGuiColumnsSet* columns = &window->ColumnsStorage[n];
+                        if (ImGui::TreeNode((void*)columns->ID, "Columns Id: 0x%08X, Count: %d, Flags: 0x%04X", columns->ID, columns->Count, columns->Flags))
+                        {
+                            ImGui::BulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns->MaxX - columns->MinX, columns->MinX, columns->MaxX);
+                            for (int column_n = 0; column_n < columns->Columns.Size; column_n++)
+                                ImGui::BulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", column_n, columns->Columns[column_n].OffsetNorm, OffsetNormToPixels(columns, columns->Columns[column_n].OffsetNorm));
+                            ImGui::TreePop();
+                        }
+                    }
+                    ImGui::TreePop();
+                }
                 ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * (int)sizeof(ImGuiStorage::Pair));
                 ImGui::TreePop();
             }
