@@ -6,16 +6,15 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "imgui/imgui.h"
-#include <time.h>
 
 namespace
 {
 
-#define RENDER_PASS_HIZ_ID						0
-#define RENDER_PASS_HIZ_DOWNSCALE_ID			1
-#define RENDER_PASS_OCCLUDE_PROPS_ID			2
-#define RENDER_PASS_COMPACT_STREAM_ID			3
-#define RENDER_PASS_MAIN_ID						4
+#define RENDER_PASS_HIZ_ID            0
+#define RENDER_PASS_HIZ_DOWNSCALE_ID  1
+#define RENDER_PASS_OCCLUDE_PROPS_ID  2
+#define RENDER_PASS_COMPACT_STREAM_ID 3
+#define RENDER_PASS_MAIN_ID           4
 
 struct Camera
 {
@@ -321,7 +320,7 @@ struct RenderPass
 	};
 };
 
-// All the per-instance data we store 
+// All the per-instance data we store
 struct InstanceData
 {
 	float m_world[16];
@@ -406,8 +405,8 @@ public:
 		m_height = _height;
 
 		//find largest pow of two dims less than backbuffer size
-		m_hiZwidth = (uint32_t)pow(2, floor(log2(m_width)));
-		m_hiZheight = (uint32_t)pow(2, floor(log2(m_height)));
+		m_hiZwidth  = (uint32_t)bx::pow(2.0f, bx::floor(bx::log2(m_width ) ) );
+		m_hiZheight = (uint32_t)bx::pow(2.0f, bx::floor(bx::log2(m_height) ) );
 
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
@@ -596,7 +595,7 @@ public:
 			m_hiZBuffer = bgfx::createFrameBuffer(1, &buffer, true);
 
 			//how many mip will the Hi Z buffer have?
-			m_noofHiZMips = (uint8_t)(1 + floor(log2(bx::uint32_max(m_hiZwidth, m_hiZheight))));
+			m_noofHiZMips = (uint8_t)(1 + bx::floor(bx::log2(bx::max(m_hiZwidth, m_hiZheight))));
 
 			// Setup compute shader buffers
 
@@ -765,7 +764,7 @@ public:
 					bgfx::makeRef(m_allPropIndicesDataCPU, totalNoofIndices * sizeof(uint16_t) )
 					);
 
-		// Create buffer with const drawcall data which will be copied to the indirect buffer later.  
+		// Create buffer with const drawcall data which will be copied to the indirect buffer later.
 		m_indirectBufferData = bgfx::createIndexBuffer(
 			bgfx::makeRef(m_indirectBufferDataCPU, m_noofProps * 3 * sizeof(uint32_t)),
 			BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32
@@ -895,7 +894,7 @@ public:
 	{
 		uint32_t width = m_hiZwidth;
 		uint32_t height = m_hiZheight;
-		 
+
 		for (uint8_t i = 0; i < m_noofHiZMips; i++)
 		{
 			float coordinateScale = i > 0 ? 2.0f : 1.0f;
@@ -938,7 +937,7 @@ public:
 		bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
 
 		//store a rounded-up, power of two instance count for the stream compaction step
-		float noofInstancesPowOf2 = (float)pow(2, floor(log(m_totalInstancesCount) / log(2)) + 1);
+		float noofInstancesPowOf2 = bx::pow(2.0f, bx::floor(bx::log(m_totalInstancesCount) / bx::log(2.0f) ) + 1.0f);
 
 		float cullingConfig[4] = { (float)m_totalInstancesCount, noofInstancesPowOf2 , (float)m_noofHiZMips, (float)m_noofProps };
 		bgfx::setUniform(u_cullingConfig, cullingConfig);
@@ -969,7 +968,7 @@ public:
 		bgfx::setUniform(u_cullingConfig, cullingConfig);
 
 		bgfx::dispatch(RENDER_PASS_COMPACT_STREAM_ID, m_programStreamCompaction, 1, 1, 1);
-		
+
 	}
 
 	//render the unoccluded props to the screen
@@ -1002,7 +1001,7 @@ public:
 
 		// Set "material" data (currently a colour only)
 		bgfx::setUniform(u_colour, &m_materials[0].m_colour, m_noofMaterials);
-		
+
 		if (m_useIndirect)
 		{
 			// Set vertex and index buffer.
