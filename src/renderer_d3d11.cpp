@@ -6420,8 +6420,8 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 						deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
 
 						const ShaderD3D11* fsh = program.m_fsh;
-						if (NULL != m_currentColor
-						||  fsh->m_hasDepthOp)
+						if (NULL != fsh
+						&& (NULL != m_currentColor || fsh->m_hasDepthOp) )
 						{
 							deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 							deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
@@ -6448,10 +6448,13 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 							commit(*vcb);
 						}
 
-						UniformBuffer* fcb = program.m_fsh->m_constantBuffer;
-						if (NULL != fcb)
+						if (NULL != program.m_fsh)
 						{
-							commit(*fcb);
+							UniformBuffer* fcb = program.m_fsh->m_constantBuffer;
+							if (NULL != fcb)
+							{
+								commit(*fcb);
+							}
 						}
 					}
 

@@ -1027,7 +1027,7 @@ namespace bgfx { namespace d3d9
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(m_shaders[_vsh.idx], m_shaders[_fsh.idx]);
+			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
@@ -4105,7 +4105,10 @@ namespace bgfx { namespace d3d9
 					{
 						ProgramD3D9& program = m_program[programIdx];
 						device->SetVertexShader(program.m_vsh->m_vertexShader);
-						device->SetPixelShader(program.m_fsh->m_pixelShader);
+						device->SetPixelShader(NULL == program.m_fsh
+							? NULL
+							: program.m_fsh->m_pixelShader
+							);
 					}
 
 					programChanged =
@@ -4124,10 +4127,13 @@ namespace bgfx { namespace d3d9
 							commit(*vcb);
 						}
 
-						UniformBuffer* fcb = program.m_fsh->m_constantBuffer;
-						if (NULL != fcb)
+						if (NULL != program.m_fsh)
 						{
-							commit(*fcb);
+							UniformBuffer* fcb = program.m_fsh->m_constantBuffer;
+							if (NULL != fcb)
+							{
+								commit(*fcb);
+							}
 						}
 					}
 
@@ -4406,11 +4412,11 @@ namespace bgfx { namespace d3d9
 					);
 
 				const D3DADAPTER_IDENTIFIER9& identifier = m_identifier;
-				tvm.printf(0, pos++, 0x8b, " Device: %s (%s)", identifier.Description, identifier.Driver);
+				tvm.printf(0, pos++, 0x8f, " Device: %s (%s)", identifier.Description, identifier.Driver);
 
 				char processMemoryUsed[16];
 				bx::prettify(processMemoryUsed, BX_COUNTOF(processMemoryUsed), bx::getProcessMemoryUsed() );
-				tvm.printf(0, pos++, 0x8b, " Memory: %s (process) ", processMemoryUsed);
+				tvm.printf(0, pos++, 0x8f, " Memory: %s (process) ", processMemoryUsed);
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8b, "        Frame: %7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "

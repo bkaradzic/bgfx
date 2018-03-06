@@ -259,17 +259,19 @@ namespace bgfx { namespace d3d9
 
 	struct ProgramD3D9
 	{
-		void create(const ShaderD3D9& _vsh, const ShaderD3D9& _fsh)
+		void create(const ShaderD3D9* _vsh, const ShaderD3D9* _fsh)
 		{
-			BX_CHECK(NULL != _vsh.m_vertexShader, "Vertex shader doesn't exist.");
-			m_vsh = &_vsh;
+			m_vsh = _vsh;
+			m_fsh = _fsh;
 
-			BX_CHECK(NULL != _fsh.m_pixelShader, "Fragment shader doesn't exist.");
-			m_fsh = &_fsh;
+			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform) );
+			m_numPredefined = _vsh->m_numPredefined;
 
-			bx::memCopy(&m_predefined[0], _vsh.m_predefined, _vsh.m_numPredefined*sizeof(PredefinedUniform) );
-			bx::memCopy(&m_predefined[_vsh.m_numPredefined], _fsh.m_predefined, _fsh.m_numPredefined*sizeof(PredefinedUniform) );
-			m_numPredefined = _vsh.m_numPredefined + _fsh.m_numPredefined;
+			if (NULL != _fsh)
+			{
+				bx::memCopy(&m_predefined[_vsh->m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform) );
+				m_numPredefined += _fsh->m_numPredefined;
+			}
 		}
 
 		void destroy()
