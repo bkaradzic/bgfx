@@ -179,8 +179,7 @@ public:
 
 		m_state[0] = meshStateCreate();
 		m_state[0]->m_state = 0
-			| BGFX_STATE_WRITE_RGB
-			| BGFX_STATE_WRITE_A
+			| (m_shadowSamplerSupported ? 0 : BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A)
 			| BGFX_STATE_WRITE_Z
 			| BGFX_STATE_DEPTH_TEST_LESS
 			| BGFX_STATE_CULL_CCW
