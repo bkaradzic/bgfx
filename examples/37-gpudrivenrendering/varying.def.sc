@@ -6,4 +6,4 @@ vec4 i_data2     : TEXCOORD5;
 vec4 i_data3     : TEXCOORD4;
 
 vec2  v_texcoord0 : TEXCOORD0;
-float v_materialID : TEXCOORD0;
+flat float v_materialID : TEXCOORD0;
