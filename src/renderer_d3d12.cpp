@@ -1511,12 +1511,11 @@ namespace bgfx { namespace d3d12
 						D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc = { BGFX_CONFIG_DRAW_INDIRECT_STRIDE, 1, &argDesc, 1 };
 
 						m_commandSignature[ii] = NULL;
-						hr = m_device->CreateCommandSignature(&commandSignatureDesc
-							, m_rootSignature
+						DX_CHECK(m_device->CreateCommandSignature(&commandSignatureDesc
+							, NULL
 							, IID_ID3D12CommandSignature
 							, (void**)&m_commandSignature[ii]
-							);
-						BX_WARN(SUCCEEDED(hr), "%d: hr 0x%08x", ii, hr);
+							) );
 					}
 				}
 			}
