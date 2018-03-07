@@ -1305,6 +1305,7 @@ namespace bgfx { namespace d3d12
 					, (void**)&m_rootSignature
 					) );
 
+				///
 				m_directAccessSupport = true
 					&& BX_ENABLED(BX_PLATFORM_XBOXONE)
 					&& m_architecture.UMA
@@ -1314,6 +1315,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
 					| BGFX_CAPS_INSTANCING
+//					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_FRAGMENT_DEPTH
@@ -1491,6 +1493,32 @@ namespace bgfx { namespace d3d12
 
 				m_gpuTimer.init();
 				m_occlusionQuery.init();
+
+				{
+					D3D12_INDIRECT_ARGUMENT_TYPE argType[] =
+					{
+						D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+						D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,
+						D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
+					};
+
+					D3D12_INDIRECT_ARGUMENT_DESC argDesc;
+					bx::memSet(&argDesc, 0, sizeof(argDesc) );
+
+					for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandSignature); ++ii)
+					{
+						argDesc.Type = argType[ii];
+						D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc = { BGFX_CONFIG_DRAW_INDIRECT_STRIDE, 1, &argDesc, 1 };
+
+						m_commandSignature[ii] = NULL;
+						hr = m_device->CreateCommandSignature(&commandSignatureDesc
+							, m_rootSignature
+							, IID_ID3D12CommandSignature
+							, (void**)&m_commandSignature[ii]
+							);
+						BX_WARN(SUCCEEDED(hr), "%d: hr 0x%08x", ii, hr);
+					}
+				}
 			}
 
 			g_internalData.context = m_device;
@@ -1575,6 +1603,11 @@ namespace bgfx { namespace d3d12
 
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_commandSignature); ++ii)
+			{
+				DX_RELEASE(m_commandSignature[ii], 0);
+			}
 
 			DX_RELEASE(m_rootSignature, 0);
 
@@ -3354,7 +3387,8 @@ data.NumQualityLevels = 0;
 		ScratchBufferD3D12 m_scratchBuffer[4];
 		DescriptorAllocatorD3D12 m_samplerAllocator;
 
-		ID3D12RootSignature* m_rootSignature;
+		ID3D12RootSignature*    m_rootSignature;
+		ID3D12CommandSignature* m_commandSignature[3];
 
 		CommandQueueD3D12 m_cmd;
 		BatchD3D12 m_batch;
@@ -4025,10 +4059,10 @@ data.NumQualityLevels = 0;
 				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 			}
 
-			cmd.draw.InstanceCount          = _draw.m_numInstances;
-			cmd.draw.VertexCountPerInstance = numVertices;
-			cmd.draw.StartVertexLocation    = 0;
-			cmd.draw.StartInstanceLocation  = 0;
+			cmd.args.InstanceCount          = _draw.m_numInstances;
+			cmd.args.VertexCountPerInstance = numVertices;
+			cmd.args.StartVertexLocation    = 0;
+			cmd.args.StartInstanceLocation  = 0;
 		}
 		else
 		{
@@ -4100,11 +4134,11 @@ data.NumQualityLevels = 0;
 				bx::memSet(vbv, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 			}
 
-			cmd.drawIndexed.IndexCountPerInstance = numIndices;
-			cmd.drawIndexed.InstanceCount         = _draw.m_numInstances;
-			cmd.drawIndexed.StartIndexLocation    = _draw.m_startIndex;
-			cmd.drawIndexed.BaseVertexLocation    = 0;
-			cmd.drawIndexed.StartInstanceLocation = 0;
+			cmd.args.IndexCountPerInstance = numIndices;
+			cmd.args.InstanceCount         = _draw.m_numInstances;
+			cmd.args.StartIndexLocation    = _draw.m_startIndex;
+			cmd.args.BaseVertexLocation    = 0;
+			cmd.args.StartInstanceLocation = 0;
 		}
 
 		if (BX_UNLIKELY(m_flushPerBatch == m_num[type]) )
@@ -4173,10 +4207,10 @@ data.NumQualityLevels = 0;
 						}
 
 						_commandList->DrawInstanced(
-							  cmd.draw.VertexCountPerInstance
-							, cmd.draw.InstanceCount
-							, cmd.draw.StartVertexLocation
-							, cmd.draw.StartInstanceLocation
+							  cmd.args.VertexCountPerInstance
+							, cmd.args.InstanceCount
+							, cmd.args.StartVertexLocation
+							, cmd.args.StartInstanceLocation
 							);
 					}
 				}
@@ -4209,11 +4243,11 @@ data.NumQualityLevels = 0;
 						}
 
 						_commandList->DrawIndexedInstanced(
-							  cmd.drawIndexed.IndexCountPerInstance
-							, cmd.drawIndexed.InstanceCount
-							, cmd.drawIndexed.StartIndexLocation
-							, cmd.drawIndexed.BaseVertexLocation
-							, cmd.drawIndexed.StartInstanceLocation
+							  cmd.args.IndexCountPerInstance
+							, cmd.args.InstanceCount
+							, cmd.args.StartIndexLocation
+							, cmd.args.BaseVertexLocation
+							, cmd.args.StartInstanceLocation
 							);
 					}
 				}
