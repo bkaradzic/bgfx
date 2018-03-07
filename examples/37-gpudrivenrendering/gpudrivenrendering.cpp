@@ -375,8 +375,8 @@ void createCubeMesh(Prop& prop)
 	prop.m_vertices = new PosVertex[prop.m_noofVertices];
 	prop.m_indices = new uint16_t[prop.m_noofIndices];
 
-	memcpy(prop.m_vertices, s_cubeVertices, prop.m_noofVertices * PosVertex::ms_decl.getStride());
-	memcpy(prop.m_indices, s_cubeIndices, prop.m_noofIndices * sizeof(uint16_t));
+	bx::memCopy(prop.m_vertices, s_cubeVertices, prop.m_noofVertices * PosVertex::ms_decl.getStride());
+	bx::memCopy(prop.m_indices, s_cubeIndices, prop.m_noofIndices * sizeof(uint16_t));
 
 	prop.m_vertexbufferHandle = bgfx::createVertexBuffer(
 		bgfx::makeRef(prop.m_vertices, prop.m_noofVertices * PosVertex::ms_decl.getStride()),
@@ -628,11 +628,11 @@ public:
 
 					for (uint32_t j = 0; j < numInstances; j++)
 					{
-						memcpy(data, prop.m_instances[j].m_bboxMin, 3 * sizeof(float));
+						bx::memCopy(data, prop.m_instances[j].m_bboxMin, 3 * sizeof(float));
 						data[3] = (float)i; // store the drawcall ID here to avoid creating a separate buffer
 						data += 4;
 
-						memcpy(data, prop.m_instances[j].m_bboxMax, 3 * sizeof(float));
+						bx::memCopy(data, prop.m_instances[j].m_bboxMax, 3 * sizeof(float));
 						data += 4;
 					}
 				}
@@ -658,16 +658,16 @@ public:
 				float* instanceData = new float[sizeOfBuffer];
 
 				float* data = instanceData;
-				for (uint16_t i = 0; i < m_noofProps; i++)
+				for (uint16_t ii = 0; ii < m_noofProps; ++ii)
 				{
-					Prop& prop = m_props[i];
+					Prop& prop = m_props[ii];
 
 					const uint32_t numInstances = prop.m_noofInstances;
 
-					for (uint32_t j = 0; j < numInstances; j++)
+					for (uint32_t jj = 0; jj < numInstances; ++jj)
 					{
-						memcpy(data, prop.m_instances[j].m_world, 16 * sizeof(float));
-						data[3] = (float)i; // store the drawcall ID here to avoid creating a separate buffer
+						bx::memCopy(data, prop.m_instances[jj].m_world, 16 * sizeof(float) );
+						data[3] = float(ii); // store the drawcall ID here to avoid creating a separate buffer
 						data += 16;
 					}
 				}
@@ -742,8 +742,8 @@ public:
 		{
 			Prop& prop = m_props[i];
 
-			memcpy(propVerticesData, prop.m_vertices, prop.m_noofVertices * sizeof(PosVertex));
-			memcpy(propIndicesData, prop.m_indices, prop.m_noofIndices * sizeof(uint16_t));
+			bx::memCopy(propVerticesData, prop.m_vertices, prop.m_noofVertices * sizeof(PosVertex));
+			bx::memCopy(propIndicesData, prop.m_indices, prop.m_noofIndices * sizeof(uint16_t));
 
 			propVerticesData += prop.m_noofVertices;
 			propIndicesData += prop.m_noofIndices;
@@ -871,7 +871,7 @@ public:
 					for (uint32_t j = 0; j < numInstances; j++)
 					{
 						//we only need the world matrix for the occlusion pass
-						memcpy(data->m_world, prop.m_instances[j].m_world, sizeof(data->m_world));
+						bx::memCopy(data->m_world, prop.m_instances[j].m_world, sizeof(data->m_world));
 						data++;
 					}
 
@@ -1019,9 +1019,9 @@ public:
 		else
 		{
 			// render all props using regular instancing
-			for (uint16_t i = 0; i < m_noofProps; i++)
+			for (uint16_t ii = 0; ii < m_noofProps; ++ii)
 			{
-				Prop& prop = m_props[i];
+				Prop& prop = m_props[ii];
 
 				if (prop.m_renderPass & RenderPass::MainPass)
 				{
@@ -1035,12 +1035,12 @@ public:
 
 						InstanceData *data = (InstanceData *)instanceBuffer.data;
 
-						for (uint32_t j = 0; j < numInstances; j++)
+						for (uint32_t jj = 0; jj < numInstances; ++jj)
 						{
 							//copy world matrix
-							memcpy(data->m_world, prop.m_instances[j].m_world, sizeof(data->m_world));
+							bx::memCopy(data->m_world, prop.m_instances[jj].m_world, sizeof(data->m_world) );
 							//pack the material ID into the world transform
-							data->m_world[3] = prop.m_materialID;
+							data->m_world[3] = float(prop.m_materialID);
 							data++;
 						}
 
