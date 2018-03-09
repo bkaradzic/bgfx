@@ -1820,8 +1820,8 @@ bool    ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas)
         ImFontConfig& cfg = atlas->ConfigData[input_i];
         ImFontTempBuildData& tmp = tmp_array[input_i];
         ImFont* dst_font = cfg.DstFont; // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
-        if (cfg.MergeMode)
-            dst_font->BuildLookupTable();
+//        if (cfg.MergeMode)
+//            dst_font->BuildLookupTable();
 
         const float font_scale = stbtt_ScaleForPixelHeight(&tmp.FontInfo, cfg.SizePixels);
         int unscaled_ascent, unscaled_descent, unscaled_line_gap;
