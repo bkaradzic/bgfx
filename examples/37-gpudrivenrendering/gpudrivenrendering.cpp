@@ -898,28 +898,28 @@ public:
 		uint32_t width = m_hiZwidth;
 		uint32_t height = m_hiZheight;
 
-		for (uint8_t i = 0; i < m_noofHiZMips; i++)
+		for (uint8_t lod = 0; lod < m_noofHiZMips; ++lod)
 		{
-			float coordinateScale = i > 0 ? 2.0f : 1.0f;
+			float coordinateScale = lod > 0 ? 2.0f : 1.0f;
 
 			float inputRendertargetSize[4] = { (float)width, (float)height, coordinateScale, coordinateScale };
 			bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
 
-			if (i > 0)
+			if (lod > 0)
 			{
 				// down scale mip 1 onwards
 				width /= 2;
 				height /= 2;
 
-				bgfx::setImage(0, getTexture(m_hiZBuffer, 0), i - 1, bgfx::Access::Read);
-				bgfx::setImage(1, getTexture(m_hiZBuffer, 0), i, bgfx::Access::Write);
+				bgfx::setImage(0, getTexture(m_hiZBuffer, 0), lod - 1, bgfx::Access::Read);
+				bgfx::setImage(1, getTexture(m_hiZBuffer, 0), lod,     bgfx::Access::Write);
 			}
 			else
 			{
 				// copy mip zero over to the hi Z buffer.
 				// We can't currently use blit as it requires same format and CopyResource is not exposed.
 				bgfx::setImage(0, getTexture(m_hiZDepthBuffer, 0), 0, bgfx::Access::Read);
-				bgfx::setImage(1, getTexture(m_hiZBuffer, 0), 0, bgfx::Access::Write);
+				bgfx::setImage(1, getTexture(m_hiZBuffer,      0), 0, bgfx::Access::Write);
 			}
 
 			bgfx::dispatch(RENDER_PASS_HIZ_DOWNSCALE_ID, m_programDownscaleHiZ, width/16, height/16);
@@ -930,11 +930,11 @@ public:
 	void renderOccludePropsPass()
 	{
 		// run the computer shader to determine visibility of each instance
-		bgfx::setTexture(0, s_texOcclusionDepthIn, bgfx::getTexture(m_hiZBuffer));
+		bgfx::setImage(0, bgfx::getTexture(m_hiZBuffer, 0), 0, bgfx::Access::Read);
 
-		bgfx::setBuffer(1, m_instanceBoundingBoxes, bgfx::Access::Read);
+		bgfx::setBuffer(1, m_instanceBoundingBoxes,  bgfx::Access::Read);
 		bgfx::setBuffer(2, m_drawcallInstanceCounts, bgfx::Access::ReadWrite);
-		bgfx::setBuffer(3, m_instancePredicates, bgfx::Access::Write);
+		bgfx::setBuffer(3, m_instancePredicates,     bgfx::Access::Write);
 
 		float inputRendertargetSize[4] = { (float)m_hiZwidth, (float)m_hiZheight, 1.0f/ m_hiZwidth, 1.0f/ m_hiZheight };
 		bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
@@ -942,7 +942,13 @@ public:
 		// store a rounded-up, power of two instance count for the stream compaction step
 		float noofInstancesPowOf2 = bx::pow(2.0f, bx::floor(bx::log(m_totalInstancesCount) / bx::log(2.0f) ) + 1.0f);
 
-		float cullingConfig[4] = { (float)m_totalInstancesCount, noofInstancesPowOf2 , (float)m_noofHiZMips, (float)m_noofProps };
+		float cullingConfig[4] =
+		{
+			(float)m_totalInstancesCount,
+			noofInstancesPowOf2,
+			(float)m_noofHiZMips,
+			(float)m_noofProps
+		};
 		bgfx::setUniform(u_cullingConfig, cullingConfig);
 
 		//set the view/projection transforms so that the compute shader can receive the viewProjection matrix automagically
