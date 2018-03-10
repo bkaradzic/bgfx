@@ -4046,7 +4046,7 @@ BX_UNUSED(currentSamplerStateIdx);
 // 						wchar_t* viewNameW = s_viewNameW[view];
 // 						viewNameW[3] = L' ';
 // 						PIX_ENDEVENT();
-// 						PIX_BEGINEVENT(D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff), viewNameW);
+// 						PIX_BEGINEVENT(toRgba8(0xff, 0x00, 0x00, 0xff), viewNameW);
 					}
 
 					commandListChanged = true;
@@ -4406,7 +4406,7 @@ BX_UNUSED(presentMin, presentMax);
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugstats");
+//			PIX_BEGINEVENT(toRgba8(0x40, 0x40, 0x40, 0xff), L"debugstats");
 
 //			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -4530,7 +4530,7 @@ BX_UNUSED(presentMin, presentMax);
 
  				if (NULL != m_renderdocdll)
  				{
- 					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
+ 					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
  				}
 
 				tvm.printf(10, pos++, 0x8b, "      Indices: %7d ", statsNumIndices);
@@ -4570,7 +4570,7 @@ BX_UNUSED(presentMin, presentMax);
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-//			PIX_BEGINEVENT(D3DCOLOR_RGBA(0x40, 0x40, 0x40, 0xff), L"debugtext");
+//			PIX_BEGINEVENT(toRgba8(0x40, 0x40, 0x40, 0xff), L"debugtext");
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 

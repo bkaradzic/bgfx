@@ -1964,7 +1964,7 @@ namespace bgfx { namespace d3d9
 					}
 					else
 					{
-						color = D3DCOLOR_RGBA(_clear.m_index[0], _clear.m_index[1], _clear.m_index[2], _clear.m_index[3]);
+						color = toRgba8(_clear.m_index[0], _clear.m_index[1], _clear.m_index[2], _clear.m_index[3]);
 					}
 
 					flags |= D3DCLEAR_TARGET;
@@ -4071,11 +4071,12 @@ namespace bgfx { namespace d3d9
 							&&  blendFactor != draw.m_rgba)
 							{
 								const uint32_t rgba = draw.m_rgba;
-								D3DCOLOR color = D3DCOLOR_RGBA(rgba>>24
-															, (rgba>>16)&0xff
-															, (rgba>> 8)&0xff
-															, (rgba    )&0xff
-															);
+								D3DCOLOR color = toRgba8(
+									   rgba>>24
+									, (rgba>>16)&0xff
+									, (rgba>> 8)&0xff
+									, (rgba    )&0xff
+									);
 								DX_CHECK(device->SetRenderState(D3DRS_BLENDFACTOR, color) );
 							}
 						}

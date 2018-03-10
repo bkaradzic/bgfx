@@ -19,16 +19,18 @@
 #	define DX_CHECK_EXTRA_ARGS
 #endif // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9
 
-#ifndef D3DCOLOR_ARGB
-#	define D3DCOLOR_ARGB(_a, _r, _g, _b) ( (DWORD)( ( ( (_a)&0xff)<<24)|( ( (_r)&0xff)<<16)|( ( (_g)&0xff)<<8)|( (_b)&0xff) ) )
-#endif // D3DCOLOR_ARGB
-
-#ifndef D3DCOLOR_RGBA
-#	define D3DCOLOR_RGBA(_r, _g, _b, _a) D3DCOLOR_ARGB(_a, _r, _g, _b)
-#endif // D3DCOLOR_RGBA
-
 namespace bgfx
 {
+	constexpr uint32_t toRgba8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
+	{
+		return uint32_t(0
+			| ( (_r)<<24)
+			| ( (_g)<<16)
+			| ( (_b)<< 8)
+			| ( (_a)    )
+			);
+	}
+
 #if BX_PLATFORM_XBOXONE
 	typedef ::IGraphicsUnknown IUnknown;
 #else
@@ -101,13 +103,13 @@ namespace bgfx
 #	define PIX_ENDEVENT()
 #endif // BGFX_CONFIG_DEBUG_PIX
 
-#define D3DCOLOR_FRAME   D3DCOLOR_RGBA(0xff, 0xd7, 0xc9, 0xff)
-#define D3DCOLOR_VIEW    D3DCOLOR_RGBA(0xe4, 0xb4, 0x8e, 0xff)
-#define D3DCOLOR_VIEW_L  D3DCOLOR_RGBA(0xf9, 0xee, 0xe5, 0xff)
-#define D3DCOLOR_VIEW_R  D3DCOLOR_RGBA(0xe8, 0xd3, 0xc0, 0xff)
-#define D3DCOLOR_DRAW    D3DCOLOR_RGBA(0xc6, 0xe5, 0xb9, 0xff)
-#define D3DCOLOR_COMPUTE D3DCOLOR_RGBA(0xa7, 0xdb, 0xd8, 0xff)
-#define D3DCOLOR_MARKER  D3DCOLOR_RGBA(0xff, 0x00, 0x00, 0xff)
+#define D3DCOLOR_FRAME   toRgba8(0xff, 0xd7, 0xc9, 0xff)
+#define D3DCOLOR_VIEW    toRgba8(0xe4, 0xb4, 0x8e, 0xff)
+#define D3DCOLOR_VIEW_L  toRgba8(0xf9, 0xee, 0xe5, 0xff)
+#define D3DCOLOR_VIEW_R  toRgba8(0xe8, 0xd3, 0xc0, 0xff)
+#define D3DCOLOR_DRAW    toRgba8(0xc6, 0xe5, 0xb9, 0xff)
+#define D3DCOLOR_COMPUTE toRgba8(0xa7, 0xdb, 0xd8, 0xff)
+#define D3DCOLOR_MARKER  toRgba8(0xff, 0x00, 0x00, 0xff)
 
 	inline int getRefCount(IUnknown* _interface)
 	{

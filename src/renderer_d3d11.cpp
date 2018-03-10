@@ -6439,7 +6439,7 @@ namespace bgfx { namespace d3d11
 
 				if (NULL != m_renderdocdll)
 				{
-					tvm.printf(tvm.m_width-27, 0, 0x1f, " [F11 - RenderDoc capture] ");
+					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
 				}
 
 				tvm.printf(10, pos++, 0x8b, "      Indices: %7d ", statsNumIndices);
