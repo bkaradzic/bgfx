@@ -1820,8 +1820,8 @@ bool    ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas)
         ImFontConfig& cfg = atlas->ConfigData[input_i];
         ImFontTempBuildData& tmp = tmp_array[input_i];
         ImFont* dst_font = cfg.DstFont; // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
-//        if (cfg.MergeMode)
-//            dst_font->BuildLookupTable();
+        if (cfg.MergeMode)
+            dst_font->BuildLookupTable();
 
         const float font_scale = stbtt_ScaleForPixelHeight(&tmp.FontInfo, cfg.SizePixels);
         int unscaled_ascent, unscaled_descent, unscaled_line_gap;
@@ -1843,7 +1843,7 @@ bool    ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas)
                     continue;
 
                 const int codepoint = range.first_unicode_codepoint_in_range + char_idx;
-                if (cfg.MergeMode && dst_font->FindGlyph((unsigned short)codepoint))
+                if (cfg.MergeMode && dst_font->FindGlyphNoFallback((unsigned short)codepoint))
                     continue;
 
                 stbtt_aligned_quad q;
@@ -2207,8 +2207,7 @@ void ImFont::BuildLookupTable()
         IndexLookup[(int)tab_glyph.Codepoint] = (unsigned short)(Glyphs.Size-1);
     }
 
-    FallbackGlyph = NULL;
-    FallbackGlyph = FindGlyph(FallbackChar);
+    FallbackGlyph = FindGlyphNoFallback(FallbackChar);
     FallbackAdvanceX = FallbackGlyph ? FallbackGlyph->AdvanceX : 0.0f;
     for (int i = 0; i < max_codepoint + 1; i++)
         if (IndexAdvanceX[i] < 0.0f)
@@ -2270,13 +2269,22 @@ void ImFont::AddRemapChar(ImWchar dst, ImWchar src, bool overwrite_dst)
 
 const ImFontGlyph* ImFont::FindGlyph(ImWchar c) const
 {
-    if (c < IndexLookup.Size)
-    {
-        const unsigned short i = IndexLookup[c];
-        if (i != (unsigned short)-1)
-            return &Glyphs.Data[i];
-    }
-    return FallbackGlyph;
+    if (c >= IndexLookup.Size)
+        return FallbackGlyph;
+    const unsigned short i = IndexLookup[c];
+    if (i == (unsigned short)-1)
+        return FallbackGlyph;
+    return &Glyphs.Data[i];
+}
+
+const ImFontGlyph* ImFont::FindGlyphNoFallback(ImWchar c) const
+{
+    if (c >= IndexLookup.Size)
+        return NULL;
+    const unsigned short i = IndexLookup[c];
+    if (i == (unsigned short)-1)
+        return NULL;
+    return &Glyphs.Data[i];
 }
 
 const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const char* text_end, float wrap_width) const
