@@ -3999,8 +3999,123 @@ data.NumQualityLevels = 0;
 		return *cmd;
 	}
 
+	uint8_t fill(ID3D12GraphicsCommandList* _commandList, D3D12_VERTEX_BUFFER_VIEW* _vbv, const RenderDraw& _draw, uint32_t& numVertices)
+	{
+		uint8_t  numStreams = 0;
+		numVertices = _draw.m_numVertices;
+		for (uint32_t idx = 0, streamMask = _draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+			; 0 != streamMask
+			; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+			)
+		{
+			streamMask >>= ntz;
+			idx += ntz;
+
+			const Stream& stream = _draw.m_stream[idx];
+
+			uint16_t handle = stream.m_handle.idx;
+			VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
+			vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+			uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
+			const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[decl];
+			uint32_t stride = vertexDecl.m_stride;
+
+			D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
+			vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
+			vbv.StrideInBytes  = vertexDecl.m_stride;
+			vbv.SizeInBytes    = vb.m_size;
+
+			numVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
+				? vb.m_size/stride
+				: _draw.m_numVertices
+				, numVertices
+				);
+		}
+
+		return numStreams;
+	}
+
 	uint32_t BatchD3D12::draw(ID3D12GraphicsCommandList* _commandList, D3D12_GPU_VIRTUAL_ADDRESS _cbv, const RenderDraw& _draw)
 	{
+		if (isValid(_draw.m_indirectBuffer) )
+		{
+			_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, _cbv);
+
+			D3D12_VERTEX_BUFFER_VIEW vbvs[BGFX_CONFIG_MAX_VERTEX_STREAMS+1];
+
+			uint32_t numVertices;
+			uint8_t  numStreams = fill(_commandList, vbvs, _draw, numVertices);
+
+			if (isValid(_draw.m_instanceDataBuffer) )
+			{
+				VertexBufferD3D12& inst = s_renderD3D12->m_vertexBuffers[_draw.m_instanceDataBuffer.idx];
+				inst.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+				D3D12_VERTEX_BUFFER_VIEW& vbv = vbvs[numStreams++];
+				vbv.BufferLocation = inst.m_gpuVA + _draw.m_instanceDataOffset;
+				vbv.StrideInBytes  = _draw.m_instanceDataStride;
+				vbv.SizeInBytes    = _draw.m_numInstances * _draw.m_instanceDataStride;
+			}
+
+			_commandList->IASetVertexBuffers(0
+				, numStreams
+				, vbvs
+				);
+
+			const VertexBufferD3D12& indirect = s_renderD3D12->m_vertexBuffers[_draw.m_indirectBuffer.idx];
+			const uint32_t numDrawIndirect = UINT16_MAX == _draw.m_numIndirect
+				? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+				: _draw.m_numIndirect
+				;
+
+			uint32_t numIndices = 0;
+
+			if (isValid(_draw.m_indexBuffer) )
+			{
+				BufferD3D12& ib = s_renderD3D12->m_indexBuffers[_draw.m_indexBuffer.idx];
+				ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+
+				const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
+				const uint32_t indexSize = hasIndex16 ? 2 : 4;
+
+				numIndices = UINT32_MAX == _draw.m_numIndices
+					? ib.m_size / indexSize
+					: _draw.m_numIndices
+					;
+
+				D3D12_INDEX_BUFFER_VIEW ibv;
+				ibv.BufferLocation = ib.m_gpuVA;
+				ibv.SizeInBytes    = ib.m_size;
+				ibv.Format = hasIndex16
+					? DXGI_FORMAT_R16_UINT
+					: DXGI_FORMAT_R32_UINT
+					;
+				_commandList->IASetIndexBuffer(&ibv);
+
+				_commandList->ExecuteIndirect(
+					  s_renderD3D12->m_commandSignature[2]
+					, numDrawIndirect
+					, indirect.m_ptr
+					, _draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+					, NULL
+					, 0
+					);
+			}
+			else
+			{
+				_commandList->ExecuteIndirect(
+					  s_renderD3D12->m_commandSignature[1]
+					, numDrawIndirect
+					, indirect.m_ptr
+					, _draw.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+					, NULL
+					, 0
+					);
+			}
+
+			return numIndices;
+		}
+
 		Enum type = Enum(!!isValid(_draw.m_indexBuffer) );
 
 		uint32_t numIndices = 0;
@@ -4010,37 +4125,8 @@ data.NumQualityLevels = 0;
 			DrawIndirectCommand& cmd = getCmd<DrawIndirectCommand>(Draw);
 			cmd.cbv = _cbv;
 
-			uint32_t numVertices = _draw.m_numVertices;
-			uint8_t  numStreams = 0;
-			for (uint32_t idx = 0, streamMask = _draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-				; 0 != streamMask
-				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
-				)
-			{
-				streamMask >>= ntz;
-				idx += ntz;
-
-				const Stream& stream = _draw.m_stream[idx];
-
-				uint16_t handle = stream.m_handle.idx;
-				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
-				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-				uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-				const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[decl];
-				uint32_t stride = vertexDecl.m_stride;
-
-				D3D12_VERTEX_BUFFER_VIEW& vbv = cmd.vbv[numStreams];
-				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
-				vbv.StrideInBytes  = vertexDecl.m_stride;
-				vbv.SizeInBytes    = vb.m_size;
-
-				numVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
-					? vb.m_size/stride
-					: _draw.m_numVertices
-					, numVertices
-					);
-			}
+			uint32_t numVertices;
+			uint8_t  numStreams = fill(_commandList, cmd.vbv, _draw, numVertices);
 
 			if (isValid(_draw.m_instanceDataBuffer) )
 			{
@@ -4085,37 +4171,8 @@ data.NumQualityLevels = 0;
 				: DXGI_FORMAT_R32_UINT
 				;
 
-			uint32_t numVertices = _draw.m_numVertices;
-			uint8_t  numStreams = 0;
-			for (uint32_t idx = 0, streamMask = _draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-				; 0 != streamMask
-				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
-				)
-			{
-				streamMask >>= ntz;
-				idx += ntz;
-
-				const Stream& stream = _draw.m_stream[idx];
-
-				uint16_t handle = stream.m_handle.idx;
-				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
-				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-
-				uint16_t decl = !isValid(vb.m_decl) ? stream.m_decl.idx : vb.m_decl.idx;
-				const VertexDecl& vertexDecl = s_renderD3D12->m_vertexDecls[decl];
-				uint32_t stride = vertexDecl.m_stride;
-
-				D3D12_VERTEX_BUFFER_VIEW& vbv = cmd.vbv[numStreams];
-				vbv.BufferLocation = vb.m_gpuVA + stream.m_startVertex * stride;
-				vbv.StrideInBytes  = stride;
-				vbv.SizeInBytes    = vb.m_size;
-
-				numVertices = bx::uint32_min(UINT32_MAX == _draw.m_numVertices
-					? vb.m_size/stride
-					: _draw.m_numVertices
-					, numVertices
-					);
-			}
+			uint32_t numVertices;
+			uint8_t  numStreams = fill(_commandList, cmd.vbv, _draw, numVertices);
 
 			if (isValid(_draw.m_instanceDataBuffer) )
 			{
