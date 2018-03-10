@@ -1315,7 +1315,7 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_3D
 					| BGFX_CAPS_TEXTURE_COMPARE_ALL
 					| BGFX_CAPS_INSTANCING
-//					| BGFX_CAPS_DRAW_INDIRECT
+					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_VERTEX_ATTRIB_HALF
 					| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 					| BGFX_CAPS_FRAGMENT_DEPTH
@@ -6056,19 +6056,21 @@ data.NumQualityLevels = 0;
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
-						const VertexBufferD3D12& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
+						const VertexBufferD3D12& indirect = m_vertexBuffers[compute.m_indirectBuffer.idx];
 
 						uint32_t numDrawIndirect = UINT16_MAX == compute.m_numIndirect
-							? vb.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+							? indirect.m_size/BGFX_CONFIG_DRAW_INDIRECT_STRIDE
 							: compute.m_numIndirect
 							;
 
-						uint32_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-						for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
-						{
-//							m_commandList->ExecuteIndirect(ptr, args);
-							args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
-						}
+						m_commandList->ExecuteIndirect(
+							  s_renderD3D12->m_commandSignature[0]
+							, numDrawIndirect
+							, indirect.m_ptr
+							, compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE
+							, NULL
+							, 0
+							);
 					}
 					else
 					{
