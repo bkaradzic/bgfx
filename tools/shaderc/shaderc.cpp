@@ -919,14 +919,20 @@ namespace bgfx
 
 		Preprocessor preprocessor(_options.inputFilePath.c_str(), 0 != essl);
 
-		for(size_t i=0; i<_options.includeDirs.size(); ++i)
-			preprocessor.addInclude(_options.includeDirs[i].c_str());
+		for(size_t i = 0; i<_options.includeDirs.size(); ++i)
+		{
+			preprocessor.addInclude(_options.includeDirs[i].c_str() );
+		}
 
-		for(size_t i=0; i<_options.defines.size(); ++i)
-			preprocessor.setDefine(_options.defines[i].c_str());
+		for(size_t i = 0; i<_options.defines.size(); ++i)
+		{
+			preprocessor.setDefine(_options.defines[i].c_str() );
+		}
 
-		for(size_t i=0; i<_options.dependencies.size(); ++i)
-			preprocessor.addDependency(_options.dependencies[i].c_str());
+		for(size_t i = 0; i<_options.dependencies.size(); ++i)
+		{
+			preprocessor.addDependency(_options.dependencies[i].c_str() );
+		}
 
 		preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
 		preprocessor.setDefaultDefine("BX_PLATFORM_EMSCRIPTEN");
