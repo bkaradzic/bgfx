@@ -84,11 +84,13 @@ void main()
 			mip = level_lower;
 
 		//load depths from high z buffer
-		vec4 depth = { 	texture2DLod(s_texOcclusionDepth, boxUVs.xy, mip).x,
-						texture2DLod(s_texOcclusionDepth, boxUVs.zy, mip).x,
-						texture2DLod(s_texOcclusionDepth, boxUVs.xw, mip).x,
-						texture2DLod(s_texOcclusionDepth, boxUVs.zw, mip).x,
-					};
+		vec4 depth =
+		{
+			texture2DLod(s_texOcclusionDepth, boxUVs.xy, mip).x,
+			texture2DLod(s_texOcclusionDepth, boxUVs.zy, mip).x,
+			texture2DLod(s_texOcclusionDepth, boxUVs.xw, mip).x,
+			texture2DLod(s_texOcclusionDepth, boxUVs.zw, mip).x,
+		};
 
 		//find the max depth
 		float maxDepth = max( max(depth.x, depth.y), max(depth.z, depth.w) );

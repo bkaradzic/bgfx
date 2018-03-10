@@ -7,18 +7,20 @@ $input v_materialID
 
 #include "../common/common.sh"
 
-uniform vec4 u_colour[50];
+uniform vec4 u_color[32];
 
 void main()
 {
-	vec4 colour = u_colour[uint(v_materialID)];
+	vec4 color = u_color[uint(v_materialID)];
 
-	if ( colour.w < 1.0f )
+	if (color.w < 1.0f)
 	{
 		//render dithered alpha
 		if ( (int(gl_FragCoord.x) % 2) == (int(gl_FragCoord.y) % 2) )
+		{
 			discard;
+		}
 	}
 
-	gl_FragColor = vec4( colour.xyz,1 );
+	gl_FragColor = vec4(color.xyz, 1.0);
 }

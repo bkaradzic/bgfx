@@ -6819,16 +6819,24 @@ namespace bgfx { namespace gl
 
 								case Binding::Image:
 									{
-										const TextureGL& texture = m_textures[bind.m_idx];
-										GL_CHECK(glBindImageTexture(ii
-											, texture.m_id
-											, bind.m_un.m_compute.m_mip
-											, texture.isCubeMap() ? GL_TRUE : GL_FALSE
-											, 0
-											, s_access[bind.m_un.m_compute.m_access]
-											, s_imageFormat[bind.m_un.m_compute.m_format])
-											);
-										barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+										if (Access::Read == bind.m_un.m_compute.m_access)
+										{
+											TextureGL& texture = m_textures[bind.m_idx];
+											texture.commit(ii, texture.m_flags, _render->m_colorPalette);
+										}
+										else
+										{
+											const TextureGL& texture = m_textures[bind.m_idx];
+											GL_CHECK(glBindImageTexture(ii
+												, texture.m_id
+												, bind.m_un.m_compute.m_mip
+												, texture.isCubeMap() ? GL_TRUE : GL_FALSE
+												, 0
+												, s_access[bind.m_un.m_compute.m_access]
+												, s_imageFormat[bind.m_un.m_compute.m_format])
+												);
+											barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+										}
 									}
 									break;
 
