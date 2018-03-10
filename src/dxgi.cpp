@@ -4,6 +4,9 @@
  */
 
 #include "bgfx_p.h"
+
+#if BGFX_CONFIG_RENDERER_DIRECT3D11 || BGFX_CONFIG_RENDERER_DIRECT3D12
+
 #include "dxgi.h"
 #include "renderer_d3d.h"
 
@@ -411,5 +414,6 @@ namespace bgfx
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	}
 
-
 } // namespace bgfx
+
+#endif // BGFX_CONFIG_RENDERER_DIRECT3D11 || BGFX_CONFIG_RENDERER_DIRECT3D12
