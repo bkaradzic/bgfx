@@ -392,6 +392,7 @@ public:
     const TFunction* findFunctionExact(const TSourceLoc& loc, const TFunction& call, bool& builtIn);
     const TFunction* findFunction120(const TSourceLoc& loc, const TFunction& call, bool& builtIn);
     const TFunction* findFunction400(const TSourceLoc& loc, const TFunction& call, bool& builtIn);
+    const TFunction* findFunctionExplicitTypes(const TSourceLoc& loc, const TFunction& call, bool& builtIn);
     void declareTypeDefaults(const TSourceLoc&, const TPublicType&);
     TIntermNode* declareVariable(const TSourceLoc&, TString& identifier, const TPublicType&, TArraySizes* typeArray = 0, TIntermTyped* initializer = 0);
     TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);

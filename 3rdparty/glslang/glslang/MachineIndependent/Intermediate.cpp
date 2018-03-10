@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2015 LunarG, Inc.
 // Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -118,16 +119,12 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
         return nullptr;
 
     // Try converting the children's base types to compatible types.
-    TIntermTyped* child = addConversion(op, left->getType(), right);
-    if (child)
-        right = child;
-    else {
-        child = addConversion(op, right->getType(), left);
-        if (child)
-            left = child;
-        else
-            return nullptr;
-    }
+    auto children = addConversion(op, left, right);
+    left = std::get<0>(children);
+    right = std::get<1>(children);
+
+    if (left == nullptr || right == nullptr)
+        return nullptr;
 
     // Convert the children's type shape to be compatible.
     addBiShapeConversion(op, left, right);
@@ -304,20 +301,18 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
     //
     TBasicType newType = EbtVoid;
     switch (op) {
+    case EOpConstructInt8:   newType = EbtInt8;   break;
+    case EOpConstructUint8:  newType = EbtUint8;  break;
+    case EOpConstructInt16:  newType = EbtInt16;    break;
+    case EOpConstructUint16: newType = EbtUint16;   break;
     case EOpConstructInt:    newType = EbtInt;    break;
     case EOpConstructUint:   newType = EbtUint;   break;
     case EOpConstructInt64:  newType = EbtInt64;  break;
     case EOpConstructUint64: newType = EbtUint64; break;
-#ifdef AMD_EXTENSIONS
-    case EOpConstructInt16:  newType = EbtInt16;  break;
-    case EOpConstructUint16: newType = EbtUint16; break;
-#endif
     case EOpConstructBool:   newType = EbtBool;   break;
     case EOpConstructFloat:  newType = EbtFloat;  break;
     case EOpConstructDouble: newType = EbtDouble; break;
-#ifdef AMD_EXTENSIONS
     case EOpConstructFloat16: newType = EbtFloat16; break;
-#endif
     default: break; // some compilers want this
     }
 
@@ -336,20 +331,18 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
     // TODO: but, did this bypass constant folding?
     //
     switch (op) {
+    case EOpConstructInt8:
+    case EOpConstructUint8:
+    case EOpConstructInt16:
+    case EOpConstructUint16:
     case EOpConstructInt:
     case EOpConstructUint:
     case EOpConstructInt64:
     case EOpConstructUint64:
-#ifdef AMD_EXTENSIONS
-    case EOpConstructInt16:
-    case EOpConstructUint16:
-#endif
     case EOpConstructBool:
     case EOpConstructFloat:
     case EOpConstructDouble:
-#ifdef AMD_EXTENSIONS
     case EOpConstructFloat16:
-#endif
         return child;
     default: break; // some compilers want this
     }
@@ -447,27 +440,14 @@ TIntermTyped* TIntermediate::setAggregateOperator(TIntermNode* node, TOperator o
     return fold(aggNode);
 }
 
-//
-// Convert the node's type to the given type, as allowed by the operation involved: 'op'.
-// For implicit conversions, 'op' is not the requested conversion, it is the explicit
-// operation requiring the implicit conversion.
-//
-// Returns a node representing the conversion, which could be the same
-// node passed in if no conversion was needed.
-//
-// Generally, this is focused on basic type conversion, not shape conversion.
-// See addShapeConversion().
-//
-// Return nullptr if a conversion can't be done.
-//
-TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TIntermTyped* node) const
+bool TIntermediate::isConversionAllowed(TOperator op, TIntermTyped* node) const
 {
     //
     // Does the base type even allow the operation?
     //
     switch (node->getBasicType()) {
     case EbtVoid:
-        return nullptr;
+        return false;
     case EbtAtomicUint:
     case EbtSampler:
         // opaque types can be passed to functions
@@ -485,10 +465,421 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
             break;
 
         // otherwise, opaque types can't even be operated on, let alone converted
-        return nullptr;
+        return false;
     default:
         break;
     }
+
+    return true;
+}
+
+// This is 'mechanism' here, it does any conversion told.
+// It is about basic type, not about shape.
+// The policy comes from the shader or the above code.
+TIntermUnary* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped* node) const
+{
+    //
+    // Add a new newNode for the conversion.
+    //
+    TIntermUnary* newNode = nullptr;
+
+    TOperator newOp = EOpNull;
+
+    switch (convertTo) {
+    case EbtDouble:
+        switch (node->getBasicType()) {
+        case EbtInt8:  newOp = EOpConvInt8ToDouble;  break;
+        case EbtUint8: newOp = EOpConvUint8ToDouble; break;
+        case EbtInt16: newOp = EOpConvInt16ToDouble; break;
+        case EbtUint16:newOp = EOpConvUint16ToDouble;break;
+        case EbtInt:   newOp = EOpConvIntToDouble;   break;
+        case EbtUint:  newOp = EOpConvUintToDouble;  break;
+        case EbtBool:  newOp = EOpConvBoolToDouble;  break;
+        case EbtFloat: newOp = EOpConvFloatToDouble; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToDouble; break;
+        case EbtInt64: newOp = EOpConvInt64ToDouble; break;
+        case EbtUint64: newOp = EOpConvUint64ToDouble; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtFloat:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToFloat;    break;
+        case EbtUint8:  newOp = EOpConvUint8ToFloat;   break;
+        case EbtInt16:  newOp = EOpConvInt16ToFloat;    break;
+        case EbtUint16: newOp = EOpConvUint16ToFloat;   break;
+        case EbtInt:    newOp = EOpConvIntToFloat;    break;
+        case EbtUint:   newOp = EOpConvUintToFloat;   break;
+        case EbtBool:   newOp = EOpConvBoolToFloat;   break;
+        case EbtDouble: newOp = EOpConvDoubleToFloat; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToFloat; break;
+        case EbtInt64:  newOp = EOpConvInt64ToFloat;  break;
+        case EbtUint64: newOp = EOpConvUint64ToFloat; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtFloat16:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToFloat16;    break;
+        case EbtUint8:  newOp = EOpConvUint8ToFloat16;   break;
+        case EbtInt16:  newOp = EOpConvInt16ToFloat16;    break;
+        case EbtUint16: newOp = EOpConvUint16ToFloat16;   break;
+        case EbtInt:    newOp = EOpConvIntToFloat16;    break;
+        case EbtUint:   newOp = EOpConvUintToFloat16;   break;
+        case EbtBool:   newOp = EOpConvBoolToFloat16;   break;
+        case EbtFloat:  newOp = EOpConvFloatToFloat16;  break;
+        case EbtDouble: newOp = EOpConvDoubleToFloat16; break;
+        case EbtInt64:  newOp = EOpConvInt64ToFloat16;  break;
+        case EbtUint64: newOp = EOpConvUint64ToFloat16; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtBool:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToBool;   break;
+        case EbtUint8:  newOp = EOpConvUint8ToBool;  break;
+        case EbtInt16:  newOp = EOpConvInt16ToBool;  break;
+        case EbtUint16: newOp = EOpConvUint16ToBool; break;
+        case EbtInt:    newOp = EOpConvIntToBool;    break;
+        case EbtUint:   newOp = EOpConvUintToBool;   break;
+        case EbtFloat:  newOp = EOpConvFloatToBool;  break;
+        case EbtDouble: newOp = EOpConvDoubleToBool; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToBool; break;
+        case EbtInt64:  newOp = EOpConvInt64ToBool;  break;
+        case EbtUint64: newOp = EOpConvUint64ToBool; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtInt8:
+        switch (node->getBasicType()) {
+        case EbtUint8:  newOp = EOpConvUint8ToInt8;   break;
+        case EbtInt16:  newOp = EOpConvInt16ToInt8;   break;
+        case EbtUint16: newOp = EOpConvUint16ToInt8;  break;
+        case EbtInt:    newOp = EOpConvIntToInt8;   break;
+        case EbtUint:   newOp = EOpConvUintToInt8;   break;
+        case EbtInt64:  newOp = EOpConvInt64ToInt8;  break;
+        case EbtUint64: newOp = EOpConvUint64ToInt8; break;
+        case EbtBool:   newOp = EOpConvBoolToInt8;   break;
+        case EbtFloat:  newOp = EOpConvFloatToInt8;  break;
+        case EbtDouble: newOp = EOpConvDoubleToInt8; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt8; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtUint8:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToUint8;   break;
+        case EbtInt16:  newOp = EOpConvInt16ToUint8;  break;
+        case EbtUint16: newOp = EOpConvUint16ToUint8; break;
+        case EbtInt:    newOp = EOpConvIntToUint8;    break;
+        case EbtUint:   newOp = EOpConvUintToUint8;   break;
+        case EbtInt64:  newOp = EOpConvInt64ToUint8;  break;
+        case EbtUint64: newOp = EOpConvUint64ToUint8; break;
+        case EbtBool:   newOp = EOpConvBoolToUint8;   break;
+        case EbtFloat:  newOp = EOpConvFloatToUint8;  break;
+        case EbtDouble: newOp = EOpConvDoubleToUint8; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint8; break;
+        default:
+            return nullptr;
+        }
+        break;
+
+    case EbtInt16:
+        switch (node->getBasicType()) {
+        case EbtUint8:  newOp = EOpConvUint8ToInt16;   break;
+        case EbtInt8:   newOp = EOpConvInt8ToInt16;   break;
+        case EbtUint16: newOp = EOpConvUint16ToInt16;  break;
+        case EbtInt:    newOp = EOpConvIntToInt16;   break;
+        case EbtUint:   newOp = EOpConvUintToInt16;   break;
+        case EbtInt64:  newOp = EOpConvInt64ToInt16;  break;
+        case EbtUint64: newOp = EOpConvUint64ToInt16; break;
+        case EbtBool:   newOp = EOpConvBoolToInt16;   break;
+        case EbtFloat:  newOp = EOpConvFloatToInt16;  break;
+        case EbtDouble: newOp = EOpConvDoubleToInt16; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt16; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtUint16:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToUint16;   break;
+        case EbtUint8:  newOp = EOpConvUint8ToUint16;  break;
+        case EbtInt16:  newOp = EOpConvInt16ToUint16; break;
+        case EbtInt:    newOp = EOpConvIntToUint16;    break;
+        case EbtUint:   newOp = EOpConvUintToUint16;   break;
+        case EbtInt64:  newOp = EOpConvInt64ToUint16;  break;
+        case EbtUint64: newOp = EOpConvUint64ToUint16; break;
+        case EbtBool:   newOp = EOpConvBoolToUint16;   break;
+        case EbtFloat:  newOp = EOpConvFloatToUint16;  break;
+        case EbtDouble: newOp = EOpConvDoubleToUint16; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint16; break;
+        default:
+            return nullptr;
+        }
+        break;
+
+    case EbtInt:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToInt;    break;
+        case EbtUint8:  newOp = EOpConvUint8ToInt;   break;
+        case EbtInt16:  newOp = EOpConvInt16ToInt;   break;
+        case EbtUint16: newOp = EOpConvUint16ToInt;  break;
+        case EbtUint:   newOp = EOpConvUintToInt;   break;
+        case EbtBool:   newOp = EOpConvBoolToInt;   break;
+        case EbtFloat:  newOp = EOpConvFloatToInt;  break;
+        case EbtDouble: newOp = EOpConvDoubleToInt; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt; break;
+        case EbtInt64:  newOp = EOpConvInt64ToInt;  break;
+        case EbtUint64: newOp = EOpConvUint64ToInt; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtUint:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToUint;   break;
+        case EbtUint8:  newOp = EOpConvUint8ToUint;  break;
+        case EbtInt16:  newOp = EOpConvInt16ToUint;  break;
+        case EbtUint16: newOp = EOpConvUint16ToUint; break;
+        case EbtInt:    newOp = EOpConvIntToUint;    break;
+        case EbtBool:   newOp = EOpConvBoolToUint;   break;
+        case EbtFloat:  newOp = EOpConvFloatToUint;  break;
+        case EbtDouble: newOp = EOpConvDoubleToUint; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint; break;
+        case EbtInt64:  newOp = EOpConvInt64ToUint;  break;
+        case EbtUint64: newOp = EOpConvUint64ToUint; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtInt64:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToInt64;   break;
+        case EbtUint8:  newOp = EOpConvUint8ToInt64;  break;
+        case EbtInt16:  newOp = EOpConvInt16ToInt64;  break;
+        case EbtUint16: newOp = EOpConvUint16ToInt64; break;
+        case EbtInt:    newOp = EOpConvIntToInt64;    break;
+        case EbtUint:   newOp = EOpConvUintToInt64;   break;
+        case EbtBool:   newOp = EOpConvBoolToInt64;   break;
+        case EbtFloat:  newOp = EOpConvFloatToInt64;  break;
+        case EbtDouble: newOp = EOpConvDoubleToInt64; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToInt64; break;
+        case EbtUint64: newOp = EOpConvUint64ToInt64; break;
+        default:
+            return nullptr;
+        }
+        break;
+    case EbtUint64:
+        switch (node->getBasicType()) {
+        case EbtInt8:   newOp = EOpConvInt8ToUint64;   break;
+        case EbtUint8:  newOp = EOpConvUint8ToUint64;  break;
+        case EbtInt16:  newOp = EOpConvInt16ToUint64;  break;
+        case EbtUint16: newOp = EOpConvUint16ToUint64; break;
+        case EbtInt:    newOp = EOpConvIntToUint64;    break;
+        case EbtUint:   newOp = EOpConvUintToUint64;   break;
+        case EbtBool:   newOp = EOpConvBoolToUint64;   break;
+        case EbtFloat:  newOp = EOpConvFloatToUint64;  break;
+        case EbtDouble: newOp = EOpConvDoubleToUint64; break;
+        case EbtFloat16: newOp = EOpConvFloat16ToUint64; break;
+        case EbtInt64:  newOp = EOpConvInt64ToUint64;  break;
+        default:
+            return nullptr;
+        }
+        break;
+    default:
+        return nullptr;
+    }
+
+    TType newType(convertTo, EvqTemporary, node->getVectorSize(), node->getMatrixCols(), node->getMatrixRows());
+    newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
+
+    // TODO: it seems that some unary folding operations should occur here, but are not
+
+    // Propagate specialization-constant-ness, if allowed
+    if (node->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*newNode))
+        newNode->getWritableType().getQualifier().makeSpecConstant();
+
+    // TODO: it seems that some unary folding operations should occur here, but are not
+
+    // Propagate specialization-constant-ness, if allowed
+    if (node->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*newNode))
+        newNode->getWritableType().getQualifier().makeSpecConstant();
+
+    return newNode;
+}
+
+std::tuple<TIntermTyped*, TIntermTyped*>
+TIntermediate::addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* node1) const
+{
+    if (!isConversionAllowed(op, node0) || !isConversionAllowed(op, node1)) {
+        return std::make_tuple(nullptr, nullptr);
+    }
+
+    // If types are identical, no problem
+    if (node0->getType() == node1->getType())
+        return std::make_tuple(node0, node1);
+
+    // If one's a structure, then no conversions.
+    if (node0->isStruct() || node1->isStruct())
+        return std::make_tuple(nullptr, nullptr);
+
+    // If one's an array, then no conversions.
+    if (node0->getType().isArray() || node1->getType().isArray())
+        return std::make_tuple(nullptr, nullptr);
+
+    auto promoteTo = std::make_tuple(EbtNumTypes, EbtNumTypes);
+
+    TBasicType type0 = node0->getType().getBasicType();
+    TBasicType type1 = node1->getType().getBasicType();
+
+    switch (op) {
+    //
+    // List all the binary ops that can implicitly convert one operand to the other's type;
+    // This implements the 'policy' for implicit type conversion.
+    //
+    case EOpLessThan:
+    case EOpGreaterThan:
+    case EOpLessThanEqual:
+    case EOpGreaterThanEqual:
+    case EOpEqual:
+    case EOpNotEqual:
+
+    case EOpAdd:
+    case EOpSub:
+    case EOpMul:
+    case EOpDiv:
+    case EOpMod:
+
+    case EOpVectorTimesScalar:
+    case EOpVectorTimesMatrix:
+    case EOpMatrixTimesVector:
+    case EOpMatrixTimesScalar:
+
+    case EOpAnd:
+    case EOpInclusiveOr:
+    case EOpExclusiveOr:
+    case EOpAndAssign:
+    case EOpInclusiveOrAssign:
+    case EOpExclusiveOrAssign:
+    case EOpLogicalNot:
+    case EOpLogicalAnd:
+    case EOpLogicalOr:
+    case EOpLogicalXor:
+
+    case EOpFunctionCall:
+    case EOpReturn:
+    case EOpAssign:
+    case EOpAddAssign:
+    case EOpSubAssign:
+    case EOpMulAssign:
+    case EOpVectorTimesScalarAssign:
+    case EOpMatrixTimesScalarAssign:
+    case EOpDivAssign:
+    case EOpModAssign:
+
+    case EOpAtan:
+    case EOpClamp:
+    case EOpCross:
+    case EOpDistance:
+    case EOpDot:
+    case EOpDst:
+    case EOpFaceForward:
+    case EOpFma:
+    case EOpFrexp:
+    case EOpLdexp:
+    case EOpMix:
+    case EOpLit:
+    case EOpMax:
+    case EOpMin:
+    case EOpModf:
+    case EOpPow:
+    case EOpReflect:
+    case EOpRefract:
+    case EOpSmoothStep:
+    case EOpStep:
+
+    case EOpSequence:
+    case EOpConstructStruct:
+
+        if (type0 == type1)
+            return std::make_tuple(node0, node1);
+
+        promoteTo = getConversionDestinatonType(type0, type1, op);
+        if (std::get<0>(promoteTo) == EbtNumTypes || std::get<1>(promoteTo) == EbtNumTypes)
+            return std::make_tuple(nullptr, nullptr);
+
+        break;
+
+    // Shifts can have mixed types as long as they are integer and of the same rank,
+    // without converting.
+    // It's the left operand's type that determines the resulting type, so no issue
+    // with assign shift ops either.
+    case EOpLeftShift:
+    case EOpRightShift:
+    case EOpLeftShiftAssign:
+    case EOpRightShiftAssign:
+
+        if (isTypeInt(type0) && isTypeInt(type1)) {
+            if (getTypeRank(type0) == getTypeRank(type1)) {
+                return std::make_tuple(node0, node1);
+            } else {
+                promoteTo = getConversionDestinatonType(type0, type1, op);
+                if (std::get<0>(promoteTo) == EbtNumTypes || std::get<1>(promoteTo) == EbtNumTypes)
+                    return std::make_tuple(nullptr, nullptr);
+            }
+        } else
+            return std::make_tuple(nullptr, nullptr);
+        break;
+
+    default:
+        return std::make_tuple(nullptr, nullptr);
+    }
+
+    TIntermTyped* newNode0;
+    TIntermTyped* newNode1;
+
+    if (std::get<0>(promoteTo) != node0->getType().getBasicType()) {
+        if (node0->getAsConstantUnion())
+            newNode0 = promoteConstantUnion(std::get<0>(promoteTo), node0->getAsConstantUnion());
+        else
+            newNode0 = createConversion(std::get<0>(promoteTo), node0);
+    } else
+        newNode0 = node0;
+
+    if (std::get<1>(promoteTo) != node1->getType().getBasicType()) {
+        if (node1->getAsConstantUnion())
+            newNode1 = promoteConstantUnion(std::get<1>(promoteTo), node1->getAsConstantUnion());
+        else
+            newNode1 = createConversion(std::get<1>(promoteTo), node1);
+    } else
+        newNode1 = node1;
+
+    return std::make_tuple(newNode0, newNode1);
+}
+
+//
+// Convert the node's type to the given type, as allowed by the operation involved: 'op'.
+// For implicit conversions, 'op' is not the requested conversion, it is the explicit
+// operation requiring the implicit conversion.
+//
+// Returns a node representing the conversion, which could be the same
+// node passed in if no conversion was needed.
+//
+// Generally, this is focused on basic type conversion, not shape conversion.
+// See addShapeConversion().
+//
+// Return nullptr if a conversion can't be done.
+//
+TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TIntermTyped* node) const
+{
+    if (!isConversionAllowed(op, node))
+        return nullptr;
 
     // Otherwise, if types are identical, no problem
     if (type == node->getType())
@@ -520,11 +911,21 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpConstructDouble:
         promoteTo = EbtDouble;
         break;
-#ifdef AMD_EXTENSIONS
     case EOpConstructFloat16:
         promoteTo = EbtFloat16;
         break;
-#endif
+    case EOpConstructInt8:
+        promoteTo = EbtInt8;
+        break;
+    case EOpConstructUint8:
+        promoteTo = EbtUint8;
+        break;
+    case EOpConstructInt16:
+        promoteTo = EbtInt16;
+        break;
+    case EOpConstructUint16:
+        promoteTo = EbtUint16;
+        break;
     case EOpConstructInt:
         promoteTo = EbtInt;
         break;
@@ -537,14 +938,6 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpConstructUint64:
         promoteTo = EbtUint64;
         break;
-#ifdef AMD_EXTENSIONS
-    case EOpConstructInt16:
-        promoteTo = EbtInt16;
-        break;
-    case EOpConstructUint16:
-        promoteTo = EbtUint16;
-        break;
-#endif
 
     //
     // List all the binary ops that can implicitly convert one operand to the other's type;
@@ -620,40 +1013,38 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         if (canImplicitlyPromote(node->getType().getBasicType(), type.getBasicType(), op))
             promoteTo = type.getBasicType();
         else
-            return nullptr;
-
+           return nullptr;
         break;
 
-    // Shifts can have mixed types as long as they are integer, without converting.
+    // Shifts can have mixed types as long as they are integer and of the same rank,
+    // without converting.
     // It's the left operand's type that determines the resulting type, so no issue
     // with assign shift ops either.
     case EOpLeftShift:
     case EOpRightShift:
     case EOpLeftShiftAssign:
     case EOpRightShiftAssign:
-        if ((type.getBasicType() == EbtInt ||
-             type.getBasicType() == EbtUint ||
-#ifdef AMD_EXTENSIONS
-             type.getBasicType() == EbtInt16 ||
-             type.getBasicType() == EbtUint16 ||
-#endif
-             type.getBasicType() == EbtInt64 ||
-             type.getBasicType() == EbtUint64) &&
-            (node->getType().getBasicType() == EbtInt ||
-             node->getType().getBasicType() == EbtUint ||
-#ifdef AMD_EXTENSIONS
-             node->getType().getBasicType() == EbtInt16 ||
-             node->getType().getBasicType() == EbtUint16 ||
-#endif
-             node->getType().getBasicType() == EbtInt64 ||
-             node->getType().getBasicType() == EbtUint64))
+    {
+        TBasicType type0 = type.getBasicType();
+        TBasicType type1 = node->getType().getBasicType();
 
-            return node;
-        else if (source == EShSourceHlsl && node->getType().getBasicType() == EbtBool) {
-            promoteTo = type.getBasicType();
-            break;
-        } else
-            return nullptr;
+        if (source == EShSourceHlsl && node->getType().getBasicType() == EbtBool) {
+            promoteTo = type0;            
+        } else {
+            if (isTypeInt(type0) && isTypeInt(type1)) {
+                if (getTypeRank(type0) == getTypeRank(type1)) {
+                    return node;
+                } else {
+                    if (canImplicitlyPromote(type1, type0, op))
+                        promoteTo = type0;
+                    else
+                        return nullptr;
+                }
+            } else
+                return nullptr;
+        }
+        break;
+    }
 
     default:
         // default is to require a match; all exceptions should have case statements above
@@ -670,207 +1061,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     //
     // Add a new newNode for the conversion.
     //
-    TIntermUnary* newNode = nullptr;
-
-    TOperator newOp = EOpNull;
-
-    // This is 'mechanism' here, it does any conversion told.  The policy comes
-    // from the shader or the above code.
-    switch (promoteTo) {
-    case EbtDouble:
-        switch (node->getBasicType()) {
-        case EbtInt:   newOp = EOpConvIntToDouble;   break;
-        case EbtUint:  newOp = EOpConvUintToDouble;  break;
-        case EbtBool:  newOp = EOpConvBoolToDouble;  break;
-        case EbtFloat: newOp = EOpConvFloatToDouble; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToDouble; break;
-#endif
-        case EbtInt64: newOp = EOpConvInt64ToDouble; break;
-        case EbtUint64: newOp = EOpConvUint64ToDouble; break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToDouble;  break;
-        case EbtUint16: newOp = EOpConvUint16ToDouble; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtFloat:
-        switch (node->getBasicType()) {
-        case EbtInt:    newOp = EOpConvIntToFloat;    break;
-        case EbtUint:   newOp = EOpConvUintToFloat;   break;
-        case EbtBool:   newOp = EOpConvBoolToFloat;   break;
-        case EbtDouble: newOp = EOpConvDoubleToFloat; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToFloat; break;
-#endif
-        case EbtInt64:  newOp = EOpConvInt64ToFloat;  break;
-        case EbtUint64: newOp = EOpConvUint64ToFloat; break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToFloat;  break;
-        case EbtUint16: newOp = EOpConvUint16ToFloat; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-#ifdef AMD_EXTENSIONS
-    case EbtFloat16:
-        switch (node->getBasicType()) {
-        case EbtInt:    newOp = EOpConvIntToFloat16;    break;
-        case EbtUint:   newOp = EOpConvUintToFloat16;   break;
-        case EbtBool:   newOp = EOpConvBoolToFloat16;   break;
-        case EbtFloat:  newOp = EOpConvFloatToFloat16;  break;
-        case EbtDouble: newOp = EOpConvDoubleToFloat16; break;
-        case EbtInt64:  newOp = EOpConvInt64ToFloat16;  break;
-        case EbtUint64: newOp = EOpConvUint64ToFloat16; break;
-        case EbtInt16:  newOp = EOpConvInt16ToFloat16;  break;
-        case EbtUint16: newOp = EOpConvUint16ToFloat16; break;
-        default:
-            return nullptr;
-        }
-        break;
-#endif
-    case EbtBool:
-        switch (node->getBasicType()) {
-        case EbtInt:    newOp = EOpConvIntToBool;    break;
-        case EbtUint:   newOp = EOpConvUintToBool;   break;
-        case EbtFloat:  newOp = EOpConvFloatToBool;  break;
-        case EbtDouble: newOp = EOpConvDoubleToBool; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToBool; break;
-#endif
-        case EbtInt64:  newOp = EOpConvInt64ToBool;  break;
-        case EbtUint64: newOp = EOpConvUint64ToBool; break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToBool;  break;
-        case EbtUint16: newOp = EOpConvUint16ToBool; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtInt:
-        switch (node->getBasicType()) {
-        case EbtUint:   newOp = EOpConvUintToInt;   break;
-        case EbtBool:   newOp = EOpConvBoolToInt;   break;
-        case EbtFloat:  newOp = EOpConvFloatToInt;  break;
-        case EbtDouble: newOp = EOpConvDoubleToInt; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToInt; break;
-#endif
-        case EbtInt64:  newOp = EOpConvInt64ToInt;  break;
-        case EbtUint64: newOp = EOpConvUint64ToInt; break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToInt;  break;
-        case EbtUint16: newOp = EOpConvUint16ToInt; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint:
-        switch (node->getBasicType()) {
-        case EbtInt:    newOp = EOpConvIntToUint;    break;
-        case EbtBool:   newOp = EOpConvBoolToUint;   break;
-        case EbtFloat:  newOp = EOpConvFloatToUint;  break;
-        case EbtDouble: newOp = EOpConvDoubleToUint; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToUint; break;
-#endif
-        case EbtInt64:  newOp = EOpConvInt64ToUint;  break;
-        case EbtUint64: newOp = EOpConvUint64ToUint; break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToUint;  break;
-        case EbtUint16: newOp = EOpConvUint16ToUint; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtInt64:
-        switch (node->getBasicType()) {
-        case EbtInt:    newOp = EOpConvIntToInt64;    break;
-        case EbtUint:   newOp = EOpConvUintToInt64;   break;
-        case EbtBool:   newOp = EOpConvBoolToInt64;   break;
-        case EbtFloat:  newOp = EOpConvFloatToInt64;  break;
-        case EbtDouble: newOp = EOpConvDoubleToInt64; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToInt64; break;
-#endif
-        case EbtUint64: newOp = EOpConvUint64ToInt64; break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToInt64;  break;
-        case EbtUint16: newOp = EOpConvUint16ToInt64; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint64:
-        switch (node->getBasicType()) {
-        case EbtInt:    newOp = EOpConvIntToUint64;    break;
-        case EbtUint:   newOp = EOpConvUintToUint64;   break;
-        case EbtBool:   newOp = EOpConvBoolToUint64;   break;
-        case EbtFloat:  newOp = EOpConvFloatToUint64;  break;
-        case EbtDouble: newOp = EOpConvDoubleToUint64; break;
-#ifdef AMD_EXTENSIONS
-        case EbtFloat16: newOp = EOpConvFloat16ToUint64; break;
-#endif
-        case EbtInt64:  newOp = EOpConvInt64ToUint64;  break;
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:  newOp = EOpConvInt16ToUint64;  break;
-        case EbtUint16: newOp = EOpConvUint16ToUint64; break;
-#endif
-        default:
-            return nullptr;
-        }
-        break;
-#ifdef AMD_EXTENSIONS
-    case EbtInt16:
-        switch (node->getBasicType()) {
-        case EbtInt:     newOp = EOpConvIntToInt16;     break;
-        case EbtUint:    newOp = EOpConvUintToInt16;    break;
-        case EbtBool:    newOp = EOpConvBoolToInt16;    break;
-        case EbtFloat:   newOp = EOpConvFloatToInt16;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToInt16;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToInt16; break;
-        case EbtInt64:   newOp = EOpConvInt64ToInt16;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToInt16;  break;
-        case EbtUint16:  newOp = EOpConvUint16ToInt16;  break;
-        default:
-            return nullptr;
-        }
-        break;
-    case EbtUint16:
-        switch (node->getBasicType()) {
-        case EbtInt:     newOp = EOpConvIntToUint16;     break;
-        case EbtUint:    newOp = EOpConvUintToUint16;    break;
-        case EbtBool:    newOp = EOpConvBoolToUint16;    break;
-        case EbtFloat:   newOp = EOpConvFloatToUint16;   break;
-        case EbtDouble:  newOp = EOpConvDoubleToUint16;  break;
-        case EbtFloat16: newOp = EOpConvFloat16ToUint16; break;
-        case EbtInt64:   newOp = EOpConvInt64ToUint16;   break;
-        case EbtUint64:  newOp = EOpConvUint64ToUint16;  break;
-        case EbtInt16:   newOp = EOpConvInt16ToUint16;   break;
-        default:
-            return nullptr;
-        }
-        break;
-#endif
-    default:
-        return nullptr;
-    }
-
-    TType newType(promoteTo, EvqTemporary, node->getVectorSize(), node->getMatrixCols(), node->getMatrixRows());
-    newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
-
-    // TODO: it seems that some unary folding operations should occur here, but are not
-
-    // Propagate specialization-constant-ness, if allowed
-    if (node->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*newNode))
-        newNode->getWritableType().getQualifier().makeSpecConstant();
+    TIntermUnary* newNode = createConversion(promoteTo, node);
 
     return newNode;
 }
@@ -1020,12 +1211,11 @@ void TIntermediate::addBiShapeConversion(TOperator op, TIntermTyped*& lhsNode, T
     rhsNode = addShapeConversion(lhsNode->getType(), rhsNode);
 }
 
-// Convert the node's shape of type for the given type. It's not necessarily
-// an error if they are different and not converted, as some operations accept
-// mixed types.  Promotion will do final shape checking.
+// Convert the node's shape of type for the given type, as allowed by the
+// operation involved: 'op'.
 //
-// If there is a chance of two nodes, with conversions possible in each direction,
-// the policy for what to ask for must be in the caller; this will do what is asked.
+// Generally, the AST represents allowed GLSL shapes, so this isn't needed
+// for GLSL.  Bad shapes are caught in conversion or promotion.
 //
 // Return 'node' if no conversion was done. Promotion handles final shape
 // checking.
@@ -1081,6 +1271,166 @@ TIntermTyped* TIntermediate::addShapeConversion(const TType& type, TIntermTyped*
     return node;
 }
 
+bool TIntermediate::isIntegralPromotion(TBasicType from, TBasicType to) const
+{
+    // integral promotions
+    if (to == EbtInt) {
+        switch(from) {
+        case EbtInt8:
+        case EbtInt16:
+        case EbtUint8:
+        case EbtUint16:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+bool TIntermediate::isFPPromotion(TBasicType from, TBasicType to) const
+{
+    // floating-point promotions
+    if (to == EbtDouble) {
+        switch(from) {
+        case EbtFloat16:
+        case EbtFloat:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+bool TIntermediate::isIntegralConversion(TBasicType from, TBasicType to) const
+{
+    switch (from) {
+    case EbtInt8:
+        switch (to) {
+        case EbtUint8:
+        case EbtInt16:
+        case EbtUint16:
+        case EbtUint:
+        case EbtInt64:
+        case EbtUint64:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtUint8:
+        switch (to) {
+        case EbtInt16:
+        case EbtUint16:
+        case EbtUint:
+        case EbtInt64:
+        case EbtUint64:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtInt16:
+        switch(to) {
+        case EbtUint16:
+        case EbtUint:
+        case EbtInt64:
+        case EbtUint64:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtUint16:
+        switch(to) {
+        case EbtUint:
+        case EbtInt64:
+        case EbtUint64:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtInt:
+        switch(to) {
+        case EbtUint:
+            return version >= 400 || (source == EShSourceHlsl);
+        case EbtInt64:
+        case EbtUint64:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtUint:
+        switch(to) {
+        case EbtInt64:
+        case EbtUint64:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtInt64:
+        if (to == EbtUint64) {
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool TIntermediate::isFPConversion(TBasicType from, TBasicType to) const
+{
+    if (to == EbtFloat && from == EbtFloat16) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool TIntermediate::isFPIntegralConversion(TBasicType from, TBasicType to) const
+{
+    switch (from) {
+    case EbtInt8:
+    case EbtUint8:
+    case EbtInt16:
+    case EbtUint16:
+        switch (to) {
+        case EbtFloat16:
+        case EbtFloat:
+        case EbtDouble:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtInt:
+    case EbtUint:
+        switch(to) {
+        case EbtFloat:
+        case EbtDouble:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case EbtInt64:
+    case EbtUint64:
+        if (to == EbtDouble) {
+            return true;
+        }
+        break;
+
+    default:
+        break;
+    }
+    return false;
+}
+
 //
 // See if the 'from' type is allowed to be implicitly converted to the
 // 'to' type.  This is not about vector/array/struct, only about basic type.
@@ -1126,118 +1476,337 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
         }
     }
 
-    switch (to) {
-    case EbtDouble:
-        switch (from) {
-        case EbtInt:
-        case EbtUint:
-        case EbtInt64:
-        case EbtUint64:
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:
-        case EbtUint16:
-#endif
-        case EbtFloat:
+    bool explicitTypesEnabled = extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int8) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int16) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int32) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int64) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_float16) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_float32) ||
+                                extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_float64);
+
+    if(explicitTypesEnabled)
+    {
+
+        // integral promotions
+        if (isIntegralPromotion(from, to)) {
+            return true;
+        }
+
+        // floating-point promotions
+        if (isFPPromotion(from, to)) {
+            return true;
+        }
+
+        // integral conversions
+        if (isIntegralConversion(from, to)) {
+            return true;
+        }
+
+        // floating-point conversions
+        if (isFPConversion(from, to)) {
+           return true;
+        }
+
+        // floating-integral conversions
+        if (isFPIntegralConversion(from, to)) {
+           return true;
+        }
+
+        // hlsl supported conversions
+        if (source == EShSourceHlsl) {
+            if (from == EbtBool && (to == EbtInt || to == EbtUint || to == EbtFloat))
+                return true;
+        }
+    } else {
+        switch (to) {
         case EbtDouble:
+            switch (from) {
+            case EbtInt:
+            case EbtUint:
+            case EbtInt64:
+            case EbtUint64:
 #ifdef AMD_EXTENSIONS
-        case EbtFloat16:
+            case EbtInt16:
+            case EbtUint16:
 #endif
-            return true;
-        default:
-            return false;
-        }
-    case EbtFloat:
-        switch (from) {
-        case EbtInt:
-        case EbtUint:
+             case EbtFloat:
+             case EbtDouble:
 #ifdef AMD_EXTENSIONS
-        case EbtInt16:
-        case EbtUint16:
+             case EbtFloat16:
 #endif
+                return true;
+            default:
+                return false;
+           }
         case EbtFloat:
+            switch (from) {
+            case EbtInt:
+            case EbtUint:
 #ifdef AMD_EXTENSIONS
-        case EbtFloat16:
+            case EbtInt16:
+            case EbtUint16:
 #endif
-            return true;
-        case EbtBool:
-            return (source == EShSourceHlsl);
-        default:
-            return false;
-        }
-    case EbtUint:
-        switch (from) {
-        case EbtInt:
-            return version >= 400 || (source == EShSourceHlsl);
+            case EbtFloat:
+#ifdef AMD_EXTENSIONS
+            case EbtFloat16:
+#endif
+                 return true;
+            case EbtBool:
+                 return (source == EShSourceHlsl);
+            default:
+                 return false;
+            }
         case EbtUint:
+            switch (from) {
+            case EbtInt:
+                 return version >= 400 || (source == EShSourceHlsl);
+            case EbtUint:
 #ifdef AMD_EXTENSIONS
-        case EbtInt16:
-        case EbtUint16:
+            case EbtInt16:
+            case EbtUint16:
 #endif
-            return true;
-        case EbtBool:
-            return (source == EShSourceHlsl);
-        default:
-            return false;
-        }
-    case EbtInt:
-        switch (from) {
+                return true;
+            case EbtBool:
+                return (source == EShSourceHlsl);
+            default:
+                return false;
+            }
         case EbtInt:
+            switch (from) {
+            case EbtInt:
 #ifdef AMD_EXTENSIONS
-        case EbtInt16:
+            case EbtInt16:
 #endif
-            return true;
-        case EbtBool:
-            return (source == EShSourceHlsl);
-        default:
-            return false;
-        }
-    case EbtUint64:
-        switch (from) {
-        case EbtInt:
-        case EbtUint:
-        case EbtInt64:
+                return true;
+            case EbtBool:
+                return (source == EShSourceHlsl);
+            default:
+                return false;
+            }
         case EbtUint64:
+            switch (from) {
+            case EbtInt:
+            case EbtUint:
+            case EbtInt64:
+            case EbtUint64:
 #ifdef AMD_EXTENSIONS
-        case EbtInt16:
-        case EbtUint16:
+            case EbtInt16:
+            case EbtUint16:
 #endif
-            return true;
-        default:
-            return false;
-        }
-    case EbtInt64:
-        switch (from) {
-        case EbtInt:
+                return true;
+            default:
+                return false;
+            }
         case EbtInt64:
+            switch (from) {
+            case EbtInt:
+            case EbtInt64:
 #ifdef AMD_EXTENSIONS
-        case EbtInt16:
+            case EbtInt16:
 #endif
-            return true;
-        default:
-            return false;
-        }
+                return true;
+            default:
+                return false;
+            }
 #ifdef AMD_EXTENSIONS
-    case EbtFloat16:
-        switch (from) {
-        case EbtInt16:
-        case EbtUint16:
         case EbtFloat16:
-            return true;
-        default:
-            return false;
+            switch (from) {
+            case EbtInt16:
+            case EbtUint16:
+            case EbtFloat16:
+                return true;
+            default:
+                return false;
         }
-    case EbtUint16:
-        switch (from) {
-        case EbtInt16:
         case EbtUint16:
-            return true;
-        default:
-            return false;
+            switch (from) {
+            case EbtInt16:
+            case EbtUint16:
+                return true;
+            default:
+                return false;
         }
 #endif
+        default:
+            return false;
+        }
+    }
+
+    return false;
+}
+
+static bool canSignedIntTypeRepresentAllUnsignedValues(TBasicType sintType, TBasicType uintType) {
+    switch(sintType) {
+    case EbtInt8:
+        switch(uintType) {
+        case EbtUint8:
+        case EbtUint16:
+        case EbtUint:
+        case EbtUint64:
+            return false;
+        default:
+            assert(false);
+            return false;
+        }
+        break;
+    case EbtInt16:
+        switch(uintType) {
+        case EbtUint8:
+            return true;
+        case EbtUint16:
+        case EbtUint:
+        case EbtUint64:
+            return false;
+        default:
+            assert(false);
+            return false;
+        }
+        break;
+    case EbtInt:
+        switch(uintType) {
+        case EbtUint8:
+        case EbtUint16:
+            return true;
+        case EbtUint:
+            return false;
+        default:
+            assert(false);
+            return false;
+        }
+        break;
+    case EbtInt64:
+        switch(uintType) {
+        case EbtUint8:
+        case EbtUint16:
+        case EbtUint:
+            return true;
+        case EbtUint64:
+            return false;
+        default:
+            assert(false);
+            return false;
+        }
+        break;
     default:
+        assert(false);
         return false;
     }
+}
+
+
+static TBasicType getCorrespondingUnsignedType(TBasicType type) {
+    switch(type) {
+    case EbtInt8:
+        return EbtUint8;
+    case EbtInt16:
+        return EbtUint16;
+    case EbtInt:
+        return EbtUint;
+    case EbtInt64:
+        return EbtUint64;
+    default:
+        assert(false);
+        return EbtNumTypes;
+    }
+}
+
+// Implements the following rules
+//    - If either operand has type float64_t or derived from float64_t,
+//      the other shall be converted to float64_t or derived type.
+//    - Otherwise, if either operand has type float32_t or derived from
+//      float32_t, the other shall be converted to float32_t or derived type.
+//    - Otherwise, if either operand has type float16_t or derived from
+//      float16_t, the other shall be converted to float16_t or derived type.
+//    - Otherwise, if both operands have integer types the following rules
+//      shall be applied to the operands:
+//      - If both operands have the same type, no further conversion
+//        is needed.
+//      - Otherwise, if both operands have signed integer types or both
+//        have unsigned integer types, the operand with the type of lesser
+//        integer conversion rank shall be converted to the type of the
+//        operand with greater rank.
+//      - Otherwise, if the operand that has unsigned integer type has rank
+//        greater than or equal to the rank of the type of the other
+//        operand, the operand with signed integer type shall be converted
+//        to the type of the operand with unsigned integer type.
+//      - Otherwise, if the type of the operand with signed integer type can
+//        represent all of the values of the type of the operand with
+//        unsigned integer type, the operand with unsigned integer type
+//        shall be converted to the type of the operand with signed
+//        integer type.
+//      - Otherwise, both operands shall be converted to the unsigned
+//        integer type corresponding to the type of the operand with signed
+//        integer type.
+
+std::tuple<TBasicType, TBasicType> TIntermediate::getConversionDestinatonType(TBasicType type0, TBasicType type1, TOperator op) const
+{
+    TBasicType res0 = EbtNumTypes;
+    TBasicType res1 = EbtNumTypes;
+
+    if (profile == EEsProfile || version == 110)
+        return std::make_tuple(res0, res1);;
+
+    if (source == EShSourceHlsl) {
+        if (canImplicitlyPromote(type1, type0, op)) {
+            res0 = type0;
+            res1 = type0;
+        } else if (canImplicitlyPromote(type0, type1, op)) {
+            res0 = type1;
+            res1 = type1;
+        }
+        return std::make_tuple(res0, res1);
+    }
+
+    if ((type0 == EbtDouble && canImplicitlyPromote(type1, EbtDouble, op)) ||
+        (type1 == EbtDouble && canImplicitlyPromote(type0, EbtDouble, op)) ) {
+        res0 = EbtDouble;
+        res1 = EbtDouble;
+    } else if ((type0 == EbtFloat && canImplicitlyPromote(type1, EbtFloat, op)) ||
+               (type1 == EbtFloat && canImplicitlyPromote(type0, EbtFloat, op)) ) {
+        res0 = EbtFloat;
+        res1 = EbtFloat;
+    } else if ((type0 == EbtFloat16 && canImplicitlyPromote(type1, EbtFloat16, op)) ||
+               (type1 == EbtFloat16 && canImplicitlyPromote(type0, EbtFloat16, op)) ) {
+        res0 = EbtFloat16;
+        res1 = EbtFloat16;
+    } else if (isTypeInt(type0) && isTypeInt(type1) &&
+               (canImplicitlyPromote(type0, type1, op) || canImplicitlyPromote(type1, type0, op))) {
+        if ((isTypeSignedInt(type0) && isTypeSignedInt(type1)) ||
+            (isTypeUnsignedInt(type0) && isTypeUnsignedInt(type1))) {
+            if (getTypeRank(type0) < getTypeRank(type1)) {
+                res0 = type1;
+                res1 = type1;
+            } else {
+                res0 = type0;
+                res1 = type0;
+            }
+        } else if (isTypeUnsignedInt(type0) && (getTypeRank(type0) > getTypeRank(type1))) {
+            res0 = type0;
+            res1 = type0;
+        } else if (isTypeUnsignedInt(type1) && (getTypeRank(type1) > getTypeRank(type0))) {
+            res0 = type1;
+            res1 = type1;
+        } else if (isTypeSignedInt(type0)) {
+            if (canSignedIntTypeRepresentAllUnsignedValues(type0, type1)) {
+                res0 = type0;
+                res1 = type0;
+            } else {
+                res0 = getCorrespondingUnsignedType(type0);
+                res1 = getCorrespondingUnsignedType(type0);
+            }
+        } else if (isTypeSignedInt(type1)) {
+            if (canSignedIntTypeRepresentAllUnsignedValues(type1, type0)) {
+                res0 = type1;
+                res1 = type1;
+            } else {
+                res0 = getCorrespondingUnsignedType(type1);
+                res1 = getCorrespondingUnsignedType(type1);
+            }
+        }
+    }
+
+    return std::make_tuple(res0, res1);
 }
 
 //
@@ -1332,7 +1901,6 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
             }
         }
         break;
-#ifdef AMD_EXTENSIONS
     case EbtFloat16:
         if (type.getMatrixCols()) {
             switch (type.getMatrixCols()) {
@@ -1372,7 +1940,42 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
             }
         }
         break;
-#endif
+    case EbtInt8:
+        switch(type.getVectorSize()) {
+        case 1: op = EOpConstructInt8;   break;
+        case 2: op = EOpConstructI8Vec2; break;
+        case 3: op = EOpConstructI8Vec3; break;
+        case 4: op = EOpConstructI8Vec4; break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtUint8:
+        switch(type.getVectorSize()) {
+        case 1: op = EOpConstructUint8;  break;
+        case 2: op = EOpConstructU8Vec2; break;
+        case 3: op = EOpConstructU8Vec3; break;
+        case 4: op = EOpConstructU8Vec4; break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtInt16:
+        switch(type.getVectorSize()) {
+        case 1: op = EOpConstructInt16;   break;
+        case 2: op = EOpConstructI16Vec2; break;
+        case 3: op = EOpConstructI16Vec3; break;
+        case 4: op = EOpConstructI16Vec4; break;
+        default: break; // some compilers want this
+        }
+        break;
+    case EbtUint16:
+        switch(type.getVectorSize()) {
+        case 1: op = EOpConstructUint16;  break;
+        case 2: op = EOpConstructU16Vec2; break;
+        case 3: op = EOpConstructU16Vec3; break;
+        case 4: op = EOpConstructU16Vec4; break;
+        default: break; // some compilers want this
+        }
+        break;
     case EbtInt:
         if (type.getMatrixCols()) {
             switch (type.getMatrixCols()) {
@@ -1467,26 +2070,6 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
         default: break; // some compilers want this
         }
         break;
-#ifdef AMD_EXTENSIONS
-    case EbtInt16:
-        switch(type.getVectorSize()) {
-        case 1: op = EOpConstructInt16;   break;
-        case 2: op = EOpConstructI16Vec2; break;
-        case 3: op = EOpConstructI16Vec3; break;
-        case 4: op = EOpConstructI16Vec4; break;
-        default: break; // some compilers want this
-        }
-        break;
-    case EbtUint16:
-        switch(type.getVectorSize()) {
-        case 1: op = EOpConstructUint16;  break;
-        case 2: op = EOpConstructU16Vec2; break;
-        case 3: op = EOpConstructU16Vec3; break;
-        case 4: op = EOpConstructU16Vec4; break;
-        default: break; // some compilers want this
-        }
-        break;
-#endif
     case EbtBool:
         if (type.getMatrixCols()) {
             switch (type.getMatrixCols()) {
@@ -1682,16 +2265,12 @@ TIntermTyped* TIntermediate::addSelection(TIntermTyped* cond, TIntermTyped* true
     //
     // Get compatible types.
     //
-    TIntermTyped* child = addConversion(EOpSequence, trueBlock->getType(), falseBlock);
-    if (child)
-        falseBlock = child;
-    else {
-        child = addConversion(EOpSequence, falseBlock->getType(), trueBlock);
-        if (child)
-            trueBlock = child;
-        else
-            return nullptr;
-    }
+    auto children = addConversion(EOpSequence, trueBlock, falseBlock);
+    trueBlock = std::get<0>(children);
+    falseBlock = std::get<1>(children);
+
+    if (trueBlock == nullptr || falseBlock == nullptr)
+        return nullptr;
 
     // Handle a vector condition as a mix
     if (!cond->getType().isScalarOrVec1()) {
@@ -1769,6 +2348,37 @@ TIntermConstantUnion* TIntermediate::addConstantUnion(const TConstUnionArray& un
 
     return node;
 }
+TIntermConstantUnion* TIntermediate::addConstantUnion(signed char i8, const TSourceLoc& loc, bool literal) const
+{
+    TConstUnionArray unionArray(1);
+    unionArray[0].setI8Const(i8);
+
+    return addConstantUnion(unionArray, TType(EbtInt8, EvqConst), loc, literal);
+}
+
+TIntermConstantUnion* TIntermediate::addConstantUnion(unsigned char u8, const TSourceLoc& loc, bool literal) const
+{
+    TConstUnionArray unionArray(1);
+    unionArray[0].setUConst(u8);
+
+    return addConstantUnion(unionArray, TType(EbtUint8, EvqConst), loc, literal);
+}
+
+TIntermConstantUnion* TIntermediate::addConstantUnion(signed short i16, const TSourceLoc& loc, bool literal) const
+{
+    TConstUnionArray unionArray(1);
+    unionArray[0].setI16Const(i16);
+
+    return addConstantUnion(unionArray, TType(EbtInt16, EvqConst), loc, literal);
+}
+
+TIntermConstantUnion* TIntermediate::addConstantUnion(unsigned short u16, const TSourceLoc& loc, bool literal) const
+{
+    TConstUnionArray unionArray(1);
+    unionArray[0].setU16Const(u16);
+
+    return addConstantUnion(unionArray, TType(EbtUint16, EvqConst), loc, literal);
+}
 
 TIntermConstantUnion* TIntermediate::addConstantUnion(int i, const TSourceLoc& loc, bool literal) const
 {
@@ -1802,24 +2412,6 @@ TIntermConstantUnion* TIntermediate::addConstantUnion(unsigned long long u64, co
     return addConstantUnion(unionArray, TType(EbtUint64, EvqConst), loc, literal);
 }
 
-#ifdef AMD_EXTENSIONS
-TIntermConstantUnion* TIntermediate::addConstantUnion(short i16, const TSourceLoc& loc, bool literal) const
-{
-    TConstUnionArray unionArray(1);
-    unionArray[0].setIConst(i16);
-
-    return addConstantUnion(unionArray, TType(EbtInt16, EvqConst), loc, literal);
-}
-
-TIntermConstantUnion* TIntermediate::addConstantUnion(unsigned short u16, const TSourceLoc& loc, bool literal) const
-{
-    TConstUnionArray unionArray(1);
-    unionArray[0].setUConst(u16);
-
-    return addConstantUnion(unionArray, TType(EbtUint16, EvqConst), loc, literal);
-}
-#endif
-
 TIntermConstantUnion* TIntermediate::addConstantUnion(bool b, const TSourceLoc& loc, bool literal) const
 {
     TConstUnionArray unionArray(1);
@@ -1830,11 +2422,7 @@ TIntermConstantUnion* TIntermediate::addConstantUnion(bool b, const TSourceLoc& 
 
 TIntermConstantUnion* TIntermediate::addConstantUnion(double d, TBasicType baseType, const TSourceLoc& loc, bool literal) const
 {
-#ifdef AMD_EXTENSIONS
     assert(baseType == EbtFloat || baseType == EbtDouble || baseType == EbtFloat16);
-#else
-    assert(baseType == EbtFloat || baseType == EbtDouble);
-#endif
 
     TConstUnionArray unionArray(1);
     unionArray[0].setDConst(d);
@@ -2129,12 +2717,10 @@ bool TIntermediate::isSpecializationOperation(const TIntermOperator& node) const
         case EOpVectorSwizzle:
         case EOpConvFloatToDouble:
         case EOpConvDoubleToFloat:
-#ifdef AMD_EXTENSIONS
         case EOpConvFloat16ToFloat:
         case EOpConvFloatToFloat16:
         case EOpConvFloat16ToDouble:
         case EOpConvDoubleToFloat16:
-#endif
             return true;
         default:
             return false;
@@ -2158,51 +2744,97 @@ bool TIntermediate::isSpecializationOperation(const TIntermOperator& node) const
     case EOpIndexDirectStruct:
     case EOpVectorSwizzle:
 
-    // conversion constructors
-    case EOpConvIntToBool:
-    case EOpConvUintToBool:
-    case EOpConvUintToInt:
-    case EOpConvBoolToInt:
-    case EOpConvIntToUint:
-    case EOpConvBoolToUint:
-    case EOpConvInt64ToBool:
-    case EOpConvBoolToInt64:
-    case EOpConvUint64ToBool:
-    case EOpConvBoolToUint64:
-    case EOpConvInt64ToInt:
-    case EOpConvIntToInt64:
-    case EOpConvUint64ToUint:
-    case EOpConvUintToUint64:
-    case EOpConvInt64ToUint64:
-    case EOpConvUint64ToInt64:
-    case EOpConvInt64ToUint:
-    case EOpConvUintToInt64:
-    case EOpConvUint64ToInt:
-    case EOpConvIntToUint64:
-#ifdef AMD_EXTENSIONS
+    // (u)int* -> bool
+    case EOpConvInt8ToBool:
     case EOpConvInt16ToBool:
-    case EOpConvBoolToInt16:
-    case EOpConvInt16ToInt:
-    case EOpConvIntToInt16:
-    case EOpConvInt16ToUint:
-    case EOpConvUintToInt16:
-    case EOpConvInt16ToInt64:
-    case EOpConvInt64ToInt16:
-    case EOpConvInt16ToUint64:
-    case EOpConvUint64ToInt16:
+    case EOpConvIntToBool:
+    case EOpConvInt64ToBool:
+    case EOpConvUint8ToBool:
     case EOpConvUint16ToBool:
+    case EOpConvUintToBool:
+    case EOpConvUint64ToBool:
+
+    // bool -> (u)int*
+    case EOpConvBoolToInt8:
+    case EOpConvBoolToInt16:
+    case EOpConvBoolToInt:
+    case EOpConvBoolToInt64:
+    case EOpConvBoolToUint8:
     case EOpConvBoolToUint16:
-    case EOpConvUint16ToInt:
-    case EOpConvIntToUint16:
-    case EOpConvUint16ToUint:
-    case EOpConvUintToUint16:
-    case EOpConvUint16ToInt64:
-    case EOpConvInt64ToUint16:
-    case EOpConvUint16ToUint64:
-    case EOpConvUint64ToUint16:
+    case EOpConvBoolToUint:
+    case EOpConvBoolToUint64:
+
+    // int8_t -> (u)int*
+    case EOpConvInt8ToInt16:
+    case EOpConvInt8ToInt:
+    case EOpConvInt8ToInt64:
+    case EOpConvInt8ToUint8:
+    case EOpConvInt8ToUint16:
+    case EOpConvInt8ToUint:
+    case EOpConvInt8ToUint64:
+
+    // int16_t -> (u)int*
+    case EOpConvInt16ToInt8:
+    case EOpConvInt16ToInt:
+    case EOpConvInt16ToInt64:
+    case EOpConvInt16ToUint8:
     case EOpConvInt16ToUint16:
+    case EOpConvInt16ToUint:
+    case EOpConvInt16ToUint64:
+
+    // int32_t -> (u)int*
+    case EOpConvIntToInt8:
+    case EOpConvIntToInt16:
+    case EOpConvIntToInt64:
+    case EOpConvIntToUint8:
+    case EOpConvIntToUint16:
+    case EOpConvIntToUint:
+    case EOpConvIntToUint64:
+
+    // int64_t -> (u)int*
+    case EOpConvInt64ToInt8:
+    case EOpConvInt64ToInt16:
+    case EOpConvInt64ToInt:
+    case EOpConvInt64ToUint8:
+    case EOpConvInt64ToUint16:
+    case EOpConvInt64ToUint:
+    case EOpConvInt64ToUint64:
+
+    // uint8_t -> (u)int*
+    case EOpConvUint8ToInt8:
+    case EOpConvUint8ToInt16:
+    case EOpConvUint8ToInt:
+    case EOpConvUint8ToInt64:
+    case EOpConvUint8ToUint16:
+    case EOpConvUint8ToUint:
+    case EOpConvUint8ToUint64:
+
+    // uint16_t -> (u)int*
+    case EOpConvUint16ToInt8:
     case EOpConvUint16ToInt16:
-#endif
+    case EOpConvUint16ToInt:
+    case EOpConvUint16ToInt64:
+    case EOpConvUint16ToUint8:
+    case EOpConvUint16ToUint:
+    case EOpConvUint16ToUint64:
+
+    // uint32_t -> (u)int*
+    case EOpConvUintToInt8:
+    case EOpConvUintToInt16:
+    case EOpConvUintToInt:
+    case EOpConvUintToInt64:
+    case EOpConvUintToUint8:
+    case EOpConvUintToUint16:
+    case EOpConvUintToUint64:
+
+    // uint64_t -> (u)int*
+    case EOpConvUint64ToInt8:
+    case EOpConvUint64ToInt16:
+    case EOpConvUint64ToInt:
+    case EOpConvUint64ToInt64:
+    case EOpConvUint64ToUint8:
+    case EOpConvUint64ToUint16:
+    case EOpConvUint64ToUint:
 
     // unary operations
     case EOpNegative:
@@ -2329,15 +2961,7 @@ bool TIntermediate::promoteUnary(TIntermUnary& node)
         }
         break;
     case EOpBitwiseNot:
-        if (operand->getBasicType() != EbtInt &&
-            operand->getBasicType() != EbtUint &&
-#ifdef AMD_EXTENSIONS
-            operand->getBasicType() != EbtInt16 &&
-            operand->getBasicType() != EbtUint16 &&
-#endif
-            operand->getBasicType() != EbtInt64 &&
-            operand->getBasicType() != EbtUint64)
-
+        if (!isTypeInt(operand->getBasicType()))
             return false;
         break;
     case EOpNegative:
@@ -2345,18 +2969,9 @@ bool TIntermediate::promoteUnary(TIntermUnary& node)
     case EOpPostDecrement:
     case EOpPreIncrement:
     case EOpPreDecrement:
-        if (operand->getBasicType() != EbtInt &&
-            operand->getBasicType() != EbtUint &&
-            operand->getBasicType() != EbtInt64 &&
-            operand->getBasicType() != EbtUint64 &&
-#ifdef AMD_EXTENSIONS
-            operand->getBasicType() != EbtInt16 &&
-            operand->getBasicType() != EbtUint16 &&
-#endif
+        if (!isTypeInt(operand->getBasicType()) &&
             operand->getBasicType() != EbtFloat &&
-#ifdef AMD_EXTENSIONS
             operand->getBasicType() != EbtFloat16 &&
-#endif
             operand->getBasicType() != EbtDouble)
 
             return false;
@@ -2376,11 +2991,7 @@ bool TIntermediate::promoteUnary(TIntermUnary& node)
 
 void TIntermUnary::updatePrecision()
 {
-#ifdef AMD_EXTENSIONS
     if (getBasicType() == EbtInt || getBasicType() == EbtUint || getBasicType() == EbtFloat || getBasicType() == EbtFloat16) {
-#else
-    if (getBasicType() == EbtInt || getBasicType() == EbtUint || getBasicType() == EbtFloat) {
-#endif
         if (operand->getQualifier().precision > getQualifier().precision)
             getQualifier().precision = operand->getQualifier().precision;
     }
@@ -2563,16 +3174,7 @@ bool TIntermediate::promoteBinary(TIntermBinary& node)
             break;
 
         // Check for integer-only operands.
-        if ((left->getBasicType() != EbtInt &&  left->getBasicType() != EbtUint &&
-#ifdef AMD_EXTENSIONS
-             left->getBasicType() != EbtInt16 && left->getBasicType() != EbtUint16 &&
-#endif
-             left->getBasicType() != EbtInt64 && left->getBasicType() != EbtUint64) ||
-            (right->getBasicType() != EbtInt && right->getBasicType() != EbtUint &&
-#ifdef AMD_EXTENSIONS
-             right->getBasicType() != EbtInt16 && right->getBasicType() != EbtUint16 &&
-#endif
-             right->getBasicType() != EbtInt64 && right->getBasicType() != EbtUint64))
+        if (!isTypeInt(left->getBasicType()) && !isTypeInt(right->getBasicType()))
             return false;
         if (left->isMatrix() || right->isMatrix())
             return false;
@@ -2873,11 +3475,7 @@ bool TIntermediate::promoteAggregate(TIntermAggregate& node)
 
 void TIntermBinary::updatePrecision()
 {
-#ifdef AMD_EXTENSIONS
     if (getBasicType() == EbtInt || getBasicType() == EbtUint || getBasicType() == EbtFloat || getBasicType() == EbtFloat16) {
-#else
-    if (getBasicType() == EbtInt || getBasicType() == EbtUint || getBasicType() == EbtFloat) {
-#endif
         getQualifier().precision = std::max(right->getQualifier().precision, left->getQualifier().precision);
         if (getQualifier().precision != EpqNone) {
             left->propagatePrecision(getQualifier().precision);
@@ -2888,11 +3486,7 @@ void TIntermBinary::updatePrecision()
 
 void TIntermTyped::propagatePrecision(TPrecisionQualifier newPrecision)
 {
-#ifdef AMD_EXTENSIONS
     if (getQualifier().precision != EpqNone || (getBasicType() != EbtInt && getBasicType() != EbtUint && getBasicType() != EbtFloat && getBasicType() != EbtFloat16))
-#else
-    if (getQualifier().precision != EpqNone || (getBasicType() != EbtInt && getBasicType() != EbtUint && getBasicType() != EbtFloat))
-#endif
         return;
 
     getQualifier().precision = newPrecision;
@@ -2967,9 +3561,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i] = rightUnionArray[i];
                 break;
             default:
@@ -2995,16 +3587,13 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i] = rightUnionArray[i];
                 break;
             default:
                 return node;
             }
             break;
-#ifdef AMD_EXTENSIONS
         case EbtFloat16:
             switch (node->getType().getBasicType()) {
             case EbtInt:
@@ -3031,7 +3620,6 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 return node;
             }
             break;
-#endif
         case EbtInt:
             switch (node->getType().getBasicType()) {
             case EbtInt:
@@ -3051,9 +3639,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i].setIConst(static_cast<int>(rightUnionArray[i].getDConst()));
                 break;
             default:
@@ -3079,9 +3665,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i].setUConst(static_cast<unsigned int>(rightUnionArray[i].getDConst()));
                 break;
             default:
@@ -3107,9 +3691,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i].setBConst(rightUnionArray[i].getDConst() != 0.0);
                 break;
             default:
@@ -3135,9 +3717,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i].setI64Const(static_cast<long long>(rightUnionArray[i].getDConst()));
                 break;
             default:
@@ -3163,9 +3743,7 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
                 break;
             case EbtFloat:
             case EbtDouble:
-#ifdef AMD_EXTENSIONS
             case EbtFloat16:
-#endif
                 leftUnionArray[i].setU64Const(static_cast<unsigned long long>(rightUnionArray[i].getDConst()));
                 break;
             default:

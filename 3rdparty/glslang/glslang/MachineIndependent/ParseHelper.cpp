@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2015 LunarG, Inc.
 // Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -1493,6 +1494,39 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         requireExtensions(loc, 1, &E_GL_ARB_sparse_texture2, fnCandidate.getName().c_str());
         break;
     }
+
+    case EOpSwizzleInvocations:
+    {
+        if (! (*argp)[1]->getAsConstantUnion())
+            error(loc, "argument must be compile-time constant", "offset", "");
+        else {
+            unsigned offset[4] = {};
+            offset[0] = (*argp)[1]->getAsConstantUnion()->getConstArray()[0].getUConst();
+            offset[1] = (*argp)[1]->getAsConstantUnion()->getConstArray()[1].getUConst();
+            offset[2] = (*argp)[1]->getAsConstantUnion()->getConstArray()[2].getUConst();
+            offset[3] = (*argp)[1]->getAsConstantUnion()->getConstArray()[3].getUConst();
+            if (offset[0] > 3 || offset[1] > 3 || offset[2] > 3 || offset[3] > 3)
+                error(loc, "components must be in the range [0, 3]", "offset", "");
+        }
+
+        break;
+    }
+
+    case EOpSwizzleInvocationsMasked:
+    {
+        if (! (*argp)[1]->getAsConstantUnion())
+            error(loc, "argument must be compile-time constant", "mask", "");
+        else {
+            unsigned mask[3] = {};
+            mask[0] = (*argp)[1]->getAsConstantUnion()->getConstArray()[0].getUConst();
+            mask[1] = (*argp)[1]->getAsConstantUnion()->getConstArray()[1].getUConst();
+            mask[2] = (*argp)[1]->getAsConstantUnion()->getConstArray()[2].getUConst();
+            if (mask[0] > 31 || mask[1] > 31 || mask[2] > 31)
+                error(loc, "components must be in the range [0, 31]", "mask", "");
+        }
+
+        break;
+    }
 #endif
 
     case EOpTextureOffset:
@@ -1608,6 +1642,23 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
             if (base == nullptr || base->getType().getQualifier().storage != EvqVaryingIn)
                 error(loc, "first argument must be an interpolant, or interpolant-array element", fnCandidate.getName().c_str(), "");
         }
+
+#ifdef AMD_EXTENSIONS
+        if (callNode.getOp() == EOpInterpolateAtVertex) {
+            if (!arg0->getType().getQualifier().isExplicitInterpolation())
+                error(loc, "argument must be qualified as __explicitInterpAMD in", "interpolant", "");
+            else {
+                if (! (*argp)[1]->getAsConstantUnion())
+                    error(loc, "argument must be compile-time constant", "vertex index", "");
+                else {
+                    unsigned vertexIdx = (*argp)[1]->getAsConstantUnion()->getConstArray()[0].getUConst();
+                    if (vertexIdx > 2)
+                        error(loc, "must be in the range [0, 2]", "vertex index", "");
+                }
+            }
+        }
+#endif
+
         break;
 
     case EOpEmitStreamVertex:
@@ -1615,8 +1666,32 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         intermediate.setMultiStream();
         break;
 
+    case EOpSubgroupClusteredAdd:
+    case EOpSubgroupClusteredMul:
+    case EOpSubgroupClusteredMin:
+    case EOpSubgroupClusteredMax:
+    case EOpSubgroupClusteredAnd:
+    case EOpSubgroupClusteredOr:
+    case EOpSubgroupClusteredXor:
+        if ((*argp)[1]->getAsConstantUnion() == nullptr)
+            error(loc, "argument must be compile-time constant", "cluster size", "");
+        else {
+            int size = (*argp)[1]->getAsConstantUnion()->getConstArray()[0].getIConst();
+            if (size < 1)
+                error(loc, "argument must be at least 1", "cluster size", "");
+            else if (!IsPow2(size))
+                error(loc, "argument must be a power of 2", "cluster size", "");
+        }
+        break;
+
     default:
         break;
+    }
+
+    if (callNode.getOp() > EOpSubgroupGuardStart && callNode.getOp() < EOpSubgroupGuardStop) {
+        // these require SPIR-V 1.3
+        if (spvVersion.spv > 0 && spvVersion.spv < EShTargetSpv_1_3)
+            error(loc, "requires SPIR-V 1.3", "subgroup op", "");
     }
 }
 
@@ -2179,7 +2254,6 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     case EOpConstructDMat4x2:
     case EOpConstructDMat4x3:
     case EOpConstructDMat4x4:
-#ifdef AMD_EXTENSIONS
     case EOpConstructF16Mat2x2:
     case EOpConstructF16Mat2x3:
     case EOpConstructF16Mat2x4:
@@ -2189,7 +2263,6 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     case EOpConstructF16Mat4x2:
     case EOpConstructF16Mat4x3:
     case EOpConstructF16Mat4x4:
-#endif
         constructingMatrix = true;
         break;
     default:
@@ -2246,18 +2319,30 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
         // Finish pinning down spec-const semantics
         if (specConstType) {
             switch (op) {
+            case EOpConstructInt8:
+            case EOpConstructUint8:
+            case EOpConstructInt16:
+            case EOpConstructUint16:
             case EOpConstructInt:
             case EOpConstructUint:
             case EOpConstructInt64:
             case EOpConstructUint64:
-#ifdef AMD_EXTENSIONS
-            case EOpConstructInt16:
-            case EOpConstructUint16:
-#endif
             case EOpConstructBool:
             case EOpConstructBVec2:
             case EOpConstructBVec3:
             case EOpConstructBVec4:
+            case EOpConstructI8Vec2:
+            case EOpConstructI8Vec3:
+            case EOpConstructI8Vec4:
+            case EOpConstructU8Vec2:
+            case EOpConstructU8Vec3:
+            case EOpConstructU8Vec4:
+            case EOpConstructI16Vec2:
+            case EOpConstructI16Vec3:
+            case EOpConstructI16Vec4:
+            case EOpConstructU16Vec2:
+            case EOpConstructU16Vec3:
+            case EOpConstructU16Vec4:
             case EOpConstructIVec2:
             case EOpConstructIVec3:
             case EOpConstructIVec4:
@@ -2270,14 +2355,6 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
             case EOpConstructU64Vec2:
             case EOpConstructU64Vec3:
             case EOpConstructU64Vec4:
-#ifdef AMD_EXTENSIONS
-            case EOpConstructI16Vec2:
-            case EOpConstructI16Vec3:
-            case EOpConstructI16Vec4:
-            case EOpConstructU16Vec2:
-            case EOpConstructU16Vec3:
-            case EOpConstructU16Vec4:
-#endif
                 // This was the list of valid ones, if they aren't converting from float
                 // and aren't making an array.
                 makeSpecConst = ! floatArgument && ! type.isArray();
@@ -2585,12 +2662,7 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
         return;
     }
 
-    if (publicType.basicType == EbtInt   || publicType.basicType == EbtUint   ||
-#ifdef AMD_EXTENSIONS
-        publicType.basicType == EbtInt16 || publicType.basicType == EbtUint16 ||
-#endif
-        publicType.basicType == EbtInt64 || publicType.basicType == EbtUint64 ||
-        publicType.basicType == EbtDouble)
+    if (isTypeInt(publicType.basicType) || publicType.basicType == EbtDouble)
         profileRequires(loc, EEsProfile, 300, nullptr, "shader input/output");
 
 #ifdef AMD_EXTENSIONS
@@ -2598,13 +2670,13 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
 #else
     if (!qualifier.flat) {
 #endif
-        if (publicType.basicType == EbtInt    || publicType.basicType == EbtUint   ||
-#ifdef AMD_EXTENSIONS
-            publicType.basicType == EbtInt16  || publicType.basicType == EbtUint16 ||
-#endif
-            publicType.basicType == EbtInt64  || publicType.basicType == EbtUint64 ||
+        if (isTypeInt(publicType.basicType) ||
             publicType.basicType == EbtDouble ||
-            (publicType.userDef && (publicType.userDef->containsBasicType(EbtInt)    ||
+            (publicType.userDef && (publicType.userDef->containsBasicType(EbtInt8)   ||
+                                    publicType.userDef->containsBasicType(EbtUint8)  ||
+                                    publicType.userDef->containsBasicType(EbtInt16)  ||
+                                    publicType.userDef->containsBasicType(EbtUint16) ||
+                                    publicType.userDef->containsBasicType(EbtInt)    ||
                                     publicType.userDef->containsBasicType(EbtUint)   ||
                                     publicType.userDef->containsBasicType(EbtInt64)  ||
                                     publicType.userDef->containsBasicType(EbtUint64) ||
@@ -4626,11 +4698,9 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         // containing a double, the offset must also be a multiple of 8..."
         if (type.containsBasicType(EbtDouble) && ! IsMultipleOfPow2(qualifier.layoutXfbOffset, 8))
             error(loc, "type contains double; xfb_offset must be a multiple of 8", "xfb_offset", "");
-#ifdef AMD_EXTENSIONS
         // ..., if applied to an aggregate containing a float16_t, the offset must also be a multiple of 2..."
         else if (type.containsBasicType(EbtFloat16) && !IsMultipleOfPow2(qualifier.layoutXfbOffset, 2))
             error(loc, "type contains half float; xfb_offset must be a multiple of 2", "xfb_offset", "");
-#endif
         else if (! IsMultipleOfPow2(qualifier.layoutXfbOffset, 4))
             error(loc, "must be a multiple of size of first component", "xfb_offset", "");
     }
@@ -4741,20 +4811,18 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
             error(loc, "can only be applied to a scalar", "constant_id", "");
         switch (type.getBasicType())
         {
+        case EbtInt8:
+        case EbtUint8:
+        case EbtInt16:
+        case EbtUint16:
         case EbtInt:
         case EbtUint:
         case EbtInt64:
         case EbtUint64:
-#ifdef AMD_EXTENSIONS
-        case EbtInt16:
-        case EbtUint16:
-#endif
         case EbtBool:
         case EbtFloat:
         case EbtDouble:
-#ifdef AMD_EXTENSIONS
         case EbtFloat16:
-#endif
             break;
         default:
             error(loc, "cannot be applied to this type", "constant_id", "");
@@ -4951,10 +5019,21 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
         return nullptr;
     }
 
+    bool explicitTypesEnabled = extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int8) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int16) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int32) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int64) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float16) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float32) ||
+                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float64);
+
     if (profile == EEsProfile || version < 120)
         function = findFunctionExact(loc, call, builtIn);
     else if (version < 400)
         function = findFunction120(loc, call, builtIn);
+    else if (explicitTypesEnabled)
+        function = findFunctionExplicitTypes(loc, call, builtIn);
     else
         function = findFunction400(loc, call, builtIn);
 
@@ -5123,6 +5202,85 @@ const TFunction* TParseContext::findFunction400(const TSourceLoc& loc, const TFu
 
         // 3. -> float is better than -> double
         return to2.getBasicType() == EbtFloat && to1.getBasicType() == EbtDouble;
+    };
+
+    // for ambiguity reporting
+    bool tie = false;
+
+    // send to the generic selector
+    const TFunction* bestMatch = selectFunction(candidateList, call, convertible, better, tie);
+
+    if (bestMatch == nullptr)
+        error(loc, "no matching overloaded function found", call.getName().c_str(), "");
+    else if (tie)
+        error(loc, "ambiguous best function under implicit type conversion", call.getName().c_str(), "");
+
+    return bestMatch;
+}
+
+// "To determine whether the conversion for a single argument in one match
+//  is better than that for another match, the conversion is assigned of the
+//  three ranks ordered from best to worst:
+//   1. Exact match: no conversion.
+//    2. Promotion: integral or floating-point promotion.
+//    3. Conversion: integral conversion, floating-point conversion,
+//       floating-integral conversion.
+//  A conversion C1 is better than a conversion C2 if the rank of C1 is
+//  better than the rank of C2."
+const TFunction* TParseContext::findFunctionExplicitTypes(const TSourceLoc& loc, const TFunction& call, bool& builtIn)
+{
+    // first, look for an exact match
+    TSymbol* symbol = symbolTable.find(call.getMangledName(), &builtIn);
+    if (symbol)
+        return symbol->getAsFunction();
+
+    // no exact match, use the generic selector, parameterized by the GLSL rules
+
+    // create list of candidates to send
+    TVector<const TFunction*> candidateList;
+    symbolTable.findFunctionNameList(call.getMangledName(), candidateList, builtIn);
+
+    // can 'from' convert to 'to'?
+    const auto convertible = [this](const TType& from, const TType& to, TOperator, int) -> bool {
+        if (from == to)
+            return true;
+        if (from.isArray() || to.isArray() || ! from.sameElementShape(to))
+            return false;
+        return intermediate.canImplicitlyPromote(from.getBasicType(), to.getBasicType());
+    };
+
+    // Is 'to2' a better conversion than 'to1'?
+    // Ties should not be considered as better.
+    // Assumes 'convertible' already said true.
+    const auto better = [this](const TType& from, const TType& to1, const TType& to2) -> bool {
+        // 1. exact match
+        if (from == to2)
+            return from != to1;
+        if (from == to1)
+            return false;
+
+        // 2. Promotion (integral, floating-point) is better
+        TBasicType from_type = from.getBasicType();
+        TBasicType to1_type = to1.getBasicType();
+        TBasicType to2_type = to2.getBasicType();
+        bool isPromotion1 = (intermediate.isIntegralPromotion(from_type, to1_type) ||
+                             intermediate.isFPPromotion(from_type, to1_type));
+        bool isPromotion2 = (intermediate.isIntegralPromotion(from_type, to2_type) ||
+                             intermediate.isFPPromotion(from_type, to2_type));
+        if (isPromotion2)
+            return !isPromotion1;
+        if(isPromotion1)
+            return false;
+
+        // 3. Conversion (integral, floating-point , floating-integral)
+        bool isConversion1 = (intermediate.isIntegralConversion(from_type, to1_type) ||
+                              intermediate.isFPConversion(from_type, to1_type) ||
+                              intermediate.isFPIntegralConversion(from_type, to1_type));
+        bool isConversion2 = (intermediate.isIntegralConversion(from_type, to2_type) ||
+                              intermediate.isFPConversion(from_type, to2_type) ||
+                              intermediate.isFPIntegralConversion(from_type, to2_type));
+
+        return isConversion2 && !isConversion1;
     };
 
     // for ambiguity reporting
@@ -5663,7 +5821,6 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         basicOp = EOpConstructDouble;
         break;
 
-#ifdef AMD_EXTENSIONS
     case EOpConstructF16Vec2:
     case EOpConstructF16Vec3:
     case EOpConstructF16Vec4:
@@ -5679,7 +5836,34 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructFloat16:
         basicOp = EOpConstructFloat16;
         break;
-#endif
+
+    case EOpConstructI8Vec2:
+    case EOpConstructI8Vec3:
+    case EOpConstructI8Vec4:
+    case EOpConstructInt8:
+        basicOp = EOpConstructInt8;
+        break;
+
+    case EOpConstructU8Vec2:
+    case EOpConstructU8Vec3:
+    case EOpConstructU8Vec4:
+    case EOpConstructUint8:
+        basicOp = EOpConstructUint8;
+        break;
+
+    case EOpConstructI16Vec2:
+    case EOpConstructI16Vec3:
+    case EOpConstructI16Vec4:
+    case EOpConstructInt16:
+        basicOp = EOpConstructInt16;
+        break;
+
+    case EOpConstructU16Vec2:
+    case EOpConstructU16Vec3:
+    case EOpConstructU16Vec4:
+    case EOpConstructUint16:
+        basicOp = EOpConstructUint16;
+        break;
 
     case EOpConstructIVec2:
     case EOpConstructIVec3:
@@ -5708,22 +5892,6 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructUint64:
         basicOp = EOpConstructUint64;
         break;
-
-#ifdef AMD_EXTENSIONS
-    case EOpConstructI16Vec2:
-    case EOpConstructI16Vec3:
-    case EOpConstructI16Vec4:
-    case EOpConstructInt16:
-        basicOp = EOpConstructInt16;
-        break;
-
-    case EOpConstructU16Vec2:
-    case EOpConstructU16Vec3:
-    case EOpConstructU16Vec4:
-    case EOpConstructUint16:
-        basicOp = EOpConstructUint16;
-        break;
-#endif
 
     case EOpConstructBVec2:
     case EOpConstructBVec3:

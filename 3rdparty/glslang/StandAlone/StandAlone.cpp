@@ -99,6 +99,7 @@ enum TOptions {
     EOptionOptimizeDisable      = (1 << 28),
     EOptionOptimizeSize         = (1 << 29),
     EOptionInvertY              = (1 << 30),
+    EOptionDumpBareVersion      = (1 << 31),
 };
 
 //
@@ -155,12 +156,16 @@ const char* entryPointName = nullptr;
 const char* sourceEntryPointName = nullptr;
 const char* shaderStageName = nullptr;
 const char* variableName = nullptr;
+bool HlslEnable16BitTypes = false;
 std::vector<std::string> IncludeDirectoryList;
-int ClientInputSemanticsVersion = 100;   // maps to, say, #define VULKAN 100
-int VulkanClientVersion = 100;           // would map to, say, Vulkan 1.0
-int OpenGLClientVersion = 450;           // doesn't influence anything yet, but maps to OpenGL 4.50
-unsigned int TargetVersion = 0x00010000; // maps to, say, SPIR-V 1.0
-std::vector<std::string> Processes;      // what should be recorded by OpModuleProcessed, or equivalent
+int ClientInputSemanticsVersion = 100;                  // maps to, say, #define VULKAN 100
+glslang::EshTargetClientVersion VulkanClientVersion =
+                          glslang::EShTargetVulkan_1_0; // would map to, say, Vulkan 1.0
+glslang::EshTargetClientVersion OpenGLClientVersion =
+                          glslang::EShTargetOpenGL_450; // doesn't influence anything yet, but maps to OpenGL 4.50
+glslang::EShTargetLanguageVersion TargetVersion =
+                          glslang::EShTargetSpv_1_0;    // maps to, say, SPIR-V 1.0
+std::vector<std::string> Processes;                     // what should be recorded by OpModuleProcessed, or equivalent
 
 // Per descriptor-set binding base data
 typedef std::map<unsigned int, unsigned int> TPerSetBaseBinding;
@@ -449,6 +454,11 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                lowerword == "hlsl-iomapper" ||
                                lowerword == "hlsl-iomapping") {
                         Options |= EOptionHlslIoMapping;
+                    } else if (lowerword == "hlsl-enable-16bit-types") {
+                        HlslEnable16BitTypes = true;
+                    } else if (lowerword == "invert-y" ||  // synonyms
+                               lowerword == "iy") {
+                        Options |= EOptionInvertY;
                     } else if (lowerword == "keep-uncalled" || // synonyms
                                lowerword == "ku") {
                         Options |= EOptionKeepUncalled;
@@ -504,25 +514,28 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         if (argc > 1) {
                             if (strcmp(argv[1], "vulkan1.0") == 0) {
                                 setVulkanSpv();
-                                VulkanClientVersion = 100;
+                                VulkanClientVersion = glslang::EShTargetVulkan_1_0;
+                            } else if (strcmp(argv[1], "vulkan1.1") == 0) {
+                                setVulkanSpv();
+                                TargetVersion = glslang::EShTargetSpv_1_3;
+                                VulkanClientVersion = glslang::EShTargetVulkan_1_1;
                             } else if (strcmp(argv[1], "opengl") == 0) {
                                 setOpenGlSpv();
-                                OpenGLClientVersion = 450;
+                                OpenGLClientVersion = glslang::EShTargetOpenGL_450;
                             } else
-                                Error("--target-env expected vulkan1.0 or opengl");
+                                Error("--target-env expected vulkan1.0, opengl, or hlsl-16bit-types");
                         }
                         bumpArg();
                     } else if (lowerword == "variable-name" || // synonyms
-                        lowerword == "vn") {
+                               lowerword == "vn") {
                         Options |= EOptionOutputHexadecimal;
                         if (argc <= 1)
                             Error("no <C-variable-name> provided for --variable-name");
                         variableName = argv[1];
                         bumpArg();
                         break;
-                    } else if (lowerword == "invert-y" ||  // synonyms
-                               lowerword == "iy") {
-                        Options |= EOptionInvertY;
+                    } else if (lowerword == "version") {
+                        Options |= EOptionDumpVersions;
                     } else {
                         usage();
                     }
@@ -586,7 +599,11 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 Options |= EOptionDumpConfig;
                 break;
             case 'd':
-                Options |= EOptionDefaultDesktop;
+                if (strncmp(&argv[0][1], "dumpversion", strlen(&argv[0][1]) + 1) == 0 ||
+                    strncmp(&argv[0][1], "dumpfullversion", strlen(&argv[0][1]) + 1) == 0)
+                    Options |= EOptionDumpBareVersion;
+                else
+                    Options |= EOptionDefaultDesktop;
                 break;
             case 'e':
                 // HLSL todo: entry point handle needs much more sophistication.
@@ -694,6 +711,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgHlslOffsets);
     if (Options & EOptionDebug)
         messages = (EShMessages)(messages | EShMsgDebugInfo);
+    if (HlslEnable16BitTypes)
+        messages = (EShMessages)(messages | EShMsgHlslEnable16BitTypes);
 }
 
 //
@@ -1046,8 +1065,14 @@ int singleMain()
             return ESuccess;
     }
 
-    if (Options & EOptionDumpVersions) {
-        printf("Glslang Version: %s %s\n", GLSLANG_REVISION, GLSLANG_DATE);
+    if (Options & EOptionDumpBareVersion) {
+        printf("%d.%d.%d\n",
+            glslang::GetSpirvGeneratorVersion(), GLSLANG_MINOR_VERSION, GLSLANG_PATCH_LEVEL);
+        if (workList.empty())
+            return ESuccess;
+    } else if (Options & EOptionDumpVersions) {
+        printf("Glslang Version: %d.%d.%d\n",
+            glslang::GetSpirvGeneratorVersion(), GLSLANG_MINOR_VERSION, GLSLANG_PATCH_LEVEL);
         printf("ESSL Version: %s\n", glslang::GetEsslVersionString());
         printf("GLSL Version: %s\n", glslang::GetGlslVersionString());
         std::string spirvVersion;
@@ -1313,12 +1338,16 @@ void usage()
            "                                       'location' (fragile, not cross stage)\n"
            "  --aml                                synonym for --auto-map-locations\n"
            "  --client {vulkan<ver>|opengl<ver>}   see -V and -G\n"
+           "  -dumpfullversion                     print bare major.minor.patchlevel\n"
+           "  -dumpversion                         same as -dumpfullversion\n"
            "  --flatten-uniform-arrays             flatten uniform texture/sampler arrays to\n"
            "                                       scalars\n"
            "  --fua                                synonym for --flatten-uniform-arrays\n"
            "  --hlsl-offsets                       Allow block offsets to follow HLSL rules\n"
            "                                       Works independently of source language\n"
            "  --hlsl-iomap                         Perform IO mapping in HLSL register space\n"
+           "  --hlsl-enable-16bit-types            Allow use of 16-bit types in SPIR-V for HLSL\n"
+           "  --invert-y | --iy                    invert position.Y output in vertex shader\n"
            "  --keep-uncalled                      don't eliminate uncalled functions\n"
            "  --ku                                 synonym for --keep-uncalled\n"
            "  --no-storage-format                  use Unknown image format\n"
@@ -1357,16 +1386,17 @@ void usage()
            "                                       using -S.\n"
            "  --suppress-warnings                  suppress GLSL warnings\n"
            "                                       (except as required by #extension : warn)\n"
-           "  --target-env {vulkan1.0|opengl}      set the execution environment code will\n"
-           "                                       execute in (as opposed to language\n"
+           "  --target-env {vulkan1.0 | vulkan1.1 | opengl} \n"
+           "                                       set execution environment that emitted code\n"
+           "                                       will execute in (as opposed to the language\n"
            "                                       semantics selected by --client) defaults:\n"
            "                                        'vulkan1.0' under '--client vulkan<ver>'\n"
            "                                        'opengl' under '--client opengl<ver>'\n"
            "  --variable-name <name>               Creates a C header file that contains a\n"
            "                                       uint32_t array named <name>\n"
            "                                       initialized with the shader binary code.\n"
+           "  --version                            synonym for -v\n"
            "  --vn <name>                          synonym for --variable-name <name>\n"
-           "  --invert-y | --iy                    invert position.Y output in vertex shader\n"
            );
 
     exit(EFailUsage);

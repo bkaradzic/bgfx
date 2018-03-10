@@ -54,6 +54,7 @@ namespace spv {
 #ifdef AMD_EXTENSIONS
         #include "GLSL.ext.AMD.h"
 #endif
+
 #ifdef NV_EXTENSIONS
         #include "GLSL.ext.NV.h"
 #endif
@@ -80,12 +81,15 @@ static void Kill(std::ostream& out, const char* message)
 // used to identify the extended instruction library imported when printing
 enum ExtInstSet {
     GLSL450Inst,
+
 #ifdef AMD_EXTENSIONS
     GLSLextAMDInst,
 #endif
+
 #ifdef NV_EXTENSIONS
     GLSLextNVInst,
 #endif
+
     OpenCLExtInst,
 };
 
@@ -652,7 +656,6 @@ static const char* GLSLextAMDGetDebugNames(const char* name, unsigned entrypoint
     return "Bad";
 }
 #endif
-
 
 #ifdef NV_EXTENSIONS
 static const char* GLSLextNVGetDebugNames(const char* name, unsigned entrypoint)

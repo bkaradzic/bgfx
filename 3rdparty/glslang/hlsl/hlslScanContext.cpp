@@ -143,6 +143,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["bool"] =                    EHTokBool;
     (*KeywordMap)["int"] =                     EHTokInt;
     (*KeywordMap)["uint"] =                    EHTokUint;
+    (*KeywordMap)["uint64_t"] =                EHTokUint64;
     (*KeywordMap)["dword"] =                   EHTokDword;
     (*KeywordMap)["half"] =                    EHTokHalf;
     (*KeywordMap)["float"] =                   EHTokFloat;
@@ -650,6 +651,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokBool:
     case EHTokInt:
     case EHTokUint:
+    case EHTokUint64:
     case EHTokDword:
     case EHTokHalf:
     case EHTokFloat:

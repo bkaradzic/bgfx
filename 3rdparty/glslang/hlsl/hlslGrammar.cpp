@@ -1377,14 +1377,15 @@ bool HlslGrammar::acceptType(TType& type)
 }
 bool HlslGrammar::acceptType(TType& type, TIntermNode*& nodeList)
 {
-    // Basic types for min* types, broken out here in case of future
-    // changes, e.g, to use native halfs.
-    static const TBasicType min16float_bt = EbtFloat;
-    static const TBasicType min10float_bt = EbtFloat;
-    static const TBasicType half_bt       = EbtFloat;
-    static const TBasicType min16int_bt   = EbtInt;
-    static const TBasicType min12int_bt   = EbtInt;
-    static const TBasicType min16uint_bt  = EbtUint;
+    // Basic types for min* types, use native halfs if the option allows them.
+    bool enable16BitTypes = parseContext.hlslEnable16BitTypes();
+
+    const TBasicType min16float_bt = enable16BitTypes ? EbtFloat16 : EbtFloat;
+    const TBasicType min10float_bt = enable16BitTypes ? EbtFloat16 : EbtFloat;
+    const TBasicType half_bt       = enable16BitTypes ? EbtFloat16 : EbtFloat;
+    const TBasicType min16int_bt   = enable16BitTypes ? EbtInt16   : EbtInt;
+    const TBasicType min12int_bt   = enable16BitTypes ? EbtInt16   : EbtInt;
+    const TBasicType min16uint_bt  = enable16BitTypes ? EbtUint16  : EbtUint;
 
     // Some types might have turned into identifiers. Take the hit for checking
     // when this has happened.
@@ -1588,6 +1589,10 @@ bool HlslGrammar::acceptType(TType& type, TIntermNode*& nodeList)
         break;
     case EHTokUint4:
         new(&type) TType(EbtUint, EvqTemporary, 4);
+        break;
+
+    case EHTokUint64:
+        new(&type) TType(EbtUint64);
         break;
 
     case EHTokBool:

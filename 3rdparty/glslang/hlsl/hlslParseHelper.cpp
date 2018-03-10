@@ -4559,6 +4559,22 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
         return imageAggregate != nullptr && imageAggregate->getOp() == EOpImageLoad;
     };
 
+    const auto lookupBuiltinVariable = [&](const char* name, TBuiltInVariable builtin, TType& type) -> TIntermTyped* {
+        TSymbol* symbol = symbolTable.find(name);
+        if (nullptr == symbol) {
+            type.getQualifier().builtIn = builtin;
+
+            TVariable* variable = new TVariable(new TString(name), type);
+
+            symbolTable.insert(*variable);
+
+            symbol = symbolTable.find(name);
+            assert(symbol && "Inserted symbol could not be found!");
+        }
+
+        return intermediate.addSymbol(*(symbol->getAsVariable()), loc);
+    };
+
     // HLSL intrinsics can be pass through to native AST opcodes, or decomposed here to existing AST
     // opcodes for compatibility with existing software stacks.
     static const bool decomposeHlslIntrinsics = true;
@@ -5115,7 +5131,65 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
 
             break;
         }
-        
+    case EOpWaveGetLaneCount:
+        {
+            // Mapped to gl_SubgroupSize builtin (We preprend @ to the symbol
+            // so that it inhabits the symbol table, but has a user-invalid name
+            // in-case some source HLSL defined the symbol also).
+            TType type(EbtUint, EvqVaryingIn);
+            node = lookupBuiltinVariable("@gl_SubgroupSize", EbvSubgroupSize2, type);
+            break;
+        }
+    case EOpWaveGetLaneIndex:
+        {
+            // Mapped to gl_SubgroupInvocationID builtin (We preprend @ to the
+            // symbol so that it inhabits the symbol table, but has a
+            // user-invalid name in-case some source HLSL defined the symbol
+            // also).
+            TType type(EbtUint, EvqVaryingIn);
+            node = lookupBuiltinVariable("@gl_SubgroupInvocationID", EbvSubgroupInvocation2, type);
+            break;
+        }
+    case EOpWaveActiveCountBits:
+        {
+            // Mapped to subgroupBallotBitCount(subgroupBallot()) builtin
+
+            // uvec4 type.
+            TType uvec4Type(EbtUint, EvqTemporary, 4);
+
+            // Get the uvec4 return from subgroupBallot().
+            TIntermTyped* res = intermediate.addBuiltInFunctionCall(loc,
+                EOpSubgroupBallot, true, arguments, uvec4Type);
+
+            // uint type.
+            TType uintType(EbtUint, EvqTemporary);
+
+            node = intermediate.addBuiltInFunctionCall(loc,
+                EOpSubgroupBallotBitCount, true, res, uintType);
+
+            break;
+        }
+    case EOpWavePrefixCountBits:
+        {
+            // Mapped to subgroupBallotInclusiveBitCount(subgroupBallot())
+            // builtin
+
+            // uvec4 type.
+            TType uvec4Type(EbtUint, EvqTemporary, 4);
+
+            // Get the uvec4 return from subgroupBallot().
+            TIntermTyped* res = intermediate.addBuiltInFunctionCall(loc,
+                EOpSubgroupBallot, true, arguments, uvec4Type);
+
+            // uint type.
+            TType uintType(EbtUint, EvqTemporary);
+
+            node = intermediate.addBuiltInFunctionCall(loc,
+                EOpSubgroupBallotInclusiveBitCount, true, res, uintType);
+
+            break;
+        }
+
     default:
         break; // most pass through unchanged
     }

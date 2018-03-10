@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -78,7 +79,7 @@ public:
         assert(i < MaxSwizzleSelectors);
         return components[i];
     }
-    
+
 private:
     int size_;
     selectorType components[MaxSwizzleSelectors];
@@ -403,6 +404,7 @@ public:
     TIntermSymbol* addSymbol(const TType&, const TSourceLoc&);
     TIntermSymbol* addSymbol(const TIntermSymbol&);
     TIntermTyped* addConversion(TOperator, const TType&, TIntermTyped*) const;
+    std::tuple<TIntermTyped*, TIntermTyped*> addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* node1) const;
     TIntermTyped* addUniShapeConversion(TOperator, const TType&, TIntermTyped*);
     void addBiShapeConversion(TOperator, TIntermTyped*& lhsNode, TIntermTyped*& rhsNode);
     TIntermTyped* addShapeConversion(const TType&, TIntermTyped*);
@@ -412,6 +414,11 @@ public:
     TIntermTyped* addUnaryMath(TOperator, TIntermTyped* child, TSourceLoc);
     TIntermTyped* addBuiltInFunctionCall(const TSourceLoc& line, TOperator, bool unary, TIntermNode*, const TType& returnType);
     bool canImplicitlyPromote(TBasicType from, TBasicType to, TOperator op = EOpNull) const;
+    bool isIntegralPromotion(TBasicType from, TBasicType to) const;
+    bool isFPPromotion(TBasicType from, TBasicType to) const;
+    bool isIntegralConversion(TBasicType from, TBasicType to) const;
+    bool isFPConversion(TBasicType from, TBasicType to) const;
+    bool isFPIntegralConversion(TBasicType from, TBasicType to) const;
     TOperator mapTypeToConstructorOp(const TType&) const;
     TIntermAggregate* growAggregate(TIntermNode* left, TIntermNode* right);
     TIntermAggregate* growAggregate(TIntermNode* left, TIntermNode* right, const TSourceLoc&);
@@ -425,15 +432,14 @@ public:
     TIntermTyped* addComma(TIntermTyped* left, TIntermTyped* right, const TSourceLoc&);
     TIntermTyped* addMethod(TIntermTyped*, const TType&, const TString*, const TSourceLoc&);
     TIntermConstantUnion* addConstantUnion(const TConstUnionArray&, const TType&, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(signed char, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(unsigned char, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(signed short, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(unsigned short, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(int, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(unsigned int, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(long long, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(unsigned long long, const TSourceLoc&, bool literal = false) const;
-#ifdef AMD_EXTENSIONS
-    TIntermConstantUnion* addConstantUnion(short, const TSourceLoc&, bool literal = false) const;
-    TIntermConstantUnion* addConstantUnion(unsigned short, const TSourceLoc&, bool literal = false) const;
-    
-#endif
     TIntermConstantUnion* addConstantUnion(bool, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(double, TBasicType, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(const TString*, const TSourceLoc&, bool literal = false) const;
@@ -643,6 +649,10 @@ protected:
     void pushSelector(TIntermSequence&, const TMatrixSelector&, const TSourceLoc&);
     bool specConstantPropagates(const TIntermTyped&, const TIntermTyped&);
     void performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root);
+    bool isConversionAllowed(TOperator op, TIntermTyped* node) const;
+    TIntermUnary* createConversion(TBasicType convertTo, TIntermTyped* node) const;
+    std::tuple<TBasicType, TBasicType> getConversionDestinatonType(TBasicType type0, TBasicType type1, TOperator op) const;
+    bool extensionRequested(const char *extension) const {return requestedExtensions.find(extension) != requestedExtensions.end();}
     static const char* getResourceName(TResourceType);
 
     const EShLanguage language;  // stage, known at construction time
@@ -650,8 +660,8 @@ protected:
     std::string entryPointName;
     std::string entryPointMangledName;
 
-    EProfile profile;
-    int version;
+    EProfile profile;                           // source profile
+    int version;                                // source version
     SpvVersion spvVersion;
     TIntermNode* treeRoot;
     std::set<std::string> requestedExtensions;  // cumulation of all enabled or required extensions; not connected to what subset of the shader used them

@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -1064,11 +1065,11 @@ int TIntermediate::getBaseAlignmentScalar(const TType& type, int& size)
     case EbtInt64:
     case EbtUint64:
     case EbtDouble:  size = 8; return 8;
-#ifdef AMD_EXTENSIONS
-    case EbtInt16:
-    case EbtUint16:
     case EbtFloat16: size = 2; return 2;
-#endif
+    case EbtInt8:
+    case EbtUint8:   size = 1; return 1;
+    case EbtInt16:
+    case EbtUint16:  size = 2; return 2;
     default:         size = 4; return 4;
     }
 }

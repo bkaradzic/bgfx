@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2013 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -60,17 +61,15 @@ void TType::buildMangledName(TString& mangledName) const
     switch (basicType) {
     case EbtFloat:              mangledName += 'f';      break;
     case EbtDouble:             mangledName += 'd';      break;
-#ifdef AMD_EXTENSIONS
     case EbtFloat16:            mangledName += "f16";    break;
-#endif
     case EbtInt:                mangledName += 'i';      break;
     case EbtUint:               mangledName += 'u';      break;
-    case EbtInt64:              mangledName += "i64";    break;
-    case EbtUint64:             mangledName += "u64";    break;
-#ifdef AMD_EXTENSIONS
+    case EbtInt8:               mangledName += "i8";     break;
+    case EbtUint8:              mangledName += "u8";     break;
     case EbtInt16:              mangledName += "i16";    break;
     case EbtUint16:             mangledName += "u16";    break;
-#endif
+    case EbtInt64:              mangledName += "i64";    break;
+    case EbtUint64:             mangledName += "u64";    break;
     case EbtBool:               mangledName += 'b';      break;
     case EbtAtomicUint:         mangledName += "au";     break;
     case EbtSampler:

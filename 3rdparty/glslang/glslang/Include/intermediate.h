@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2016 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -84,100 +85,189 @@ enum TOperator {
     EOpPreIncrement,
     EOpPreDecrement,
 
+    // (u)int* -> bool
+    EOpConvInt8ToBool,
+    EOpConvUint8ToBool,
+    EOpConvInt16ToBool,
+    EOpConvUint16ToBool,
     EOpConvIntToBool,
     EOpConvUintToBool,
-    EOpConvFloatToBool,
-    EOpConvDoubleToBool,
     EOpConvInt64ToBool,
     EOpConvUint64ToBool,
-    EOpConvBoolToFloat,
-    EOpConvIntToFloat,
-    EOpConvUintToFloat,
-    EOpConvDoubleToFloat,
-    EOpConvInt64ToFloat,
-    EOpConvUint64ToFloat,
-    EOpConvUintToInt,
-    EOpConvFloatToInt,
-    EOpConvBoolToInt,
-    EOpConvDoubleToInt,
-    EOpConvInt64ToInt,
-    EOpConvUint64ToInt,
-    EOpConvIntToUint,
-    EOpConvFloatToUint,
-    EOpConvBoolToUint,
-    EOpConvDoubleToUint,
-    EOpConvInt64ToUint,
-    EOpConvUint64ToUint,
-    EOpConvIntToDouble,
-    EOpConvUintToDouble,
-    EOpConvFloatToDouble,
-    EOpConvBoolToDouble,
-    EOpConvInt64ToDouble,
-    EOpConvUint64ToDouble,
-    EOpConvBoolToInt64,
-    EOpConvIntToInt64,
-    EOpConvUintToInt64,
-    EOpConvFloatToInt64,
-    EOpConvDoubleToInt64,
-    EOpConvUint64ToInt64,
-    EOpConvBoolToUint64,
-    EOpConvIntToUint64,
-    EOpConvUintToUint64,
-    EOpConvFloatToUint64,
-    EOpConvDoubleToUint64,
-    EOpConvInt64ToUint64,
-#ifdef AMD_EXTENSIONS
-    EOpConvBoolToFloat16,
-    EOpConvIntToFloat16,
-    EOpConvUintToFloat16,
-    EOpConvFloatToFloat16,
-    EOpConvDoubleToFloat16,
-    EOpConvInt64ToFloat16,
-    EOpConvUint64ToFloat16,
-    EOpConvFloat16ToBool,
-    EOpConvFloat16ToInt,
-    EOpConvFloat16ToUint,
-    EOpConvFloat16ToFloat,
-    EOpConvFloat16ToDouble,
-    EOpConvFloat16ToInt64,
-    EOpConvFloat16ToUint64,
 
+    // float* -> bool
+    EOpConvFloat16ToBool,
+    EOpConvFloatToBool,
+    EOpConvDoubleToBool,
+
+    // bool -> (u)int*
+    EOpConvBoolToInt8,
+    EOpConvBoolToUint8,
     EOpConvBoolToInt16,
-    EOpConvIntToInt16,
-    EOpConvUintToInt16,
-    EOpConvFloatToInt16,
-    EOpConvDoubleToInt16,
-    EOpConvFloat16ToInt16,
-    EOpConvInt64ToInt16,
-    EOpConvUint64ToInt16,
-    EOpConvUint16ToInt16,
-    EOpConvInt16ToBool,
+    EOpConvBoolToUint16,
+    EOpConvBoolToInt,
+    EOpConvBoolToUint,
+    EOpConvBoolToInt64,
+    EOpConvBoolToUint64,
+
+    // bool -> float*
+    EOpConvBoolToFloat16,
+    EOpConvBoolToFloat,
+    EOpConvBoolToDouble,
+
+    // int8_t -> (u)int*
+    EOpConvInt8ToInt16,
+    EOpConvInt8ToInt,
+    EOpConvInt8ToInt64,
+    EOpConvInt8ToUint8,
+    EOpConvInt8ToUint16,
+    EOpConvInt8ToUint,
+    EOpConvInt8ToUint64,
+
+    // uint8_t -> (u)int*
+    EOpConvUint8ToInt8,
+    EOpConvUint8ToInt16,
+    EOpConvUint8ToInt,
+    EOpConvUint8ToInt64,
+    EOpConvUint8ToUint16,
+    EOpConvUint8ToUint,
+    EOpConvUint8ToUint64,
+
+    // int8_t -> float*
+    EOpConvInt8ToFloat16,
+    EOpConvInt8ToFloat,
+    EOpConvInt8ToDouble,
+
+    // uint8_t -> float*
+    EOpConvUint8ToFloat16,
+    EOpConvUint8ToFloat,
+    EOpConvUint8ToDouble,
+
+    // int16_t -> (u)int*
+    EOpConvInt16ToInt8,
     EOpConvInt16ToInt,
-    EOpConvInt16ToUint,
-    EOpConvInt16ToFloat,
-    EOpConvInt16ToDouble,
-    EOpConvInt16ToFloat16,
     EOpConvInt16ToInt64,
+    EOpConvInt16ToUint8,
+    EOpConvInt16ToUint16,
+    EOpConvInt16ToUint,
     EOpConvInt16ToUint64,
 
-    EOpConvBoolToUint16,
-    EOpConvIntToUint16,
-    EOpConvUintToUint16,
-    EOpConvFloatToUint16,
-    EOpConvDoubleToUint16,
-    EOpConvFloat16ToUint16,
-    EOpConvInt64ToUint16,
-    EOpConvUint64ToUint16,
-    EOpConvInt16ToUint16,
-    EOpConvUint16ToBool,
+    // uint16_t -> (u)int*
+    EOpConvUint16ToInt8,
+    EOpConvUint16ToInt16,
     EOpConvUint16ToInt,
+    EOpConvUint16ToInt64,
+    EOpConvUint16ToUint8,
     EOpConvUint16ToUint,
+    EOpConvUint16ToUint64,
+
+    // int16_t -> float*
+    EOpConvInt16ToFloat16,
+    EOpConvInt16ToFloat,
+    EOpConvInt16ToDouble,
+
+    // uint16_t -> float*
+    EOpConvUint16ToFloat16,
     EOpConvUint16ToFloat,
     EOpConvUint16ToDouble,
-    EOpConvUint16ToFloat16,
-    EOpConvUint16ToInt64,
-    EOpConvUint16ToUint64,
-#endif
+
+    // int32_t -> (u)int*
+    EOpConvIntToInt8,
+    EOpConvIntToInt16,
+    EOpConvIntToInt64,
+    EOpConvIntToUint8,
+    EOpConvIntToUint16,
+    EOpConvIntToUint,
+    EOpConvIntToUint64,
+
+    // uint32_t -> (u)int*
+    EOpConvUintToInt8,
+    EOpConvUintToInt16,
+    EOpConvUintToInt,
+    EOpConvUintToInt64,
+    EOpConvUintToUint8,
+    EOpConvUintToUint16,
+    EOpConvUintToUint64,
+
+    // int32_t -> float*
+    EOpConvIntToFloat16,
+    EOpConvIntToFloat,
+    EOpConvIntToDouble,
+
+    // uint32_t -> float*
+    EOpConvUintToFloat16,
+    EOpConvUintToFloat,
+    EOpConvUintToDouble,
+
+    // int64_t -> (u)int*
+    EOpConvInt64ToInt8,
+    EOpConvInt64ToInt16,
+    EOpConvInt64ToInt,
+    EOpConvInt64ToUint8,
+    EOpConvInt64ToUint16,
+    EOpConvInt64ToUint,
+    EOpConvInt64ToUint64,
+
+    // uint64_t -> (u)int*
+    EOpConvUint64ToInt8,
+    EOpConvUint64ToInt16,
+    EOpConvUint64ToInt,
+    EOpConvUint64ToInt64,
+    EOpConvUint64ToUint8,
+    EOpConvUint64ToUint16,
+    EOpConvUint64ToUint,
+
+    // int64_t -> float*
+    EOpConvInt64ToFloat16,
+    EOpConvInt64ToFloat,
+    EOpConvInt64ToDouble,
+
+    // uint64_t -> float*
+    EOpConvUint64ToFloat16,
+    EOpConvUint64ToFloat,
+    EOpConvUint64ToDouble,
+
+    // float16_t -> (u)int*
+    EOpConvFloat16ToInt8,
+    EOpConvFloat16ToInt16,
+    EOpConvFloat16ToInt,
+    EOpConvFloat16ToInt64,
+    EOpConvFloat16ToUint8,
+    EOpConvFloat16ToUint16,
+    EOpConvFloat16ToUint,
+    EOpConvFloat16ToUint64,
+
+    // float16_t -> float*
+    EOpConvFloat16ToFloat,
+    EOpConvFloat16ToDouble,
+
+    // float -> (u)int*
+    EOpConvFloatToInt8,
+    EOpConvFloatToInt16,
+    EOpConvFloatToInt,
+    EOpConvFloatToInt64,
+    EOpConvFloatToUint8,
+    EOpConvFloatToUint16,
+    EOpConvFloatToUint,
+    EOpConvFloatToUint64,
+
+    // float -> float*
+    EOpConvFloatToFloat16,
+    EOpConvFloatToDouble,
+
+    // float64 _t-> (u)int*
+    EOpConvDoubleToInt8,
+    EOpConvDoubleToInt16,
+    EOpConvDoubleToInt,
+    EOpConvDoubleToInt64,
+    EOpConvDoubleToUint8,
+    EOpConvDoubleToUint16,
+    EOpConvDoubleToUint,
+    EOpConvDoubleToUint64,
+
+    // float64_t -> float*
+    EOpConvDoubleToFloat16,
+    EOpConvDoubleToFloat,
 
     //
     // binary operations
@@ -280,12 +370,10 @@ enum TOperator {
     EOpDoubleBitsToUint64,
     EOpInt64BitsToDouble,
     EOpUint64BitsToDouble,
-#ifdef AMD_EXTENSIONS
     EOpFloat16BitsToInt16,
     EOpFloat16BitsToUint16,
     EOpInt16BitsToFloat16,
     EOpUint16BitsToFloat16,
-#endif
     EOpPackSnorm2x16,
     EOpUnpackSnorm2x16,
     EOpPackUnorm2x16,
@@ -302,7 +390,6 @@ enum TOperator {
     EOpUnpackInt2x32,
     EOpPackUint2x32,
     EOpUnpackUint2x32,
-#ifdef AMD_EXTENSIONS
     EOpPackFloat2x16,
     EOpUnpackFloat2x16,
     EOpPackInt2x16,
@@ -313,7 +400,12 @@ enum TOperator {
     EOpUnpackInt4x16,
     EOpPackUint4x16,
     EOpUnpackUint4x16,
-#endif
+    EOpPack16,
+    EOpPack32,
+    EOpPack64,
+    EOpUnpack32,
+    EOpUnpack16,
+    EOpUnpack8,
 
     EOpLength,
     EOpDistance,
@@ -378,6 +470,64 @@ enum TOperator {
     EOpAnyInvocation,
     EOpAllInvocations,
     EOpAllInvocationsEqual,
+
+    EOpSubgroupGuardStart,
+    EOpSubgroupBarrier,
+    EOpSubgroupMemoryBarrier,
+    EOpSubgroupMemoryBarrierBuffer,
+    EOpSubgroupMemoryBarrierImage,
+    EOpSubgroupMemoryBarrierShared, // compute only
+    EOpSubgroupElect,
+    EOpSubgroupAll,
+    EOpSubgroupAny,
+    EOpSubgroupAllEqual,
+    EOpSubgroupBroadcast,
+    EOpSubgroupBroadcastFirst,
+    EOpSubgroupBallot,
+    EOpSubgroupInverseBallot,
+    EOpSubgroupBallotBitExtract,
+    EOpSubgroupBallotBitCount,
+    EOpSubgroupBallotInclusiveBitCount,
+    EOpSubgroupBallotExclusiveBitCount,
+    EOpSubgroupBallotFindLSB,
+    EOpSubgroupBallotFindMSB,
+    EOpSubgroupShuffle,
+    EOpSubgroupShuffleXor,
+    EOpSubgroupShuffleUp,
+    EOpSubgroupShuffleDown,
+    EOpSubgroupAdd,
+    EOpSubgroupMul,
+    EOpSubgroupMin,
+    EOpSubgroupMax,
+    EOpSubgroupAnd,
+    EOpSubgroupOr,
+    EOpSubgroupXor,
+    EOpSubgroupInclusiveAdd,
+    EOpSubgroupInclusiveMul,
+    EOpSubgroupInclusiveMin,
+    EOpSubgroupInclusiveMax,
+    EOpSubgroupInclusiveAnd,
+    EOpSubgroupInclusiveOr,
+    EOpSubgroupInclusiveXor,
+    EOpSubgroupExclusiveAdd,
+    EOpSubgroupExclusiveMul,
+    EOpSubgroupExclusiveMin,
+    EOpSubgroupExclusiveMax,
+    EOpSubgroupExclusiveAnd,
+    EOpSubgroupExclusiveOr,
+    EOpSubgroupExclusiveXor,
+    EOpSubgroupClusteredAdd,
+    EOpSubgroupClusteredMul,
+    EOpSubgroupClusteredMin,
+    EOpSubgroupClusteredMax,
+    EOpSubgroupClusteredAnd,
+    EOpSubgroupClusteredOr,
+    EOpSubgroupClusteredXor,
+    EOpSubgroupQuadBroadcast,
+    EOpSubgroupQuadSwapHorizontal,
+    EOpSubgroupQuadSwapVertical,
+    EOpSubgroupQuadSwapDiagonal,
+    EOpSubgroupGuardStop,
 
 #ifdef AMD_EXTENSIONS
     EOpMinInvocations,
@@ -451,32 +601,36 @@ enum TOperator {
     EOpConstructGuardStart,
     EOpConstructInt,          // these first scalar forms also identify what implicit conversion is needed
     EOpConstructUint,
-    EOpConstructInt64,
-    EOpConstructUint64,
-#ifdef AMD_EXTENSIONS
+    EOpConstructInt8,
+    EOpConstructUint8,
     EOpConstructInt16,
     EOpConstructUint16,
-#endif
+    EOpConstructInt64,
+    EOpConstructUint64,
     EOpConstructBool,
     EOpConstructFloat,
     EOpConstructDouble,
-#ifdef AMD_EXTENSIONS
-    EOpConstructFloat16,
-#endif
     EOpConstructVec2,
     EOpConstructVec3,
     EOpConstructVec4,
     EOpConstructDVec2,
     EOpConstructDVec3,
     EOpConstructDVec4,
-#ifdef AMD_EXTENSIONS
-    EOpConstructF16Vec2,
-    EOpConstructF16Vec3,
-    EOpConstructF16Vec4,
-#endif
     EOpConstructBVec2,
     EOpConstructBVec3,
     EOpConstructBVec4,
+    EOpConstructI8Vec2,
+    EOpConstructI8Vec3,
+    EOpConstructI8Vec4,
+    EOpConstructU8Vec2,
+    EOpConstructU8Vec3,
+    EOpConstructU8Vec4,
+    EOpConstructI16Vec2,
+    EOpConstructI16Vec3,
+    EOpConstructI16Vec4,
+    EOpConstructU16Vec2,
+    EOpConstructU16Vec3,
+    EOpConstructU16Vec4,
     EOpConstructIVec2,
     EOpConstructIVec3,
     EOpConstructIVec4,
@@ -489,14 +643,6 @@ enum TOperator {
     EOpConstructU64Vec2,
     EOpConstructU64Vec3,
     EOpConstructU64Vec4,
-#ifdef AMD_EXTENSIONS
-    EOpConstructI16Vec2,
-    EOpConstructI16Vec3,
-    EOpConstructI16Vec4,
-    EOpConstructU16Vec2,
-    EOpConstructU16Vec3,
-    EOpConstructU16Vec4,
-#endif
     EOpConstructMat2x2,
     EOpConstructMat2x3,
     EOpConstructMat2x4,
@@ -542,7 +688,10 @@ enum TOperator {
     EOpConstructBMat4x2,
     EOpConstructBMat4x3,
     EOpConstructBMat4x4,
-#ifdef AMD_EXTENSIONS
+    EOpConstructFloat16,
+    EOpConstructF16Vec2,
+    EOpConstructF16Vec3,
+    EOpConstructF16Vec4,
     EOpConstructF16Mat2x2,
     EOpConstructF16Mat2x3,
     EOpConstructF16Mat2x4,
@@ -552,7 +701,6 @@ enum TOperator {
     EOpConstructF16Mat4x2,
     EOpConstructF16Mat4x3,
     EOpConstructF16Mat4x4,
-#endif
     EOpConstructStruct,
     EOpConstructTextureSampler,
     EOpConstructGuardEnd,
@@ -777,6 +925,12 @@ enum TOperator {
 
     // matrix
     EOpMatrixSwizzle,                    // select multiple matrix components (non-column)
+
+    // SM6 wave ops
+    EOpWaveGetLaneCount,                 // Will decompose to gl_SubgroupSize.
+    EOpWaveGetLaneIndex,                 // Will decompose to gl_SubgroupInvocationID.
+    EOpWaveActiveCountBits,              // Will decompose to subgroupBallotBitCount(subgroupBallot()).
+    EOpWavePrefixCountBits,              // Will decompose to subgroupBallotInclusiveBitCount(subgroupBallot()).
 };
 
 class TIntermTraverser;

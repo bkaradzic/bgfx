@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -464,15 +465,33 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["u64vec3"] =                 U64VEC3;
     (*KeywordMap)["u64vec4"] =                 U64VEC4;
 
-#ifdef AMD_EXTENSIONS
+    // GL_KHX_shader_explicit_arithmetic_types
+    (*KeywordMap)["int8_t"] =                  INT8_T;
+    (*KeywordMap)["i8vec2"] =                  I8VEC2;
+    (*KeywordMap)["i8vec3"] =                  I8VEC3;
+    (*KeywordMap)["i8vec4"] =                  I8VEC4;
+    (*KeywordMap)["uint8_t"] =                 UINT8_T;
+    (*KeywordMap)["u8vec2"] =                  U8VEC2;
+    (*KeywordMap)["u8vec3"] =                  U8VEC3;
+    (*KeywordMap)["u8vec4"] =                  U8VEC4;
+
     (*KeywordMap)["int16_t"] =                 INT16_T;
-    (*KeywordMap)["uint16_t"] =                UINT16_T;
     (*KeywordMap)["i16vec2"] =                 I16VEC2;
     (*KeywordMap)["i16vec3"] =                 I16VEC3;
     (*KeywordMap)["i16vec4"] =                 I16VEC4;
+    (*KeywordMap)["uint16_t"] =                UINT16_T;
     (*KeywordMap)["u16vec2"] =                 U16VEC2;
     (*KeywordMap)["u16vec3"] =                 U16VEC3;
     (*KeywordMap)["u16vec4"] =                 U16VEC4;
+
+    (*KeywordMap)["int32_t"] =                 INT32_T;
+    (*KeywordMap)["i32vec2"] =                 I32VEC2;
+    (*KeywordMap)["i32vec3"] =                 I32VEC3;
+    (*KeywordMap)["i32vec4"] =                 I32VEC4;
+    (*KeywordMap)["uint32_t"] =                UINT32_T;
+    (*KeywordMap)["u32vec2"] =                 U32VEC2;
+    (*KeywordMap)["u32vec3"] =                 U32VEC3;
+    (*KeywordMap)["u32vec4"] =                 U32VEC4;
 
     (*KeywordMap)["float16_t"] =               FLOAT16_T;
     (*KeywordMap)["f16vec2"] =                 F16VEC2;
@@ -490,7 +509,39 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["f16mat4x2"] =               F16MAT4X2;
     (*KeywordMap)["f16mat4x3"] =               F16MAT4X3;
     (*KeywordMap)["f16mat4x4"] =               F16MAT4X4;
-#endif
+
+    (*KeywordMap)["float32_t"] =               FLOAT32_T;
+    (*KeywordMap)["f32vec2"] =                 F32VEC2;
+    (*KeywordMap)["f32vec3"] =                 F32VEC3;
+    (*KeywordMap)["f32vec4"] =                 F32VEC4;
+    (*KeywordMap)["f32mat2"] =                 F32MAT2;
+    (*KeywordMap)["f32mat3"] =                 F32MAT3;
+    (*KeywordMap)["f32mat4"] =                 F32MAT4;
+    (*KeywordMap)["f32mat2x2"] =               F32MAT2X2;
+    (*KeywordMap)["f32mat2x3"] =               F32MAT2X3;
+    (*KeywordMap)["f32mat2x4"] =               F32MAT2X4;
+    (*KeywordMap)["f32mat3x2"] =               F32MAT3X2;
+    (*KeywordMap)["f32mat3x3"] =               F32MAT3X3;
+    (*KeywordMap)["f32mat3x4"] =               F32MAT3X4;
+    (*KeywordMap)["f32mat4x2"] =               F32MAT4X2;
+    (*KeywordMap)["f32mat4x3"] =               F32MAT4X3;
+    (*KeywordMap)["f32mat4x4"] =               F32MAT4X4;
+    (*KeywordMap)["float64_t"] =               FLOAT64_T;
+    (*KeywordMap)["f64vec2"] =                 F64VEC2;
+    (*KeywordMap)["f64vec3"] =                 F64VEC3;
+    (*KeywordMap)["f64vec4"] =                 F64VEC4;
+    (*KeywordMap)["f64mat2"] =                 F64MAT2;
+    (*KeywordMap)["f64mat3"] =                 F64MAT3;
+    (*KeywordMap)["f64mat4"] =                 F64MAT4;
+    (*KeywordMap)["f64mat2x2"] =               F64MAT2X2;
+    (*KeywordMap)["f64mat2x3"] =               F64MAT2X3;
+    (*KeywordMap)["f64mat2x4"] =               F64MAT2X4;
+    (*KeywordMap)["f64mat3x2"] =               F64MAT3X2;
+    (*KeywordMap)["f64mat3x3"] =               F64MAT3X3;
+    (*KeywordMap)["f64mat3x4"] =               F64MAT3X4;
+    (*KeywordMap)["f64mat4x2"] =               F64MAT4X2;
+    (*KeywordMap)["f64mat4x3"] =               F64MAT4X3;
+    (*KeywordMap)["f64mat4x4"] =               F64MAT4X4;
 
     (*KeywordMap)["sampler2D"] =               SAMPLER2D;
     (*KeywordMap)["samplerCube"] =             SAMPLERCUBE;
@@ -763,19 +814,15 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
             parseContext.error(loc, "not supported", "::", "");
             break;
 
-        case PpAtomConstInt:           parserToken->sType.lex.i   = ppToken.ival;       return INTCONSTANT;
-        case PpAtomConstUint:          parserToken->sType.lex.i   = ppToken.ival;       return UINTCONSTANT;
-        case PpAtomConstInt64:         parserToken->sType.lex.i64 = ppToken.i64val;     return INT64CONSTANT;
-        case PpAtomConstUint64:        parserToken->sType.lex.i64 = ppToken.i64val;     return UINT64CONSTANT;
-#ifdef AMD_EXTENSIONS
-        case PpAtomConstInt16:         parserToken->sType.lex.i   = ppToken.ival;       return INT16CONSTANT;
-        case PpAtomConstUint16:        parserToken->sType.lex.i   = ppToken.ival;       return UINT16CONSTANT;
-#endif
-        case PpAtomConstFloat:         parserToken->sType.lex.d   = ppToken.dval;       return FLOATCONSTANT;
-        case PpAtomConstDouble:        parserToken->sType.lex.d   = ppToken.dval;       return DOUBLECONSTANT;
-#ifdef AMD_EXTENSIONS
-        case PpAtomConstFloat16:       parserToken->sType.lex.d   = ppToken.dval;       return FLOAT16CONSTANT;
-#endif
+        case PpAtomConstInt:           parserToken->sType.lex.i    = ppToken.ival;       return INTCONSTANT;
+        case PpAtomConstUint:          parserToken->sType.lex.i    = ppToken.ival;       return UINTCONSTANT;
+        case PpAtomConstInt16:         parserToken->sType.lex.i    = ppToken.ival;       return INT16CONSTANT;
+        case PpAtomConstUint16:        parserToken->sType.lex.i    = ppToken.ival;       return UINT16CONSTANT;
+        case PpAtomConstInt64:         parserToken->sType.lex.i64  = ppToken.i64val;     return INT64CONSTANT;
+        case PpAtomConstUint64:        parserToken->sType.lex.i64  = ppToken.i64val;     return UINT64CONSTANT;
+        case PpAtomConstFloat:         parserToken->sType.lex.d    = ppToken.dval;       return FLOATCONSTANT;
+        case PpAtomConstDouble:        parserToken->sType.lex.d    = ppToken.dval;       return DOUBLECONSTANT;
+        case PpAtomConstFloat16:       parserToken->sType.lex.d    = ppToken.dval;       return FLOAT16CONSTANT;
         case PpAtomIdentifier:
         {
             int token = tokenizeIdentifier();
@@ -1036,11 +1083,28 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
-             parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64)))
+             (parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int64))))
             return keyword;
         return identifierOrType();
 
-#ifdef AMD_EXTENSIONS
+    case INT8_T:
+    case UINT8_T:
+    case I8VEC2:
+    case I8VEC3:
+    case I8VEC4:
+    case U8VEC2:
+    case U8VEC3:
+    case U8VEC4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int8)) &&
+              parseContext.profile != EEsProfile && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+
     case INT16_T:
     case UINT16_T:
     case I16VEC2:
@@ -1052,7 +1116,74 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
-             parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16)))
+             (
+#ifdef AMD_EXTENSIONS
+              parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) ||
+#endif
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int16))))
+            return keyword;
+        return identifierOrType();
+    case INT32_T:
+    case UINT32_T:
+    case I32VEC2:
+    case I32VEC3:
+    case I32VEC4:
+    case U32VEC2:
+    case U32VEC3:
+    case U32VEC4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+           ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+             parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int32)) &&
+             parseContext.profile != EEsProfile && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+    case FLOAT32_T:
+    case F32VEC2:
+    case F32VEC3:
+    case F32VEC4:
+    case F32MAT2:
+    case F32MAT3:
+    case F32MAT4:
+    case F32MAT2X2:
+    case F32MAT2X3:
+    case F32MAT2X4:
+    case F32MAT3X2:
+    case F32MAT3X3:
+    case F32MAT3X4:
+    case F32MAT4X2:
+    case F32MAT4X3:
+    case F32MAT4X4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float32)) &&
+              parseContext.profile != EEsProfile && parseContext.version >= 450))
+            return keyword;
+        return identifierOrType();
+
+    case FLOAT64_T:
+    case F64VEC2:
+    case F64VEC3:
+    case F64VEC4:
+    case F64MAT2:
+    case F64MAT3:
+    case F64MAT4:
+    case F64MAT2X2:
+    case F64MAT2X3:
+    case F64MAT2X4:
+    case F64MAT3X2:
+    case F64MAT3X3:
+    case F64MAT3X4:
+    case F64MAT4X2:
+    case F64MAT4X3:
+    case F64MAT4X4:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float64)) &&
+              parseContext.profile != EEsProfile && parseContext.version >= 450))
             return keyword;
         return identifierOrType();
 
@@ -1075,11 +1206,15 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
-             parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float)))
+             (
+#ifdef AMD_EXTENSIONS
+              parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
+#endif
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float16))))
             return keyword;
 
         return identifierOrType();
-#endif
 
     case SAMPLERCUBEARRAY:
     case SAMPLERCUBEARRAYSHADOW:

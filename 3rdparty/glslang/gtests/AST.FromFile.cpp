@@ -44,7 +44,7 @@ using CompileToAstTest = GlslangTest<::testing::TestWithParam<std::string>>;
 TEST_P(CompileToAstTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::OpenGL,
+                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0,
                             Target::AST);
 }
 
@@ -210,6 +210,7 @@ INSTANTIATE_TEST_CASE_P(
         "precise.tesc",
         "precise_struct_block.vert",
         "maxClipDistances.vert",
+        "findFunction.frag",
     })),
     FileNameAsCustomTestSuffix
 );

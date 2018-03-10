@@ -256,7 +256,7 @@ namespace spv {
 
     spv::Id spirvbin_t::localId(spv::Id id, spv::Id newId)
     {
-        assert(id != spv::NoResult && newId != spv::NoResult);
+        //assert(id != spv::NoResult && newId != spv::NoResult);
 
         if (id > bound()) {
             error(std::string("ID out of range: ") + std::to_string(id));

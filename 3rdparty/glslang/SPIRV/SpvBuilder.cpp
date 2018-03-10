@@ -46,9 +46,7 @@
 
 #include "SpvBuilder.h"
 
-#ifdef AMD_EXTENSIONS
-    #include "hex_float.h"
-#endif
+#include "hex_float.h"
 
 #ifndef _WIN32
     #include <cstdio>
@@ -194,6 +192,9 @@ Id Builder::makeIntegerType(int width, bool hasSign)
 
     // deal with capabilities
     switch (width) {
+    case 8:
+        addCapability(CapabilityInt8);
+        break;
     case 16:
         addCapability(CapabilityInt16);
         break;
@@ -819,7 +820,6 @@ Id Builder::makeDoubleConstant(double d, bool specConstant)
     return c->getResultId();
 }
 
-#ifdef AMD_EXTENSIONS
 Id Builder::makeFloat16Constant(float f16, bool specConstant)
 {
     Op opcode = specConstant ? OpSpecConstant : OpConstant;
@@ -847,7 +847,6 @@ Id Builder::makeFloat16Constant(float f16, bool specConstant)
 
     return c->getResultId();
 }
-#endif
 
 Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps)
 {
@@ -1178,7 +1177,7 @@ Id Builder::createAccessChain(StorageClass storageClass, Id base, const std::vec
 
 Id Builder::createArrayLength(Id base, unsigned int member)
 {
-    spv::Id intType = makeUintType(32);
+    spv::Id intType = makeIntType(32);
     Instruction* length = new Instruction(getUniqueId(), intType, OpArrayLength);
     length->addIdOperand(base);
     length->addImmediateOperand(member);

@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2014-2015 LunarG, Inc.
 // Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
 //
@@ -65,6 +66,8 @@ public:
     virtual ~Builder();
 
     static const int maxMatrixSize = 4;
+
+    unsigned int getSpvVersion() const { return spvVersion; }
 
     void setSource(spv::SourceLanguage lang, int version)
     {
@@ -212,19 +215,17 @@ public:
 
     // For making new constants (will return old constant if the requested one was already made).
     Id makeBoolConstant(bool b, bool specConstant = false);
+    Id makeInt8Constant(int i, bool specConstant = false)        { return makeIntConstant(makeIntType(8),  (unsigned)i, specConstant); }
+    Id makeUint8Constant(unsigned u, bool specConstant = false)  { return makeIntConstant(makeUintType(8),           u, specConstant); }
+    Id makeInt16Constant(int i, bool specConstant = false)       { return makeIntConstant(makeIntType(16),  (unsigned)i, specConstant); }
+    Id makeUint16Constant(unsigned u, bool specConstant = false) { return makeIntConstant(makeUintType(16),           u, specConstant); }
     Id makeIntConstant(int i, bool specConstant = false)         { return makeIntConstant(makeIntType(32),  (unsigned)i, specConstant); }
     Id makeUintConstant(unsigned u, bool specConstant = false)   { return makeIntConstant(makeUintType(32),           u, specConstant); }
     Id makeInt64Constant(long long i, bool specConstant = false)            { return makeInt64Constant(makeIntType(64),  (unsigned long long)i, specConstant); }
     Id makeUint64Constant(unsigned long long u, bool specConstant = false)  { return makeInt64Constant(makeUintType(64),                     u, specConstant); }
-#ifdef AMD_EXTENSIONS
-    Id makeInt16Constant(short i, bool specConstant = false)        { return makeIntConstant(makeIntType(16),      (unsigned)((unsigned short)i), specConstant); }
-    Id makeUint16Constant(unsigned short u, bool specConstant = false)  { return makeIntConstant(makeUintType(16), (unsigned)u, specConstant); }
-#endif
     Id makeFloatConstant(float f, bool specConstant = false);
     Id makeDoubleConstant(double d, bool specConstant = false);
-#ifdef AMD_EXTENSIONS
     Id makeFloat16Constant(float f16, bool specConstant = false);
-#endif
 
     // Turn the array of constants into a proper spv constant of the requested type.
     Id makeCompositeConstant(Id type, const std::vector<Id>& comps, bool specConst = false);
@@ -331,7 +332,7 @@ public:
     // Generally, the type of 'scalar' does not need to be the same type as the components in 'vector'.
     // The type of the created vector is a vector of components of the same type as the scalar.
     //
-    // Note: One of the arguments will change, with the result coming back that way rather than 
+    // Note: One of the arguments will change, with the result coming back that way rather than
     // through the return value.
     void promoteScalar(Decoration precision, Id& left, Id& right);
 

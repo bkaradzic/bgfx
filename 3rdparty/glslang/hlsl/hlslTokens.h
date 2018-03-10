@@ -95,6 +95,7 @@ enum EHlslTokenClass {
     EHTokBool,
     EHTokInt,
     EHTokUint,
+    EHTokUint64,
     EHTokDword,
     EHTokHalf,
     EHTokFloat,
