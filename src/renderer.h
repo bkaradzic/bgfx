@@ -314,11 +314,6 @@ namespace bgfx
 		uint16_t m_invViewProjCached;
 	};
 
-	template<typename Ty>
-	inline void release(Ty)
-	{
-	}
-
 	template <typename Ty, uint16_t MaxHandleT>
 	class StateCacheLru
 	{

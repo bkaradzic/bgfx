@@ -411,6 +411,11 @@ namespace bgfx
 		}
 	};
 
+	template<typename Ty>
+	inline void release(Ty)
+	{
+	}
+
 	void setGraphicsDebuggerPresent(bool _present);
 	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);

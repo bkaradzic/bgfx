@@ -22,7 +22,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4005) // warning C4005: '' : macro redefinitio
 #define D3D11_NO_HELPERS
 #if BX_PLATFORM_WINDOWS
 #   include <d3d11_3.h>
-#   include <dxgi1_6.h>
 #elif BX_PLATFORM_WINRT
 #   define __D3D10_1SHADER_H__ // BK - not used keep quiet!
 #   include <d3d11_3.h>
@@ -41,6 +40,7 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include "hmd_openvr.h"
 #include "debug_renderdoc.h"
 #include "nvapi.h"
+#include "dxgi.h"
 
 #define BGFX_D3D11_BLEND_STATE_MASK (0 \
 			| BGFX_STATE_BLEND_MASK \
