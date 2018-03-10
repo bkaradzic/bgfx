@@ -23,12 +23,12 @@ namespace bgfx
 {
 	constexpr uint32_t toRgba8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
 	{
-		return uint32_t(0
-			| ( (_r)<<24)
-			| ( (_g)<<16)
-			| ( (_b)<< 8)
-			| ( (_a)    )
-			);
+		return 0
+			| (uint32_t(_r)<<24)
+			| (uint32_t(_g)<<16)
+			| (uint32_t(_b)<< 8)
+			| (uint32_t(_a)    )
+			;
 	}
 
 #if BX_PLATFORM_XBOXONE
