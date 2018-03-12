@@ -31,11 +31,11 @@ namespace bgfx
 			;
 	}
 
-#if BX_PLATFORM_XBOXONE
-	typedef ::IGraphicsUnknown IUnknown;
-#else
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	typedef ::IUnknown IUnknown;
-#endif // BX_PLATFORM_XBOXONE
+#else
+	typedef ::IGraphicsUnknown IUnknown;
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
 #define _DX_CHECK(_call) \
 			BX_MACRO_BLOCK_BEGIN \

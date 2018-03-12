@@ -126,135 +126,138 @@ namespace bgfx
 			: D3D_DRIVER_TYPE_HARDWARE
 			;
 
-		IDXGIAdapter* adapter;
-		for (uint32_t ii = 0
-			; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, &adapter) && ii < BX_COUNTOF(_caps.gpu)
-			; ++ii
-			)
+		if (NULL != m_factory)
 		{
-			DXGI_ADAPTER_DESC desc;
-			hr = adapter->GetDesc(&desc);
-			if (SUCCEEDED(hr) )
-			{
-				BX_TRACE("Adapter #%d", ii);
-
-				char description[BX_COUNTOF(desc.Description)];
-				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-				BX_TRACE("\tDescription: %s", description);
-				BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-					, desc.VendorId
-					, desc.DeviceId
-					, desc.SubSysId
-					, desc.Revision
-					);
-				BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-					, desc.DedicatedVideoMemory
-					, desc.DedicatedSystemMemory
-					, desc.SharedSystemMemory
-					);
-
-				_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
-				_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
-				++_caps.numGPUs;
-
-				if (NULL == m_adapter)
-				{
-					if ( (BGFX_PCI_ID_NONE != _caps.vendorId ||             0 != _caps.deviceId)
-					&&   (BGFX_PCI_ID_NONE == _caps.vendorId || desc.VendorId == _caps.vendorId)
-					&&   (               0 == _caps.deviceId || desc.DeviceId == _caps.deviceId) )
-					{
-						m_adapter = adapter;
-						m_adapter->AddRef();
-						m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
-					}
-
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-					&&  0 != bx::strFind(description, "PerfHUD") )
-					{
-						m_adapter = adapter;
-						m_driverType = D3D_DRIVER_TYPE_REFERENCE;
-					}
-				}
-			}
-
-			IDXGIOutput* output;
-			for (uint32_t jj = 0
-				; DXGI_ERROR_NOT_FOUND != adapter->EnumOutputs(jj, &output)
-				; ++jj
+			IDXGIAdapter* adapter;
+			for (uint32_t ii = 0
+				; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, &adapter) && ii < BX_COUNTOF(_caps.gpu)
+				; ++ii
 				)
 			{
-				DXGI_OUTPUT_DESC outputDesc;
-				hr = output->GetDesc(&outputDesc);
-				if (SUCCEEDED(hr))
+				DXGI_ADAPTER_DESC desc;
+				hr = adapter->GetDesc(&desc);
+				if (SUCCEEDED(hr) )
 				{
-					BX_TRACE("\tOutput #%d", jj);
+					BX_TRACE("Adapter #%d", ii);
 
-					char deviceName[BX_COUNTOF(outputDesc.DeviceName)];
-					wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName));
-					BX_TRACE("\t\tDeviceName: %s", deviceName);
-					BX_TRACE("\t\tDesktopCoordinates: %d, %d, %d, %d"
-						, outputDesc.DesktopCoordinates.left
-						, outputDesc.DesktopCoordinates.top
-						, outputDesc.DesktopCoordinates.right
-						, outputDesc.DesktopCoordinates.bottom
+					char description[BX_COUNTOF(desc.Description)];
+					wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
+					BX_TRACE("\tDescription: %s", description);
+					BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
+						, desc.VendorId
+						, desc.DeviceId
+						, desc.SubSysId
+						, desc.Revision
 						);
-					BX_TRACE("\t\tAttachedToDesktop: %d", outputDesc.AttachedToDesktop);
-					BX_TRACE("\t\tRotation: %d", outputDesc.Rotation);
+					BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
+						, desc.DedicatedVideoMemory
+						, desc.DedicatedSystemMemory
+						, desc.SharedSystemMemory
+						);
 
-					DX_RELEASE(output, 0);
+					_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
+					_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
+					++_caps.numGPUs;
+
+					if (NULL == m_adapter)
+					{
+						if ( (BGFX_PCI_ID_NONE != _caps.vendorId ||             0 != _caps.deviceId)
+						&&   (BGFX_PCI_ID_NONE == _caps.vendorId || desc.VendorId == _caps.vendorId)
+						&&   (               0 == _caps.deviceId || desc.DeviceId == _caps.deviceId) )
+						{
+							m_adapter = adapter;
+							m_adapter->AddRef();
+							m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+						}
+
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
+						&&  0 != bx::strFind(description, "PerfHUD") )
+						{
+							m_adapter = adapter;
+							m_driverType = D3D_DRIVER_TYPE_REFERENCE;
+						}
+					}
 				}
+
+				IDXGIOutput* output;
+				for (uint32_t jj = 0
+					; DXGI_ERROR_NOT_FOUND != adapter->EnumOutputs(jj, &output)
+					; ++jj
+					)
+				{
+					DXGI_OUTPUT_DESC outputDesc;
+					hr = output->GetDesc(&outputDesc);
+					if (SUCCEEDED(hr))
+					{
+						BX_TRACE("\tOutput #%d", jj);
+
+						char deviceName[BX_COUNTOF(outputDesc.DeviceName)];
+						wcstombs(deviceName, outputDesc.DeviceName, BX_COUNTOF(outputDesc.DeviceName));
+						BX_TRACE("\t\tDeviceName: %s", deviceName);
+						BX_TRACE("\t\tDesktopCoordinates: %d, %d, %d, %d"
+							, outputDesc.DesktopCoordinates.left
+							, outputDesc.DesktopCoordinates.top
+							, outputDesc.DesktopCoordinates.right
+							, outputDesc.DesktopCoordinates.bottom
+							);
+						BX_TRACE("\t\tAttachedToDesktop: %d", outputDesc.AttachedToDesktop);
+						BX_TRACE("\t\tRotation: %d", outputDesc.Rotation);
+
+						DX_RELEASE(output, 0);
+					}
+				}
+
+				DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
 			}
 
-			DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
-		}
-
-		if (NULL == m_adapter)
-		{
-			hr = m_factory->EnumAdapters(0, &m_adapter);
-			BX_WARN(SUCCEEDED(hr), "EnumAdapters failed 0x%08x.", hr);
-			m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
-		}
-
-		bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
-		hr = m_adapter->GetDesc(&m_adapterDesc);
-		BX_WARN(SUCCEEDED(hr), "Adapter GetDesc failed 0x%08x.", hr);
-
-		m_adapter->EnumOutputs(0, &m_output);
-
-		_caps.vendorId = 0 == m_adapterDesc.VendorId
-			? BGFX_PCI_ID_SOFTWARE_RASTERIZER
-			: (uint16_t)m_adapterDesc.VendorId
-			;
-		_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
-
-		{
-			IDXGIDevice* device = NULL;
-			hr = E_FAIL;
-			for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
+			if (NULL == m_adapter)
 			{
-				hr = m_factory->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&device);
-				BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii, hr);
+				hr = m_factory->EnumAdapters(0, &m_adapter);
+				BX_WARN(SUCCEEDED(hr), "EnumAdapters failed 0x%08x.", hr);
+				m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
+			}
 
-				if (SUCCEEDED(hr))
+			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
+			hr = m_adapter->GetDesc(&m_adapterDesc);
+			BX_WARN(SUCCEEDED(hr), "Adapter GetDesc failed 0x%08x.", hr);
+
+			m_adapter->EnumOutputs(0, &m_output);
+
+			_caps.vendorId = 0 == m_adapterDesc.VendorId
+				? BGFX_PCI_ID_SOFTWARE_RASTERIZER
+				: (uint16_t)m_adapterDesc.VendorId
+				;
+			_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+
+			{
+				IDXGIDevice* device = NULL;
+				hr = E_FAIL;
+				for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
 				{
+					hr = m_factory->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&device);
+					BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii, hr);
+
+					if (SUCCEEDED(hr))
+					{
 #if BX_COMPILER_MSVC
-					BX_PRAGMA_DIAGNOSTIC_PUSH();
-					BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+						BX_PRAGMA_DIAGNOSTIC_PUSH();
+						BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 						try
-					{
-						// QueryInterface above can succeed, but getting adapter call might crash on Win7.
-						hr = device->GetAdapter(&adapter);
-					}
-					catch (...)
-					{
-						BX_TRACE("Failed to get adapter for IID_IDXGIDevice%d.", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii);
-						DX_RELEASE(device, 0);
-						hr = E_FAIL;
-					}
-					BX_PRAGMA_DIAGNOSTIC_POP();
+						{
+							// QueryInterface above can succeed, but getting adapter call might crash on Win7.
+							hr = device->GetAdapter(&adapter);
+						}
+						catch (...)
+						{
+							BX_TRACE("Failed to get adapter for IID_IDXGIDevice%d.", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii);
+							DX_RELEASE(device, 0);
+							hr = E_FAIL;
+						}
+						BX_PRAGMA_DIAGNOSTIC_POP();
 #else
-					hr = device->GetAdapter(&adapter);
+						hr = device->GetAdapter(&adapter);
 #endif // BX_COMPILER_MSVC
+					}
 				}
 			}
 		}
@@ -273,6 +276,31 @@ namespace bgfx
 
 		bx::dlclose(m_dxgiDll);
 		m_dxgiDll = NULL;
+	}
+
+	void Dxgi::update(IUnknown* _device)
+	{
+		if (NULL == m_factory)
+		{
+			IDXGIDevice* device = NULL;
+			HRESULT hr = E_FAIL;
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
+			{
+				hr = _device->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&device);
+				BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii, hr);
+
+				if (SUCCEEDED(hr) )
+				{
+					DX_CHECK(device->GetAdapter(&m_adapter) );
+				}
+			}
+
+			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
+			hr = m_adapter->GetDesc(&m_adapterDesc);
+			BX_WARN(SUCCEEDED(hr), "Adapter GetDesc failed 0x%08x.", hr);
+
+			DX_CHECK(m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory) );
+		}
 	}
 
 	HRESULT Dxgi::createSwapChain(IUnknown* _device, const SwapChainDesc& _scd, IDXGISwapChain** _swapChain)
@@ -409,8 +437,6 @@ namespace bgfx
 			device->Trim();
 			DX_RELEASE(device, 1);
 		}
-#else
-		BX_UNUSED(_device);
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	}
 

@@ -956,6 +956,8 @@ namespace bgfx { namespace d3d11
 				m_featureLevel = m_device->GetFeatureLevel();
 			}
 
+			m_dxgi.update(m_device);
+
 			{
 				m_deviceInterfaceVersion = 0;
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_d3dDeviceIIDs); ++ii)
@@ -977,6 +979,12 @@ namespace bgfx { namespace d3d11
 				{
 					setGraphicsDebuggerPresent(true);
 					DX_RELEASE(renderdoc, 2);
+				}
+				else
+				{
+					IUnknown* device = m_device;
+					setGraphicsDebuggerPresent(3 != getRefCount(device) );
+					DX_RELEASE(device, 2);
 				}
 
 				if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)

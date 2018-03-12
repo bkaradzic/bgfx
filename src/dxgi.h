@@ -6,14 +6,21 @@
 #ifndef BGFX_DXGI_H_HEADER_GUARD
 #define BGFX_DXGI_H_HEADER_GUARD
 
-#include <d3dcommon.h>
-
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+#	include <d3dcommon.h>
 #	include <dxgi1_6.h>
-#endif // BX_PLATFORM_WINDOWS
+#else
+#	include <d3d11_x.h>
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
 namespace bgfx
 {
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+	typedef ::IUnknown IUnknown;
+#else
+	typedef ::IGraphicsUnknown IUnknown;
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+
 	typedef HRESULT (WINAPI* PFN_CREATE_DXGI_FACTORY)(REFIID _riid, void** _factory);
 	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE)(REFIID _riid, void** _debug);
 	typedef HRESULT (WINAPI* PFN_GET_DEBUG_INTERFACE1)(UINT _flags, REFIID _riid, void** _debug);
@@ -55,6 +62,9 @@ namespace bgfx
 		void shutdown();
 
 		///
+		void update(IUnknown* _device);
+
+		///
 		HRESULT createSwapChain(IUnknown* _device, const SwapChainDesc& _desc, IDXGISwapChain** _swapChain);
 
 		///
@@ -76,7 +86,7 @@ namespace bgfx
 		IDXGIAdapter* m_adapter;
 		IDXGIOutput*  m_output;
 	};
-	
+
 } // namespace bgfx
 
 #endif // BGFX_DXGI_H_HEADER_GUARD
