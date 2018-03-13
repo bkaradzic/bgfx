@@ -264,47 +264,6 @@ namespace bgfx { namespace d3d12
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
-	static const char* s_colorSpace[] =
-	{
-		// https://msdn.microsoft.com/en-us/library/windows/desktop/dn903661(v=vs.85).aspx
-		"RGB,    0-255, 2.2,  Image, BT.709,  n/a",    // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709
-		"RGB,    0-255, 1.0,  Image, BT.709,  n/a",    // DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709
-		"RGB,   16-235, 2.2,  Image, BT.709,  n/a",    // DXGI_COLOR_SPACE_RGB_STUDIO_G22_NONE_P709
-		"RGB,   16-235, 2.2,  Image, BT.2020, n/a",    // DXGI_COLOR_SPACE_RGB_STUDIO_G22_NONE_P2020
-		"Reserved",                                    // DXGI_COLOR_SPACE_RESERVED
-		"YCbCr,  0-255, 2.2,  Image, BT.709,  BT.601", // DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601
-		"YCbCr, 16-235, 2.2,  Video, BT.601,  n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601
-		"YCbCr,  0-255, 2.2,  Video, BT.601,  n/a",    // DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601
-		"YCbCr, 16-235, 2.2,  Video, BT.709,  n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709
-		"YCbCr,  0-255, 2.2,  Video, BT.709,  n/a",    // DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709
-		"YCbCr, 16-235, 2.2,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P2020
-		"YCbCr,  0-255, 2.2,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P2020
-		"RGB,    0-255, 2084, Image, BT.2020, n/a",    // DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020
-		"YCbCr, 16-235, 2084, Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_LEFT_P2020
-		"RGB,    0-255, 2084, Image, BT.2020, n/a",    // DXGI_COLOR_SPACE_RGB_STUDIO_G2084_NONE_P2020
-		"YCbCr, 16-235, 2.2,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_TOPLEFT_P2020
-		"YCbCr, 16-235, 2084, Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020
-#if BX_PLATFORM_WINDOWS
-		"RGB,    0-255, 2.2,  Image, BT.2020, n/a",    // DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P2020
-		"YCbCr, 16-235, HLG,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_GHLG_TOPLEFT_P2020
-		"YCbCr,  0-255, HLG,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020
-//		"RGB,   16-235, 2.4,  Image, BT.709,  n/a",    // DXGI_COLOR_SPACE_RGB_STUDIO_G24_NONE_P709
-//		"RGB,   16-235, 2.4,  Image, BT.2020, n/a",    // DXGI_COLOR_SPACE_RGB_STUDIO_G24_NONE_P2020
-//		"YCbCr, 16-235, 2.4,  Video, BT.709,  n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P709
-//		"YCbCr, 16-235, 2.4,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P2020
-//		"YCbCr, 16-235, 2.4,  Video, BT.2020, n/a",    // DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_TOPLEFT_P2020
-#endif // BX_PLATFORM_WINDOWS
-		"Custom",
-	};
-	static const char kDxgiLastColorSpace =
-#if BX_PLATFORM_WINDOWS
-		DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020
-#else
-		DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020
-#endif // BX_PLATFORM_WINDOWS
-		;
-	BX_STATIC_ASSERT(BX_COUNTOF(s_colorSpace) == kDxgiLastColorSpace+2);
-
 	static const D3D12_INPUT_ELEMENT_DESC s_attrib[] =
 	{
 		{ "POSITION",     0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -427,15 +386,6 @@ namespace bgfx { namespace d3d12
 	static const GUID IID_ID3D12Resource            = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
 	static const GUID IID_ID3D12RootSignature       = { 0xc54a6b66, 0x72df, 0x4ee8, { 0x8b, 0xe5, 0xa9, 0x46, 0xa1, 0x42, 0x92, 0x14 } };
 	static const GUID IID_ID3D12QueryHeap           = { 0x0d9658ae, 0xed45, 0x469e, { 0xa6, 0x1d, 0x97, 0x0e, 0xc5, 0x83, 0xca, 0xb4 } };
-	static const GUID IID_IDXGIDevice0              = { 0x54ec77fa, 0x1377, 0x44e6, { 0x8c, 0x32, 0x88, 0xfd, 0x5f, 0x44, 0xc8, 0x4c } };
-	static const GUID IID_IDXGIDevice1              = { 0x77db970f, 0x6276, 0x48ba, { 0xba, 0x28, 0x07, 0x01, 0x43, 0xb4, 0x39, 0x2c } };
-	static const GUID IID_IDXGIDevice2              = { 0x05008617, 0xfbfd, 0x4051, { 0xa7, 0x90, 0x14, 0x48, 0x84, 0xb4, 0xf6, 0xa9 } };
-	static const GUID IID_IDXGIDevice3              = { 0x6007896c, 0x3244, 0x4afd, { 0xbf, 0x18, 0xa6, 0xd3, 0xbe, 0xda, 0x50, 0x23 } };
-	static const GUID IID_IDXGIFactory2             = { 0x50c83a1c, 0xe072, 0x4c48, { 0x87, 0xb0, 0x36, 0x30, 0xfa, 0x36, 0xa6, 0xd0 } };
-	static const GUID IID_IDXGIFactory4             = { 0x1bc6ea02, 0xef36, 0x464f, { 0xbf, 0x0c, 0x21, 0xca, 0x39, 0xe5, 0x16, 0x8a } };
-	static const GUID IID_IDXGIFactory5             = { 0x7632e1f5, 0xee65, 0x4dca, { 0x87, 0xfd, 0x84, 0xcd, 0x75, 0xf8, 0x83, 0x8d } };
-	static const GUID IID_IDXGIOutput6              = { 0x068346e8, 0xaaec, 0x4b84, { 0xad, 0xd7, 0x13, 0x7f, 0x51, 0x3f, 0x77, 0xa1 } };
-
 
 	BX_PRAGMA_DIAGNOSTIC_POP();
 
@@ -648,7 +598,6 @@ namespace bgfx { namespace d3d12
 	{
 		RendererContextD3D12()
 			: m_d3d12dll(NULL)
-			, m_dxgidll(NULL)
 			, m_renderdocdll(NULL)
 			, m_winPixEvent(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
@@ -661,7 +610,6 @@ namespace bgfx { namespace d3d12
 			, m_backBufferColorIdx(0)
 			, m_rtMsaa(false)
 			, m_directAccessSupport(false)
-			, m_allowTearingSupport(false)
 		{
 		}
 
@@ -685,7 +633,7 @@ namespace bgfx { namespace d3d12
 			};
 
 			ErrorState::Enum errorState = ErrorState::Default;
-			LUID luid;
+//			LUID luid;
 
 #if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 			m_winPixEvent = bx::dlopen("WinPixEventRuntime.dll");
@@ -753,102 +701,16 @@ namespace bgfx { namespace d3d12
 				BX_TRACE("Init error: Function not found.");
 				goto error;
 			}
-
-			m_dxgidll = bx::dlopen("dxgi.dll");
-
-			if (NULL == m_dxgidll)
-			{
-				BX_TRACE("Init error: Failed to load dxgi.dll.");
-				goto error;
-			}
-
-			CreateDXGIFactory1 = (PFN_CREATE_DXGI_FACTORY)bx::dlsym(m_dxgidll, "CreateDXGIFactory1");
-
-			if (NULL == CreateDXGIFactory1)
-			{
-				BX_TRACE("Init error: Function CreateDXGIFactory1 not found.");
-				goto error;
-			}
 #endif // USE_D3D12_DYNAMIC_LIB
+
+			if (!m_dxgi.init(g_caps) )
+			{
+				goto error;
+			}
 
 			errorState = ErrorState::LoadedDXGI;
 
 			HRESULT hr;
-
-#if BX_PLATFORM_WINDOWS
-			hr = CreateDXGIFactory1(IID_IDXGIFactory5, (void**)&m_factory);
-#elif BX_PLATFORM_WINRT
-			hr = CreateDXGIFactory1(IID_IDXGIFactory4, (void**)&m_factory);
-#else
-			hr = S_OK;
-			m_factory = NULL;
-#endif // BX_PLATFORM_*
-
-			if (FAILED(hr) )
-			{
-				BX_TRACE("Init error: Unable to create DXGI factory.");
-				goto error;
-			}
-
-			errorState = ErrorState::CreatedDXGIFactory;
-
-			m_adapter = NULL;
-			m_driverType = D3D_DRIVER_TYPE_HARDWARE;
-
-			if (NULL != m_factory)
-			{
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-				IDXGIAdapter3* adapter;
-#else
-				IDXGIAdapter* adapter;
-#endif // BX_PLATFORM_*
-				for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
-				{
-					DXGI_ADAPTER_DESC desc;
-					hr = adapter->GetDesc(&desc);
-					if (SUCCEEDED(hr) )
-					{
-						BX_TRACE("Adapter #%d", ii);
-
-						char description[BX_COUNTOF(desc.Description)];
-						wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-						BX_TRACE("\tDescription: %s", description);
-						BX_TRACE("\tVendorId: 0x%08x, DeviceId: 0x%08x, SubSysId: 0x%08x, Revision: 0x%08x"
-							, desc.VendorId
-							, desc.DeviceId
-							, desc.SubSysId
-							, desc.Revision
-							);
-						BX_TRACE("\tMemory: %" PRIi64 " (video), %" PRIi64 " (system), %" PRIi64 " (shared)"
-							, desc.DedicatedVideoMemory
-							, desc.DedicatedSystemMemory
-							, desc.SharedSystemMemory
-							);
-
-						g_caps.gpu[ii].vendorId = (uint16_t)desc.VendorId;
-						g_caps.gpu[ii].deviceId = (uint16_t)desc.DeviceId;
-						++g_caps.numGPUs;
-
-						if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||             0 != g_caps.deviceId)
-						&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || desc.VendorId == g_caps.vendorId)
-						&&   (0 == g_caps.deviceId                || desc.DeviceId == g_caps.deviceId) )
-						{
-							m_adapter = adapter;
-							m_adapter->AddRef();
-							m_driverType = D3D_DRIVER_TYPE_UNKNOWN;
-						}
-
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-						&&  0 != bx::strFind(description, "PerfHUD") )
-						{
-							m_adapter = adapter;
-							m_driverType = D3D_DRIVER_TYPE_REFERENCE;
-						}
-					}
-
-					DX_RELEASE(adapter, adapter == m_adapter ? 1 : 0);
-				}
-			}
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG||BGFX_CONFIG_DEBUG_PIX) )
 			{
@@ -900,7 +762,7 @@ namespace bgfx { namespace d3d12
 				hr = E_FAIL;
 				for (uint32_t ii = 0; ii < BX_COUNTOF(featureLevel) && FAILED(hr); ++ii)
 				{
-					hr = D3D12CreateDevice(m_adapter
+					hr = D3D12CreateDevice(m_dxgi.m_adapter
 							, featureLevel[ii]
 							, IID_ID3D12Device
 							, (void**)&m_device
@@ -923,76 +785,7 @@ namespace bgfx { namespace d3d12
 				goto error;
 			}
 
-#if !BX_PLATFORM_WINDOWS
-			if (NULL == m_factory)
-			{
-				IDXGIDevice1* dxgiDevice;
-				hr = m_device->QueryInterface(IID_IDXGIDevice1, (void**)&dxgiDevice);
-
-				if (FAILED(hr) )
-				{
-					BX_TRACE("Init error: Unable to query IDXGIDevice1 interface 0x%08x.", hr);
-					goto error;
-				}
-
-				hr = dxgiDevice->GetAdapter(&m_adapter);
-
-				if (FAILED(hr) )
-				{
-					BX_TRACE("Init error: DXGIDevice1::GetAdapter failed 0x%08x.", hr);
-					goto error;
-				}
-
-				hr = m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory);
-
-				if (FAILED(hr) )
-				{
-					BX_TRACE("Init error: IDXGIAdapter::GetParent failed 0x%08x.", hr);
-					goto error;
-				}
-			}
-#endif // !BX_PLATFORM_WINDOWS
-
-			if (NULL != m_factory)
-			{
-				bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
-//	NOTICE:
-//		LUID STDMETHODCALLTYPE ID3D12Device::GetAdapterLuid() has a different behaviour in gcc ,
-//		because gcc64 returns small struct in RAX, but the microsoft implemention of ID3D12Device::GetAdapterLuid() in d3d12.dll
-//		pass the struct LUID's address as the second parameter.
-				typedef void (STDMETHODCALLTYPE ID3D12Device::*ID3D12Device_GetAdapterLuid_f)(LUID *);
-				(m_device->*(ID3D12Device_GetAdapterLuid_f)(&ID3D12Device::GetAdapterLuid))(&luid);
-#if BX_PLATFORM_WINDOWS
-				IDXGIAdapter3* adapter;
-#else
-				IDXGIAdapter* adapter;
-#endif // BX_PLATFORM_*
-				for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
-				{
-					adapter->GetDesc(&m_adapterDesc);
-					if (m_adapterDesc.AdapterLuid.LowPart  == luid.LowPart
-					&&  m_adapterDesc.AdapterLuid.HighPart == luid.HighPart)
-					{
-						if (NULL == m_adapter)
-						{
-							m_adapter = adapter;
-						}
-						else
-						{
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-							DX_RELEASE(adapter, 0);
-#else
-							DX_RELEASE(adapter, 2);
-#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-						}
-						break;
-					}
-					DX_RELEASE(adapter, 0);
-				}
-			}
-
-			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
-			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
+			m_dxgi.update(m_device);
 
 			{
 				uint32_t numNodes = m_device->GetNodeCount();
@@ -1029,159 +822,45 @@ namespace bgfx { namespace d3d12
 			m_cmd.init(m_device);
 			errorState = ErrorState::CreatedCommandQueue;
 
-#if BX_PLATFORM_WINDOWS
-			{
-				bool allowTearing;
-				hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
-				m_allowTearingSupport = SUCCEEDED(hr) ? allowTearing : false;
-				BX_TRACE("Allow tearing is %ssupported.", m_allowTearingSupport ? "" : "not ");
-			}
-#endif // BX_PLATFORM_WINDOWS
-
 			if (NULL == g_platformData.backBuffer)
 			{
-#if !BX_PLATFORM_WINDOWS
 				bx::memSet(&m_scd, 0, sizeof(m_scd) );
-				m_scd.Width  = _init.resolution.m_width;
-				m_scd.Height = _init.resolution.m_height;
-				m_scd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				m_scd.Stereo  = false;
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				m_scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.BufferCount = bx::uint32_min(BX_COUNTOF(m_backBufferColor), 4);
-				m_scd.Scaling = 0 == g_platformData.ndt
+				m_scd.width  = _init.resolution.m_width;
+				m_scd.height = _init.resolution.m_height;
+				m_scd.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				m_scd.stereo  = false;
+				m_scd.sampleDesc.Count   = 1;
+				m_scd.sampleDesc.Quality = 0;
+				m_scd.bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+				m_scd.bufferCount = bx::uint32_min(BX_COUNTOF(m_backBufferColor), 4);
+				m_scd.scaling = 0 == g_platformData.ndt
 					? DXGI_SCALING_NONE
 					: DXGI_SCALING_STRETCH
 					;
-				m_scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-				m_scd.AlphaMode  = DXGI_ALPHA_MODE_IGNORE;
-				m_scd.Flags      = 0
-					| DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
-#if BX_PLATFORM_WINDOWS
-					| (m_allowTearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
-#endif // BX_PLATFORM_WINDOWS
+				m_scd.swapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+				m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
+				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 					;
+				m_scd.nwh      = g_platformData.nwh;
+				m_scd.ndt      = g_platformData.ndt;
+				m_scd.windowed = true;
 
-				m_backBufferColorIdx = m_scd.BufferCount-1;
+				m_backBufferColorIdx = m_scd.bufferCount-1;
 
-				if (NULL == g_platformData.ndt)
-				{
-					hr = m_factory->CreateSwapChainForCoreWindow(
+				hr = m_dxgi.createSwapChain(
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-						  m_cmd.m_commandQueue
+					  m_cmd.m_commandQueue
 #else
-						  m_device
+					  m_device
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-						, (::IUnknown*)g_platformData.nwh
-						, &m_scd
-						, NULL
-						, &m_swapChain
-						);
-
-					if (FAILED(hr) )
-					{
-						BX_TRACE("Init error: Unable to create Direct3D12 swap chain.");
-						goto error;
-					}
-				}
-				else
-				{
-					BGFX_FATAL(g_platformData.ndt == reinterpret_cast<void*>(1), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
-
-					hr = m_factory->CreateSwapChainForComposition(m_device
-							, &m_scd
-							, NULL
-							, &m_swapChain
-							);
-					BX_WARN(SUCCEEDED(hr), "Unable to create Direct3D11 swap chain.");
-
-#	if BX_PLATFORM_WINRT
-					IInspectable* nativeWindow = reinterpret_cast<IInspectable *>(g_platformData.nwh);
-					ISwapChainBackgroundPanelNative* panel = NULL;
-					hr = nativeWindow->QueryInterface(__uuidof(ISwapChainBackgroundPanelNative), (void**)&panel);
-					BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
-
-					if (NULL != panel)
-					{
-						hr = panel->SetSwapChain(m_swapChain);
-						BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Unable to set swap chain on panel.");
-
-						panel->Release();
-					}
-#	endif // BX_PLATFORM_WINRT
-				}
-#else
-				m_scd.BufferDesc.Width  = _init.resolution.m_width;
-				m_scd.BufferDesc.Height = _init.resolution.m_height;
-				m_scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				m_scd.BufferDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;
-				m_scd.BufferDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-				m_scd.BufferDesc.RefreshRate.Numerator   = 60;
-				m_scd.BufferDesc.RefreshRate.Denominator = 1;
-				m_scd.SampleDesc.Count   = 1;
-				m_scd.SampleDesc.Quality = 0;
-				m_scd.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.BufferCount  = bx::uint32_min(BX_COUNTOF(m_backBufferColor), 4);
-				m_scd.OutputWindow = (HWND)g_platformData.nwh;
-				m_scd.Windowed     = true;
-				m_scd.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-				m_scd.Flags      = 0
-					| DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
-#if BX_PLATFORM_WINDOWS
-					| (m_allowTearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
-#endif // BX_PLATFORM_WINDOWS
-					;
-
-				BX_CHECK(m_scd.BufferCount <= BX_COUNTOF(m_backBufferColor), "Swap chain buffer count %d (max %d)."
-					, m_scd.BufferCount
-					, BX_COUNTOF(m_backBufferColor)
+					, m_scd
+					, &m_swapChain
 					);
-				hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
-					, &m_scd
-					, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
-					);
-#endif // BX_PLATFORM_*
+
 				if (FAILED(hr) )
 				{
-					BX_TRACE("Init error: Failed to create swap chain.");
+					BX_TRACE("Init error: Unable to create Direct3D12 swap chain.");
 					goto error;
-				}
-			}
-
-			{
-				IDXGIOutput* output;
-				hr = m_swapChain->GetContainingOutput(&output);
-				if (SUCCEEDED(hr) )
-				{
-#if BX_PLATFORM_WINDOWS
-					IDXGIOutput6* output6;
-					hr = output->QueryInterface(IID_IDXGIOutput6, (void**)&output6);
-					if (SUCCEEDED(hr) )
-					{
-						DXGI_OUTPUT_DESC1 desc;
-						hr = output6->GetDesc1(&desc);
-						if (SUCCEEDED(hr) )
-						{
-							BX_TRACE("Display specs:")
-							BX_TRACE("\t         BitsPerColor: %d", desc.BitsPerColor);
-							BX_TRACE("\t          Color space: %s (colorspace, range, gamma, sitting, primaries, transform)"
-								, s_colorSpace[bx::min<uint32_t>(desc.ColorSpace, kDxgiLastColorSpace+1)]
-								);
-							BX_TRACE("\t           RedPrimary: %f, %f", desc.RedPrimary[0],   desc.RedPrimary[1]);
-							BX_TRACE("\t         GreenPrimary: %f, %f", desc.GreenPrimary[0], desc.GreenPrimary[1]);
-							BX_TRACE("\t          BluePrimary: %f, %f", desc.BluePrimary[0],  desc.BluePrimary[1]);
-							BX_TRACE("\t           WhitePoint: %f, %f", desc.WhitePoint[0],   desc.WhitePoint[1]);
-							BX_TRACE("\t         MinLuminance: %f", desc.MinLuminance);
-							BX_TRACE("\t         MaxLuminance: %f", desc.MaxLuminance);
-							BX_TRACE("\tMaxFullFrameLuminance: %f", desc.MaxFullFrameLuminance);
-						}
-
-						DX_RELEASE(output6, 1);
-					}
-#endif // BX_PLATFORM_WINDOWS
-
-					DX_RELEASE(output, 0);
 				}
 			}
 
@@ -1194,7 +873,7 @@ namespace bgfx { namespace d3d12
 				m_numWindows = 1;
 
 #if BX_PLATFORM_WINDOWS
-				DX_CHECK(m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
+				DX_CHECK(m_dxgi.m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
 					, 0
 					| DXGI_MWA_NO_WINDOW_CHANGES
 					| DXGI_MWA_NO_ALT_ENTER
@@ -1532,15 +1211,11 @@ namespace bgfx { namespace d3d12
 
 			case ErrorState::CreatedDXGIFactory:
 				DX_RELEASE(m_device,  0);
-				DX_RELEASE(m_adapter, 0);
-				DX_RELEASE(m_factory, 0);
+				m_dxgi.shutdown();
 				BX_FALLTHROUGH;
 
 #if USE_D3D12_DYNAMIC_LIB
 			case ErrorState::LoadedDXGI:
-				bx::dlclose(m_dxgidll);
-				BX_FALLTHROUGH;
-
 			case ErrorState::LoadedD3D12:
 				bx::dlclose(m_d3d12dll);
 				BX_FALLTHROUGH;
@@ -1615,8 +1290,8 @@ namespace bgfx { namespace d3d12
 			m_cmd.shutdown();
 
 			DX_RELEASE(m_device,  0);
-			DX_RELEASE(m_adapter, 0);
-			DX_RELEASE(m_factory, 0);
+
+			m_dxgi.shutdown();
 
 			unloadRenderDoc(m_renderdocdll);
 
@@ -1624,7 +1299,6 @@ namespace bgfx { namespace d3d12
 			m_winPixEvent = NULL;
 
 #if USE_D3D12_DYNAMIC_LIB
-			bx::dlclose(m_dxgidll);
 			bx::dlclose(m_d3d12dll);
 			bx::dlclose(m_kernel32dll);
 #endif // USE_D3D12_DYNAMIC_LIB
@@ -1652,7 +1326,7 @@ namespace bgfx { namespace d3d12
 			{
 				int64_t start = bx::getHPCounter();
 
-				m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.BufferCount]);
+				m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.bufferCount]);
 
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = !!(m_resolution.m_flags & BGFX_RESET_VSYNC);
@@ -1942,7 +1616,7 @@ namespace bgfx { namespace d3d12
 		{
 			BX_UNUSED(_handle);
 
-			uint32_t idx = (m_backBufferColorIdx-1) % m_scd.BufferCount;
+			uint32_t idx = (m_backBufferColorIdx-1) % m_scd.bufferCount;
 			m_cmd.finish(m_backBufferColorFence[idx]);
 			ID3D12Resource* backBuffer = m_backBufferColor[idx];
 
@@ -2056,8 +1730,8 @@ namespace bgfx { namespace d3d12
 
 		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
-			const uint32_t width  = getBufferWidth();
-			const uint32_t height = getBufferHeight();
+			const uint32_t width  = m_scd.width;
+			const uint32_t height = m_scd.height;
 
 			setFrameBuffer(BGFX_INVALID_HANDLE, false);
 
@@ -2160,7 +1834,7 @@ namespace bgfx { namespace d3d12
 		{
 			finishAll();
 
-			for (uint32_t ii = 0, num = m_scd.BufferCount; ii < num; ++ii)
+			for (uint32_t ii = 0, num = m_scd.bufferCount; ii < num; ++ii)
 			{
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 				DX_RELEASE(m_backBufferColor[ii], num-1-ii);
@@ -2186,7 +1860,7 @@ namespace bgfx { namespace d3d12
 
 			uint32_t rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-			for (uint32_t ii = 0, num = m_scd.BufferCount; ii < num; ++ii)
+			for (uint32_t ii = 0, num = m_scd.bufferCount; ii < num; ++ii)
 			{
 				D3D12_CPU_DESCRIPTOR_HANDLE handle = getCPUHandleHeapStart(m_rtvDescriptorHeap);
 				handle.ptr += ii * rtvDescriptorSize;
@@ -2256,7 +1930,7 @@ namespace bgfx { namespace d3d12
 
 				D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS data;
 				bx::memSet(&data, 0, sizeof(msaa) );
-				data.Format = getBufferFormat();
+				data.Format = m_scd.format;
 				data.SampleCount = msaa;
 				data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 				HRESULT hr = m_device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data) );
@@ -2320,7 +1994,8 @@ data.NumQualityLevels = 0;
 				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
 				m_textVideoMem.clear();
 
-				setBufferSize(_resolution.m_width, _resolution.m_height);
+				m_scd.width  = _resolution.m_width;
+				m_scd.height = _resolution.m_height;
 
 				preReset();
 
@@ -2334,21 +2009,21 @@ data.NumQualityLevels = 0;
 					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
 
 					DX_CHECK(m_swapChain->ResizeBuffers1(
-						  m_scd.BufferCount
-						, m_scd.BufferDesc.Width
-						, m_scd.BufferDesc.Height
-						, m_scd.BufferDesc.Format
-						, m_scd.Flags
+						  m_scd.bufferCount
+						, m_scd.width
+						, m_scd.height
+						, m_scd.format
+						, m_scd.flags
 						, nodeMask
 						, presentQueue
 						) );
 #elif BX_PLATFORM_WINRT
 					DX_CHECK(m_swapChain->ResizeBuffers(
-						  m_scd.BufferCount
-						, m_scd.Width
-						, m_scd.Height
-						, m_scd.Format
-						, m_scd.Flags
+						  m_scd.bufferCount
+						, m_scd.width
+						, m_scd.height
+						, m_scd.format
+						, m_scd.flags
 						) );
 					m_backBufferColorIdx = m_scd.BufferCount-1;
 #endif // BX_PLATFORM_WINDOWS
@@ -2356,29 +2031,20 @@ data.NumQualityLevels = 0;
 				else
 				{
 					updateMsaa();
-					m_scd.SampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+					m_scd.sampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 					DX_RELEASE(m_swapChain, 0);
 
 					HRESULT hr;
-#if BX_PLATFORM_WINDOWS
-					hr = m_factory->CreateSwapChain(m_cmd.m_commandQueue
-							, &m_scd
-							, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
-							);
-#else
-					hr = m_factory->CreateSwapChainForCoreWindow(
+					hr = m_dxgi.createSwapChain(
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-						  m_cmd.m_commandQueue
+							  m_cmd.m_commandQueue
 #	else
-						  m_device
+							  m_device
 #	endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-						, (::IUnknown*)g_platformData.nwh
-						, &m_scd
-						, NULL
-						, &m_swapChain
-						);
-#endif // BX_PLATFORM_WINDOWS
+							, m_scd
+							, &m_swapChain
+							);
 					BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 				}
 
@@ -3111,44 +2777,6 @@ data.NumQualityLevels = 0;
 			return _visible == (0 != _render->m_occlusion[_handle.idx]);
 		}
 
-		DXGI_FORMAT getBufferFormat()
-		{
-#if BX_PLATFORM_WINDOWS
-			return m_scd.BufferDesc.Format;
-#else
-			return m_scd.Format;
-#endif
-		}
-
-		uint32_t getBufferWidth()
-		{
-#if BX_PLATFORM_WINDOWS
-			return m_scd.BufferDesc.Width;
-#else
-			return m_scd.Width;
-#endif
-		}
-
-		uint32_t getBufferHeight()
-		{
-#if BX_PLATFORM_WINDOWS
-			return m_scd.BufferDesc.Height;
-#else
-			return m_scd.Height;
-#endif
-		}
-
-		void setBufferSize(uint32_t _width, uint32_t _height)
-		{
-#if BX_PLATFORM_WINDOWS
-			m_scd.BufferDesc.Width  = _width;
-			m_scd.BufferDesc.Height = _height;
-#else
-			m_scd.Width  = _width;
-			m_scd.Height = _height;
-#endif
-		}
-
 		void commit(UniformBuffer& _uniformBuffer)
 		{
 			_uniformBuffer.reset();
@@ -3301,8 +2929,8 @@ data.NumQualityLevels = 0;
 			}
 			else
 			{
-				width  = getBufferWidth();
-				height = getBufferHeight();
+				width  = m_scd.width;
+				height = m_scd.height;
 			}
 
 			if (0      == _rect.m_x
@@ -3344,9 +2972,10 @@ data.NumQualityLevels = 0;
 			m_commandList = NULL;
 		}
 
+		Dxgi m_dxgi;
+
 		void* m_kernel32dll;
 		void* m_d3d12dll;
-		void* m_dxgidll;
 		void* m_renderdocdll;
 		void* m_winPixEvent;
 
@@ -3357,9 +2986,7 @@ data.NumQualityLevels = 0;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
-		AdapterI*   m_adapter;
-		FactoryI*   m_factory;
-		SwapChainI* m_swapChain;
+		Dxgi::SwapChainI* m_swapChain;
 
 #if BX_PLATFORM_WINDOWS
 		ID3D12InfoQueue* m_infoQueue;
@@ -3397,7 +3024,7 @@ data.NumQualityLevels = 0;
 		bool m_wireframe;
 		bool m_lost;
 
-		DXGI_SWAP_CHAIN_DESC m_scd;
+		SwapChainDesc m_scd;
 		uint32_t m_maxAnisotropy;
 		bool m_depthClamp;
 
@@ -3426,7 +3053,6 @@ data.NumQualityLevels = 0;
 		uint32_t m_backBufferColorIdx;
 		bool m_rtMsaa;
 		bool m_directAccessSupport;
-		bool m_allowTearingSupport;
 	};
 
 	static RendererContextD3D12* s_renderD3D12;
@@ -5115,16 +4741,17 @@ data.NumQualityLevels = 0;
 		BX_UNUSED(_nwh, _width, _height, _depthFormat);
 
 #if BX_PLATFORM_WINDOWS
-		DXGI_SWAP_CHAIN_DESC scd;
+		SwapChainDesc scd;
 		bx::memCopy(&scd, &s_renderD3D12->m_scd, sizeof(DXGI_SWAP_CHAIN_DESC) );
-		scd.BufferDesc.Width  = _width;
-		scd.BufferDesc.Height = _height;
-		scd.OutputWindow = (HWND)_nwh;
+		scd.width  = _width;
+		scd.height = _height;
+		scd.nwh    = _nwh;
 
 		HRESULT hr;
-		hr = s_renderD3D12->m_factory->CreateSwapChain(s_renderD3D12->m_cmd.m_commandQueue
-				, &scd
-				, reinterpret_cast<IDXGISwapChain**>(&m_swapChain)
+		hr = s_renderD3D12->m_dxgi.createSwapChain(
+				  s_renderD3D12->m_cmd.m_commandQueue
+				, scd
+				, &m_swapChain
 				);
 		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 		m_state = D3D12_RESOURCE_STATE_PRESENT;
@@ -5132,7 +4759,7 @@ data.NumQualityLevels = 0;
 		ID3D12Device* device = s_renderD3D12->m_device;
 		FrameBufferHandle fbh = { uint16_t(this - s_renderD3D12->m_frameBuffers) };
 
-		for (uint32_t ii = 0, num = scd.BufferCount; ii < num; ++ii)
+		for (uint32_t ii = 0, num = scd.bufferCount; ii < num; ++ii)
 		{
 			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = s_renderD3D12->getRtv(fbh, uint8_t(ii) );
 
@@ -5799,7 +5426,7 @@ data.NumQualityLevels = 0;
 #if BX_PLATFORM_WINDOWS
 		m_backBufferColorIdx = m_swapChain->GetCurrentBackBufferIndex();
 #else
-		m_backBufferColorIdx = (m_backBufferColorIdx+1) % m_scd.BufferCount;
+		m_backBufferColorIdx = (m_backBufferColorIdx+1) % m_scd.bufferCount;
 #endif // BX_PLATFORM_WINDOWS
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FACTOR;
@@ -6517,8 +6144,8 @@ data.NumQualityLevels = 0;
 
 #if BX_PLATFORM_WINDOWS
 		DXGI_QUERY_VIDEO_MEMORY_INFO vmi[2];
-		DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,     &vmi[0]) );
-		DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &vmi[1]) );
+		DX_CHECK(m_dxgi.m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,     &vmi[0]) );
+		DX_CHECK(m_dxgi.m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &vmi[1]) );
 
 		perfStats.gpuMemoryMax  = int64_t(vmi[0].Budget);
 		perfStats.gpuMemoryUsed = int64_t(vmi[0].CurrentUsage);

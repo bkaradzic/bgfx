@@ -52,6 +52,23 @@ namespace bgfx
 	///
 	struct Dxgi
 	{
+#if BX_PLATFORM_WINDOWS
+		typedef ::IDXGIAdapter3   AdapterI;
+		typedef ::IDXGIFactory5   FactoryI;
+		typedef ::IDXGISwapChain3 SwapChainI;
+		typedef ::IDXGIOutput     OutputI;
+#elif BX_PLATFORM_WINRT
+		typedef ::IDXGIAdapter    AdapterI;
+		typedef ::IDXGIFactory4   FactoryI;
+		typedef ::IDXGISwapChain1 SwapChainI;
+		typedef ::IDXGIOutput     OutputI;
+#else
+		typedef ::IDXGIAdapter    AdapterI;
+		typedef ::IDXGIFactory2   FactoryI;
+		typedef ::IDXGISwapChain1 SwapChainI;
+		typedef ::IDXGIOutput     OutputI;
+#endif // BX_PLATFORM_WINDOWS
+
 		///
 		Dxgi();
 
@@ -65,7 +82,7 @@ namespace bgfx
 		void update(IUnknown* _device);
 
 		///
-		HRESULT createSwapChain(IUnknown* _device, const SwapChainDesc& _desc, IDXGISwapChain** _swapChain);
+		HRESULT createSwapChain(IUnknown* _device, const SwapChainDesc& _desc, SwapChainI** _swapChain);
 
 		///
 		void trim();
@@ -76,15 +93,9 @@ namespace bgfx
 
 		D3D_DRIVER_TYPE   m_driverType;
 		DXGI_ADAPTER_DESC m_adapterDesc;
-#if BX_PLATFORM_WINDOWS
-		IDXGIFactory* m_factory;
-#elif BX_PLATFORM_WINRT
-		IDXGIFactory4* m_factory;
-#else
-		IDXGIFactory2* m_factory;
-#endif // BX_PLATFORM_WINDOWS
-		IDXGIAdapter* m_adapter;
-		IDXGIOutput*  m_output;
+		FactoryI* m_factory;
+		AdapterI* m_adapter;
+		OutputI*  m_output;
 	};
 
 } // namespace bgfx

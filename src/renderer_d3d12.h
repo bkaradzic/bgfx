@@ -11,7 +11,6 @@
 #include <sal.h>
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 #   include <d3d12.h>
-#   include <dxgi1_6.h>
 #else
 #   if !BGFX_CONFIG_DEBUG
 #      define D3DCOMPILE_NO_DEBUG 1
@@ -84,26 +83,6 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _g
 
 namespace bgfx { namespace d3d12
 {
-#if BX_PLATFORM_WINDOWS
-	typedef ::DXGI_SWAP_CHAIN_DESC  DXGI_SWAP_CHAIN_DESC;
-#else
-	typedef ::DXGI_SWAP_CHAIN_DESC1 DXGI_SWAP_CHAIN_DESC;
-#endif // BX_PLATFORM_WINDOWS
-
-#if BX_PLATFORM_WINDOWS
-	typedef ::IDXGIAdapter3   AdapterI;
-	typedef ::IDXGIFactory5   FactoryI;
-	typedef ::IDXGISwapChain3 SwapChainI;
-#elif BX_PLATFORM_WINRT
-	typedef ::IDXGIAdapter    AdapterI;
-	typedef ::IDXGIFactory4   FactoryI;
-	typedef ::IDXGISwapChain1 SwapChainI;
-#else
-	typedef ::IDXGIAdapter    AdapterI;
-	typedef ::IDXGIFactory2   FactoryI;
-	typedef ::IDXGISwapChain1 SwapChainI;
-#endif // BX_PLATFORM_WINDOWS
-
 	struct Rdt
 	{
 		enum Enum
@@ -378,7 +357,7 @@ namespace bgfx { namespace d3d12
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
-		SwapChainI* m_swapChain;
+		Dxgi::SwapChainI* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;

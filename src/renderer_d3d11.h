@@ -329,7 +329,7 @@ namespace bgfx { namespace d3d11
 		ID3D11RenderTargetView* m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11DepthStencilView* m_dsv;
-		IDXGISwapChain* m_swapChain;
+		Dxgi::SwapChainI* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
 

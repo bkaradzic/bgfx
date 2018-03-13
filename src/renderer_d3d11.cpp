@@ -3413,7 +3413,7 @@ namespace bgfx { namespace d3d11
 
 		D3D_FEATURE_LEVEL m_featureLevel;
 
-		IDXGISwapChain* m_swapChain;
+		Dxgi::SwapChainI* m_swapChain;
 
 		bool m_needPresent;
 		bool m_lost;
@@ -3768,7 +3768,7 @@ namespace bgfx { namespace d3d11
 
 		if (result != ovrSuccess_NotVisible && NULL != m_mirrorTexture)
 		{
-			IDXGISwapChain* swapChain = s_renderD3D11->m_swapChain;
+			Dxgi::SwapChainI* swapChain = s_renderD3D11->m_swapChain;
 
 			ID3D11Texture2D* tex = NULL;
 			ovr_GetMirrorTextureBufferDX(m_session, m_mirrorTexture, IID_PPV_ARGS(&tex));
