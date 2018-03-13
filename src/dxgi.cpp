@@ -19,15 +19,16 @@
 
 namespace bgfx
 {
+	BX_PRAGMA_DIAGNOSTIC_PUSH();
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-variable");
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunused-const-variable");
+	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
+
 #if BX_PLATFORM_WINDOWS
 	static PFN_CREATE_DXGI_FACTORY  CreateDXGIFactory;
 	static PFN_GET_DEBUG_INTERFACE  DXGIGetDebugInterface;
 	static PFN_GET_DEBUG_INTERFACE1 DXGIGetDebugInterface1;
 #endif // BX_PLATFORM_WINDOWS
-
-	BX_PRAGMA_DIAGNOSTIC_PUSH();
-	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunused-const-variable");
-	BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wunneeded-internal-declaration");
 
 	static const GUID IID_IDXGIFactory    = { 0x7b7166ec, 0x21c7, 0x44ae, { 0xb2, 0x1a, 0xc9, 0xae, 0x32, 0x1a, 0xe3, 0x69 } };
 	static const GUID IID_IDXGIFactory2   = { 0x50c83a1c, 0xe072, 0x4c48, { 0x87, 0xb0, 0x36, 0x30, 0xfa, 0x36, 0xa6, 0xd0 } };
@@ -309,7 +310,7 @@ namespace bgfx
 						}
 						BX_PRAGMA_DIAGNOSTIC_POP();
 #else
-						hr = device->GetAdapter(&adapter);
+						hr = dxgiDevice->GetAdapter(reinterpret_cast<IDXGIAdapter**>(&adapter) );
 #endif // BX_COMPILER_MSVC
 					}
 				}

@@ -92,7 +92,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createIndexBuffer(IndexBufferHandle /*_handle*/, Memory* /*_mem*/, uint16_t /*_flags*/) override
+		void createIndexBuffer(IndexBufferHandle /*_handle*/, const Memory* /*_mem*/, uint16_t /*_flags*/) override
 		{
 		}
 
@@ -108,7 +108,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle /*_handle*/, Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint16_t /*_flags*/) override
+		void createVertexBuffer(VertexBufferHandle /*_handle*/, const Memory* /*_mem*/, VertexDeclHandle /*_declHandle*/, uint16_t /*_flags*/) override
 		{
 		}
 
@@ -120,7 +120,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void updateDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, Memory* /*_mem*/) override
+		void updateDynamicIndexBuffer(IndexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, const Memory* /*_mem*/) override
 		{
 		}
 
@@ -132,7 +132,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void updateDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, Memory* /*_mem*/) override
+		void updateDynamicVertexBuffer(VertexBufferHandle /*_handle*/, uint32_t /*_offset*/, uint32_t /*_size*/, const Memory* /*_mem*/) override
 		{
 		}
 
@@ -140,7 +140,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createShader(ShaderHandle /*_handle*/, Memory* /*_mem*/) override
+		void createShader(ShaderHandle /*_handle*/, const Memory* /*_mem*/) override
 		{
 		}
 
@@ -156,7 +156,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void* createTexture(TextureHandle /*_handle*/, Memory* /*_mem*/, uint32_t /*_flags*/, uint8_t /*_skip*/) override
+		void* createTexture(TextureHandle /*_handle*/, const Memory* /*_mem*/, uint32_t /*_flags*/, uint8_t /*_skip*/) override
 		{
 			return NULL;
 		}
