@@ -39,7 +39,6 @@
 
 #if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) || defined MINGW_HAS_SECURE_API
     #include <basetsd.h>
-    #define snprintf sprintf_s
     #define safe_vsprintf(buf,max,format,args) vsnprintf_s((buf), (max), (max), (format), (args))
 #elif defined (solaris)
     #define safe_vsprintf(buf,max,format,args) vsnprintf((buf), (max), (format), (args))
@@ -99,6 +98,10 @@ inline long long int atoll (const char* str)
 #include <string>
 #include <cstdio>
 #include <cassert>
+
+#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) || defined MINGW_HAS_SECURE_API
+    #define snprintf sprintf_s
+#endif
 
 #include "PoolAlloc.h"
 
