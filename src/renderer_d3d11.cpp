@@ -4983,9 +4983,9 @@ namespace bgfx { namespace d3d11
 						{
 						default:
 						case TextureD3D11::Texture2D:
-							if(1 < msaa.Count)
+							if (1 < msaa.Count)
 							{
-								if(1 < texture.m_depth)
+								if (1 < texture.m_depth)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
@@ -4998,7 +4998,7 @@ namespace bgfx { namespace d3d11
 							}
 							else
 							{
-								if(1 < texture.m_depth)
+								if (1 < texture.m_depth)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 									desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
@@ -5011,7 +5011,7 @@ namespace bgfx { namespace d3d11
 									desc.Texture2D.MipSlice = m_attachment[ii].mip;
 								}
 							}
-							
+
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
 								  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
 								, &desc
