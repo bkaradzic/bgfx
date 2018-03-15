@@ -6212,17 +6212,29 @@ namespace bgfx { namespace gl
 					}
 					else
 					{
-						GLenum target = texture.isCubeMap()
-							? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_attachment[ii].layer
-							: texture.m_target
-							;
-
-						GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
-							, attachment
-							, target
-							, texture.m_id
-							, m_attachment[ii].mip
+						if(texture.m_depth > 1 && !texture.isCubeMap())
+						{
+							GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER
+								, attachment
+								, texture.m_id
+								, m_attachment[ii].mip
+								, m_attachment[ii].layer
 							) );
+						}
+						else
+						{
+							GLenum target = texture.isCubeMap()
+								? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_attachment[ii].layer
+								: texture.m_target
+								;
+
+							GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER
+								, attachment
+								, target
+								, texture.m_id
+								, m_attachment[ii].mip
+							) );
+						}
 					}
 
 					needResolve |= (0 != texture.m_rbo) && (0 != texture.m_id);

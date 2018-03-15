@@ -4330,7 +4330,10 @@ namespace bgfx { namespace d3d11
 			m_flags  = _flags;
 			m_width  = textureWidth;
 			m_height = textureHeight;
-			m_depth  = imageContainer.m_depth;
+			m_depth  = 1 < imageContainer.m_depth
+				? imageContainer.m_depth
+				: imageContainer.m_numLayers
+				;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -4980,15 +4983,34 @@ namespace bgfx { namespace d3d11
 						{
 						default:
 						case TextureD3D11::Texture2D:
-							if (1 < msaa.Count)
-							{
-								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-							}
-							else
-							{
-								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-								desc.Texture2D.MipSlice = m_attachment[ii].mip;
-							}
+							if(1 < msaa.Count)
++                                                       {
++                                                               if(1 < texture.m_depth)
++                                                               {
++                                                                       desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
++                                                                       desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
++                                                                       desc.Texture2DMSArray.ArraySize = 1;
++                                                               }
++                                                               else
++                                                               {
++                                                                       desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
++                                                               }
++                                                       }
++                                                       else
++                                                       {
++                                                               if(1 < texture.m_depth)
++                                                               {
++                                                                       desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
++                                                                       desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
++                                                                       desc.Texture2DArray.ArraySize = 1;
++                                                                       desc.Texture2DArray.MipSlice = m_attachment[ii].mip;
++                                                               }
++                                                               else
++                                                               {
++                                                                       desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
++                                                                       desc.Texture2D.MipSlice = m_attachment[ii].mip;
++                                                               }
++                                                       }
 
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(
 								  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
