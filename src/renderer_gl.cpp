@@ -6213,7 +6213,7 @@ namespace bgfx { namespace gl
 					else
 					{
 						if (1 < texture.m_depth
-                        &&  !texture.isCubeMap())
+						&&  !texture.isCubeMap())
 						{
 							GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER
 								, attachment
