@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 8
+#define BGFX_SHADERC_VERSION_MINOR 9
 
 namespace bgfx
 {
@@ -2327,8 +2327,7 @@ namespace bgfx
 				return bx::kExitFailure;
 			}
 
-			if ( compileShader(attribdef.getData(), data, size, options, writer) )
-				compiled = true;
+			compiled = compileShader(attribdef.getData(), data, size, options, writer);
 
 			bx::close(writer);
 			delete writer;

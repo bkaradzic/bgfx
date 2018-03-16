@@ -983,8 +983,7 @@ namespace bgfx { namespace d3d11
 				else
 				{
 					IUnknown* device = m_device;
-					setGraphicsDebuggerPresent(3 != getRefCount(device) );
-					DX_RELEASE(device, 2);
+					setGraphicsDebuggerPresent(2 != getRefCount(device) );
 				}
 
 				if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
@@ -1598,6 +1597,7 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(m_annotation, 1);
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
+			DX_RELEASE(m_device, 0);
 
 			m_dxgi.shutdown();
 
