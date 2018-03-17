@@ -169,7 +169,7 @@ project "glsl-optimizer"
 			"/wd4701", -- warning C4701: potentially uninitialized local variable 'lower' used
 			"/wd4702", -- warning C4702: unreachable code
 			"/wd4706", -- warning C4706: assignment within conditional expression
-			"/wd4996" -- warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _strdup.
+			"/wd4996", -- warning C4996: 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _strdup.
 		}
 
 	configuration { "mingw* or linux or osx" }
