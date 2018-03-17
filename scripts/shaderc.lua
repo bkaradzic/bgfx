@@ -28,7 +28,7 @@ project "glslang"
 			"/wd4715", -- warning C4715: 'spv::Builder::makeFpConstant': not all control paths return a value
 		}
 
-	configuration { "not vs*" }
+	configuration { "mingw* or linux or osx" }
 		buildoptions {
 			"-Wno-ignored-qualifiers",
 			"-Wno-missing-field-initializers",
@@ -175,6 +175,11 @@ project "glsl-optimizer"
 	configuration { "mingw* or linux or osx" }
 		buildoptions {
 			"-fno-strict-aliasing", -- glsl-optimizer has bugs if strict aliasing is used.
+
+			"-Wno-implicit-fallthrough",
+			"-Wno-misleading-indentation",
+			"-Wno-sign-compare",
+			"-Wno-unused-function",
 			"-Wno-unused-parameter",
 		}
 
