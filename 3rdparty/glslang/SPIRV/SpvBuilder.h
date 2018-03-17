@@ -226,6 +226,7 @@ public:
     Id makeFloatConstant(float f, bool specConstant = false);
     Id makeDoubleConstant(double d, bool specConstant = false);
     Id makeFloat16Constant(float f16, bool specConstant = false);
+    Id makeFpConstant(Id type, double d, bool specConstant = false);
 
     // Turn the array of constants into a proper spv constant of the requested type.
     Id makeCompositeConstant(Id type, const std::vector<Id>& comps, bool specConst = false);
@@ -236,7 +237,10 @@ public:
     void addName(Id, const char* name);
     void addMemberName(Id, int member, const char* name);
     void addDecoration(Id, Decoration, int num = -1);
+    void addDecoration(Id, Decoration, const char*);
+    void addDecorationId(Id id, Decoration, Id idDecoration);
     void addMemberDecoration(Id, unsigned int member, Decoration, int num = -1);
+    void addMemberDecoration(Id, unsigned int member, Decoration, const char*);
 
     // At the end of what block do the next create*() instructions go?
     void setBuildPoint(Block* bp) { buildPoint = bp; }

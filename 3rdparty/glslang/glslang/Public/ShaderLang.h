@@ -70,7 +70,7 @@
 // This should always increase, as some paths to do not consume
 // a more major number.
 // It should increment by one when new functionality is added.
-#define GLSLANG_MINOR_VERSION 3
+#define GLSLANG_MINOR_VERSION 5
 
 //
 // Call before doing any other compiler/linker operations.
@@ -154,6 +154,7 @@ struct TClient {
 struct TTarget {
     EShTargetLanguage language;
     EShTargetLanguageVersion version; // version to target, if SPIR-V, defined by "word 1" of the SPIR-V header
+    bool hlslFunctionality1;          // can target hlsl_functionality1 extension(s)
 };
 
 // All source/client/target versions and settings.
@@ -420,6 +421,8 @@ public:
         environment.target.language = lang;
         environment.target.version = version;
     }
+    void setEnvTargetHlslFunctionality1() { environment.target.hlslFunctionality1 = true; }
+    bool getEnvTargetHlslFunctionality1() const { return environment.target.hlslFunctionality1; }
 
     // Interface to #include handlers.
     //

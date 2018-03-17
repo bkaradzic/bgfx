@@ -65,10 +65,10 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
     entryPointFunction(nullptr),
     entryPointFunctionBody(nullptr),
     gsStreamOutput(nullptr),
-    clipDistanceInput(nullptr),
-    cullDistanceInput(nullptr),
     clipDistanceOutput(nullptr),
-    cullDistanceOutput(nullptr)
+    cullDistanceOutput(nullptr),
+    clipDistanceInput(nullptr),
+    cullDistanceInput(nullptr)
 {
     globalUniformDefaults.clear();
     globalUniformDefaults.layoutMatrix = ElmRowMajor;
@@ -1608,7 +1608,7 @@ void HlslParseContext::addStructBufferHiddenCounterParam(const TSourceLoc& loc, 
     if (! hasStructBuffCounter(*param.type))
         return;
 
-    const TString counterBlockName(getStructBuffCounterName(*param.name));
+    const TString counterBlockName(intermediate.addCounterBufferName(*param.name));
 
     TType counterType;
     counterBufferType(loc, counterType);
@@ -3163,7 +3163,7 @@ void HlslParseContext::counterBufferType(const TSourceLoc& loc, TType& type)
 {
     // Counter type
     TType* counterType = new TType(EbtInt, EvqBuffer);
-    counterType->setFieldName("@count");
+    counterType->setFieldName(intermediate.implicitCounterName);
 
     TTypeList* blockStruct = new TTypeList;
     TTypeLoc  member = { counterType, loc };
@@ -3174,12 +3174,6 @@ void HlslParseContext::counterBufferType(const TSourceLoc& loc, TType& type)
 
     type.shallowCopy(blockType);
     shareStructBufferType(type);
-}
-
-// knowledge of how to construct block name, in one place instead of N places.
-TString HlslParseContext::getStructBuffCounterName(const TString& blockName) const
-{
-    return blockName + "@count";
 }
 
 // declare counter for a structured buffer type
@@ -3195,9 +3189,9 @@ void HlslParseContext::declareStructBufferCounter(const TSourceLoc& loc, const T
     TType blockType;
     counterBufferType(loc, blockType);
 
-    TString* blockName = new TString(getStructBuffCounterName(name));
+    TString* blockName = new TString(intermediate.addCounterBufferName(name));
 
-    // Counter buffer does not have its own counter buffer.  TODO: there should be a better way to track this.
+    // Counter buffer is not yet in use
     structBufferCounter[*blockName] = false;
 
     shareStructBufferType(blockType);
@@ -3211,7 +3205,7 @@ TIntermTyped* HlslParseContext::getStructBufferCounter(const TSourceLoc& loc, TI
     if (buffer == nullptr || ! isStructBufferType(buffer->getType()))
         return nullptr;
 
-    const TString counterBlockName(getStructBuffCounterName(buffer->getAsSymbolNode()->getName()));
+    const TString counterBlockName(intermediate.addCounterBufferName(buffer->getAsSymbolNode()->getName()));
 
     // Mark the counter as being used
     structBufferCounter[counterBlockName] = true;
@@ -3223,7 +3217,6 @@ TIntermTyped* HlslParseContext::getStructBufferCounter(const TSourceLoc& loc, TI
     counterMember->setType(TType(EbtInt));
     return counterMember;
 }
-
 
 //
 // Decompose structure buffer methods into AST
@@ -5743,12 +5736,11 @@ void HlslParseContext::addStructBuffArguments(const TSourceLoc& loc, TIntermAggr
                 TType counterType;
                 counterBufferType(loc, counterType);
 
-                const TString counterBlockName(getStructBuffCounterName(blockSym->getName()));
+                const TString counterBlockName(intermediate.addCounterBufferName(blockSym->getName()));
 
                 TVariable* variable = makeInternalVariable(counterBlockName, counterType);
 
-                // Mark this buffer as requiring a counter block.  TODO: there should be a better
-                // way to track it.
+                // Mark this buffer's counter block as being in use
                 structBufferCounter[counterBlockName] = true;
 
                 TIntermSymbol* sym = intermediate.addSymbol(*variable, loc);
@@ -8320,6 +8312,22 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
     // First, convert types as needed.
     //
     switch (op) {
+    case EOpConstructF16Vec2:
+    case EOpConstructF16Vec3:
+    case EOpConstructF16Vec4:
+    case EOpConstructF16Mat2x2:
+    case EOpConstructF16Mat2x3:
+    case EOpConstructF16Mat2x4:
+    case EOpConstructF16Mat3x2:
+    case EOpConstructF16Mat3x3:
+    case EOpConstructF16Mat3x4:
+    case EOpConstructF16Mat4x2:
+    case EOpConstructF16Mat4x3:
+    case EOpConstructF16Mat4x4:
+    case EOpConstructFloat16:
+        basicOp = EOpConstructFloat16;
+        break;
+
     case EOpConstructVec2:
     case EOpConstructVec3:
     case EOpConstructVec4:
@@ -8352,6 +8360,13 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
         basicOp = EOpConstructDouble;
         break;
 
+    case EOpConstructI16Vec2:
+    case EOpConstructI16Vec3:
+    case EOpConstructI16Vec4:
+    case EOpConstructInt16:
+        basicOp = EOpConstructInt16;
+        break;
+
     case EOpConstructIVec2:
     case EOpConstructIVec3:
     case EOpConstructIVec4:
@@ -8366,6 +8381,13 @@ TIntermTyped* HlslParseContext::constructBuiltIn(const TType& type, TOperator op
     case EOpConstructIMat4x4:
     case EOpConstructInt:
         basicOp = EOpConstructInt;
+        break;
+
+    case EOpConstructU16Vec2:
+    case EOpConstructU16Vec3:
+    case EOpConstructU16Vec4:
+    case EOpConstructUint16:
+        basicOp = EOpConstructUint16;
         break;
 
     case EOpConstructUVec2:
@@ -9914,7 +9936,8 @@ void HlslParseContext::addPatchConstantInvocation()
 }
 
 // Finalization step: remove unused buffer blocks from linkage (we don't know until the
-// shader is entirely compiled)
+// shader is entirely compiled).
+// Preserve order of remaining symbols.
 void HlslParseContext::removeUnusedStructBufferCounters()
 {
     const auto endIt = std::remove_if(linkageSymbols.begin(), linkageSymbols.end(),

@@ -550,6 +550,7 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
 
         case PpAtomConstInt:           parserToken->i = ppToken.ival;       return EHTokIntConstant;
         case PpAtomConstUint:          parserToken->i = ppToken.ival;       return EHTokUintConstant;
+        case PpAtomConstFloat16:       parserToken->d = ppToken.dval;       return EHTokFloat16Constant;
         case PpAtomConstFloat:         parserToken->d = ppToken.dval;       return EHTokFloatConstant;
         case PpAtomConstDouble:        parserToken->d = ppToken.dval;       return EHTokDoubleConstant;
         case PpAtomIdentifier:

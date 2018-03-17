@@ -225,6 +225,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NVX_multiview_per_view_attributes]        = EBhDisable;
     extensionBehavior[E_GL_NV_shader_atomic_int64]                   = EBhDisable;
     extensionBehavior[E_GL_NV_conservative_raster_underestimation]   = EBhDisable;
+    extensionBehavior[E_GL_NV_shader_noperspective_interpolation]    = EBhDisable;
 #endif
 
     // AEP
@@ -319,6 +320,13 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_OES_texture_cube_map_array 1\n"
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             ;
+
+#ifdef NV_EXTENSIONS
+            if (profile == EEsProfile && version >= 300) {
+                preamble += "#define GL_NV_shader_noperspective_interpolation 1\n";
+            }
+#endif
+
     } else {
         preamble =
             "#define GL_FRAGMENT_PRECISION_HIGH 1\n"

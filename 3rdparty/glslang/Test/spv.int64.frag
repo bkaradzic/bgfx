@@ -116,6 +116,8 @@ void operators()
     i64  = i64 % i;
 
     // Shift
+    u64v = u64v << i;
+    i64 = i64 >> uv.y;
     u64v <<= i;
     i64  >>= uv.y;
 

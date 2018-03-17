@@ -1,7 +1,7 @@
 300.frag
 ERROR: 0:2: 'float' : type requires declaration of default precision qualifier 
 ERROR: 0:30: 'noperspective' : Reserved word. 
-ERROR: 0:30: 'noperspective' : not supported with this profile: es
+ERROR: 0:30: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:31: 'sampler2D' : sampler/image types can only be used in uniform variables or function parameters: bads
 ERROR: 0:32: 'uint' : cannot apply precision statement to this type; use 'float', 'int' or a sampler type 
 ERROR: 0:39: 'structure' : must be qualified as flat in

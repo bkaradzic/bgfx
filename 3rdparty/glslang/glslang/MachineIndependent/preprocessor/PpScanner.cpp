@@ -174,16 +174,22 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
     // Suffix:
     bool isFloat16 = false;
     if (ch == 'l' || ch == 'L') {
-        parseContext.doubleCheck(ppToken->loc, "double floating-point suffix");
+        if (parseContext.intermediate.getSource() == EShSourceGlsl)
+            parseContext.doubleCheck(ppToken->loc, "double floating-point suffix");
         if (! HasDecimalOrExponent)
             parseContext.ppError(ppToken->loc, "float literal needs a decimal point or exponent", "", "");
-        int ch2 = getChar();
-        if (ch2 != 'f' && ch2 != 'F') {
-            ungetChar();
-            ungetChar();
-        } else {
+        if (parseContext.intermediate.getSource() == EShSourceGlsl) {
+            int ch2 = getChar();
+            if (ch2 != 'f' && ch2 != 'F') {
+                ungetChar();
+                ungetChar();
+            } else {
+                saveName(ch);
+                saveName(ch2);
+                isDouble = 1;
+            }
+        } else if (parseContext.intermediate.getSource() == EShSourceHlsl) {
             saveName(ch);
-            saveName(ch2);
             isDouble = 1;
         }
     } else if (ch == 'h' || ch == 'H') {
@@ -201,9 +207,9 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
                 saveName(ch2);
                 isFloat16 = true;
             }
-        } else {
+        } else if (parseContext.intermediate.getSource() == EShSourceHlsl) {
             saveName(ch);
-            isFloat16 = false;
+            isFloat16 = true;
         }
     } else if (ch == 'f' || ch == 'F') {
         parseContext.profileRequires(ppToken->loc,  EEsProfile, 300, nullptr, "floating-point suffix");

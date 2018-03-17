@@ -171,7 +171,7 @@ TEST_P(CompileVulkanToSpirvTestAMD, FromFile)
 #endif
 
 #ifdef NV_EXTENSIONS
-// Compiling GLSL to SPIR-V under Vulkan semantics (AMD extensions enabled).
+// Compiling GLSL to SPIR-V under Vulkan semantics (NV extensions enabled).
 // Expected to successfully generate SPIR-V.
 TEST_P(CompileVulkanToSpirvTestNV, FromFile)
 {
@@ -416,6 +416,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.460.comp",
         "spv.atomic.comp",
         "spv.glFragColor.frag",
+        "spv.rankShift.comp",
         "spv.specConst.vert",
         "spv.OVR_multiview.vert",
     })),

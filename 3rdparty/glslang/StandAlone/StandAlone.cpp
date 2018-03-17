@@ -101,6 +101,7 @@ enum TOptions {
     EOptionInvertY              = (1 << 30),
     EOptionDumpBareVersion      = (1 << 31),
 };
+bool targetHlslFunctionality1 = false;
 
 //
 // Return codes from main/exit().
@@ -523,7 +524,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                 setOpenGlSpv();
                                 OpenGLClientVersion = glslang::EShTargetOpenGL_450;
                             } else
-                                Error("--target-env expected vulkan1.0, opengl, or hlsl-16bit-types");
+                                Error("--target-env expected vulkan1.0, vulkan1.1, or opengl");
                         }
                         bumpArg();
                     } else if (lowerword == "variable-name" || // synonyms
@@ -612,6 +613,12 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 if (argc <= 1)
                     Error("no <name> provided for -e");
                 bumpArg();
+                break;
+            case 'f':
+                if (strcmp(&argv[0][2], "hlsl_functionality1") == 0)
+                    targetHlslFunctionality1 = true;
+                else
+                    Error("-f: expected hlsl_functionality1");
                 break;
             case 'g':
                 Options |= EOptionDebug;
@@ -874,14 +881,15 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                                                                 : glslang::EShSourceGlsl,
                                         compUnit.stage, glslang::EShClientVulkan, ClientInputSemanticsVersion);
                 shader->setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
-                shader->setEnvTarget(glslang::EShTargetSpv, TargetVersion);
             } else {
                 shader->setEnvInput((Options & EOptionReadHlsl) ? glslang::EShSourceHlsl
                                                                 : glslang::EShSourceGlsl,
                                         compUnit.stage, glslang::EShClientOpenGL, ClientInputSemanticsVersion);
                 shader->setEnvClient(glslang::EShClientOpenGL, OpenGLClientVersion);
-                shader->setEnvTarget(glslang::EshTargetSpv, TargetVersion);
             }
+            shader->setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+            if (targetHlslFunctionality1)
+                shader->setEnvTargetHlslFunctionality1();
         }
 
         shaders.push_back(shader);
@@ -1318,6 +1326,9 @@ void usage()
            "  -d          default to desktop (#version 110) when there is no shader #version\n"
            "              (default is ES version 100)\n"
            "  -e <name>   specify <name> as the entry-point name\n"
+           "  -f{hlsl_functionality1}\n"
+           "              'hlsl_functionality1' enables use of the\n"
+           "                  SPV_GOOGLE_hlsl_functionality1 extension\n"
            "  -g          generate debug information\n"
            "  -h          print this usage message\n"
            "  -i          intermediate tree (glslang AST) is printed out\n"
@@ -1390,8 +1401,8 @@ void usage()
            "                                       set execution environment that emitted code\n"
            "                                       will execute in (as opposed to the language\n"
            "                                       semantics selected by --client) defaults:\n"
-           "                                        'vulkan1.0' under '--client vulkan<ver>'\n"
-           "                                        'opengl' under '--client opengl<ver>'\n"
+           "                                          'vulkan1.0' under '--client vulkan<ver>'\n"
+           "                                          'opengl' under '--client opengl<ver>'\n"
            "  --variable-name <name>               Creates a C header file that contains a\n"
            "                                       uint32_t array named <name>\n"
            "                                       initialized with the shader binary code.\n"

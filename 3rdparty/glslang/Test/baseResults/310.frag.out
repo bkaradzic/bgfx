@@ -105,7 +105,7 @@ ERROR: 0:346: 'centroid/sample/patch' : can't use auxiliary qualifier on a fragm
 ERROR: 0:347: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:348: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:349: 'noperspective' : Reserved word. 
-ERROR: 0:349: 'noperspective' : not supported with this profile: es
+ERROR: 0:349: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:349: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:355: 'interpolateAtCentroid' : required extension not requested: GL_OES_shader_multisample_interpolation
 ERROR: 0:356: 'interpolateAtSample' : required extension not requested: GL_OES_shader_multisample_interpolation

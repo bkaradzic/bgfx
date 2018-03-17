@@ -21,7 +21,7 @@ ERROR: 0:44: 'assign' :  l-value required (can't modify a const)
 ERROR: 0:47: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:48: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:49: 'noperspective' : Reserved word. 
-ERROR: 0:49: 'noperspective' : not supported with this profile: es
+ERROR: 0:49: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:49: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:50: '' : can only have one auxiliary qualifier (centroid, patch, and sample) 
 ERROR: 0:54: 'gl_PerVertex' : block already declared with size, can't redeclare as implicitly-sized 

@@ -3283,6 +3283,9 @@ bool HlslGrammar::acceptLiteral(TIntermTyped*& node)
     case EHTokUintConstant:
         node = intermediate.addConstantUnion(token.u, token.loc, true);
         break;
+    case EHTokFloat16Constant:
+        node = intermediate.addConstantUnion(token.d, EbtFloat16, token.loc, true);
+        break;
     case EHTokFloatConstant:
         node = intermediate.addConstantUnion(token.d, EbtFloat, token.loc, true);
         break;

@@ -1117,7 +1117,11 @@ interpolation_qualifier
     }
     | NOPERSPECTIVE {
         parseContext.globalCheck($1.loc, "noperspective");
+#ifdef NV_EXTENSIONS
+        parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_NV_shader_noperspective_interpolation, "noperspective");
+#else
         parseContext.requireProfile($1.loc, ~EEsProfile, "noperspective");
+#endif
         parseContext.profileRequires($1.loc, ENoProfile, 130, 0, "noperspective");
         $$.init($1.loc);
         $$.qualifier.nopersp = true;

@@ -202,6 +202,13 @@ $EXE -H -e main -V -D -Od -H -i --invert-y hlsl.y-negate-3.vert > $TARGETDIR/hls
 diff -b $BASEDIR/hlsl.y-negate-3.vert.out $TARGETDIR/hlsl.y-negate-3.vert.out || HASERROR=1
 
 #
+# Testing hlsl_functionality1
+#
+$EXE -H -e main -D -Od -fhlsl_functionality1 hlsl.structbuffer.incdec.frag > \
+    $TARGETDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out
+diff -b $BASEDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out $TARGETDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out || HASERROR=1
+
+#
 # Final checking
 #
 if [ $HASERROR -eq 0 ]

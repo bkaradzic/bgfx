@@ -598,7 +598,7 @@ protected:
 /********************************************************************************
 The following IO resolver maps types in HLSL register space, as follows:
 
-t – for shader resource views (SRV)
+t - for shader resource views (SRV)
    TEXTURE1D
    TEXTURE1DARRAY
    TEXTURE2D
@@ -613,7 +613,7 @@ t – for shader resource views (SRV)
    BUFFER
    TBUFFER
     
-s – for samplers
+s - for samplers
    SAMPLER
    SAMPLER1D
    SAMPLER2D
@@ -622,7 +622,7 @@ s – for samplers
    SAMPLERSTATE
    SAMPLERCOMPARISONSTATE
 
-u – for unordered access views (UAV)
+u - for unordered access views (UAV)
    RWBYTEADDRESSBUFFER
    RWSTRUCTUREDBUFFER
    APPENDSTRUCTUREDBUFFER
@@ -634,7 +634,7 @@ u – for unordered access views (UAV)
    RWTEXTURE2DARRAY
    RWTEXTURE3D
 
-b – for constant buffer views (CBV)
+b - for constant buffer views (CBV)
    CBUFFER
    CONSTANTBUFFER
  ********************************************************************************/

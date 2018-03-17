@@ -768,6 +768,8 @@ bool ProcessDeferred(
     SpvVersion spvVersion;
     EShLanguage stage = compiler->getLanguage();
     TranslateEnvironment(environment, messages, source, stage, spvVersion);
+    if (environment != nullptr && environment->target.hlslFunctionality1)
+        intermediate.setHlslFunctionality1();
 
     // First, without using the preprocessor or parser, find the #version, so we know what
     // symbol tables, processing rules, etc. to set up.  This does not need the extra strings
@@ -1629,6 +1631,7 @@ TShader::TShader(EShLanguage s)
     environment.input.dialect = EShClientNone;
     environment.client.client = EShClientNone;
     environment.target.language = EShTargetNone;
+    environment.target.hlslFunctionality1 = false;
 }
 
 TShader::~TShader()

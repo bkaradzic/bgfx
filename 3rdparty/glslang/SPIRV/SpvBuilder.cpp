@@ -848,6 +848,23 @@ Id Builder::makeFloat16Constant(float f16, bool specConstant)
     return c->getResultId();
 }
 
+Id Builder::makeFpConstant(Id type, double d, bool specConstant)
+{
+        assert(isFloatType(type));
+
+        switch (getScalarTypeWidth(type)) {
+        case 16:
+                return makeFloat16Constant(d, specConstant);
+        case 32:
+                return makeFloatConstant(d, specConstant);
+        case 64:
+                return makeDoubleConstant(d, specConstant);
+        }
+
+        assert(false);
+}
+
+
 Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps)
 {
     Instruction* constant = 0;
@@ -993,6 +1010,7 @@ void Builder::addDecoration(Id id, Decoration decoration, int num)
 {
     if (decoration == spv::DecorationMax)
         return;
+
     Instruction* dec = new Instruction(OpDecorate);
     dec->addIdOperand(id);
     dec->addImmediateOperand(decoration);
@@ -1002,14 +1020,57 @@ void Builder::addDecoration(Id id, Decoration decoration, int num)
     decorations.push_back(std::unique_ptr<Instruction>(dec));
 }
 
+void Builder::addDecoration(Id id, Decoration decoration, const char* s)
+{
+    if (decoration == spv::DecorationMax)
+        return;
+
+    Instruction* dec = new Instruction(OpDecorateStringGOOGLE);
+    dec->addIdOperand(id);
+    dec->addImmediateOperand(decoration);
+    dec->addStringOperand(s);
+
+    decorations.push_back(std::unique_ptr<Instruction>(dec));
+}
+
+void Builder::addDecorationId(Id id, Decoration decoration, Id idDecoration)
+{
+    if (decoration == spv::DecorationMax)
+        return;
+
+    Instruction* dec = new Instruction(OpDecorateId);
+    dec->addIdOperand(id);
+    dec->addImmediateOperand(decoration);
+    dec->addIdOperand(idDecoration);
+
+    decorations.push_back(std::unique_ptr<Instruction>(dec));
+}
+
 void Builder::addMemberDecoration(Id id, unsigned int member, Decoration decoration, int num)
 {
+    if (decoration == spv::DecorationMax)
+        return;
+
     Instruction* dec = new Instruction(OpMemberDecorate);
     dec->addIdOperand(id);
     dec->addImmediateOperand(member);
     dec->addImmediateOperand(decoration);
     if (num >= 0)
         dec->addImmediateOperand(num);
+
+    decorations.push_back(std::unique_ptr<Instruction>(dec));
+}
+
+void Builder::addMemberDecoration(Id id, unsigned int member, Decoration decoration, const char *s)
+{
+    if (decoration == spv::DecorationMax)
+        return;
+
+    Instruction* dec = new Instruction(OpMemberDecorateStringGOOGLE);
+    dec->addIdOperand(id);
+    dec->addImmediateOperand(member);
+    dec->addImmediateOperand(decoration);
+    dec->addStringOperand(s);
 
     decorations.push_back(std::unique_ptr<Instruction>(dec));
 }
@@ -2530,7 +2591,7 @@ void Builder::remapDynamicSwizzle()
     if (accessChain.component != NoResult && accessChain.swizzle.size() > 1) {
         // build a vector of the swizzle for the component to map into
         std::vector<Id> components;
-        for (int c = 0; c < accessChain.swizzle.size(); ++c)
+        for (int c = 0; c < (int)accessChain.swizzle.size(); ++c)
             components.push_back(makeUintConstant(accessChain.swizzle[c]));
         Id mapType = makeVectorType(makeUintType(32), (int)accessChain.swizzle.size());
         Id map = makeCompositeConstant(mapType, components);

@@ -405,7 +405,7 @@ protected:
     // may fit in TSampler::structReturnIndex.
     TVector<TTypeList*> textureReturnStruct;
     
-    TMap<TString, bool> structBufferCounter;
+    TMap<TString, bool> structBufferCounter;  // true if counter buffer is in use
 
     // The built-in interstage IO map considers e.g, EvqPosition on input and output separately, so that we
     // can build the linkage correctly if position appears on both sides.  Otherwise, multiple positions

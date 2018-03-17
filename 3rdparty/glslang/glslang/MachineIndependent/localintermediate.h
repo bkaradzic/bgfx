@@ -210,7 +210,7 @@ class TVariable;
 class TIntermediate {
 public:
     explicit TIntermediate(EShLanguage l, int v = 0, EProfile p = ENoProfile) :
-        implicitThisName("@this"),
+        implicitThisName("@this"), implicitCounterName("@count"),
         language(l), source(EShSourceNone), profile(p), version(v), treeRoot(0),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
         invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet),
@@ -218,6 +218,7 @@ public:
         pixelCenterInteger(false), originUpperLeft(false),
         vertexSpacing(EvsNone), vertexOrder(EvoNone), pointMode(false), earlyFragmentTests(false),
         postDepthCoverage(false), depthLayout(EldNone), depthReplacing(false),
+        hlslFunctionality1(false),
         blendEquations(0), xfbMode(false), multiStream(false),
 #ifdef NV_EXTENSIONS
         layoutOverrideCoverage(false),
@@ -362,6 +363,13 @@ public:
     }
     bool usingHlslIoMapping() { return hlslIoMapping; }
 
+    template<class T> T addCounterBufferName(const T& name) const { return name + implicitCounterName; }
+    bool hasCounterBufferName(const TString& name) const {
+        size_t len = strlen(implicitCounterName);
+        return name.size() > len &&
+               name.compare(name.size() - len, len, implicitCounterName) == 0;
+    }
+
     void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { textureSamplerTransformMode = mode; }
 
     void setVersion(int v) { version = v; }
@@ -458,9 +466,6 @@ public:
     TIntermBinary* addBinaryNode(TOperator op, TIntermTyped* left, TIntermTyped* right, TSourceLoc, const TType&) const;
     TIntermUnary* addUnaryNode(TOperator op, TIntermTyped* child, TSourceLoc) const;
     TIntermUnary* addUnaryNode(TOperator op, TIntermTyped* child, TSourceLoc, const TType&) const;
-
-    // Add conversion from node's type to given basic type.
-    TIntermTyped* convertToBasicType(TOperator op, TBasicType basicType, TIntermTyped* node) const;
 
     // Constant folding (in Constant.cpp)
     TIntermTyped* fold(TIntermAggregate* aggrNode);
@@ -567,6 +572,9 @@ public:
     void setDepthReplacing() { depthReplacing = true; }
     bool isDepthReplacing() const { return depthReplacing; }
 
+    void setHlslFunctionality1() { hlslFunctionality1 = true; }
+    bool getHlslFunctionality1() const { return hlslFunctionality1; }
+
     void addBlendEquation(TBlendEquationShift b) { blendEquations |= (1 << b); }
     unsigned int getBlendEquations() const { return blendEquations; }
 
@@ -626,6 +634,7 @@ public:
     bool needsLegalization() const { return needToLegalize; }
 
     const char* const implicitThisName;
+    const char* const implicitCounterName;
 
 protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
@@ -685,6 +694,7 @@ protected:
     bool postDepthCoverage;
     TLayoutDepth depthLayout;
     bool depthReplacing;
+    bool hlslFunctionality1;
     int blendEquations;        // an 'or'ing of masks of shifts of TBlendEquationShift
     bool xfbMode;
     bool multiStream;

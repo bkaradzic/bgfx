@@ -23,7 +23,7 @@ ERROR: 0:157: 'centroid/sample/patch' : can't use auxiliary qualifier on a fragm
 ERROR: 0:158: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:159: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:160: 'noperspective' : Reserved word. 
-ERROR: 0:160: 'noperspective' : not supported with this profile: es
+ERROR: 0:160: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:160: 'flat/smooth/noperspective' : can't use interpolation qualifier on a fragment output 
 ERROR: 0:165: 'centroid/sample/patch' : can't use auxiliary qualifier on a fragment output 
 ERROR: 0:180: 'interpolateAtCentroid' : no matching overloaded function found 

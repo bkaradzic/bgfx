@@ -21,7 +21,7 @@ ERROR: 0:48: 'assign' :  l-value required (can't modify a const)
 ERROR: 0:51: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:52: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:53: 'noperspective' : Reserved word. 
-ERROR: 0:53: 'noperspective' : not supported with this profile: es
+ERROR: 0:53: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:53: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:54: 'sample' : Reserved word. 
 ERROR: 0:54: '' : can only have one auxiliary qualifier (centroid, patch, and sample) 
