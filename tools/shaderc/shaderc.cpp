@@ -1977,6 +1977,49 @@ namespace bgfx
 											, 'f' == _options.shaderType ? "in" : "out"
 											);
 									}
+									else if (essl == 2)
+									{
+										code +=
+											"mat2 transpose(mat2 _mtx)\n"
+											"{\n"
+											"	vec2 v0 = _mtx[0];\n"
+											"	vec2 v1 = _mtx[1];\n"
+											"\n"
+											"	return mat2(\n"
+											"		  vec2(v0.x, v1.x)\n"
+											"		, vec2(v0.y, v1.y)\n"
+											"		);\n"
+											"}\n"
+											"\n"
+											"mat3 transpose(mat3 _mtx)\n"
+											"{\n"
+											"	vec3 v0 = _mtx[0];\n"
+											"	vec3 v1 = _mtx[1];\n"
+											"	vec3 v2 = _mtx[2];\n"
+											"\n"
+											"	return mat3(\n"
+											"		  vec3(v0.x, v1.x, v2.x)\n"
+											"		, vec3(v0.y, v1.y, v2.y)\n"
+											"		, vec3(v0.z, v1.z, v2.z)\n"
+											"		);\n"
+											"}\n"
+											"\n"
+											"mat4 transpose(mat4 _mtx)\n"
+											"{\n"
+											"	vec4 v0 = _mtx[0];\n"
+											"	vec4 v1 = _mtx[1];\n"
+											"	vec4 v2 = _mtx[2];\n"
+											"	vec4 v3 = _mtx[3];\n"
+											"\n"
+											"	return mat4(\n"
+											"		  vec4(v0.x, v1.x, v2.x, v3.x)\n"
+											"		, vec4(v0.y, v1.y, v2.y, v3.y)\n"
+											"		, vec4(v0.z, v1.z, v2.z, v3.z)\n"
+											"		, vec4(v0.w, v1.w, v2.w, v3.w)\n"
+											"		);\n"
+											"}\n"
+											;
+									}
 
 									// Pretend that all extensions are available.
 									// This will be stripped later.
