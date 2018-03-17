@@ -14,4 +14,9 @@ namespace bgfx
 		return false;
 	}
 
+	const char* getPsslPreamble()
+	{
+		return "";
+	}
+
 } // namespace bgfx

@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 9
+#define BGFX_SHADERC_VERSION_MINOR 10
 
 namespace bgfx
 {
@@ -865,8 +865,7 @@ namespace bgfx
 			);
 	}
 
-
-	bool compileShader(const char* _varying, char* _shader, uint32_t _shaderLen, Options& _options, bx::FileWriter* _writer)
+	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, Options& _options, bx::FileWriter* _writer)
 	{
 		uint32_t glsl  = 0;
 		uint32_t essl  = 0;
@@ -1133,7 +1132,7 @@ namespace bgfx
 			data = _shader;
 			uint32_t size = _shaderLen;
 
-			const size_t padding = 4096;
+			const size_t padding = 16384;
 
 			if (!raw)
 			{
@@ -1237,6 +1236,11 @@ namespace bgfx
 				}
 				else
 				{
+					if (0 != pssl)
+					{
+						preprocessor.writef(getPsslPreamble() );
+					}
+
 					preprocessor.writef(
 						"#define lowp\n"
 						"#define mediump\n"
@@ -1306,9 +1310,6 @@ namespace bgfx
 
 				if (preprocessor.run(input) )
 				{
-					//BX_TRACE("Input file: %s", filePath);
-					//BX_TRACE("Output file: %s", outFilePath);
-
 					if (_options.preprocessOnly)
 					{
 						bx::write(_writer, preprocessor.m_preprocessed.c_str(), (int32_t)preprocessor.m_preprocessed.size() );
@@ -1317,14 +1318,14 @@ namespace bgfx
 					}
 
 					{
+						std::string code;
+
 						bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
 						bx::write(_writer, outputHash);
 
 						if (0 != glsl
 						||  0 != essl)
 						{
-							std::string code;
-
 							if (essl)
 							{
 								bx::stringPrintf(code, "#version 310 es\n");
@@ -1334,8 +1335,9 @@ namespace bgfx
 								bx::stringPrintf(code, "#version %d\n", glsl == 0 ? 430 : glsl);
 							}
 
-							code += preprocessor.m_preprocessed;
 #if 1
+							code += preprocessor.m_preprocessed;
+
 							bx::write(_writer, uint16_t(0) );
 
 							uint32_t shaderSize = (uint32_t)code.size();
@@ -1345,20 +1347,29 @@ namespace bgfx
 
 							compiled = true;
 #else
+							code += _comment;
+							code += preprocessor.m_preprocessed;
+
 							compiled = compileGLSLShader(cmdLine, essl, code, writer);
 #endif // 0
 						}
-						else if (0 != spirv)
-						{
-							compiled = compileSPIRVShader(_options, 0, preprocessor.m_preprocessed, _writer);
-						}
-						else if (0 != pssl)
-						{
-							compiled = compilePSSLShader(_options, 0, preprocessor.m_preprocessed, _writer);
-						}
 						else
 						{
-							compiled = compileHLSLShader(_options, d3d, preprocessor.m_preprocessed, _writer);
+							code += _comment;
+							code += preprocessor.m_preprocessed;
+
+							if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(_options, 0, code, _writer);
+							}
+							else if (0 != pssl)
+							{
+								compiled = compilePSSLShader(_options, 0, code, _writer);
+							}
+							else
+							{
+								compiled = compileHLSLShader(_options, d3d, code, _writer);
+							}
 						}
 					}
 
@@ -1448,6 +1459,11 @@ namespace bgfx
 				}
 				else
 				{
+					if (0 != pssl)
+					{
+						preprocessor.writef(getPsslPreamble() );
+					}
+
 					preprocessor.writef(
 						"#define lowp\n"
 						"#define mediump\n"
@@ -1779,6 +1795,8 @@ namespace bgfx
 					}
 
 					{
+						std::string code;
+
 						if ('f' == _options.shaderType)
 						{
 							bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
@@ -1799,8 +1817,6 @@ namespace bgfx
 						||  0 != essl
 						||  0 != metal)
 						{
-							std::string code;
-
 							if (NULL != bx::strFind(preprocessor.m_preprocessed.c_str(), "layout(std430") )
 							{
 								glsl = 430;
@@ -2046,10 +2062,10 @@ namespace bgfx
 									);
 							}
 
-							code += preprocessor.m_preprocessed;
-
 							if (glsl > 400)
 							{
+								code += preprocessor.m_preprocessed;
+
 								bx::write(_writer, uint16_t(0) );
 
 								uint32_t shaderSize = (uint32_t)code.size();
@@ -2061,36 +2077,29 @@ namespace bgfx
 							}
 							else
 							{
-								compiled = compileGLSLShader(_options
-									, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl
-									, code
-									, _writer
-									);
+								code += _comment;
+								code += preprocessor.m_preprocessed;
+
+								compiled = compileGLSLShader(_options, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : essl, code, _writer);
 							}
-						}
-						else if (0 != spirv)
-						{
-							compiled = compileSPIRVShader(_options
-								, 0
-								, preprocessor.m_preprocessed
-								, _writer
-								);
-						}
-						else if (0 != pssl)
-						{
-							compiled = compilePSSLShader(_options
-								, 0
-								, preprocessor.m_preprocessed
-								, _writer
-								);
 						}
 						else
 						{
-							compiled = compileHLSLShader(_options
-								, d3d
-								, preprocessor.m_preprocessed
-								, _writer
-								);
+							code += _comment;
+							code += preprocessor.m_preprocessed;
+
+							if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(_options, 0, code, _writer);
+							}
+							else if (0 != pssl)
+							{
+								compiled = compilePSSLShader(_options, 0, code, _writer);
+							}
+							else
+							{
+								compiled = compileHLSLShader(_options, d3d, code, _writer);
+							}
 						}
 					}
 
@@ -2268,6 +2277,14 @@ namespace bgfx
 			defines = ';' == *eol ? eol+1 : eol;
 		}
 
+		std::string commandLineComment = "// shaderc command line:\n//";
+		for (int32_t ii = 0, num = cmdLine.getNum(); ii < num; ++ii)
+		{
+			commandLineComment += " ";
+			commandLineComment += cmdLine.get(ii);
+		}
+		commandLineComment += "\n\n";
+
 		bool compiled = false;
 
 		bx::FileReader reader;
@@ -2291,7 +2308,7 @@ namespace bgfx
 				fprintf(stderr, "ERROR: Failed to parse varying def file: \"%s\" No input/output semantics will be generated in the code!\n", varyingdef);
 			}
 
-			const size_t padding = 4096;
+			const size_t padding    = 16384;
 			uint32_t size = (uint32_t)bx::getSize(&reader);
 			char* data = new char[size+padding+1];
 			size = (uint32_t)bx::read(&reader, data, size);
@@ -2327,7 +2344,7 @@ namespace bgfx
 				return bx::kExitFailure;
 			}
 
-			compiled = compileShader(attribdef.getData(), data, size, options, writer);
+			compiled = compileShader(attribdef.getData(), commandLineComment.c_str(), data, size, options, writer);
 
 			bx::close(writer);
 			delete writer;
