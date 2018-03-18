@@ -172,7 +172,7 @@ public:
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::SetNextWindowSize(
-				  ImVec2(m_width / 5.0f, m_height / 2.0f)
+				  ImVec2(m_width / 5.0f, m_height / 4.0f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
@@ -186,7 +186,6 @@ public:
 			ImGui::Checkbox("Write A", &m_a);
 
 			ImGui::End();
-
 
 			imguiEndFrame();
 

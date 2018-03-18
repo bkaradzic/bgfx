@@ -490,7 +490,7 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
 		bgfx::init(args.m_type, args.m_pciId);
@@ -558,8 +558,6 @@ public:
 				);
 
 			showExampleDialog(this);
-
-			imguiEndFrame();
 
 			// Set view 0 default viewport.
 			bgfx::setViewRect(0, 0, 0, uint16_t(m_width), uint16_t(m_height) );
@@ -758,12 +756,28 @@ public:
 			bgfx::submit(0, m_program);
 
 			// Display stats.
-			uint16_t row = 18;
-			bgfx::dbgTextPrintf(1, row++, 0x0f, "Num vertices: %5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
-			bgfx::dbgTextPrintf(1, row++, 0x0f, "      Update: % 7.3f[ms]", double(profUpdate)*toMs);
-			bgfx::dbgTextPrintf(1, row++, 0x0f, "Calc normals: % 7.3f[ms]", double(profNormal)*toMs);
-			bgfx::dbgTextPrintf(1, row++, 0x0f, " Triangulate: % 7.3f[ms]", double(profTriangulate)*toMs);
-			bgfx::dbgTextPrintf(1, row++, 0x0f, "       Frame: % 7.3f[ms]", double(frameTime)*toMs);
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 4.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Stats"
+				, NULL
+				, 0
+				);
+
+			ImGui::Text("Num vertices:"); ImGui::SameLine(100); ImGui::Text("%5d (%6.4f%%)", numVertices, float(numVertices)/maxVertices * 100);
+			ImGui::Text("Update:");       ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(profUpdate)*toMs);
+			ImGui::Text("Calc normals:"); ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(profNormal)*toMs);
+			ImGui::Text("Triangulate:");  ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(profTriangulate)*toMs);
+			ImGui::Text("Frame:");        ImGui::SameLine(100); ImGui::Text("% 7.3f[ms]", double(frameTime)*toMs);
+
+			ImGui::End();
+
+			imguiEndFrame();
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
