@@ -1508,7 +1508,6 @@ namespace bgfx { namespace d3d11
 				DX_RELEASE(m_swapChain, 0);
 				DX_RELEASE(m_deviceCtx, 0);
 				DX_RELEASE(m_device, 0);
-				BX_FALLTHROUGH;
 
 #if USE_D3D11_DYNAMIC_LIB
 				if (NULL != m_d3d9dll)
