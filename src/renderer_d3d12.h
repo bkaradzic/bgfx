@@ -83,6 +83,8 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _g
 
 namespace bgfx { namespace d3d12
 {
+	typedef HRESULT (WINAPI* PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES)(uint32_t _numFeatures, const IID* _iids, void* _configurationStructs, uint32_t* _configurationStructSizes);
+
 	struct Rdt
 	{
 		enum Enum

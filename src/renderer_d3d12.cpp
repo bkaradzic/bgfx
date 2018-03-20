@@ -534,10 +534,11 @@ namespace bgfx { namespace d3d12
 	}
 
 #if USE_D3D12_DYNAMIC_LIB
-	static PFN_D3D12_CREATE_DEVICE            D3D12CreateDevice;
-	static PFN_D3D12_GET_DEBUG_INTERFACE      D3D12GetDebugInterface;
-	static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE D3D12SerializeRootSignature;
-	static PFN_CREATE_DXGI_FACTORY            CreateDXGIFactory1;
+	static PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES D3D12EnableExperimentalFeatures;
+	static PFN_D3D12_CREATE_DEVICE                D3D12CreateDevice;
+	static PFN_D3D12_GET_DEBUG_INTERFACE          D3D12GetDebugInterface;
+	static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE     D3D12SerializeRootSignature;
+	static PFN_CREATE_DXGI_FACTORY                CreateDXGIFactory1;
 
 	typedef HANDLE  (WINAPI* PFN_CREATE_EVENT_EX_A)(LPSECURITY_ATTRIBUTES _attrs, LPCSTR _name, DWORD _flags, DWORD _access);
 	static PFN_CREATE_EVENT_EX_A CreateEventExA;
@@ -684,6 +685,9 @@ namespace bgfx { namespace d3d12
 			}
 
 			errorState = ErrorState::LoadedD3D12;
+
+			D3D12EnableExperimentalFeatures = (PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES)bx::dlsym(m_d3d12dll, "D3D12EnableExperimentalFeatures");
+			BX_WARN(NULL != D3D12EnableExperimentalFeatures, "Function D3D12EnableExperimentalFeatures not found.");
 
 			D3D12CreateDevice = (PFN_D3D12_CREATE_DEVICE)bx::dlsym(m_d3d12dll, "D3D12CreateDevice");
 			BX_WARN(NULL != D3D12CreateDevice, "Function D3D12CreateDevice not found.");
