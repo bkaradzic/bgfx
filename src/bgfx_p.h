@@ -165,40 +165,30 @@ namespace tinystl
 	class list : public vector<T, Alloc>
 	{
 	public:
-		void push_front(const T& _value);
-		void pop_front();
+		void push_front(const T& _value)
+		{
+			this->insert(this->begin(), _value);
+		}
 
-		void sort();
+		void pop_front()
+		{
+			this->erase(this->begin() );
+		}
 
-	private:
-		vector<T, Alloc> m_vector;
+		void sort()
+		{
+			bx::quickSort(
+				this->begin()
+				, uint32_t(this->end() - this->begin() )
+				, sizeof(T)
+				, [](const void* _a, const void* _b) -> int32_t {
+					const T& lhs = *(const T*)(_a);
+					const T& rhs = *(const T*)(_b);
+					return lhs < rhs ? -1 : 1;
+				});
+		}
 	};
 
-	template<typename T, typename Alloc>
-	inline void list<T, Alloc>::push_front(const T& _value)
-	{
-		this->insert(this->begin(), _value);
-	}
-
-	template<typename T, typename Alloc>
-	inline void list<T, Alloc>::pop_front()
-	{
-		this->erase(this->begin() );
-	}
-
-	template<typename T, typename Alloc>
-	inline void list<T, Alloc>::sort()
-	{
-		bx::quickSort(
-			  this->begin()
-			, uint32_t(this->end() - this->begin() )
-			, sizeof(T)
-			, [](const void* _a, const void* _b) -> int32_t {
-				const T& lhs = *(const T*)(_a);
-				const T& rhs = *(const T*)(_b);
-				return lhs < rhs;
-			});
-	}
 } // namespace tinystl
 
 namespace stl = tinystl;
