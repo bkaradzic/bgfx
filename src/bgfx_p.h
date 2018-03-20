@@ -144,8 +144,6 @@ namespace bgfx
 			| BGFX_CLEAR_COLOR_USE_PALETTE \
 			)
 
-#include <list> // mingw wants it to be before tr1/unordered_*...
-
 #if BGFX_CONFIG_USE_TINYSTL
 namespace bgfx
 {
@@ -160,8 +158,52 @@ namespace bgfx
 #	include <tinystl/unordered_map.h>
 #	include <tinystl/unordered_set.h>
 #	include <tinystl/vector.h>
+
+namespace tinystl
+{
+	template<typename T, typename Alloc = TINYSTL_ALLOCATOR>
+	class list : public vector<T, Alloc>
+	{
+	public:
+		void push_front(const T& _value);
+		void pop_front();
+
+		void sort();
+
+	private:
+		vector<T, Alloc> m_vector;
+	};
+
+	template<typename T, typename Alloc>
+	inline void list<T, Alloc>::push_front(const T& _value)
+	{
+		this->insert(this->begin(), _value);
+	}
+
+	template<typename T, typename Alloc>
+	inline void list<T, Alloc>::pop_front()
+	{
+		this->erase(this->begin() );
+	}
+
+	template<typename T, typename Alloc>
+	inline void list<T, Alloc>::sort()
+	{
+		bx::quickSort(
+			  this->begin()
+			, uint32_t(this->end() - this->begin() )
+			, sizeof(T)
+			, [](const void* _a, const void* _b) -> int32_t {
+				const T& lhs = *(const T*)(_a);
+				const T& rhs = *(const T*)(_b);
+				return lhs < rhs;
+			});
+	}
+} // namespace tinystl
+
 namespace stl = tinystl;
 #else
+#	include <list>
 #	include <string>
 #	include <unordered_map>
 #	include <unordered_set>
@@ -2546,7 +2588,7 @@ namespace bgfx
 			uint32_t m_size;
 		};
 
-		typedef std::list<Free> FreeList;
+		typedef stl::list<Free> FreeList;
 		FreeList m_free;
 
 		typedef stl::unordered_map<uint64_t, uint32_t> UsedList;
