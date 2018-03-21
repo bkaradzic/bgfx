@@ -1553,8 +1553,6 @@ namespace bgfx { namespace d3d11
 			preReset();
 			m_ovr.shutdown();
 
-			m_nvapi.shutdown();
-
 			if (NULL != m_ags)
 			{
 				agsDeInit(m_ags);
@@ -1598,6 +1596,7 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(m_deviceCtx, 0);
 			DX_RELEASE(m_device, 0);
 
+			m_nvapi.shutdown();
 			m_dxgi.shutdown();
 
 			unloadRenderDoc(m_renderdocdll);
