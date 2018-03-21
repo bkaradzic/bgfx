@@ -308,6 +308,17 @@ namespace bgfx
 		return 0 != _decl.m_stride;
 	}
 
+	struct Condition
+	{
+		enum Enum
+		{
+			LessEqual,
+			GreaterEqual,
+		};
+	};
+
+	bool windowsVersionIs(Condition::Enum _op, uint32_t _version);
+
 	struct Clear
 	{
 		void set(uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)

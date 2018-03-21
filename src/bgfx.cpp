@@ -2028,15 +2028,6 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_rendererCreator) == RendererType::Count);
 
-	struct Condition
-	{
-		enum Enum
-		{
-			LessEqual,
-			GreaterEqual,
-		};
-	};
-
 	bool windowsVersionIs(Condition::Enum _op, uint32_t _version)
 	{
 #if BX_PLATFORM_WINDOWS
