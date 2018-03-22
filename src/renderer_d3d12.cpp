@@ -538,7 +538,6 @@ namespace bgfx { namespace d3d12
 	static PFN_D3D12_CREATE_DEVICE                D3D12CreateDevice;
 	static PFN_D3D12_GET_DEBUG_INTERFACE          D3D12GetDebugInterface;
 	static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE     D3D12SerializeRootSignature;
-	static PFN_CREATE_DXGI_FACTORY                CreateDXGIFactory1;
 
 	typedef HANDLE  (WINAPI* PFN_CREATE_EVENT_EX_A)(LPSECURITY_ATTRIBUTES _attrs, LPCSTR _name, DWORD _flags, DWORD _access);
 	static PFN_CREATE_EVENT_EX_A CreateEventExA;
@@ -844,10 +843,9 @@ namespace bgfx { namespace d3d12
 				m_scd.swapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 				m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
 				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-					;
-				m_scd.nwh      = g_platformData.nwh;
-				m_scd.ndt      = g_platformData.ndt;
-				m_scd.windowed = true;
+				m_scd.nwh        = g_platformData.nwh;
+				m_scd.ndt        = g_platformData.ndt;
+				m_scd.windowed   = true;
 
 				m_backBufferColorIdx = m_scd.bufferCount-1;
 
@@ -939,13 +937,13 @@ namespace bgfx { namespace d3d12
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 				{
 					m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_DRAW_CALLS*1024
-							, BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
-							);
+						, BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
+						);
 				}
 				m_samplerAllocator.create(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-						, 1024
-						, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
-						);
+					, 1024
+					, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
+					);
 
 				D3D12_DESCRIPTOR_RANGE descRange[] =
 				{
@@ -1881,7 +1879,7 @@ namespace bgfx { namespace d3d12
 			resourceDesc.Width     = bx::uint32_max(m_resolution.m_width,  1);
 			resourceDesc.Height    = bx::uint32_max(m_resolution.m_height, 1);
 			resourceDesc.DepthOrArraySize   = 1;
-			resourceDesc.MipLevels          = 0;
+			resourceDesc.MipLevels          = 1;
 			resourceDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
 			resourceDesc.SampleDesc.Count   = 1;
 			resourceDesc.SampleDesc.Quality = 0;
