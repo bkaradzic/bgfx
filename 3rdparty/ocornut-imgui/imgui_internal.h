@@ -248,7 +248,8 @@ enum ImGuiDataType
 {
     ImGuiDataType_Int,
     ImGuiDataType_Float,
-    ImGuiDataType_Float2
+    ImGuiDataType_Double,
+    ImGuiDataType_COUNT
 };
 
 enum ImGuiInputSource
@@ -258,7 +259,7 @@ enum ImGuiInputSource
     ImGuiInputSource_Nav,
     ImGuiInputSource_NavKeyboard,   // Only used occasionally for storage, not tested/handled by most code
     ImGuiInputSource_NavGamepad,    // "
-    ImGuiInputSource_COUNT,
+    ImGuiInputSource_COUNT
 };
 
 // FIXME-NAV: Clarify/expose various repeat delay/rate

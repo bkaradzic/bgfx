@@ -728,7 +728,7 @@ static ImVec2           InputTextCalcTextSizeW(const ImWchar* text_begin, const 
 
 static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, const char* display_format, char* buf, int buf_size);
 static inline void      DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, int decimal_precision, char* buf, int buf_size);
-static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2);
+static void             DataTypeApplyOp(ImGuiDataType data_type, int op, void* output, void* arg_1, const void* arg_2);
 static bool             DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format);
 
 namespace ImGui
@@ -2323,7 +2323,9 @@ static void NavRestoreLayer(int layer)
 static inline void NavUpdateAnyRequestFlag()
 {
     ImGuiContext& g = *GImGui;
-    g.NavAnyRequest = g.NavMoveRequest || g.NavInitRequest || IMGUI_DEBUG_NAV_SCORING;
+    g.NavAnyRequest = g.NavMoveRequest || g.NavInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.NavWindow != NULL);
+    if (g.NavAnyRequest)
+        IM_ASSERT(g.NavWindow != NULL);
 }
 
 static bool NavMoveRequestButNoResultYet()
@@ -6571,34 +6573,35 @@ void ImGui::PopStyleColor(int count)
 struct ImGuiStyleVarInfo
 {
     ImGuiDataType   Type;
+    ImU32           Count;
     ImU32           Offset;
     void*           GetVarPtr(ImGuiStyle* style) const { return (void*)((unsigned char*)style + Offset); }
 };
 
 static const ImGuiStyleVarInfo GStyleVarInfo[] =
 {
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, Alpha) },                // ImGuiStyleVar_Alpha
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowPadding) },        // ImGuiStyleVar_WindowPadding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, WindowRounding) },       // ImGuiStyleVar_WindowRounding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, WindowBorderSize) },     // ImGuiStyleVar_WindowBorderSize
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowMinSize) },        // ImGuiStyleVar_WindowMinSize
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowTitleAlign) },     // ImGuiStyleVar_WindowTitleAlign
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, ChildRounding) },        // ImGuiStyleVar_ChildRounding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, ChildBorderSize) },      // ImGuiStyleVar_ChildBorderSize
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, PopupRounding) },        // ImGuiStyleVar_PopupRounding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, PopupBorderSize) },      // ImGuiStyleVar_PopupBorderSize
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, FramePadding) },         // ImGuiStyleVar_FramePadding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, FrameRounding) },        // ImGuiStyleVar_FrameRounding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, FrameBorderSize) },      // ImGuiStyleVar_FrameBorderSize
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, ItemSpacing) },          // ImGuiStyleVar_ItemSpacing
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, ItemInnerSpacing) },     // ImGuiStyleVar_ItemInnerSpacing
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, IndentSpacing) },        // ImGuiStyleVar_IndentSpacing
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, ScrollbarSize) },        // ImGuiStyleVar_ScrollbarSize
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, ScrollbarRounding) },    // ImGuiStyleVar_ScrollbarRounding
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, GrabMinSize) },          // ImGuiStyleVar_GrabMinSize
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, GrabRounding) },         // ImGuiStyleVar_GrabRounding
-    { ImGuiDataType_Float2, (ImU32)IM_OFFSETOF(ImGuiStyle, ButtonTextAlign) },      // ImGuiStyleVar_ButtonTextAlign
-    { ImGuiDataType_Float,  (ImU32)IM_OFFSETOF(ImGuiStyle, ViewId) },
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, Alpha) },              // ImGuiStyleVar_Alpha
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowPadding) },      // ImGuiStyleVar_WindowPadding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowRounding) },     // ImGuiStyleVar_WindowRounding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowBorderSize) },   // ImGuiStyleVar_WindowBorderSize
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowMinSize) },      // ImGuiStyleVar_WindowMinSize
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, WindowTitleAlign) },   // ImGuiStyleVar_WindowTitleAlign
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ChildRounding) },      // ImGuiStyleVar_ChildRounding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ChildBorderSize) },    // ImGuiStyleVar_ChildBorderSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, PopupRounding) },      // ImGuiStyleVar_PopupRounding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, PopupBorderSize) },    // ImGuiStyleVar_PopupBorderSize
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, FramePadding) },       // ImGuiStyleVar_FramePadding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, FrameRounding) },      // ImGuiStyleVar_FrameRounding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, FrameBorderSize) },    // ImGuiStyleVar_FrameBorderSize
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, ItemSpacing) },        // ImGuiStyleVar_ItemSpacing
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, ItemInnerSpacing) },   // ImGuiStyleVar_ItemInnerSpacing
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, IndentSpacing) },      // ImGuiStyleVar_IndentSpacing
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ScrollbarSize) },      // ImGuiStyleVar_ScrollbarSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ScrollbarRounding) },  // ImGuiStyleVar_ScrollbarRounding
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, GrabMinSize) },        // ImGuiStyleVar_GrabMinSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, GrabRounding) },       // ImGuiStyleVar_GrabRounding
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, ButtonTextAlign) },    // ImGuiStyleVar_ButtonTextAlign
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ViewId) },
 };
 
 static const ImGuiStyleVarInfo* GetStyleVarInfo(ImGuiStyleVar idx)
@@ -6611,7 +6614,7 @@ static const ImGuiStyleVarInfo* GetStyleVarInfo(ImGuiStyleVar idx)
 void ImGui::PushStyleVar(ImGuiStyleVar idx, float val)
 {
     const ImGuiStyleVarInfo* var_info = GetStyleVarInfo(idx);
-    if (var_info->Type == ImGuiDataType_Float)
+    if (var_info->Type == ImGuiDataType_Float && var_info->Count == 1)
     {
         ImGuiContext& g = *GImGui;
         float* pvar = (float*)var_info->GetVarPtr(&g.Style);
@@ -6625,7 +6628,7 @@ void ImGui::PushStyleVar(ImGuiStyleVar idx, float val)
 void ImGui::PushStyleVar(ImGuiStyleVar idx, const ImVec2& val)
 {
     const ImGuiStyleVarInfo* var_info = GetStyleVarInfo(idx);
-    if (var_info->Type == ImGuiDataType_Float2)
+    if (var_info->Type == ImGuiDataType_Float && var_info->Count == 2)
     {
         ImGuiContext& g = *GImGui;
         ImVec2* pvar = (ImVec2*)var_info->GetVarPtr(&g.Style);
@@ -6641,11 +6644,12 @@ void ImGui::PopStyleVar(int count)
     ImGuiContext& g = *GImGui;
     while (count > 0)
     {
+        // We avoid a generic memcpy(data, &backup.Backup.., GDataTypeSize[info->Type] * info->Count), the overhead in Debug is not worth it.
         ImGuiStyleMod& backup = g.StyleModifiers.back();
         const ImGuiStyleVarInfo* info = GetStyleVarInfo(backup.VarIdx);
-        if (info->Type == ImGuiDataType_Float)          (*(float*)info->GetVarPtr(&g.Style)) = backup.BackupFloat[0];
-        else if (info->Type == ImGuiDataType_Float2)    (*(ImVec2*)info->GetVarPtr(&g.Style)) = ImVec2(backup.BackupFloat[0], backup.BackupFloat[1]);
-        else if (info->Type == ImGuiDataType_Int)       (*(int*)info->GetVarPtr(&g.Style)) = backup.BackupInt[0];
+        void* data = info->GetVarPtr(&g.Style);
+        if (info->Type == ImGuiDataType_Float && info->Count == 1)      { ((float*)data)[0] = backup.BackupFloat[0]; }
+        else if (info->Type == ImGuiDataType_Float && info->Count == 2) { ((float*)data)[0] = backup.BackupFloat[0]; ((float*)data)[1] = backup.BackupFloat[1]; }
         g.StyleModifiers.pop_back();
         count--;
     }
@@ -8382,6 +8386,8 @@ static inline void DataTypeFormatString(ImGuiDataType data_type, void* data_ptr,
         ImFormatString(buf, buf_size, display_format, *(int*)data_ptr);
     else if (data_type == ImGuiDataType_Float)
         ImFormatString(buf, buf_size, display_format, *(float*)data_ptr);
+    else if (data_type == ImGuiDataType_Double)
+        ImFormatString(buf, buf_size, display_format, *(double*)data_ptr);
 }
 
 static inline void DataTypeFormatString(ImGuiDataType data_type, void* data_ptr, int decimal_precision, char* buf, int buf_size)
@@ -8400,27 +8406,44 @@ static inline void DataTypeFormatString(ImGuiDataType data_type, void* data_ptr,
         else
             ImFormatString(buf, buf_size, "%.*f", decimal_precision, *(float*)data_ptr);
     }
+    else if (data_type == ImGuiDataType_Double)
+    {
+        if (decimal_precision < 0)
+            ImFormatString(buf, buf_size, "%f", *(double*)data_ptr);
+        else
+            ImFormatString(buf, buf_size, "%.*f", decimal_precision, *(double*)data_ptr);
+    }
 }
 
-static void DataTypeApplyOp(ImGuiDataType data_type, int op, void* value1, const void* value2)// Store into value1
+static void DataTypeApplyOp(ImGuiDataType data_type, int op, void* output, void* arg1, const void* arg2)
 {
+    IM_ASSERT(op == '+' || op == '-');
     if (data_type == ImGuiDataType_Int)
     {
-        if (op == '+')
-            *(int*)value1 = *(int*)value1 + *(const int*)value2;
-        else if (op == '-')
-            *(int*)value1 = *(int*)value1 - *(const int*)value2;
+        if (op == '+')      *(int*)output = *(int*)arg1 + *(const int*)arg2;
+        else if (op == '-') *(int*)output = *(int*)arg1 - *(const int*)arg2;
     }
     else if (data_type == ImGuiDataType_Float)
     {
-        if (op == '+')
-            *(float*)value1 = *(float*)value1 + *(const float*)value2;
-        else if (op == '-')
-            *(float*)value1 = *(float*)value1 - *(const float*)value2;
+        if (op == '+')      *(float*)output = *(float*)arg1 + *(const float*)arg2;
+        else if (op == '-') *(float*)output = *(float*)arg1 - *(const float*)arg2;
+    }
+    else if (data_type == ImGuiDataType_Double)
+    {
+        if (op == '+')      *(double*)output = *(double*)arg1 + *(const double*)arg2;
+        else if (op == '-') *(double*)output = *(double*)arg1 - *(const double*)arg2;
     }
 }
 
+static size_t GDataTypeSize[ImGuiDataType_COUNT] =
+{
+    sizeof(int),
+    sizeof(float),
+    sizeof(double)
+};
+
 // User can input math operators (e.g. +100) to edit a numerical values.
+// NB: This is _not_ a full expression evaluator. We should probably add one though..
 static bool DataTypeApplyOpFromText(const char* buf, const char* initial_value_buf, ImGuiDataType data_type, void* data_ptr, const char* scalar_format)
 {
     while (ImCharIsSpace(*buf))
@@ -8442,45 +8465,56 @@ static bool DataTypeApplyOpFromText(const char* buf, const char* initial_value_b
     if (!buf[0])
         return false;
 
+    IM_ASSERT(data_type < ImGuiDataType_COUNT);
+    int data_backup[2];
+    IM_ASSERT(GDataTypeSize[data_type] <= sizeof(data_backup));
+    memcpy(data_backup, data_ptr, GDataTypeSize[data_type]);
+
     if (data_type == ImGuiDataType_Int)
     {
         if (!scalar_format)
             scalar_format = "%d";
         int* v = (int*)data_ptr;
-        const int old_v = *v;
         int arg0i = *v;
         if (op && sscanf(initial_value_buf, scalar_format, &arg0i) < 1)
             return false;
-
         // Store operand in a float so we can use fractional value for multipliers (*1.1), but constant always parsed as integer so we can fit big integers (e.g. 2000000003) past float precision
         float arg1f = 0.0f;
         if (op == '+')      { if (sscanf(buf, "%f", &arg1f) == 1) *v = (int)(arg0i + arg1f); }                 // Add (use "+-" to subtract)
         else if (op == '*') { if (sscanf(buf, "%f", &arg1f) == 1) *v = (int)(arg0i * arg1f); }                 // Multiply
         else if (op == '/') { if (sscanf(buf, "%f", &arg1f) == 1 && arg1f != 0.0f) *v = (int)(arg0i / arg1f); }// Divide
-        else                { if (sscanf(buf, scalar_format, &arg0i) == 1) *v = arg0i; }                       // Assign constant (read as integer so big values are not lossy)
-        return (old_v != *v);
+        else                { if (sscanf(buf, scalar_format, &arg0i) == 1) *v = arg0i; }                       // Assign integer constant
     }
     else if (data_type == ImGuiDataType_Float)
     {
         // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in
         scalar_format = "%f";
         float* v = (float*)data_ptr;
-        const float old_v = *v;
-        float arg0f = *v;
+        float arg0f = *v, arg1f = 0.0f;
         if (op && sscanf(initial_value_buf, scalar_format, &arg0f) < 1)
             return false;
-
-        float arg1f = 0.0f;
         if (sscanf(buf, scalar_format, &arg1f) < 1)
             return false;
         if (op == '+')      { *v = arg0f + arg1f; }                    // Add (use "+-" to subtract)
         else if (op == '*') { *v = arg0f * arg1f; }                    // Multiply
         else if (op == '/') { if (arg1f != 0.0f) *v = arg0f / arg1f; } // Divide
         else                { *v = arg1f; }                            // Assign constant
-        return (old_v != *v);
     }
-
-    return false;
+    else if (data_type == ImGuiDataType_Double)
+    {
+        scalar_format = "%lf";
+        double* v = (double*)data_ptr;
+        double arg0f = *v, arg1f = 0.0f;
+        if (op && sscanf(initial_value_buf, scalar_format, &arg0f) < 1)
+            return false;
+        if (sscanf(buf, scalar_format, &arg1f) < 1)
+            return false;
+        if (op == '+')      { *v = arg0f + arg1f; }                    // Add (use "+-" to subtract)
+        else if (op == '*') { *v = arg0f * arg1f; }                    // Multiply
+        else if (op == '/') { if (arg1f != 0.0f) *v = arg0f / arg1f; } // Divide
+        else                { *v = arg1f; }                            // Assign constant
+    }
+    return memcmp(data_backup, data_ptr, GDataTypeSize[data_type]) != 0;
 }
 
 // Create text input in place of a slider (when CTRL+Clicking on slider)
@@ -9781,10 +9815,14 @@ static bool InputTextFilterCharacter(unsigned int* p_char, ImGuiInputTextFlags f
     if (c >= 0xE000 && c <= 0xF8FF) // Filter private Unicode range. I don't imagine anybody would want to input them. GLFW on OSX seems to send private characters for special keys like arrow keys.
         return false;
 
-    if (flags & (ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsNoBlank))
+    if (flags & (ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CharsScientific))
     {
         if (flags & ImGuiInputTextFlags_CharsDecimal)
             if (!(c >= '0' && c <= '9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/'))
+                return false;
+
+        if (flags & ImGuiInputTextFlags_CharsScientific)
+            if (!(c >= '0' && c <= '9') && (c != '.') && (c != '-') && (c != '+') && (c != '*') && (c != '/') && (c != 'e') && (c != 'E'))
                 return false;
 
         if (flags & ImGuiInputTextFlags_CharsHexadecimal)
@@ -10448,7 +10486,7 @@ bool ImGui::InputScalarEx(const char* label, ImGuiDataType data_type, void* data
     DataTypeFormatString(data_type, data_ptr, scalar_format, buf, IM_ARRAYSIZE(buf));
 
     bool value_changed = false;
-    if (!(extra_flags & ImGuiInputTextFlags_CharsHexadecimal))
+    if ((extra_flags & (ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsScientific)) == 0)
         extra_flags |= ImGuiInputTextFlags_CharsDecimal;
     extra_flags |= ImGuiInputTextFlags_AutoSelectAll;
     if (InputText("", buf, IM_ARRAYSIZE(buf), extra_flags)) // PushId(label) + "" gives us the expected ID from outside point of view
@@ -10461,13 +10499,13 @@ bool ImGui::InputScalarEx(const char* label, ImGuiDataType data_type, void* data
         SameLine(0, style.ItemInnerSpacing.x);
         if (ButtonEx("-", button_sz, ImGuiButtonFlags_Repeat | ImGuiButtonFlags_DontClosePopups))
         {
-            DataTypeApplyOp(data_type, '-', data_ptr, g.IO.KeyCtrl && step_fast_ptr ? step_fast_ptr : step_ptr);
+            DataTypeApplyOp(data_type, '-', data_ptr, data_ptr, g.IO.KeyCtrl && step_fast_ptr ? step_fast_ptr : step_ptr);
             value_changed = true;
         }
         SameLine(0, style.ItemInnerSpacing.x);
         if (ButtonEx("+", button_sz, ImGuiButtonFlags_Repeat | ImGuiButtonFlags_DontClosePopups))
         {
-            DataTypeApplyOp(data_type, '+', data_ptr, g.IO.KeyCtrl && step_fast_ptr ? step_fast_ptr : step_ptr);
+            DataTypeApplyOp(data_type, '+', data_ptr, data_ptr, g.IO.KeyCtrl && step_fast_ptr ? step_fast_ptr : step_ptr);
             value_changed = true;
         }
     }
@@ -10486,19 +10524,31 @@ bool ImGui::InputScalarEx(const char* label, ImGuiDataType data_type, void* data
 
 bool ImGui::InputFloat(const char* label, float* v, float step, float step_fast, int decimal_precision, ImGuiInputTextFlags extra_flags)
 {
-    char display_format[16];
+    extra_flags |= ImGuiInputTextFlags_CharsScientific;
     if (decimal_precision < 0)
-        strcpy(display_format, "%f");      // Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float, while hiding non-significant digits? %f doesn't have a minimum of 1
+    {
+        // Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float, while hiding non-significant digits? %f doesn't have a minimum of 1
+        return InputScalarEx(label, ImGuiDataType_Float, (void*)v, (void*)(step>0.0f ? &step : NULL), (void*)(step_fast>0.0f ? &step_fast : NULL), "%f", extra_flags);
+    }
     else
+    {
+        char display_format[16];
         ImFormatString(display_format, IM_ARRAYSIZE(display_format), "%%.%df", decimal_precision);
-    return InputScalarEx(label, ImGuiDataType_Float, (void*)v, (void*)(step>0.0f ? &step : NULL), (void*)(step_fast>0.0f ? &step_fast : NULL), display_format, extra_flags);
+        return InputScalarEx(label, ImGuiDataType_Float, (void*)v, (void*)(step>0.0f ? &step : NULL), (void*)(step_fast>0.0f ? &step_fast : NULL), display_format, extra_flags);
+    }
+}
+
+bool ImGui::InputDouble(const char* label, double* v, double step, double step_fast, const char* display_format, ImGuiInputTextFlags extra_flags)
+{
+    extra_flags |= ImGuiInputTextFlags_CharsScientific;
+    return InputScalarEx(label, ImGuiDataType_Double, (void*)v, (void*)(step>0.0 ? &step : NULL), (void*)(step_fast>0.0 ? &step_fast : NULL), display_format, extra_flags);
 }
 
 bool ImGui::InputInt(const char* label, int* v, int step, int step_fast, ImGuiInputTextFlags extra_flags)
 {
     // Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use InputText() to parse your own data, if you want to handle prefixes.
     const char* scalar_format = (extra_flags & ImGuiInputTextFlags_CharsHexadecimal) ? "%08X" : "%d";
-    return InputScalarEx(label, ImGuiDataType_Int, (void*)v, (void*)(step>0.0f ? &step : NULL), (void*)(step_fast>0.0f ? &step_fast : NULL), scalar_format, extra_flags);
+    return InputScalarEx(label, ImGuiDataType_Int, (void*)v, (void*)(step>0 ? &step : NULL), (void*)(step_fast>0 ? &step_fast : NULL), scalar_format, extra_flags);
 }
 
 bool ImGui::InputFloatN(const char* label, float* v, int components, int decimal_precision, ImGuiInputTextFlags extra_flags)
@@ -13262,6 +13312,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             ImGui::Text("HoveredId: 0x%08X/0x%08X (%.2f sec)", g.HoveredId, g.HoveredIdPreviousFrame, g.HoveredIdTimer); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
             ImGui::Text("ActiveId: 0x%08X/0x%08X (%.2f sec), ActiveIdSource: %s", g.ActiveId, g.ActiveIdPreviousFrame, g.ActiveIdTimer, input_source_names[g.ActiveIdSource]);
             ImGui::Text("ActiveIdWindow: '%s'", g.ActiveIdWindow ? g.ActiveIdWindow->Name : "NULL");
+            ImGui::Text("MovingWindow: '%s'", g.MovingWindow ? g.MovingWindow->Name : "NULL");
             ImGui::Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
             ImGui::Text("NavId: 0x%08X, NavLayer: %d", g.NavId, g.NavLayer);
             ImGui::Text("NavInputSource: %s", input_source_names[g.NavInputSource]);

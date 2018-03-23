@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 10
+#define BGFX_SHADERC_VERSION_MINOR 12
 
 namespace bgfx
 {
