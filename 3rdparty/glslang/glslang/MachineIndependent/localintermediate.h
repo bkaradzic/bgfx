@@ -590,6 +590,7 @@ public:
     int addUsedOffsets(int binding, int offset, int numOffsets);
     bool addUsedConstantId(int id);
     static int computeTypeLocationSize(const TType&, EShLanguage);
+    static int computeTypeUniformLocationSize(const TType&);
 
     bool setXfbBufferStride(int buffer, unsigned stride)
     {

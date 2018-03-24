@@ -859,11 +859,13 @@ Id Builder::makeFpConstant(Id type, double d, bool specConstant)
                 return makeFloatConstant(d, specConstant);
         case 64:
                 return makeDoubleConstant(d, specConstant);
+        default:
+                break;
         }
 
         assert(false);
+        return NoResult;
 }
-
 
 Id Builder::findCompositeConstant(Op typeClass, const std::vector<Id>& comps)
 {

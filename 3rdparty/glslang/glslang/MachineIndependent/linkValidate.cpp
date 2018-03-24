@@ -962,6 +962,36 @@ int TIntermediate::computeTypeLocationSize(const TType& type, EShLanguage stage)
     return 1;
 }
 
+// Same as computeTypeLocationSize but for uniforms
+int TIntermediate::computeTypeUniformLocationSize(const TType& type)
+{
+    // "Individual elements of a uniform array are assigned
+    // consecutive locations with the first element taking location
+    // location."
+    if (type.isArray()) {
+        // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
+        TType elementType(type, 0);
+        if (type.isImplicitlySizedArray()) {
+            // TODO: are there valid cases of having an implicitly-sized array with a location?  If so, running this code too early.
+            return computeTypeUniformLocationSize(elementType);
+        } else
+            return type.getOuterArraySize() * computeTypeUniformLocationSize(elementType);
+    }
+
+    // "Each subsequent inner-most member or element gets incremental
+    // locations for the entire structure or array."
+    if (type.isStruct()) {
+        int size = 0;
+        for (int member = 0; member < (int)type.getStruct()->size(); ++member) {
+            TType memberType(type, member);
+            size += computeTypeUniformLocationSize(memberType);
+        }
+        return size;
+    }
+
+    return 1;
+}
+
 // Accumulate xfb buffer ranges and check for collisions as the accumulation is done.
 //
 // Returns < 0 if no collision, >= 0 if collision and the value returned is a colliding value.

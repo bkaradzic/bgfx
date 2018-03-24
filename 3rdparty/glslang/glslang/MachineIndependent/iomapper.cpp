@@ -431,7 +431,8 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 
         // no locations added if already present, a built-in variable, a block, or an opaque
         if (type.getQualifier().hasLocation() || type.isBuiltIn() ||
-            type.getBasicType() == EbtBlock || type.containsOpaque())
+            type.getBasicType() == EbtBlock ||
+            (type.containsOpaque() && intermediate.getSpv().openGl == 0))
             return -1;
 
         // no locations on blocks of built-in variables
@@ -442,7 +443,11 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
                 return -1;
         }
 
-        return nextUniformLocation++;
+        int location = nextUniformLocation;
+
+        nextUniformLocation += TIntermediate::computeTypeUniformLocationSize(type);
+
+        return location;
     }
     bool validateInOut(EShLanguage /*stage*/, const char* /*name*/, const TType& /*type*/, bool /*is_live*/) override
     {

@@ -132,7 +132,9 @@ typedef enum {
     EShTargetVulkan_1_0 = (1 << 22),
     EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),
     EShTargetOpenGL_450 = 450,
-} EshTargetClientVersion;
+} EShTargetClientVersion;
+
+typedef EShTargetClientVersion EshTargetClientVersion;
 
 typedef enum {
     EShTargetSpv_1_0 = (1 << 16),
@@ -148,7 +150,7 @@ struct TInputLanguage {
 
 struct TClient {
     EShClient client;
-    EshTargetClientVersion version;   // version of client itself (not the client's input dialect)
+    EShTargetClientVersion version;   // version of client itself (not the client's input dialect)
 };
 
 struct TTarget {
@@ -411,7 +413,7 @@ public:
         environment.input.dialect = client;
         environment.input.dialectVersion = version;
     }
-    void setEnvClient(EShClient client, EshTargetClientVersion version)
+    void setEnvClient(EShClient client, EShTargetClientVersion version)
     {
         environment.client.client = client;
         environment.client.version = version;

@@ -118,7 +118,7 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
         ch = getChar();
 
         // 1.#INF or -1.#INF
-        if (parseContext.intermediate.getSource() == EShSourceHlsl && ch == '#') {
+        if (ch == '#' && (ifdepth > 0 || parseContext.intermediate.getSource() == EShSourceHlsl)) {
             if ((len <  2) ||
                 (len == 2 && ppToken->name[0] != '1') ||
                 (len == 3 && ppToken->name[1] != '1' && !(ppToken->name[0] == '-' || ppToken->name[0] == '+')) ||
@@ -174,9 +174,9 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
     // Suffix:
     bool isFloat16 = false;
     if (ch == 'l' || ch == 'L') {
-        if (parseContext.intermediate.getSource() == EShSourceGlsl)
+        if (ifdepth == 0 && parseContext.intermediate.getSource() == EShSourceGlsl)
             parseContext.doubleCheck(ppToken->loc, "double floating-point suffix");
-        if (! HasDecimalOrExponent)
+        if (ifdepth == 0 && !HasDecimalOrExponent)
             parseContext.ppError(ppToken->loc, "float literal needs a decimal point or exponent", "", "");
         if (parseContext.intermediate.getSource() == EShSourceGlsl) {
             int ch2 = getChar();
@@ -193,9 +193,9 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
             isDouble = 1;
         }
     } else if (ch == 'h' || ch == 'H') {
-        if (parseContext.intermediate.getSource() == EShSourceGlsl)
+        if (ifdepth == 0 && parseContext.intermediate.getSource() == EShSourceGlsl)
             parseContext.float16Check(ppToken->loc, "half floating-point suffix");
-        if (!HasDecimalOrExponent)
+        if (ifdepth == 0 && !HasDecimalOrExponent)
             parseContext.ppError(ppToken->loc, "float literal needs a decimal point or exponent", "", "");
         if (parseContext.intermediate.getSource() == EShSourceGlsl) {
             int ch2 = getChar();
@@ -212,10 +212,11 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
             isFloat16 = true;
         }
     } else if (ch == 'f' || ch == 'F') {
-        parseContext.profileRequires(ppToken->loc,  EEsProfile, 300, nullptr, "floating-point suffix");
-        if (! parseContext.relaxedErrors())
+        if (ifdepth == 0)
+            parseContext.profileRequires(ppToken->loc,  EEsProfile, 300, nullptr, "floating-point suffix");
+        if (ifdepth == 0 && !parseContext.relaxedErrors())
             parseContext.profileRequires(ppToken->loc, ~EEsProfile, 120, nullptr, "floating-point suffix");
-        if (! HasDecimalOrExponent)
+        if (ifdepth == 0 && !HasDecimalOrExponent)
             parseContext.ppError(ppToken->loc, "float literal needs a decimal point or exponent", "", "");
         saveName(ch);
     } else
@@ -483,18 +484,22 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                 ppToken->name[len] = '\0';
 
                 if (isInt64 && pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
-                    pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
+                    if (pp->ifdepth == 0) {
+                        pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
                                                         "64-bit hexadecimal literal");
-                    pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
-                        Num_Int64_Extensions, Int64_Extensions, "64-bit hexadecimal literal");
+                        pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
+                            Num_Int64_Extensions, Int64_Extensions, "64-bit hexadecimal literal");
+                    }
                     ppToken->i64val = ival;
                     return isUnsigned ? PpAtomConstUint64 : PpAtomConstInt64;
                 } else if (isInt16) {
-                    if (pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
-                        pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
-                                                         "16-bit hexadecimal literal");
-                        pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
-                            Num_Int16_Extensions, Int16_Extensions, "16-bit hexadecimal literal");
+                    if (pp->ifdepth == 0) {
+                        if (pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
+                            pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
+                                                             "16-bit hexadecimal literal");
+                            pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
+                                Num_Int16_Extensions, Int16_Extensions, "16-bit hexadecimal literal");
+                        }
                     }
                     ppToken->ival = (int)ival;
                     return isUnsigned ? PpAtomConstUint16 : PpAtomConstInt16;
@@ -595,18 +600,22 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                     pp->parseContext.ppError(ppToken->loc, "octal literal too big", "", "");
 
                 if (isInt64 && pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
-                    pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
+                    if (pp->ifdepth == 0) {
+                        pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
                                                         "64-bit octal literal");
-                    pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
-                        Num_Int64_Extensions, Int64_Extensions, "64-bit octal literal");
+                        pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
+                            Num_Int64_Extensions, Int64_Extensions, "64-bit octal literal");
+                    }
                     ppToken->i64val = ival;
                     return isUnsigned ? PpAtomConstUint64 : PpAtomConstInt64;
                 } else if (isInt16) {
-                    if (pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
-                        pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
-                                                         "16-bit octal literal");
-                        pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
-                            Num_Int16_Extensions, Int16_Extensions, "16-bit octal literal");
+                    if (pp->ifdepth == 0) {
+                        if (pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
+                            pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
+                                                            "16-bit octal literal");
+                            pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
+                                Num_Int16_Extensions, Int16_Extensions, "16-bit octal literal");
+                        }
                     }
                     ppToken->ival = (int)ival;
                     return isUnsigned ? PpAtomConstUint16 : PpAtomConstInt16;
@@ -700,16 +709,18 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
                 }
 
                 if (isInt64 && pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
-                    pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
+                    if (pp->ifdepth == 0) {
+                        pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
                                                         "64-bit literal");
-                    pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
-                        Num_Int64_Extensions, Int64_Extensions, "64-bit literal");
+                        pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
+                            Num_Int64_Extensions, Int64_Extensions, "64-bit literal");
+                    }
                     ppToken->i64val = ival;
                     return isUnsigned ? PpAtomConstUint64 : PpAtomConstInt64;
                 } else if (isInt16) {
-                    if (pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
+                    if (pp->ifdepth == 0 && pp->parseContext.intermediate.getSource() == EShSourceGlsl) {
                         pp->parseContext.requireProfile(ppToken->loc, ~EEsProfile,
-                                                         "16-bit  literal");
+                                                        "16-bit  literal");
                         pp->parseContext.profileRequires(ppToken->loc, ~EEsProfile, 0,
                             Num_Int16_Extensions, Int16_Extensions, "16-bit literal");
                     }
@@ -972,7 +983,7 @@ int TPpContext::tokenize(TPpToken& ppToken)
                 continue;
             break;
         case PpAtomConstString:
-            if (parseContext.intermediate.getSource() != EShSourceHlsl) {
+            if (ifdepth == 0 && parseContext.intermediate.getSource() != EShSourceHlsl) {
                 // HLSL allows string literals.
                 parseContext.ppError(ppToken.loc, "string literals not supported", "\"\"", "");
                 continue;

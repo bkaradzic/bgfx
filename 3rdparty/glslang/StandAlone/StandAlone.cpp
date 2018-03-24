@@ -160,9 +160,9 @@ const char* variableName = nullptr;
 bool HlslEnable16BitTypes = false;
 std::vector<std::string> IncludeDirectoryList;
 int ClientInputSemanticsVersion = 100;                  // maps to, say, #define VULKAN 100
-glslang::EshTargetClientVersion VulkanClientVersion =
+glslang::EShTargetClientVersion VulkanClientVersion =
                           glslang::EShTargetVulkan_1_0; // would map to, say, Vulkan 1.0
-glslang::EshTargetClientVersion OpenGLClientVersion =
+glslang::EShTargetClientVersion OpenGLClientVersion =
                           glslang::EShTargetOpenGL_450; // doesn't influence anything yet, but maps to OpenGL 4.50
 glslang::EShTargetLanguageVersion TargetVersion =
                           glslang::EShTargetSpv_1_0;    // maps to, say, SPIR-V 1.0

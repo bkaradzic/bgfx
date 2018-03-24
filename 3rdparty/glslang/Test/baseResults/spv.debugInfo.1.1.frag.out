@@ -94,6 +94,7 @@ void main()
                               MemberDecorate 54(ubuf) 0 Offset 0
                               Decorate 54(ubuf) Block
                               Decorate 56 DescriptorSet 3
+                              Decorate 69(s2d) Location 0
                               Decorate 69(s2d) DescriptorSet 3
                3:             TypeVoid
                4:             TypeFunction 3

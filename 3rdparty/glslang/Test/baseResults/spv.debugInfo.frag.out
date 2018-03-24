@@ -97,6 +97,7 @@ void main()
                               Decorate 54(ubuf) Block
                               Decorate 56 DescriptorSet 3
                               Decorate 56 Binding 0
+                              Decorate 69(s2d) Location 0
                               Decorate 69(s2d) DescriptorSet 3
                               Decorate 69(s2d) Binding 1
                3:             TypeVoid

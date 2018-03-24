@@ -197,7 +197,7 @@ public:
     GlslangResult compileAndLink(
             const std::string shaderName, const std::string& code,
             const std::string& entryPointName, EShMessages controls,
-            glslang::EshTargetClientVersion clientTargetVersion,
+            glslang::EShTargetClientVersion clientTargetVersion,
             bool flattenUniformArrays = false,
             EShTextureSamplerTransformMode texSampTransMode = EShTexSampTransKeep,
             bool disableOptimizer = true,
@@ -407,7 +407,7 @@ public:
                                  const std::string& testName,
                                  Source source,
                                  Semantics semantics,
-                                 glslang::EshTargetClientVersion clientTargetVersion,
+                                 glslang::EShTargetClientVersion clientTargetVersion,
                                  Target target,
                                  bool automap = true,
                                  const std::string& entryPointName="",
