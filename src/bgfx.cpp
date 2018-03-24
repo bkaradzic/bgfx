@@ -1714,11 +1714,10 @@ namespace bgfx
 	void Context::end(Encoder* _encoder)
 	{
 #if BGFX_CONFIG_MULTITHREADED
-		if (BGFX_API_THREAD_MAGIC != s_threadIndex)
+		EncoderImpl* encoder = reinterpret_cast<EncoderImpl*>(_encoder);
+		if (encoder != &m_encoder[0])
 		{
-			EncoderImpl* encoder = reinterpret_cast<EncoderImpl*>(_encoder);
 			encoder->end(true);
-
 			m_encoderEndSem.post();
 		}
 #else
