@@ -3522,11 +3522,25 @@ namespace bgfx { namespace mtl
 				const RenderDraw& draw = renderItem.draw;
 
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
-				if (isValid(draw.m_occlusionQuery)
-				&&  !hasOcclusionQuery
-				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
 				{
-					continue;
+					const bool occluded = true
+						&& isValid(draw.m_occlusionQuery)
+						&& !hasOcclusionQuery
+						&& !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) )
+						;
+
+					if (occluded
+					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
+					{
+						if (resetState)
+						{
+							currentState.clear();
+							currentState.m_scissor = !draw.m_scissor;
+							currentBind.clear();
+						}
+
+						continue;
+					}
 				}
 
 				const uint64_t newFlags = draw.m_stateFlags;
@@ -3587,11 +3601,6 @@ namespace bgfx { namespace mtl
 					{
 						Rect scissorRect;
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
-
-						if (scissorRect.isZeroArea() )
-						{
-							continue;
-						}
 
 						rc.x      = scissorRect.m_x;
 						rc.y      = scissorRect.m_y;

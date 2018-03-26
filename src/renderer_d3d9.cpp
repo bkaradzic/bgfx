@@ -3788,11 +3788,18 @@ namespace bgfx { namespace d3d9
 				const RenderBind& renderBind = _render->m_renderItemBind[itemIdx];
 
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
-				if (isValid(draw.m_occlusionQuery)
-				&&  !hasOcclusionQuery
-				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
 				{
-					continue;
+					const bool occluded = true
+						&& isValid(draw.m_occlusionQuery)
+						&& !hasOcclusionQuery
+						&& !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) )
+						;
+
+					if (occluded
+					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
+					{
+						continue;
+					}
 				}
 
 				const uint64_t newFlags = draw.m_stateFlags;
@@ -3883,10 +3890,6 @@ namespace bgfx { namespace d3d9
 					{
 						Rect scissorRect;
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
-						if (scissorRect.isZeroArea() )
-						{
-							continue;
-						}
 
 						DX_CHECK(device->SetRenderState(D3DRS_SCISSORTESTENABLE, true) );
 						RECT rc;

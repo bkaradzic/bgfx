@@ -6923,25 +6923,43 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				const RenderDraw& draw = renderItem.draw;
 
 				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
-				if (isValid(draw.m_occlusionQuery)
-				&&  !hasOcclusionQuery
-				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
 				{
-					continue;
+					const bool occluded = true
+						&& isValid(draw.m_occlusionQuery)
+						&& !hasOcclusionQuery
+						&& !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) )
+						;
+
+					if (occluded
+					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
+					{
+						if (resetState)
+						{
+							currentState.clear();
+							currentState.m_scissor = !draw.m_scissor;
+							currentBind.clear();
+						}
+
+						continue;
+					}
 				}
 
 				const uint64_t newFlags = draw.m_stateFlags;
 				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				currentState.m_stateFlags = newFlags;
 
 				const uint64_t newStencil = draw.m_stencil;
 				uint64_t changedStencil = currentState.m_stencil ^ draw.m_stencil;
+				currentState.m_stencil = newStencil;
 
 				if (resetState)
 				{
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
-					changedFlags = BGFX_STATE_MASK;
+					changedFlags   = BGFX_STATE_MASK;
 					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+					currentState.m_stateFlags = newFlags;
+					currentState.m_stencil    = newStencil;
 
 					currentBind.clear();
 				}
@@ -6971,10 +6989,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					{
 						Rect scissorRect;
 						scissorRect.setIntersect(viewScissorRect, _render->m_frameCache.m_rectCache.m_cache[scissor]);
-						if (scissorRect.isZeroArea() )
-						{
-							continue;
-						}
 
 						GL_CHECK(glEnable(GL_SCISSOR_TEST) );
 						GL_CHECK(glScissor(scissorRect.m_x
@@ -6984,9 +6998,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							) );
 					}
 				}
-
-				currentState.m_stateFlags = newFlags;
-				currentState.m_stencil    = newStencil;
 
 				if (0 != changedStencil)
 				{

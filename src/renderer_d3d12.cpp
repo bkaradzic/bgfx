@@ -1170,7 +1170,7 @@ namespace bgfx { namespace d3d12
 				postReset();
 
 				m_batch.create(4<<10);
-				m_batch.setIndirectMode(BGFX_PCI_ID_NVIDIA != m_adapterDesc.VendorId);
+				m_batch.setIndirectMode(BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId);
 
 				m_gpuTimer.init();
 				m_occlusionQuery.init();
@@ -2984,7 +2984,6 @@ data.NumQualityLevels = 0;
 		D3D_FEATURE_LEVEL m_featureLevel;
 
 		D3D_DRIVER_TYPE m_driverType;
-		DXGI_ADAPTER_DESC m_adapterDesc;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
@@ -5709,26 +5708,9 @@ data.NumQualityLevels = 0;
 					continue;
 				}
 
-				const RenderDraw& draw = renderItem.draw;
+				bool resetState = viewChanged || wasCompute;
 
-				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
-				if (isValid(draw.m_occlusionQuery)
-				&&  !hasOcclusionQuery
-				&&  !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) ) )
-				{
-					continue;
-				}
-
-				const uint64_t newFlags = draw.m_stateFlags;
-				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
-				currentState.m_stateFlags = newFlags;
-
-				const uint64_t newStencil = draw.m_stencil;
-				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
-				currentState.m_stencil = newStencil;
-
-				if (viewChanged
-				||  wasCompute)
+				if (wasCompute)
 				{
 					if (wasCompute)
 					{
@@ -5743,6 +5725,54 @@ data.NumQualityLevels = 0;
  						PIX3_ENDEVENT(m_commandList);
  						PIX3_BEGINEVENT(m_commandList, D3DCOLOR_DRAW, viewName);
 					}
+
+					commandListChanged = true;
+				}
+
+				const RenderDraw& draw = renderItem.draw;
+
+				const bool hasOcclusionQuery = 0 != (draw.m_stateFlags & BGFX_STATE_INTERNAL_OCCLUSION_QUERY);
+				{
+					const bool occluded = true
+						&& isValid(draw.m_occlusionQuery)
+						&& !hasOcclusionQuery
+						&& !isVisible(_render, draw.m_occlusionQuery, 0 != (draw.m_submitFlags&BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE) )
+						;
+
+					if (occluded
+					||  _render->m_frameCache.isZeroArea(viewScissorRect, draw.m_scissor) )
+					{
+						if (resetState)
+						{
+							currentState.clear();
+							currentState.m_scissor = !draw.m_scissor;
+							currentBind.clear();
+						}
+
+						continue;
+					}
+				}
+
+				const uint64_t newFlags = draw.m_stateFlags;
+				uint64_t changedFlags = currentState.m_stateFlags ^ draw.m_stateFlags;
+				currentState.m_stateFlags = newFlags;
+
+				const uint64_t newStencil = draw.m_stencil;
+				uint64_t changedStencil = (currentState.m_stencil ^ draw.m_stencil) & BGFX_STENCIL_FUNC_REF_MASK;
+				currentState.m_stencil = newStencil;
+
+				if (resetState)
+				{
+					wasCompute = false;
+
+					currentState.clear();
+					currentState.m_scissor = !draw.m_scissor;
+					changedFlags = BGFX_STATE_MASK;
+					changedStencil = packStencil(BGFX_STENCIL_MASK, BGFX_STENCIL_MASK);
+					currentState.m_stateFlags = newFlags;
+					currentState.m_stencil    = newStencil;
+
+					currentBind.clear();
 
 					commandListChanged = true;
 				}
@@ -6178,7 +6208,7 @@ data.NumQualityLevels = 0;
 					, (m_featureLevel >>  8) & 0xf
 					);
 
-				const DXGI_ADAPTER_DESC& desc = m_adapterDesc;
+				const DXGI_ADAPTER_DESC& desc = m_dxgi.m_adapterDesc;
 				char description[BX_COUNTOF(desc.Description)];
 				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
 				tvm.printf(0, pos++, 0x8f, " Device: %s", description);

@@ -1772,6 +1772,18 @@ namespace bgfx
 			m_rectCache.reset();
 		}
 
+		bool isZeroArea(const Rect& _rect, uint16_t _scissor) const
+		{
+			if (UINT16_MAX != _scissor)
+			{
+				Rect scissorRect;
+				scissorRect.setIntersect(_rect, m_rectCache.m_cache[_scissor]);
+				return scissorRect.isZeroArea();
+			}
+
+			return false;
+		}
+
 		MatrixCache m_matrixCache;
 		RectCache m_rectCache;
 	};
