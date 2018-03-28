@@ -1484,8 +1484,14 @@ int _main_(int _argc, char** _argv)
 								, bimg::getName(bimg::TextureFormat::Enum(view.m_textureInfo.format) )
 								);
 
-							ImGui::SliderInt("Layer", (int32_t*)&view.m_layer, 0, view.m_textureInfo.numLayers - 1);
-							ImGui::SliderInt("Mip",   (int32_t*)&view.m_mip,   0, view.m_textureInfo.numMips   - 1);
+							uint32_t numLayers = view.m_textureInfo.numLayers;
+							if (1 < view.m_textureInfo.depth)
+							{
+								numLayers = bx::max(1, view.m_textureInfo.depth >> view.m_mip);
+							}
+							view.m_layer = bx::clamp<int32_t>(view.m_layer, 0, numLayers - 1);
+							ImGui::SliderInt("Layer", (int32_t*)&view.m_layer, 0, numLayers - 1);
+							ImGui::SliderInt("Mip",   (int32_t*)&view.m_mip,   0, view.m_textureInfo.numMips - 1);
 
 							ImGui::Separator();
 
@@ -1834,7 +1840,7 @@ int _main_(int _argc, char** _argv)
 			float params[4] = { mip.getValue(), layer.getValue(), view.m_inLinear ? 1.0f : 0.0f, ev.getValue() };
 			if (1 < view.m_textureInfo.depth)
 			{
-				params[1] = layer.getValue()/view.m_textureInfo.depth;
+				params[1] = layer.getValue()/float(bx::max(1, view.m_textureInfo.depth >> view.m_mip) );
 			}
 
 			bgfx::setUniform(u_params, params);
