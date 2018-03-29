@@ -1907,12 +1907,13 @@ namespace bgfx { namespace d3d12
 				, getCPUHandleHeapStart(m_dsvDescriptorHeap)
 				);
 
+			m_commandList = m_cmd.alloc();
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
 				m_frameBuffers[ii].postReset();
 			}
 
-			m_commandList = m_cmd.alloc();
 //			capturePostReset();
 		}
 
@@ -4868,6 +4869,15 @@ data.NumQualityLevels = 0;
 							, &dsvDesc
 							, dsvDescriptor
 							);
+
+						s_renderD3D12->m_commandList->ClearDepthStencilView(
+							  dsvDescriptor
+							, D3D12_CLEAR_FLAG_DEPTH|D3D12_CLEAR_FLAG_STENCIL
+							, 0.0f
+							, 0
+							, 0
+							, NULL
+							);
 					}
 					else
 					{
@@ -4922,6 +4932,15 @@ data.NumQualityLevels = 0;
 							, &desc
 							, rtv
 							);
+
+						float rgba[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+						s_renderD3D12->m_commandList->ClearRenderTargetView(
+							  rtv
+							, rgba
+							, 0
+							, NULL
+							);
+
 						m_num++;
 					}
 				}
