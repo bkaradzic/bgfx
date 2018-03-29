@@ -169,8 +169,8 @@ namespace bgfx
 			NvApiStatus status = nvApiGpuGetMemoryInfo(m_nvGpu, &memInfo);
 			if (NVAPI_OK == status)
 			{
-				_gpuMemoryMax  = 1024 *  memInfo.availableDedicatedVideoMemory;
-				_gpuMemoryUsed = 1024 * (memInfo.availableDedicatedVideoMemory - memInfo.curAvailableDedicatedVideoMemory);
+				_gpuMemoryMax  = 1024 * int64_t(memInfo.availableDedicatedVideoMemory);
+				_gpuMemoryUsed = 1024 * int64_t(memInfo.availableDedicatedVideoMemory - memInfo.curAvailableDedicatedVideoMemory);
 //				BX_TRACE("            dedicatedVideoMemory: %d KiB", memInfo.dedicatedVideoMemory);
 //				BX_TRACE("   availableDedicatedVideoMemory: %d KiB", memInfo.availableDedicatedVideoMemory);
 //				BX_TRACE("               systemVideoMemory: %d KiB", memInfo.systemVideoMemory);
