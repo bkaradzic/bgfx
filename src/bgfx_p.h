@@ -2679,6 +2679,8 @@ namespace bgfx
 			, m_colorPaletteDirty(0)
 			, m_frames(0)
 			, m_debug(BGFX_DEBUG_NONE)
+			, m_rtMemoryUsed(0)
+			, m_textureMemoryUsed(0)
 			, m_renderCtx(NULL)
 			, m_renderMain(NULL)
 			, m_renderNoop(NULL)
@@ -2818,6 +2820,9 @@ namespace bgfx
 			stats.numUniforms             = m_uniformHandle.getNumHandles();
 			stats.numVertexBuffers        = m_vertexBufferHandle.getNumHandles();
 			stats.numVertexDecls          = m_vertexDeclHandle.getNumHandles();
+
+			stats.textureMemoryUsed = m_textureMemoryUsed;
+			stats.rtMemoryUsed      = m_rtMemoryUsed;
 
 			return &stats;
 		}
@@ -3869,10 +3874,21 @@ namespace bgfx
 				TextureRef& ref = m_textureRef[handle.idx];
 				ref.init(_ratio
 					, _info->format
+					, _info->storageSize
 					, imageContainer.m_numMips
 					, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
 					, _immutable
+					, 0 != (_flags & BGFX_TEXTURE_RT_MASK)
 					);
+
+				if (ref.m_rt)
+				{
+					m_rtMemoryUsed += int64_t(ref.m_storageSize);
+				}
+				else
+				{
+					m_textureMemoryUsed += int64_t(ref.m_storageSize);
+				}
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateTexture);
 				cmdbuf.write(handle);
@@ -3990,6 +4006,15 @@ namespace bgfx
 			if (0 == refs)
 			{
 				ref.m_name.clear();
+
+				if (ref.m_rt)
+				{
+					m_rtMemoryUsed -= int64_t(ref.m_storageSize);
+				}
+				else
+				{
+					m_textureMemoryUsed -= int64_t(ref.m_storageSize);
+				}
 
 				bool ok = m_submit->free(_handle); BX_UNUSED(ok);
 				BX_CHECK(ok, "Texture handle %d is already destroyed!", _handle.idx);
@@ -4648,28 +4673,34 @@ namespace bgfx
 			void init(
 				  BackbufferRatio::Enum _ratio
 				, TextureFormat::Enum _format
+				, uint32_t _storageSize
 				, uint8_t _numMips
 				, bool _ptrPending
 				, bool _immutable
+				, bool _rt
 				)
 			{
-				m_ptr       = _ptrPending ? (void*)UINTPTR_MAX : NULL;
-				m_refCount  = 1;
-				m_bbRatio   = uint8_t(_ratio);
-				m_format    = uint8_t(_format);
-				m_numMips   = _numMips;
-				m_owned     = false;
-				m_immutable = _immutable;
+				m_ptr         = _ptrPending ? (void*)UINTPTR_MAX : NULL;
+				m_storageSize = _storageSize;
+				m_refCount    = 1;
+				m_bbRatio     = uint8_t(_ratio);
+				m_format      = uint8_t(_format);
+				m_numMips     = _numMips;
+				m_owned       = false;
+				m_immutable   = _immutable;
+				m_rt          = _rt;
 			}
 
-			String  m_name;
-			void*   m_ptr;
-			int16_t m_refCount;
-			uint8_t m_bbRatio;
-			uint8_t m_format;
-			uint8_t m_numMips;
-			bool    m_owned;
-			bool    m_immutable;
+			String   m_name;
+			void*    m_ptr;
+			uint32_t m_storageSize;
+			int16_t  m_refCount;
+			uint8_t  m_bbRatio;
+			uint8_t  m_format;
+			uint8_t  m_numMips;
+			bool     m_owned;
+			bool     m_immutable;
+			bool     m_rt;
 		};
 
 		struct FrameBufferRef
@@ -4710,6 +4741,9 @@ namespace bgfx
 		int64_t  m_frameTimeLast;
 		uint32_t m_frames;
 		uint32_t m_debug;
+
+		int64_t m_rtMemoryUsed;
+		int64_t m_textureMemoryUsed;
 
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;

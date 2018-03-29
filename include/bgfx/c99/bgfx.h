@@ -386,6 +386,9 @@ typedef struct bgfx_stats
     uint16_t numVertexBuffers;
     uint16_t numVertexDecls;
 
+    int64_t textureMemoryUsed;
+    int64_t rtMemoryUsed;
+
     int64_t gpuMemoryMax;
     int64_t gpuMemoryUsed;
 
