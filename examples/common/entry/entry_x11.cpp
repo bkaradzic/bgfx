@@ -346,7 +346,7 @@ namespace entry
 		int32_t run(int _argc, const char* const* _argv)
 		{
 			XInitThreads();
-			m_display = XOpenDisplay(0);
+			m_display = XOpenDisplay(NULL);
 
 			int32_t screen = DefaultScreen(m_display);
 			m_depth  = DefaultDepth(m_display, screen);
