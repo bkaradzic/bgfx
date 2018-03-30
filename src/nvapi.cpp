@@ -119,11 +119,11 @@ namespace bgfx
 
 			if (initialized)
 			{
-				nvApiInitialize       = (PFN_NVAPI_INITIALIZE       )nvApiQueryInterface(NVAPI_INITIALIZE);
-				nvApiUnload           = (PFN_NVAPI_UNLOAD           )nvApiQueryInterface(NVAPI_UNLOAD);
-				nvApiEnumPhysicalGPUs = (PFN_NVAPI_ENUMPHYSICALGPUS )nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
-				nvApiGpuGetMemoryInfo = (PFN_NVAPI_GPUGETMEMORYINFO )nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
-				nvApiGpuGetFullName   = (PFN_NVAPI_GPUGETFULLNAME   )nvApiQueryInterface(NVAPI_GPUGETFULLNAME);
+				nvApiInitialize       = (PFN_NVAPI_INITIALIZE      )nvApiQueryInterface(NVAPI_INITIALIZE);
+				nvApiUnload           = (PFN_NVAPI_UNLOAD          )nvApiQueryInterface(NVAPI_UNLOAD);
+				nvApiEnumPhysicalGPUs = (PFN_NVAPI_ENUMPHYSICALGPUS)nvApiQueryInterface(NVAPI_ENUMPHYSICALGPUS);
+				nvApiGpuGetMemoryInfo = (PFN_NVAPI_GPUGETMEMORYINFO)nvApiQueryInterface(NVAPI_GPUGETMEMORYINFO);
+				nvApiGpuGetFullName   = (PFN_NVAPI_GPUGETFULLNAME  )nvApiQueryInterface(NVAPI_GPUGETFULLNAME);
 
 				nvApiD3D11MultiDrawInstancedIndirect        = (PFN_NVAPI_MULTIDRAWINDIRECT)nvApiQueryInterface(NVAPI_MULTIDRAWINSTANCEDINDIRECT);
 				nvApiD3D11MultiDrawIndexedInstancedIndirect = (PFN_NVAPI_MULTIDRAWINDIRECT)nvApiQueryInterface(NVAPI_MULTIDRAWINDEXEDINSTANCEDINDIRECT);
