@@ -676,6 +676,8 @@ namespace bgfx { namespace d3d12
 
 			errorState = ErrorState::LoadedKernel32;
 
+			m_nvapi.init();
+
 			m_d3d12dll = bx::dlopen("d3d12.dll");
 			if (NULL == m_d3d12dll)
 			{
@@ -724,7 +726,7 @@ namespace bgfx { namespace d3d12
 				{
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 					{
-						debug0->EnableDebugLayer();
+//						debug0->EnableDebugLayer();
 
 #if BX_PLATFORM_WINDOWS
 						{
@@ -789,6 +791,11 @@ namespace bgfx { namespace d3d12
 			}
 
 			m_dxgi.update(m_device);
+
+			if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
+			{
+				m_nvapi.shutdown();
+			}
 
 			{
 				uint32_t numNodes = m_device->GetNodeCount();
@@ -1201,6 +1208,13 @@ namespace bgfx { namespace d3d12
 				}
 			}
 
+			if (m_nvapi.isInitialized() )
+			{
+				finish();
+				m_commandList = m_cmd.alloc();
+				m_nvapi.initAftermath(m_device, m_commandList);
+			}
+
 			g_internalData.context = m_device;
 			return true;
 
@@ -1229,6 +1243,8 @@ namespace bgfx { namespace d3d12
 #endif // USE_D3D12_DYNAMIC_LIB
 			case ErrorState::Default:
 			default:
+				m_nvapi.shutdown();
+
 				unloadRenderDoc(m_renderdocdll);
 				bx::dlclose(m_winPixEvent);
 				m_winPixEvent = NULL;
@@ -1286,13 +1302,13 @@ namespace bgfx { namespace d3d12
 			}
 
 			DX_RELEASE(m_rootSignature, 0);
-
 			DX_RELEASE(m_swapChain, 0);
 
 			m_cmd.shutdown();
 
 			DX_RELEASE(m_device,  0);
 
+			m_nvapi.shutdown();
 			m_dxgi.shutdown();
 
 			unloadRenderDoc(m_renderdocdll);
@@ -2976,6 +2992,7 @@ data.NumQualityLevels = 0;
 		}
 
 		Dxgi m_dxgi;
+		NvApi m_nvapi;
 
 		void* m_kernel32dll;
 		void* m_d3d12dll;

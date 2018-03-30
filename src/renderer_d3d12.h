@@ -49,6 +49,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
 #include "debug_renderdoc.h"
+#include "nvapi.h"
 #include "dxgi.h"
 
 #if BGFX_CONFIG_DEBUG_PIX
