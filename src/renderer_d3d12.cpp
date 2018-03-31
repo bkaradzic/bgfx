@@ -738,6 +738,8 @@ namespace bgfx { namespace d3d12
 //								debug1->SetEnableGPUBasedValidation(true);
 //								debug1->SetEnableSynchronizedCommandQueueValidation(true);
 							}
+
+							DX_RELEASE(debug1, 1);
 						}
 #elif BX_PLATFORM_XBOXONE
 						debug0->SetProcessDebugFlags(D3D12_PROCESS_DEBUG_FLAG_DEBUG_LAYER_ENABLED);
@@ -751,8 +753,9 @@ namespace bgfx { namespace d3d12
 						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED);
 					}
 #endif // BX_PLATFORM_XBOXONE
-				}
 
+					DX_RELEASE(debug0, 0);
+				}
 			}
 
 			{
@@ -1306,7 +1309,7 @@ namespace bgfx { namespace d3d12
 
 			m_cmd.shutdown();
 
-			DX_RELEASE(m_device,  0);
+			DX_RELEASE(m_device, 0);
 
 			m_nvapi.shutdown();
 			m_dxgi.shutdown();
@@ -5783,6 +5786,7 @@ data.NumQualityLevels = 0;
 							currentState.clear();
 							currentState.m_scissor = !draw.m_scissor;
 							currentBind.clear();
+							commandListChanged = true;
 						}
 
 						continue;
