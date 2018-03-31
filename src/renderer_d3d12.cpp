@@ -5520,6 +5520,8 @@ data.NumQualityLevels = 0;
 					m_batch.flush(m_commandList, true);
 					kick();
 
+					commandListChanged = true;
+
 					view = key.m_view;
 					currentPso = NULL;
 					currentSamplerStateIdx = kInvalidHandle;
@@ -5585,6 +5587,13 @@ data.NumQualityLevels = 0;
 							PIX3_ENDEVENT(m_commandList);
 							PIX3_BEGINEVENT(m_commandList, D3DCOLOR_COMPUTE, viewName);
 						}
+
+						commandListChanged = true;
+					}
+
+					if (commandListChanged)
+					{
+						commandListChanged = false;
 
 						m_commandList->SetComputeRootSignature(m_rootSignature);
 						ID3D12DescriptorHeap* heaps[] = {
@@ -5751,10 +5760,7 @@ data.NumQualityLevels = 0;
 
 				if (wasCompute)
 				{
-					if (wasCompute)
-					{
-						wasCompute = false;
-					}
+					wasCompute = false;
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 					{
