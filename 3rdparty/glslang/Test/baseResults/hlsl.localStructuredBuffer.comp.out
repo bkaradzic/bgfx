@@ -13,7 +13,7 @@ ERROR: node is still EOpNull!
 0:?     Sequence
 0:2      Function Call: @main( ( temp void)
 0:?   Linker Objects
-0:?     'srt0' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
+0:?     'srt0' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
 
 
 Linked compute stage:
@@ -29,6 +29,6 @@ ERROR: node is still EOpNull!
 0:?     Sequence
 0:2      Function Call: @main( ( temp void)
 0:?   Linker Objects
-0:?     'srt0' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
+0:?     'srt0' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
 
 SPIR-V is not generated for failed compile or link

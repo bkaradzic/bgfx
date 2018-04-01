@@ -527,6 +527,32 @@ enum TOperator {
     EOpSubgroupQuadSwapHorizontal,
     EOpSubgroupQuadSwapVertical,
     EOpSubgroupQuadSwapDiagonal,
+
+#ifdef NV_EXTENSIONS
+    EOpSubgroupPartition,
+    EOpSubgroupPartitionedAdd,
+    EOpSubgroupPartitionedMul,
+    EOpSubgroupPartitionedMin,
+    EOpSubgroupPartitionedMax,
+    EOpSubgroupPartitionedAnd,
+    EOpSubgroupPartitionedOr,
+    EOpSubgroupPartitionedXor,
+    EOpSubgroupPartitionedInclusiveAdd,
+    EOpSubgroupPartitionedInclusiveMul,
+    EOpSubgroupPartitionedInclusiveMin,
+    EOpSubgroupPartitionedInclusiveMax,
+    EOpSubgroupPartitionedInclusiveAnd,
+    EOpSubgroupPartitionedInclusiveOr,
+    EOpSubgroupPartitionedInclusiveXor,
+    EOpSubgroupPartitionedExclusiveAdd,
+    EOpSubgroupPartitionedExclusiveMul,
+    EOpSubgroupPartitionedExclusiveMin,
+    EOpSubgroupPartitionedExclusiveMax,
+    EOpSubgroupPartitionedExclusiveAnd,
+    EOpSubgroupPartitionedExclusiveOr,
+    EOpSubgroupPartitionedExclusiveXor,
+#endif
+
     EOpSubgroupGuardStop,
 
 #ifdef AMD_EXTENSIONS
@@ -729,7 +755,11 @@ enum TOperator {
     // Array operators
     //
 
-    EOpArrayLength,      // "Array" distinguishes from length(v) built-in function, but it applies to vectors and matrices as well.
+    // Can apply to arrays, vectors, or matrices.
+    // Can be decomposed to a constant at compile time, but this does not always happen,
+    // due to link-time effects. So, consumer can expect either a link-time sized or
+    // run-time sized array.
+    EOpArrayLength,
 
     //
     // Image operations

@@ -243,7 +243,7 @@ void TParseContextBase::checkIndex(const TSourceLoc& loc, const TType& type, int
         error(loc, "", "[", "index out of range '%d'", index);
         index = 0;
     } else if (type.isArray()) {
-        if (type.isExplicitlySizedArray() && index >= type.getOuterArraySize()) {
+        if (type.isSizedArray() && index >= type.getOuterArraySize()) {
             error(loc, "", "[", "array index out of range '%d'", index);
             index = type.getOuterArraySize() - 1;
         }

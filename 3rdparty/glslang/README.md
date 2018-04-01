@@ -240,8 +240,11 @@ bool InitializeProcess();
 void FinalizeProcess();
 
 class TShader
+    setStrings(...);
+    setEnvInput(EShSourceHlsl or EShSourceGlsl, stage,  EShClientVulkan or EShClientOpenGL, 100);
+    setEnvClient(EShClientVulkan or EShClientOpenGL, EShTargetVulkan_1_0 or EShTargetVulkan_1_1 or EShTargetOpenGL_450);
+    setEnvTarget(EShTargetSpv, EShTargetSpv_1_0 or EShTargetSpv_1_3);
     bool parse(...);
-    void setStrings(...);
     const char* getInfoLog();
 
 class TProgram

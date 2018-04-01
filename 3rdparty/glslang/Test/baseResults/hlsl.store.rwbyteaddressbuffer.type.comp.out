@@ -26,8 +26,8 @@ local_size = (64, 1, 1)
 0:7                2 (const int)
 0:7          move second child to first child ( temp uint)
 0:7            indirect index (layout( row_major std430) buffer uint)
-0:7              @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
-0:7                'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
+0:7              @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
+0:7                'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
 0:7                Constant:
 0:7                  0 (const uint)
 0:7              'byteAddrTemp' ( temp int)
@@ -42,7 +42,7 @@ local_size = (64, 1, 1)
 0:5      Function Call: @main(vu3; ( temp void)
 0:?         'dispatchThreadID' ( temp 3-component vector of uint)
 0:?   Linker Objects
-0:?     'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
+0:?     'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
 0:?     'dispatchThreadID' ( in 3-component vector of uint GlobalInvocationID)
 
 
@@ -76,8 +76,8 @@ local_size = (64, 1, 1)
 0:7                2 (const int)
 0:7          move second child to first child ( temp uint)
 0:7            indirect index (layout( row_major std430) buffer uint)
-0:7              @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of uint)
-0:7                'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
+0:7              @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
+0:7                'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
 0:7                Constant:
 0:7                  0 (const uint)
 0:7              'byteAddrTemp' ( temp int)
@@ -92,7 +92,7 @@ local_size = (64, 1, 1)
 0:5      Function Call: @main(vu3; ( temp void)
 0:?         'dispatchThreadID' ( temp 3-component vector of uint)
 0:?   Linker Objects
-0:?     'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of uint @data})
+0:?     'buffer' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
 0:?     'dispatchThreadID' ( in 3-component vector of uint GlobalInvocationID)
 
 // Module Version 10000

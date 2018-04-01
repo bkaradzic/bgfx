@@ -599,6 +599,31 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpSubgroupQuadSwapVertical:        out.debug << "subgroupQuadSwapVertical";        break;
     case EOpSubgroupQuadSwapDiagonal:        out.debug << "subgroupQuadSwapDiagonal";        break;
 
+#ifdef NV_EXTENSIONS
+    case EOpSubgroupPartition:                          out.debug << "subgroupPartitionNV";                          break;
+    case EOpSubgroupPartitionedAdd:                     out.debug << "subgroupPartitionedAddNV";                     break;
+    case EOpSubgroupPartitionedMul:                     out.debug << "subgroupPartitionedMulNV";                     break;
+    case EOpSubgroupPartitionedMin:                     out.debug << "subgroupPartitionedMinNV";                     break;
+    case EOpSubgroupPartitionedMax:                     out.debug << "subgroupPartitionedMaxNV";                     break;
+    case EOpSubgroupPartitionedAnd:                     out.debug << "subgroupPartitionedAndNV";                     break;
+    case EOpSubgroupPartitionedOr:                      out.debug << "subgroupPartitionedOrNV";                      break;
+    case EOpSubgroupPartitionedXor:                     out.debug << "subgroupPartitionedXorNV";                     break;
+    case EOpSubgroupPartitionedInclusiveAdd:            out.debug << "subgroupPartitionedInclusiveAddNV";            break;
+    case EOpSubgroupPartitionedInclusiveMul:            out.debug << "subgroupPartitionedInclusiveMulNV";            break;
+    case EOpSubgroupPartitionedInclusiveMin:            out.debug << "subgroupPartitionedInclusiveMinNV";            break;
+    case EOpSubgroupPartitionedInclusiveMax:            out.debug << "subgroupPartitionedInclusiveMaxNV";            break;
+    case EOpSubgroupPartitionedInclusiveAnd:            out.debug << "subgroupPartitionedInclusiveAndNV";            break;
+    case EOpSubgroupPartitionedInclusiveOr:             out.debug << "subgroupPartitionedInclusiveOrNV";             break;
+    case EOpSubgroupPartitionedInclusiveXor:            out.debug << "subgroupPartitionedInclusiveXorNV";            break;
+    case EOpSubgroupPartitionedExclusiveAdd:            out.debug << "subgroupPartitionedExclusiveAddNV";            break;
+    case EOpSubgroupPartitionedExclusiveMul:            out.debug << "subgroupPartitionedExclusiveMulNV";            break;
+    case EOpSubgroupPartitionedExclusiveMin:            out.debug << "subgroupPartitionedExclusiveMinNV";            break;
+    case EOpSubgroupPartitionedExclusiveMax:            out.debug << "subgroupPartitionedExclusiveMaxNV";            break;
+    case EOpSubgroupPartitionedExclusiveAnd:            out.debug << "subgroupPartitionedExclusiveAndNV";            break;
+    case EOpSubgroupPartitionedExclusiveOr:             out.debug << "subgroupPartitionedExclusiveOrNV";             break;
+    case EOpSubgroupPartitionedExclusiveXor:            out.debug << "subgroupPartitionedExclusiveXorNV";            break;
+#endif
+
     case EOpClip:                   out.debug << "clip";                  break;
     case EOpIsFinite:               out.debug << "isfinite";              break;
     case EOpLog10:                  out.debug << "log10";                 break;

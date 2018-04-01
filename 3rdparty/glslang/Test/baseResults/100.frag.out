@@ -395,7 +395,7 @@ ERROR: node is still EOpNull!
 0:?     'v' ( smooth in 3-element array of mediump 4-component vector of float)
 0:?     'f' ( invariant global mediump float)
 0:?     'anon@0' (layout( column_major shared) uniform block{layout( column_major shared) uniform mediump int x})
-0:?     'fa' ( global implicitly-sized array of mediump float)
+0:?     'fa' ( global unsized 1-element array of mediump float)
 0:?     'f13' ( invariant global mediump float)
 0:?     'fi' ( invariant temp mediump float)
 0:?     'av' ( invariant smooth in mediump 4-component vector of float)

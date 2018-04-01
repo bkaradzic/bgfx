@@ -320,7 +320,7 @@ ERROR: node is still EOpNull!
 0:?     'factor' (layout( location=3 index=1) out 4-component vector of float)
 0:?     'colors' (layout( location=2) out 3-element array of 4-component vector of float)
 0:?     'gl_FragDepth' ( gl_FragDepth float FragDepth)
-0:?     'anon@2' ( in block{ in float FogFragCoord gl_FogFragCoord,  in implicitly-sized array of 4-component vector of float TexCoord gl_TexCoord,  flat in 4-component vector of float Color gl_Color,  in 4-component vector of float SecondaryColor gl_SecondaryColor})
+0:?     'anon@2' ( in block{ in float FogFragCoord gl_FogFragCoord,  in unsized 1-element array of 4-component vector of float TexCoord gl_TexCoord,  flat in 4-component vector of float Color gl_Color,  in 4-component vector of float SecondaryColor gl_SecondaryColor})
 
 
 Linked fragment stage:

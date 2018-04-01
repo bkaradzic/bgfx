@@ -215,6 +215,7 @@ enum EShMessages {
     EShMsgHlslOffsets      = (1 << 9),  // allow block offsets to follow HLSL rules instead of GLSL rules
     EShMsgDebugInfo        = (1 << 10), // save debug information
     EShMsgHlslEnable16BitTypes  = (1 << 11), // enable use of 16-bit types in SPIR-V for HLSL
+    EShMsgHlslLegalization  = (1 << 12), // enable HLSL Legalization messages
 };
 
 //
@@ -670,6 +671,7 @@ public:
     int getUniformBlockSize(int blockIndex) const;         // can be used for glGetActiveUniformBlockiv(UNIFORM_BLOCK_DATA_SIZE)
     int getUniformIndex(const char* name) const;           // can be used for glGetUniformIndices()
     int getUniformBinding(int index) const;                // returns the binding number
+	int getUniformBlockBinding(int index) const;           // returns the block binding number
     int getUniformBlockIndex(int index) const;             // can be used for glGetActiveUniformsiv(GL_UNIFORM_BLOCK_INDEX)
     int getUniformBlockCounterIndex(int index) const;      // returns block index of associated counter.
     int getUniformType(int index) const;                   // can be used for glGetActiveUniformsiv(GL_UNIFORM_TYPE)

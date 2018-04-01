@@ -35,8 +35,8 @@ gl_FragCoord origin is upper left
 0:20        Function Call: @main(vf4; ( temp 4-component vector of float)
 0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'buffer1' (layout( set=0 binding=1 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
-0:?     'buffer3' (layout( set=2 binding=3 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
+0:?     'buffer1' (layout( set=0 binding=1 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of structure{ temp 2-component vector of float f} @data})
+0:?     'buffer3' (layout( set=2 binding=3 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of structure{ temp 2-component vector of float f} @data})
 0:?     'attach' ( uniform texture2D)
 0:?     'ci' ( specialization-constant const int)
 0:?       11 (const int)
@@ -84,8 +84,8 @@ gl_FragCoord origin is upper left
 0:20        Function Call: @main(vf4; ( temp 4-component vector of float)
 0:?           'input' ( temp 4-component vector of float)
 0:?   Linker Objects
-0:?     'buffer1' (layout( set=0 binding=1 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
-0:?     'buffer3' (layout( set=2 binding=3 row_major std430) readonly buffer block{layout( row_major std430) buffer implicitly-sized array of structure{ temp 2-component vector of float f} @data})
+0:?     'buffer1' (layout( set=0 binding=1 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of structure{ temp 2-component vector of float f} @data})
+0:?     'buffer3' (layout( set=2 binding=3 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of structure{ temp 2-component vector of float f} @data})
 0:?     'attach' ( uniform texture2D)
 0:?     'ci' ( specialization-constant const int)
 0:?       11 (const int)

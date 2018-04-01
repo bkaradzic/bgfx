@@ -8,8 +8,8 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:8      move second child to first child ( temp 4-component vector of float)
 0:8        indirect index (layout( row_major std430) buffer 4-component vector of float)
-0:8          @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of 4-component vector of float)
-0:8            'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:8          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of 4-component vector of float)
+0:8            'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:8            Constant:
 0:8              0 (const uint)
 0:8          AtomicAdd ( temp uint)
@@ -26,8 +26,8 @@ gl_FragCoord origin is upper left
 0:?           4.000000
 0:10      Branch: Return with expression
 0:10        indirect index (layout( row_major std430) buffer 4-component vector of float)
-0:10          @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of 4-component vector of float)
-0:10            'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:10          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of 4-component vector of float)
+0:10            'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:10            Constant:
 0:10              0 (const uint)
 0:10          add ( temp uint)
@@ -51,11 +51,11 @@ gl_FragCoord origin is upper left
 0:7        Function Call: @main(u1; ( temp 4-component vector of float)
 0:?           'pos' ( temp uint)
 0:?   Linker Objects
-0:?     'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:?     'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     'sbuf_a@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
-0:?     'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:?     'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     'sbuf_c@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
-0:?     'sbuf_unused' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:?     'sbuf_unused' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'pos' (layout( location=0) flat in uint)
 
@@ -72,8 +72,8 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:8      move second child to first child ( temp 4-component vector of float)
 0:8        indirect index (layout( row_major std430) buffer 4-component vector of float)
-0:8          @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of 4-component vector of float)
-0:8            'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:8          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of 4-component vector of float)
+0:8            'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:8            Constant:
 0:8              0 (const uint)
 0:8          AtomicAdd ( temp uint)
@@ -90,8 +90,8 @@ gl_FragCoord origin is upper left
 0:?           4.000000
 0:10      Branch: Return with expression
 0:10        indirect index (layout( row_major std430) buffer 4-component vector of float)
-0:10          @data: direct index for structure (layout( row_major std430) buffer implicitly-sized array of 4-component vector of float)
-0:10            'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:10          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of 4-component vector of float)
+0:10            'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:10            Constant:
 0:10              0 (const uint)
 0:10          add ( temp uint)
@@ -115,11 +115,11 @@ gl_FragCoord origin is upper left
 0:7        Function Call: @main(u1; ( temp 4-component vector of float)
 0:?           'pos' ( temp uint)
 0:?   Linker Objects
-0:?     'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:?     'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     'sbuf_a@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
-0:?     'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:?     'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     'sbuf_c@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
-0:?     'sbuf_unused' (layout( row_major std430) buffer block{layout( row_major std430) buffer implicitly-sized array of 4-component vector of float @data})
+0:?     'sbuf_unused' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'pos' (layout( location=0) flat in uint)
 

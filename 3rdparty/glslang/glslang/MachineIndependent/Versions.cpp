@@ -226,6 +226,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_shader_atomic_int64]                   = EBhDisable;
     extensionBehavior[E_GL_NV_conservative_raster_underestimation]   = EBhDisable;
     extensionBehavior[E_GL_NV_shader_noperspective_interpolation]    = EBhDisable;
+    extensionBehavior[E_GL_NV_shader_subgroup_partitioned]           = EBhDisable;
 #endif
 
     // AEP
@@ -389,6 +390,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_viewport_array2 1\n"
             "#define GL_NV_shader_atomic_int64 1\n"
             "#define GL_NV_conservative_raster_underestimation 1\n"
+            "#define GL_NV_shader_subgroup_partitioned 1\n"
 #endif
             "#define GL_KHX_shader_explicit_arithmetic_types 1\n"
             "#define GL_KHX_shader_explicit_arithmetic_types_int8 1\n"
@@ -750,6 +752,10 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
     else if (strcmp(extension, "GL_KHR_shader_subgroup_quad") == 0)
         updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
+#ifdef NV_EXTENSIONS
+    else if (strcmp(extension, "GL_NV_shader_subgroup_partitioned") == 0)
+        updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
+#endif
 }
 
 void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBehavior behavior)

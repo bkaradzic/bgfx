@@ -9,7 +9,7 @@ ERROR: node is still EOpNull!
 0:8  Function Definition: main( ( global void)
 0:8    Function Parameters: 
 0:?   Linker Objects
-0:?     'gl_out' ( out implicitly-sized array of block{ out 4-component vector of float Position gl_Position,  out float PointSize gl_PointSize,  out implicitly-sized array of float ClipDistance gl_ClipDistance})
+0:?     'gl_out' ( out unsized 1-element array of block{ out 4-component vector of float Position gl_Position,  out float PointSize gl_PointSize,  out unsized 1-element array of float ClipDistance gl_ClipDistance})
 0:?     'outa' ( global 1-element array of int)
 0:?     'patchOut' ( patch out 4-component vector of float)
 

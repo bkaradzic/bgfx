@@ -7,7 +7,7 @@ ERROR: 0:56: 'constructor' :  cannot convert parameter 2 from ' const 3-element 
 ERROR: 0:60: 'constructor' :  cannot convert parameter 2 from ' const 2-element array of 4-component vector of float' to ' temp 3-element array of 4-component vector of float'
 ERROR: 0:64: '=' :  cannot convert from ' const 3-element array of 2-element array of 4-component vector of float' to ' temp 4-element array of 2-element array of 4-component vector of float'
 ERROR: 0:70: 'assign' :  cannot convert from ' global 4-element array of 7-element array of float' to ' global 5-element array of 7-element array of float'
-ERROR: 0:71: 'assign' :  cannot convert from ' global 4-element array of 7-element array of float' to ' global implicitly-sized array of 7-element array of float'
+ERROR: 0:71: 'assign' :  cannot convert from ' global 4-element array of 7-element array of float' to ' global unsized 1-element array of 7-element array of float'
 ERROR: 0:73: 'foo' : no matching overloaded function found 
 ERROR: 0:78: '==' :  wrong operand types: no operation '==' exists that takes a left-hand operand of type ' global 4-element array of 7-element array of float' and a right operand of type ' global 5-element array of 7-element array of float' (or there is no acceptable conversion)
 ERROR: 0:84: '[' :  array index out of range '5'
@@ -335,7 +335,7 @@ ERROR: node is still EOpNull!
 0:69        Function Call: foo(f1[5][7]; ( global 4-element array of 7-element array of float)
 0:69          'g5' ( global 5-element array of 7-element array of float)
 0:70      'g5' ( global 5-element array of 7-element array of float)
-0:71      'gu' ( global implicitly-sized array of 7-element array of float)
+0:71      'gu' ( global unsized 1-element array of 7-element array of float)
 0:73      Constant:
 0:73        0.000000
 0:74      Function Call: bar(f1[5][7]; ( global void)
@@ -404,8 +404,8 @@ ERROR: node is still EOpNull!
 0:98        0.000000
 0:?   Linker Objects
 0:?     'many' ( global 1-element array of 2-element array of 3-element array of 4-element array of 5-element array of 6-element array of float)
-0:?     'gu' ( global implicitly-sized array of 7-element array of float)
-0:?     'gimp' ( global implicitly-sized array of 1-element array of float)
+0:?     'gu' ( global unsized 1-element array of 7-element array of float)
+0:?     'gimp' ( global unsized 1-element array of 1-element array of float)
 0:?     'g4' ( global 4-element array of 7-element array of float)
 0:?     'g5' ( global 5-element array of 7-element array of float)
 

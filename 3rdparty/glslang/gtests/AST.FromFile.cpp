@@ -199,6 +199,7 @@ INSTANTIATE_TEST_CASE_P(
         "loopsArtificial.frag",
         "matrix.frag",
         "matrix2.frag",
+        "mixedArrayDecls.frag",
         "newTexture.frag",
         "Operations.frag",
         "overlongLiteral.frag",

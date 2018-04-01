@@ -436,28 +436,20 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
             if (declaredType.getQualifier().storage == EvqTemporary && parseContext.symbolTable.atGlobalLevel())
                 declaredType.getQualifier().storage = EvqUniform;
 
+            // recognize array_specifier
+            TArraySizes* arraySizes = nullptr;
+            acceptArraySpecifier(arraySizes);
+
             // We can handle multiple variables per type declaration, so
             // the number of types can expand when arrayness is different.
             TType variableType;
             variableType.shallowCopy(declaredType);
 
-            // recognize array_specifier
-            TArraySizes* arraySizes = nullptr;
-            acceptArraySpecifier(arraySizes);
-
-            // Fix arrayness in the variableType
-            if (declaredType.isImplicitlySizedArray()) {
-                // Because "int[] a = int[2](...), b = int[3](...)" makes two arrays a and b
-                // of different sizes, for this case sharing the shallow copy of arrayness
-                // with the parseType oversubscribes it, so get a deep copy of the arrayness.
-                variableType.newArraySizes(declaredType.getArraySizes());
-            }
-            if (arraySizes || variableType.isArray()) {
-                // In the most general case, arrayness is potentially coming both from the
-                // declared type and from the variable: "int[] a[];" or just one or the other.
-                // Merge it all to the variableType, so all arrayness is part of the variableType.
-                parseContext.arrayDimMerge(variableType, arraySizes);
-            }
+            // In the most general case, arrayness is potentially coming both from the
+            // declared type and from the variable: "int[] a[];" or just one or the other.
+            // Merge it all to the variableType, so all arrayness is part of the variableType.
+            variableType.transferArraySizes(arraySizes);
+            variableType.copyArrayInnerSizes(declaredType.getArraySizes());
 
             // samplers accept immediate sampler state
             if (variableType.getBasicType() == EbtSampler) {
@@ -487,8 +479,7 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
                 else if (variableType.getBasicType() == EbtBlock) {
                     if (expressionNode)
                         parseContext.error(idToken.loc, "buffer aliasing not yet supported", "block initializer", "");
-                    parseContext.declareBlock(idToken.loc, variableType, fullName,
-                                              variableType.isArray() ? &variableType.getArraySizes() : nullptr);
+                    parseContext.declareBlock(idToken.loc, variableType, fullName);
                     parseContext.declareStructBufferCounter(idToken.loc, variableType, *fullName);
                 } else {
                     if (variableType.getQualifier().storage == EvqUniform && ! variableType.containsOpaque()) {
@@ -1036,7 +1027,7 @@ bool HlslGrammar::acceptTessellationPatchTemplateType(TType& type)
 
     TArraySizes* arraySizes = new TArraySizes;
     arraySizes->addInnerSize(size->getAsConstantUnion()->getConstArray()[0].getIConst());
-    type.newArraySizes(*arraySizes);
+    type.transferArraySizes(arraySizes);
     type.getQualifier().builtIn = patchType;
 
     if (! acceptTokenClass(EHTokRightAngle)) {
@@ -2295,9 +2286,9 @@ bool HlslGrammar::acceptStructBufferType(TType& type)
 
     // Create an unsized array out of that type.
     // TODO: does this work if it's already an array type?
-    TArraySizes unsizedArray;
-    unsizedArray.addInnerSize(UnsizedArraySize);
-    templateType->newArraySizes(unsizedArray);
+    TArraySizes* unsizedArray = new TArraySizes;
+    unsizedArray->addInnerSize(UnsizedArraySize);
+    templateType->transferArraySizes(unsizedArray);
     templateType->getQualifier().storage = storage;
 
     // field name is canonical for all structbuffers
@@ -2395,7 +2386,7 @@ bool HlslGrammar::acceptStructDeclarationList(TTypeList*& typeList, TIntermNode*
                 TArraySizes* arraySizes = nullptr;
                 acceptArraySpecifier(arraySizes);
                 if (arraySizes)
-                    typeList->back().type->newArraySizes(*arraySizes);
+                    typeList->back().type->transferArraySizes(arraySizes);
 
                 acceptPostDecls(member.type->getQualifier());
 
@@ -2578,12 +2569,12 @@ bool HlslGrammar::acceptParameterDeclaration(TFunction& function)
     TArraySizes* arraySizes = nullptr;
     acceptArraySpecifier(arraySizes);
     if (arraySizes) {
-        if (arraySizes->isImplicit()) {
-            parseContext.error(token.loc, "function parameter array cannot be implicitly sized", "", "");
+        if (arraySizes->hasUnsized()) {
+            parseContext.error(token.loc, "function parameter requires array size", "[]", "");
             return false;
         }
 
-        type->newArraySizes(*arraySizes);
+        type->transferArraySizes(arraySizes);
     }
 
     // post_decls
@@ -2954,7 +2945,7 @@ bool HlslGrammar::acceptUnaryExpression(TIntermTyped*& node)
             TArraySizes* arraySizes = nullptr;
             acceptArraySpecifier(arraySizes);
             if (arraySizes != nullptr)
-                castType.newArraySizes(*arraySizes);
+                castType.transferArraySizes(arraySizes);
             TSourceLoc loc = token.loc;
             if (acceptTokenClass(EHTokRightParen)) {
                 // We've matched "(type)" now, get the expression to cast

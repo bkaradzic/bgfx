@@ -51,4 +51,7 @@ const char* const E_SPV_NV_stereo_view_rendering = "SPV_NV_stereo_view_rendering
 //SPV_NVX_multiview_per_view_attributes
 const char* const E_SPV_NVX_multiview_per_view_attributes = "SPV_NVX_multiview_per_view_attributes";
 
+//SPV_NV_shader_subgroup_partitioned
+const char* const E_SPV_NV_shader_subgroup_partitioned = "SPV_NV_shader_subgroup_partitioned";
+
 #endif  // #ifndef GLSLextNV_H

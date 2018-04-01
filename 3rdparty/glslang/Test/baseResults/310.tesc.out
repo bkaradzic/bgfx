@@ -70,8 +70,8 @@ ERROR: node is still EOpNull!
 0:25        move second child to first child ( temp highp 4-component vector of float)
 0:25          'p' ( temp highp 4-component vector of float)
 0:25          gl_Position: direct index for structure ( in highp 4-component vector of float Position)
-0:25            direct index ( temp block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in implicitly-sized array of highp 4-component vector of float gl_PositionPerViewNV})
-0:25              'gl_in' ( in 32-element array of block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in implicitly-sized array of highp 4-component vector of float gl_PositionPerViewNV})
+0:25            direct index ( temp block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in unsized 1-element array of highp 4-component vector of float gl_PositionPerViewNV})
+0:25              'gl_in' ( in 32-element array of block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in unsized 1-element array of highp 4-component vector of float gl_PositionPerViewNV})
 0:25              Constant:
 0:25                1 (const int)
 0:25            Constant:
@@ -80,8 +80,8 @@ ERROR: node is still EOpNull!
 0:26        move second child to first child ( temp highp float)
 0:26          'ps' ( temp highp float)
 0:26          gl_PointSize: direct index for structure ( in highp float PointSize)
-0:26            direct index ( temp block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in implicitly-sized array of highp 4-component vector of float gl_PositionPerViewNV})
-0:26              'gl_in' ( in 32-element array of block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in implicitly-sized array of highp 4-component vector of float gl_PositionPerViewNV})
+0:26            direct index ( temp block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in unsized 1-element array of highp 4-component vector of float gl_PositionPerViewNV})
+0:26              'gl_in' ( in 32-element array of block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in unsized 1-element array of highp 4-component vector of float gl_PositionPerViewNV})
 0:26              Constant:
 0:26                1 (const int)
 0:26            Constant:
@@ -209,8 +209,8 @@ ERROR: node is still EOpNull!
 0:114        move second child to first child ( temp highp float)
 0:114          'ps' ( temp highp float)
 0:114          gl_PointSize: direct index for structure ( in highp float PointSize)
-0:114            direct index ( temp block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in implicitly-sized array of highp 4-component vector of float gl_PositionPerViewNV})
-0:114              'gl_in' ( in 32-element array of block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in implicitly-sized array of highp 4-component vector of float gl_PositionPerViewNV})
+0:114            direct index ( temp block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in unsized 1-element array of highp 4-component vector of float gl_PositionPerViewNV})
+0:114              'gl_in' ( in 32-element array of block{ in highp 4-component vector of float Position gl_Position,  in highp float PointSize gl_PointSize,  in highp 4-component vector of float gl_SecondaryPositionNV,  in unsized 1-element array of highp 4-component vector of float gl_PositionPerViewNV})
 0:114              Constant:
 0:114                1 (const int)
 0:114            Constant:
@@ -357,7 +357,7 @@ ERROR: node is still EOpNull!
 0:?     'inb' ( in 32-element array of highp 2-component vector of float)
 0:?     'inc' ( in 32-element array of highp 2-component vector of float)
 0:?     'ind' ( in 32-element array of highp 2-component vector of float)
-0:?     'implA' ( patch out implicitly-sized array of highp float)
+0:?     'implA' ( patch out unsized 1-element array of highp float)
 0:?     'ivla' (layout( location=3) in 32-element array of highp 4-component vector of float)
 0:?     'ivlb' (layout( location=4) in 32-element array of highp 4-component vector of float)
 0:?     'ivlc' (layout( location=4) in 32-element array of highp 4-component vector of float)
@@ -372,7 +372,7 @@ ERROR: node is still EOpNull!
 0:?     'misSized' ( out 5-element array of highp float)
 0:?     'okaySize' ( out 4-element array of highp float)
 0:?     'pv3' ( noContraction temp highp 3-component vector of float)
-0:?     'badpatchIName' ( patch out implicitly-sized array of block{ out highp float f})
+0:?     'badpatchIName' ( patch out unsized 1-element array of block{ out highp float f})
 0:?     'patchIName' ( patch out 4-element array of block{ out highp float f})
 
 

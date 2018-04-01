@@ -19,7 +19,7 @@ ERROR: node is still EOpNull!
 0:?   Linker Objects
 0:?     'gl_FragDepth' ( gl_FragDepth float FragDepth)
 0:?     'depth' ( smooth in float)
-0:?     'a' (layout( binding=0 offset=0) uniform implicitly-sized array of atomic_uint)
+0:?     'a' (layout( binding=0 offset=0) uniform unsized 1-element array of atomic_uint)
 
 
 Linked fragment stage:

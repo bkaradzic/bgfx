@@ -705,12 +705,6 @@ TIntermUnary* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     if (node->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*newNode))
         newNode->getWritableType().getQualifier().makeSpecConstant();
 
-    // TODO: it seems that some unary folding operations should occur here, but are not
-
-    // Propagate specialization-constant-ness, if allowed
-    if (node->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*newNode))
-        newNode->getWritableType().getQualifier().makeSpecConstant();
-
     return newNode;
 }
 
@@ -1425,7 +1419,7 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                                 extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_float32) ||
                                 extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_float64);
 
-    if(explicitTypesEnabled) {
+    if (explicitTypesEnabled) {
         // integral promotions
         if (isIntegralPromotion(from, to)) {
             return true;

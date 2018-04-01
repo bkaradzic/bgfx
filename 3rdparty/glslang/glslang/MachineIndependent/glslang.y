@@ -934,13 +934,15 @@ parameter_declarator
             parseContext.profileRequires($1.loc, EEsProfile, 300, 0, "arrayed type");
             parseContext.arraySizeRequiredCheck($1.loc, *$1.arraySizes);
         }
-        parseContext.arrayDimCheck($2.loc, $1.arraySizes, $3.arraySizes);
+        TType* type = new TType($1);
+        type->transferArraySizes($3.arraySizes);
+        type->copyArrayInnerSizes($1.arraySizes);
 
+        parseContext.arrayOfArrayVersionCheck($2.loc, type->getArraySizes());
         parseContext.arraySizeRequiredCheck($3.loc, *$3.arraySizes);
         parseContext.reservedErrorCheck($2.loc, *$2.string);
 
-        TParameter param = { $2.string, new TType($1)};
-        parseContext.arrayDimMerge(*param.type, $3.arraySizes);
+        TParameter param = { $2.string, type };
 
         $$.loc = $2.loc;
         $$.param = param;
@@ -966,7 +968,7 @@ parameter_declaration
         $$ = $1;
 
         parseContext.parameterTypeCheck($1.loc, EvqIn, *$1.param.type);
-        parseContext.paramCheckFix($1.loc, EvqTemporary, *$$.param.type);
+        parseContext.paramCheckFixStorage($1.loc, EvqTemporary, *$$.param.type);
         parseContext.precisionQualifierCheck($$.loc, $$.param.type->getBasicType(), $$.param.type->getQualifier());
     }
     //
@@ -986,7 +988,7 @@ parameter_declaration
         $$ = $1;
 
         parseContext.parameterTypeCheck($1.loc, EvqIn, *$1.param.type);
-        parseContext.paramCheckFix($1.loc, EvqTemporary, *$$.param.type);
+        parseContext.paramCheckFixStorage($1.loc, EvqTemporary, *$$.param.type);
         parseContext.precisionQualifierCheck($$.loc, $$.param.type->getBasicType(), $$.param.type->getQualifier());
     }
     ;
@@ -1075,7 +1077,7 @@ fully_specified_type
         }
 
         if ($2.arraySizes && parseContext.arrayQualifierError($2.loc, $1.qualifier))
-            $2.arraySizes = 0;
+            $2.arraySizes = nullptr;
 
         parseContext.checkNoShaderLayouts($2.loc, $1.shaderQualifiers);
         $2.shaderQualifiers.merge($1.shaderQualifiers);
@@ -1352,7 +1354,7 @@ type_specifier
         $$.qualifier.precision = parseContext.getDefaultPrecision($$);
     }
     | type_specifier_nonarray array_specifier {
-        parseContext.arrayDimCheck($2.loc, $2.arraySizes, 0);
+        parseContext.arrayOfArrayVersionCheck($2.loc, $2.arraySizes);
         $$ = $1;
         $$.qualifier.precision = parseContext.getDefaultPrecision($$);
         $$.arraySizes = $2.arraySizes;
@@ -3110,12 +3112,15 @@ struct_declaration
         parseContext.precisionQualifierCheck($1.loc, $1.basicType, $1.qualifier);
 
         for (unsigned int i = 0; i < $$->size(); ++i) {
-            parseContext.arrayDimCheck($1.loc, (*$$)[i].type, $1.arraySizes);
-            (*$$)[i].type->mergeType($1);
+            TType type($1);
+            type.setFieldName((*$$)[i].type->getFieldName());
+            type.transferArraySizes((*$$)[i].type->getArraySizes());
+            type.copyArrayInnerSizes($1.arraySizes);
+            parseContext.arrayOfArrayVersionCheck((*$$)[i].loc, type.getArraySizes());
+            (*$$)[i].type->shallowCopy(type);
         }
     }
     | type_qualifier type_specifier struct_declarator_list SEMICOLON {
-        parseContext.globalQualifierFixCheck($1.loc, $1.qualifier);
         if ($2.arraySizes) {
             parseContext.profileRequires($2.loc, ENoProfile, 120, E_GL_3DL_array_objects, "arrayed type");
             parseContext.profileRequires($2.loc, EEsProfile, 300, 0, "arrayed type");
@@ -3125,14 +3130,18 @@ struct_declaration
 
         $$ = $3;
 
-        parseContext.checkNoShaderLayouts($1.loc, $1.shaderQualifiers);
+        parseContext.memberQualifierCheck($1);
         parseContext.voidErrorCheck($2.loc, (*$3)[0].type->getFieldName(), $2.basicType);
         parseContext.mergeQualifiers($2.loc, $2.qualifier, $1.qualifier, true);
         parseContext.precisionQualifierCheck($2.loc, $2.basicType, $2.qualifier);
 
         for (unsigned int i = 0; i < $$->size(); ++i) {
-            parseContext.arrayDimCheck($1.loc, (*$$)[i].type, $2.arraySizes);
-            (*$$)[i].type->mergeType($2);
+            TType type($2);
+            type.setFieldName((*$$)[i].type->getFieldName());
+            type.transferArraySizes((*$$)[i].type->getArraySizes());
+            type.copyArrayInnerSizes($2.arraySizes);
+            parseContext.arrayOfArrayVersionCheck((*$$)[i].loc, type.getArraySizes());
+            (*$$)[i].type->shallowCopy(type);
         }
     }
     ;
@@ -3154,12 +3163,12 @@ struct_declarator
         $$.type->setFieldName(*$1.string);
     }
     | IDENTIFIER array_specifier {
-        parseContext.arrayDimCheck($1.loc, $2.arraySizes, 0);
+        parseContext.arrayOfArrayVersionCheck($1.loc, $2.arraySizes);
 
         $$.type = new TType(EbtVoid);
         $$.loc = $1.loc;
         $$.type->setFieldName(*$1.string);
-        $$.type->newArraySizes(*$2.arraySizes);
+        $$.type->transferArraySizes($2.arraySizes);
     }
     ;
 

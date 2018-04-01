@@ -895,6 +895,36 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   mid3(f16vec3,   f16vec3,   f16vec3);"
             "f16vec4   mid3(f16vec4,   f16vec4,   f16vec4);"
 
+            "int16_t   min3(int16_t,   int16_t,   int16_t);"
+            "i16vec2   min3(i16vec2,   i16vec2,   i16vec2);"
+            "i16vec3   min3(i16vec3,   i16vec3,   i16vec3);"
+            "i16vec4   min3(i16vec4,   i16vec4,   i16vec4);"
+
+            "int16_t   max3(int16_t,   int16_t,   int16_t);"
+            "i16vec2   max3(i16vec2,   i16vec2,   i16vec2);"
+            "i16vec3   max3(i16vec3,   i16vec3,   i16vec3);"
+            "i16vec4   max3(i16vec4,   i16vec4,   i16vec4);"
+
+            "int16_t   mid3(int16_t,   int16_t,   int16_t);"
+            "i16vec2   mid3(i16vec2,   i16vec2,   i16vec2);"
+            "i16vec3   mid3(i16vec3,   i16vec3,   i16vec3);"
+            "i16vec4   mid3(i16vec4,   i16vec4,   i16vec4);"
+
+            "uint16_t  min3(uint16_t,  uint16_t,  uint16_t);"
+            "u16vec2   min3(u16vec2,   u16vec2,   u16vec2);"
+            "u16vec3   min3(u16vec3,   u16vec3,   u16vec3);"
+            "u16vec4   min3(u16vec4,   u16vec4,   u16vec4);"
+
+            "uint16_t  max3(uint16_t,  uint16_t,  uint16_t);"
+            "u16vec2   max3(u16vec2,   u16vec2,   u16vec2);"
+            "u16vec3   max3(u16vec3,   u16vec3,   u16vec3);"
+            "u16vec4   max3(u16vec4,   u16vec4,   u16vec4);"
+
+            "uint16_t  mid3(uint16_t,  uint16_t,  uint16_t);"
+            "u16vec2   mid3(u16vec2,   u16vec2,   u16vec2);"
+            "u16vec3   mid3(u16vec3,   u16vec3,   u16vec3);"
+            "u16vec4   mid3(u16vec4,   u16vec4,   u16vec4);"
+
             "\n"
         );
     }
@@ -2206,6 +2236,298 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bvec3  subgroupQuadSwapDiagonal(bvec3);\n"
             "bvec4  subgroupQuadSwapDiagonal(bvec4);\n"
 
+#ifdef NV_EXTENSIONS
+            "uvec4  subgroupPartitionNV(float);\n"
+            "uvec4  subgroupPartitionNV(vec2);\n"
+            "uvec4  subgroupPartitionNV(vec3);\n"
+            "uvec4  subgroupPartitionNV(vec4);\n"
+            "uvec4  subgroupPartitionNV(int);\n"
+            "uvec4  subgroupPartitionNV(ivec2);\n"
+            "uvec4  subgroupPartitionNV(ivec3);\n"
+            "uvec4  subgroupPartitionNV(ivec4);\n"
+            "uvec4  subgroupPartitionNV(uint);\n"
+            "uvec4  subgroupPartitionNV(uvec2);\n"
+            "uvec4  subgroupPartitionNV(uvec3);\n"
+            "uvec4  subgroupPartitionNV(uvec4);\n"
+            "uvec4  subgroupPartitionNV(bool);\n"
+            "uvec4  subgroupPartitionNV(bvec2);\n"
+            "uvec4  subgroupPartitionNV(bvec3);\n"
+            "uvec4  subgroupPartitionNV(bvec4);\n"
+
+            "float  subgroupPartitionedAddNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedAddNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedAddNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedAddNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedAddNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedAddNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedAddNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedAddNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedAddNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedAddNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedAddNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedAddNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedMulNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedMulNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedMulNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedMulNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedMulNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedMulNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedMulNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedMulNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedMulNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedMulNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedMulNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedMulNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedMinNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedMinNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedMinNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedMinNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedMinNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedMinNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedMinNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedMinNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedMinNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedMinNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedMinNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedMinNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedMaxNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedMaxNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedMaxNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedMaxNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedMaxNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedMaxNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedMaxNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedMaxNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedMaxNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedMaxNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedMaxNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedMaxNV(uvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedAndNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedAndNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedAndNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedAndNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedAndNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedAndNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedAndNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedAndNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedAndNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedAndNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedAndNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedAndNV(bvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedOrNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedOrNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedOrNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedOrNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedOrNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedOrNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedOrNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedOrNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedOrNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedOrNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedOrNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedOrNV(bvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedXorNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedXorNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedXorNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedXorNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedXorNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedXorNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedXorNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedXorNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedXorNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedXorNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedXorNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedXorNV(bvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedInclusiveAddNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedInclusiveAddNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedInclusiveAddNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedInclusiveAddNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedInclusiveAddNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveAddNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveAddNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveAddNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveAddNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveAddNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveAddNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveAddNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedInclusiveMulNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedInclusiveMulNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedInclusiveMulNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedInclusiveMulNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedInclusiveMulNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveMulNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveMulNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveMulNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveMulNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveMulNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveMulNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveMulNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedInclusiveMinNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedInclusiveMinNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedInclusiveMinNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedInclusiveMinNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedInclusiveMinNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveMinNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveMinNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveMinNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveMinNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveMinNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveMinNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveMinNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedInclusiveMaxNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedInclusiveMaxNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedInclusiveMaxNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedInclusiveMaxNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedInclusiveMaxNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveMaxNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveMaxNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveMaxNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveMaxNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveMaxNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveMaxNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveMaxNV(uvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedInclusiveAndNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveAndNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveAndNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveAndNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveAndNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveAndNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveAndNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveAndNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedInclusiveAndNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedInclusiveAndNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedInclusiveAndNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedInclusiveAndNV(bvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedInclusiveOrNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveOrNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveOrNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveOrNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveOrNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveOrNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveOrNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveOrNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedInclusiveOrNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedInclusiveOrNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedInclusiveOrNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedInclusiveOrNV(bvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedInclusiveXorNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedInclusiveXorNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedInclusiveXorNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedInclusiveXorNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedInclusiveXorNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedInclusiveXorNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedInclusiveXorNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedInclusiveXorNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedInclusiveXorNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedInclusiveXorNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedInclusiveXorNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedInclusiveXorNV(bvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedExclusiveAddNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedExclusiveAddNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedExclusiveAddNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedExclusiveAddNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedExclusiveAddNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveAddNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveAddNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveAddNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveAddNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveAddNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveAddNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveAddNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedExclusiveMulNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedExclusiveMulNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedExclusiveMulNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedExclusiveMulNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedExclusiveMulNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveMulNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveMulNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveMulNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveMulNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveMulNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveMulNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveMulNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedExclusiveMinNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedExclusiveMinNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedExclusiveMinNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedExclusiveMinNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedExclusiveMinNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveMinNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveMinNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveMinNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveMinNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveMinNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveMinNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveMinNV(uvec4, uvec4 ballot);\n"
+
+            "float  subgroupPartitionedExclusiveMaxNV(float, uvec4 ballot);\n"
+            "vec2   subgroupPartitionedExclusiveMaxNV(vec2, uvec4 ballot);\n"
+            "vec3   subgroupPartitionedExclusiveMaxNV(vec3, uvec4 ballot);\n"
+            "vec4   subgroupPartitionedExclusiveMaxNV(vec4, uvec4 ballot);\n"
+            "int    subgroupPartitionedExclusiveMaxNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveMaxNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveMaxNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveMaxNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveMaxNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveMaxNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveMaxNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveMaxNV(uvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedExclusiveAndNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveAndNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveAndNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveAndNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveAndNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveAndNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveAndNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveAndNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedExclusiveAndNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedExclusiveAndNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedExclusiveAndNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedExclusiveAndNV(bvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedExclusiveOrNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveOrNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveOrNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveOrNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveOrNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveOrNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveOrNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveOrNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedExclusiveOrNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedExclusiveOrNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedExclusiveOrNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedExclusiveOrNV(bvec4, uvec4 ballot);\n"
+
+            "int    subgroupPartitionedExclusiveXorNV(int, uvec4 ballot);\n"
+            "ivec2  subgroupPartitionedExclusiveXorNV(ivec2, uvec4 ballot);\n"
+            "ivec3  subgroupPartitionedExclusiveXorNV(ivec3, uvec4 ballot);\n"
+            "ivec4  subgroupPartitionedExclusiveXorNV(ivec4, uvec4 ballot);\n"
+            "uint   subgroupPartitionedExclusiveXorNV(uint, uvec4 ballot);\n"
+            "uvec2  subgroupPartitionedExclusiveXorNV(uvec2, uvec4 ballot);\n"
+            "uvec3  subgroupPartitionedExclusiveXorNV(uvec3, uvec4 ballot);\n"
+            "uvec4  subgroupPartitionedExclusiveXorNV(uvec4, uvec4 ballot);\n"
+            "bool   subgroupPartitionedExclusiveXorNV(bool, uvec4 ballot);\n"
+            "bvec2  subgroupPartitionedExclusiveXorNV(bvec2, uvec4 ballot);\n"
+            "bvec3  subgroupPartitionedExclusiveXorNV(bvec3, uvec4 ballot);\n"
+            "bvec4  subgroupPartitionedExclusiveXorNV(bvec4, uvec4 ballot);\n"
+#endif
+
             "\n");
 
         if (profile != EEsProfile && version >= 400) {
@@ -2345,6 +2667,74 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "dvec3  subgroupQuadSwapDiagonal(dvec3);\n"
                 "dvec4  subgroupQuadSwapDiagonal(dvec4);\n"
 
+
+#ifdef NV_EXTENSIONS
+                "uvec4  subgroupPartitionNV(double);\n"
+                "uvec4  subgroupPartitionNV(dvec2);\n"
+                "uvec4  subgroupPartitionNV(dvec3);\n"
+                "uvec4  subgroupPartitionNV(dvec4);\n"
+
+                "double subgroupPartitionedAddNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedAddNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedAddNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedAddNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedMulNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedMulNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedMulNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedMulNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedMinNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedMinNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedMinNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedMinNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedMaxNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedMaxNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedMaxNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedMaxNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedInclusiveAddNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedInclusiveAddNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedInclusiveAddNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedInclusiveAddNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedInclusiveMulNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedInclusiveMulNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedInclusiveMulNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedInclusiveMulNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedInclusiveMinNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedInclusiveMinNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedInclusiveMinNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedInclusiveMinNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedInclusiveMaxNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedInclusiveMaxNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedInclusiveMaxNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedInclusiveMaxNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedExclusiveAddNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedExclusiveAddNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedExclusiveAddNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedExclusiveAddNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedExclusiveMulNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedExclusiveMulNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedExclusiveMulNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedExclusiveMulNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedExclusiveMinNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedExclusiveMinNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedExclusiveMinNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedExclusiveMinNV(dvec4, uvec4 ballot);\n"
+
+                "double subgroupPartitionedExclusiveMaxNV(double, uvec4 ballot);\n"
+                "dvec2  subgroupPartitionedExclusiveMaxNV(dvec2, uvec4 ballot);\n"
+                "dvec3  subgroupPartitionedExclusiveMaxNV(dvec3, uvec4 ballot);\n"
+                "dvec4  subgroupPartitionedExclusiveMaxNV(dvec4, uvec4 ballot);\n"
+#endif
+
                 "\n");
             }
 
@@ -2403,6 +2793,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   minInvocationsAMD(f16vec3);"
             "f16vec4   minInvocationsAMD(f16vec4);"
 
+            "int16_t minInvocationsAMD(int16_t);"
+            "i16vec2 minInvocationsAMD(i16vec2);"
+            "i16vec3 minInvocationsAMD(i16vec3);"
+            "i16vec4 minInvocationsAMD(i16vec4);"
+
+            "uint16_t minInvocationsAMD(uint16_t);"
+            "u16vec2  minInvocationsAMD(u16vec2);"
+            "u16vec3  minInvocationsAMD(u16vec3);"
+            "u16vec4  minInvocationsAMD(u16vec4);"
+
             "float minInvocationsInclusiveScanAMD(float);"
             "vec2  minInvocationsInclusiveScanAMD(vec2);"
             "vec3  minInvocationsInclusiveScanAMD(vec3);"
@@ -2437,6 +2837,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   minInvocationsInclusiveScanAMD(f16vec2);"
             "f16vec3   minInvocationsInclusiveScanAMD(f16vec3);"
             "f16vec4   minInvocationsInclusiveScanAMD(f16vec4);"
+
+            "int16_t minInvocationsInclusiveScanAMD(int16_t);"
+            "i16vec2 minInvocationsInclusiveScanAMD(i16vec2);"
+            "i16vec3 minInvocationsInclusiveScanAMD(i16vec3);"
+            "i16vec4 minInvocationsInclusiveScanAMD(i16vec4);"
+
+            "uint16_t minInvocationsInclusiveScanAMD(uint16_t);"
+            "u16vec2  minInvocationsInclusiveScanAMD(u16vec2);"
+            "u16vec3  minInvocationsInclusiveScanAMD(u16vec3);"
+            "u16vec4  minInvocationsInclusiveScanAMD(u16vec4);"
 
             "float minInvocationsExclusiveScanAMD(float);"
             "vec2  minInvocationsExclusiveScanAMD(vec2);"
@@ -2473,6 +2883,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   minInvocationsExclusiveScanAMD(f16vec3);"
             "f16vec4   minInvocationsExclusiveScanAMD(f16vec4);"
 
+            "int16_t minInvocationsExclusiveScanAMD(int16_t);"
+            "i16vec2 minInvocationsExclusiveScanAMD(i16vec2);"
+            "i16vec3 minInvocationsExclusiveScanAMD(i16vec3);"
+            "i16vec4 minInvocationsExclusiveScanAMD(i16vec4);"
+
+            "uint16_t minInvocationsExclusiveScanAMD(uint16_t);"
+            "u16vec2  minInvocationsExclusiveScanAMD(u16vec2);"
+            "u16vec3  minInvocationsExclusiveScanAMD(u16vec3);"
+            "u16vec4  minInvocationsExclusiveScanAMD(u16vec4);"
+
             "float maxInvocationsAMD(float);"
             "vec2  maxInvocationsAMD(vec2);"
             "vec3  maxInvocationsAMD(vec3);"
@@ -2507,6 +2927,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   maxInvocationsAMD(f16vec2);"
             "f16vec3   maxInvocationsAMD(f16vec3);"
             "f16vec4   maxInvocationsAMD(f16vec4);"
+
+            "int16_t maxInvocationsAMD(int16_t);"
+            "i16vec2 maxInvocationsAMD(i16vec2);"
+            "i16vec3 maxInvocationsAMD(i16vec3);"
+            "i16vec4 maxInvocationsAMD(i16vec4);"
+
+            "uint16_t maxInvocationsAMD(uint16_t);"
+            "u16vec2  maxInvocationsAMD(u16vec2);"
+            "u16vec3  maxInvocationsAMD(u16vec3);"
+            "u16vec4  maxInvocationsAMD(u16vec4);"
 
             "float maxInvocationsInclusiveScanAMD(float);"
             "vec2  maxInvocationsInclusiveScanAMD(vec2);"
@@ -2543,6 +2973,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   maxInvocationsInclusiveScanAMD(f16vec3);"
             "f16vec4   maxInvocationsInclusiveScanAMD(f16vec4);"
 
+            "int16_t maxInvocationsInclusiveScanAMD(int16_t);"
+            "i16vec2 maxInvocationsInclusiveScanAMD(i16vec2);"
+            "i16vec3 maxInvocationsInclusiveScanAMD(i16vec3);"
+            "i16vec4 maxInvocationsInclusiveScanAMD(i16vec4);"
+
+            "uint16_t maxInvocationsInclusiveScanAMD(uint16_t);"
+            "u16vec2  maxInvocationsInclusiveScanAMD(u16vec2);"
+            "u16vec3  maxInvocationsInclusiveScanAMD(u16vec3);"
+            "u16vec4  maxInvocationsInclusiveScanAMD(u16vec4);"
+
             "float maxInvocationsExclusiveScanAMD(float);"
             "vec2  maxInvocationsExclusiveScanAMD(vec2);"
             "vec3  maxInvocationsExclusiveScanAMD(vec3);"
@@ -2577,6 +3017,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   maxInvocationsExclusiveScanAMD(f16vec2);"
             "f16vec3   maxInvocationsExclusiveScanAMD(f16vec3);"
             "f16vec4   maxInvocationsExclusiveScanAMD(f16vec4);"
+
+            "int16_t maxInvocationsExclusiveScanAMD(int16_t);"
+            "i16vec2 maxInvocationsExclusiveScanAMD(i16vec2);"
+            "i16vec3 maxInvocationsExclusiveScanAMD(i16vec3);"
+            "i16vec4 maxInvocationsExclusiveScanAMD(i16vec4);"
+
+            "uint16_t maxInvocationsExclusiveScanAMD(uint16_t);"
+            "u16vec2  maxInvocationsExclusiveScanAMD(u16vec2);"
+            "u16vec3  maxInvocationsExclusiveScanAMD(u16vec3);"
+            "u16vec4  maxInvocationsExclusiveScanAMD(u16vec4);"
 
             "float addInvocationsAMD(float);"
             "vec2  addInvocationsAMD(vec2);"
@@ -2613,6 +3063,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   addInvocationsAMD(f16vec3);"
             "f16vec4   addInvocationsAMD(f16vec4);"
 
+            "int16_t addInvocationsAMD(int16_t);"
+            "i16vec2 addInvocationsAMD(i16vec2);"
+            "i16vec3 addInvocationsAMD(i16vec3);"
+            "i16vec4 addInvocationsAMD(i16vec4);"
+
+            "uint16_t addInvocationsAMD(uint16_t);"
+            "u16vec2  addInvocationsAMD(u16vec2);"
+            "u16vec3  addInvocationsAMD(u16vec3);"
+            "u16vec4  addInvocationsAMD(u16vec4);"
+
             "float addInvocationsInclusiveScanAMD(float);"
             "vec2  addInvocationsInclusiveScanAMD(vec2);"
             "vec3  addInvocationsInclusiveScanAMD(vec3);"
@@ -2647,6 +3107,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   addInvocationsInclusiveScanAMD(f16vec2);"
             "f16vec3   addInvocationsInclusiveScanAMD(f16vec3);"
             "f16vec4   addInvocationsInclusiveScanAMD(f16vec4);"
+
+            "int16_t addInvocationsInclusiveScanAMD(int16_t);"
+            "i16vec2 addInvocationsInclusiveScanAMD(i16vec2);"
+            "i16vec3 addInvocationsInclusiveScanAMD(i16vec3);"
+            "i16vec4 addInvocationsInclusiveScanAMD(i16vec4);"
+
+            "uint16_t addInvocationsInclusiveScanAMD(uint16_t);"
+            "u16vec2  addInvocationsInclusiveScanAMD(u16vec2);"
+            "u16vec3  addInvocationsInclusiveScanAMD(u16vec3);"
+            "u16vec4  addInvocationsInclusiveScanAMD(u16vec4);"
 
             "float addInvocationsExclusiveScanAMD(float);"
             "vec2  addInvocationsExclusiveScanAMD(vec2);"
@@ -2683,6 +3153,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   addInvocationsExclusiveScanAMD(f16vec3);"
             "f16vec4   addInvocationsExclusiveScanAMD(f16vec4);"
 
+            "int16_t addInvocationsExclusiveScanAMD(int16_t);"
+            "i16vec2 addInvocationsExclusiveScanAMD(i16vec2);"
+            "i16vec3 addInvocationsExclusiveScanAMD(i16vec3);"
+            "i16vec4 addInvocationsExclusiveScanAMD(i16vec4);"
+
+            "uint16_t addInvocationsExclusiveScanAMD(uint16_t);"
+            "u16vec2  addInvocationsExclusiveScanAMD(u16vec2);"
+            "u16vec3  addInvocationsExclusiveScanAMD(u16vec3);"
+            "u16vec4  addInvocationsExclusiveScanAMD(u16vec4);"
+
             "float minInvocationsNonUniformAMD(float);"
             "vec2  minInvocationsNonUniformAMD(vec2);"
             "vec3  minInvocationsNonUniformAMD(vec3);"
@@ -2717,6 +3197,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   minInvocationsNonUniformAMD(f16vec2);"
             "f16vec3   minInvocationsNonUniformAMD(f16vec3);"
             "f16vec4   minInvocationsNonUniformAMD(f16vec4);"
+
+            "int16_t minInvocationsNonUniformAMD(int16_t);"
+            "i16vec2 minInvocationsNonUniformAMD(i16vec2);"
+            "i16vec3 minInvocationsNonUniformAMD(i16vec3);"
+            "i16vec4 minInvocationsNonUniformAMD(i16vec4);"
+
+            "uint16_t minInvocationsNonUniformAMD(uint16_t);"
+            "u16vec2  minInvocationsNonUniformAMD(u16vec2);"
+            "u16vec3  minInvocationsNonUniformAMD(u16vec3);"
+            "u16vec4  minInvocationsNonUniformAMD(u16vec4);"
 
             "float minInvocationsInclusiveScanNonUniformAMD(float);"
             "vec2  minInvocationsInclusiveScanNonUniformAMD(vec2);"
@@ -2753,6 +3243,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   minInvocationsInclusiveScanNonUniformAMD(f16vec3);"
             "f16vec4   minInvocationsInclusiveScanNonUniformAMD(f16vec4);"
 
+            "int16_t minInvocationsInclusiveScanNonUniformAMD(int16_t);"
+            "i16vec2 minInvocationsInclusiveScanNonUniformAMD(i16vec2);"
+            "i16vec3 minInvocationsInclusiveScanNonUniformAMD(i16vec3);"
+            "i16vec4 minInvocationsInclusiveScanNonUniformAMD(i16vec4);"
+
+            "uint16_t minInvocationsInclusiveScanNonUniformAMD(uint16_t);"
+            "u16vec2  minInvocationsInclusiveScanNonUniformAMD(u16vec2);"
+            "u16vec3  minInvocationsInclusiveScanNonUniformAMD(u16vec3);"
+            "u16vec4  minInvocationsInclusiveScanNonUniformAMD(u16vec4);"
+
             "float minInvocationsExclusiveScanNonUniformAMD(float);"
             "vec2  minInvocationsExclusiveScanNonUniformAMD(vec2);"
             "vec3  minInvocationsExclusiveScanNonUniformAMD(vec3);"
@@ -2787,6 +3287,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   minInvocationsExclusiveScanNonUniformAMD(f16vec2);"
             "f16vec3   minInvocationsExclusiveScanNonUniformAMD(f16vec3);"
             "f16vec4   minInvocationsExclusiveScanNonUniformAMD(f16vec4);"
+
+            "int16_t minInvocationsExclusiveScanNonUniformAMD(int16_t);"
+            "i16vec2 minInvocationsExclusiveScanNonUniformAMD(i16vec2);"
+            "i16vec3 minInvocationsExclusiveScanNonUniformAMD(i16vec3);"
+            "i16vec4 minInvocationsExclusiveScanNonUniformAMD(i16vec4);"
+
+            "uint16_t minInvocationsExclusiveScanNonUniformAMD(uint16_t);"
+            "u16vec2  minInvocationsExclusiveScanNonUniformAMD(u16vec2);"
+            "u16vec3  minInvocationsExclusiveScanNonUniformAMD(u16vec3);"
+            "u16vec4  minInvocationsExclusiveScanNonUniformAMD(u16vec4);"
 
             "float maxInvocationsNonUniformAMD(float);"
             "vec2  maxInvocationsNonUniformAMD(vec2);"
@@ -2823,6 +3333,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   maxInvocationsNonUniformAMD(f16vec3);"
             "f16vec4   maxInvocationsNonUniformAMD(f16vec4);"
 
+            "int16_t maxInvocationsNonUniformAMD(int16_t);"
+            "i16vec2 maxInvocationsNonUniformAMD(i16vec2);"
+            "i16vec3 maxInvocationsNonUniformAMD(i16vec3);"
+            "i16vec4 maxInvocationsNonUniformAMD(i16vec4);"
+
+            "uint16_t maxInvocationsNonUniformAMD(uint16_t);"
+            "u16vec2  maxInvocationsNonUniformAMD(u16vec2);"
+            "u16vec3  maxInvocationsNonUniformAMD(u16vec3);"
+            "u16vec4  maxInvocationsNonUniformAMD(u16vec4);"
+
             "float maxInvocationsInclusiveScanNonUniformAMD(float);"
             "vec2  maxInvocationsInclusiveScanNonUniformAMD(vec2);"
             "vec3  maxInvocationsInclusiveScanNonUniformAMD(vec3);"
@@ -2857,6 +3377,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   maxInvocationsInclusiveScanNonUniformAMD(f16vec2);"
             "f16vec3   maxInvocationsInclusiveScanNonUniformAMD(f16vec3);"
             "f16vec4   maxInvocationsInclusiveScanNonUniformAMD(f16vec4);"
+
+            "int16_t maxInvocationsInclusiveScanNonUniformAMD(int16_t);"
+            "i16vec2 maxInvocationsInclusiveScanNonUniformAMD(i16vec2);"
+            "i16vec3 maxInvocationsInclusiveScanNonUniformAMD(i16vec3);"
+            "i16vec4 maxInvocationsInclusiveScanNonUniformAMD(i16vec4);"
+
+            "uint16_t maxInvocationsInclusiveScanNonUniformAMD(uint16_t);"
+            "u16vec2  maxInvocationsInclusiveScanNonUniformAMD(u16vec2);"
+            "u16vec3  maxInvocationsInclusiveScanNonUniformAMD(u16vec3);"
+            "u16vec4  maxInvocationsInclusiveScanNonUniformAMD(u16vec4);"
 
             "float maxInvocationsExclusiveScanNonUniformAMD(float);"
             "vec2  maxInvocationsExclusiveScanNonUniformAMD(vec2);"
@@ -2893,6 +3423,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   maxInvocationsExclusiveScanNonUniformAMD(f16vec3);"
             "f16vec4   maxInvocationsExclusiveScanNonUniformAMD(f16vec4);"
 
+            "int16_t maxInvocationsExclusiveScanNonUniformAMD(int16_t);"
+            "i16vec2 maxInvocationsExclusiveScanNonUniformAMD(i16vec2);"
+            "i16vec3 maxInvocationsExclusiveScanNonUniformAMD(i16vec3);"
+            "i16vec4 maxInvocationsExclusiveScanNonUniformAMD(i16vec4);"
+
+            "uint16_t maxInvocationsExclusiveScanNonUniformAMD(uint16_t);"
+            "u16vec2  maxInvocationsExclusiveScanNonUniformAMD(u16vec2);"
+            "u16vec3  maxInvocationsExclusiveScanNonUniformAMD(u16vec3);"
+            "u16vec4  maxInvocationsExclusiveScanNonUniformAMD(u16vec4);"
+
             "float addInvocationsNonUniformAMD(float);"
             "vec2  addInvocationsNonUniformAMD(vec2);"
             "vec3  addInvocationsNonUniformAMD(vec3);"
@@ -2927,6 +3467,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   addInvocationsNonUniformAMD(f16vec2);"
             "f16vec3   addInvocationsNonUniformAMD(f16vec3);"
             "f16vec4   addInvocationsNonUniformAMD(f16vec4);"
+
+            "int16_t addInvocationsNonUniformAMD(int16_t);"
+            "i16vec2 addInvocationsNonUniformAMD(i16vec2);"
+            "i16vec3 addInvocationsNonUniformAMD(i16vec3);"
+            "i16vec4 addInvocationsNonUniformAMD(i16vec4);"
+
+            "uint16_t addInvocationsNonUniformAMD(uint16_t);"
+            "u16vec2  addInvocationsNonUniformAMD(u16vec2);"
+            "u16vec3  addInvocationsNonUniformAMD(u16vec3);"
+            "u16vec4  addInvocationsNonUniformAMD(u16vec4);"
 
             "float addInvocationsInclusiveScanNonUniformAMD(float);"
             "vec2  addInvocationsInclusiveScanNonUniformAMD(vec2);"
@@ -2963,6 +3513,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   addInvocationsInclusiveScanNonUniformAMD(f16vec3);"
             "f16vec4   addInvocationsInclusiveScanNonUniformAMD(f16vec4);"
 
+            "int16_t addInvocationsInclusiveScanNonUniformAMD(int16_t);"
+            "i16vec2 addInvocationsInclusiveScanNonUniformAMD(i16vec2);"
+            "i16vec3 addInvocationsInclusiveScanNonUniformAMD(i16vec3);"
+            "i16vec4 addInvocationsInclusiveScanNonUniformAMD(i16vec4);"
+
+            "uint16_t addInvocationsInclusiveScanNonUniformAMD(uint16_t);"
+            "u16vec2  addInvocationsInclusiveScanNonUniformAMD(u16vec2);"
+            "u16vec3  addInvocationsInclusiveScanNonUniformAMD(u16vec3);"
+            "u16vec4  addInvocationsInclusiveScanNonUniformAMD(u16vec4);"
+
             "float addInvocationsExclusiveScanNonUniformAMD(float);"
             "vec2  addInvocationsExclusiveScanNonUniformAMD(vec2);"
             "vec3  addInvocationsExclusiveScanNonUniformAMD(vec3);"
@@ -2997,6 +3557,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec2   addInvocationsExclusiveScanNonUniformAMD(f16vec2);"
             "f16vec3   addInvocationsExclusiveScanNonUniformAMD(f16vec3);"
             "f16vec4   addInvocationsExclusiveScanNonUniformAMD(f16vec4);"
+
+            "int16_t addInvocationsExclusiveScanNonUniformAMD(int16_t);"
+            "i16vec2 addInvocationsExclusiveScanNonUniformAMD(i16vec2);"
+            "i16vec3 addInvocationsExclusiveScanNonUniformAMD(i16vec3);"
+            "i16vec4 addInvocationsExclusiveScanNonUniformAMD(i16vec4);"
+
+            "uint16_t addInvocationsExclusiveScanNonUniformAMD(uint16_t);"
+            "u16vec2  addInvocationsExclusiveScanNonUniformAMD(u16vec2);"
+            "u16vec3  addInvocationsExclusiveScanNonUniformAMD(u16vec3);"
+            "u16vec4  addInvocationsExclusiveScanNonUniformAMD(u16vec4);"
 
             "float swizzleInvocationsAMD(float, uvec4);"
             "vec2  swizzleInvocationsAMD(vec2,  uvec4);"
@@ -7361,6 +7931,32 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupQuadSwapHorizontal",      1, &E_GL_KHR_shader_subgroup_quad);
             symbolTable.setFunctionExtensions("subgroupQuadSwapVertical",        1, &E_GL_KHR_shader_subgroup_quad);
             symbolTable.setFunctionExtensions("subgroupQuadSwapDiagonal",        1, &E_GL_KHR_shader_subgroup_quad);
+
+#ifdef NV_EXTENSIONS
+            symbolTable.setFunctionExtensions("subgroupPartitionNV",                          1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedAddNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedMulNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedMinNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedMaxNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedAndNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedOrNV",                      1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedXorNV",                     1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveAddNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveMulNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveMinNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveMaxNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveAndNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveOrNV",             1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedInclusiveXorNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveAddNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveMulNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveMinNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveMaxNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveAndNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveOrNV",             1, &E_GL_NV_shader_subgroup_partitioned);
+            symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveXorNV",            1, &E_GL_NV_shader_subgroup_partitioned);
+#endif
+
         }
 
         if (profile == EEsProfile) {
@@ -7897,6 +8493,31 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.relateToOperator("subgroupQuadSwapHorizontal",      EOpSubgroupQuadSwapHorizontal);
             symbolTable.relateToOperator("subgroupQuadSwapVertical",        EOpSubgroupQuadSwapVertical);
             symbolTable.relateToOperator("subgroupQuadSwapDiagonal",        EOpSubgroupQuadSwapDiagonal);
+
+#ifdef NV_EXTENSIONS
+            symbolTable.relateToOperator("subgroupPartitionNV",                          EOpSubgroupPartition);
+            symbolTable.relateToOperator("subgroupPartitionedAddNV",                     EOpSubgroupPartitionedAdd);
+            symbolTable.relateToOperator("subgroupPartitionedMulNV",                     EOpSubgroupPartitionedMul);
+            symbolTable.relateToOperator("subgroupPartitionedMinNV",                     EOpSubgroupPartitionedMin);
+            symbolTable.relateToOperator("subgroupPartitionedMaxNV",                     EOpSubgroupPartitionedMax);
+            symbolTable.relateToOperator("subgroupPartitionedAndNV",                     EOpSubgroupPartitionedAnd);
+            symbolTable.relateToOperator("subgroupPartitionedOrNV",                      EOpSubgroupPartitionedOr);
+            symbolTable.relateToOperator("subgroupPartitionedXorNV",                     EOpSubgroupPartitionedXor);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveAddNV",            EOpSubgroupPartitionedInclusiveAdd);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveMulNV",            EOpSubgroupPartitionedInclusiveMul);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveMinNV",            EOpSubgroupPartitionedInclusiveMin);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveMaxNV",            EOpSubgroupPartitionedInclusiveMax);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveAndNV",            EOpSubgroupPartitionedInclusiveAnd);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveOrNV",             EOpSubgroupPartitionedInclusiveOr);
+            symbolTable.relateToOperator("subgroupPartitionedInclusiveXorNV",            EOpSubgroupPartitionedInclusiveXor);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveAddNV",            EOpSubgroupPartitionedExclusiveAdd);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveMulNV",            EOpSubgroupPartitionedExclusiveMul);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveMinNV",            EOpSubgroupPartitionedExclusiveMin);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveMaxNV",            EOpSubgroupPartitionedExclusiveMax);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveAndNV",            EOpSubgroupPartitionedExclusiveAnd);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveOrNV",             EOpSubgroupPartitionedExclusiveOr);
+            symbolTable.relateToOperator("subgroupPartitionedExclusiveXorNV",            EOpSubgroupPartitionedExclusiveXor);
+#endif
         }
 
         if (profile == EEsProfile) {
@@ -7981,9 +8602,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         if (version == 100 || IncludeLegacy(version, profile, spvVersion) || (! ForwardCompatibility && profile != EEsProfile && version < 420)) {
             TPrecisionQualifier pq = profile == EEsProfile ? EpqMedium : EpqNone;
             TType fragData(EbtFloat, EvqFragColor, pq, 4);
-            TArraySizes& arraySizes = *new TArraySizes;
-            arraySizes.addInnerSize(resources.maxDrawBuffers);
-            fragData.newArraySizes(arraySizes);
+            TArraySizes* arraySizes = new TArraySizes;
+            arraySizes->addInnerSize(resources.maxDrawBuffers);
+            fragData.transferArraySizes(arraySizes);
             symbolTable.insert(*new TVariable(NewPoolTString("gl_FragData"), fragData));
             SpecialQualifier("gl_FragData", EvqFragColor, EbvFragData, symbolTable);
         }

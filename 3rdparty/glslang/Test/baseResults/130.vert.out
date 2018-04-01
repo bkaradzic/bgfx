@@ -113,7 +113,7 @@ ERROR: node is still EOpNull!
 0:45          'gl_VertexID' ( gl_VertexId int VertexId)
 0:46      move second child to first child ( temp float)
 0:46        direct index ( smooth temp float ClipDistance)
-0:46          'gl_ClipDistance' ( smooth out implicitly-sized array of float ClipDistance)
+0:46          'gl_ClipDistance' ( smooth out unsized 2-element array of float ClipDistance)
 0:46          Constant:
 0:46            1 (const int)
 0:46        Constant:
@@ -132,7 +132,7 @@ ERROR: node is still EOpNull!
 0:66        'gl_DepthRange' ( uniform structure{ global float near,  global float far,  global float diff})
 0:66        Constant:
 0:66          1 (const int)
-0:67      'gl_TexCoord' ( smooth out implicitly-sized array of 4-component vector of float TexCoord)
+0:67      'gl_TexCoord' ( smooth out unsized 1-element array of 4-component vector of float TexCoord)
 0:68      'gl_FogFragCoord' ( smooth out float FogFragCoord)
 0:69      'gl_FrontColor' ( smooth out 4-component vector of float FrontColor)
 0:?   Linker Objects
@@ -145,8 +145,8 @@ ERROR: node is still EOpNull!
 0:?     'c3D' ( in 3-component vector of float)
 0:?     'c4D' ( smooth temp 4-component vector of float)
 0:?     'v4' ( uniform 4-component vector of float)
-0:?     'gl_ClipDistance' ( smooth out implicitly-sized array of float ClipDistance)
-0:?     'gl_TexCoord' ( smooth out implicitly-sized array of 4-component vector of float TexCoord)
+0:?     'gl_ClipDistance' ( smooth out unsized 2-element array of float ClipDistance)
+0:?     'gl_TexCoord' ( smooth out unsized 1-element array of 4-component vector of float TexCoord)
 0:?     'abcdef' ( global int)
 0:?     'qrstuv' ( global int)
 0:?     'gl_VertexID' ( gl_VertexId int VertexId)

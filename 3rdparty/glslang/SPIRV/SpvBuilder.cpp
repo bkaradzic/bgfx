@@ -854,9 +854,9 @@ Id Builder::makeFpConstant(Id type, double d, bool specConstant)
 
         switch (getScalarTypeWidth(type)) {
         case 16:
-                return makeFloat16Constant(d, specConstant);
+                return makeFloat16Constant((float)d, specConstant);
         case 32:
-                return makeFloatConstant(d, specConstant);
+                return makeFloatConstant((float)d, specConstant);
         case 64:
                 return makeDoubleConstant(d, specConstant);
         default:

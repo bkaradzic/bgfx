@@ -574,7 +574,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 if (argv[0][2] == 'd')
                     Options |= EOptionOptimizeDisable;
                 else if (argv[0][2] == 's')
-#ifdef ENABLE_OPT
+#if ENABLE_OPT
                     Options |= EOptionOptimizeSize;
 #else
                     Error("-Os not available; optimizer not linked");
@@ -720,6 +720,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgDebugInfo);
     if (HlslEnable16BitTypes)
         messages = (EShMessages)(messages | EShMsgHlslEnable16BitTypes);
+    if ((Options & EOptionOptimizeDisable) || !ENABLE_OPT)
+        messages = (EShMessages)(messages | EShMsgHlslLegalization);
 }
 
 //

@@ -49,7 +49,7 @@ ERROR: node is still EOpNull!
 0:18        move second child to first child ( temp float)
 0:18          'clip' ( temp float)
 0:18          direct index ( smooth temp float ClipDistance)
-0:18            'gl_ClipDistance' ( smooth in implicitly-sized array of float ClipDistance)
+0:18            'gl_ClipDistance' ( smooth in unsized 4-element array of float ClipDistance)
 0:18            Constant:
 0:18              3 (const int)
 0:23  Function Definition: foo( ( global void)
@@ -381,7 +381,7 @@ ERROR: node is still EOpNull!
 0:?     'fflat' ( flat in float)
 0:?     'fsmooth' ( smooth in float)
 0:?     'fnop' ( noperspective in float)
-0:?     'gl_ClipDistance' ( smooth in implicitly-sized array of float ClipDistance)
+0:?     'gl_ClipDistance' ( smooth in unsized 4-element array of float ClipDistance)
 0:?     'sampC' ( uniform samplerCube)
 0:?     'gl_Color' ( in 4-component vector of float Color)
 0:?     'samp2D' ( uniform sampler2D)

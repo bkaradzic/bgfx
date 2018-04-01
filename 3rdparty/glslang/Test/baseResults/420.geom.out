@@ -20,15 +20,15 @@ ERROR: node is still EOpNull!
 0:9      Constant:
 0:9        1 (const int)
 0:10      gl_Position: direct index for structure ( in 4-component vector of float Position)
-0:10        direct index ( temp block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
-0:10          'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
+0:10        direct index ( temp block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
+0:10          'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
 0:10          Constant:
 0:10            1 (const int)
 0:10        Constant:
 0:10          0 (const int)
 0:11      gl_Position: direct index for structure ( in 4-component vector of float Position)
-0:11        indirect index ( temp block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
-0:11          'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
+0:11        indirect index ( temp block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
+0:11          'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
 0:11          'i' ( global int)
 0:11        Constant:
 0:11          0 (const int)
@@ -38,8 +38,8 @@ ERROR: node is still EOpNull!
 0:20      Constant:
 0:20        3 (const int)
 0:21      gl_Position: direct index for structure ( in 4-component vector of float Position)
-0:21        indirect index ( temp block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
-0:21          'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
+0:21        indirect index ( temp block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
+0:21          'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
 0:21          'i' ( global int)
 0:21        Constant:
 0:21          0 (const int)
@@ -121,12 +121,12 @@ ERROR: node is still EOpNull!
 0:54          'i' ( global int)
 0:?   Linker Objects
 0:?     'i' ( global int)
-0:?     'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in implicitly-sized array of float ClipDistance gl_ClipDistance})
+0:?     'gl_in' ( in 3-element array of block{ in 4-component vector of float Position gl_Position,  in float PointSize gl_PointSize,  in unsized 1-element array of float ClipDistance gl_ClipDistance})
 0:?     'color3' ( in 3-element array of 4-component vector of float)
 0:?     's2D' ( uniform sampler2D)
 0:?     'coord' ( in 3-element array of 2-component vector of float)
 0:?     'v4' ( uniform 4-component vector of float)
-0:?     'anon@0' (layout( stream=0) out block{layout( stream=0) gl_PointSize float PointSize gl_PointSize, layout( stream=0) out implicitly-sized array of float ClipDistance gl_ClipDistance})
+0:?     'anon@0' (layout( stream=0) out block{layout( stream=0) gl_PointSize float PointSize gl_PointSize, layout( stream=0) out unsized 1-element array of float ClipDistance gl_ClipDistance})
 
 
 Linked geometry stage:

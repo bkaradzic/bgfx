@@ -94,9 +94,10 @@ endif()
 
 if(ENABLE_OPT)
     message(STATUS "optimizer enabled")
-    add_definitions(-DENABLE_OPT)
+    add_definitions(-DENABLE_OPT=1)
 elseif(ENABLE_HLSL)
     message(STATUS "spirv-tools not linked - illegal SPIRV may be generated for HLSL")
+    add_definitions(-DENABLE_OPT=0)
 endif()
 
 add_subdirectory(glslang)

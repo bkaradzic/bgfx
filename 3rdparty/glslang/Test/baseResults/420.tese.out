@@ -139,7 +139,7 @@ ERROR: node is still EOpNull!
 0:?     'b3' ( global 2-element array of 4-component vector of float)
 0:?     'b4' ( global 2-element array of 4-component vector of float)
 0:?     'c3' ( global 4X2 matrix of float)
-0:?     'd2' ( global implicitly-sized array of structure{ global float s,  global float t})
+0:?     'd2' ( global unsized 1-element array of structure{ global float s,  global float t})
 0:?     'b5' ( global 5-element array of float)
 0:?     'single1' ( global structure{ global int f})
 0:?     'single2' ( global structure{ global 2-component vector of uint v})

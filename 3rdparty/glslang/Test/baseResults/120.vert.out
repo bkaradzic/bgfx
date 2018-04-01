@@ -19,6 +19,7 @@ ERROR: 0:34: 'a4' : redefinition
 ERROR: 0:35: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:36: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:37: 'arrays of arrays' : not supported with this profile: none
+ERROR: 0:37: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:38: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:39: 'arrays of arrays' : not supported with this profile: none
 ERROR: 0:40: 'arrays of arrays' : not supported with this profile: none
@@ -78,7 +79,7 @@ ERROR: 0:192: 'assign' :  l-value required (can't modify a const)
 ERROR: 0:195: 'gl_ModelViewMatrix' : identifiers starting with "gl_" are reserved 
 ERROR: 0:200: 'token pasting (##)' : not supported for this version or the enabled extensions 
 ERROR: 0:203: 'token pasting (##)' : not supported for this version or the enabled extensions 
-ERROR: 79 compilation errors.  No code generated.
+ERROR: 80 compilation errors.  No code generated.
 
 
 Shader version: 120
