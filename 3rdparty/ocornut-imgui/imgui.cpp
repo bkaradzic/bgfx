@@ -8,7 +8,13 @@
 // Gallery (please post your screenshots/video there!): https://github.com/ocornut/imgui/issues/1269
 // Developed by Omar Cornut and every direct or indirect contributors to the GitHub.
 // This library is free but I need your support to sustain development and maintenance.
-// If you work for a company, please consider financial support, see Readme. For individuals: https://www.patreon.com/imgui
+// If you work for a company, please consider financial support, see README. For individuals: https://www.patreon.com/imgui
+
+// It is recommended that you don't modify imgui.cpp! It will become difficult for you to update the library.
+// Note that 'ImGui::' being a namespace, you can add functions into the namespace from your own source files, without 
+// modifying imgui.h or imgui.cpp. You may include imgui_internal.h to access internal data structures, but it doesn't 
+// come with any guarantee of forward compatibility. Discussing your changes on the GitHub Issue Tracker may lead you 
+// to a better solution or official support for them.
 
 /*
 
@@ -25,7 +31,7 @@
  - FREQUENTLY ASKED QUESTIONS (FAQ), TIPS
    - How can I tell whether to dispatch mouse/keyboard to imgui or to my application?
    - How can I display an image? What is ImTextureID, how does it works?
-   - How can I have multiple widgets with the same label? Can I have widget without a label? (Yes). A primer on labels and the ID stack.
+   - How can I have multiple widgets with the same label or without a label? A primer on labels and the ID Stack.
    - How can I load a different font than the default?
    - How can I easily use icons in my application?
    - How can I load multiple fonts?
@@ -48,8 +54,8 @@
  - Minimize setup and maintenance
  - Minimize state storage on user side
  - Portable, minimize dependencies, run on target (consoles, phones, etc.)
- - Efficient runtime and memory consumption (NB- we do allocate when "growing" content e.g. creating a window, opening a tree node 
-   for the first time, etc. but a typical frame won't allocate anything)
+ - Efficient runtime and memory consumption (NB- we do allocate when "growing" content e.g. creating a window, 
+   opening a tree node for the first time, etc. but a typical frame should not allocate anything)
 
  Designed for developers and content-creators, not the typical end-user! Some of the weaknesses includes:
  - Doesn't look fancy, doesn't animate
@@ -86,8 +92,8 @@
  READ FIRST
 
  - Read the FAQ below this section!
- - Your code creates the UI, if your code doesn't run the UI is gone! == very dynamic UI, no construction/destructions steps, less data retention
-   on your side, no state duplication, less sync, less bugs.
+ - Your code creates the UI, if your code doesn't run the UI is gone! The UI can be highly dynamic, there are no construction
+   or destruction steps, less data retention on your side, less state duplication, less state synchronization, less bugs.
  - Call and read ImGui::ShowDemoWindow() for demo code demonstrating most features.
  - You can learn about immediate-mode gui principles at http://www.johno.se/book/imgui.html or watch http://mollyrocket.com/861
 
@@ -95,18 +101,18 @@
 
  - Overwrite all the sources files except for imconfig.h (if you have made modification to your copy of imconfig.h)
  - Read the "API BREAKING CHANGES" section (below). This is where we list occasional API breaking changes. 
-   If a function/type has been renamed / or marked obsolete, try to fix the name in your code before it is permanently removed from the public API.
-   If you have a problem with a missing function/symbols, search for its name in the code, there will likely be a comment about it. 
-   Please report any issue to the GitHub page!
+   If a function/type has been renamed / or marked obsolete, try to fix the name in your code before it is permanently removed 
+   from the public API. If you have a problem with a missing function/symbols, search for its name in the code, there will 
+   likely be a comment about it. Please report any issue to the GitHub page!
  - Try to keep your copy of dear imgui reasonably up to date.
 
  GETTING STARTED WITH INTEGRATING DEAR IMGUI IN YOUR CODE/ENGINE
 
+ - Run and study the examples and demo to get acquainted with the library.
  - Add the Dear ImGui source files to your projects, using your preferred build system. 
    It is recommended you build the .cpp files as part of your project and not as a library.
  - You can later customize the imconfig.h file to tweak some compilation time behavior, such as integrating imgui types with your own maths types.
- - See examples/ folder for standalone sample applications.
- - You may be able to grab and copy a ready made imgui_impl_*** file from the examples/.
+ - You may be able to grab and copy a ready made imgui_impl_*** file from the examples/ folder.
  - When using Dear ImGui, your programming IDE is your friend: follow the declaration of variables, functions and types to find comments about them.
 
  - Init: retrieve the ImGuiIO structure with ImGui::GetIO() and fill the fields marked 'Settings': at minimum you need to set io.DisplaySize
@@ -194,7 +200,8 @@
                  MyEngineBindTexture(pcmd->TextureId);
 
                  // We are using scissoring to clip some objects. All low-level graphics API supports it.
-                 // If your engine doesn't support scissoring yet, you will get some small glitches (some elements outside their bounds) which you can fix later.
+                 // If your engine doesn't support scissoring yet, you may ignore this at first. You will get some small glitches 
+                 // (some elements visible outside their bounds) but you can fix that once everywhere else works!
                  MyEngineScissor((int)pcmd->ClipRect.x, (int)pcmd->ClipRect.y, (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
 
                  // Render 'pcmd->ElemCount/3' indexed triangles.
@@ -210,22 +217,25 @@
  - When calling NewFrame(), the 'io.WantCaptureMouse'/'io.WantCaptureKeyboard'/'io.WantTextInput' flags are updated. 
    They tell you if ImGui intends to use your inputs. So for example, if 'io.WantCaptureMouse' is set you would typically want to hide 
    mouse inputs from the rest of your application. Read the FAQ below for more information about those flags.
+ - Please read the FAQ above. Amusingly, it is called a FAQ because people frequently have the same issues!
 
  USING GAMEPAD/KEYBOARD NAVIGATION CONTROLS [BETA]
 
  - The gamepad/keyboard navigation is in Beta. Ask questions and report issues at https://github.com/ocornut/imgui/issues/787
  - The initial focus was to support game controllers, but keyboard is becoming increasingly and decently usable.
  - Keyboard:
-    - Set io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard to enable. NewFrame() will automatically fill io.NavInputs[] based on your io.KeyDown[] + io.KeyMap[] arrays.
-    - When keyboard navigation is active (io.NavActive + ImGuiConfigFlags_NavEnableKeyboard), the io.WantCaptureKeyboard flag will be set.
-      For more advanced uses, you may want to read from:
+    - Set io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard to enable. 
+      NewFrame() will automatically fill io.NavInputs[] based on your io.KeyDown[] + io.KeyMap[] arrays.
+    - When keyboard navigation is active (io.NavActive + ImGuiConfigFlags_NavEnableKeyboard), the io.WantCaptureKeyboard flag
+      will be set. For more advanced uses, you may want to read from:
        - io.NavActive: true when a window is focused and it doesn't have the ImGuiWindowFlags_NoNavInputs flag set.
        - io.NavVisible: true when the navigation cursor is visible (and usually goes false when mouse is used).
        - or query focus information with e.g. IsWindowFocused(), IsItemFocused() etc. functions.
       Please reach out if you think the game vs navigation input sharing could be improved.
  - Gamepad:
     - Set io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad to enable.
-    - Backend: Set io.BackendFlags |= ImGuiBackendFlags_HasGamepad + fill the io.NavInputs[] fields before calling NewFrame(). Note that io.NavInputs[] is cleared by EndFrame().
+    - Backend: Set io.BackendFlags |= ImGuiBackendFlags_HasGamepad + fill the io.NavInputs[] fields before calling NewFrame(). 
+      Note that io.NavInputs[] is cleared by EndFrame().
     - See 'enum ImGuiNavInput_' in imgui.h for a description of inputs. For each entry of io.NavInputs[], set the following values:
          0.0f= not held. 1.0f= fully held. Pass intermediate 0.0f..1.0f values for analog triggers/sticks.
     - We uses a simple >0.0f test for activation testing, and won't attempt to test for a dead-zone.
@@ -428,63 +438,69 @@
     It could be an identifier to your OpenGL texture (cast GLuint to void*), a pointer to your custom engine material (cast MyMaterial* to void*), etc.
     At the end of the chain, your renderer takes this void* to cast it back into whatever it needs to select a current texture to render.
     Refer to examples applications, where each renderer (in a imgui_impl_xxxx.cpp file) is treating ImTextureID as a different thing.
-    (c++ tip: OpenGL uses integers to identify textures. You can safely store an integer into a void*, just cast it to void*, don't take it's address!)
+    (C++ tip: OpenGL uses integers to identify textures. You can safely store an integer into a void*, just cast it to void*, don't take it's address!)
     To display a custom image/texture within an ImGui window, you may use ImGui::Image(), ImGui::ImageButton(), ImDrawList::AddImage() functions.
     Dear ImGui will generate the geometry and draw calls using the ImTextureID that you passed and which your renderer can use.
     You may call ImGui::ShowMetricsWindow() to explore active draw lists and visualize/understand how the draw data is generated.
     It is your responsibility to get textures uploaded to your GPU.
 
- Q: Can I have multiple widgets with the same label? Can I have widget without a label?
- A: Yes. A primer on labels and the ID stack...
+ Q: How can I have multiple widgets with the same label or without a label? 
+ A: A primer on labels and the ID Stack...
 
    - Elements that are typically not clickable, such as Text() items don't need an ID.
 
-   - Interactive widgets require state to be carried over multiple frames (most typically Dear ImGui often needs to remember what is 
-     the "active" widget). to do so they need a unique ID. unique ID are typically derived from a string label, an integer index or a pointer.
+   - Interactive widgets require state to be carried over multiple frames (most typically Dear ImGui
+     often needs to remember what is the "active" widget). To do so they need a unique ID. Unique ID 
+     are typically derived from a string label, an integer index or a pointer.
 
-       Button("OK");          // Label = "OK",     ID = hash of "OK"
-       Button("Cancel");      // Label = "Cancel", ID = hash of "Cancel"
+       Button("OK");          // Label = "OK",     ID = top of id stack + hash of "OK"
+       Button("Cancel");      // Label = "Cancel", ID = top of id stack + hash of "Cancel"
 
-   - ID are uniquely scoped within windows, tree nodes, etc. so no conflict can happen if you have two buttons called "OK"
-     in two different windows or in two different locations of a tree.
+   - ID are uniquely scoped within windows, tree nodes, etc. which all pushes to the ID stack. Having
+     two buttons labeled "OK" in different windows or different tree locations is fine.
 
    - If you have a same ID twice in the same location, you'll have a conflict:
 
        Button("OK");
-       Button("OK");          // ID collision! Both buttons will be treated as the same.
+       Button("OK");          // ID collision! Interacting with either button will trigger the first one.
 
      Fear not! this is easy to solve and there are many ways to solve it!
 
-   - When passing a label you can optionally specify extra unique ID information within string itself.
+   - Solving ID conflict in a simple/local context:
+     When passing a label you can optionally specify extra ID information within string itself.
      Use "##" to pass a complement to the ID that won't be visible to the end-user.
-     This helps solving the simple collision cases when you know which items are going to be created.
+     This helps solving the simple collision cases when you know e.g. at compilation time which items
+     are going to be created:
 
-       Button("Play");        // Label = "Play",   ID = hash of "Play"
-       Button("Play##foo1");  // Label = "Play",   ID = hash of "Play##foo1" (different from above)
-       Button("Play##foo2");  // Label = "Play",   ID = hash of "Play##foo2" (different from above)
+       Button("Play");        // Label = "Play",   ID = top of id stack + hash of "Play"
+       Button("Play##foo1");  // Label = "Play",   ID = top of id stack + hash of "Play##foo1" (different from above)
+       Button("Play##foo2");  // Label = "Play",   ID = top of id stack + hash of "Play##foo2" (different from above)
 
    - If you want to completely hide the label, but still need an ID:
 
-       Checkbox("##On", &b);  // Label = "",       ID = hash of "##On" (no label!)
+       Checkbox("##On", &b);  // Label = "",       ID = top of id stack + hash of "##On" (no label!)
 
-   - Occasionally/rarely you might want change a label while preserving a constant ID. This allows you to animate labels.
-     For example you may want to include varying information in a window title bar, but windows are uniquely identified by their ID..
-     Use "###" to pass a label that isn't part of ID:
+   - Occasionally/rarely you might want change a label while preserving a constant ID. This allows
+     you to animate labels. For example you may want to include varying information in a window title bar, 
+     but windows are uniquely identified by their ID. Use "###" to pass a label that isn't part of ID:
 
-       Button("Hello###ID";   // Label = "Hello",  ID = hash of "ID"
-       Button("World###ID";   // Label = "World",  ID = hash of "ID" (same as above)
+       Button("Hello###ID";   // Label = "Hello",  ID = top of id stack + hash of "ID"
+       Button("World###ID";   // Label = "World",  ID = top of id stack + hash of "ID" (same as above)
 
        sprintf(buf, "My game (%f FPS)###MyGame", fps);
        Begin(buf);            // Variable label,   ID = hash of "MyGame"
 
-   - Use PushID() / PopID() to create scopes and avoid ID conflicts within the same Window.
-     This is the most convenient way of distinguishing ID if you are iterating and creating many UI elements.
-     You can push a pointer, a string or an integer value. Remember that ID are formed from the concatenation of _everything_ in the ID stack!
+   - Solving ID conflict in a more general manner:
+     Use PushID() / PopID() to create scopes and manipulate the ID stack, as to avoid ID conflicts 
+     within the same window. This is the most convenient way of distinguishing ID when iterating and
+     creating many UI elements programmatically. 
+     You can push a pointer, a string or an integer value into the ID stack. 
+     Remember that ID are formed from the concatenation of _everything_ in the ID stack!
 
        for (int i = 0; i < 100; i++)
        {
          PushID(i);
-         Button("Click");   // Label = "Click",  ID = hash of integer + "label" (unique)
+         Button("Click");   // Label = "Click",  ID = top of id stack + hash of integer + hash of "Click"
          PopID();
        }
 
@@ -492,7 +508,7 @@
        {
          MyObject* obj = Objects[i];
          PushID(obj);
-         Button("Click");   // Label = "Click",  ID = hash of pointer + "label" (unique)
+         Button("Click");   // Label = "Click",  ID = top of id stack + hash of pointer + hash of "Click"
          PopID();
        }
 
@@ -500,50 +516,53 @@
        {
          MyObject* obj = Objects[i];
          PushID(obj->Name);
-         Button("Click");   // Label = "Click",  ID = hash of string + "label" (unique)
+         Button("Click");   // Label = "Click",  ID = top of id stack + hash of string + hash of "Click"
          PopID();
        }
 
    - More example showing that you can stack multiple prefixes into the ID stack:
 
-       Button("Click");     // Label = "Click",  ID = hash of "Click"
+       Button("Click");     // Label = "Click",  ID = top of id stack + hash of "Click"
        PushID("node");
-       Button("Click");     // Label = "Click",  ID = hash of "node" + "Click"
+       Button("Click");     // Label = "Click",  ID = top of id stack + hash of "node" + hash of "Click"
          PushID(my_ptr);
-           Button("Click"); // Label = "Click",  ID = hash of "node" + ptr + "Click"
+           Button("Click"); // Label = "Click",  ID = top of id stack + hash of "node" + hash of ptr + hash of "Click"
          PopID();
        PopID();
 
    - Tree nodes implicitly creates a scope for you by calling PushID().
 
-       Button("Click");     // Label = "Click",  ID = hash of "Click"
+       Button("Click");     // Label = "Click",  ID = top of id stack + hash of "Click"
        if (TreeNode("node"))
        {
-         Button("Click");   // Label = "Click",  ID = hash of "node" + "Click"
+         Button("Click");   // Label = "Click",  ID = top of id stack + hash of "node" + hash of "Click"
          TreePop();
        }
 
    - When working with trees, ID are used to preserve the open/close state of each tree node.
      Depending on your use cases you may want to use strings, indices or pointers as ID.
-      e.g. when displaying a single object that may change over time (dynamic 1-1 relationship), using a static string as ID will preserve your
-       node open/closed state when the targeted object change.
-      e.g. when displaying a list of objects, using indices or pointers as ID will preserve the node open/closed state differently. 
-       experiment and see what makes more sense!
+      e.g. when following a single pointer that may change over time, using a static string as ID
+       will preserve your node open/closed state when the targeted object change.
+      e.g. when displaying a list of objects, using indices or pointers as ID will preserve the 
+       node open/closed state differently. See what makes more sense in your situation!
 
- Q: How can I load a different font than the default? (default is an embedded version of ProggyClean.ttf, rendered at size 13)
+ Q: How can I load a different font than the default?
  A: Use the font atlas to load the TTF/OTF file you want:
       ImGuiIO& io = ImGui::GetIO();
       io.Fonts->AddFontFromFileTTF("myfontfile.ttf", size_in_pixels);
       io.Fonts->GetTexDataAsRGBA32() or GetTexDataAsAlpha8()
+    (default is ProggyClean.ttf, rendered at size 13, embedded in dear imgui's source code)
 
-    New programmers: remember that in C/C++ and most programming languages if you want to use a backslash \ in a string literal you need to write a double backslash "\\":
-      io.Fonts->AddFontFromFileTTF("MyDataFolder\MyFontFile.ttf", size_in_pixels);   // WRONG
+    New programmers: remember that in C/C++ and most programming languages if you want to use a 
+    backslash \ within a string literal, you need to write it double backslash "\\":
+      io.Fonts->AddFontFromFileTTF("MyDataFolder\MyFontFile.ttf", size_in_pixels);   // WRONG (you are escape the M here!)
       io.Fonts->AddFontFromFileTTF("MyDataFolder\\MyFontFile.ttf", size_in_pixels);  // CORRECT
       io.Fonts->AddFontFromFileTTF("MyDataFolder/MyFontFile.ttf", size_in_pixels);   // ALSO CORRECT
 
  Q: How can I easily use icons in my application?
- A: The most convenient and practical way is to merge an icon font such as FontAwesome inside you main font. Then you can refer to icons within your 
-    strings. Read 'How can I load multiple fonts?' and the file 'misc/fonts/README.txt' for instructions and useful header files.
+ A: The most convenient and practical way is to merge an icon font such as FontAwesome inside you
+    main font. Then you can refer to icons within your strings. Read 'How can I load multiple fonts?' 
+    and the file 'misc/fonts/README.txt' for instructions and useful header files.
 
  Q: How can I load multiple fonts?
  A: Use the font atlas to pack them into a single texture:
@@ -588,13 +607,16 @@
       builder.BuildRanges(&ranges);                          // Build the final result (ordered ranges with all the unique characters submitted)
       io.Fonts->AddFontFromFileTTF("myfontfile.ttf", size_in_pixels, NULL, ranges.Data);
 
-    All your strings needs to use UTF-8 encoding. In C++11 you can encode a string literal in UTF-8 by using the u8"hello" syntax. 
-    Specifying literal in your source code using a local code page (such as CP-923 for Japanese or CP-1251 for Cyrillic) will NOT work!
+    All your strings needs to use UTF-8 encoding. In C++11 you can encode a string literal in UTF-8 
+    by using the u8"hello" syntax. Specifying literal in your source code using a local code page 
+    (such as CP-923 for Japanese or CP-1251 for Cyrillic) will NOT work!
     Otherwise you can convert yourself to UTF-8 or load text data from file already saved as UTF-8.
 
-    Text input: it is up to your application to pass the right character code to io.AddInputCharacter(). The applications in examples/ are doing that.
-    For languages using IME, on Windows you can copy the Hwnd of your application to io.ImeWindowHandle.
-    The default implementation of io.ImeSetInputScreenPosFn() on Windows will set your IME position correctly.
+    Text input: it is up to your application to pass the right character code by calling 
+    io.AddInputCharacter(). The applications in examples/ are doing that. For languages relying 
+    on an Input Method Editor (IME), on Windows you can copy the Hwnd of your application in the
+    io.ImeWindowHandle field. The default implementation of io.ImeSetInputScreenPosFn() will set
+    your Microsoft IME position correctly.
 
  Q: How can I use the drawing facilities without an ImGui window? (using ImDrawList API)
  A: - You can create a dummy window. Call SetNextWindowBgAlpha(0.0f), call Begin() with NoTitleBar|NoResize|NoMove|NoScrollbar|NoSavedSettings|NoInputs flags. 
@@ -668,14 +690,15 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"// warning : 'xx' is deprecated: The POSIX name for this item.. // for strdup used in demo code (so user can copy & paste the code)
 #pragma clang diagnostic ignored "-Wunused-function"        // warning : 'xxxx' defined but not used
 #pragma clang diagnostic ignored "-Wformat-pedantic"        // warning : format specifies type 'void *' but the argument has type 'xxxx *' // unreasonable, would lead to casting every %p arg to void*. probably enabled by -pedantic. 
-#pragma clang diagnostic ignored "-Wint-to-void-pointer-cast" // warning : cast to 'void *' from smaller integer type 'int' //
+#pragma clang diagnostic ignored "-Wint-to-void-pointer-cast" // warning : cast to 'void *' from smaller integer type 'int'
+#pragma clang diagnostic ignored "-Wcast-qual"              // warning : cast from 'const xxxx *' to 'xxxx *' drops const qualifier
 #elif defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-function"          // warning: 'xxxx' defined but not used
 #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"      // warning: cast to pointer from integer of different size
 #pragma GCC diagnostic ignored "-Wformat"                   // warning: format '%p' expects argument of type 'void*', but argument 6 has type 'ImGuiWindow*'
 #pragma GCC diagnostic ignored "-Wdouble-promotion"         // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wconversion"               // warning: conversion to 'xxxx' from 'xxxx' may alter its value
-#pragma GCC diagnostic ignored "-Wcast-qual"                // warning: cast from type 'xxxx' to type 'xxxx' casts away qualifiers
+#pragma GCC diagnostic ignored "-Wcast-qual"                // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"        // warning: format not a string literal, format string not checked
 #pragma GCC diagnostic ignored "-Wstrict-overflow"          // warning: assuming signed overflow does not occur when assuming that (X - c) > X is always false
 #endif
@@ -1006,11 +1029,11 @@ char* ImStrdup(const char *str)
     return (char*)memcpy(buf, (const void*)str, len);
 }
 
-char* ImStrchrRange(const char* str, const char* str_end, char c)
+const char* ImStrchrRange(const char* str, const char* str_end, char c)
 {
     for ( ; str < str_end; str++)
         if (*str == c) 
-            return (char*)str; 
+            return str; 
     return NULL;
 }
 
@@ -3743,7 +3766,7 @@ static void LoadIniSettingsFromMemory(const char* buf_readonly)
             line_end[-1] = 0;
             const char* name_end = line_end - 1;
             const char* type_start = line + 1;
-            char* type_end = ImStrchrRange(type_start, name_end, ']');
+            char* type_end = (char*)ImStrchrRange(type_start, name_end, ']');
             const char* name_start = type_end ? ImStrchrRange(type_end + 1, name_end, '[') : NULL;
             if (!type_end || !name_start)
             {
@@ -9406,7 +9429,7 @@ struct ImGuiPlotArrayGetterData
 static float Plot_ArrayGetter(void* data, int idx)
 {
     ImGuiPlotArrayGetterData* plot_data = (ImGuiPlotArrayGetterData*)data;
-    const float v = *(float*)(void*)((unsigned char*)plot_data->Values + (size_t)idx * plot_data->Stride);
+    const float v = *(const float*)(const void*)((const unsigned char*)plot_data->Values + (size_t)idx * plot_data->Stride);
     return v;
 }
 
