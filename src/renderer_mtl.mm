@@ -1148,6 +1148,10 @@ namespace bgfx { namespace mtl
 
 				MTLPixelFormat prevMetalLayerPixelFormat = m_metalLayer.pixelFormat;
 
+#if BX_PLATFORM_OSX > 101300
+				m_metalLayer.displaySyncEnabled = 0 != (_resolution.m_flags&BGFX_RESET_VSYNC);
+#endif // BX_PLATFORM_OSX > 101300
+
 				m_metalLayer.drawableSize = CGSizeMake(_resolution.m_width, _resolution.m_height);
 				m_metalLayer.pixelFormat = (m_resolution.m_flags & BGFX_RESET_SRGB_BACKBUFFER)
 					? MTLPixelFormatBGRA8Unorm_sRGB
@@ -1160,9 +1164,13 @@ namespace bgfx { namespace mtl
 				m_textureDescriptor.textureType = sampleCount > 1 ? MTLTextureType2DMultisample : MTLTextureType2D;
 
 				if (m_hasPixelFormatDepth32Float_Stencil8)
+				{
 					m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+				}
 				else
+				{
 					m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float;
+				}
 
 				m_textureDescriptor.width  = _resolution.m_width;
 				m_textureDescriptor.height = _resolution.m_height;
@@ -1175,7 +1183,7 @@ namespace bgfx { namespace mtl
 				{
 					m_textureDescriptor.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 					m_textureDescriptor.storageMode  = MTLStorageModePrivate;
-					m_textureDescriptor.usage		 = MTLTextureUsageRenderTarget;
+					m_textureDescriptor.usage        = MTLTextureUsageRenderTarget;
 				}
 
 				if (NULL != m_backBufferDepth)
@@ -1207,6 +1215,7 @@ namespace bgfx { namespace mtl
 					{
 						release(m_backBufferColorMSAA);
 					}
+
 					m_textureDescriptor.pixelFormat = m_metalLayer.pixelFormat;
 					m_backBufferColorMSAA   = m_device.newTextureWithDescriptor(m_textureDescriptor);
 				}
