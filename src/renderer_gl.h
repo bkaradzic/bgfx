@@ -1153,7 +1153,7 @@ namespace bgfx { namespace gl
 
 			//Workaround for s4 drivers leaking lots of memory
 			//https://developer.qualcomm.com/forum/qdevnet-forums/mobile-technologies/mobile-gaming-graphics-optimization-adreno/26936
-			if (_offset == 0)
+			if (_offset == 0 && _size == m_size)
 			{
 				GL_CHECK(glBufferData(m_target
 					, _size
