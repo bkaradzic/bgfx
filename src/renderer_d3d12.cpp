@@ -4818,15 +4818,10 @@ data.NumQualityLevels = 0;
 	{
 		if (m_needPresent)
 		{
-#if 1
 			HRESULT hr = m_swapChain->Present(_syncInterval, _flags);
 			hr = !isLost(hr) ? S_OK : hr;
 			m_needPresent = false;
 			return hr;
-#else
-			m_needPresent = false;
-			return S_OK;
-#endif // 0
 		}
 
 		return S_OK;
