@@ -2464,14 +2464,23 @@ data.NumQualityLevels = 0;
 				if (DxbcOperandType::ConstantBuffer == operand.type)
 				{
 					if (DxbcOperandAddrMode::Imm32 == operand.addrMode[0]
-					&&  0 == operand.regIndex[0]
-					&&  DxbcOperandAddrMode::Imm32 == operand.addrMode[1])
+					&&  0 == operand.regIndex[0])
 					{
-						operand.regIndex[1] += cast.offset;
-					}
-					else if (DxbcOperandAddrMode::RegImm32 == operand.addrMode[1])
-					{
-						operand.regIndex[1] += cast.offset;
+						for (uint32_t jj = 1; jj < operand.numAddrModes; ++jj)
+						{
+							if (DxbcOperandAddrMode::Imm32    == operand.addrMode[jj]
+							||  DxbcOperandAddrMode::RegImm32 == operand.addrMode[jj])
+							{
+								operand.regIndex[jj] += cast.offset;
+							}
+							else
+							{
+								operand.subOperand[jj].regIndex = operand.regIndex[jj];
+								operand.addrMode[jj] = DxbcOperandAddrMode::RegImm32;
+								operand.regIndex[jj] = cast.offset;
+								_instruction.length += 1;
+							}
+						}
 					}
 				}
 			}
@@ -2579,7 +2588,7 @@ data.NumQualityLevels = 0;
 
 			if (NULL != program.m_fsh)
 			{
- 				temp = alloc(program.m_fsh->m_code->size);
+ 				temp = alloc(program.m_fsh->m_code->size+1024);
  				bx::memSet(temp->data, 0, temp->size);
  				bx::MemoryReader rd(program.m_fsh->m_code->data, program.m_fsh->m_code->size);
  				bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
@@ -2589,7 +2598,7 @@ data.NumQualityLevels = 0;
 				read(&rd, dxbc, &err);
 
 				bool patchShader = !dxbc.shader.aon9;
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+				if (BX_ENABLED(false) //BGFX_CONFIG_DEBUG)
 				&&  patchShader)
 				{
 					union { uint32_t offset; void* ptr; } cast = { 0 };
@@ -2629,11 +2638,12 @@ data.NumQualityLevels = 0;
 						uint32_t(program.m_vsh->m_size)/16
 					};
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
-					write(&wr, dxbc, &err);
-					dxbcHash(temp->data + 20, temp->size - 20, temp->data + 4);
+
+					int32_t size = write(&wr, dxbc, &err);
+					dxbcHash(temp->data + 20, size - 20, temp->data + 4);
 
 					desc.PS.pShaderBytecode = temp->data;
-					desc.PS.BytecodeLength  = temp->size;
+					desc.PS.BytecodeLength  = size;
 				}
 				else
 				{
