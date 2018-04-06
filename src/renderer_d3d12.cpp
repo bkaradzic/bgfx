@@ -2473,12 +2473,11 @@ data.NumQualityLevels = 0;
 							{
 								operand.regIndex[jj] += cast.offset;
 							}
-							else
+							else if (0 != cast.offset)
 							{
 								operand.subOperand[jj].regIndex = operand.regIndex[jj];
 								operand.addrMode[jj] = DxbcOperandAddrMode::RegImm32;
 								operand.regIndex[jj] = cast.offset;
-								_instruction.length += 1;
 							}
 						}
 					}
@@ -2588,25 +2587,24 @@ data.NumQualityLevels = 0;
 
 			if (NULL != program.m_fsh)
 			{
- 				temp = alloc(program.m_fsh->m_code->size+1024);
- 				bx::memSet(temp->data, 0, temp->size);
  				bx::MemoryReader rd(program.m_fsh->m_code->data, program.m_fsh->m_code->size);
- 				bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 				DxbcContext dxbc;
 				bx::Error err;
 				read(&rd, dxbc, &err);
 
 				bool patchShader = !dxbc.shader.aon9;
-				if (BX_ENABLED(false) //BGFX_CONFIG_DEBUG)
+				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 				&&  patchShader)
 				{
 					union { uint32_t offset; void* ptr; } cast = { 0 };
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
 
-					write(&wr, dxbc, &err);
+					temp = alloc(uint32_t(dxbc.shader.byteCode.size() )+1024);
+					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
-					dxbcHash(temp->data + 20, temp->size - 20, temp->data + 4);
+					int32_t size = write(&wr, dxbc, &err);
+					dxbcHash(temp->data + 20, size - 20, temp->data + 4);
 
 					patchShader = 0 == bx::memCmp(program.m_fsh->m_code->data, temp->data, 16);
 					BX_CHECK(patchShader, "DXBC fragment shader patching error (ShaderHandle: %d).", program.m_fsh - m_shaders);
@@ -2626,18 +2624,21 @@ data.NumQualityLevels = 0;
 						desc.PS.pShaderBytecode = program.m_fsh->m_code->data;
 						desc.PS.BytecodeLength  = program.m_fsh->m_code->size;
 					}
+
+					release(temp);
+					temp = NULL;
 				}
 
 				if (patchShader)
 				{
-					bx::memCopy(temp->data, program.m_fsh->m_code->data, program.m_fsh->m_code->size);
-
-					bx::seek(&wr, 0, bx::Whence::Begin);
 					union { uint32_t offset; void* ptr; } cast =
 					{
 						uint32_t(program.m_vsh->m_size)/16
 					};
 					filter(dxbc.shader, dxbc.shader, patchCb0, cast.ptr);
+
+					temp = alloc(uint32_t(dxbc.shader.byteCode.size() )+1024);
+					bx::StaticMemoryBlockWriter wr(temp->data, temp->size);
 
 					int32_t size = write(&wr, dxbc, &err);
 					dxbcHash(temp->data + 20, size - 20, temp->data + 4);

@@ -2030,9 +2030,12 @@ namespace bgfx
 
 			_fn(instruction, _userData);
 
-			total += write(&writer, instruction, _err);
+			bx::SizerWriter sw;
+			uint32_t length = instruction.length;
+			instruction.length = uint32_t(write(&sw, instruction, _err)/4);
 
-			token += instruction.length;
+			total += write(&writer, instruction, _err);
+			token += length;
 		}
 
 		uint8_t* data = (uint8_t*)mb.more();
