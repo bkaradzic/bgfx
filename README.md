@@ -37,7 +37,7 @@ Supported platforms:
  * iOS (iPhone, iPad, AppleTV)
  * Linux
  * MIPS Creator CI20
- * OSX (10.9+)
+ * OSX (10.12+)
  * RaspberryPi
  * SteamLink
  * Windows (XP, Vista, 7, 8, 10)
