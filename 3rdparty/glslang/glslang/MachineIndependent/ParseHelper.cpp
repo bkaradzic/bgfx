@@ -381,6 +381,8 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
         if (index->getQualifier().isFrontEndConstant()) {
             if (base->getType().isUnsizedArray())
                 base->getWritableType().updateImplicitArraySize(indexValue + 1);
+            else
+                checkIndex(loc, base->getType(), indexValue);
             result = intermediate.addIndex(EOpIndexDirect, base, index, loc);
         } else {
             if (base->getType().isUnsizedArray()) {
@@ -390,8 +392,7 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
                     error(loc, "", "[", "array must be sized by a redeclaration or layout qualifier before being indexed with a variable");
                 else {
                     // it is okay for a run-time sized array
-                    if (base->getType().getQualifier().storage != EvqBuffer)
-                        error(loc, "", "[", "array must be redeclared with a size before being indexed with a variable");
+                    checkRuntimeSizable(loc, *base);
                 }
                 base->getWritableType().setArrayVariablyIndexed();
             }
@@ -433,6 +434,10 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
             newType.getQualifier().makePartialTemporary();
         }
         result->setType(newType);
+
+        // Propagate nonuniform
+        if (base->getQualifier().isNonUniform() || index->getQualifier().isNonUniform())
+            result->getWritableType().getQualifier().nonUniform = true;
 
         if (anyIndexLimits)
             handleIndexLimits(loc, base, index);
@@ -741,6 +746,10 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
     // Propagate noContraction up the dereference chain
     if (base->getQualifier().noContraction)
         result->getWritableType().getQualifier().noContraction = true;
+
+    // Propagate nonuniform
+    if (base->getQualifier().isNonUniform())
+        result->getWritableType().getQualifier().nonUniform = true;
 
     return result;
 }
@@ -1235,7 +1244,7 @@ TIntermTyped* TParseContext::handleLengthMethod(const TSourceLoc& loc, TFunction
                 if (length == 0) {
                     if (intermNode->getAsSymbolNode() && isIoResizeArray(type))
                         error(loc, "", function->getName().c_str(), "array must first be sized by a redeclaration or layout qualifier");
-                    else if (type.getQualifier().isUniformOrBuffer()) {
+                    else if (isRuntimeLength(*intermNode->getAsTyped())) {
                         // Create a unary op and let the back end handle it
                         return intermediate.addBuiltInFunctionCall(loc, EOpArrayLength, true, intermNode, TType(EbtInt));
                     } else
@@ -2622,6 +2631,10 @@ void TParseContext::memberQualifierCheck(glslang::TPublicType& publicType)
 {
     globalQualifierFixCheck(publicType.loc, publicType.qualifier);
     checkNoShaderLayouts(publicType.loc, publicType.shaderQualifiers);
+    if (publicType.qualifier.isNonUniform()) {
+        error(publicType.loc, "not allowed on block or structure members", "nonuniformEXT", "");
+        publicType.qualifier.nonUniform = false;
+    }
 }
 
 //
@@ -2629,12 +2642,15 @@ void TParseContext::memberQualifierCheck(glslang::TPublicType& publicType)
 //
 void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& qualifier)
 {
+    bool nonuniformOkay = false;
+
     // move from parameter/unknown qualifiers to pipeline in/out qualifiers
     switch (qualifier.storage) {
     case EvqIn:
         profileRequires(loc, ENoProfile, 130, nullptr, "in for stage inputs");
         profileRequires(loc, EEsProfile, 300, nullptr, "in for stage inputs");
         qualifier.storage = EvqVaryingIn;
+        nonuniformOkay = true;
         break;
     case EvqOut:
         profileRequires(loc, ENoProfile, 130, nullptr, "out for stage outputs");
@@ -2645,9 +2661,16 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
         qualifier.storage = EvqVaryingIn;
         error(loc, "cannot use 'inout' at global scope", "", "");
         break;
+    case EvqGlobal:
+    case EvqTemporary:
+        nonuniformOkay = true;
+        break;
     default:
         break;
     }
+
+    if (!nonuniformOkay && qualifier.nonUniform)
+        error(loc, "for non-parameter, can only apply to 'in' or no storage qualifier", "nonuniformEXT", "");
 
     invariantCheck(loc, qualifier);
 }
@@ -2897,6 +2920,7 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
     MERGE_SINGLETON(readonly);
     MERGE_SINGLETON(writeonly);
     MERGE_SINGLETON(specConstant);
+    MERGE_SINGLETON(nonUniform);
 
     if (repeated)
         error(loc, "replicated qualifiers", "", "");
@@ -3266,6 +3290,39 @@ void TParseContext::declareArray(const TSourceLoc& loc, const TString& identifie
 
     if (isIoResizeArray(type))
         checkIoArraysConsistency(loc);
+}
+
+// Policy and error check for needing a runtime sized array.
+void TParseContext::checkRuntimeSizable(const TSourceLoc& loc, const TIntermTyped& base)
+{
+    // runtime length implies runtime sizeable, so no problem
+    if (isRuntimeLength(base))
+        return;
+
+    // check for additional things allowed by GL_EXT_nonuniform_qualifier
+    if (base.getBasicType() == EbtSampler ||
+            (base.getBasicType() == EbtBlock && base.getType().getQualifier().isUniformOrBuffer()))
+        requireExtensions(loc, 1, &E_GL_EXT_nonuniform_qualifier, "variable index");
+    else
+        error(loc, "", "[", "array must be redeclared with a size before being indexed with a variable");
+}
+
+// Policy decision for whether a run-time .length() is allowed.
+bool TParseContext::isRuntimeLength(const TIntermTyped& base) const
+{
+    if (base.getType().getQualifier().storage == EvqBuffer) {
+        // in a buffer block
+        const TIntermBinary* binary = base.getAsBinaryNode();
+        if (binary != nullptr && binary->getOp() == EOpIndexDirectStruct) {
+            // is it the last member?
+            const int index = binary->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst();
+            const int memberCount = (int)binary->getLeft()->getType().getStruct()->size();
+            if (index == memberCount - 1)
+                return true;
+        }
+    }
+
+    return false;
 }
 
 // Returns true if the first argument to the #line directive is the line number for the next line.
@@ -3678,6 +3735,8 @@ void TParseContext::paramCheckFix(const TSourceLoc& loc, const TQualifier& quali
         else
             warn(loc, "qualifier has no effect on non-output parameters", "precise", "");
     }
+    if (qualifier.isNonUniform())
+        type.getQualifier().nonUniform = qualifier.nonUniform;
 
     paramCheckFixStorage(loc, qualifier.storage, type);
 }
@@ -4655,11 +4714,16 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         if (type.getBasicType() == EbtSampler) {
             int lastBinding = qualifier.layoutBinding;
             if (type.isArray()) {
-                if (type.isSizedArray())
-                    lastBinding += type.getCumulativeArraySize();
-                else {
+                if (spvVersion.vulkan > 0)
                     lastBinding += 1;
-                    warn(loc, "assuming array size of one for compile-time checking of binding numbers for unsized array", "[]", "");
+                else {
+                    if (type.isSizedArray())
+                        lastBinding += type.getCumulativeArraySize();
+                    else {
+                        lastBinding += 1;
+                        if (spvVersion.vulkan == 0)
+                            warn(loc, "assuming binding count of one for compile-time checking of binding numbers for unsized array", "[]", "");
+                    }
                 }
             }
             if (spvVersion.vulkan == 0 && lastBinding >= resources.maxCombinedTextureImageUnits)
@@ -5825,6 +5889,11 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructBVec4:
     case EOpConstructBool:
         basicOp = EOpConstructBool;
+        break;
+
+    case EOpConstructNonuniform:
+        node->getWritableType().getQualifier().nonUniform = true;
+        return node;
         break;
 
     default:

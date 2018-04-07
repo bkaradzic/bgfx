@@ -341,6 +341,7 @@ void TScanContext::fillInKeywordMap()
 
     (*KeywordMap)["const"] =                   CONST;
     (*KeywordMap)["uniform"] =                 UNIFORM;
+    (*KeywordMap)["nonuniformEXT"] =           NONUNIFORM;
     (*KeywordMap)["in"] =                      IN;
     (*KeywordMap)["out"] =                     OUT;
     (*KeywordMap)["inout"] =                   INOUT;
@@ -872,6 +873,12 @@ int TScanContext::tokenizeIdentifier()
     case RETURN:
     case CASE:
         return keyword;
+
+    case NONUNIFORM:
+        if (parseContext.extensionTurnedOn(E_GL_EXT_nonuniform_qualifier))
+            return keyword;
+        else
+            return identifierOrType();
 
     case SWITCH:
     case DEFAULT:

@@ -57,7 +57,8 @@ branch.
 
 ### Dependencies
 
-* A C++11 compiler
+* A C++11 compiler.
+  (For MSVS: 2015 is recommended, 2013 is fully supported/tested, and 2010 support is attempted, but not tested.)
 * [CMake][cmake]: for generating compilation targets.
 * make: _Linux_, ninja is an alternative, if configured.
 * [Python 2.7][python]: for executing SPIRV-Tools scripts. (Optional if not using SPIRV-Tools.)

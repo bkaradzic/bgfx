@@ -158,6 +158,11 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
     if (specConstantPropagates(*node->getLeft(), *node->getRight()) && isSpecializationOperation(*node))
         node->getWritableType().getQualifier().makeSpecConstant();
 
+    // If must propagate nonuniform, make a nonuniform.
+    if ((node->getLeft()->getQualifier().nonUniform || node->getRight()->getQualifier().nonUniform) &&
+            isNonuniformPropagating(node->getOp()))
+        node->getWritableType().getQualifier().nonUniform = true;
+
     return node;
 }
 
@@ -365,6 +370,10 @@ TIntermTyped* TIntermediate::addUnaryMath(TOperator op, TIntermTyped* child, TSo
     // if the operation is allowed for specialization constants.
     if (node->getOperand()->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*node))
         node->getWritableType().getQualifier().makeSpecConstant();
+
+    // If must propagate nonuniform, make a nonuniform.
+    if (node->getOperand()->getQualifier().nonUniform && isNonuniformPropagating(node->getOp()))
+        node->getWritableType().getQualifier().nonUniform = true;
 
     return node;
 }
@@ -1748,6 +1757,9 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
 {
     TOperator op = EOpNull;
 
+    if (type.getQualifier().nonUniform)
+        return EOpConstructNonuniform;
+
     switch (type.getBasicType()) {
     case EbtStruct:
         op = EOpConstructStruct;
@@ -2798,6 +2810,64 @@ bool TIntermediate::isSpecializationOperation(const TIntermOperator& node) const
     default:
         return false;
     }
+}
+
+// Is the operation one that must propagate nonuniform?
+bool TIntermediate::isNonuniformPropagating(TOperator op) const
+{
+    // "* All Operators in Section 5.1 (Operators), except for assignment,
+    //    arithmetic assignment, and sequence
+    //  * Component selection in Section 5.5
+    //  * Matrix components in Section 5.6
+    //  * Structure and Array Operations in Section 5.7, except for the length
+    //    method."
+    switch (op) {
+    case EOpPostIncrement:
+    case EOpPostDecrement:
+    case EOpPreIncrement:
+    case EOpPreDecrement:
+
+    case EOpNegative:
+    case EOpLogicalNot:
+    case EOpVectorLogicalNot:
+    case EOpBitwiseNot:
+
+    case EOpAdd:
+    case EOpSub:
+    case EOpMul:
+    case EOpDiv:
+    case EOpMod:
+    case EOpRightShift:
+    case EOpLeftShift:
+    case EOpAnd:
+    case EOpInclusiveOr:
+    case EOpExclusiveOr:
+    case EOpEqual:
+    case EOpNotEqual:
+    case EOpLessThan:
+    case EOpGreaterThan:
+    case EOpLessThanEqual:
+    case EOpGreaterThanEqual:
+    case EOpVectorTimesScalar:
+    case EOpVectorTimesMatrix:
+    case EOpMatrixTimesVector:
+    case EOpMatrixTimesScalar:
+
+    case EOpLogicalOr:
+    case EOpLogicalXor:
+    case EOpLogicalAnd:
+
+    case EOpIndexDirect:
+    case EOpIndexIndirect:
+    case EOpIndexDirectStruct:
+    case EOpVectorSwizzle:
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////

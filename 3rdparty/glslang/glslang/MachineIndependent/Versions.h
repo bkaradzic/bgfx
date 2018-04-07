@@ -157,6 +157,7 @@ const char* const E_GL_EXT_device_group                 = "GL_EXT_device_group";
 const char* const E_GL_EXT_multiview                    = "GL_EXT_multiview";
 const char* const E_GL_EXT_post_depth_coverage          = "GL_EXT_post_depth_coverage";
 const char* const E_GL_EXT_control_flow_attributes      = "GL_EXT_control_flow_attributes";
+const char* const E_GL_EXT_nonuniform_qualifier         = "GL_EXT_nonuniform_qualifier";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

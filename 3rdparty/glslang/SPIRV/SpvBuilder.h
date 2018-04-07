@@ -554,7 +554,7 @@ public:
     void accessChainStore(Id rvalue);
 
     // use accessChain and swizzle to load an r-value
-    Id accessChainLoad(Decoration precision, Id ResultType);
+    Id accessChainLoad(Decoration precision, Decoration nonUniform, Id ResultType);
 
     // get the direct pointer for an l-value
     Id accessChainGetLValue();

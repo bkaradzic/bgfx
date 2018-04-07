@@ -943,8 +943,6 @@ ERROR: Linking tessellation control stage: Multiple function bodies in multiple 
 ERROR: Linking tessellation control stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:
     main(
 ERROR: Linking tessellation control stage: Types must match:
-    gl_out: " out 4-element array of block{ out 4-component vector of float Position gl_Position,  out float PointSize gl_PointSize,  out unsized 2-element array of float ClipDistance gl_ClipDistance}" versus " out unsized 1-element array of block{ out 4-component vector of float Position gl_Position,  out float PointSize gl_PointSize,  out unsized 1-element array of float ClipDistance gl_ClipDistance}"
-ERROR: Linking tessellation control stage: Types must match:
     outa: " global 4-element array of int" versus " global 1-element array of int"
 ERROR: Linking tessellation control stage: can't handle multiple entry points per stage
 ERROR: Linking tessellation control stage: Multiple function bodies in multiple compilation units for the same signature in the same stage:

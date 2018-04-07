@@ -199,6 +199,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_shader_image_load_formatted]             = EBhDisable;
     extensionBehavior[E_GL_EXT_post_depth_coverage]                     = EBhDisable;
     extensionBehavior[E_GL_EXT_control_flow_attributes]                 = EBhDisable;
+    extensionBehavior[E_GL_EXT_nonuniform_qualifier]                    = EBhDisable;
 
     // #line and #include
     extensionBehavior[E_GL_GOOGLE_cpp_style_line_directive]          = EBhDisable;
@@ -360,6 +361,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_image_load_formatted 1\n"
             "#define GL_EXT_post_depth_coverage 1\n"
             "#define GL_EXT_control_flow_attributes 1\n"
+            "#define GL_EXT_nonuniform_qualifier 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"

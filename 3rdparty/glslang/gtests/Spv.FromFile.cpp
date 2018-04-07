@@ -282,6 +282,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.newTexture.frag",
         "spv.noDeadDecorations.vert",
         "spv.nonSquare.vert",
+        "spv.nonuniform.frag",
         "spv.noWorkgroup.comp",
         "spv.offsets.frag",
         "spv.Operations.frag",

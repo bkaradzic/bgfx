@@ -844,6 +844,8 @@ TIntermTyped* HlslParseContext::handleBracketDereference(const TSourceLoc& loc, 
             if (index->getQualifier().isFrontEndConstant()) {
                 if (base->getType().isUnsizedArray())
                     base->getWritableType().updateImplicitArraySize(indexValue + 1);
+                else
+                    checkIndex(loc, base->getType(), indexValue);
                 result = intermediate.addIndex(EOpIndexDirect, base, index, loc);
             } else
                 result = intermediate.addIndex(EOpIndexIndirect, base, index, loc);
@@ -6551,6 +6553,7 @@ void HlslParseContext::mergeQualifiers(TQualifier& dst, const TQualifier& src)
     MERGE_SINGLETON(readonly);
     MERGE_SINGLETON(writeonly);
     MERGE_SINGLETON(specConstant);
+    MERGE_SINGLETON(nonUniform);
 }
 
 // used to flatten the sampler type space into a single dimension

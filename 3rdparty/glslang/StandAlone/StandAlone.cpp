@@ -729,6 +729,9 @@ void SetMessageOptions(EShMessages& messages)
 //
 void CompileShaders(glslang::TWorklist& worklist)
 {
+    if (Options & EOptionDebug)
+        Error("cannot generate debug information unless linking to generate code");
+
     glslang::TWorkItem* workItem;
     if (Options & EOptionStdin) {
         worklist.remove(workItem);

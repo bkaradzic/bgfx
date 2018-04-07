@@ -437,6 +437,7 @@ public:
         clearInterstage();
         clearMemory();
         specConstant = false;
+        nonUniform = false;
         clearLayout();
     }
 
@@ -478,6 +479,7 @@ public:
     {
         storage      = EvqTemporary;
         specConstant = false;
+        nonUniform   = false;
     }
 
     const char*         semanticName;
@@ -502,6 +504,7 @@ public:
     bool readonly     : 1;
     bool writeonly    : 1;
     bool specConstant : 1;  // having a constant_id is not sufficient: expressions have no id, but are still specConstant
+    bool nonUniform   : 1;
 
     bool isMemory() const
     {
@@ -832,6 +835,10 @@ public:
         // had a specialization-constant ID, and false if it is not a
         // true front-end constant.
         return specConstant;
+    }
+    bool isNonUniform() const
+    {
+        return nonUniform;
     }
     bool isFrontEndConstant() const
     {
@@ -1383,8 +1390,9 @@ public:
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
 
     // "Image" is a superset of "Subpass"
-    virtual bool isImage() const   { return basicType == EbtSampler && getSampler().isImage(); }
+    virtual bool isImage()   const { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
+    virtual bool isTexture() const { return basicType == EbtSampler && getSampler().isTexture(); }
 
     // return true if this type contains any subtype which satisfies the given predicate.
     template <typename P>
@@ -1689,6 +1697,8 @@ public:
             appendStr(" writeonly");
         if (qualifier.specConstant)
             appendStr(" specialization-constant");
+        if (qualifier.nonUniform)
+            appendStr(" nonuniform");
         appendStr(" ");
         appendStr(getStorageQualifierString());
         if (isArray()) {

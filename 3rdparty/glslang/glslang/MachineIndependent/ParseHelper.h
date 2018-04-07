@@ -427,6 +427,8 @@ protected:
     TVariable* makeInternalVariable(const char* name, const TType&) const;
     TVariable* declareNonArray(const TSourceLoc&, const TString& identifier, const TType&);
     void declareArray(const TSourceLoc&, const TString& identifier, const TType&, TSymbol*&);
+    void checkRuntimeSizable(const TSourceLoc&, const TIntermTyped&);
+    bool isRuntimeLength(const TIntermTyped&) const;
     TIntermNode* executeInitializer(const TSourceLoc&, TIntermTyped* initializer, TVariable* variable);
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer);
     void finish() override;

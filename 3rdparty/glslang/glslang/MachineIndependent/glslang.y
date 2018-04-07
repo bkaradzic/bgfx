@@ -140,7 +140,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> U8VEC2  U8VEC3  U8VEC4
 %token <lex> VEC2 VEC3 VEC4
 %token <lex> MAT2 MAT3 MAT4 CENTROID IN OUT INOUT
-%token <lex> UNIFORM PATCH SAMPLE BUFFER SHARED
+%token <lex> UNIFORM PATCH SAMPLE BUFFER SHARED NONUNIFORM
 %token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY
 %token <lex> DVEC2 DVEC3 DVEC4 DMAT2 DMAT3 DMAT4
 %token <lex> F16VEC2 F16VEC3 F16VEC4 F16MAT2 F16MAT3 F16MAT4
@@ -268,6 +268,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm> array_specifier
 %type <interm.type> precise_qualifier invariant_qualifier interpolation_qualifier storage_qualifier precision_qualifier
 %type <interm.type> layout_qualifier layout_qualifier_id_list layout_qualifier_id
+%type <interm.type> non_uniform_qualifier
 
 %type <interm.type> type_qualifier fully_specified_type type_specifier
 %type <interm.type> single_type_qualifier
@@ -472,6 +473,11 @@ function_identifier
             TString empty("");
             $$.function = new TFunction(&empty, TType(EbtVoid), EOpNull);
         }
+    }
+    | non_uniform_qualifier {
+        // Constructor
+        $$.intermNode = 0;
+        $$.function = parseContext.handleConstructorCall($1.loc, $1);
     }
     ;
 
@@ -1217,6 +1223,9 @@ single_type_qualifier
         // allow inheritance of storage qualifier from block declaration
         $$ = $1;
     }
+    | non_uniform_qualifier {
+        $$ = $1;
+    }
     ;
 
 storage_qualifier
@@ -1334,6 +1343,13 @@ storage_qualifier
         parseContext.globalCheck($1.loc, "subroutine");
         parseContext.unimplemented($1.loc, "subroutine");
         $$.init($1.loc);
+    }
+    ;
+
+non_uniform_qualifier
+    : NONUNIFORM {
+        $$.init($1.loc);
+        $$.qualifier.nonUniform = true;
     }
     ;
 

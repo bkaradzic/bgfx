@@ -729,6 +729,7 @@ enum TOperator {
     EOpConstructF16Mat4x4,
     EOpConstructStruct,
     EOpConstructTextureSampler,
+    EOpConstructNonuniform,     // expected to be transformed away, not present in final AST
     EOpConstructGuardEnd,
 
     //

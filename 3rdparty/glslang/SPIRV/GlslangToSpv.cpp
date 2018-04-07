@@ -102,6 +102,7 @@ private:
 struct OpDecorations {
     spv::Decoration precision;
     spv::Decoration noContraction;
+    spv::Decoration nonUniform;
 };
 
 } // namespace
@@ -136,12 +137,14 @@ protected:
 
     spv::Decoration TranslateInterpolationDecoration(const glslang::TQualifier& qualifier);
     spv::Decoration TranslateAuxiliaryStorageDecoration(const glslang::TQualifier& qualifier);
+    spv::Decoration TranslateNonUniformDecoration(const glslang::TQualifier& qualifier);
     spv::BuiltIn TranslateBuiltInDecoration(glslang::TBuiltInVariable, bool memberDeclaration);
     spv::ImageFormat TranslateImageFormat(const glslang::TType& type);
     spv::SelectionControlMask TranslateSelectionControl(const glslang::TIntermSelection&) const;
     spv::SelectionControlMask TranslateSwitchControl(const glslang::TIntermSwitch&) const;
     spv::LoopControlMask TranslateLoopControl(const glslang::TIntermLoop&, unsigned int& dependencyLength) const;
     spv::StorageClass TranslateStorageClass(const glslang::TType&);
+    void addIndirectionIndexCapabilities(const glslang::TType& baseType, const glslang::TType& indexType);
     spv::Id createSpvVariable(const glslang::TIntermSymbol*);
     spv::Id getSampledType(const glslang::TSampler&);
     spv::Id getInvertedSwizzleType(const glslang::TIntermTyped&);
@@ -440,6 +443,17 @@ spv::Decoration TranslateNoContractionDecoration(const glslang::TQualifier& qual
     if (qualifier.noContraction)
         return spv::DecorationNoContraction;
     else
+        return spv::DecorationMax;
+}
+
+// If glslang type is nonUniform, return SPIR-V NonUniform decoration.
+spv::Decoration TGlslangToSpvTraverser::TranslateNonUniformDecoration(const glslang::TQualifier& qualifier)
+{
+    if (qualifier.isNonUniform()) {
+        builder.addExtension("SPV_EXT_descriptor_indexing");
+        builder.addCapability(spv::CapabilityShaderNonUniformEXT);
+        return spv::DecorationNonUniformEXT;
+    } else
         return spv::DecorationMax;
 }
 
@@ -889,6 +903,42 @@ spv::StorageClass TGlslangToSpvTraverser::TranslateStorageClass(const glslang::T
     return spv::StorageClassFunction;
 }
 
+// Add capabilities pertaining to how an array is indexed.
+void TGlslangToSpvTraverser::addIndirectionIndexCapabilities(const glslang::TType& baseType,
+                                                             const glslang::TType& indexType)
+{
+    if (indexType.getQualifier().isNonUniform()) {
+        // deal with an asserted non-uniform index
+        if (baseType.getBasicType() == glslang::EbtSampler) {
+            if (baseType.getQualifier().hasAttachment())
+                builder.addCapability(spv::CapabilityInputAttachmentArrayNonUniformIndexingEXT);
+            else if (baseType.isImage() && baseType.getSampler().dim == glslang::EsdBuffer)
+                builder.addCapability(spv::CapabilityStorageTexelBufferArrayNonUniformIndexingEXT);
+            else if (baseType.isTexture() && baseType.getSampler().dim == glslang::EsdBuffer)
+                builder.addCapability(spv::CapabilityUniformTexelBufferArrayNonUniformIndexingEXT);
+            else if (baseType.isImage())
+                builder.addCapability(spv::CapabilityStorageImageArrayNonUniformIndexingEXT);
+            else if (baseType.isTexture())
+                builder.addCapability(spv::CapabilitySampledImageArrayNonUniformIndexingEXT);
+        } else if (baseType.getBasicType() == glslang::EbtBlock) {
+            if (baseType.getQualifier().storage == glslang::EvqBuffer)
+                builder.addCapability(spv::CapabilityStorageBufferArrayNonUniformIndexingEXT);
+            else if (baseType.getQualifier().storage == glslang::EvqUniform)
+                builder.addCapability(spv::CapabilityUniformBufferArrayNonUniformIndexingEXT);
+        }
+    } else {
+        // assume a dynamically uniform index
+        if (baseType.getBasicType() == glslang::EbtSampler) {
+            if (baseType.getQualifier().hasAttachment())
+                builder.addCapability(spv::CapabilityInputAttachmentArrayDynamicIndexingEXT);
+            else if (baseType.isImage() && baseType.getSampler().dim == glslang::EsdBuffer)
+                builder.addCapability(spv::CapabilityStorageTexelBufferArrayDynamicIndexingEXT);
+            else if (baseType.isTexture() && baseType.getSampler().dim == glslang::EsdBuffer)
+                builder.addCapability(spv::CapabilityUniformTexelBufferArrayDynamicIndexingEXT);
+        }
+    }
+}
+
 // Return whether or not the given type is something that should be tied to a
 // descriptor set.
 bool IsDescriptorResource(const glslang::TType& type)
@@ -1229,8 +1279,10 @@ void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
                         id = getSymbolId(it->second);
                         if (id != spv::NoResult) {
                             spv::Id counterId = getSymbolId(symbol);
-                            if (counterId != spv::NoResult)
+                            if (counterId != spv::NoResult) {
+                                builder.addExtension("SPV_GOOGLE_hlsl_functionality1");
                                 builder.addDecorationId(id, spv::DecorationHlslCounterBufferGOOGLE, counterId);
+                            }
                         }
                     }
                 }
@@ -1286,7 +1338,8 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
 
                 // do the operation
                 OpDecorations decorations = { TranslatePrecisionDecoration(node->getOperationPrecision()),
-                                              TranslateNoContractionDecoration(node->getType().getQualifier()) };
+                                              TranslateNoContractionDecoration(node->getType().getQualifier()),
+                                              TranslateNonUniformDecoration(node->getType().getQualifier()) };
                 rValue = createBinaryOperation(node->getOp(), decorations,
                                                convertGlslangToSpvType(node->getType()), leftRValue, rValue,
                                                node->getType().getBasicType());
@@ -1362,6 +1415,8 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
             node->getRight()->traverse(this);
             spv::Id index = accessChainLoad(node->getRight()->getType());
 
+            addIndirectionIndexCapabilities(node->getLeft()->getType(), node->getRight()->getType());
+
             // restore the saved access chain
             builder.setAccessChain(partial);
 
@@ -1415,7 +1470,8 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
 
     // get result
     OpDecorations decorations = { TranslatePrecisionDecoration(node->getOperationPrecision()),
-                                  TranslateNoContractionDecoration(node->getType().getQualifier()) };
+                                  TranslateNoContractionDecoration(node->getType().getQualifier()),
+                                  TranslateNonUniformDecoration(node->getType().getQualifier()) };
     spv::Id result = createBinaryOperation(node->getOp(), decorations,
                                            convertGlslangToSpvType(node->getType()), left, right,
                                            node->getLeft()->getType().getBasicType());
@@ -1453,6 +1509,11 @@ bool TGlslangToSpvTraverser::visitUnary(glslang::TVisit /* visit */, glslang::TI
 
     if (node->getOp() == glslang::EOpArrayLength) {
         // Quite special; won't want to evaluate the operand.
+
+        // Currently, the front-end does not allow .length() on an array until it is sized,
+        // except for the last block membeor of an SSBO.
+        // TODO: If this changes, link-time sized arrays might show up here, and need their
+        // size extracted.
 
         // Normal .length() would have been constant folded by the front-end.
         // So, this has to be block.lastMember.length().
@@ -1495,7 +1556,8 @@ bool TGlslangToSpvTraverser::visitUnary(glslang::TVisit /* visit */, glslang::TI
         operand = accessChainLoad(node->getOperand()->getType());
 
     OpDecorations decorations = { TranslatePrecisionDecoration(node->getOperationPrecision()),
-                                  TranslateNoContractionDecoration(node->getType().getQualifier()) };
+                                  TranslateNoContractionDecoration(node->getType().getQualifier()),
+                                  TranslateNonUniformDecoration(node->getType().getQualifier()) };
 
     // it could be a conversion
     if (! result)
@@ -1506,8 +1568,10 @@ bool TGlslangToSpvTraverser::visitUnary(glslang::TVisit /* visit */, glslang::TI
         result = createUnaryOperation(node->getOp(), decorations, resultType(), operand, node->getOperand()->getBasicType());
 
     if (result) {
-        if (invertedType)
+        if (invertedType) {
             result = createInvertedSwizzle(decorations.precision, *node->getOperand(), result);
+            builder.addDecoration(result, decorations.nonUniform);
+        }
 
         builder.clearAccessChain();
         builder.setAccessChainRValue(result);
@@ -1934,7 +1998,8 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
 
         builder.setLine(node->getLoc().line);
         OpDecorations decorations = { precision,
-                                      TranslateNoContractionDecoration(node->getType().getQualifier()) };
+                                      TranslateNoContractionDecoration(node->getType().getQualifier()),
+                                      TranslateNonUniformDecoration(node->getType().getQualifier()) };
         result = createBinaryOperation(binOp, decorations,
                                        resultType(), leftId, rightId,
                                        left->getType().getBasicType(), reduceComparison);
@@ -2035,7 +2100,8 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
         case 1:
             {
                 OpDecorations decorations = { precision, 
-                                              TranslateNoContractionDecoration(node->getType().getQualifier()) };
+                                              TranslateNoContractionDecoration(node->getType().getQualifier()),
+                                              TranslateNonUniformDecoration(node->getType().getQualifier()) };
                 result = createUnaryOperation(
                     node->getOp(), decorations,
                     resultType(), operands.front(),
@@ -2651,8 +2717,13 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
         // (Unsized arrays that survive through linking will be runtime-sized arrays)
         if (type.isSizedArray())
             spvType = builder.makeArrayType(spvType, makeArraySizeId(*type.getArraySizes(), 0), stride);
-        else
+        else {
+            if (!lastBufferBlockMember) {
+                builder.addExtension("SPV_EXT_descriptor_indexing");
+                builder.addCapability(spv::CapabilityRuntimeDescriptorArrayEXT);
+            }
             spvType = builder.makeRuntimeArray(spvType);
+        }
         if (stride > 0)
             builder.addDecoration(spvType, spv::DecorationArrayStride, stride);
     }
@@ -2824,6 +2895,9 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
         if (builtIn != spv::BuiltInMax)
             builder.addMemberDecoration(spvType, member, spv::DecorationBuiltIn, (int)builtIn);
 
+        // nonuniform
+        builder.addMemberDecoration(spvType, member, TranslateNonUniformDecoration(glslangMember.getQualifier()));
+
         if (glslangIntermediate->getHlslFunctionality1() && memberQualifier.semanticName != nullptr) {
             builder.addExtension("SPV_GOOGLE_hlsl_functionality1");
             builder.addMemberDecoration(spvType, member, (spv::Decoration)spv::DecorationHlslSemanticGOOGLE,
@@ -2891,7 +2965,8 @@ spv::Id TGlslangToSpvTraverser::makeArraySizeId(const glslang::TArraySizes& arra
 spv::Id TGlslangToSpvTraverser::accessChainLoad(const glslang::TType& type)
 {
     spv::Id nominalTypeId = builder.accessChainGetInferredType();
-    spv::Id loadedId = builder.accessChainLoad(TranslatePrecisionDecoration(type), nominalTypeId);
+    spv::Id loadedId = builder.accessChainLoad(TranslatePrecisionDecoration(type),
+                                               TranslateNonUniformDecoration(type.getQualifier()), nominalTypeId);
 
     // Need to convert to abstract types when necessary
     if (type.getBasicType() == glslang::EbtBool) {
@@ -4102,6 +4177,7 @@ spv::Id TGlslangToSpvTraverser::createBinaryOperation(glslang::TOperator op, OpD
 
         spv::Id result = builder.createBinOp(binOp, typeId, left, right);
         builder.addDecoration(result, decorations.noContraction);
+        builder.addDecoration(result, decorations.nonUniform);
         return builder.setPrecision(result, decorations.precision);
     }
 
@@ -4113,6 +4189,7 @@ spv::Id TGlslangToSpvTraverser::createBinaryOperation(glslang::TOperator op, OpD
     if (reduceComparison && (op == glslang::EOpEqual || op == glslang::EOpNotEqual)
                          && (builder.isVector(left) || builder.isMatrix(left) || builder.isAggregate(left))) {
         spv::Id result = builder.createCompositeCompare(decorations.precision, left, right, op == glslang::EOpEqual);
+        builder.addDecoration(result, decorations.nonUniform);
         return result;
     }
 
@@ -4174,6 +4251,7 @@ spv::Id TGlslangToSpvTraverser::createBinaryOperation(glslang::TOperator op, OpD
     if (binOp != spv::OpNop) {
         spv::Id result = builder.createBinOp(binOp, typeId, left, right);
         builder.addDecoration(result, decorations.noContraction);
+        builder.addDecoration(result, decorations.nonUniform);
         return builder.setPrecision(result, decorations.precision);
     }
 
@@ -4235,6 +4313,7 @@ spv::Id TGlslangToSpvTraverser::createBinaryMatrixOperation(spv::Op op, OpDecora
     if (firstClass) {
         spv::Id result = builder.createBinOp(op, typeId, left, right);
         builder.addDecoration(result, decorations.noContraction);
+        builder.addDecoration(result, decorations.nonUniform);
         return builder.setPrecision(result, decorations.precision);
     }
 
@@ -4274,11 +4353,13 @@ spv::Id TGlslangToSpvTraverser::createBinaryMatrixOperation(spv::Op op, OpDecora
             spv::Id rightVec = rightMat ? builder.createCompositeExtract(right, vecType, indexes) : smearVec;
             spv::Id result = builder.createBinOp(op, vecType, leftVec, rightVec);
             builder.addDecoration(result, decorations.noContraction);
+            builder.addDecoration(result, decorations.nonUniform);
             results.push_back(builder.setPrecision(result, decorations.precision));
         }
 
         // put the pieces together
         spv::Id result = builder.setPrecision(builder.createCompositeConstruct(typeId, results), decorations.precision);
+        builder.addDecoration(result, decorations.nonUniform);
         return result;
     }
     default:
@@ -4687,6 +4768,7 @@ spv::Id TGlslangToSpvTraverser::createUnaryOperation(glslang::TOperator op, OpDe
     }
 
     builder.addDecoration(id, decorations.noContraction);
+    builder.addDecoration(id, decorations.nonUniform);
     return builder.setPrecision(id, decorations.precision);
 }
 
@@ -4715,11 +4797,13 @@ spv::Id TGlslangToSpvTraverser::createUnaryMatrixOperation(spv::Op op, OpDecorat
         spv::Id srcVec  = builder.createCompositeExtract(operand, srcVecType, indexes);
         spv::Id destVec = builder.createUnaryOp(op, destVecType, srcVec);
         builder.addDecoration(destVec, decorations.noContraction);
+        builder.addDecoration(destVec, decorations.nonUniform);
         results.push_back(builder.setPrecision(destVec, decorations.precision));
     }
 
     // put the pieces together
     spv::Id result = builder.setPrecision(builder.createCompositeConstruct(typeId, results), decorations.precision);
+    builder.addDecoration(result, decorations.nonUniform);
     return result;
 }
 
@@ -5177,6 +5261,7 @@ spv::Id TGlslangToSpvTraverser::createConversion(glslang::TOperator op, OpDecora
         result = builder.createUnaryOp(convOp, destType, operand);
 
     result = builder.setPrecision(result, decorations.precision);
+    builder.addDecoration(result, decorations.nonUniform);
     return result;
 }
 
@@ -6395,6 +6480,9 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
     spv::BuiltIn builtIn = TranslateBuiltInDecoration(symbol->getQualifier().builtIn, false);
     if (builtIn != spv::BuiltInMax)
         builder.addDecoration(id, spv::DecorationBuiltIn, (int)builtIn);
+
+    // nonuniform
+    builder.addDecoration(id, TranslateNonUniformDecoration(symbol->getType().getQualifier()));
 
 #ifdef NV_EXTENSIONS
     if (builtIn == spv::BuiltInSampleMask) {

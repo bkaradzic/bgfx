@@ -207,6 +207,9 @@ diff -b $BASEDIR/hlsl.y-negate-3.vert.out $TARGETDIR/hlsl.y-negate-3.vert.out ||
 $EXE -H -e main -D -Od -fhlsl_functionality1 hlsl.structbuffer.incdec.frag > \
     $TARGETDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out
 diff -b $BASEDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out $TARGETDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out || HASERROR=1
+$EXE -H -e main -D -Od -fhlsl_functionality1 hlsl.noSemantic.functionality1.comp > \
+    $TARGETDIR/hlsl.noSemantic.functionality1.comp.out
+diff -b $BASEDIR/hlsl.noSemantic.functionality1.comp.out $TARGETDIR/hlsl.noSemantic.functionality1.comp.out || HASERROR=1
 
 #
 # Final checking

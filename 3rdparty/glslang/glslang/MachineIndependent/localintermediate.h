@@ -619,7 +619,7 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
-    void setSourceFile(const char* file) { sourceFile = file; }
+    void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
     const std::string& getSourceFile() const { return sourceFile; }
     void addSourceText(const char* text) { sourceText = sourceText + text; }
     const std::string& getSourceText() const { return sourceText; }
@@ -651,6 +651,7 @@ protected:
     TIntermSequence& findLinkerObjects() const;
     bool userOutputUsed() const;
     bool isSpecializationOperation(const TIntermOperator&) const;
+    bool isNonuniformPropagating(TOperator) const;
     bool promoteUnary(TIntermUnary&);
     bool promoteBinary(TIntermBinary&);
     void addSymbolLinkageNode(TIntermAggregate*& linkage, TSymbolTable&, const TString&);
