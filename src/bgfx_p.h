@@ -1648,8 +1648,14 @@ namespace bgfx
 		Resolution resolution;
 	};
 
+	struct IndexBuffer
+	{
+		uint32_t m_size;
+	};
+
 	struct VertexBuffer
 	{
+		uint32_t m_size;
 		uint16_t m_stride;
 	};
 
@@ -2836,6 +2842,9 @@ namespace bgfx
 			BX_WARN(isValid(handle), "Failed to allocate index buffer handle.");
 			if (isValid(handle) )
 			{
+				IndexBuffer& ib = m_indexBuffers[handle.idx];
+				ib.m_size = _mem->size;
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateIndexBuffer);
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
@@ -2899,7 +2908,9 @@ namespace bgfx
 
 				m_declRef.add(handle, declHandle, _decl.m_hash);
 
-				m_vertexBuffers[handle.idx].m_stride = _decl.m_stride;
+				VertexBuffer& vb = m_vertexBuffers[handle.idx];
+				vb.m_size   = _mem->size;
+				vb.m_stride = _decl.m_stride;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexBuffer);
 				cmdbuf.write(handle);
@@ -2950,10 +2961,13 @@ namespace bgfx
 				BX_WARN(isValid(indexBufferHandle), "Failed to allocate index buffer handle.");
 				if (!isValid(indexBufferHandle) )
 				{
-					return ptr;
+					return NonLocalAllocator::kInvalidBlock;
 				}
 
 				const uint32_t allocSize = bx::max<uint32_t>(BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE, _size);
+
+				IndexBuffer& ib = m_indexBuffers[indexBufferHandle.idx];
+				ib.m_size = allocSize;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
 				cmdbuf.write(indexBufferHandle);
@@ -3063,7 +3077,7 @@ namespace bgfx
 			const uint32_t offset = (dib.m_startIndex + _startIndex)*indexSize;
 			const uint32_t size   = bx::min<uint32_t>(offset
 				+ bx::min(bx::uint32_satsub(dib.m_size, _startIndex*indexSize), _mem->size)
-				, BGFX_CONFIG_DYNAMIC_INDEX_BUFFER_SIZE) - offset
+				, m_indexBuffers[dib.m_handle.idx].m_size) - offset
 				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic index buffer update (size %d, mem size %d)."
 				, size
@@ -3115,7 +3129,6 @@ namespace bgfx
 			if (ptr == NonLocalAllocator::kInvalidBlock)
 			{
 				VertexBufferHandle vertexBufferHandle = { m_vertexBufferHandle.alloc() };
-
 				BX_WARN(isValid(vertexBufferHandle), "Failed to allocate dynamic vertex buffer handle.");
 				if (!isValid(vertexBufferHandle) )
 				{
@@ -3123,6 +3136,10 @@ namespace bgfx
 				}
 
 				const uint32_t allocSize = bx::max<uint32_t>(BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE, _size);
+
+				VertexBuffer& vb = m_vertexBuffers[vertexBufferHandle.idx];
+				vb.m_size   = allocSize;
+				vb.m_stride = 0;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(vertexBufferHandle);
@@ -3242,7 +3259,7 @@ namespace bgfx
 			const uint32_t offset = (dvb.m_startVertex + _startVertex)*dvb.m_stride;
 			const uint32_t size   = bx::min<uint32_t>(offset
 				+ bx::min(bx::uint32_satsub(dvb.m_size, _startVertex*dvb.m_stride), _mem->size)
-				, BGFX_CONFIG_DYNAMIC_VERTEX_BUFFER_SIZE) - offset
+				, m_vertexBuffers[dvb.m_handle.idx].m_size) - offset
 				;
 			BX_CHECK(_mem->size <= size, "Truncating dynamic vertex buffer update (size %d, mem size %d)."
 				, size
@@ -4616,6 +4633,7 @@ namespace bgfx
 		uint64_t m_tempKeys[BGFX_CONFIG_MAX_DRAW_CALLS];
 		RenderItemCount m_tempValues[BGFX_CONFIG_MAX_DRAW_CALLS];
 
+		IndexBuffer  m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBuffer m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
 
 		DynamicIndexBuffer  m_dynamicIndexBuffers[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
