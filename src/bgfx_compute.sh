@@ -51,6 +51,14 @@
 
 #define NUM_THREADS(_x, _y, _z) layout (local_size_x = _x, local_size_y = _y, local_size_z = _z) in;
 
+#define atomicFetchAndAdd(_mem, _data, _original)      _original = atomicAdd(_mem, _data)
+#define atomicFetchAndAnd(_mem, _data, _original)      _original = atomicAnd(_mem, _data)
+#define atomicFetchAndMax(_mem, _data, _original)      _original = atomicMax(_mem, _data)
+#define atomicFetchAndMin(_mem, _data, _original)      _original = atomicMin(_mem, _data)
+#define atomicFetchAndOr(_mem, _data, _original)       _original = atomicOrnterlockedOr(_mem, _data)
+#define atomicFetchAndXor(_mem, _data, _original)      _original = atomicXor(_mem, _data)
+#define atomicFetchAndExchange(_mem, _data, _original) _original = atomicExchange(_mem, _data)
+
 #else
 
 #define SHARED groupshared
@@ -251,16 +259,20 @@ __IMAGE_IMPL_A(r32ui,       x,    uvec4, xxxx)
 __IMAGE_IMPL_A(rg32ui,      xy,   uvec4, xyyy)
 __IMAGE_IMPL_A(rgba32ui,    xyzw, uvec4, xyzw)
 
-#define atomicAdd(_mem, _data)      InterlockedAdd(_mem, _data)
-#define atomicAnd(_mem, _data)      InterlockedAnd(_mem, _data)
-#define atomicExchange(_mem, _data) InterlockedExchange(_mem, _data)
-#define atomicMax(_mem, _data)      InterlockedMax(_mem, _data)
-#define atomicMin(_mem, _data)      InterlockedMin(_mem, _data)
-#define atomicOr(_mem, _data)       InterlockedOr(_mem, _data)
-#define atomicXor(_mem, _data)      InterlockedXor(_mem, _data)
-
-#define atomicCompSwap(_mem, _compare, _data) \
-	InterlockedCompareExchange(_mem,_compare, _data)
+#define atomicAdd(_mem, _data)                         InterlockedAdd(_mem, _data)
+#define atomicAnd(_mem, _data)                         InterlockedAnd(_mem, _data)
+#define atomicMax(_mem, _data)                         InterlockedMax(_mem, _data)
+#define atomicMin(_mem, _data)                         InterlockedMin(_mem, _data)
+#define atomicOr(_mem,  _data)                         InterlockedOr(_mem, _data)
+#define atomicXor(_mem, _data)                         InterlockedXor(_mem, _data)
+#define atomicFetchAndAdd(_mem, _data, _original)      InterlockedAdd(_mem, _data, _original)
+#define atomicFetchAndAnd(_mem, _data, _original)      InterlockedAnd(_mem, _data, _original)
+#define atomicFetchAndMax(_mem, _data, _original)      InterlockedMax(_mem, _data, _original)
+#define atomicFetchAndMin(_mem, _data, _original)      InterlockedMin(_mem, _data, _original)
+#define atomicFetchAndOr(_mem, _data, _original)       InterlockedOr(_mem, _data, _original)
+#define atomicFetchAndXor(_mem, _data, _original)      InterlockedXor(_mem, _data, _original)
+#define atomicFetchAndExchange(_mem, _data, _original) InterlockedExchange(_mem, _data, _original)
+#define atomicCompSwap(_mem, _compare, _data)          InterlockedCompareExchange(_mem,_compare, _data)
 
 // InterlockedCompareStore
 
