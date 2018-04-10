@@ -283,6 +283,7 @@ function exampleProjectDefaults()
 			"X11",
 			"GL",
 			"pthread",
+--			"X11-xcb",
 		}
 
 	configuration { "linux-steamlink" }

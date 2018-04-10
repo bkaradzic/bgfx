@@ -838,9 +838,10 @@ VK_IMPORT
 			errorState = ErrorState::InstanceCreated;
 
 			BX_TRACE("Instance functions:");
-#define VK_IMPORT_INSTANCE_FUNC(_optional, _func) \
+
+#define VK_IMPORT_INSTANCE_FUNC(_optional, _func)                           \
 			_func = (PFN_##_func)vkGetInstanceProcAddr(m_instance, #_func); \
-			BX_TRACE("\t%p " #_func, _func); \
+			BX_TRACE("\t%p " #_func, _func);                                \
 			imported &= _optional || NULL != _func
 VK_IMPORT_INSTANCE
 #undef VK_IMPORT_INSTANCE_FUNC
@@ -852,6 +853,7 @@ VK_IMPORT_INSTANCE
 			}
 
 			m_debugReportCallback = VK_NULL_HANDLE;
+
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 			{
 				VkDebugReportCallbackCreateInfoEXT drcb;
@@ -3525,8 +3527,8 @@ VK_DESTROY
 			, shaderSize
 			);
 #else
-#include "../examples/runtime/shaders/spv/vert.spv.h"
-#include "../examples/runtime/shaders/spv/frag.spv.h"
+#include "../examples/runtime/shaders/spirv/vert.spv.h"
+#include "../examples/runtime/shaders/spirv/frag.spv.h"
 
 		shaderSize = BGFX_CHUNK_MAGIC_VSH == magic
 			? sizeof(vs_cubes_spv)

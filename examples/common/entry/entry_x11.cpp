@@ -12,6 +12,7 @@
 #include <X11/keysymdef.h>
 #include <X11/Xlib.h> // will include X11 which #defines None... Don't mess with order of includes.
 #include <X11/Xutil.h>
+//#include <X11/Xlib-xcb.h>
 #include <bgfx/platform.h>
 
 #include <unistd.h> // syscall
@@ -35,7 +36,11 @@ namespace entry
 	inline void x11SetDisplayWindow(void* _display, uint32_t _window, void* _glx = NULL)
 	{
 		bgfx::PlatformData pd;
+#if 0
+		pd.ndt          = XGetXCBConnection( (Display*)_display);
+#else
 		pd.ndt          = _display;
+#endif // 0
 		pd.nwh          = (void*)(uintptr_t)_window;
 		pd.context      = _glx;
 		pd.backBuffer   = NULL;
