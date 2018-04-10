@@ -2998,6 +2998,9 @@ namespace bgfx
 					return handle;
 				}
 
+				IndexBuffer& ib = m_indexBuffers[indexBufferHandle.idx];
+				ib.m_size = size;
+
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicIndexBuffer);
 				cmdbuf.write(indexBufferHandle);
 				cmdbuf.write(size);
@@ -3169,6 +3172,10 @@ namespace bgfx
 					BX_TRACE("WARNING: Failed to allocate vertex buffer handle (BGFX_CONFIG_MAX_VERTEX_BUFFERS, max: %d).", BGFX_CONFIG_MAX_VERTEX_BUFFERS);
 					return handle;
 				}
+
+				VertexBuffer& vb = m_vertexBuffers[vertexBufferHandle.idx];
+				vb.m_size   = size;
+				vb.m_stride = 0;
 
 				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateDynamicVertexBuffer);
 				cmdbuf.write(vertexBufferHandle);
