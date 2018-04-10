@@ -1,4 +1,4 @@
-// dear imgui, v1.60 WIP
+// dear imgui, v1.61 WIP
 // (headers)
 
 // See imgui.cpp file for documentation.
@@ -21,7 +21,7 @@
 #include <stddef.h>         // ptrdiff_t, NULL
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.60 WIP"
+#define IMGUI_VERSION       "1.61 WIP"
 
 // Define attributes of all API symbols declarations, e.g. for DLL under Windows.
 #ifndef IMGUI_API
@@ -745,8 +745,8 @@ enum ImGuiKey_
 enum ImGuiNavInput_
 {
     // Gamepad Mapping
-    ImGuiNavInput_Activate,      // activate / open / toggle / tweak value       // e.g. Circle (PS4), A (Xbox), A (Switch), Space (Keyboard)
-    ImGuiNavInput_Cancel,        // cancel / close / exit                        // e.g. Cross  (PS4), B (Xbox), B (Switch), Escape (Keyboard)
+    ImGuiNavInput_Activate,      // activate / open / toggle / tweak value       // e.g. Cross  (PS4), A (Xbox), A (Switch), Space (Keyboard)
+    ImGuiNavInput_Cancel,        // cancel / close / exit                        // e.g. Circle (PS4), B (Xbox), B (Switch), Escape (Keyboard)
     ImGuiNavInput_Input,         // text input / on-screen keyboard              // e.g. Triang.(PS4), Y (Xbox), X (Switch), Return (Keyboard)
     ImGuiNavInput_Menu,          // tap: toggle menu / hold: focus, move, resize // e.g. Square (PS4), X (Xbox), Y (Switch), Alt (Keyboard)
     ImGuiNavInput_DpadLeft,      // move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard)
@@ -1215,7 +1215,7 @@ inline void* operator new(size_t, ImNewDummy, void* ptr) { return ptr; }
 inline void  operator delete(void*, ImNewDummy, void*)   {} // This is only required so we can use the symetrical new()
 #define IM_PLACEMENT_NEW(_PTR)              new(ImNewDummy(), _PTR)
 #define IM_NEW(_TYPE)                       new(ImNewDummy(), ImGui::MemAlloc(sizeof(_TYPE))) _TYPE
-template<typename T> void IM_DELETE(T*& p)  { if (p) { p->~T(); ImGui::MemFree(p); p = NULL; } }
+template<typename T> void IM_DELETE(T* p)   { if (p) { p->~T(); ImGui::MemFree(p); } }
 
 // Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within deep-nested code that runs multiple times every frame.
 // Usage: static ImGuiOnceUponAFrame oaf; if (oaf) ImGui::Text("This will be called only once per frame");

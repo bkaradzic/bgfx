@@ -1,4 +1,4 @@
-// dear imgui, v1.60
+// dear imgui, v1.61 WIP
 // (main code and documentation)
 
 // Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp for demo code.
@@ -262,6 +262,7 @@
  Here is a change-log of API breaking changes, if you are using one of the functions listed, expect to have to fix some code.
  Also read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2018/04/09 (1.61) - IM_DELETE() helper function added in 1.60 doesn't clear the input _pointer_ reference, more consistent with expectation and allows passing r-value.
  - 2018/03/20 (1.60) - Renamed io.WantMoveMouse to io.WantSetMousePos for consistency and ease of understanding (was added in 1.52, _not_ used by core and only honored by some binding ahead of merging the Nav branch).
  - 2018/03/12 (1.60) - Removed ImGuiCol_CloseButton, ImGuiCol_CloseButtonActive, ImGuiCol_CloseButtonHovered as the closing cross uses regular button colors now.
  - 2018/03/08 (1.60) - Changed ImFont::DisplayOffset.y to default to 0 instead of +1. Fixed rounding of Ascent/Descent to match TrueType renderer. If you were adding or subtracting to ImFont::DisplayOffset check if your fonts are correctly aligned vertically.
@@ -743,7 +744,6 @@ static void             MarkIniSettingsDirty(ImGuiWindow* window);
 static ImRect           GetViewportRect();
 
 static void             ClosePopupToLevel(int remaining);
-static ImGuiWindow*     GetFrontMostModalRootWindow();
 
 static bool             InputTextFilterCharacter(unsigned int* p_char, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data);
 static int              InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end);
@@ -3356,7 +3356,7 @@ void ImGui::NewFrameUpdateHoveredWindowAndCaptureFlags()
     g.HoveredRootWindow = g.HoveredWindow ? g.HoveredWindow->RootWindow : NULL;
 
     // Modal windows prevents cursor from hovering behind them.
-    ImGuiWindow* modal_window = GetFrontMostModalRootWindow();
+    ImGuiWindow* modal_window = GetFrontMostPopupModal();
     if (modal_window)
         if (g.HoveredRootWindow && !IsWindowChildOf(g.HoveredRootWindow, modal_window))
             g.HoveredRootWindow = g.HoveredWindow = NULL;
@@ -3507,7 +3507,7 @@ void ImGui::NewFrame()
     NewFrameUpdateMovingWindow();
     NewFrameUpdateHoveredWindowAndCaptureFlags();
     
-    if (GetFrontMostModalRootWindow() != NULL)
+    if (GetFrontMostPopupModal() != NULL)
         g.ModalWindowDarkeningRatio = ImMin(g.ModalWindowDarkeningRatio + g.IO.DeltaTime * 6.0f, 1.0f);
     else
         g.ModalWindowDarkeningRatio = 0.0f;
@@ -3673,6 +3673,7 @@ void ImGui::Shutdown(ImGuiContext* context)
     // The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
     if (g.IO.Fonts && g.FontAtlasOwnedByContext)
         IM_DELETE(g.IO.Fonts);
+    g.IO.Fonts = NULL;
 
     // Cleanup of other data are conditional on actually having initialize ImGui.
     if (!g.Initialized)
@@ -3693,8 +3694,6 @@ void ImGui::Shutdown(ImGuiContext* context)
     g.HoveredRootWindow = NULL;
     g.ActiveIdWindow = NULL;
     g.MovingWindow = NULL;
-    for (int i = 0; i < g.SettingsWindows.Size; i++)
-        IM_DELETE(g.SettingsWindows[i].Name);
     g.ColorModifiers.clear();
     g.StyleModifiers.clear();
     g.FontStack.clear();
@@ -3707,6 +3706,8 @@ void ImGui::Shutdown(ImGuiContext* context)
     g.InputTextState.InitialText.clear();
     g.InputTextState.TempTextBuffer.clear();
 
+    for (int i = 0; i < g.SettingsWindows.Size; i++)
+        IM_DELETE(g.SettingsWindows[i].Name);
     g.SettingsWindows.clear();
     g.SettingsHandlers.clear();
 
@@ -3717,6 +3718,7 @@ void ImGui::Shutdown(ImGuiContext* context)
     }
     if (g.LogClipboard)
         IM_DELETE(g.LogClipboard);
+    g.LogClipboard = NULL;
 
     g.Initialized = false;
 }
@@ -4029,7 +4031,7 @@ void ImGui::EndFrame()
                     if (!(g.HoveredWindow->Flags & ImGuiWindowFlags_NoMove) && !(g.HoveredRootWindow->Flags & ImGuiWindowFlags_NoMove))
                         g.MovingWindow = g.HoveredWindow;
                 }
-                else if (g.NavWindow != NULL && GetFrontMostModalRootWindow() == NULL)
+                else if (g.NavWindow != NULL && GetFrontMostPopupModal() == NULL)
                 {
                     // Clicking on void disable focus
                     FocusWindow(NULL);
@@ -4042,7 +4044,7 @@ void ImGui::EndFrame()
             {
                 // Find the top-most window between HoveredWindow and the front most Modal Window.
                 // This is where we can trim the popup stack.
-                ImGuiWindow* modal = GetFrontMostModalRootWindow();
+                ImGuiWindow* modal = GetFrontMostPopupModal();
                 bool hovered_window_above_modal = false;
                 if (modal == NULL)
                     hovered_window_above_modal = true;
@@ -4916,7 +4918,7 @@ void ImGui::ClosePopupsOverWindow(ImGuiWindow* ref_window)
         ClosePopupToLevel(n);
 }
 
-static ImGuiWindow* GetFrontMostModalRootWindow()
+ImGuiWindow* ImGui::GetFrontMostPopupModal()
 {
     ImGuiContext& g = *GImGui;
     for (int n = g.OpenPopupStack.Size-1; n >= 0; n--)
@@ -5962,7 +5964,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             PushClipRect(viewport_rect.Min, viewport_rect.Max, true);
 
         // Draw modal window background (darkens what is behind them)
-        if ((flags & ImGuiWindowFlags_Modal) != 0 && window == GetFrontMostModalRootWindow())
+        if ((flags & ImGuiWindowFlags_Modal) != 0 && window == GetFrontMostPopupModal())
             window->DrawList->AddRectFilled(viewport_rect.Min, viewport_rect.Max, GetColorU32(ImGuiCol_ModalWindowDarkening, g.ModalWindowDarkeningRatio));
 
         // Draw navigation selection/windowing rectangle background

@@ -1,4 +1,4 @@
-// dear imgui, v1.60
+// dear imgui, v1.61 WIP
 // (internals)
 
 // You may use this file to debug, understand or extend ImGui features but we don't provide any guarantee of forward compatibility!
@@ -1052,6 +1052,7 @@ namespace ImGui
     IMGUI_API bool          IsPopupOpen(ImGuiID id);
     IMGUI_API bool          BeginPopupEx(ImGuiID id, ImGuiWindowFlags extra_flags);
     IMGUI_API void          BeginTooltipEx(ImGuiWindowFlags extra_flags, bool override_previous_tooltip = true);
+    IMGUI_API ImGuiWindow*  GetFrontMostPopupModal();
 
     IMGUI_API void          NavInitWindow(ImGuiWindow* window, bool force_reinit);
     IMGUI_API void          NavMoveRequestCancel();

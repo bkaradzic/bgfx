@@ -1,4 +1,4 @@
-// dear imgui, v1.60
+// dear imgui, v1.61 WIP
 // (drawing and font code)
 
 // Contains implementation for
@@ -1642,6 +1642,7 @@ bool ImFontAtlas::GetMouseCursorTexData(ImGuiMouseCursor cursor_type, ImVec2* ou
     if (Flags & ImFontAtlasFlags_NoMouseCursors)
         return false;
 
+    IM_ASSERT(CustomRectIds[0] != -1);
     ImFontAtlas::CustomRect& r = CustomRects[CustomRectIds[0]];
     IM_ASSERT(r.ID == FONT_ATLAS_DEFAULT_TEX_DATA_ID);
     ImVec2 pos = FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][0] + ImVec2((float)r.X, (float)r.Y);
