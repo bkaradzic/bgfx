@@ -1284,14 +1284,23 @@ VK_IMPORT_DEVICE
 
 				if (VK_SUCCESS != result)
 				{
-					VkXcbSurfaceCreateInfoKHR sci;
-					sci.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-					sci.pNext = NULL;
-					sci.flags      = 0;
-					sci.connection = (xcb_connection_t*)g_platformData.ndt;
-					union { void* ptr; xcb_window_t window; } cast = { g_platformData.nwh };
-					sci.window = cast.window;
-					result = vkCreateXcbSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+					void* xcbdll = bx::dlopen("libX11-xcb.so.1");
+					if (NULL != xcbdll)
+					{
+						typedef xcb_connection_t* (*PFN_XGETXCBCONNECTION)(Display*);
+						PFN_XGETXCBCONNECTION XGetXCBConnection = (PFN_XGETXCBCONNECTION)bx::dlsym(xcbdll, "XGetXCBConnection");
+
+						VkXcbSurfaceCreateInfoKHR sci;
+						sci.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+						sci.pNext = NULL;
+						sci.flags      = 0;
+						sci.connection = XGetXCBConnection( (Display*)g_platformData.ndt);
+						union { void* ptr; xcb_window_t window; } cast = { g_platformData.nwh };
+						sci.window = cast.window;
+						result = vkCreateXcbSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
+
+						bx::dlclose(xcbdll);
+					}
 				}
 			}
 #else
@@ -3516,7 +3525,7 @@ VK_DESTROY
 		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
-#if 1
+#if 0
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
