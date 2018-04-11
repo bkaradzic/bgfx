@@ -501,8 +501,10 @@ struct DebugDraw
 
 	void init(bool _depthTestLess, bx::AllocatorI* _allocator)
 	{
-		m_allocator = _allocator;
-		m_depthTestLess = _depthTestLess;
+		m_encoder        = NULL;
+		m_defaultEncoder = bgfx::begin();
+		m_allocator      = _allocator;
+		m_depthTestLess  = _depthTestLess;
 
 		if (NULL == _allocator)
 		{
@@ -922,10 +924,11 @@ struct DebugDraw
 		m_geometry.destroy(_handle);
 	}
 
-	void begin(bgfx::ViewId _viewId)
+	void begin(bgfx::ViewId _viewId, bgfx::Encoder* _encoder)
 	{
 		BX_CHECK(State::Count == m_state);
 
+		m_encoder = NULL != _encoder ? _encoder : m_defaultEncoder;
 		m_viewId  = _viewId;
 		m_state   = State::None;
 		m_stack   = 0;
@@ -956,7 +959,8 @@ struct DebugDraw
 		flushQuad();
 		flush();
 
-		m_state = State::Count;
+		m_encoder = NULL;
+		m_state   = State::Count;
 	}
 
 	void push()
@@ -1392,9 +1396,9 @@ struct DebugDraw
 		};
 
 		bx::vec3Norm(params[0], params[0]);
-		bgfx::setUniform(u_params, params, 4);
+		m_encoder->setUniform(u_params, params, 4);
 
-		bgfx::setState(0
+		m_encoder->setState(0
 			| _attrib.m_state
 			| (_wireframe ? BGFX_STATE_PT_LINES | BGFX_STATE_LINEAA | BGFX_STATE_BLEND_ALPHA
 			: (alpha < 0xff) ? BGFX_STATE_BLEND_ALPHA : 0)
@@ -1404,7 +1408,7 @@ struct DebugDraw
 	void draw(GeometryHandle _handle)
 	{
 		Geometry::Geometry& geometry = m_geometry.m_geometry[_handle.idx];
-		bgfx::setVertexBuffer(0, geometry.m_vbh);
+		m_encoder->setVertexBuffer(0, geometry.m_vbh);
 
 		const Attrib& attrib = m_attrib[m_stack];
 		const bool wireframe = attrib.m_wireframe;
@@ -1412,7 +1416,7 @@ struct DebugDraw
 
 		if (wireframe)
 		{
-			bgfx::setIndexBuffer(
+			m_encoder->setIndexBuffer(
 				  geometry.m_ibh
 				, geometry.m_topologyNumIndices[0]
 				, geometry.m_topologyNumIndices[1]
@@ -1420,16 +1424,16 @@ struct DebugDraw
 		}
 		else if (0 != geometry.m_topologyNumIndices[0])
 		{
-			bgfx::setIndexBuffer(
+			m_encoder->setIndexBuffer(
 				  geometry.m_ibh
 				, 0
 				, geometry.m_topologyNumIndices[0]
 				);
 		}
 
-		bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
+		m_encoder->setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 		bgfx::ProgramHandle program = m_program[wireframe ? Program::FillMesh : Program::FillLitMesh];
-		bgfx::submit(m_viewId, program);
+		m_encoder->submit(m_viewId, program);
 	}
 
 	void draw(bool _lineList, uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
@@ -1441,23 +1445,23 @@ struct DebugDraw
 			bgfx::TransientVertexBuffer tvb;
 			bgfx::allocTransientVertexBuffer(&tvb, _numVertices, DebugMeshVertex::ms_decl);
 			bx::memCopy(tvb.data, _vertices, _numVertices * DebugMeshVertex::ms_decl.m_stride);
-			bgfx::setVertexBuffer(0, &tvb);
+			m_encoder->setVertexBuffer(0, &tvb);
 
 			if (0 < _numIndices)
 			{
 				bgfx::TransientIndexBuffer tib;
 				bgfx::allocTransientIndexBuffer(&tib, _numIndices);
 				bx::memCopy(tib.data, _indices, _numIndices * sizeof(uint16_t) );
-				bgfx::setIndexBuffer(&tib);
+				m_encoder->setIndexBuffer(&tib);
 			}
 
 			const Attrib& attrib = m_attrib[m_stack];
 			const bool wireframe = _lineList;
 			setUParams(attrib, wireframe);
 
-			bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
+			m_encoder->setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 			bgfx::ProgramHandle program = m_program[wireframe ? Program::FillMesh : Program::FillLitMesh];
-			bgfx::submit(m_viewId, program);
+			m_encoder->submit(m_viewId, program);
 		}
 	}
 
@@ -2086,7 +2090,7 @@ private:
 
 		if (0 != mesh.m_numIndices[_wireframe])
 		{
-			bgfx::setIndexBuffer(m_ibh
+			m_encoder->setIndexBuffer(m_ibh
 				, mesh.m_startIndex[_wireframe]
 				, mesh.m_numIndices[_wireframe]
 				);
@@ -2096,10 +2100,10 @@ private:
 		setUParams(attrib, _wireframe);
 
 		MatrixStack& stack = m_mtxStack[m_mtxStackCurrent];
-		bgfx::setTransform(stack.mtx, stack.num);
+		m_encoder->setTransform(stack.mtx, stack.num);
 
-		bgfx::setVertexBuffer(0, m_vbh, mesh.m_startVertex, mesh.m_numVertices);
-		bgfx::submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
+		m_encoder->setVertexBuffer(0, m_vbh, mesh.m_startVertex, mesh.m_numVertices);
+		m_encoder->submit(m_viewId, m_program[_wireframe ? Program::Fill : Program::FillLit]);
 
 		popTransform();
 	}
@@ -2128,18 +2132,18 @@ private:
 
 				const Attrib& attrib = m_attrib[m_stack];
 
-				bgfx::setVertexBuffer(0, &tvb);
-				bgfx::setIndexBuffer(&tib);
-				bgfx::setState(0
+				m_encoder->setVertexBuffer(0, &tvb);
+				m_encoder->setIndexBuffer(&tib);
+				m_encoder->setState(0
 					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_PT_LINES
 					| attrib.m_state
 					| BGFX_STATE_LINEAA
 					| BGFX_STATE_BLEND_ALPHA
 					);
-				bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
+				m_encoder->setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 				bgfx::ProgramHandle program = m_program[attrib.m_stipple ? 1 : 0];
-				bgfx::submit(m_viewId, program);
+				m_encoder->submit(m_viewId, program);
 			}
 
 			m_state     = State::None;
@@ -2177,14 +2181,14 @@ private:
 
 				const Attrib& attrib = m_attrib[m_stack];
 
-				bgfx::setVertexBuffer(0, &tvb);
-				bgfx::setIndexBuffer(&tib);
-				bgfx::setState(0
+				m_encoder->setVertexBuffer(0, &tvb);
+				m_encoder->setIndexBuffer(&tib);
+				m_encoder->setState(0
 					| (attrib.m_state & ~BGFX_STATE_CULL_MASK)
 					);
-				bgfx::setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
-				bgfx::setTexture(0, s_texColor, m_texture);
-				bgfx::submit(m_viewId, m_program[Program::FillTexture]);
+				m_encoder->setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
+				m_encoder->setTexture(0, s_texColor, m_texture);
+				m_encoder->submit(m_viewId, m_program[Program::FillTexture]);
 			}
 
 			m_posQuad = 0;
@@ -2250,6 +2254,9 @@ private:
 	typedef GeometryT<256> Geometry;
 	Geometry m_geometry;
 
+	bgfx::Encoder* m_encoder;
+	bgfx::Encoder* m_defaultEncoder;
+
 	bgfx::UniformHandle s_texColor;
 	bgfx::TextureHandle m_texture;
 	bgfx::ProgramHandle m_program[Program::Count];
@@ -2293,9 +2300,9 @@ void ddDestroy(GeometryHandle _handle)
 	s_dd.destroy(_handle);
 }
 
-void ddBegin(uint16_t _viewId)
+void ddBegin(uint16_t _viewId, bgfx::Encoder* _encoder)
 {
-	s_dd.begin(_viewId);
+	s_dd.begin(_viewId, _encoder);
 }
 
 void ddEnd()

@@ -51,7 +51,7 @@ GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices
 void ddDestroy(GeometryHandle _handle);
 
 ///
-void ddBegin(uint16_t _viewId);
+void ddBegin(uint16_t _viewId, bgfx::Encoder* _encoder = NULL);
 
 ///
 void ddEnd();
