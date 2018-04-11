@@ -1150,11 +1150,26 @@ namespace bgfx { namespace gl
 			}
 
 			GL_CHECK(glBindBuffer(m_target, m_id) );
-			GL_CHECK(glBufferSubData(m_target
-				, _offset
-				, _size
-				, _data
-				) );
+
+			//Workaround for s4 drivers leaking lots of memory
+			//https://developer.qualcomm.com/forum/qdevnet-forums/mobile-technologies/mobile-gaming-graphics-optimization-adreno/26936
+			if (_offset == 0 && _size == m_size)
+			{
+				GL_CHECK(glBufferData(m_target
+					, _size
+					, _data
+					, GL_STATIC_DRAW
+				));
+			}
+			else
+			{
+				GL_CHECK(glBufferSubData(m_target
+					, _offset
+					, _size
+					, _data
+				));
+			}
+
 			GL_CHECK(glBindBuffer(m_target, 0) );
 		}
 
