@@ -7,11 +7,167 @@ group "tools/shaderc"
 
 local GLSL_OPTIMIZER = path.join(BGFX_DIR, "3rdparty/glsl-optimizer")
 local FCPP_DIR = path.join(BGFX_DIR, "3rdparty/fcpp")
+local GLSLANG = path.join(BGFX_DIR, "3rdparty/glslang")
+local SPIRV_TOOLS = path.join(BGFX_DIR, "3rdparty/spirv-tools")
+
+project "spirv-opt"
+	kind "StaticLib"
+
+	includedirs {
+		path.join(SPIRV_TOOLS, "include"),
+		path.join(SPIRV_TOOLS, "include/generated"),
+		path.join(SPIRV_TOOLS, "source"),
+		path.join(SPIRV_TOOLS, "external/SPIRV-Headers/include"),
+	}
+
+	files {
+		path.join(SPIRV_TOOLS, "source/opt/**.cpp"),
+		path.join(SPIRV_TOOLS, "source/opt/**.h"),
+
+		-- libspirv
+		path.join(SPIRV_TOOLS, "source/util/bitutils.h"),
+		path.join(SPIRV_TOOLS, "source/util/bit_stream.h"),
+		path.join(SPIRV_TOOLS, "source/util/hex_float.h"),
+		path.join(SPIRV_TOOLS, "source/util/parse_number.h"),
+		path.join(SPIRV_TOOLS, "source/util/string_utils.h"),
+		path.join(SPIRV_TOOLS, "source/util/timer.h"),
+		path.join(SPIRV_TOOLS, "source/assembly_grammar.h"),
+		path.join(SPIRV_TOOLS, "source/binary.h"),
+		path.join(SPIRV_TOOLS, "source/cfa.h"),
+		path.join(SPIRV_TOOLS, "source/diagnostic.h"),
+		path.join(SPIRV_TOOLS, "source/disassemble.h"),
+		path.join(SPIRV_TOOLS, "source/enum_set.h"),
+		path.join(SPIRV_TOOLS, "source/enum_string_mapping.h"),
+		path.join(SPIRV_TOOLS, "source/ext_inst.h"),
+		path.join(SPIRV_TOOLS, "source/extensions.h"),
+		path.join(SPIRV_TOOLS, "source/id_descriptor.h"),
+		path.join(SPIRV_TOOLS, "source/instruction.h"),
+		path.join(SPIRV_TOOLS, "source/latest_version_glsl_std_450_header.h"),
+		path.join(SPIRV_TOOLS, "source/latest_version_opencl_std_header.h"),
+		path.join(SPIRV_TOOLS, "source/latest_version_spirv_header.h"),
+		path.join(SPIRV_TOOLS, "source/macro.h"),
+		path.join(SPIRV_TOOLS, "source/name_mapper.h"),
+		path.join(SPIRV_TOOLS, "source/opcode.h"),
+		path.join(SPIRV_TOOLS, "source/operand.h"),
+		path.join(SPIRV_TOOLS, "source/parsed_operand.h"),
+		path.join(SPIRV_TOOLS, "source/print.h"),
+		path.join(SPIRV_TOOLS, "source/spirv_constant.h"),
+		path.join(SPIRV_TOOLS, "source/spirv_definition.h"),
+		path.join(SPIRV_TOOLS, "source/spirv_endian.h"),
+		path.join(SPIRV_TOOLS, "source/spirv_target_env.h"),
+		path.join(SPIRV_TOOLS, "source/spirv_validator_options.h"),
+		path.join(SPIRV_TOOLS, "source/table.h"),
+		path.join(SPIRV_TOOLS, "source/text.h"),
+		path.join(SPIRV_TOOLS, "source/text_handler.h"),
+		path.join(SPIRV_TOOLS, "source/validate.h"),
+		path.join(SPIRV_TOOLS, "source/util/bit_stream.cpp"),
+		path.join(SPIRV_TOOLS, "source/util/parse_number.cpp"),
+		path.join(SPIRV_TOOLS, "source/util/string_utils.cpp"),
+		path.join(SPIRV_TOOLS, "source/assembly_grammar.cpp"),
+		path.join(SPIRV_TOOLS, "source/binary.cpp"),
+		path.join(SPIRV_TOOLS, "source/diagnostic.cpp"),
+		path.join(SPIRV_TOOLS, "source/disassemble.cpp"),
+		path.join(SPIRV_TOOLS, "source/enum_string_mapping.cpp"),
+		path.join(SPIRV_TOOLS, "source/ext_inst.cpp"),
+		path.join(SPIRV_TOOLS, "source/extensions.cpp"),
+		path.join(SPIRV_TOOLS, "source/id_descriptor.cpp"),
+		path.join(SPIRV_TOOLS, "source/libspirv.cpp"),
+		path.join(SPIRV_TOOLS, "source/message.cpp"),
+		path.join(SPIRV_TOOLS, "source/name_mapper.cpp"),
+		path.join(SPIRV_TOOLS, "source/opcode.cpp"),
+		path.join(SPIRV_TOOLS, "source/operand.cpp"),
+		path.join(SPIRV_TOOLS, "source/parsed_operand.cpp"),
+		path.join(SPIRV_TOOLS, "source/print.cpp"),
+		path.join(SPIRV_TOOLS, "source/software_version.cpp"),
+		path.join(SPIRV_TOOLS, "source/spirv_endian.cpp"),
+		path.join(SPIRV_TOOLS, "source/spirv_stats.cpp"),
+		path.join(SPIRV_TOOLS, "source/spirv_target_env.cpp"),
+		path.join(SPIRV_TOOLS, "source/spirv_validator_options.cpp"),
+		path.join(SPIRV_TOOLS, "source/table.cpp"),
+		path.join(SPIRV_TOOLS, "source/text.cpp"),
+		path.join(SPIRV_TOOLS, "source/text_handler.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_adjacency.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_arithmetics.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_atomics.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_barriers.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_bitwise.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_builtins.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_capability.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_cfg.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_composites.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_conversion.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_datarules.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_decorations.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_derivatives.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_ext_inst.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_id.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_image.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_instruction.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_layout.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_literals.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_logicals.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_primitives.cpp"),
+		path.join(SPIRV_TOOLS, "source/validate_type_unique.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/decoration.h"),
+		path.join(SPIRV_TOOLS, "source/val/basic_block.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/construct.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/function.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/instruction.cpp"),
+		path.join(SPIRV_TOOLS, "source/val/validation_state.cpp"),
+	}
+
+	configuration { "vs*" }
+		buildoptions {
+			"/wd4127", -- warning C4127: conditional expression is constant
+			"/wd4389", -- warning C4389: '==': signed/unsigned mismatch
+			"/wd4702", -- warning C4702: unreachable code
+			"/wd4706", -- warning C4706: assignment within conditional expression
+		}
 
 project "glslang"
 	kind "StaticLib"
 
-	local GLSLANG = path.join(BGFX_DIR, "3rdparty/glslang")
+	defines {
+		"ENABLE_OPT=1", -- spirv-tools
+	}
+
+	includedirs {
+		GLSLANG,
+		path.join(SPIRV_TOOLS, "include"),
+		path.join(SPIRV_TOOLS, "source"),
+	}
+
+	files {
+		path.join(GLSLANG, "glslang/**.cpp"),
+		path.join(GLSLANG, "glslang/**.h"),
+
+		path.join(GLSLANG, "hlsl/**.cpp"),
+		path.join(GLSLANG, "hlsl/**.h"),
+
+		path.join(GLSLANG, "SPIRV/**.cpp"),
+		path.join(GLSLANG, "SPIRV/**.h"),
+
+		path.join(GLSLANG, "OGLCompilersDLL/**.cpp"),
+		path.join(GLSLANG, "OGLCompilersDLL/**.h"),
+	}
+
+	removefiles {
+		path.join(GLSLANG, "glslang/OSDependent/Unix/main.cpp"),
+		path.join(GLSLANG, "glslang/OSDependent/Windows/main.cpp"),
+	}
+
+	configuration { "windows" }
+		removefiles {
+			path.join(GLSLANG, "glslang/OSDependent/Unix/**.cpp"),
+			path.join(GLSLANG, "glslang/OSDependent/Unix/**.h"),
+		}
+
+	configuration { "not windows" }
+		removefiles {
+			path.join(GLSLANG, "glslang/OSDependent/Windows/**.cpp"),
+			path.join(GLSLANG, "glslang/OSDependent/Windows/**.h"),
+		}
 
 	configuration { "vs*" }
 		buildoptions {
@@ -63,41 +219,6 @@ project "glslang"
 	configuration {}
 		defines {
 			"ENABLE_HLSL=1",
-		}
-
-	includedirs {
-		GLSLANG,
-	}
-
-	files {
-		path.join(GLSLANG, "glslang/**.cpp"),
-		path.join(GLSLANG, "glslang/**.h"),
-
-		path.join(GLSLANG, "hlsl/**.cpp"),
-		path.join(GLSLANG, "hlsl/**.h"),
-
-		path.join(GLSLANG, "SPIRV/**.cpp"),
-		path.join(GLSLANG, "SPIRV/**.h"),
-
-		path.join(GLSLANG, "OGLCompilersDLL/**.cpp"),
-		path.join(GLSLANG, "OGLCompilersDLL/**.h"),
-	}
-
-	removefiles {
-		path.join(GLSLANG, "glslang/OSDependent/Unix/main.cpp"),
-		path.join(GLSLANG, "glslang/OSDependent/Windows/main.cpp"),
-	}
-
-	configuration { "windows" }
-		removefiles {
-			path.join(GLSLANG, "glslang/OSDependent/Unix/**.cpp"),
-			path.join(GLSLANG, "glslang/OSDependent/Unix/**.h"),
-		}
-
-	configuration { "not windows" }
-		removefiles {
-			path.join(GLSLANG, "glslang/OSDependent/Windows/**.cpp"),
-			path.join(GLSLANG, "glslang/OSDependent/Windows/**.h"),
 		}
 
 	configuration {}
@@ -177,7 +298,6 @@ project "glsl-optimizer"
 			"-fno-strict-aliasing", -- glsl-optimizer has bugs if strict aliasing is used.
 
 			"-Wno-implicit-fallthrough",
-			"-Wno-misleading-indentation",
 			"-Wno-sign-compare",
 			"-Wno-unused-function",
 			"-Wno-unused-parameter",
@@ -185,6 +305,16 @@ project "glsl-optimizer"
 
 		removebuildoptions {
 			"-Wshadow", -- glsl-optimizer is full of -Wshadow warnings ignore it.
+		}
+
+	configuration { "osx" }
+		buildoptions {
+			"-Wno-deprecated-register",
+		}
+
+	configuration { "mingw* or linux" }
+		buildoptions {
+			"-Wno-misleading-indentation",
 		}
 
 	configuration {}
@@ -250,6 +380,7 @@ project "shaderc"
 		"fcpp",
 		"glslang",
 		"glsl-optimizer",
+		"spirv-opt",
 	}
 
 	files {

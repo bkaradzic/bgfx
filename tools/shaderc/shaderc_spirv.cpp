@@ -683,7 +683,11 @@ namespace bgfx { namespace spirv
 
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
 				std::vector<uint32_t> spirv;
-				glslang::GlslangToSpv(*intermediate, spirv);
+
+				glslang::SpvOptions options;
+				options.disableOptimizer = false;
+
+				glslang::GlslangToSpv(*intermediate, spirv, &options);
 				spv::spirvbin_t spvBin;
 				spvBin.remap(
 					  spirv
