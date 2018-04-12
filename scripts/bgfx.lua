@@ -173,6 +173,7 @@ function bgfxProjectBase(_kind, _defines)
 			path.join(BGFX_DIR, "include/**.h"),
 			path.join(BGFX_DIR, "src/**.cpp"),
 			path.join(BGFX_DIR, "src/**.h"),
+			path.join(BGFX_DIR, "scripts/**.natvis"),
 		}
 
 		removefiles {
