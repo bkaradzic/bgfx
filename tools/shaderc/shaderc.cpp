@@ -759,12 +759,12 @@ namespace bgfx
 		bx::snprintf(find, sizeof(find), "gl_FragData[%d]", _idx);
 
 		char replace[32];
-		bx::snprintf(replace, sizeof(replace), "gl_FragData_%d_", _idx);
+		bx::snprintf(replace, sizeof(replace), "bgfx_FragData%d", _idx);
 
 		strReplace(_data, find, replace);
 
 		_preprocessor.writef(
-			" \\\n\t%sout vec4 gl_FragData_%d_ : SV_TARGET%d"
+			" \\\n\t%sout vec4 bgfx_FragData%d : SV_TARGET%d"
 			, _comma ? ", " : "  "
 			, _idx
 			, _idx
@@ -1523,7 +1523,7 @@ namespace bgfx
 						{
 							// GL errors when both gl_FragColor and gl_FragData is used.
 							// This will trigger the same error with HLSL compiler too.
-							preprocessor.writef("#define gl_FragColor gl_FragData_0_\n");
+							preprocessor.writef("#define gl_FragColor bgfx_FragData0\n");
 
 							// If it has gl_FragData or gl_FragColor, color target at
 							// index 0 exists, otherwise shader is not modifying color

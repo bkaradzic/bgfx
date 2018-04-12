@@ -688,14 +688,6 @@ namespace bgfx { namespace spirv
 				options.disableOptimizer = false;
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
-				spv::spirvbin_t spvBin;
-				spvBin.remap(
-					  spirv
-					, 0
-					| spv::spirvbin_t::DCE_ALL
-					| spv::spirvbin_t::OPT_ALL
-					| spv::spirvbin_t::MAP_ALL
-					);
 
 				bx::Error err;
 				bx::WriterI* writer = bx::getDebugOut();

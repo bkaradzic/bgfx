@@ -3529,8 +3529,7 @@ VK_DESTROY
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		m_code = alloc( ( ( (shaderSize+3)/4)*4) );
-		bx::memSet(m_code->data, 0, m_code->size);
+		m_code = alloc(shaderSize);
 		bx::memCopy(m_code->data
 			, code
 			, shaderSize
