@@ -550,16 +550,16 @@ public:
 	}
 
 	template<typename Ty>
-	bool intersect(const Ray& _ray, const Ty& _shape)
+	bool intersect(DebugDrawEncoder* _dde, const Ray& _ray, const Ty& _shape)
 	{
 		Hit hit;
 		if (::intersect(_ray, _shape, &hit) )
 		{
-			ddPush();
+			_dde->push();
 
-			ddSetWireframe(false);
+			_dde->setWireframe(false);
 
-			ddSetColor(0xff0000ff);
+			_dde->setColor(0xff0000ff);
 
 			float tmp[3];
 			bx::vec3Mul(tmp, hit.m_normal, 0.7f);
@@ -567,9 +567,9 @@ public:
 			float end[3];
 			bx::vec3Add(end, hit.m_pos, tmp);
 
-			ddDrawCone(hit.m_pos, end, 0.1f);
+			_dde->drawCone(hit.m_pos, end, 0.1f);
 
-			ddPop();
+			_dde->pop();
 
 			return true;
 		}
@@ -649,113 +649,115 @@ public:
 
 			const uint32_t selected = 0xff80ffff;
 
-			ddBegin(0);
-			ddDrawAxis(0.0f, 0.0f, 0.0f);
+			DebugDrawEncoder dde;
 
-			ddPush();
+			dde.begin(0);
+			dde.drawAxis(0.0f, 0.0f, 0.0f);
+
+			dde.push();
 				Aabb aabb =
 				{
 					{  5.0f, 1.0f, 1.0f },
 					{ 10.0f, 5.0f, 5.0f },
 				};
-				ddSetWireframe(true);
-				ddSetColor(intersect(ray, aabb) ? selected : 0xff00ff00);
-				ddDraw(aabb);
-			ddPop();
+				dde.setWireframe(true);
+				dde.setColor(intersect(&dde, ray, aabb) ? selected : 0xff00ff00);
+				dde.draw(aabb);
+			dde.pop();
 
 			float time = float(now/freq);
 
 			Obb obb;
 			bx::mtxRotateX(obb.m_mtx, time);
-			ddSetWireframe(true);
-			ddSetColor(intersect(ray, obb) ? selected : 0xffffffff);
-			ddDraw(obb);
+			dde.setWireframe(true);
+			dde.setColor(intersect(&dde, ray, obb) ? selected : 0xffffffff);
+			dde.draw(obb);
 
 			bx::mtxSRT(obb.m_mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
 
-			ddPush();
+			dde.push();
 				toAabb(aabb, obb);
-				ddSetWireframe(true);
-				ddSetColor(0xff0000ff);
-				ddDraw(aabb);
-			ddPop();
+				dde.setWireframe(true);
+				dde.setColor(0xff0000ff);
+				dde.draw(aabb);
+			dde.pop();
 
-			ddSetWireframe(false);
-			ddSetColor(intersect(ray, obb) ? selected : 0xffffffff);
-			ddDraw(obb);
+			dde.setWireframe(false);
+			dde.setColor(intersect(&dde, ray, obb) ? selected : 0xffffffff);
+			dde.draw(obb);
 
-			ddSetColor(0xffffffff);
+			dde.setColor(0xffffffff);
 
-			ddPush();
+			dde.push();
 			{
 				float bunny[16];
 				bx::mtxSRT(bunny, 0.03f, 0.03f, 0.03f, 0.0f, 0.0f, 0.0f, -3.0f, 0.0f, 0.0f);
 
-				ddSetTransform(bunny);
+				dde.setTransform(bunny);
 				const bool wireframe = bx::mod(time, 2.0f) > 1.0f;
-				ddSetWireframe(wireframe);
-				ddSetColor(wireframe ? 0xffff00ff : 0xff00ff00);
-				ddDraw(m_bunny);
+				dde.setWireframe(wireframe);
+				dde.setColor(wireframe ? 0xffff00ff : 0xff00ff00);
+				dde.draw(m_bunny);
 			}
-			ddPop();
+			dde.pop();
 
-			ddSetTranslate(0.0f, -2.0f, 0.0f);
-			ddDrawGrid(Axis::Y, zero, 20, 1.0f);
-			ddSetTransform(NULL);
+			dde.setTranslate(0.0f, -2.0f, 0.0f);
+			dde.drawGrid(Axis::Y, zero, 20, 1.0f);
+			dde.setTransform(NULL);
 
-			ddDrawFrustum(mtxVp);
+			dde.drawFrustum(mtxVp);
 
-			ddPush();
+			dde.push();
 				Sphere sphere = { { 0.0f, 5.0f, 0.0f }, 1.0f };
-				ddSetColor(intersect(ray, sphere) ? selected : 0xfff0c0ff);
-				ddSetWireframe(true);
-				ddSetLod(3);
-				ddDraw(sphere);
-				ddSetWireframe(false);
+				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xfff0c0ff);
+				dde.setWireframe(true);
+				dde.setLod(3);
+				dde.draw(sphere);
+				dde.setWireframe(false);
 
 				sphere.m_center[0] = -2.0f;
-				ddSetColor(intersect(ray, sphere) ? selected : 0xc0ffc0ff);
-				ddSetLod(2);
-				ddDraw(sphere);
+				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xc0ffc0ff);
+				dde.setLod(2);
+				dde.draw(sphere);
 
 				sphere.m_center[0] = -4.0f;
-				ddSetColor(intersect(ray, sphere) ? selected : 0xa0f0ffff);
-				ddSetLod(1);
-				ddDraw(sphere);
+				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xa0f0ffff);
+				dde.setLod(1);
+				dde.draw(sphere);
 
 				sphere.m_center[0] = -6.0f;
-				ddSetColor(intersect(ray, sphere) ? selected : 0xffc0ff00);
-				ddSetLod(0);
-				ddDraw(sphere);
-			ddPop();
+				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xffc0ff00);
+				dde.setLod(0);
+				dde.draw(sphere);
+			dde.pop();
 
-			ddSetColor(0xffffffff);
+			dde.setColor(0xffffffff);
 
-			ddPush();
+			dde.push();
 			{
 				float normal[3] = {  0.0f, 0.0f, 1.0f };
 				float center[3] = { -8.0f, 0.0f, 0.0f };
-				ddPush();
-					ddSetStipple(true, 1.0f, time*0.1f);
-					ddSetColor(0xff0000ff);
-					ddDrawCircle(normal, center, 1.0f, 0.5f + bx::sin(time*10.0f) );
-				ddPop();
+				dde.push();
+					dde.setStipple(true, 1.0f, time*0.1f);
+					dde.setColor(0xff0000ff);
+					dde.drawCircle(normal, center, 1.0f, 0.5f + bx::sin(time*10.0f) );
+				dde.pop();
 
-				ddSetSpin(time);
-				ddDrawQuad(m_sprite, normal, center, 2.0f);
+				dde.setSpin(time);
+				dde.drawQuad(m_sprite, normal, center, 2.0f);
 			}
-			ddPop();
+			dde.pop();
 
-			ddPush();
-				ddSetStipple(true, 1.0f, -time*0.1f);
-				ddDrawCircle(Axis::Z, -8.0f, 0.0f, 0.0f, 1.25f, 2.0f);
-			ddPop();
+			dde.push();
+				dde.setStipple(true, 1.0f, -time*0.1f);
+				dde.drawCircle(Axis::Z, -8.0f, 0.0f, 0.0f, 1.25f, 2.0f);
+			dde.pop();
 
-			ddPush();
-				ddSetLod(UINT8_MAX);
+			dde.push();
+				dde.setLod(UINT8_MAX);
 
-				ddPush();
-					ddSetSpin(time*0.3f);
+				dde.push();
+					dde.setSpin(time*0.3f);
 					{
 						Cone cone =
 						{
@@ -771,32 +773,32 @@ public:
 							0.5f
 						};
 
-						ddSetColor(false
-							|| intersect(ray, cone)
-							|| intersect(ray, cylinder)
+						dde.setColor(false
+							|| intersect(&dde, ray, cone)
+							|| intersect(&dde, ray, cylinder)
 							? selected
 							: 0xffffffff
 							);
 
-						ddDraw(cone);
-						ddDraw(cylinder);
+						dde.draw(cone);
+						dde.draw(cylinder);
 					}
-				ddPop();
+				dde.pop();
 
 				{
-					ddSetLod(0);
+					dde.setLod(0);
 					Capsule capsule =
 					{
 						{  0.0f, 7.0f, 0.0f },
 						{ -6.0f, 7.0f, 0.0f },
 						0.5f
 					};
-					ddSetColor(intersect(ray, capsule) ? selected : 0xffffffff);
-					ddDraw(capsule);
+					dde.setColor(intersect(&dde, ray, capsule) ? selected : 0xffffffff);
+					dde.draw(capsule);
 				}
-			ddPop();
+			dde.pop();
 
-			ddPush();
+			dde.push();
 
 				float mtx[16];
 				bx::mtxSRT(mtx
@@ -814,21 +816,21 @@ public:
 
 				float up[3] = { 0.0f, 4.0f, 0.0f };
 				bx::vec3MulMtx(cylinder.m_end, up, mtx);
-				ddSetColor(intersect(ray, cylinder) ? selected : 0xffffffff);
-				ddDraw(cylinder);
+				dde.setColor(intersect(&dde, ray, cylinder) ? selected : 0xffffffff);
+				dde.draw(cylinder);
 
-				ddPush();
+				dde.push();
 					toAabb(aabb, cylinder);
-					ddSetWireframe(true);
-					ddSetColor(0xff0000ff);
-					ddDraw(aabb);
-				ddPop();
+					dde.setWireframe(true);
+					dde.setColor(0xff0000ff);
+					dde.draw(aabb);
+				dde.pop();
 
-			ddPop();
+			dde.pop();
 
-			ddDrawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
+			dde.drawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
 
-			ddEnd();
+			dde.end();
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
