@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <Type Name="bgfx::IndexBufferHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_indexBuffers[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::VertexBufferHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_vertexBuffers[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::DynamicIndexBufferHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_dynamicIndexBuffers[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::DynamicVertexBufferHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_dynamicVertexBuffers[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::UniformHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx}, name={bgfx::s_ctx->m_uniformRef[idx].m_name} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_uniformRef[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::ShaderHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx}, name={bgfx::s_ctx->m_shaderRef[idx].m_name} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_shaderRef[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::Context::ShaderRef">
+        <Expand>
+            <Item Name="m_uniforms">m_uniforms,[m_num]</Item>
+            <Item Name="m_name">m_name</Item>
+            <Item Name="m_hash">m_hash</Item>
+            <Item Name="m_refCount">m_refCount</Item>
+            <Item Name="m_num">m_num</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::ProgramHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx}, vsh={bgfx::s_ctx->m_programRef[idx].m_vsh}, fsh={bgfx::s_ctx->m_programRef[idx].m_fsh} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_programRef[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::TextureHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx}, name={bgfx::s_ctx->m_textureRef[idx].m_name} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_textureRef[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::Context::TextureRef">
+        <Expand>
+            <Item Name="m_name">m_name</Item>
+            <Item Name="m_ptr">m_ptr</Item>
+            <Item Name="m_storageSize">m_storageSize</Item>
+            <Item Name="m_refCount">m_refCount</Item>
+            <Item Name="m_bbRatio">m_bbRatio</Item>
+            <Item Name="m_format">(bgfx::TextureFormat::Enum)m_format</Item>
+            <Item Name="m_numMips">m_numMips</Item>
+            <Item Name="m_owned">m_owned</Item>
+            <Item Name="m_immutable">m_immutable</Item>
+            <Item Name="m_rt">m_rt</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::FrameBufferHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx} }}</DisplayString>
+        <Expand>
+            <Item Name="idx">idx</Item>
+            <ExpandedItem>bgfx::s_ctx->m_frameBufferRef[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="bgfx::VertexDeclHandle">
+        <DisplayString Condition="idx == bgfx::kInvalidHandle">{{ idx={idx} (INVALID) }}</DisplayString>
+        <DisplayString>{{ idx={idx} }}</DisplayString>
+        <Expand>
+            <ExpandedItem>this,!</ExpandedItem>
+            <ExpandedItem>bgfx::s_ctx->m_declRef[idx]</ExpandedItem>
+        </Expand>
+    </Type>
+</AutoVisualizer>
