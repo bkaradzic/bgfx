@@ -3569,20 +3569,6 @@ VK_DESTROY
 		m_attrMask[Attrib::Color0]   = UINT16_MAX;
 		iohash = 0;
 
-		if (BGFX_CHUNK_MAGIC_VSH == magic)
-		{
-			m_predefined[0].m_loc   = 0;
-			m_predefined[0].m_count = 4;
-			m_predefined[0].m_type  = uint8_t(PredefinedUniform::ModelViewProj);
-			m_numPredefined = 1;
-			m_size = 64;
-		}
-		else
-		{
-			m_size = 0;
-			m_numPredefined = 0;
-		}
-
 		uint8_t numAttrs = 0;
 //		bx::read(&reader, numAttrs);
 //
@@ -3606,6 +3592,8 @@ VK_DESTROY
 		murmur.add(numAttrs);
 		murmur.add(m_attrMask, numAttrs);
 		m_hash = murmur.end();
+
+		bx::read(&reader, m_size);
 	}
 
 	void ShaderVK::destroy()

@@ -570,7 +570,6 @@ namespace bgfx { namespace spirv
 			);
 		bool linked = false;
 		bool validated = true;
-		bool optimized = true;
 
 		if (!compiled)
 		{
@@ -625,6 +624,8 @@ namespace bgfx { namespace spirv
 			}
 			else
 			{
+				uint16_t size = 0;
+
 				program->buildReflection();
 				{
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
@@ -635,6 +636,11 @@ namespace bgfx { namespace spirv
 					{
 						Uniform un;
 						un.name = program->getUniformName(ii);
+
+						un.num = uint8_t(program->getUniformArraySize(ii) );
+						un.regIndex = 0;
+						un.regCount = un.num;
+
 						switch (program->getUniformType(ii))
 						{
 						case 0x1404: // GL_INT:
@@ -645,17 +651,18 @@ namespace bgfx { namespace spirv
 							break;
 						case 0x8B5B: // GL_FLOAT_MAT3:
 							un.type = UniformType::Mat3;
+							un.regCount *= 3;
 							break;
 						case 0x8B5C: // GL_FLOAT_MAT4:
 							un.type = UniformType::Mat4;
+							un.regCount *= 4;
 							break;
 						default:
 							un.type = UniformType::End;
 							break;
 						}
-						un.num = uint8_t(program->getUniformArraySize(ii) );
-						un.regIndex = 0;
-						un.regCount = un.num;
+
+						size += un.regCount*16;
 
 						uint8_t nameSize = (uint8_t)un.name.size();
 						bx::write(_writer, nameSize);
@@ -694,14 +701,13 @@ namespace bgfx { namespace spirv
 				bx::MemoryReader reader(spirv.data(), uint32_t(spirv.size()*4) );
 				disassemble(writer, &reader, &err);
 
-				if (optimized)
-				{
-					uint32_t shaderSize = (uint32_t)spirv.size()*sizeof(uint32_t);
-					bx::write(_writer, shaderSize);
-					bx::write(_writer, spirv.data(), shaderSize);
-					uint8_t nul = 0;
-					bx::write(_writer, nul);
-				}
+				uint32_t shaderSize = (uint32_t)spirv.size()*sizeof(uint32_t);
+				bx::write(_writer, shaderSize);
+				bx::write(_writer, spirv.data(), shaderSize);
+				uint8_t nul = 0;
+				bx::write(_writer, nul);
+
+				bx::write(_writer, size);
 			}
 		}
 
@@ -710,7 +716,7 @@ namespace bgfx { namespace spirv
 
 		glslang::FinalizeProcess();
 
-		return compiled && linked && validated && optimized;
+		return compiled && linked && validated;
 	}
 
 } // namespace spirv
