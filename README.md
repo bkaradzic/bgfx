@@ -115,12 +115,6 @@ derivative of the original Torque Engine.
 target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
 alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
-## twinkle
-
-https://github.com/cgbystrom/twinkle GPU-accelerated UI framework powered by
-JavaScript for desktop/mobile apps. Idea is to combine the fast workflow and
-deployment model of web with the performance of native code and GPU acceleration.
-
 ## Lumix Engine
 
 https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
