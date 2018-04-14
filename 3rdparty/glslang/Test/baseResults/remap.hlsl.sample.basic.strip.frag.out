@@ -11,6 +11,7 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 188 192
                               ExecutionMode 4 OriginUpperLeft
+                              ExecutionMode 4 DepthReplacing
                               Decorate 45 DescriptorSet 0
                               Decorate 45 Binding 0
                               Decorate 49 DescriptorSet 0

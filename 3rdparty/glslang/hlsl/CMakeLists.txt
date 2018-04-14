@@ -17,9 +17,13 @@ set(HEADERS
     hlslGrammar.h
     hlslParseables.h)
 
-add_library(HLSL STATIC ${SOURCES} ${HEADERS})
+add_library(HLSL ${LIB_TYPE} ${SOURCES} ${HEADERS})
 set_property(TARGET HLSL PROPERTY FOLDER hlsl)
 set_property(TARGET HLSL PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties(HLSL PROPERTIES PREFIX "")
+endif()
 
 if(WIN32)
     source_group("Source" FILES ${SOURCES} ${HEADERS})

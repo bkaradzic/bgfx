@@ -9,6 +9,14 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+
+set(LIB_TYPE STATIC)
+
+if(BUILD_SHARED_LIBS)
+    set(LIB_TYPE SHARED)
+endif()
+
 option(SKIP_GLSLANG_INSTALL "Skip installation" ${SKIP_GLSLANG_INSTALL})
 if(NOT ${SKIP_GLSLANG_INSTALL})
   set(ENABLE_GLSLANG_INSTALL ON)

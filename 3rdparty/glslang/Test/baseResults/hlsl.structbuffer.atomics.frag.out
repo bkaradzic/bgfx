@@ -6,7 +6,7 @@ gl_FragCoord origin is upper left
 0:5    Function Parameters: 
 0:5      'pos' ( in uint)
 0:?     Sequence
-0:8      AtomicAdd ( temp void)
+0:8      AtomicAdd ( temp uint)
 0:8        indirect index (layout( row_major std430) buffer uint)
 0:8          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:8            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -34,7 +34,7 @@ gl_FragCoord origin is upper left
 0:9                2 (const int)
 0:9          Constant:
 0:9            1 (const int)
-0:10      AtomicAnd ( temp void)
+0:10      AtomicAnd ( temp uint)
 0:10        indirect index (layout( row_major std430) buffer uint)
 0:10          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:10            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -95,7 +95,7 @@ gl_FragCoord origin is upper left
 0:14                2 (const int)
 0:14          Constant:
 0:14            1 (const int)
-0:15      AtomicMax ( temp void)
+0:15      AtomicMax ( temp uint)
 0:15        indirect index (layout( row_major std430) buffer uint)
 0:15          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:15            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -123,7 +123,7 @@ gl_FragCoord origin is upper left
 0:16                2 (const int)
 0:16          Constant:
 0:16            1 (const int)
-0:17      AtomicMin ( temp void)
+0:17      AtomicMin ( temp uint)
 0:17        indirect index (layout( row_major std430) buffer uint)
 0:17          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:17            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -151,7 +151,7 @@ gl_FragCoord origin is upper left
 0:18                2 (const int)
 0:18          Constant:
 0:18            1 (const int)
-0:19      AtomicOr ( temp void)
+0:19      AtomicOr ( temp uint)
 0:19        indirect index (layout( row_major std430) buffer uint)
 0:19          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:19            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -179,7 +179,7 @@ gl_FragCoord origin is upper left
 0:20                2 (const int)
 0:20          Constant:
 0:20            1 (const int)
-0:21      AtomicXor ( temp void)
+0:21      AtomicXor ( temp uint)
 0:21        indirect index (layout( row_major std430) buffer uint)
 0:21          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:21            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -245,7 +245,7 @@ gl_FragCoord origin is upper left
 0:5    Function Parameters: 
 0:5      'pos' ( in uint)
 0:?     Sequence
-0:8      AtomicAdd ( temp void)
+0:8      AtomicAdd ( temp uint)
 0:8        indirect index (layout( row_major std430) buffer uint)
 0:8          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:8            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -273,7 +273,7 @@ gl_FragCoord origin is upper left
 0:9                2 (const int)
 0:9          Constant:
 0:9            1 (const int)
-0:10      AtomicAnd ( temp void)
+0:10      AtomicAnd ( temp uint)
 0:10        indirect index (layout( row_major std430) buffer uint)
 0:10          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:10            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -334,7 +334,7 @@ gl_FragCoord origin is upper left
 0:14                2 (const int)
 0:14          Constant:
 0:14            1 (const int)
-0:15      AtomicMax ( temp void)
+0:15      AtomicMax ( temp uint)
 0:15        indirect index (layout( row_major std430) buffer uint)
 0:15          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:15            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -362,7 +362,7 @@ gl_FragCoord origin is upper left
 0:16                2 (const int)
 0:16          Constant:
 0:16            1 (const int)
-0:17      AtomicMin ( temp void)
+0:17      AtomicMin ( temp uint)
 0:17        indirect index (layout( row_major std430) buffer uint)
 0:17          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:17            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -390,7 +390,7 @@ gl_FragCoord origin is upper left
 0:18                2 (const int)
 0:18          Constant:
 0:18            1 (const int)
-0:19      AtomicOr ( temp void)
+0:19      AtomicOr ( temp uint)
 0:19        indirect index (layout( row_major std430) buffer uint)
 0:19          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:19            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -418,7 +418,7 @@ gl_FragCoord origin is upper left
 0:20                2 (const int)
 0:20          Constant:
 0:20            1 (const int)
-0:21      AtomicXor ( temp void)
+0:21      AtomicXor ( temp uint)
 0:21        indirect index (layout( row_major std430) buffer uint)
 0:21          @data: direct index for structure (layout( row_major std430) buffer unsized 1-element array of uint)
 0:21            'sbuf' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of uint @data})
@@ -542,14 +542,14 @@ gl_FragCoord origin is upper left
            29(u):      7(ptr) Variable Function
               22:     18(int) ShiftRightArithmetic 20 21
               24:     23(ptr) AccessChain 17(sbuf) 19 22
-              28:           2 AtomicIAdd 24 26 27 25
+              28:      6(int) AtomicIAdd 24 26 27 25
               30:     18(int) ShiftRightArithmetic 20 21
               31:     23(ptr) AccessChain 17(sbuf) 19 30
               32:      6(int) AtomicIAdd 31 26 27 25
                               Store 29(u) 32
               33:     18(int) ShiftRightArithmetic 20 21
               34:     23(ptr) AccessChain 17(sbuf) 19 33
-              35:           2 AtomicAnd 34 26 27 25
+              35:      6(int) AtomicAnd 34 26 27 25
               36:     18(int) ShiftRightArithmetic 20 21
               37:     23(ptr) AccessChain 17(sbuf) 19 36
               38:      6(int) AtomicAnd 37 26 27 25
@@ -565,28 +565,28 @@ gl_FragCoord origin is upper left
                               Store 29(u) 45
               46:     18(int) ShiftRightArithmetic 20 21
               47:     23(ptr) AccessChain 17(sbuf) 19 46
-              48:           2 AtomicSMax 47 26 27 25
+              48:      6(int) AtomicUMax 47 26 27 25
               49:     18(int) ShiftRightArithmetic 20 21
               50:     23(ptr) AccessChain 17(sbuf) 19 49
               51:      6(int) AtomicUMax 50 26 27 25
                               Store 29(u) 51
               52:     18(int) ShiftRightArithmetic 20 21
               53:     23(ptr) AccessChain 17(sbuf) 19 52
-              54:           2 AtomicSMin 53 26 27 25
+              54:      6(int) AtomicUMin 53 26 27 25
               55:     18(int) ShiftRightArithmetic 20 21
               56:     23(ptr) AccessChain 17(sbuf) 19 55
               57:      6(int) AtomicUMin 56 26 27 25
                               Store 29(u) 57
               58:     18(int) ShiftRightArithmetic 20 21
               59:     23(ptr) AccessChain 17(sbuf) 19 58
-              60:           2 AtomicOr 59 26 27 25
+              60:      6(int) AtomicOr 59 26 27 25
               61:     18(int) ShiftRightArithmetic 20 21
               62:     23(ptr) AccessChain 17(sbuf) 19 61
               63:      6(int) AtomicOr 62 26 27 25
                               Store 29(u) 63
               64:     18(int) ShiftRightArithmetic 20 21
               65:     23(ptr) AccessChain 17(sbuf) 19 64
-              66:           2 AtomicXor 65 26 27 25
+              66:      6(int) AtomicXor 65 26 27 25
               67:     18(int) ShiftRightArithmetic 20 21
               68:     23(ptr) AccessChain 17(sbuf) 19 67
               69:      6(int) AtomicXor 68 26 27 25

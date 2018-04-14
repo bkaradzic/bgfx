@@ -1,6 +1,7 @@
 hlsl.getsampleposition.dx10.frag
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:13  Function Definition: @main(i1; ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:13    Function Parameters: 
@@ -292,6 +293,7 @@ Linked fragment stage:
 
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:13  Function Definition: @main(i1; ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:13    Function Parameters: 
@@ -587,6 +589,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 181 188 192
                               ExecutionMode 4 OriginUpperLeft
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "main"
                               Name 10  "PS_OUTPUT"

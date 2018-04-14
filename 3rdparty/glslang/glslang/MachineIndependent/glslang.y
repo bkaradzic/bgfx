@@ -1538,40 +1538,40 @@ type_specifier_nonarray
         $$.setVector(4);
     }
     | F32VEC2 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setVector(2);
+        parseContext.explicitFloat32Check($1.loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setVector(2);
     }
     | F32VEC3 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setVector(3);
+        parseContext.explicitFloat32Check($1.loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setVector(3);
     }
     | F32VEC4 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setVector(4);
+        parseContext.explicitFloat32Check($1.loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setVector(4);
     }
     | F64VEC2 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setVector(2);
+        parseContext.explicitFloat64Check($1.loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setVector(2);
     }
     | F64VEC3 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setVector(3);
+        parseContext.explicitFloat64Check($1.loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setVector(3);
     }
     | F64VEC4 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setVector(4);
+        parseContext.explicitFloat64Check($1.loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setVector(4);
     }
     | BVEC2 {
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
@@ -1604,40 +1604,40 @@ type_specifier_nonarray
         $$.setVector(4);
     }
     | I8VEC2 {
- 	   parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
- 	   $$.basicType = EbtInt8;
- 	   $$.setVector(2);
+       parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtInt8;
+       $$.setVector(2);
     }
     | I8VEC3 {
- 	   parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
- 	   $$.basicType = EbtInt8;
- 	   $$.setVector(3);
+       parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtInt8;
+       $$.setVector(3);
     }
     | I8VEC4 {
- 	   parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
- 	   $$.basicType = EbtInt8;
- 	   $$.setVector(4);
+       parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtInt8;
+       $$.setVector(4);
     }
     | I16VEC2 {
- 	   parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
- 	   $$.basicType = EbtInt16;
- 	   $$.setVector(2);
+       parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtInt16;
+       $$.setVector(2);
     }
     | I16VEC3 {
- 	   parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
- 	   $$.basicType = EbtInt16;
- 	   $$.setVector(3);
+       parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtInt16;
+       $$.setVector(3);
     }
     | I16VEC4 {
- 	   parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
- 	   $$.basicType = EbtInt16;
- 	   $$.setVector(4);
+       parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtInt16;
+       $$.setVector(4);
     }
     | I32VEC2 {
         parseContext.explicitInt32Check($1.loc, "32-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
@@ -1970,148 +1970,148 @@ type_specifier_nonarray
         $$.setMatrix(4, 4);
     }
     | F32MAT2 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(2, 2);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(2, 2);
     }
     | F32MAT3 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(3, 3);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(3, 3);
     }
     | F32MAT4 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(4, 4);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(4, 4);
     }
     | F32MAT2X2 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(2, 2);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(2, 2);
     }
     | F32MAT2X3 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(2, 3);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(2, 3);
     }
     | F32MAT2X4 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(2, 4);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(2, 4);
     }
     | F32MAT3X2 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(3, 2);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(3, 2);
     }
     | F32MAT3X3 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(3, 3);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(3, 3);
     }
     | F32MAT3X4 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(3, 4);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(3, 4);
     }
     | F32MAT4X2 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(4, 2);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(4, 2);
     }
     | F32MAT4X3 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(4, 3);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(4, 3);
     }
     | F32MAT4X4 {
-    	parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtFloat;
-    	$$.setMatrix(4, 4);
+        parseContext.explicitFloat32Check($1.loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.setMatrix(4, 4);
     }
     | F64MAT2 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(2, 2);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(2, 2);
     }
     | F64MAT3 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(3, 3);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(3, 3);
     }
     | F64MAT4 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(4, 4);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(4, 4);
     }
     | F64MAT2X2 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(2, 2);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(2, 2);
     }
     | F64MAT2X3 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(2, 3);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(2, 3);
     }
     | F64MAT2X4 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(2, 4);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(2, 4);
     }
     | F64MAT3X2 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(3, 2);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(3, 2);
     }
     | F64MAT3X3 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(3, 3);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(3, 3);
     }
     | F64MAT3X4 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(3, 4);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(3, 4);
     }
     | F64MAT4X2 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(4, 2);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(4, 2);
     }
     | F64MAT4X3 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(4, 3);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(4, 3);
     }
     | F64MAT4X4 {
-    	parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	$$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-    	$$.basicType = EbtDouble;
-    	$$.setMatrix(4, 4);
+        parseContext.explicitFloat64Check($1.loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtDouble;
+        $$.setMatrix(4, 4);
     }
     | ATOMIC_UINT {
         parseContext.vulkanRemoved($1.loc, "atomic counter types");

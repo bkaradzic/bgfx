@@ -1,6 +1,7 @@
 hlsl.gatherRGBA.offset.dx10.frag
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:39  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:39    Function Parameters: 
@@ -633,6 +634,7 @@ Linked fragment stage:
 
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:39  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:39    Function Parameters: 
@@ -1270,6 +1272,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 363 367
                               ExecutionMode 4 OriginUpperLeft
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"

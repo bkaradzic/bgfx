@@ -171,6 +171,7 @@ using depth_greater
                               EntryPoint Fragment 4  "main" 22 27 31 36 45 48 51 55
                               ExecutionMode 4 OriginUpperLeft
                               ExecutionMode 4 DepthGreater
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "main"
                               Name 8  "T"

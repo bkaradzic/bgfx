@@ -3,6 +3,7 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
 
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:53  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:53    Function Parameters: 
@@ -278,6 +279,7 @@ Linked fragment stage:
 
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:53  Function Definition: @main( ( temp structure{ temp 4-component vector of float Color,  temp float Depth})
 0:53    Function Parameters: 
@@ -557,6 +559,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 188 192
                               ExecutionMode 4 OriginUpperLeft
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"

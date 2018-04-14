@@ -5,9 +5,9 @@ gl_FragCoord origin is upper left
 0:8  Function Definition: Fn2(block--vf4[0]1;block--vf4[0]1; ( temp 4-component vector of float)
 0:8    Function Parameters: 
 0:8      'arg_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:8      'arg_a@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:8      'arg_a@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:8      'arg_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:8      'arg_c@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:8      'arg_c@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:?     Sequence
 0:9      move second child to first child ( temp 4-component vector of float)
 0:9        indirect index ( buffer 4-component vector of float)
@@ -16,12 +16,12 @@ gl_FragCoord origin is upper left
 0:9            Constant:
 0:9              0 (const uint)
 0:9          AtomicAdd ( temp uint)
-0:9            @count: direct index for structure ( temp int)
-0:9              'arg_a@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:9            @count: direct index for structure ( temp uint)
+0:9              'arg_a@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:9              Constant:
 0:9                0 (const int)
 0:9            Constant:
-0:9              1 (const int)
+0:9              1 (const uint)
 0:?         Constant:
 0:?           1.000000
 0:?           2.000000
@@ -35,12 +35,12 @@ gl_FragCoord origin is upper left
 0:10              0 (const uint)
 0:10          add ( temp uint)
 0:10            AtomicAdd ( temp uint)
-0:10              @count: direct index for structure ( temp int)
-0:10                'arg_c@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:10              @count: direct index for structure ( temp uint)
+0:10                'arg_c@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:10                Constant:
 0:10                  0 (const int)
 0:10              Constant:
-0:10                -1 (const int)
+0:10                4294967295 (const uint)
 0:10            Constant:
 0:10              -1 (const int)
 0:19  Function Definition: @main(u1; ( temp 4-component vector of float)
@@ -50,9 +50,9 @@ gl_FragCoord origin is upper left
 0:22      Branch: Return with expression
 0:22        Function Call: Fn2(block--vf4[0]1;block--vf4[0]1; ( temp 4-component vector of float)
 0:22          'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:22          'sbuf_a@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:22          'sbuf_a@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:22          'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:22          'sbuf_c@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:22          'sbuf_c@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:19  Function Definition: main( ( temp void)
 0:19    Function Parameters: 
 0:?     Sequence
@@ -65,9 +65,9 @@ gl_FragCoord origin is upper left
 0:?           'pos' ( temp uint)
 0:?   Linker Objects
 0:?     'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:?     'sbuf_a@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
+0:?     'sbuf_a@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer uint @count})
 0:?     'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:?     'sbuf_c@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
+0:?     'sbuf_c@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer uint @count})
 0:?     'sbuf_unused' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'pos' (layout( location=0) flat in uint)
@@ -82,9 +82,9 @@ gl_FragCoord origin is upper left
 0:8  Function Definition: Fn2(block--vf4[0]1;block--vf4[0]1; ( temp 4-component vector of float)
 0:8    Function Parameters: 
 0:8      'arg_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:8      'arg_a@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:8      'arg_a@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:8      'arg_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:8      'arg_c@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:8      'arg_c@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:?     Sequence
 0:9      move second child to first child ( temp 4-component vector of float)
 0:9        indirect index ( buffer 4-component vector of float)
@@ -93,12 +93,12 @@ gl_FragCoord origin is upper left
 0:9            Constant:
 0:9              0 (const uint)
 0:9          AtomicAdd ( temp uint)
-0:9            @count: direct index for structure ( temp int)
-0:9              'arg_a@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:9            @count: direct index for structure ( temp uint)
+0:9              'arg_a@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:9              Constant:
 0:9                0 (const int)
 0:9            Constant:
-0:9              1 (const int)
+0:9              1 (const uint)
 0:?         Constant:
 0:?           1.000000
 0:?           2.000000
@@ -112,12 +112,12 @@ gl_FragCoord origin is upper left
 0:10              0 (const uint)
 0:10          add ( temp uint)
 0:10            AtomicAdd ( temp uint)
-0:10              @count: direct index for structure ( temp int)
-0:10                'arg_c@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:10              @count: direct index for structure ( temp uint)
+0:10                'arg_c@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:10                Constant:
 0:10                  0 (const int)
 0:10              Constant:
-0:10                -1 (const int)
+0:10                4294967295 (const uint)
 0:10            Constant:
 0:10              -1 (const int)
 0:19  Function Definition: @main(u1; ( temp 4-component vector of float)
@@ -127,9 +127,9 @@ gl_FragCoord origin is upper left
 0:22      Branch: Return with expression
 0:22        Function Call: Fn2(block--vf4[0]1;block--vf4[0]1; ( temp 4-component vector of float)
 0:22          'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:22          'sbuf_a@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:22          'sbuf_a@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:22          'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:22          'sbuf_c@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:22          'sbuf_c@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:19  Function Definition: main( ( temp void)
 0:19    Function Parameters: 
 0:?     Sequence
@@ -142,9 +142,9 @@ gl_FragCoord origin is upper left
 0:?           'pos' ( temp uint)
 0:?   Linker Objects
 0:?     'sbuf_a' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:?     'sbuf_a@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
+0:?     'sbuf_a@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer uint @count})
 0:?     'sbuf_c' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
-0:?     'sbuf_c@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
+0:?     'sbuf_c@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer uint @count})
 0:?     'sbuf_unused' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of float @data})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'pos' (layout( location=0) flat in uint)
@@ -169,8 +169,8 @@ gl_FragCoord origin is upper left
                               Name 16  "arg_a@count"
                               Name 17  "arg_c"
                               Name 18  "arg_c@count"
-                              Name 25  "@main(u1;"
-                              Name 24  "pos"
+                              Name 24  "@main(u1;"
+                              Name 23  "pos"
                               Name 49  "sbuf_a"
                               Name 50  "sbuf_a@count"
                               Name 51  "sbuf_c"
@@ -207,30 +207,30 @@ gl_FragCoord origin is upper left
                8:             TypeRuntimeArray 7(fvec4)
                9:             TypeStruct 8
               10:             TypePointer Uniform 9(struct)
-              11:             TypeInt 32 1
+              11:             TypeInt 32 0
               12:             TypeStruct 11(int)
               13:             TypePointer Uniform 12(struct)
               14:             TypeFunction 7(fvec4) 10(ptr) 13(ptr) 10(ptr) 13(ptr)
-              21:             TypeInt 32 0
-              22:             TypePointer Function 21(int)
-              23:             TypeFunction 7(fvec4) 22(ptr)
-              27:     11(int) Constant 0
+              21:             TypePointer Function 11(int)
+              22:             TypeFunction 7(fvec4) 21(ptr)
+              26:             TypeInt 32 1
+              27:     26(int) Constant 0
               28:             TypePointer Uniform 11(int)
               30:     11(int) Constant 1
-              31:     21(int) Constant 1
-              32:     21(int) Constant 0
-              34:    6(float) Constant 1065353216
-              35:    6(float) Constant 1073741824
-              36:    6(float) Constant 1077936128
-              37:    6(float) Constant 1082130432
-              38:    7(fvec4) ConstantComposite 34 35 36 37
-              39:             TypePointer Uniform 7(fvec4)
-              42:     11(int) Constant 4294967295
+              31:     11(int) Constant 0
+              33:    6(float) Constant 1065353216
+              34:    6(float) Constant 1073741824
+              35:    6(float) Constant 1077936128
+              36:    6(float) Constant 1082130432
+              37:    7(fvec4) ConstantComposite 33 34 35 36
+              38:             TypePointer Uniform 7(fvec4)
+              41:     11(int) Constant 4294967295
+              43:     26(int) Constant 4294967295
       49(sbuf_a):     10(ptr) Variable Uniform
 50(sbuf_a@count):     13(ptr) Variable Uniform
       51(sbuf_c):     10(ptr) Variable Uniform
 52(sbuf_c@count):     13(ptr) Variable Uniform
-              57:             TypePointer Input 21(int)
+              57:             TypePointer Input 11(int)
          58(pos):     57(ptr) Variable Input
               60:             TypePointer Output 7(fvec4)
 61(@entryPointOutput):     60(ptr) Variable Output
@@ -241,13 +241,13 @@ gl_FragCoord origin is upper left
  69(sbuf_unused):     10(ptr) Variable Uniform
          4(main):           2 Function None 3
                5:             Label
-         56(pos):     22(ptr) Variable Function
-       62(param):     22(ptr) Variable Function
-              59:     21(int) Load 58(pos)
+         56(pos):     21(ptr) Variable Function
+       62(param):     21(ptr) Variable Function
+              59:     11(int) Load 58(pos)
                               Store 56(pos) 59
-              63:     21(int) Load 56(pos)
+              63:     11(int) Load 56(pos)
                               Store 62(param) 63
-              64:    7(fvec4) FunctionCall 25(@main(u1;) 62(param)
+              64:    7(fvec4) FunctionCall 24(@main(u1;) 62(param)
                               Store 61(@entryPointOutput) 64
                               Return
                               FunctionEnd
@@ -258,19 +258,19 @@ gl_FragCoord origin is upper left
  18(arg_c@count):     13(ptr) FunctionParameter
               20:             Label
               29:     28(ptr) AccessChain 16(arg_a@count) 27
-              33:     21(int) AtomicIAdd 29 31 32 30
-              40:     39(ptr) AccessChain 15(arg_a) 27 33
-                              Store 40 38
-              41:     28(ptr) AccessChain 18(arg_c@count) 27
-              43:     21(int) AtomicIAdd 41 31 32 42
-              44:     21(int) IAdd 43 42
-              45:     39(ptr) AccessChain 17(arg_c) 27 44
+              32:     11(int) AtomicIAdd 29 30 31 30
+              39:     38(ptr) AccessChain 15(arg_a) 27 32
+                              Store 39 37
+              40:     28(ptr) AccessChain 18(arg_c@count) 27
+              42:     11(int) AtomicIAdd 40 30 31 41
+              44:     11(int) IAdd 42 43
+              45:     38(ptr) AccessChain 17(arg_c) 27 44
               46:    7(fvec4) Load 45
                               ReturnValue 46
                               FunctionEnd
-   25(@main(u1;):    7(fvec4) Function None 23
-         24(pos):     22(ptr) FunctionParameter
-              26:             Label
+   24(@main(u1;):    7(fvec4) Function None 22
+         23(pos):     21(ptr) FunctionParameter
+              25:             Label
               53:    7(fvec4) FunctionCall 19(Fn2(block--vf4[0]1;block--vf4[0]1;) 49(sbuf_a) 50(sbuf_a@count) 51(sbuf_c) 52(sbuf_c@count)
                               ReturnValue 53
                               FunctionEnd

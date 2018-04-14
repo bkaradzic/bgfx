@@ -744,9 +744,9 @@ bool ProcessDeferred(
     const int numPre = 2;
     const int numPost = requireNonempty? 1 : 0;
     const int numTotal = numPre + numStrings + numPost;
-    size_t* lengths = new size_t[numTotal];
-    const char** strings = new const char*[numTotal];
-    const char** names = new const char*[numTotal];
+    std::unique_ptr<size_t[]> lengths(new size_t[numTotal]);
+    std::unique_ptr<const char*[]> strings(new const char*[numTotal]);
+    std::unique_ptr<const char*[]> names(new const char*[numTotal]);
     for (int s = 0; s < numStrings; ++s) {
         strings[s + numPre] = shaderStrings[s];
         if (inputLengths == nullptr || inputLengths[s] < 0)
@@ -834,19 +834,14 @@ bool ProcessDeferred(
                                                   [stage];
 
     // Dynamically allocate the symbol table so we can control when it is deallocated WRT the pool.
-    TSymbolTable* symbolTableMemory = new TSymbolTable;
-    TSymbolTable& symbolTable = *symbolTableMemory;
+    std::unique_ptr<TSymbolTable> symbolTable(new TSymbolTable);
     if (cachedTable)
-        symbolTable.adoptLevels(*cachedTable);
+        symbolTable->adoptLevels(*cachedTable);
 
     // Add built-in symbols that are potentially context dependent;
     // they get popped again further down.
-    if (! AddContextSpecificSymbols(resources, compiler->infoSink, symbolTable, version, profile, spvVersion,
+    if (! AddContextSpecificSymbols(resources, compiler->infoSink, *symbolTable, version, profile, spvVersion,
                                     stage, source)) {
-        delete symbolTableMemory;
-        delete [] lengths;
-        delete [] strings;
-        delete [] names;
         return false;
     }
 
@@ -854,10 +849,9 @@ bool ProcessDeferred(
     // Now we can process the full shader under proper symbols and rules.
     //
 
-    TParseContextBase* parseContext = CreateParseContext(symbolTable, intermediate, version, profile, source,
-                                                         stage, compiler->infoSink,
-                                                         spvVersion, forwardCompatible, messages, false, sourceEntryPointName);
-
+    std::unique_ptr<TParseContextBase> parseContext(CreateParseContext(*symbolTable, intermediate, version, profile, source,
+                                                    stage, compiler->infoSink,
+                                                    spvVersion, forwardCompatible, messages, false, sourceEntryPointName));
     TPpContext ppContext(*parseContext, names[numPre] ? names[numPre] : "", includer);
 
     // only GLSL (bison triggered, really) needs an externally set scan context
@@ -893,23 +887,14 @@ bool ProcessDeferred(
         lengths[postIndex] = strlen(strings[numStrings + numPre]);
         names[postIndex] = nullptr;
     }
-    TInputScanner fullInput(numStrings + numPre + numPost, strings, lengths, names, numPre, numPost);
+    TInputScanner fullInput(numStrings + numPre + numPost, strings.get(), lengths.get(), names.get(), numPre, numPost);
 
     // Push a new symbol allocation scope that will get used for the shader's globals.
-    symbolTable.push();
+    symbolTable->push();
 
     bool success = processingContext(*parseContext, ppContext, fullInput,
-                                     versionWillBeError, symbolTable,
+                                     versionWillBeError, *symbolTable,
                                      intermediate, optLevel, messages);
-
-    // Clean up the symbol table. The AST is self-sufficient now.
-    delete symbolTableMemory;
-
-    delete parseContext;
-    delete [] lengths;
-    delete [] strings;
-    delete [] names;
-
     return success;
 }
 

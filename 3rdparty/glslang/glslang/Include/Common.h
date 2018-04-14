@@ -67,18 +67,19 @@ std::string to_string(const T& val) {
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1800
-inline long long int strtoll (const char* str, char** endptr, int base)
-{
-  return _strtoi64(str, endptr, base);
-}
-inline unsigned long long int strtoull (const char* str, char** endptr, int base)
-{
-  return _strtoui64(str, endptr, base);
-}
-inline long long int atoll (const char* str)
-{
-  return strtoll(str, NULL, 10);
-}
+    #include <stdlib.h>
+    inline long long int strtoll (const char* str, char** endptr, int base)
+    {
+        return _strtoi64(str, endptr, base);
+    }
+    inline unsigned long long int strtoull (const char* str, char** endptr, int base)
+    {
+        return _strtoui64(str, endptr, base);
+    }
+    inline long long int atoll (const char* str)
+    {
+        return strtoll(str, NULL, 10);
+    }
 #endif
 
 #if defined(_MSC_VER)

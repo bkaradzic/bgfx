@@ -3977,6 +3977,28 @@ void TParseContext::finish()
     default:
         break;
     }
+
+#ifdef NV_EXTENSIONS
+    // Set default outputs for GL_NV_geometry_shader_passthrough
+    if (language == EShLangGeometry && extensionTurnedOn(E_SPV_NV_geometry_shader_passthrough)) {
+        if (intermediate.getOutputPrimitive() == ElgNone) {
+            switch (intermediate.getInputPrimitive()) {
+            case ElgPoints:      intermediate.setOutputPrimitive(ElgPoints);    break;
+            case ElgLines:       intermediate.setOutputPrimitive(ElgLineStrip); break;
+            case ElgTriangles:   intermediate.setOutputPrimitive(ElgTriangles); break;
+            default: break;
+            }
+        }
+        if (intermediate.getVertices() == TQualifier::layoutNotSet) {
+            switch (intermediate.getInputPrimitive()) {
+            case ElgPoints:      intermediate.setVertices(1); break;
+            case ElgLines:       intermediate.setVertices(2); break;
+            case ElgTriangles:   intermediate.setVertices(3); break;
+            default: break;
+            }
+        }
+    }
+#endif
 }
 
 //
@@ -5771,8 +5793,22 @@ TIntermTyped* TParseContext::addConstructor(const TSourceLoc& loc, TIntermNode* 
 //
 // Returns nullptr for an error or the constructed node.
 //
-TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, TIntermTyped* node, const TSourceLoc& loc, bool subset)
+TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, TIntermTyped* node, const TSourceLoc& loc,
+    bool subset)
 {
+    // If we are changing a matrix in both domain of basic type and to a non matrix,
+    // do the shape change first (by default, below, basic type is changed before shape).
+    // This avoids requesting a matrix of a new type that is going to be discarded anyway.
+    // TODO: This could be generalized to more type combinations, but that would require
+    // more extensive testing and full algorithm rework. For now, the need to do two changes makes
+    // the recursive call work, and avoids the most aggregious case of creating integer matrices.
+    if (node->getType().isMatrix() && (type.isScalar() || type.isVector()) &&
+            type.isFloatingDomain() != node->getType().isFloatingDomain()) {
+        TType transitionType(node->getBasicType(), glslang::EvqTemporary, type.getVectorSize(), 0, 0, node->isVector());
+        TOperator transitionOp = intermediate.mapTypeToConstructorOp(transitionType);
+        node = constructBuiltIn(transitionType, transitionOp, node, loc, false);
+    }
+
     TIntermTyped* newNode;
     TOperator basicOp;
 

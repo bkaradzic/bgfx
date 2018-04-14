@@ -892,12 +892,12 @@ void TParseVersions::explicitInt16Check(const TSourceLoc& loc, const char* op, b
 {
     if (! builtIn) {
 #if AMD_EXTENSIONS
-	const char* const extensions[3] = {E_GL_AMD_gpu_shader_int16,
-                                           E_GL_KHX_shader_explicit_arithmetic_types,
-                                           E_GL_KHX_shader_explicit_arithmetic_types_int16};
+        const char* const extensions[3] = {E_GL_AMD_gpu_shader_int16,
+                                            E_GL_KHX_shader_explicit_arithmetic_types,
+                                            E_GL_KHX_shader_explicit_arithmetic_types_int16};
 #else
         const char* const extensions[2] = {E_GL_KHX_shader_explicit_arithmetic_types,
-                                           E_GL_KHX_shader_explicit_arithmetic_types_int16};
+                                            E_GL_KHX_shader_explicit_arithmetic_types_int16};
 #endif
         requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, "explicit types");
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);

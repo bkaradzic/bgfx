@@ -59,6 +59,7 @@ using depth_greater
                               EntryPoint Fragment 4  "PixelShaderFunction" 18
                               ExecutionMode 4 OriginUpperLeft
                               ExecutionMode 4 DepthGreater
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "PixelShaderFunction"
                               Name 10  "@PixelShaderFunction(f1;"

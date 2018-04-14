@@ -11,6 +11,7 @@ WARNING: 0:4: 'immediate sampler state' : unimplemented
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 188 192
                               ExecutionMode 4 OriginUpperLeft
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "main"
                               Name 8  "PS_OUTPUT"

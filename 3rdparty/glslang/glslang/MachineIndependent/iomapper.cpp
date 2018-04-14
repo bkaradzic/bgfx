@@ -432,6 +432,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
         // no locations added if already present, a built-in variable, a block, or an opaque
         if (type.getQualifier().hasLocation() || type.isBuiltIn() ||
             type.getBasicType() == EbtBlock ||
+            type.getBasicType() == EbtAtomicUint ||
             (type.containsOpaque() && intermediate.getSpv().openGl == 0))
             return -1;
 

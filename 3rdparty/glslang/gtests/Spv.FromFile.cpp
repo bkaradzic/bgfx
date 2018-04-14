@@ -322,6 +322,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.variableArrayIndex.frag",
         "spv.varyingArray.frag",
         "spv.varyingArrayIndirect.frag",
+        "spv.vecMatConstruct.frag",
         "spv.voidFunction.frag",
         "spv.whileLoop.frag",
         "spv.AofA.frag",

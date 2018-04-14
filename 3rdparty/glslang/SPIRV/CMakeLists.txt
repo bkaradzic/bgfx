@@ -40,13 +40,18 @@ if(ENABLE_NV_EXTENSIONS)
          GLSL.ext.NV.h)
 endif(ENABLE_NV_EXTENSIONS)
 
-add_library(SPIRV STATIC ${SOURCES} ${HEADERS})
+add_library(SPIRV ${LIB_TYPE} ${SOURCES} ${HEADERS})
 set_property(TARGET SPIRV PROPERTY FOLDER glslang)
 set_property(TARGET SPIRV PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-add_library(SPVRemapper STATIC ${SPVREMAP_SOURCES} ${SPVREMAP_HEADERS})
+add_library(SPVRemapper ${LIB_TYPE} ${SPVREMAP_SOURCES} ${SPVREMAP_HEADERS})
 set_property(TARGET SPVRemapper PROPERTY FOLDER glslang)
 set_property(TARGET SPVRemapper PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties(SPIRV PROPERTIES PREFIX "")
+    set_target_properties(SPVRemapper PROPERTIES PREFIX "")
+endif()
 
 if(ENABLE_OPT)
     target_include_directories(SPIRV

@@ -17,7 +17,7 @@ gl_FragCoord origin is upper left
 0:10  Function Definition: set(block--vu4[0]1;u1;vu4; ( temp void)
 0:10    Function Parameters: 
 0:10      'sb' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
-0:10      'sb@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:10      'sb@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:10      'bufferOffset' ( in uint)
 0:10      'data' ( in 4-component vector of uint)
 0:?     Sequence
@@ -35,7 +35,7 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:21      Function Call: set(block--vu4[0]1;u1;vu4; ( temp void)
 0:21        'sbuf2' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
-0:21        'sbuf2@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:21        'sbuf2@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:21        Constant:
 0:21          2 (const uint)
 0:21        Function Call: get(block--vu4[0]1;u1; ( temp 4-component vector of uint)
@@ -61,7 +61,7 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     'sbuf' (layout( binding=10 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
 0:?     'sbuf2' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
-0:?     'sbuf2@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
+0:?     'sbuf2@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer uint @count})
 0:?     'sbuf3' (layout( binding=12 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of 3-component vector of uint @data})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'pos' (layout( location=0) flat in uint)
@@ -88,7 +88,7 @@ gl_FragCoord origin is upper left
 0:10  Function Definition: set(block--vu4[0]1;u1;vu4; ( temp void)
 0:10    Function Parameters: 
 0:10      'sb' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
-0:10      'sb@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:10      'sb@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:10      'bufferOffset' ( in uint)
 0:10      'data' ( in 4-component vector of uint)
 0:?     Sequence
@@ -106,7 +106,7 @@ gl_FragCoord origin is upper left
 0:?     Sequence
 0:21      Function Call: set(block--vu4[0]1;u1;vu4; ( temp void)
 0:21        'sbuf2' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
-0:21        'sbuf2@count' ( buffer block{layout( row_major std430) buffer int @count})
+0:21        'sbuf2@count' ( buffer block{layout( row_major std430) buffer uint @count})
 0:21        Constant:
 0:21          2 (const uint)
 0:21        Function Call: get(block--vu4[0]1;u1; ( temp 4-component vector of uint)
@@ -132,7 +132,7 @@ gl_FragCoord origin is upper left
 0:?   Linker Objects
 0:?     'sbuf' (layout( binding=10 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
 0:?     'sbuf2' (layout( row_major std430) buffer block{layout( row_major std430) buffer unsized 1-element array of 4-component vector of uint @data})
-0:?     'sbuf2@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer int @count})
+0:?     'sbuf2@count' (layout( row_major std430) buffer block{layout( row_major std430) buffer uint @count})
 0:?     'sbuf3' (layout( binding=12 row_major std430) readonly buffer block{layout( row_major std430) buffer unsized 1-element array of 3-component vector of uint @data})
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 0:?     'pos' (layout( location=0) flat in uint)
@@ -155,15 +155,15 @@ gl_FragCoord origin is upper left
                               Name 14  "bufferOffset"
                               Name 18  ""
                               MemberName 18 0  "@data"
-                              Name 21  ""
-                              MemberName 21 0  "@count"
-                              Name 29  "set(block--vu4[0]1;u1;vu4;"
-                              Name 25  "sb"
-                              Name 26  "sb@count"
-                              Name 27  "bufferOffset"
-                              Name 28  "data"
-                              Name 35  "@main(u1;"
-                              Name 34  "pos"
+                              Name 20  ""
+                              MemberName 20 0  "@count"
+                              Name 28  "set(block--vu4[0]1;u1;vu4;"
+                              Name 24  "sb"
+                              Name 25  "sb@count"
+                              Name 26  "bufferOffset"
+                              Name 27  "data"
+                              Name 34  "@main(u1;"
+                              Name 33  "pos"
                               Name 47  "sbuf2"
                               Name 48  "sbuf2@count"
                               Name 50  "sbuf"
@@ -188,7 +188,7 @@ gl_FragCoord origin is upper left
                               Decorate 17 ArrayStride 16
                               MemberDecorate 18 0 Offset 0
                               Decorate 18 BufferBlock
-                              Decorate 21 BufferBlock
+                              Decorate 20 BufferBlock
                               Decorate 47(sbuf2) DescriptorSet 0
                               Decorate 48(sbuf2@count) DescriptorSet 0
                               Decorate 50(sbuf) DescriptorSet 0
@@ -217,28 +217,28 @@ gl_FragCoord origin is upper left
               17:             TypeRuntimeArray 7(ivec4)
               18:             TypeStruct 17
               19:             TypePointer Uniform 18(struct)
-              20:             TypeInt 32 1
-              21:             TypeStruct 20(int)
-              22:             TypePointer Uniform 21(struct)
-              23:             TypePointer Function 7(ivec4)
-              24:             TypeFunction 2 19(ptr) 22(ptr) 11(ptr) 23(ptr)
-              31:             TypeFloat 32
-              32:             TypeVector 31(float) 4
-              33:             TypeFunction 32(fvec4) 11(ptr)
-              37:     20(int) Constant 0
+              20:             TypeStruct 6(int)
+              21:             TypePointer Uniform 20(struct)
+              22:             TypePointer Function 7(ivec4)
+              23:             TypeFunction 2 19(ptr) 21(ptr) 11(ptr) 22(ptr)
+              30:             TypeFloat 32
+              31:             TypeVector 30(float) 4
+              32:             TypeFunction 31(fvec4) 11(ptr)
+              36:             TypeInt 32 1
+              37:     36(int) Constant 0
               39:             TypePointer Uniform 7(ivec4)
        47(sbuf2):     19(ptr) Variable Uniform
- 48(sbuf2@count):     22(ptr) Variable Uniform
+ 48(sbuf2@count):     21(ptr) Variable Uniform
               49:      6(int) Constant 2
         50(sbuf):     10(ptr) Variable Uniform
               51:      6(int) Constant 3
-              57:   31(float) Constant 0
-              58:   32(fvec4) ConstantComposite 57 57 57 57
+              57:   30(float) Constant 0
+              58:   31(fvec4) ConstantComposite 57 57 57 57
               62:             TypePointer Input 6(int)
          63(pos):     62(ptr) Variable Input
-              65:             TypePointer Output 32(fvec4)
+              65:             TypePointer Output 31(fvec4)
 66(@entryPointOutput):     65(ptr) Variable Output
- 70(sbuf2@count):             TypeStruct 20(int)
+ 70(sbuf2@count):             TypeStruct 6(int)
               71:             TypePointer Uniform 70(sbuf2@count)
  72(sbuf2@count):     71(ptr) Variable Uniform
               73:             TypeVector 6(int) 3
@@ -254,7 +254,7 @@ gl_FragCoord origin is upper left
                               Store 61(pos) 64
               68:      6(int) Load 61(pos)
                               Store 67(param) 68
-              69:   32(fvec4) FunctionCall 35(@main(u1;) 67(param)
+              69:   31(fvec4) FunctionCall 34(@main(u1;) 67(param)
                               Store 66(@entryPointOutput) 69
                               Return
                               FunctionEnd
@@ -267,28 +267,28 @@ gl_FragCoord origin is upper left
               41:    7(ivec4) Load 40
                               ReturnValue 41
                               FunctionEnd
-29(set(block--vu4[0]1;u1;vu4;):           2 Function None 24
-          25(sb):     19(ptr) FunctionParameter
-    26(sb@count):     22(ptr) FunctionParameter
-27(bufferOffset):     11(ptr) FunctionParameter
-        28(data):     23(ptr) FunctionParameter
-              30:             Label
-              44:      6(int) Load 27(bufferOffset)
-              45:    7(ivec4) Load 28(data)
-              46:     39(ptr) AccessChain 25(sb) 37 44
+28(set(block--vu4[0]1;u1;vu4;):           2 Function None 23
+          24(sb):     19(ptr) FunctionParameter
+    25(sb@count):     21(ptr) FunctionParameter
+26(bufferOffset):     11(ptr) FunctionParameter
+        27(data):     22(ptr) FunctionParameter
+              29:             Label
+              44:      6(int) Load 26(bufferOffset)
+              45:    7(ivec4) Load 27(data)
+              46:     39(ptr) AccessChain 24(sb) 37 44
                               Store 46 45
                               Return
                               FunctionEnd
-   35(@main(u1;):   32(fvec4) Function None 33
-         34(pos):     11(ptr) FunctionParameter
-              36:             Label
+   34(@main(u1;):   31(fvec4) Function None 32
+         33(pos):     11(ptr) FunctionParameter
+              35:             Label
        52(param):     11(ptr) Variable Function
        54(param):     11(ptr) Variable Function
-       55(param):     23(ptr) Variable Function
+       55(param):     22(ptr) Variable Function
                               Store 52(param) 51
               53:    7(ivec4) FunctionCall 15(get(block--vu4[0]1;u1;) 50(sbuf) 52(param)
                               Store 54(param) 49
                               Store 55(param) 53
-              56:           2 FunctionCall 29(set(block--vu4[0]1;u1;vu4;) 47(sbuf2) 48(sbuf2@count) 54(param) 55(param)
+              56:           2 FunctionCall 28(set(block--vu4[0]1;u1;vu4;) 47(sbuf2) 48(sbuf2@count) 54(param) 55(param)
                               ReturnValue 58
                               FunctionEnd

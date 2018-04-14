@@ -6102,10 +6102,10 @@ yyreduce:
   case 206:
 #line 1540 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setVector(2);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setVector(2);
     }
 #line 6111 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6113,10 +6113,10 @@ yyreduce:
   case 207:
 #line 1546 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setVector(3);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setVector(3);
     }
 #line 6122 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6124,10 +6124,10 @@ yyreduce:
   case 208:
 #line 1552 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setVector(4);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t vector", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setVector(4);
     }
 #line 6133 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6135,10 +6135,10 @@ yyreduce:
   case 209:
 #line 1558 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setVector(2);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setVector(2);
     }
 #line 6144 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6146,10 +6146,10 @@ yyreduce:
   case 210:
 #line 1564 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setVector(3);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setVector(3);
     }
 #line 6155 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6157,10 +6157,10 @@ yyreduce:
   case 211:
 #line 1570 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setVector(4);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t vector", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setVector(4);
     }
 #line 6166 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6228,10 +6228,10 @@ yyreduce:
   case 218:
 #line 1606 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
- 	   parseContext.explicitInt8Check((yyvsp[0].lex).loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
- 	   (yyval.interm.type).basicType = EbtInt8;
- 	   (yyval.interm.type).setVector(2);
+       parseContext.explicitInt8Check((yyvsp[0].lex).loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+       (yyval.interm.type).basicType = EbtInt8;
+       (yyval.interm.type).setVector(2);
     }
 #line 6237 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6239,10 +6239,10 @@ yyreduce:
   case 219:
 #line 1612 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
- 	   parseContext.explicitInt8Check((yyvsp[0].lex).loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
- 	   (yyval.interm.type).basicType = EbtInt8;
- 	   (yyval.interm.type).setVector(3);
+       parseContext.explicitInt8Check((yyvsp[0].lex).loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+       (yyval.interm.type).basicType = EbtInt8;
+       (yyval.interm.type).setVector(3);
     }
 #line 6248 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6250,10 +6250,10 @@ yyreduce:
   case 220:
 #line 1618 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
- 	   parseContext.explicitInt8Check((yyvsp[0].lex).loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
- 	   (yyval.interm.type).basicType = EbtInt8;
- 	   (yyval.interm.type).setVector(4);
+       parseContext.explicitInt8Check((yyvsp[0].lex).loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+       (yyval.interm.type).basicType = EbtInt8;
+       (yyval.interm.type).setVector(4);
     }
 #line 6259 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6261,10 +6261,10 @@ yyreduce:
   case 221:
 #line 1624 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
- 	   parseContext.explicitInt16Check((yyvsp[0].lex).loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
- 	   (yyval.interm.type).basicType = EbtInt16;
- 	   (yyval.interm.type).setVector(2);
+       parseContext.explicitInt16Check((yyvsp[0].lex).loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+       (yyval.interm.type).basicType = EbtInt16;
+       (yyval.interm.type).setVector(2);
     }
 #line 6270 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6272,10 +6272,10 @@ yyreduce:
   case 222:
 #line 1630 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
- 	   parseContext.explicitInt16Check((yyvsp[0].lex).loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
- 	   (yyval.interm.type).basicType = EbtInt16;
- 	   (yyval.interm.type).setVector(3);
+       parseContext.explicitInt16Check((yyvsp[0].lex).loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+       (yyval.interm.type).basicType = EbtInt16;
+       (yyval.interm.type).setVector(3);
     }
 #line 6281 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6283,10 +6283,10 @@ yyreduce:
   case 223:
 #line 1636 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
- 	   parseContext.explicitInt16Check((yyvsp[0].lex).loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
- 	   (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
- 	   (yyval.interm.type).basicType = EbtInt16;
- 	   (yyval.interm.type).setVector(4);
+       parseContext.explicitInt16Check((yyvsp[0].lex).loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+       (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+       (yyval.interm.type).basicType = EbtInt16;
+       (yyval.interm.type).setVector(4);
     }
 #line 6292 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6909,10 +6909,10 @@ yyreduce:
   case 281:
 #line 1972 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(2, 2);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(2, 2);
     }
 #line 6918 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6920,10 +6920,10 @@ yyreduce:
   case 282:
 #line 1978 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(3, 3);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(3, 3);
     }
 #line 6929 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6931,10 +6931,10 @@ yyreduce:
   case 283:
 #line 1984 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(4, 4);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(4, 4);
     }
 #line 6940 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6942,10 +6942,10 @@ yyreduce:
   case 284:
 #line 1990 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(2, 2);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(2, 2);
     }
 #line 6951 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6953,10 +6953,10 @@ yyreduce:
   case 285:
 #line 1996 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(2, 3);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(2, 3);
     }
 #line 6962 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6964,10 +6964,10 @@ yyreduce:
   case 286:
 #line 2002 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(2, 4);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(2, 4);
     }
 #line 6973 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6975,10 +6975,10 @@ yyreduce:
   case 287:
 #line 2008 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(3, 2);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(3, 2);
     }
 #line 6984 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6986,10 +6986,10 @@ yyreduce:
   case 288:
 #line 2014 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(3, 3);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(3, 3);
     }
 #line 6995 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -6997,10 +6997,10 @@ yyreduce:
   case 289:
 #line 2020 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(3, 4);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(3, 4);
     }
 #line 7006 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7008,10 +7008,10 @@ yyreduce:
   case 290:
 #line 2026 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(4, 2);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(4, 2);
     }
 #line 7017 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7019,10 +7019,10 @@ yyreduce:
   case 291:
 #line 2032 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(4, 3);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(4, 3);
     }
 #line 7028 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7030,10 +7030,10 @@ yyreduce:
   case 292:
 #line 2038 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtFloat;
-    	(yyval.interm.type).setMatrix(4, 4);
+        parseContext.explicitFloat32Check((yyvsp[0].lex).loc, "float32_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtFloat;
+        (yyval.interm.type).setMatrix(4, 4);
     }
 #line 7039 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7041,10 +7041,10 @@ yyreduce:
   case 293:
 #line 2044 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(2, 2);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(2, 2);
     }
 #line 7050 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7052,10 +7052,10 @@ yyreduce:
   case 294:
 #line 2050 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(3, 3);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(3, 3);
     }
 #line 7061 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7063,10 +7063,10 @@ yyreduce:
   case 295:
 #line 2056 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(4, 4);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(4, 4);
     }
 #line 7072 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7074,10 +7074,10 @@ yyreduce:
   case 296:
 #line 2062 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(2, 2);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(2, 2);
     }
 #line 7083 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7085,10 +7085,10 @@ yyreduce:
   case 297:
 #line 2068 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(2, 3);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(2, 3);
     }
 #line 7094 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7096,10 +7096,10 @@ yyreduce:
   case 298:
 #line 2074 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(2, 4);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(2, 4);
     }
 #line 7105 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7107,10 +7107,10 @@ yyreduce:
   case 299:
 #line 2080 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(3, 2);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(3, 2);
     }
 #line 7116 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7118,10 +7118,10 @@ yyreduce:
   case 300:
 #line 2086 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(3, 3);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(3, 3);
     }
 #line 7127 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7129,10 +7129,10 @@ yyreduce:
   case 301:
 #line 2092 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(3, 4);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(3, 4);
     }
 #line 7138 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7140,10 +7140,10 @@ yyreduce:
   case 302:
 #line 2098 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(4, 2);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(4, 2);
     }
 #line 7149 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7151,10 +7151,10 @@ yyreduce:
   case 303:
 #line 2104 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(4, 3);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(4, 3);
     }
 #line 7160 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
@@ -7162,10 +7162,10 @@ yyreduce:
   case 304:
 #line 2110 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
-    	parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
-    	(yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
-    	(yyval.interm.type).basicType = EbtDouble;
-    	(yyval.interm.type).setMatrix(4, 4);
+        parseContext.explicitFloat64Check((yyvsp[0].lex).loc, "float64_t matrix", parseContext.symbolTable.atBuiltInLevel());
+        (yyval.interm.type).init((yyvsp[0].lex).loc, parseContext.symbolTable.atGlobalLevel());
+        (yyval.interm.type).basicType = EbtDouble;
+        (yyval.interm.type).setMatrix(4, 4);
     }
 #line 7171 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;

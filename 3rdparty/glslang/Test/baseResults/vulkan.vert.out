@@ -36,7 +36,8 @@ ERROR: 0:51: '[]' : only outermost dimension of an array of arrays can be a spec
 ERROR: 0:54: '[]' : only outermost dimension of an array of arrays can be a specialization constant 
 ERROR: 0:54: 'location' : SPIR-V requires location for user input/output 
 ERROR: 0:58: 'location' : SPIR-V requires location for user input/output 
-ERROR: 37 compilation errors.  No code generated.
+ERROR: 0:65: 'location' : overlapping use of location 10
+ERROR: 38 compilation errors.  No code generated.
 
 
 SPIR-V is not generated for failed compile or link

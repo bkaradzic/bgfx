@@ -847,8 +847,8 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         // combine location and component ranges
         TIoRange range(locationRange, componentRange, type.getBasicType(), qualifier.hasIndex() ? qualifier.layoutIndex : 0);
 
-        // check for collisions, except for vertex inputs on desktop
-        if (! (profile != EEsProfile && language == EShLangVertex && qualifier.isPipeInput()))
+        // check for collisions, except for vertex inputs on desktop targeting OpenGL
+        if (! (profile != EEsProfile && language == EShLangVertex && qualifier.isPipeInput()) || spvVersion.vulkan > 0)
             collision = checkLocationRange(set, range, type, typeCollision);
 
         if (collision < 0)

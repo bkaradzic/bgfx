@@ -3638,7 +3638,7 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
             if (builder.getImageTypeFormat(builder.getImageType(operands.front())) == spv::ImageFormatUnknown)
                 builder.addCapability(spv::CapabilityStorageImageReadWithoutFormat);
 
-            std::vector<spv::Id> result = { builder.createOp(spv::OpImageRead, resultType(), operands) };
+            std::vector<spv::Id> result( 1, builder.createOp(spv::OpImageRead, resultType(), operands) );
             builder.setPrecision(result[0], precision);
 
             // If needed, add a conversion constructor to the proper size.
@@ -3926,9 +3926,9 @@ spv::Id TGlslangToSpvTraverser::createImageTextureFunctionCall(glslang::TIntermO
         }
     }
 
-    std::vector<spv::Id> result = { 
+    std::vector<spv::Id> result( 1, 
         builder.createTextureCall(precision, resultType(), sparse, cracked.fetch, cracked.proj, cracked.gather, noImplicitLod, params)
-    };
+    );
 
     if (components != node->getType().getVectorSize())
         result[0] = builder.createConstructor(precision, result, convertGlslangToSpvType(node->getType()));

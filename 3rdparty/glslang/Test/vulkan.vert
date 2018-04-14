@@ -61,3 +61,5 @@ out ban2 {
 
 layout(binding = 3000) uniform sampler2D s3000;
 layout(binding = 3001) uniform b3001 { int a; };
+layout(location = 10) in vec4 in1;
+layout(location = 10) in vec4 in2;  // ERROR, no location aliasing

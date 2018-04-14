@@ -1,6 +1,7 @@
 hlsl.inoutquals.frag
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:8  Function Definition: MyFunc(f1;f1;f1;f1; ( temp void)
 0:8    Function Parameters: 
@@ -106,6 +107,7 @@ Linked fragment stage:
 
 Shader version: 500
 gl_FragCoord origin is upper left
+using depth_any
 0:? Sequence
 0:8  Function Definition: MyFunc(f1;f1;f1;f1; ( temp void)
 0:8    Function Parameters: 
@@ -214,6 +216,7 @@ gl_FragCoord origin is upper left
                               MemoryModel Logical GLSL450
                               EntryPoint Fragment 4  "main" 68 78 82 86
                               ExecutionMode 4 OriginUpperLeft
+                              ExecutionMode 4 DepthReplacing
                               Source HLSL 500
                               Name 4  "main"
                               Name 13  "MyFunc(f1;f1;f1;f1;"
