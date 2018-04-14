@@ -1957,7 +1957,7 @@ public:
 			const float camAspect  = float(int32_t(m_viewState.m_width) ) / float(int32_t(m_viewState.m_height) );
 			const float camNear    = 0.1f;
 			const float camFar     = 2000.0f;
-			const float projHeight = 1.0f/bx::tan(bx::toRad(camFovy)*0.5f);
+			const float projHeight = bx::tan(bx::toRad(camFovy)*0.5f);
 			const float projWidth  = projHeight * camAspect;
 			bx::mtxProj(m_viewState.m_proj, camFovy, camAspect, camNear, camFar, caps->homogeneousDepth);
 			cameraGetViewMtx(m_viewState.m_view);
