@@ -237,15 +237,11 @@ width="640" height="480" border="0" /></a>
 https://github.com/VladSerhiienko/FbxPipeline - Yet another FBX exporter with
 flatbuffers serialization.
 
-## FRAG - Framework for Rather Awesome Games
-
-http://fragworks.io/ - FRAG is a cross-platform 2D game creation framework for
-the Nim programming language.
-
 ## vg-renderer
 
 https://github.com/jdryg/vg-renderer#vg-renderer - A vector graphics renderer
-for bgfx, based on ideas from both NanoVG and ImDrawList (Dear ImGUI)
+for bgfx, based on ideas from both NanoVG and ImDrawList (Dear ImGUI)  
+![vg-renderer](https://raw.githubusercontent.com/jdryg/vg-renderer/master/img/vgrenderer_tiger.png)
 
 ## Zombie Safari
 
