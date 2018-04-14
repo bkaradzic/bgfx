@@ -257,7 +257,7 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	uint32_t fillVertexDecl(VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _decl)
+	uint32_t fillVertexDecl(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _decl)
 	{
 		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription*>(_vertexInputState.pVertexBindingDescriptions);
 		VkVertexInputAttributeDescription* inputAttrib  = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions);
@@ -272,8 +272,8 @@ VK_IMPORT_DEVICE
 		{
 			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
-				inputAttrib->location   = numAttribs;
-				inputAttrib->binding    = 0;
+				inputAttrib->location = _vsh->m_attrRemap[attr];
+				inputAttrib->binding  = 0;
 
 				if (0 == _decl.m_attributes[attr])
 				{
@@ -2554,7 +2554,7 @@ VK_IMPORT_DEVICE
 				decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 			}
 
-			uint32_t num = fillVertexDecl(_vertexInputState, decl);
+			uint32_t num = fillVertexDecl(_program.m_vsh, _vertexInputState, decl);
 
 //			const D3D12_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
 
@@ -3547,9 +3547,17 @@ VK_DESTROY
 			, &m_module
 			) );
 
-		bx::memSet(m_attrMask, 0, sizeof(m_attrMask) );
+		bx::memSet(m_attrMask,  0, sizeof(m_attrMask) );
+		bx::memSet(m_attrRemap, 0, sizeof(m_attrRemap) );
+
 		m_attrMask[Attrib::Position] = UINT16_MAX;
 		m_attrMask[Attrib::Color0]   = UINT16_MAX;
+
+		m_attrRemap[Attrib::Color0]   = 0;
+		m_attrRemap[Attrib::Position] = 1;
+
+		m_numAttrs = 2;
+
 		iohash = 0;
 
 		uint8_t numAttrs = 0;

@@ -379,11 +379,13 @@ VK_DESTROY
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];
+		uint8_t m_attrRemap[Attrib::Count];
 
 		uint32_t m_hash;
 		uint16_t m_numUniforms;
 		uint16_t m_size;
 		uint8_t m_numPredefined;
+		uint8_t m_numAttrs;
 	};
 
 	struct ProgramVK
