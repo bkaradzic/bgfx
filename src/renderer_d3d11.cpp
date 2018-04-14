@@ -5397,14 +5397,8 @@ namespace bgfx { namespace d3d11
 				box.bottom = blit.m_srcY + height;
 				box.back   = 1;
 
-				const uint32_t srcZ = TextureD3D11::TextureCube == src.m_type
-					? blit.m_srcZ
-					: 0
-					;
-				const uint32_t dstZ = TextureD3D11::TextureCube == dst.m_type
-					? blit.m_dstZ
-					: 0
-					;
+				const uint32_t srcZ = blit.m_srcZ;
+				const uint32_t dstZ = blit.m_dstZ;
 
 				deviceCtx->CopySubresourceRegion(dst.m_ptr
 					, dstZ*dst.m_numMips+blit.m_dstMip
