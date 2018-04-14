@@ -56,7 +56,7 @@ namespace bgfx
 	}
 
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI;
-	static RENDERDOC_API_1_1_0* s_renderDoc = NULL;
+	static RENDERDOC_API_1_1_2* s_renderDoc = NULL;
 	static void* s_renderDocDll = NULL;
 
 	void* loadRenderDoc()
@@ -78,9 +78,9 @@ namespace bgfx
 		{
 			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderDocDll, "RENDERDOC_GetAPI");
 			if (NULL != RENDERDOC_GetAPI
-			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_0, (void**)&s_renderDoc) )
+			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&s_renderDoc) )
 			{
-				s_renderDoc->SetLogFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
+				s_renderDoc->SetCaptureFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
 
  				s_renderDoc->SetFocusToggleKeys(NULL, 0);
 
