@@ -533,7 +533,7 @@ namespace bgfx { namespace spirv
 //		fprintf(stderr, "%s\n", _message);
 //	}
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
 		BX_UNUSED(_version);
 
@@ -627,6 +627,52 @@ namespace bgfx { namespace spirv
 				uint16_t size = 0;
 
 				program->buildReflection();
+
+				if (_firstPass)
+				{
+					const size_t strLength = bx::strLen("uniform");
+
+					// first time through, we just find unused uniforms and get rid of them
+					std::string output;
+					bx::Error err;
+					LineReader reader(_code.c_str() );
+					while (err.isOk() )
+					{
+						char str[4096];
+						int32_t len = bx::read(&reader, str, BX_COUNTOF(str), &err);
+						if (err.isOk() )
+						{
+							std::string strLine(str, len);
+
+							for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
+							{
+								size_t index = strLine.find("uniform ");
+								if (index == std::string::npos)
+								{
+									continue;
+								}
+
+								// matching lines like:  uniform u_name;
+								// we want to replace "uniform" with "static" so that it's no longer
+								// included in the uniform blob that the application must upload
+								// we can't just remove them, because unused functions might still reference
+								// them and cause a compile error when they're gone
+								if (!!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii) ) )
+								{
+									break;
+								}
+
+								strLine = strLine.replace(index, strLength, "static");
+							}
+
+							output += strLine;
+						}
+					}
+
+					// recompile with the unused uniforms converted to statics
+					return compile(_options, _version, output.c_str(), _writer, false);
+				}
+
 				{
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
 					bx::write(_writer, count);
@@ -723,7 +769,7 @@ namespace bgfx { namespace spirv
 
 	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer)
 	{
-		return spirv::compile(_options, _version, _code, _writer);
+		return spirv::compile(_options, _version, _code, _writer, true);
 	}
 
 } // namespace bgfx
