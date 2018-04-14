@@ -533,6 +533,42 @@ namespace bgfx { namespace spirv
 //		fprintf(stderr, "%s\n", _message);
 //	}
 
+	static const char* s_attribName[] =
+	{
+		"a_position",
+		"a_normal",
+		"a_tangent",
+		"a_bitangent",
+		"a_color0",
+		"a_color1",
+		"a_color2",
+		"a_color3",
+		"a_indices",
+		"a_weight",
+		"a_texcoord0",
+		"a_texcoord1",
+		"a_texcoord2",
+		"a_texcoord3",
+		"a_texcoord4",
+		"a_texcoord5",
+		"a_texcoord6",
+		"a_texcoord7",
+	};
+	BX_STATIC_ASSERT(bgfx::Attrib::Count == BX_COUNTOF(s_attribName) );
+
+	bgfx::Attrib::Enum toAttribEnum(const bx::StringView& _name)
+	{
+		for (uint8_t ii = 0; ii < Attrib::Count; ++ii)
+		{
+			if (0 == bx::strCmp(s_attribName[ii], _name) )
+			{
+				return bgfx::Attrib::Enum(ii);
+			}
+		}
+
+		return bgfx::Attrib::Count;
+	}
+
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
 		BX_UNUSED(_version);
@@ -644,25 +680,29 @@ namespace bgfx { namespace spirv
 						{
 							std::string strLine(str, len);
 
-							for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
+							size_t index = strLine.find("uniform ");
+							if (index != std::string::npos)
 							{
-								size_t index = strLine.find("uniform ");
-								if (index == std::string::npos)
+								bool found = false;
+
+								for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
 								{
-									continue;
+									// matching lines like:  uniform u_name;
+									// we want to replace "uniform" with "static" so that it's no longer
+									// included in the uniform blob that the application must upload
+									// we can't just remove them, because unused functions might still reference
+									// them and cause a compile error when they're gone
+									if (!!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii) ) )
+									{
+										found = true;
+										break;
+									}
 								}
 
-								// matching lines like:  uniform u_name;
-								// we want to replace "uniform" with "static" so that it's no longer
-								// included in the uniform blob that the application must upload
-								// we can't just remove them, because unused functions might still reference
-								// them and cause a compile error when they're gone
-								if (!!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii) ) )
+								if (!found)
 								{
-									break;
+									strLine = strLine.replace(index, strLength, "static");
 								}
-
-								strLine = strLine.replace(index, strLength, "static");
 							}
 
 							output += strLine;
@@ -684,7 +724,8 @@ namespace bgfx { namespace spirv
 						un.name = program->getUniformName(ii);
 
 						un.num = uint8_t(program->getUniformArraySize(ii) );
-						un.regIndex = 0;
+						const uint32_t offset = program->getUniformBufferOffset(ii);
+						un.regIndex = uint16_t(offset);
 						un.regCount = un.num;
 
 						switch (program->getUniformType(ii))
@@ -752,6 +793,23 @@ namespace bgfx { namespace spirv
 				bx::write(_writer, spirv.data(), shaderSize);
 				uint8_t nul = 0;
 				bx::write(_writer, nul);
+
+				//
+				const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
+				bx::write(_writer, numAttr);
+
+				for (uint8_t ii = 0; ii < numAttr; ++ii)
+				{
+					bgfx::Attrib::Enum attr = toAttribEnum(program->getAttributeName(ii) );
+					if (bgfx::Attrib::Count != attr)
+					{
+						bx::write(_writer, bgfx::attribToId(attr) );
+					}
+					else
+					{
+						bx::write(_writer, uint16_t(UINT16_MAX) );
+					}
+				}
 
 				bx::write(_writer, size);
 			}

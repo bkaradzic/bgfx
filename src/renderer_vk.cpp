@@ -3550,38 +3550,29 @@ VK_DESTROY
 		bx::memSet(m_attrMask,  0, sizeof(m_attrMask) );
 		bx::memSet(m_attrRemap, 0, sizeof(m_attrRemap) );
 
-		m_attrMask[Attrib::Position] = UINT16_MAX;
-		m_attrMask[Attrib::Color0]   = UINT16_MAX;
+		bx::read(&reader, m_numAttrs);
 
-		m_attrRemap[Attrib::Color0]   = 0;
-		m_attrRemap[Attrib::Position] = 1;
+		for (uint8_t ii = 0; ii < m_numAttrs; ++ii)
+		{
+			uint16_t id;
+			bx::read(&reader, id);
 
-		m_numAttrs = 2;
+			Attrib::Enum attr = idToAttrib(id);
 
-		iohash = 0;
-
-		uint8_t numAttrs = 0;
-//		bx::read(&reader, numAttrs);
-//
-//		for (uint32_t ii = 0; ii < numAttrs; ++ii)
-//		{
-//			uint16_t id;
-//			bx::read(&reader, id);
-//
-//			Attrib::Enum attr = idToAttrib(id);
-//
-//			if (Attrib::Count != attr)
-//			{
-//				m_attrMask[attr] = UINT16_MAX;
-//			}
-//		}
+			if (Attrib::Count != attr)
+			{
+				m_attrMask[attr]  = UINT16_MAX;
+				m_attrRemap[attr] = ii;
+			}
+		}
 
 		bx::HashMurmur2A murmur;
 		murmur.begin();
 		murmur.add(iohash);
 		murmur.add(m_code->data, m_code->size);
-		murmur.add(numAttrs);
-		murmur.add(m_attrMask, numAttrs);
+		murmur.add(m_numAttrs);
+		murmur.add(m_attrMask,  m_numAttrs);
+		murmur.add(m_attrRemap, m_numAttrs);
 		m_hash = murmur.end();
 
 		bx::read(&reader, m_size);
