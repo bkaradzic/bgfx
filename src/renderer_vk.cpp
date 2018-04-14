@@ -3525,7 +3525,6 @@ VK_DESTROY
 		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
-#if 1
 		const void* code = reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
@@ -3534,22 +3533,6 @@ VK_DESTROY
 			, code
 			, shaderSize
 			);
-#else
-#include "../examples/runtime/shaders/spirv/vert.spv.h"
-#include "../examples/runtime/shaders/spirv/frag.spv.h"
-
-		shaderSize = BGFX_CHUNK_MAGIC_VSH == magic
-			? sizeof(vs_cubes_spv)
-			: sizeof(fs_cubes_spv)
-			;
-		m_code = alloc(shaderSize);
-		bx::memCopy(m_code->data
-			, BGFX_CHUNK_MAGIC_VSH == magic
-				? vs_cubes_spv
-				: fs_cubes_spv
-			, shaderSize
-			);
-#endif // 0
 
 		VkShaderModuleCreateInfo smci;
 		smci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
