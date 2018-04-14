@@ -232,11 +232,6 @@ target="_blank"><img src="http://img.youtube.com/vi/cAsqLbqSDBg/0.jpg"
 alt="Lumix Engine - new features v0.29 & v0.30"
 width="640" height="480" border="0" /></a>
 
-## FbxPipeline
-
-https://github.com/VladSerhiienko/FbxPipeline - Yet another FBX exporter with
-flatbuffers serialization.
-
 ## vg-renderer
 
 https://github.com/jdryg/vg-renderer#vg-renderer - A vector graphics renderer
