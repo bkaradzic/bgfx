@@ -2068,7 +2068,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							s_textureFilter[TextureFormat::RGBA32F] = linear32F;
 						}
 
-
 						if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 						{
 							setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
@@ -2139,7 +2138,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						s_textureFormat[TextureFormat::R8].m_fmt         = GL_LUMINANCE;
 					}
 				}
-
 
 				for (uint32_t ii = BX_ENABLED(BX_PLATFORM_IOS) ? TextureFormat::Unknown : 0 // skip test on iOS!
 					; ii < TextureFormat::Count
@@ -2349,7 +2347,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS)
 							);
 				}
-
 
 	//			if (s_extension[Extension::ARB_clip_control].m_supported)
 	//			{
