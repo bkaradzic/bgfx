@@ -1049,6 +1049,8 @@ void associate()
 		bx::stringPrintf(str, "xdg-mime default texturev.desktop image/%s\n", ext);
 	}
 
+	bx::stringPrintf(str, "xdg-mime default texturev.desktop image/x-dds\n");
+
 	str += "\n";
 
 	bx::FileWriter writer;
