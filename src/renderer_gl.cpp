@@ -889,6 +889,15 @@ namespace bgfx { namespace gl
 		NULL
 	};
 
+	static const char* s_uint[] =
+	{
+		"uint",
+		"uvec2",
+		"uvec3",
+		"uvec4",
+		NULL
+	};
+
 	static const char* s_texelFetch[] =
 	{
 		"texture",
@@ -5783,6 +5792,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					const bool usesGpuShader4   = !!bx::findIdentifierMatch(code, s_EXT_gpu_shader4);
 					const bool usesGpuShader5   = !!bx::findIdentifierMatch(code, s_ARB_gpu_shader5);
 					const bool usesIUsamplers   = !!bx::findIdentifierMatch(code, s_uisamplers);
+					const bool usesUint         = !!bx::findIdentifierMatch(code, s_uint);
 					const bool usesTexelFetch   = !!bx::findIdentifierMatch(code, s_texelFetch);
 					const bool usesTextureArray = !!bx::findIdentifierMatch(code, s_textureArray);
 					const bool usesTexture3D    = !!bx::findIdentifierMatch(code, s_texture3D);
@@ -5794,6 +5804,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						:  usesTextureArray
 						|| usesTexture3D
 						|| usesIUsamplers
+						|| usesUint
 						|| usesTexelFetch
 						|| usesGpuShader5
 						|| usesInterpQ   ? 130
