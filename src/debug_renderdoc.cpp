@@ -72,11 +72,18 @@ namespace bgfx
 			return NULL;
 		}
 
-		void* renderDocDll = bx::dlopen("renderdoc.dll");
+		void* renderDocDll = bx::dlopen(
+#if BX_PLATFORM_WINDOWS
+				"renderdoc.dll"
+#else
+				"./librenderdoc.so"
+#endif // BX_PLATFORM_WINDOWS
+				);
 
 		if (NULL != renderDocDll)
 		{
 			RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)bx::dlsym(renderDocDll, "RENDERDOC_GetAPI");
+
 			if (NULL != RENDERDOC_GetAPI
 			&&  1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&s_renderDoc) )
 			{
