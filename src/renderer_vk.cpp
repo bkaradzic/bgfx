@@ -570,6 +570,12 @@ VK_IMPORT_DEVICE
 
 	void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImage _image, VkImageLayout _oldLayout, VkImageLayout _newLayout)
 	{
+		BX_CHECK(true
+			&& _newLayout != VK_IMAGE_LAYOUT_UNDEFINED
+			&& _newLayout != VK_IMAGE_LAYOUT_PREINITIALIZED
+			, "_newLayout cannot use VK_IMAGE_LAYOUT_UNDEFINED or VK_IMAGE_LAYOUT_PREINITIALIZED."
+			);
+
 		VkAccessFlags srcAccessMask = 0;
 		VkAccessFlags dstAccessMask = 0;
 		VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -606,6 +612,7 @@ VK_IMPORT_DEVICE
 			break;
 
 		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			srcAccessMask |= VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
 			break;
 
 		case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
@@ -676,7 +683,7 @@ VK_IMPORT_DEVICE
 		imb.subresourceRange.layerCount     = 1;
 		vkCmdPipelineBarrier(_commandBuffer
 			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
-			, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
 			, 0
 			, 0
 			, NULL
@@ -1189,7 +1196,7 @@ VK_IMPORT_DEVICE
 				ad[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 				ad[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				ad[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				ad[0].initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				ad[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 				ad[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 				ad[1].flags   = 0;
 				ad[1].format  = m_backBufferDepthStencilFormat;
@@ -1198,7 +1205,7 @@ VK_IMPORT_DEVICE
 				ad[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 				ad[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				ad[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				ad[1].initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				ad[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 				ad[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 				VkAttachmentReference colorAr[1];
@@ -1445,7 +1452,7 @@ VK_IMPORT_DEVICE
 				ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				ici.queueFamilyIndexCount = 0; //m_sci.queueFamilyIndexCount;
 				ici.pQueueFamilyIndices   = NULL; //m_sci.pQueueFamilyIndices;
-				ici.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+				ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				result = vkCreateImage(m_device, &ici, m_allocatorCb, &m_backBufferDepthStencilImage);
 
 				if (VK_SUCCESS != result)
@@ -3341,7 +3348,8 @@ VK_DESTROY
 		bci.flags = 0;
 		bci.size  = _size;
 		bci.usage = 0
-			| (_vertex ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT : VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+			| (m_dynamic ? VK_BUFFER_USAGE_TRANSFER_DST_BIT  : 0)
+			| (_vertex   ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT : VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
 			;
 		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		bci.queueFamilyIndexCount = 0;
