@@ -2109,6 +2109,17 @@ namespace bgfx
 									  "#define texture2DProjGrad textureProjGrad\n"
 									  "#define textureCubeLod    textureLod\n"
 									  "#define textureCubeGrad   textureGrad\n"
+									  "#define texture3D         texture\n"
+									);
+
+								bx::stringPrintf(code, "#define attribute in\n");
+								bx::stringPrintf(code, "#define varying %s\n"
+									, 'f' == _options.shaderType ? "in" : "out"
+									);
+
+								bx::stringPrintf(code
+									, "#define bgfxShadow2D(_sampler, _coord)     vec4_splat(texture(_sampler, _coord))\n"
+									  "#define bgfxShadow2DProj(_sampler, _coord) vec4_splat(textureProj(_sampler, _coord))\n"
 									);
 							}
 
