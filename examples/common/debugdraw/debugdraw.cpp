@@ -1007,24 +1007,24 @@ struct DebugDrawEncoderImpl
 	{
 	}
 
-	void init(bool _depthTestLess, bgfx::Encoder* _encoder)
+	void init(bgfx::Encoder* _encoder)
 	{
 		m_defaultEncoder = _encoder;
-		m_depthTestLess  = _depthTestLess;
 	}
 
 	void shutdown()
 	{
 	}
 
-	void begin(bgfx::ViewId _viewId, bgfx::Encoder* _encoder)
+	void begin(bgfx::ViewId _viewId, bool _depthTestLess, bgfx::Encoder* _encoder)
 	{
 		BX_CHECK(State::Count == m_state);
 
-		m_viewId  = _viewId;
-		m_encoder = _encoder == NULL ? m_defaultEncoder : _encoder;
-		m_state   = State::None;
-		m_stack   = 0;
+		m_viewId        = _viewId;
+		m_encoder       = _encoder == NULL ? m_defaultEncoder : _encoder;
+		m_state         = State::None;
+		m_stack         = 0;
+		m_depthTestLess = _depthTestLess;
 
 		m_pos       = 0;
 		m_indexPos  = 0;
@@ -1079,6 +1079,19 @@ struct DebugDrawEncoderImpl
 			flush();
 		}
 		--m_stack;
+	}
+
+	void setDepthTestLess(bool _depthTestLess)
+	{
+		BX_CHECK(State::Count != m_state);
+		if (m_depthTestLess != _depthTestLess)
+		{
+			m_depthTestLess = _depthTestLess;
+			flush();
+			Attrib& attrib = m_attrib[m_stack];
+			attrib.m_state &= ~BGFX_STATE_DEPTH_TEST_MASK;
+			attrib.m_state |= _depthTestLess ? BGFX_STATE_DEPTH_TEST_LESS : BGFX_STATE_DEPTH_TEST_GREATER;
+		}
 	}
 
 	void setTransform(const void* _mtx, uint16_t _num = 1)
@@ -2293,10 +2306,10 @@ struct DebugDrawEncoderImpl
 static DebugDrawEncoderImpl s_dde;
 BX_STATIC_ASSERT(sizeof(DebugDrawEncoderImpl) <= sizeof(DebugDrawEncoder), "Size must match");
 
-void ddInit(bool _depthTestLess, bx::AllocatorI* _allocator)
+void ddInit(bx::AllocatorI* _allocator)
 {
 	s_dds.init(_allocator);
-	s_dde.init(_depthTestLess, bgfx::begin() );
+	s_dde.init(bgfx::begin() );
 }
 
 void ddShutdown()
@@ -2325,9 +2338,9 @@ void ddDestroy(GeometryHandle _handle)
 	s_dds.destroy(_handle);
 }
 
-void ddBegin(uint16_t _viewId, bgfx::Encoder* _encoder)
+void ddBegin(uint16_t _viewId, bool _depthTestLess, bgfx::Encoder* _encoder)
 {
-	s_dde.begin(_viewId, _encoder);
+	s_dde.begin(_viewId, _depthTestLess, _encoder);
 }
 
 void ddEnd()
@@ -2343,6 +2356,11 @@ void ddPush()
 void ddPop()
 {
 	s_dde.pop();
+}
+
+void ddSetDepthTestLess(bool _depthTestLess)
+{
+	s_dde.setDepthTestLess(_depthTestLess);
 }
 
 void ddSetState(bool _depthTest, bool _depthWrite, bool _clockwise)
@@ -2534,7 +2552,7 @@ void ddDrawOrb(float _x, float _y, float _z, float _radius, Axis::Enum _hightlig
 
 DebugDrawEncoder::DebugDrawEncoder()
 {
-	DEBUG_DRAW_ENCODER(init(true, s_dde.m_defaultEncoder) );
+	DEBUG_DRAW_ENCODER(init(s_dde.m_defaultEncoder) );
 }
 
 DebugDrawEncoder::~DebugDrawEncoder()
@@ -2542,9 +2560,9 @@ DebugDrawEncoder::~DebugDrawEncoder()
 	DEBUG_DRAW_ENCODER(shutdown() );
 }
 
-void DebugDrawEncoder::begin(uint16_t _viewId, bgfx::Encoder* _encoder)
+void DebugDrawEncoder::begin(uint16_t _viewId, bool _depthTestLess, bgfx::Encoder* _encoder)
 {
-	DEBUG_DRAW_ENCODER(begin(_viewId, _encoder) );
+	DEBUG_DRAW_ENCODER(begin(_viewId, _depthTestLess, _encoder) );
 }
 
 void DebugDrawEncoder::end()
@@ -2560,6 +2578,11 @@ void DebugDrawEncoder::push()
 void DebugDrawEncoder::pop()
 {
 	DEBUG_DRAW_ENCODER(pop() );
+}
+
+void DebugDrawEncoder::setDepthTestLess(bool _depthTestLess)
+{
+	DEBUG_DRAW_ENCODER(setDepthTestLess(_depthTestLess) );
 }
 
 void DebugDrawEncoder::setState(bool _depthTest, bool _depthWrite, bool _clockwise)

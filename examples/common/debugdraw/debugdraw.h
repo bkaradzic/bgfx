@@ -33,7 +33,7 @@ struct GeometryHandle { uint16_t idx; };
 inline bool isValid(GeometryHandle _handle) { return _handle.idx != UINT16_MAX; }
 
 ///
-void ddInit(bool _depthTestLess = true, bx::AllocatorI* _allocator = NULL);
+void ddInit(bx::AllocatorI* _allocator = NULL);
 
 ///
 void ddShutdown();
@@ -60,7 +60,7 @@ struct DebugDrawEncoder
 	~DebugDrawEncoder();
 
 	///
-	void begin(uint16_t _viewId, bgfx::Encoder* _encoder = NULL);
+	void begin(uint16_t _viewId, bool _depthTestLess = true, bgfx::Encoder* _encoder = NULL);
 
 	///
 	void end();
@@ -70,6 +70,9 @@ struct DebugDrawEncoder
 
 	///
 	void pop();
+
+	///
+	void setDepthTestLess(bool _depthTestLess);
 
 	///
 	void setState(bool _depthTest, bool _depthWrite, bool _clockwise);
@@ -186,7 +189,7 @@ struct DebugDrawEncoder
 };
 
 ///
-void ddBegin(uint16_t _viewId, bgfx::Encoder* _encoder = NULL);
+void ddBegin(uint16_t _viewId, bool _depthTestLess = true, bgfx::Encoder* _encoder = NULL);
 
 ///
 void ddEnd();
@@ -196,6 +199,9 @@ void ddPush();
 
 ///
 void ddPop();
+
+///
+void ddSetDepthTestLess(bool _depthTestLess);
 
 ///
 void ddSetState(bool _depthTest, bool _depthWrite, bool _clockwise);
