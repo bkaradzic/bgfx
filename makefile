@@ -92,15 +92,11 @@ asmjs: asmjs-debug asmjs-release ## Build - Emscripten Debug and Release
 
 .build/projects/gmake-linux:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc gmake
-linux-debug32: .build/projects/gmake-linux ## Build - Linux x86 Debug
-	$(MAKE) -R -C .build/projects/gmake-linux config=debug32
-linux-release32: .build/projects/gmake-linux ## Build - Linux x86 Release
-	$(MAKE) -R -C .build/projects/gmake-linux config=release32
 linux-debug64: .build/projects/gmake-linux ## Build - Linux x64 Debug
 	$(MAKE) -R -C .build/projects/gmake-linux config=debug64
 linux-release64: .build/projects/gmake-linux ## Build - Linux x64 Release
 	$(MAKE) -R -C .build/projects/gmake-linux config=release64
-linux: linux-debug32 linux-release32 linux-debug64 linux-release64 ## Build - Linux x86/x64 Debug and Release
+linux: linux-debug64 linux-release64 ## Build - Linux x86/x64 Debug and Release
 
 .build/projects/gmake-freebsd:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=freebsd gmake
