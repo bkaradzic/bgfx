@@ -4246,6 +4246,8 @@ namespace bgfx { namespace d3d11
 			desc.MiscFlags = 0;
 			desc.StructureByteStride = 0;
 			DX_CHECK(s_renderD3D11->m_device->CreateBuffer(&desc, NULL, &m_buffer) );
+
+			BX_TRACE("\tCB size: %d", desc.ByteWidth);
 		}
 	}
 
