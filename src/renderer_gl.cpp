@@ -1020,10 +1020,22 @@ namespace bgfx { namespace gl
 
 	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
 
+	static void flushGlError()
+	{
+		for(GLenum err = glGetError(); err != 0; err = glGetError());
+	}
+
+	static GLenum getGlErrorAndFlush()
+	{
+		GLenum err = glGetError();
+		flushGlError();
+		return err;
+	}
+
 	static const char* getGLString(GLenum _name)
 	{
 		const char* str = (const char*)glGetString(_name);
-		glGetError(); // ignore error if glGetString returns NULL.
+		flushGlError(); // ignore error if glGetString returns NULL.
 		if (NULL != str)
 		{
 			return str;
@@ -1035,7 +1047,7 @@ namespace bgfx { namespace gl
 	static uint32_t getGLStringHash(GLenum _name)
 	{
 		const char* str = (const char*)glGetString(_name);
-		glGetError(); // ignore error if glGetString returns NULL.
+		flushGlError(); // ignore error if glGetString returns NULL.
 		if (NULL != str)
 		{
 			return bx::hash<bx::HashMurmur2A>(str, (uint32_t)bx::strLen(str) );
@@ -1120,7 +1132,7 @@ namespace bgfx { namespace gl
 	{
 		GLint result = 0;
 		glGetIntegerv(_pname, &result);
-		GLenum err = glGetError();
+		GLenum err = getGlErrorAndFlush();
 		BX_WARN(0 == err, "glGetIntegerv(0x%04x, ...) failed with GL error: 0x%04x.", _pname, err);
 		return 0 == err ? result : 0;
 	}
@@ -1131,11 +1143,6 @@ namespace bgfx { namespace gl
 		tfi.m_internalFmt = _internalFmt;
 		tfi.m_fmt         = _fmt;
 		tfi.m_type        = _type;
-	}
-
-	void flushGlError()
-	{
-		for (GLenum err = glGetError(); err != 0; err = glGetError() );
 	}
 
 	static void texSubImage(
@@ -1422,7 +1429,7 @@ namespace bgfx { namespace gl
 				uint32_t block = bx::uint32_max(4, dim);
 				size = (block*block*bpp)/8;
 				compressedTexImage(target, ii, internalFmt, dim, dim, 0, 0, size, data);
-				err |= glGetError();
+				err |= getGlErrorAndFlush();
 			}
 		}
 		else
@@ -1432,7 +1439,7 @@ namespace bgfx { namespace gl
 				dim = bx::uint32_max(1, dim);
 				size = (dim*dim*bpp)/8;
 				texImage(target, 0, ii, internalFmt, dim, dim, 0, 0, tfi.m_fmt, tfi.m_type, data);
-				err |= glGetError();
+				err |= getGlErrorAndFlush();
 			}
 		}
 
@@ -1478,7 +1485,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				, _dim
 				, _dim
 				);
-			err = glGetError();
+			err = getGlErrorAndFlush();
 		}
 
 		if (0 == err)
@@ -1497,7 +1504,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			&&  _mipAutogen)
 			{
 				glGenerateMipmap(target);
-				err = glGetError();
+				err = getGlErrorAndFlush();
 			}
 		}
 
@@ -1521,7 +1528,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		GLenum err = 0;
 
 		glTexStorage2D(GL_TEXTURE_2D, 1, s_imageFormat[_format], _dim, _dim);
-		err |= glGetError();
+		err |= getGlErrorAndFlush();
 		if (0 == err)
 		{
 			glBindImageTexture(0
@@ -1532,7 +1539,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				, GL_READ_WRITE
 				, s_imageFormat[_format]
 				);
-			err |= glGetError();
+			err |= getGlErrorAndFlush();
 		}
 
 		GL_CHECK(glDeleteTextures(1, &id) );
@@ -1572,7 +1579,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			glBindRenderbuffer(GL_RENDERBUFFER, 0);
 			glDeleteRenderbuffers(1, &rbo);
 
-			GLenum err = glGetError();
+			GLenum err = getGlErrorAndFlush();
 			return 0 == err;
 		}
 
@@ -1614,7 +1621,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				, id
 				, 0
 				);
-		err = glGetError();
+		err = getGlErrorAndFlush();
 
 		if (0 == err)
 		{
@@ -1882,7 +1889,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_USE_EXTENSIONS) )
 			{
 				const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
-				glGetError(); // ignore error if glGetString returns NULL.
+				flushGlError(); // ignore error if glGetString returns NULL.
 				if (NULL != extensions)
 				{
 					char name[1024];
@@ -1915,7 +1922,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					GLint numExtensions = 0;
 					glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-					glGetError(); // ignore error if glGetIntegerv returns NULL.
+					flushGlError(); // ignore error if glGetIntegerv returns NULL.
 
 					for (GLint index = 0; index < numExtensions; ++index)
 					{
@@ -2061,9 +2068,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							s_textureFilter[TextureFormat::RGBA32F] = linear32F;
 						}
 
-						if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_EMSCRIPTEN))
+						if (BX_ENABLED(BX_PLATFORM_IOS) || BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 						{
 							setTextureFormat(TextureFormat::D16,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
+							setTextureFormat(TextureFormat::D24,   GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
 							setTextureFormat(TextureFormat::D24S8, GL_DEPTH_STENCIL,   GL_DEPTH_STENCIL,   GL_UNSIGNED_INT_24_8);
 						}
 					}
@@ -2118,8 +2126,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
 				{
+					setTextureFormat(TextureFormat::R5G6B5, GL_ZERO, GL_ZERO, GL_ZERO);
 					setTextureFormat(TextureFormat::RGBA4,  GL_ZERO, GL_ZERO, GL_ZERO);
 					setTextureFormat(TextureFormat::RGB5A1, GL_ZERO, GL_ZERO, GL_ZERO);
+
 
 					if (!isTextureFormatValid(TextureFormat::R8) )
 					{
@@ -2202,7 +2212,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, 1
 							, &maxSamples
 							);
-						GLenum err = glGetError();
+						GLenum err = getGlErrorAndFlush();
 						supported |= 0 == err && maxSamples > 0
 							? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 							: BGFX_CAPS_FORMAT_TEXTURE_NONE
@@ -2214,7 +2224,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, 1
 							, &maxSamples
 							);
-						err = glGetError();
+						err = getGlErrorAndFlush();
 						supported |= 0 == err && maxSamples > 0
 							? BGFX_CAPS_FORMAT_TEXTURE_MSAA
 							: BGFX_CAPS_FORMAT_TEXTURE_NONE
