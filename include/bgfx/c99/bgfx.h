@@ -591,6 +591,37 @@ typedef struct bgfx_allocator_vtbl
 } bgfx_allocator_vtbl_t;
 
 /**/
+typedef struct bgfx_resolution
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t flags;
+
+} bgfx_resolution_t;
+
+/**/
+typedef struct bgfx_init_limits
+{
+    uint16_t maxEncoders;
+
+} bgfx_init_limits_t;
+
+/**/
+typedef struct bgfx_init
+{
+    bgfx_renderer_type_t type;
+    uint16_t vendorId;
+    uint16_t deviceId;
+
+    bgfx_resolution_t  resolution;
+    bgfx_init_limits_t limits;
+
+    bgfx_callback_interface_t*  callback;
+    bgfx_allocator_interface_t* allocator;
+
+} bgfx_init_t;
+
+/**/
 BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _decl, bgfx_renderer_type_t _renderer);
 
 /**/
@@ -627,7 +658,10 @@ BGFX_C_API uint8_t bgfx_get_supported_renderers(uint8_t _max, bgfx_renderer_type
 BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type);
 
 /**/
-BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_allocator_interface_t* _allocator);
+BGFX_C_API void bgfx_init_ctor(bgfx_init_t* _init);
+
+/**/
+BGFX_C_API bool bgfx_init(const bgfx_init_t* _init);
 
 /**/
 BGFX_C_API void bgfx_shutdown(void);

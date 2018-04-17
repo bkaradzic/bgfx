@@ -838,8 +838,8 @@ namespace bgfx { namespace d3d12
 			if (NULL == g_platformData.backBuffer)
 			{
 				bx::memSet(&m_scd, 0, sizeof(m_scd) );
-				m_scd.width  = _init.resolution.m_width;
-				m_scd.height = _init.resolution.m_height;
+				m_scd.width  = _init.resolution.width;
+				m_scd.height = _init.resolution.height;
 				m_scd.format = DXGI_FORMAT_R8G8B8A8_UNORM;
 				m_scd.stereo  = false;
 				m_scd.sampleDesc.Count   = 1;
@@ -874,13 +874,21 @@ namespace bgfx { namespace d3d12
 					BX_TRACE("Init error: Unable to create Direct3D12 swap chain.");
 					goto error;
 				}
+				else
+				{
+					m_resolution       = _init.resolution;
+					m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
+
+					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+					m_textVideoMem.clear();
+				}
 			}
 
 			m_presentElapsed = 0;
 
 			{
-				m_resolution.m_width  = _init.resolution.m_width;
-				m_resolution.m_height = _init.resolution.m_height;
+				m_resolution.width  = _init.resolution.width;
+				m_resolution.height = _init.resolution.height;
 
 				m_numWindows = 1;
 
@@ -1350,7 +1358,7 @@ namespace bgfx { namespace d3d12
 				m_cmd.finish(m_backBufferColorFence[(m_backBufferColorIdx-1) % m_scd.bufferCount]);
 
 				HRESULT hr = S_OK;
-				uint32_t syncInterval = !!(m_resolution.m_flags & BGFX_RESET_VSYNC);
+				uint32_t syncInterval = !!(m_resolution.reset & BGFX_RESET_VSYNC);
 				uint32_t flags = 0 == syncInterval ? DXGI_PRESENT_RESTART : 0;
 				for (uint32_t ii = 1, num = m_numWindows; ii < num && SUCCEEDED(hr); ++ii)
 				{
@@ -1895,8 +1903,8 @@ namespace bgfx { namespace d3d12
 			D3D12_RESOURCE_DESC resourceDesc;
 			resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 			resourceDesc.Alignment = 0;
-			resourceDesc.Width     = bx::uint32_max(m_resolution.m_width,  1);
-			resourceDesc.Height    = bx::uint32_max(m_resolution.m_height, 1);
+			resourceDesc.Width     = bx::uint32_max(m_resolution.width,  1);
+			resourceDesc.Height    = bx::uint32_max(m_resolution.height, 1);
 			resourceDesc.DepthOrArraySize   = 1;
 			resourceDesc.MipLevels          = 1;
 			resourceDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -1975,7 +1983,7 @@ data.NumQualityLevels = 0;
 
 		bool updateResolution(const Resolution& _resolution)
 		{
-			if (!!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY) )
+			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
 				m_maxAnisotropy = D3D12_REQ_MAXANISOTROPY;
 			}
@@ -1984,7 +1992,7 @@ data.NumQualityLevels = 0;
 				m_maxAnisotropy = 1;
 			}
 
-			bool depthClamp = !!(_resolution.m_flags & BGFX_RESET_DEPTH_CLAMP);
+			bool depthClamp = !!(_resolution.reset & BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_depthClamp != depthClamp)
 			{
@@ -1999,25 +2007,25 @@ data.NumQualityLevels = 0;
 				| BGFX_RESET_SUSPEND
 				);
 
-			if (m_resolution.m_width            !=  _resolution.m_width
-			||  m_resolution.m_height           !=  _resolution.m_height
-			|| (m_resolution.m_flags&maskFlags) != (_resolution.m_flags&maskFlags) )
+			if (m_resolution.width            !=  _resolution.width
+			||  m_resolution.height           !=  _resolution.height
+			|| (m_resolution.reset&maskFlags) != (_resolution.reset&maskFlags) )
 			{
-				uint32_t flags = _resolution.m_flags & (~BGFX_RESET_INTERNAL_FORCE);
+				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
 				bool resize = true
 					&& BX_ENABLED(BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
-					&& (m_resolution.m_flags&BGFX_RESET_MSAA_MASK) == (_resolution.m_flags&BGFX_RESET_MSAA_MASK)
+					&& (m_resolution.reset&BGFX_RESET_MSAA_MASK) == (_resolution.reset&BGFX_RESET_MSAA_MASK)
 					;
 
 				m_resolution = _resolution;
-				m_resolution.m_flags = flags;
+				m_resolution.reset = flags;
 
-				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
+				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
-				m_scd.width  = _resolution.m_width;
-				m_scd.height = _resolution.m_height;
+				m_scd.width  = _resolution.width;
+				m_scd.height = _resolution.height;
 
 				preReset();
 
@@ -2053,7 +2061,7 @@ data.NumQualityLevels = 0;
 				else
 				{
 					updateMsaa();
-					m_scd.sampleDesc = s_msaa[(m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+					m_scd.sampleDesc = s_msaa[(m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 					DX_RELEASE(m_swapChain, 0);
 
@@ -6164,7 +6172,7 @@ data.NumQualityLevels = 0;
 
 			if (0 < _render->m_numRenderItems)
 			{
-				if (0 != (m_resolution.m_flags & BGFX_RESET_FLUSH_AFTER_RENDER) )
+				if (0 != (m_resolution.reset & BGFX_RESET_FLUSH_AFTER_RENDER) )
 				{
 //					deviceCtx->Flush();
 				}
@@ -6327,13 +6335,13 @@ data.NumQualityLevels = 0;
 				char hmd[16];
 				bx::snprintf(hmd, BX_COUNTOF(hmd), ", [%c] HMD ", hmdEnabled ? '\xfe' : ' ');
 
-				const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, " Reset flags: [%c] vsync, [%c] MSAAx%d%s, [%c] MaxAnisotropy "
-					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+					, !!(m_resolution.reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
 					, ", no-HMD "
-					, !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
+					, !!(m_resolution.reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 
 				double elapsedCpuMs = double(frameTime)*toMs;

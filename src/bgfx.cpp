@@ -1382,9 +1382,12 @@ namespace bgfx
 		TextureFormat::RGBA8, // D3D9 doesn't support RGBA8
 	};
 
-	bool Context::init(RendererType::Enum _type)
+	bool Context::init(const Init& _init)
 	{
 		BX_CHECK(!m_rendererInitialized, "Already initialized?");
+
+		m_init = _init;
+		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
 		m_exit    = false;
 		m_flipped = true;
@@ -1442,11 +1445,19 @@ namespace bgfx
 		m_declRef.init();
 
 		CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RendererInit);
-		cmdbuf.write(_type);
+		cmdbuf.write(_init);
 
 		frameNoRenderWait();
 
-		uint16_t idx = m_encoderHandle.alloc();
+		m_encoderHandle = bx::createHandleAlloc(g_allocator, _init.limits.maxEncoders);
+		m_encoder       = (EncoderImpl*)BX_ALLOC(g_allocator, sizeof(EncoderImpl)*_init.limits.maxEncoders);
+		m_encoderStats  = (EncoderStats*)BX_ALLOC(g_allocator, sizeof(EncoderStats)*_init.limits.maxEncoders);
+		for (uint32_t ii = 0, num = _init.limits.maxEncoders; ii < num; ++ii)
+		{
+			BX_PLACEMENT_NEW(&m_encoder[ii], EncoderImpl);
+		}
+
+		uint16_t idx = m_encoderHandle->alloc();
 		BX_CHECK(0 == idx, "Internal encoder handle is not 0 (idx %d).", idx); BX_UNUSED(idx);
 		m_encoder[0].begin(m_submit, 0);
 		m_encoder0 = reinterpret_cast<Encoder*>(&m_encoder[0]);
@@ -1537,6 +1548,16 @@ namespace bgfx
 		frame();
 
 		m_encoder[0].end(true);
+		m_encoderHandle->free(0);
+		bx::destroyHandleAlloc(g_allocator, m_encoderHandle);
+		m_encoderHandle = NULL;
+
+		for (uint32_t ii = 0, num = g_caps.limits.maxEncoders; ii < num; ++ii)
+		{
+			m_encoder[ii].~EncoderImpl();
+		}
+		BX_FREE(g_allocator, m_encoder);
+		BX_FREE(g_allocator, m_encoderStats);
 
 		m_dynVertexBufferAllocator.compact();
 		m_dynIndexBufferAllocator.compact();
@@ -1697,7 +1718,7 @@ namespace bgfx
 		{
 			bx::MutexScope scopeLock(m_encoderApiLock);
 
-			uint16_t idx = m_encoderHandle.alloc();
+			uint16_t idx = m_encoderHandle->alloc();
 			if (kInvalidHandle == idx)
 			{
 				return NULL;
@@ -1761,8 +1782,8 @@ namespace bgfx
 	void Context::swap()
 	{
 		freeDynamicBuffers();
-		m_submit->m_resolution = m_resolution;
-		m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
+		m_submit->m_resolution = m_init.resolution;
+		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 		m_submit->m_debug = m_debug;
 		m_submit->m_perfStats.numViews = 0;
 
@@ -1795,9 +1816,10 @@ namespace bgfx
 
 		bx::memSet(m_seq, 0, sizeof(m_seq) );
 
-		m_submit->m_textVideoMem->resize(m_render->m_textVideoMem->m_small
-			, m_resolution.m_width
-			, m_resolution.m_height
+		m_submit->m_textVideoMem->resize(
+			  m_render->m_textVideoMem->m_small
+			, m_init.resolution.width
+			, m_init.resolution.height
 			);
 
 		int64_t now = bx::getHPCounter();
@@ -1806,7 +1828,7 @@ namespace bgfx
 	}
 
 	///
-	RendererContextI* rendererCreate(RendererType::Enum _type, const Init& _init);
+	RendererContextI* rendererCreate(const Init& _init);
 
 	///
 	void rendererDestroy(RendererContextI* _renderCtx);
@@ -1825,7 +1847,8 @@ namespace bgfx
 				rendererDestroy(m_renderCtx);
 
 				Init init;
-				m_renderCtx = rendererCreate(RendererType::Noop, init);
+				init.type = RendererType::Noop;
+				m_renderCtx = rendererCreate(init);
 				g_caps.rendererType = RendererType::Noop;
 			}
 		}
@@ -2060,7 +2083,7 @@ namespace bgfx
 		return *(const int32_t*)_rhs - *(const int32_t*)_lhs;
 	}
 
-	RendererContextI* rendererCreate(RendererType::Enum _type, const Init& _init)
+	RendererContextI* rendererCreate(const Init& _init)
 	{
 		int32_t scores[RendererType::Count];
 		uint32_t numScores = 0;
@@ -2071,7 +2094,7 @@ namespace bgfx
 			if (s_rendererCreator[ii].supported)
 			{
 				int32_t score = 0;
-				if (_type == renderer)
+				if (_init.type == renderer)
 				{
 					score += 1000;
 				}
@@ -2184,11 +2207,10 @@ namespace bgfx
 						);
 					BX_CHECK(!m_rendererInitialized, "This shouldn't happen! Bad synchronization?");
 
-					RendererType::Enum type;
-					_cmdbuf.read(type);
-
 					Init init;
-					m_renderCtx = rendererCreate(type, init);
+					_cmdbuf.read(init);
+
+					m_renderCtx = rendererCreate(init);
 
 					m_rendererInitialized = NULL != m_renderCtx;
 
@@ -2741,7 +2763,24 @@ namespace bgfx
 		return s_rendererCreator[_type].name;
 	}
 
-	bool init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::AllocatorI* _allocator)
+	Resolution::Resolution()
+		: width(1280)
+		, height(720)
+		, reset(BGFX_RESET_NONE)
+	{
+	}
+
+	Init::Init()
+		: type(RendererType::Count)
+		, vendorId(BGFX_PCI_ID_NONE)
+		, deviceId(0)
+		, callback(NULL)
+		, allocator(NULL)
+	{
+		limits.maxEncoders = BGFX_CONFIG_DEFAULT_MAX_ENCODERS;
+	}
+
+	bool init(const Init& _init)
 	{
 		if (NULL != s_ctx)
 		{
@@ -2760,9 +2799,9 @@ namespace bgfx
 
 		ErrorState::Enum errorState = ErrorState::Default;
 
-		if (NULL != _allocator)
+		if (NULL != _init.allocator)
 		{
-			g_allocator = _allocator;
+			g_allocator = _init.allocator;
 		}
 		else
 		{
@@ -2771,9 +2810,9 @@ namespace bgfx
 				s_allocatorStub = BX_NEW(&allocator, AllocatorStub);
 		}
 
-		if (NULL != _callback)
+		if (NULL != _init.callback)
 		{
-			g_callback = _callback;
+			g_callback = _init.callback;
 		}
 		else
 		{
@@ -2783,7 +2822,7 @@ namespace bgfx
 
 		if (true
 		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
-		&&  RendererType::Noop != _type
+		&&  RendererType::Noop != _init.type
 		&&  NULL == g_platformData.ndt
 		&&  NULL == g_platformData.nwh
 		&&  NULL == g_platformData.context
@@ -2815,17 +2854,17 @@ namespace bgfx
 		g_caps.limits.maxUniforms             = BGFX_CONFIG_MAX_UNIFORMS;
 		g_caps.limits.maxOcclusionQueries     = BGFX_CONFIG_MAX_OCCLUSION_QUERIES;
 		g_caps.limits.maxFBAttachments        = 1;
-		g_caps.limits.maxEncoders             = BGFX_CONFIG_MAX_ENCODERS;
+		g_caps.limits.maxEncoders             = (0 != BGFX_CONFIG_MULTITHREADED) ? _init.limits.maxEncoders : 1;
 
-		g_caps.vendorId = _vendorId;
-		g_caps.deviceId = _deviceId;
+		g_caps.vendorId = _init.vendorId;
+		g_caps.deviceId = _init.deviceId;
 
 		BX_TRACE("Init...");
 
 		errorState = ErrorState::ContextAllocated;
 
 		s_ctx = BX_ALIGNED_NEW(g_allocator, Context, 64);
-		if (s_ctx->init(_type) )
+		if (s_ctx->init(_init) )
 		{
 			BX_TRACE("Init complete.");
 			return true;
@@ -2862,6 +2901,19 @@ error:
 		}
 
 		return false;
+	}
+
+	bool init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::AllocatorI* _allocator)
+	{
+		Init in;
+
+		in.type      = _type;
+		in.vendorId  = _vendorId;
+		in.deviceId  = _deviceId;
+		in.callback  = _callback;
+		in.allocator = _allocator;
+
+		return init(in);
 	}
 
 	void shutdown()
@@ -3672,8 +3724,8 @@ error:
 
 		if (BackbufferRatio::Count != _ratio)
 		{
-			_width  = uint16_t(s_ctx->m_resolution.m_width);
-			_height = uint16_t(s_ctx->m_resolution.m_height);
+			_width  = uint16_t(s_ctx->m_init.resolution.width);
+			_height = uint16_t(s_ctx->m_init.resolution.height);
 			getTextureSizeFromRatio(_ratio, _width, _height);
 		}
 
@@ -4027,8 +4079,8 @@ error:
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
 
-		uint16_t width  = uint16_t(s_ctx->m_resolution.m_width);
-		uint16_t height = uint16_t(s_ctx->m_resolution.m_height);
+		uint16_t width  = uint16_t(s_ctx->m_init.resolution.width);
+		uint16_t height = uint16_t(s_ctx->m_init.resolution.height);
 		getTextureSizeFromRatio(_ratio, width, height);
 		setViewRect(_id, _x, _y, width, height);
 	}
@@ -4690,20 +4742,14 @@ BGFX_C_API const char* bgfx_get_renderer_name(bgfx_renderer_type_t _type)
 	return bgfx::getRendererName(bgfx::RendererType::Enum(_type) );
 }
 
-BGFX_C_API bool bgfx_init(bgfx_renderer_type_t _type, uint16_t _vendorId, uint16_t _deviceId, bgfx_callback_interface_t* _callback, bgfx_allocator_interface_t* _allocator)
+BGFX_C_API void bgfx_init_ctor(bgfx_init_t* _init)
 {
-	static bgfx::CallbackC99 s_callback;
-	s_callback.m_interface = _callback;
+	BX_PLACEMENT_NEW(_init, bgfx::Init);
+}
 
-	static bgfx::AllocatorC99 s_allocator;
-	s_allocator.m_interface = _allocator;
-
-	return bgfx::init(bgfx::RendererType::Enum(_type)
-		, _vendorId
-		, _deviceId
-		, NULL == _callback  ? NULL : &s_callback
-		, NULL == _allocator ? NULL : &s_allocator
-		);
+BGFX_C_API bool bgfx_init(const bgfx_init_t* _init)
+{
+	return bgfx::init(*reinterpret_cast<const bgfx::Init*>(_init) );
 }
 
 BGFX_C_API void bgfx_shutdown(void)
@@ -5663,6 +5709,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(topology_sort_tri_list)                               \
 	BGFX_IMPORT_FUNC(get_supported_renderers)                              \
 	BGFX_IMPORT_FUNC(get_renderer_name)                                    \
+	BGFX_IMPORT_FUNC(init_ctor)                                            \
 	BGFX_IMPORT_FUNC(init)                                                 \
 	BGFX_IMPORT_FUNC(shutdown)                                             \
 	BGFX_IMPORT_FUNC(reset)                                                \

@@ -323,14 +323,15 @@ public:
 			| BGFX_RESET_MSAA_X16
 			;
 
-		bgfx::init(
-			  args.m_type
-			, args.m_pciId
-			, 0
-			, &m_callback  // custom callback handler
-			, &m_allocator // custom allocator
-			);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		init.callback  = &m_callback;  // custom callback handler
+		init.allocator = &m_allocator; // custom allocator
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);

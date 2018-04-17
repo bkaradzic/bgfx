@@ -557,6 +557,64 @@ namespace bgfx
 	{
 	}
 
+	///
+	///
+	/// @attention C99 equivalent is `bgfx_resolution_t`.
+	///
+	struct Resolution
+	{
+		Resolution();
+
+		uint32_t width;  //!< Backbuffer width.
+		uint32_t height; //!< Backbuffer height.
+		uint32_t reset;	 //!< Reset parameters.
+	};
+
+	/// Initialization parameters used by `bgfx::init`.
+	///
+	/// @attention C99 equivalent is `bgfx_init_t`.
+	///
+	struct Init
+	{
+		Init();
+
+		/// Select rendering backend. When set to RendererType::Count
+		/// a default rendering backend will be selected appropriate to the platform.
+		/// See: `bgfx::RendererType`
+		RendererType::Enum type;
+
+		/// Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
+		/// device.
+		///   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
+		///   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
+		///   - `BGFX_PCI_ID_AMD` - AMD adapter.
+		///   - `BGFX_PCI_ID_INTEL` - Intel adapter.
+		///   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
+		uint16_t vendorId;
+
+		/// Device id. If set to 0 it will select first device, or device with
+		/// matching id.
+		uint16_t deviceId;
+
+		Resolution resolution;
+
+		struct Limits
+		{
+			uint16_t maxEncoders; //!< Maximum number of encoder threads.
+		};
+
+		Limits limits;
+
+		/// Provide application specific callback interface.
+		/// See: `bgfx::CallbackI`
+		CallbackI* callback;
+
+		/// Custom allocator. When a custom allocator is not
+		/// specified, bgfx uses the CRT allocator. Bgfx assumes
+		/// custom allocator is thread safe.
+		bx::AllocatorI* allocator;
+	};
+
 	/// Memory release callback.
 	///
 	/// param[in] _ptr Pointer to allocated data.
@@ -1748,39 +1806,13 @@ namespace bgfx
 
 	/// Initialize bgfx library.
 	///
-	/// @param[in] _type Select rendering backend. When set to RendererType::Count
-	///   a default rendering backend will be selected appropriate to the platform.
-	///   See: `bgfx::RendererType`
-	///
-	/// @param[in] _vendorId Vendor PCI id. If set to `BGFX_PCI_ID_NONE` it will select the first
-	///   device.
-	///   - `BGFX_PCI_ID_NONE` - Autoselect adapter.
-	///   - `BGFX_PCI_ID_SOFTWARE_RASTERIZER` - Software rasterizer.
-	///   - `BGFX_PCI_ID_AMD` - AMD adapter.
-	///   - `BGFX_PCI_ID_INTEL` - Intel adapter.
-	///   - `BGFX_PCI_ID_NVIDIA` - nVidia adapter.
-	///
-	/// @param[in] _deviceId Device id. If set to 0 it will select first device, or device with
-	///   matching id.
-	///
-	/// @param[in] _callback Provide application specific callback interface.
-	///   See: `bgfx::CallbackI`
-	///
-	/// @param[in] _allocator Custom allocator. When a custom allocator is not
-	///   specified, bgfx uses the CRT allocator. Bgfx assumes
-	///   custom allocator is thread safe.
+	/// @param[in] _init Initialization parameters. See: `bgfx::Init` for more info.
 	///
 	/// @returns `true` if initialization was successful.
 	///
 	/// @attention C99 equivalent is `bgfx_init`.
 	///
-	bool init(
-		  RendererType::Enum _type = RendererType::Count
-		, uint16_t _vendorId = BGFX_PCI_ID_NONE
-		, uint16_t _deviceId = 0
-		, CallbackI* _callback = NULL
-		, bx::AllocatorI* _allocator = NULL
-		);
+	bool init(const Init& _init);
 
 	/// Shutdown bgfx library.
 	///

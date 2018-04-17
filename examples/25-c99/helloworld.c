@@ -22,12 +22,10 @@ int32_t _main_(int32_t _argc, char** _argv)
 	(void)_argc;
 	(void)_argv;
 
-	bgfx_init(BGFX_RENDERER_TYPE_COUNT
-			, BGFX_PCI_ID_NONE
-			, 0
-			, NULL
-			, NULL
-			);
+	bgfx_init_t init;
+	bgfx_init_ctor(&init);
+
+	bgfx_init(&init);
 	bgfx_reset(width, height, reset);
 
 	// Enable debug text.

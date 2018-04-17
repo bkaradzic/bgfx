@@ -1014,8 +1014,8 @@ namespace bgfx { namespace mtl
 		{
 			RenderCommandEncoder rce = m_renderCommandEncoder;
 
-			uint32_t width  = m_resolution.m_width;
-			uint32_t height  = m_resolution.m_height;
+			uint32_t width  = m_resolution.width;
+			uint32_t height = m_resolution.height;
 
 			//if (m_ovr.isEnabled() )
 			//{
@@ -1128,7 +1128,7 @@ namespace bgfx { namespace mtl
 
 		void updateResolution(const Resolution& _resolution)
 		{
-			m_maxAnisotropy = !!(_resolution.m_flags & BGFX_RESET_MAXANISOTROPY)
+			m_maxAnisotropy = !!(_resolution.reset & BGFX_RESET_MAXANISOTROPY)
 				? 16
 				: 1
 				;
@@ -1140,26 +1140,26 @@ namespace bgfx { namespace mtl
 				| BGFX_RESET_SUSPEND
 				);
 
-			if (m_resolution.m_width            !=  _resolution.m_width
-			||  m_resolution.m_height           !=  _resolution.m_height
-			|| (m_resolution.m_flags&maskFlags) != (_resolution.m_flags&maskFlags) )
+			if (m_resolution.width            !=  _resolution.width
+			||  m_resolution.height           !=  _resolution.height
+			|| (m_resolution.reset&maskFlags) != (_resolution.reset&maskFlags) )
 			{
-				int sampleCount = s_msaa[(_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+				int sampleCount = s_msaa[(_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 				MTLPixelFormat prevMetalLayerPixelFormat = m_metalLayer.pixelFormat;
 
 #if BX_PLATFORM_OSX > 101300
-				m_metalLayer.displaySyncEnabled = 0 != (_resolution.m_flags&BGFX_RESET_VSYNC);
+				m_metalLayer.displaySyncEnabled = 0 != (_resolution.reset&BGFX_RESET_VSYNC);
 #endif // BX_PLATFORM_OSX > 101300
 
-				m_metalLayer.drawableSize = CGSizeMake(_resolution.m_width, _resolution.m_height);
-				m_metalLayer.pixelFormat = (m_resolution.m_flags & BGFX_RESET_SRGB_BACKBUFFER)
+				m_metalLayer.drawableSize = CGSizeMake(_resolution.width, _resolution.height);
+				m_metalLayer.pixelFormat = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
 					? MTLPixelFormatBGRA8Unorm_sRGB
 					: MTLPixelFormatBGRA8Unorm
 					;
 
 				m_resolution = _resolution;
-				m_resolution.m_flags &= ~BGFX_RESET_INTERNAL_FORCE;
+				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
 				m_textureDescriptor.textureType = sampleCount > 1 ? MTLTextureType2DMultisample : MTLTextureType2D;
 
@@ -1172,8 +1172,8 @@ namespace bgfx { namespace mtl
 					m_textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float;
 				}
 
-				m_textureDescriptor.width  = _resolution.m_width;
-				m_textureDescriptor.height = _resolution.m_height;
+				m_textureDescriptor.width  = _resolution.width;
+				m_textureDescriptor.height = _resolution.height;
 				m_textureDescriptor.depth  = 1;
 				m_textureDescriptor.mipmapLevelCount = 1;
 				m_textureDescriptor.sampleCount = sampleCount;
@@ -1236,7 +1236,7 @@ namespace bgfx { namespace mtl
 
 				updateCapture();
 
-				m_textVideoMem.resize(false, _resolution.m_width, _resolution.m_height);
+				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
 				if (prevMetalLayerPixelFormat != m_metalLayer.pixelFormat)
@@ -1254,11 +1254,11 @@ namespace bgfx { namespace mtl
 
 		void updateCapture()
 		{
-			if (m_resolution.m_flags&BGFX_RESET_CAPTURE)
+			if (m_resolution.reset&BGFX_RESET_CAPTURE)
 			{
-				m_captureSize = m_resolution.m_width*m_resolution.m_height*4;
+				m_captureSize = m_resolution.width*m_resolution.height*4;
 				m_capture = BX_REALLOC(g_allocator, m_capture, m_captureSize);
-				g_callback->captureBegin(m_resolution.m_width, m_resolution.m_height, m_resolution.m_width*4, TextureFormat::BGRA8, false);
+				g_callback->captureBegin(m_resolution.width, m_resolution.height, m_resolution.width*4, TextureFormat::BGRA8, false);
 			}
 			else
 			{
@@ -1280,9 +1280,9 @@ namespace bgfx { namespace mtl
 				m_cmd.kick(false, true);
 				m_commandBuffer = 0;
 
-				MTLRegion region = { { 0, 0, 0 }, { m_resolution.m_width, m_resolution.m_height, 1 } };
+				MTLRegion region = { { 0, 0, 0 }, { m_resolution.width, m_resolution.height, 1 } };
 
-				m_screenshotTarget.getBytes(m_capture, 4*m_resolution.m_width, 0, region, 0, 0);
+				m_screenshotTarget.getBytes(m_capture, 4*m_resolution.width, 0, region, 0, 0);
 
 				m_commandBuffer = m_cmd.alloc();
 
@@ -1290,11 +1290,11 @@ namespace bgfx { namespace mtl
 				{
 					bimg::imageSwizzleBgra8(
 						  m_capture
-						, m_resolution.m_width*4
-						, m_resolution.m_width
-						, m_resolution.m_height
+						, m_resolution.width*4
+						, m_resolution.width
+						, m_resolution.height
 						, m_capture
-						, m_resolution.m_width*4
+						, m_resolution.width*4
 						);
 				}
 
@@ -1458,8 +1458,8 @@ namespace bgfx { namespace mtl
 			}
 			else
 			{
-				width  = m_resolution.m_width;
-				height = m_resolution.m_height;
+				width  = m_resolution.width;
+				height = m_resolution.height;
 			}
 
 
@@ -3183,8 +3183,8 @@ namespace bgfx { namespace mtl
 		{
 			if (m_screenshotTarget)
 			{
-				if (m_screenshotTarget.width()  != m_resolution.m_width
-				||  m_screenshotTarget.height() != m_resolution.m_height)
+				if (m_screenshotTarget.width()  != m_resolution.width
+				||  m_screenshotTarget.height() != m_resolution.height)
 				{
 					MTL_RELEASE(m_screenshotTarget);
 				}
@@ -3194,8 +3194,8 @@ namespace bgfx { namespace mtl
 			{
 				m_textureDescriptor.textureType = MTLTextureType2D;
 				m_textureDescriptor.pixelFormat = m_metalLayer.pixelFormat;
-				m_textureDescriptor.width  = m_resolution.m_width;
-				m_textureDescriptor.height = m_resolution.m_height;
+				m_textureDescriptor.width  = m_resolution.width;
+				m_textureDescriptor.height = m_resolution.height;
 				m_textureDescriptor.depth  = 1;
 				m_textureDescriptor.mipmapLevelCount = 1;
 				m_textureDescriptor.sampleCount = 1;
@@ -3378,8 +3378,8 @@ namespace bgfx { namespace mtl
 
 						fbh = _render->m_view[view].m_fbh;
 
-						uint32_t width  = m_resolution.m_width;
-						uint32_t height = m_resolution.m_height;
+						uint32_t width  = m_resolution.width;
+						uint32_t height = m_resolution.height;
 
 						if (isValid(fbh) )
 						{
@@ -4011,12 +4011,12 @@ namespace bgfx { namespace mtl
 					, freq/frameTime
 					);
 
-				const uint32_t msaa = (m_resolution.m_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
+				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, "  Reset flags: [%c] vsync, [%c] MSAAx%d, [%c] MaxAnisotropy "
-					, !!(m_resolution.m_flags&BGFX_RESET_VSYNC) ? '\xfe' : ' '
+					, !!(m_resolution.reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
-					, !!(m_resolution.m_flags&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
+					, !!(m_resolution.reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 
 				double elapsedCpuMs = double(frameTime)*toMs;
