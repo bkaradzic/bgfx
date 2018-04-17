@@ -1087,10 +1087,13 @@ struct DebugDrawEncoderImpl
 		if (m_depthTestLess != _depthTestLess)
 		{
 			m_depthTestLess = _depthTestLess;
-			flush();
 			Attrib& attrib = m_attrib[m_stack];
-			attrib.m_state &= ~BGFX_STATE_DEPTH_TEST_MASK;
-			attrib.m_state |= _depthTestLess ? BGFX_STATE_DEPTH_TEST_LESS : BGFX_STATE_DEPTH_TEST_GREATER;
+			if (attrib.m_state & BGFX_STATE_DEPTH_TEST_MASK)
+			{
+				flush();
+				attrib.m_state &= ~BGFX_STATE_DEPTH_TEST_MASK;
+				attrib.m_state |= _depthTestLess ? BGFX_STATE_DEPTH_TEST_LESS : BGFX_STATE_DEPTH_TEST_GREATER;
+			}
 		}
 	}
 
