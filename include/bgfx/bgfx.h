@@ -1812,7 +1812,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_init`.
 	///
-	bool init(const Init& _init);
+	bool init(const Init& _init = {});
 
 	/// Shutdown bgfx library.
 	///
