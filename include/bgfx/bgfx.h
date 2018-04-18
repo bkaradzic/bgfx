@@ -557,7 +557,7 @@ namespace bgfx
 	{
 	}
 
-	///
+	/// Backbuffer resolution and reset parameters.
 	///
 	/// @attention C99 equivalent is `bgfx_resolution_t`.
 	///
@@ -596,7 +596,7 @@ namespace bgfx
 		/// matching id.
 		uint16_t deviceId;
 
-		Resolution resolution;
+		Resolution resolution; //!< Backbuffer resolution and reset parameters.
 
 		struct Limits
 		{
