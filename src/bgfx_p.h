@@ -1835,6 +1835,9 @@ namespace bgfx
 
 		void start()
 		{
+			m_perfStats.transientVbUsed = m_vboffset;
+			m_perfStats.transientIbUsed = m_iboffset;
+
 			m_frameCache.reset();
 			m_numRenderItems = 0;
 			m_numBlitItems   = 0;
@@ -1866,7 +1869,7 @@ namespace bgfx
 		{
 			uint32_t offset   = bx::strideAlign(m_iboffset, sizeof(uint16_t) );
 			uint32_t iboffset = offset + _num*sizeof(uint16_t);
-			iboffset = bx::min<uint32_t>(iboffset, BGFX_CONFIG_TRANSIENT_INDEX_BUFFER_SIZE);
+			iboffset = bx::min<uint32_t>(iboffset, g_caps.limits.transientIbSize);
 			uint32_t num = (iboffset-offset)/sizeof(uint16_t);
 			return num;
 		}
@@ -1885,7 +1888,7 @@ namespace bgfx
 		{
 			uint32_t offset   = bx::strideAlign(m_vboffset, _stride);
 			uint32_t vboffset = offset + _num * _stride;
-			vboffset = bx::min<uint32_t>(vboffset, BGFX_CONFIG_TRANSIENT_VERTEX_BUFFER_SIZE);
+			vboffset = bx::min<uint32_t>(vboffset, g_caps.limits.transientVbSize);
 			uint32_t num = (vboffset-offset)/_stride;
 			return num;
 		}

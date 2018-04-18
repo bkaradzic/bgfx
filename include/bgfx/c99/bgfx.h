@@ -388,6 +388,8 @@ typedef struct bgfx_stats_s
 
     int64_t textureMemoryUsed;
     int64_t rtMemoryUsed;
+    int32_t transientVbUsed;
+    int32_t transientIbUsed;
 
     int64_t gpuMemoryMax;
     int64_t gpuMemoryUsed;
@@ -512,6 +514,8 @@ typedef struct bgfx_caps_limits_s
     uint32_t maxUniforms;
     uint32_t maxOcclusionQueries;
     uint32_t maxEncoders;
+    uint32_t transientVbSize;
+    uint32_t transientIbSize;
 
 } bgfx_caps_limits_t;
 
@@ -600,6 +604,8 @@ typedef struct bgfx_resolution_s
 typedef struct bgfx_init_limits_s
 {
     uint16_t maxEncoders;
+    uint32_t transientVbSize;
+    uint32_t transientIbSize;
 
 } bgfx_init_limits_t;
 

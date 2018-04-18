@@ -236,6 +236,8 @@ struct View
 		, m_inLinear(false)
 	{
 		load();
+
+		m_textureInfo.format = bgfx::TextureFormat::Count;
 	}
 
 	~View()

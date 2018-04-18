@@ -600,7 +600,9 @@ namespace bgfx
 
 		struct Limits
 		{
-			uint16_t maxEncoders; //!< Maximum number of encoder threads.
+			uint16_t maxEncoders;     //!< Maximum number of encoder threads.
+			uint32_t transientVbSize; //!<
+			uint32_t transientIbSize; //!<
 		};
 
 		Limits limits;
@@ -689,6 +691,8 @@ namespace bgfx
 			uint32_t maxUniforms;             //!< Maximum number of uniform handles.
 			uint32_t maxOcclusionQueries;     //!< Maximum number of occlusion query handles.
 			uint32_t maxEncoders;             //!< Maximum number of encoder threads.
+			uint32_t transientVbSize;         //!<
+			uint32_t transientIbSize;         //!<
 		};
 
 		Limits limits;
@@ -898,6 +902,8 @@ namespace bgfx
 
 		int64_t textureMemoryUsed;        //!<
 		int64_t rtMemoryUsed;             //!<
+		int32_t transientVbUsed;          //!<
+		int32_t transientIbUsed;          //!<
 
 		int64_t gpuMemoryMax;             //!< Maximum available GPU memory for application.
 		int64_t gpuMemoryUsed;            //!< Amount of GPU memory used by the application.
