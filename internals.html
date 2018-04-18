@@ -30,9 +30,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
         <link rel="next" title="License" href="license.html"/>
         <link rel="prev" title="Tools" href="tools.html"/> 
@@ -90,7 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Internals</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Internals</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#sort-based-draw-call-bucketing">Sort based draw call bucketing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#api-and-render-thread">API and render thread</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#resource-api">Resource API</a></li>
@@ -158,7 +155,7 @@
 </div>
 <div class="section" id="api-and-render-thread">
 <h2>API and render thread<a class="headerlink" href="#api-and-render-thread" title="Permalink to this headline">¶</a></h2>
-<p>This is thread from which <code class="docutils literal"><span class="pre">bgfx::init</span></code> is called. Once <code class="docutils literal"><span class="pre">bgfx::init</span></code> is called on thread, internally bgfx assumes that all API calls will be called from the same thread.</p>
+<p>API thread is thread from which <code class="docutils literal"><span class="pre">bgfx::init</span></code> is called. Once <code class="docutils literal"><span class="pre">bgfx::init</span></code> is called on thread, internally bgfx assumes that all API calls will be called from the same thread with exception of Resource, View, and Encoder API.</p>
 <p>Render thread from where internal rendering <code class="docutils literal"><span class="pre">bgfx::renderFrame</span></code> is called. On most of OS&#8217; it&#8217;s required that this call be called on thread that OS created when executing process (some refer to this thread as &#8220;main&#8221; thread, or thread where <code class="docutils literal"><span class="pre">main</span></code> function is called).</p>
 <p>When bgfx is compiled with option <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREADED=1</span></code> (default is on) <code class="docutils literal"><span class="pre">bgfx::renderFrame</span></code> can be called by user. It&#8217;s required to be called before <code class="docutils literal"><span class="pre">bgfx::init</span></code> from thread that will be used as render thread. If both <code class="docutils literal"><span class="pre">bgfx::renderFrame</span></code> and <code class="docutils literal"><span class="pre">bgfx::init</span></code> are called from the same thread, bgfx will switch to execute in single threaded mode, and calling <code class="docutils literal"><span class="pre">bgfx::renderFrame</span></code> is not required, since it will be called automatically during <code class="docutils literal"><span class="pre">bgfx::frame</span></code> call.</p>
 </div>
