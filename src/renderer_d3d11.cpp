@@ -2229,15 +2229,9 @@ namespace bgfx { namespace d3d11
 		void invalidateCompute()
 		{
 			m_deviceCtx->CSSetShader(NULL, NULL, 0);
-
-			ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
-			m_deviceCtx->CSSetUnorderedAccessViews(0, BX_COUNTOF(uav), uav, NULL);
-
-			ID3D11ShaderResourceView* srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
-			m_deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);
-
-			ID3D11SamplerState* samplers[BGFX_MAX_COMPUTE_BINDINGS] = {};
-			m_deviceCtx->CSSetSamplers(0, BX_COUNTOF(samplers), samplers);
+			m_deviceCtx->CSSetUnorderedAccessViews(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_uav, NULL);
+			m_deviceCtx->CSSetShaderResources(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_srv);
+			m_deviceCtx->CSSetSamplers(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_sampler);
 		}
 
 		void updateMsaa()
@@ -5770,6 +5764,11 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+					{
+						// Quiet validation: Resource being set to CS UnorderedAccessView slot 0 is still bound on input!
+						deviceCtx->CSSetShaderResources(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_srv);
+					}
 					deviceCtx->CSSetUnorderedAccessViews(0, BX_COUNTOF(uav), uav, NULL);
 					deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);
 					deviceCtx->CSSetSamplers(0, BX_COUNTOF(sampler), sampler);
