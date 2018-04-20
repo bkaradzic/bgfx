@@ -211,14 +211,20 @@ namespace bgfx
 			, optimizationLevel
 			);
 
-		for(size_t i=0; i<includeDirs.size(); ++i)
-			BX_TRACE("\t  include :%s\n", includeDirs[i].c_str());
+		for (size_t ii = 0; ii < includeDirs.size(); ++ii)
+		{
+			BX_TRACE("\t  include :%s\n", includeDirs[ii].c_str());
+		}
 
-		for(size_t i=0; i<defines.size(); ++i)
-			BX_TRACE("\t  define :%s\n", defines[i].c_str());
+		for (size_t ii = 0; ii < defines.size(); ++ii)
+		{
+			BX_TRACE("\t  define :%s\n", defines[ii].c_str());
+		}
 
-		for(size_t i=0; i<dependencies.size(); ++i)
-			BX_TRACE("\t  dependency :%s\n", dependencies[i].c_str());
+		for (size_t ii = 0; ii < dependencies.size(); ++ii)
+		{
+			BX_TRACE("\t  dependency :%s\n", dependencies[ii].c_str());
+		}
 	}
 
 	const char* interpolationDx11(const char* _glsl)
@@ -918,19 +924,19 @@ namespace bgfx
 
 		Preprocessor preprocessor(_options.inputFilePath.c_str(), 0 != essl);
 
-		for(size_t i = 0; i<_options.includeDirs.size(); ++i)
+		for (size_t ii = 0; ii < _options.includeDirs.size(); ++ii)
 		{
-			preprocessor.addInclude(_options.includeDirs[i].c_str() );
+			preprocessor.addInclude(_options.includeDirs[ii].c_str() );
 		}
 
-		for(size_t i = 0; i<_options.defines.size(); ++i)
+		for (size_t ii = 0; ii < _options.defines.size(); ++ii)
 		{
-			preprocessor.setDefine(_options.defines[i].c_str() );
+			preprocessor.setDefine(_options.defines[ii].c_str() );
 		}
 
-		for(size_t i = 0; i<_options.dependencies.size(); ++i)
+		for (size_t ii = 0; ii < _options.dependencies.size(); ++ii)
 		{
-			preprocessor.addDependency(_options.dependencies[i].c_str() );
+			preprocessor.addDependency(_options.dependencies[ii].c_str() );
 		}
 
 		preprocessor.setDefaultDefine("BX_PLATFORM_ANDROID");
