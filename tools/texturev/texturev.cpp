@@ -50,7 +50,7 @@ namespace stl = tinystl;
 #define IMAGE_VIEW_ID      1
 
 #define BGFX_TEXTUREV_VERSION_MAJOR 1
-#define BGFX_TEXTUREV_VERSION_MINOR 0
+#define BGFX_TEXTUREV_VERSION_MINOR 1
 
 const float kEvMin = -10.0f;
 const float kEvMax =  20.0f;
@@ -96,6 +96,7 @@ struct Binding
 		App,
 		View,
 		Help,
+		About,
 
 		Count
 	};
@@ -188,11 +189,18 @@ static const InputBinding s_bindingHelp[] =
 	INPUT_BINDING_END
 };
 
+static const InputBinding s_bindingAbout[] =
+{
+	{ entry::Key::Esc,  entry::Modifier::None,  1, NULL, "view about" },
+	INPUT_BINDING_END
+};
+
 static const char* s_bindingName[] =
 {
 	"App",
 	"View",
 	"Help",
+	"About",
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_bindingName) );
 
@@ -201,6 +209,7 @@ static const InputBinding* s_binding[] =
 	s_bindingApp,
 	s_bindingView,
 	s_bindingHelp,
+	s_bindingAbout,
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
 
@@ -230,6 +239,7 @@ struct View
 		, m_fit(true)
 		, m_alpha(false)
 		, m_help(false)
+		, m_about(false)
 		, m_info(false)
 		, m_files(false)
 		, m_sdf(false)
@@ -578,6 +588,10 @@ struct View
 			{
 				m_help ^= true;
 			}
+			else if (0 == bx::strCmp(_argv[1], "about") )
+			{
+				m_about ^= true;
+			}
 			else if (0 == bx::strCmp(_argv[1], "save") )
 			{
 				save();
@@ -737,6 +751,7 @@ struct View
 	bool     m_fit;
 	bool     m_alpha;
 	bool     m_help;
+	bool     m_about;
 	bool     m_info;
 	bool     m_files;
 	bool     m_sdf;
@@ -1239,6 +1254,7 @@ int _main_(int _argc, char** _argv)
 	float speed = 0.37f;
 	float time  = 0.0f;
 
+	Interpolator menuFade(5.0f);
 	Interpolator mip(0.0f);
 	Interpolator layer(0.0f);
 	InterpolatorLinear ev(0.0f);
@@ -1289,75 +1305,60 @@ int _main_(int _argc, char** _argv)
 				,  uint16_t(height)
 				);
 
-			static bool help = false;
-			static bool mouseDelta = false;
-			if (!mouseDelta)
+			bool modalWindow = view.m_help || view.m_about;
+			bool overArea = false
+				|| ImGui::GetMousePos().y <= ImGui::GetTextLineHeightWithSpacing()
+				|| ImGui::MouseOverArea()
+				;
+			overArea &= !modalWindow;
+
+			if (overArea)
 			{
-				mouseStatePrev = mouseState;
-				mouseDelta = true;
+				menuFade.set(5.0f, 0.25f);
+			}
+			else if (modalWindow)
+			{
+				menuFade.reset(0.0f);
+			}
+			else
+			{
+				menuFade.set(0.0f, 2.0f);
 			}
 
-			int32_t zoomDelta = mouseState.m_mz - mouseStatePrev.m_mz;
-			if (zoomDelta != 0)
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, bx::clamp(menuFade.getValue(), 0.0f, 1.0f) );
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+
+			if (ImGui::BeginMainMenuBar() )
 			{
-				char exec[64];
-				bx::snprintf(exec, BX_COUNTOF(exec), "view zoom %+f", -zoomDelta*0.1f);
-				cmdExec(exec);
-			}
-
-			const float xDelta = float(mouseStatePrev.m_mx - mouseState.m_mx);
-			const float yDelta = float(mouseStatePrev.m_my - mouseState.m_my);
-
-			if (!ImGui::MouseOverArea()
-			&&  !help
-			&&  mouseState.m_buttons[entry::MouseButton::Left] != mouseStatePrev.m_buttons[entry::MouseButton::Left])
-			{
-				dragging = !!mouseState.m_buttons[entry::MouseButton::Left];
-			}
-
-			if (dragging)
-			{
-				if (view.m_textureInfo.cubeMap
-				&&  Geometry::Quad == view.m_cubeMapGeo)
+				if (ImGui::BeginMenu("File"))
 				{
-					char exec[64];
-					bx::snprintf(exec, BX_COUNTOF(exec), "view cubemap %+f %+f", -yDelta, -xDelta);
-					cmdExec(exec);
-				}
-				else
-				{
-					char exec[64];
-					bx::snprintf(exec, BX_COUNTOF(exec), "view pan %+f %+f", xDelta, yDelta);
-					cmdExec(exec);
-				}
-			}
+					if (ImGui::MenuItem("Show File List", NULL, view.m_files) )
+					{
+						cmdExec("view files");
+					}
 
-			mouseStatePrev = mouseState;
+					ImGui::Separator();
+					if (ImGui::MenuItem("Exit") )
+					{
+						cmdExec("exit");
+					}
 
-			if (ImGui::BeginPopupContextVoid("Menu") )
-			{
-				if (ImGui::MenuItem("Files", NULL, view.m_files) )
-				{
-					cmdExec("view files");
+					ImGui::EndMenu();
 				}
 
-				if (ImGui::MenuItem("Info", NULL, view.m_info) )
+				if (ImGui::BeginMenu("View") )
 				{
-					cmdExec("view info");
-				}
+					if (ImGui::MenuItem("Info", NULL, view.m_info) )
+					{
+						cmdExec("view info");
+					}
 
-//				if (ImGui::MenuItem("Save As") )
-				{
-				}
+					if (ImGui::MenuItem("Reset") )
+					{
+						cmdExec(s_resetCmd);
+					}
 
-				if (ImGui::MenuItem("Reset") )
-				{
-					cmdExec(s_resetCmd);
-				}
-
-				ImGui::Separator();
-				if (ImGui::BeginMenu("Options"))
-				{
+					ImGui::Separator();
 					bool filter = view.m_filter;
 					if (ImGui::MenuItem("Filter", NULL, &filter) )
 					{
@@ -1430,20 +1431,72 @@ int _main_(int _argc, char** _argv)
 					ImGui::EndMenu();
 				}
 
-				ImGui::Separator();
-				if (ImGui::MenuItem("Help") )
+				if (ImGui::BeginMenu("Help") )
 				{
-					cmdExec("view help");
+					if (ImGui::MenuItem("View Help") )
+					{
+						cmdExec("view help");
+					}
+
+					ImGui::Separator();
+					if (ImGui::MenuItem("About") )
+					{
+						cmdExec("view about");
+					}
+
+					ImGui::EndMenu();
 				}
 
-				ImGui::Separator();
-				if (ImGui::MenuItem("Exit") )
-				{
-					cmdExec("exit");
-				}
-
-				ImGui::EndPopup();
+				ImGui::EndMainMenuBar();
 			}
+
+			ImGui::PopStyleVar(2);
+
+			static bool help = false;
+			static bool about = false;
+			static bool mouseDelta = false;
+			if (!mouseDelta)
+			{
+				mouseStatePrev = mouseState;
+				mouseDelta = true;
+			}
+
+			int32_t zoomDelta = overArea ? 0.0f : mouseState.m_mz - mouseStatePrev.m_mz;
+			if (zoomDelta != 0)
+			{
+				char exec[64];
+				bx::snprintf(exec, BX_COUNTOF(exec), "view zoom %+f", -zoomDelta*0.1f);
+				cmdExec(exec);
+			}
+
+			const float xDelta = float(mouseStatePrev.m_mx - mouseState.m_mx);
+			const float yDelta = float(mouseStatePrev.m_my - mouseState.m_my);
+
+			if (!overArea
+			&&  !help
+			&&  mouseState.m_buttons[entry::MouseButton::Left] != mouseStatePrev.m_buttons[entry::MouseButton::Left])
+			{
+				dragging = !!mouseState.m_buttons[entry::MouseButton::Left];
+			}
+
+			if (dragging)
+			{
+				if (view.m_textureInfo.cubeMap
+				&&  Geometry::Quad == view.m_cubeMapGeo)
+				{
+					char exec[64];
+					bx::snprintf(exec, BX_COUNTOF(exec), "view cubemap %+f %+f", -yDelta, -xDelta);
+					cmdExec(exec);
+				}
+				else
+				{
+					char exec[64];
+					bx::snprintf(exec, BX_COUNTOF(exec), "view pan %+f %+f", xDelta, yDelta);
+					cmdExec(exec);
+				}
+			}
+
+			mouseStatePrev = mouseState;
 
 			if (help != view.m_help)
 			{
@@ -1462,6 +1515,23 @@ int _main_(int _argc, char** _argv)
 				help = view.m_help;
 			}
 
+			if (about != view.m_about)
+			{
+				if (!about)
+				{
+					ImGui::OpenPopup("About");
+					inputRemoveBindings(s_bindingName[Binding::View]);
+					inputAddBindings(s_bindingName[Binding::About], s_binding[Binding::About]);
+				}
+				else
+				{
+					inputRemoveBindings(s_bindingName[Binding::About]);
+					inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
+				}
+
+				about = view.m_about;
+			}
+
 			if (view.m_info)
 			{
 				ImGui::SetNextWindowSize(
@@ -1469,7 +1539,7 @@ int _main_(int _argc, char** _argv)
 					, ImGuiCond_FirstUseEver
 					);
 
-				if (ImGui::Begin("Info", NULL, ImGuiWindowFlags_AlwaysAutoResize) )
+				if (ImGui::Begin("Info", &view.m_info) )
 				{
 					if (ImGui::BeginChild("##info", ImVec2(0.0f, 0.0f) ) )
 					{
@@ -1512,8 +1582,9 @@ int _main_(int _argc, char** _argv)
 						ImGui::EndChild();
 					}
 
-					ImGui::End();
 				}
+
+				ImGui::End();
 			}
 
 			if (view.m_files)
@@ -1526,7 +1597,7 @@ int _main_(int _argc, char** _argv)
 					, ImGuiCond_FirstUseEver
 					);
 
-				if (ImGui::Begin(temp, NULL) )
+				if (ImGui::Begin(temp, &view.m_files) )
 				{
 					if (ImGui::BeginChild("##file_list", ImVec2(0.0f, 0.0f) ) )
 					{
@@ -1578,12 +1649,12 @@ int _main_(int _argc, char** _argv)
 						ImGui::PopFont();
 						ImGui::EndChild();
 					}
-
-					ImGui::End();
 				}
+
+				ImGui::End();
 			}
 
-			if (ImGui::BeginPopupModal("Help", NULL, ImGuiWindowFlags_AlwaysAutoResize) )
+			if (ImGui::BeginPopupModal("About", &view.m_about, ImGuiWindowFlags_AlwaysAutoResize) )
 			{
 				ImGui::SetWindowFontScale(1.0f);
 
@@ -1595,8 +1666,22 @@ int _main_(int _argc, char** _argv)
 					, BGFX_TEXTUREV_VERSION_MINOR
 					, BGFX_API_VERSION
 					);
-				ImGui::Separator();
-				ImGui::NextLine();
+
+				ImGui::Dummy(ImVec2(0.0f, 0.0f) );
+				ImGui::SameLine(ImGui::GetWindowWidth() - 136.0f);
+				if (ImGui::Button("Close", ImVec2(128.0f, 0.0f) )
+				|| !view.m_about)
+				{
+					view.m_about = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+
+			if (ImGui::BeginPopupModal("Help", &view.m_help, ImGuiWindowFlags_AlwaysAutoResize) )
+			{
+				ImGui::SetWindowFontScale(1.0f);
 
 				ImGui::Text("Key bindings:\n\n");
 
