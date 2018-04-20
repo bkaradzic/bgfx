@@ -250,9 +250,9 @@ public:
 
 					// Set render states.
 					bgfx::setState(0
-						| (m_r	? BGFX_STATE_WRITE_R : 0)
-						| (m_g	? BGFX_STATE_WRITE_G : 0)
-						| (m_b	? BGFX_STATE_WRITE_B : 0)
+						| (m_r ? BGFX_STATE_WRITE_R : 0)
+						| (m_g ? BGFX_STATE_WRITE_G : 0)
+						| (m_b ? BGFX_STATE_WRITE_B : 0)
 						| (m_a ? BGFX_STATE_WRITE_A : 0)
 						| BGFX_STATE_WRITE_Z
 						| BGFX_STATE_DEPTH_TEST_LESS
