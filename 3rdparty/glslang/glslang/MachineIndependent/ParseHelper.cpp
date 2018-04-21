@@ -3508,7 +3508,8 @@ TSymbol* TParseContext::redeclareBuiltinVariable(const TSourceLoc& loc, const TS
 // Either redeclare the requested block, or give an error message why it can't be done.
 //
 // TODO: functionality: explicitly sizing members of redeclared blocks is not giving them an explicit size
-void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newTypeList, const TString& blockName, const TString* instanceName, TArraySizes* arraySizes)
+void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newTypeList, const TString& blockName,
+    const TString* instanceName, TArraySizes* arraySizes)
 {
     const char* feature = "built-in block redeclaration";
     profileRequires(loc, EEsProfile, 320, Num_AEP_shader_io_blocks, AEP_shader_io_blocks, feature);
@@ -3662,15 +3663,24 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
 
     if (numOriginalMembersFound < newTypeList.size())
         error(loc, "block redeclaration has extra members", blockName.c_str(), "");
-    if (type.isArray() != (arraySizes != nullptr))
+    if (type.isArray() != (arraySizes != nullptr) ||
+        (type.isArray() && arraySizes != nullptr && type.getArraySizes()->getNumDims() != arraySizes->getNumDims()))
         error(loc, "cannot change arrayness of redeclared block", blockName.c_str(), "");
     else if (type.isArray()) {
-        if (type.isSizedArray() && !arraySizes->isSized())
-            error(loc, "block already declared with size, can't redeclare as unsized", blockName.c_str(), "");
-        else if (type.isSizedArray() && *type.getArraySizes() != *arraySizes)
-            error(loc, "cannot change array size of redeclared block", blockName.c_str(), "");
-        else if (!type.isSizedArray() && arraySizes->isSized())
+        // At this point, we know both are arrays and both have the same number of dimensions.
+
+        // It is okay for a built-in block redeclaration to be unsized, and keep the size of the
+        // original block declaration.
+        if (!arraySizes->isSized() && type.isSizedArray())
+            arraySizes->changeOuterSize(type.getOuterArraySize());
+
+        // And, okay to be giving a size to the array, by the redeclaration
+        if (!type.isSizedArray() && arraySizes->isSized())
             type.changeOuterArraySize(arraySizes->getOuterSize());
+
+        // Now, they must match in all dimensions.
+        if (type.isSizedArray() && *type.getArraySizes() != *arraySizes)
+            error(loc, "cannot change array size of redeclared block", blockName.c_str(), "");
     }
 
     symbolTable.insert(*block);

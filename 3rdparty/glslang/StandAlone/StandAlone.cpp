@@ -1196,38 +1196,48 @@ int C_DECL main(int argc, char* argv[])
 //   .frag = fragment
 //   .comp = compute
 //
-EShLanguage FindLanguage(const std::string& name, bool parseSuffix)
+//   Additionally, the file names may end in .<stage>.glsl and .<stage>.hlsl
+//   where <stage> is one of the stages listed above.
+//
+EShLanguage FindLanguage(const std::string& name, bool parseStageName)
 {
-    size_t ext = 0;
-    std::string suffix;
-
+    std::string stageName;
     if (shaderStageName)
-        suffix = shaderStageName;
-    else {
-        // Search for a suffix on a filename: e.g, "myfile.frag".  If given
-        // the suffix directly, we skip looking for the '.'
-        if (parseSuffix) {
-            ext = name.rfind('.');
-            if (ext == std::string::npos) {
-                usage();
-                return EShLangVertex;
-            }
-            ++ext;
+        stageName = shaderStageName;
+    else if (parseStageName) {
+        // Note: "first" extension means "first from the end", i.e.
+        // if the file is named foo.vert.glsl, then "glsl" is first,
+        // "vert" is second.
+        size_t firstExtStart = name.find_last_of(".");
+        bool hasFirstExt = firstExtStart != std::string::npos;
+        size_t secondExtStart = hasFirstExt ? name.find_last_of(".", firstExtStart - 1) : std::string::npos;
+        bool hasSecondExt = secondExtStart != std::string::npos;
+        std::string firstExt = name.substr(firstExtStart + 1, std::string::npos);
+        bool usesUnifiedExt = hasFirstExt && (firstExt == "glsl" || firstExt == "hlsl");
+        if (usesUnifiedExt && firstExt == "hlsl")
+            Options |= EOptionReadHlsl;
+        if (hasFirstExt && !usesUnifiedExt)
+            stageName = firstExt;
+        else if (usesUnifiedExt && hasSecondExt)
+            stageName = name.substr(secondExtStart + 1, firstExtStart - secondExtStart - 1);
+        else {
+            usage();
+            return EShLangVertex;
         }
-        suffix = name.substr(ext, std::string::npos);
-    }
+    } else
+        stageName = name;
 
-    if (suffix == "vert")
+    if (stageName == "vert")
         return EShLangVertex;
-    else if (suffix == "tesc")
+    else if (stageName == "tesc")
         return EShLangTessControl;
-    else if (suffix == "tese")
+    else if (stageName == "tese")
         return EShLangTessEvaluation;
-    else if (suffix == "geom")
+    else if (stageName == "geom")
         return EShLangGeometry;
-    else if (suffix == "frag")
+    else if (stageName == "frag")
         return EShLangFragment;
-    else if (suffix == "comp")
+    else if (stageName == "comp")
         return EShLangCompute;
 
     usage();
@@ -1298,10 +1308,12 @@ void usage()
            "    .geom   for a geometry shader\n"
            "    .frag   for a fragment shader\n"
            "    .comp   for a compute shader\n"
+           "    .glsl   for .vert.glsl, .tesc.glsl, ..., .comp.glsl compound suffixes\n"
+           "    .hlsl   for .vert.hlsl, .tesc.hlsl, ..., .comp.hlsl compound suffixes\n"
            "\n"
            "Options:\n"
            "  -C          cascading errors; risk crash from accumulation of error recoveries\n"
-           "  -D          input is HLSL\n"
+           "  -D          input is HLSL (default when any suffix is .hlsl)\n"
            "  -D<macro=def>\n"
            "  -D<macro>   define a pre-processor macro\n"
            "  -E          print pre-processed GLSL; cannot be used with -l;\n"

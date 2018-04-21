@@ -55,7 +55,7 @@ patch sample in vec3 badp4;         // ERROR
 
 #extension GL_ARB_separate_shader_objects : enable
 
-in gl_PerVertex           // ERROR, no size
+in gl_PerVertex
 {
     vec4 gl_Position;
 } gl_in[];

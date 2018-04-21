@@ -6126,6 +6126,11 @@ spv::Id TGlslangToSpvTraverser::createMiscOperation(glslang::TOperator op, spv::
             assert(builder.isPointerType(typeId1));
             typeId1 = builder.getContainedTypeId(typeId1);
             int width = builder.getScalarTypeWidth(typeId1);
+#ifdef AMD_EXTENSIONS
+            if (width == 16)
+                // Using 16-bit exp operand, enable extension SPV_AMD_gpu_shader_int16
+                builder.addExtension(spv::E_SPV_AMD_gpu_shader_int16);
+#endif
             if (builder.getNumComponents(operands[0]) == 1)
                 frexpIntType = builder.makeIntegerType(width, true);
             else

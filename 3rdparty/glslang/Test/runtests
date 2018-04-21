@@ -74,11 +74,15 @@ else
 fi
 
 #
-# Testing -S
+# Testing -S and compound suffixes
 #
-echo Running explicit stage test
+echo Running explicit stage test and compound suffix tests
 $EXE -i -S vert nosuffix > $TARGETDIR/nosuffix.out
 diff -b $BASEDIR/nosuffix.out $TARGETDIR/nosuffix.out || HASERROR=1
+$EXE -i compoundsuffix.vert.glsl > $TARGETDIR/compoundsuffix.vert.glsl
+diff -b $BASEDIR/compoundsuffix.vert.glsl $TARGETDIR/compoundsuffix.vert.glsl || HASERROR=1
+$EXE -e main -H compoundsuffix.frag.hlsl > $TARGETDIR/compoundsuffix.frag.hlsl
+diff -b $BASEDIR/compoundsuffix.frag.hlsl $TARGETDIR/compoundsuffix.frag.hlsl || HASERROR=1
 
 #
 # Testing --hlsl-offsets

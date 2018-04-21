@@ -24,7 +24,6 @@ ERROR: 0:49: 'noperspective' : Reserved word.
 ERROR: 0:49: 'noperspective' : not supported for this version or the enabled extensions 
 ERROR: 0:49: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:50: '' : can only have one auxiliary qualifier (centroid, patch, and sample) 
-ERROR: 0:54: 'gl_PerVertex' : block already declared with size, can't redeclare as unsized 
 ERROR: 0:59: 'gl_PerVertex' : can only redeclare a built-in block once, and before any use 
 ERROR: 0:64: 'quads' : cannot apply to 'out' 
 ERROR: 0:64: 'cw' : can only apply to 'in' 
@@ -43,7 +42,7 @@ ERROR: 0:96: 'location' : overlapping use of location 24
 ERROR: 0:99: 'location' : overlapping use of location 24
 ERROR: 0:101: 'gl_TessLevelOuter' : identifiers starting with "gl_" are reserved 
 ERROR: 0:113: 'gl_BoundingBoxOES' : undeclared identifier 
-ERROR: 40 compilation errors.  No code generated.
+ERROR: 39 compilation errors.  No code generated.
 
 
 Shader version: 320
