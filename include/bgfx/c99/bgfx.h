@@ -596,7 +596,7 @@ typedef struct bgfx_resolution_s
 {
     uint32_t width;
     uint32_t height;
-    uint32_t flags;
+    uint32_t reset;
 
 } bgfx_resolution_t;
 
