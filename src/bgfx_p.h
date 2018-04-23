@@ -3454,6 +3454,8 @@ namespace bgfx
 
 		BGFX_API_FUNC(void allocInstanceDataBuffer(InstanceDataBuffer* _idb, uint32_t _num, uint16_t _stride) )
 		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
 			uint16_t stride = BX_ALIGN_16(_stride);
 			uint32_t offset = m_submit->allocTransientVertexBuffer(_num, stride);
 

@@ -25,7 +25,6 @@ ERROR: 0:53: 'noperspective' : not supported for this version or the enabled ext
 ERROR: 0:53: 'patch' : cannot use interpolation qualifiers with patch 
 ERROR: 0:54: 'sample' : Reserved word. 
 ERROR: 0:54: '' : can only have one auxiliary qualifier (centroid, patch, and sample) 
-ERROR: 0:58: 'gl_PerVertex' : block already declared with size, can't redeclare as unsized 
 ERROR: 0:63: 'gl_PerVertex' : can only redeclare a built-in block once, and before any use 
 ERROR: 0:68: 'quads' : cannot apply to 'out' 
 ERROR: 0:68: 'cw' : can only apply to 'in' 
@@ -47,7 +46,7 @@ ERROR: 0:113: 'sample' : Reserved word.
 ERROR: 0:119: 'gl_PointSize' : no such field in structure 
 ERROR: 0:119: '=' :  cannot convert from ' temp block{ in highp 4-component vector of float Position gl_Position}' to ' temp highp float'
 ERROR: 0:127: 'gl_BoundingBoxOES' : undeclared identifier 
-ERROR: 44 compilation errors.  No code generated.
+ERROR: 43 compilation errors.  No code generated.
 
 
 Shader version: 310
