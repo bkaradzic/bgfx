@@ -244,22 +244,22 @@ public:
 		}
 
 		m_textureCube[0] = bgfx::createTextureCube(
-				  textureside
-				, false
-				, 1
-				, bgfx::TextureFormat::BGRA8
-				, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
-				);
+			  textureside
+			, false
+			, 1
+			, bgfx::TextureFormat::BGRA8
+			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
+			);
 
 		if (m_blitSupported)
 		{
 			m_textureCube[1] = bgfx::createTextureCube(
-					  textureside
-					, false
-					, 1
-					, bgfx::TextureFormat::BGRA8
-					, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT|BGFX_TEXTURE_BLIT_DST
-					);
+				  textureside
+				, false
+				, 1
+				, bgfx::TextureFormat::BGRA8
+				, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT|BGFX_TEXTURE_BLIT_DST
+				);
 		}
 
 		if (m_computeSupported)
@@ -274,13 +274,13 @@ public:
 		}
 
 		m_texture2d = bgfx::createTexture2D(
-				  texture2dSize
-				, texture2dSize
-				, false
-				, 1
-				, bgfx::TextureFormat::BGRA8
-				, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
-				);
+			  texture2dSize
+			, texture2dSize
+			, false
+			, 1
+			, bgfx::TextureFormat::BGRA8
+			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
+			);
 
 		m_texture2dData = (uint8_t*)malloc(texture2dSize*texture2dSize*4);
 

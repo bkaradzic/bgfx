@@ -977,8 +977,7 @@ struct InterpolatorT
 
 	float getValue()
 	{
-
-		if (duration > 0.0)
+		if (isActive() )
 		{
 			const double freq = double(bx::getHPFrequency() );
 			int64_t now = bx::getHPCounter();
@@ -988,6 +987,15 @@ struct InterpolatorT
 		}
 
 		return to;
+	}
+
+	bool isActive() const
+	{
+		const double freq = double(bx::getHPFrequency() );
+		int64_t now = bx::getHPCounter();
+		float time = (float)(double(now - offset) / freq);
+		float lerp = bx::clamp(time, 0.0f, duration) / duration;
+		return lerp < 1.0f;
 	}
 };
 
@@ -1266,6 +1274,23 @@ int _main_(int _argc, char** _argv)
 	InterpolatorAngle angx(0.0f);
 	InterpolatorAngle angy(0.0f);
 
+	auto anyActive = [&]() -> bool
+	{
+		return false
+			|| menuFade.isActive()
+			|| mip.isActive()
+			|| layer.isActive()
+			|| ev.isActive()
+			|| zoom.isActive()
+			|| scale.isActive()
+			|| posx.isActive()
+			|| posy.isActive()
+			|| angle.isActive()
+			|| angx.isActive()
+			|| angy.isActive()
+			;
+	};
+
 	const char* filePath = _argc < 2 ? "" : _argv[1];
 
 	std::string path = filePath;
@@ -1461,7 +1486,7 @@ int _main_(int _argc, char** _argv)
 				mouseDelta = true;
 			}
 
-			int32_t zoomDelta = overArea ? 0.0f : mouseState.m_mz - mouseStatePrev.m_mz;
+			int32_t zoomDelta = overArea ? 0 : mouseState.m_mz - mouseStatePrev.m_mz;
 			if (zoomDelta != 0)
 			{
 				char exec[64];
@@ -1999,6 +2024,13 @@ int _main_(int _argc, char** _argv)
 			}
 
 			bgfx::frame();
+
+			// Slow down when nothing is animating...
+			if (!dragging
+			&&  !anyActive() )
+			{
+				bx::sleep(100);
+			}
 		}
 	}
 
