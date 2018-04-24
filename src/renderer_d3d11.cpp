@@ -1097,6 +1097,8 @@ namespace bgfx { namespace d3d11
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR,      false);
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING,    false);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_INFO,       false);
+					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_MESSAGE,    false);
 
 					D3D11_INFO_QUEUE_FILTER filter;
 					bx::memSet(&filter, 0, sizeof(filter) );
