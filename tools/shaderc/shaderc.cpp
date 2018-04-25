@@ -558,7 +558,7 @@ namespace bgfx
 			m_tagptr->data = (void*)fppError;
 			m_tagptr++;
 
-			m_tagptr->tag = FPPTAG_IGNOREVERSION;
+			m_tagptr->tag = FPPTAG_SHOWVERSION;
 			m_tagptr->data = (void*)0;
 			m_tagptr++;
 

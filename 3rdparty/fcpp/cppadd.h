@@ -67,7 +67,7 @@ struct Global {
   int           errors;                 /* cpp error counter            */
   FILEINFO      *infile;                /* Current input file           */
 #if DEBUG
-  int           debug;                  /* TRUE if debugging now        */
+  int           debug;                  /* FPP_TRUE if debugging now        */
 #endif
   /*
    * This counter is incremented when a macro expansion is initiated.
@@ -83,7 +83,7 @@ struct Global {
   int           rec_recover;            /* Unwind recursive macros      */
 
   /*
-   * instring is set TRUE when a string is scanned.  It modifies the
+   * instring is set FPP_TRUE when a string is scanned.  It modifies the
    * behavior of the "get next character" routine, causing all characters
    * to be passed to the caller (except <DEF_MAGIC>).  Note especially that
    * comments and \<newline> are not removed from the source.  (This
@@ -95,17 +95,17 @@ struct Global {
    * shouldn't delimit tokens, but we'll worry about that some other
    * time -- it is more important to prevent infinitly long output lines.
    *
-   * instring and inmarcor are parameters to the get() routine which
+   * instring and inmarcor are parameters to the fpp_get() routine which
    * were made global for speed.
    */
-  int           instring;       /* TRUE if scanning string      */
-  int           inmacro;        /* TRUE if #defining a macro    */
+  int           instring;       /* FPP_TRUE if scanning string      */
+  int           inmacro;        /* FPP_TRUE if #defining a macro    */
   
   /*
    * work[] and workp are used to store one piece of text in a temporay
    * buffer.  To initialize storage, set workp = work.  To store one
-   * character, call save(c);  (This will fatally exit if there isn't
-   * room.)  To terminate the string, call save(EOS).  Note that
+   * character, call fpp_save(c);  (This will fatally exit if there isn't
+   * room.)  To terminate the string, call fpp_save(EOS).  Note that
    * the work buffer is used by several subroutines -- be sure your
    * data won't be overwritten.  The extra byte in the allocation is
    * needed for string formal replacement.
@@ -114,7 +114,7 @@ struct Global {
   char          *workp;                 /* Work buffer pointer          */
 
   /*
-   * keepcomments is set TRUE by the -C option.  If TRUE, comments
+   * keepcomments is set FPP_TRUE by the -C option.  If FPP_TRUE, comments
    * are written directly to the output stream.  This is needed if
    * the output from cpp is to be passed to lint (which uses commands
    * embedded in comments).  cflag contains the permanent state of the
@@ -138,10 +138,10 @@ struct Global {
    * ifstack[] holds information about nested #if's.  It is always
    * accessed via *ifptr.  The information is as follows:
    *    WAS_COMPILING   state of compiling flag at outer level.
-   *    ELSE_SEEN       set TRUE when #else seen to prevent 2nd #else.
-   *    TRUE_SEEN       set TRUE when #if or #elif succeeds
-   * ifstack[0] holds the compiling flag.  It is TRUE if compilation
-   * is currently enabled.  Note that this must be initialized TRUE.
+   *    ELSE_SEEN       set FPP_TRUE when #else seen to prevent 2nd #else.
+   *    FPP_TRUE_SEEN       set FPP_TRUE when #if or #elif succeeds
+   * ifstack[0] holds the compiling flag.  It is FPP_TRUE if compilation
+   * is currently enabled.  Note that this must be initialized FPP_TRUE.
    */
   char          ifstack[BLK_NEST];      /* #if information      */
   char          *ifptr;                 /* -> current ifstack[] */
@@ -158,7 +158,7 @@ struct Global {
    */
   char  *include[NINCLUDE];
   char  includeshow[NINCLUDE]; /* show it or not! */
-  char  included;
+  unsigned  included;
 
   /*
    * This is the table used to predefine target machine and operating
@@ -176,7 +176,7 @@ struct Global {
 
   /*
    * This is the variable saying if Cpp should remove C++ style comments from
-   * the output. Default is... TRUE, yes, pronto, do it!!!
+   * the output. Default is... FPP_TRUE, yes, pronto, do it!!!
    */
   
   char cplusplus;
@@ -197,7 +197,7 @@ struct Global {
 
   DEFBUF *symtab[SBSIZE];       /* Symbol table queue headers   */
 
-  int evalue;                   /* Current value from evallex() */
+  int evalue;                   /* Current value from fpp_evallex() */
 
   void (*depends)(char *filename, void *); /* depends function */
 
@@ -225,7 +225,7 @@ struct Global {
 
   char showspace;   /* display all whitespaces as they are */
 
-  char comment;     /* TRUE if a comment just has been written to output */
+  char comment;     /* FPP_TRUE if a comment just has been written to output */
 
   char *spacebuf;    /* Buffer to store whitespaces in if -H */
 
@@ -242,7 +242,7 @@ struct Global {
   char out; /* should we output anything now? */
 
   char rightconcat; /* should the right part of a concatenation be avaluated
-					   before the concat (TRUE) or after (FALSE) */
+					   before the concat (FPP_TRUE) or after (FPP_FALSE) */
   char *initialfunc; /* file to include first in all functions */
 
   char *excludedinit[20]; /* functions (names) excluded from the initfunc */
@@ -251,6 +251,10 @@ struct Global {
   char outputfunctions;  /* output all discovered functions to stderr! */
 
   char webmode; /* WWW process mode */
+
+  char allowincludelocal;
+
+  FILE* (*openfile)(char *,char *, void *);
 };
 
 typedef enum {
@@ -359,56 +363,56 @@ typedef enum {
 } ReturnCode;
 
 /* Nasty defines to make them appear as three different functions! */
-#define cwarn cerror
-#define cfatal cerror 
+#define fpp_cwarn fpp_cerror
+#define fpp_cfatal fpp_cerror 
 
 
 /**********************************************************************
  * PROTOTYPES:
  *********************************************************************/
 int PREFIX fppPreProcess(REG(a0) struct fppTag *);
-void Freemem(void *);
-void Error(struct Global *, char *, ...);
-void Putchar(struct Global *, int);
-void Putstring(struct Global *, char *);
-void Putint(struct Global *, int);
-char *savestring(struct Global *, char *);
-ReturnCode addfile(struct Global *, FILE *, char *);
-int catenate(struct Global *, ReturnCode *);
-void cerror(struct Global *, ErrorCode, ...);
-ReturnCode control(struct Global *, int *);
-ReturnCode dodefine(struct Global *);
-int dooptions(struct Global *, struct fppTag *);
-void doundef(struct Global *);
-void dumpparm(char *);
-ReturnCode expand(struct Global *, DEFBUF *);
-int get(struct Global *);
-ReturnCode initdefines(struct Global *);
-void outdefines(struct Global *);
-ReturnCode save(struct Global *, int);
-void scanid(struct Global *, int);
-ReturnCode scannumber(struct Global *, int, ReturnCode(*)(struct Global *, int));
-ReturnCode scanstring(struct Global *, int, ReturnCode(*)(struct Global *, int));
-void unget(struct Global *);
-ReturnCode ungetstring(struct Global *, char *);
-ReturnCode eval(struct Global *, int *);
+void fpp_Freemem(void *);
+void fpp_Error(struct Global *, char *, ...);
+void fpp_Putchar(struct Global *, int);
+void fpp_Putstring(struct Global *, char *);
+void fpp_Putint(struct Global *, int);
+char *fpp_savestring(struct Global *, char *);
+ReturnCode fpp_addfile(struct Global *, FILE *, char *);
+int fpp_catenate(struct Global *, int lhs_number, ReturnCode *);
+void fpp_cerror(struct Global *, ErrorCode, ...);
+ReturnCode fpp_control(struct Global *, int *);
+ReturnCode fpp_dodefine(struct Global *);
+int fpp_dooptions(struct Global *, struct fppTag *);
+void fpp_doundef(struct Global *);
+void fpp_dumpparm(char *);
+ReturnCode fpp_expand(struct Global *, DEFBUF *);
+int fpp_get(struct Global *);
+ReturnCode fpp_initdefines(struct Global *);
+void fpp_outdefines(struct Global *);
+ReturnCode fpp_save(struct Global *, int);
+void fpp_scanid(struct Global *, int);
+ReturnCode fpp_scannumber(struct Global *, int, ReturnCode(*)(struct Global *, int));
+ReturnCode fpp_scanstring(struct Global *, int, ReturnCode(*)(struct Global *, int));
+void fpp_unget(struct Global *);
+ReturnCode fpp_ungetstring(struct Global *, char *);
+ReturnCode fpp_eval(struct Global *, int *);
 #ifdef  DEBUG_EVAL
-void dumpstack(OPTAB[NEXP], register OPTAB *, int [NEXP], register int *);
+void fpp_dumpstack(OPTAB[NEXP], register OPTAB *, int [NEXP], register int *);
 #endif
-void skipnl(struct Global *);
-int skipws(struct Global *);
-ReturnCode macroid(struct Global *, int *);
-ReturnCode getfile(struct Global *, size_t, char *, FILEINFO **);
-DEFBUF *lookid(struct Global *, int );
-DEFBUF *defendel(struct Global *, char *, int);
+void fpp_skipnl(struct Global *);
+int fpp_skipws(struct Global *);
+ReturnCode fpp_macroid(struct Global *, int *);
+ReturnCode fpp_getfile(struct Global *, size_t, char *, FILEINFO **);
+DEFBUF *fpp_lookid(struct Global *, int );
+DEFBUF *fpp_defendel(struct Global *, char *, int);
 #if DEBUG
-void dumpdef(char *);
-void dumpadef(char *, register DEFBUF *);
+void fpp_dumpdef(char *);
+void fpp_dumpadef(char *, register DEFBUF *);
 #endif
-ReturnCode openfile(struct Global *,char *);
-int cget(struct Global *);
-void delbuiltindefines(struct Global *);
-void delalldefines(struct Global *);
-char *Getmem(struct Global *, int);
-ReturnCode openinclude(struct Global *, char *, int);
-ReturnCode expstuff(struct Global *, char *, char *);
+ReturnCode fpp_openfile(struct Global *,char *);
+int fpp_cget(struct Global *);
+void fpp_delbuiltindefines(struct Global *);
+void fpp_delalldefines(struct Global *);
+char *fpp_Getmem(struct Global *, int);
+ReturnCode fpp_openinclude(struct Global *, char *, int);
+ReturnCode fpp_expstuff(struct Global *, char *, char *);
