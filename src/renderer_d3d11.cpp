@@ -4479,7 +4479,7 @@ namespace bgfx { namespace d3d11
 			case Texture2D:
 			case TextureCube:
 				{
-					D3D11_TEXTURE2D_DESC desc;
+					D3D11_TEXTURE2D_DESC desc = {};
 					desc.Width  = textureWidth;
 					desc.Height = textureHeight;
 					desc.MipLevels  = numMips;
@@ -4583,7 +4583,7 @@ namespace bgfx { namespace d3d11
 
 			case Texture3D:
 				{
-					D3D11_TEXTURE3D_DESC desc;
+					D3D11_TEXTURE3D_DESC desc = {};
 					desc.Width  = textureWidth;
 					desc.Height = textureHeight;
 					desc.Depth  = imageContainer.m_depth;

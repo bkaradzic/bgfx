@@ -2148,7 +2148,8 @@ namespace bgfx
 					 ||  BX_PLATFORM_WINRT
 					 ) )
 				{
-					score += RendererType::Direct3D11 == renderer ? 20 : 0;
+					score += RendererType::Direct3D12 == renderer ? 20 : 0;
+					score += RendererType::Direct3D11 == renderer ? 10 : 0;
 				}
 
 				scores[numScores++] = (score<<8) | uint8_t(renderer);

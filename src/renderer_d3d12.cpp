@@ -439,7 +439,7 @@ namespace bgfx { namespace d3d12
 		initHeapProperties(_device, s_heapProperties[HeapProperty::ReadBack].m_properties);
 	}
 
-	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, D3D12_RESOURCE_DESC* _resourceDesc, D3D12_CLEAR_VALUE* _clearValue)
+	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, const D3D12_RESOURCE_DESC* _resourceDesc, const D3D12_CLEAR_VALUE* _clearValue, bool _memSet = false)
 	{
 		const HeapProperty& heapProperty = s_heapProperties[_heapProperty];
 		ID3D12Resource* resource;
@@ -454,6 +454,16 @@ namespace bgfx { namespace d3d12
 		BX_WARN(NULL != resource, "CreateCommittedResource failed (size: %d). Out of memory?"
 			, _resourceDesc->Width
 			);
+
+		if (BX_ENABLED(BX_PLATFORM_XBOXONE)
+		&&  _memSet)
+		{
+			void* ptr;
+			DX_CHECK(resource->Map(0, NULL, &ptr) );
+			D3D12_RESOURCE_ALLOCATION_INFO rai = _device->GetResourceAllocationInfo(1, 1, _resourceDesc);
+			bx::memSet(ptr, 0, rai.SizeInBytes);
+			resource->Unmap(0, NULL);
+		}
 
 		return resource;
 	}
@@ -1898,6 +1908,19 @@ namespace bgfx { namespace d3d12
 					, (void**)&m_backBufferColor[ii]
 					) );
 				m_device->CreateRenderTargetView(m_backBufferColor[ii], NULL, handle);
+
+				if (BX_ENABLED(BX_PLATFORM_XBOXONE) )
+				{
+					ID3D12Resource* resource = m_backBufferColor[ii];
+
+					BX_CHECK(DXGI_FORMAT_R8G8B8A8_UNORM == m_scd.format, "");
+					const uint32_t size = m_scd.width*m_scd.height*4;
+
+					void* ptr;
+					DX_CHECK(resource->Map(0, NULL, &ptr) );
+					bx::memSet(ptr, 0, size);
+					resource->Unmap(0, NULL);
+				}
 			}
 
 			D3D12_RESOURCE_DESC resourceDesc;
@@ -4620,7 +4643,7 @@ data.NumQualityLevels = 0;
 				break;
 			}
 
-			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue);
+			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue, renderTarget);
 
 			if (directAccess)
 			{
