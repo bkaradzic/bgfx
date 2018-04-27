@@ -336,18 +336,20 @@ void ImGui::ShowDemoWindow(bool* p_open)
             {
                 static char str0[128] = "Hello, world!";
                 static int i0 = 123;
-                static float f0 = 0.001f;
                 ImGui::InputText("input text", str0, IM_ARRAYSIZE(str0));
                 ImGui::SameLine(); ShowHelpMarker("Hold SHIFT or use mouse to select text.\n" "CTRL+Left/Right to word jump.\n" "CTRL+A or double-click to select all.\n" "CTRL+X,CTRL+C,CTRL+V clipboard.\n" "CTRL+Z,CTRL+Y undo/redo.\n" "ESCAPE to revert.\n");
 
                 ImGui::InputInt("input int", &i0);
                 ImGui::SameLine(); ShowHelpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n");
 
+                static float f0 = 0.001f;
                 ImGui::InputFloat("input float", &f0, 0.01f, 1.0f);
 
-                // NB: You can use the %e notation as well.
                 static double d0 = 999999.000001;
                 ImGui::InputDouble("input double", &d0, 0.01f, 1.0f, "%.6f");
+
+                static float f1 = 1.e10f;
+                ImGui::InputFloat("input scientific", &f1, 0.0f, 0.0f, "%e");
                 ImGui::SameLine(); ShowHelpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n");
 
                 static float vec4a[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
@@ -1706,14 +1708,14 @@ void ImGui::ShowDemoWindow(bool* p_open)
             ImGui::Text("ImGui");
             ImGui::Button("Apple");
             static float foo = 1.0f;
-            ImGui::InputFloat("red", &foo, 0.05f, 0, 3);
+            ImGui::InputFloat("red", &foo, 0.05f, 0, "%.3f");
             ImGui::Text("An extra line here.");
             ImGui::NextColumn();
 
                 ImGui::Text("Sailor");
             ImGui::Button("Corniflower");
             static float bar = 1.0f;
-            ImGui::InputFloat("blue", &bar, 0.05f, 0, 3);
+            ImGui::InputFloat("blue", &bar, 0.05f, 0, "%.3f");
             ImGui::NextColumn();
 
             if (ImGui::CollapsingHeader("Category A")) { ImGui::Text("Blah blah blah"); } ImGui::NextColumn();
