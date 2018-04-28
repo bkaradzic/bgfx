@@ -105,4 +105,6 @@ void main()
     storageImage[i];           // ERROR, need extension
     uniformTexelBuffer[i];     // ERROR, need extension
     storageTexelBuffer[i];     // ERROR, need extension
+
+    float local[] = ubuf.b;    // ERROR, can initialize with runtime-sized array
 }

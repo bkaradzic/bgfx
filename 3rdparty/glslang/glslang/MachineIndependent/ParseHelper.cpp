@@ -3135,7 +3135,8 @@ void TParseContext::structArrayCheck(const TSourceLoc& /*loc*/, const TType& typ
     }
 }
 
-void TParseContext::arraySizesCheck(const TSourceLoc& loc, const TQualifier& qualifier, TArraySizes* arraySizes, bool initializer, bool lastMember)
+void TParseContext::arraySizesCheck(const TSourceLoc& loc, const TQualifier& qualifier, TArraySizes* arraySizes,
+    const TIntermTyped* initializer, bool lastMember)
 {
     assert(arraySizes);
 
@@ -3143,9 +3144,13 @@ void TParseContext::arraySizesCheck(const TSourceLoc& loc, const TQualifier& qua
     if (parsingBuiltins)
         return;
 
-    // always allow an initializer to set any unknown array sizes
-    if (initializer)
+    // initializer must be a sized array, in which case
+    // allow the initializer to set any unknown array sizes
+    if (initializer != nullptr) {
+        if (initializer->getType().isUnsizedArray())
+            error(loc, "array initializer must be sized", "[]", "");
         return;
+    }
 
     // No environment allows any non-outer-dimension to be implicitly sized
     if (arraySizes->isInnerUnsized()) {
@@ -4786,6 +4791,14 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         }
     }
 
+    // some things can't have arrays of arrays
+    if (type.isArrayOfArrays()) {
+        if (spvVersion.vulkan > 0) {
+            if (type.isOpaque() || (type.getQualifier().isUniformOrBuffer() && type.getBasicType() == EbtBlock))
+                warn(loc, "Generating SPIR-V array-of-arrays, but Vulkan only supports single array level for this resource", "[][]", "");
+        }
+    }
+
     // "The offset qualifier can only be used on block members of blocks..."
     if (qualifier.hasOffset()) {
         if (type.getBasicType() == EbtBlock)
@@ -5390,7 +5403,7 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     // Declare the variable
     if (type.isArray()) {
         // Check that implicit sizing is only where allowed.
-        arraySizesCheck(loc, type.getQualifier(), type.getArraySizes(), initializer != nullptr, false);
+        arraySizesCheck(loc, type.getQualifier(), type.getArraySizes(), initializer, false);
 
         if (! arrayQualifierError(loc, type.getQualifier()) && ! arrayError(loc, type))
             declareArray(loc, identifier, type, symbol);
@@ -5992,7 +6005,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
     blockStageIoCheck(loc, currentBlockQualifier);
     blockQualifierCheck(loc, currentBlockQualifier, instanceName != nullptr);
     if (arraySizes != nullptr) {
-        arraySizesCheck(loc, currentBlockQualifier, arraySizes, false, false);
+        arraySizesCheck(loc, currentBlockQualifier, arraySizes, nullptr, false);
         arrayOfArrayVersionCheck(loc, arraySizes);
         if (arraySizes->getNumDims() > 1)
             requireProfile(loc, ~EEsProfile, "array-of-array of block");
@@ -6010,7 +6023,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
         if ((currentBlockQualifier.storage == EvqUniform || currentBlockQualifier.storage == EvqBuffer) && (memberQualifier.isInterpolation() || memberQualifier.isAuxiliary()))
             error(memberLoc, "member of uniform or buffer block cannot have an auxiliary or interpolation qualifier", memberType.getFieldName().c_str(), "");
         if (memberType.isArray())
-            arraySizesCheck(memberLoc, currentBlockQualifier, memberType.getArraySizes(), false, member == typeList.size() - 1);
+            arraySizesCheck(memberLoc, currentBlockQualifier, memberType.getArraySizes(), nullptr, member == typeList.size() - 1);
         if (memberQualifier.hasOffset()) {
             if (spvVersion.spv == 0) {
                 requireProfile(memberLoc, ~EEsProfile, "offset on block member");

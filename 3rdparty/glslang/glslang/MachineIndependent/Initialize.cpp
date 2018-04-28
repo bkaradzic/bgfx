@@ -6569,6 +6569,7 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
                         break;
                     case 2:
                         s.append("Offsets");
+                        break;
                     default:
                         break;
                     }
@@ -6680,6 +6681,7 @@ void TBuiltIns::addGatherFunctions(TSampler sampler, const TString& typeName, in
                                 break;
                             case 2:
                                 s.append("Offsets");
+                                break;
                             default:
                                 break;
                             }

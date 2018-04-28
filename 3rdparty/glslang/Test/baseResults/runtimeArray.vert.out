@@ -31,7 +31,8 @@ ERROR: 0:104: 'variable index' : required extension not requested: GL_EXT_nonuni
 ERROR: 0:105: 'variable index' : required extension not requested: GL_EXT_nonuniform_qualifier
 ERROR: 0:106: 'variable index' : required extension not requested: GL_EXT_nonuniform_qualifier
 ERROR: 0:107: 'variable index' : required extension not requested: GL_EXT_nonuniform_qualifier
-ERROR: 26 compilation errors.  No code generated.
+ERROR: 0:109: '[]' : array initializer must be sized 
+ERROR: 27 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -311,6 +312,13 @@ ERROR: node is still EOpNull!
 0:107      indirect index (layout( binding=9 r32f) temp imageBuffer)
 0:107        'storageTexelBuffer' (layout( binding=9 r32f) uniform runtime-sized array of imageBuffer)
 0:107        'i' ( global int)
+0:109      Sequence
+0:109        move second child to first child ( temp unsized 1-element array of float)
+0:109          'local' ( temp unsized 1-element array of float)
+0:109          b: direct index for structure (layout( column_major shared) uniform runtime-sized array of float)
+0:109            'ubuf' (layout( column_major shared) uniform block{layout( column_major shared) uniform runtime-sized array of int a, layout( column_major shared) uniform runtime-sized array of float b})
+0:109            Constant:
+0:109              1 (const int)
 0:?   Linker Objects
 0:?     'buf' (layout( column_major shared) buffer block{layout( column_major shared) buffer runtime-sized array of int a, layout( column_major shared) buffer runtime-sized array of float b})
 0:?     'ubuf' (layout( column_major shared) uniform block{layout( column_major shared) uniform runtime-sized array of int a, layout( column_major shared) uniform runtime-sized array of float b})
@@ -611,6 +619,13 @@ ERROR: node is still EOpNull!
 0:107      indirect index (layout( binding=9 r32f) temp imageBuffer)
 0:107        'storageTexelBuffer' (layout( binding=9 r32f) uniform runtime-sized array of imageBuffer)
 0:107        'i' ( global int)
+0:109      Sequence
+0:109        move second child to first child ( temp 1-element array of float)
+0:109          'local' ( temp 1-element array of float)
+0:109          b: direct index for structure (layout( column_major shared) uniform runtime-sized array of float)
+0:109            'ubuf' (layout( column_major shared) uniform block{layout( column_major shared) uniform runtime-sized array of int a, layout( column_major shared) uniform runtime-sized array of float b})
+0:109            Constant:
+0:109              1 (const int)
 0:?   Linker Objects
 0:?     'buf' (layout( column_major shared) buffer block{layout( column_major shared) buffer runtime-sized array of int a, layout( column_major shared) buffer runtime-sized array of float b})
 0:?     'ubuf' (layout( column_major shared) uniform block{layout( column_major shared) uniform runtime-sized array of int a, layout( column_major shared) uniform runtime-sized array of float b})

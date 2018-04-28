@@ -108,5 +108,6 @@ uniform sampler2D s2d[];
 
 void foo4()
 {
-    s2d[a];           // ERROR, can't variably index unsized array
+    s2d[a];                         // ERROR, can't variably index unsized array
+    float local[] = gUnusedUnsized; // ERROR, can initialize with runtime-sized array
 }
