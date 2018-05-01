@@ -83,8 +83,11 @@ bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v
                 new_value = ImLerp(v_min, v_max, clicked_t);
             }
 
+            char fmt[64];
+            snprintf(fmt, 64, "%%.%df", decimal_precision);
+
             // Round past decimal precision
-            new_value = RoundScalar(new_value, decimal_precision);
+            new_value = RoundScalarWithFormat(fmt, new_value);
             if (*v1 != new_value || *v2 != new_value)
             {
                 if (fabsf(*v1 - new_value) < fabsf(*v2 - new_value))
@@ -188,8 +191,13 @@ bool RangeSliderFloat(const char* label, float* v1, float* v2, float v_min, floa
             g.ScalarAsInputTextId = 0;
         }
     }
+
     if (start_text_input || (g.ActiveId == id && g.ScalarAsInputTextId == id))
-        return InputScalarAsWidgetReplacement(frame_bb, label, ImGuiDataType_Float, v1, id, decimal_precision);
+    {
+        char fmt[64];
+        snprintf(fmt, 64, "%%.%df", decimal_precision);
+        return InputScalarAsWidgetReplacement(frame_bb, id, label, ImGuiDataType_Float, v1, fmt);
+    }
 
     ItemSize(total_bb, style.FramePadding.y);
 
