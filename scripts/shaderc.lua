@@ -130,6 +130,7 @@ project "glslang"
 
 	defines {
 		"ENABLE_OPT=1", -- spirv-tools
+		"ENABLE_HLSL=1",
 	}
 
 	includedirs {
@@ -214,11 +215,6 @@ project "glslang"
 	configuration { "mingw* or linux or osx" }
 		buildoptions {
 			"-fno-strict-aliasing", -- glslang has bugs if strict aliasing is used.
-		}
-
-	configuration {}
-		defines {
-			"ENABLE_HLSL=1",
 		}
 
 	configuration {}
