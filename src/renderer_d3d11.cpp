@@ -3746,7 +3746,6 @@ namespace bgfx { namespace d3d11
 		ID3D11Texture2D* eyeTexture;
 		ovr_GetTextureSwapChainBufferDX(m_session, m_textureSwapChain, index, IID_PPV_ARGS(&eyeTexture));
 
-		// resolve MSAA
 		if (NULL != m_msaaRtv)
 		{
 			deviceCtx->ResolveSubresource(eyeTexture, 0, m_msaaTexture, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
