@@ -111,6 +111,19 @@ namespace bgfx
 #define D3DCOLOR_COMPUTE toRgba8(0xa7, 0xdb, 0xd8, 0xff)
 #define D3DCOLOR_MARKER  toRgba8(0xff, 0x00, 0x00, 0xff)
 
+	inline bool isType(IUnknown* _interface, const GUID& _id)
+	{
+		IUnknown* out;
+		HRESULT hr = _interface->QueryInterface(_id, (void**)&out);
+		if (FAILED(hr) )
+		{
+			return false;
+		}
+
+		out->Release();
+		return true;
+	}
+
 	inline int getRefCount(IUnknown* _interface)
 	{
 		_interface->AddRef();

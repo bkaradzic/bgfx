@@ -395,6 +395,8 @@ namespace bgfx
 		}
 	}
 
+	static const GUID IID_ID3D12CommandQueue = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
+
 	HRESULT Dxgi::createSwapChain(IUnknown* _device, const SwapChainDesc& _scd, SwapChainI** _swapChain)
 	{
 		HRESULT hr = S_OK;
@@ -429,6 +431,12 @@ namespace bgfx
 			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
 			;
 
+		if (isType(_device, IID_ID3D12CommandQueue) )
+		{
+			scd.SampleDesc.Count   = 1;
+			scd.SampleDesc.Quality = 0;
+		}
+
 		hr = m_factory->CreateSwapChain(
 				  _device
 				, &scd
@@ -447,6 +455,12 @@ namespace bgfx
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
 		scd.Flags       = _scd.flags;
+
+		if (isType(_device, IID_ID3D12CommandQueue) )
+		{
+			scd.SampleDesc.Count   = 1;
+			scd.SampleDesc.Quality = 0;
+		}
 
 		if (NULL == _scd.ndt)
 		{
