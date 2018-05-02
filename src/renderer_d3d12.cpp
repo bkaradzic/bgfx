@@ -847,14 +847,15 @@ namespace bgfx { namespace d3d12
 
 			if (NULL == g_platformData.backBuffer)
 			{
-				updateMsaa();
-
 				bx::memSet(&m_scd, 0, sizeof(m_scd) );
 				m_scd.width  = _init.resolution.width;
 				m_scd.height = _init.resolution.height;
 				m_scd.format = DXGI_FORMAT_R8G8B8A8_UNORM;
 				m_scd.stereo  = false;
-				m_scd.sampleDesc  = s_msaa[(_init.resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+
+				updateMsaa(m_scd.format);
+				m_scd.sampleDesc = s_msaa[(_init.resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+
 				m_scd.bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 				m_scd.bufferCount = bx::uint32_min(BX_COUNTOF(m_backBufferColor), 4);
 				m_scd.scaling = 0 == g_platformData.ndt
@@ -1976,7 +1977,7 @@ namespace bgfx { namespace d3d12
 			m_samplerAllocator.reset();
 		}
 
-		void updateMsaa()
+		void updateMsaa(DXGI_FORMAT _format) const
 		{
 			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
@@ -1984,7 +1985,7 @@ namespace bgfx { namespace d3d12
 
 				D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS data;
 				bx::memSet(&data, 0, sizeof(msaa) );
-				data.Format = m_scd.format;
+				data.Format = _format;
 				data.SampleCount = msaa;
 				data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 				HRESULT hr = m_device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data) );
@@ -2093,7 +2094,7 @@ namespace bgfx { namespace d3d12
 				}
 				else
 				{
-					updateMsaa();
+					updateMsaa(m_scd.format);
 					m_scd.sampleDesc = s_msaa[(m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 					DX_RELEASE(m_swapChain, 0);

@@ -1005,8 +1005,10 @@ namespace bgfx { namespace d3d11
 					m_scd.width  = _init.resolution.width;
 					m_scd.height = _init.resolution.height;
 					m_scd.format  = DXGI_FORMAT_R8G8B8A8_UNORM;
-					m_scd.sampleDesc.Count   = 1;
-					m_scd.sampleDesc.Quality = 0;
+
+					updateMsaa(m_scd.format);
+					m_scd.sampleDesc  = s_msaa[(_init.resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+
 					m_scd.bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 					m_scd.bufferCount = m_swapBufferCount;
 					m_scd.scaling = 0 == g_platformData.ndt
@@ -1504,7 +1506,7 @@ namespace bgfx { namespace d3d11
 				}
 
 				//
-				updateMsaa();
+				updateMsaa(m_scd.format);
 				postReset();
 			}
 
@@ -2236,13 +2238,13 @@ namespace bgfx { namespace d3d11
 			m_deviceCtx->CSSetSamplers(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_sampler);
 		}
 
-		void updateMsaa()
+		void updateMsaa(DXGI_FORMAT _format) const
 		{
 			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
 				uint32_t msaa = s_checkMsaa[ii];
 				uint32_t quality = 0;
-				HRESULT hr = m_device->CheckMultisampleQualityLevels(m_scd.format, msaa, &quality);
+				HRESULT hr = m_device->CheckMultisampleQualityLevels(_format, msaa, &quality);
 
 				if (SUCCEEDED(hr)
 				&&  0 < quality)
@@ -2362,7 +2364,7 @@ namespace bgfx { namespace d3d11
 					}
 					else
 					{
-						updateMsaa();
+						updateMsaa(m_scd.format);
 						m_scd.sampleDesc = s_msaa[(m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 						DX_RELEASE(m_swapChain, 0);
