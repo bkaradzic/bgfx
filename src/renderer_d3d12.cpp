@@ -1611,6 +1611,16 @@ namespace bgfx { namespace d3d12
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) override
 		{
+			finishAll(true);
+
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+			{
+				if (m_frameBuffers[ii].m_nwh == _nwh)
+				{
+					m_frameBuffers[ii].destroy();
+				}
+			}
+
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
 			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat);
@@ -1618,7 +1628,14 @@ namespace bgfx { namespace d3d12
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
-			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
+			FrameBufferD3D12& frameBuffer = m_frameBuffers[_handle.idx];
+
+			if (NULL != frameBuffer.m_swapChain)
+			{
+				finishAll(true);
+			}
+
+			uint16_t denseIdx = frameBuffer.destroy();
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
@@ -3060,11 +3077,11 @@ namespace bgfx { namespace d3d12
 			m_commandList = NULL;
 		}
 
-		void finishAll()
+		void finishAll(bool _alloc = false)
 		{
 			uint64_t fence = m_cmd.kick();
 			m_cmd.finish(fence, true);
-			m_commandList = NULL;
+			m_commandList = _alloc ? m_cmd.alloc() : NULL;
 		}
 
 		Dxgi m_dxgi;
@@ -4869,6 +4886,7 @@ namespace bgfx { namespace d3d12
 		}
 #endif // BX_PLATFORM_WINDOWS
 
+		m_nwh      = _nwh;
 		m_denseIdx = _denseIdx;
 		m_num      = 1;
 	}
@@ -4877,6 +4895,7 @@ namespace bgfx { namespace d3d12
 	{
 		DX_RELEASE(m_swapChain, 0);
 
+		m_nwh   = NULL;
 		m_numTh = 0;
 		m_needPresent = false;
 
@@ -6526,8 +6545,11 @@ namespace bgfx { namespace d3d12
 		for (uint32_t ii = 1, num = m_numWindows; ii < num; ++ii)
 		{
 			FrameBufferD3D12& frameBuffer = m_frameBuffers[m_windows[ii].idx];
-			uint8_t idx = uint8_t(frameBuffer.m_swapChain->GetCurrentBackBufferIndex() );
-			frameBuffer.setState(m_commandList, idx, D3D12_RESOURCE_STATE_PRESENT);
+			if (NULL != frameBuffer.m_swapChain)
+			{
+				uint8_t idx = uint8_t(frameBuffer.m_swapChain->GetCurrentBackBufferIndex() );
+				frameBuffer.setState(m_commandList, idx, D3D12_RESOURCE_STATE_PRESENT);
+			}
 		}
 #endif // BX_PLATFORM_WINDOWS
 
