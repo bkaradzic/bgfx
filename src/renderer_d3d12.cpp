@@ -892,6 +892,31 @@ namespace bgfx { namespace d3d12
 					m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
 					m_textVideoMem.clear();
 				}
+
+				if (1 < m_scd.sampleDesc.Count)
+				{
+					D3D12_RESOURCE_DESC resourceDesc;
+					resourceDesc.Dimension  = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+					resourceDesc.Alignment  = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
+					resourceDesc.Width      = m_scd.width;
+					resourceDesc.Height     = m_scd.height;
+					resourceDesc.MipLevels  = 1;
+					resourceDesc.Format     = m_scd.format;
+					resourceDesc.SampleDesc = m_scd.sampleDesc;
+					resourceDesc.Layout     = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+					resourceDesc.Flags      = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+					resourceDesc.DepthOrArraySize = 1;
+
+					D3D12_CLEAR_VALUE clearValue;
+					clearValue.Format   = resourceDesc.Format;
+					clearValue.Color[0] = 0.0f;
+					clearValue.Color[1] = 0.0f;
+					clearValue.Color[2] = 0.0f;
+					clearValue.Color[3] = 0.0f;
+
+					m_msaaRt = createCommittedResource(m_device, HeapProperty::Texture, &resourceDesc, &clearValue, true);
+					setDebugObjectName(m_msaaRt, "MSAA Backbuffer");
+				}
 			}
 
 			m_presentElapsed = 0;

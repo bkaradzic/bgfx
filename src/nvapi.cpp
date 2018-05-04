@@ -252,11 +252,19 @@ namespace bgfx
 				if (1 == result)
 				{
 					result = nvAftermathDx12CreateContextHandle(_commandList, &m_aftermathHandle);
-					BX_WARN(1 == result, "%x", result);
+					BX_WARN(1 == result, "NV Aftermath: nvAftermathDx12CreateContextHandle failed %x", result);
 
 					if (1 == result)
 					{
 						return true;
+					}
+				}
+				else
+				{
+					switch (result)
+					{
+					case int32_t(0xbad0000a): BX_TRACE("NV Aftermath: Debug layer not compatible with Aftermath."); break;
+					default:                  BX_TRACE("NV Aftermath: Failed to initialize."); break;
 					}
 				}
 			}
