@@ -736,7 +736,7 @@ namespace bgfx { namespace d3d12
 				{
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 					{
-//						debug0->EnableDebugLayer();
+						debug0->EnableDebugLayer();
 
 #if BX_PLATFORM_WINDOWS
 						{
@@ -1926,7 +1926,7 @@ namespace bgfx { namespace d3d12
 					, (void**)&m_backBufferColor[ii]
 					) );
 				m_device->CreateRenderTargetView(
-						NULL == m_msaaRt
+					  NULL == m_msaaRt
 					? m_backBufferColor[ii]
 					: m_msaaRt
 					, NULL
@@ -4574,14 +4574,16 @@ namespace bgfx { namespace d3d12
 			}
 			else if (renderTarget)
 			{
+				resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+				state              |= D3D12_RESOURCE_STATE_RENDER_TARGET;
+				state              &= ~D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
 				clearValue = (D3D12_CLEAR_VALUE*)alloca(sizeof(D3D12_CLEAR_VALUE) );
 				clearValue->Format = resourceDesc.Format;
 				clearValue->Color[0] = 0.0f;
 				clearValue->Color[1] = 0.0f;
 				clearValue->Color[2] = 0.0f;
 				clearValue->Color[3] = 0.0f;
-
-				resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 			}
 
 			if (writeOnly)
