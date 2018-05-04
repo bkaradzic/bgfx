@@ -4756,7 +4756,19 @@ BGFX_C_API void bgfx_init_ctor(bgfx_init_t* _init)
 
 BGFX_C_API bool bgfx_init(const bgfx_init_t* _init)
 {
-	return bgfx::init(*reinterpret_cast<const bgfx::Init*>(_init) );
+	bgfx_init_t init = *_init;
+	if (init.callback != NULL) {
+		static bgfx::CallbackC99 s_callback;
+		s_callback.m_interface = init.callback;
+		init.callback = reinterpret_cast<bgfx_callback_interface_t *>(&s_callback);
+	}
+	if (init.allocator != NULL) {
+		static bgfx::AllocatorC99 s_allocator;
+		s_allocator.m_interface = init.allocator;
+		init.allocator = reinterpret_cast<bgfx_allocator_interface_t *>(&s_allocator);
+	}
+
+	return bgfx::init(*reinterpret_cast<const bgfx::Init*>(&init) );
 }
 
 BGFX_C_API void bgfx_shutdown(void)
