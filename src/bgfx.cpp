@@ -2128,12 +2128,17 @@ namespace bgfx
 				}
 				else if (BX_ENABLED(BX_PLATFORM_OSX) )
 				{
-					score += RendererType::OpenGL   == renderer ? 20 : 0;
+					score += RendererType::Metal    == renderer ? 20 : 0;
+					score += RendererType::OpenGL   == renderer ? 10 : 0;
+				}
+				else if (BX_ENABLED(BX_PLATFORM_IOS) )
+				{
+					score += RendererType::Metal    == renderer ? 20 : 0;
+					score += RendererType::OpenGLES == renderer ? 10 : 0;
 				}
 				else if (BX_ENABLED(0
 					 ||  BX_PLATFORM_ANDROID
 					 ||  BX_PLATFORM_EMSCRIPTEN
-					 ||  BX_PLATFORM_IOS
 					 ||  BX_PLATFORM_RPI
 					 ) )
 				{
