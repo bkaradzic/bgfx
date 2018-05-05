@@ -132,7 +132,7 @@ public:
             target = &inputList;
         else if (base->getQualifier().storage == EvqVaryingOut)
             target = &outputList;
-        else if (base->getQualifier().isUniformOrBuffer())
+        else if (base->getQualifier().isUniformOrBuffer() && !base->getQualifier().layoutPushConstant)
             target = &uniformList;
 
         if (target) {

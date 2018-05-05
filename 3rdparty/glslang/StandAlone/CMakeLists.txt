@@ -44,4 +44,9 @@ if(ENABLE_GLSLANG_INSTALL)
 
     install(TARGETS spirv-remap
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+            
+    if(BUILD_SHARED_LIBS)
+        install(TARGETS glslang-default-resource-limits
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    endif()
 endif(ENABLE_GLSLANG_INSTALL)
