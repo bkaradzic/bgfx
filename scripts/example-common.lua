@@ -30,8 +30,8 @@ project ("example-common")
 	files {
 		path.join(BGFX_DIR, "3rdparty/ib-compress/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/ib-compress/**.h"),
-		path.join(BGFX_DIR, "3rdparty/ocornut-imgui/**.cpp"),
-		path.join(BGFX_DIR, "3rdparty/ocornut-imgui/**.h"),
+		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.h"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.h"),

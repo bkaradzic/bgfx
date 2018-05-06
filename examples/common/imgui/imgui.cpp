@@ -8,7 +8,7 @@
 #include <bx/allocator.h>
 #include <bx/math.h>
 #include <bx/timer.h>
-#include <ocornut-imgui/imgui.h>
+#include <dear-imgui/imgui.h>
 
 #include "imgui.h"
 #include "../bgfx_utils.h"
