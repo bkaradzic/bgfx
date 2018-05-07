@@ -37,7 +37,7 @@ struct PosTexcoordVertex
 
 bgfx::VertexDecl PosTexcoordVertex::ms_decl;
 
-static PosTexcoordVertex s_m_cubeVertices[28] =
+static PosTexcoordVertex s_cubeVertices[] =
 {
 	{-1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f },
 	{ 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f },
@@ -74,8 +74,9 @@ static PosTexcoordVertex s_m_cubeVertices[28] =
 	{-1.0f, -1.0f,  1.0f, -2.0f, -2.0f,  2.0f },
 	{ 1.0f, -1.0f,  1.0f,  2.0f, -2.0f,  2.0f },
 };
+BX_STATIC_ASSERT(BX_COUNTOF(s_cubeVertices) == 28);
 
-static const uint16_t s_m_cubeIndices[36] =
+static const uint16_t s_cubeIndices[] =
 {
 	 0,  1,  2, // 0
 	 1,  3,  2,
@@ -95,8 +96,20 @@ static const uint16_t s_m_cubeIndices[36] =
 	20, 22, 21, // 10
 	21, 22, 23,
 };
+BX_STATIC_ASSERT(BX_COUNTOF(s_cubeIndices) == 36);
 
-static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _side, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 0xff)
+static void updateTextureCubeRectBgra8(
+	  bgfx::TextureHandle _handle
+	, uint8_t _side
+	, uint16_t _x
+	, uint16_t _y
+	, uint16_t _width
+	, uint16_t _height
+	, uint8_t _r
+	, uint8_t _g
+	, uint8_t _b
+	, uint8_t _a = 0xff
+	)
 {
 	bgfx::TextureInfo ti;
 	bgfx::calcTextureSize(ti, _width, _height, 1, false, false, 1, bgfx::TextureFormat::BGRA8);
@@ -115,15 +128,15 @@ static void updateTextureCubeRectBgra8(bgfx::TextureHandle _handle, uint8_t _sid
 	bgfx::updateTextureCube(_handle, 0, _side, 0, _x, _y, _width, _height, mem);
 }
 
-static const uint16_t textureside   = 512;
-static const uint32_t texture2dSize = 256;
+static const uint16_t kTextureSide   = 512;
+static const uint32_t kTexture2dSize = 256;
 
 class ExampleUpdate : public entry::AppI
 {
 public:
 	ExampleUpdate(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
-		, m_cube(textureside)
+		, m_cube(kTextureSide)
 	{
 	}
 
@@ -211,10 +224,10 @@ public:
 		}
 
 		// Create static vertex buffer.
-		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_m_cubeVertices, sizeof(s_m_cubeVertices) ), PosTexcoordVertex::ms_decl);
+		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_decl);
 
 		// Create static index buffer.
-		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_m_cubeIndices, sizeof(s_m_cubeIndices) ) );
+		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create programs.
 		m_program    = loadProgram("vs_update", "fs_update");
@@ -244,7 +257,7 @@ public:
 		}
 
 		m_textureCube[0] = bgfx::createTextureCube(
-			  textureside
+			  kTextureSide
 			, false
 			, 1
 			, bgfx::TextureFormat::BGRA8
@@ -254,7 +267,7 @@ public:
 		if (m_blitSupported)
 		{
 			m_textureCube[1] = bgfx::createTextureCube(
-				  textureside
+				  kTextureSide
 				, false
 				, 1
 				, bgfx::TextureFormat::BGRA8
@@ -265,7 +278,7 @@ public:
 		if (m_computeSupported)
 		{
 			m_textureCube[2] = bgfx::createTextureCube(
-				  textureside
+				  kTextureSide
 				, false
 				, 1
 				, bgfx::TextureFormat::RGBA8
@@ -274,15 +287,15 @@ public:
 		}
 
 		m_texture2d = bgfx::createTexture2D(
-			  texture2dSize
-			, texture2dSize
+			  kTexture2dSize
+			, kTexture2dSize
 			, false
 			, 1
 			, bgfx::TextureFormat::BGRA8
 			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
 			);
 
-		m_texture2dData = (uint8_t*)malloc(texture2dSize*texture2dSize*4);
+		m_texture2dData = (uint8_t*)malloc(kTexture2dSize*kTexture2dSize*4);
 
 		m_rr = rand()%255;
 		m_gg = rand()%255;
@@ -388,8 +401,8 @@ public:
 			{
 				PackCube face;
 
-				uint16_t bw = bx::uint16_max(1, rand()%(textureside/4) );
-				uint16_t bh = bx::uint16_max(1, rand()%(textureside/4) );
+				uint16_t bw = bx::uint16_max(1, rand()%(kTextureSide/4) );
+				uint16_t bh = bx::uint16_max(1, rand()%(kTextureSide/4) );
 
 				if (m_cube.find(bw, bh, face) )
 				{
@@ -430,14 +443,14 @@ public:
 
 				{
 					// Fill rect.
-					const uint32_t pitch = texture2dSize*4;
+					const uint32_t pitch = kTexture2dSize*4;
 
-					const uint16_t tw = rand()% texture2dSize;
-					const uint16_t th = rand()% texture2dSize;
-					const uint16_t tx = rand()%(texture2dSize-tw);
-					const uint16_t ty = rand()%(texture2dSize-th);
+					const uint16_t tw = rand()% kTexture2dSize;
+					const uint16_t th = rand()% kTexture2dSize;
+					const uint16_t tx = rand()%(kTexture2dSize-tw);
+					const uint16_t ty = rand()%(kTexture2dSize-th);
 
-					uint8_t* dst = &m_texture2dData[(ty*texture2dSize+tx)*4];
+					uint8_t* dst = &m_texture2dData[(ty*kTexture2dSize+tx)*4];
 					uint8_t* next = dst + pitch;
 
 					// Using makeRef to pass texture memory without copying.
@@ -476,7 +489,7 @@ public:
 			if (bgfx::isValid(m_programCompute) )
 			{
 				bgfx::setImage(0, m_textureCube[2], 0, bgfx::Access::Write);
-				bgfx::dispatch(0, m_programCompute, textureside/16, textureside/16);
+				bgfx::dispatch(0, m_programCompute, kTextureSide/16, kTextureSide/16);
 			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCube); ++ii)
@@ -490,7 +503,7 @@ public:
 					bgfx::setTransform(mtx);
 
 					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0,  m_vbh );
+					bgfx::setVertexBuffer(0,  m_vbh);
 					bgfx::setIndexBuffer(m_ibh);
 
 					// Bind texture.
