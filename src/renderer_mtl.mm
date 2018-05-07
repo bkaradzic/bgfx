@@ -333,7 +333,14 @@ namespace bgfx { namespace mtl
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
-	int s_msaa[5] = { 1,2,4,8,16 };
+	int s_msaa[] =
+	{
+		 1,
+		 2,
+		 4,
+		 8,
+		16,
+	};
 
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME ("_mtl_u")
@@ -944,14 +951,15 @@ namespace bgfx { namespace mtl
 
 			m_screenshotTarget.getBytes(data, 4*width, 0, region, 0, 0);
 
-			g_callback->screenShot(_filePath
-					, m_screenshotTarget.width()
-					, m_screenshotTarget.height()
-					, width*4
-					, data
-					, length
-					, false
-					);
+			g_callback->screenShot(
+				  _filePath
+				, m_screenshotTarget.width()
+				, m_screenshotTarget.height()
+				, width*4
+				, data
+				, length
+				, false
+				);
 
 			BX_FREE(g_allocator, data);
 
@@ -1017,26 +1025,26 @@ namespace bgfx { namespace mtl
 			uint32_t width  = m_resolution.width;
 			uint32_t height = m_resolution.height;
 
-			//if (m_ovr.isEnabled() )
-			//{
-			//	m_ovr.getSize(width, height);
-			//}
-
 			FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
 
 			if (NULL == rce
 			||  m_renderCommandEncoderFrameBufferHandle.idx != kInvalidHandle)
 			{
-				if (m_renderCommandEncoder )
+				if (m_renderCommandEncoder)
+				{
 					m_renderCommandEncoder.endEncoding();
+				}
 
 				RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
 
 				setFrameBuffer(renderPassDescriptor, fbh);
 
 				renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
-				renderPassDescriptor.colorAttachments[0].storeAction = NULL != renderPassDescriptor.colorAttachments[0].resolveTexture ?
-					MTLStoreActionMultisampleResolve : MTLStoreActionStore;
+				renderPassDescriptor.colorAttachments[0].storeAction =
+					NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
+					? MTLStoreActionMultisampleResolve
+					: MTLStoreActionStore
+					;
 
 				rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 				m_renderCommandEncoder = rce;
@@ -1115,7 +1123,6 @@ namespace bgfx { namespace mtl
 				return;
 			}
 
-			// Present and commit the command buffer
 			if (NULL != m_drawable)
 			{
 				m_commandBuffer.presentDrawable(m_drawable);
@@ -1469,14 +1476,14 @@ namespace bgfx { namespace mtl
 
 			uint64_t stencil = 0;
 			stencil |= _clear.m_flags & BGFX_CLEAR_STENCIL ? 0
-			| BGFX_STENCIL_TEST_ALWAYS
-			| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
-			| BGFX_STENCIL_FUNC_RMASK(0xff)
-			| BGFX_STENCIL_OP_FAIL_S_REPLACE
-			| BGFX_STENCIL_OP_FAIL_Z_REPLACE
-			| BGFX_STENCIL_OP_PASS_Z_REPLACE
-			: 0
-			;
+				| BGFX_STENCIL_TEST_ALWAYS
+				| BGFX_STENCIL_FUNC_REF(_clear.m_stencil)
+				| BGFX_STENCIL_FUNC_RMASK(0xff)
+				| BGFX_STENCIL_OP_FAIL_S_REPLACE
+				| BGFX_STENCIL_OP_FAIL_Z_REPLACE
+				| BGFX_STENCIL_OP_PASS_Z_REPLACE
+				: 0
+				;
 
 			setDepthStencilState(state, stencil);
 
@@ -1782,7 +1789,6 @@ namespace bgfx { namespace mtl
 			return m_drawable;
 		}
 
-
 		Device            m_device;
 		OcclusionQueryMTL m_occlusionQuery;
 		TimerQueryMtl     m_gpuTimer;
@@ -1907,9 +1913,9 @@ namespace bgfx { namespace mtl
 		bx::read(&reader, count);
 
 		BX_TRACE("%s Shader consts %d"
-				 , BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
-				 , count
-				 );
+			, BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
+			, count
+			);
 
 		for (uint32_t ii = 0; ii < count; ++ii)
 		{
@@ -1995,6 +2001,7 @@ namespace bgfx { namespace mtl
 				}
 			}
 		}
+
 		m_used[used] = Attrib::Count;
 		m_instanceData[instUsed] = UINT16_MAX;
 	}
@@ -2032,24 +2039,24 @@ namespace bgfx { namespace mtl
 	{
 		switch (_type)
 		{
-			case MTLDataTypeUInt:
-			case MTLDataTypeInt:
-				return UniformType::Int1;
+		case MTLDataTypeUInt:
+		case MTLDataTypeInt:
+			return UniformType::Int1;
 
-			case MTLDataTypeFloat:
-			case MTLDataTypeFloat2:
-			case MTLDataTypeFloat3:
-			case MTLDataTypeFloat4:
-				return UniformType::Vec4;
+		case MTLDataTypeFloat:
+		case MTLDataTypeFloat2:
+		case MTLDataTypeFloat3:
+		case MTLDataTypeFloat4:
+			return UniformType::Vec4;
 
-			case MTLDataTypeFloat3x3:
-				return UniformType::Mat3;
+		case MTLDataTypeFloat3x3:
+			return UniformType::Mat3;
 
-			case MTLDataTypeFloat4x4:
-				return UniformType::Mat4;
+		case MTLDataTypeFloat4x4:
+			return UniformType::Mat4;
 
-			default:
-				break;
+		default:
+			break;
 		};
 
 		BX_CHECK(false, "Unrecognized Mtl Data type 0x%04x.", _type);
@@ -2217,7 +2224,7 @@ namespace bgfx { namespace mtl
 					bool normalized;
 					bool asInt;
 					vertexDecl.decode(attr, num, type, normalized, asInt);
-					BX_CHECK(num <= 4, "num must be <=4");
+					BX_CHECK(num <= 4, "num must be <= 4");
 
 					if (UINT16_MAX != vertexDecl.m_attributes[attr])
 					{
@@ -2348,7 +2355,6 @@ namespace bgfx { namespace mtl
 													BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform.offset) );
 												}
 											}
-
 										}
 									}
 								}
@@ -3496,7 +3502,7 @@ namespace bgfx { namespace mtl
 						MTL_RELEASE(renderPassDescriptor);
 					}
 
-					rce.setTriangleFillMode(wireframe? MTLTriangleFillModeLines : MTLTriangleFillModeFill);
+					rce.setTriangleFillMode(wireframe ? MTLTriangleFillModeLines : MTLTriangleFillModeFill);
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
 					{
