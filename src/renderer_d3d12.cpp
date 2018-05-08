@@ -2620,7 +2620,14 @@ namespace bgfx { namespace d3d12
 			return pso;
 		}
 
-		ID3D12PipelineState* getPipelineState(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexDecl** _vertexDecls, uint16_t _programIdx, uint8_t _numInstanceData)
+		ID3D12PipelineState* getPipelineState(
+			  uint64_t _state
+			, uint64_t _stencil
+			, uint8_t _numStreams
+			, const VertexDecl** _vertexDecls
+			, uint16_t _programIdx
+			, uint8_t _numInstanceData
+			)
 		{
 			ProgramD3D12& program = m_program[_programIdx];
 

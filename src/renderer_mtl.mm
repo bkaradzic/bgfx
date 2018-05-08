@@ -1067,7 +1067,13 @@ namespace bgfx { namespace mtl
 			setDepthStencilState(state);
 
 			ProgramMtl& program = m_program[_blitter.m_program.idx];
-			RenderPipelineState pipelineState = program.getRenderPipelineState(state, 0, fbh, _blitter.m_vb->decl, 0);
+			RenderPipelineState pipelineState = program.getRenderPipelineState(
+				  state
+				, 0
+				, fbh
+				, _blitter.m_vb->decl
+				, 0
+				);
 			rce.setRenderPipelineState(pipelineState);
 
 			uint32_t vertexUniformBufferSize   = program.m_vshConstantBufferSize;
@@ -1496,7 +1502,8 @@ namespace bgfx { namespace mtl
 			}
 
 			ProgramMtl& program = m_program[_clearQuad.m_program[numMrt-1].idx];
-			m_renderCommandEncoder.setRenderPipelineState(program.getRenderPipelineState(state, 0, fbh, _clearQuad.m_vb->decl, 0) );
+			RenderPipelineState pso = program.getRenderPipelineState(state, 0, fbh, _clearQuad.m_vb->decl, 0);
+			m_renderCommandEncoder.setRenderPipelineState(pso);
 
 			uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
 
@@ -2032,7 +2039,7 @@ namespace bgfx { namespace mtl
 		m_processedUniforms = false;
 		m_numPredefined     = 0;
 
-		m_renderPipelineStateCache.invalidate();
+		m_pipelineStateCache.invalidate();
 	}
 
 	UniformType::Enum convertMtlType(MTLDataType _type)
@@ -2063,7 +2070,13 @@ namespace bgfx { namespace mtl
 		return UniformType::End;
 	}
 
-	RenderPipelineState ProgramMtl::getRenderPipelineState(uint64_t _state, uint32_t _rgba, FrameBufferHandle _fbHandle, VertexDeclHandle _declHandle,  uint16_t _numInstanceData)
+	RenderPipelineState ProgramMtl::getRenderPipelineState(
+		  uint64_t _state
+		, uint32_t _rgba
+		, FrameBufferHandle _fbh
+		, VertexDeclHandle _declHandle
+		, uint16_t _numInstanceData
+		)
 	{
 		_state &= (0
 			| BGFX_STATE_BLEND_MASK
@@ -2081,21 +2094,21 @@ namespace bgfx { namespace mtl
 		murmur.begin();
 		murmur.add(_state);
 		murmur.add(independentBlendEnable ? _rgba : 0);
-		if (!isValid(_fbHandle) )
+		if (!isValid(_fbh) )
 		{
 			murmur.add(s_renderMtl->m_backBufferPixelFormatHash);
 		}
 		else
 		{
-			FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbHandle.idx];
+			FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbh.idx];
 			murmur.add(frameBuffer.m_pixelFormatHash);
 		}
 		murmur.add(s_renderMtl->m_vertexDecls[_declHandle.idx].m_hash);
 		murmur.add(_numInstanceData);
 		uint32_t hash = murmur.end();
 
-		RenderPipelineState rps = m_renderPipelineStateCache.find(hash);
-		if (NULL == rps)
+		RenderPipelineState pso = m_pipelineStateCache.find(hash);
+		if (NULL == pso)
 		{
 			RenderPipelineDescriptor& pd = s_renderMtl->m_renderPipelineDescriptor;
 			reset(pd);
@@ -2104,7 +2117,7 @@ namespace bgfx { namespace mtl
 
 			uint32_t frameBufferAttachment = 1;
 
-			if (!isValid(_fbHandle) )
+			if (!isValid(_fbh) )
 			{
 				pd.sampleCount = NULL != s_renderMtl->m_backBufferColorMSAA
 					? s_renderMtl->m_backBufferColorMSAA.sampleCount()
@@ -2116,7 +2129,7 @@ namespace bgfx { namespace mtl
 			}
 			else
 			{
-				FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbHandle.idx];
+				FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbh.idx];
 				frameBufferAttachment = frameBuffer.m_num;
 
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
@@ -2267,13 +2280,13 @@ namespace bgfx { namespace mtl
 
 			if (m_processedUniforms)
 			{
-				rps = s_renderMtl->m_device.newRenderPipelineStateWithDescriptor(pd);
+				pso = s_renderMtl->m_device.newRenderPipelineStateWithDescriptor(pd);
 			}
 			else
 			{
 				m_numPredefined = 0;
 				RenderPipelineReflection reflection = NULL;
-				rps = s_renderMtl->m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
+				pso = s_renderMtl->m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
 
 				if (NULL != reflection)
 				{
@@ -2397,10 +2410,10 @@ namespace bgfx { namespace mtl
 				m_processedUniforms = true;
 			}
 
-			m_renderPipelineStateCache.add(hash, rps);
+			m_pipelineStateCache.add(hash, pso);
 		}
 
-		return rps;
+		return pso;
 	}
 
 
@@ -3718,7 +3731,7 @@ namespace bgfx { namespace mtl
 						ProgramMtl& program = m_program[programIdx];
 						currentProgram = &program;
 
-						RenderPipelineState pipelineState = NULL;
+						RenderPipelineState pso = NULL;
 
 						if (isValid(draw.m_stream[0].m_handle) )
 						{
@@ -3727,17 +3740,17 @@ namespace bgfx { namespace mtl
 							VertexDeclHandle decl;
 							decl.idx = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
 
-							pipelineState = program.getRenderPipelineState(newFlags, draw.m_rgba, fbh, decl, draw.m_instanceDataStride/16);
+							pso = program.getRenderPipelineState(newFlags, draw.m_rgba, fbh, decl, draw.m_instanceDataStride/16);
 						}
 
-						if (NULL == pipelineState)
+						if (NULL == pso)
 						{
 							currentProgram = NULL;
 							programIdx = kInvalidHandle;
 							continue;
 						}
 
-						rce.setRenderPipelineState(pipelineState);
+						rce.setRenderPipelineState(pso);
 					}
 
 					programChanged =

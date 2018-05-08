@@ -800,12 +800,12 @@ namespace bgfx { namespace mtl
 		RenderPipelineState getRenderPipelineState(
 			  uint64_t _state
 			, uint32_t _rgba
-			, FrameBufferHandle _fbHandle
+			, FrameBufferHandle _fbh
 			, VertexDeclHandle _declHandle
 			, uint16_t _numInstanceData
 			);
 
-		StateCacheT<RenderPipelineState> m_renderPipelineStateCache;
+		StateCacheT<RenderPipelineState> m_pipelineStateCache;
 
 		uint8_t  m_used[Attrib::Count+1]; // dense
 		uint32_t m_attributes[Attrib::Count]; // sparse
