@@ -31,9 +31,11 @@ namespace bgfx { namespace mtl
 #endif
 	}
 
-	inline bool macOSVersionEqualOrGreater(NSInteger _majorVersion,
-										   NSInteger _minorVersion,
-										   NSInteger _patchVersion)
+	inline bool macOSVersionEqualOrGreater(
+		  NSInteger _majorVersion
+		, NSInteger _minorVersion
+		, NSInteger _patchVersion
+		)
 	{
 #if BX_PLATFORM_OSX
 		NSOperatingSystemVersion v = [[NSProcessInfo processInfo] operatingSystemVersion];
@@ -825,6 +827,7 @@ namespace bgfx { namespace mtl
 			bgfx::UniformHandle m_uniform;
 			bool				m_fragment;
 		};
+
 		SamplerInfo m_samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t	m_samplerCount;
 
@@ -856,11 +859,13 @@ namespace bgfx { namespace mtl
 		}
 
 		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
+
 		void destroy()
 		{
 			MTL_RELEASE(m_ptr);
 			MTL_RELEASE(m_ptrStencil);
 		}
+
 		void update(
 			  uint8_t _side
 			, uint8_t _mip
@@ -870,6 +875,7 @@ namespace bgfx { namespace mtl
 			, uint16_t _pitch
 			, const Memory* _mem
 			);
+
 		void commit(
 			  uint8_t _stage
 			, bool _vertex
@@ -912,7 +918,6 @@ namespace bgfx { namespace mtl
 		void postReset();
 		uint16_t destroy();
 
-//		SwapChainMtl* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
