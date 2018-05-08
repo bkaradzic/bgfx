@@ -2110,10 +2110,10 @@ namespace bgfx { namespace mtl
 		RenderPipelineState pso = m_pipelineStateCache.find(hash);
 		if (NULL == pso)
 		{
-			RenderPipelineDescriptor& pd = s_renderMtl->m_renderPipelineDescriptor;
+			RenderPipelineDescriptor pd = s_renderMtl->m_renderPipelineDescriptor;
 			reset(pd);
 
-			pd.alphaToCoverageEnabled  = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
+			pd.alphaToCoverageEnabled = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 
 			uint32_t frameBufferAttachment = 1;
 
@@ -2129,7 +2129,7 @@ namespace bgfx { namespace mtl
 			}
 			else
 			{
-				FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbh.idx];
+				const FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbh.idx];
 				frameBufferAttachment = frameBuffer.m_num;
 
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
@@ -2226,7 +2226,7 @@ namespace bgfx { namespace mtl
 				VertexDescriptor vertexDesc = s_renderMtl->m_vertexDescriptor;
 				reset(vertexDesc);
 
-				VertexDecl &vertexDecl = s_renderMtl->m_vertexDecls[_declHandle.idx];
+				const VertexDecl& vertexDecl = s_renderMtl->m_vertexDecls[_declHandle.idx];
 				for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
 				{
 					Attrib::Enum attr = Attrib::Enum(m_used[ii]);
@@ -2333,14 +2333,15 @@ namespace bgfx { namespace mtl
 												num = (uint32_t)uniform.arrayType.arrayLength;
 											}
 
-											switch (dataType) {
-												case MTLDataTypeFloat4:   num *= 1; break;
-												case MTLDataTypeFloat4x4: num *= 4; break;
-												case MTLDataTypeFloat3x3: num *= 3; break;
+											switch (dataType)
+											{
+											case MTLDataTypeFloat4:   num *= 1; break;
+											case MTLDataTypeFloat4x4: num *= 4; break;
+											case MTLDataTypeFloat3x3: num *= 3; break;
 
-												default:
-													BX_WARN(0, "Unsupported uniform MTLDataType: %d", uniform.dataType);
-													break;
+											default:
+												BX_WARN(0, "Unsupported uniform MTLDataType: %d", uniform.dataType);
+												break;
 											}
 
 											PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
@@ -2857,6 +2858,7 @@ namespace bgfx { namespace mtl
 			const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
 			murmur.add( (uint32_t)texture.m_ptr.pixelFormat() );
 		}
+
 		if (!isValid(m_depthHandle) )
 		{
 			murmur.add( (uint32_t)MTLPixelFormatInvalid);
@@ -2918,6 +2920,7 @@ namespace bgfx { namespace mtl
 	static void commandBufferFinishedCallback(void* _data)
 	{
 		CommandQueueMtl* queue = (CommandQueueMtl*)_data;
+
 		if (queue)
 		{
 			queue->m_framesSemaphore.post();
@@ -2935,6 +2938,7 @@ namespace bgfx { namespace mtl
 			}
 
 			m_activeCommandBuffer.commit();
+
 			if (_waitForFinish)
 			{
 				m_activeCommandBuffer.waitUntilCompleted();
@@ -2977,10 +2981,12 @@ namespace bgfx { namespace mtl
 		m_releaseReadIndex = (m_releaseReadIndex + 1) % MTL_MAX_FRAMES_IN_FLIGHT;
 
 		ResourceArray& ra = m_release[m_releaseReadIndex];
+
 		for (ResourceArray::iterator it = ra.begin(), itEnd = ra.end(); it != itEnd; ++it)
 		{
 			bgfx::mtl::release(*it);
 		}
+
 		ra.clear();
 	}
 
@@ -3063,6 +3069,7 @@ namespace bgfx { namespace mtl
 	void OcclusionQueryMTL::resolve(Frame* _render, bool _wait)
 	{
 		BX_UNUSED(_wait);
+
 		while (0 != m_control.available() )
 		{
 			Query& query = m_query[m_control.m_read];
