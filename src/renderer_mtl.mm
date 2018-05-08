@@ -342,6 +342,34 @@ namespace bgfx { namespace mtl
 		16,
 	};
 
+	static UniformType::Enum convertMtlType(MTLDataType _type)
+	{
+		switch (_type)
+		{
+		case MTLDataTypeUInt:
+		case MTLDataTypeInt:
+			return UniformType::Int1;
+
+		case MTLDataTypeFloat:
+		case MTLDataTypeFloat2:
+		case MTLDataTypeFloat3:
+		case MTLDataTypeFloat4:
+			return UniformType::Vec4;
+
+		case MTLDataTypeFloat3x3:
+			return UniformType::Mat3;
+
+		case MTLDataTypeFloat4x4:
+			return UniformType::Mat4;
+
+		default:
+			break;
+		};
+
+		BX_CHECK(false, "Unrecognized Mtl Data type 0x%04x.", _type);
+		return UniformType::End;
+	}
+
 #define SHADER_FUNCTION_NAME ("xlatMtlMain")
 #define SHADER_UNIFORM_NAME ("_mtl_u")
 
@@ -663,6 +691,8 @@ namespace bgfx { namespace mtl
 		{
 			m_occlusionQuery.postReset();
 			m_gpuTimer.shutdown();
+
+			m_pipelineStateCache.invalidate();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
 			{
@@ -1066,16 +1096,17 @@ namespace bgfx { namespace mtl
 
 			setDepthStencilState(state);
 
-			ProgramMtl& program = m_program[_blitter.m_program.idx];
-			RenderPipelineState pipelineState = program.getRenderPipelineState(
+			RenderPipelineState pso = getPipelineState(
 				  state
 				, 0
 				, fbh
 				, _blitter.m_vb->decl
+				, _blitter.m_program.idx
 				, 0
 				);
-			rce.setRenderPipelineState(pipelineState);
+			rce.setRenderPipelineState(pso);
 
+			ProgramMtl& program = m_program[_blitter.m_program.idx];
 			uint32_t vertexUniformBufferSize   = program.m_vshConstantBufferSize;
 			uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
 
@@ -1475,7 +1506,6 @@ namespace bgfx { namespace mtl
 				height = m_resolution.height;
 			}
 
-
 			uint64_t state = 0;
 			state |= _clear.m_flags & BGFX_CLEAR_COLOR ? BGFX_STATE_WRITE_RGB|BGFX_STATE_WRITE_A         : 0;
 			state |= _clear.m_flags & BGFX_CLEAR_DEPTH ? BGFX_STATE_DEPTH_TEST_ALWAYS|BGFX_STATE_WRITE_Z : 0;
@@ -1501,8 +1531,15 @@ namespace bgfx { namespace mtl
 				numMrt = bx::uint32_max(1, fb.m_num);
 			}
 
-			ProgramMtl& program = m_program[_clearQuad.m_program[numMrt-1].idx];
-			RenderPipelineState pso = program.getRenderPipelineState(state, 0, fbh, _clearQuad.m_vb->decl, 0);
+			const ProgramMtl& program = m_program[_clearQuad.m_program[numMrt-1].idx];
+			RenderPipelineState pso = getPipelineState(
+				  state
+				, 0
+				, fbh
+				, _clearQuad.m_vb->decl
+				, _clearQuad.m_program[numMrt-1].idx
+				, 0
+				);
 			m_renderCommandEncoder.setRenderPipelineState(pso);
 
 			uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
@@ -1731,6 +1768,359 @@ namespace bgfx { namespace mtl
 			m_renderCommandEncoder.setStencilReferenceValue(ref);
 		}
 
+		RenderPipelineState getPipelineState(
+			uint64_t _state
+			, uint32_t _rgba
+			, FrameBufferHandle _fbh
+			, VertexDeclHandle _declHandle
+			, uint16_t _programIdx
+			, uint16_t _numInstanceData
+			)
+		{
+			_state &= (0
+				| BGFX_STATE_BLEND_MASK
+				| BGFX_STATE_BLEND_EQUATION_MASK
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
+				| BGFX_STATE_BLEND_INDEPENDENT
+				| BGFX_STATE_MSAA
+				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
+				);
+
+			bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
+
+			bx::HashMurmur2A murmur;
+			murmur.begin();
+			murmur.add(_state);
+			murmur.add(independentBlendEnable ? _rgba : 0);
+			if (!isValid(_fbh) )
+			{
+				murmur.add(m_backBufferPixelFormatHash);
+			}
+			else
+			{
+				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
+				murmur.add(frameBuffer.m_pixelFormatHash);
+			}
+			murmur.add(m_vertexDecls[_declHandle.idx].m_hash);
+			murmur.add(_numInstanceData);
+			uint32_t hash = murmur.end();
+
+			RenderPipelineState pso = m_pipelineStateCache.find(hash);
+			if (NULL == pso)
+			{
+				RenderPipelineDescriptor pd = m_renderPipelineDescriptor;
+				reset(pd);
+
+				pd.alphaToCoverageEnabled = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
+
+				uint32_t frameBufferAttachment = 1;
+
+				if (!isValid(_fbh) )
+				{
+					pd.sampleCount = NULL != m_backBufferColorMSAA
+						? m_backBufferColorMSAA.sampleCount()
+						: 1
+						;
+					pd.colorAttachments[0].pixelFormat = currentDrawable().texture.pixelFormat;
+					pd.depthAttachmentPixelFormat      = m_backBufferDepth.m_obj.pixelFormat;
+					pd.stencilAttachmentPixelFormat    = m_backBufferStencil.m_obj.pixelFormat;
+				}
+				else
+				{
+					const FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
+					frameBufferAttachment = frameBuffer.m_num;
+
+					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
+					{
+						const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
+						pd.sampleCount = NULL != texture.m_ptrMSAA
+							? texture.m_ptrMSAA.sampleCount()
+							: 1
+							;
+						pd.colorAttachments[ii].pixelFormat = texture.m_ptr.m_obj.pixelFormat;
+					}
+
+					if (isValid(frameBuffer.m_depthHandle) )
+					{
+						const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
+						pd.depthAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
+						if (NULL != texture.m_ptrStencil)
+						{
+							pd.stencilAttachmentPixelFormat = texture.m_ptrStencil.m_obj.pixelFormat;
+						}
+						else
+						{
+							if (texture.m_textureFormat == TextureFormat::D24S8)
+							{
+								pd.stencilAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
+							}
+						}
+					}
+				}
+
+				const uint32_t blend    = uint32_t( (_state&BGFX_STATE_BLEND_MASK         )>>BGFX_STATE_BLEND_SHIFT);
+				const uint32_t equation = uint32_t( (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
+
+				const uint32_t srcRGB = (blend    )&0xf;
+				const uint32_t dstRGB = (blend>> 4)&0xf;
+				const uint32_t srcA   = (blend>> 8)&0xf;
+				const uint32_t dstA   = (blend>>12)&0xf;
+
+				const uint32_t equRGB = (equation   )&0x7;
+				const uint32_t equA   = (equation>>3)&0x7;
+
+				uint8_t writeMask = 0;
+				writeMask |= (_state&BGFX_STATE_WRITE_R) ? MTLColorWriteMaskRed   : 0;
+				writeMask |= (_state&BGFX_STATE_WRITE_G) ? MTLColorWriteMaskGreen : 0;
+				writeMask |= (_state&BGFX_STATE_WRITE_B) ? MTLColorWriteMaskBlue  : 0;
+				writeMask |= (_state&BGFX_STATE_WRITE_A) ? MTLColorWriteMaskAlpha : 0;
+
+				for (uint32_t ii = 0; ii < (independentBlendEnable ? 1 : frameBufferAttachment); ++ii)
+				{
+					RenderPipelineColorAttachmentDescriptor drt = pd.colorAttachments[ii];
+
+					drt.blendingEnabled = !!(BGFX_STATE_BLEND_MASK & _state);
+
+					drt.sourceRGBBlendFactor        = s_blendFactor[srcRGB][0];
+					drt.destinationRGBBlendFactor   = s_blendFactor[dstRGB][0];
+					drt.rgbBlendOperation           = s_blendEquation[equRGB];
+
+					drt.sourceAlphaBlendFactor      = s_blendFactor[srcA][1];
+					drt.destinationAlphaBlendFactor = s_blendFactor[dstA][1];
+					drt.alphaBlendOperation         = s_blendEquation[equA];
+
+					drt.writeMask = writeMask;
+				}
+
+				if (independentBlendEnable)
+				{
+					for (uint32_t ii = 1, rgba = _rgba; ii < frameBufferAttachment; ++ii, rgba >>= 11)
+					{
+						RenderPipelineColorAttachmentDescriptor drt = pd.colorAttachments[ii];
+
+						drt.blendingEnabled = 0 != (rgba&0x7ff);
+
+						const uint32_t src           = (rgba   )&0xf;
+						const uint32_t dst           = (rgba>>4)&0xf;
+						const uint32_t equationIndex = (rgba>>8)&0x7;
+
+						drt.sourceRGBBlendFactor      = s_blendFactor[src][0];
+						drt.destinationRGBBlendFactor = s_blendFactor[dst][0];
+						drt.rgbBlendOperation         = s_blendEquation[equationIndex];
+
+						drt.sourceAlphaBlendFactor      = s_blendFactor[src][1];
+						drt.destinationAlphaBlendFactor = s_blendFactor[dst][1];
+						drt.alphaBlendOperation         = s_blendEquation[equationIndex];
+
+						drt.writeMask = writeMask;
+					}
+				}
+
+				ProgramMtl& program = m_program[_programIdx];
+				pd.vertexFunction   = program.m_vsh->m_function;
+				pd.fragmentFunction = program.m_fsh != NULL ? program.m_fsh->m_function : NULL;
+
+				if (isValid(_declHandle) )
+				{
+					VertexDescriptor vertexDesc = m_vertexDescriptor;
+					reset(vertexDesc);
+
+					const VertexDecl& vertexDecl = m_vertexDecls[_declHandle.idx];
+					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
+					{
+						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
+						uint32_t loc = program.m_attributes[attr];
+
+						uint8_t num;
+						AttribType::Enum type;
+						bool normalized;
+						bool asInt;
+						vertexDecl.decode(attr, num, type, normalized, asInt);
+						BX_CHECK(num <= 4, "num must be <= 4");
+
+						if (UINT16_MAX != vertexDecl.m_attributes[attr])
+						{
+							vertexDesc.attributes[loc].format      = s_attribType[type][num-1][normalized?1:0];
+							vertexDesc.attributes[loc].bufferIndex = 1;
+							vertexDesc.attributes[loc].offset      = vertexDecl.m_offset[attr];
+
+							BX_TRACE("attrib:%s format: %d offset:%d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
+						}
+						else
+						{	// NOTE: missing attribute: using dummy attribute with smallest possible size
+							vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
+							vertexDesc.attributes[loc].bufferIndex = 1;
+							vertexDesc.attributes[loc].offset      = 0;
+						}
+					}
+
+					vertexDesc.layouts[1].stride       = vertexDecl.getStride();
+					vertexDesc.layouts[1].stepFunction = MTLVertexStepFunctionPerVertex;
+
+					BX_TRACE("stride: %d", (int)vertexDesc.layouts[1].stride);
+
+					if (0 < _numInstanceData)
+					{
+						for (uint32_t ii = 0; UINT16_MAX != program.m_instanceData[ii]; ++ii)
+						{
+							uint32_t loc = program.m_instanceData[ii];
+							vertexDesc.attributes[loc].format      = MTLVertexFormatFloat4;
+							vertexDesc.attributes[loc].bufferIndex = 2;
+							vertexDesc.attributes[loc].offset      = ii*16;
+						}
+
+						vertexDesc.layouts[2].stride       = _numInstanceData * 16;
+						vertexDesc.layouts[2].stepFunction = MTLVertexStepFunctionPerInstance;
+						vertexDesc.layouts[2].stepRate     = 1;
+					}
+
+					pd.vertexDescriptor = vertexDesc;
+				}
+
+				if (program.m_processedUniforms)
+				{
+					pso = m_device.newRenderPipelineStateWithDescriptor(pd);
+				}
+				else
+				{
+					program.m_numPredefined = 0;
+					RenderPipelineReflection reflection = NULL;
+					pso = m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
+
+					if (NULL != reflection)
+					{
+						for (uint32_t shaderType = 0; shaderType < 2; ++shaderType)
+						{
+							UniformBuffer*& constantBuffer = shaderType == 0
+								? program.m_vshConstantBuffer
+								: program.m_fshConstantBuffer
+								;
+							uint8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
+
+							for (MTLArgument* arg in (shaderType == 0 ? reflection.vertexArguments : reflection.fragmentArguments) )
+							{
+								BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
+								if (arg.active)
+								{
+									if (arg.type == MTLArgumentTypeBuffer
+									&&  0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
+									{
+										BX_CHECK( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
+										BX_CHECK( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
+
+										if (MTLDataTypeStruct == arg.bufferDataType)
+										{
+											if (shaderType == 0)
+											{
+												program.m_vshConstantBufferSize = (uint32_t)arg.bufferDataSize;
+												program.m_vshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
+											}
+											else
+											{
+												program.m_fshConstantBufferSize = (uint32_t)arg.bufferDataSize;
+												program.m_fshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
+											}
+
+											for (MTLStructMember* uniform in arg.bufferStructType.members )
+											{
+												const char* name = utf8String(uniform.name);
+												BX_TRACE("uniform: %s type:%d", name, uniform.dataType);
+
+												MTLDataType dataType = uniform.dataType;
+												uint32_t num = 1;
+
+												if (dataType == MTLDataTypeArray)
+												{
+													dataType = uniform.arrayType.elementType;
+													num = (uint32_t)uniform.arrayType.arrayLength;
+												}
+
+												switch (dataType)
+												{
+												case MTLDataTypeFloat4:   num *= 1; break;
+												case MTLDataTypeFloat4x4: num *= 4; break;
+												case MTLDataTypeFloat3x3: num *= 3; break;
+
+												default:
+													BX_WARN(0, "Unsupported uniform MTLDataType: %d", uniform.dataType);
+													break;
+												}
+
+												PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+												if (PredefinedUniform::Count != predefined)
+												{
+													program.m_predefined[program.m_numPredefined].m_loc   = uint32_t(uniform.offset);
+													program.m_predefined[program.m_numPredefined].m_count = uint16_t(num);
+													program.m_predefined[program.m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
+													++program.m_numPredefined;
+												}
+												else
+												{
+													const UniformRegInfo* info = m_uniformReg.find(name);
+													BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+
+													if (NULL != info)
+													{
+														if (NULL == constantBuffer)
+														{
+															constantBuffer = UniformBuffer::create(1024);
+														}
+
+														UniformType::Enum type = convertMtlType(dataType);
+														constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
+														BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform.offset) );
+													}
+												}
+											}
+										}
+									}
+									else if (arg.type == MTLArgumentTypeTexture)
+									{
+										const char* name = utf8String(arg.name);
+										const UniformRegInfo* info = m_uniformReg.find(name);
+										BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+
+										if (NULL != info)
+										{
+											if (program.m_samplerCount >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+											{
+												BX_WARN(NULL != info, "Too many samplers in shader(only %d is supported). User defined uniform '%s' won't be set.", BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, name);
+											}
+											else
+											{
+												program.m_samplers[program.m_samplerCount].m_index = uint32_t(arg.index);
+												program.m_samplers[program.m_samplerCount].m_uniform = info->m_handle;
+												program.m_samplers[program.m_samplerCount].m_fragment = fragmentBit ? 1 : 0;
+												++program.m_samplerCount;
+												BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
+											}
+										}
+									}
+									else if (arg.type == MTLArgumentTypeSampler)
+									{
+										BX_TRACE("sampler: %s index:%d", utf8String(arg.name), arg.index);
+									}
+								}
+							}
+
+							if (NULL != constantBuffer)
+							{
+								constantBuffer->finish();
+							}
+						}
+					}
+
+					program.m_processedUniforms = true;
+				}
+
+				m_pipelineStateCache.add(hash, pso);
+			}
+
+			return pso;
+		}
+
+
 		SamplerState getSamplerState(uint32_t _flags)
 		{
 			_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
@@ -1832,8 +2222,9 @@ namespace bgfx { namespace mtl
 		UniformRegistry m_uniformReg;
 		void*           m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
-		StateCacheT<DepthStencilState> m_depthStencilStateCache;
-		StateCacheT<SamplerState>      m_samplerStateCache;
+		StateCacheT<RenderPipelineState> m_pipelineStateCache;
+		StateCacheT<DepthStencilState>   m_depthStencilStateCache;
+		StateCacheT<SamplerState>        m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
 
@@ -2038,385 +2429,7 @@ namespace bgfx { namespace mtl
 		m_samplerCount      = 0;
 		m_processedUniforms = false;
 		m_numPredefined     = 0;
-
-		m_pipelineStateCache.invalidate();
 	}
-
-	UniformType::Enum convertMtlType(MTLDataType _type)
-	{
-		switch (_type)
-		{
-		case MTLDataTypeUInt:
-		case MTLDataTypeInt:
-			return UniformType::Int1;
-
-		case MTLDataTypeFloat:
-		case MTLDataTypeFloat2:
-		case MTLDataTypeFloat3:
-		case MTLDataTypeFloat4:
-			return UniformType::Vec4;
-
-		case MTLDataTypeFloat3x3:
-			return UniformType::Mat3;
-
-		case MTLDataTypeFloat4x4:
-			return UniformType::Mat4;
-
-		default:
-			break;
-		};
-
-		BX_CHECK(false, "Unrecognized Mtl Data type 0x%04x.", _type);
-		return UniformType::End;
-	}
-
-	RenderPipelineState ProgramMtl::getRenderPipelineState(
-		  uint64_t _state
-		, uint32_t _rgba
-		, FrameBufferHandle _fbh
-		, VertexDeclHandle _declHandle
-		, uint16_t _numInstanceData
-		)
-	{
-		_state &= (0
-			| BGFX_STATE_BLEND_MASK
-			| BGFX_STATE_BLEND_EQUATION_MASK
-			| BGFX_STATE_WRITE_RGB
-			| BGFX_STATE_WRITE_A
-			| BGFX_STATE_BLEND_INDEPENDENT
-			| BGFX_STATE_MSAA
-			| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
-			);
-
-		bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
-
-		bx::HashMurmur2A murmur;
-		murmur.begin();
-		murmur.add(_state);
-		murmur.add(independentBlendEnable ? _rgba : 0);
-		if (!isValid(_fbh) )
-		{
-			murmur.add(s_renderMtl->m_backBufferPixelFormatHash);
-		}
-		else
-		{
-			FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbh.idx];
-			murmur.add(frameBuffer.m_pixelFormatHash);
-		}
-		murmur.add(s_renderMtl->m_vertexDecls[_declHandle.idx].m_hash);
-		murmur.add(_numInstanceData);
-		uint32_t hash = murmur.end();
-
-		RenderPipelineState pso = m_pipelineStateCache.find(hash);
-		if (NULL == pso)
-		{
-			RenderPipelineDescriptor pd = s_renderMtl->m_renderPipelineDescriptor;
-			reset(pd);
-
-			pd.alphaToCoverageEnabled = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
-
-			uint32_t frameBufferAttachment = 1;
-
-			if (!isValid(_fbh) )
-			{
-				pd.sampleCount = NULL != s_renderMtl->m_backBufferColorMSAA
-					? s_renderMtl->m_backBufferColorMSAA.sampleCount()
-					: 1
-					;
-				pd.colorAttachments[0].pixelFormat = s_renderMtl->currentDrawable().texture.pixelFormat;
-				pd.depthAttachmentPixelFormat      = s_renderMtl->m_backBufferDepth.m_obj.pixelFormat;
-				pd.stencilAttachmentPixelFormat    = s_renderMtl->m_backBufferStencil.m_obj.pixelFormat;
-			}
-			else
-			{
-				const FrameBufferMtl& frameBuffer = s_renderMtl->m_frameBuffers[_fbh.idx];
-				frameBufferAttachment = frameBuffer.m_num;
-
-				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
-				{
-					const TextureMtl& texture = s_renderMtl->m_textures[frameBuffer.m_colorHandle[ii].idx];
-					pd.sampleCount = NULL != texture.m_ptrMSAA
-						? texture.m_ptrMSAA.sampleCount()
-						: 1
-						;
-					pd.colorAttachments[ii].pixelFormat = texture.m_ptr.m_obj.pixelFormat;
-				}
-
-				if (isValid(frameBuffer.m_depthHandle) )
-				{
-					const TextureMtl& texture = s_renderMtl->m_textures[frameBuffer.m_depthHandle.idx];
-					pd.depthAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
-					if (NULL != texture.m_ptrStencil)
-					{
-						pd.stencilAttachmentPixelFormat = texture.m_ptrStencil.m_obj.pixelFormat;
-					}
-					else
-					{
-						if (texture.m_textureFormat == TextureFormat::D24S8)
-						{
-							pd.stencilAttachmentPixelFormat = texture.m_ptr.m_obj.pixelFormat;
-						}
-					}
-				}
-			}
-
-			const uint32_t blend    = uint32_t( (_state&BGFX_STATE_BLEND_MASK         )>>BGFX_STATE_BLEND_SHIFT);
-			const uint32_t equation = uint32_t( (_state&BGFX_STATE_BLEND_EQUATION_MASK)>>BGFX_STATE_BLEND_EQUATION_SHIFT);
-
-			const uint32_t srcRGB = (blend    )&0xf;
-			const uint32_t dstRGB = (blend>> 4)&0xf;
-			const uint32_t srcA   = (blend>> 8)&0xf;
-			const uint32_t dstA   = (blend>>12)&0xf;
-
-			const uint32_t equRGB = (equation   )&0x7;
-			const uint32_t equA   = (equation>>3)&0x7;
-
-			uint8_t writeMask = 0;
-			writeMask |= (_state&BGFX_STATE_WRITE_R) ? MTLColorWriteMaskRed   : 0;
-			writeMask |= (_state&BGFX_STATE_WRITE_G) ? MTLColorWriteMaskGreen : 0;
-			writeMask |= (_state&BGFX_STATE_WRITE_B) ? MTLColorWriteMaskBlue  : 0;
-			writeMask |= (_state&BGFX_STATE_WRITE_A) ? MTLColorWriteMaskAlpha : 0;
-
-			for (uint32_t ii = 0; ii < (independentBlendEnable ? 1 : frameBufferAttachment); ++ii)
-			{
-				RenderPipelineColorAttachmentDescriptor drt = pd.colorAttachments[ii];
-
-				drt.blendingEnabled = !!(BGFX_STATE_BLEND_MASK & _state);
-
-				drt.sourceRGBBlendFactor        = s_blendFactor[srcRGB][0];
-				drt.destinationRGBBlendFactor   = s_blendFactor[dstRGB][0];
-				drt.rgbBlendOperation           = s_blendEquation[equRGB];
-
-				drt.sourceAlphaBlendFactor      = s_blendFactor[srcA][1];
-				drt.destinationAlphaBlendFactor = s_blendFactor[dstA][1];
-				drt.alphaBlendOperation         = s_blendEquation[equA];
-
-				drt.writeMask = writeMask;
-			}
-
-			if (independentBlendEnable)
-			{
-				for (uint32_t ii = 1, rgba = _rgba; ii < frameBufferAttachment; ++ii, rgba >>= 11)
-				{
-					RenderPipelineColorAttachmentDescriptor drt = pd.colorAttachments[ii];
-
-					drt.blendingEnabled = 0 != (rgba&0x7ff);
-
-					const uint32_t src           = (rgba   )&0xf;
-					const uint32_t dst           = (rgba>>4)&0xf;
-					const uint32_t equationIndex = (rgba>>8)&0x7;
-
-					drt.sourceRGBBlendFactor      = s_blendFactor[src][0];
-					drt.destinationRGBBlendFactor = s_blendFactor[dst][0];
-					drt.rgbBlendOperation         = s_blendEquation[equationIndex];
-
-					drt.sourceAlphaBlendFactor      = s_blendFactor[src][1];
-					drt.destinationAlphaBlendFactor = s_blendFactor[dst][1];
-					drt.alphaBlendOperation         = s_blendEquation[equationIndex];
-
-					drt.writeMask = writeMask;
-				}
-			}
-
-			pd.vertexFunction   = m_vsh->m_function;
-			pd.fragmentFunction = m_fsh != NULL ? m_fsh->m_function : NULL;
-
-			if (isValid(_declHandle) )
-			{
-				VertexDescriptor vertexDesc = s_renderMtl->m_vertexDescriptor;
-				reset(vertexDesc);
-
-				const VertexDecl& vertexDecl = s_renderMtl->m_vertexDecls[_declHandle.idx];
-				for (uint32_t ii = 0; Attrib::Count != m_used[ii]; ++ii)
-				{
-					Attrib::Enum attr = Attrib::Enum(m_used[ii]);
-					uint32_t loc = m_attributes[attr];
-
-					uint8_t num;
-					AttribType::Enum type;
-					bool normalized;
-					bool asInt;
-					vertexDecl.decode(attr, num, type, normalized, asInt);
-					BX_CHECK(num <= 4, "num must be <= 4");
-
-					if (UINT16_MAX != vertexDecl.m_attributes[attr])
-					{
-						vertexDesc.attributes[loc].format      = s_attribType[type][num-1][normalized?1:0];
-						vertexDesc.attributes[loc].bufferIndex = 1;
-						vertexDesc.attributes[loc].offset      = vertexDecl.m_offset[attr];
-
-						BX_TRACE("attrib:%s format: %d offset:%d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
-					}
-					else
-					{	// NOTE: missing attribute: using dummy attribute with smallest possible size
-						vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
-						vertexDesc.attributes[loc].bufferIndex = 1;
-						vertexDesc.attributes[loc].offset      = 0;
-					}
-				}
-
-				vertexDesc.layouts[1].stride = vertexDecl.getStride();
-				vertexDesc.layouts[1].stepFunction = MTLVertexStepFunctionPerVertex;
-
-				BX_TRACE("stride: %d", (int)vertexDesc.layouts[1].stride);
-
-				if (0 < _numInstanceData)
-				{
-					for (uint32_t ii = 0; UINT16_MAX != m_instanceData[ii]; ++ii)
-					{
-						uint32_t loc = m_instanceData[ii];
-						vertexDesc.attributes[loc].format      = MTLVertexFormatFloat4;
-						vertexDesc.attributes[loc].bufferIndex = 2;
-						vertexDesc.attributes[loc].offset      = ii*16;
-					}
-
-					vertexDesc.layouts[2].stride       = _numInstanceData * 16;
-					vertexDesc.layouts[2].stepFunction = MTLVertexStepFunctionPerInstance;
-					vertexDesc.layouts[2].stepRate     = 1;
-				}
-
-				pd.vertexDescriptor = vertexDesc;
-			}
-
-			if (m_processedUniforms)
-			{
-				pso = s_renderMtl->m_device.newRenderPipelineStateWithDescriptor(pd);
-			}
-			else
-			{
-				m_numPredefined = 0;
-				RenderPipelineReflection reflection = NULL;
-				pso = s_renderMtl->m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
-
-				if (NULL != reflection)
-				{
-					for (uint32_t shaderType = 0; shaderType < 2; ++shaderType)
-					{
-						UniformBuffer*& constantBuffer = (shaderType == 0 ? m_vshConstantBuffer : m_fshConstantBuffer);
-						uint8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
-
-						for (MTLArgument* arg in (shaderType == 0 ? reflection.vertexArguments : reflection.fragmentArguments) )
-						{
-							BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
-							if (arg.active)
-							{
-								if (arg.type == MTLArgumentTypeBuffer
-								&&  0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
-								{
-									BX_CHECK( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
-									BX_CHECK( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
-
-									if (MTLDataTypeStruct == arg.bufferDataType)
-									{
-										if (shaderType == 0)
-										{
-											m_vshConstantBufferSize = (uint32_t)arg.bufferDataSize;
-											m_vshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
-										}
-										else
-										{
-											m_fshConstantBufferSize = (uint32_t)arg.bufferDataSize;
-											m_fshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
-										}
-
-										for (MTLStructMember* uniform in arg.bufferStructType.members )
-										{
-											const char* name = utf8String(uniform.name);
-											BX_TRACE("uniform: %s type:%d", name, uniform.dataType);
-
-											MTLDataType dataType = uniform.dataType;
-											uint32_t num = 1;
-
-											if (dataType == MTLDataTypeArray)
-											{
-												dataType = uniform.arrayType.elementType;
-												num = (uint32_t)uniform.arrayType.arrayLength;
-											}
-
-											switch (dataType)
-											{
-											case MTLDataTypeFloat4:   num *= 1; break;
-											case MTLDataTypeFloat4x4: num *= 4; break;
-											case MTLDataTypeFloat3x3: num *= 3; break;
-
-											default:
-												BX_WARN(0, "Unsupported uniform MTLDataType: %d", uniform.dataType);
-												break;
-											}
-
-											PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
-											if (PredefinedUniform::Count != predefined)
-											{
-												m_predefined[m_numPredefined].m_loc   = uint32_t(uniform.offset);
-												m_predefined[m_numPredefined].m_count = uint16_t(num);
-												m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
-												m_numPredefined++;
-											}
-											else
-											{
-												const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
-												BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
-
-												if (NULL != info)
-												{
-													if (NULL == constantBuffer)
-													{
-														constantBuffer = UniformBuffer::create(1024);
-													}
-
-													UniformType::Enum type = convertMtlType(dataType);
-													constantBuffer->writeUniformHandle( (UniformType::Enum)(type|fragmentBit), uint32_t(uniform.offset), info->m_handle, uint16_t(num) );
-													BX_TRACE("store %s %d offset:%d", name, info->m_handle, uint32_t(uniform.offset) );
-												}
-											}
-										}
-									}
-								}
-								else if (arg.type == MTLArgumentTypeTexture)
-								{
-									const char* name = utf8String(arg.name);
-									const UniformRegInfo* info = s_renderMtl->m_uniformReg.find(name);
-									BX_WARN(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
-
-									if (NULL != info)
-									{
-										if ( m_samplerCount >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
-										{
-											BX_WARN(NULL != info, "Too many samplers in shader(only %d is supported). User defined uniform '%s' won't be set.", BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, name);
-										}
-										else
-										{
-											m_samplers[m_samplerCount].m_index = uint32_t(arg.index);
-											m_samplers[m_samplerCount].m_uniform = info->m_handle;
-											m_samplers[m_samplerCount].m_fragment = fragmentBit ? 1 : 0;
-											++m_samplerCount;
-											BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
-										}
-									}
-								}
-								else if (arg.type == MTLArgumentTypeSampler)
-								{
-									BX_TRACE("sampler: %s index:%d", utf8String(arg.name), arg.index);
-								}
-							}
-						}
-
-						if (NULL != constantBuffer)
-						{
-							constantBuffer->finish();
-						}
-					}
-				}
-
-				m_processedUniforms = true;
-			}
-
-			m_pipelineStateCache.add(hash, pso);
-		}
-
-		return pso;
-	}
-
 
 	void BufferMtl::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
@@ -3747,7 +3760,14 @@ namespace bgfx { namespace mtl
 							VertexDeclHandle decl;
 							decl.idx = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
 
-							pso = program.getRenderPipelineState(newFlags, draw.m_rgba, fbh, decl, draw.m_instanceDataStride/16);
+							pso = getPipelineState(
+								  newFlags
+								, draw.m_rgba
+								, fbh
+								, decl
+								, programIdx
+								, draw.m_instanceDataStride/16
+								);
 						}
 
 						if (NULL == pso)

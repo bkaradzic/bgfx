@@ -797,16 +797,6 @@ namespace bgfx { namespace mtl
 		void create(const ShaderMtl* _vsh, const ShaderMtl* _fsh);
 		void destroy();
 
-		RenderPipelineState getRenderPipelineState(
-			  uint64_t _state
-			, uint32_t _rgba
-			, FrameBufferHandle _fbh
-			, VertexDeclHandle _declHandle
-			, uint16_t _numInstanceData
-			);
-
-		StateCacheT<RenderPipelineState> m_pipelineStateCache;
-
 		uint8_t  m_used[Attrib::Count+1]; // dense
 		uint32_t m_attributes[Attrib::Count]; // sparse
 		uint32_t m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
