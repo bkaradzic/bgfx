@@ -3811,15 +3811,18 @@ namespace bgfx { namespace mtl
 
 						RenderPipelineState pso = NULL;
 
-						pso = getPipelineState(
-							  newFlags
-							, draw.m_rgba
-							, fbh
-							, numStreams
-							, decls
-							, programIdx
-							, draw.m_instanceDataStride/16
-							);
+						if (0 < numStreams)
+						{
+							pso = getPipelineState(
+								  newFlags
+								, draw.m_rgba
+								, fbh
+								, numStreams
+								, decls
+								, programIdx
+								, draw.m_instanceDataStride/16
+								);
+						}
 
 						if (NULL == pso)
 						{
