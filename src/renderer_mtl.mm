@@ -1769,12 +1769,13 @@ namespace bgfx { namespace mtl
 		}
 
 		RenderPipelineState getPipelineState(
-			uint64_t _state
+			  uint64_t _state
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
-			, VertexDeclHandle _declHandle
+			, uint8_t _numStreams
+			, const VertexDecl** _vertexDecls
 			, uint16_t _programIdx
-			, uint16_t _numInstanceData
+			, uint8_t _numInstanceData
 			)
 		{
 			_state &= (0
@@ -1802,7 +1803,7 @@ namespace bgfx { namespace mtl
 				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
 				murmur.add(frameBuffer.m_pixelFormatHash);
 			}
-			murmur.add(m_vertexDecls[_declHandle.idx].m_hash);
+			murmur.add(_vertexDecls[0]->m_hash);
 			murmur.add(_numInstanceData);
 			uint32_t hash = murmur.end();
 
@@ -1921,12 +1922,12 @@ namespace bgfx { namespace mtl
 				pd.vertexFunction   = program.m_vsh->m_function;
 				pd.fragmentFunction = program.m_fsh != NULL ? program.m_fsh->m_function : NULL;
 
-				if (isValid(_declHandle) )
+				if (0 < _numStreams)
 				{
 					VertexDescriptor vertexDesc = m_vertexDescriptor;
 					reset(vertexDesc);
 
-					const VertexDecl& vertexDecl = m_vertexDecls[_declHandle.idx];
+					const VertexDecl& vertexDecl = *_vertexDecls[0];
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
 						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
@@ -2120,6 +2121,26 @@ namespace bgfx { namespace mtl
 			return pso;
 		}
 
+		RenderPipelineState getPipelineState(
+			  uint64_t _state
+			, uint32_t _rgba
+			, FrameBufferHandle _fbh
+			, VertexDeclHandle _declHandle
+			, uint16_t _programIdx
+			, uint16_t _numInstanceData
+			)
+		{
+			const VertexDecl* decl = &m_vertexDecls[_declHandle.idx];
+			return getPipelineState(
+				  _state
+				, _rgba
+				, _fbh
+				, 1
+				, &decl
+				, _programIdx
+				, _numInstanceData
+				);
+		}
 
 		SamplerState getSamplerState(uint32_t _flags)
 		{
