@@ -3089,10 +3089,10 @@ namespace bgfx { namespace d3d11
 		void ovrPostReset()
 		{
 #if BGFX_CONFIG_USE_OVR
-			if (m_resolution.m_flags & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
+			if (m_resolution.reset & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
 			{
-				const uint32_t msaaSamples = 1 << ((m_resolution.m_flags&BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT);
-				m_ovr.postReset(msaaSamples, m_resolution.m_width, m_resolution.m_height);
+				const uint32_t msaaSamples = 1 << ((m_resolution.reset&BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT);
+				m_ovr.postReset(msaaSamples, m_resolution.width, m_resolution.height);
 			}
 #endif // BGFX_CONFIG_USE_OVR
 		}
@@ -3756,8 +3756,8 @@ namespace bgfx { namespace d3d11
 		ovrResult result = ovr_CommitTextureSwapChain(m_session, m_textureSwapChain);
 		if (!OVR_SUCCESS(result) )
 		{
-			return false;
 			DX_RELEASE(eyeTexture, 1);
+			return false;
 		}
 
 		ovrLayerHeader* layerList = &m_renderLayer.Header;
