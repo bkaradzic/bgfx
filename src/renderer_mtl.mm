@@ -1794,6 +1794,8 @@ namespace bgfx { namespace mtl
 			murmur.begin();
 			murmur.add(_state);
 			murmur.add(independentBlendEnable ? _rgba : 0);
+			murmur.add(_numInstanceData);
+
 			if (!isValid(_fbh) )
 			{
 				murmur.add(m_backBufferPixelFormatHash);
@@ -1803,8 +1805,12 @@ namespace bgfx { namespace mtl
 				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
 				murmur.add(frameBuffer.m_pixelFormatHash);
 			}
-			murmur.add(_vertexDecls[0]->m_hash);
-			murmur.add(_numInstanceData);
+
+			for (uint8_t ii = 0; ii < _numStreams; ++ii)
+			{
+				murmur.add(_vertexDecls[ii]->m_hash);
+			}
+
 			uint32_t hash = murmur.end();
 
 			RenderPipelineState pso = m_pipelineStateCache.find(hash);
@@ -2912,13 +2918,10 @@ namespace bgfx { namespace mtl
 	void FrameBufferMtl::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
 	{
 		BX_UNUSED(_denseIdx, _nwh, _width, _height, _depthFormat);
-
-		BX_WARN(false, "FrameBufferMtl::create not yet implemented");
 	}
 
 	void FrameBufferMtl::postReset()
 	{
-		BX_WARN(false, "FrameBufferMtl::postReset not yet implemented");
 	}
 
 	uint16_t FrameBufferMtl::destroy()
@@ -3741,7 +3744,10 @@ namespace bgfx { namespace mtl
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
+				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
+
 				if (key.m_program != programIdx
+				||  vertexStreamChanged
 				|| (0
 				   | BGFX_STATE_BLEND_MASK
 				   | BGFX_STATE_BLEND_EQUATION_MASK
@@ -3751,16 +3757,47 @@ namespace bgfx { namespace mtl
 				   | BGFX_STATE_MSAA
 				   | BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				   ) & changedFlags
-				||  currentState.m_streamMask             != draw.m_streamMask
-				||  currentState.m_stream[0].m_handle.idx != draw.m_stream[0].m_handle.idx
-				||  currentState.m_stream[0].m_decl.idx   != draw.m_stream[0].m_decl.idx
-				||  currentState.m_instanceDataStride     != draw.m_instanceDataStride
 				|| ( (blendFactor != draw.m_rgba) && !!(newFlags & BGFX_STATE_BLEND_INDEPENDENT) ) )
 				{
 					programIdx = key.m_program;
-					currentState.m_streamMask         = draw.m_streamMask;
-					currentState.m_stream[0].m_decl   = draw.m_stream[0].m_decl;
-					currentState.m_instanceDataStride = draw.m_instanceDataStride;
+
+					currentState.m_streamMask             = draw.m_streamMask;
+					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
+					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
+					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
+
+					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+
+					uint32_t numVertices = draw.m_numVertices;
+					uint8_t  numStreams  = 0;
+					for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+						; 0 != streamMask
+						; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+						)
+					{
+						streamMask >>= ntz;
+						idx         += ntz;
+
+						currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
+						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
+						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+
+						uint16_t handle = draw.m_stream[idx].m_handle.idx;
+						const VertexBufferMtl& vb = m_vertexBuffers[handle];
+						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+						const VertexDecl& vertexDecl = m_vertexDecls[decl];
+						uint32_t stride = vertexDecl.m_stride;
+
+						decls[numStreams]   = &vertexDecl;
+
+						numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
+							? vb.m_size/stride
+							: draw.m_numVertices
+							, numVertices
+							);
+					}
+
+					currentState.m_numVertices = numVertices;
 
 					if (kInvalidHandle == programIdx)
 					{
@@ -3774,22 +3811,15 @@ namespace bgfx { namespace mtl
 
 						RenderPipelineState pso = NULL;
 
-						if (isValid(draw.m_stream[0].m_handle) )
-						{
-							uint16_t handle = draw.m_stream[0].m_handle.idx;
-							const VertexBufferMtl& vb = m_vertexBuffers[handle];
-							VertexDeclHandle decl;
-							decl.idx = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-
-							pso = getPipelineState(
-								  newFlags
-								, draw.m_rgba
-								, fbh
-								, decl
-								, programIdx
-								, draw.m_instanceDataStride/16
-								);
-						}
+						pso = getPipelineState(
+							  newFlags
+							, draw.m_rgba
+							, fbh
+							, numStreams
+							, decls
+							, programIdx
+							, draw.m_instanceDataStride/16
+							);
 
 						if (NULL == pso)
 						{
@@ -3802,7 +3832,7 @@ namespace bgfx { namespace mtl
 					}
 
 					programChanged =
-					constantsChanged = true;
+						constantsChanged = true;
 				}
 
 				if (kInvalidHandle != programIdx)
@@ -3879,18 +3909,8 @@ namespace bgfx { namespace mtl
 					}
 				}
 
-				if (currentState.m_streamMask              != draw.m_streamMask
-				||  currentState.m_stream[0].m_handle.idx  != draw.m_stream[0].m_handle.idx
-				||  currentState.m_stream[0].m_startVertex != draw.m_stream[0].m_startVertex
-				||  currentState.m_instanceDataBuffer.idx  != draw.m_instanceDataBuffer.idx
-				||  currentState.m_instanceDataOffset      != draw.m_instanceDataOffset)
+				if (vertexStreamChanged)
 				{
-					currentState.m_streamMask               = draw.m_streamMask;
-					currentState.m_stream[0].m_handle       = draw.m_stream[0].m_handle;
-					currentState.m_stream[0].m_startVertex  = draw.m_stream[0].m_startVertex;
-					currentState.m_instanceDataBuffer.idx   = draw.m_instanceDataBuffer.idx;
-					currentState.m_instanceDataOffset       = draw.m_instanceDataOffset;
-
 					uint16_t handle = draw.m_stream[0].m_handle.idx;
 					if (kInvalidHandle != handle)
 					{
