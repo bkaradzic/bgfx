@@ -454,6 +454,15 @@ namespace bgfx
 		}
 	};
 
+	void setGraphicsDebuggerPresent(bool _present);
+	bool isGraphicsDebuggerPresent();
+	void release(const Memory* _mem);
+	const char* getAttribName(Attrib::Enum _attr);
+	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
+	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
+	const char* getName(TextureFormat::Enum _fmt);
+	const char* getName(UniformHandle _handle);
+
 	template<typename Ty>
 	inline void release(Ty)
 	{
@@ -464,15 +473,6 @@ namespace bgfx
 	{
 		release( (const Memory*)_mem);
 	}
-
-	void setGraphicsDebuggerPresent(bool _present);
-	bool isGraphicsDebuggerPresent();
-	void release(const Memory* _mem);
-	const char* getAttribName(Attrib::Enum _attr);
-	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
-	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
-	const char* getName(TextureFormat::Enum _fmt);
-	const char* getName(UniformHandle _handle);
 
 	inline uint32_t castfu(float _value)
 	{

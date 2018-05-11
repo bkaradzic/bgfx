@@ -6343,35 +6343,49 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 	{
 		if (0 != m_fbo[1])
 		{
-			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
-			GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
-			GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
-			GL_CHECK(glBlitFramebuffer(0
-				, 0
-				, m_width
-				, m_height
-				, 0
-				, 0
-				, m_width
-				, m_height
-				, GL_COLOR_BUFFER_BIT
-				, GL_LINEAR
-				) );
-			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
-			GL_CHECK(glReadBuffer(GL_NONE) );
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_msaaBackBufferFbo) );
-		}
-
-		if (0 < m_numTh)
-		{
+			uint32_t colorIdx = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
 				TextureHandle handle = m_attachment[ii].handle;
 				if (isValid(handle) )
 				{
 					const TextureGL& texture = s_renderGL->m_textures[handle.idx];
-					texture.resolve();
+
+					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
+					if (!bimg::isDepth(format) )
+					{
+						GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+						GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo[1]) );
+						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
+						GL_CHECK(glDrawBuffer(GL_COLOR_ATTACHMENT0 + colorIdx) );
+						colorIdx++;
+						GL_CHECK(glBlitFramebuffer(0
+							, 0
+							, m_width
+							, m_height
+							, 0
+							, 0
+							, m_width
+							, m_height
+							, GL_COLOR_BUFFER_BIT
+							, GL_LINEAR
+							) );
+					}
 				}
+			}
+
+			GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo[0]) );
+			GL_CHECK(glReadBuffer(GL_NONE) );
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, s_renderGL->m_msaaBackBufferFbo) );
+		}
+
+		for (uint32_t ii = 0; ii < m_numTh; ++ii)
+		{
+			TextureHandle handle = m_attachment[ii].handle;
+			if (isValid(handle) )
+			{
+				const TextureGL& texture = s_renderGL->m_textures[handle.idx];
+				texture.resolve();
 			}
 		}
 	}
