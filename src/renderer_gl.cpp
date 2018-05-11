@@ -2369,11 +2369,12 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					|| s_extension[Extension::EXT_shadow_samplers].m_supported
 					;
 
-				m_programBinarySupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
-					|| s_extension[Extension::ARB_get_program_binary].m_supported
-					|| s_extension[Extension::OES_get_program_binary].m_supported
-					|| s_extension[Extension::IMG_shader_binary     ].m_supported
-					;
+				m_programBinarySupport = !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
+					&& (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+						|| s_extension[Extension::ARB_get_program_binary].m_supported
+						|| s_extension[Extension::OES_get_program_binary].m_supported
+						|| s_extension[Extension::IMG_shader_binary     ].m_supported
+						);
 
 				m_textureSwizzleSupport = false
 					|| s_extension[Extension::ARB_texture_swizzle].m_supported
