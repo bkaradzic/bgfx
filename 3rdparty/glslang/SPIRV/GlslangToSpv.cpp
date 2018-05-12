@@ -170,7 +170,7 @@ protected:
     void declareUseOfStructMember(const glslang::TTypeList& members, int glslangMember);
 
     bool isShaderEntryPoint(const glslang::TIntermAggregate* node);
-    bool writableParam(glslang::TStorageQualifier);
+    bool writableParam(glslang::TStorageQualifier) const;
     bool originalParam(glslang::TStorageQualifier, const glslang::TType&, bool implicitThisParam);
     void makeFunctions(const glslang::TIntermSequence&);
     void makeGlobalInitializers(const glslang::TIntermSequence&);
@@ -3241,7 +3241,7 @@ bool TGlslangToSpvTraverser::isShaderEntryPoint(const glslang::TIntermAggregate*
 // Does parameter need a place to keep writes, separate from the original?
 // Assumes called after originalParam(), which filters out block/buffer/opaque-based
 // qualifiers such that we should have only in/out/inout/constreadonly here.
-bool TGlslangToSpvTraverser::writableParam(glslang::TStorageQualifier qualifier)
+bool TGlslangToSpvTraverser::writableParam(glslang::TStorageQualifier qualifier) const
 {
     assert(qualifier == glslang::EvqIn ||
            qualifier == glslang::EvqOut ||
@@ -3954,18 +3954,17 @@ spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAgg
     // 3. Make the call
     // 4. Copy back the results
 
-    // 1. Evaluate the arguments
+    // 1. Evaluate the arguments and their types
     std::vector<spv::Builder::AccessChain> lValues;
     std::vector<spv::Id> rValues;
     std::vector<const glslang::TType*> argTypes;
     for (int a = 0; a < (int)glslangArgs.size(); ++a) {
-        const glslang::TType& paramType = glslangArgs[a]->getAsTyped()->getType();
+        argTypes.push_back(&glslangArgs[a]->getAsTyped()->getType());
         // build l-value
         builder.clearAccessChain();
         glslangArgs[a]->traverse(this);
-        argTypes.push_back(&paramType);
         // keep outputs and pass-by-originals as l-values, evaluate others as r-values
-        if (originalParam(qualifiers[a], paramType, function->hasImplicitThis() && a == 0) ||
+        if (originalParam(qualifiers[a], *argTypes[a], function->hasImplicitThis() && a == 0) ||
             writableParam(qualifiers[a])) {
             // save l-value
             lValues.push_back(builder.getAccessChain());
@@ -3983,26 +3982,33 @@ spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAgg
     int rValueCount = 0;
     std::vector<spv::Id> spvArgs;
     for (int a = 0; a < (int)glslangArgs.size(); ++a) {
-        const glslang::TType& paramType = glslangArgs[a]->getAsTyped()->getType();
         spv::Id arg;
-        if (originalParam(qualifiers[a], paramType, function->hasImplicitThis() && a == 0)) {
+        if (originalParam(qualifiers[a], *argTypes[a], function->hasImplicitThis() && a == 0)) {
             builder.setAccessChain(lValues[lValueCount]);
             arg = builder.accessChainGetLValue();
             ++lValueCount;
         } else if (writableParam(qualifiers[a])) {
             // need space to hold the copy
-            arg = builder.createVariable(spv::StorageClassFunction, convertGlslangToSpvType(paramType), "param");
+            arg = builder.createVariable(spv::StorageClassFunction, builder.getContainedTypeId(function->getParamType(a)), "param");
             if (qualifiers[a] == glslang::EvqIn || qualifiers[a] == glslang::EvqInOut) {
                 // need to copy the input into output space
                 builder.setAccessChain(lValues[lValueCount]);
                 spv::Id copy = accessChainLoad(*argTypes[a]);
                 builder.clearAccessChain();
                 builder.setAccessChainLValue(arg);
-                multiTypeStore(paramType, copy);
+                multiTypeStore(*argTypes[a], copy);
             }
             ++lValueCount;
         } else {
-            arg = rValues[rValueCount];
+            // process r-value, which involves a copy for a type mismatch
+            if (function->getParamType(a) != convertGlslangToSpvType(*argTypes[a])) {
+                spv::Id argCopy = builder.createVariable(spv::StorageClassFunction, function->getParamType(a), "arg");
+                builder.clearAccessChain();
+                builder.setAccessChainLValue(argCopy);
+                multiTypeStore(*argTypes[a], rValues[rValueCount]);
+                arg = builder.createLoad(argCopy);
+            } else
+                arg = rValues[rValueCount];
             ++rValueCount;
         }
         spvArgs.push_back(arg);
@@ -4015,14 +4021,13 @@ spv::Id TGlslangToSpvTraverser::handleUserFunctionCall(const glslang::TIntermAgg
     // 4. Copy back out an "out" arguments.
     lValueCount = 0;
     for (int a = 0; a < (int)glslangArgs.size(); ++a) {
-        const glslang::TType& paramType = glslangArgs[a]->getAsTyped()->getType();
-        if (originalParam(qualifiers[a], paramType, function->hasImplicitThis() && a == 0))
+        if (originalParam(qualifiers[a], *argTypes[a], function->hasImplicitThis() && a == 0))
             ++lValueCount;
         else if (writableParam(qualifiers[a])) {
             if (qualifiers[a] == glslang::EvqOut || qualifiers[a] == glslang::EvqInOut) {
                 spv::Id copy = builder.createLoad(spvArgs[a]);
                 builder.setAccessChain(lValues[lValueCount]);
-                multiTypeStore(paramType, copy);
+                multiTypeStore(*argTypes[a], copy);
             }
             ++lValueCount;
         }
