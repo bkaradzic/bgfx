@@ -561,8 +561,7 @@ namespace bgfx { namespace mtl
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 			}
 			g_caps.limits.maxTextureLayers = 2048;
-
-			//todo: vendor id, device id, gpu enum
+			g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 			m_hasPixelFormatDepth32Float_Stencil8 = false
 				||  BX_ENABLED(BX_PLATFORM_OSX)
@@ -1928,12 +1927,13 @@ namespace bgfx { namespace mtl
 				pd.vertexFunction   = program.m_vsh->m_function;
 				pd.fragmentFunction = program.m_fsh != NULL ? program.m_fsh->m_function : NULL;
 
-				if (0 < _numStreams)
-				{
-					VertexDescriptor vertexDesc = m_vertexDescriptor;
-					reset(vertexDesc);
+				VertexDescriptor vertexDesc = m_vertexDescriptor;
+				reset(vertexDesc);
 
-					const VertexDecl& vertexDecl = *_vertexDecls[0];
+				uint8_t stream = 0;
+				for (; stream < _numStreams; ++stream)
+				{
+					const VertexDecl& vertexDecl = *_vertexDecls[stream];
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
 						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
@@ -1949,41 +1949,39 @@ namespace bgfx { namespace mtl
 						if (UINT16_MAX != vertexDecl.m_attributes[attr])
 						{
 							vertexDesc.attributes[loc].format      = s_attribType[type][num-1][normalized?1:0];
-							vertexDesc.attributes[loc].bufferIndex = 1;
+							vertexDesc.attributes[loc].bufferIndex = stream+1;
 							vertexDesc.attributes[loc].offset      = vertexDecl.m_offset[attr];
 
-							BX_TRACE("attrib:%s format: %d offset:%d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
+							BX_TRACE("attrib: %s format: %d offset: %d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
 						}
-						else
-						{	// NOTE: missing attribute: using dummy attribute with smallest possible size
-							vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
-							vertexDesc.attributes[loc].bufferIndex = 1;
-							vertexDesc.attributes[loc].offset      = 0;
-						}
+//						else
+//						{	// NOTE: missing attribute: using dummy attribute with smallest possible size
+//							vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
+//							vertexDesc.attributes[loc].bufferIndex = 1;
+//							vertexDesc.attributes[loc].offset      = 0;
+//						}
 					}
 
-					vertexDesc.layouts[1].stride       = vertexDecl.getStride();
-					vertexDesc.layouts[1].stepFunction = MTLVertexStepFunctionPerVertex;
-
-					BX_TRACE("stride: %d", (int)vertexDesc.layouts[1].stride);
-
-					if (0 < _numInstanceData)
-					{
-						for (uint32_t ii = 0; UINT16_MAX != program.m_instanceData[ii]; ++ii)
-						{
-							uint32_t loc = program.m_instanceData[ii];
-							vertexDesc.attributes[loc].format      = MTLVertexFormatFloat4;
-							vertexDesc.attributes[loc].bufferIndex = 2;
-							vertexDesc.attributes[loc].offset      = ii*16;
-						}
-
-						vertexDesc.layouts[2].stride       = _numInstanceData * 16;
-						vertexDesc.layouts[2].stepFunction = MTLVertexStepFunctionPerInstance;
-						vertexDesc.layouts[2].stepRate     = 1;
-					}
-
-					pd.vertexDescriptor = vertexDesc;
+					vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
+					vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
 				}
+
+				if (0 < _numInstanceData)
+				{
+					for (uint32_t ii = 0; UINT16_MAX != program.m_instanceData[ii]; ++ii)
+					{
+						uint32_t loc = program.m_instanceData[ii];
+						vertexDesc.attributes[loc].format      = MTLVertexFormatFloat4;
+						vertexDesc.attributes[loc].bufferIndex = stream+1;
+						vertexDesc.attributes[loc].offset      = ii*16;
+					}
+
+					vertexDesc.layouts[stream+1].stride       = _numInstanceData * 16;
+					vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerInstance;
+					vertexDesc.layouts[stream+1].stepRate     = 1;
+				}
+
+				pd.vertexDescriptor = vertexDesc;
 
 				if (program.m_processedUniforms)
 				{
@@ -3795,6 +3793,9 @@ namespace bgfx { namespace mtl
 							: draw.m_numVertices
 							, numVertices
 							);
+						uint32_t offset = draw.m_stream[idx].m_startVertex  * vertexDecl.getStride();
+
+						rce.setVertexBuffer(vb.getBuffer(), offset, idx+1);
 					}
 
 					currentState.m_numVertices = numVertices;
@@ -3832,6 +3833,12 @@ namespace bgfx { namespace mtl
 						}
 
 						rce.setRenderPipelineState(pso);
+					}
+
+					if (isValid(draw.m_instanceDataBuffer) )
+					{
+						const VertexBufferMtl& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
+						rce.setVertexBuffer(inst.getBuffer(), draw.m_instanceDataOffset, numStreams+1);
 					}
 
 					programChanged =
@@ -3909,27 +3916,6 @@ namespace bgfx { namespace mtl
 						}
 
 						current = bind;
-					}
-				}
-
-				if (vertexStreamChanged)
-				{
-					uint16_t handle = draw.m_stream[0].m_handle.idx;
-					if (kInvalidHandle != handle)
-					{
-						const VertexBufferMtl& vb = m_vertexBuffers[handle];
-
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-						const VertexDecl& vertexDecl = m_vertexDecls[decl];
-						uint32_t offset = draw.m_stream[0].m_startVertex  * vertexDecl.getStride();
-
-						rce.setVertexBuffer(vb.getBuffer(), offset, 1);
-
-						if (isValid(draw.m_instanceDataBuffer) )
-						{
-							const VertexBufferMtl& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
-							rce.setVertexBuffer(inst.getBuffer(), draw.m_instanceDataOffset, 2);
-						}
 					}
 				}
 
