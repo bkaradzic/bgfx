@@ -2859,12 +2859,14 @@ namespace bgfx { namespace mtl
 	void FrameBufferMtl::create(uint8_t _num, const Attachment* _attachment)
 	{
 		m_denseIdx = UINT16_MAX;
-		m_num = 0;
-		m_width = 0;
+		m_num    = 0;
+		m_width  = 0;
 		m_height = 0;
+
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
 			TextureHandle handle = _attachment[ii].handle;
+
 			if (isValid(handle) )
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[handle.idx];
@@ -2889,26 +2891,30 @@ namespace bgfx { namespace mtl
 
 		bx::HashMurmur2A murmur;
 		murmur.begin();
-
 		murmur.add(m_num);
+
 		for (uint32_t ii = 0; ii < m_num; ++ii)
 		{
 			const TextureMtl& texture = s_renderMtl->m_textures[m_colorHandle[ii].idx];
-			murmur.add( (uint32_t)texture.m_ptr.pixelFormat() );
+			murmur.add(uint32_t(texture.m_ptr.pixelFormat() ) );
 		}
 
 		if (!isValid(m_depthHandle) )
 		{
-			murmur.add( (uint32_t)MTLPixelFormatInvalid);
-			murmur.add( (uint32_t)MTLPixelFormatInvalid);
+			murmur.add(uint32_t(MTLPixelFormatInvalid) );
+			murmur.add(uint32_t(MTLPixelFormatInvalid) );
 		}
 		else
 		{
 			const TextureMtl& depthTexture = s_renderMtl->m_textures[m_depthHandle.idx];
-			murmur.add( (uint32_t)depthTexture.m_ptr.pixelFormat() );
-			murmur.add( (uint32_t)(NULL != depthTexture.m_ptrStencil ? depthTexture.m_ptrStencil.pixelFormat() : MTLPixelFormatInvalid) );
+			murmur.add(uint32_t(depthTexture.m_ptr.pixelFormat() ) );
+			murmur.add(NULL != depthTexture.m_ptrStencil
+				? uint32_t(depthTexture.m_ptrStencil.pixelFormat() )
+				: uint32_t(MTLPixelFormatInvalid)
+				);
 		}
-		murmur.add(1); //SampleCount
+
+		murmur.add(1); // SampleCount
 
 		m_pixelFormatHash = murmur.end();
 	}
