@@ -967,6 +967,7 @@ void ImGuiIO::AddInputCharactersUTF8(const char* utf8_chars)
 // HELPERS
 //-----------------------------------------------------------------------------
 
+#define IM_STATIC_ASSERT(_COND)         typedef char static_assertion_##__line__[(_COND)?1:-1]
 #define IM_F32_TO_INT8_UNBOUND(_VAL)    ((int)((_VAL) * 255.0f + ((_VAL)>=0 ? 0.5f : -0.5f)))   // Unsaturated, for display purpose 
 #define IM_F32_TO_INT8_SAT(_VAL)        ((int)(ImSaturate(_VAL) * 255.0f + 0.5f))               // Saturated, always output 0..255
 
@@ -8512,6 +8513,7 @@ static inline int DataTypeFormatString(char* buf, int buf_size, ImGuiDataType da
     return 0;
 }
 
+// FIXME: Adding support for clamping on boundaries of the data type would be nice.
 static void DataTypeApplyOp(ImGuiDataType data_type, int op, void* output, void* arg1, const void* arg2)
 {
     IM_ASSERT(op == '+' || op == '-');
@@ -8543,6 +8545,7 @@ static void DataTypeApplyOp(ImGuiDataType data_type, int op, void* output, void*
             return;
         case ImGuiDataType_COUNT: break;
     }
+    IM_ASSERT(0);
 }
 
 struct ImGuiDataTypeInfo
@@ -8552,7 +8555,7 @@ struct ImGuiDataTypeInfo
     const char* ScanFmt;
 };
 
-static const ImGuiDataTypeInfo GDataTypeInfo[ImGuiDataType_COUNT] =
+static const ImGuiDataTypeInfo GDataTypeInfo[] =
 {
     { sizeof(int),          "%d",   "%d"    },
     { sizeof(unsigned int), "%u",   "%u"    },
@@ -8566,6 +8569,7 @@ static const ImGuiDataTypeInfo GDataTypeInfo[ImGuiDataType_COUNT] =
     { sizeof(float),        "%f",   "%f"    },  // float are promoted to double in va_arg
     { sizeof(double),       "%f",   "%lf"   },
 };
+IM_STATIC_ASSERT(IM_ARRAYSIZE(GDataTypeInfo) == ImGuiDataType_COUNT);
 
 // User can input math operators (e.g. +100) to edit a numerical values.
 // NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess..
@@ -8890,8 +8894,8 @@ static bool ImGui::SliderBehaviorT(const ImRect& bb, ImGuiID id, ImGuiDataType d
                 }
                 else
                 {
-                    if (v_max - v_min <= 100.0f || v_max - v_min >= -100.0f || IsNavInputDown(ImGuiNavInput_TweakSlow))
-                        delta = ((delta < 0.0f) ? -1.0f : +1.0f) / (float)(v_max - v_min); // Gamepad/keyboard tweak speeds in integer steps
+                    if ((v_range >= -100.0f && v_range <= 100.0f) || IsNavInputDown(ImGuiNavInput_TweakSlow))
+                        delta = ((delta < 0.0f) ? -1.0f : +1.0f) / (float)v_range; // Gamepad/keyboard tweak speeds in integer steps
                     else
                         delta /= 100.0f;
                 }
@@ -8978,6 +8982,9 @@ static bool ImGui::SliderBehaviorT(const ImRect& bb, ImGuiID id, ImGuiDataType d
     return value_changed;
 }
 
+// For 32-bits and larger types, slider bounds are limited to half the natural type range.
+// So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2.
+// It would be possible to life that limitation with some work but it doesn't seem to be work it for sliders.
 bool ImGui::SliderBehavior(const ImRect& bb, ImGuiID id, ImGuiDataType data_type, void* v, const void* v_min, const void* v_max, const char* format, float power, ImGuiSliderFlags flags)
 {
     switch (data_type)
@@ -9000,8 +9007,7 @@ bool ImGui::SliderBehavior(const ImRect& bb, ImGuiID id, ImGuiDataType data_type
     case ImGuiDataType_Double: 
         IM_ASSERT(*(const double*)v_min >= -DBL_MAX/2.0f && *(const double*)v_max <= DBL_MAX/2.0f);
         return SliderBehaviorT<double,double,double>(bb, id, data_type, (double*)v, *(const double*)v_min, *(const double*)v_max, format, power, flags);
-    case ImGuiDataType_COUNT:  
-        break;
+    case ImGuiDataType_COUNT: break;
     }
     IM_ASSERT(0);
     return false;
@@ -9254,7 +9260,7 @@ static bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE* v, float v_speed
     }
     if (g.ActiveIdSource == ImGuiInputSource_Nav)
     {
-        int decimal_precision = ImParseFormatPrecision(format, 3);
+        int decimal_precision = (data_type == ImGuiDataType_Float || data_type == ImGuiDataType_Double) ? ImParseFormatPrecision(format, 3) : 0;
         adjust_delta = GetNavInputAmount2d(ImGuiNavDirSourceFlags_Keyboard|ImGuiNavDirSourceFlags_PadDPad, ImGuiInputReadMode_RepeatFast, 1.0f/10.0f, 10.0f).x;
         v_speed = ImMax(v_speed, GetMinimumStepAtDecimalPrecision(decimal_precision));
     }
@@ -9364,7 +9370,7 @@ bool ImGui::DragScalar(const char* label, ImGuiDataType data_type, void* v, floa
         return false;
 
     if (power != 1.0f)
-        IM_ASSERT(v_min != v_max); // When using a power curve the drag needs to have known bounds
+        IM_ASSERT(v_min != NULL && v_max != NULL); // When using a power curve the drag needs to have known bounds
 
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
