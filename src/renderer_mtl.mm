@@ -1707,7 +1707,7 @@ namespace bgfx { namespace mtl
 			uint32_t fstencil = unpackStencil(0, _stencil);
 			uint32_t ref      = (fstencil&BGFX_STENCIL_FUNC_REF_MASK)>>BGFX_STENCIL_FUNC_REF_SHIFT;
 
-			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, BGFX_STENCIL_MASK);
+			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
