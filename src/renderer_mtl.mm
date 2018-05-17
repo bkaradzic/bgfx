@@ -478,7 +478,8 @@ namespace bgfx { namespace mtl
 			{
 				m_uniformBuffers[i] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
 			}
-			m_uniformBufferVertexOffset = 0;
+
+			m_uniformBufferVertexOffset   = 0;
 			m_uniformBufferFragmentOffset = 0;
 
 			const char* vshSource =
@@ -851,12 +852,15 @@ namespace bgfx { namespace mtl
 
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_ptr.width()  >> _mip);
 			uint32_t srcHeight = bx::uint32_max(1, texture.m_ptr.height() >> _mip);
-			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
+			const uint8_t bpp  = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
-			MTLRegion region = { { 0, 0, 0 }, { srcWidth, srcHeight, 1 } };
+			MTLRegion region =
+			{
+				{        0,         0, 0 },
+				{ srcWidth, srcHeight, 1 },
+			};
 
 			texture.m_ptr.getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
-
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) override
@@ -951,14 +955,12 @@ namespace bgfx { namespace mtl
 			m_uniformReg.remove(_handle);
 		}
 
-		//cmdPre
 		void requestScreenShotPre(const char* _filePath)
 		{
 			BX_UNUSED(_filePath);
 			m_saveScreenshot = true;
 		}
 
-		//cmdPost
 		void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) override
 		{
 			BX_UNUSED(_handle);
@@ -1070,7 +1072,7 @@ namespace bgfx { namespace mtl
 
 				renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
 				renderPassDescriptor.colorAttachments[0].storeAction =
-					NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
+					  NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
 					? MTLStoreActionMultisampleResolve
 					: MTLStoreActionStore
 					;
