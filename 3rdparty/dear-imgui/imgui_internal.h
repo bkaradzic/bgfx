@@ -33,16 +33,25 @@
 // Forward Declarations
 //-----------------------------------------------------------------------------
 
-struct ImRect;
-struct ImGuiColMod;
-struct ImGuiStyleMod;
-struct ImGuiGroupData;
-struct ImGuiMenuColumns;
-struct ImGuiDrawContext;
-struct ImGuiTextEditState;
-struct ImGuiPopupRef;
-struct ImGuiWindow;
-struct ImGuiWindowSettings;
+struct ImRect;                      // An axis-aligned rectangle (2 points)
+struct ImDrawDataBuilder;           // Helper to build a ImDrawData instance
+struct ImDrawListSharedData;        // Data shared between all ImDrawList instances
+struct ImGuiColMod;                 // Stacked color modifier, backup of modified data so we can restore it
+struct ImGuiColumnData;             // Storage data for a single column
+struct ImGuiColumnsSet;             // Storage data for a columns set
+struct ImGuiContext;                // Main imgui context
+struct ImGuiGroupData;              // Stacked storage data for BeginGroup()/EndGroup()
+struct ImGuiItemHoveredDataBackup;  // Backup and restore IsItemHovered() internal data
+struct ImGuiMenuColumns;            // Simple column measurement, currently used for MenuItem() only
+struct ImGuiNavMoveResult;          // Result of a directional navigation move query result
+struct ImGuiNextWindowData;         // Storage for SetNexWindow** functions
+struct ImGuiPopupRef;               // Storage for current popup stack
+struct ImGuiSettingsHandler;
+struct ImGuiStyleMod;               // Stacked style modifier, backup of modified data so we can restore it
+struct ImGuiTextEditState;          // Internal state of the currently focused/edited text input box
+struct ImGuiWindow;                 // Storage for one window
+struct ImGuiWindowTempData;         // Temporary storage for one, that's the data which in theory we could ditch at the end of the frame
+struct ImGuiWindowSettings;         // Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
 
 typedef int ImGuiLayoutType;        // enum: horizontal or vertical             // enum ImGuiLayoutType_
 typedef int ImGuiButtonFlags;       // flags: for ButtonEx(), ButtonBehavior()  // enum ImGuiButtonFlags_
@@ -228,10 +237,11 @@ enum ImGuiColumnsFlags_
 enum ImGuiSelectableFlagsPrivate_
 {
     // NB: need to be in sync with last value of ImGuiSelectableFlags_
-    ImGuiSelectableFlags_Menu               = 1 << 3,   // -> PressedOnClick
-    ImGuiSelectableFlags_MenuItem           = 1 << 4,   // -> PressedOnRelease
-    ImGuiSelectableFlags_Disabled           = 1 << 5,
-    ImGuiSelectableFlags_DrawFillAvailWidth = 1 << 6
+    ImGuiSelectableFlags_NoHoldingActiveID  = 1 << 3,
+    ImGuiSelectableFlags_PressedOnClick     = 1 << 4,
+    ImGuiSelectableFlags_PressedOnRelease   = 1 << 5,
+    ImGuiSelectableFlags_Disabled           = 1 << 6,
+    ImGuiSelectableFlags_DrawFillAvailWidth = 1 << 7
 };
 
 enum ImGuiSeparatorFlags_
@@ -371,7 +381,7 @@ struct ImGuiStyleMod
     ImGuiStyleMod(ImGuiStyleVar idx, ImVec2 v)  { VarIdx = idx; BackupFloat[0] = v.x; BackupFloat[1] = v.y; }
 };
 
-// Stacked data for BeginGroup()/EndGroup()
+// Stacked storage data for BeginGroup()/EndGroup()
 struct ImGuiGroupData
 {
     ImVec2      BackupCursorPos;
@@ -385,7 +395,7 @@ struct ImGuiGroupData
     bool        AdvanceCursor;
 };
 
-// Simple column measurement currently used for MenuItem() only. This is very short-sighted/throw-away code and NOT a generic helper.
+// Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper.
 struct IMGUI_API ImGuiMenuColumns
 {
     int         Count;
@@ -423,7 +433,7 @@ struct IMGUI_API ImGuiTextEditState
     void                OnKeyPressed(int key);
 };
 
-// Data saved in imgui.ini file
+// Windows data saved in imgui.ini file
 struct ImGuiWindowSettings
 {
     char*       Name;
@@ -437,7 +447,7 @@ struct ImGuiWindowSettings
 
 struct ImGuiSettingsHandler
 {
-    const char* TypeName;   // Short description stored in .ini file. Disallowed characters: '[' ']'  
+    const char* TypeName;   // Short description stored in .ini file. Disallowed characters: '[' ']'
     ImGuiID     TypeHash;   // == ImHash(TypeName, 0, 0)
     void*       (*ReadOpenFn)(ImGuiContext* ctx, ImGuiSettingsHandler* handler, const char* name);              // Read: Called when entering into a new ini entry e.g. "[Window][Name]"
     void        (*ReadLineFn)(ImGuiContext* ctx, ImGuiSettingsHandler* handler, void* entry, const char* line); // Read: Called for every line of text within an ini entry
@@ -500,6 +510,7 @@ struct ImGuiColumnsSet
     }
 };
 
+// Data shared between all ImDrawList instances
 struct IMGUI_API ImDrawListSharedData
 {
     ImVec2          TexUvWhitePixel;            // UV of white pixel in the atlas
@@ -578,7 +589,7 @@ struct ImGuiNextWindowData
     }
 };
 
-// Main state for ImGui
+// Main imgui context
 struct ImGuiContext
 {
     bool                    Initialized;
@@ -639,7 +650,7 @@ struct ImGuiContext
     ImGuiInputSource        NavInputSource;                     // Keyboard or Gamepad mode?
     ImRect                  NavScoringRectScreen;               // Rectangle used for scoring, in screen space. Based of window->DC.NavRefRectRel[], modified for directional navigation scoring.
     int                     NavScoringCount;                    // Metrics for debugging
-    ImGuiWindow*            NavWindowingTarget;                 // When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed front-most. 
+    ImGuiWindow*            NavWindowingTarget;                 // When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed front-most.
     float                   NavWindowingHighlightTimer;
     float                   NavWindowingHighlightAlpha;
     bool                    NavWindowingToggleLayer;
@@ -824,16 +835,16 @@ enum ImGuiItemFlags_
 {
     ImGuiItemFlags_AllowKeyboardFocus           = 1 << 0,  // true
     ImGuiItemFlags_ButtonRepeat                 = 1 << 1,  // false    // Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings.
-    ImGuiItemFlags_Disabled                     = 1 << 2,  // false    // FIXME-WIP: Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP) 
+    ImGuiItemFlags_Disabled                     = 1 << 2,  // false    // FIXME-WIP: Disable interactions but doesn't affect visuals. Should be: grey out and disable interactions with widgets that affect data + view widgets (WIP)
     ImGuiItemFlags_NoNav                        = 1 << 3,  // false
     ImGuiItemFlags_NoNavDefaultFocus            = 1 << 4,  // false
     ImGuiItemFlags_SelectableDontClosePopup     = 1 << 5,  // false    // MenuItem/Selectable() automatically closes current Popup window
     ImGuiItemFlags_Default_                     = ImGuiItemFlags_AllowKeyboardFocus
 };
 
-// Transient per-window data, reset at the beginning of the frame
-// FIXME: That's theory, in practice the delimitation between ImGuiWindow and ImGuiDrawContext is quite tenuous and could be reconsidered.
-struct IMGUI_API ImGuiDrawContext
+// Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
+// FIXME: That's theory, in practice the delimitation between ImGuiWindow and ImGuiWindowTempData is quite tenuous and could be reconsidered.
+struct IMGUI_API ImGuiWindowTempData
 {
     ImVec2                  CursorPos;
     ImVec2                  CursorPosPrevLine;
@@ -878,7 +889,7 @@ struct IMGUI_API ImGuiDrawContext
     float                   ColumnsOffsetX;         // Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use cases like Tree->Column->Tree. Need revamp columns API.
     ImGuiColumnsSet*        ColumnsSet;             // Current columns set
 
-    ImGuiDrawContext()
+    ImGuiWindowTempData()
     {
         CursorPos = CursorPosPrevLine = CursorStartPos = CursorMaxPos = ImVec2(0.0f, 0.0f);
         CurrentLineHeight = PrevLineHeight = 0.0f;
@@ -910,7 +921,7 @@ struct IMGUI_API ImGuiDrawContext
     }
 };
 
-// Windows data
+// Storage for one window
 struct IMGUI_API ImGuiWindow
 {
     char*                   Name;
@@ -955,7 +966,7 @@ struct IMGUI_API ImGuiWindow
     ImVec2                  SetWindowPosVal;                    // store window position when using a non-zero Pivot (position set needs to be processed when we know the window size)
     ImVec2                  SetWindowPosPivot;                  // store window pivot for positioning. ImVec2(0,0) when positioning from top-left corner; ImVec2(0.5f,0.5f) for centering; ImVec2(1,1) for bottom right.
 
-    ImGuiDrawContext        DC;                                 // Temporary per-window data, reset at the beginning of the frame
+    ImGuiWindowTempData     DC;                                 // Temporary per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the "DC" variable name.
     ImVector<ImGuiID>       IDStack;                            // ID stack. ID are hashes seeded with the value at the top of the stack
     ImRect                  ClipRect;                           // Current clipping rectangle. = DrawList->clip_rect_stack.back(). Scissoring / clipping rectangle. x1, y1, x2, y2.
     ImRect                  OuterRectClipped;                   // = WindowRect just after setup in Begin(). == window->Rect() for root window.
@@ -1007,7 +1018,7 @@ public:
     ImRect      MenuBarRect() const                     { float y1 = Pos.y + TitleBarHeight(); return ImRect(Pos.x, y1, Pos.x + SizeFull.x, y1 + MenuBarHeight()); }
 };
 
-// Backup and restore just enough data to be able to use IsItemHovered() on item A after another B in the same window has overwritten the data.  
+// Backup and restore just enough data to be able to use IsItemHovered() on item A after another B in the same window has overwritten the data.
 struct ImGuiItemHoveredDataBackup
 {
     ImGuiID                 LastItemId;
@@ -1148,7 +1159,7 @@ namespace ImGui
 // ImFontAtlas internals
 IMGUI_API bool              ImFontAtlasBuildWithStbTruetype(ImFontAtlas* atlas);
 IMGUI_API void              ImFontAtlasBuildRegisterDefaultCustomRects(ImFontAtlas* atlas);
-IMGUI_API void              ImFontAtlasBuildSetupFont(ImFontAtlas* atlas, ImFont* font, ImFontConfig* font_config, float ascent, float descent); 
+IMGUI_API void              ImFontAtlasBuildSetupFont(ImFontAtlas* atlas, ImFont* font, ImFontConfig* font_config, float ascent, float descent);
 IMGUI_API void              ImFontAtlasBuildPackCustomRects(ImFontAtlas* atlas, void* spc);
 IMGUI_API void              ImFontAtlasBuildFinish(ImFontAtlas* atlas);
 IMGUI_API void              ImFontAtlasBuildMultiplyCalcLookupTable(unsigned char out_table[256], float in_multiply_factor);
