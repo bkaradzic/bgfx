@@ -298,19 +298,20 @@ namespace bgfx
 		};
 	};
 
+	/// Primitive topology.
 	///
 	/// @attention C99 equivalent is `bgfx_topology_t`.
 	///
 	struct Topology
 	{
-		///
+		/// Primitive topology:
 		enum Enum
 		{
-			TriList,   //!<
-			TriStrip,  //!<
-			LineList,  //!<
-			LineStrip, //!<
-			PointList, //!<
+			TriList,   //!< Triangle list.
+			TriStrip,  //!< Triangle strip.
+			LineList,  //!< Line list.
+			LineStrip, //!< Line strip.
+			PointList, //!< Point list.
 
 			Count
 		};
@@ -918,12 +919,12 @@ namespace bgfx
 		uint16_t numVertexBuffers;          //!< Number of used vertex buffers.
 		uint16_t numVertexDecls;            //!< Number of used vertex declarations.
 
-		int64_t textureMemoryUsed;          //!<
-		int64_t rtMemoryUsed;               //!<
-		int32_t transientVbUsed;            //!<
-		int32_t transientIbUsed;            //!<
+		int64_t textureMemoryUsed;          //!< Estimate of texture memory used.
+		int64_t rtMemoryUsed;               //!< Estimate of render target memory used.
+		int32_t transientVbUsed;            //!< Amount of transient vertex buffer used.
+		int32_t transientIbUsed;            //!< Amount of transient index buffer used.
 
-		uint32_t numPrims[Topology::Count]; //!<
+		uint32_t numPrims[Topology::Count]; //!< Number of primitives rendered.
 
 		int64_t gpuMemoryMax;               //!< Maximum available GPU memory for application.
 		int64_t gpuMemoryUsed;              //!< Amount of GPU memory used by the application.
