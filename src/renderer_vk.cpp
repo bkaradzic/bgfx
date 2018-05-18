@@ -25,18 +25,11 @@ namespace bgfx { namespace vk
 		{ VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,  3, 3, 0 },
 		{ VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 3, 1, 2 },
 		{ VK_PRIMITIVE_TOPOLOGY_LINE_LIST,      2, 2, 0 },
+		{ VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,     2, 1, 1 },
 		{ VK_PRIMITIVE_TOPOLOGY_POINT_LIST,     1, 1, 0 },
 		{ VK_PRIMITIVE_TOPOLOGY_MAX_ENUM,       0, 0, 0 },
 	};
-
-	static const char* s_primName[] =
-	{
-		"TriList",
-		"TriStrip",
-		"Line",
-		"Point",
-	};
-	BX_STATIC_ASSERT(BX_COUNTOF(s_primInfo) == BX_COUNTOF(s_primName)+1);
+	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_primInfo)-1);
 
 	static const uint32_t s_checkMsaa[] =
 	{
@@ -3833,7 +3826,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						clearQuad(clearRect, clr, _render->m_colorPalette);
 					}
 
-					prim = s_primInfo[BX_COUNTOF(s_primName)]; // Force primitive type update.
+					prim = s_primInfo[Topology::Count]; // Force primitive type update.
 
 					submitBlit(bs, view);
 				}
@@ -4399,6 +4392,7 @@ BX_UNUSED(presentMin, presentMax);
 //		perfStats.numDraw       = statsKeyType[0];
 //		perfStats.numCompute    = statsKeyType[1];
 //		perfStats.maxGpuLatency = maxGpuLatency;
+		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;
 
@@ -4504,10 +4498,10 @@ BX_UNUSED(presentMin, presentMax);
 					, elapsedCpuMs
 					);
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_primName); ++ii)
+				for (uint32_t ii = 0; ii < Topology::Count; ++ii)
 				{
 					tvm.printf(10, pos++, 0x8b, "   %9s: %7d (#inst: %5d), submitted: %7d "
-						, s_primName[ii]
+						, getName(Topology::Enum(ii) )
 						, statsNumPrimsRendered[ii]
 						, statsNumInstances[ii]
 						, statsNumPrimsSubmitted[ii]

@@ -462,6 +462,7 @@ namespace bgfx
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
 	const char* getName(TextureFormat::Enum _fmt);
 	const char* getName(UniformHandle _handle);
+	const char* getName(Topology::Enum _topology);
 
 	template<typename Ty>
 	inline void release(Ty)

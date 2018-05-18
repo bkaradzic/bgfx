@@ -1363,6 +1363,21 @@ namespace bgfx
 		return s_ctx->m_uniformRef[_handle.idx].m_name.getPtr();
 	}
 
+	static const char* s_topologyName[] =
+	{
+		"TriList",
+		"TriStrip",
+		"Line",
+		"LineStrip",
+		"Point",
+	};
+	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_topologyName) );
+
+	const char* getName(Topology::Enum _topology)
+	{
+		return s_topologyName[_topology];
+	}
+
 	static TextureFormat::Enum s_emulatedFormats[] =
 	{
 		TextureFormat::BC1,
@@ -4566,6 +4581,7 @@ BGFX_C99_ENUM_CHECK(bgfx::TextureFormat,        BGFX_TEXTURE_FORMAT_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::UniformType,          BGFX_UNIFORM_TYPE_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::BackbufferRatio,      BGFX_BACKBUFFER_RATIO_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::OcclusionQueryResult, BGFX_OCCLUSION_QUERY_RESULT_COUNT);
+BGFX_C99_ENUM_CHECK(bgfx::Topology,             BGFX_TOPOLOGY_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::TopologyConvert,      BGFX_TOPOLOGY_CONVERT_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::RenderFrame,          BGFX_RENDER_FRAME_COUNT);
 #undef BGFX_C99_ENUM_CHECK
