@@ -284,6 +284,13 @@ target="_blank"><img src="http://img.youtube.com/vi/nY8y_dFolKo/0.jpg"
 alt="WonderWorlds"
 width="640" height="480" border="0" /></a>
 
+## mud
+
+https://hugoam.github.io/mud-io/ - an all-purpose c++ app prototyping library,
+focused towards live graphical apps and games.
+
+![mud](https://raw.githubusercontent.com/hugoam/mud-io/master/media/14_live_gfx.png)
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
