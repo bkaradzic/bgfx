@@ -6105,11 +6105,11 @@ namespace bgfx { namespace d3d11
 						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
 						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
 
-						uint16_t handle = draw.m_stream[idx].m_handle.idx;
+						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 						const VertexBufferD3D11& vb = m_vertexBuffers[handle];
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+						const uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
-						uint32_t stride = vertexDecl.m_stride;
+						const uint32_t stride = vertexDecl.m_stride;
 
 						buffers[numStreams] = vb.m_ptr;
 						strides[numStreams] = stride;
