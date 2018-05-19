@@ -1780,7 +1780,8 @@ namespace bgfx { namespace mtl
 				| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE
 				);
 
-			bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
+			const bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
+			ProgramMtl& program = m_program[_programIdx];
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -1796,6 +1797,12 @@ namespace bgfx { namespace mtl
 			{
 				FrameBufferMtl& frameBuffer = m_frameBuffers[_fbh.idx];
 				murmur.add(frameBuffer.m_pixelFormatHash);
+			}
+
+			murmur.add(program.m_vsh->m_hash);
+			if (NULL != program.m_fsh)
+			{
+				murmur.add(program.m_fsh->m_hash);
 			}
 
 			for (uint8_t ii = 0; ii < _numStreams; ++ii)
@@ -1916,7 +1923,6 @@ namespace bgfx { namespace mtl
 					}
 				}
 
-				ProgramMtl& program = m_program[_programIdx];
 				pd.vertexFunction   = program.m_vsh->m_function;
 				pd.fragmentFunction = program.m_fsh != NULL ? program.m_fsh->m_function : NULL;
 
@@ -2374,6 +2380,14 @@ namespace bgfx { namespace mtl
 			, "Failed to create %s shader."
 			, BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
 			);
+
+		bx::HashMurmur2A murmur;
+		murmur.begin();
+		murmur.add(iohash);
+		murmur.add(code, shaderSize);
+//		murmur.add(numAttrs);
+//		murmur.add(m_attrMask, numAttrs);
+		m_hash = murmur.end();
 	}
 
 	void ProgramMtl::create(const ShaderMtl* _vsh, const ShaderMtl* _fsh)
