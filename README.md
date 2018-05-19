@@ -79,8 +79,8 @@ Languages:
 [Tools](https://bkaradzic.github.io/bgfx/tools.html)
 ----------------------------------------------------
 
-Who is using it?
-----------------
+Who is using it? #madewithbgfx
+------------------------------
 
 ## Airmech
 
