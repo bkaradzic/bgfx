@@ -10,7 +10,6 @@ spv.shaderBallotAMD.comp
                               Capability Groups
                               Capability Int16
                               Capability StorageUniformBufferBlock16
-                              Capability StorageUniform16
                               Extension  "SPV_AMD_gpu_shader_half_float"
                               Extension  "SPV_AMD_gpu_shader_int16"
                               Extension  "SPV_AMD_shader_ballot"
