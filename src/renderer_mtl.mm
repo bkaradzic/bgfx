@@ -1723,7 +1723,7 @@ namespace bgfx { namespace mtl
 				if (0 != _stencil)
 				{
 					StencilDescriptor frontFaceDesc = m_frontFaceStencilDescriptor;
-					StencilDescriptor backfaceDesc = m_backFaceStencilDescriptor;
+					StencilDescriptor backfaceDesc  = m_backFaceStencilDescriptor;
 
 					uint32_t readMask  = (fstencil&BGFX_STENCIL_FUNC_RMASK_MASK)>>BGFX_STENCIL_FUNC_RMASK_SHIFT;
 					uint32_t writeMask = 0xff;
@@ -1743,7 +1743,7 @@ namespace bgfx { namespace mtl
 					backfaceDesc.writeMask = writeMask;
 
 					desc.frontFaceStencil = frontFaceDesc;
-					desc.backFaceStencil = backfaceDesc;
+					desc.backFaceStencil  = backfaceDesc;
 				}
 				else
 				{
@@ -3706,7 +3706,7 @@ namespace bgfx { namespace mtl
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
 						const uint64_t pt = newFlags&BGFX_STATE_CULL_MASK;
-						uint8_t cullIndex = uint8_t(pt>>BGFX_STATE_CULL_SHIFT);
+						const uint8_t cullIndex = uint8_t(pt>>BGFX_STATE_CULL_SHIFT);
 						rce.setCullMode(s_cullMode[cullIndex]);
 					}
 
@@ -3779,20 +3779,20 @@ namespace bgfx { namespace mtl
 						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
 						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
 
-						uint16_t handle = draw.m_stream[idx].m_handle.idx;
+						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 						const VertexBufferMtl& vb = m_vertexBuffers[handle];
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+						const uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
 						const VertexDecl& vertexDecl = m_vertexDecls[decl];
-						uint32_t stride = vertexDecl.m_stride;
+						const uint32_t stride = vertexDecl.m_stride;
 
-						decls[numStreams]   = &vertexDecl;
+						decls[numStreams] = &vertexDecl;
 
 						numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
 							? vb.m_size/stride
 							: draw.m_numVertices
 							, numVertices
 							);
-						uint32_t offset = draw.m_stream[idx].m_startVertex  * vertexDecl.getStride();
+						const uint32_t offset = draw.m_stream[idx].m_startVertex * stride;
 
 						rce.setVertexBuffer(vb.getBuffer(), offset, idx+1);
 					}
