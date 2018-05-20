@@ -1494,6 +1494,36 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx5Stats17textureMemoryUsedE">
+<span id="bgfx::Stats::textureMemoryUsed__int64_t"></span><span class="target" id="structbgfx_1_1_stats_1ad209161ed6b9f04105ab55c535e4f4ee"></span>int64_t <code class="descname">textureMemoryUsed</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats17textureMemoryUsedE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate of texture memory used. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats12rtMemoryUsedE">
+<span id="bgfx::Stats::rtMemoryUsed__int64_t"></span><span class="target" id="structbgfx_1_1_stats_1a532fd0f54fd15377cf24309a2ebbd95b"></span>int64_t <code class="descname">rtMemoryUsed</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12rtMemoryUsedE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate of render target memory used. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats15transientVbUsedE">
+<span id="bgfx::Stats::transientVbUsed__int32_t"></span><span class="target" id="structbgfx_1_1_stats_1af15ba5ebef38a16382762ed84748bc34"></span>int32_t <code class="descname">transientVbUsed</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats15transientVbUsedE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Amount of transient vertex buffer used. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats15transientIbUsedE">
+<span id="bgfx::Stats::transientIbUsed__int32_t"></span><span class="target" id="structbgfx_1_1_stats_1a57989ed31ef534e59a884c2f39cfdb3f"></span>int32_t <code class="descname">transientIbUsed</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats15transientIbUsedE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Amount of transient index buffer used. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx5Stats8numPrimsE">
+<span id="bgfx::Stats::numPrims__uint32_tA"></span><span class="target" id="structbgfx_1_1_stats_1a35ef32f727dd0e81350209549d51cb9d"></span>uint32_t <code class="descname">numPrims</code>[Topology::Count]<a class="headerlink" href="#_CPPv2N4bgfx5Stats8numPrimsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of primitives rendered. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx5Stats12gpuMemoryMaxE">
 <span id="bgfx::Stats::gpuMemoryMax__int64_t"></span><span class="target" id="structbgfx_1_1_stats_1afe5fd057109b00d5a4f760a034c59c8b"></span>int64_t <code class="descname">gpuMemoryMax</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12gpuMemoryMaxE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum available GPU memory for application. </p>
@@ -3448,18 +3478,43 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </div>
 <div class="section" id="state-flags">
 <h4>State Flags<a class="headerlink" href="#state-flags" title="Permalink to this headline">¶</a></h4>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_STATE_RGB_WRITE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_STATE_ALPHA_WRITE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_STATE_DEPTH_WRITE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
+<dl class="macro">
+<dt id="c.BGFX_STATE_WRITE_R">
+<span class="target" id="defines_8h_1af089d9292e8742a9bbc8f31e9959ac8f"></span><code class="descname">BGFX_STATE_WRITE_R</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Color RGB/alpha/depth write. When it&#8217;s not specified write will be disabled. </p>
+<p>Enable R write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_WRITE_G">
+<span class="target" id="defines_8h_1a67607d6d1f9a225c1b2ff4e9d12f815d"></span><code class="descname">BGFX_STATE_WRITE_G</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_G" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable G write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_WRITE_B">
+<span class="target" id="defines_8h_1acf95680646da08e7457c76f7f9eef258"></span><code class="descname">BGFX_STATE_WRITE_B</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_B" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable B write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_WRITE_RGB">
+<span class="target" id="defines_8h_1a62234af4b2f8561cc9f63625d2f87e13"></span><code class="descname">BGFX_STATE_WRITE_RGB</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_RGB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable RGB write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_WRITE_A">
+<span class="target" id="defines_8h_1a83b7df77e4daba5f403757d272262f0e"></span><code class="descname">BGFX_STATE_WRITE_A</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_A" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable alpha write. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_WRITE_Z">
+<span class="target" id="defines_8h_1a648e6de360193486206989233d94a7f7"></span><code class="descname">BGFX_STATE_WRITE_Z</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_Z" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth write. </p>
+</dd></dl>
+
 <dl class="macro">
 <dt id="c.BGFX_STATE_DEFAULT">
 <span class="target" id="defines_8h_1a7f87ba52187999ca674a61ccc27170db"></span><code class="descname">BGFX_STATE_DEFAULT</code><a class="headerlink" href="#c.BGFX_STATE_DEFAULT" title="Permalink to this definition">¶</a></dt>
@@ -3827,18 +3882,40 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setInstanceDataBuffer&#8221; with arguments (const InstanceDataBuffer *, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer">
+<span id="bgfx::setInstanceDataBuffer__InstanceDataBufferCP"></span><span class="target" id="namespacebgfx_1aa99e46d4c06aacf639114d727eac87dd"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span><em class="property">const</em> InstanceDataBuffer *<em>_idb</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set instance data buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_idb</span></code>: Transient instance data buffer.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setInstanceDataBuffer(DynamicVertexBufferHandle, uint32_t, uint32_t)
-- void bgfx::setInstanceDataBuffer(VertexBufferHandle, uint32_t, uint32_t)
-- void bgfx::setInstanceDataBuffer(const InstanceDataBuffer *)
-- void bgfx::setInstanceDataBuffer(const InstanceDataBuffer *, uint32_t, uint32_t)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer8uint32_t8uint32_t">
+<span id="bgfx::setInstanceDataBuffer__InstanceDataBufferCP.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1ad9b9b9217c22449bc4d18af7abe4651e"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span><em class="property">const</em> InstanceDataBuffer *<em>_idb</em>, uint32_t <em>_start</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set instance data buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_idb</span></code>: Transient instance data buffer. </li>
+<li><code class="docutils literal"><span class="pre">_start</span></code>: First instance data. </li>
+<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of data instances.</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t">
 <span id="bgfx::setInstanceDataBuffer__VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1a20b0e58f00d16430069e045755e72bb0"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span>VertexBufferHandle <em>_handle</em>, uint32_t <em>_start</em>, uint32_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferE18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
