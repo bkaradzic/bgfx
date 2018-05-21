@@ -1394,7 +1394,6 @@ namespace bgfx
 
 	struct UniformRegInfo
 	{
-		const void* m_data;
 		UniformHandle m_handle;
 	};
 
@@ -1420,7 +1419,7 @@ namespace bgfx
 			return NULL;
 		}
 
-		const UniformRegInfo& add(UniformHandle _handle, const char* _name, const void* _data)
+		const UniformRegInfo& add(UniformHandle _handle, const char* _name)
 		{
 			BX_CHECK(isValid(_handle), "Uniform handle is invalid (name: %s)!", _name);
 			const uint32_t key = bx::hash<bx::HashMurmur2A>(_name);
@@ -1428,7 +1427,6 @@ namespace bgfx
 			m_uniforms.insert(key, _handle.idx);
 
 			UniformRegInfo& info = m_info[_handle.idx];
-			info.m_data   = _data;
 			info.m_handle = _handle;
 
 			return info;
