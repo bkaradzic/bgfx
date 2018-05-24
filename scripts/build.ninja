@@ -23,6 +23,9 @@ rule texturec_bc4
 rule texturec_bc5
     command = texturec -f $in -o $out -t bc5 -m
 
+rule texturec_bc7
+    command = texturec -f $in -o $out -t bc7 -m
+
 rule texturec_etc1
     command = texturec -f $in -o $out -t etc1 -m
 
