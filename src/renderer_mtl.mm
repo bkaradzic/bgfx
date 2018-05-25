@@ -2707,7 +2707,9 @@ namespace bgfx { namespace mtl
 
 						if (convert)
 						{
-							bimg::imageDecodeToBgra8(temp
+							bimg::imageDecodeToBgra8(
+								  g_allocator
+								, temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
@@ -2780,7 +2782,9 @@ namespace bgfx { namespace mtl
 		if (convert)
 		{
 			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
-			bimg::imageDecodeToBgra8(temp
+			bimg::imageDecodeToBgra8(
+				  g_allocator
+				, temp
 				, data
 				, _rect.m_width
 				, _rect.m_height

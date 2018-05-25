@@ -2978,13 +2978,15 @@ namespace bgfx { namespace d3d9
 								uint32_t srcpitch = mipWidth*bpp/8;
 
 								uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, srcpitch*mipHeight);
-								bimg::imageDecodeToBgra8(temp
-										, mip.m_data
-										, mip.m_width
-										, mip.m_height
-										, srcpitch
-										, mip.m_format
-										);
+								bimg::imageDecodeToBgra8(
+									  g_allocator
+									, temp
+									, mip.m_data
+									, mip.m_width
+									, mip.m_height
+									, srcpitch
+									, mip.m_format
+									);
 
 								bx::memCopy(bits, temp, pitch, height, srcpitch, pitch);
 
@@ -2992,7 +2994,7 @@ namespace bgfx { namespace d3d9
 							}
 							else
 							{
-								bimg::imageDecodeToBgra8(bits, mip.m_data, mip.m_width, mip.m_height, pitch, mip.m_format);
+								bimg::imageDecodeToBgra8(g_allocator, bits, mip.m_data, mip.m_width, mip.m_height, pitch, mip.m_format);
 							}
 						}
 						else
@@ -3051,7 +3053,7 @@ namespace bgfx { namespace d3d9
 		if (convert)
 		{
 			temp = (uint8_t*)BX_ALLOC(g_allocator, rectpitch*_rect.m_height);
-			bimg::imageDecodeToBgra8(temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+			bimg::imageDecodeToBgra8(g_allocator, temp, data, _rect.m_width, _rect.m_height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 			data = temp;
 		}
 

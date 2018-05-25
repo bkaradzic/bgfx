@@ -4495,13 +4495,15 @@ namespace bgfx { namespace d3d12
 							const uint32_t size  = slice*depth;
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
-							bimg::imageDecodeToBgra8(temp
-									, mip.m_data
-									, mip.m_width
-									, mip.m_height
-									, pitch
-									, mip.m_format
-									);
+							bimg::imageDecodeToBgra8(
+								  g_allocator
+								, temp
+								, mip.m_data
+								, mip.m_width
+								, mip.m_height
+								, pitch
+								, mip.m_format
+								);
 
 							srd[kk].pData      = temp;
 							srd[kk].RowPitch   = pitch;

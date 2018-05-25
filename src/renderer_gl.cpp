@@ -5151,7 +5151,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 							if (convert)
 							{
-								imageDecodeToRgba8(temp
+								imageDecodeToRgba8(
+									  g_allocator
+									, temp
 									, mip.m_data
 									, mip.m_width
 									, mip.m_height
@@ -5320,7 +5322,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 			if (convert)
 			{
-				bimg::imageDecodeToRgba8(temp, data, width, height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
+				bimg::imageDecodeToRgba8(g_allocator, temp, data, width, height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
 				data = temp;
 				srcpitch = rectpitch;
 			}
