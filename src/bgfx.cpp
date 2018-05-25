@@ -4793,7 +4793,10 @@ BGFX_C_API bool bgfx_init(const bgfx_init_t* _init)
 		init.allocator = reinterpret_cast<bgfx_allocator_interface_t *>(&s_allocator);
 	}
 
-	return bgfx::init(*reinterpret_cast<const bgfx::Init*>(&init) );
+	union { const bgfx_init_t* c; const bgfx::Init* cpp; } in;
+	in.c = _init;
+
+	return bgfx::init(*in.cpp);
 }
 
 BGFX_C_API void bgfx_shutdown(void)
