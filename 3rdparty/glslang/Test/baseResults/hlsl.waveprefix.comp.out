@@ -2370,8 +2370,8 @@ local_size = (32, 16, 1)
               16:             TypeFloat 32
               17:             TypeVector 16(float) 4
               18:             TypeFloat 64
-              19:             TypeVector 18(float) 4
-       20(Types):             TypeStruct 13(ivec4) 15(ivec4) 17(fvec4) 19(fvec4)
+              19:             TypeVector 18(float64_t) 4
+       20(Types):             TypeStruct 13(ivec4) 15(ivec4) 17(fvec4) 19(f64vec4)
               21:             TypeRuntimeArray 20(Types)
         22(data):             TypeStruct 21
               23:             TypePointer Uniform 22(data)
@@ -2394,10 +2394,10 @@ local_size = (32, 16, 1)
              136:             TypeVector 16(float) 2
              148:             TypeVector 16(float) 3
              158:     14(int) Constant 3
-             161:             TypePointer Uniform 19(fvec4)
-             170:             TypePointer Uniform 18(float)
-             179:             TypeVector 18(float) 2
-             191:             TypeVector 18(float) 3
+             161:             TypePointer Uniform 19(f64vec4)
+             170:             TypePointer Uniform 18(float64_t)
+             179:             TypeVector 18(float64_t) 2
+             191:             TypeVector 18(float64_t) 3
              357:             TypeBool
              363:             TypePointer Input 7(ivec3)
         364(dti):    363(ptr) Variable Input
@@ -2546,8 +2546,8 @@ local_size = (32, 16, 1)
              159:     27(ptr) AccessChain 10(dti) 26
              160:      6(int) Load 159
              162:    161(ptr) AccessChain 24(data) 25 160 158
-             163:   19(fvec4) Load 162
-             164:   19(fvec4) GroupNonUniformFAdd 35 InclusiveScan 163
+             163: 19(f64vec4) Load 162
+             164: 19(f64vec4) GroupNonUniformFAdd 35 InclusiveScan 163
              165:    161(ptr) AccessChain 24(data) 25 157 158
                               Store 165 164
              166:     27(ptr) AccessChain 10(dti) 26
@@ -2555,8 +2555,8 @@ local_size = (32, 16, 1)
              168:     27(ptr) AccessChain 10(dti) 26
              169:      6(int) Load 168
              171:    170(ptr) AccessChain 24(data) 25 169 158 26
-             172:   18(float) Load 171
-             173:   18(float) GroupNonUniformFAdd 35 InclusiveScan 172
+             172:18(float64_t) Load 171
+             173:18(float64_t) GroupNonUniformFAdd 35 InclusiveScan 172
              174:    170(ptr) AccessChain 24(data) 25 167 158 26
                               Store 174 173
              175:     27(ptr) AccessChain 10(dti) 26
@@ -2564,24 +2564,24 @@ local_size = (32, 16, 1)
              177:     27(ptr) AccessChain 10(dti) 26
              178:      6(int) Load 177
              180:    161(ptr) AccessChain 24(data) 25 178 158
-             181:   19(fvec4) Load 180
-             182:  179(fvec2) VectorShuffle 181 181 0 1
-             183:  179(fvec2) GroupNonUniformFAdd 35 InclusiveScan 182
+             181: 19(f64vec4) Load 180
+             182:179(f64vec2) VectorShuffle 181 181 0 1
+             183:179(f64vec2) GroupNonUniformFAdd 35 InclusiveScan 182
              184:    161(ptr) AccessChain 24(data) 25 176 158
-             185:   19(fvec4) Load 184
-             186:   19(fvec4) VectorShuffle 185 183 4 5 2 3
+             185: 19(f64vec4) Load 184
+             186: 19(f64vec4) VectorShuffle 185 183 4 5 2 3
                               Store 184 186
              187:     27(ptr) AccessChain 10(dti) 26
              188:      6(int) Load 187
              189:     27(ptr) AccessChain 10(dti) 26
              190:      6(int) Load 189
              192:    161(ptr) AccessChain 24(data) 25 190 158
-             193:   19(fvec4) Load 192
-             194:  191(fvec3) VectorShuffle 193 193 0 1 2
-             195:  191(fvec3) GroupNonUniformFAdd 35 InclusiveScan 194
+             193: 19(f64vec4) Load 192
+             194:191(f64vec3) VectorShuffle 193 193 0 1 2
+             195:191(f64vec3) GroupNonUniformFAdd 35 InclusiveScan 194
              196:    161(ptr) AccessChain 24(data) 25 188 158
-             197:   19(fvec4) Load 196
-             198:   19(fvec4) VectorShuffle 197 195 4 5 6 3
+             197: 19(f64vec4) Load 196
+             198: 19(f64vec4) VectorShuffle 197 195 4 5 6 3
                               Store 196 198
              199:     27(ptr) AccessChain 10(dti) 26
              200:      6(int) Load 199
@@ -2714,8 +2714,8 @@ local_size = (32, 16, 1)
              315:     27(ptr) AccessChain 10(dti) 26
              316:      6(int) Load 315
              317:    161(ptr) AccessChain 24(data) 25 316 158
-             318:   19(fvec4) Load 317
-             319:   19(fvec4) GroupNonUniformFMul 35 InclusiveScan 318
+             318: 19(f64vec4) Load 317
+             319: 19(f64vec4) GroupNonUniformFMul 35 InclusiveScan 318
              320:    161(ptr) AccessChain 24(data) 25 314 158
                               Store 320 319
              321:     27(ptr) AccessChain 10(dti) 26
@@ -2723,8 +2723,8 @@ local_size = (32, 16, 1)
              323:     27(ptr) AccessChain 10(dti) 26
              324:      6(int) Load 323
              325:    170(ptr) AccessChain 24(data) 25 324 158 26
-             326:   18(float) Load 325
-             327:   18(float) GroupNonUniformFMul 35 InclusiveScan 326
+             326:18(float64_t) Load 325
+             327:18(float64_t) GroupNonUniformFMul 35 InclusiveScan 326
              328:    170(ptr) AccessChain 24(data) 25 322 158 26
                               Store 328 327
              329:     27(ptr) AccessChain 10(dti) 26
@@ -2732,24 +2732,24 @@ local_size = (32, 16, 1)
              331:     27(ptr) AccessChain 10(dti) 26
              332:      6(int) Load 331
              333:    161(ptr) AccessChain 24(data) 25 332 158
-             334:   19(fvec4) Load 333
-             335:  179(fvec2) VectorShuffle 334 334 0 1
-             336:  179(fvec2) GroupNonUniformFMul 35 InclusiveScan 335
+             334: 19(f64vec4) Load 333
+             335:179(f64vec2) VectorShuffle 334 334 0 1
+             336:179(f64vec2) GroupNonUniformFMul 35 InclusiveScan 335
              337:    161(ptr) AccessChain 24(data) 25 330 158
-             338:   19(fvec4) Load 337
-             339:   19(fvec4) VectorShuffle 338 336 4 5 2 3
+             338: 19(f64vec4) Load 337
+             339: 19(f64vec4) VectorShuffle 338 336 4 5 2 3
                               Store 337 339
              340:     27(ptr) AccessChain 10(dti) 26
              341:      6(int) Load 340
              342:     27(ptr) AccessChain 10(dti) 26
              343:      6(int) Load 342
              344:    161(ptr) AccessChain 24(data) 25 343 158
-             345:   19(fvec4) Load 344
-             346:  191(fvec3) VectorShuffle 345 345 0 1 2
-             347:  191(fvec3) GroupNonUniformFMul 35 InclusiveScan 346
+             345: 19(f64vec4) Load 344
+             346:191(f64vec3) VectorShuffle 345 345 0 1 2
+             347:191(f64vec3) GroupNonUniformFMul 35 InclusiveScan 346
              348:    161(ptr) AccessChain 24(data) 25 341 158
-             349:   19(fvec4) Load 348
-             350:   19(fvec4) VectorShuffle 349 347 4 5 6 3
+             349: 19(f64vec4) Load 348
+             350: 19(f64vec4) VectorShuffle 349 347 4 5 6 3
                               Store 348 350
              351:     27(ptr) AccessChain 10(dti) 26
              352:      6(int) Load 351

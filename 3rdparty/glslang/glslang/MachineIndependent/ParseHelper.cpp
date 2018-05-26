@@ -269,7 +269,8 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         intermediate.setUseStorageBuffer();
     } else if (tokens[0].compare("once") == 0) {
         warn(loc, "not implemented", "#pragma once", "");
-    }
+    } else if (tokens[0].compare("glslang_binary_double_output") == 0)
+        intermediate.setBinaryDoubleOutput();
 }
 
 //

@@ -93,7 +93,13 @@ namespace glslang {
 //
 class TOutputTraverser : public TIntermTraverser {
 public:
-    TOutputTraverser(TInfoSink& i) : infoSink(i) { }
+    TOutputTraverser(TInfoSink& i) : infoSink(i), extraOutput(NoExtraOutput) { }
+
+    enum EExtraOutput {
+        NoExtraOutput,
+        BinaryDoubleOutput
+    };
+    void setDoubleOutput(EExtraOutput extra) { extraOutput = extra; }
 
     virtual bool visitBinary(TVisit, TIntermBinary* node);
     virtual bool visitUnary(TVisit, TIntermUnary* node);
@@ -109,6 +115,8 @@ public:
 protected:
     TOutputTraverser(TOutputTraverser&);
     TOutputTraverser& operator=(TOutputTraverser&);
+
+    EExtraOutput extraOutput;
 };
 
 //
@@ -1082,7 +1090,61 @@ bool TOutputTraverser::visitSelection(TVisit /* visit */, TIntermSelection* node
     return false;
 }
 
-static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const TConstUnionArray& constUnion, int depth)
+// Print infinities and NaNs, and numbers in a portable way.
+// Goals:
+//   - portable (across IEEE 754 platforms)
+//   - shows all possible IEEE values
+//   - shows simple numbers in a simple way, e.g., no leading/trailing 0s
+//   - shows all digits, no premature rounding
+static void OutputDouble(TInfoSink& out, double value, TOutputTraverser::EExtraOutput extra)
+{
+    if (IsInfinity(value)) {
+        if (value < 0)
+            out.debug << "-1.#INF";
+        else
+            out.debug << "+1.#INF";
+    } else if (IsNan(value))
+        out.debug << "1.#IND";
+    else {
+        const int maxSize = 340;
+        char buf[maxSize];
+        const char* format = "%f";
+        if (fabs(value) > 0.0 && (fabs(value) < 1e-5 || fabs(value) > 1e12))
+            format = "%-.13e";
+        snprintf(buf, maxSize, format, value);
+
+        // remove a leading zero in the 100s slot in exponent; it is not portable
+        // pattern:   XX...XXXe+0XX or XX...XXXe-0XX
+        int len = (int)strnlen(buf, maxSize);
+        if (len > 5) {
+            if (buf[len-5] == 'e' && (buf[len-4] == '+' || buf[len-4] == '-') && buf[len-3] == '0') {
+                buf[len-3] = buf[len-2];
+                buf[len-2] = buf[len-1];
+                buf[len-1] = '\0';
+            }
+        }
+
+        out.debug << buf;
+
+        switch (extra) {
+        case TOutputTraverser::BinaryDoubleOutput:
+        {
+            out.debug << " : ";
+            long long b = *reinterpret_cast<long long*>(&value);
+            for (int i = 0; i < 8 * sizeof(value); ++i, ++b) {
+                out.debug << ((b & 0x8000000000000000) != 0 ? "1" : "0");
+                b <<= 1;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
+static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const TConstUnionArray& constUnion,
+    TOutputTraverser::EExtraOutput extra, int depth)
 {
     int size = node->getType().computeNumComponents();
 
@@ -1102,24 +1164,8 @@ static void OutputConstantUnion(TInfoSink& out, const TIntermTyped* node, const 
         case EbtFloat:
         case EbtDouble:
         case EbtFloat16:
-            {
-                const double value = constUnion[i].getDConst();
-                // Print infinities and NaNs in a portable way.
-                if (IsInfinity(value)) {
-                    if (value < 0)
-                        out.debug << "-1.#INF\n";
-                    else
-                        out.debug << "+1.#INF\n";
-                } else if (IsNan(value))
-                    out.debug << "1.#IND\n";
-                else {
-                    const int maxSize = 300;
-                    char buf[maxSize];
-                    snprintf(buf, maxSize, "%f", value);
-
-                    out.debug << buf << "\n";
-                }
-            }
+            OutputDouble(out, constUnion[i].getDConst(), extra);
+            out.debug << "\n";
             break;
         case EbtInt8:
             {
@@ -1205,7 +1251,7 @@ void TOutputTraverser::visitConstantUnion(TIntermConstantUnion* node)
     OutputTreeText(infoSink, node, depth);
     infoSink.debug << "Constant:\n";
 
-    OutputConstantUnion(infoSink, node, node->getConstArray(), depth + 1);
+    OutputConstantUnion(infoSink, node, node->getConstArray(), extraOutput, depth + 1);
 }
 
 void TOutputTraverser::visitSymbol(TIntermSymbol* node)
@@ -1215,7 +1261,7 @@ void TOutputTraverser::visitSymbol(TIntermSymbol* node)
     infoSink.debug << "'" << node->getName() << "' (" << node->getCompleteString() << ")\n";
 
     if (! node->getConstArray().empty())
-        OutputConstantUnion(infoSink, node, node->getConstArray(), depth + 1);
+        OutputConstantUnion(infoSink, node, node->getConstArray(), extraOutput, depth + 1);
     else if (node->getConstSubtree()) {
         incrementDepth(node);
         node->getConstSubtree()->traverse(this);
@@ -1417,7 +1463,8 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
         return;
 
     TOutputTraverser it(infoSink);
-
+    if (getBinaryDoubleOutput())
+        it.setDoubleOutput(TOutputTraverser::BinaryDoubleOutput);
     treeRoot->traverse(&it);
 }
 

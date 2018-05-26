@@ -97,6 +97,56 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace glslang {
 
+
+namespace {
+
+    // When recording (and playing back) should the backing name string
+    // be saved (restored)?
+    bool SaveName(int atom)
+    {
+        switch (atom) {
+        case PpAtomIdentifier:
+        case PpAtomConstString:
+        case PpAtomConstInt:
+        case PpAtomConstUint:
+        case PpAtomConstInt64:
+        case PpAtomConstUint64:
+    #ifdef AMD_EXTENSIONS
+        case PpAtomConstInt16:
+        case PpAtomConstUint16:
+    #endif
+        case PpAtomConstFloat:
+        case PpAtomConstDouble:
+        case PpAtomConstFloat16:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    // When recording (and playing back) should the numeric value
+    // be saved (restored)?
+    bool SaveValue(int atom)
+    {
+        switch (atom) {
+        case PpAtomConstInt:
+        case PpAtomConstUint:
+        case PpAtomConstInt64:
+        case PpAtomConstUint64:
+    #ifdef AMD_EXTENSIONS
+        case PpAtomConstInt16:
+        case PpAtomConstUint16:
+    #endif
+        case PpAtomConstFloat:
+        case PpAtomConstDouble:
+        case PpAtomConstFloat16:
+            return true;
+        default:
+            return false;
+        }
+    }
+}
+
 // push onto back of stream
 void TPpContext::TokenStream::putSubtoken(char subtoken)
 {
@@ -121,42 +171,25 @@ void TPpContext::TokenStream::ungetSubtoken()
 
 // Add a complete token (including backing string) to the end of a list
 // for later playback.
-void TPpContext::TokenStream::putToken(int token, TPpToken* ppToken)
+void TPpContext::TokenStream::putToken(int atom, TPpToken* ppToken)
 {
-    const char* s;
-    char* str = NULL;
+    // save the atom
+    assert((atom & ~0xff) == 0);
+    putSubtoken(static_cast<char>(atom));
 
-    assert((token & ~0xff) == 0);
-    putSubtoken(static_cast<char>(token));
-
-    switch (token) {
-    case PpAtomIdentifier:
-    case PpAtomConstString:
-        s = ppToken->name;
+    // save the backing name string
+    if (SaveName(atom)) {
+        const char* s = ppToken->name;
         while (*s)
             putSubtoken(*s++);
         putSubtoken(0);
-        break;
-    case PpAtomConstInt:
-    case PpAtomConstUint:
-    case PpAtomConstInt64:
-    case PpAtomConstUint64:
-#ifdef AMD_EXTENSIONS
-    case PpAtomConstInt16:
-    case PpAtomConstUint16:
-#endif
-    case PpAtomConstFloat:
-    case PpAtomConstDouble:
-    case PpAtomConstFloat16:
-        str = ppToken->name;
-        while (*str) {
-            putSubtoken(*str);
-            str++;
-        }
-        putSubtoken(0);
-        break;
-    default:
-        break;
+    }
+
+    // save the numeric value
+    if (SaveValue(atom)) {
+        const char* n = reinterpret_cast<const char*>(&ppToken->i64val);
+        for (int i = 0; i < sizeof(ppToken->i64val); ++i)
+            putSubtoken(*n++);
     }
 }
 
@@ -164,38 +197,19 @@ void TPpContext::TokenStream::putToken(int token, TPpToken* ppToken)
 // (Not the source stream, but a stream used to hold a tokenized macro).
 int TPpContext::TokenStream::getToken(TParseContextBase& parseContext, TPpToken *ppToken)
 {
-    int len;
-    int ch;
+    // get the atom
+    int atom = getSubtoken();
+    if (atom == EndOfInput)
+        return atom;
 
-    int subtoken = getSubtoken();
+    // init the token
+    ppToken->clear();
     ppToken->loc = parseContext.getCurrentLoc();
-    switch (subtoken) {
-    case '#':
-        // Check for ##, unless the current # is the last character
-        if (current < data.size()) {
-            if (getSubtoken() == '#') {
-                parseContext.requireProfile(ppToken->loc, ~EEsProfile, "token pasting (##)");
-                parseContext.profileRequires(ppToken->loc, ~EEsProfile, 130, 0, "token pasting (##)");
-                subtoken = PpAtomPaste;
-            } else
-                ungetSubtoken();
-        }
-        break;
-    case PpAtomConstString:
-    case PpAtomIdentifier:
-    case PpAtomConstFloat:
-    case PpAtomConstDouble:
-    case PpAtomConstFloat16:
-    case PpAtomConstInt:
-    case PpAtomConstUint:
-    case PpAtomConstInt64:
-    case PpAtomConstUint64:
-#ifdef AMD_EXTENSIONS
-    case PpAtomConstInt16:
-    case PpAtomConstUint16:
-#endif
-        len = 0;
-        ch = getSubtoken();
+
+    // get the backing name string
+    if (SaveName(atom)) {
+        int ch = getSubtoken();
+        int len = 0;
         while (ch != 0 && ch != EndOfInput) {
             if (len < MaxTokenLength) {
                 ppToken->name[len] = (char)ch;
@@ -207,63 +221,28 @@ int TPpContext::TokenStream::getToken(TParseContextBase& parseContext, TPpToken 
             }
         }
         ppToken->name[len] = 0;
+    }
 
-        switch (subtoken) {
-        case PpAtomIdentifier:
-            break;
-        case PpAtomConstString:
-            break;
-        case PpAtomConstFloat:
-        case PpAtomConstDouble:
-        case PpAtomConstFloat16:
-            ppToken->dval = atof(ppToken->name);
-            break;
-        case PpAtomConstInt:
-#ifdef AMD_EXTENSIONS
-        case PpAtomConstInt16:
-#endif
-            if (len > 0 && ppToken->name[0] == '0') {
-                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
-                    ppToken->ival = (int)strtol(ppToken->name, 0, 16);
-                else
-                    ppToken->ival = (int)strtol(ppToken->name, 0, 8);
+    // Check for ##, unless the current # is the last character
+    if (atom == '#') {
+        if (current < data.size()) {
+            if (getSubtoken() == '#') {
+                parseContext.requireProfile(ppToken->loc, ~EEsProfile, "token pasting (##)");
+                parseContext.profileRequires(ppToken->loc, ~EEsProfile, 130, 0, "token pasting (##)");
+                atom = PpAtomPaste;
             } else
-                ppToken->ival = atoi(ppToken->name);
-            break;
-        case PpAtomConstUint:
-#ifdef AMD_EXTENSIONS
-        case PpAtomConstUint16:
-#endif
-            if (len > 0 && ppToken->name[0] == '0') {
-                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
-                    ppToken->ival = (int)strtoul(ppToken->name, 0, 16);
-                else
-                    ppToken->ival = (int)strtoul(ppToken->name, 0, 8);
-            } else
-                ppToken->ival = (int)strtoul(ppToken->name, 0, 10);
-            break;
-        case PpAtomConstInt64:
-            if (len > 0 && ppToken->name[0] == '0') {
-                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
-                    ppToken->i64val = strtoll(ppToken->name, nullptr, 16);
-                else
-                    ppToken->i64val = strtoll(ppToken->name, nullptr, 8);
-            } else
-                ppToken->i64val = atoll(ppToken->name);
-            break;
-        case PpAtomConstUint64:
-            if (len > 0 && ppToken->name[0] == '0') {
-                if (len > 1 && (ppToken->name[1] == 'x' || ppToken->name[1] == 'X'))
-                    ppToken->i64val = (long long)strtoull(ppToken->name, nullptr, 16);
-                else
-                    ppToken->i64val = (long long)strtoull(ppToken->name, nullptr, 8);
-            } else
-                ppToken->i64val = (long long)strtoull(ppToken->name, 0, 10);
-            break;
+                ungetSubtoken();
         }
     }
 
-    return subtoken;
+    // get the numeric value
+    if (SaveValue(atom)) {
+        char* n = reinterpret_cast<char*>(&ppToken->i64val);
+        for (int i = 0; i < sizeof(ppToken->i64val); ++i)
+            *n++ = getSubtoken();
+    }
+
+    return atom;
 }
 
 // We are pasting if

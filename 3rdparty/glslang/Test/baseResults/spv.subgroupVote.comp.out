@@ -56,8 +56,8 @@ spv.subgroupVote.comp
               20:             TypeVector 19(int) 4
               21:             TypeVector 6(int) 4
               22:             TypeFloat 64
-              23:             TypeVector 22(float) 4
-     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(fvec4) 19(int)
+              23:             TypeVector 22(float64_t) 4
+     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(f64vec4) 19(int)
               25:             TypeArray 24(Buffers) 15
               26:             TypePointer Uniform 25
         27(data):     26(ptr) Variable Uniform
@@ -81,10 +81,10 @@ spv.subgroupVote.comp
              111:             TypeVector 6(int) 2
              112:             TypePointer Uniform 21(ivec4)
              120:             TypeVector 6(int) 3
-             142:             TypePointer Uniform 22(float)
-             149:             TypeVector 22(float) 2
-             150:             TypePointer Uniform 23(fvec4)
-             158:             TypeVector 22(float) 3
+             142:             TypePointer Uniform 22(float64_t)
+             149:             TypeVector 22(float64_t) 2
+             150:             TypePointer Uniform 23(f64vec4)
+             158:             TypeVector 22(float64_t) 3
              182:   81(ivec2) ConstantComposite 33 33
              183:             TypeVector 34(bool) 2
              194:   90(ivec3) ConstantComposite 33 33 33
@@ -212,30 +212,30 @@ spv.subgroupVote.comp
              139:                 Label
              141:      6(int)     Load 8(invocation)
              143:    142(ptr)     AccessChain 27(data) 33 68 41
-             144:   22(float)     Load 143
+             144:22(float64_t)     Load 143
              145:    34(bool)     GroupNonUniformAllEqual 36 144
              146:     19(int)     Select 145 46 33
              147:     30(ptr)     AccessChain 27(data) 141 29
                                   Store 147 146
              148:      6(int)     Load 8(invocation)
              151:    150(ptr)     AccessChain 27(data) 46 68
-             152:   23(fvec4)     Load 151
-             153:  149(fvec2)     VectorShuffle 152 152 0 1
+             152: 23(f64vec4)     Load 151
+             153:149(f64vec2)     VectorShuffle 152 152 0 1
              154:    34(bool)     GroupNonUniformAllEqual 36 153
              155:     19(int)     Select 154 46 33
              156:     30(ptr)     AccessChain 27(data) 148 29
                                   Store 156 155
              157:      6(int)     Load 8(invocation)
              159:    150(ptr)     AccessChain 27(data) 59 68
-             160:   23(fvec4)     Load 159
-             161:  158(fvec3)     VectorShuffle 160 160 0 1 2
+             160: 23(f64vec4)     Load 159
+             161:158(f64vec3)     VectorShuffle 160 160 0 1 2
              162:    34(bool)     GroupNonUniformAllEqual 36 161
              163:     19(int)     Select 162 46 33
              164:     30(ptr)     AccessChain 27(data) 157 29
                                   Store 164 163
              165:      6(int)     Load 8(invocation)
              166:    150(ptr)     AccessChain 27(data) 68 68
-             167:   23(fvec4)     Load 166
+             167: 23(f64vec4)     Load 166
              168:    34(bool)     GroupNonUniformAllEqual 36 167
              169:     19(int)     Select 168 46 33
              170:     30(ptr)     AccessChain 27(data) 165 29

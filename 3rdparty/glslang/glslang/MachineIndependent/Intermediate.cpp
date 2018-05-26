@@ -3769,23 +3769,39 @@ struct TextureUpgradeAndSamplerRemovalTransform : public TIntermTraverser {
     bool visitAggregate(TVisit, TIntermAggregate* ag) override {
         using namespace std;
         TIntermSequence& seq = ag->getSequence();
-        // remove pure sampler variables
-        TIntermSequence::iterator newEnd = remove_if(seq.begin(), seq.end(), [](TIntermNode* node) {
-            TIntermSymbol* symbol = node->getAsSymbolNode();
-            if (!symbol)
-                return false;
+        TQualifierList& qual = ag->getQualifierList();
 
-            return (symbol->getBasicType() == EbtSampler && symbol->getType().getSampler().isPureSampler());
-        });
-        seq.erase(newEnd, seq.end());
-        // replace constructors with sampler/textures
-        for_each(seq.begin(), seq.end(), [](TIntermNode*& node) {
-            TIntermAggregate *constructor = node->getAsAggregate();
+        // qual and seq are indexed using the same indices, so we have to modify both in lock-step
+        assert(seq.size() == qual.size() || qual.empty());
+
+        size_t write = 0;
+        for (size_t i = 0; i < seq.size(); ++i) {
+            TIntermSymbol* symbol = seq[i]->getAsSymbolNode();
+            if (symbol && symbol->getBasicType() == EbtSampler && symbol->getType().getSampler().isPureSampler()) {
+                // remove pure sampler variables
+                continue;
+            }
+
+            TIntermNode* result = seq[i];
+
+            // replace constructors with sampler/textures
+            TIntermAggregate *constructor = seq[i]->getAsAggregate();
             if (constructor && constructor->getOp() == EOpConstructTextureSampler) {
                 if (!constructor->getSequence().empty())
-                    node = constructor->getSequence()[0];
+                    result = constructor->getSequence()[0];
             }
-        });
+
+            // write new node & qualifier
+            seq[write] = result;
+            if (!qual.empty())
+                qual[write] = qual[i];
+            write++;
+        }
+
+        seq.resize(write);
+        if (!qual.empty())
+            qual.resize(write);
+
         return true;
     }
 };

@@ -80,6 +80,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stack>
 #include <unordered_map>
+#include <sstream>
 
 #include "../ParseHelper.h"
 
@@ -92,13 +93,16 @@ namespace glslang {
 
 class TPpToken {
 public:
-    TPpToken() : space(false), i64val(0)
+    TPpToken() { clear(); }
+    void clear()
     {
+        space = false;
+        i64val = 0;
         loc.init();
         name[0] = 0;
     }
 
-    // This is used for comparing macro definitions, so checks what is relevant for that.
+    // Used for comparing macro definitions, so checks what is relevant for that.
     bool operator==(const TPpToken& right)
     {
         return space == right.space &&
@@ -108,15 +112,17 @@ public:
     bool operator!=(const TPpToken& right) { return ! operator==(right); }
 
     TSourceLoc loc;
-    bool space;  // true if a space (for white space or a removed comment) should also be recognized, in front of the token returned
-
+    // True if a space (for white space or a removed comment) should also be
+    // recognized, in front of the token returned:
+    bool space;
+    // Numeric value of the token:
     union {
         int ival;
         double dval;
         long long i64val;
     };
-
-    char   name[MaxTokenLength + 1];
+    // Text string of the token:
+    char name[MaxTokenLength + 1];
 };
 
 class TStringAtomMap {
@@ -615,6 +621,8 @@ protected:
     std::string rootFileName;
     std::stack<TShader::Includer::IncludeResult*> includeStack;
     std::string currentSourceFile;
+
+    std::istringstream strtodStream;
 };
 
 } // end namespace glslang

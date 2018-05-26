@@ -64,18 +64,18 @@ spv.specConstant.vert
               33:             TypeInt 32 0
        34(scale):     33(int) SpecConstant 2
               38:             TypeFloat 64
-    39(spDouble):   38(float) SpecConstant 1413754136 1074340347
+    39(spDouble):38(float64_t) SpecConstant 1413754136 1074340347
      40(spFloat):    6(float) SpecConstant 1078523331
-              41:   38(float) SpecConstantOp 115 40(spFloat)
+              41:38(float64_t) SpecConstantOp 115 40(spFloat)
 50(dupArraySize):      8(int) SpecConstant 12
               51:             TypeArray 7(fvec4) 50(dupArraySize)
               52:             TypePointer Input 51
      53(dupUcol):     52(ptr) Variable Input
    60(spDupBool):    29(bool) SpecConstantTrue
     63(dupScale):     33(int) SpecConstant 2
- 67(spDupDouble):   38(float) SpecConstant 1413754136 1074340347
+ 67(spDupDouble):38(float64_t) SpecConstant 1413754136 1074340347
   68(spDupFloat):    6(float) SpecConstant 1078523331
-              69:   38(float) SpecConstantOp 115 68(spDupFloat)
+              69:38(float64_t) SpecConstantOp 115 68(spDupFloat)
               75:             TypePointer Function 8(int)
 77(gl_MaxImageUnits):      8(int) SpecConstant 8
          4(main):           2 Function None 3
@@ -94,7 +94,7 @@ spv.specConstant.vert
                                 Store 20(color) 37
                                 Branch 32
               32:             Label
-              42:   38(float) FDiv 39(spDouble) 41
+              42:38(float64_t) FDiv 39(spDouble) 41
               43:    6(float) FConvert 42
               44:    7(fvec4) Load 20(color)
               45:    7(fvec4) CompositeConstruct 43 43 43 43
@@ -125,7 +125,7 @@ spv.specConstant.vert
                                 Store 20(color) 66
                                 Branch 62
               62:             Label
-              70:   38(float) FDiv 67(spDupDouble) 69
+              70:38(float64_t) FDiv 67(spDupDouble) 69
               71:    6(float) FConvert 70
               72:    7(fvec4) Load 20(color)
               73:    7(fvec4) CompositeConstruct 71 71 71 71

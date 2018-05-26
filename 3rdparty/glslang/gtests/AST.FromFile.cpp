@@ -208,6 +208,7 @@ INSTANTIATE_TEST_CASE_P(
         "prepost.frag",
         "runtimeArray.vert",
         "simpleFunctionCall.frag",
+        "stringToDouble.vert",
         "structAssignment.frag",
         "structDeref.frag",
         "structure.frag",

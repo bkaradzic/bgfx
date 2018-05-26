@@ -6401,12 +6401,18 @@ bool HlslParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node
         return true;
     }
 
-    if (op == EOpConstructStruct && ! type.isArray() && isScalarConstructor(node))
-        return false;
+    if (op == EOpConstructStruct && ! type.isArray()) {
+        if (isScalarConstructor(node))
+            return false;
 
-    if (op == EOpConstructStruct && ! type.isArray() && (int)type.getStruct()->size() != function.getParamCount()) {
-        error(loc, "Number of constructor parameters does not match the number of structure fields", "constructor", "");
-        return true;
+        // Self-type construction: e.g, we can construct a struct from a single identically typed object.
+        if (function.getParamCount() == 1 && type == *function[0].type)
+            return false;
+
+        if ((int)type.getStruct()->size() != function.getParamCount()) {
+            error(loc, "Number of constructor parameters does not match the number of structure fields", "constructor", "");
+            return true;
+        }
     }
 
     if ((op != EOpConstructStruct && size != 1 && size < type.computeNumComponents()) ||
@@ -8131,6 +8137,10 @@ TIntermTyped* HlslParseContext::handleConstructor(const TSourceLoc& loc, TInterm
 {
     if (node == nullptr)
         return nullptr;
+
+    // Construct identical type
+    if (type == node->getType())
+        return node;
 
     // Handle the idiom "(struct type)<scalar value>"
     if (type.isStruct() && isScalarConstructor(node)) {

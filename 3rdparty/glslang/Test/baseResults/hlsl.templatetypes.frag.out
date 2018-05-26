@@ -571,8 +571,8 @@ gl_FragCoord origin is upper left
               28:     25(int) Constant 1
               29:             TypePointer Function 6(float)
               31:             TypeFloat 64
-              32:             TypePointer Function 31(float)
-              34:   31(float) Constant 0 1072693248
+              32:             TypePointer Function 31(float64_t)
+              34:31(float64_t) Constant 0 1072693248
               35:             TypeInt 32 0
               36:             TypePointer Function 35(int)
               38:     35(int) Constant 1
@@ -587,10 +587,10 @@ gl_FragCoord origin is upper left
               49:             TypeVector 6(float) 2
               50:             TypePointer Function 49(fvec2)
               52:   49(fvec2) ConstantComposite 13 14
-              53:             TypeVector 31(float) 2
-              54:             TypePointer Function 53(fvec2)
-              56:   31(float) Constant 0 1073741824
-              57:   53(fvec2) ConstantComposite 34 56
+              53:             TypeVector 31(float64_t) 2
+              54:             TypePointer Function 53(f64vec2)
+              56:31(float64_t) Constant 0 1073741824
+              57: 53(f64vec2) ConstantComposite 34 56
               58:             TypeVector 35(int) 2
               59:             TypePointer Function 58(ivec2)
               61:     35(int) Constant 2
@@ -605,10 +605,10 @@ gl_FragCoord origin is upper left
               72:             TypeVector 6(float) 3
               73:             TypePointer Function 72(fvec3)
               75:   72(fvec3) ConstantComposite 13 14 15
-              76:             TypeVector 31(float) 3
-              77:             TypePointer Function 76(fvec3)
-              79:   31(float) Constant 0 1074266112
-              80:   76(fvec3) ConstantComposite 34 56 79
+              76:             TypeVector 31(float64_t) 3
+              77:             TypePointer Function 76(f64vec3)
+              79:31(float64_t) Constant 0 1074266112
+              80: 76(f64vec3) ConstantComposite 34 56 79
               81:             TypeVector 35(int) 3
               82:             TypePointer Function 81(ivec3)
               84:     35(int) Constant 3
@@ -620,10 +620,10 @@ gl_FragCoord origin is upper left
               91:             TypePointer Function 90(ivec4)
               93:     25(int) Constant 4
               94:   90(ivec4) ConstantComposite 28 47 70 93
-              96:             TypeVector 31(float) 4
-              97:             TypePointer Function 96(fvec4)
-              99:   31(float) Constant 0 1074790400
-             100:   96(fvec4) ConstantComposite 34 56 79 99
+              96:             TypeVector 31(float64_t) 4
+              97:             TypePointer Function 96(f64vec4)
+              99:31(float64_t) Constant 0 1074790400
+             100: 96(f64vec4) ConstantComposite 34 56 79 99
              101:             TypeVector 35(int) 4
              102:             TypePointer Function 101(ivec4)
              104:     35(int) Constant 4

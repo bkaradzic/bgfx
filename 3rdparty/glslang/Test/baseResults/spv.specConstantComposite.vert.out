@@ -41,7 +41,7 @@ spv.specConstantComposite.vert
               32:             TypePointer Function 14(int)
   37(spec_float):   24(float) SpecConstant 1078523331
               38:             TypeFloat 64
- 39(spec_double):   38(float) SpecConstant 1413754136 1074340347
+ 39(spec_double):38(float64_t) SpecConstant 1413754136 1074340347
               40:             TypeArray 25(fvec4) 28(spec_int)
               41:             TypePointer Input 40
 42(global_vec4_array_with_spec_length):     41(ptr) Variable Input

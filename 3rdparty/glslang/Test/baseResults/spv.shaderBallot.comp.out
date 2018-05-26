@@ -52,8 +52,8 @@ spv.shaderBallot.comp
 12(gl_SubGroupSizeARB):      9(ptr) Variable Input
               15:      6(int) Constant 4
               17:             TypeInt 64 0
-              18:             TypePointer Function 17(int)
-              20:             TypePointer Input 17(int)
+              18:             TypePointer Function 17(int64_t)
+              20:             TypePointer Input 17(int64_t)
 21(gl_SubGroupEqMaskARB):     20(ptr) Variable Input
 23(gl_SubGroupGeMaskARB):     20(ptr) Variable Input
 26(gl_SubGroupGtMaskARB):     20(ptr) Variable Input
@@ -99,22 +99,22 @@ spv.shaderBallot.comp
               14:      6(int) IAdd 11 13
               16:      6(int) UMod 14 15
                               Store 8(invocation) 16
-              22:     17(int) Load 21(gl_SubGroupEqMaskARB)
-              24:     17(int) Load 23(gl_SubGroupGeMaskARB)
-              25:     17(int) IAdd 22 24
-              27:     17(int) Load 26(gl_SubGroupGtMaskARB)
-              28:     17(int) IAdd 25 27
-              30:     17(int) Load 29(gl_SubGroupLeMaskARB)
-              31:     17(int) IAdd 28 30
-              33:     17(int) Load 32(gl_SubGroupLtMaskARB)
-              34:     17(int) IAdd 31 33
+              22: 17(int64_t) Load 21(gl_SubGroupEqMaskARB)
+              24: 17(int64_t) Load 23(gl_SubGroupGeMaskARB)
+              25: 17(int64_t) IAdd 22 24
+              27: 17(int64_t) Load 26(gl_SubGroupGtMaskARB)
+              28: 17(int64_t) IAdd 25 27
+              30: 17(int64_t) Load 29(gl_SubGroupLeMaskARB)
+              31: 17(int64_t) IAdd 28 30
+              33: 17(int64_t) Load 32(gl_SubGroupLtMaskARB)
+              34: 17(int64_t) IAdd 31 33
                               Store 19(relMask) 34
-              35:     17(int) Load 19(relMask)
+              35: 17(int64_t) Load 19(relMask)
               39:   38(ivec4) SubgroupBallotKHR 37
               40:      6(int) CompositeExtract 39 0
               41:      6(int) CompositeExtract 39 1
               43:   42(ivec2) CompositeConstruct 40 41
-              44:     17(int) Bitcast 43
+              44: 17(int64_t) Bitcast 43
               45:    36(bool) IEqual 35 44
                               SelectionMerge 47 None
                               BranchConditional 45 46 216

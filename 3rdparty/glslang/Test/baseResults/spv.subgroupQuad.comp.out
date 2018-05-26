@@ -54,8 +54,8 @@ spv.subgroupQuad.comp
               20:             TypeVector 19(int) 4
               21:             TypeVector 6(int) 4
               22:             TypeFloat 64
-              23:             TypeVector 22(float) 4
-     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(fvec4)
+              23:             TypeVector 22(float64_t) 4
+     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(f64vec4)
               25:             TypeArray 24(Buffers) 15
               26:             TypePointer Uniform 25
         27(data):     26(ptr) Variable Uniform
@@ -78,10 +78,10 @@ spv.subgroupQuad.comp
              102:             TypeVector 6(int) 2
              103:             TypePointer Uniform 21(ivec4)
              112:             TypeVector 6(int) 3
-             126:             TypePointer Uniform 22(float)
-             132:             TypeVector 22(float) 2
-             133:             TypePointer Uniform 23(fvec4)
-             142:             TypeVector 22(float) 3
+             126:             TypePointer Uniform 22(float64_t)
+             132:             TypeVector 22(float64_t) 2
+             133:             TypePointer Uniform 23(f64vec4)
+             142:             TypeVector 22(float64_t) 3
              158:             TypeBool
              167:   72(ivec2) ConstantComposite 29 29
              168:             TypeVector 158(bool) 2
@@ -195,32 +195,32 @@ spv.subgroupQuad.comp
                               Store 124 123
              125:      6(int) Load 8(invocation)
              127:    126(ptr) AccessChain 27(data) 29 60 30
-             128:   22(float) Load 127
-             129:   22(float) GroupNonUniformQuadBroadcast 35 128 34
+             128:22(float64_t) Load 127
+             129:22(float64_t) GroupNonUniformQuadBroadcast 35 128 34
              130:    126(ptr) AccessChain 27(data) 125 60 30
                               Store 130 129
              131:      6(int) Load 8(invocation)
              134:    133(ptr) AccessChain 27(data) 39 60
-             135:   23(fvec4) Load 134
-             136:  132(fvec2) VectorShuffle 135 135 0 1
-             137:  132(fvec2) GroupNonUniformQuadBroadcast 35 136 34
+             135: 23(f64vec4) Load 134
+             136:132(f64vec2) VectorShuffle 135 135 0 1
+             137:132(f64vec2) GroupNonUniformQuadBroadcast 35 136 34
              138:    133(ptr) AccessChain 27(data) 131 60
-             139:   23(fvec4) Load 138
-             140:   23(fvec4) VectorShuffle 139 137 4 5 2 3
+             139: 23(f64vec4) Load 138
+             140: 23(f64vec4) VectorShuffle 139 137 4 5 2 3
                               Store 138 140
              141:      6(int) Load 8(invocation)
              143:    133(ptr) AccessChain 27(data) 50 60
-             144:   23(fvec4) Load 143
-             145:  142(fvec3) VectorShuffle 144 144 0 1 2
-             146:  142(fvec3) GroupNonUniformQuadBroadcast 35 145 34
+             144: 23(f64vec4) Load 143
+             145:142(f64vec3) VectorShuffle 144 144 0 1 2
+             146:142(f64vec3) GroupNonUniformQuadBroadcast 35 145 34
              147:    133(ptr) AccessChain 27(data) 141 60
-             148:   23(fvec4) Load 147
-             149:   23(fvec4) VectorShuffle 148 146 4 5 6 3
+             148: 23(f64vec4) Load 147
+             149: 23(f64vec4) VectorShuffle 148 146 4 5 6 3
                               Store 147 149
              150:      6(int) Load 8(invocation)
              151:    133(ptr) AccessChain 27(data) 60 60
-             152:   23(fvec4) Load 151
-             153:   23(fvec4) GroupNonUniformQuadBroadcast 35 152 34
+             152: 23(f64vec4) Load 151
+             153: 23(f64vec4) GroupNonUniformQuadBroadcast 35 152 34
              154:    133(ptr) AccessChain 27(data) 150 60
                               Store 154 153
              155:      6(int) Load 8(invocation)
@@ -353,32 +353,32 @@ spv.subgroupQuad.comp
                               Store 276 275
              277:      6(int) Load 8(invocation)
              278:    126(ptr) AccessChain 27(data) 29 60 30
-             279:   22(float) Load 278
-             280:   22(float) GroupNonUniformQuadSwap 35 279 30
+             279:22(float64_t) Load 278
+             280:22(float64_t) GroupNonUniformQuadSwap 35 279 30
              281:    126(ptr) AccessChain 27(data) 277 60 30
                               Store 281 280
              282:      6(int) Load 8(invocation)
              283:    133(ptr) AccessChain 27(data) 39 60
-             284:   23(fvec4) Load 283
-             285:  132(fvec2) VectorShuffle 284 284 0 1
-             286:  132(fvec2) GroupNonUniformQuadSwap 35 285 30
+             284: 23(f64vec4) Load 283
+             285:132(f64vec2) VectorShuffle 284 284 0 1
+             286:132(f64vec2) GroupNonUniformQuadSwap 35 285 30
              287:    133(ptr) AccessChain 27(data) 282 60
-             288:   23(fvec4) Load 287
-             289:   23(fvec4) VectorShuffle 288 286 4 5 2 3
+             288: 23(f64vec4) Load 287
+             289: 23(f64vec4) VectorShuffle 288 286 4 5 2 3
                               Store 287 289
              290:      6(int) Load 8(invocation)
              291:    133(ptr) AccessChain 27(data) 50 60
-             292:   23(fvec4) Load 291
-             293:  142(fvec3) VectorShuffle 292 292 0 1 2
-             294:  142(fvec3) GroupNonUniformQuadSwap 35 293 30
+             292: 23(f64vec4) Load 291
+             293:142(f64vec3) VectorShuffle 292 292 0 1 2
+             294:142(f64vec3) GroupNonUniformQuadSwap 35 293 30
              295:    133(ptr) AccessChain 27(data) 290 60
-             296:   23(fvec4) Load 295
-             297:   23(fvec4) VectorShuffle 296 294 4 5 6 3
+             296: 23(f64vec4) Load 295
+             297: 23(f64vec4) VectorShuffle 296 294 4 5 6 3
                               Store 295 297
              298:      6(int) Load 8(invocation)
              299:    133(ptr) AccessChain 27(data) 60 60
-             300:   23(fvec4) Load 299
-             301:   23(fvec4) GroupNonUniformQuadSwap 35 300 30
+             300: 23(f64vec4) Load 299
+             301: 23(f64vec4) GroupNonUniformQuadSwap 35 300 30
              302:    133(ptr) AccessChain 27(data) 298 60
                               Store 302 301
              303:      6(int) Load 8(invocation)
@@ -511,32 +511,32 @@ spv.subgroupQuad.comp
                               Store 414 413
              415:      6(int) Load 8(invocation)
              416:    126(ptr) AccessChain 27(data) 29 60 30
-             417:   22(float) Load 416
-             418:   22(float) GroupNonUniformQuadSwap 35 417 34
+             417:22(float64_t) Load 416
+             418:22(float64_t) GroupNonUniformQuadSwap 35 417 34
              419:    126(ptr) AccessChain 27(data) 415 60 30
                               Store 419 418
              420:      6(int) Load 8(invocation)
              421:    133(ptr) AccessChain 27(data) 39 60
-             422:   23(fvec4) Load 421
-             423:  132(fvec2) VectorShuffle 422 422 0 1
-             424:  132(fvec2) GroupNonUniformQuadSwap 35 423 34
+             422: 23(f64vec4) Load 421
+             423:132(f64vec2) VectorShuffle 422 422 0 1
+             424:132(f64vec2) GroupNonUniformQuadSwap 35 423 34
              425:    133(ptr) AccessChain 27(data) 420 60
-             426:   23(fvec4) Load 425
-             427:   23(fvec4) VectorShuffle 426 424 4 5 2 3
+             426: 23(f64vec4) Load 425
+             427: 23(f64vec4) VectorShuffle 426 424 4 5 2 3
                               Store 425 427
              428:      6(int) Load 8(invocation)
              429:    133(ptr) AccessChain 27(data) 50 60
-             430:   23(fvec4) Load 429
-             431:  142(fvec3) VectorShuffle 430 430 0 1 2
-             432:  142(fvec3) GroupNonUniformQuadSwap 35 431 34
+             430: 23(f64vec4) Load 429
+             431:142(f64vec3) VectorShuffle 430 430 0 1 2
+             432:142(f64vec3) GroupNonUniformQuadSwap 35 431 34
              433:    133(ptr) AccessChain 27(data) 428 60
-             434:   23(fvec4) Load 433
-             435:   23(fvec4) VectorShuffle 434 432 4 5 6 3
+             434: 23(f64vec4) Load 433
+             435: 23(f64vec4) VectorShuffle 434 432 4 5 6 3
                               Store 433 435
              436:      6(int) Load 8(invocation)
              437:    133(ptr) AccessChain 27(data) 60 60
-             438:   23(fvec4) Load 437
-             439:   23(fvec4) GroupNonUniformQuadSwap 35 438 34
+             438: 23(f64vec4) Load 437
+             439: 23(f64vec4) GroupNonUniformQuadSwap 35 438 34
              440:    133(ptr) AccessChain 27(data) 436 60
                               Store 440 439
              441:      6(int) Load 8(invocation)
@@ -669,32 +669,32 @@ spv.subgroupQuad.comp
                               Store 553 552
              554:      6(int) Load 8(invocation)
              555:    126(ptr) AccessChain 27(data) 29 60 30
-             556:   22(float) Load 555
-             557:   22(float) GroupNonUniformQuadSwap 35 556 478
+             556:22(float64_t) Load 555
+             557:22(float64_t) GroupNonUniformQuadSwap 35 556 478
              558:    126(ptr) AccessChain 27(data) 554 60 30
                               Store 558 557
              559:      6(int) Load 8(invocation)
              560:    133(ptr) AccessChain 27(data) 39 60
-             561:   23(fvec4) Load 560
-             562:  132(fvec2) VectorShuffle 561 561 0 1
-             563:  132(fvec2) GroupNonUniformQuadSwap 35 562 478
+             561: 23(f64vec4) Load 560
+             562:132(f64vec2) VectorShuffle 561 561 0 1
+             563:132(f64vec2) GroupNonUniformQuadSwap 35 562 478
              564:    133(ptr) AccessChain 27(data) 559 60
-             565:   23(fvec4) Load 564
-             566:   23(fvec4) VectorShuffle 565 563 4 5 2 3
+             565: 23(f64vec4) Load 564
+             566: 23(f64vec4) VectorShuffle 565 563 4 5 2 3
                               Store 564 566
              567:      6(int) Load 8(invocation)
              568:    133(ptr) AccessChain 27(data) 50 60
-             569:   23(fvec4) Load 568
-             570:  142(fvec3) VectorShuffle 569 569 0 1 2
-             571:  142(fvec3) GroupNonUniformQuadSwap 35 570 478
+             569: 23(f64vec4) Load 568
+             570:142(f64vec3) VectorShuffle 569 569 0 1 2
+             571:142(f64vec3) GroupNonUniformQuadSwap 35 570 478
              572:    133(ptr) AccessChain 27(data) 567 60
-             573:   23(fvec4) Load 572
-             574:   23(fvec4) VectorShuffle 573 571 4 5 6 3
+             573: 23(f64vec4) Load 572
+             574: 23(f64vec4) VectorShuffle 573 571 4 5 6 3
                               Store 572 574
              575:      6(int) Load 8(invocation)
              576:    133(ptr) AccessChain 27(data) 60 60
-             577:   23(fvec4) Load 576
-             578:   23(fvec4) GroupNonUniformQuadSwap 35 577 478
+             577: 23(f64vec4) Load 576
+             578: 23(f64vec4) GroupNonUniformQuadSwap 35 577 478
              579:    133(ptr) AccessChain 27(data) 575 60
                               Store 579 578
              580:      6(int) Load 8(invocation)

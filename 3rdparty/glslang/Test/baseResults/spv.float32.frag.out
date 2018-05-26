@@ -142,8 +142,8 @@ spv.float32.frag
              107:             TypeBool
              108:             TypePointer Function 107(bool)
              149:             TypeFloat 64
-             150:             TypeVector 149(float) 3
-             151:             TypePointer Function 150(fvec3)
+             150:             TypeVector 149(float64_t) 3
+             151:             TypePointer Function 150(f64vec3)
              153:             TypeVector 26(float) 3
              154:             TypePointer Function 153(fvec3)
              158:             TypeVector 107(bool) 3
@@ -152,28 +152,28 @@ spv.float32.frag
              163:  153(fvec3) ConstantComposite 162 162 162
              164:  153(fvec3) ConstantComposite 54 54 54
              172:             TypeFloat 16
-             173:             TypeVector 172(float) 3
-             174:             TypePointer Function 173(fvec3)
+             173:             TypeVector 172(float16_t) 3
+             174:             TypePointer Function 173(f16vec3)
              180:             TypeInt 8 1
-             181:             TypeVector 180(int) 3
-             182:             TypePointer Function 181(ivec3)
+             181:             TypeVector 180(int8_t) 3
+             182:             TypePointer Function 181(i8vec3)
              186:             TypeInt 16 1
-             187:             TypeVector 186(int) 3
-             188:             TypePointer Function 187(ivec3)
+             187:             TypeVector 186(int16_t) 3
+             188:             TypePointer Function 187(i16vec3)
              192:             TypeInt 32 1
              193:             TypeVector 192(int) 3
              194:             TypePointer Function 193(ivec3)
              198:             TypeInt 64 1
-             199:             TypeVector 198(int) 3
-             200:             TypePointer Function 199(ivec3)
+             199:             TypeVector 198(int64_t) 3
+             200:             TypePointer Function 199(i64vec3)
              207:             TypeInt 16 0
-             208:             TypeVector 207(int) 3
-             209:             TypePointer Function 208(ivec3)
+             208:             TypeVector 207(int16_t) 3
+             209:             TypePointer Function 208(i16vec3)
              213:             TypeVector 31(int) 3
              214:             TypePointer Function 213(ivec3)
              218:             TypeInt 64 0
-             219:             TypeVector 218(int) 3
-             220:             TypePointer Function 219(ivec3)
+             219:             TypeVector 218(int64_t) 3
+             220:             TypePointer Function 219(i64vec3)
              224:             TypeVector 26(float) 4
              225:             TypePointer Function 224(fvec4)
     374(ResType):             TypeStruct 153(fvec3) 193(ivec3)
@@ -199,14 +199,14 @@ spv.float32.frag
          519(B1):             TypeStruct 26(float) 27(fvec2) 153(fvec3) 515 409 516 517(S) 518
              520:             TypePointer Uniform 519(B1)
              521:    520(ptr) Variable Uniform
-       522(sf16):  172(float) SpecConstant 12288
+       522(sf16):172(float16_t) SpecConstant 12288
          523(sf):   26(float) SpecConstant 1048576000
-         524(sd):  149(float) SpecConstant 0 1071644672
+         524(sd):149(float64_t) SpecConstant 0 1071644672
              525:   26(float) SpecConstantOp 115 522(sf16)
              526:   26(float) SpecConstantOp 115 522(sf16)
-             527:  149(float) SpecConstantOp 115 526
-             528:  172(float) SpecConstantOp 115 523(sf)
-             529:  172(float) SpecConstantOp 115 524(sd)
+             527:149(float64_t) SpecConstantOp 115 526
+             528:172(float16_t) SpecConstantOp 115 523(sf)
+             529:172(float16_t) SpecConstantOp 115 524(sd)
          4(main):           2 Function None 3
                5:             Label
                               Return
@@ -368,7 +368,7 @@ spv.float32.frag
        215(u32v):    214(ptr) Variable Function
        221(u64v):    220(ptr) Variable Function
              156:  153(fvec3) Load 155(f32v)
-             157:  150(fvec3) FConvert 156
+             157:150(f64vec3) FConvert 156
                               Store 152(f64v) 157
              161:  158(bvec3) Load 160(bv)
              165:  153(fvec3) Select 161 164 163
@@ -376,41 +376,41 @@ spv.float32.frag
              166:  153(fvec3) Load 155(f32v)
              167:  158(bvec3) FOrdNotEqual 166 163
                               Store 160(bv) 167
-             168:  150(fvec3) Load 152(f64v)
+             168:150(f64vec3) Load 152(f64v)
              169:  153(fvec3) FConvert 168
                               Store 155(f32v) 169
              170:  153(fvec3) Load 155(f32v)
-             171:  150(fvec3) FConvert 170
+             171:150(f64vec3) FConvert 170
                               Store 152(f64v) 171
-             176:  173(fvec3) Load 175(f16v)
+             176:173(f16vec3) Load 175(f16v)
              177:  153(fvec3) FConvert 176
                               Store 155(f32v) 177
              178:  153(fvec3) Load 155(f32v)
-             179:  173(fvec3) FConvert 178
+             179:173(f16vec3) FConvert 178
                               Store 175(f16v) 179
              184:  153(fvec3) Load 155(f32v)
-             185:  181(ivec3) ConvertFToS 184
+             185: 181(i8vec3) ConvertFToS 184
                               Store 183(i8v) 185
              190:  153(fvec3) Load 155(f32v)
-             191:  187(ivec3) ConvertFToS 190
+             191:187(i16vec3) ConvertFToS 190
                               Store 189(i16v) 191
              196:  153(fvec3) Load 155(f32v)
              197:  193(ivec3) ConvertFToS 196
                               Store 195(i32v) 197
              202:  153(fvec3) Load 155(f32v)
-             203:  199(ivec3) ConvertFToS 202
+             203:199(i64vec3) ConvertFToS 202
                               Store 201(i64v) 203
              205:  153(fvec3) Load 155(f32v)
-             206:  181(ivec3) ConvertFToS 205
+             206: 181(i8vec3) ConvertFToS 205
                               Store 204(u8v) 206
              211:  153(fvec3) Load 155(f32v)
-             212:  208(ivec3) ConvertFToU 211
+             212:208(i16vec3) ConvertFToU 211
                               Store 210(u16v) 212
              216:  153(fvec3) Load 155(f32v)
              217:  213(ivec3) ConvertFToU 216
                               Store 215(u32v) 217
              222:  153(fvec3) Load 155(f32v)
-             223:  219(ivec3) ConvertFToU 222
+             223:219(i64vec3) ConvertFToU 222
                               Store 221(u64v) 223
                               Return
                               FunctionEnd
