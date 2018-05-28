@@ -1365,17 +1365,17 @@ namespace bgfx
 
 	static const char* s_topologyName[] =
 	{
-		"TriList",
+		"Triangles",
 		"TriStrip",
-		"Line",
+		"Lines",
 		"LineStrip",
-		"Point",
+		"Points",
 	};
 	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_topologyName) );
 
 	const char* getName(Topology::Enum _topology)
 	{
-		return s_topologyName[_topology];
+		return s_topologyName[bx::min(_topology, Topology::PointList)];
 	}
 
 	static TextureFormat::Enum s_emulatedFormats[] =
