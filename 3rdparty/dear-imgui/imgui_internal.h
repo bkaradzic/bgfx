@@ -627,6 +627,8 @@ struct ImGuiContext
     ImVec2                  ActiveIdClickOffset;                // Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior)
     ImGuiWindow*            ActiveIdWindow;
     ImGuiInputSource        ActiveIdSource;                     // Activating with mouse or nav (gamepad/keyboard)
+    ImGuiID                 LastActiveId;                       // Store the last non-zero ActiveId, useful for animation.
+    float                   LastActiveIdTimer;                  // Store the last non-zero ActiveId timer since the beginning of activation, useful for animation.
     ImGuiWindow*            MovingWindow;                       // Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow.
     ImVector<ImGuiColMod>   ColorModifiers;                     // Stack for PushStyleColor()/PopStyleColor()
     ImVector<ImGuiStyleMod> StyleModifiers;                     // Stack for PushStyleVar()/PopStyleVar()
@@ -688,7 +690,8 @@ struct ImGuiContext
     ImGuiPayload            DragDropPayload;
     ImRect                  DragDropTargetRect;
     ImGuiID                 DragDropTargetId;
-    float                   DragDropAcceptIdCurrRectSurface;
+    ImGuiDragDropFlags      DragDropAcceptFlags;
+    float                   DragDropAcceptIdCurrRectSurface;    // Target item surface (we resolve overlapping targets by prioritizing the smaller surface)
     ImGuiID                 DragDropAcceptIdCurr;               // Target item id (set at the time of accepting the payload)
     ImGuiID                 DragDropAcceptIdPrev;               // Target item id from previous frame (we need to store this to allow for overlapping drag and drop targets)
     int                     DragDropAcceptFrameCount;           // Last time a target expressed a desire to accept the source
@@ -761,6 +764,8 @@ struct ImGuiContext
         ActiveIdClickOffset = ImVec2(-1,-1);
         ActiveIdWindow = NULL;
         ActiveIdSource = ImGuiInputSource_None;
+        LastActiveId = 0;
+        LastActiveIdTimer = 0.0f;
         MovingWindow = NULL;
         NextTreeNodeOpenVal = false;
         NextTreeNodeOpenCond = 0;
@@ -799,6 +804,7 @@ struct ImGuiContext
         DragDropSourceFlags = 0;
         DragDropMouseButton = -1;
         DragDropTargetId = 0;
+        DragDropAcceptFlags = 0;
         DragDropAcceptIdCurrRectSurface = 0.0f;
         DragDropAcceptIdPrev = DragDropAcceptIdCurr = 0;
         DragDropAcceptFrameCount = -1;
@@ -1109,6 +1115,8 @@ namespace ImGui
     IMGUI_API bool          BeginDragDropTargetCustom(const ImRect& bb, ImGuiID id);
     IMGUI_API void          ClearDragDrop();
     IMGUI_API bool          IsDragDropPayloadBeingAccepted();
+    IMGUI_API void          BeginDragDropTooltip();
+    IMGUI_API void          EndDragDropTooltip();
 
     // FIXME-WIP: New Columns API
     IMGUI_API void          BeginColumns(const char* str_id, int count, ImGuiColumnsFlags flags = 0); // setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().

@@ -2118,7 +2118,14 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
     ImGuiContext& g = *GImGui;
     g.ActiveIdIsJustActivated = (g.ActiveId != id);
     if (g.ActiveIdIsJustActivated)
+    {
         g.ActiveIdTimer = 0.0f;
+        if (id != 0)
+        {
+            g.LastActiveId = id;
+            g.LastActiveIdTimer = 0.0f;
+        }
+    }
     g.ActiveId = id;
     g.ActiveIdAllowNavDirFlags = 0;
     g.ActiveIdAllowOverlap = false;
@@ -3414,7 +3421,8 @@ static void ImGui::UpdateMouseInputs()
         {
             if (g.Time - g.IO.MouseClickedTime[i] < g.IO.MouseDoubleClickTime)
             {
-                if (ImLengthSqr(g.IO.MousePos - g.IO.MouseClickedPos[i]) < g.IO.MouseDoubleClickMaxDist * g.IO.MouseDoubleClickMaxDist)
+                ImVec2 delta_from_click_pos = IsMousePosValid(&g.IO.MousePos) ? (g.IO.MousePos - g.IO.MouseClickedPos[i]) : ImVec2(0.0f, 0.0f);
+                if (ImLengthSqr(delta_from_click_pos) < g.IO.MouseDoubleClickMaxDist * g.IO.MouseDoubleClickMaxDist)
                     g.IO.MouseDoubleClicked[i] = true;
                 g.IO.MouseClickedTime[i] = -FLT_MAX;    // so the third click isn't turned into a double-click
             }
@@ -3428,10 +3436,11 @@ static void ImGui::UpdateMouseInputs()
         }
         else if (g.IO.MouseDown[i])
         {
-            ImVec2 mouse_delta = g.IO.MousePos - g.IO.MouseClickedPos[i];
-            g.IO.MouseDragMaxDistanceAbs[i].x = ImMax(g.IO.MouseDragMaxDistanceAbs[i].x, mouse_delta.x < 0.0f ? -mouse_delta.x : mouse_delta.x);
-            g.IO.MouseDragMaxDistanceAbs[i].y = ImMax(g.IO.MouseDragMaxDistanceAbs[i].y, mouse_delta.y < 0.0f ? -mouse_delta.y : mouse_delta.y);
-            g.IO.MouseDragMaxDistanceSqr[i] = ImMax(g.IO.MouseDragMaxDistanceSqr[i], ImLengthSqr(mouse_delta));
+            // Maintain the maximum distance we reaching from the initial click position, which is used with dragging threshold
+            ImVec2 delta_from_click_pos = IsMousePosValid(&g.IO.MousePos) ? (g.IO.MousePos - g.IO.MouseClickedPos[i]) : ImVec2(0.0f, 0.0f);
+            g.IO.MouseDragMaxDistanceSqr[i] = ImMax(g.IO.MouseDragMaxDistanceSqr[i], ImLengthSqr(delta_from_click_pos));
+            g.IO.MouseDragMaxDistanceAbs[i].x = ImMax(g.IO.MouseDragMaxDistanceAbs[i].x, delta_from_click_pos.x < 0.0f ? -delta_from_click_pos.x : delta_from_click_pos.x);
+            g.IO.MouseDragMaxDistanceAbs[i].y = ImMax(g.IO.MouseDragMaxDistanceAbs[i].y, delta_from_click_pos.y < 0.0f ? -delta_from_click_pos.y : delta_from_click_pos.y);
         }
         if (g.IO.MouseClicked[i]) // Clicking any mouse button reactivate mouse hovering which may have been deactivated by gamepad/keyboard navigation
             g.NavDisableMouseHover = false;
@@ -3571,6 +3580,7 @@ void ImGui::NewFrame()
         ClearActiveID();
     if (g.ActiveId)
         g.ActiveIdTimer += g.IO.DeltaTime;
+    g.LastActiveIdTimer += g.IO.DeltaTime;
     g.ActiveIdPreviousFrame = g.ActiveId;
     g.ActiveIdIsAlive = false;
     g.ActiveIdIsJustActivated = false;
@@ -11224,28 +11234,28 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     ImVec2 size(size_arg.x != 0.0f ? size_arg.x : label_size.x, size_arg.y != 0.0f ? size_arg.y : label_size.y);
     ImVec2 pos = window->DC.CursorPos;
     pos.y += window->DC.CurrentLineTextBaseOffset;
-    ImRect bb(pos, pos + size);
-    ItemSize(bb);
+    ImRect bb_inner(pos, pos + size);
+    ItemSize(bb_inner);
 
     // Fill horizontal space.
     ImVec2 window_padding = window->WindowPadding;
     float max_x = (flags & ImGuiSelectableFlags_SpanAllColumns) ? GetWindowContentRegionMax().x : GetContentRegionMax().x;
     float w_draw = ImMax(label_size.x, window->Pos.x + max_x - window_padding.x - window->DC.CursorPos.x);
     ImVec2 size_draw((size_arg.x != 0 && !(flags & ImGuiSelectableFlags_DrawFillAvailWidth)) ? size_arg.x : w_draw, size_arg.y != 0.0f ? size_arg.y : size.y);
-    ImRect bb_with_spacing(pos, pos + size_draw);
+    ImRect bb(pos, pos + size_draw);
     if (size_arg.x == 0.0f || (flags & ImGuiSelectableFlags_DrawFillAvailWidth))
-        bb_with_spacing.Max.x += window_padding.x;
+        bb.Max.x += window_padding.x;
 
     // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
     float spacing_L = (float)(int)(style.ItemSpacing.x * 0.5f);
     float spacing_U = (float)(int)(style.ItemSpacing.y * 0.5f);
     float spacing_R = style.ItemSpacing.x - spacing_L;
     float spacing_D = style.ItemSpacing.y - spacing_U;
-    bb_with_spacing.Min.x -= spacing_L;
-    bb_with_spacing.Min.y -= spacing_U;
-    bb_with_spacing.Max.x += spacing_R;
-    bb_with_spacing.Max.y += spacing_D;
-    if (!ItemAdd(bb_with_spacing, (flags & ImGuiSelectableFlags_Disabled) ? 0 : id))
+    bb.Min.x -= spacing_L;
+    bb.Min.y -= spacing_U;
+    bb.Max.x += spacing_R;
+    bb.Max.y += spacing_D;
+    if (!ItemAdd(bb, (flags & ImGuiSelectableFlags_Disabled) ? 0 : id))
     {
         if ((flags & ImGuiSelectableFlags_SpanAllColumns) && window->DC.ColumnsSet)
             PushColumnClipRect();
@@ -11260,7 +11270,7 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     if (flags & ImGuiSelectableFlags_Disabled) button_flags |= ImGuiButtonFlags_Disabled;
     if (flags & ImGuiSelectableFlags_AllowDoubleClick) button_flags |= ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnDoubleClick;
     bool hovered, held;
-    bool pressed = ButtonBehavior(bb_with_spacing, id, &hovered, &held, button_flags);
+    bool pressed = ButtonBehavior(bb, id, &hovered, &held, button_flags);
     if (flags & ImGuiSelectableFlags_Disabled)
         selected = false;
 
@@ -11276,18 +11286,18 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     if (hovered || selected)
     {
         const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_HeaderActive : hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
-        RenderFrame(bb_with_spacing.Min, bb_with_spacing.Max, col, false, 0.0f);
-        RenderNavHighlight(bb_with_spacing, id, ImGuiNavHighlightFlags_TypeThin | ImGuiNavHighlightFlags_NoRounding);
+        RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
+        RenderNavHighlight(bb, id, ImGuiNavHighlightFlags_TypeThin | ImGuiNavHighlightFlags_NoRounding);
     }
 
     if ((flags & ImGuiSelectableFlags_SpanAllColumns) && window->DC.ColumnsSet)
     {
         PushColumnClipRect();
-        bb_with_spacing.Max.x -= (GetContentRegionMax().x - max_x);
+        bb.Max.x -= (GetContentRegionMax().x - max_x);
     }
 
     if (flags & ImGuiSelectableFlags_Disabled) PushStyleColor(ImGuiCol_Text, g.Style.Colors[ImGuiCol_TextDisabled]);
-    RenderTextClipped(bb.Min, bb_with_spacing.Max, label, NULL, &label_size, ImVec2(0.0f,0.0f));
+    RenderTextClipped(bb_inner.Min, bb.Max, label, NULL, &label_size, ImVec2(0.0f,0.0f));
     if (flags & ImGuiSelectableFlags_Disabled) PopStyleColor();
 
     // Automatically close popups
@@ -13148,6 +13158,7 @@ void ImGui::ClearDragDrop()
     ImGuiContext& g = *GImGui;
     g.DragDropActive = false;
     g.DragDropPayload.Clear();
+    g.DragDropAcceptFlags = 0;
     g.DragDropAcceptIdCurr = g.DragDropAcceptIdPrev = 0;
     g.DragDropAcceptIdCurrRectSurface = FLT_MAX;
     g.DragDropAcceptFrameCount = -1;
@@ -13232,16 +13243,15 @@ bool ImGui::BeginDragDropSource(ImGuiDragDropFlags flags)
 
         if (!(flags & ImGuiDragDropFlags_SourceNoPreviewTooltip))
         {
-            // FIXME-DRAG
-            //SetNextWindowPos(g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding);
-            //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This is better but e.g ColorButton with checkboard has issue with transparent colors :(
-
-            // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
-            // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
-            ImVec2 tooltip_pos = g.IO.MousePos + ImVec2(16 * g.Style.MouseCursorScale, 8 * g.Style.MouseCursorScale);
-            SetNextWindowPos(tooltip_pos);
-            PushStyleColor(ImGuiCol_PopupBg, GetStyleColorVec4(ImGuiCol_PopupBg) * ImVec4(1.0f, 1.0f, 1.0f, 0.6f));
-            BeginTooltip();
+            // Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
+            // We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents. 
+            BeginDragDropTooltip();
+            if (g.DragDropActive && g.DragDropAcceptIdPrev && (g.DragDropAcceptFlags & ImGuiDragDropFlags_AcceptNoPreviewTooltip))
+            {
+                ImGuiWindow* tooltip_window = g.CurrentWindow;
+                tooltip_window->SkipItems = true;
+                tooltip_window->HiddenFrames = 1;
+            }
         }
 
         if (!(flags & ImGuiDragDropFlags_SourceNoDisableHover) && !(flags & ImGuiDragDropFlags_SourceExtern))
@@ -13258,15 +13268,30 @@ void ImGui::EndDragDropSource()
     IM_ASSERT(g.DragDropActive);
 
     if (!(g.DragDropSourceFlags & ImGuiDragDropFlags_SourceNoPreviewTooltip))
-    {
-        EndTooltip();
-        PopStyleColor();
-        //PopStyleVar();
-    }
+        EndDragDropTooltip();
 
     // Discard the drag if have not called SetDragDropPayload()
     if (g.DragDropPayload.DataFrameCount == -1)
         ClearDragDrop();
+}
+
+void ImGui::BeginDragDropTooltip()
+{
+    // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
+    // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
+    // Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and disable clipping the tooltip without our display area, like regular tooltip do.
+    ImGuiContext& g = *GImGui;
+    //ImVec2 tooltip_pos = g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding;
+    ImVec2 tooltip_pos = g.IO.MousePos + ImVec2(16 * g.Style.MouseCursorScale, 8 * g.Style.MouseCursorScale);
+    SetNextWindowPos(tooltip_pos);
+    SetNextWindowBgAlpha(g.Style.Colors[ImGuiCol_PopupBg].w * 0.60f);
+    //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This would be nice but e.g ColorButton with checkboard has issue with transparent colors :(
+    BeginTooltipEx(0, true);
+}
+
+void ImGui::EndDragDropTooltip()
+{
+    EndTooltip();
 }
 
 // Use 'cond' to choose to submit payload on drag start or every frame
@@ -13382,6 +13407,7 @@ const ImGuiPayload* ImGui::AcceptDragDropPayload(const char* type, ImGuiDragDrop
     float r_surface = r.GetWidth() * r.GetHeight();
     if (r_surface < g.DragDropAcceptIdCurrRectSurface)
     {
+        g.DragDropAcceptFlags = flags;
         g.DragDropAcceptIdCurr = g.DragDropTargetId;
         g.DragDropAcceptIdCurrRectSurface = r_surface;
     }
