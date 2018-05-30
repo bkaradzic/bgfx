@@ -1696,6 +1696,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		{ "NVIDIA Corporation",           BGFX_PCI_ID_NVIDIA },
 		{ "Advanced Micro Devices, Inc.", BGFX_PCI_ID_AMD    },
 		{ "Intel",                        BGFX_PCI_ID_INTEL  },
+		{ "ATI Technologies Inc.",        BGFX_PCI_ID_AMD    },
 	};
 
 	struct Workaround
