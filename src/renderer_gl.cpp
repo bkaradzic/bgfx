@@ -6590,7 +6590,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		if (0 < _render->m_vboffset)
 		{
 			TransientVertexBuffer* vb = _render->m_transientVb;
-			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data, true);
+			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data, false);
 		}
 
 		_render->sort();
