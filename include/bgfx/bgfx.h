@@ -1247,6 +1247,16 @@ namespace bgfx
 			, uint32_t _numVertices
 			);
 
+		/// Set number of vertices for auto generated vertices use in conjuction
+		/// with gl_VertexID.
+		///
+		/// @param[in] _numVertices Number of vertices.
+		///
+		/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+		/// @attention C99 equivalent is `bgfx_set_vertex_count`.
+		///
+		void setVertexCount(uint32_t _numVertices);
+
 		/// Set instance data buffer for draw primitive.
 		///
 		/// @param[in] _idb Transient instance data buffer.
@@ -3549,6 +3559,9 @@ namespace bgfx
 		, uint32_t _startVertex
 		, uint32_t _numVertices
 		);
+
+	///
+	void setVertexCount(uint32_t _numVertices);
 
 	/// Set instance data buffer for draw primitive.
 	///
