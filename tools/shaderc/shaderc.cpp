@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 12
+#define BGFX_SHADERC_VERSION_MINOR 13
 
 namespace bgfx
 {
@@ -1596,18 +1596,27 @@ namespace bgfx
 								);
 						}
 
-						if (hasFrontFacing
-						&&  hlsl >= 3)
+						if (hasFrontFacing)
 						{
-							preprocessor.writef(
-								" \\\n\t%sfloat __vface : VFACE"
-								, arg++ > 0 ? ", " : "  "
-								);
+							if (hlsl == 3)
+							{
+								preprocessor.writef(
+									" \\\n\t%sfloat __vface : VFACE"
+									, arg++ > 0 ? ", " : "  "
+									);
+							}
+							else
+							{
+								preprocessor.writef(
+									" \\\n\t%sbool gl_FrontFacing : SV_IsFrontFace"
+									, arg++ > 0 ? ", " : "  "
+									);
+							}
 						}
 
 						if (hasPrimitiveId)
 						{
-							if (d3d > 9)
+							if (hlsl > 3)
 							{
 								preprocessor.writef(
 									" \\\n\t%suint gl_PrimitiveID : SV_PrimitiveID"
@@ -1627,16 +1636,10 @@ namespace bgfx
 
 						if (hasFrontFacing)
 						{
-							if (hlsl >= 3)
+							if (hlsl == 3)
 							{
 								preprocessor.writef(
 									"#define gl_FrontFacing (__vface <= 0.0)\n"
-									);
-							}
-							else
-							{
-								preprocessor.writef(
-									"#define gl_FrontFacing false\n"
 									);
 							}
 						}
