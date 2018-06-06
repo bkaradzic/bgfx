@@ -2311,6 +2311,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					;
 
 				g_caps.supported |= false
+					|| s_extension[Extension::EXT_gpu_shader4].m_supported
+					|| (!!(BGFX_CONFIG_RENDERER_OPENGLES >= 30) && !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN) )
+					? BGFX_CAPS_VERTEX_ID
+					: 0
+					;
+
+				g_caps.supported |= false
 					|| s_extension[Extension::ARB_texture_cube_map_array].m_supported
 					|| s_extension[Extension::EXT_texture_cube_map_array].m_supported
 					? BGFX_CAPS_TEXTURE_CUBE_ARRAY
@@ -7459,21 +7466,26 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							if (bindAttribs || diffStartVertex)
 							{
 								program.bindAttributesBegin();
-								for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-									; 0 != streamMask
-									; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-									)
+
+								if (UINT8_MAX != draw.m_streamMask)
 								{
-									streamMask >>= ntz;
-									idx         += ntz;
+									for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+										; 0 != streamMask
+										; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+										)
+									{
+										streamMask >>= ntz;
+										idx         += ntz;
 
-									currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+										currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
 
-									const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
-									uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
-									GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-									program.bindAttributes(m_vertexDecls[decl], draw.m_stream[idx].m_startVertex);
+										const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
+										uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
+										program.bindAttributes(m_vertexDecls[decl], draw.m_stream[idx].m_startVertex);
+									}
 								}
+
 								program.bindAttributesEnd();
 
 								if (isValid(draw.m_instanceDataBuffer) )

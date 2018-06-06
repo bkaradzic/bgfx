@@ -6158,6 +6158,10 @@ namespace bgfx { namespace d3d11
 							deviceCtx->IASetVertexBuffers(0, 1, &inst.m_ptr, &instStride, &draw.m_instanceDataOffset);
 							setInputLayout(0, NULL, m_program[programIdx], uint16_t(instStride/16) );
 						}
+						else
+						{
+							deviceCtx->IASetInputLayout(NULL);
+						}
 					}
 				}
 
