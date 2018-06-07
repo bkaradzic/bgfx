@@ -561,7 +561,7 @@ namespace entry
 								m_eventQueue.postMouseEvent(handle
 									, mev.x
 									, mev.y
-									, 0
+									, m_mz
 									, button
 									, mev.type == SDL_MOUSEBUTTONDOWN
 									);
