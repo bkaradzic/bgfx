@@ -3265,9 +3265,11 @@ static void ImGui::NavUpdate()
         // Set mouse position given our knowledge of the navigated item position from last frame
         if ((g.IO.ConfigFlags & ImGuiConfigFlags_NavEnableSetMousePos) && (g.IO.BackendFlags & ImGuiBackendFlags_HasSetMousePos))
         {
-            IM_ASSERT(!g.NavDisableHighlight && g.NavDisableMouseHover);
-            g.IO.MousePos = g.IO.MousePosPrev = NavCalcPreferredRefPos();
-            g.IO.WantSetMousePos = true;
+            if (!g.NavDisableHighlight && g.NavDisableMouseHover && g.NavWindow)
+            {
+                g.IO.MousePos = g.IO.MousePosPrev = NavCalcPreferredRefPos();
+                g.IO.WantSetMousePos = true;
+            }
         }
         g.NavMousePosDirty = false;
     }
@@ -5114,16 +5116,19 @@ void ImGui::OpenPopupEx(ImGuiID id)
     }
     else
     {
-        // Close child popups if any
-        g.OpenPopupStack.resize(current_stack_size + 1);
-
         // Gently handle the user mistakenly calling OpenPopup() every frame. It is a programming mistake! However, if we were to run the regular code path, the ui
         // would become completely unusable because the popup will always be in hidden-while-calculating-size state _while_ claiming focus. Which would be a very confusing
         // situation for the programmer. Instead, we silently allow the popup to proceed, it will keep reappearing and the programming error will be more obvious to understand.
         if (g.OpenPopupStack[current_stack_size].PopupId == id && g.OpenPopupStack[current_stack_size].OpenFrameCount == g.FrameCount - 1)
+        {
             g.OpenPopupStack[current_stack_size].OpenFrameCount = popup_ref.OpenFrameCount;
+        }
         else
+        {
+            // Close child popups if any, then flag popup for open/reopen
+            g.OpenPopupStack.resize(current_stack_size + 1);
             g.OpenPopupStack[current_stack_size] = popup_ref;
+        }
 
         // When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup it would get closed by ClosePopupsOverWindow().
         // This is equivalent to what ClosePopupToLevel() does.
@@ -9112,7 +9117,8 @@ static bool ImGui::SliderBehaviorT(const ImRect& bb, ImGuiID id, ImGuiDataType d
             else if (delta != 0.0f)
             {
                 clicked_t = SliderBehaviorCalcRatioFromValue<TYPE,FLOATTYPE>(data_type, *v, v_min, v_max, power, linear_zero_pos);
-                if (is_decimal || is_power)
+                const int decimal_precision = is_decimal ? ImParseFormatPrecision(format, 3) : 0;
+                if ((decimal_precision > 0) || is_power)
                 {
                     delta /= 100.0f;    // Gamepad/keyboard tweak speeds in % of slider bounds
                     if (IsNavInputDown(ImGuiNavInput_TweakSlow))
