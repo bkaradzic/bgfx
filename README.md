@@ -291,6 +291,16 @@ focused towards live graphical apps and games.
 
 ![mud](https://raw.githubusercontent.com/hugoam/mud-io/master/media/14_live_gfx.png)
 
+## Talking Tom Pool
+
+https://outfit7.com/apps/talking-tom-pool/ - "Sling and match” puzzle game for
+mobile devices.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=eNSI45zDEo0" 
+target="_blank"><img src="http://img.youtube.com/vi/eNSI45zDEo0/0.jpg" 
+alt="Talking Tom Pool"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
