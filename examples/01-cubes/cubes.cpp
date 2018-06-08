@@ -117,6 +117,7 @@ class ExampleCubes : public entry::AppI
 public:
 	ExampleCubes(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
+		, m_pt(0)
 		, m_r(true)
 		, m_g(true)
 		, m_b(true)
