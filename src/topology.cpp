@@ -37,6 +37,37 @@ namespace bgfx
 		return _numIndices;
 	}
 
+	inline bool isEven(uint32_t _num)
+	{
+		return 0 == (_num & 1);
+	}
+
+	template<typename IndexT>
+	static uint32_t topologyConvertTriStripFlipWinding(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices)
+	{
+		const uint32_t numIndices = isEven(_numIndices) ? _numIndices + 1 : _numIndices;
+
+		if (NULL != _dst)
+		{
+			return numIndices;
+		}
+
+		IndexT* dst = (IndexT*)_dst;
+		IndexT* end = &dst[_dstSize/sizeof(IndexT)];
+
+		if (isEven(_numIndices) )
+		{
+			*dst++ = _indices[_numIndices-1];
+		}
+
+		for (uint32_t ii = 1; ii <= _numIndices && dst < end; ++ii)
+		{
+			*dst++ = _indices[_numIndices - ii];
+		}
+
+		return numIndices;
+	}
+
 	template<typename IndexT, typename SortT>
 	static uint32_t topologyConvertTriListToLineList(void* _dst, uint32_t _dstSize, const IndexT* _indices, uint32_t _numIndices, IndexT* _temp, SortT* _tempSort)
 	{
@@ -194,6 +225,14 @@ namespace bgfx
 			}
 
 			return topologyConvertTriListFlipWinding(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
+
+		case TopologyConvert::TriStripFlipWinding:
+			if (_index32)
+			{
+				return topologyConvertTriStripFlipWinding(_dst, _dstSize, (const uint32_t*)_indices, _numIndices);
+			}
+
+			return topologyConvertTriStripFlipWinding(_dst, _dstSize, (const uint16_t*)_indices, _numIndices);
 
 		case TopologyConvert::TriListToLineList:
 			if (NULL == _allocator)
