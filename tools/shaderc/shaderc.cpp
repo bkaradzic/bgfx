@@ -18,7 +18,7 @@ extern "C"
 #define BGFX_CHUNK_MAGIC_VSH BX_MAKEFOURCC('V', 'S', 'H', 0x5)
 
 #define BGFX_SHADERC_VERSION_MAJOR 1
-#define BGFX_SHADERC_VERSION_MINOR 13
+#define BGFX_SHADERC_VERSION_MINOR 14
 
 namespace bgfx
 {
@@ -1639,7 +1639,7 @@ namespace bgfx
 							if (hlsl == 3)
 							{
 								preprocessor.writef(
-									"#define gl_FrontFacing (__vface <= 0.0)\n"
+									"#define gl_FrontFacing (__vface >= 0.0)\n"
 									);
 							}
 						}

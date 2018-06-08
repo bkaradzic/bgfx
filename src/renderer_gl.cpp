@@ -6575,6 +6575,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		}
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
+		GL_CHECK(glFrontFace(GL_CW) );
 
 		updateResolution(_render->m_resolution);
 
@@ -7094,12 +7095,12 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
-						if (BGFX_STATE_CULL_CW & newFlags)
+						if (BGFX_STATE_CULL_CCW & newFlags)
 						{
 							GL_CHECK(glEnable(GL_CULL_FACE) );
 							GL_CHECK(glCullFace(GL_BACK) );
 						}
-						else if (BGFX_STATE_CULL_CCW & newFlags)
+						else if (BGFX_STATE_CULL_CW & newFlags)
 						{
 							GL_CHECK(glEnable(GL_CULL_FACE) );
 							GL_CHECK(glCullFace(GL_FRONT) );
