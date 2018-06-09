@@ -173,7 +173,15 @@ namespace bgfx
 			PTC14A,       //!< PVRTC1 RGBA 4BPP
 			PTC22,        //!< PVRTC2 RGBA 2BPP
 			PTC24,        //!< PVRTC2 RGBA 4BPP
-
+			ATC,          //!< ATC RGB 4BPP
+			ATCE,         //!< ATCE RGBA 8 BPP explicit alpha
+			ATCI,         //!< ATCI RGBA 8 BPP interpolated alpha
+			ASTC4x4,      //!< ASTC 4x4 8.0 BPP
+			ASTC5x5,      //!< ASTC 5x5 5.12 BPP
+			ASTC6x6,      //!< ASTC 6x6 3.56 BPP
+			ASTC8x5,      //!< ASTC 8x5 3.20 BPP
+			ASTC8x6,      //!< ASTC 8x6 2.67 BPP
+			ASTC10x5,	  //!< ASTC 10x5 2.56 BPP
 			Unknown,      // Compressed formats above.
 
 			R1,

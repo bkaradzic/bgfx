@@ -208,6 +208,15 @@ namespace bgfx { namespace gl
 		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT,     GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,         GL_ZERO,                         false }, // PTC14A
 		{ GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                                       GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,         GL_ZERO,                         false }, // PTC22
 		{ GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                                       GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,         GL_ZERO,                         false }, // PTC24
+		{ GL_ATC_RGB_AMD,                              GL_ZERO,                                       GL_ATC_RGB_AMD,                              GL_ZERO,                         false }, // ATC
+		{ GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                                       GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,              GL_ZERO,                         false }, // ATCE
+		{ GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                                       GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,          GL_ZERO,                         false }, // ATCI
+		{ GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_COMPRESSED_SRGB8_ASTC_4x4_KHR,              GL_COMPRESSED_RGBA_ASTC_4x4_KHR,             GL_ZERO,                         false }, // ASTC4x4
+		{ GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_5x5_KHR,              GL_COMPRESSED_RGBA_ASTC_5x5_KHR,             GL_ZERO,                         false }, // ASTC5x5
+		{ GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_6x6_KHR,              GL_COMPRESSED_RGBA_ASTC_6x6_KHR,             GL_ZERO,                         false }, // ASTC6x6
+		{ GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x5_KHR,              GL_COMPRESSED_RGBA_ASTC_8x5_KHR,             GL_ZERO,                         false }, // ASTC8x5
+		{ GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_COMPRESSED_SRGB8_ASTC_8x6_KHR,              GL_COMPRESSED_RGBA_ASTC_8x6_KHR,             GL_ZERO,                         false }, // ASTC8x6
+		{ GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_COMPRESSED_SRGB8_ASTC_10x5_KHR,             GL_COMPRESSED_RGBA_ASTC_10x5_KHR,            GL_ZERO,                         false }, // ASTC10x5
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                         false }, // Unknown
 		{ GL_ZERO,                                     GL_ZERO,                                       GL_ZERO,                                     GL_ZERO,                         false }, // R1
 		{ GL_ALPHA,                                    GL_ZERO,                                       GL_ALPHA,                                    GL_UNSIGNED_BYTE,                false }, // A8
@@ -291,6 +300,15 @@ namespace bgfx { namespace gl
 		GL_ZERO,               // PTC14A
 		GL_ZERO,               // PTC22
 		GL_ZERO,               // PTC24
+		GL_ZERO,               // ATC
+		GL_ZERO,               // ATCE
+		GL_ZERO,               // ATCI
+		GL_ZERO,               // ASTC4x4
+		GL_ZERO,               // ASTC5x5
+		GL_ZERO,               // ASTC6x6
+		GL_ZERO,               // ASTC8x5
+		GL_ZERO,               // ASTC8x6
+		GL_ZERO,               // ASTC10x5
 		GL_ZERO,               // Unknown
 		GL_ZERO,               // R1
 		GL_ALPHA,              // A8
@@ -372,6 +390,15 @@ namespace bgfx { namespace gl
 		GL_ZERO,           // PTC14A
 		GL_ZERO,           // PTC22
 		GL_ZERO,           // PTC24
+		GL_ZERO,           // ATC
+		GL_ZERO,           // ATCE
+		GL_ZERO,           // ATCI
+		GL_ZERO,           // ASTC4x4
+		GL_ZERO,           // ASTC5x5
+		GL_ZERO,           // ASTC6x6
+		GL_ZERO,           // ASTC8x5
+		GL_ZERO,           // ASTC8x6
+		GL_ZERO,           // ASTC10x5
 		GL_ZERO,           // Unknown
 		GL_ZERO,           // R1
 		GL_ALPHA,          // A8
