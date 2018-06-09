@@ -330,7 +330,7 @@ ERROR: node is still EOpNull!
 0:73        move second child to first child ( temp float)
 0:73          'g6' ( temp float)
 0:73          Constant:
-0:73            0.000005
+0:73            5.0000000000000e-06
 0:74      Sequence
 0:74        move second child to first child ( temp float)
 0:74          'g7' ( temp float)
@@ -739,7 +739,7 @@ ERROR: node is still EOpNull!
 0:73        move second child to first child ( temp float)
 0:73          'g6' ( temp float)
 0:73          Constant:
-0:73            0.000005
+0:73            5.0000000000000e-06
 0:74      Sequence
 0:74        move second child to first child ( temp float)
 0:74          'g7' ( temp float)

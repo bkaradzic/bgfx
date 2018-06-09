@@ -404,7 +404,7 @@ namespace bgfx
 		bool allowTearing = false;
 
 #if BX_PLATFORM_WINDOWS
-		if (windowsVersionIs(Condition::GreaterEqual, 0x0602) )
+		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
 		{
 			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
 			//      will crash on pre Windows 8. Issue #1356.

@@ -1475,22 +1475,25 @@ bool HlslParseContext::isClipOrCullDistance(TBuiltInVariable builtIn)
 void HlslParseContext::fixBuiltInIoType(TType& type)
 {
     int requiredArraySize = 0;
+    int requiredVectorSize = 0;
 
     switch (type.getQualifier().builtIn) {
     case EbvTessLevelOuter: requiredArraySize = 4; break;
     case EbvTessLevelInner: requiredArraySize = 2; break;
 
-    case EbvTessCoord:
+    case EbvSampleMask:
         {
-            // tesscoord is always a vec3 for the IO variable, no matter the shader's
-            // declared vector size.
-            TType tessCoordType(type.getBasicType(), type.getQualifier().storage, 3);
-
-            tessCoordType.getQualifier() = type.getQualifier();
-            type.shallowCopy(tessCoordType);
-
+            // Promote scalar to array of size 1.  Leave existing arrays alone.
+            if (!type.isArray())
+                requiredArraySize = 1;
             break;
         }
+
+    case EbvWorkGroupId:        requiredVectorSize = 3; break;
+    case EbvGlobalInvocationId: requiredVectorSize = 3; break;
+    case EbvLocalInvocationId:  requiredVectorSize = 3; break;
+    case EbvTessCoord:          requiredVectorSize = 3; break;
+
     default:
         if (isClipOrCullDistance(type)) {
             const int loc = type.getQualifier().layoutLocation;
@@ -1509,6 +1512,14 @@ void HlslParseContext::fixBuiltInIoType(TType& type)
         }
 
         return;
+    }
+
+    // Alter or set vector size as needed.
+    if (requiredVectorSize > 0) {
+        TType newType(type.getBasicType(), type.getQualifier().storage, requiredVectorSize);
+        newType.getQualifier() = type.getQualifier();
+
+        type.shallowCopy(newType);
     }
 
     // Alter or set array size as needed.
@@ -2697,6 +2708,15 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
         } else if (assignsClipPos(left)) {
             // Position can require special handling: see comment above assignPosition
             return assignPosition(loc, op, left, right);
+        } else if (left->getQualifier().builtIn == EbvSampleMask) {
+            // Certain builtins are required to be arrayed outputs in SPIR-V, but may internally be scalars
+            // in the shader.  Copy the scalar RHS into the LHS array element zero, if that happens.
+            if (left->isArray() && !right->isArray()) {
+                const TType derefType(left->getType(), 0);
+                left = intermediate.addIndex(EOpIndexDirect, left, intermediate.addConstantUnion(0, loc), loc);
+                left->setType(derefType);
+                // Fall through to add assign.
+            }
         }
 
         return intermediate.addAssign(op, left, right, loc);
@@ -4487,23 +4507,18 @@ void HlslParseContext::decomposeGeometryMethods(const TSourceLoc& loc, TIntermTy
             emit->setLoc(loc);
             emit->setType(TType(EbtVoid));
 
-            // find the matching output
-            if (gsStreamOutput == nullptr) {
-                error(loc, "unable to find output symbol for Append()", "", "");
-                return;
-            }
+            TIntermTyped* data = argAggregate->getSequence()[1]->getAsTyped();
 
-            sequence = intermediate.growAggregate(sequence,
-                                                  handleAssign(loc, EOpAssign,
-                                                               intermediate.addSymbol(*gsStreamOutput, loc),
-                                                               argAggregate->getSequence()[1]->getAsTyped()),
-                                                  loc);
-
+            // This will be patched in finalization during finalizeAppendMethods()
+            sequence = intermediate.growAggregate(sequence, data, loc);
             sequence = intermediate.growAggregate(sequence, emit);
 
             sequence->setOperator(EOpSequence);
             sequence->setLoc(loc);
             sequence->setType(TType(EbtVoid));
+
+            gsAppends.push_back({sequence, loc});
+
             node = sequence;
         }
         break;
@@ -6386,12 +6401,18 @@ bool HlslParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node
         return true;
     }
 
-    if (op == EOpConstructStruct && ! type.isArray() && isScalarConstructor(node))
-        return false;
+    if (op == EOpConstructStruct && ! type.isArray()) {
+        if (isScalarConstructor(node))
+            return false;
 
-    if (op == EOpConstructStruct && ! type.isArray() && (int)type.getStruct()->size() != function.getParamCount()) {
-        error(loc, "Number of constructor parameters does not match the number of structure fields", "constructor", "");
-        return true;
+        // Self-type construction: e.g, we can construct a struct from a single identically typed object.
+        if (function.getParamCount() == 1 && type == *function[0].type)
+            return false;
+
+        if ((int)type.getStruct()->size() != function.getParamCount()) {
+            error(loc, "Number of constructor parameters does not match the number of structure fields", "constructor", "");
+            return true;
+        }
     }
 
     if ((op != EOpConstructStruct && size != 1 && size < type.computeNumComponents()) ||
@@ -8116,6 +8137,10 @@ TIntermTyped* HlslParseContext::handleConstructor(const TSourceLoc& loc, TInterm
 {
     if (node == nullptr)
         return nullptr;
+
+    // Construct identical type
+    if (type == node->getType())
+        return node;
 
     // Handle the idiom "(struct type)<scalar value>"
     if (type.isStruct() && isScalarConstructor(node)) {
@@ -9919,6 +9944,31 @@ void HlslParseContext::fixTextureShadowModes()
     }
 }
 
+// Finalization step: patch append methods to use proper stream output, which isn't known until
+// main is parsed, which could happen after the append method is parsed.
+void HlslParseContext::finalizeAppendMethods()
+{
+    TSourceLoc loc;
+    loc.init();
+
+    // Nothing to do: bypass test for valid stream output.
+    if (gsAppends.empty())
+        return;
+
+    if (gsStreamOutput == nullptr) {
+        error(loc, "unable to find output symbol for Append()", "", "");
+        return;
+    }
+
+    // Patch append sequences, now that we know the stream output symbol.
+    for (auto append = gsAppends.begin(); append != gsAppends.end(); ++append) {
+        append->node->getSequence()[0] = 
+            handleAssign(append->loc, EOpAssign,
+                         intermediate.addSymbol(*gsStreamOutput, append->loc),
+                         append->node->getSequence()[0]->getAsTyped());
+    }
+}
+
 // post-processing
 void HlslParseContext::finish()
 {
@@ -9931,6 +9981,7 @@ void HlslParseContext::finish()
     removeUnusedStructBufferCounters();
     addPatchConstantInvocation();
     fixTextureShadowModes();
+    finalizeAppendMethods();
 
     // Communicate out (esp. for command line) that we formed AST that will make
     // illegal AST SPIR-V and it needs transforms to legalize it.

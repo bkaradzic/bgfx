@@ -75,11 +75,49 @@ static const uint16_t s_cubeTriStrip[] =
 	5,
 };
 
+static const uint16_t s_cubeLineList[] =
+{
+	0, 1,
+	0, 2,
+	0, 4,
+	1, 3,
+	1, 5,
+	2, 3,
+	2, 6,
+	3, 7,
+	4, 5,
+	4, 6,
+	5, 7,
+	6, 7,
+};
+
+static const uint16_t s_cubePoints[] =
+{
+	0, 1, 2, 3, 4, 5, 6, 7
+};
+
+static const char* s_ptNames[]
+{
+	"Triangle List",
+	"Triangle Strip",
+	"Lines",
+	"Points",
+};
+
+static const uint64_t s_ptState[]
+{
+	BGFX_STATE_PT_TRISTRIP,
+	UINT64_C(0),
+	BGFX_STATE_PT_LINES,
+	BGFX_STATE_PT_POINTS,
+};
+
 class ExampleCubes : public entry::AppI
 {
 public:
 	ExampleCubes(const char* _name, const char* _description)
 		: entry::AppI(_name, _description)
+		, m_pt(0)
 		, m_r(true)
 		, m_g(true)
 		, m_b(true)
@@ -89,8 +127,6 @@ public:
 
 	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
-		BX_UNUSED(s_cubeTriList, s_cubeTriStrip);
-
 		Args args(_argc, _argv);
 
 		m_width  = _width;
@@ -111,27 +147,45 @@ public:
 
 		// Set view 0 clear state.
 		bgfx::setViewClear(0
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 0x303030ff
-				, 1.0f
-				, 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 0x303030ff
+			, 1.0f
+			, 0
+			);
 
 		// Create vertex stream declaration.
 		PosColorVertex::init();
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
-				// Static data can be passed with bgfx::makeRef
-				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosColorVertex::ms_decl
-				);
+			// Static data can be passed with bgfx::makeRef
+			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
+			, PosColorVertex::ms_decl
+			);
 
-		// Create static index buffer.
-		m_ibh = bgfx::createIndexBuffer(
-				// Static data can be passed with bgfx::makeRef
-				bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip) )
-				);
+		// Create static index buffer for triangle strip rendering.
+		m_ibh[0] = bgfx::createIndexBuffer(
+			// Static data can be passed with bgfx::makeRef
+			bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip) )
+			);
+
+		// Create static index buffer for triangle list rendering.
+		m_ibh[1] = bgfx::createIndexBuffer(
+			// Static data can be passed with bgfx::makeRef
+			bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList) )
+			);
+
+		// Create static index buffer for triangle list rendering.
+		m_ibh[2] = bgfx::createIndexBuffer(
+			// Static data can be passed with bgfx::makeRef
+			bgfx::makeRef(s_cubeLineList, sizeof(s_cubeLineList) )
+			);
+
+		// Create static index buffer for triangle list rendering.
+		m_ibh[3] = bgfx::createIndexBuffer(
+			// Static data can be passed with bgfx::makeRef
+			bgfx::makeRef(s_cubePoints, sizeof(s_cubePoints) )
+			);
 
 		// Create program from shaders.
 		m_program = loadProgram("vs_cubes", "fs_cubes");
@@ -146,7 +200,11 @@ public:
 		imguiDestroy();
 
 		// Cleanup.
-		bgfx::destroy(m_ibh);
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_ibh); ++ii)
+		{
+			bgfx::destroy(m_ibh[ii]);
+		}
+
 		bgfx::destroy(m_vbh);
 		bgfx::destroy(m_program);
 
@@ -177,7 +235,7 @@ public:
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::SetNextWindowSize(
-				  ImVec2(m_width / 5.0f, m_height / 4.0f)
+				  ImVec2(m_width / 5.0f, m_height / 3.5f)
 				, ImGuiCond_FirstUseEver
 				);
 			ImGui::Begin("Settings"
@@ -189,6 +247,9 @@ public:
 			ImGui::Checkbox("Write G", &m_g);
 			ImGui::Checkbox("Write B", &m_b);
 			ImGui::Checkbox("Write A", &m_a);
+
+			ImGui::Text("Primitive topology:");
+			ImGui::Combo("", (int*)&m_pt, s_ptNames, BX_COUNTOF(s_ptNames) );
 
 			ImGui::End();
 
@@ -230,6 +291,19 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
+			bgfx::IndexBufferHandle ibh = m_ibh[m_pt];
+			uint64_t state = 0
+				| (m_r ? BGFX_STATE_WRITE_R : 0)
+				| (m_g ? BGFX_STATE_WRITE_G : 0)
+				| (m_b ? BGFX_STATE_WRITE_B : 0)
+				| (m_a ? BGFX_STATE_WRITE_A : 0)
+				| BGFX_STATE_WRITE_Z
+				| BGFX_STATE_DEPTH_TEST_LESS
+				| BGFX_STATE_CULL_CW
+				| BGFX_STATE_MSAA
+				| s_ptState[m_pt]
+				;
+
 			// Submit 11x11 cubes.
 			for (uint32_t yy = 0; yy < 11; ++yy)
 			{
@@ -246,20 +320,10 @@ public:
 
 					// Set vertex and index buffer.
 					bgfx::setVertexBuffer(0, m_vbh);
-					bgfx::setIndexBuffer(m_ibh);
+					bgfx::setIndexBuffer(ibh);
 
 					// Set render states.
-					bgfx::setState(0
-						| (m_r ? BGFX_STATE_WRITE_R : 0)
-						| (m_g ? BGFX_STATE_WRITE_G : 0)
-						| (m_b ? BGFX_STATE_WRITE_B : 0)
-						| (m_a ? BGFX_STATE_WRITE_A : 0)
-						| BGFX_STATE_WRITE_Z
-						| BGFX_STATE_DEPTH_TEST_LESS
-						| BGFX_STATE_CULL_CW
-						| BGFX_STATE_MSAA
-						| BGFX_STATE_PT_TRISTRIP
-						);
+					bgfx::setState(state);
 
 					// Submit primitive for rendering to view 0.
 					bgfx::submit(0, m_program);
@@ -283,9 +347,10 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh;
+	bgfx::IndexBufferHandle m_ibh[4];
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
+	int32_t m_pt;
 
 	bool m_r;
 	bool m_g;

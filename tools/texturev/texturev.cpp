@@ -1277,6 +1277,7 @@ int _main_(int _argc, char** _argv)
 	auto anyActive = [&]() -> bool
 	{
 		return false
+			|| ImGui::MouseOverArea()
 			|| menuFade.isActive()
 			|| mip.isActive()
 			|| layer.isActive()

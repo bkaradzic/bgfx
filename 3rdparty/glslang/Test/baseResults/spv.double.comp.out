@@ -34,13 +34,13 @@ spv.double.comp
                3:             TypeFunction 2
                6:             TypeFloat 32
                7:             TypeFloat 64
-      8(bufName):             TypeStruct 6(float) 7(float)
+      8(bufName):             TypeStruct 6(float) 7(float64_t)
                9:             TypePointer Uniform 8(bufName)
      10(bufInst):      9(ptr) Variable Uniform
               11:             TypeInt 32 1
               12:     11(int) Constant 1
-              13:    7(float) Constant 1413754136 1074340347
-              14:             TypePointer Uniform 7(float)
+              13:7(float64_t) Constant 1413754136 1074340347
+              14:             TypePointer Uniform 7(float64_t)
               16:     11(int) Constant 0
               17:    6(float) Constant 1095307129
               18:             TypePointer Uniform 6(float)
@@ -51,19 +51,19 @@ spv.double.comp
               25:             TypePointer Input 24(ivec3)
 26(gl_GlobalInvocationID):     25(ptr) Variable Input
               27:             TypeVector 23(int) 2
-              31:             TypePointer Function 7(float)
+              31:             TypePointer Function 7(float64_t)
 33(gl_LocalInvocationID):     25(ptr) Variable Input
               37:     11(int) Constant 8
               40:             TypeVector 6(float) 2
               42:    6(float) Constant 1090519040
-              47:             TypeVector 7(float) 4
-              48:             TypePointer Function 47(fvec4)
-              50:    7(float) Constant 2576980378 1071225241
-              51:    7(float) Constant 2576980378 1070176665
-              52:    7(float) Constant 858993459 1070805811
-              53:   47(fvec4) ConstantComposite 50 51 52 50
-              55:    7(float) Constant 0 1072693248
-              56:    7(float) Constant 3229815407 1074340298
+              47:             TypeVector 7(float64_t) 4
+              48:             TypePointer Function 47(f64vec4)
+              50:7(float64_t) Constant 2576980378 1071225241
+              51:7(float64_t) Constant 2576980378 1070176665
+              52:7(float64_t) Constant 858993459 1070805811
+              53: 47(f64vec4) ConstantComposite 50 51 52 50
+              55:7(float64_t) Constant 0 1072693248
+              56:7(float64_t) Constant 3229815407 1074340298
               57:             TypeImage 6(float) 2D nonsampled format:Unknown
               58:             TypePointer UniformConstant 57
      59(destTex):     58(ptr) Variable UniformConstant
@@ -90,7 +90,7 @@ spv.double.comp
               43:   40(fvec2) CompositeConstruct 42 42
               44:   40(fvec2) FDiv 41 43
               45:    6(float) ExtInst 1(GLSL.std.450) 66(Length) 44
-              46:    7(float) FConvert 45
+              46:7(float64_t) FConvert 45
                               Store 32(localCoef) 46
                               Store 49(aa) 53
                               Store 54(globalCoef) 55

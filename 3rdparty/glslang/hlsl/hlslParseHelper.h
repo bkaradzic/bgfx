@@ -266,6 +266,7 @@ protected:
     TVariable* getSplitNonIoVar(int id) const;
     void addPatchConstantInvocation();
     void fixTextureShadowModes();
+    void finalizeAppendMethods();
     TIntermTyped* makeIntegerIndex(TIntermTyped*);
 
     void fixBuiltInIoType(TType&);
@@ -459,6 +460,17 @@ protected:
     };
 
     TVector<tMipsOperatorData> mipsOperatorMipArg;
+
+    // The geometry output stream is not copied out from the entry point as a typical output variable
+    // is.  It's written via EmitVertex (hlsl=Append), which may happen in arbitrary control flow.
+    // For this we need the real output symbol.  Since it may not be known at the time and Append()
+    // method is parsed, the sequence will be patched during finalization.
+    struct tGsAppendData {
+        TIntermAggregate* node;
+        TSourceLoc loc;
+    };
+
+    TVector<tGsAppendData> gsAppends;
 
     // A texture object may be used with shadow and non-shadow samplers, but both may not be
     // alive post-DCE in the same shader.  We do not know at compilation time which are alive: that's

@@ -66,8 +66,8 @@ Shader version: 450
                7:             TypeVector 6(float) 3
                8:             TypeVector 6(float) 2
                9:             TypeFloat 64
-              10:             TypeVector 9(float) 2
-       11(block):             TypeStruct 6(float) 7(fvec3) 6(float) 7(fvec3) 7(fvec3) 8(fvec2) 8(fvec2) 6(float) 8(fvec2) 6(float) 6(float) 8(fvec2) 8(fvec2) 10(fvec2)
+              10:             TypeVector 9(float64_t) 2
+       11(block):             TypeStruct 6(float) 7(fvec3) 6(float) 7(fvec3) 7(fvec3) 8(fvec2) 8(fvec2) 6(float) 8(fvec2) 6(float) 6(float) 8(fvec2) 8(fvec2) 10(f64vec2)
               12:             TypePointer Uniform 11(block)
               13:     12(ptr) Variable Uniform
          4(main):           2 Function None 3

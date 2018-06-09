@@ -298,6 +298,25 @@ namespace bgfx
 		};
 	};
 
+	/// Primitive topology.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_t`.
+	///
+	struct Topology
+	{
+		/// Primitive topology:
+		enum Enum
+		{
+			TriList,   //!< Triangle list.
+			TriStrip,  //!< Triangle strip.
+			LineList,  //!< Line list.
+			LineStrip, //!< Line strip.
+			PointList, //!< Point list.
+
+			Count
+		};
+	};
+
 	/// Topology conversion function.
 	///
 	/// @attention C99 equivalent is `bgfx_topology_convert_t`.
@@ -308,6 +327,7 @@ namespace bgfx
 		enum Enum
 		{
 			TriListFlipWinding,  //!< Flip winding order of triangle list.
+			TriStripFlipWinding, //!< Flip winding order of trinagle strip.
 			TriListToLineList,   //!< Convert triangle list to line list.
 			TriStripToTriList,   //!< Convert triangle strip to triangle list.
 			LineStripToLineList, //!< Convert line strip to line list.
@@ -871,53 +891,55 @@ namespace bgfx
 	///   time frequencies define timestamps-per-second for that hardware.
 	struct Stats
 	{
-		int64_t cpuTimeFrame;             //!< CPU time between two `bgfx::frame` calls.
-		int64_t cpuTimeBegin;             //!< Render thread CPU submit begin time.
-		int64_t cpuTimeEnd;               //!< Render thread CPU submit end time.
-		int64_t cpuTimerFreq;             //!< CPU timer frequency. Timestamps-per-second
+		int64_t cpuTimeFrame;               //!< CPU time between two `bgfx::frame` calls.
+		int64_t cpuTimeBegin;               //!< Render thread CPU submit begin time.
+		int64_t cpuTimeEnd;                 //!< Render thread CPU submit end time.
+		int64_t cpuTimerFreq;               //!< CPU timer frequency. Timestamps-per-second
 
-		int64_t gpuTimeBegin;             //!< GPU frame begin time.
-		int64_t gpuTimeEnd;               //!< GPU frame end time.
-		int64_t gpuTimerFreq;             //!< GPU timer frequency.
+		int64_t gpuTimeBegin;               //!< GPU frame begin time.
+		int64_t gpuTimeEnd;                 //!< GPU frame end time.
+		int64_t gpuTimerFreq;               //!< GPU timer frequency.
 
-		int64_t waitRender;               //!< Time spent waiting for render backend thread to finish issuing
-		                                  //!  draw commands to underlying graphics API.
-		int64_t waitSubmit;               //!< Time spent waiting for submit thread to advance to next frame.
+		int64_t waitRender;                 //!< Time spent waiting for render backend thread to finish issuing
+		                                    //!  draw commands to underlying graphics API.
+		int64_t waitSubmit;                 //!< Time spent waiting for submit thread to advance to next frame.
 
-		uint32_t numDraw;                 //!< Number of draw calls submitted.
-		uint32_t numCompute;              //!< Number of compute calls submitted.
-		uint32_t maxGpuLatency;           //!< GPU driver latency.
+		uint32_t numDraw;                   //!< Number of draw calls submitted.
+		uint32_t numCompute;                //!< Number of compute calls submitted.
+		uint32_t maxGpuLatency;             //!< GPU driver latency.
 
-		uint16_t numDynamicIndexBuffers;  //!< Number of used dynamic index buffers.
-		uint16_t numDynamicVertexBuffers; //!< Number of used dynamic vertex buffers.
-		uint16_t numFrameBuffers;         //!< Number of used frame buffers.
-		uint16_t numIndexBuffers;         //!< Number of used index buffers.
-		uint16_t numOcclusionQueries;     //!< Number of used occlusion queries.
-		uint16_t numPrograms;             //!< Number of used programs.
-		uint16_t numShaders;              //!< Number of used shaders.
-		uint16_t numTextures;             //!< Number of used textures.
-		uint16_t numUniforms;             //!< Number of used uniforms.
-		uint16_t numVertexBuffers;        //!< Number of used vertex buffers.
-		uint16_t numVertexDecls;          //!< Number of used vertex declarations.
+		uint16_t numDynamicIndexBuffers;    //!< Number of used dynamic index buffers.
+		uint16_t numDynamicVertexBuffers;   //!< Number of used dynamic vertex buffers.
+		uint16_t numFrameBuffers;           //!< Number of used frame buffers.
+		uint16_t numIndexBuffers;           //!< Number of used index buffers.
+		uint16_t numOcclusionQueries;       //!< Number of used occlusion queries.
+		uint16_t numPrograms;               //!< Number of used programs.
+		uint16_t numShaders;                //!< Number of used shaders.
+		uint16_t numTextures;               //!< Number of used textures.
+		uint16_t numUniforms;               //!< Number of used uniforms.
+		uint16_t numVertexBuffers;          //!< Number of used vertex buffers.
+		uint16_t numVertexDecls;            //!< Number of used vertex declarations.
 
-		int64_t textureMemoryUsed;        //!<
-		int64_t rtMemoryUsed;             //!<
-		int32_t transientVbUsed;          //!<
-		int32_t transientIbUsed;          //!<
+		int64_t textureMemoryUsed;          //!< Estimate of texture memory used.
+		int64_t rtMemoryUsed;               //!< Estimate of render target memory used.
+		int32_t transientVbUsed;            //!< Amount of transient vertex buffer used.
+		int32_t transientIbUsed;            //!< Amount of transient index buffer used.
 
-		int64_t gpuMemoryMax;             //!< Maximum available GPU memory for application.
-		int64_t gpuMemoryUsed;            //!< Amount of GPU memory used by the application.
+		uint32_t numPrims[Topology::Count]; //!< Number of primitives rendered.
 
-		uint16_t width;                   //!< Backbuffer width in pixels.
-		uint16_t height;                  //!< Backbuffer height in pixels.
-		uint16_t textWidth;               //!< Debug text width in characters.
-		uint16_t textHeight;              //!< Debug text height in characters.
+		int64_t gpuMemoryMax;               //!< Maximum available GPU memory for application.
+		int64_t gpuMemoryUsed;              //!< Amount of GPU memory used by the application.
 
-		uint16_t   numViews;              //!< Number of view stats.
-		ViewStats* viewStats;             //!< Array of View stats.
+		uint16_t width;                     //!< Backbuffer width in pixels.
+		uint16_t height;                    //!< Backbuffer height in pixels.
+		uint16_t textWidth;                 //!< Debug text width in characters.
+		uint16_t textHeight;                //!< Debug text height in characters.
 
-		uint8_t       numEncoders;        //!< Number of encoders used during frame.
-		EncoderStats* encoderStats;       //!< Array of encoder stats.
+		uint16_t   numViews;                //!< Number of view stats.
+		ViewStats* viewStats;               //!< Array of View stats.
+
+		uint8_t       numEncoders;          //!< Number of encoders used during frame.
+		EncoderStats* encoderStats;         //!< Array of encoder stats.
 	};
 
 	/// Encoders are used for submitting draw calls from multiple threads, so one encoder per thread.
@@ -1225,6 +1247,16 @@ namespace bgfx
 			, uint32_t _startVertex
 			, uint32_t _numVertices
 			);
+
+		/// Set number of vertices for auto generated vertices use in conjuction
+		/// with gl_VertexID.
+		///
+		/// @param[in] _numVertices Number of vertices.
+		///
+		/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+		/// @attention C99 equivalent is `bgfx_set_vertex_count`.
+		///
+		void setVertexCount(uint32_t _numVertices);
 
 		/// Set instance data buffer for draw primitive.
 		///
@@ -3528,6 +3560,16 @@ namespace bgfx
 		, uint32_t _startVertex
 		, uint32_t _numVertices
 		);
+
+	/// Set number of vertices for auto generated vertices use in conjuction
+	/// with gl_VertexID.
+	///
+	/// @param[in] _numVertices Number of vertices.
+	///
+	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+	/// @attention C99 equivalent is `bgfx_set_vertex_count`.
+	///
+	void setVertexCount(uint32_t _numVertices);
 
 	/// Set instance data buffer for draw primitive.
 	///

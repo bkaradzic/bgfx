@@ -932,17 +932,25 @@ namespace bgfx
 		m_draw.m_uniformBegin = m_uniformBegin;
 		m_draw.m_uniformEnd   = m_uniformEnd;
 
-		uint32_t numVertices = UINT32_MAX;
-		for (uint32_t idx = 0, streamMask = m_draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
-			; 0 != streamMask
-			; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
-			)
+		if (UINT8_MAX != m_draw.m_streamMask)
 		{
-			streamMask >>= ntz;
-			idx         += ntz;
-			numVertices = bx::min(numVertices, m_numVertices[idx]);
+			uint32_t numVertices = UINT32_MAX;
+			for (uint32_t idx = 0, streamMask = m_draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+				; 0 != streamMask
+				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+				)
+			{
+				streamMask >>= ntz;
+				idx         += ntz;
+				numVertices = bx::min(numVertices, m_numVertices[idx]);
+			}
+
+			m_draw.m_numVertices = numVertices;
 		}
-		m_draw.m_numVertices = numVertices;
+		else
+		{
+			m_draw.m_numVertices = m_numVertices[0];
+		}
 
 		if (isValid(_occlusionQuery) )
 		{
@@ -1167,6 +1175,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_TEXTURE_READ_BACK),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_HALF),
 		CAPS_FLAGS(BGFX_CAPS_VERTEX_ATTRIB_UINT10),
+		CAPS_FLAGS(BGFX_CAPS_VERTEX_ID),
 #undef CAPS_FLAGS
 	};
 
@@ -1361,6 +1370,21 @@ namespace bgfx
 	const char* getName(UniformHandle _handle)
 	{
 		return s_ctx->m_uniformRef[_handle.idx].m_name.getPtr();
+	}
+
+	static const char* s_topologyName[] =
+	{
+		"Triangles",
+		"TriStrip",
+		"Lines",
+		"LineStrip",
+		"Points",
+	};
+	BX_STATIC_ASSERT(Topology::Count == BX_COUNTOF(s_topologyName) );
+
+	const char* getName(Topology::Enum _topology)
+	{
+		return s_topologyName[bx::min(_topology, Topology::PointList)];
 	}
 
 	static TextureFormat::Enum s_emulatedFormats[] =
@@ -3104,6 +3128,12 @@ error:
 		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
 	}
 
+	void Encoder::setVertexCount(uint32_t _numVertices)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_VERTEX_ID, "Auto generated vertices are not supported!");
+		BGFX_ENCODER(setVertexCount(_numVertices) );
+	}
+
 	void Encoder::setInstanceDataBuffer(const InstanceDataBuffer* _idb)
 	{
 		setInstanceDataBuffer(_idb, 0, UINT32_MAX);
@@ -4271,6 +4301,12 @@ error:
 		setVertexBuffer(_stream, _tvb, 0, UINT32_MAX);
 	}
 
+	void setVertexCount(uint32_t _numVertices)
+	{
+		BGFX_CHECK_API_THREAD();
+		s_ctx->m_encoder0->setVertexCount(_numVertices);
+	}
+
 	void setInstanceDataBuffer(const InstanceDataBuffer* _idb)
 	{
 		BGFX_CHECK_API_THREAD();
@@ -4566,6 +4602,7 @@ BGFX_C99_ENUM_CHECK(bgfx::TextureFormat,        BGFX_TEXTURE_FORMAT_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::UniformType,          BGFX_UNIFORM_TYPE_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::BackbufferRatio,      BGFX_BACKBUFFER_RATIO_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::OcclusionQueryResult, BGFX_OCCLUSION_QUERY_RESULT_COUNT);
+BGFX_C99_ENUM_CHECK(bgfx::Topology,             BGFX_TOPOLOGY_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::TopologyConvert,      BGFX_TOPOLOGY_CONVERT_COUNT);
 BGFX_C99_ENUM_CHECK(bgfx::RenderFrame,          BGFX_RENDER_FRAME_COUNT);
 #undef BGFX_C99_ENUM_CHECK
@@ -4761,7 +4798,26 @@ BGFX_C_API void bgfx_init_ctor(bgfx_init_t* _init)
 
 BGFX_C_API bool bgfx_init(const bgfx_init_t* _init)
 {
-	return bgfx::init(*reinterpret_cast<const bgfx::Init*>(_init) );
+	bgfx_init_t init = *_init;
+
+	if (init.callback != NULL)
+	{
+		static bgfx::CallbackC99 s_callback;
+		s_callback.m_interface = init.callback;
+		init.callback = reinterpret_cast<bgfx_callback_interface_t *>(&s_callback);
+	}
+
+	if (init.allocator != NULL)
+	{
+		static bgfx::AllocatorC99 s_allocator;
+		s_allocator.m_interface = init.allocator;
+		init.allocator = reinterpret_cast<bgfx_allocator_interface_t *>(&s_allocator);
+	}
+
+	union { const bgfx_init_t* c; const bgfx::Init* cpp; } in;
+	in.c = _init;
+
+	return bgfx::init(*in.cpp);
 }
 
 BGFX_C_API void bgfx_shutdown(void)
@@ -5356,6 +5412,11 @@ BGFX_C_API void bgfx_set_transient_vertex_buffer(uint8_t _stream, const bgfx_tra
 	bgfx::setVertexBuffer(_stream, (const bgfx::TransientVertexBuffer*)_tvb, _startVertex, _numVertices);
 }
 
+BGFX_C_API void bgfx_set_vertex_count(uint32_t _numVertices)
+{
+	bgfx::setVertexCount(_numVertices);
+}
+
 BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num)
 {
 	bgfx::setInstanceDataBuffer( (const bgfx::InstanceDataBuffer*)_idb, _start, _num);
@@ -5552,6 +5613,11 @@ BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_s* _encoder,
 BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder_s* _encoder, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices)
 {
 	BGFX_ENCODER(setVertexBuffer(_stream, (const bgfx::TransientVertexBuffer*)_tvb, _startVertex, _numVertices) );
+}
+
+BGFX_C_API void bgfx_encoder_set_vertex_count(bgfx_encoder_s* _encoder, uint32_t _numVertices)
+{
+	BGFX_ENCODER(setVertexCount(_numVertices) );
 }
 
 BGFX_C_API void bgfx_encoder_set_instance_data_buffer(bgfx_encoder_s* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num)
@@ -5820,6 +5886,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(encoder_set_vertex_buffer)                            \
 	BGFX_IMPORT_FUNC(encoder_set_dynamic_vertex_buffer)                    \
 	BGFX_IMPORT_FUNC(encoder_set_transient_vertex_buffer)                  \
+	BGFX_IMPORT_FUNC(encoder_set_vertex_count)                             \
 	BGFX_IMPORT_FUNC(encoder_set_instance_data_buffer)                     \
 	BGFX_IMPORT_FUNC(encoder_set_instance_data_from_vertex_buffer)         \
 	BGFX_IMPORT_FUNC(encoder_set_instance_data_from_dynamic_vertex_buffer) \

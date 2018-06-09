@@ -1715,18 +1715,18 @@ gl_FragCoord origin is upper left
               29:             TypePointer Function 28(bvec3)
               30:             TypeFunction 2 29(ptr)
               34:             TypeFloat 64
-              35:             TypeVector 34(float) 3
-              36:             TypePointer Function 35(fvec3)
+              35:             TypeVector 34(float64_t) 3
+              36:             TypePointer Function 35(f64vec3)
               37:             TypeFunction 2 36(ptr)
               41:             TypeFunction 7(fvec3) 8(ptr)
               54:             TypeFunction 14(ivec3) 15(ptr)
               67:             TypeFunction 21(ivec3) 22(ptr)
               80:             TypeFunction 28(bvec3) 29(ptr)
-              93:             TypeFunction 35(fvec3) 36(ptr)
+              93:             TypeFunction 35(f64vec3) 36(ptr)
              106:             TypeVector 6(float) 4
   107(PS_OUTPUT):             TypeStruct 106(fvec4)
              108:             TypeFunction 107(PS_OUTPUT)
-    111($Global):             TypeStruct 14(ivec3) 21(ivec3) 7(fvec3) 21(ivec3) 35(fvec3) 13(int) 20(int) 6(float) 20(int) 34(float)
+    111($Global):             TypeStruct 14(ivec3) 21(ivec3) 7(fvec3) 21(ivec3) 35(f64vec3) 13(int) 20(int) 6(float) 20(int) 34(float64_t)
              112:             TypePointer Uniform 111($Global)
              113:    112(ptr) Variable Uniform
              114:     13(int) Constant 0
@@ -1741,24 +1741,24 @@ gl_FragCoord origin is upper left
              142:    7(fvec3) ConstantComposite 140 140 140
              143:    7(fvec3) ConstantComposite 141 141 141
              151:     13(int) Constant 4
-             152:             TypePointer Uniform 35(fvec3)
+             152:             TypePointer Uniform 35(f64vec3)
              172:   14(ivec3) ConstantComposite 114 114 114
              173:   14(ivec3) ConstantComposite 134 134 134
              181:     13(int) Constant 2
              182:             TypePointer Uniform 7(fvec3)
              218:     20(int) Constant 1
              219:   21(ivec3) ConstantComposite 218 218 218
-             261:   34(float) Constant 0 0
-             262:   35(fvec3) ConstantComposite 261 261 261
-             288:   34(float) Constant 0 1072693248
-             289:   35(fvec3) ConstantComposite 288 288 288
+             261:34(float64_t) Constant 0 0
+             262: 35(f64vec3) ConstantComposite 261 261 261
+             288:34(float64_t) Constant 0 1072693248
+             289: 35(f64vec3) ConstantComposite 288 288 288
              473:     13(int) Constant 5
              474:             TypePointer Uniform 13(int)
              480:     13(int) Constant 6
              481:             TypePointer Uniform 20(int)
              488:     13(int) Constant 8
              494:     13(int) Constant 9
-             495:             TypePointer Uniform 34(float)
+             495:             TypePointer Uniform 34(float64_t)
              514:     13(int) Constant 7
              515:             TypePointer Uniform 6(float)
              574:             TypePointer Function 13(int)
@@ -1841,11 +1841,11 @@ gl_FragCoord origin is upper left
            51(p):      8(ptr) FunctionParameter
               53:             Label
              153:    152(ptr) AccessChain 113 151
-             154:   35(fvec3) Load 153
+             154: 35(f64vec3) Load 153
              155:    7(fvec3) FConvert 154
                               Store 51(p) 155
              156:    152(ptr) AccessChain 113 151
-             157:   35(fvec3) Load 156
+             157: 35(f64vec3) Load 156
              158:    7(fvec3) FConvert 157
                               ReturnValue 158
                               FunctionEnd
@@ -1891,11 +1891,11 @@ gl_FragCoord origin is upper left
            64(p):     15(ptr) FunctionParameter
               66:             Label
              191:    152(ptr) AccessChain 113 151
-             192:   35(fvec3) Load 191
+             192: 35(f64vec3) Load 191
              193:   14(ivec3) ConvertFToS 192
                               Store 64(p) 193
              194:    152(ptr) AccessChain 113 151
-             195:   35(fvec3) Load 194
+             195: 35(f64vec3) Load 194
              196:   14(ivec3) ConvertFToS 195
                               ReturnValue 196
                               FunctionEnd
@@ -1941,11 +1941,11 @@ gl_FragCoord origin is upper left
            77(p):     22(ptr) FunctionParameter
               79:             Label
              227:    152(ptr) AccessChain 113 151
-             228:   35(fvec3) Load 227
+             228: 35(f64vec3) Load 227
              229:   21(ivec3) ConvertFToU 228
                               Store 77(p) 229
              230:    152(ptr) AccessChain 113 151
-             231:   35(fvec3) Load 230
+             231: 35(f64vec3) Load 230
              232:   21(ivec3) ConvertFToU 231
                               ReturnValue 232
                               FunctionEnd
@@ -1989,62 +1989,62 @@ gl_FragCoord origin is upper left
            90(p):     29(ptr) FunctionParameter
               92:             Label
              259:    152(ptr) AccessChain 113 151
-             260:   35(fvec3) Load 259
+             260: 35(f64vec3) Load 259
              263:   28(bvec3) FOrdNotEqual 260 262
                               Store 90(p) 263
              264:    152(ptr) AccessChain 113 151
-             265:   35(fvec3) Load 264
+             265: 35(f64vec3) Load 264
              266:   28(bvec3) FOrdNotEqual 265 262
                               ReturnValue 266
                               FunctionEnd
-95(Fn_R_D3I(vd3;):   35(fvec3) Function None 93
+95(Fn_R_D3I(vd3;): 35(f64vec3) Function None 93
            94(p):     36(ptr) FunctionParameter
               96:             Label
              269:    115(ptr) AccessChain 113 114
              270:   14(ivec3) Load 269
-             271:   35(fvec3) ConvertSToF 270
+             271: 35(f64vec3) ConvertSToF 270
                               Store 94(p) 271
              272:    115(ptr) AccessChain 113 114
              273:   14(ivec3) Load 272
-             274:   35(fvec3) ConvertSToF 273
+             274: 35(f64vec3) ConvertSToF 273
                               ReturnValue 274
                               FunctionEnd
-98(Fn_R_D3U(vd3;):   35(fvec3) Function None 93
+98(Fn_R_D3U(vd3;): 35(f64vec3) Function None 93
            97(p):     36(ptr) FunctionParameter
               99:             Label
              277:    125(ptr) AccessChain 113 124
              278:   21(ivec3) Load 277
-             279:   35(fvec3) ConvertUToF 278
+             279: 35(f64vec3) ConvertUToF 278
                               Store 97(p) 279
              280:    125(ptr) AccessChain 113 124
              281:   21(ivec3) Load 280
-             282:   35(fvec3) ConvertUToF 281
+             282: 35(f64vec3) ConvertUToF 281
                               ReturnValue 282
                               FunctionEnd
-101(Fn_R_D3B(vd3;):   35(fvec3) Function None 93
+101(Fn_R_D3B(vd3;): 35(f64vec3) Function None 93
           100(p):     36(ptr) FunctionParameter
              102:             Label
              285:    125(ptr) AccessChain 113 134
              286:   21(ivec3) Load 285
              287:   28(bvec3) INotEqual 286 138
-             290:   35(fvec3) Select 287 289 262
+             290: 35(f64vec3) Select 287 289 262
                               Store 100(p) 290
              291:    125(ptr) AccessChain 113 134
              292:   21(ivec3) Load 291
              293:   28(bvec3) INotEqual 292 138
-             294:   35(fvec3) Select 293 289 262
+             294: 35(f64vec3) Select 293 289 262
                               ReturnValue 294
                               FunctionEnd
-104(Fn_R_D3F(vd3;):   35(fvec3) Function None 93
+104(Fn_R_D3F(vd3;): 35(f64vec3) Function None 93
           103(p):     36(ptr) FunctionParameter
              105:             Label
              297:    182(ptr) AccessChain 113 181
              298:    7(fvec3) Load 297
-             299:   35(fvec3) FConvert 298
+             299: 35(f64vec3) FConvert 298
                               Store 103(p) 299
              300:    182(ptr) AccessChain 113 181
              301:    7(fvec3) Load 300
-             302:   35(fvec3) FConvert 301
+             302: 35(f64vec3) FConvert 301
                               ReturnValue 302
                               FunctionEnd
      109(@main():107(PS_OUTPUT) Function None 108
@@ -2087,7 +2087,7 @@ gl_FragCoord origin is upper left
              317:    7(fvec3) ConvertUToF 316
                               Store 314(r02) 317
              319:    152(ptr) AccessChain 113 151
-             320:   35(fvec3) Load 319
+             320: 35(f64vec3) Load 319
              321:    7(fvec3) FConvert 320
                               Store 318(r03) 321
              323:    125(ptr) AccessChain 113 134
@@ -2104,7 +2104,7 @@ gl_FragCoord origin is upper left
              334:   14(ivec3) ConvertFToS 333
                               Store 331(r12) 334
              336:    152(ptr) AccessChain 113 151
-             337:   35(fvec3) Load 336
+             337: 35(f64vec3) Load 336
              338:   14(ivec3) ConvertFToS 337
                               Store 335(r13) 338
              340:    125(ptr) AccessChain 113 134
@@ -2121,7 +2121,7 @@ gl_FragCoord origin is upper left
              351:   21(ivec3) ConvertFToU 350
                               Store 348(r22) 351
              353:    152(ptr) AccessChain 113 151
-             354:   35(fvec3) Load 353
+             354: 35(f64vec3) Load 353
              355:   21(ivec3) ConvertFToU 354
                               Store 352(r23) 355
              357:    115(ptr) AccessChain 113 114
@@ -2137,25 +2137,25 @@ gl_FragCoord origin is upper left
              367:   28(bvec3) FOrdNotEqual 366 142
                               Store 364(r32) 367
              369:    152(ptr) AccessChain 113 151
-             370:   35(fvec3) Load 369
+             370: 35(f64vec3) Load 369
              371:   28(bvec3) FOrdNotEqual 370 262
                               Store 368(r33) 371
              373:    115(ptr) AccessChain 113 114
              374:   14(ivec3) Load 373
-             375:   35(fvec3) ConvertSToF 374
+             375: 35(f64vec3) ConvertSToF 374
                               Store 372(r40) 375
              377:    125(ptr) AccessChain 113 124
              378:   21(ivec3) Load 377
-             379:   35(fvec3) ConvertUToF 378
+             379: 35(f64vec3) ConvertUToF 378
                               Store 376(r41) 379
              381:    182(ptr) AccessChain 113 181
              382:    7(fvec3) Load 381
-             383:   35(fvec3) FConvert 382
+             383: 35(f64vec3) FConvert 382
                               Store 380(r42) 383
              385:    125(ptr) AccessChain 113 134
              386:   21(ivec3) Load 385
              387:   28(bvec3) INotEqual 386 138
-             388:   35(fvec3) Select 387 289 262
+             388: 35(f64vec3) Select 387 289 262
                               Store 384(r43) 388
              389:    115(ptr) AccessChain 113 114
              390:   14(ivec3) Load 389
@@ -2177,7 +2177,7 @@ gl_FragCoord origin is upper left
              404:    7(fvec3) FMul 403 402
                               Store 314(r02) 404
              405:    152(ptr) AccessChain 113 151
-             406:   35(fvec3) Load 405
+             406: 35(f64vec3) Load 405
              407:    7(fvec3) FConvert 406
              408:    7(fvec3) Load 318(r03)
              409:    7(fvec3) FMul 408 407
@@ -2202,7 +2202,7 @@ gl_FragCoord origin is upper left
              425:   14(ivec3) IMul 424 423
                               Store 331(r12) 425
              426:    152(ptr) AccessChain 113 151
-             427:   35(fvec3) Load 426
+             427: 35(f64vec3) Load 426
              428:   14(ivec3) ConvertFToS 427
              429:   14(ivec3) Load 335(r13)
              430:   14(ivec3) IMul 429 428
@@ -2227,35 +2227,35 @@ gl_FragCoord origin is upper left
              446:   21(ivec3) IMul 445 444
                               Store 348(r22) 446
              447:    152(ptr) AccessChain 113 151
-             448:   35(fvec3) Load 447
+             448: 35(f64vec3) Load 447
              449:   21(ivec3) ConvertFToU 448
              450:   21(ivec3) Load 352(r23)
              451:   21(ivec3) IMul 450 449
                               Store 352(r23) 451
              452:    115(ptr) AccessChain 113 114
              453:   14(ivec3) Load 452
-             454:   35(fvec3) ConvertSToF 453
-             455:   35(fvec3) Load 372(r40)
-             456:   35(fvec3) FMul 455 454
+             454: 35(f64vec3) ConvertSToF 453
+             455: 35(f64vec3) Load 372(r40)
+             456: 35(f64vec3) FMul 455 454
                               Store 372(r40) 456
              457:    125(ptr) AccessChain 113 124
              458:   21(ivec3) Load 457
-             459:   35(fvec3) ConvertUToF 458
-             460:   35(fvec3) Load 376(r41)
-             461:   35(fvec3) FMul 460 459
+             459: 35(f64vec3) ConvertUToF 458
+             460: 35(f64vec3) Load 376(r41)
+             461: 35(f64vec3) FMul 460 459
                               Store 376(r41) 461
              462:    182(ptr) AccessChain 113 181
              463:    7(fvec3) Load 462
-             464:   35(fvec3) FConvert 463
-             465:   35(fvec3) Load 380(r42)
-             466:   35(fvec3) FMul 465 464
+             464: 35(f64vec3) FConvert 463
+             465: 35(f64vec3) Load 380(r42)
+             466: 35(f64vec3) FMul 465 464
                               Store 380(r42) 466
              467:    125(ptr) AccessChain 113 134
              468:   21(ivec3) Load 467
              469:   28(bvec3) INotEqual 468 138
-             470:   35(fvec3) Select 469 289 262
-             471:   35(fvec3) Load 384(r43)
-             472:   35(fvec3) FMul 471 470
+             470: 35(f64vec3) Select 469 289 262
+             471: 35(f64vec3) Load 384(r43)
+             472: 35(f64vec3) FMul 471 470
                               Store 384(r43) 472
              475:    474(ptr) AccessChain 113 473
              476:     13(int) Load 475
@@ -2277,7 +2277,7 @@ gl_FragCoord origin is upper left
              493:    7(fvec3) VectorTimesScalar 492 491
                               Store 314(r02) 493
              496:    495(ptr) AccessChain 113 494
-             497:   34(float) Load 496
+             497:34(float64_t) Load 496
              498:    6(float) FConvert 497
              499:    7(fvec3) Load 318(r03)
              500:    7(fvec3) VectorTimesScalar 499 498
@@ -2305,7 +2305,7 @@ gl_FragCoord origin is upper left
              521:   14(ivec3) IMul 519 520
                               Store 331(r12) 521
              522:    495(ptr) AccessChain 113 494
-             523:   34(float) Load 522
+             523:34(float64_t) Load 522
              524:     13(int) ConvertFToS 523
              525:   14(ivec3) Load 335(r13)
              526:   14(ivec3) CompositeConstruct 524 524 524
@@ -2334,7 +2334,7 @@ gl_FragCoord origin is upper left
              546:   21(ivec3) IMul 544 545
                               Store 348(r22) 546
              547:    495(ptr) AccessChain 113 494
-             548:   34(float) Load 547
+             548:34(float64_t) Load 547
              549:     20(int) ConvertFToU 548
              550:   21(ivec3) Load 352(r23)
              551:   21(ivec3) CompositeConstruct 549 549 549
@@ -2342,28 +2342,28 @@ gl_FragCoord origin is upper left
                               Store 352(r23) 552
              553:    474(ptr) AccessChain 113 473
              554:     13(int) Load 553
-             555:   34(float) ConvertSToF 554
-             556:   35(fvec3) Load 372(r40)
-             557:   35(fvec3) VectorTimesScalar 556 555
+             555:34(float64_t) ConvertSToF 554
+             556: 35(f64vec3) Load 372(r40)
+             557: 35(f64vec3) VectorTimesScalar 556 555
                               Store 372(r40) 557
              558:    481(ptr) AccessChain 113 488
              559:     20(int) Load 558
-             560:   34(float) ConvertUToF 559
-             561:   35(fvec3) Load 376(r41)
-             562:   35(fvec3) VectorTimesScalar 561 560
+             560:34(float64_t) ConvertUToF 559
+             561: 35(f64vec3) Load 376(r41)
+             562: 35(f64vec3) VectorTimesScalar 561 560
                               Store 376(r41) 562
              563:    515(ptr) AccessChain 113 514
              564:    6(float) Load 563
-             565:   34(float) FConvert 564
-             566:   35(fvec3) Load 380(r42)
-             567:   35(fvec3) VectorTimesScalar 566 565
+             565:34(float64_t) FConvert 564
+             566: 35(f64vec3) Load 380(r42)
+             567: 35(f64vec3) VectorTimesScalar 566 565
                               Store 380(r42) 567
              568:    481(ptr) AccessChain 113 480
              569:     20(int) Load 568
              570:    27(bool) INotEqual 569 137
-             571:   34(float) Select 570 288 261
-             572:   35(fvec3) Load 384(r43)
-             573:   35(fvec3) VectorTimesScalar 572 571
+             571:34(float64_t) Select 570 288 261
+             572: 35(f64vec3) Load 384(r43)
+             573: 35(f64vec3) VectorTimesScalar 572 571
                               Store 384(r43) 573
                               Store 575(c1) 124
                               Store 576(c2) 124

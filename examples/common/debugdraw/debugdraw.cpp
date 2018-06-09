@@ -1111,7 +1111,7 @@ struct DebugDrawEncoderImpl
 		}
 
 		bgfx::Transform transform;
-		stack.mtx  = bgfx::allocTransform(&transform, _num);
+		stack.mtx  = m_encoder->allocTransform(&transform, _num);
 		stack.num  = _num;
 		stack.data = transform.data;
 		bx::memCopy(transform.data, _mtx, _num*64);
