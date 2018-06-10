@@ -2016,6 +2016,12 @@ creating windows.</p>
 </dd></dl>
 
 <dl class="enumerator">
+<dt id="_CPPv2N4bgfx15TopologyConvert19TriStripFlipWindingE">
+<span class="target" id="structbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153ab15cde16196aa72a0fe0bad4f389669d"></span><code class="descname">TriStripFlipWinding</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert19TriStripFlipWindingE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip winding order of trinagle strip. </p>
+</dd></dl>
+
+<dl class="enumerator">
 <dt id="_CPPv2N4bgfx15TopologyConvert17TriListToLineListE">
 <span class="target" id="structbgfx_1_1_topology_convert_1acc544033627edfbc7c30a75a58ace153a0cf4dc87b95b89d5633e151a286aaeb1"></span><code class="descname">TriListToLineList</code><a class="headerlink" href="#_CPPv2N4bgfx15TopologyConvert17TriListToLineListE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert triangle list to line list. </p>
@@ -2978,6 +2984,24 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <li><code class="docutils literal"><span class="pre">_tvb</span></code>: Transient vertex buffer. </li>
 <li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
 <li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder14setVertexCountE8uint32_t">
+<span id="bgfx::Encoder::setVertexCount__uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1a6bec8d7a72516210170abcd6b1fd98aa"></span>void <code class="descname">setVertexCount</code><span class="sig-paren">(</span>uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder14setVertexCountE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of vertices for auto generated vertices use in conjuction with gl_VertexID. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_count</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices.</li>
 </ul>
 </dd>
 </dl>
@@ -5047,8 +5071,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx25updateDynamicVertexBufferE25DynamicVertexBufferHandle8uint32_tPK6Memory">
-<span id="bgfx::updateDynamicVertexBuffer__DynamicVertexBufferHandle.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a392233c9c36e33a902ccacea28c83299"></span>void <code class="descclassname">bgfx::</code><code class="descname">updateDynamicVertexBuffer</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx25updateDynamicVertexBufferE25DynamicVertexBufferHandle8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6updateE25DynamicVertexBufferHandle8uint32_tPK6Memory">
+<span id="bgfx::update__DynamicVertexBufferHandle.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1ae443751595715ba47e61a97c45cbf939"></span>void <code class="descclassname">bgfx::</code><code class="descname">update</code><span class="sig-paren">(</span>DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6updateE25DynamicVertexBufferHandle8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update dynamic vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5214,8 +5238,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx24updateDynamicIndexBufferE24DynamicIndexBufferHandle8uint32_tPK6Memory">
-<span id="bgfx::updateDynamicIndexBuffer__DynamicIndexBufferHandle.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a94bc9d8f473817a271846bc17e321d11"></span>void <code class="descclassname">bgfx::</code><code class="descname">updateDynamicIndexBuffer</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_startIndex</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx24updateDynamicIndexBufferE24DynamicIndexBufferHandle8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx6updateE24DynamicIndexBufferHandle8uint32_tPK6Memory">
+<span id="bgfx::update__DynamicIndexBufferHandle.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1abdc14b2d18b00e5c85b9b099d63c5d99"></span>void <code class="descclassname">bgfx::</code><code class="descname">update</code><span class="sig-paren">(</span>DynamicIndexBufferHandle <em>_handle</em>, uint32_t <em>_startIndex</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6updateE24DynamicIndexBufferHandle8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update dynamic index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
