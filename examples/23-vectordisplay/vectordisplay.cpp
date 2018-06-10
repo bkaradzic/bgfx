@@ -163,10 +163,11 @@ void VectorDisplay::endFrame()
 
 	BX_CHECK(m_points.size() < MAX_NUMBER_VERTICES, "");
 
-	bgfx::updateDynamicVertexBuffer(m_vertexBuffers[m_currentDrawStep]
+	bgfx::update(
+		  m_vertexBuffers[m_currentDrawStep]
 		, 0
 		, bgfx::copy(m_points.data(), (uint32_t)m_points.size() * sizeof(PosColorUvVertex) )
-	);
+		);
 	m_vertexBuffersSize[m_currentDrawStep] = (uint32_t)m_points.size();
 
 	for (int loopvar = 0; loopvar < m_numberDecaySteps; loopvar++)

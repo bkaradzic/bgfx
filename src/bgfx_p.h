@@ -3052,7 +3052,7 @@ namespace bgfx
 
 			if (isValid(handle) )
 			{
-				updateDynamicIndexBuffer(handle, 0, _mem);
+				update(handle, 0, _mem);
 			}
 			else
 			{
@@ -3062,7 +3062,7 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(void updateDynamicIndexBuffer(DynamicIndexBufferHandle _handle, uint32_t _startIndex, const Memory* _mem) )
+		BGFX_API_FUNC(void update(DynamicIndexBufferHandle _handle, uint32_t _startIndex, const Memory* _mem) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3238,7 +3238,7 @@ namespace bgfx
 
 			if (isValid(handle) )
 			{
-				updateDynamicVertexBuffer(handle, 0, _mem);
+				update(handle, 0, _mem);
 			}
 			else
 			{
@@ -3248,7 +3248,7 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(void updateDynamicVertexBuffer(DynamicVertexBufferHandle _handle, uint32_t _startVertex, const Memory* _mem) )
+		BGFX_API_FUNC(void update(DynamicVertexBufferHandle _handle, uint32_t _startVertex, const Memory* _mem) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 

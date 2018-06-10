@@ -2178,7 +2178,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_update_dynamic_index_buffer`.
 	///
-	void updateDynamicIndexBuffer(
+	void update(
 		  DynamicIndexBufferHandle _handle
 		, uint32_t _startIndex
 		, const Memory* _mem
@@ -2252,7 +2252,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_update_dynamic_vertex_buffer`.
 	///
-	void updateDynamicVertexBuffer(
+	void update(
 		  DynamicVertexBufferHandle _handle
 		, uint32_t _startVertex
 		, const Memory* _mem

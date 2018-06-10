@@ -261,7 +261,7 @@ public:
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_vertices[0], sizeof(PosTexCoord0Vertex) * m_terrain.m_vertexCount);
-			bgfx::updateDynamicVertexBuffer(m_dvbh, 0, mem);
+			bgfx::update(m_dvbh, 0, mem);
 
 			if (!bgfx::isValid(m_dibh) )
 			{
@@ -269,7 +269,7 @@ public:
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_indices[0], sizeof(uint16_t) * m_terrain.m_indexCount);
-			bgfx::updateDynamicIndexBuffer(m_dibh, 0, mem);
+			bgfx::update(m_dibh, 0, mem);
 			break;
 
 		case 2: // Height Texture: Update a height texture that is sampled in the terrain vertex shader.
