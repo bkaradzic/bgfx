@@ -108,7 +108,7 @@ Shader version: 460
 0:26        move second child to first child ( temp double)
 0:26          'e11' ( temp double)
 0:26          Constant:
-0:26            9.8813129168249e-324
+0:26            1.0000000000000e-307
 0:27      Sequence
 0:27        move second child to first child ( temp double)
 0:27          'e12' ( temp double)
@@ -561,7 +561,7 @@ Shader version: 460
 0:26        move second child to first child ( temp double)
 0:26          'e11' ( temp double)
 0:26          Constant:
-0:26            9.8813129168249e-324
+0:26            1.0000000000000e-307
 0:27      Sequence
 0:27        move second child to first child ( temp double)
 0:27          'e12' ( temp double)
