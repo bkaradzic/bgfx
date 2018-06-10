@@ -458,7 +458,7 @@ typedef uint64_t GLuint64;
 #endif // GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT
 
 #ifndef ATC_RGB_AMD
-    #define GL_ATC_RGB_AMD 0x8C92
+	#define GL_ATC_RGB_AMD 0x8C92
 #endif
 
 #ifndef GL_ATC_RGBA_EXPLICIT_ALPHA_AMD
