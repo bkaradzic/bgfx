@@ -242,9 +242,22 @@ typedef enum bgfx_occlusion_query_result
 
 } bgfx_occlusion_query_result_t;
 
+typedef enum bgfx_topology
+{
+    BGFX_TOPOLOGY_TRI_LIST,
+    BGFX_TOPOLOGY_TRI_STRIP,
+    BGFX_TOPOLOGY_LINE_LIST,
+    BGFX_TOPOLOGY_LINE_STRIP,
+    BGFX_TOPOLOGY_POINT_LIST,
+
+    BGFX_TOPOLOGY_COUNT
+
+} bgfx_topology_t;
+
 typedef enum bgfx_topology_convert
 {
     BGFX_TOPOLOGY_CONVERT_TRI_LIST_FLIP_WINDING,
+    BGFX_TOPOLOGY_CONVERT_TRI_STRIP_FLIP_WINDING,
     BGFX_TOPOLOGY_CONVERT_TRI_LIST_TO_LINE_LIST,
     BGFX_TOPOLOGY_CONVERT_TRI_STRIP_TO_TRI_LIST,
     BGFX_TOPOLOGY_CONVERT_LINE_STRIP_TO_LINE_LIST,
@@ -399,6 +412,8 @@ typedef struct bgfx_stats_s
     int64_t rtMemoryUsed;
     int32_t transientVbUsed;
     int32_t transientIbUsed;
+
+    uint32_t numPrims[BGFX_TOPOLOGY_COUNT];
 
     int64_t gpuMemoryMax;
     int64_t gpuMemoryUsed;
@@ -979,6 +994,9 @@ BGFX_C_API void bgfx_set_dynamic_vertex_buffer(uint8_t _stream, bgfx_dynamic_ver
 BGFX_C_API void bgfx_set_transient_vertex_buffer(uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices);
 
 /**/
+BGFX_C_API void bgfx_set_vertex_count(uint32_t _numVertices);
+
+/**/
 BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num);
 
 /**/
@@ -1079,6 +1097,9 @@ BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(struct bgfx_encoder_s* _e
 
 /**/
 BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(struct bgfx_encoder_s* _encoder, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices);
+
+/**/
+BGFX_C_API void bgfx_encoder_set_vertex_count(struct bgfx_encoder_s* _encoder, uint32_t _numVertices);
 
 /**/
 BGFX_C_API void bgfx_encoder_set_instance_data_buffer(struct bgfx_encoder_s* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num);

@@ -36,8 +36,8 @@ spv.matrix.frag
            28(f):     27(ptr) Variable Input
               81:    6(float) Constant 1065353216
              136:             TypeFloat 64
-             137:             TypeVector 136(float) 4
-             138:             TypeMatrix 137(fvec4) 3
+             137:             TypeVector 136(float64_t) 4
+             138:             TypeMatrix 137(f64vec4) 3
              139:             TypePointer Function 138
              157:             TypeVector 6(float) 3
              158:             TypePointer Function 157(fvec3)
@@ -193,19 +193,19 @@ spv.matrix.frag
                               Store 10(sum34) 135
              141:           8 Load 10(sum34)
              142:    7(fvec4) CompositeExtract 141 0
-             143:  137(fvec4) FConvert 142
+             143:137(f64vec4) FConvert 142
              144:    7(fvec4) CompositeExtract 141 1
-             145:  137(fvec4) FConvert 144
+             145:137(f64vec4) FConvert 144
              146:    7(fvec4) CompositeExtract 141 2
-             147:  137(fvec4) FConvert 146
+             147:137(f64vec4) FConvert 146
              148:         138 CompositeConstruct 143 145 147
                               Store 140(dm) 148
              149:         138 Load 140(dm)
-             150:  137(fvec4) CompositeExtract 149 0
+             150:137(f64vec4) CompositeExtract 149 0
              151:    7(fvec4) FConvert 150
-             152:  137(fvec4) CompositeExtract 149 1
+             152:137(f64vec4) CompositeExtract 149 1
              153:    7(fvec4) FConvert 152
-             154:  137(fvec4) CompositeExtract 149 2
+             154:137(f64vec4) CompositeExtract 149 2
              155:    7(fvec4) FConvert 154
              156:           8 CompositeConstruct 151 153 155
                               Store 10(sum34) 156

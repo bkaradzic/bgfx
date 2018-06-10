@@ -54,8 +54,8 @@ spv.subgroupClustered.comp
               20:             TypeVector 19(int) 4
               21:             TypeVector 6(int) 4
               22:             TypeFloat 64
-              23:             TypeVector 22(float) 4
-     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(fvec4)
+              23:             TypeVector 22(float64_t) 4
+     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(f64vec4)
               25:             TypeArray 24(Buffers) 15
               26:             TypePointer Uniform 25
         27(data):     26(ptr) Variable Uniform
@@ -78,10 +78,10 @@ spv.subgroupClustered.comp
              102:             TypeVector 6(int) 2
              103:             TypePointer Uniform 21(ivec4)
              112:             TypeVector 6(int) 3
-             126:             TypePointer Uniform 22(float)
-             132:             TypeVector 22(float) 2
-             133:             TypePointer Uniform 23(fvec4)
-             142:             TypeVector 22(float) 3
+             126:             TypePointer Uniform 22(float64_t)
+             132:             TypeVector 22(float64_t) 2
+             133:             TypePointer Uniform 23(f64vec4)
+             142:             TypeVector 22(float64_t) 3
              522:             TypeBool
              531:   72(ivec2) ConstantComposite 29 29
              532:             TypeVector 522(bool) 2
@@ -194,32 +194,32 @@ spv.subgroupClustered.comp
                               Store 124 123
              125:      6(int) Load 8(invocation)
              127:    126(ptr) AccessChain 27(data) 29 60 30
-             128:   22(float) Load 127
-             129:   22(float) GroupNonUniformFAdd 35 ClusteredReduce 128 34
+             128:22(float64_t) Load 127
+             129:22(float64_t) GroupNonUniformFAdd 35 ClusteredReduce 128 34
              130:    126(ptr) AccessChain 27(data) 125 60 30
                               Store 130 129
              131:      6(int) Load 8(invocation)
              134:    133(ptr) AccessChain 27(data) 39 60
-             135:   23(fvec4) Load 134
-             136:  132(fvec2) VectorShuffle 135 135 0 1
-             137:  132(fvec2) GroupNonUniformFAdd 35 ClusteredReduce 136 34
+             135: 23(f64vec4) Load 134
+             136:132(f64vec2) VectorShuffle 135 135 0 1
+             137:132(f64vec2) GroupNonUniformFAdd 35 ClusteredReduce 136 34
              138:    133(ptr) AccessChain 27(data) 131 60
-             139:   23(fvec4) Load 138
-             140:   23(fvec4) VectorShuffle 139 137 4 5 2 3
+             139: 23(f64vec4) Load 138
+             140: 23(f64vec4) VectorShuffle 139 137 4 5 2 3
                               Store 138 140
              141:      6(int) Load 8(invocation)
              143:    133(ptr) AccessChain 27(data) 50 60
-             144:   23(fvec4) Load 143
-             145:  142(fvec3) VectorShuffle 144 144 0 1 2
-             146:  142(fvec3) GroupNonUniformFAdd 35 ClusteredReduce 145 34
+             144: 23(f64vec4) Load 143
+             145:142(f64vec3) VectorShuffle 144 144 0 1 2
+             146:142(f64vec3) GroupNonUniformFAdd 35 ClusteredReduce 145 34
              147:    133(ptr) AccessChain 27(data) 141 60
-             148:   23(fvec4) Load 147
-             149:   23(fvec4) VectorShuffle 148 146 4 5 6 3
+             148: 23(f64vec4) Load 147
+             149: 23(f64vec4) VectorShuffle 148 146 4 5 6 3
                               Store 147 149
              150:      6(int) Load 8(invocation)
              151:    133(ptr) AccessChain 27(data) 60 60
-             152:   23(fvec4) Load 151
-             153:   23(fvec4) GroupNonUniformFAdd 35 ClusteredReduce 152 34
+             152: 23(f64vec4) Load 151
+             153: 23(f64vec4) GroupNonUniformFAdd 35 ClusteredReduce 152 34
              154:    133(ptr) AccessChain 27(data) 150 60
                               Store 154 153
              155:      6(int) Load 8(invocation)
@@ -314,32 +314,32 @@ spv.subgroupClustered.comp
                               Store 232 231
              233:      6(int) Load 8(invocation)
              234:    126(ptr) AccessChain 27(data) 29 60 30
-             235:   22(float) Load 234
-             236:   22(float) GroupNonUniformFMul 35 ClusteredReduce 235 34
+             235:22(float64_t) Load 234
+             236:22(float64_t) GroupNonUniformFMul 35 ClusteredReduce 235 34
              237:    126(ptr) AccessChain 27(data) 233 60 30
                               Store 237 236
              238:      6(int) Load 8(invocation)
              239:    133(ptr) AccessChain 27(data) 39 60
-             240:   23(fvec4) Load 239
-             241:  132(fvec2) VectorShuffle 240 240 0 1
-             242:  132(fvec2) GroupNonUniformFMul 35 ClusteredReduce 241 34
+             240: 23(f64vec4) Load 239
+             241:132(f64vec2) VectorShuffle 240 240 0 1
+             242:132(f64vec2) GroupNonUniformFMul 35 ClusteredReduce 241 34
              243:    133(ptr) AccessChain 27(data) 238 60
-             244:   23(fvec4) Load 243
-             245:   23(fvec4) VectorShuffle 244 242 4 5 2 3
+             244: 23(f64vec4) Load 243
+             245: 23(f64vec4) VectorShuffle 244 242 4 5 2 3
                               Store 243 245
              246:      6(int) Load 8(invocation)
              247:    133(ptr) AccessChain 27(data) 50 60
-             248:   23(fvec4) Load 247
-             249:  142(fvec3) VectorShuffle 248 248 0 1 2
-             250:  142(fvec3) GroupNonUniformFMul 35 ClusteredReduce 249 34
+             248: 23(f64vec4) Load 247
+             249:142(f64vec3) VectorShuffle 248 248 0 1 2
+             250:142(f64vec3) GroupNonUniformFMul 35 ClusteredReduce 249 34
              251:    133(ptr) AccessChain 27(data) 246 60
-             252:   23(fvec4) Load 251
-             253:   23(fvec4) VectorShuffle 252 250 4 5 6 3
+             252: 23(f64vec4) Load 251
+             253: 23(f64vec4) VectorShuffle 252 250 4 5 6 3
                               Store 251 253
              254:      6(int) Load 8(invocation)
              255:    133(ptr) AccessChain 27(data) 60 60
-             256:   23(fvec4) Load 255
-             257:   23(fvec4) GroupNonUniformFMul 35 ClusteredReduce 256 34
+             256: 23(f64vec4) Load 255
+             257: 23(f64vec4) GroupNonUniformFMul 35 ClusteredReduce 256 34
              258:    133(ptr) AccessChain 27(data) 254 60
                               Store 258 257
              259:      6(int) Load 8(invocation)
@@ -434,32 +434,32 @@ spv.subgroupClustered.comp
                               Store 336 335
              337:      6(int) Load 8(invocation)
              338:    126(ptr) AccessChain 27(data) 29 60 30
-             339:   22(float) Load 338
-             340:   22(float) GroupNonUniformFMin 35 ClusteredReduce 339 34
+             339:22(float64_t) Load 338
+             340:22(float64_t) GroupNonUniformFMin 35 ClusteredReduce 339 34
              341:    126(ptr) AccessChain 27(data) 337 60 30
                               Store 341 340
              342:      6(int) Load 8(invocation)
              343:    133(ptr) AccessChain 27(data) 39 60
-             344:   23(fvec4) Load 343
-             345:  132(fvec2) VectorShuffle 344 344 0 1
-             346:  132(fvec2) GroupNonUniformFMin 35 ClusteredReduce 345 34
+             344: 23(f64vec4) Load 343
+             345:132(f64vec2) VectorShuffle 344 344 0 1
+             346:132(f64vec2) GroupNonUniformFMin 35 ClusteredReduce 345 34
              347:    133(ptr) AccessChain 27(data) 342 60
-             348:   23(fvec4) Load 347
-             349:   23(fvec4) VectorShuffle 348 346 4 5 2 3
+             348: 23(f64vec4) Load 347
+             349: 23(f64vec4) VectorShuffle 348 346 4 5 2 3
                               Store 347 349
              350:      6(int) Load 8(invocation)
              351:    133(ptr) AccessChain 27(data) 50 60
-             352:   23(fvec4) Load 351
-             353:  142(fvec3) VectorShuffle 352 352 0 1 2
-             354:  142(fvec3) GroupNonUniformFMin 35 ClusteredReduce 353 34
+             352: 23(f64vec4) Load 351
+             353:142(f64vec3) VectorShuffle 352 352 0 1 2
+             354:142(f64vec3) GroupNonUniformFMin 35 ClusteredReduce 353 34
              355:    133(ptr) AccessChain 27(data) 350 60
-             356:   23(fvec4) Load 355
-             357:   23(fvec4) VectorShuffle 356 354 4 5 6 3
+             356: 23(f64vec4) Load 355
+             357: 23(f64vec4) VectorShuffle 356 354 4 5 6 3
                               Store 355 357
              358:      6(int) Load 8(invocation)
              359:    133(ptr) AccessChain 27(data) 60 60
-             360:   23(fvec4) Load 359
-             361:   23(fvec4) GroupNonUniformFMin 35 ClusteredReduce 360 34
+             360: 23(f64vec4) Load 359
+             361: 23(f64vec4) GroupNonUniformFMin 35 ClusteredReduce 360 34
              362:    133(ptr) AccessChain 27(data) 358 60
                               Store 362 361
              363:      6(int) Load 8(invocation)
@@ -554,32 +554,32 @@ spv.subgroupClustered.comp
                               Store 440 439
              441:      6(int) Load 8(invocation)
              442:    126(ptr) AccessChain 27(data) 29 60 30
-             443:   22(float) Load 442
-             444:   22(float) GroupNonUniformFMax 35 ClusteredReduce 443 34
+             443:22(float64_t) Load 442
+             444:22(float64_t) GroupNonUniformFMax 35 ClusteredReduce 443 34
              445:    126(ptr) AccessChain 27(data) 441 60 30
                               Store 445 444
              446:      6(int) Load 8(invocation)
              447:    133(ptr) AccessChain 27(data) 39 60
-             448:   23(fvec4) Load 447
-             449:  132(fvec2) VectorShuffle 448 448 0 1
-             450:  132(fvec2) GroupNonUniformFMax 35 ClusteredReduce 449 34
+             448: 23(f64vec4) Load 447
+             449:132(f64vec2) VectorShuffle 448 448 0 1
+             450:132(f64vec2) GroupNonUniformFMax 35 ClusteredReduce 449 34
              451:    133(ptr) AccessChain 27(data) 446 60
-             452:   23(fvec4) Load 451
-             453:   23(fvec4) VectorShuffle 452 450 4 5 2 3
+             452: 23(f64vec4) Load 451
+             453: 23(f64vec4) VectorShuffle 452 450 4 5 2 3
                               Store 451 453
              454:      6(int) Load 8(invocation)
              455:    133(ptr) AccessChain 27(data) 50 60
-             456:   23(fvec4) Load 455
-             457:  142(fvec3) VectorShuffle 456 456 0 1 2
-             458:  142(fvec3) GroupNonUniformFMax 35 ClusteredReduce 457 34
+             456: 23(f64vec4) Load 455
+             457:142(f64vec3) VectorShuffle 456 456 0 1 2
+             458:142(f64vec3) GroupNonUniformFMax 35 ClusteredReduce 457 34
              459:    133(ptr) AccessChain 27(data) 454 60
-             460:   23(fvec4) Load 459
-             461:   23(fvec4) VectorShuffle 460 458 4 5 6 3
+             460: 23(f64vec4) Load 459
+             461: 23(f64vec4) VectorShuffle 460 458 4 5 6 3
                               Store 459 461
              462:      6(int) Load 8(invocation)
              463:    133(ptr) AccessChain 27(data) 60 60
-             464:   23(fvec4) Load 463
-             465:   23(fvec4) GroupNonUniformFMax 35 ClusteredReduce 464 34
+             464: 23(f64vec4) Load 463
+             465: 23(f64vec4) GroupNonUniformFMax 35 ClusteredReduce 464 34
              466:    133(ptr) AccessChain 27(data) 462 60
                               Store 466 465
              467:      6(int) Load 8(invocation)

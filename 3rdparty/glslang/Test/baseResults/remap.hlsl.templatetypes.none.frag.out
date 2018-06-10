@@ -68,8 +68,8 @@ remap.hlsl.templatetypes.none.frag
               29:     26(int) Constant 1
               30:             TypePointer Function 6(float)
               32:             TypeFloat 64
-              33:             TypePointer Function 32(float)
-              35:   32(float) Constant 0 1072693248
+              33:             TypePointer Function 32(float64_t)
+              35:32(float64_t) Constant 0 1072693248
               36:             TypeInt 32 0
               37:             TypePointer Function 36(int)
               39:     36(int) Constant 1
@@ -84,10 +84,10 @@ remap.hlsl.templatetypes.none.frag
               50:             TypeVector 6(float) 2
               51:             TypePointer Function 50(fvec2)
               53:   50(fvec2) ConstantComposite 14 15
-              54:             TypeVector 32(float) 2
-              55:             TypePointer Function 54(fvec2)
-              57:   32(float) Constant 0 1073741824
-              58:   54(fvec2) ConstantComposite 35 57
+              54:             TypeVector 32(float64_t) 2
+              55:             TypePointer Function 54(f64vec2)
+              57:32(float64_t) Constant 0 1073741824
+              58: 54(f64vec2) ConstantComposite 35 57
               59:             TypeVector 36(int) 2
               60:             TypePointer Function 59(ivec2)
               62:     36(int) Constant 2
@@ -102,10 +102,10 @@ remap.hlsl.templatetypes.none.frag
               73:             TypeVector 6(float) 3
               74:             TypePointer Function 73(fvec3)
               76:   73(fvec3) ConstantComposite 14 15 16
-              77:             TypeVector 32(float) 3
-              78:             TypePointer Function 77(fvec3)
-              80:   32(float) Constant 0 1074266112
-              81:   77(fvec3) ConstantComposite 35 57 80
+              77:             TypeVector 32(float64_t) 3
+              78:             TypePointer Function 77(f64vec3)
+              80:32(float64_t) Constant 0 1074266112
+              81: 77(f64vec3) ConstantComposite 35 57 80
               82:             TypeVector 36(int) 3
               83:             TypePointer Function 82(ivec3)
               85:     36(int) Constant 3
@@ -117,10 +117,10 @@ remap.hlsl.templatetypes.none.frag
               92:             TypePointer Function 91(ivec4)
               94:     26(int) Constant 4
               95:   91(ivec4) ConstantComposite 29 48 71 94
-              97:             TypeVector 32(float) 4
-              98:             TypePointer Function 97(fvec4)
-             100:   32(float) Constant 0 1074790400
-             101:   97(fvec4) ConstantComposite 35 57 80 100
+              97:             TypeVector 32(float64_t) 4
+              98:             TypePointer Function 97(f64vec4)
+             100:32(float64_t) Constant 0 1074790400
+             101: 97(f64vec4) ConstantComposite 35 57 80 100
              102:             TypeVector 36(int) 4
              103:             TypePointer Function 102(ivec4)
              105:     36(int) Constant 4

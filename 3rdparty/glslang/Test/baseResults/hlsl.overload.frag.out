@@ -937,7 +937,7 @@ gl_FragCoord origin is upper left
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 64
-               7:             TypePointer Function 6(float)
+               7:             TypePointer Function 6(float64_t)
                8:             TypeBool
                9:             TypePointer Function 8(bool)
               10:             TypeFunction 2 7(ptr) 9(ptr)
@@ -967,8 +967,8 @@ gl_FragCoord origin is upper left
              113:             TypeVector 22(int) 3
              114:             TypePointer Function 113(ivec3)
              115:             TypeFunction 2 114(ptr)
-             125:             TypeVector 6(float) 3
-             126:             TypePointer Function 125(fvec3)
+             125:             TypeVector 6(float64_t) 3
+             126:             TypePointer Function 125(f64vec3)
              127:             TypeFunction 2 126(ptr)
              134:             TypeVector 15(int) 2
              135:             TypePointer Function 134(ivec2)
@@ -976,14 +976,14 @@ gl_FragCoord origin is upper left
              149:             TypeVector 29(float) 4
              150:             TypePointer Function 149(fvec4)
              151:             TypeFunction 149(fvec4) 150(ptr)
-             334:    6(float) Constant 0 0
+             334:6(float64_t) Constant 0 0
              339:     15(int) Constant 0
              348:   29(float) Constant 0
              353:     15(int) Constant 1
              373:     22(int) Constant 0
              374:     22(int) Constant 1
              394:   29(float) Constant 1065353216
-             414:    6(float) Constant 0 1072693248
+             414:6(float64_t) Constant 0 1072693248
              484:             TypeVector 22(int) 2
              494:             TypeVector 22(int) 4
              503:             TypeVector 8(bool) 3
@@ -1283,117 +1283,117 @@ gl_FragCoord origin is upper left
       497(param):     23(ptr) Variable Function
       500(param):      9(ptr) Variable Function
       506(param):      9(ptr) Variable Function
-             158:    6(float) Load 155(d)
+             158:6(float64_t) Load 155(d)
                               Store 157(param) 158
              160:     8(bool) Load 156(b)
                               Store 159(param) 160
              161:           2 FunctionCall 13(foo1(d1;b1;) 157(param) 159(param)
-             163:    6(float) Load 155(d)
+             163:6(float64_t) Load 155(d)
                               Store 162(param) 163
-             165:    6(float) Load 155(d)
+             165:6(float64_t) Load 155(d)
                               Store 164(param) 165
              166:           2 FunctionCall 39(foo1(d1;d1;) 162(param) 164(param)
-             169:    6(float) Load 155(d)
+             169:6(float64_t) Load 155(d)
                               Store 168(param) 169
              171:     15(int) Load 167(u)
                               Store 170(param) 171
              172:           2 FunctionCall 20(foo1(d1;u1;) 168(param) 170(param)
-             175:    6(float) Load 155(d)
+             175:6(float64_t) Load 155(d)
                               Store 174(param) 175
              177:     22(int) Load 173(i)
                               Store 176(param) 177
              178:           2 FunctionCall 27(foo1(d1;i1;) 174(param) 176(param)
-             181:    6(float) Load 155(d)
+             181:6(float64_t) Load 155(d)
                               Store 180(param) 181
              183:   29(float) Load 179(f)
                               Store 182(param) 183
              184:           2 FunctionCall 34(foo1(d1;f1;) 180(param) 182(param)
              185:   29(float) Load 179(f)
-             186:    6(float) FConvert 185
+             186:6(float64_t) FConvert 185
                               Store 187(param) 186
              189:     8(bool) Load 156(b)
                               Store 188(param) 189
              190:           2 FunctionCall 13(foo1(d1;b1;) 187(param) 188(param)
              191:   29(float) Load 179(f)
-             192:    6(float) FConvert 191
+             192:6(float64_t) FConvert 191
                               Store 193(param) 192
-             195:    6(float) Load 155(d)
+             195:6(float64_t) Load 155(d)
                               Store 194(param) 195
              196:           2 FunctionCall 39(foo1(d1;d1;) 193(param) 194(param)
              197:   29(float) Load 179(f)
-             198:    6(float) FConvert 197
+             198:6(float64_t) FConvert 197
                               Store 199(param) 198
              201:     15(int) Load 167(u)
                               Store 200(param) 201
              202:           2 FunctionCall 20(foo1(d1;u1;) 199(param) 200(param)
              203:   29(float) Load 179(f)
-             204:    6(float) FConvert 203
+             204:6(float64_t) FConvert 203
                               Store 205(param) 204
              207:     22(int) Load 173(i)
                               Store 206(param) 207
              208:           2 FunctionCall 27(foo1(d1;i1;) 205(param) 206(param)
              209:   29(float) Load 179(f)
-             210:    6(float) FConvert 209
+             210:6(float64_t) FConvert 209
                               Store 211(param) 210
              213:   29(float) Load 179(f)
                               Store 212(param) 213
              214:           2 FunctionCall 34(foo1(d1;f1;) 211(param) 212(param)
              215:     15(int) Load 167(u)
-             216:    6(float) ConvertUToF 215
+             216:6(float64_t) ConvertUToF 215
                               Store 217(param) 216
              219:     8(bool) Load 156(b)
                               Store 218(param) 219
              220:           2 FunctionCall 13(foo1(d1;b1;) 217(param) 218(param)
              221:     15(int) Load 167(u)
-             222:    6(float) ConvertUToF 221
+             222:6(float64_t) ConvertUToF 221
                               Store 223(param) 222
-             225:    6(float) Load 155(d)
+             225:6(float64_t) Load 155(d)
                               Store 224(param) 225
              226:           2 FunctionCall 39(foo1(d1;d1;) 223(param) 224(param)
              227:     15(int) Load 167(u)
-             228:    6(float) ConvertUToF 227
+             228:6(float64_t) ConvertUToF 227
                               Store 229(param) 228
              231:     15(int) Load 167(u)
                               Store 230(param) 231
              232:           2 FunctionCall 20(foo1(d1;u1;) 229(param) 230(param)
              233:     15(int) Load 167(u)
-             234:    6(float) ConvertUToF 233
+             234:6(float64_t) ConvertUToF 233
                               Store 235(param) 234
              237:     22(int) Load 173(i)
                               Store 236(param) 237
              238:           2 FunctionCall 27(foo1(d1;i1;) 235(param) 236(param)
              239:     15(int) Load 167(u)
-             240:    6(float) ConvertUToF 239
+             240:6(float64_t) ConvertUToF 239
                               Store 241(param) 240
              243:   29(float) Load 179(f)
                               Store 242(param) 243
              244:           2 FunctionCall 34(foo1(d1;f1;) 241(param) 242(param)
              245:     22(int) Load 173(i)
-             246:    6(float) ConvertSToF 245
+             246:6(float64_t) ConvertSToF 245
                               Store 247(param) 246
              249:     8(bool) Load 156(b)
                               Store 248(param) 249
              250:           2 FunctionCall 13(foo1(d1;b1;) 247(param) 248(param)
              251:     22(int) Load 173(i)
-             252:    6(float) ConvertSToF 251
+             252:6(float64_t) ConvertSToF 251
                               Store 253(param) 252
-             255:    6(float) Load 155(d)
+             255:6(float64_t) Load 155(d)
                               Store 254(param) 255
              256:           2 FunctionCall 39(foo1(d1;d1;) 253(param) 254(param)
              257:     22(int) Load 173(i)
-             258:    6(float) ConvertSToF 257
+             258:6(float64_t) ConvertSToF 257
                               Store 259(param) 258
              261:     15(int) Load 167(u)
                               Store 260(param) 261
              262:           2 FunctionCall 20(foo1(d1;u1;) 259(param) 260(param)
              263:     22(int) Load 173(i)
-             264:    6(float) ConvertSToF 263
+             264:6(float64_t) ConvertSToF 263
                               Store 265(param) 264
              267:     22(int) Load 173(i)
                               Store 266(param) 267
              268:           2 FunctionCall 27(foo1(d1;i1;) 265(param) 266(param)
              269:     22(int) Load 173(i)
-             270:    6(float) ConvertSToF 269
+             270:6(float64_t) ConvertSToF 269
                               Store 271(param) 270
              273:   29(float) Load 179(f)
                               Store 272(param) 273
@@ -1407,7 +1407,7 @@ gl_FragCoord origin is upper left
              281:     15(int) Load 167(u)
              282:     22(int) Bitcast 281
                               Store 283(param) 282
-             285:    6(float) Load 155(d)
+             285:6(float64_t) Load 155(d)
                               Store 284(param) 285
              286:           2 FunctionCall 64(foo2(i1;d1;) 283(param) 284(param)
              287:     15(int) Load 167(u)
@@ -1435,7 +1435,7 @@ gl_FragCoord origin is upper left
              309:           2 FunctionCall 44(foo2(i1;b1;) 305(param) 307(param)
              311:     22(int) Load 173(i)
                               Store 310(param) 311
-             313:    6(float) Load 155(d)
+             313:6(float64_t) Load 155(d)
                               Store 312(param) 313
              314:           2 FunctionCall 64(foo2(i1;d1;) 310(param) 312(param)
              316:     22(int) Load 173(i)
@@ -1456,7 +1456,7 @@ gl_FragCoord origin is upper left
              331:     8(bool) Load 156(b)
                               Store 330(param) 331
              332:           2 FunctionCall 68(foo3(b1;) 330(param)
-             333:    6(float) Load 155(d)
+             333:6(float64_t) Load 155(d)
              335:     8(bool) FOrdNotEqual 333 334
                               Store 336(param) 335
              337:           2 FunctionCall 68(foo3(b1;) 336(param)
@@ -1476,7 +1476,7 @@ gl_FragCoord origin is upper left
              354:     15(int) Select 352 353 339
                               Store 355(param) 354
              356:           2 FunctionCall 72(foo4(u1;) 355(param)
-             357:    6(float) Load 155(d)
+             357:6(float64_t) Load 155(d)
              358:     15(int) ConvertFToU 357
                               Store 359(param) 358
              360:           2 FunctionCall 72(foo4(u1;) 359(param)
@@ -1495,7 +1495,7 @@ gl_FragCoord origin is upper left
              375:     22(int) Select 372 374 373
                               Store 376(param) 375
              377:           2 FunctionCall 76(foo5(i1;) 376(param)
-             378:    6(float) Load 155(d)
+             378:6(float64_t) Load 155(d)
              379:     22(int) ConvertFToS 378
                               Store 380(param) 379
              381:           2 FunctionCall 76(foo5(i1;) 380(param)
@@ -1514,7 +1514,7 @@ gl_FragCoord origin is upper left
              395:   29(float) Select 393 394 348
                               Store 396(param) 395
              397:           2 FunctionCall 80(foo6(f1;) 396(param)
-             398:    6(float) Load 155(d)
+             398:6(float64_t) Load 155(d)
              399:   29(float) FConvert 398
                               Store 400(param) 399
              401:           2 FunctionCall 80(foo6(f1;) 400(param)
@@ -1530,22 +1530,22 @@ gl_FragCoord origin is upper left
                               Store 410(param) 411
              412:           2 FunctionCall 80(foo6(f1;) 410(param)
              413:     8(bool) Load 156(b)
-             415:    6(float) Select 413 414 334
+             415:6(float64_t) Select 413 414 334
                               Store 416(param) 415
              417:           2 FunctionCall 84(foo7(d1;) 416(param)
-             419:    6(float) Load 155(d)
+             419:6(float64_t) Load 155(d)
                               Store 418(param) 419
              420:           2 FunctionCall 84(foo7(d1;) 418(param)
              421:     15(int) Load 167(u)
-             422:    6(float) ConvertUToF 421
+             422:6(float64_t) ConvertUToF 421
                               Store 423(param) 422
              424:           2 FunctionCall 84(foo7(d1;) 423(param)
              425:     22(int) Load 173(i)
-             426:    6(float) ConvertSToF 425
+             426:6(float64_t) ConvertSToF 425
                               Store 427(param) 426
              428:           2 FunctionCall 84(foo7(d1;) 427(param)
              429:   29(float) Load 179(f)
-             430:    6(float) FConvert 429
+             430:6(float64_t) FConvert 429
                               Store 431(param) 430
              432:           2 FunctionCall 84(foo7(d1;) 431(param)
              433:     8(bool) Load 156(b)
@@ -1568,7 +1568,7 @@ gl_FragCoord origin is upper left
              450:     15(int) ConvertFToU 449
                               Store 451(param) 450
              452:           2 FunctionCall 96(foo9(u1;) 451(param)
-             453:    6(float) Load 155(d)
+             453:6(float64_t) Load 155(d)
              454:     15(int) ConvertFToU 453
                               Store 455(param) 454
              456:           2 FunctionCall 96(foo9(u1;) 455(param)
@@ -1580,7 +1580,7 @@ gl_FragCoord origin is upper left
              462:     22(int) ConvertFToS 461
                               Store 463(param) 462
              464:           2 FunctionCall 102(foo10(i1;) 463(param)
-             465:    6(float) Load 155(d)
+             465:6(float64_t) Load 155(d)
              466:     22(int) ConvertFToS 465
                               Store 467(param) 466
              468:           2 FunctionCall 102(foo10(i1;) 467(param)
@@ -1589,12 +1589,12 @@ gl_FragCoord origin is upper left
                               Store 471(param) 470
              472:           2 FunctionCall 120(foo11(u1;) 471(param)
              473:   29(float) Load 179(f)
-             474:    6(float) FConvert 473
+             474:6(float64_t) FConvert 473
                               Store 475(param) 474
              476:           2 FunctionCall 111(foo11(d1;) 475(param)
              477:   29(float) Load 179(f)
              478:  104(fvec3) CompositeConstruct 477 477 477
-             479:  125(fvec3) FConvert 478
+             479:125(f64vec3) FConvert 478
                               Store 480(param) 479
              481:           2 FunctionCall 129(foo12(vd3;) 480(param)
              482:     22(int) Load 173(i)

@@ -8073,8 +8073,8 @@ local_size = (32, 16, 1)
               16:             TypeFloat 32
               17:             TypeVector 16(float) 4
               18:             TypeFloat 64
-              19:             TypeVector 18(float) 4
-       20(Types):             TypeStruct 13(ivec4) 15(ivec4) 17(fvec4) 19(fvec4)
+              19:             TypeVector 18(float64_t) 4
+       20(Types):             TypeStruct 13(ivec4) 15(ivec4) 17(fvec4) 19(f64vec4)
               21:             TypeRuntimeArray 20(Types)
         22(data):             TypeStruct 21
               23:             TypePointer Uniform 22(data)
@@ -8097,10 +8097,10 @@ local_size = (32, 16, 1)
              136:             TypeVector 16(float) 2
              148:             TypeVector 16(float) 3
              158:     14(int) Constant 3
-             161:             TypePointer Uniform 19(fvec4)
-             170:             TypePointer Uniform 18(float)
-             179:             TypeVector 18(float) 2
-             191:             TypeVector 18(float) 3
+             161:             TypePointer Uniform 19(f64vec4)
+             170:             TypePointer Uniform 18(float64_t)
+             179:             TypeVector 18(float64_t) 2
+             191:             TypeVector 18(float64_t) 3
              205:      6(int) Constant 1
              358:      6(int) Constant 2
             1114:             TypePointer Input 7(ivec3)
@@ -8250,8 +8250,8 @@ local_size = (32, 16, 1)
              159:     27(ptr) AccessChain 10(dti) 26
              160:      6(int) Load 159
              162:    161(ptr) AccessChain 24(data) 25 160 158
-             163:   19(fvec4) Load 162
-             164:   19(fvec4) GroupNonUniformQuadBroadcast 35 163 26
+             163: 19(f64vec4) Load 162
+             164: 19(f64vec4) GroupNonUniformQuadBroadcast 35 163 26
              165:    161(ptr) AccessChain 24(data) 25 157 158
                               Store 165 164
              166:     27(ptr) AccessChain 10(dti) 26
@@ -8259,8 +8259,8 @@ local_size = (32, 16, 1)
              168:     27(ptr) AccessChain 10(dti) 26
              169:      6(int) Load 168
              171:    170(ptr) AccessChain 24(data) 25 169 158 26
-             172:   18(float) Load 171
-             173:   18(float) GroupNonUniformQuadBroadcast 35 172 26
+             172:18(float64_t) Load 171
+             173:18(float64_t) GroupNonUniformQuadBroadcast 35 172 26
              174:    170(ptr) AccessChain 24(data) 25 167 158 26
                               Store 174 173
              175:     27(ptr) AccessChain 10(dti) 26
@@ -8268,24 +8268,24 @@ local_size = (32, 16, 1)
              177:     27(ptr) AccessChain 10(dti) 26
              178:      6(int) Load 177
              180:    161(ptr) AccessChain 24(data) 25 178 158
-             181:   19(fvec4) Load 180
-             182:  179(fvec2) VectorShuffle 181 181 0 1
-             183:  179(fvec2) GroupNonUniformQuadBroadcast 35 182 26
+             181: 19(f64vec4) Load 180
+             182:179(f64vec2) VectorShuffle 181 181 0 1
+             183:179(f64vec2) GroupNonUniformQuadBroadcast 35 182 26
              184:    161(ptr) AccessChain 24(data) 25 176 158
-             185:   19(fvec4) Load 184
-             186:   19(fvec4) VectorShuffle 185 183 4 5 2 3
+             185: 19(f64vec4) Load 184
+             186: 19(f64vec4) VectorShuffle 185 183 4 5 2 3
                               Store 184 186
              187:     27(ptr) AccessChain 10(dti) 26
              188:      6(int) Load 187
              189:     27(ptr) AccessChain 10(dti) 26
              190:      6(int) Load 189
              192:    161(ptr) AccessChain 24(data) 25 190 158
-             193:   19(fvec4) Load 192
-             194:  191(fvec3) VectorShuffle 193 193 0 1 2
-             195:  191(fvec3) GroupNonUniformQuadBroadcast 35 194 26
+             193: 19(f64vec4) Load 192
+             194:191(f64vec3) VectorShuffle 193 193 0 1 2
+             195:191(f64vec3) GroupNonUniformQuadBroadcast 35 194 26
              196:    161(ptr) AccessChain 24(data) 25 188 158
-             197:   19(fvec4) Load 196
-             198:   19(fvec4) VectorShuffle 197 195 4 5 6 3
+             197: 19(f64vec4) Load 196
+             198: 19(f64vec4) VectorShuffle 197 195 4 5 6 3
                               Store 196 198
              199:     27(ptr) AccessChain 10(dti) 26
              200:      6(int) Load 199
@@ -8418,8 +8418,8 @@ local_size = (32, 16, 1)
              316:     27(ptr) AccessChain 10(dti) 26
              317:      6(int) Load 316
              318:    161(ptr) AccessChain 24(data) 25 317 158
-             319:   19(fvec4) Load 318
-             320:   19(fvec4) GroupNonUniformQuadBroadcast 35 319 205
+             319: 19(f64vec4) Load 318
+             320: 19(f64vec4) GroupNonUniformQuadBroadcast 35 319 205
              321:    161(ptr) AccessChain 24(data) 25 315 158
                               Store 321 320
              322:     27(ptr) AccessChain 10(dti) 26
@@ -8427,8 +8427,8 @@ local_size = (32, 16, 1)
              324:     27(ptr) AccessChain 10(dti) 26
              325:      6(int) Load 324
              326:    170(ptr) AccessChain 24(data) 25 325 158 26
-             327:   18(float) Load 326
-             328:   18(float) GroupNonUniformQuadBroadcast 35 327 205
+             327:18(float64_t) Load 326
+             328:18(float64_t) GroupNonUniformQuadBroadcast 35 327 205
              329:    170(ptr) AccessChain 24(data) 25 323 158 26
                               Store 329 328
              330:     27(ptr) AccessChain 10(dti) 26
@@ -8436,24 +8436,24 @@ local_size = (32, 16, 1)
              332:     27(ptr) AccessChain 10(dti) 26
              333:      6(int) Load 332
              334:    161(ptr) AccessChain 24(data) 25 333 158
-             335:   19(fvec4) Load 334
-             336:  179(fvec2) VectorShuffle 335 335 0 1
-             337:  179(fvec2) GroupNonUniformQuadBroadcast 35 336 205
+             335: 19(f64vec4) Load 334
+             336:179(f64vec2) VectorShuffle 335 335 0 1
+             337:179(f64vec2) GroupNonUniformQuadBroadcast 35 336 205
              338:    161(ptr) AccessChain 24(data) 25 331 158
-             339:   19(fvec4) Load 338
-             340:   19(fvec4) VectorShuffle 339 337 4 5 2 3
+             339: 19(f64vec4) Load 338
+             340: 19(f64vec4) VectorShuffle 339 337 4 5 2 3
                               Store 338 340
              341:     27(ptr) AccessChain 10(dti) 26
              342:      6(int) Load 341
              343:     27(ptr) AccessChain 10(dti) 26
              344:      6(int) Load 343
              345:    161(ptr) AccessChain 24(data) 25 344 158
-             346:   19(fvec4) Load 345
-             347:  191(fvec3) VectorShuffle 346 346 0 1 2
-             348:  191(fvec3) GroupNonUniformQuadBroadcast 35 347 205
+             346: 19(f64vec4) Load 345
+             347:191(f64vec3) VectorShuffle 346 346 0 1 2
+             348:191(f64vec3) GroupNonUniformQuadBroadcast 35 347 205
              349:    161(ptr) AccessChain 24(data) 25 342 158
-             350:   19(fvec4) Load 349
-             351:   19(fvec4) VectorShuffle 350 348 4 5 6 3
+             350: 19(f64vec4) Load 349
+             351: 19(f64vec4) VectorShuffle 350 348 4 5 6 3
                               Store 349 351
              352:     27(ptr) AccessChain 10(dti) 26
              353:      6(int) Load 352
@@ -8586,8 +8586,8 @@ local_size = (32, 16, 1)
              469:     27(ptr) AccessChain 10(dti) 26
              470:      6(int) Load 469
              471:    161(ptr) AccessChain 24(data) 25 470 158
-             472:   19(fvec4) Load 471
-             473:   19(fvec4) GroupNonUniformQuadBroadcast 35 472 358
+             472: 19(f64vec4) Load 471
+             473: 19(f64vec4) GroupNonUniformQuadBroadcast 35 472 358
              474:    161(ptr) AccessChain 24(data) 25 468 158
                               Store 474 473
              475:     27(ptr) AccessChain 10(dti) 26
@@ -8595,8 +8595,8 @@ local_size = (32, 16, 1)
              477:     27(ptr) AccessChain 10(dti) 26
              478:      6(int) Load 477
              479:    170(ptr) AccessChain 24(data) 25 478 158 26
-             480:   18(float) Load 479
-             481:   18(float) GroupNonUniformQuadBroadcast 35 480 358
+             480:18(float64_t) Load 479
+             481:18(float64_t) GroupNonUniformQuadBroadcast 35 480 358
              482:    170(ptr) AccessChain 24(data) 25 476 158 26
                               Store 482 481
              483:     27(ptr) AccessChain 10(dti) 26
@@ -8604,24 +8604,24 @@ local_size = (32, 16, 1)
              485:     27(ptr) AccessChain 10(dti) 26
              486:      6(int) Load 485
              487:    161(ptr) AccessChain 24(data) 25 486 158
-             488:   19(fvec4) Load 487
-             489:  179(fvec2) VectorShuffle 488 488 0 1
-             490:  179(fvec2) GroupNonUniformQuadBroadcast 35 489 358
+             488: 19(f64vec4) Load 487
+             489:179(f64vec2) VectorShuffle 488 488 0 1
+             490:179(f64vec2) GroupNonUniformQuadBroadcast 35 489 358
              491:    161(ptr) AccessChain 24(data) 25 484 158
-             492:   19(fvec4) Load 491
-             493:   19(fvec4) VectorShuffle 492 490 4 5 2 3
+             492: 19(f64vec4) Load 491
+             493: 19(f64vec4) VectorShuffle 492 490 4 5 2 3
                               Store 491 493
              494:     27(ptr) AccessChain 10(dti) 26
              495:      6(int) Load 494
              496:     27(ptr) AccessChain 10(dti) 26
              497:      6(int) Load 496
              498:    161(ptr) AccessChain 24(data) 25 497 158
-             499:   19(fvec4) Load 498
-             500:  191(fvec3) VectorShuffle 499 499 0 1 2
-             501:  191(fvec3) GroupNonUniformQuadBroadcast 35 500 358
+             499: 19(f64vec4) Load 498
+             500:191(f64vec3) VectorShuffle 499 499 0 1 2
+             501:191(f64vec3) GroupNonUniformQuadBroadcast 35 500 358
              502:    161(ptr) AccessChain 24(data) 25 495 158
-             503:   19(fvec4) Load 502
-             504:   19(fvec4) VectorShuffle 503 501 4 5 6 3
+             503: 19(f64vec4) Load 502
+             504: 19(f64vec4) VectorShuffle 503 501 4 5 6 3
                               Store 502 504
              505:     27(ptr) AccessChain 10(dti) 26
              506:      6(int) Load 505
@@ -8754,8 +8754,8 @@ local_size = (32, 16, 1)
              621:     27(ptr) AccessChain 10(dti) 26
              622:      6(int) Load 621
              623:    161(ptr) AccessChain 24(data) 25 622 158
-             624:   19(fvec4) Load 623
-             625:   19(fvec4) GroupNonUniformQuadBroadcast 35 624 35
+             624: 19(f64vec4) Load 623
+             625: 19(f64vec4) GroupNonUniformQuadBroadcast 35 624 35
              626:    161(ptr) AccessChain 24(data) 25 620 158
                               Store 626 625
              627:     27(ptr) AccessChain 10(dti) 26
@@ -8763,8 +8763,8 @@ local_size = (32, 16, 1)
              629:     27(ptr) AccessChain 10(dti) 26
              630:      6(int) Load 629
              631:    170(ptr) AccessChain 24(data) 25 630 158 26
-             632:   18(float) Load 631
-             633:   18(float) GroupNonUniformQuadBroadcast 35 632 35
+             632:18(float64_t) Load 631
+             633:18(float64_t) GroupNonUniformQuadBroadcast 35 632 35
              634:    170(ptr) AccessChain 24(data) 25 628 158 26
                               Store 634 633
              635:     27(ptr) AccessChain 10(dti) 26
@@ -8772,24 +8772,24 @@ local_size = (32, 16, 1)
              637:     27(ptr) AccessChain 10(dti) 26
              638:      6(int) Load 637
              639:    161(ptr) AccessChain 24(data) 25 638 158
-             640:   19(fvec4) Load 639
-             641:  179(fvec2) VectorShuffle 640 640 0 1
-             642:  179(fvec2) GroupNonUniformQuadBroadcast 35 641 35
+             640: 19(f64vec4) Load 639
+             641:179(f64vec2) VectorShuffle 640 640 0 1
+             642:179(f64vec2) GroupNonUniformQuadBroadcast 35 641 35
              643:    161(ptr) AccessChain 24(data) 25 636 158
-             644:   19(fvec4) Load 643
-             645:   19(fvec4) VectorShuffle 644 642 4 5 2 3
+             644: 19(f64vec4) Load 643
+             645: 19(f64vec4) VectorShuffle 644 642 4 5 2 3
                               Store 643 645
              646:     27(ptr) AccessChain 10(dti) 26
              647:      6(int) Load 646
              648:     27(ptr) AccessChain 10(dti) 26
              649:      6(int) Load 648
              650:    161(ptr) AccessChain 24(data) 25 649 158
-             651:   19(fvec4) Load 650
-             652:  191(fvec3) VectorShuffle 651 651 0 1 2
-             653:  191(fvec3) GroupNonUniformQuadBroadcast 35 652 35
+             651: 19(f64vec4) Load 650
+             652:191(f64vec3) VectorShuffle 651 651 0 1 2
+             653:191(f64vec3) GroupNonUniformQuadBroadcast 35 652 35
              654:    161(ptr) AccessChain 24(data) 25 647 158
-             655:   19(fvec4) Load 654
-             656:   19(fvec4) VectorShuffle 655 653 4 5 6 3
+             655: 19(f64vec4) Load 654
+             656: 19(f64vec4) VectorShuffle 655 653 4 5 6 3
                               Store 654 656
              657:     27(ptr) AccessChain 10(dti) 26
              658:      6(int) Load 657
@@ -8922,8 +8922,8 @@ local_size = (32, 16, 1)
              773:     27(ptr) AccessChain 10(dti) 26
              774:      6(int) Load 773
              775:    161(ptr) AccessChain 24(data) 25 774 158
-             776:   19(fvec4) Load 775
-             777:   19(fvec4) GroupNonUniformQuadSwap 35 776 26
+             776: 19(f64vec4) Load 775
+             777: 19(f64vec4) GroupNonUniformQuadSwap 35 776 26
              778:    161(ptr) AccessChain 24(data) 25 772 158
                               Store 778 777
              779:     27(ptr) AccessChain 10(dti) 26
@@ -8931,8 +8931,8 @@ local_size = (32, 16, 1)
              781:     27(ptr) AccessChain 10(dti) 26
              782:      6(int) Load 781
              783:    170(ptr) AccessChain 24(data) 25 782 158 26
-             784:   18(float) Load 783
-             785:   18(float) GroupNonUniformQuadSwap 35 784 26
+             784:18(float64_t) Load 783
+             785:18(float64_t) GroupNonUniformQuadSwap 35 784 26
              786:    170(ptr) AccessChain 24(data) 25 780 158 26
                               Store 786 785
              787:     27(ptr) AccessChain 10(dti) 26
@@ -8940,24 +8940,24 @@ local_size = (32, 16, 1)
              789:     27(ptr) AccessChain 10(dti) 26
              790:      6(int) Load 789
              791:    161(ptr) AccessChain 24(data) 25 790 158
-             792:   19(fvec4) Load 791
-             793:  179(fvec2) VectorShuffle 792 792 0 1
-             794:  179(fvec2) GroupNonUniformQuadSwap 35 793 26
+             792: 19(f64vec4) Load 791
+             793:179(f64vec2) VectorShuffle 792 792 0 1
+             794:179(f64vec2) GroupNonUniformQuadSwap 35 793 26
              795:    161(ptr) AccessChain 24(data) 25 788 158
-             796:   19(fvec4) Load 795
-             797:   19(fvec4) VectorShuffle 796 794 4 5 2 3
+             796: 19(f64vec4) Load 795
+             797: 19(f64vec4) VectorShuffle 796 794 4 5 2 3
                               Store 795 797
              798:     27(ptr) AccessChain 10(dti) 26
              799:      6(int) Load 798
              800:     27(ptr) AccessChain 10(dti) 26
              801:      6(int) Load 800
              802:    161(ptr) AccessChain 24(data) 25 801 158
-             803:   19(fvec4) Load 802
-             804:  191(fvec3) VectorShuffle 803 803 0 1 2
-             805:  191(fvec3) GroupNonUniformQuadSwap 35 804 26
+             803: 19(f64vec4) Load 802
+             804:191(f64vec3) VectorShuffle 803 803 0 1 2
+             805:191(f64vec3) GroupNonUniformQuadSwap 35 804 26
              806:    161(ptr) AccessChain 24(data) 25 799 158
-             807:   19(fvec4) Load 806
-             808:   19(fvec4) VectorShuffle 807 805 4 5 6 3
+             807: 19(f64vec4) Load 806
+             808: 19(f64vec4) VectorShuffle 807 805 4 5 6 3
                               Store 806 808
              809:     27(ptr) AccessChain 10(dti) 26
              810:      6(int) Load 809
@@ -9090,8 +9090,8 @@ local_size = (32, 16, 1)
              925:     27(ptr) AccessChain 10(dti) 26
              926:      6(int) Load 925
              927:    161(ptr) AccessChain 24(data) 25 926 158
-             928:   19(fvec4) Load 927
-             929:   19(fvec4) GroupNonUniformQuadSwap 35 928 205
+             928: 19(f64vec4) Load 927
+             929: 19(f64vec4) GroupNonUniformQuadSwap 35 928 205
              930:    161(ptr) AccessChain 24(data) 25 924 158
                               Store 930 929
              931:     27(ptr) AccessChain 10(dti) 26
@@ -9099,8 +9099,8 @@ local_size = (32, 16, 1)
              933:     27(ptr) AccessChain 10(dti) 26
              934:      6(int) Load 933
              935:    170(ptr) AccessChain 24(data) 25 934 158 26
-             936:   18(float) Load 935
-             937:   18(float) GroupNonUniformQuadSwap 35 936 205
+             936:18(float64_t) Load 935
+             937:18(float64_t) GroupNonUniformQuadSwap 35 936 205
              938:    170(ptr) AccessChain 24(data) 25 932 158 26
                               Store 938 937
              939:     27(ptr) AccessChain 10(dti) 26
@@ -9108,24 +9108,24 @@ local_size = (32, 16, 1)
              941:     27(ptr) AccessChain 10(dti) 26
              942:      6(int) Load 941
              943:    161(ptr) AccessChain 24(data) 25 942 158
-             944:   19(fvec4) Load 943
-             945:  179(fvec2) VectorShuffle 944 944 0 1
-             946:  179(fvec2) GroupNonUniformQuadSwap 35 945 205
+             944: 19(f64vec4) Load 943
+             945:179(f64vec2) VectorShuffle 944 944 0 1
+             946:179(f64vec2) GroupNonUniformQuadSwap 35 945 205
              947:    161(ptr) AccessChain 24(data) 25 940 158
-             948:   19(fvec4) Load 947
-             949:   19(fvec4) VectorShuffle 948 946 4 5 2 3
+             948: 19(f64vec4) Load 947
+             949: 19(f64vec4) VectorShuffle 948 946 4 5 2 3
                               Store 947 949
              950:     27(ptr) AccessChain 10(dti) 26
              951:      6(int) Load 950
              952:     27(ptr) AccessChain 10(dti) 26
              953:      6(int) Load 952
              954:    161(ptr) AccessChain 24(data) 25 953 158
-             955:   19(fvec4) Load 954
-             956:  191(fvec3) VectorShuffle 955 955 0 1 2
-             957:  191(fvec3) GroupNonUniformQuadSwap 35 956 205
+             955: 19(f64vec4) Load 954
+             956:191(f64vec3) VectorShuffle 955 955 0 1 2
+             957:191(f64vec3) GroupNonUniformQuadSwap 35 956 205
              958:    161(ptr) AccessChain 24(data) 25 951 158
-             959:   19(fvec4) Load 958
-             960:   19(fvec4) VectorShuffle 959 957 4 5 6 3
+             959: 19(f64vec4) Load 958
+             960: 19(f64vec4) VectorShuffle 959 957 4 5 6 3
                               Store 958 960
              961:     27(ptr) AccessChain 10(dti) 26
              962:      6(int) Load 961
@@ -9258,8 +9258,8 @@ local_size = (32, 16, 1)
             1077:     27(ptr) AccessChain 10(dti) 26
             1078:      6(int) Load 1077
             1079:    161(ptr) AccessChain 24(data) 25 1078 158
-            1080:   19(fvec4) Load 1079
-            1081:   19(fvec4) GroupNonUniformQuadSwap 35 1080 358
+            1080: 19(f64vec4) Load 1079
+            1081: 19(f64vec4) GroupNonUniformQuadSwap 35 1080 358
             1082:    161(ptr) AccessChain 24(data) 25 1076 158
                               Store 1082 1081
             1083:     27(ptr) AccessChain 10(dti) 26
@@ -9267,8 +9267,8 @@ local_size = (32, 16, 1)
             1085:     27(ptr) AccessChain 10(dti) 26
             1086:      6(int) Load 1085
             1087:    170(ptr) AccessChain 24(data) 25 1086 158 26
-            1088:   18(float) Load 1087
-            1089:   18(float) GroupNonUniformQuadSwap 35 1088 358
+            1088:18(float64_t) Load 1087
+            1089:18(float64_t) GroupNonUniformQuadSwap 35 1088 358
             1090:    170(ptr) AccessChain 24(data) 25 1084 158 26
                               Store 1090 1089
             1091:     27(ptr) AccessChain 10(dti) 26
@@ -9276,24 +9276,24 @@ local_size = (32, 16, 1)
             1093:     27(ptr) AccessChain 10(dti) 26
             1094:      6(int) Load 1093
             1095:    161(ptr) AccessChain 24(data) 25 1094 158
-            1096:   19(fvec4) Load 1095
-            1097:  179(fvec2) VectorShuffle 1096 1096 0 1
-            1098:  179(fvec2) GroupNonUniformQuadSwap 35 1097 358
+            1096: 19(f64vec4) Load 1095
+            1097:179(f64vec2) VectorShuffle 1096 1096 0 1
+            1098:179(f64vec2) GroupNonUniformQuadSwap 35 1097 358
             1099:    161(ptr) AccessChain 24(data) 25 1092 158
-            1100:   19(fvec4) Load 1099
-            1101:   19(fvec4) VectorShuffle 1100 1098 4 5 2 3
+            1100: 19(f64vec4) Load 1099
+            1101: 19(f64vec4) VectorShuffle 1100 1098 4 5 2 3
                               Store 1099 1101
             1102:     27(ptr) AccessChain 10(dti) 26
             1103:      6(int) Load 1102
             1104:     27(ptr) AccessChain 10(dti) 26
             1105:      6(int) Load 1104
             1106:    161(ptr) AccessChain 24(data) 25 1105 158
-            1107:   19(fvec4) Load 1106
-            1108:  191(fvec3) VectorShuffle 1107 1107 0 1 2
-            1109:  191(fvec3) GroupNonUniformQuadSwap 35 1108 358
+            1107: 19(f64vec4) Load 1106
+            1108:191(f64vec3) VectorShuffle 1107 1107 0 1 2
+            1109:191(f64vec3) GroupNonUniformQuadSwap 35 1108 358
             1110:    161(ptr) AccessChain 24(data) 25 1103 158
-            1111:   19(fvec4) Load 1110
-            1112:   19(fvec4) VectorShuffle 1111 1109 4 5 6 3
+            1111: 19(f64vec4) Load 1110
+            1112: 19(f64vec4) VectorShuffle 1111 1109 4 5 6 3
                               Store 1110 1112
                               Return
                               FunctionEnd

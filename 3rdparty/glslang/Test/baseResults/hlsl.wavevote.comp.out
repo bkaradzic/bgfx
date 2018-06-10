@@ -238,7 +238,7 @@ local_size = (32, 16, 1)
                8:             TypePointer Function 7(ivec3)
                9:             TypeFunction 2 8(ptr)
               13:             TypeInt 64 0
-              14:             TypeRuntimeArray 13(int)
+              14:             TypeRuntimeArray 13(int64_t)
         15(data):             TypeStruct 14
               16:             TypePointer Uniform 15(data)
         17(data):     16(ptr) Variable Uniform
@@ -249,8 +249,8 @@ local_size = (32, 16, 1)
               26:             TypeBool
               28:      6(int) Constant 3
               30:             TypeVector 6(int) 4
-              32:             TypeVector 13(int) 4
-              35:             TypePointer Uniform 13(int)
+              32:             TypeVector 13(int64_t) 4
+              35:             TypePointer Uniform 13(int64_t)
               37:      6(int) Constant 1
               48:      6(int) Constant 2
               69:             TypePointer Input 7(ivec3)
@@ -276,8 +276,8 @@ local_size = (32, 16, 1)
               27:    26(bool) IEqual 25 20
               29:    26(bool) GroupNonUniformAny 28 27
               31:   30(ivec4) GroupNonUniformBallot 28 29
-              33:   32(ivec4) UConvert 31
-              34:     13(int) CompositeExtract 33 0
+              33: 32(i64vec4) UConvert 31
+              34: 13(int64_t) CompositeExtract 33 0
               36:     35(ptr) AccessChain 17(data) 19 23
                               Store 36 34
               38:     21(ptr) AccessChain 10(dti) 37
@@ -287,8 +287,8 @@ local_size = (32, 16, 1)
               42:    26(bool) IEqual 41 20
               43:    26(bool) GroupNonUniformAll 28 42
               44:   30(ivec4) GroupNonUniformBallot 28 43
-              45:   32(ivec4) UConvert 44
-              46:     13(int) CompositeExtract 45 0
+              45: 32(i64vec4) UConvert 44
+              46: 13(int64_t) CompositeExtract 45 0
               47:     35(ptr) AccessChain 17(data) 19 39
                               Store 47 46
               49:     21(ptr) AccessChain 10(dti) 48
@@ -298,8 +298,8 @@ local_size = (32, 16, 1)
               53:    26(bool) IEqual 52 20
               54:    26(bool) GroupNonUniformAllEqual 28 53
               55:   30(ivec4) GroupNonUniformBallot 28 54
-              56:   32(ivec4) UConvert 55
-              57:     13(int) CompositeExtract 56 0
+              56: 32(i64vec4) UConvert 55
+              57: 13(int64_t) CompositeExtract 56 0
               58:     35(ptr) AccessChain 17(data) 19 50
                               Store 58 57
               59:     21(ptr) AccessChain 10(dti) 48
@@ -308,8 +308,8 @@ local_size = (32, 16, 1)
               62:      6(int) Load 61
               63:    26(bool) GroupNonUniformAllEqual 28 62
               64:   30(ivec4) GroupNonUniformBallot 28 63
-              65:   32(ivec4) UConvert 64
-              66:     13(int) CompositeExtract 65 0
+              65: 32(i64vec4) UConvert 64
+              66: 13(int64_t) CompositeExtract 65 0
               67:     35(ptr) AccessChain 17(data) 19 60
                               Store 67 66
                               Return

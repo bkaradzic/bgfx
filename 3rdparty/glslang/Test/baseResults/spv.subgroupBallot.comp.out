@@ -76,8 +76,8 @@ spv.subgroupBallot.comp
               42:             TypeInt 32 1
               43:             TypeVector 42(int) 4
               44:             TypeFloat 64
-              45:             TypeVector 44(float) 4
-     46(Buffers):             TypeStruct 41(fvec4) 43(ivec4) 17(ivec4) 45(fvec4)
+              45:             TypeVector 44(float64_t) 4
+     46(Buffers):             TypeStruct 41(fvec4) 43(ivec4) 17(ivec4) 45(f64vec4)
               47:             TypeArray 46(Buffers) 15
               48:             TypePointer Uniform 47
         49(data):     48(ptr) Variable Uniform
@@ -101,10 +101,10 @@ spv.subgroupBallot.comp
              149:             TypeVector 42(int) 3
              171:             TypeVector 6(int) 2
              181:             TypeVector 6(int) 3
-             197:             TypePointer Uniform 44(float)
-             204:             TypeVector 44(float) 2
-             205:             TypePointer Uniform 45(fvec4)
-             215:             TypeVector 44(float) 3
+             197:             TypePointer Uniform 44(float64_t)
+             204:             TypeVector 44(float64_t) 2
+             205:             TypePointer Uniform 45(f64vec4)
+             215:             TypeVector 44(float64_t) 3
              242:  138(ivec2) ConstantComposite 61 61
              243:             TypeVector 36(bool) 2
              247:  138(ivec2) ConstantComposite 60 60
@@ -285,36 +285,36 @@ spv.subgroupBallot.comp
                                 Store 195 194
              196:      6(int)   Load 8(invocation)
              198:    197(ptr)   AccessChain 49(data) 61 124 54
-             199:   44(float)   Load 198
+             199:44(float64_t)   Load 198
              200:      6(int)   Load 8(invocation)
-             201:   44(float)   GroupNonUniformBroadcast 38 199 200
+             201:44(float64_t)   GroupNonUniformBroadcast 38 199 200
              202:    197(ptr)   AccessChain 49(data) 196 124 54
                                 Store 202 201
              203:      6(int)   Load 8(invocation)
              206:    205(ptr)   AccessChain 49(data) 60 124
-             207:   45(fvec4)   Load 206
-             208:  204(fvec2)   VectorShuffle 207 207 0 1
+             207: 45(f64vec4)   Load 206
+             208:204(f64vec2)   VectorShuffle 207 207 0 1
              209:      6(int)   Load 8(invocation)
-             210:  204(fvec2)   GroupNonUniformBroadcast 38 208 209
+             210:204(f64vec2)   GroupNonUniformBroadcast 38 208 209
              211:    205(ptr)   AccessChain 49(data) 203 124
-             212:   45(fvec4)   Load 211
-             213:   45(fvec4)   VectorShuffle 212 210 4 5 2 3
+             212: 45(f64vec4)   Load 211
+             213: 45(f64vec4)   VectorShuffle 212 210 4 5 2 3
                                 Store 211 213
              214:      6(int)   Load 8(invocation)
              216:    205(ptr)   AccessChain 49(data) 51 124
-             217:   45(fvec4)   Load 216
-             218:  215(fvec3)   VectorShuffle 217 217 0 1 2
+             217: 45(f64vec4)   Load 216
+             218:215(f64vec3)   VectorShuffle 217 217 0 1 2
              219:      6(int)   Load 8(invocation)
-             220:  215(fvec3)   GroupNonUniformBroadcast 38 218 219
+             220:215(f64vec3)   GroupNonUniformBroadcast 38 218 219
              221:    205(ptr)   AccessChain 49(data) 214 124
-             222:   45(fvec4)   Load 221
-             223:   45(fvec4)   VectorShuffle 222 220 4 5 6 3
+             222: 45(f64vec4)   Load 221
+             223: 45(f64vec4)   VectorShuffle 222 220 4 5 6 3
                                 Store 221 223
              224:      6(int)   Load 8(invocation)
              225:    205(ptr)   AccessChain 49(data) 124 124
-             226:   45(fvec4)   Load 225
+             226: 45(f64vec4)   Load 225
              227:      6(int)   Load 8(invocation)
-             228:   45(fvec4)   GroupNonUniformBroadcast 38 226 227
+             228: 45(f64vec4)   GroupNonUniformBroadcast 38 226 227
              229:    205(ptr)   AccessChain 49(data) 224 124
                                 Store 229 228
              230:      6(int)   Load 8(invocation)
@@ -453,32 +453,32 @@ spv.subgroupBallot.comp
                                 Store 354 353
              355:      6(int)   Load 8(invocation)
              356:    197(ptr)   AccessChain 49(data) 61 124 54
-             357:   44(float)   Load 356
-             358:   44(float)   GroupNonUniformBroadcastFirst 38 357
+             357:44(float64_t)   Load 356
+             358:44(float64_t)   GroupNonUniformBroadcastFirst 38 357
              359:    197(ptr)   AccessChain 49(data) 355 124 54
                                 Store 359 358
              360:      6(int)   Load 8(invocation)
              361:    205(ptr)   AccessChain 49(data) 60 124
-             362:   45(fvec4)   Load 361
-             363:  204(fvec2)   VectorShuffle 362 362 0 1
-             364:  204(fvec2)   GroupNonUniformBroadcastFirst 38 363
+             362: 45(f64vec4)   Load 361
+             363:204(f64vec2)   VectorShuffle 362 362 0 1
+             364:204(f64vec2)   GroupNonUniformBroadcastFirst 38 363
              365:    205(ptr)   AccessChain 49(data) 360 124
-             366:   45(fvec4)   Load 365
-             367:   45(fvec4)   VectorShuffle 366 364 4 5 2 3
+             366: 45(f64vec4)   Load 365
+             367: 45(f64vec4)   VectorShuffle 366 364 4 5 2 3
                                 Store 365 367
              368:      6(int)   Load 8(invocation)
              369:    205(ptr)   AccessChain 49(data) 51 124
-             370:   45(fvec4)   Load 369
-             371:  215(fvec3)   VectorShuffle 370 370 0 1 2
-             372:  215(fvec3)   GroupNonUniformBroadcastFirst 38 371
+             370: 45(f64vec4)   Load 369
+             371:215(f64vec3)   VectorShuffle 370 370 0 1 2
+             372:215(f64vec3)   GroupNonUniformBroadcastFirst 38 371
              373:    205(ptr)   AccessChain 49(data) 368 124
-             374:   45(fvec4)   Load 373
-             375:   45(fvec4)   VectorShuffle 374 372 4 5 6 3
+             374: 45(f64vec4)   Load 373
+             375: 45(f64vec4)   VectorShuffle 374 372 4 5 6 3
                                 Store 373 375
              376:      6(int)   Load 8(invocation)
              377:    205(ptr)   AccessChain 49(data) 124 124
-             378:   45(fvec4)   Load 377
-             379:   45(fvec4)   GroupNonUniformBroadcastFirst 38 378
+             378: 45(f64vec4)   Load 377
+             379: 45(f64vec4)   GroupNonUniformBroadcastFirst 38 378
              380:    205(ptr)   AccessChain 49(data) 376 124
                                 Store 380 379
              381:      6(int)   Load 8(invocation)

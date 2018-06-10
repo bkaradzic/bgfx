@@ -54,8 +54,8 @@ spv.subgroupArithmetic.comp
               20:             TypeVector 19(int) 4
               21:             TypeVector 6(int) 4
               22:             TypeFloat 64
-              23:             TypeVector 22(float) 4
-     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(fvec4)
+              23:             TypeVector 22(float64_t) 4
+     24(Buffers):             TypeStruct 18(fvec4) 20(ivec4) 21(ivec4) 23(f64vec4)
               25:             TypeArray 24(Buffers) 15
               26:             TypePointer Uniform 25
         27(data):     26(ptr) Variable Uniform
@@ -77,10 +77,10 @@ spv.subgroupArithmetic.comp
              101:             TypeVector 6(int) 2
              102:             TypePointer Uniform 21(ivec4)
              111:             TypeVector 6(int) 3
-             125:             TypePointer Uniform 22(float)
-             131:             TypeVector 22(float) 2
-             132:             TypePointer Uniform 23(fvec4)
-             141:             TypeVector 22(float) 3
+             125:             TypePointer Uniform 22(float64_t)
+             131:             TypeVector 22(float64_t) 2
+             132:             TypePointer Uniform 23(f64vec4)
+             141:             TypeVector 22(float64_t) 3
              521:             TypeBool
              530:   71(ivec2) ConstantComposite 29 29
              531:             TypeVector 521(bool) 2
@@ -194,32 +194,32 @@ spv.subgroupArithmetic.comp
                               Store 123 122
              124:      6(int) Load 8(invocation)
              126:    125(ptr) AccessChain 27(data) 29 59 30
-             127:   22(float) Load 126
-             128:   22(float) GroupNonUniformFAdd 34 Reduce 127
+             127:22(float64_t) Load 126
+             128:22(float64_t) GroupNonUniformFAdd 34 Reduce 127
              129:    125(ptr) AccessChain 27(data) 124 59 30
                               Store 129 128
              130:      6(int) Load 8(invocation)
              133:    132(ptr) AccessChain 27(data) 38 59
-             134:   23(fvec4) Load 133
-             135:  131(fvec2) VectorShuffle 134 134 0 1
-             136:  131(fvec2) GroupNonUniformFAdd 34 Reduce 135
+             134: 23(f64vec4) Load 133
+             135:131(f64vec2) VectorShuffle 134 134 0 1
+             136:131(f64vec2) GroupNonUniformFAdd 34 Reduce 135
              137:    132(ptr) AccessChain 27(data) 130 59
-             138:   23(fvec4) Load 137
-             139:   23(fvec4) VectorShuffle 138 136 4 5 2 3
+             138: 23(f64vec4) Load 137
+             139: 23(f64vec4) VectorShuffle 138 136 4 5 2 3
                               Store 137 139
              140:      6(int) Load 8(invocation)
              142:    132(ptr) AccessChain 27(data) 49 59
-             143:   23(fvec4) Load 142
-             144:  141(fvec3) VectorShuffle 143 143 0 1 2
-             145:  141(fvec3) GroupNonUniformFAdd 34 Reduce 144
+             143: 23(f64vec4) Load 142
+             144:141(f64vec3) VectorShuffle 143 143 0 1 2
+             145:141(f64vec3) GroupNonUniformFAdd 34 Reduce 144
              146:    132(ptr) AccessChain 27(data) 140 59
-             147:   23(fvec4) Load 146
-             148:   23(fvec4) VectorShuffle 147 145 4 5 6 3
+             147: 23(f64vec4) Load 146
+             148: 23(f64vec4) VectorShuffle 147 145 4 5 6 3
                               Store 146 148
              149:      6(int) Load 8(invocation)
              150:    132(ptr) AccessChain 27(data) 59 59
-             151:   23(fvec4) Load 150
-             152:   23(fvec4) GroupNonUniformFAdd 34 Reduce 151
+             151: 23(f64vec4) Load 150
+             152: 23(f64vec4) GroupNonUniformFAdd 34 Reduce 151
              153:    132(ptr) AccessChain 27(data) 149 59
                               Store 153 152
              154:      6(int) Load 8(invocation)
@@ -314,32 +314,32 @@ spv.subgroupArithmetic.comp
                               Store 231 230
              232:      6(int) Load 8(invocation)
              233:    125(ptr) AccessChain 27(data) 29 59 30
-             234:   22(float) Load 233
-             235:   22(float) GroupNonUniformFMul 34 Reduce 234
+             234:22(float64_t) Load 233
+             235:22(float64_t) GroupNonUniformFMul 34 Reduce 234
              236:    125(ptr) AccessChain 27(data) 232 59 30
                               Store 236 235
              237:      6(int) Load 8(invocation)
              238:    132(ptr) AccessChain 27(data) 38 59
-             239:   23(fvec4) Load 238
-             240:  131(fvec2) VectorShuffle 239 239 0 1
-             241:  131(fvec2) GroupNonUniformFMul 34 Reduce 240
+             239: 23(f64vec4) Load 238
+             240:131(f64vec2) VectorShuffle 239 239 0 1
+             241:131(f64vec2) GroupNonUniformFMul 34 Reduce 240
              242:    132(ptr) AccessChain 27(data) 237 59
-             243:   23(fvec4) Load 242
-             244:   23(fvec4) VectorShuffle 243 241 4 5 2 3
+             243: 23(f64vec4) Load 242
+             244: 23(f64vec4) VectorShuffle 243 241 4 5 2 3
                               Store 242 244
              245:      6(int) Load 8(invocation)
              246:    132(ptr) AccessChain 27(data) 49 59
-             247:   23(fvec4) Load 246
-             248:  141(fvec3) VectorShuffle 247 247 0 1 2
-             249:  141(fvec3) GroupNonUniformFMul 34 Reduce 248
+             247: 23(f64vec4) Load 246
+             248:141(f64vec3) VectorShuffle 247 247 0 1 2
+             249:141(f64vec3) GroupNonUniformFMul 34 Reduce 248
              250:    132(ptr) AccessChain 27(data) 245 59
-             251:   23(fvec4) Load 250
-             252:   23(fvec4) VectorShuffle 251 249 4 5 6 3
+             251: 23(f64vec4) Load 250
+             252: 23(f64vec4) VectorShuffle 251 249 4 5 6 3
                               Store 250 252
              253:      6(int) Load 8(invocation)
              254:    132(ptr) AccessChain 27(data) 59 59
-             255:   23(fvec4) Load 254
-             256:   23(fvec4) GroupNonUniformFMul 34 Reduce 255
+             255: 23(f64vec4) Load 254
+             256: 23(f64vec4) GroupNonUniformFMul 34 Reduce 255
              257:    132(ptr) AccessChain 27(data) 253 59
                               Store 257 256
              258:      6(int) Load 8(invocation)
@@ -434,32 +434,32 @@ spv.subgroupArithmetic.comp
                               Store 335 334
              336:      6(int) Load 8(invocation)
              337:    125(ptr) AccessChain 27(data) 29 59 30
-             338:   22(float) Load 337
-             339:   22(float) GroupNonUniformFMin 34 Reduce 338
+             338:22(float64_t) Load 337
+             339:22(float64_t) GroupNonUniformFMin 34 Reduce 338
              340:    125(ptr) AccessChain 27(data) 336 59 30
                               Store 340 339
              341:      6(int) Load 8(invocation)
              342:    132(ptr) AccessChain 27(data) 38 59
-             343:   23(fvec4) Load 342
-             344:  131(fvec2) VectorShuffle 343 343 0 1
-             345:  131(fvec2) GroupNonUniformFMin 34 Reduce 344
+             343: 23(f64vec4) Load 342
+             344:131(f64vec2) VectorShuffle 343 343 0 1
+             345:131(f64vec2) GroupNonUniformFMin 34 Reduce 344
              346:    132(ptr) AccessChain 27(data) 341 59
-             347:   23(fvec4) Load 346
-             348:   23(fvec4) VectorShuffle 347 345 4 5 2 3
+             347: 23(f64vec4) Load 346
+             348: 23(f64vec4) VectorShuffle 347 345 4 5 2 3
                               Store 346 348
              349:      6(int) Load 8(invocation)
              350:    132(ptr) AccessChain 27(data) 49 59
-             351:   23(fvec4) Load 350
-             352:  141(fvec3) VectorShuffle 351 351 0 1 2
-             353:  141(fvec3) GroupNonUniformFMin 34 Reduce 352
+             351: 23(f64vec4) Load 350
+             352:141(f64vec3) VectorShuffle 351 351 0 1 2
+             353:141(f64vec3) GroupNonUniformFMin 34 Reduce 352
              354:    132(ptr) AccessChain 27(data) 349 59
-             355:   23(fvec4) Load 354
-             356:   23(fvec4) VectorShuffle 355 353 4 5 6 3
+             355: 23(f64vec4) Load 354
+             356: 23(f64vec4) VectorShuffle 355 353 4 5 6 3
                               Store 354 356
              357:      6(int) Load 8(invocation)
              358:    132(ptr) AccessChain 27(data) 59 59
-             359:   23(fvec4) Load 358
-             360:   23(fvec4) GroupNonUniformFMin 34 Reduce 359
+             359: 23(f64vec4) Load 358
+             360: 23(f64vec4) GroupNonUniformFMin 34 Reduce 359
              361:    132(ptr) AccessChain 27(data) 357 59
                               Store 361 360
              362:      6(int) Load 8(invocation)
@@ -554,32 +554,32 @@ spv.subgroupArithmetic.comp
                               Store 439 438
              440:      6(int) Load 8(invocation)
              441:    125(ptr) AccessChain 27(data) 29 59 30
-             442:   22(float) Load 441
-             443:   22(float) GroupNonUniformFMax 34 Reduce 442
+             442:22(float64_t) Load 441
+             443:22(float64_t) GroupNonUniformFMax 34 Reduce 442
              444:    125(ptr) AccessChain 27(data) 440 59 30
                               Store 444 443
              445:      6(int) Load 8(invocation)
              446:    132(ptr) AccessChain 27(data) 38 59
-             447:   23(fvec4) Load 446
-             448:  131(fvec2) VectorShuffle 447 447 0 1
-             449:  131(fvec2) GroupNonUniformFMax 34 Reduce 448
+             447: 23(f64vec4) Load 446
+             448:131(f64vec2) VectorShuffle 447 447 0 1
+             449:131(f64vec2) GroupNonUniformFMax 34 Reduce 448
              450:    132(ptr) AccessChain 27(data) 445 59
-             451:   23(fvec4) Load 450
-             452:   23(fvec4) VectorShuffle 451 449 4 5 2 3
+             451: 23(f64vec4) Load 450
+             452: 23(f64vec4) VectorShuffle 451 449 4 5 2 3
                               Store 450 452
              453:      6(int) Load 8(invocation)
              454:    132(ptr) AccessChain 27(data) 49 59
-             455:   23(fvec4) Load 454
-             456:  141(fvec3) VectorShuffle 455 455 0 1 2
-             457:  141(fvec3) GroupNonUniformFMax 34 Reduce 456
+             455: 23(f64vec4) Load 454
+             456:141(f64vec3) VectorShuffle 455 455 0 1 2
+             457:141(f64vec3) GroupNonUniformFMax 34 Reduce 456
              458:    132(ptr) AccessChain 27(data) 453 59
-             459:   23(fvec4) Load 458
-             460:   23(fvec4) VectorShuffle 459 457 4 5 6 3
+             459: 23(f64vec4) Load 458
+             460: 23(f64vec4) VectorShuffle 459 457 4 5 6 3
                               Store 458 460
              461:      6(int) Load 8(invocation)
              462:    132(ptr) AccessChain 27(data) 59 59
-             463:   23(fvec4) Load 462
-             464:   23(fvec4) GroupNonUniformFMax 34 Reduce 463
+             463: 23(f64vec4) Load 462
+             464: 23(f64vec4) GroupNonUniformFMax 34 Reduce 463
              465:    132(ptr) AccessChain 27(data) 461 59
                               Store 465 464
              466:      6(int) Load 8(invocation)
@@ -968,32 +968,32 @@ spv.subgroupArithmetic.comp
                               Store 811 810
              812:      6(int) Load 8(invocation)
              813:    125(ptr) AccessChain 27(data) 29 59 30
-             814:   22(float) Load 813
-             815:   22(float) GroupNonUniformFAdd 34 InclusiveScan 814
+             814:22(float64_t) Load 813
+             815:22(float64_t) GroupNonUniformFAdd 34 InclusiveScan 814
              816:    125(ptr) AccessChain 27(data) 812 59 30
                               Store 816 815
              817:      6(int) Load 8(invocation)
              818:    132(ptr) AccessChain 27(data) 38 59
-             819:   23(fvec4) Load 818
-             820:  131(fvec2) VectorShuffle 819 819 0 1
-             821:  131(fvec2) GroupNonUniformFAdd 34 InclusiveScan 820
+             819: 23(f64vec4) Load 818
+             820:131(f64vec2) VectorShuffle 819 819 0 1
+             821:131(f64vec2) GroupNonUniformFAdd 34 InclusiveScan 820
              822:    132(ptr) AccessChain 27(data) 817 59
-             823:   23(fvec4) Load 822
-             824:   23(fvec4) VectorShuffle 823 821 4 5 2 3
+             823: 23(f64vec4) Load 822
+             824: 23(f64vec4) VectorShuffle 823 821 4 5 2 3
                               Store 822 824
              825:      6(int) Load 8(invocation)
              826:    132(ptr) AccessChain 27(data) 49 59
-             827:   23(fvec4) Load 826
-             828:  141(fvec3) VectorShuffle 827 827 0 1 2
-             829:  141(fvec3) GroupNonUniformFAdd 34 InclusiveScan 828
+             827: 23(f64vec4) Load 826
+             828:141(f64vec3) VectorShuffle 827 827 0 1 2
+             829:141(f64vec3) GroupNonUniformFAdd 34 InclusiveScan 828
              830:    132(ptr) AccessChain 27(data) 825 59
-             831:   23(fvec4) Load 830
-             832:   23(fvec4) VectorShuffle 831 829 4 5 6 3
+             831: 23(f64vec4) Load 830
+             832: 23(f64vec4) VectorShuffle 831 829 4 5 6 3
                               Store 830 832
              833:      6(int) Load 8(invocation)
              834:    132(ptr) AccessChain 27(data) 59 59
-             835:   23(fvec4) Load 834
-             836:   23(fvec4) GroupNonUniformFAdd 34 InclusiveScan 835
+             835: 23(f64vec4) Load 834
+             836: 23(f64vec4) GroupNonUniformFAdd 34 InclusiveScan 835
              837:    132(ptr) AccessChain 27(data) 833 59
                               Store 837 836
              838:      6(int) Load 8(invocation)
@@ -1088,32 +1088,32 @@ spv.subgroupArithmetic.comp
                               Store 915 914
              916:      6(int) Load 8(invocation)
              917:    125(ptr) AccessChain 27(data) 29 59 30
-             918:   22(float) Load 917
-             919:   22(float) GroupNonUniformFMul 34 InclusiveScan 918
+             918:22(float64_t) Load 917
+             919:22(float64_t) GroupNonUniformFMul 34 InclusiveScan 918
              920:    125(ptr) AccessChain 27(data) 916 59 30
                               Store 920 919
              921:      6(int) Load 8(invocation)
              922:    132(ptr) AccessChain 27(data) 38 59
-             923:   23(fvec4) Load 922
-             924:  131(fvec2) VectorShuffle 923 923 0 1
-             925:  131(fvec2) GroupNonUniformFMul 34 InclusiveScan 924
+             923: 23(f64vec4) Load 922
+             924:131(f64vec2) VectorShuffle 923 923 0 1
+             925:131(f64vec2) GroupNonUniformFMul 34 InclusiveScan 924
              926:    132(ptr) AccessChain 27(data) 921 59
-             927:   23(fvec4) Load 926
-             928:   23(fvec4) VectorShuffle 927 925 4 5 2 3
+             927: 23(f64vec4) Load 926
+             928: 23(f64vec4) VectorShuffle 927 925 4 5 2 3
                               Store 926 928
              929:      6(int) Load 8(invocation)
              930:    132(ptr) AccessChain 27(data) 49 59
-             931:   23(fvec4) Load 930
-             932:  141(fvec3) VectorShuffle 931 931 0 1 2
-             933:  141(fvec3) GroupNonUniformFMul 34 InclusiveScan 932
+             931: 23(f64vec4) Load 930
+             932:141(f64vec3) VectorShuffle 931 931 0 1 2
+             933:141(f64vec3) GroupNonUniformFMul 34 InclusiveScan 932
              934:    132(ptr) AccessChain 27(data) 929 59
-             935:   23(fvec4) Load 934
-             936:   23(fvec4) VectorShuffle 935 933 4 5 6 3
+             935: 23(f64vec4) Load 934
+             936: 23(f64vec4) VectorShuffle 935 933 4 5 6 3
                               Store 934 936
              937:      6(int) Load 8(invocation)
              938:    132(ptr) AccessChain 27(data) 59 59
-             939:   23(fvec4) Load 938
-             940:   23(fvec4) GroupNonUniformFMul 34 InclusiveScan 939
+             939: 23(f64vec4) Load 938
+             940: 23(f64vec4) GroupNonUniformFMul 34 InclusiveScan 939
              941:    132(ptr) AccessChain 27(data) 937 59
                               Store 941 940
              942:      6(int) Load 8(invocation)
@@ -1208,32 +1208,32 @@ spv.subgroupArithmetic.comp
                               Store 1019 1018
             1020:      6(int) Load 8(invocation)
             1021:    125(ptr) AccessChain 27(data) 29 59 30
-            1022:   22(float) Load 1021
-            1023:   22(float) GroupNonUniformFMin 34 InclusiveScan 1022
+            1022:22(float64_t) Load 1021
+            1023:22(float64_t) GroupNonUniformFMin 34 InclusiveScan 1022
             1024:    125(ptr) AccessChain 27(data) 1020 59 30
                               Store 1024 1023
             1025:      6(int) Load 8(invocation)
             1026:    132(ptr) AccessChain 27(data) 38 59
-            1027:   23(fvec4) Load 1026
-            1028:  131(fvec2) VectorShuffle 1027 1027 0 1
-            1029:  131(fvec2) GroupNonUniformFMin 34 InclusiveScan 1028
+            1027: 23(f64vec4) Load 1026
+            1028:131(f64vec2) VectorShuffle 1027 1027 0 1
+            1029:131(f64vec2) GroupNonUniformFMin 34 InclusiveScan 1028
             1030:    132(ptr) AccessChain 27(data) 1025 59
-            1031:   23(fvec4) Load 1030
-            1032:   23(fvec4) VectorShuffle 1031 1029 4 5 2 3
+            1031: 23(f64vec4) Load 1030
+            1032: 23(f64vec4) VectorShuffle 1031 1029 4 5 2 3
                               Store 1030 1032
             1033:      6(int) Load 8(invocation)
             1034:    132(ptr) AccessChain 27(data) 49 59
-            1035:   23(fvec4) Load 1034
-            1036:  141(fvec3) VectorShuffle 1035 1035 0 1 2
-            1037:  141(fvec3) GroupNonUniformFMin 34 InclusiveScan 1036
+            1035: 23(f64vec4) Load 1034
+            1036:141(f64vec3) VectorShuffle 1035 1035 0 1 2
+            1037:141(f64vec3) GroupNonUniformFMin 34 InclusiveScan 1036
             1038:    132(ptr) AccessChain 27(data) 1033 59
-            1039:   23(fvec4) Load 1038
-            1040:   23(fvec4) VectorShuffle 1039 1037 4 5 6 3
+            1039: 23(f64vec4) Load 1038
+            1040: 23(f64vec4) VectorShuffle 1039 1037 4 5 6 3
                               Store 1038 1040
             1041:      6(int) Load 8(invocation)
             1042:    132(ptr) AccessChain 27(data) 59 59
-            1043:   23(fvec4) Load 1042
-            1044:   23(fvec4) GroupNonUniformFMin 34 InclusiveScan 1043
+            1043: 23(f64vec4) Load 1042
+            1044: 23(f64vec4) GroupNonUniformFMin 34 InclusiveScan 1043
             1045:    132(ptr) AccessChain 27(data) 1041 59
                               Store 1045 1044
             1046:      6(int) Load 8(invocation)
@@ -1328,32 +1328,32 @@ spv.subgroupArithmetic.comp
                               Store 1123 1122
             1124:      6(int) Load 8(invocation)
             1125:    125(ptr) AccessChain 27(data) 29 59 30
-            1126:   22(float) Load 1125
-            1127:   22(float) GroupNonUniformFMax 34 InclusiveScan 1126
+            1126:22(float64_t) Load 1125
+            1127:22(float64_t) GroupNonUniformFMax 34 InclusiveScan 1126
             1128:    125(ptr) AccessChain 27(data) 1124 59 30
                               Store 1128 1127
             1129:      6(int) Load 8(invocation)
             1130:    132(ptr) AccessChain 27(data) 38 59
-            1131:   23(fvec4) Load 1130
-            1132:  131(fvec2) VectorShuffle 1131 1131 0 1
-            1133:  131(fvec2) GroupNonUniformFMax 34 InclusiveScan 1132
+            1131: 23(f64vec4) Load 1130
+            1132:131(f64vec2) VectorShuffle 1131 1131 0 1
+            1133:131(f64vec2) GroupNonUniformFMax 34 InclusiveScan 1132
             1134:    132(ptr) AccessChain 27(data) 1129 59
-            1135:   23(fvec4) Load 1134
-            1136:   23(fvec4) VectorShuffle 1135 1133 4 5 2 3
+            1135: 23(f64vec4) Load 1134
+            1136: 23(f64vec4) VectorShuffle 1135 1133 4 5 2 3
                               Store 1134 1136
             1137:      6(int) Load 8(invocation)
             1138:    132(ptr) AccessChain 27(data) 49 59
-            1139:   23(fvec4) Load 1138
-            1140:  141(fvec3) VectorShuffle 1139 1139 0 1 2
-            1141:  141(fvec3) GroupNonUniformFMax 34 InclusiveScan 1140
+            1139: 23(f64vec4) Load 1138
+            1140:141(f64vec3) VectorShuffle 1139 1139 0 1 2
+            1141:141(f64vec3) GroupNonUniformFMax 34 InclusiveScan 1140
             1142:    132(ptr) AccessChain 27(data) 1137 59
-            1143:   23(fvec4) Load 1142
-            1144:   23(fvec4) VectorShuffle 1143 1141 4 5 6 3
+            1143: 23(f64vec4) Load 1142
+            1144: 23(f64vec4) VectorShuffle 1143 1141 4 5 6 3
                               Store 1142 1144
             1145:      6(int) Load 8(invocation)
             1146:    132(ptr) AccessChain 27(data) 59 59
-            1147:   23(fvec4) Load 1146
-            1148:   23(fvec4) GroupNonUniformFMax 34 InclusiveScan 1147
+            1147: 23(f64vec4) Load 1146
+            1148: 23(f64vec4) GroupNonUniformFMax 34 InclusiveScan 1147
             1149:    132(ptr) AccessChain 27(data) 1145 59
                               Store 1149 1148
             1150:      6(int) Load 8(invocation)
@@ -1742,32 +1742,32 @@ spv.subgroupArithmetic.comp
                               Store 1485 1484
             1486:      6(int) Load 8(invocation)
             1487:    125(ptr) AccessChain 27(data) 29 59 30
-            1488:   22(float) Load 1487
-            1489:   22(float) GroupNonUniformFAdd 34 ExclusiveScan 1488
+            1488:22(float64_t) Load 1487
+            1489:22(float64_t) GroupNonUniformFAdd 34 ExclusiveScan 1488
             1490:    125(ptr) AccessChain 27(data) 1486 59 30
                               Store 1490 1489
             1491:      6(int) Load 8(invocation)
             1492:    132(ptr) AccessChain 27(data) 38 59
-            1493:   23(fvec4) Load 1492
-            1494:  131(fvec2) VectorShuffle 1493 1493 0 1
-            1495:  131(fvec2) GroupNonUniformFAdd 34 ExclusiveScan 1494
+            1493: 23(f64vec4) Load 1492
+            1494:131(f64vec2) VectorShuffle 1493 1493 0 1
+            1495:131(f64vec2) GroupNonUniformFAdd 34 ExclusiveScan 1494
             1496:    132(ptr) AccessChain 27(data) 1491 59
-            1497:   23(fvec4) Load 1496
-            1498:   23(fvec4) VectorShuffle 1497 1495 4 5 2 3
+            1497: 23(f64vec4) Load 1496
+            1498: 23(f64vec4) VectorShuffle 1497 1495 4 5 2 3
                               Store 1496 1498
             1499:      6(int) Load 8(invocation)
             1500:    132(ptr) AccessChain 27(data) 49 59
-            1501:   23(fvec4) Load 1500
-            1502:  141(fvec3) VectorShuffle 1501 1501 0 1 2
-            1503:  141(fvec3) GroupNonUniformFAdd 34 ExclusiveScan 1502
+            1501: 23(f64vec4) Load 1500
+            1502:141(f64vec3) VectorShuffle 1501 1501 0 1 2
+            1503:141(f64vec3) GroupNonUniformFAdd 34 ExclusiveScan 1502
             1504:    132(ptr) AccessChain 27(data) 1499 59
-            1505:   23(fvec4) Load 1504
-            1506:   23(fvec4) VectorShuffle 1505 1503 4 5 6 3
+            1505: 23(f64vec4) Load 1504
+            1506: 23(f64vec4) VectorShuffle 1505 1503 4 5 6 3
                               Store 1504 1506
             1507:      6(int) Load 8(invocation)
             1508:    132(ptr) AccessChain 27(data) 59 59
-            1509:   23(fvec4) Load 1508
-            1510:   23(fvec4) GroupNonUniformFAdd 34 ExclusiveScan 1509
+            1509: 23(f64vec4) Load 1508
+            1510: 23(f64vec4) GroupNonUniformFAdd 34 ExclusiveScan 1509
             1511:    132(ptr) AccessChain 27(data) 1507 59
                               Store 1511 1510
             1512:      6(int) Load 8(invocation)
@@ -1862,32 +1862,32 @@ spv.subgroupArithmetic.comp
                               Store 1589 1588
             1590:      6(int) Load 8(invocation)
             1591:    125(ptr) AccessChain 27(data) 29 59 30
-            1592:   22(float) Load 1591
-            1593:   22(float) GroupNonUniformFMul 34 ExclusiveScan 1592
+            1592:22(float64_t) Load 1591
+            1593:22(float64_t) GroupNonUniformFMul 34 ExclusiveScan 1592
             1594:    125(ptr) AccessChain 27(data) 1590 59 30
                               Store 1594 1593
             1595:      6(int) Load 8(invocation)
             1596:    132(ptr) AccessChain 27(data) 38 59
-            1597:   23(fvec4) Load 1596
-            1598:  131(fvec2) VectorShuffle 1597 1597 0 1
-            1599:  131(fvec2) GroupNonUniformFMul 34 ExclusiveScan 1598
+            1597: 23(f64vec4) Load 1596
+            1598:131(f64vec2) VectorShuffle 1597 1597 0 1
+            1599:131(f64vec2) GroupNonUniformFMul 34 ExclusiveScan 1598
             1600:    132(ptr) AccessChain 27(data) 1595 59
-            1601:   23(fvec4) Load 1600
-            1602:   23(fvec4) VectorShuffle 1601 1599 4 5 2 3
+            1601: 23(f64vec4) Load 1600
+            1602: 23(f64vec4) VectorShuffle 1601 1599 4 5 2 3
                               Store 1600 1602
             1603:      6(int) Load 8(invocation)
             1604:    132(ptr) AccessChain 27(data) 49 59
-            1605:   23(fvec4) Load 1604
-            1606:  141(fvec3) VectorShuffle 1605 1605 0 1 2
-            1607:  141(fvec3) GroupNonUniformFMul 34 ExclusiveScan 1606
+            1605: 23(f64vec4) Load 1604
+            1606:141(f64vec3) VectorShuffle 1605 1605 0 1 2
+            1607:141(f64vec3) GroupNonUniformFMul 34 ExclusiveScan 1606
             1608:    132(ptr) AccessChain 27(data) 1603 59
-            1609:   23(fvec4) Load 1608
-            1610:   23(fvec4) VectorShuffle 1609 1607 4 5 6 3
+            1609: 23(f64vec4) Load 1608
+            1610: 23(f64vec4) VectorShuffle 1609 1607 4 5 6 3
                               Store 1608 1610
             1611:      6(int) Load 8(invocation)
             1612:    132(ptr) AccessChain 27(data) 59 59
-            1613:   23(fvec4) Load 1612
-            1614:   23(fvec4) GroupNonUniformFMul 34 ExclusiveScan 1613
+            1613: 23(f64vec4) Load 1612
+            1614: 23(f64vec4) GroupNonUniformFMul 34 ExclusiveScan 1613
             1615:    132(ptr) AccessChain 27(data) 1611 59
                               Store 1615 1614
             1616:      6(int) Load 8(invocation)
@@ -1982,32 +1982,32 @@ spv.subgroupArithmetic.comp
                               Store 1693 1692
             1694:      6(int) Load 8(invocation)
             1695:    125(ptr) AccessChain 27(data) 29 59 30
-            1696:   22(float) Load 1695
-            1697:   22(float) GroupNonUniformFMin 34 ExclusiveScan 1696
+            1696:22(float64_t) Load 1695
+            1697:22(float64_t) GroupNonUniformFMin 34 ExclusiveScan 1696
             1698:    125(ptr) AccessChain 27(data) 1694 59 30
                               Store 1698 1697
             1699:      6(int) Load 8(invocation)
             1700:    132(ptr) AccessChain 27(data) 38 59
-            1701:   23(fvec4) Load 1700
-            1702:  131(fvec2) VectorShuffle 1701 1701 0 1
-            1703:  131(fvec2) GroupNonUniformFMin 34 ExclusiveScan 1702
+            1701: 23(f64vec4) Load 1700
+            1702:131(f64vec2) VectorShuffle 1701 1701 0 1
+            1703:131(f64vec2) GroupNonUniformFMin 34 ExclusiveScan 1702
             1704:    132(ptr) AccessChain 27(data) 1699 59
-            1705:   23(fvec4) Load 1704
-            1706:   23(fvec4) VectorShuffle 1705 1703 4 5 2 3
+            1705: 23(f64vec4) Load 1704
+            1706: 23(f64vec4) VectorShuffle 1705 1703 4 5 2 3
                               Store 1704 1706
             1707:      6(int) Load 8(invocation)
             1708:    132(ptr) AccessChain 27(data) 49 59
-            1709:   23(fvec4) Load 1708
-            1710:  141(fvec3) VectorShuffle 1709 1709 0 1 2
-            1711:  141(fvec3) GroupNonUniformFMin 34 ExclusiveScan 1710
+            1709: 23(f64vec4) Load 1708
+            1710:141(f64vec3) VectorShuffle 1709 1709 0 1 2
+            1711:141(f64vec3) GroupNonUniformFMin 34 ExclusiveScan 1710
             1712:    132(ptr) AccessChain 27(data) 1707 59
-            1713:   23(fvec4) Load 1712
-            1714:   23(fvec4) VectorShuffle 1713 1711 4 5 6 3
+            1713: 23(f64vec4) Load 1712
+            1714: 23(f64vec4) VectorShuffle 1713 1711 4 5 6 3
                               Store 1712 1714
             1715:      6(int) Load 8(invocation)
             1716:    132(ptr) AccessChain 27(data) 59 59
-            1717:   23(fvec4) Load 1716
-            1718:   23(fvec4) GroupNonUniformFMin 34 ExclusiveScan 1717
+            1717: 23(f64vec4) Load 1716
+            1718: 23(f64vec4) GroupNonUniformFMin 34 ExclusiveScan 1717
             1719:    132(ptr) AccessChain 27(data) 1715 59
                               Store 1719 1718
             1720:      6(int) Load 8(invocation)
@@ -2102,32 +2102,32 @@ spv.subgroupArithmetic.comp
                               Store 1797 1796
             1798:      6(int) Load 8(invocation)
             1799:    125(ptr) AccessChain 27(data) 29 59 30
-            1800:   22(float) Load 1799
-            1801:   22(float) GroupNonUniformFMax 34 ExclusiveScan 1800
+            1800:22(float64_t) Load 1799
+            1801:22(float64_t) GroupNonUniformFMax 34 ExclusiveScan 1800
             1802:    125(ptr) AccessChain 27(data) 1798 59 30
                               Store 1802 1801
             1803:      6(int) Load 8(invocation)
             1804:    132(ptr) AccessChain 27(data) 38 59
-            1805:   23(fvec4) Load 1804
-            1806:  131(fvec2) VectorShuffle 1805 1805 0 1
-            1807:  131(fvec2) GroupNonUniformFMax 34 ExclusiveScan 1806
+            1805: 23(f64vec4) Load 1804
+            1806:131(f64vec2) VectorShuffle 1805 1805 0 1
+            1807:131(f64vec2) GroupNonUniformFMax 34 ExclusiveScan 1806
             1808:    132(ptr) AccessChain 27(data) 1803 59
-            1809:   23(fvec4) Load 1808
-            1810:   23(fvec4) VectorShuffle 1809 1807 4 5 2 3
+            1809: 23(f64vec4) Load 1808
+            1810: 23(f64vec4) VectorShuffle 1809 1807 4 5 2 3
                               Store 1808 1810
             1811:      6(int) Load 8(invocation)
             1812:    132(ptr) AccessChain 27(data) 49 59
-            1813:   23(fvec4) Load 1812
-            1814:  141(fvec3) VectorShuffle 1813 1813 0 1 2
-            1815:  141(fvec3) GroupNonUniformFMax 34 ExclusiveScan 1814
+            1813: 23(f64vec4) Load 1812
+            1814:141(f64vec3) VectorShuffle 1813 1813 0 1 2
+            1815:141(f64vec3) GroupNonUniformFMax 34 ExclusiveScan 1814
             1816:    132(ptr) AccessChain 27(data) 1811 59
-            1817:   23(fvec4) Load 1816
-            1818:   23(fvec4) VectorShuffle 1817 1815 4 5 6 3
+            1817: 23(f64vec4) Load 1816
+            1818: 23(f64vec4) VectorShuffle 1817 1815 4 5 6 3
                               Store 1816 1818
             1819:      6(int) Load 8(invocation)
             1820:    132(ptr) AccessChain 27(data) 59 59
-            1821:   23(fvec4) Load 1820
-            1822:   23(fvec4) GroupNonUniformFMax 34 ExclusiveScan 1821
+            1821: 23(f64vec4) Load 1820
+            1822: 23(f64vec4) GroupNonUniformFMax 34 ExclusiveScan 1821
             1823:    132(ptr) AccessChain 27(data) 1819 59
                               Store 1823 1822
             1824:      6(int) Load 8(invocation)

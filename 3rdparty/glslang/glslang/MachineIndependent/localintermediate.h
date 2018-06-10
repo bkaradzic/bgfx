@@ -233,7 +233,8 @@ public:
         useStorageBuffer(false),
         hlslIoMapping(false),
         textureSamplerTransformMode(EShTexSampTransKeep),
-        needToLegalize(false)
+        needToLegalize(false),
+        binaryDoubleOutput(false)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -634,6 +635,9 @@ public:
     void setNeedsLegalization() { needToLegalize = true; }
     bool needsLegalization() const { return needToLegalize; }
 
+    void setBinaryDoubleOutput() { binaryDoubleOutput = true; }
+    bool getBinaryDoubleOutput() { return binaryDoubleOutput; }
+
     const char* const implicitThisName;
     const char* const implicitCounterName;
 
@@ -742,6 +746,7 @@ protected:
     TProcesses processes;
 
     bool needToLegalize;
+    bool binaryDoubleOutput;
 
 private:
     void operator=(TIntermediate&); // prevent assignments

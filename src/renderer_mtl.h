@@ -54,11 +54,11 @@ namespace bgfx { namespace mtl
 
 #define MTL_MAX_FRAMES_IN_FLIGHT (3)
 
-#define MTL_CLASS(name) \
-	class name \
-	{ \
-	public: \
-		name(id <MTL##name> _obj = nil) : m_obj(_obj) {} \
+#define MTL_CLASS(name)                                   \
+	class name                                            \
+	{                                                     \
+	public:                                               \
+		name(id <MTL##name> _obj = nil) : m_obj(_obj) {}  \
 		operator id <MTL##name>() const { return m_obj; } \
 		id <MTL##name> m_obj;
 
@@ -775,6 +775,7 @@ namespace bgfx { namespace mtl
 		}
 
 		Function m_function;
+		uint32_t m_hash;
 	};
 
 	struct ProgramMtl

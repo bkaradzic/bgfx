@@ -8,7 +8,7 @@ remap.literal64.none.spv
                1:             TypeVoid
                2:             TypeInt 64 1
                3:             TypeFunction 1
-               4:      2(int) Constant 0 0
+               4:  2(int64_t) Constant 0 0
                5:           1 Function None 3
                6:             Label
                               SelectionMerge 7 None

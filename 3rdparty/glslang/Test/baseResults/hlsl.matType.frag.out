@@ -82,8 +82,8 @@ gl_FragCoord origin is upper left
               19:             TypeVector 6(float) 2
               20:             TypeMatrix 19(fvec2) 1
               21:             TypeFloat 64
-              22:             TypeVector 21(float) 3
-              23:             TypeMatrix 22(fvec3) 2
+              22:             TypeVector 21(float64_t) 3
+              23:             TypeMatrix 22(f64vec3) 2
               24:             TypeInt 32 1
               25:             TypeVector 24(int) 4
               26:             TypeMatrix 25(ivec4) 4
