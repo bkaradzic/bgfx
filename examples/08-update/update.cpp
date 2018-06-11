@@ -171,15 +171,19 @@ public:
 		// Create vertex stream declaration.
 		PosTexcoordVertex::init();
 
-		m_textures[0] = loadTexture("textures/texture_compression_bc1.ktx",  BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP);
-		m_textures[1] = loadTexture("textures/texture_compression_bc2.ktx",  BGFX_TEXTURE_U_CLAMP);
-		m_textures[2] = loadTexture("textures/texture_compression_bc3.ktx",  BGFX_TEXTURE_V_CLAMP);
-		m_textures[3] = loadTexture("textures/texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER|BGFX_TEXTURE_V_BORDER|BGFX_TEXTURE_BORDER_COLOR(1) );
-		m_textures[4] = loadTexture("textures/texture_compression_etc2.ktx");
-		m_textures[5] = loadTexture("textures/texture_compression_ptc12.pvr");
-		m_textures[6] = loadTexture("textures/texture_compression_ptc14.pvr");
-		m_textures[7] = loadTexture("textures/texture_compression_ptc22.pvr");
-		m_textures[8] = loadTexture("textures/texture_compression_ptc24.pvr");
+		m_textures[ 0] = loadTexture("textures/texture_compression_bc1.ktx", BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP);
+		m_textures[ 1] = loadTexture("textures/texture_compression_bc2.ktx", BGFX_TEXTURE_U_CLAMP);
+		m_textures[ 2] = loadTexture("textures/texture_compression_bc3.ktx", BGFX_TEXTURE_V_CLAMP);
+		m_textures[ 3] = loadTexture("textures/texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER | BGFX_TEXTURE_V_BORDER | BGFX_TEXTURE_BORDER_COLOR(1));
+		m_textures[ 4] = loadTexture("textures/texture_compression_etc2.ktx");
+		m_textures[ 5] = loadTexture("textures/texture_compression_ptc12.pvr");
+		m_textures[ 6] = loadTexture("textures/texture_compression_ptc14.pvr");
+		m_textures[ 7] = loadTexture("textures/texture_compression_ptc22.pvr");
+		m_textures[ 8] = loadTexture("textures/texture_compression_ptc24.pvr");
+		m_textures[ 9] = loadTexture("textures/texture_compression_atc.dds");
+		m_textures[10] = loadTexture("textures/texture_compression_atci.dds");
+		m_textures[11] = loadTexture("textures/texture_compression_atce.dds");
+		BX_STATIC_ASSERT(12 == BX_COUNTOF(m_textures));
 
 		const bgfx::Caps* caps = bgfx::getCaps();
 		m_texture3DSupported = !!(caps->supported & BGFX_CAPS_TEXTURE_3D);
@@ -519,13 +523,16 @@ public:
 
 			// Set view and projection matrix for view 1.
 			const float aspectRatio = float(m_height)/float(m_width);
-			const float size = 11.0f;
+			const float margin = 0.7f;
+			const float sizeX = 0.5f * BX_COUNTOF(m_textures) * 2.1f + margin;
+			const float sizeY = sizeX * aspectRatio;
+
 			const bgfx::Caps* caps = bgfx::getCaps();
-			bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
+			bx::mtxOrtho(proj, -sizeX, sizeX, sizeY, -sizeY, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
 			bgfx::setViewTransform(1, NULL, proj);
 
 			float mtx[16];
-			bx::mtxTranslate(mtx, -size+2.0f - BX_COUNTOF(m_textures)*0.1f*0.5f, 1.9f, 0.0f);
+			bx::mtxTranslate(mtx, -sizeX + margin + 1.0f, 1.9f, 0.0f);
 
 			// Set model matrix for rendering.
 			bgfx::setTransform(mtx);
@@ -543,11 +550,11 @@ public:
 			// Submit primitive for rendering to view 1.
 			bgfx::submit(1, m_programCmp);
 
-			const float xpos = -size+2.0f - BX_COUNTOF(m_textures)*0.1f*0.5f;
+			const float xpos = -sizeX + margin + 1.0f;
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textures); ++ii)
 			{
-				bx::mtxTranslate(mtx, xpos + ii*2.1f, size-6.5f, 0.0f);
+				bx::mtxTranslate(mtx, xpos + ii*2.1f, sizeY - margin - 1.0f, 0.0f);
 
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);
@@ -568,7 +575,7 @@ public:
 
 			for (uint32_t ii = 0; ii < m_numTextures3d; ++ii)
 			{
-				bx::mtxTranslate(mtx, xpos + (ii+3)*2.1f, -size+6.5f, 0.0f);
+				bx::mtxTranslate(mtx, xpos + (ii+(BX_COUNTOF(m_textures) - m_numTextures3d)*0.5f)*2.1f, -sizeY + margin + 1.0f, 0.0f);
 
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);
@@ -589,7 +596,7 @@ public:
 
 			for (uint32_t ii = 0; ii < 4; ++ii)
 			{
-				bx::mtxTranslate(mtx, xpos + (size-2.0f)*2.1f, -size+6.5f + ii*2.1f, 0.0f);
+				bx::mtxTranslate(mtx, sizeX - margin - 1.0f, -sizeY + margin + 1.0f + ii*2.1f, 0.0f);
 
 				// Set model matrix for rendering.
 				bgfx::setTransform(mtx);
@@ -643,7 +650,7 @@ public:
 	uint8_t m_gg;
 	uint8_t m_bb;
 
-	bgfx::TextureHandle m_textures[9];
+	bgfx::TextureHandle m_textures[12];
 	bgfx::TextureHandle m_textures3d[3];
 	bgfx::TextureHandle m_texture2d;
 	bgfx::TextureHandle m_textureCube[3];

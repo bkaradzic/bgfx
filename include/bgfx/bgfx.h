@@ -183,7 +183,7 @@ namespace bgfx
 			ASTC8x6,      //!< ASTC 8x6 2.67 BPP
 			ASTC10x5,     //!< ASTC 10x5 2.56 BPP
 
-			Unknown,      // Compressed formats above.
+      Unknown,      // Compressed formats above.
 
 			R1,
 			A8,
