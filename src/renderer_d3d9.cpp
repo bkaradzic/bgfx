@@ -180,6 +180,15 @@ namespace bgfx { namespace d3d9
 		{ D3DFMT_UNKNOWN       }, // PTC14A
 		{ D3DFMT_UNKNOWN       }, // PTC22
 		{ D3DFMT_UNKNOWN       }, // PTC24
+		{ D3DFMT_UNKNOWN       }, // ATC,
+		{ D3DFMT_UNKNOWN       }, // ATCE,
+		{ D3DFMT_UNKNOWN       }, // ATCI,
+		{ D3DFMT_UNKNOWN       }, // ASTC4x4,
+		{ D3DFMT_UNKNOWN       }, // ASTC5x5,
+		{ D3DFMT_UNKNOWN       }, // ASTC6x6,
+		{ D3DFMT_UNKNOWN       }, // ASTC8x5,
+		{ D3DFMT_UNKNOWN       }, // ASTC8x6,
+		{ D3DFMT_UNKNOWN       }, // ASTC10x5,
 		{ D3DFMT_UNKNOWN       }, // Unknown
 		{ D3DFMT_A1            }, // R1
 		{ D3DFMT_A8            }, // A8
