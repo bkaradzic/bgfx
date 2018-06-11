@@ -19,6 +19,49 @@
 #	define DX_CHECK_EXTRA_ARGS
 #endif // BGFX_CONFIG_DEBUG && BGFX_CONFIG_RENDERER_DIRECT3D9
 
+#define DXGI_FORMAT_ASTC_4X4_TYPELESS     DXGI_FORMAT(133)
+#define DXGI_FORMAT_ASTC_4X4_UNORM        DXGI_FORMAT(134)
+#define DXGI_FORMAT_ASTC_4X4_UNORM_SRGB   DXGI_FORMAT(135)
+#define DXGI_FORMAT_ASTC_5X4_TYPELESS     DXGI_FORMAT(137)
+#define DXGI_FORMAT_ASTC_5X4_UNORM        DXGI_FORMAT(138)
+#define DXGI_FORMAT_ASTC_5X4_UNORM_SRGB   DXGI_FORMAT(139)
+#define DXGI_FORMAT_ASTC_5X5_TYPELESS     DXGI_FORMAT(141)
+#define DXGI_FORMAT_ASTC_5X5_UNORM        DXGI_FORMAT(142)
+#define DXGI_FORMAT_ASTC_5X5_UNORM_SRGB   DXGI_FORMAT(143)
+#define DXGI_FORMAT_ASTC_6X5_TYPELESS     DXGI_FORMAT(145)
+#define DXGI_FORMAT_ASTC_6X5_UNORM        DXGI_FORMAT(146)
+#define DXGI_FORMAT_ASTC_6X5_UNORM_SRGB   DXGI_FORMAT(147)
+#define DXGI_FORMAT_ASTC_6X6_TYPELESS     DXGI_FORMAT(149)
+#define DXGI_FORMAT_ASTC_6X6_UNORM        DXGI_FORMAT(150)
+#define DXGI_FORMAT_ASTC_6X6_UNORM_SRGB   DXGI_FORMAT(151)
+#define DXGI_FORMAT_ASTC_8X5_TYPELESS     DXGI_FORMAT(153)
+#define DXGI_FORMAT_ASTC_8X5_UNORM        DXGI_FORMAT(154)
+#define DXGI_FORMAT_ASTC_8X5_UNORM_SRGB   DXGI_FORMAT(155)
+#define DXGI_FORMAT_ASTC_8X6_TYPELESS     DXGI_FORMAT(157)
+#define DXGI_FORMAT_ASTC_8X6_UNORM        DXGI_FORMAT(158)
+#define DXGI_FORMAT_ASTC_8X6_UNORM_SRGB   DXGI_FORMAT(159)
+#define DXGI_FORMAT_ASTC_8X8_TYPELESS     DXGI_FORMAT(161)
+#define DXGI_FORMAT_ASTC_8X8_UNORM        DXGI_FORMAT(162)
+#define DXGI_FORMAT_ASTC_8X8_UNORM_SRGB   DXGI_FORMAT(163)
+#define DXGI_FORMAT_ASTC_10X5_TYPELESS    DXGI_FORMAT(165)
+#define DXGI_FORMAT_ASTC_10X5_UNORM       DXGI_FORMAT(166)
+#define DXGI_FORMAT_ASTC_10X5_UNORM_SRGB  DXGI_FORMAT(167)
+#define DXGI_FORMAT_ASTC_10X6_TYPELESS    DXGI_FORMAT(169)
+#define DXGI_FORMAT_ASTC_10X6_UNORM       DXGI_FORMAT(170)
+#define DXGI_FORMAT_ASTC_10X6_UNORM_SRGB  DXGI_FORMAT(171)
+#define DXGI_FORMAT_ASTC_10X8_TYPELESS    DXGI_FORMAT(173)
+#define DXGI_FORMAT_ASTC_10X8_UNORM       DXGI_FORMAT(174)
+#define DXGI_FORMAT_ASTC_10X8_UNORM_SRGB  DXGI_FORMAT(175)
+#define DXGI_FORMAT_ASTC_10X10_TYPELESS   DXGI_FORMAT(177)
+#define DXGI_FORMAT_ASTC_10X10_UNORM      DXGI_FORMAT(178)
+#define DXGI_FORMAT_ASTC_10X10_UNORM_SRGB DXGI_FORMAT(179)
+#define DXGI_FORMAT_ASTC_12X10_TYPELESS   DXGI_FORMAT(181)
+#define DXGI_FORMAT_ASTC_12X10_UNORM      DXGI_FORMAT(182)
+#define DXGI_FORMAT_ASTC_12X10_UNORM_SRGB DXGI_FORMAT(183)
+#define DXGI_FORMAT_ASTC_12X12_TYPELESS   DXGI_FORMAT(185)
+#define DXGI_FORMAT_ASTC_12X12_UNORM      DXGI_FORMAT(186)
+#define DXGI_FORMAT_ASTC_12X12_UNORM_SRGB DXGI_FORMAT(187)
+
 namespace bgfx
 {
 	constexpr uint32_t toRgba8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
@@ -37,28 +80,28 @@ namespace bgfx
 	typedef ::IGraphicsUnknown IUnknown;
 #endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 
-#define _DX_CHECK(_call) \
-			BX_MACRO_BLOCK_BEGIN \
-				HRESULT __hr__ = _call; \
+#define _DX_CHECK(_call)                                                                  \
+			BX_MACRO_BLOCK_BEGIN                                                          \
+				HRESULT __hr__ = _call;                                                   \
 				BX_CHECK(SUCCEEDED(__hr__), #_call " FAILED 0x%08x" DX_CHECK_EXTRA_F "\n" \
-					, (uint32_t)__hr__ \
-					DX_CHECK_EXTRA_ARGS \
-					); \
+					, (uint32_t)__hr__                                                    \
+					DX_CHECK_EXTRA_ARGS                                                   \
+					);                                                                    \
 			BX_MACRO_BLOCK_END
 
-#define _DX_RELEASE(_ptr, _expected, _check) \
-			BX_MACRO_BLOCK_BEGIN \
-				if (NULL != (_ptr) ) \
-				{ \
-					ULONG count = (_ptr)->Release(); \
+#define _DX_RELEASE(_ptr, _expected, _check)                                                                                                                 \
+			BX_MACRO_BLOCK_BEGIN                                                                                                                             \
+				if (NULL != (_ptr) )                                                                                                                         \
+				{                                                                                                                                            \
+					ULONG count = (_ptr)->Release();                                                                                                         \
 					_check(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); BX_UNUSED(count); \
-					_ptr = NULL; \
-				} \
+					_ptr = NULL;                                                                                                                             \
+				}                                                                                                                                            \
 			BX_MACRO_BLOCK_END
 
-#define _DX_CHECK_REFCOUNT(_ptr, _expected) \
-			BX_MACRO_BLOCK_BEGIN \
-				ULONG count = getRefCount(_ptr); \
+#define _DX_CHECK_REFCOUNT(_ptr, _expected)                                                                                              \
+			BX_MACRO_BLOCK_BEGIN                                                                                                         \
+				ULONG count = getRefCount(_ptr);                                                                                         \
 				BX_CHECK(isGraphicsDebuggerPresent() || _expected == count, "%p RefCount is %d (expected %d).", _ptr, count, _expected); \
 			BX_MACRO_BLOCK_END
 

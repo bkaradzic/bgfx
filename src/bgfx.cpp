@@ -1407,6 +1407,12 @@ namespace bgfx
 		TextureFormat::ATC,
 		TextureFormat::ATCE,
 		TextureFormat::ATCI,
+		TextureFormat::ASTC4x4,
+		TextureFormat::ASTC5x5,
+		TextureFormat::ASTC6x6,
+		TextureFormat::ASTC8x5,
+		TextureFormat::ASTC8x6,
+		TextureFormat::ASTC10x5,
 		TextureFormat::BGRA8, // GL doesn't support BGRA8 without extensions.
 		TextureFormat::RGBA8, // D3D9 doesn't support RGBA8
 	};

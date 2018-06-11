@@ -207,7 +207,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					, mem
 					);
 			}
-			else
+			else if (bgfx::isTextureValid(0, false, imageContainer->m_numLayers, bgfx::TextureFormat::Enum(imageContainer->m_format), _flags) )
 			{
 				handle = bgfx::createTexture2D(
 					  uint16_t(imageContainer->m_width)
@@ -220,7 +220,10 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 					);
 			}
 
-			bgfx::setName(handle, _filePath);
+			if (bgfx::isValid(handle) )
+			{
+				bgfx::setName(handle, _filePath);
+			}
 
 			if (NULL != _info)
 			{
