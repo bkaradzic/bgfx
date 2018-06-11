@@ -779,15 +779,17 @@ void TextBufferManager::submitTextBuffer(TextBufferHandle _handle, bgfx::ViewId 
 				ibh.idx = bc.indexBufferHandleIdx;
 				vbh.idx = bc.vertexBufferHandleIdx;
 
-				bgfx::updateDynamicIndexBuffer(ibh
-						, 0
-						, bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
-						);
+				bgfx::update(
+					  ibh
+					, 0
+					, bgfx::copy(bc.textBuffer->getIndexBuffer(), indexSize)
+					);
 
-				bgfx::updateDynamicVertexBuffer(vbh
-						, 0
-						, bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
-						);
+				bgfx::update(
+					  vbh
+					, 0
+					, bgfx::copy(bc.textBuffer->getVertexBuffer(), vertexSize)
+					);
 			}
 
 			bgfx::setVertexBuffer(0, vbh, 0, bc.textBuffer->getVertexCount() );

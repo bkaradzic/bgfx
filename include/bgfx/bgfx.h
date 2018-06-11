@@ -181,8 +181,9 @@ namespace bgfx
 			ASTC6x6,      //!< ASTC 6x6 3.56 BPP
 			ASTC8x5,      //!< ASTC 8x5 3.20 BPP
 			ASTC8x6,      //!< ASTC 8x6 2.67 BPP
-			ASTC10x5,	  //!< ASTC 10x5 2.56 BPP
-			Unknown,      // Compressed formats above.
+			ASTC10x5,     //!< ASTC 10x5 2.56 BPP
+
+      Unknown,      // Compressed formats above.
 
 			R1,
 			A8,
@@ -2186,7 +2187,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_update_dynamic_index_buffer`.
 	///
-	void updateDynamicIndexBuffer(
+	void update(
 		  DynamicIndexBufferHandle _handle
 		, uint32_t _startIndex
 		, const Memory* _mem
@@ -2260,7 +2261,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_update_dynamic_vertex_buffer`.
 	///
-	void updateDynamicVertexBuffer(
+	void update(
 		  DynamicVertexBufferHandle _handle
 		, uint32_t _startVertex
 		, const Memory* _mem

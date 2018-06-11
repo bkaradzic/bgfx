@@ -23,7 +23,7 @@ void main()
     float e8 = 1e-16;
     double e9 = 1e100;
     double e10 = 1e+308;
-    double e11 = 1e-323;
+    double e11 = 1e-307; // Was 1e-323, but that's flushed to zero sometimes. 1e-308 can be flushed to 0.
     double e12 = 1e+309;
     double e13 = 1e-324;
     double e24 = 1e+999;

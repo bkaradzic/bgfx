@@ -239,7 +239,7 @@ public:
 				}
 
 				uint32_t idx = m_mwc.gen() % (kDimWidth*kDimHeight);
-				bgfx::updateDynamicVertexBuffer(m_vbh[idx], 0, mem);
+				bgfx::update(m_vbh[idx], 0, mem);
 			}
 
 			// Submit 11x11 cubes.
