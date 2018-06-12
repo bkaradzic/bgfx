@@ -630,8 +630,8 @@ namespace bgfx
 		struct Limits
 		{
 			uint16_t maxEncoders;     //!< Maximum number of encoder threads.
-			uint32_t transientVbSize; //!<
-			uint32_t transientIbSize; //!<
+			uint32_t transientVbSize; //!< Maximum transient vertex buffer size.
+			uint32_t transientIbSize; //!< Maximum transient index buffer size.
 		};
 
 		Limits limits;
