@@ -2185,6 +2185,7 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
     if (g.ActiveIdIsJustActivated)
     {
         g.ActiveIdTimer = 0.0f;
+        g.ActiveIdValueChanged = false;
         if (id != 0)
         {
             g.LastActiveId = id;
@@ -2200,12 +2201,6 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
         g.ActiveIdIsAlive = true;
         g.ActiveIdSource = (g.NavActivateId == id || g.NavInputId == id || g.NavJustTabbedId == id || g.NavJustMovedToId == id) ? ImGuiInputSource_Nav : ImGuiInputSource_Mouse;
     }
-}
-
-ImGuiID ImGui::GetActiveID()
-{
-    ImGuiContext& g = *GImGui;
-    return g.ActiveId;
 }
 
 void ImGui::SetFocusID(ImGuiID id, ImGuiWindow* window)
@@ -2256,6 +2251,15 @@ void ImGui::KeepAliveID(ImGuiID id)
         g.ActiveIdIsAlive = true;
     if (g.ActiveIdPreviousFrame == id)
         g.ActiveIdPreviousFrameIsAlive = true;
+}
+
+void ImGui::MarkItemValueChanged(ImGuiID id)
+{
+    // This marking is solely to be able to provide info for IsItemDeactivatedAfterChange().
+    // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need need to fill the data.
+    ImGuiContext& g = *GImGui;
+    IM_ASSERT(g.ActiveId == id || g.ActiveId == 0);
+    g.ActiveIdValueChanged = true;
 }
 
 static inline bool IsWindowContentHoverable(ImGuiWindow* window, ImGuiHoveredFlags flags)
@@ -3725,6 +3729,7 @@ void ImGui::NewFrame()
     g.LastActiveIdTimer += g.IO.DeltaTime;
     g.ActiveIdPreviousFrame = g.ActiveId;
     g.ActiveIdPreviousFrameWindow = g.ActiveIdWindow;
+    g.ActiveIdPreviousFrameValueChanged = g.ActiveIdValueChanged;
     g.ActiveIdIsAlive = g.ActiveIdPreviousFrameIsAlive = false;
     g.ActiveIdIsJustActivated = false;
     if (g.ScalarAsInputTextId && g.ActiveId != g.ScalarAsInputTextId)
@@ -4989,6 +4994,12 @@ bool ImGui::IsItemDeactivated()
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
     return (g.ActiveIdPreviousFrame == window->DC.LastItemId && g.ActiveIdPreviousFrame != 0 && g.ActiveId != window->DC.LastItemId);
+}
+
+bool ImGui::IsItemDeactivatedAfterChange()
+{
+    ImGuiContext& g = *GImGui;
+    return IsItemDeactivated() && (g.ActiveIdPreviousFrameValueChanged || (g.ActiveId == 0 && g.ActiveIdValueChanged));
 }
 
 bool ImGui::IsItemFocused()
@@ -8031,6 +8042,8 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
         flags |= ImGuiButtonFlags_Repeat;
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
+    if (pressed)
+        MarkItemValueChanged(id);
 
     // Render
     const ImU32 col = GetColorU32((hovered && held) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
@@ -9336,6 +9349,8 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* v, co
     // Actual slider behavior + render grab
     ItemSize(total_bb, style.FramePadding.y);
     const bool value_changed = SliderBehavior(frame_bb, id, data_type, v, v_min, v_max, format, power);
+    if (value_changed)
+        MarkItemValueChanged(id);
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
     char value_buf[64];
@@ -9389,7 +9404,9 @@ bool ImGui::VSliderScalar(const char* label, const ImVec2& size, ImGuiDataType d
     }
 
     // Actual slider behavior + render grab
-    bool value_changed = SliderBehavior(frame_bb, id, data_type, v, v_min, v_max, format, power, ImGuiSliderFlags_Vertical);
+    const bool value_changed = SliderBehavior(frame_bb, id, data_type, v, v_min, v_max, format, power, ImGuiSliderFlags_Vertical);
+    if (value_changed)
+        MarkItemValueChanged(id);
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
     // For the vertical slider we allow centered text to overlap the frame padding
@@ -9666,6 +9683,8 @@ bool ImGui::DragScalar(const char* label, ImGuiDataType data_type, void* v, floa
     // Actual drag behavior
     ItemSize(total_bb, style.FramePadding.y);
     const bool value_changed = DragBehavior(id, data_type, v, v_speed, v_min, v_max, format, power);
+    if (value_changed)
+        MarkItemValueChanged(id);
 
     // Draw frame
     const ImU32 frame_col = GetColorU32(g.ActiveId == id ? ImGuiCol_FrameBgActive : g.HoveredId == id ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
@@ -10014,7 +10033,10 @@ bool ImGui::Checkbox(const char* label, bool* v)
     bool hovered, held;
     bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
     if (pressed)
+    {
         *v = !(*v);
+        MarkItemValueChanged(id);
+    }
 
     RenderNavHighlight(total_bb, id);
     RenderFrame(check_bb.Min, check_bb.Max, GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), true, style.FrameRounding);
@@ -10082,6 +10104,8 @@ bool ImGui::RadioButton(const char* label, bool active)
 
     bool hovered, held;
     bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+    if (pressed)
+        MarkItemValueChanged(id);
 
     RenderNavHighlight(total_bb, id);
     window->DrawList->AddCircleFilled(center, radius, GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), 16);
@@ -10978,6 +11002,9 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
     if (label_size.x > 0)
         RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);
 
+    if (value_changed)
+        MarkItemValueChanged(id);
+
     if ((flags & ImGuiInputTextFlags_EnterReturnsTrue) != 0)
         return enter_pressed;
     else
@@ -11442,6 +11469,8 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
             g.NavDisableHighlight = true;
             SetNavID(id, window->DC.NavLayerCurrent);
         }
+    if (pressed)
+        MarkItemValueChanged(id);
 
     // Render
     if (hovered || selected)
@@ -12034,6 +12063,9 @@ bool ImGui::ColorButton(const char* desc_id, const ImVec4& col, ImGuiColorEditFl
     if (!(flags & ImGuiColorEditFlags_NoTooltip) && hovered)
         ColorTooltip(desc_id, &col.x, flags & (ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf));
 
+    if (pressed)
+        MarkItemValueChanged(id);
+
     return pressed;
 }
 
@@ -12327,6 +12359,9 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
     // When picker is being actively used, use its active id so IsItemActive() will function on ColorEdit4().
     if (picker_active_window && g.ActiveId != 0 && g.ActiveIdWindow == picker_active_window)
         window->DC.LastItemId = g.ActiveId;
+
+    if (value_changed)
+        MarkItemValueChanged(window->DC.LastItemId);
 
     return value_changed;
 }
@@ -12651,9 +12686,15 @@ bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags fl
     }
 
     EndGroup();
+
+    if (value_changed && memcmp(backup_initial_col, col, components * sizeof(float)) == 0)
+        value_changed = false;
+    if (value_changed)
+        MarkItemValueChanged(window->DC.LastItemId);
+
     PopID();
 
-    return value_changed && memcmp(backup_initial_col, col, components * sizeof(float));
+    return value_changed;
 }
 
 // Horizontal separating line.
@@ -12761,6 +12802,8 @@ bool ImGui::SplitterBehavior(ImGuiID id, const ImRect& bb, ImGuiAxis axis, float
         *size1 += mouse_delta;
         *size2 -= mouse_delta;
         bb_render.Translate((axis == ImGuiAxis_X) ? ImVec2(mouse_delta, 0.0f) : ImVec2(0.0f, mouse_delta));
+
+        MarkItemValueChanged(id);
     }
 
     // Render
