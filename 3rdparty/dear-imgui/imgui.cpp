@@ -2687,7 +2687,7 @@ bool ImGui::ItemHoverable(const ImRect& bb, ImGuiID id)
         return false;
     if (!IsMouseHoveringRect(bb.Min, bb.Max))
         return false;
-    if (g.NavDisableMouseHover || !IsWindowContentHoverable(window, ImGuiHoveredFlags_Default))
+    if (g.NavDisableMouseHover || !IsWindowContentHoverable(window, ImGuiHoveredFlags_None))
         return false;
     if (window->DC.ItemFlags & ImGuiItemFlags_Disabled)
         return false;
@@ -5010,7 +5010,7 @@ bool ImGui::IsItemFocused()
 
 bool ImGui::IsItemClicked(int mouse_button)
 {
-    return IsMouseClicked(mouse_button) && IsItemHovered(ImGuiHoveredFlags_Default);
+    return IsMouseClicked(mouse_button) && IsItemHovered(ImGuiHoveredFlags_None);
 }
 
 bool ImGui::IsAnyItemHovered()
@@ -8326,7 +8326,7 @@ void ImGui::LogButtons()
 bool ImGui::TreeNodeBehaviorIsOpen(ImGuiID id, ImGuiTreeNodeFlags flags)
 {
     if (flags & ImGuiTreeNodeFlags_Leaf)
-        return false;
+        return true;
 
     // We only write to the tree storage if the user clicks (or explicitly use SetNextTreeNode*** functions)
     ImGuiContext& g = *GImGui;
@@ -12697,7 +12697,7 @@ bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags fl
     return value_changed;
 }
 
-// Horizontal separating line.
+// Horizontal/vertical separating line
 void ImGui::Separator()
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -12705,9 +12705,8 @@ void ImGui::Separator()
         return;
     ImGuiContext& g = *GImGui;
 
-    ImGuiSeparatorFlags flags = 0;
-    if ((flags & (ImGuiSeparatorFlags_Horizontal | ImGuiSeparatorFlags_Vertical)) == 0)
-        flags |= (window->DC.LayoutType == ImGuiLayoutType_Horizontal) ? ImGuiSeparatorFlags_Vertical : ImGuiSeparatorFlags_Horizontal;
+    // Those flags should eventually be overridable by the user
+    ImGuiSeparatorFlags flags = (window->DC.LayoutType == ImGuiLayoutType_Horizontal) ? ImGuiSeparatorFlags_Vertical : ImGuiSeparatorFlags_Horizontal;
     IM_ASSERT(ImIsPowerOfTwo((int)(flags & (ImGuiSeparatorFlags_Horizontal | ImGuiSeparatorFlags_Vertical))));   // Check that only 1 option is selected
     if (flags & ImGuiSeparatorFlags_Vertical)
     {
@@ -13327,6 +13326,7 @@ void ImGui::TreePop()
         }
     window->DC.TreeDepthMayJumpToParentOnPop &= (1 << window->DC.TreeDepth) - 1;
 
+    IM_ASSERT(window->IDStack.Size > 1); // There should always be 1 element in the IDStack (pushed during window creation). If this triggers you called TreePop/PopID too much.
     PopID();
 }
 
@@ -13675,42 +13675,43 @@ static const char* GetClipboardTextFn_DefaultImpl(void*)
 {
     static ImVector<char> buf_local;
     buf_local.clear();
-    if (!OpenClipboard(NULL))
+    if (!::OpenClipboard(NULL))
         return NULL;
-    HANDLE wbuf_handle = GetClipboardData(CF_UNICODETEXT);
+    HANDLE wbuf_handle = ::GetClipboardData(CF_UNICODETEXT);
     if (wbuf_handle == NULL)
     {
-        CloseClipboard();
+        ::CloseClipboard();
         return NULL;
     }
-    if (ImWchar* wbuf_global = (ImWchar*)GlobalLock(wbuf_handle))
+    if (ImWchar* wbuf_global = (ImWchar*)::GlobalLock(wbuf_handle))
     {
         int buf_len = ImTextCountUtf8BytesFromStr(wbuf_global, NULL) + 1;
         buf_local.resize(buf_len);
         ImTextStrToUtf8(buf_local.Data, buf_len, wbuf_global, NULL);
     }
-    GlobalUnlock(wbuf_handle);
-    CloseClipboard();
+    ::GlobalUnlock(wbuf_handle);
+    ::CloseClipboard();
     return buf_local.Data;
 }
 
 static void SetClipboardTextFn_DefaultImpl(void*, const char* text)
 {
-    if (!OpenClipboard(NULL))
+    if (!::OpenClipboard(NULL))
         return;
     const int wbuf_length = ImTextCountCharsFromUtf8(text, NULL) + 1;
-    HGLOBAL wbuf_handle = GlobalAlloc(GMEM_MOVEABLE, (SIZE_T)wbuf_length * sizeof(ImWchar));
+    HGLOBAL wbuf_handle = ::GlobalAlloc(GMEM_MOVEABLE, (SIZE_T)wbuf_length * sizeof(ImWchar));
     if (wbuf_handle == NULL)
     {
-        CloseClipboard();
+        ::CloseClipboard();
         return;
     }
-    ImWchar* wbuf_global = (ImWchar*)GlobalLock(wbuf_handle);
+    ImWchar* wbuf_global = (ImWchar*)::GlobalLock(wbuf_handle);
     ImTextStrFromUtf8(wbuf_global, wbuf_length, text, NULL);
-    GlobalUnlock(wbuf_handle);
-    EmptyClipboard();
-    SetClipboardData(CF_UNICODETEXT, wbuf_handle);
-    CloseClipboard();
+    ::GlobalUnlock(wbuf_handle);
+    ::EmptyClipboard();
+    if (::SetClipboardData(CF_UNICODETEXT, wbuf_handle) == NULL)
+        ::GlobalFree(wbuf_handle);
+    ::CloseClipboard();
 }
 
 #else
@@ -13747,13 +13748,13 @@ static void ImeSetInputScreenPosFn_DefaultImpl(int x, int y)
 {
     // Notify OS Input Method Editor of text input position
     if (HWND hwnd = (HWND)GImGui->IO.ImeWindowHandle)
-        if (HIMC himc = ImmGetContext(hwnd))
+        if (HIMC himc = ::ImmGetContext(hwnd))
         {
             COMPOSITIONFORM cf;
             cf.ptCurrentPos.x = x;
             cf.ptCurrentPos.y = y;
             cf.dwStyle = CFS_FORCE_POSITION;
-            ImmSetCompositionWindow(himc, &cf);
+            ::ImmSetCompositionWindow(himc, &cf);
         }
 }
 
