@@ -55,7 +55,7 @@
 #define atomicFetchAndAnd(_mem, _data, _original)      _original = atomicAnd(_mem, _data)
 #define atomicFetchAndMax(_mem, _data, _original)      _original = atomicMax(_mem, _data)
 #define atomicFetchAndMin(_mem, _data, _original)      _original = atomicMin(_mem, _data)
-#define atomicFetchAndOr(_mem, _data, _original)       _original = atomicOrnterlockedOr(_mem, _data)
+#define atomicFetchAndOr(_mem, _data, _original)       _original = atomicOr(_mem, _data)
 #define atomicFetchAndXor(_mem, _data, _original)      _original = atomicXor(_mem, _data)
 #define atomicFetchAndExchange(_mem, _data, _original) _original = atomicExchange(_mem, _data)
 
