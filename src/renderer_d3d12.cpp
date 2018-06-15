@@ -4497,24 +4497,16 @@ namespace bgfx { namespace d3d12
 
 			for (uint8_t side = 0; side < numSides; ++side)
 			{
-				uint32_t width  = textureWidth;
-				uint32_t height = textureHeight;
-				uint32_t depth  = imageContainer.m_depth;
-
 				for (uint8_t lod = 0; lod < numMips; ++lod)
 				{
-					width  = bx::uint32_max(blockWidth,  width);
-					height = bx::uint32_max(blockHeight, height);
-					depth  = bx::uint32_max(1, depth);
-
 					bimg::ImageMip mip;
 					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
 					{
 						if (convert)
 						{
-							const uint32_t pitch = bx::strideAlign(bx::max<uint32_t>(width,  4)*bpp/8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(height, 4)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-							const uint32_t size  = slice*depth;
+							const uint32_t pitch = bx::strideAlign(bx::max<uint32_t>(mip.m_width,  4)*bpp/8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+							const uint32_t slice = bx::strideAlign(bx::max<uint32_t>(mip.m_height, 4)*pitch, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+							const uint32_t size  = slice*mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
 							bimg::imageDecodeToBgra8(
@@ -4535,13 +4527,13 @@ namespace bgfx { namespace d3d12
 						{
 							const uint32_t pitch = bx::strideAlign( (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 							const uint32_t slice = bx::strideAlign( (mip.m_height/blockInfo.blockHeight)*pitch,           D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-							const uint32_t size  = slice*depth;
+							const uint32_t size  = slice*mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
 							bimg::imageCopy(temp
 									,  mip.m_height/blockInfo.blockHeight
 									, (mip.m_width /blockInfo.blockWidth )*mip.m_blockSize
-									, depth
+									, mip.m_depth
 									, mip.m_data
 									, pitch
 									);
@@ -4555,11 +4547,11 @@ namespace bgfx { namespace d3d12
 							const uint32_t pitch = bx::strideAlign(mip.m_width*mip.m_bpp / 8, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 							const uint32_t slice = bx::strideAlign(mip.m_height*pitch,        D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
-							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*depth);
+							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, slice*mip.m_depth);
 							bimg::imageCopy(temp
 									, mip.m_height
 									, mip.m_width*mip.m_bpp/8
-									, depth
+									, mip.m_depth
 									, mip.m_data
 									, pitch
 									);
@@ -4571,10 +4563,6 @@ namespace bgfx { namespace d3d12
 
 						++kk;
 					}
-
-					width  >>= 1;
-					height >>= 1;
-					depth  >>= 1;
 				}
 			}
 
