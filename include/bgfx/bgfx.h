@@ -951,8 +951,8 @@ namespace bgfx
 		EncoderStats* encoderStats;         //!< Array of encoder stats.
 	};
 
-	/// Encoders are used for submitting draw calls from multiple threads, so one encoder per thread.
-	/// Use `bgfx::begin()` to obtain an encoder for a thread.
+	/// Encoders are used for submitting draw calls from multiple threads. Only one encoder
+	/// per thread should be used. Use `bgfx::begin()` to obtain an encoder for a thread.
 	///
 	/// @attention C99 equivalent is `bgfx_encoder`.
 	///
