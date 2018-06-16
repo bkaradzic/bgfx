@@ -2255,6 +2255,7 @@ void ImGui::KeepAliveID(ImGuiID id)
 
 void ImGui::MarkItemValueChanged(ImGuiID id)
 {
+    (void)id;
     // This marking is solely to be able to provide info for IsItemDeactivatedAfterChange().
     // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need need to fill the data.
     ImGuiContext& g = *GImGui;

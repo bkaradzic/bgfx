@@ -400,15 +400,14 @@ namespace bgfx
 
 		void setIntersect(const Rect& _a, const Rect& _b)
 		{
-			using namespace bx;
-			const uint16_t sx = uint16_max(_a.m_x, _b.m_x);
-			const uint16_t sy = uint16_max(_a.m_y, _b.m_y);
-			const uint16_t ex = uint16_min(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
-			const uint16_t ey = uint16_min(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
+			const uint16_t sx = bx::max<uint16_t>(_a.m_x, _b.m_x);
+			const uint16_t sy = bx::max<uint16_t>(_a.m_y, _b.m_y);
+			const uint16_t ex = bx::min<uint16_t>(_a.m_x + _a.m_width,  _b.m_x + _b.m_width );
+			const uint16_t ey = bx::min<uint16_t>(_a.m_y + _a.m_height, _b.m_y + _b.m_height);
 			m_x = sx;
 			m_y = sy;
-			m_width  = (uint16_t)uint32_satsub(ex, sx);
-			m_height = (uint16_t)uint32_satsub(ey, sy);
+			m_width  = (uint16_t)bx::uint32_satsub(ex, sx);
+			m_height = (uint16_t)bx::uint32_satsub(ey, sy);
 		}
 
 		void intersect(const Rect& _a)
@@ -1674,10 +1673,10 @@ namespace bgfx
 
 		void setRect(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 		{
-			m_rect.m_x = (uint16_t)bx::uint32_imax(int16_t(_x), 0);
-			m_rect.m_y = (uint16_t)bx::uint32_imax(int16_t(_y), 0);
-			m_rect.m_width  = bx::uint16_max(_width,  1);
-			m_rect.m_height = bx::uint16_max(_height, 1);
+			m_rect.m_x      = uint16_t(bx::max<int16_t>(int16_t(_x), 0) );
+			m_rect.m_y      = uint16_t(bx::max<int16_t>(int16_t(_y), 0) );
+			m_rect.m_width  = bx::max<uint16_t>(_width,  1);
+			m_rect.m_height = bx::max<uint16_t>(_height, 1);
 		}
 
 		void setScissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -3646,7 +3645,7 @@ namespace bgfx
 			ShaderRef& sr = m_shaderRef[_handle.idx];
 			if (NULL != _uniforms)
 			{
-				bx::memCopy(_uniforms, sr.m_uniforms, bx::uint16_min(_max, sr.m_num)*sizeof(UniformHandle) );
+				bx::memCopy(_uniforms, sr.m_uniforms, bx::min<uint16_t>(_max, sr.m_num)*sizeof(UniformHandle) );
 			}
 
 			return sr.m_num;
@@ -4247,7 +4246,7 @@ namespace bgfx
 				return handle;
 			}
 
-			_num  = bx::uint16_max(1, _num);
+			_num  = bx::max<uint16_t>(1, _num);
 
 			uint16_t idx = m_uniformHashMap.find(bx::hash<bx::HashMurmur2A>(_name) );
 			if (kInvalidHandle != idx)
@@ -4267,7 +4266,7 @@ namespace bgfx
 				||  uniform.m_num < _num)
 				{
 					uniform.m_type = oldsize < newsize ? _type : uniform.m_type;
-					uniform.m_num  = bx::uint16_max(uniform.m_num, _num);
+					uniform.m_num  = bx::max<uint16_t>(uniform.m_num, _num);
 
 					CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateUniform);
 					cmdbuf.write(handle);

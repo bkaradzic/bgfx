@@ -89,8 +89,8 @@ public:
 			// Use debug font to print information about this example.
 			bgfx::dbgTextClear();
 			bgfx::dbgTextImage(
-				  bx::uint16_max(uint16_t(m_width /2/8 ), 20)-20
-				, bx::uint16_max(uint16_t(m_height/2/16),  6)-6
+				  bx::max<uint16_t>(uint16_t(m_width /2/8 ), 20)-20
+				, bx::max<uint16_t>(uint16_t(m_height/2/16),  6)-6
 				, 40
 				, 12
 				, s_logo

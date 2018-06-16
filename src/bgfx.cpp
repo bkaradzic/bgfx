@@ -362,7 +362,7 @@ namespace bgfx
 		tc.m_height    = _height;
 		tc.m_depth     = 0;
 		tc.m_numLayers = 1;
-		tc.m_numMips   = uint8_t(bx::uint16_max(1, _numMips) );
+		tc.m_numMips   = bx::max<uint8_t>(1, _numMips);
 		tc.m_format    = _format;
 		tc.m_cubeMap   = false;
 		tc.m_mem       = NULL;
@@ -3759,8 +3759,8 @@ error:
 			break;
 		}
 
-		_width  = bx::uint16_max(1, _width);
-		_height = bx::uint16_max(1, _height);
+		_width  = bx::max<uint16_t>(1, _width);
+		_height = bx::max<uint16_t>(1, _height);
 	}
 
 	static TextureHandle createTexture2D(BackbufferRatio::Enum _ratio, uint16_t _width, uint16_t _height, bool _hasMips, uint16_t _numLayers, TextureFormat::Enum _format, uint32_t _flags, const Memory* _mem)
@@ -3781,7 +3781,7 @@ error:
 		}
 
 		const uint8_t numMips = calcNumMips(_hasMips, _width, _height);
-		_numLayers = bx::uint16_max(_numLayers, 1);
+		_numLayers = bx::max<uint16_t>(_numLayers, 1);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -3876,7 +3876,7 @@ error:
 		BX_CHECK(err.isOk(), "%s", err.getMessage().getPtr() );
 
 		const uint8_t numMips = calcNumMips(_hasMips, _size, _size);
-		_numLayers = bx::uint16_max(_numLayers, 1);
+		_numLayers = bx::max<uint16_t>(_numLayers, 1);
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG)
 		&&  NULL != _mem)
@@ -4029,8 +4029,8 @@ error:
 			);
 		return s_ctx->createFrameBuffer(
 			  _nwh
-			, bx::uint16_max(_width, 1)
-			, bx::uint16_max(_height, 1)
+			, bx::max<uint16_t>(_width, 1)
+			, bx::max<uint16_t>(_height, 1)
 			, _depthFormat
 			);
 	}

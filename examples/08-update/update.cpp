@@ -8,7 +8,8 @@
 #include "packrect.h"
 #include "imgui/imgui.h"
 
-#include <bx/uint32_t.h>
+#include <bx/rng.h>
+
 #include <list>
 
 namespace
@@ -301,9 +302,9 @@ public:
 
 		m_texture2dData = (uint8_t*)malloc(kTexture2dSize*kTexture2dSize*4);
 
-		m_rr = rand()%255;
-		m_gg = rand()%255;
-		m_bb = rand()%255;
+		m_rr = m_rng.gen()%255;
+		m_gg = m_rng.gen()%255;
+		m_bb = m_rng.gen()%255;
 
 		m_hit  = 0;
 		m_miss = 0;
@@ -386,7 +387,13 @@ public:
 
 			imguiEndFrame();
 
-			float borderColor[4] = { float(rand()%255)/255.0f, float(rand()%255)/255.0f, float(rand()%255)/255.0f, float(rand()%255)/255.0f };
+			float borderColor[4] =
+			{
+				float(m_rng.gen()%255)/255.0f,
+				float(m_rng.gen()%255)/255.0f,
+				float(m_rng.gen()%255)/255.0f,
+				float(m_rng.gen()%255)/255.0f,
+			};
 			bgfx::setPaletteColor(1, borderColor);
 
 			// Set view 0 and 1 viewport.
@@ -405,8 +412,8 @@ public:
 			{
 				PackCube face;
 
-				uint16_t bw = bx::uint16_max(1, rand()%(kTextureSide/4) );
-				uint16_t bh = bx::uint16_max(1, rand()%(kTextureSide/4) );
+				uint16_t bw = bx::max<uint16_t>(1, m_rng.gen()%(kTextureSide/4) );
+				uint16_t bh = bx::max<uint16_t>(1, m_rng.gen()%(kTextureSide/4) );
 
 				if (m_cube.find(bw, bh, face) )
 				{
@@ -421,9 +428,9 @@ public:
 						bgfx::blit(0, m_textureCube[1], 0, rect.m_x, rect.m_y, face.m_side, m_textureCube[0], 0, rect.m_x, rect.m_y, face.m_side, rect.m_width, rect.m_height);
 					}
 
-					m_rr = rand()%255;
-					m_gg = rand()%255;
-					m_bb = rand()%255;
+					m_rr = m_rng.gen()%255;
+					m_gg = m_rng.gen()%255;
+					m_bb = m_rng.gen()%255;
 				}
 				else
 				{
@@ -449,10 +456,10 @@ public:
 					// Fill rect.
 					const uint32_t pitch = kTexture2dSize*4;
 
-					const uint16_t tw = rand()% kTexture2dSize;
-					const uint16_t th = rand()% kTexture2dSize;
-					const uint16_t tx = rand()%(kTexture2dSize-tw);
-					const uint16_t ty = rand()%(kTexture2dSize-th);
+					const uint16_t tw = m_rng.gen()% kTexture2dSize;
+					const uint16_t th = m_rng.gen()% kTexture2dSize;
+					const uint16_t tx = m_rng.gen()%(kTexture2dSize-tw);
+					const uint16_t ty = m_rng.gen()%(kTexture2dSize-th);
 
 					uint8_t* dst = &m_texture2dData[(ty*kTexture2dSize+tx)*4];
 					uint8_t* next = dst + pitch;
@@ -642,6 +649,7 @@ public:
 	RectPackCubeT<256> m_cube;
 	int64_t m_updateTime;
 	int64_t m_timeOffset;
+	bx::RngMwc m_rng;
 
 	uint32_t m_hit;
 	uint32_t m_miss;

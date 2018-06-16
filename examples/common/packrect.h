@@ -43,8 +43,8 @@ public:
 
 	bool find(uint16_t _width, uint16_t _height, Pack2D& _pack)
 	{
-		uint16_t width  = bx::uint16_min(64, (_width  + m_bw - 1) / m_bw);
-		uint16_t height = bx::uint16_min(numBlocks, (_height + m_bh - 1) / m_bh);
+		uint16_t width  = bx::min<uint16_t>(64, (_width  + m_bw - 1) / m_bw);
+		uint16_t height = bx::min<uint16_t>(numBlocks, (_height + m_bh - 1) / m_bh);
 		uint16_t numx = 64-width;
 		uint16_t numy = numBlocks-height;
 
@@ -90,10 +90,10 @@ public:
 
 	void clear(const Pack2D& _pack)
 	{
-		uint16_t startx = bx::uint16_min(63, _pack.m_x / m_bw);
-		uint16_t starty = bx::uint16_min(numBlocks-1, _pack.m_y / m_bh);
-		uint16_t endx   = bx::uint16_min(64, (_pack.m_width + m_bw - 1) / m_bw + startx);
-		uint16_t endy   = bx::uint16_min(numBlocks, (_pack.m_height + m_bh - 1) / m_bh + starty);
+		uint16_t startx = bx::min<uint16_t>(63, _pack.m_x / m_bw);
+		uint16_t starty = bx::min<uint16_t>(numBlocks-1, _pack.m_y / m_bh);
+		uint16_t endx   = bx::min<uint16_t>(64, (_pack.m_width + m_bw - 1) / m_bw + startx);
+		uint16_t endy   = bx::min<uint16_t>(numBlocks, (_pack.m_height + m_bh - 1) / m_bh + starty);
 		uint16_t width  = endx - startx;
 
 		const uint64_t mask = (width == 64 ? UINT64_MAX : (UINT64_C(1)<<width)-1 )<<startx;

@@ -4365,8 +4365,8 @@ BX_UNUSED(currentSamplerStateIdx);
 
 		static int64_t min = frameTime;
 		static int64_t max = frameTime;
-		min = bx::int64_min(min, frameTime);
-		max = bx::int64_max(max, frameTime);
+		min = bx::min<int64_t>(min, frameTime);
+		max = bx::max<int64_t>(max, frameTime);
 
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
@@ -4376,8 +4376,8 @@ BX_UNUSED(maxGpuLatency, maxGpuElapsed, elapsedGpuMs);
 		static int64_t presentMin = 0; //m_presentElapsed;
 		static int64_t presentMax = 0; //m_presentElapsed;
 BX_UNUSED(presentMin, presentMax);
-//		presentMin = bx::int64_min(presentMin, m_presentElapsed);
-//		presentMax = bx::int64_max(presentMax, m_presentElapsed);
+//		presentMin = bx::min<int64_t>(presentMin, m_presentElapsed);
+//		presentMax = bx::max<int64_t>(presentMax, m_presentElapsed);
 
 //		m_gpuTimer.end(m_commandList);
 

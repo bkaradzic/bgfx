@@ -957,7 +957,7 @@ public:
 		//set the view/projection transforms so that the compute shader can receive the viewProjection matrix automagically
 		bgfx::setViewTransform(RENDER_PASS_OCCLUDE_PROPS_ID, m_mainView, m_occlusionProj);
 
-		uint16_t groupX = bx::uint16_max(m_totalInstancesCount / 64 + 1, 1);
+		uint16_t groupX = bx::max<uint16_t>(m_totalInstancesCount / 64 + 1, 1);
 
 		bgfx::dispatch(RENDER_PASS_OCCLUDE_PROPS_ID, m_programOccludeProps, groupX, 1, 1);
 

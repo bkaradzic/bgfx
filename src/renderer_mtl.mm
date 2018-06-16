@@ -4059,8 +4059,8 @@ namespace bgfx { namespace mtl
 
 		static int64_t min = frameTime;
 		static int64_t max = frameTime;
-		min = bx::int64_min(min, frameTime);
-		max = bx::int64_max(max, frameTime);
+		min = bx::min<int64_t>(min, frameTime);
+		max = bx::max<int64_t>(max, frameTime);
 
 		static uint32_t maxGpuLatency = 0;
 		static double   maxGpuElapsed = 0.0f;
