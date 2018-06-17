@@ -71,4 +71,17 @@ void main()
 
     int degrees;
     degrees(3.2);
+
+    {
+        S s;
+        s.x = 3;
+        struct S {   // okay, hides S
+            bool b;
+        };
+        S t;
+        t.b = true;
+        struct S {    // ERROR, redefinition of struct S
+            float f;
+        };
+    }
 }

@@ -383,29 +383,34 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
         return !(at != slots[set].end() && *at == slot);
     }
 
-    int reserveSlot(int set, int slot)
+    int reserveSlot(int set, int slot, int size = 1)
     {
         TSlotSet::iterator at = findSlot(set, slot);
 
         // tolerate aliasing, by not double-recording aliases
         // (policy about appropriateness of the alias is higher up)
-        if (at == slots[set].end() || *at != slot)
-            slots[set].insert(at, slot);
+        for (int i = 0; i < size; i++) {
+                if (at == slots[set].end() || *at != slot + i)
+                        at = slots[set].insert(at, slot + i);
+                ++at;
+        }
 
         return slot;
     }
 
-    int getFreeSlot(int set, int base)
+    int getFreeSlot(int set, int base, int size = 1)
     {
         TSlotSet::iterator at = findSlot(set, base);
         if (at == slots[set].end())
-            return reserveSlot(set, base);
+            return reserveSlot(set, base, size);
 
-        // look in locksteps, if they not match, then there is a free slot
-        for (; at != slots[set].end(); ++at, ++base)
-            if (*at != base)
+        // look for a big enough gap
+        for (; at != slots[set].end(); ++at) {
+            if (*at - base >= size)
                 break;
-        return reserveSlot(set, base);
+            base = *at + 1;
+        }
+        return reserveSlot(set, base, size);
     }
 
     virtual bool validateBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override = 0;
@@ -561,40 +566,42 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase
     int resolveBinding(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool is_live) override
     {
         const int set = getLayoutSet(type);
+        // On OpenGL arrays of opaque types take a seperate binding for each element
+        int numBindings = intermediate.getSpv().openGl != 0 && type.isSizedArray() ? type.getCumulativeArraySize() : 1;
 
         if (type.getQualifier().hasBinding()) {
             if (isImageType(type))
-                return reserveSlot(set, getBaseBinding(EResImage, set) + type.getQualifier().layoutBinding);
+                return reserveSlot(set, getBaseBinding(EResImage, set) + type.getQualifier().layoutBinding, numBindings);
 
             if (isTextureType(type))
-                return reserveSlot(set, getBaseBinding(EResTexture, set) + type.getQualifier().layoutBinding);
+                return reserveSlot(set, getBaseBinding(EResTexture, set) + type.getQualifier().layoutBinding, numBindings);
 
             if (isSsboType(type))
-                return reserveSlot(set, getBaseBinding(EResSsbo, set) + type.getQualifier().layoutBinding);
+                return reserveSlot(set, getBaseBinding(EResSsbo, set) + type.getQualifier().layoutBinding, numBindings);
 
             if (isSamplerType(type))
-                return reserveSlot(set, getBaseBinding(EResSampler, set) + type.getQualifier().layoutBinding);
+                return reserveSlot(set, getBaseBinding(EResSampler, set) + type.getQualifier().layoutBinding, numBindings);
 
             if (isUboType(type))
-                return reserveSlot(set, getBaseBinding(EResUbo, set) + type.getQualifier().layoutBinding);
+                return reserveSlot(set, getBaseBinding(EResUbo, set) + type.getQualifier().layoutBinding, numBindings);
         } else if (is_live && doAutoBindingMapping()) {
             // find free slot, the caller did make sure it passes all vars with binding
             // first and now all are passed that do not have a binding and needs one
 
             if (isImageType(type))
-                return getFreeSlot(set, getBaseBinding(EResImage, set));
+                return getFreeSlot(set, getBaseBinding(EResImage, set), numBindings);
 
             if (isTextureType(type))
-                return getFreeSlot(set, getBaseBinding(EResTexture, set));
+                return getFreeSlot(set, getBaseBinding(EResTexture, set), numBindings);
 
             if (isSsboType(type))
-                return getFreeSlot(set, getBaseBinding(EResSsbo, set));
+                return getFreeSlot(set, getBaseBinding(EResSsbo, set), numBindings);
 
             if (isSamplerType(type))
-                return getFreeSlot(set, getBaseBinding(EResSampler, set));
+                return getFreeSlot(set, getBaseBinding(EResSampler, set), numBindings);
 
             if (isUboType(type))
-                return getFreeSlot(set, getBaseBinding(EResUbo, set));
+                return getFreeSlot(set, getBaseBinding(EResUbo, set), numBindings);
         }
 
         return -1;
