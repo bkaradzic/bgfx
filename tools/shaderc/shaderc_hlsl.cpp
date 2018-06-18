@@ -624,8 +624,17 @@ namespace bgfx { namespace hlsl
 			int32_t start  = 0;
 			int32_t end    = INT32_MAX;
 
+			if (!hlslfp.empty())
+			{
+				const char* logfp = bx::strFind(log, hlslfp.c_str());
+				if (NULL != logfp)
+				{
+					log = logfp + hlslfp.length();
+				}
+			}
+
 			bool found = false
-				|| 2 == sscanf(log, "(%u,%u):",  &line, &column)
+				|| 2 == sscanf(log, "(%u,%u",  &line, &column)
 				|| 2 == sscanf(log, " :%u:%u: ", &line, &column)
 				;
 
