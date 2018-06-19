@@ -639,6 +639,8 @@ typedef struct bgfx_init_s
     bgfx_renderer_type_t type;
     uint16_t vendorId;
     uint16_t deviceId;
+    bool debug;
+    bool profiling;
 
     bgfx_resolution_t  resolution;
     bgfx_init_limits_t limits;

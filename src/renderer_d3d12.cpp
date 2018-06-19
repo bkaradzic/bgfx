@@ -664,7 +664,12 @@ namespace bgfx { namespace d3d12
 			}
 #endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
 
-			m_renderdocdll = loadRenderDoc();
+			if (_init.debug
+			||  _init.profile)
+			{
+				m_renderdocdll = loadRenderDoc();
+			}
+
 			setGraphicsDebuggerPresent(NULL != m_renderdocdll || NULL != m_winPixEvent);
 
 			m_fbh.idx = kInvalidHandle;
@@ -729,14 +734,15 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG||BGFX_CONFIG_DEBUG_PIX) )
+			if (_init.debug
+			||  _init.profile)
 			{
 				ID3D12Debug* debug0;
 				hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug0);
 
 				if (SUCCEEDED(hr) )
 				{
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+					if (_init.debug)
 					{
 						debug0->EnableDebugLayer();
 
@@ -759,7 +765,7 @@ namespace bgfx { namespace d3d12
 					}
 
 #if BX_PLATFORM_XBOXONE
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					if (_init.profile)
 					{
 						// https://github.com/Microsoft/Xbox-ATG-Samples/blob/76d236e3bd372aceec18b2ad0556a7879dbd9628/XDKSamples/IntroGraphics/SimpleTriangle12/DeviceResources.cpp#L67
 						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED);
@@ -936,7 +942,7 @@ namespace bgfx { namespace d3d12
 					| DXGI_MWA_NO_ALT_ENTER
 					) );
 
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+				if (_init.debug)
 				{
 					hr = m_device->QueryInterface(IID_ID3D12InfoQueue, (void**)&m_infoQueue);
 
@@ -1780,7 +1786,7 @@ namespace bgfx { namespace d3d12
 
 		void setMarker(const char* _marker, uint32_t /*_size*/) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX))
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
 				PIX3_SETMARKER(m_commandList, D3DCOLOR_MARKER, _marker);
 			}

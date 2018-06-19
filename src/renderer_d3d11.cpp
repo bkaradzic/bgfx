@@ -724,7 +724,8 @@ namespace bgfx { namespace d3d11
 #endif // BGFX_CONFIG_USE_OVR
 			m_ovr.init(vrImpl);
 
-			if (!m_ovr.isInitialized() )
+			if (!m_ovr.isInitialized()
+			&& (_init.debug || _init.profile) )
 			{
 				m_renderdocdll = loadRenderDoc();
 			}
@@ -891,7 +892,7 @@ namespace bgfx { namespace d3d11
 						| D3D11_CREATE_DEVICE_SINGLETHREADED
 						| D3D11_CREATE_DEVICE_BGRA_SUPPORT
 //						| D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
-						| (BX_ENABLED(BGFX_CONFIG_DEBUG) ? D3D11_CREATE_DEVICE_DEBUG : 0)
+						| (_init.debug ? D3D11_CREATE_DEVICE_DEBUG : 0)
 						;
 
 					hr = E_FAIL;
@@ -1090,7 +1091,7 @@ namespace bgfx { namespace d3d11
 			}
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			if (_init.debug)
 			{
 				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&m_infoQueue);
 
@@ -1465,7 +1466,7 @@ namespace bgfx { namespace d3d11
 					mbstowcs(s_viewNameW[ii], s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED);
 				}
 
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG)
+				if (_init.debug
 				&&  NULL != m_infoQueue)
 				{
 					m_infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);

@@ -625,6 +625,9 @@ namespace bgfx
 		/// matching id.
 		uint16_t deviceId;
 
+		bool debug;   //!< Enable device for debuging.
+		bool profile; //!< Enable device for profiling.
+
 		Resolution resolution; //!< Backbuffer resolution and reset parameters.
 
 		struct Limits

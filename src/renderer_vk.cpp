@@ -743,7 +743,12 @@ VK_IMPORT_DEVICE
 			m_qfiGraphics = UINT32_MAX;
 			m_qfiCompute  = UINT32_MAX;
 
-			m_renderdocdll = loadRenderDoc();
+			if (_init.debug
+			||  _init.profile)
+			{
+				m_renderdocdll = loadRenderDoc();
+			}
+
 			m_vulkan1dll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
 					"vulkan-1.dll"

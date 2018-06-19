@@ -1786,7 +1786,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
-			m_renderdocdll = loadRenderDoc();
+			if (_init.debug
+			||  _init.profile)
+			{
+				m_renderdocdll = loadRenderDoc();
+			}
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
