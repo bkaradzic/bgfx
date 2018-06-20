@@ -4835,7 +4835,7 @@ BGFX_C_API bool bgfx_init(const bgfx_init_t* _init)
 	}
 
 	union { const bgfx_init_t* c; const bgfx::Init* cpp; } in;
-	in.c = _init;
+	in.c = &init;
 
 	return bgfx::init(*in.cpp);
 }
