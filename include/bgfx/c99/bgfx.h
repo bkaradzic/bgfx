@@ -640,7 +640,7 @@ typedef struct bgfx_init_s
     uint16_t vendorId;
     uint16_t deviceId;
     bool debug;
-    bool profiling;
+    bool profile;
 
     bgfx_resolution_t  resolution;
     bgfx_init_limits_t limits;
