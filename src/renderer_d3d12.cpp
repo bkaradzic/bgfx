@@ -435,10 +435,12 @@ namespace bgfx { namespace d3d12
 
 	static void initHeapProperties(ID3D12Device* _device)
 	{
+#if BX_PLATFORM_WINDOWS
 		initHeapProperties(_device, s_heapProperties[HeapProperty::Default ].m_properties);
 		initHeapProperties(_device, s_heapProperties[HeapProperty::Texture ].m_properties);
 		initHeapProperties(_device, s_heapProperties[HeapProperty::Upload  ].m_properties);
 		initHeapProperties(_device, s_heapProperties[HeapProperty::ReadBack].m_properties);
+#endif // BX_PLATFORM_WINDOWS
 	}
 
 	ID3D12Resource* createCommittedResource(ID3D12Device* _device, HeapProperty::Enum _heapProperty, const D3D12_RESOURCE_DESC* _resourceDesc, const D3D12_CLEAR_VALUE* _clearValue, bool _memSet = false)
@@ -742,11 +744,13 @@ namespace bgfx { namespace d3d12
 
 				if (SUCCEEDED(hr) )
 				{
+					uint32_t debugFlags = 0;
+
 					if (_init.debug)
 					{
+#if BX_PLATFORM_WINDOWS
 						debug0->EnableDebugLayer();
 
-#if BX_PLATFORM_WINDOWS
 						{
 							ID3D12Debug1* debug1;
 							hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
@@ -760,15 +764,17 @@ namespace bgfx { namespace d3d12
 							DX_RELEASE(debug1, 1);
 						}
 #elif BX_PLATFORM_XBOXONE
-						debug0->SetProcessDebugFlags(D3D12_PROCESS_DEBUG_FLAG_DEBUG_LAYER_ENABLED);
+						debugFlags |= D3D12_PROCESS_DEBUG_FLAG_DEBUG_LAYER_ENABLED;
 #endif // BX_PLATFORM_WINDOWS
 					}
 
 #if BX_PLATFORM_XBOXONE
-					if (_init.profile)
+					// https://github.com/Microsoft/Xbox-ATG-Samples/blob/76d236e3bd372aceec18b2ad0556a7879dbd9628/XDKSamples/IntroGraphics/SimpleTriangle12/DeviceResources.cpp#L67
+					debugFlags |= _init.profile ? D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED : 0;
+
+					if (0 != debugFlags)
 					{
-						// https://github.com/Microsoft/Xbox-ATG-Samples/blob/76d236e3bd372aceec18b2ad0556a7879dbd9628/XDKSamples/IntroGraphics/SimpleTriangle12/DeviceResources.cpp#L67
-						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED);
+						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAGS(debugFlags) );
 					}
 #endif // BX_PLATFORM_XBOXONE
 
@@ -812,6 +818,10 @@ namespace bgfx { namespace d3d12
 			}
 
 			m_dxgi.update(m_device);
+
+#if BX_PLATFORM_XBOXONE
+			m_device->SetDebugErrorFilterX(0x73EC9EAF, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_BREAKS);
+#endif // BX_PLATFORM_XBOXONE
 
 			if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
 			{
@@ -1998,10 +2008,16 @@ namespace bgfx { namespace d3d12
 			clearValue.DepthStencil.Depth   = 1.0f;
 			clearValue.DepthStencil.Stencil = 0;
 
+			m_commandList = m_cmd.alloc();
+
 			m_backBufferDepthStencil = createCommittedResource(m_device, HeapProperty::Default, &resourceDesc, &clearValue);
 			m_device->CreateDepthStencilView(m_backBufferDepthStencil, NULL, getCPUHandleHeapStart(m_dsvDescriptorHeap));
 
-			m_commandList = m_cmd.alloc();
+			setResourceBarrier(m_commandList
+				, m_backBufferDepthStencil
+				, D3D12_RESOURCE_STATE_COMMON
+				, D3D12_RESOURCE_STATE_DEPTH_WRITE
+				);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
 			{
@@ -4164,6 +4180,9 @@ namespace bgfx { namespace d3d12
 
 		if (drawIndirect)
 		{
+#if BX_PLATFORM_XBOXONE
+			flags |= D3D12XBOX_RESOURCE_FLAG_ALLOW_INDIRECT_BUFFER;
+#endif // BX_PLATFORM_XBOXONE
 			format = DXGI_FORMAT_R32G32B32A32_UINT;
 			stride = 16;
 		}
