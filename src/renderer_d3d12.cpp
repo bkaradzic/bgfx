@@ -777,6 +777,7 @@ namespace bgfx { namespace d3d12
 						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAGS(debugFlags) );
 					}
 #endif // BX_PLATFORM_XBOXONE
+					BX_UNUSED(debugFlags);
 
 					DX_RELEASE(debug0, 0);
 				}

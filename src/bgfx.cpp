@@ -3590,9 +3590,9 @@ error:
 		return s_ctx->getShaderUniforms(_handle, _uniforms, _max);
 	}
 
-	void setName(ShaderHandle _handle, const char* _name)
+	void setName(ShaderHandle _handle, const char* _name, int32_t _len)
 	{
-		s_ctx->setName(_handle, _name);
+		s_ctx->setName(_handle, bx::StringView(_name, _len) );
 	}
 
 	void destroy(ShaderHandle _handle)
@@ -3913,9 +3913,9 @@ error:
 		return s_ctx->createTexture(mem, _flags, 0, NULL, BackbufferRatio::Count, NULL != _mem);
 	}
 
-	void setName(TextureHandle _handle, const char* _name)
+	void setName(TextureHandle _handle, const char* _name, int32_t _len)
 	{
-		s_ctx->setName(_handle, _name);
+		s_ctx->setName(_handle, bx::StringView(_name, _len) );
 	}
 
 	void* getDirectAccessPtr(TextureHandle _handle)
@@ -5068,10 +5068,10 @@ BGFX_C_API uint16_t bgfx_get_shader_uniforms(bgfx_shader_handle_t _handle, bgfx_
 	return bgfx::getShaderUniforms(handle.cpp, (bgfx::UniformHandle*)_uniforms, _max);
 }
 
-BGFX_C_API void bgfx_set_shader_name(bgfx_shader_handle_t _handle, const char* _name)
+BGFX_C_API void bgfx_set_shader_name(bgfx_shader_handle_t _handle, const char* _name, int32_t _len)
 {
 	union { bgfx_shader_handle_t c; bgfx::ShaderHandle cpp; } handle = { _handle };
-	bgfx::setName(handle.cpp, _name);
+	bgfx::setName(handle.cpp, _name, _len);
 }
 
 BGFX_C_API void bgfx_destroy_shader(bgfx_shader_handle_t _handle)
@@ -5174,10 +5174,10 @@ BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data
 	return bgfx::readTexture(handle.cpp, _data, _mip);
 }
 
-BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char* _name)
+BGFX_C_API void bgfx_set_texture_name(bgfx_texture_handle_t _handle, const char* _name, int32_t _len)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
-	bgfx::setName(handle.cpp, _name);
+	bgfx::setName(handle.cpp, _name, _len);
 }
 
 BGFX_C_API void* bgfx_get_direct_access_ptr(bgfx_texture_handle_t _handle)

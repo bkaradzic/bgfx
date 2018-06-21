@@ -3651,16 +3651,17 @@ namespace bgfx
 			return sr.m_num;
 		}
 
-		void setName(Handle _handle, const char* _name)
+		void setName(Handle _handle, const bx::StringView& _name)
 		{
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SetName);
 			cmdbuf.write(_handle);
-			uint16_t len = (uint8_t)bx::strLen(_name)+1;
+			uint16_t len = uint16_t(_name.getLength()+1);
 			cmdbuf.write(len);
-			cmdbuf.write(_name, len);
+			cmdbuf.write(_name.getPtr(), len-1);
+			cmdbuf.write('\0');
 		}
 
-		BGFX_API_FUNC(void setName(ShaderHandle _handle, const char* _name) )
+		BGFX_API_FUNC(void setName(ShaderHandle _handle, const bx::StringView& _name) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3937,7 +3938,7 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(void setName(TextureHandle _handle, const char* _name) )
+		BGFX_API_FUNC(void setName(TextureHandle _handle, const bx::StringView& _name) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 			BGFX_CHECK_HANDLE("setName", m_textureHandle, _handle);
