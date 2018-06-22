@@ -2950,19 +2950,6 @@ error:
 		return false;
 	}
 
-	bool init(RendererType::Enum _type, uint16_t _vendorId, uint16_t _deviceId, CallbackI* _callback, bx::AllocatorI* _allocator)
-	{
-		Init in;
-
-		in.type      = _type;
-		in.vendorId  = _vendorId;
-		in.deviceId  = _deviceId;
-		in.callback  = _callback;
-		in.allocator = _allocator;
-
-		return init(in);
-	}
-
 	void shutdown()
 	{
 		BX_TRACE("Shutdown...");
