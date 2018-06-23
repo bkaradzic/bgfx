@@ -239,7 +239,7 @@ int TPpContext::TokenStream::getToken(TParseContextBase& parseContext, TPpToken 
     if (SaveValue(atom)) {
         char* n = reinterpret_cast<char*>(&ppToken->i64val);
         for (size_t i = 0; i < sizeof(ppToken->i64val); ++i)
-            *n++ = getSubtoken();
+            *n++ = (char)getSubtoken();
     }
 
     return atom;

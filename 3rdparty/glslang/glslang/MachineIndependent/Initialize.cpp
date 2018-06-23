@@ -603,10 +603,10 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "dvec3  reflect(dvec3 , dvec3 );"
             "dvec4  reflect(dvec4 , dvec4 );"
 
-            "double refract(double, double, float);"
-            "dvec2  refract(dvec2 , dvec2 , float);"
-            "dvec3  refract(dvec3 , dvec3 , float);"
-            "dvec4  refract(dvec4 , dvec4 , float);"
+            "double refract(double, double, double);"
+            "dvec2  refract(dvec2 , dvec2 , double);"
+            "dvec3  refract(dvec3 , dvec3 , double);"
+            "dvec4  refract(dvec4 , dvec4 , double);"
 
             "dmat2 matrixCompMult(dmat2, dmat2);"
             "dmat3 matrixCompMult(dmat3, dmat3);"

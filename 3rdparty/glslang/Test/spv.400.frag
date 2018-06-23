@@ -192,10 +192,10 @@ void doubles()
     dvec3v  += reflect(dvec3v, dvec3v);
     dvec4v  += reflect(dvec4v, dvec4v);
 
-    doublev += refract(doublev, doublev, 1.3);
-    dvec2v  += refract(dvec2v,  dvec2v,  1.3);
-    dvec3v  += refract(dvec3v,  dvec3v,  1.3);
-    dvec4v  += refract(dvec4v,  dvec4v,  1.3);
+    doublev += refract(doublev, doublev, doublev);
+    dvec2v  += refract(dvec2v, dvec2v, doublev);
+    dvec3v  += refract(dvec3v, dvec3v, doublev);
+    dvec4v  += refract(dvec4v, dvec4v, doublev);
 
     dmat2   dmat2v   = outerProduct(dvec2v, dvec2v);
     dmat3   dmat3v   = outerProduct(dvec3v, dvec3v);

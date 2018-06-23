@@ -844,29 +844,25 @@ ERROR: node is still EOpNull!
 0:288        refract ( global double)
 0:288          'doublev' ( temp double)
 0:288          'doublev' ( temp double)
-0:288          Constant:
-0:288            1.300000
+0:288          'doublev' ( temp double)
 0:289      add second child into first child ( temp 2-component vector of double)
 0:289        'dvec2v' ( temp 2-component vector of double)
 0:289        refract ( global 2-component vector of double)
 0:289          'dvec2v' ( temp 2-component vector of double)
 0:289          'dvec2v' ( temp 2-component vector of double)
-0:289          Constant:
-0:289            1.300000
+0:289          'doublev' ( temp double)
 0:290      add second child into first child ( temp 3-component vector of double)
 0:290        'dvec3v' ( temp 3-component vector of double)
 0:290        refract ( global 3-component vector of double)
 0:290          'dvec3v' ( temp 3-component vector of double)
 0:290          'dvec3v' ( temp 3-component vector of double)
-0:290          Constant:
-0:290            1.300000
+0:290          'doublev' ( temp double)
 0:291      add second child into first child ( temp 4-component vector of double)
 0:291        'dvec4v' ( temp 4-component vector of double)
 0:291        refract ( global 4-component vector of double)
 0:291          'dvec4v' ( temp 4-component vector of double)
 0:291          'dvec4v' ( temp 4-component vector of double)
-0:291          Constant:
-0:291            1.300000
+0:291          'doublev' ( temp double)
 0:293      Sequence
 0:293        move second child to first child ( temp 2X2 matrix of double)
 0:293          'dmat2v' ( temp 2X2 matrix of double)
