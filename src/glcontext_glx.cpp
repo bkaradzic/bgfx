@@ -152,6 +152,7 @@ namespace bgfx { namespace gl
 			m_context = glXCreateContext( (::Display*)g_platformData.ndt, m_visualInfo, 0, GL_TRUE);
 			BGFX_FATAL(NULL != m_context, Fatal::UnableToInitialize, "Failed to create GL 2.1 context.");
 
+#if BGFX_CONFIG_RENDERER_OPENGL >= 31
 			glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress( (const GLubyte*)"glXCreateContextAttribsARB");
 
 			if (NULL != glXCreateContextAttribsARB)
@@ -175,6 +176,9 @@ namespace bgfx { namespace gl
 					m_context = context;
 				}
 			}
+#else
+			BX_UNUSED(bestConfig);
+#endif // BGFX_CONFIG_RENDERER_OPENGL >= 31
 
 			XUnlockDisplay( (::Display*)g_platformData.ndt);
 		}
