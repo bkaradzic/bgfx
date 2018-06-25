@@ -1,4 +1,4 @@
-// dear imgui, v1.62
+// dear imgui, v1.63 WIP
 // (demo code)
 
 // Message to the person tempted to delete this file when integrating ImGui into their code base:
@@ -2608,8 +2608,8 @@ static void ShowExampleAppSimpleOverlay(bool* p_open)
             if (p_open && ImGui::MenuItem("Close")) *p_open = false;
             ImGui::EndPopup();
         }
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 // Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
@@ -3220,7 +3220,7 @@ static void ShowExampleAppPropertyEditor(bool* p_open)
                     {
                         // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
                         ImGui::AlignTextToFramePadding();
-                        ImGui::TreeNodeEx("Field", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet, "Field_%d", i);
+                        ImGui::TreeNodeEx("Field", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Field_%d", i);
                         ImGui::NextColumn();
                         ImGui::PushItemWidth(-1);
                         if (i >= 5)
