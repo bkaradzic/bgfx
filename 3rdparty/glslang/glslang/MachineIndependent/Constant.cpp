@@ -182,66 +182,66 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TIntermTyped* right
                 newConstArray[i].setDConst(leftUnionArray[i].getDConst() / rightUnionArray[i].getDConst());
                 break;
             case EbtInt8:
-                if (rightUnionArray[i] == 0)
-                    newConstArray[i].setI8Const(0x7F);
-                else if (rightUnionArray[i].getI8Const() == -1 && leftUnionArray[i].getI8Const() == (signed char)0x80)
-                    newConstArray[i].setI8Const((signed char)0x80);
+                if (rightUnionArray[i] == (signed char)0)
+                    newConstArray[i].setI8Const((signed char)0x7F);
+                else if (rightUnionArray[i].getI8Const() == (signed char)-1 && leftUnionArray[i].getI8Const() == (signed char)-0x80)
+                    newConstArray[i].setI8Const((signed char)-0x80);
                 else
                     newConstArray[i].setI8Const(leftUnionArray[i].getI8Const() / rightUnionArray[i].getI8Const());
                 break;
 
             case EbtUint8:
-                if (rightUnionArray[i] == 0) {
-                    newConstArray[i].setU8Const(0xFF);
-                } else
+                if (rightUnionArray[i] == (unsigned char)0u)
+                    newConstArray[i].setU8Const((unsigned char)0xFFu);
+                else
                     newConstArray[i].setU8Const(leftUnionArray[i].getU8Const() / rightUnionArray[i].getU8Const());
                 break;
 
            case EbtInt16:
-                if (rightUnionArray[i] == 0)
-                    newConstArray[i].setI16Const(0x7FFF);
-                else if (rightUnionArray[i].getI16Const() == -1 && leftUnionArray[i].getI16Const() == (signed short)0x8000)
-                    newConstArray[i].setI16Const(short(0x8000));
+                if (rightUnionArray[i] == (signed short)0)
+                    newConstArray[i].setI16Const((signed short)0x7FFF);
+                else if (rightUnionArray[i].getI16Const() == (signed short)-1 && leftUnionArray[i].getI16Const() == (signed short)-0x8000)
+                    newConstArray[i].setI16Const((signed short)-0x8000);
                 else
                     newConstArray[i].setI16Const(leftUnionArray[i].getI16Const() / rightUnionArray[i].getI16Const());
                 break;
 
             case EbtUint16:
-                if (rightUnionArray[i] == 0) {
-                    newConstArray[i].setU16Const(0xFFFF);
-                } else
+                if (rightUnionArray[i] == (unsigned short)0u)
+                    newConstArray[i].setU16Const((unsigned short)0xFFFFu);
+                else
                     newConstArray[i].setU16Const(leftUnionArray[i].getU16Const() / rightUnionArray[i].getU16Const());
                 break;
 
             case EbtInt:
                 if (rightUnionArray[i] == 0)
                     newConstArray[i].setIConst(0x7FFFFFFF);
-                else if (rightUnionArray[i].getIConst() == -1 && leftUnionArray[i].getIConst() == (int)0x80000000)
-                    newConstArray[i].setIConst(0x80000000);
+                else if (rightUnionArray[i].getIConst() == -1 && leftUnionArray[i].getIConst() == -(int)0x80000000)
+                    newConstArray[i].setIConst(-(int)0x80000000);
                 else
                     newConstArray[i].setIConst(leftUnionArray[i].getIConst() / rightUnionArray[i].getIConst());
                 break;
 
             case EbtUint:
-                if (rightUnionArray[i] == 0) {
+                if (rightUnionArray[i] == 0u)
                     newConstArray[i].setUConst(0xFFFFFFFFu);
-                } else
+                else
                     newConstArray[i].setUConst(leftUnionArray[i].getUConst() / rightUnionArray[i].getUConst());
                 break;
 
             case EbtInt64:
-                if (rightUnionArray[i] == 0)
+                if (rightUnionArray[i] == 0ll)
                     newConstArray[i].setI64Const(0x7FFFFFFFFFFFFFFFll);
-                else if (rightUnionArray[i].getI64Const() == -1 && leftUnionArray[i].getI64Const() == (long long)0x8000000000000000)
-                    newConstArray[i].setI64Const(0x8000000000000000);
+                else if (rightUnionArray[i].getI64Const() == -1 && leftUnionArray[i].getI64Const() == -0x8000000000000000ll)
+                    newConstArray[i].setI64Const(-0x8000000000000000ll);
                 else
                     newConstArray[i].setI64Const(leftUnionArray[i].getI64Const() / rightUnionArray[i].getI64Const());
                 break;
 
             case EbtUint64:
-                if (rightUnionArray[i] == 0) {
+                if (rightUnionArray[i] == 0ull)
                     newConstArray[i].setU64Const(0xFFFFFFFFFFFFFFFFull);
-                } else
+                else
                     newConstArray[i].setU64Const(leftUnionArray[i].getU64Const() / rightUnionArray[i].getU64Const());
                 break;
             default:

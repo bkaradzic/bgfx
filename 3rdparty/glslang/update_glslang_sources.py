@@ -66,7 +66,7 @@ def command_retval(cmd, directory):
     p = subprocess.Popen(cmd,
                          cwd=directory,
                          stdout=subprocess.PIPE)
-    (stdout, _) = p.communicate()
+    p.communicate()
     return p.returncode
 
 
@@ -95,8 +95,8 @@ class GoodCommit(object):
 
     def AddRemote(self):
         """Add the remote 'known-good' if it does not exist."""
-        print('Ignore "fatal" errors for missing known-good remote:')
-        if command_retval(['git', 'remote', 'show', 'known-good'], self.subdir) != 0:
+        remotes = command_output(['git', 'remote'], self.subdir).splitlines()
+        if 'known-good' not in remotes:
             command_output(['git', 'remote', 'add', 'known-good', self.GetUrl()], self.subdir)
 
     def HasCommit(self):

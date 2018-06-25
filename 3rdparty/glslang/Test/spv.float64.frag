@@ -204,7 +204,7 @@ void builtinGeometryFuncs()
 {
     float64_t f64;
     f64vec3   f64v1, f64v2, f64v3;
-    float f;
+
     f64   = length(f64v1);
     f64   = distance(f64v1, f64v2);
     f64   = dot(f64v1, f64v2);
@@ -212,7 +212,7 @@ void builtinGeometryFuncs()
     f64v2 = normalize(f64v1);
     f64v3 = faceforward(f64v1, f64v2, f64v3);
     f64v3 = reflect(f64v1, f64v2);
-    f64v3 = refract(f64v1, f64v2, f);
+    f64v3 = refract(f64v1, f64v2, f64);
 }
 
 void builtinMatrixFuncs()
