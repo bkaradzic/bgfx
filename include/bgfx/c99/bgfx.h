@@ -657,7 +657,7 @@ BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _decl, bgfx_renderer_
 BGFX_C_API void bgfx_vertex_decl_add(bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
 
 /**/
-BGFX_C_API void bgfx_vertex_decl_decode(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t *_num, bgfx_attrib_type_t *_type, bool *_normalized, bool *_asInt);
+BGFX_C_API void bgfx_vertex_decl_decode(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t* _num, bgfx_attrib_type_t* _type, bool* _normalized, bool* _asInt);
 
 /**/
 BGFX_C_API bool bgfx_vertex_decl_has(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib);

@@ -73,6 +73,8 @@ typedef struct bgfx_interface_vtbl
     uintptr_t (*override_internal_texture)(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags);
     void (*vertex_decl_begin)(bgfx_vertex_decl_t* _decl, bgfx_renderer_type_t _renderer);
     void (*vertex_decl_add)(bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
+    void (*vertex_decl_decode)(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t* _num, bgfx_attrib_type_t* _type, bool* _normalized, bool* _asInt);
+    bool (*vertex_decl_has)(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib);
     void (*vertex_decl_skip)(bgfx_vertex_decl_t* _decl, uint8_t _num);
     void (*vertex_decl_end)(bgfx_vertex_decl_t* _decl);
     void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl_t* _decl, void* _data, uint32_t _index);
