@@ -4741,6 +4741,25 @@ BGFX_C_API void bgfx_vertex_decl_add(bgfx_vertex_decl_t* _decl, bgfx_attrib_t _a
 		);
 }
 
+BGFX_C_API void bgfx_vertex_decl_decode(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib, uint8_t *_num, bgfx_attrib_type_t *_type, bool *_normalized, bool *_asInt)
+{
+	bgfx::AttribType::Enum type;
+	const bgfx::VertexDecl* decl = (const bgfx::VertexDecl*)_decl;
+	decl->decode(bgfx::Attrib::Enum(_attrib)
+		, *_num
+		, type
+		, *_normalized
+		, *_asInt
+		);
+	*_type = (bgfx_attrib_type_t)type;
+}
+
+BGFX_C_API bool bgfx_vertex_decl_has(const bgfx_vertex_decl_t* _decl, bgfx_attrib_t _attrib)
+{
+	const bgfx::VertexDecl* decl = (const bgfx::VertexDecl*)_decl;
+	return decl->has(bgfx::Attrib::Enum(_attrib));
+}
+
 BGFX_C_API void bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _decl, uint8_t _num)
 {
 	bgfx::VertexDecl* decl = (bgfx::VertexDecl*)_decl;
