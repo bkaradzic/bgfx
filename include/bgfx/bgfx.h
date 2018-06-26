@@ -1675,6 +1675,9 @@ namespace bgfx
 		VertexDecl& skip(uint8_t _num);
 
 		/// Decode attribute.
+		///
+		/// @attention C99 equivalent is `bgfx_vertex_decl_decode`.
+		///
 		void decode(
 			  Attrib::Enum _attrib
 			, uint8_t& _num
@@ -1684,6 +1687,9 @@ namespace bgfx
 			) const;
 
 		/// Returns true if VertexDecl contains attribute.
+		///
+		/// @attention C99 equivalent is `bgfx_vertex_decl_has`.
+		///
 		bool has(Attrib::Enum _attrib) const { return UINT16_MAX != m_attributes[_attrib]; }
 
 		/// Returns relative attribute offset from the vertex.
