@@ -231,6 +231,18 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx4Init5debugE">
+<span id="bgfx::Init::debug__b"></span><span class="target" id="structbgfx_1_1_init_1a3fc874cff90fe5c279356e92a306f022"></span>bool <code class="descname">debug</code><a class="headerlink" href="#_CPPv2N4bgfx4Init5debugE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable device for debuging. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Init7profileE">
+<span id="bgfx::Init::profile__b"></span><span class="target" id="structbgfx_1_1_init_1a5cf66d060d59a5e1e55147e3d75d32fe"></span>bool <code class="descname">profile</code><a class="headerlink" href="#_CPPv2N4bgfx4Init7profileE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable device for profiling. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx4Init10resolutionE">
 <span id="bgfx::Init::resolution__Resolution"></span><span class="target" id="structbgfx_1_1_init_1a12f9e2f7f7a8514e1bd58a8aee137b1a"></span>Resolution <code class="descname">resolution</code><a class="headerlink" href="#_CPPv2N4bgfx4Init10resolutionE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Backbuffer resolution and reset parameters. </p>
@@ -2595,7 +2607,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dl class="class">
 <dt id="_CPPv2N4bgfx7EncoderE">
 <span id="bgfx::Encoder"></span><span class="target" id="structbgfx_1_1_encoder"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Encoder</code><a class="headerlink" href="#_CPPv2N4bgfx7EncoderE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encoders are used for submitting draw calls from multiple threads, so one encoder per thread. Use <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1ad9800f61a086fe35076e141c1198fc80"><span><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
+<dd><p>Encoders are used for submitting draw calls from multiple threads. Only one encoder per thread should be used. Use <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1ad9800f61a086fe35076e141c1198fc80"><span><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder</span></code>. </dd>
@@ -3442,40 +3454,26 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx7setNameE12ShaderHandlePKc">
-<span id="bgfx::setName__ShaderHandle.cCP"></span><span class="target" id="namespacebgfx_1a5561bb80a08e1c799d60d5d666721cb5"></span>void <code class="descclassname">bgfx::</code><code class="descname">setName</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7setNameE12ShaderHandlePKc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set shader debug name. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_shader_name</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Shader handle. </li>
-<li><code class="docutils literal"><span class="pre">_name</span></code>: Shader name.</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (ShaderHandle, const char *) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx7setNameE13TextureHandlePKc">
-<span id="bgfx::setName__TextureHandle.cCP"></span><span class="target" id="namespacebgfx_1a98de5e46897fe151b92c659b3dced951"></span>void <code class="descclassname">bgfx::</code><code class="descname">setName</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, <em class="property">const</em> char *<em>_name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7setNameE13TextureHandlePKc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set texture debug name. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_texture_name</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Texture handle. </li>
-<li><code class="docutils literal"><span class="pre">_name</span></code>: Texture name.</li>
-</ul>
-</dd>
-</dl>
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setName(ShaderHandle, const char *, int32_t)
+- void bgfx::setName(TextureHandle, const char *, int32_t)
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (TextureHandle, const char *) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setName(ShaderHandle, const char *, int32_t)
+- void bgfx::setName(TextureHandle, const char *, int32_t)
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="state">
 <h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
@@ -4807,12 +4805,22 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt id="_CPPv2NK4bgfx10VertexDecl6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb">
 <span id="bgfx::VertexDecl::decode__Attrib::Enum.uint8_tR.AttribType::EnumR.bR.bRC"></span><span class="target" id="structbgfx_1_1_vertex_decl_1a915f65137652582b4e6be86b28dc1e25"></span>void <code class="descname">decode</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em>, uint8_t &amp;<em>_num</em>, <a class="reference internal" href="#_CPPv2N4bgfx10AttribTypeE" title="bgfx::AttribType">AttribType</a>::<a class="reference internal" href="#_CPPv2N4bgfx10AttribType4EnumE" title="bgfx::AttribType::Enum">Enum</a> &amp;<em>_type</em>, bool &amp;<em>_normalized</em>, bool &amp;<em>_asInt</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK4bgfx10VertexDecl6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decode attribute. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_decl_decode</span></code>. </dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="_CPPv2NK4bgfx10VertexDecl3hasEN6Attrib4EnumE">
 <span id="bgfx::VertexDecl::has__Attrib::EnumC"></span><span class="target" id="structbgfx_1_1_vertex_decl_1a49f2052830fd5d4676b7f3c23190f436"></span>bool <code class="descname">has</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK4bgfx10VertexDecl3hasEN6Attrib4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> contains attribute. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_vertex_decl_has</span></code>. </dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="function">

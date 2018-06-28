@@ -272,7 +272,15 @@ android-release, etc.
 </div>
 <div class="section" id="xcode">
 <h3>Xcode<a class="headerlink" href="#xcode" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre><span class="nb">open</span> <span class="o">.</span><span class="n">build</span><span class="o">/</span><span class="n">projects</span><span class="o">/</span><span class="n">xcode4</span><span class="o">-</span><span class="n">osx</span><span class="o">/</span><span class="n">bgfx</span><span class="o">.</span><span class="n">xcworkspace</span>
+<p>Xcode command line:</p>
+<div class="highlight-python"><div class="highlight"><pre>make osx-release64
+cd examples/runtime
+../../.build/osx64_clang/bin/examples.app/Contents/MacOS/examplesRelease
+</pre></div>
+</div>
+<p>Xcode IDE:</p>
+<div class="highlight-python"><div class="highlight"><pre>genie --with-combined-examples --xcode=osx xcode9
+open .build/projects/xcode9-osx/bgfx.xcworkspace
 </pre></div>
 </div>
 <p>Due to <a class="reference external" href="https://github.com/bkaradzic/genie/blob/master/docs/scripting-reference.md#debugdirpath">inability</a>
