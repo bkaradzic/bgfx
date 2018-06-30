@@ -168,7 +168,7 @@ public:
 		// Create vertex stream declaration.
 		PosColorTexCoord0Vertex::init();
 
-		m_uffizi = loadTexture("textures/uffizi.dds"
+		m_uffizi = loadTexture("textures/uffizi.ktx"
 				, 0
 				| BGFX_TEXTURE_U_CLAMP
 				| BGFX_TEXTURE_V_CLAMP
