@@ -723,8 +723,8 @@ namespace bgfx
 			uint32_t maxUniforms;             //!< Maximum number of uniform handles.
 			uint32_t maxOcclusionQueries;     //!< Maximum number of occlusion query handles.
 			uint32_t maxEncoders;             //!< Maximum number of encoder threads.
-			uint32_t transientVbSize;         //!<
-			uint32_t transientIbSize;         //!<
+			uint32_t transientVbSize;         //!< Maximum transient vertex buffer size.
+			uint32_t transientIbSize;         //!< Maximum transient index buffer size.
 		};
 
 		Limits limits;
@@ -1964,6 +1964,8 @@ namespace bgfx
 
 	/// Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
 	///
+	/// @param[in] _size Size to allocate.
+	///
 	/// @attention C99 equivalent is `bgfx_alloc`.
 	///
 	const Memory* alloc(uint32_t _size);
@@ -1986,6 +1988,9 @@ namespace bgfx
 	/// consumed, otherwise you must make sure _data is available for at least 2
 	/// `bgfx::frame` calls. `ReleaseFn` function must be able to be called
 	/// from any thread.
+	///
+	/// @param[in] _data Pointer to data.
+	/// @param[in] _size Size of data.
 	///
 	/// @attention Data passed must be available for at least 2 `bgfx::frame` calls.
 	/// @attention C99 equivalent are `bgfx_make_ref`, `bgfx_make_ref_release`.
@@ -2014,6 +2019,9 @@ namespace bgfx
 	void setDebug(uint32_t _debug);
 
 	/// Clear internal debug text buffer.
+	///
+	/// @param[in] _attr Background color.
+	/// @param[in] _small Default or 8x8 font.
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_clear`.
 	///
