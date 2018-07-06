@@ -305,6 +305,7 @@
  When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all imgui files.
  You can read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2018/07/06 (1.63) - removed per-window ImGuiWindowFlags_ResizeFromAnySide beta flag in favor of a global io.OptResizeWindowsFromEdges to enable the feature.
  - 2018/06/06 (1.62) - renamed GetGlyphRangesChinese() to GetGlyphRangesChineseFull() to distinguish other variants and discourage using the full set.
  - 2018/06/06 (1.62) - TreeNodeEx()/TreeNodeBehavior(): the ImGuiTreeNodeFlags_CollapsingHeader helper now include the ImGuiTreeNodeFlags_NoTreePushOnOpen flag. See Changelog for details. 
  - 2018/05/03 (1.61) - DragInt(): the default compile-time format string has been changed from "%.0f" to "%d", as we are not using integers internally any more.
@@ -894,6 +895,8 @@ static bool             DataTypeApplyOpFromText(const char* buf, const char* ini
 
 namespace ImGui
 {
+static bool             BeginChildEx(const char* name, ImGuiID id, const ImVec2& size_arg, bool border, ImGuiWindowFlags flags);
+
 static void             NavUpdate();
 static void             NavUpdateWindowing();
 static void             NavProcessItem(ImGuiWindow* window, const ImRect& nav_bb, const ImGuiID id);
@@ -3717,6 +3720,10 @@ void ImGui::NewFrame()
     if (g.IO.ConfigFlags & ImGuiConfigFlags_NavEnableKeyboard)
         IM_ASSERT(g.IO.KeyMap[ImGuiKey_Space] != -1 && "ImGuiKey_Space is not mapped, required for keyboard navigation.");
 
+    // The beta io.OptResizeWindowsFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
+    if (g.IO.OptResizeWindowsFromEdges && !(g.IO.BackendFlags & ImGuiBackendFlags_HasMouseCursors))
+        g.IO.OptResizeWindowsFromEdges = false;
+
     // Load settings on first frame (if not explicitly loaded manually before)
     if (!g.SettingsLoaded)
     {
@@ -5469,45 +5476,47 @@ bool ImGui::BeginPopupContextVoid(const char* str_id, int mouse_button)
     return BeginPopupEx(id, ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoSavedSettings);
 }
 
-static bool BeginChildEx(const char* name, ImGuiID id, const ImVec2& size_arg, bool border, ImGuiWindowFlags extra_flags)
+static bool ImGui::BeginChildEx(const char* name, ImGuiID id, const ImVec2& size_arg, bool border, ImGuiWindowFlags flags)
 {
     ImGuiContext& g = *GImGui;
-    ImGuiWindow* parent_window = ImGui::GetCurrentWindow();
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_ChildWindow;
+    ImGuiWindow* parent_window = g.CurrentWindow;
+
+    flags |= ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_ChildWindow;
     flags |= (parent_window->Flags & ImGuiWindowFlags_NoMove);  // Inherit the NoMove flag
 
-    const ImVec2 content_avail = ImGui::GetContentRegionAvail();
+    // Size
+    const ImVec2 content_avail = GetContentRegionAvail();
     ImVec2 size = ImFloor(size_arg);
     const int auto_fit_axises = ((size.x == 0.0f) ? (1 << ImGuiAxis_X) : 0x00) | ((size.y == 0.0f) ? (1 << ImGuiAxis_Y) : 0x00);
     if (size.x <= 0.0f)
         size.x = ImMax(content_avail.x + size.x, 4.0f); // Arbitrary minimum child size (0.0f causing too much issues)
     if (size.y <= 0.0f)
         size.y = ImMax(content_avail.y + size.y, 4.0f);
+    SetNextWindowSize(size);
 
-    const float backup_border_size = g.Style.ChildBorderSize;
-    if (!border)
-        g.Style.ChildBorderSize = 0.0f;
-    flags |= extra_flags;
-
+    // Name
     char title[256];
     if (name)
         ImFormatString(title, IM_ARRAYSIZE(title), "%s/%s", parent_window->Name, name);
     else
         ImFormatString(title, IM_ARRAYSIZE(title), "%s/%08X", parent_window->Name, id);
 
-    ImGui::SetNextWindowSize(size);
-    bool ret = ImGui::Begin(title, NULL, flags);
-    ImGuiWindow* child_window = ImGui::GetCurrentWindow();
-    child_window->ChildId = id;
-    child_window->AutoFitChildAxises = auto_fit_axises;
+    const float backup_border_size = g.Style.ChildBorderSize;
+    if (!border)
+        g.Style.ChildBorderSize = 0.0f;
+    bool ret = Begin(title, NULL, flags);
     g.Style.ChildBorderSize = backup_border_size;
 
+    ImGuiWindow* child_window = g.CurrentWindow;
+    child_window->ChildId = id;
+    child_window->AutoFitChildAxises = auto_fit_axises;
+
     // Process navigation-in immediately so NavInit can run on first frame
-    if (!(flags & ImGuiWindowFlags_NavFlattened) && (child_window->DC.NavLayerActiveMask != 0 || child_window->DC.NavHasScroll) && g.NavActivateId == id)
+    if (g.NavActivateId == id && !(flags & ImGuiWindowFlags_NavFlattened) && (child_window->DC.NavLayerActiveMask != 0 || child_window->DC.NavHasScroll))
     {
-        ImGui::FocusWindow(child_window);
-        ImGui::NavInitWindow(child_window, false);
-        ImGui::SetActiveID(id+1, child_window); // Steal ActiveId with a dummy id so that key-press won't activate child item
+        FocusWindow(child_window);
+        NavInitWindow(child_window, false);
+        SetActiveID(id+1, child_window); // Steal ActiveId with a dummy id so that key-press won't activate child item
         g.ActiveIdSource = ImGuiInputSource_Nav;
     }
 
@@ -5826,8 +5835,10 @@ static ImVec2 CalcSizeAutoFit(ImGuiWindow* window, const ImVec2& size_contents)
     else
     {
         // When the window cannot fit all contents (either because of constraints, either because screen is too small): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
-        ImVec2 size_min(0.0f, 0.0f);
-        if (!(window->Flags & ImGuiWindowFlags_ChildMenu))
+        const bool is_popup = (window->Flags & ImGuiWindowFlags_Popup) != 0 && (window->Flags & ImGuiWindowFlags_AlwaysAutoResize) != 0;
+        const bool is_menu = (window->Flags & ImGuiWindowFlags_ChildMenu) != 0;
+        ImVec2 size_min(1.0f, 1.0f);
+        if (!is_popup && !is_menu)
             size_min = style.WindowMinSize;
         ImVec2 size_auto_fit = ImClamp(size_contents, size_min, ImMax(size_min, g.IO.DisplaySize - style.DisplaySafeAreaPadding * 2.0f));
         ImVec2 size_auto_fit_after_constraint = CalcSizeAfterConstraint(window, size_auto_fit);
@@ -5936,7 +5947,7 @@ static void ImGui::UpdateManualResize(ImGuiWindow* window, const ImVec2& size_au
     if ((flags & ImGuiWindowFlags_NoResize) || (flags & ImGuiWindowFlags_AlwaysAutoResize) || window->AutoFitFramesX > 0 || window->AutoFitFramesY > 0)
         return;
 
-    const int resize_border_count = (flags & ImGuiWindowFlags_ResizeFromAnySide) ? 4 : 0;
+    const int resize_border_count = g.IO.OptResizeWindowsFromEdges ? 4 : 0;
     const float grip_draw_size = (float)(int)ImMax(g.FontSize * 1.35f, window->WindowRounding + 1.0f + g.FontSize * 0.2f);
     const float grip_hover_size = (float)(int)(grip_draw_size * 0.75f);
 
@@ -6337,7 +6348,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // Handle manual resize: Resize Grips, Borders, Gamepad
         int border_held = -1;
         ImU32 resize_grip_col[4] = { 0 };
-        const int resize_grip_count = (flags & ImGuiWindowFlags_ResizeFromAnySide) ? 2 : 1; // 4
+        const int resize_grip_count = g.IO.OptResizeWindowsFromEdges ? 2 : 1; // 4
         const float grip_draw_size = (float)(int)ImMax(g.FontSize * 1.35f, window->WindowRounding + 1.0f + g.FontSize * 0.2f);
         if (!window->Collapsed)
             UpdateManualResize(window, size_auto_fit, &border_held, resize_grip_count, &resize_grip_col[0]);
