@@ -1991,6 +1991,8 @@ namespace bgfx
 	///
 	/// @param[in] _data Pointer to data.
 	/// @param[in] _size Size of data.
+	/// @param[in] _releaseFn Callback function to release memory after use.
+	/// @param[in] _userData User data to be passed to callback function.
 	///
 	/// @attention Data passed must be available for at least 2 `bgfx::frame` calls.
 	/// @attention C99 equivalent are `bgfx_make_ref`, `bgfx_make_ref_release`.
@@ -2442,7 +2444,7 @@ namespace bgfx
 	///
 	void setName(
 		  ShaderHandle _handle
-		, const char* _ptr
+		, const char* _name
 		, int32_t _len = INT32_MAX
 		);
 
@@ -2805,7 +2807,7 @@ namespace bgfx
 	///
 	void setName(
 		  TextureHandle _handle
-		, const char* _ptr
+		, const char* _name
 		, int32_t _len = INT32_MAX
 		);
 
