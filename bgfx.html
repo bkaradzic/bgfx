@@ -3472,26 +3472,42 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (ShaderHandle, const char *, int32_t _len) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx7setNameE12ShaderHandlePKc7int32_t">
+<span id="bgfx::setName__ShaderHandle.cCP.int32_t"></span><span class="target" id="namespacebgfx_1a7d44c7ebbc42932b4f22ea9d8aa9047a"></span>void <code class="descclassname">bgfx::</code><code class="descname">setName</code><span class="sig-paren">(</span>ShaderHandle <em>_handle</em>, <em class="property">const</em> char *<em>_name</em>, int32_t <em>_len</em> = INT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7setNameE12ShaderHandlePKc7int32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set shader debug name. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_shader_name</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Shader handle. </li>
+<li><code class="docutils literal"><span class="pre">_name</span></code>: Shader name. </li>
+<li><code class="docutils literal"><span class="pre">_len</span></code>: Shader name length (if length is INT32_MAX, it&#8217;s expected that _name is zero terminated string.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setName(ShaderHandle, const char *, int32_t)
-- void bgfx::setName(TextureHandle, const char *, int32_t)
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (TextureHandle, const char *, int32_t _len) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7setNameE13TextureHandlePKc7int32_t">
+<span id="bgfx::setName__TextureHandle.cCP.int32_t"></span><span class="target" id="namespacebgfx_1a852d5743e0942806741f3d1790bab783"></span>void <code class="descclassname">bgfx::</code><code class="descname">setName</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, <em class="property">const</em> char *<em>_name</em>, int32_t <em>_len</em> = INT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7setNameE13TextureHandlePKc7int32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set texture debug name. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_texture_name</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Texture handle. </li>
+<li><code class="docutils literal"><span class="pre">_name</span></code>: Texture name. </li>
+<li><code class="docutils literal"><span class="pre">_len</span></code>: Texture name length (if length is INT32_MAX, it&#8217;s expected that _name is zero terminated string.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setName(ShaderHandle, const char *, int32_t)
-- void bgfx::setName(TextureHandle, const char *, int32_t)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 </div>
 <div class="section" id="state">
 <h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
@@ -4440,7 +4456,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_data</span></code>: Pointer to data. </li>
-<li><code class="docutils literal"><span class="pre">_size</span></code>: Size of data.</li>
+<li><code class="docutils literal"><span class="pre">_size</span></code>: Size of data. </li>
+<li><code class="docutils literal"><span class="pre">_releaseFn</span></code>: Callback function to release memory after use. </li>
+<li><code class="docutils literal"><span class="pre">_userData</span></code>: User data to be passed to callback function.</li>
 </ul>
 </dd>
 </dl>
