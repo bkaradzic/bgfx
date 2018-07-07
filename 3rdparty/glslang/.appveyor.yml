@@ -60,6 +60,7 @@ after_test:
   # Zip all glslang artifacts for uploading and deploying
   - 7z a glslang-master-windows-"%PLATFORM%"-"%CONFIGURATION%".zip
     bin\glslangValidator.exe
+    bin\spirv-remap.exe
     include\glslang\*
     include\SPIRV\*
     lib\glslang%SUFFIX%.lib

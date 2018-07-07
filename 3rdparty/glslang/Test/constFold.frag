@@ -81,7 +81,7 @@ void foo()
     a[0] = s.m[1].z;     // 7.0
     b % 0;  // int
     b / 0;
-    e / 0;
+    e / 0;  -e / 0;  0.0 / 0.0;
     const uint ua = 5;
     const uvec2 ub = uvec2(6, 7);
     const uint uc = 8;

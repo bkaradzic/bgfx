@@ -1061,8 +1061,17 @@ int TPpContext::tokenize(TPpToken& ppToken)
             continue;
 
         // expand macros
-        if (token == PpAtomIdentifier && MacroExpand(&ppToken, false, true) != 0)
-            continue;
+        if (token == PpAtomIdentifier) {
+            switch (MacroExpand(&ppToken, false, true)) {
+            case MacroExpandNotStarted:
+                break;
+            case MacroExpandError:
+                return EndOfInput;
+            case MacroExpandStarted:
+            case MacroExpandUndef:
+                continue;
+            }
+        }
 
         switch (token) {
         case PpAtomIdentifier:

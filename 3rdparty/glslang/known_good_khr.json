@@ -12,7 +12,7 @@
       "site" : "gitlab",
       "subrepo" : "spirv/SPIRV-Headers",
       "subdir" : "External/spirv-tools/external/spirv-headers",
-      "commit" : "4082a777bd5df31ed45acf40e64263094e85ed2e"
+      "commit" : "gitlab-prelim-rc4"
     }
   ]
 }

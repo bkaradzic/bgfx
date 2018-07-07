@@ -102,6 +102,7 @@ enum TOptions {
     EOptionDumpBareVersion      = (1 << 31),
 };
 bool targetHlslFunctionality1 = false;
+bool SpvToolsDisassembler = false;
 
 //
 // Return codes from main/exit().
@@ -506,6 +507,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         sourceEntryPointName = argv[1];
                         bumpArg();
                         break;
+                    } else if (lowerword == "spirv-dis") {
+                        SpvToolsDisassembler = true;
                     } else if (lowerword == "stdin") {
                         Options |= EOptionStdin;
                         shaderStageName = argv[1];
@@ -982,9 +985,15 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
                         } else {
                             glslang::OutputSpvBin(spirv, GetBinaryName((EShLanguage)stage));
                         }
-                        if (Options & EOptionHumanReadableSpv) {
+#if ENABLE_OPT
+                        if (SpvToolsDisassembler)
+                            spv::SpirvToolsDisassemble(std::cout, spirv);
+#else
+                        if (SpvToolsDisassembler)
+                            printf("SPIRV-Tools is not enabled; use -H for human readable SPIR-V\n");
+#endif
+                        if (!SpvToolsDisassembler && (Options & EOptionHumanReadableSpv))
                             spv::Disassemble(std::cout, spirv);
-                        }
                     }
                 }
             }
@@ -1405,6 +1414,8 @@ void usage()
            "  --shift-UBO-binding [stage] [num set]... per-descriptor-set shift values\n"
            "  --shift-cbuffer-binding [stage] num  synonym for --shift-UBO-binding\n"
            "  --shift-cbuffer-binding [stage] [num set]... per-descriptor-set shift values\n"
+           "  --spirv-dis                          output standard form disassembly; works only\n"
+           "                                       when a SPIR-V generation option is also used\n"
            "  --sub [stage] num                    synonym for --shift-UBO-binding\n"
            "  --source-entrypoint <name>           the given shader source function is\n"
            "                                       renamed to be the <name> given in -e\n"

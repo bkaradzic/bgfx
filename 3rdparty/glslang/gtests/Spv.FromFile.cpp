@@ -215,6 +215,12 @@ INSTANTIATE_TEST_CASE_P(
         "spv.140.frag",
         "spv.150.geom",
         "spv.150.vert",
+        "spv.16bitstorage.frag",
+        "spv.16bitstorage_Error.frag",
+        "spv.16bitstorage-int.frag",
+        "spv.16bitstorage_Error-int.frag",
+        "spv.16bitstorage-uint.frag",
+        "spv.16bitstorage_Error-uint.frag",
         "spv.300BuiltIns.vert",
         "spv.300layout.frag",
         "spv.300layout.vert",
@@ -231,6 +237,10 @@ INSTANTIATE_TEST_CASE_P(
         "spv.450.tesc",
         "spv.450.geom",
         "spv.450.noRedecl.tesc",
+        "spv.8bitstorage-int.frag",
+        "spv.8bitstorage_Error-int.frag",
+        "spv.8bitstorage-uint.frag",
+        "spv.8bitstorage_Error-uint.frag",
         "spv.accessChain.frag",
         "spv.aggOps.frag",
         "spv.always-discard.frag",
@@ -344,6 +354,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.xfb.vert",
         "spv.xfb2.vert",
         "spv.xfb3.vert",
+        "spv.samplerlessTextureFunctions.frag",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -433,6 +444,7 @@ INSTANTIATE_TEST_CASE_P(
         "vulkan.frag",
         "vulkan.vert",
         "vulkan.comp",
+        "samplerlessTextureFunctions.frag",
     })),
     FileNameAsCustomTestSuffix
 );

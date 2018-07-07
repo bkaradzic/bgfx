@@ -2507,6 +2507,20 @@ spv::Id TGlslangToSpvTraverser::createSpvVariable(const glslang::TIntermSymbol* 
         }
     }
 
+    const bool contains8BitType = node->getType().containsBasicType(glslang::EbtInt8)   ||
+                                  node->getType().containsBasicType(glslang::EbtUint8);
+    if (contains8BitType) {
+        if (storageClass == spv::StorageClassPushConstant) {
+            builder.addExtension(spv::E_SPV_KHR_8bit_storage);
+            builder.addCapability(spv::CapabilityStoragePushConstant8);
+        } else if (storageClass == spv::StorageClassUniform) {
+            builder.addExtension(spv::E_SPV_KHR_8bit_storage);
+            builder.addCapability(spv::CapabilityUniformAndStorageBuffer8BitAccess);
+            if (node->getType().getQualifier().storage == glslang::EvqBuffer)
+                builder.addCapability(spv::CapabilityStorageBuffer8BitAccess);
+        }
+    }
+
     const char* name = node->getName().c_str();
     if (glslang::IsAnonymous(name))
         name = "";

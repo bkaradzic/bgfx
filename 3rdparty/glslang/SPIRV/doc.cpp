@@ -790,6 +790,10 @@ const char* CapabilityString(int info)
     case CapabilityStoragePushConstant16:       return "StoragePushConstant16";
     case CapabilityStorageInputOutput16:        return "StorageInputOutput16";
 
+    case CapabilityStorageBuffer8BitAccess:             return "CapabilityStorageBuffer8BitAccess";
+    case CapabilityUniformAndStorageBuffer8BitAccess:   return "CapabilityUniformAndStorageBuffer8BitAccess";
+    case CapabilityStoragePushConstant8:                return "CapabilityStoragePushConstant8";
+
     case CapabilityDeviceGroup: return "DeviceGroup";
     case CapabilityMultiView:   return "MultiView";
 

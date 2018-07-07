@@ -716,4 +716,25 @@ void Disassemble(std::ostream& out, const std::vector<unsigned int>& stream)
     SpirvStream.processInstructions();
 }
 
+#if ENABLE_OPT
+
+#include "spirv-tools/libspirv.h"
+
+// Use the SPIRV-Tools disassembler to print SPIR-V.
+void SpirvToolsDisassemble(std::ostream& out, const std::vector<unsigned int>& spirv)
+{
+    spv_context context = spvContextCreate(SPV_ENV_UNIVERSAL_1_3);
+    spv_text text;
+    spv_diagnostic diagnostic = nullptr;
+    spvBinaryToText(context, &spirv.front(), spirv.size(),
+        SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES | SPV_BINARY_TO_TEXT_OPTION_INDENT,
+        &text, &diagnostic);
+    if (diagnostic == nullptr)
+        out << text->str;
+    else
+        spvDiagnosticPrint(diagnostic);
+}
+
+#endif
+
 }; // end namespace spv

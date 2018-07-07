@@ -179,7 +179,14 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TIntermTyped* right
             case EbtDouble:
             case EbtFloat:
             case EbtFloat16:
-                newConstArray[i].setDConst(leftUnionArray[i].getDConst() / rightUnionArray[i].getDConst());
+                if (rightUnionArray[i].getDConst() != 0.0)
+                    newConstArray[i].setDConst(leftUnionArray[i].getDConst() / rightUnionArray[i].getDConst());
+                else if (leftUnionArray[i].getDConst() > 0.0)
+                    newConstArray[i].setDConst((double)INFINITY);
+                else if (leftUnionArray[i].getDConst() < 0.0)
+                    newConstArray[i].setDConst((double)-INFINITY);
+                else
+                    newConstArray[i].setDConst((double)NAN);
                 break;
             case EbtInt8:
                 if (rightUnionArray[i] == (signed char)0)

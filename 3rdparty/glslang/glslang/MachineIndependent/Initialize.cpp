@@ -5914,15 +5914,19 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                                 addSamplingFunctions(sampler, typeName, version, profile);
                                 addGatherFunctions(sampler, typeName, version, profile);
 
-                                if (spvVersion.vulkan > 0 && sampler.dim == EsdBuffer && sampler.isCombined()) {
-                                    // Vulkan wants a textureBuffer to allow texelFetch() --
-                                    // a sampled image with no sampler.
-                                    // So, add sampling functions for both the
-                                    // samplerBuffer and textureBuffer types.
+                                if (spvVersion.vulkan > 0 && sampler.isCombined() && !sampler.shadow) {
+                                    // Base Vulkan allows texelFetch() for
+                                    // textureBuffer (i.e. without sampler).
+                                    //
+                                    // GL_EXT_samplerless_texture_functions
+                                    // allows texelFetch() and query functions
+                                    // (other than textureQueryLod()) for all
+                                    // texture types.
                                     sampler.setTexture(sampler.type, sampler.dim, sampler.arrayed, sampler.shadow,
                                                        sampler.ms);
                                     TString textureTypeName = sampler.getString();
                                     addSamplingFunctions(sampler, textureTypeName, version, profile);
+                                    addQueryFunctions(sampler, textureTypeName, version, profile);
                                 }
                             }
                         }
@@ -5995,7 +5999,7 @@ void TBuiltIns::addQueryFunctions(TSampler sampler, const TString& typeName, int
     // textureQueryLod(), fragment stage only
     //
 
-    if (profile != EEsProfile && version >= 400 && ! sampler.image && sampler.dim != EsdRect && ! sampler.ms && sampler.dim != EsdBuffer) {
+    if (profile != EEsProfile && version >= 400 && sampler.combined && sampler.dim != EsdRect && ! sampler.ms && sampler.dim != EsdBuffer) {
 #ifdef AMD_EXTENSIONS
         for (int f16TexAddr = 0; f16TexAddr < 2; ++f16TexAddr) {
             if (f16TexAddr && sampler.type != EbtFloat16)
@@ -6200,12 +6204,12 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
     //
     for (int proj = 0; proj <= 1; ++proj) { // loop over "bool" projective or not
 
-        if (proj && (sampler.dim == EsdCube || sampler.dim == EsdBuffer || sampler.arrayed || sampler.ms))
+        if (proj && (sampler.dim == EsdCube || sampler.dim == EsdBuffer || sampler.arrayed || sampler.ms || !sampler.combined))
             continue;
 
         for (int lod = 0; lod <= 1; ++lod) {
 
-            if (lod && (sampler.dim == EsdBuffer || sampler.dim == EsdRect || sampler.ms))
+            if (lod && (sampler.dim == EsdBuffer || sampler.dim == EsdRect || sampler.ms || !sampler.combined))
                 continue;
             if (lod && sampler.dim == Esd2D && sampler.arrayed && sampler.shadow)
                 continue;
@@ -6214,7 +6218,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 
             for (int bias = 0; bias <= 1; ++bias) {
 
-                if (bias && (lod || sampler.ms))
+                if (bias && (lod || sampler.ms || !sampler.combined))
                     continue;
                 if (bias && (sampler.dim == Esd2D || sampler.dim == EsdCube) && sampler.shadow && sampler.arrayed)
                     continue;
@@ -6236,12 +6240,12 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
                             continue;
                         if (fetch && (sampler.shadow || sampler.dim == EsdCube))
                             continue;
-                        if (fetch == 0 && (sampler.ms || sampler.dim == EsdBuffer))
+                        if (fetch == 0 && (sampler.ms || sampler.dim == EsdBuffer || !sampler.combined))
                             continue;
 
                         for (int grad = 0; grad <= 1; ++grad) { // loop over "bool" grad or not
 
-                            if (grad && (lod || bias || sampler.ms))
+                            if (grad && (lod || bias || sampler.ms || !sampler.combined))
                                 continue;
                             if (grad && sampler.dim == EsdBuffer)
                                 continue;
@@ -6263,7 +6267,7 @@ void TBuiltIns::addSamplingFunctions(TSampler sampler, const TString& typeName, 
 
                                 if (extraProj && ! proj)
                                     continue;
-                                if (extraProj && (sampler.dim == Esd3D || sampler.shadow))
+                                if (extraProj && (sampler.dim == Esd3D || sampler.shadow || !sampler.combined))
                                     continue;
 #ifdef AMD_EXTENSIONS
                                 for (int f16TexAddr = 0; f16TexAddr <= 1; ++f16TexAddr) { // loop over 16-bit floating-point texel addressing

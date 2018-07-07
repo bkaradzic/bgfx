@@ -881,6 +881,9 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     // like vector and matrix sizes.
 
     TBasicType promoteTo;
+    // GL_EXT_shader_16bit_storage can't do OpConstantComposite with
+    // 16-bit types, so disable promotion for those types.
+    bool canPromoteConstant = true;
 
     switch (op) {
     //
@@ -897,18 +900,28 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
         break;
     case EOpConstructFloat16:
         promoteTo = EbtFloat16;
+        canPromoteConstant = extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                             extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_float16);
         break;
     case EOpConstructInt8:
         promoteTo = EbtInt8;
+        canPromoteConstant = extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                             extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int8);
         break;
     case EOpConstructUint8:
         promoteTo = EbtUint8;
+        canPromoteConstant = extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                             extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int8);
         break;
     case EOpConstructInt16:
         promoteTo = EbtInt16;
+        canPromoteConstant = extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                             extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int16);
         break;
     case EOpConstructUint16:
         promoteTo = EbtUint16;
+        canPromoteConstant = extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types) ||
+                             extensionRequested(E_GL_KHX_shader_explicit_arithmetic_types_int16);
         break;
     case EOpConstructInt:
         promoteTo = EbtInt;
@@ -999,7 +1012,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
             return nullptr;
     }
 
-    if (node->getAsConstantUnion())
+    if (canPromoteConstant && node->getAsConstantUnion())
         return promoteConstantUnion(promoteTo, node->getAsConstantUnion());
 
     //
@@ -1468,16 +1481,16 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtUint:
             case EbtInt64:
             case EbtUint64:
+            case EbtFloat:
+            case EbtDouble:
+                return true;
 #ifdef AMD_EXTENSIONS
             case EbtInt16:
             case EbtUint16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
+            case EbtFloat16:
+                return extensionRequested(E_GL_AMD_gpu_shader_half_float);
 #endif
-             case EbtFloat:
-             case EbtDouble:
-#ifdef AMD_EXTENSIONS
-             case EbtFloat16:
-#endif
-                return true;
             default:
                 return false;
            }
@@ -1485,17 +1498,21 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             switch (from) {
             case EbtInt:
             case EbtUint:
-#ifdef AMD_EXTENSIONS
-            case EbtInt16:
-            case EbtUint16:
-#endif
             case EbtFloat:
-#ifdef AMD_EXTENSIONS
-            case EbtFloat16:
-#endif
                  return true;
             case EbtBool:
                  return (source == EShSourceHlsl);
+#ifdef AMD_EXTENSIONS
+            case EbtInt16:
+            case EbtUint16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
+#endif
+            case EbtFloat16:
+                return 
+#ifdef AMD_EXTENSIONS
+                    extensionRequested(E_GL_AMD_gpu_shader_half_float) ||
+#endif
+                    (source == EShSourceHlsl);
             default:
                  return false;
             }
@@ -1504,25 +1521,27 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtInt:
                  return version >= 400 || (source == EShSourceHlsl);
             case EbtUint:
-#ifdef AMD_EXTENSIONS
-            case EbtInt16:
-            case EbtUint16:
-#endif
                 return true;
             case EbtBool:
                 return (source == EShSourceHlsl);
+#ifdef AMD_EXTENSIONS
+            case EbtInt16:
+            case EbtUint16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
+#endif
             default:
                 return false;
             }
         case EbtInt:
             switch (from) {
             case EbtInt:
-#ifdef AMD_EXTENSIONS
-            case EbtInt16:
-#endif
                 return true;
             case EbtBool:
                 return (source == EShSourceHlsl);
+#ifdef AMD_EXTENSIONS
+            case EbtInt16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
+#endif
             default:
                 return false;
             }
@@ -1532,11 +1551,12 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtUint:
             case EbtInt64:
             case EbtUint64:
+                return true;
 #ifdef AMD_EXTENSIONS
             case EbtInt16:
             case EbtUint16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
 #endif
-                return true;
             default:
                 return false;
             }
@@ -1544,32 +1564,36 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             switch (from) {
             case EbtInt:
             case EbtInt64:
+                return true;
 #ifdef AMD_EXTENSIONS
             case EbtInt16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
 #endif
-                return true;
             default:
                 return false;
             }
-#ifdef AMD_EXTENSIONS
         case EbtFloat16:
             switch (from) {
+#ifdef AMD_EXTENSIONS
             case EbtInt16:
             case EbtUint16:
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
             case EbtFloat16:
-                return true;
+                return extensionRequested(E_GL_AMD_gpu_shader_half_float);
+#endif
             default:
                 return false;
         }
         case EbtUint16:
             switch (from) {
+#ifdef AMD_EXTENSIONS
             case EbtInt16:
             case EbtUint16:
-                return true;
+                return extensionRequested(E_GL_AMD_gpu_shader_int16);
+#endif
             default:
                 return false;
         }
-#endif
         default:
             return false;
         }

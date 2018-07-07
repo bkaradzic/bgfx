@@ -183,6 +183,13 @@ protected:
 
 class TInputScanner;
 
+enum MacroExpandResult {
+    MacroExpandNotStarted, // macro not expanded, which might not be an error
+    MacroExpandError,      // a clear error occurred while expanding, no expansion
+    MacroExpandStarted,    // macro expansion process has started
+    MacroExpandUndef       // macro is undefined and will be expanded
+};
+
 // This class is the result of turning a huge pile of C code communicating through globals
 // into a class.  This was done to allowing instancing to attain thread safety.
 // Don't expect too much in terms of OO design.
@@ -400,7 +407,7 @@ protected:
     int readCPPline(TPpToken * ppToken);
     int scanHeaderName(TPpToken* ppToken, char delimit);
     TokenStream* PrescanMacroArg(TokenStream&, TPpToken*, bool newLineOkay);
-    int MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
+    MacroExpandResult MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
 
     //
     // From PpTokens.cpp

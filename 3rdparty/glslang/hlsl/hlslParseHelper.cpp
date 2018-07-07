@@ -4377,15 +4377,12 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             txquerylod->getSequence().push_back(txcombine);
             txquerylod->getSequence().push_back(argCoord);
 
-            TIntermTyped* lodComponent = intermediate.addConstantUnion(0, loc, true);
+            TIntermTyped* lodComponent = intermediate.addConstantUnion(
+                op == EOpMethodCalculateLevelOfDetail ? 0 : 1,
+                loc, true);
             TIntermTyped* lodComponentIdx = intermediate.addIndex(EOpIndexDirect, txquerylod, lodComponent, loc);
             lodComponentIdx->setType(TType(EbtFloat, EvqTemporary, 1));
-
             node = lodComponentIdx;
-
-            // We cannot currently obtain the unclamped LOD
-            if (op == EOpMethodCalculateLevelOfDetailUnclamped)
-                error(loc, "unimplemented: CalculateLevelOfDetailUnclamped", "", "");
 
             break;
         }

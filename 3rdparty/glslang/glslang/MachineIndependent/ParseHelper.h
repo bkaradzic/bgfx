@@ -367,6 +367,7 @@ public:
     void nestedStructCheck(const TSourceLoc&);
     void arrayObjectCheck(const TSourceLoc&, const TType&, const char* op);
     void opaqueCheck(const TSourceLoc&, const TType&, const char* op);
+    void storage16BitAssignmentCheck(const TSourceLoc&, const TType&, const char* op);
     void specializationCheck(const TSourceLoc&, const TType&, const char* op);
     void structTypeCheck(const TSourceLoc&, TPublicType&);
     void inductiveLoopCheck(const TSourceLoc&, TIntermNode* init, TIntermLoop* loop);

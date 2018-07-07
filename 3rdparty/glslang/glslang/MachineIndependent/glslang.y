@@ -699,6 +699,7 @@ assignment_expression
     | unary_expression assignment_operator assignment_expression {
         parseContext.arrayObjectCheck($2.loc, $1->getType(), "array assignment");
         parseContext.opaqueCheck($2.loc, $1->getType(), "=");
+        parseContext.storage16BitAssignmentCheck($2.loc, $1->getType(), "=");
         parseContext.specializationCheck($2.loc, $1->getType(), "=");
         parseContext.lValueErrorCheck($2.loc, "assign", $1);
         parseContext.rValueErrorCheck($2.loc, "assign", $3);
@@ -1419,7 +1420,7 @@ type_specifier_nonarray
         $$.basicType = EbtDouble;
     }
     | FLOAT16_T {
-        parseContext.float16Check($1.loc, "float16_t", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.float16ScalarVectorCheck($1.loc, "float16_t", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloat16;
     }
@@ -1443,22 +1444,22 @@ type_specifier_nonarray
         $$.basicType = EbtUint;
     }
     | INT8_T {
-        parseContext.explicitInt8Check($1.loc, "8-bit signed integer", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit signed integer", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtInt8;
     }
     | UINT8_T {
-        parseContext.explicitInt8Check($1.loc, "8-bit unsigned integer", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit unsigned integer", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint8;
     }
     | INT16_T {
-        parseContext.explicitInt16Check($1.loc, "16-bit signed integer", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit signed integer", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtInt16;
     }
     | UINT16_T {
-        parseContext.explicitInt16Check($1.loc, "16-bit unsigned integer", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit unsigned integer", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint16;
     }
@@ -1520,19 +1521,19 @@ type_specifier_nonarray
         $$.setVector(4);
     }
     | F16VEC2 {
-        parseContext.float16Check($1.loc, "half float vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.float16ScalarVectorCheck($1.loc, "half float vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloat16;
         $$.setVector(2);
     }
     | F16VEC3 {
-        parseContext.float16Check($1.loc, "half float vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.float16ScalarVectorCheck($1.loc, "half float vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloat16;
         $$.setVector(3);
     }
     | F16VEC4 {
-        parseContext.float16Check($1.loc, "half float vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.float16ScalarVectorCheck($1.loc, "half float vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloat16;
         $$.setVector(4);
@@ -1604,40 +1605,40 @@ type_specifier_nonarray
         $$.setVector(4);
     }
     | I8VEC2 {
-       parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
-       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtInt8;
-       $$.setVector(2);
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt8;
+        $$.setVector(2);
     }
     | I8VEC3 {
-       parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
-       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtInt8;
-       $$.setVector(3);
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt8;
+        $$.setVector(3);
     }
     | I8VEC4 {
-       parseContext.explicitInt8Check($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
-       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtInt8;
-       $$.setVector(4);
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt8;
+        $$.setVector(4);
     }
     | I16VEC2 {
-       parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
-       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtInt16;
-       $$.setVector(2);
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt16;
+        $$.setVector(2);
     }
     | I16VEC3 {
-       parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
-       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtInt16;
-       $$.setVector(3);
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt16;
+        $$.setVector(3);
     }
     | I16VEC4 {
-       parseContext.explicitInt16Check($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
-       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-       $$.basicType = EbtInt16;
-       $$.setVector(4);
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt16;
+        $$.setVector(4);
     }
     | I32VEC2 {
         parseContext.explicitInt32Check($1.loc, "32-bit signed integer vector", parseContext.symbolTable.atBuiltInLevel());
@@ -1694,37 +1695,37 @@ type_specifier_nonarray
         $$.setVector(4);
     }
     | U8VEC2 {
-        parseContext.explicitInt8Check($1.loc, "8-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint8;
         $$.setVector(2);
     }
     | U8VEC3 {
-        parseContext.explicitInt8Check($1.loc, "8-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
-        $$.basicType = EbtInt8;
+        $$.basicType = EbtUint8;
         $$.setVector(3);
     }
     | U8VEC4 {
-        parseContext.explicitInt8Check($1.loc, "8-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int8ScalarVectorCheck($1.loc, "8-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint8;
         $$.setVector(4);
     }
     | U16VEC2 {
-        parseContext.explicitInt16Check($1.loc, "16-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint16;
         $$.setVector(2);
     }
     | U16VEC3 {
-        parseContext.explicitInt16Check($1.loc, "16-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint16;
         $$.setVector(3);
     }
     | U16VEC4 {
-        parseContext.explicitInt16Check($1.loc, "16-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
+        parseContext.int16ScalarVectorCheck($1.loc, "16-bit unsigned integer vector", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtUint16;
         $$.setVector(4);

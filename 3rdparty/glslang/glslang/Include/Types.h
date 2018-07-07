@@ -1472,6 +1472,16 @@ public:
         return contains([](const TType* t) { return t->isArray() && t->arraySizes->isOuterSpecialization(); } );
     }
 
+    virtual bool contains16BitInt() const
+    {
+        return containsBasicType(EbtInt16) || containsBasicType(EbtUint16);
+    }
+
+    virtual bool contains8BitInt() const
+    {
+        return containsBasicType(EbtInt8) || containsBasicType(EbtUint8);
+    }
+
     // Array editing methods.  Array descriptors can be shared across
     // type instances.  This allows all uses of the same array
     // to be updated at once.  E.g., all nodes can be explicitly sized
