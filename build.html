@@ -98,7 +98,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#id1">Windows</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#xcode">Xcode</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">Linux</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#winrt-windows-phone-8-1">WinRT / Windows Phone 8.1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#winrt-uwp">WinRT / UWP</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#amalgamated-build">Amalgamated Build</a></li>
@@ -176,12 +176,12 @@ git clone git://github.com/bkaradzic/bgfx.git
 <div class="highlight-python"><div class="highlight"><pre>cd bgfx
 </pre></div>
 </div>
-<p>Generate Visual Studio 2015 project files:</p>
-<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie --with-examples vs2015
+<p>Generate Visual Studio 2017 project files:</p>
+<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie --with-examples vs2017
 </pre></div>
 </div>
-<p>Open bgfx solution in Visual Studio 2015:</p>
-<div class="highlight-python"><div class="highlight"><pre>start .build\projects\vs2015\bgfx.sln
+<p>Open bgfx solution in Visual Studio 2017:</p>
+<div class="highlight-python"><div class="highlight"><pre>start .build\projects\vs2017\bgfx.sln
 </pre></div>
 </div>
 <div class="admonition note">
@@ -279,7 +279,7 @@ cd examples/runtime
 </pre></div>
 </div>
 <p>Xcode IDE:</p>
-<div class="highlight-python"><div class="highlight"><pre>genie --with-combined-examples --xcode=osx xcode9
+<div class="highlight-python"><div class="highlight"><pre>../bx/tools/bin/darwin/genie --with-combined-examples --xcode=osx xcode9
 open .build/projects/xcode9-osx/bgfx.xcworkspace
 </pre></div>
 </div>
@@ -299,9 +299,9 @@ configuration file, it has to be set manually for each example project:</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="winrt-windows-phone-8-1">
-<h3>WinRT / Windows Phone 8.1<a class="headerlink" href="#winrt-windows-phone-8-1" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python"><div class="highlight"><pre>../bx/tools/bin/windows/genie --vs=winphone81 vs2015
+<div class="section" id="winrt-uwp">
+<h3>WinRT / UWP<a class="headerlink" href="#winrt-uwp" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie --vs=winstore100 vs2017
 </pre></div>
 </div>
 <p>Build the resulting solution and deploy to device.</p>
@@ -327,14 +327,14 @@ instead) inside different build system.</p>
 </pre></div>
 </div>
 <p>And generate project files with <code class="docutils literal"><span class="pre">--with-ovr</span></code> option:</p>
-<div class="highlight-python"><div class="highlight"><pre>genie --with-ovr vs2015
+<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie --with-ovr vs2017
 </pre></div>
 </div>
 </div>
 <div class="section" id="tools">
 <h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
 <p>To build bgfx project files for tools, use <code class="docutils literal"><span class="pre">--with-tools</span></code> option:</p>
-<div class="highlight-python"><div class="highlight"><pre>genie --with-tools vs2015
+<div class="highlight-python"><div class="highlight"><pre>..\bx\tools\bin\windows\genie --with-tools vs2017
 </pre></div>
 </div>
 </div>

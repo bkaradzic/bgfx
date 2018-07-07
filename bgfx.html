@@ -816,6 +816,12 @@
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dbg_text_clear</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_attr</span></code>: Background color. </li>
+<li><code class="docutils literal"><span class="pre">_small</span></code>: Default or 8x8 font.</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -1232,6 +1238,18 @@
 <dt id="_CPPv2N4bgfx4Caps6Limits11maxEncodersE">
 <span id="bgfx::Caps::Limits::maxEncoders__uint32_t"></span><span class="target" id="structbgfx_1_1_caps_1_1_limits_1ad8bf1308949450d13fc231179c0d8a2c"></span>uint32_t <code class="descname">maxEncoders</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits11maxEncodersE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum number of encoder threads. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits15transientVbSizeE">
+<span id="bgfx::Caps::Limits::transientVbSize__uint32_t"></span><span class="target" id="structbgfx_1_1_caps_1_1_limits_1a7612ba54b79f902dcfb278bab1027cdc"></span>uint32_t <code class="descname">transientVbSize</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits15transientVbSizeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum transient vertex buffer size. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits15transientIbSizeE">
+<span id="bgfx::Caps::Limits::transientIbSize__uint32_t"></span><span class="target" id="structbgfx_1_1_caps_1_1_limits_1a4e604a96366723416a4b19dc4b2d93e9"></span>uint32_t <code class="descname">transientIbSize</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits15transientIbSizeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum transient index buffer size. </p>
 </dd></dl>
 
 </div>
@@ -3456,7 +3474,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (ShaderHandle, const char *) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (ShaderHandle, const char *, int32_t _len) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
 Potential matches:
 </p>
 <div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setName(ShaderHandle, const char *, int32_t)
@@ -3466,7 +3484,7 @@ Potential matches:
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (TextureHandle, const char *) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setName&#8221; with arguments (TextureHandle, const char *, int32_t _len) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
 Potential matches:
 </p>
 <div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setName(ShaderHandle, const char *, int32_t)
@@ -4384,6 +4402,11 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_size</span></code>: Size to allocate.</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -4414,6 +4437,12 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dd>Data passed must be available for at least 2 <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code> calls. </dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent are <code class="docutils literal"><span class="pre">bgfx_make_ref</span></code>, <code class="docutils literal"><span class="pre">bgfx_make_ref_release</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_data</span></code>: Pointer to data. </li>
+<li><code class="docutils literal"><span class="pre">_size</span></code>: Size of data.</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
