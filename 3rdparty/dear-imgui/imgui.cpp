@@ -2303,7 +2303,7 @@ void ImGui::MarkItemValueChanged(ImGuiID id)
     // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need need to fill the data.
     (void)id; // Avoid unused variable warnings when asserts are compiled out.
     ImGuiContext& g = *GImGui;
-    IM_ASSERT(g.ActiveId == id || g.ActiveId == 0);
+    IM_ASSERT(g.ActiveId == id || g.ActiveId == 0 || g.DragDropActive);
     g.ActiveIdValueChanged = true;
 }
 
@@ -5835,11 +5835,11 @@ static ImVec2 CalcSizeAutoFit(ImGuiWindow* window, const ImVec2& size_contents)
     else
     {
         // When the window cannot fit all contents (either because of constraints, either because screen is too small): we are growing the size on the other axis to compensate for expected scrollbar. FIXME: Might turn bigger than DisplaySize-WindowPadding.
-        const bool is_popup = (window->Flags & ImGuiWindowFlags_Popup) != 0 && (window->Flags & ImGuiWindowFlags_AlwaysAutoResize) != 0;
+        const bool is_popup = (window->Flags & ImGuiWindowFlags_Popup) != 0;
         const bool is_menu = (window->Flags & ImGuiWindowFlags_ChildMenu) != 0;
-        ImVec2 size_min(1.0f, 1.0f);
-        if (!is_popup && !is_menu)
-            size_min = style.WindowMinSize;
+        ImVec2 size_min = style.WindowMinSize;
+        if (is_popup || is_menu) // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
+            size_min = ImMin(size_min, ImVec2(4.0f, 4.0f));
         ImVec2 size_auto_fit = ImClamp(size_contents, size_min, ImMax(size_min, g.IO.DisplaySize - style.DisplaySafeAreaPadding * 2.0f));
         ImVec2 size_auto_fit_after_constraint = CalcSizeAfterConstraint(window, size_auto_fit);
         if (size_auto_fit_after_constraint.x < size_contents.x && !(window->Flags & ImGuiWindowFlags_NoScrollbar) && (window->Flags & ImGuiWindowFlags_HorizontalScrollbar))
@@ -13830,6 +13830,7 @@ static void ImeSetInputScreenPosFn_DefaultImpl(int x, int y)
             cf.ptCurrentPos.y = y;
             cf.dwStyle = CFS_FORCE_POSITION;
             ::ImmSetCompositionWindow(himc, &cf);
+            ::ImmReleaseContext(hwnd, himc);
         }
 }
 
