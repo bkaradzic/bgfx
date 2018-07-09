@@ -147,7 +147,7 @@ namespace bgfx
 		{ 5, 0 }, // GATHER4_C
 		{ 5, 0 }, // GATHER4_PO
 		{ 0, 0 }, // GATHER4_PO_C
-		{ 0, 0 }, // RCP
+		{ 2, 0 }, // RCP
 		{ 0, 0 }, // F32TOF16
 		{ 0, 0 }, // F16TOF32
 		{ 0, 0 }, // UADDC
