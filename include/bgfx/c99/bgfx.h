@@ -15,7 +15,9 @@
 
 #include <bx/platform.h>
 
-#define BGFX_INVALID_HANDLE { UINT16_MAX }
+#if !defined(BGFX_INVALID_HANDLE)
+#   define BGFX_INVALID_HANDLE { UINT16_MAX }
+#endif // !defined(BGFX_INVALID_HANDLE)
 
 #ifndef BGFX_SHARED_LIB_BUILD
 #    define BGFX_SHARED_LIB_BUILD 0
