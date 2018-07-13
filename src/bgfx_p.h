@@ -2539,7 +2539,7 @@ namespace bgfx
 
 		uint64_t alloc(uint32_t _size)
 		{
-			_size = bx::min(_size, 16u);
+			_size = bx::max(_size, 16u);
 
 			for (FreeList::iterator it = m_free.begin(), itEnd = m_free.end(); it != itEnd; ++it)
 			{
