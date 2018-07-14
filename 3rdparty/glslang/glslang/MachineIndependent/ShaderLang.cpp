@@ -1910,6 +1910,7 @@ const char* TProgram::getUniformBlockName(int index) const   { return reflection
 int TProgram::getUniformBlockSize(int index) const           { return reflection->getUniformBlock(index).size; }
 int TProgram::getUniformIndex(const char* name) const        { return reflection->getIndex(name); }
 int TProgram::getUniformBinding(int index) const             { return reflection->getUniform(index).getBinding(); }
+EShLanguageMask TProgram::getUniformStages(int index) const  { return reflection->getUniform(index).stages; }
 int TProgram::getUniformBlockBinding(int index) const        { return reflection->getUniformBlock(index).getBinding(); }
 int TProgram::getUniformBlockIndex(int index) const          { return reflection->getUniform(index).index; }
 int TProgram::getUniformBlockCounterIndex(int index) const   { return reflection->getUniformBlock(index).counterIndex; }

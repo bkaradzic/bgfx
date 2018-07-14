@@ -513,6 +513,9 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
     void endResolve(EShLanguage) override {}
 
 protected:
+    TDefaultIoResolverBase(TDefaultIoResolverBase&);
+    TDefaultIoResolverBase& operator=(TDefaultIoResolverBase&);
+
     const TIntermediate &intermediate;
     int nextUniformLocation;
     int nextInputLocation;

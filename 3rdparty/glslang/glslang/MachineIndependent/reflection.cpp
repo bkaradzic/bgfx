@@ -778,6 +778,14 @@ void TReflection::buildCounterIndices(const TIntermediate& intermediate)
     }
 }
 
+// build Shader Stages mask for all uniforms
+void TReflection::buildUniformStageMask(const TIntermediate& intermediate)
+{
+    for (int i = 0; i < int(indexToUniform.size()); ++i) {
+        indexToUniform[i].stages = static_cast<EShLanguageMask>(indexToUniform[i].stages | 1 << intermediate.getStage());
+    }
+}
+
 // Merge live symbols from 'intermediate' into the existing reflection database.
 //
 // Returns false if the input is too malformed to do this.
@@ -803,6 +811,7 @@ bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
     }
 
     buildCounterIndices(intermediate);
+    buildUniformStageMask(intermediate);
 
     return true;
 }

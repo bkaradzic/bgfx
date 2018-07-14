@@ -52,7 +52,7 @@ ERROR: 0:209: 'assign' :  cannot convert from ' const float' to ' temp 4-compone
 ERROR: 0:212: 'sampler2DRect' : Reserved word. 
 ERROR: 0:244: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type ' global void' and a right operand of type ' const int' (or there is no acceptable conversion)
 ERROR: 0:245: ':' :  wrong operand types: no operation ':' exists that takes a left-hand operand of type ' const int' and a right operand of type ' global void' (or there is no acceptable conversion)
-ERROR: 0:248: 'explicit types' : required extension not requested: Possible extensions include:
+ERROR: 0:248: 'half floating-point suffix' : required extension not requested: Possible extensions include:
 GL_AMD_gpu_shader_half_float
 GL_KHX_shader_explicit_arithmetic_types
 GL_KHX_shader_explicit_arithmetic_types_float16

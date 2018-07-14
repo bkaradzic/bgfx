@@ -372,15 +372,12 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
     }
 
     if (!base->isArray() && base->isVector()) {
-        if (base->getType().containsBasicType(EbtFloat16)) {
-            requireFloat16Arithmetic(loc, "'[' does not operate on types containing float16");
-        }
-        if (base->getType().contains16BitInt()) {
-            requireInt16Arithmetic(loc, "'[' does not operate on types containing (u)int16");
-        }
-        if (base->getType().contains8BitInt()) {
-            requireInt8Arithmetic(loc, "'[' does not operate on types containing (u)int8");
-        }
+        if (base->getType().containsBasicType(EbtFloat16))
+            requireFloat16Arithmetic(loc, "[", "does not operate on types containing float16");
+        if (base->getType().contains16BitInt())
+            requireInt16Arithmetic(loc, "[", "does not operate on types containing (u)int16");
+        if (base->getType().contains8BitInt())
+            requireInt8Arithmetic(loc, "[", "does not operate on types containing (u)int8");
     }
 
     // check for constant folding
@@ -721,15 +718,12 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
         TSwizzleSelectors<TVectorSelector> selectors;
         parseSwizzleSelector(loc, field, base->getVectorSize(), selectors);
 
-        if (base->isVector() && selectors.size() != 1 && base->getType().containsBasicType(EbtFloat16)) {
-            requireFloat16Arithmetic(loc, "can't swizzle types containing float16");
-        }
-        if (base->isVector() && selectors.size() != 1 && base->getType().contains16BitInt()) {
-            requireInt16Arithmetic(loc, "can't swizzle types containing (u)int16");
-        }
-        if (base->isVector() && selectors.size() != 1 && base->getType().contains8BitInt()) {
-            requireInt8Arithmetic(loc, "can't swizzle types containing (u)int8");
-        }
+        if (base->isVector() && selectors.size() != 1 && base->getType().containsBasicType(EbtFloat16))
+            requireFloat16Arithmetic(loc, ".", "can't swizzle types containing float16");
+        if (base->isVector() && selectors.size() != 1 && base->getType().contains16BitInt())
+            requireInt16Arithmetic(loc, ".", "can't swizzle types containing (u)int16");
+        if (base->isVector() && selectors.size() != 1 && base->getType().contains8BitInt())
+            requireInt8Arithmetic(loc, ".", "can't swizzle types containing (u)int8");
 
         if (base->isScalar()) {
             if (selectors.size() == 1)
@@ -1009,15 +1003,12 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
             if (builtIn && fnCandidate->getNumExtensions())
                 requireExtensions(loc, fnCandidate->getNumExtensions(), fnCandidate->getExtensions(), fnCandidate->getName().c_str());
 
-            if (builtIn && fnCandidate->getType().containsBasicType(EbtFloat16)) {
-                requireFloat16Arithmetic(loc, "float16 types can only be in uniform block or buffer storage");
-            }
-            if (builtIn && fnCandidate->getType().contains16BitInt()) {
-                requireInt16Arithmetic(loc, "(u)int16 types can only be in uniform block or buffer storage");
-            }
-            if (builtIn && fnCandidate->getType().contains8BitInt()) {
-                requireInt8Arithmetic(loc, "(u)int8 types can only be in uniform block or buffer storage");
-            }
+            if (builtIn && fnCandidate->getType().containsBasicType(EbtFloat16))
+                requireFloat16Arithmetic(loc, "built-in function", "float16 types can only be in uniform block or buffer storage");
+            if (builtIn && fnCandidate->getType().contains16BitInt())
+                requireInt16Arithmetic(loc, "built-in function", "(u)int16 types can only be in uniform block or buffer storage");
+            if (builtIn && fnCandidate->getType().contains8BitInt())
+                requireInt8Arithmetic(loc, "built-in function", "(u)int8 types can only be in uniform block or buffer storage");
 
             if (arguments != nullptr) {
                 // Make sure qualifications work for these arguments.
@@ -1045,15 +1036,12 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                             error(arguments->getLoc(), message, "writeonly", "");
                     }
 
-                    if (builtIn && arg->getAsTyped()->getType().containsBasicType(EbtFloat16)) {
-                        requireFloat16Arithmetic(arguments->getLoc(), "float16 types can only be in uniform block or buffer storage");
-                    }
-                    if (builtIn && arg->getAsTyped()->getType().contains16BitInt()) {
-                        requireInt16Arithmetic(arguments->getLoc(), "(u)int16 types can only be in uniform block or buffer storage");
-                    }
-                    if (builtIn && arg->getAsTyped()->getType().contains8BitInt()) {
-                        requireInt8Arithmetic(arguments->getLoc(), "(u)int8 types can only be in uniform block or buffer storage");
-                    }
+                    if (builtIn && arg->getAsTyped()->getType().containsBasicType(EbtFloat16))
+                        requireFloat16Arithmetic(arguments->getLoc(), "built-in function", "float16 types can only be in uniform block or buffer storage");
+                    if (builtIn && arg->getAsTyped()->getType().contains16BitInt())
+                        requireInt16Arithmetic(arguments->getLoc(), "built-in function", "(u)int16 types can only be in uniform block or buffer storage");
+                    if (builtIn && arg->getAsTyped()->getType().contains8BitInt())
+                        requireInt8Arithmetic(arguments->getLoc(), "built-in function", "(u)int8 types can only be in uniform block or buffer storage");
 
                     // TODO 4.5 functionality:  A shader will fail to compile
                     // if the value passed to the memargument of an atomic memory function does not correspond to a buffer or
@@ -2417,15 +2405,15 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
             floatArgument = true;
         if (type.isStruct()) {
             if (function[arg].type->containsBasicType(EbtFloat16)) {
-                requireFloat16Arithmetic(loc, "Can't construct structure containing 16-bit type");
+                requireFloat16Arithmetic(loc, "constructor", "can't construct structure containing 16-bit type");
             }
             if (function[arg].type->containsBasicType(EbtUint16) ||
                 function[arg].type->containsBasicType(EbtInt16)) {
-                requireInt16Arithmetic(loc, "Can't construct structure containing 16-bit type");
+                requireInt16Arithmetic(loc, "constructor", "can't construct structure containing 16-bit type");
             }
             if (function[arg].type->containsBasicType(EbtUint8) ||
                 function[arg].type->containsBasicType(EbtInt8)) {
-                requireInt8Arithmetic(loc, "Can't construct structure containing 8-bit type");
+                requireInt8Arithmetic(loc, "constructor", "can't construct structure containing 8-bit type");
             }
         }
     }
@@ -2435,13 +2423,10 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     case EOpConstructF16Vec2:
     case EOpConstructF16Vec3:
     case EOpConstructF16Vec4:
-        if (type.isArray()) {
-            requireFloat16Arithmetic(loc, "16-bit array constructors not supported");
-        }
-
-        if (type.isVector() && function.getParamCount() != 1) {
-            requireFloat16Arithmetic(loc, "16-bit vector constructors only take vector types");
-        }
+        if (type.isArray())
+            requireFloat16Arithmetic(loc, "constructor", "16-bit arrays not supported");
+        if (type.isVector() && function.getParamCount() != 1)
+            requireFloat16Arithmetic(loc, "constructor", "16-bit vectors only take vector types");
         break;
     case EOpConstructUint16:
     case EOpConstructU16Vec2:
@@ -2451,13 +2436,10 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     case EOpConstructI16Vec2:
     case EOpConstructI16Vec3:
     case EOpConstructI16Vec4:
-        if (type.isArray()) {
-            requireInt16Arithmetic(loc, "16-bit array constructors not supported");
-        }
-
-        if (type.isVector() && function.getParamCount() != 1) {
-            requireInt16Arithmetic(loc, "16-bit vector constructors only take vector types");
-        }
+        if (type.isArray())
+            requireInt16Arithmetic(loc, "constructor", "16-bit arrays not supported");
+        if (type.isVector() && function.getParamCount() != 1)
+            requireInt16Arithmetic(loc, "constructor", "16-bit vectors only take vector types");
         break;
     case EOpConstructUint8:
     case EOpConstructU8Vec2:
@@ -2467,13 +2449,10 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
     case EOpConstructI8Vec2:
     case EOpConstructI8Vec3:
     case EOpConstructI8Vec4:
-        if (type.isArray()) {
-            requireInt8Arithmetic(loc, "8-bit array constructors not supported");
-        }
-
-        if (type.isVector() && function.getParamCount() != 1) {
-            requireInt8Arithmetic(loc, "8-bit vector constructors only take vector types");
-        }
+        if (type.isArray())
+            requireInt8Arithmetic(loc, "constructor", "8-bit arrays not supported");
+        if (type.isVector() && function.getParamCount() != 1)
+            requireInt8Arithmetic(loc, "constructor", "8-bit vectors only take vector types");
         break;
     default:
         break;
@@ -3162,15 +3141,12 @@ void TParseContext::parameterTypeCheck(const TSourceLoc& loc, TStorageQualifier 
     if ((qualifier == EvqOut || qualifier == EvqInOut) && type.isOpaque())
         error(loc, "samplers and atomic_uints cannot be output parameters", type.getBasicTypeString().c_str(), "");
 
-    if (!parsingBuiltins && type.containsBasicType(EbtFloat16)) {
-        requireFloat16Arithmetic(loc, "float16 types can only be in uniform block or buffer storage");
-    }
-    if (!parsingBuiltins && type.contains16BitInt()) {
-        requireInt16Arithmetic(loc, "(u)int16 types can only be in uniform block or buffer storage");
-    }
-    if (!parsingBuiltins && type.contains8BitInt()) {
-        requireInt8Arithmetic(loc, "(u)int8 types can only be in uniform block or buffer storage");
-    }
+    if (!parsingBuiltins && type.containsBasicType(EbtFloat16))
+        requireFloat16Arithmetic(loc, type.getBasicTypeString().c_str(), "float16 types can only be in uniform block or buffer storage");
+    if (!parsingBuiltins && type.contains16BitInt())
+        requireInt16Arithmetic(loc, type.getBasicTypeString().c_str(), "(u)int16 types can only be in uniform block or buffer storage");
+    if (!parsingBuiltins && type.contains8BitInt())
+        requireInt8Arithmetic(loc, type.getBasicTypeString().c_str(), "(u)int8 types can only be in uniform block or buffer storage");
 }
 
 bool TParseContext::containsFieldWithBasicType(const TType& type, TBasicType basicType)
@@ -3948,34 +3924,34 @@ void TParseContext::opaqueCheck(const TSourceLoc& loc, const TType& type, const 
 void TParseContext::storage16BitAssignmentCheck(const TSourceLoc& loc, const TType& type, const char* op)
 {
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtFloat16))
-        requireFloat16Arithmetic(loc, "can't use with structs containing float16");
+        requireFloat16Arithmetic(loc, op, "can't use with structs containing float16");
 
     if (type.isArray() && type.getBasicType() == EbtFloat16)
-        requireFloat16Arithmetic(loc, "can't use with arrays containing float16");
+        requireFloat16Arithmetic(loc, op, "can't use with arrays containing float16");
 
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtInt16))
-        requireInt16Arithmetic(loc, "can't use with structs containing int16");
+        requireInt16Arithmetic(loc, op, "can't use with structs containing int16");
 
     if (type.isArray() && type.getBasicType() == EbtInt16)
-        requireInt16Arithmetic(loc, "can't use with arrays containing int16");
+        requireInt16Arithmetic(loc, op, "can't use with arrays containing int16");
 
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtUint16))
-        requireInt16Arithmetic(loc, "can't use with structs containing uint16");
+        requireInt16Arithmetic(loc, op, "can't use with structs containing uint16");
 
     if (type.isArray() && type.getBasicType() == EbtUint16)
-        requireInt16Arithmetic(loc, "can't use with arrays containing uint16");
+        requireInt16Arithmetic(loc, op, "can't use with arrays containing uint16");
 
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtInt8))
-        requireInt8Arithmetic(loc, "can't use with structs containing int8");
+        requireInt8Arithmetic(loc, op, "can't use with structs containing int8");
 
     if (type.isArray() && type.getBasicType() == EbtInt8)
-        requireInt8Arithmetic(loc, "can't use with arrays containing int8");
+        requireInt8Arithmetic(loc, op, "can't use with arrays containing int8");
 
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtUint8))
-        requireInt8Arithmetic(loc, "can't use with structs containing uint8");
+        requireInt8Arithmetic(loc, op, "can't use with structs containing uint8");
 
     if (type.isArray() && type.getBasicType() == EbtUint8)
-        requireInt8Arithmetic(loc, "can't use with arrays containing uint8");
+        requireInt8Arithmetic(loc, op, "can't use with arrays containing uint8");
 }
 
 void TParseContext::specializationCheck(const TSourceLoc& loc, const TType& type, const char* op)
@@ -5582,15 +5558,12 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     transparentOpaqueCheck(loc, type, identifier);
 
     if (type.getQualifier().storage != EvqUniform && type.getQualifier().storage != EvqBuffer) {
-        if (type.containsBasicType(EbtFloat16)) {
-            requireFloat16Arithmetic(loc, "float16 types can only be in uniform block or buffer storage");
-        }
-        if (type.contains16BitInt()) {
-            requireInt16Arithmetic(loc, "(u)int16 types can only be in uniform block or buffer storage");
-        }
-        if (type.contains8BitInt()) {
-            requireInt8Arithmetic(loc, "(u)int8 types can only be in uniform block or buffer storage");
-        }
+        if (type.containsBasicType(EbtFloat16))
+            requireFloat16Arithmetic(loc, "qualifier", "float16 types can only be in uniform block or buffer storage");
+        if (type.contains16BitInt())
+            requireInt16Arithmetic(loc, "qualifier", "(u)int16 types can only be in uniform block or buffer storage");
+        if (type.contains8BitInt())
+            requireInt8Arithmetic(loc, "qualifier", "(u)int8 types can only be in uniform block or buffer storage");
     }
 
     if (identifier != "gl_FragCoord" && (publicType.shaderQualifiers.originUpperLeft || publicType.shaderQualifiers.pixelCenterInteger))

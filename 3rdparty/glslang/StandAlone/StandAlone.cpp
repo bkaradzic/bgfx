@@ -737,17 +737,18 @@ void CompileShaders(glslang::TWorklist& worklist)
 
     glslang::TWorkItem* workItem;
     if (Options & EOptionStdin) {
-        worklist.remove(workItem);
-        ShHandle compiler = ShConstructCompiler(FindLanguage("stdin"), Options);
-        if (compiler == 0)
-            return;
+        if (worklist.remove(workItem)) {
+            ShHandle compiler = ShConstructCompiler(FindLanguage("stdin"), Options);
+            if (compiler == nullptr)
+                return;
 
-        CompileFile("stdin", compiler);
+            CompileFile("stdin", compiler);
 
             if (! (Options & EOptionSuppressInfolog))
                 workItem->results = ShGetInfoLog(compiler);
 
-        ShDestruct(compiler);
+            ShDestruct(compiler);
+        }
     } else {
         while (worklist.remove(workItem)) {
             ShHandle compiler = ShConstructCompiler(FindLanguage(workItem->name), Options);

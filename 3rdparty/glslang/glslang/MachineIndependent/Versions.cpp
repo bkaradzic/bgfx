@@ -831,7 +831,7 @@ void TParseVersions::float16Check(const TSourceLoc& loc, const char* op, bool bu
 #endif
                                            E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_float16};
-        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, "explicit types");
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
 
@@ -865,34 +865,49 @@ bool TParseVersions::int8Arithmetic()
     return extensionsTurnedOn(sizeof(extensions)/sizeof(extensions[0]), extensions);
 }
 
-void TParseVersions::requireFloat16Arithmetic(const TSourceLoc& loc, const char* featureDesc)
+void TParseVersions::requireFloat16Arithmetic(const TSourceLoc& loc, const char* op, const char* featureDesc)
 {
+    TString combined;
+    combined = op;
+    combined += ": ";
+    combined += featureDesc;
+
     const char* const extensions[] = {
 #if AMD_EXTENSIONS
                                        E_GL_AMD_gpu_shader_half_float,
 #endif
                                        E_GL_KHX_shader_explicit_arithmetic_types,
                                        E_GL_KHX_shader_explicit_arithmetic_types_float16};
-    requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, featureDesc);
+    requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, combined.c_str());
 }
 
-void TParseVersions::requireInt16Arithmetic(const TSourceLoc& loc, const char* featureDesc)
+void TParseVersions::requireInt16Arithmetic(const TSourceLoc& loc, const char* op, const char* featureDesc)
 {
+    TString combined;
+    combined = op;
+    combined += ": ";
+    combined += featureDesc;
+
     const char* const extensions[] = {
 #if AMD_EXTENSIONS
                                        E_GL_AMD_gpu_shader_int16,
 #endif
                                        E_GL_KHX_shader_explicit_arithmetic_types,
                                        E_GL_KHX_shader_explicit_arithmetic_types_int16};
-    requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, featureDesc);
+    requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, combined.c_str());
 }
 
-void TParseVersions::requireInt8Arithmetic(const TSourceLoc& loc, const char* featureDesc)
+void TParseVersions::requireInt8Arithmetic(const TSourceLoc& loc, const char* op, const char* featureDesc)
 {
+    TString combined;
+    combined = op;
+    combined += ": ";
+    combined += featureDesc;
+
     const char* const extensions[] = {
                                        E_GL_KHX_shader_explicit_arithmetic_types,
                                        E_GL_KHX_shader_explicit_arithmetic_types_int8};
-    requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, featureDesc);
+    requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, combined.c_str());
 }
 
 void TParseVersions::float16ScalarVectorCheck(const TSourceLoc& loc, const char* op, bool builtIn)
@@ -905,7 +920,7 @@ void TParseVersions::float16ScalarVectorCheck(const TSourceLoc& loc, const char*
                                            E_GL_EXT_shader_16bit_storage,
                                            E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_float16};
-        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, "explicit types");
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
 
@@ -915,7 +930,7 @@ void TParseVersions::explicitFloat32Check(const TSourceLoc& loc, const char* op,
     if (!builtIn) {
         const char* const extensions[2] = {E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_float32};
-        requireExtensions(loc, 2, extensions, "explicit types");
+        requireExtensions(loc, 2, extensions, op);
     }
 }
 
@@ -925,7 +940,7 @@ void TParseVersions::explicitFloat64Check(const TSourceLoc& loc, const char* op,
     if (!builtIn) {
         const char* const extensions[2] = {E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_float64};
-        requireExtensions(loc, 2, extensions, "explicit types");
+        requireExtensions(loc, 2, extensions, op);
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
         profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, nullptr, op);
     }
@@ -937,7 +952,7 @@ void TParseVersions::explicitInt8Check(const TSourceLoc& loc, const char* op, bo
     if (! builtIn) {
         const char* const extensions[2] = {E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_int8};
-        requireExtensions(loc, 2, extensions, "explicit types");
+        requireExtensions(loc, 2, extensions, op);
     }
 }
 
@@ -963,7 +978,7 @@ void TParseVersions::explicitInt16Check(const TSourceLoc& loc, const char* op, b
 #endif
                                            E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_int16};
-        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, "explicit types");
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
 
@@ -977,7 +992,7 @@ void TParseVersions::int16ScalarVectorCheck(const TSourceLoc& loc, const char* o
                                            E_GL_EXT_shader_16bit_storage,
                                            E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_int16};
-        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, "explicit types");
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
 
@@ -988,7 +1003,7 @@ void TParseVersions::int8ScalarVectorCheck(const TSourceLoc& loc, const char* op
                                            E_GL_EXT_shader_8bit_storage,
                                            E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_int8};
-        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, "explicit types");
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
 
@@ -998,7 +1013,7 @@ void TParseVersions::explicitInt32Check(const TSourceLoc& loc, const char* op, b
     if (! builtIn) {
         const char* const extensions[2] = {E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_int32};
-        requireExtensions(loc, 2, extensions, "explicit types");
+        requireExtensions(loc, 2, extensions, op);
     }
 }
 
@@ -1009,7 +1024,7 @@ void TParseVersions::int64Check(const TSourceLoc& loc, const char* op, bool buil
         const char* const extensions[3] = {E_GL_ARB_gpu_shader_int64,
                                            E_GL_KHX_shader_explicit_arithmetic_types,
                                            E_GL_KHX_shader_explicit_arithmetic_types_int64};
-        requireExtensions(loc, 3, extensions, "shader int64");
+        requireExtensions(loc, 3, extensions, op);
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
         profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, nullptr, op);
     }

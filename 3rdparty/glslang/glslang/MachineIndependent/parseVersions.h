@@ -81,13 +81,13 @@ public:
     virtual void float16Check(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual void float16ScalarVectorCheck(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual bool float16Arithmetic();
-    virtual void requireFloat16Arithmetic(const TSourceLoc& loc, const char* featureDesc);
+    virtual void requireFloat16Arithmetic(const TSourceLoc& loc, const char* op, const char* featureDesc);
     virtual void int16ScalarVectorCheck(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual bool int16Arithmetic();
-    virtual void requireInt16Arithmetic(const TSourceLoc& loc, const char* featureDesc);
+    virtual void requireInt16Arithmetic(const TSourceLoc& loc, const char* op, const char* featureDesc);
     virtual void int8ScalarVectorCheck(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual bool int8Arithmetic();
-    virtual void requireInt8Arithmetic(const TSourceLoc& loc, const char* featureDesc);
+    virtual void requireInt8Arithmetic(const TSourceLoc& loc, const char* op, const char* featureDesc);
 #ifdef AMD_EXTENSIONS
     virtual void float16OpaqueCheck(const TSourceLoc&, const char* op, bool builtIn = false);
 #endif
