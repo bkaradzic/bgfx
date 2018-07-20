@@ -601,9 +601,6 @@
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_VSYNC</span></code> - Enable V-Sync.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_MAXANISOTROPY</span></code> - Turn on/off max anisotropy.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_CAPTURE</span></code> - Begin screen capture.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_RESET_HMD</span></code> - <a class="reference internal" href="#structbgfx_1_1_h_m_d"><span>HMD</span></a> stereo rendering.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_RESET_HMD_DEBUG</span></code> - <a class="reference internal" href="#structbgfx_1_1_h_m_d"><span>HMD</span></a> stereo rendering debug mode.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_RESET_HMD_RECENTER</span></code> - <a class="reference internal" href="#structbgfx_1_1_h_m_d"><span>HMD</span></a> calibration.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_FLUSH_AFTER_RENDER</span></code> - Flush rendering after submitting to GPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_FLIP_AFTER_RENDER</span></code> - This flag specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREADED=0</span></code>.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_SRGB_BACKBUFFER</span></code> - Enable sRGB backbuffer.</li>
@@ -669,24 +666,18 @@
 <dd><p>Begin screen capture. </p>
 </dd></dl>
 
-<dl class="macro">
-<dt id="c.BGFX_RESET_HMD">
-<span class="target" id="defines_8h_1a10365b783e6435920a2a4e107d3cf0af"></span><code class="descname">BGFX_RESET_HMD</code><a class="headerlink" href="#c.BGFX_RESET_HMD" title="Permalink to this definition">¶</a></dt>
-<dd><p>HMD stereo rendering. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_RESET_HMD_DEBUG">
-<span class="target" id="defines_8h_1a35ee9c476985f91c2cedef68e1ffdd6e"></span><code class="descname">BGFX_RESET_HMD_DEBUG</code><a class="headerlink" href="#c.BGFX_RESET_HMD_DEBUG" title="Permalink to this definition">¶</a></dt>
-<dd><p>HMD stereo rendering debug mode. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_RESET_HMD_RECENTER">
-<span class="target" id="defines_8h_1ab078d316ca2bc294a5661b9a7d99910c"></span><code class="descname">BGFX_RESET_HMD_RECENTER</code><a class="headerlink" href="#c.BGFX_RESET_HMD_RECENTER" title="Permalink to this definition">¶</a></dt>
-<dd><p>HMD calibration. </p>
-</dd></dl>
-
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_RESET_HMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_RESET_HMD_DEBUG&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_RESET_HMD_RECENTER&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
 <dl class="macro">
 <dt id="c.BGFX_RESET_FLUSH_AFTER_RENDER">
 <span class="target" id="defines_8h_1ae01ca78b058a1f7bf2358d61f7b52b03"></span><code class="descname">BGFX_RESET_FLUSH_AFTER_RENDER</code><a class="headerlink" href="#c.BGFX_RESET_FLUSH_AFTER_RENDER" title="Permalink to this definition">¶</a></dt>
@@ -1325,12 +1316,10 @@
 <dd><p>Multiple windows are supported. </p>
 </dd></dl>
 
-<dl class="macro">
-<dt id="c.BGFX_CAPS_HMD">
-<span class="target" id="defines_8h_1a90daba42512c59b433058031335c0c47"></span><code class="descname">BGFX_CAPS_HMD</code><a class="headerlink" href="#c.BGFX_CAPS_HMD" title="Permalink to this definition">¶</a></dt>
-<dd><p>Head Mounted Display is available. </p>
-</dd></dl>
-
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_CAPS_HMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
 <dl class="macro">
 <dt id="c.BGFX_CAPS_INDEX32">
 <span class="target" id="defines_8h_1ab334337b725ebcfa588afc00ab838e77"></span><code class="descname">BGFX_CAPS_INDEX32</code><a class="headerlink" href="#c.BGFX_CAPS_INDEX32" title="Permalink to this definition">¶</a></dt>
@@ -1631,129 +1620,26 @@
 </div>
 <div class="section" id="head-mounted-display">
 <h4>Head Mounted Display<a class="headerlink" href="#head-mounted-display" title="Permalink to this headline">¶</a></h4>
-<dl class="function">
-<dt id="_CPPv2N4bgfx6getHMDEv">
-<span id="bgfx::getHMD"></span><span class="target" id="namespacebgfx_1a4da6ccef4febaf717d877852ac6b2b25"></span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx3HMDE" title="bgfx::HMD">HMD</a> *<code class="descclassname">bgfx::</code><code class="descname">getHMD</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6getHMDEv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns <a class="reference internal" href="#structbgfx_1_1_h_m_d"><span>HMD</span></a> info. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_get_hmd</span></code>. </dd>
-</dl>
-</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="_CPPv2N4bgfx3HMDE">
-<span id="bgfx::HMD"></span><span class="target" id="structbgfx_1_1_h_m_d"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">HMD</code><a class="headerlink" href="#_CPPv2N4bgfx3HMDE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_h_m_d"><span>HMD</span></a> info. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_hmd_t</span></code>. </dd>
-</dl>
-</p>
-<div class="breathe-sectiondef container">
-<p class="breathe-sectiondef-title rubric">Public Members</p>
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD5widthE">
-<span id="bgfx::HMD::width__uint16_t"></span><span class="target" id="structbgfx_1_1_h_m_d_1ad093809cc663ce7f272282c7b049611c"></span>uint16_t <code class="descname">width</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD5widthE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Frame buffer width. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD6heightE">
-<span id="bgfx::HMD::height__uint16_t"></span><span class="target" id="structbgfx_1_1_h_m_d_1a8b918bcaef2145d1783926b3241d9f18"></span>uint16_t <code class="descname">height</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD6heightE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Frame buffer height. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD11deviceWidthE">
-<span id="bgfx::HMD::deviceWidth__uint32_t"></span><span class="target" id="structbgfx_1_1_h_m_d_1aaf60b6bb2a1c6b46cd1637e62a2a1b32"></span>uint32_t <code class="descname">deviceWidth</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD11deviceWidthE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Device resolution width. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD12deviceHeightE">
-<span id="bgfx::HMD::deviceHeight__uint32_t"></span><span class="target" id="structbgfx_1_1_h_m_d_1afc717cd684b68ec13ff8ce3e5228008f"></span>uint32_t <code class="descname">deviceHeight</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD12deviceHeightE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Device resolution height. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD5flagsE">
-<span id="bgfx::HMD::flags__uint8_t"></span><span class="target" id="structbgfx_1_1_h_m_d_1ad06355a240c30f266462745624b6d5db"></span>uint8_t <code class="descname">flags</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD5flagsE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Status flags. </p>
-</dd></dl>
-
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygenfunction: Cannot find function &#8220;bgfx::getHMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
 </div>
-<dl class="class">
-<dt id="_CPPv2N4bgfx3HMD3EyeE">
-<span id="bgfx::HMD::Eye"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye"></span><em class="property">struct </em><code class="descname">Eye</code><a class="headerlink" href="#_CPPv2N4bgfx3HMD3EyeE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_h_m_d_1_1_eye"><span>Eye</span></a>. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_hmd_eye_t</span></code>. </dd>
-</dl>
-</p>
-<div class="breathe-sectiondef container">
-<p class="breathe-sectiondef-title rubric">Public Members</p>
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD3Eye8rotationE">
-<span id="bgfx::HMD::Eye::rotation__floatA"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye_1a5cd423f29878115cce05edd155e7323d"></span>float <code class="descname">rotation</code>[4]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye8rotationE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_h_m_d_1_1_eye"><span>Eye</span></a> rotation represented as quaternion. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD3Eye11translationE">
-<span id="bgfx::HMD::Eye::translation__floatA"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye_1a668e56a83e86667feb2475d4f7023da8"></span>float <code class="descname">translation</code>[3]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye11translationE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_h_m_d_1_1_eye"><span>Eye</span></a> translation. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD3Eye3fovE">
-<span id="bgfx::HMD::Eye::fov__floatA"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye_1ae13f19ce665f317cf96b36a0271e0126"></span>float <code class="descname">fov</code>[4]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye3fovE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Field of view (up, down, left, right). </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD3Eye10viewOffsetE">
-<span id="bgfx::HMD::Eye::viewOffset__floatA"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye_1a66c74ef9fc006582cbb89dc1a66d9802"></span>float <code class="descname">viewOffset</code>[3]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye10viewOffsetE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_h_m_d_1_1_eye"><span>Eye</span></a> view matrix translation adjustment. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD3Eye10projectionE">
-<span id="bgfx::HMD::Eye::projection__floatA"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye_1aba4db0b11b3793e075464e34e307eebb"></span>float <code class="descname">projection</code>[16]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye10projectionE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_h_m_d_1_1_eye"><span>Eye</span></a> projection matrix. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx3HMD3Eye17pixelsPerTanAngleE">
-<span id="bgfx::HMD::Eye::pixelsPerTanAngle__floatA"></span><span class="target" id="structbgfx_1_1_h_m_d_1_1_eye_1ab04298a85d1e180551392905ec5052b2"></span>float <code class="descname">pixelsPerTanAngle</code>[2]<a class="headerlink" href="#_CPPv2N4bgfx3HMD3Eye17pixelsPerTanAngleE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of pixels that fit in tan(angle) = 1. </p>
-</dd></dl>
-
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygenstruct: Cannot find class &#8220;bgfx::HMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
 </div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_HMD_NONE">
-<span class="target" id="defines_8h_1a3ac67824cc42497782025993b6bb54f3"></span><code class="descname">BGFX_HMD_NONE</code><a class="headerlink" href="#c.BGFX_HMD_NONE" title="Permalink to this definition">¶</a></dt>
-<dd><p>None. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_HMD_DEVICE_RESOLUTION">
-<span class="target" id="defines_8h_1a3d7805ee1a27ac0d128e245e2d9639d7"></span><code class="descname">BGFX_HMD_DEVICE_RESOLUTION</code><a class="headerlink" href="#c.BGFX_HMD_DEVICE_RESOLUTION" title="Permalink to this definition">¶</a></dt>
-<dd><p>Has HMD native resolution. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_HMD_RENDERING">
-<span class="target" id="defines_8h_1a28f6309e935fdd3919402a3622aba5eb"></span><code class="descname">BGFX_HMD_RENDERING</code><a class="headerlink" href="#c.BGFX_HMD_RENDERING" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rendering to HMD. </p>
-</dd></dl>
-
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_HMD_NONE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_HMD_DEVICE_RESOLUTION&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">doxygendefine: Cannot find define &#8220;BGFX_HMD_RENDERING&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
+</div>
 </div>
 </div>
 <div class="section" id="platform-specific">
