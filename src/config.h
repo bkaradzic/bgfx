@@ -143,11 +143,6 @@
 #	define BGFX_CONFIG_USE_TINYSTL 1
 #endif // BGFX_CONFIG_USE_TINYSTL
 
-/// Enable OculusVR integration.
-#ifndef BGFX_CONFIG_USE_OVR
-#	define BGFX_CONFIG_USE_OVR 0
-#endif // BGFX_CONFIG_USE_OVR
-
 /// Enable nVidia PerfHUD integration.
 #ifndef BGFX_CONFIG_DEBUG_PERFHUD
 #	define BGFX_CONFIG_DEBUG_PERFHUD 0

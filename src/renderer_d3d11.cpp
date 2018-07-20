@@ -635,29 +635,6 @@ namespace bgfx { namespace d3d11
 	int  WINAPI d3d11Annotation_EndEvent();
 	void WINAPI d3d11Annotation_SetMarker(DWORD _color, LPCWSTR _name);
 
-#if BGFX_CONFIG_USE_OVR
-	class VRImplOVRD3D11 : public VRImplOVR
-	{
-	public:
-		VRImplOVRD3D11();
-
-		virtual bool createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight) override;
-		virtual void destroySwapChain() override;
-		virtual void destroyMirror() override;
-		virtual void makeRenderTargetActive(const VRDesc& _desc) override;
-		virtual bool submitSwapChain(const VRDesc& _desc) override;
-
-	private:
-		ID3D11DepthStencilView* m_depthBuffer;
-		ID3D11RenderTargetView* m_eyeRtv[4];
-		ID3D11RenderTargetView* m_msaaRtv;
-		ID3D11Texture2D* m_msaaTexture;
-
-		ovrTextureSwapChain m_textureSwapChain;
-		ovrMirrorTexture m_mirrorTexture;
-	};
-#endif // BGFX_CONFIG_USE_OVR
-
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
@@ -2055,8 +2032,6 @@ namespace bgfx { namespace d3d11
 		{
 			m_needPresent = false;
 
-			ovrPreReset();
-
 			if (m_timerQuerySupport)
 			{
 				m_gpuTimer.preReset();
@@ -2110,8 +2085,6 @@ namespace bgfx { namespace d3d11
 				m_gpuTimer.postReset();
 			}
 			m_occlusionQuery.postReset();
-
-			ovrPostReset();
 
 			if (NULL == m_backBufferDepthStencil)
 			{
@@ -3033,24 +3006,6 @@ namespace bgfx { namespace d3d11
 			return srv;
 		}
 
-		void ovrPostReset()
-		{
-#if BGFX_CONFIG_USE_OVR
-			if (m_resolution.reset & (BGFX_RESET_HMD|BGFX_RESET_HMD_DEBUG) )
-			{
-				const uint32_t msaaSamples = 1 << ((m_resolution.reset&BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT);
-				m_ovr.postReset(msaaSamples, m_resolution.width, m_resolution.height);
-			}
-#endif // BGFX_CONFIG_USE_OVR
-		}
-
-		void ovrPreReset()
-		{
-#if BGFX_CONFIG_USE_OVR
-			m_ovr.preReset();
-#endif // BGFX_CONFIG_USE_OVR
-		}
-
 		void capturePostReset()
 		{
 			if (m_resolution.reset&BGFX_RESET_CAPTURE)
@@ -3508,229 +3463,6 @@ namespace bgfx { namespace d3d11
 		BX_UNUSED(_color);
 		s_renderD3D11->m_annotation->SetMarker(_name);
 	}
-
-#if BGFX_CONFIG_USE_OVR
-
-	VRImplOVRD3D11::VRImplOVRD3D11()
-		: m_depthBuffer(NULL)
-		, m_msaaRtv(NULL)
-		, m_msaaTexture(NULL)
-		, m_textureSwapChain(NULL)
-		, m_mirrorTexture(NULL)
-	{
-		bx::memSet(m_eyeRtv, 0, sizeof(m_eyeRtv));
-	}
-
-	bool VRImplOVRD3D11::createSwapChain(const VRDesc& _desc, int _msaaSamples, int _mirrorWidth, int _mirrorHeight)
-	{
-		if (!m_session)
-		{
-			return false;
-		}
-
-		ID3D11Device* device = s_renderD3D11->m_device;
-
-		if (NULL == m_textureSwapChain)
-		{
-			ovrTextureSwapChainDesc swapchainDesc = {};
-			swapchainDesc.Type = ovrTexture_2D;
-			swapchainDesc.Width = _desc.m_eyeSize[0].m_w + _desc.m_eyeSize[1].m_w;
-			swapchainDesc.Height = bx::uint32_max(_desc.m_eyeSize[0].m_h, _desc.m_eyeSize[1].m_h);
-			swapchainDesc.MipLevels = 1;
-			swapchainDesc.ArraySize = 1;
-			swapchainDesc.SampleCount = 1;
-			swapchainDesc.MiscFlags = ovrTextureMisc_DX_Typeless;
-			swapchainDesc.BindFlags = ovrTextureBind_DX_RenderTarget;
-			swapchainDesc.StaticImage = ovrFalse;
-			swapchainDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-
-			ovrResult result = ovr_CreateTextureSwapChainDX(m_session, device, &swapchainDesc, &m_textureSwapChain);
-			if (!OVR_SUCCESS(result) )
-			{
-				return false;
-			}
-
-			for (int eye = 0; eye < 2; ++eye)
-			{
-				m_renderLayer.ColorTexture[eye] = m_textureSwapChain;
-			}
-
-			// create MSAA target
-			if (_msaaSamples > 1)
-			{
-				D3D11_TEXTURE2D_DESC msDesc;
-				msDesc.Width = swapchainDesc.Width;
-				msDesc.Height = swapchainDesc.Height;
-				msDesc.MipLevels = 1;
-				msDesc.ArraySize = 1;
-				msDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				msDesc.SampleDesc.Count = _msaaSamples;
-				msDesc.SampleDesc.Quality = 0;
-				msDesc.Usage = D3D11_USAGE_DEFAULT;
-				msDesc.CPUAccessFlags = 0;
-				msDesc.MiscFlags = 0;
-				msDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
-				DX_CHECK(device->CreateTexture2D(&msDesc, NULL, &m_msaaTexture) );
-				DX_CHECK(device->CreateRenderTargetView(m_msaaTexture, NULL, &m_msaaRtv) );
-			}
-			else
-			{
-				int swapchainSize;
-				result = ovr_GetTextureSwapChainLength(m_session, m_textureSwapChain, &swapchainSize);
-				if (!OVR_SUCCESS(result) )
-				{
-					destroySwapChain();
-					return false;
-				}
-
-				BX_CHECK(swapchainSize <= BX_COUNTOF(m_eyeRtv), "Too many OVR swap chain entries %d", swapchainSize);
-				for (int ii = 0; ii < swapchainSize; ++ii)
-				{
-					ID3D11Texture2D* texture;
-					ovr_GetTextureSwapChainBufferDX(m_session, m_textureSwapChain, ii, IID_PPV_ARGS(&texture) );
-
-					D3D11_RENDER_TARGET_VIEW_DESC viewDesc;
-					viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-					viewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-					viewDesc.Texture2D.MipSlice = 0;
-					DX_CHECK(device->CreateRenderTargetView(texture, &viewDesc, &m_eyeRtv[ii]) );
-					DX_RELEASE(texture, 1);
-				}
-			}
-
-			// create depth buffer
-			D3D11_TEXTURE2D_DESC dbDesc = {};
-			dbDesc.Width = swapchainDesc.Width;
-			dbDesc.Height = swapchainDesc.Height;
-			dbDesc.MipLevels = 1;
-			dbDesc.ArraySize = 1;
-			dbDesc.Format = DXGI_FORMAT_D32_FLOAT;
-			dbDesc.SampleDesc.Count = _msaaSamples;
-			dbDesc.SampleDesc.Quality = 0;
-			dbDesc.Usage = D3D11_USAGE_DEFAULT;
-			dbDesc.CPUAccessFlags = 0;
-			dbDesc.MiscFlags = 0;
-			dbDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-			ID3D11Texture2D* depthTexture;
-			DX_CHECK(device->CreateTexture2D(&dbDesc, NULL, &depthTexture) );
-			DX_CHECK(device->CreateDepthStencilView(depthTexture, NULL, &m_depthBuffer) );
-			DX_RELEASE(depthTexture, 0);
-		}
-
-		if (NULL == m_mirrorTexture)
-		{
-			ovrMirrorTextureDesc mirrorDesc = {};
-			mirrorDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-			mirrorDesc.Width = _mirrorWidth;
-			mirrorDesc.Height = _mirrorHeight;
-			ovrResult result = ovr_CreateMirrorTextureDX(m_session, device, &mirrorDesc, &m_mirrorTexture);
-			BX_WARN(OVR_SUCCESS(result), "Could not create D3D11 OVR mirror texture");
-			BX_UNUSED(result);
-		}
-
-		return true;
-	}
-
-	void VRImplOVRD3D11::destroySwapChain()
-	{
-		if (NULL != m_textureSwapChain)
-		{
-			BX_CHECK(m_session, "VRSWapChain destroyed without valid OVR session");
-			ovr_DestroyTextureSwapChain(m_session, m_textureSwapChain);
-			m_textureSwapChain = NULL;
-		}
-
-		for (int ii = 0, nn = BX_COUNTOF(m_eyeRtv); ii < nn; ++ii)
-		{
-			DX_RELEASE(m_eyeRtv[ii], 0);
-		}
-
-		DX_RELEASE(m_msaaRtv, 0);
-		DX_RELEASE(m_msaaTexture, 0);
-		DX_RELEASE(m_depthBuffer, 0);
-
-		destroyMirror();
-	}
-
-	void VRImplOVRD3D11::destroyMirror()
-	{
-		if (NULL != m_mirrorTexture)
-		{
-			ovr_DestroyMirrorTexture(m_session, m_mirrorTexture);
-			m_mirrorTexture = NULL;
-		}
-	}
-
-	void VRImplOVRD3D11::makeRenderTargetActive(const VRDesc& /*_desc*/)
-	{
-		if (NULL != m_msaaRtv)
-		{
-			s_renderD3D11->m_currentColor = m_msaaRtv;
-		}
-		else
-		{
-			int index;
-			ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain, &index);
-			s_renderD3D11->m_currentColor = m_eyeRtv[index];
-		}
-
-		s_renderD3D11->m_currentDepthStencil = m_depthBuffer;
-	}
-
-	bool VRImplOVRD3D11::submitSwapChain(const VRDesc& /* _desc */)
-	{
-		BX_CHECK(NULL != m_session, "No session in VRImplOVRD3D11::submitSwapChain. Usage error");
-		BX_CHECK(NULL != m_textureSwapChain, "VRImplOVRD3D11 submitted without a valid swap chain");
-
-		ID3D11DeviceContext* deviceCtx = s_renderD3D11->m_deviceCtx;
-
-		int index;
-		ovr_GetTextureSwapChainCurrentIndex(m_session, m_textureSwapChain, &index);
-
-		ID3D11Texture2D* eyeTexture;
-		ovr_GetTextureSwapChainBufferDX(m_session, m_textureSwapChain, index, IID_PPV_ARGS(&eyeTexture));
-
-		if (NULL != m_msaaRtv)
-		{
-			deviceCtx->ResolveSubresource(eyeTexture, 0, m_msaaTexture, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-		}
-
-		ovrResult result = ovr_CommitTextureSwapChain(m_session, m_textureSwapChain);
-		if (!OVR_SUCCESS(result) )
-		{
-			DX_RELEASE(eyeTexture, 1);
-			return false;
-		}
-
-		ovrLayerHeader* layerList = &m_renderLayer.Header;
-		result = ovr_SubmitFrame(m_session, 0, NULL, &layerList, 1);
-		if (!OVR_SUCCESS(result) )
-		{
-			DX_RELEASE(eyeTexture, 1);
-			return false;
-		}
-
-		if (result != ovrSuccess_NotVisible && NULL != m_mirrorTexture)
-		{
-			Dxgi::SwapChainI* swapChain = s_renderD3D11->m_swapChain;
-
-			ID3D11Texture2D* tex = NULL;
-			ovr_GetMirrorTextureBufferDX(m_session, m_mirrorTexture, IID_PPV_ARGS(&tex));
-			ID3D11Texture2D* backBuffer;
-			DX_CHECK(swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer)));
-
-			deviceCtx->CopyResource(backBuffer, tex);
-			DX_CHECK(swapChain->Present(0, 0));
-
-			DX_RELEASE(tex, 1);
-			DX_RELEASE(backBuffer, 0);
-		}
-
-		DX_RELEASE(eyeTexture, 1);
-		return true;
-	}
-
-#endif // BGFX_CONFIG_USE_OVR
 
 	struct UavFormat
 	{

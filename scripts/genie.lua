@@ -9,11 +9,6 @@ newoption {
 }
 
 newoption {
-	trigger = "with-ovr",
-	description = "Enable OculusVR integration.",
-}
-
-newoption {
 	trigger = "with-sdl",
 	description = "Enable SDL entry.",
 }
@@ -180,19 +175,6 @@ function exampleProjectDefaults()
 				"-framework CoreVideo",
 				"-framework IOKit",
 			}
-
-		configuration {}
-	end
-
-	if _OPTIONS["with-ovr"] then
-		configuration { "x32" }
-			libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/Win32/Release", _ACTION) }
-
-		configuration { "x64" }
-			libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/x64/Release", _ACTION) }
-
-		configuration { "x32 or x64" }
-			links { "libovr" }
 
 		configuration {}
 	end
