@@ -9,7 +9,6 @@
 #	include "renderer_gl.h"
 #	include <bx/timer.h>
 #	include <bx/uint32_t.h>
-#	include "hmd_ovr.h"
 
 namespace bgfx { namespace gl
 {
@@ -1798,13 +1797,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 			setRenderContextSize(_init.resolution.width, _init.resolution.height);
 
-			// Must be after context is initialized?!
-			VRImplI* vrImpl = NULL;
-#if BGFX_CONFIG_USE_OVR
-			vrImpl = &m_ovrRender;
-#endif
-			m_ovr.init(vrImpl);
-
 			m_vendor      = getGLString(GL_VENDOR);
 			m_renderer    = getGLString(GL_RENDERER);
 			m_version     = getGLString(GL_VERSION);
@@ -2595,7 +2587,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 
 			ovrPreReset();
-			m_ovr.shutdown();
 
 			m_glctx.destroy();
 
@@ -2606,7 +2597,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		void shutdown()
 		{
 			ovrPreReset();
-			m_ovr.shutdown();
 
 			if (m_vaoSupport)
 			{
@@ -2657,7 +2647,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			return false;
 		}
 
-		void flip(HMD& _hmd) override
+		void flip() override
 		{
 			if (m_flip)
 			{
@@ -2673,9 +2663,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				if (m_needPresent)
 				{
-					m_ovr.flip();
-					m_ovr.swap(_hmd);
-
 					// Ensure the back buffer is bound as the source of the flip
 					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo));
 
@@ -3122,7 +3109,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		void updateResolution(const Resolution& _resolution)
 		{
-			bool recenter   = !!(_resolution.reset & BGFX_RESET_HMD_RECENTER);
 			m_maxAnisotropy = !!(_resolution.reset & BGFX_RESET_MAXANISOTROPY)
 				? m_maxAnisotropyDefault
 				: 0.0f
@@ -3141,7 +3127,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 
 			const uint32_t maskFlags = ~(0
-				| BGFX_RESET_HMD_RECENTER
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
@@ -3159,12 +3144,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
-				if ( (flags & BGFX_RESET_HMD)
-				&&  m_ovr.isInitialized() )
-				{
-					flags &= ~BGFX_RESET_MSAA_MASK;
-				}
-
 				setRenderContextSize(m_resolution.width
 						, m_resolution.height
 						, flags
@@ -3179,21 +3158,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				ovrPreReset();
 				ovrPostReset();
 
-				if (m_ovr.isEnabled() )
-				{
-					m_ovr.makeRenderTargetActive();
-				}
-				else
-				{
-					m_currentFbo = 0;
-				}
+				m_currentFbo = 0;
 
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
-			}
-
-			if (recenter)
-			{
-				m_ovr.recenter();
 			}
 		}
 
@@ -3235,14 +3202,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			{
 				m_needPresent |= true;
 
-				if (m_ovr.isEnabled() )
-				{
-					m_ovr.makeRenderTargetActive();
-				}
-				else
-				{
-					m_currentFbo = m_msaaBackBufferFbo;
-				}
+				m_currentFbo = m_msaaBackBufferFbo;
 
 				if (m_srgbWriteControlSupport)
 				{
@@ -3972,11 +3932,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		Workaround m_workaround;
 
 		GLuint m_currentFbo;
-
-		VR m_ovr;
-#if BGFX_CONFIG_USE_OVR
-		VRImplOVRGL m_ovrRender;
-#endif // BGFX_CONFIG_USE_OVR
 	};
 
 	RendererContextGL* s_renderGL;
@@ -6643,9 +6598,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		RenderBind currentBind;
 		currentBind.clear();
 
-		_render->m_hmdInitialized = m_ovr.isInitialized();
-
-		const bool hmdEnabled = m_ovr.isEnabled();
+		const bool hmdEnabled = false;
 		static ViewState viewState;
 		viewState.reset(_render, hmdEnabled);
 
@@ -6656,10 +6609,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		BlitState bs(_render);
 
-		int32_t resolutionHeight = hmdEnabled
-					? _render->m_hmd.height
-					: _render->m_resolution.height
-					;
+		int32_t resolutionHeight = _render->m_resolution.height;
 		uint32_t blendFactor = 0;
 
 		uint8_t primIndex;
@@ -6749,10 +6699,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
 						fbh = _render->m_view[view].m_fbh;
-						resolutionHeight = hmdEnabled
-							? _render->m_hmd.height
-							: _render->m_resolution.height
-							;
+						resolutionHeight = _render->m_resolution.height;
 						resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
 					}
 
@@ -6792,15 +6739,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							GL_CHECK(glInsertEventMarker(0, viewName) );
 						}
 
-						if (m_ovr.isEnabled() )
-						{
-							m_ovr.getViewport(eye, &viewState.m_rect);
-						}
-						else
-						{
-							viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
-							viewState.m_rect.m_width /= 2;
-						}
+						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
+						viewState.m_rect.m_width /= 2;
 					}
 					else
 					{
@@ -7783,14 +7723,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					);
 
 				char hmd[16];
-				bx::snprintf(hmd, BX_COUNTOF(hmd), ", [%c] HMD ", hmdEnabled ? '\xfe' : ' ');
+				bx::snprintf(hmd, BX_COUNTOF(hmd), ", [ ] HMD ");
 
 				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, "  Reset flags: [%c] vsync, [%c] MSAAx%d%s, [%c] MaxAnisotropy "
 					, !!(m_resolution.reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
-					, m_ovr.isInitialized() ? hmd : ", no-HMD "
+					, ", no-HMD "
 					, !!(m_resolution.reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 

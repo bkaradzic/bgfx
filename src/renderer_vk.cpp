@@ -1959,7 +1959,7 @@ VK_IMPORT_DEVICE
 			return false;
 		}
 
-		void flip(HMD& /*_hmd*/) override
+		void flip() override
 		{
 			if (VK_NULL_HANDLE != m_swapchain)
 			{
@@ -2192,7 +2192,7 @@ VK_IMPORT_DEVICE
 				m_pipelineStateCache.invalidate();
 			}
 
-			uint32_t flags = _resolution.reset & ~(BGFX_RESET_HMD_RECENTER | BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
+			uint32_t flags = _resolution.reset & ~(BGFX_RESET_MAXANISOTROPY | BGFX_RESET_DEPTH_CLAMP);
 
 			if (m_resolution.width  != _resolution.width
 			||  m_resolution.height != _resolution.height
@@ -3662,8 +3662,6 @@ VK_DESTROY
 		currentState.clear();
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
-
-		_render->m_hmdInitialized = false;
 
 		const bool hmdEnabled = false;
 		ViewState viewState(_render, hmdEnabled);

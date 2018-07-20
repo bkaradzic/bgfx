@@ -987,18 +987,6 @@ public:
 	void renderMainPass()
 	{
 		// Set view and projection matrix for view 0.
-		const bgfx::HMD* hmd = bgfx::getHMD();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING))
-		{
-			bgfx::setViewTransform(RENDER_PASS_MAIN_ID, m_mainView, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
-
-			// Set view 0 default viewport.
-			//
-			// Use HMD's width/height since HMD's internal frame buffer size
-			// might be much larger than window size.
-			bgfx::setViewRect(RENDER_PASS_MAIN_ID, 0, 0, hmd->width, hmd->height);
-		}
-		else
 		{
 			bgfx::setViewTransform(RENDER_PASS_MAIN_ID, m_mainView, m_mainProj);
 

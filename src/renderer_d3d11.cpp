@@ -8,10 +8,6 @@
 #if BGFX_CONFIG_RENDERER_DIRECT3D11
 #	include "renderer_d3d11.h"
 
-#if BGFX_CONFIG_USE_OVR
-#	include "hmd_ovr.h"
-#endif // BGFX_CONFIG_USE_OVR
-
 namespace bgfx { namespace d3d11
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
@@ -717,15 +713,8 @@ namespace bgfx { namespace d3d11
 
 			ErrorState::Enum errorState = ErrorState::Default;
 
-			// Must be before device creation, and before RenderDoc.
-			VRImplI* vrImpl = NULL;
-#if BGFX_CONFIG_USE_OVR
-			vrImpl = &m_ovrRender;
-#endif // BGFX_CONFIG_USE_OVR
-			m_ovr.init(vrImpl);
-
-			if (!m_ovr.isInitialized()
-			&& (_init.debug || _init.profile) )
+			if (_init.debug
+			||  _init.profile)
 			{
 				m_renderdocdll = loadRenderDoc();
 			}
@@ -1141,9 +1130,6 @@ namespace bgfx { namespace d3d11
 						| BGFX_CAPS_TEXTURE_DIRECT_ACCESS
 						: 0)
 					| BGFX_CAPS_SWAP_CHAIN
-					| (m_ovr.isInitialized()
-						? BGFX_CAPS_HMD
-						: 0)
 					| BGFX_CAPS_DRAW_INDIRECT
 					| BGFX_CAPS_TEXTURE_BLIT
 					| BGFX_CAPS_TEXTURE_READ_BACK
@@ -1555,7 +1541,6 @@ namespace bgfx { namespace d3d11
 				m_agsdll = NULL;
 
 				unloadRenderDoc(m_renderdocdll);
-				m_ovr.shutdown();
 				break;
 			}
 
@@ -1565,7 +1550,6 @@ namespace bgfx { namespace d3d11
 		void shutdown()
 		{
 			preReset();
-			m_ovr.shutdown();
 
 			if (NULL != m_ags)
 			{
@@ -2129,8 +2113,7 @@ namespace bgfx { namespace d3d11
 
 			ovrPostReset();
 
-			// If OVR doesn't create separate depth stencil view, create default one.
-			if (!m_ovr.isEnabled() && NULL == m_backBufferDepthStencil)
+			if (NULL == m_backBufferDepthStencil)
 			{
 				D3D11_TEXTURE2D_DESC dsd;
 				dsd.Width  = m_scd.width;
@@ -2150,14 +2133,7 @@ namespace bgfx { namespace d3d11
 				DX_RELEASE(depthStencil, 0);
 			}
 
-			if (m_ovr.isEnabled() )
-			{
-				m_ovr.makeRenderTargetActive();
-			}
-			else
-			{
-				m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
-			}
+			m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
 
 			m_currentColor = m_backBufferColor;
 			m_currentDepthStencil = m_backBufferDepthStencil;
@@ -2175,7 +2151,7 @@ namespace bgfx { namespace d3d11
 			return m_lost;
 		}
 
-		void flip(HMD& _hmd) override
+		void flip() override
 		{
 			if (NULL != m_swapChain
 			&&  !m_lost)
@@ -2195,13 +2171,7 @@ namespace bgfx { namespace d3d11
 				{
 					if (m_needPresent)
 					{
-						m_ovr.flip();
-						m_ovr.swap(_hmd);
-
-						if (!m_ovr.isEnabled() )
-						{
-							hr = m_swapChain->Present(syncInterval, 0);
-						}
+						hr = m_swapChain->Present(syncInterval, 0);
 
 						m_needPresent = false;
 					}
@@ -2285,8 +2255,6 @@ namespace bgfx { namespace d3d11
 				m_resolution.reset &= ~BGFX_RESET_SUSPEND;
 			}
 
-			bool recenter = !!(_resolution.reset & BGFX_RESET_HMD_RECENTER);
-
 			uint32_t maxAnisotropy = 1;
 			if (!!(_resolution.reset & BGFX_RESET_MAXANISOTROPY) )
 			{
@@ -2314,7 +2282,6 @@ namespace bgfx { namespace d3d11
 			}
 
 			const uint32_t maskFlags = ~(0
-				| BGFX_RESET_HMD_RECENTER
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
@@ -2382,19 +2349,9 @@ namespace bgfx { namespace d3d11
 							m_scd.bufferCount = m_swapBufferCount;
 						}
 
-						SwapChainDesc* scd = &m_scd;
-						SwapChainDesc swapChainScd;
-						if (0 != (m_resolution.reset & BGFX_RESET_HMD)
-						&&  m_ovr.isInitialized() )
-						{
-							swapChainScd = m_scd;
-							swapChainScd.sampleDesc = s_msaa[0];
-							scd = &swapChainScd;
-						}
-
 						HRESULT hr;
 						hr = m_dxgi.createSwapChain(m_device
-								, *scd
+								, m_scd
 								, &m_swapChain
 								);
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
@@ -2402,11 +2359,6 @@ namespace bgfx { namespace d3d11
 				}
 
 				postReset();
-			}
-
-			if (recenter)
-			{
-				m_ovr.recenter();
 			}
 
 			return false;
@@ -2471,15 +2423,8 @@ namespace bgfx { namespace d3d11
 
 			if (!isValid(_fbh) )
 			{
-				if (m_ovr.isEnabled() )
-				{
-					m_ovr.makeRenderTargetActive();
-				}
-				else
-				{
-					m_currentColor = m_backBufferColor;
-					m_currentDepthStencil = m_backBufferDepthStencil;
-				}
+				m_currentColor        = m_backBufferColor;
+				m_currentDepthStencil = m_backBufferDepthStencil;
 
 				m_deviceCtx->OMSetRenderTargets(1, &m_currentColor, m_currentDepthStencil);
 				m_needPresent |= _needPresent;
@@ -3485,11 +3430,6 @@ namespace bgfx { namespace d3d11
 		bool m_rtMsaa;
 		bool m_timerQuerySupport;
 		bool m_directAccessSupport;
-
-		VR m_ovr;
-#if BGFX_CONFIG_USE_OVR
-		VRImplOVRD3D11 m_ovrRender;
-#endif // BGFX_CONFIG_USE_OVR
 	};
 
 	static RendererContextD3D11* s_renderD3D11;
@@ -5459,9 +5399,7 @@ namespace bgfx { namespace d3d11
 		RenderBind currentBind;
 		currentBind.clear();
 
-		_render->m_hmdInitialized = m_ovr.isInitialized();
-
-		const bool hmdEnabled = m_ovr.isEnabled();
+		const bool hmdEnabled = false;
 		static ViewState viewState;
 		viewState.reset(_render, hmdEnabled);
 
@@ -5590,15 +5528,8 @@ namespace bgfx { namespace d3d11
 								);
 						}
 
-						if (m_ovr.isEnabled() )
-						{
-							m_ovr.getViewport(eye, &viewState.m_rect);
-						}
-						else
-						{
-							viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
-							viewState.m_rect.m_width /= 2;
-						}
+						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
+						viewState.m_rect.m_width /= 2;
 					}
 					else
 					{
@@ -6452,14 +6383,14 @@ namespace bgfx { namespace d3d11
 					);
 
 				char hmd[16];
-				bx::snprintf(hmd, BX_COUNTOF(hmd), ", [%c] HMD ", hmdEnabled ? '\xfe' : ' ');
+				bx::snprintf(hmd, BX_COUNTOF(hmd), ", [ ] HMD ");
 
 				const uint32_t msaa = (m_resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT;
 				tvm.printf(10, pos++, 0x8b, "  Reset flags: [%c] vsync, [%c] MSAAx%d%s, [%c] MaxAnisotropy "
 					, !!(m_resolution.reset&BGFX_RESET_VSYNC) ? '\xfe' : ' '
 					, 0 != msaa ? '\xfe' : ' '
 					, 1<<msaa
-					, m_ovr.isInitialized() ? hmd : ", no-HMD "
+					, ", no-HMD "
 					, !!(m_resolution.reset&BGFX_RESET_MAXANISOTROPY) ? '\xfe' : ' '
 					);
 

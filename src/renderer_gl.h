@@ -113,8 +113,6 @@ typedef uint64_t GLuint64;
 #endif // BGFX_CONFIG_RENDERER_OPENGL
 
 #include "renderer.h"
-#include "hmd.h"
-#include "hmd_openvr.h"
 #include "debug_renderdoc.h"
 
 #ifndef GL_LUMINANCE

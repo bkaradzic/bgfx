@@ -25,10 +25,6 @@ Supported rendering backends:
  * WebGL 1.0
  * WebGL 2.0
 
-Supported HMD:
-
- * OculusVR (1.3.0)
-
 Supported platforms:
 
  * Android (14+, ARM, x86, MIPS)

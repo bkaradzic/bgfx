@@ -47,12 +47,12 @@ namespace bgfx
 		{
 		}
 
-		ViewState(Frame* _frame, bool _hmdEnabled)
+		ViewState(Frame* _frame, bool _stereo)
 		{
-			reset(_frame, _hmdEnabled);
+			reset(_frame, _stereo);
 		}
 
-		void reset(Frame* _frame, bool _hmdEnabled)
+		void reset(Frame* _frame, bool _stereo)
 		{
 			m_alphaRef = 0.0f;
 			m_invViewCached = UINT16_MAX;
@@ -62,16 +62,15 @@ namespace bgfx
 			m_view[0] = m_viewTmp[0];
 			m_view[1] = m_viewTmp[1];
 
-			if (_hmdEnabled)
+			if (_stereo)
 			{
-				HMD& hmd = _frame->m_hmd;
-
 				m_view[0] = m_viewTmp[0];
 				Matrix4 viewAdjust;
 				bx::mtxIdentity(viewAdjust.un.val);
 
 				for (uint32_t eye = 0; eye < 2; ++eye)
 				{
+/*
 					const HMD::Eye& hmdEye = hmd.eye[eye];
 					viewAdjust.un.val[12] = hmdEye.viewOffset[0];
 					viewAdjust.un.val[13] = hmdEye.viewOffset[1];
@@ -91,6 +90,7 @@ namespace bgfx
 							bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
 						}
 					}
+*/
 				}
 			}
 			else
@@ -103,7 +103,7 @@ namespace bgfx
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
-				for (uint32_t eye = 0; eye < uint32_t(_hmdEnabled)+1; ++eye)
+				for (uint32_t eye = 0; eye < uint32_t(_stereo)+1; ++eye)
 				{
 					bx::float4x4_mul(&m_viewProj[eye][ii].un.f4x4
 						, &m_view[eye][ii].un.f4x4

@@ -1778,7 +1778,6 @@ namespace bgfx
 		Frame()
 			: m_waitSubmit(0)
 			, m_waitRender(0)
-			, m_hmdInitialized(false)
 			, m_capture(false)
 		{
 			SortKey term;
@@ -2051,7 +2050,6 @@ namespace bgfx
 		FreeHandle<UniformHandle,      BGFX_CONFIG_MAX_UNIFORMS>       m_freeUniform;
 
 		TextVideoMem* m_textVideoMem;
-		HMD m_hmd;
 
 		Stats     m_perfStats;
 		ViewStats m_viewStats[BGFX_CONFIG_MAX_VIEWS];
@@ -2059,7 +2057,6 @@ namespace bgfx
 		int64_t m_waitSubmit;
 		int64_t m_waitRender;
 
-		bool m_hmdInitialized;
 		bool m_capture;
 	};
 
@@ -2629,7 +2626,7 @@ namespace bgfx
 		virtual RendererType::Enum getRendererType() const = 0;
 		virtual const char* getRendererName() const = 0;
 		virtual bool isDeviceRemoved() = 0;
-		virtual void flip(HMD& _hmd) = 0;
+		virtual void flip() = 0;
 		virtual void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) = 0;
 		virtual void destroyIndexBuffer(IndexBufferHandle _handle) = 0;
 		virtual void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) = 0;
@@ -2797,18 +2794,6 @@ namespace bgfx
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
 			m_submit->m_textVideoMem->image(_x, _y, _width, _height, _data, _pitch);
-		}
-
-		BGFX_API_FUNC(const HMD* getHMD() )
-		{
-			BGFX_MUTEX_SCOPE(m_resourceApiLock);
-
-			if (m_submit->m_hmdInitialized)
-			{
-				return &m_submit->m_hmd;
-			}
-
-			return NULL;
 		}
 
 		BGFX_API_FUNC(const Stats* getPerfStats() )

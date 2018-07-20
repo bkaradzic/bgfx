@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(75)
+#define BGFX_API_VERSION UINT32_C(76)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define BGFX_STATE_WRITE_R                 UINT64_C(0x0000000000000001) //!< Enable R write.
@@ -417,9 +417,6 @@
 #define BGFX_RESET_VSYNC                 UINT32_C(0x00000080) //!< Enable V-Sync.
 #define BGFX_RESET_MAXANISOTROPY         UINT32_C(0x00000100) //!< Turn on/off max anisotropy.
 #define BGFX_RESET_CAPTURE               UINT32_C(0x00000200) //!< Begin screen capture.
-#define BGFX_RESET_HMD                   UINT32_C(0x00000400) //!< HMD stereo rendering.
-#define BGFX_RESET_HMD_DEBUG             UINT32_C(0x00000800) //!< HMD stereo rendering debug mode.
-#define BGFX_RESET_HMD_RECENTER          UINT32_C(0x00001000) //!< HMD calibration.
 #define BGFX_RESET_FLUSH_AFTER_RENDER    UINT32_C(0x00002000) //!< Flush rendering after submitting to GPU.
 #define BGFX_RESET_FLIP_AFTER_RENDER     UINT32_C(0x00004000) //!< This flag  specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 #define BGFX_RESET_SRGB_BACKBUFFER       UINT32_C(0x00008000) //!< Enable sRGB backbuffer.
@@ -440,7 +437,6 @@
 #define BGFX_CAPS_FRAGMENT_ORDERING      UINT64_C(0x0000000000000040) //!< Fragment ordering is available in fragment shader.
 #define BGFX_CAPS_GRAPHICS_DEBUGGER      UINT64_C(0x0000000000000080) //!< Graphics debugger is present.
 #define BGFX_CAPS_HIDPI                  UINT64_C(0x0000000000000100) //!< HiDPI rendering is supported.
-#define BGFX_CAPS_HMD                    UINT64_C(0x0000000000000200) //!< Head Mounted Display is available.
 #define BGFX_CAPS_INDEX32                UINT64_C(0x0000000000000400) //!< 32-bit indices are supported.
 #define BGFX_CAPS_INSTANCING             UINT64_C(0x0000000000000800) //!< Instancing is supported.
 #define BGFX_CAPS_OCCLUSION_QUERY        UINT64_C(0x0000000000001000) //!< Occlusion query is supported.
@@ -495,11 +491,6 @@
 #define BGFX_PCI_ID_AMD                 UINT16_C(0x1002) //!< AMD adapter.
 #define BGFX_PCI_ID_INTEL               UINT16_C(0x8086) //!< Intel adapter.
 #define BGFX_PCI_ID_NVIDIA              UINT16_C(0x10de) //!< nVidia adapter.
-
-///
-#define BGFX_HMD_NONE              UINT8_C(0x00) //!< None.
-#define BGFX_HMD_DEVICE_RESOLUTION UINT8_C(0x01) //!< Has HMD native resolution.
-#define BGFX_HMD_RENDERING         UINT8_C(0x02) //!< Rendering to HMD.
 
 ///
 #define BGFX_CUBE_MAP_POSITIVE_X UINT8_C(0x00) //!< Cubemap +x.

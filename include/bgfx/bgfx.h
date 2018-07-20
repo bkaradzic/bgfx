@@ -842,34 +842,6 @@ namespace bgfx
 		uint16_t num; //!< Number of matrices.
 	};
 
-	/// HMD info.
-	///
-	/// @attention C99 equivalent is `bgfx_hmd_t`.
-	///
-	struct HMD
-	{
-		/// Eye
-		///
-		/// @attention C99 equivalent is `bgfx_hmd_eye_t`.
-		///
-		struct Eye
-		{
-			float rotation[4];          //!< Eye rotation represented as quaternion.
-			float translation[3];       //!< Eye translation.
-			float fov[4];               //!< Field of view (up, down, left, right).
-			float viewOffset[3];        //!< Eye view matrix translation adjustment.
-			float projection[16];       //!< Eye projection matrix.
-			float pixelsPerTanAngle[2]; //!< Number of pixels that fit in tan(angle) = 1.
-		};
-
-		Eye eye[2];
-		uint16_t width;        //!< Frame buffer width.
-		uint16_t height;       //!< Frame buffer height.
-		uint32_t deviceWidth;  //!< Device resolution width.
-		uint32_t deviceHeight; //!< Device resolution height.
-		uint8_t  flags;        //!< Status flags.
-	};
-
 	///
 	typedef uint16_t ViewId;
 
@@ -1887,9 +1859,6 @@ namespace bgfx
 	///   - `BGFX_RESET_VSYNC` - Enable V-Sync.
 	///   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.
 	///   - `BGFX_RESET_CAPTURE` - Begin screen capture.
-	///   - `BGFX_RESET_HMD` - HMD stereo rendering.
-	///   - `BGFX_RESET_HMD_DEBUG` - HMD stereo rendering debug mode.
-	///   - `BGFX_RESET_HMD_RECENTER` - HMD calibration.
 	///   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.
 	///   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip
 	///     occurs. Default behavior is that flip occurs before rendering new
@@ -1948,12 +1917,6 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_get_caps`.
 	///
 	const Caps* getCaps();
-
-	/// Returns HMD info.
-	///
-	/// @attention C99 equivalent is `bgfx_get_hmd`.
-	///
-	const HMD* getHMD();
 
 	/// Returns performance counters.
 	///

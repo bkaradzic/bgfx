@@ -92,7 +92,6 @@ typedef struct bgfx_interface_vtbl
     uint32_t (*frame)(bool _capture);
     bgfx_renderer_type_t (*get_renderer_type)();
     const bgfx_caps_t* (*get_caps)();
-    const bgfx_hmd_t* (*get_hmd)();
     const bgfx_stats_t* (*get_stats)();
     const bgfx_memory_t* (*alloc)(uint32_t _size);
     const bgfx_memory_t* (*copy)(const void* _data, uint32_t _size);

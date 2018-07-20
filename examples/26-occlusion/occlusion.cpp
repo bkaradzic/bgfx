@@ -209,23 +209,6 @@ public:
 				cameraGetViewMtx(view);
 
 				// Set view and projection matrix for view 0.
-				const bgfx::HMD* hmd = bgfx::getHMD();
-				if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-				{
-					float viewHead[16];
-					float eye[3] = {};
-					bx::mtxQuatTranslationHMD(viewHead, hmd->eye[0].rotation, eye);
-
-					float tmp[16];
-					bx::mtxMul(tmp, view, viewHead);
-
-					bgfx::setViewTransform(0, tmp, hmd->eye[0].projection);
-					bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-
-					bgfx::setViewTransform(1, tmp, hmd->eye[1].projection);
-					bgfx::setViewRect(1, 0, 0, hmd->width, hmd->height);
-				}
-				else
 				{
 					float proj[16];
 					bx::mtxProj(proj, 90.0f, float(m_width)/float(m_height), 0.1f, 10000.0f, bgfx::getCaps()->homogeneousDepth);

@@ -1163,7 +1163,7 @@ namespace bgfx { namespace mtl
 			return false;
 		}
 
-		void flip(HMD& /*_hmd*/) override
+		void flip() override
 		{
 			if (NULL == m_commandBuffer)
 			{

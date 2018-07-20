@@ -79,29 +79,7 @@ struct OcornutImguiContext
 		bgfx::setViewName(m_viewId, "ImGui");
 		bgfx::setViewMode(m_viewId, bgfx::ViewMode::Sequential);
 
-		const bgfx::HMD*  hmd  = bgfx::getHMD();
 		const bgfx::Caps* caps = bgfx::getCaps();
-		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-		{
-			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
-
-			static float time = 0.0f;
-			time += 0.05f;
-
-			const float dist = 10.0f;
-			const float offset0 = -proj[8] + (hmd->eye[0].viewOffset[0] / dist * proj[0]);
-			const float offset1 = -proj[8] + (hmd->eye[1].viewOffset[0] / dist * proj[0]);
-
-			float ortho[2][16];
-			const float viewOffset = width/4.0f;
-			const float viewWidth  = width/2.0f;
-			bx::mtxOrtho(ortho[0], viewOffset, viewOffset + viewWidth, height, 0.0f, 0.0f, 1000.0f, offset0, caps->homogeneousDepth);
-			bx::mtxOrtho(ortho[1], viewOffset, viewOffset + viewWidth, height, 0.0f, 0.0f, 1000.0f, offset1, caps->homogeneousDepth);
-			bgfx::setViewTransform(m_viewId, NULL, ortho[0], BGFX_VIEW_STEREO, ortho[1]);
-			bgfx::setViewRect(m_viewId, 0, 0, hmd->width, hmd->height);
-		}
-		else
 		{
 			float ortho[16];
 			bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);

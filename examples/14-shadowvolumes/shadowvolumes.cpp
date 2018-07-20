@@ -2138,19 +2138,6 @@ public:
 			cameraUpdate(deltaTime, m_mouseState);
 
 			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-			{
-				float eye[3];
-				cameraGetPosition(eye);
-
-				bx::mtxQuatTranslationHMD(m_viewState.m_view, hmd->eye[0].rotation, eye);
-				bx::mtxProj(m_viewState.m_proj, hmd->eye[0].fov, nearPlane, farPlane, s_oglNdc);
-
-				m_viewState.m_width  = hmd->width;
-				m_viewState.m_height = hmd->height;
-			}
-			else
 			{
 				cameraGetViewMtx(m_viewState.m_view);
 				bx::mtxProj(m_viewState.m_proj, fov, aspect, nearPlane, farPlane, s_oglNdc);

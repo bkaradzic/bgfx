@@ -36,8 +36,6 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include "renderer.h"
 #include "renderer_d3d.h"
 #include "shader_dxbc.h"
-#include "hmd.h"
-#include "hmd_openvr.h"
 #include "debug_renderdoc.h"
 #include "nvapi.h"
 #include "dxgi.h"

@@ -1403,7 +1403,6 @@ namespace bgfx { namespace d3d9
 				: 1
 				;
 			const uint32_t maskFlags = ~(0
-				| BGFX_RESET_HMD_RECENTER
 				| BGFX_RESET_MAXANISOTROPY
 				| BGFX_RESET_DEPTH_CLAMP
 				| BGFX_RESET_SUSPEND
@@ -1523,7 +1522,7 @@ namespace bgfx { namespace d3d9
 			return false;
 		}
 
-		void flip(HMD& /*_hmd*/) override
+		void flip() override
 		{
 			if (NULL != m_swapChain)
 			{

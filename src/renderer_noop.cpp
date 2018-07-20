@@ -22,7 +22,6 @@ namespace bgfx { namespace noop
 				| BGFX_CAPS_FRAGMENT_ORDERING
 				| BGFX_CAPS_GRAPHICS_DEBUGGER
 				| BGFX_CAPS_HIDPI
-				| BGFX_CAPS_HMD
 				| BGFX_CAPS_INDEX32
 				| BGFX_CAPS_INSTANCING
 				| BGFX_CAPS_OCCLUSION_QUERY
@@ -88,7 +87,7 @@ namespace bgfx { namespace noop
 			return false;
 		}
 
-		void flip(HMD& /*_hmd*/) override
+		void flip() override
 		{
 		}
 

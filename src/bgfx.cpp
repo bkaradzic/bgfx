@@ -1159,7 +1159,6 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_ORDERING),
 		CAPS_FLAGS(BGFX_CAPS_GRAPHICS_DEBUGGER),
 		CAPS_FLAGS(BGFX_CAPS_HIDPI),
-		CAPS_FLAGS(BGFX_CAPS_HMD),
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
 		CAPS_FLAGS(BGFX_CAPS_INSTANCING),
 		CAPS_FLAGS(BGFX_CAPS_OCCLUSION_QUERY),
@@ -1873,7 +1872,7 @@ namespace bgfx
 		if (m_rendererInitialized
 		&& !m_flipped)
 		{
-			m_renderCtx->flip(m_render->m_hmd);
+			m_renderCtx->flip();
 			m_flipped = true;
 
 			if (m_renderCtx->isDeviceRemoved() )
@@ -3311,11 +3310,6 @@ error:
 		return &g_caps;
 	}
 
-	const HMD* getHMD()
-	{
-		return s_ctx->getHMD();
-	}
-
 	const Stats* getStats()
 	{
 		return s_ctx->getPerfStats();
@@ -4619,8 +4613,6 @@ BGFX_C99_ENUM_CHECK(bgfx::RenderFrame,          BGFX_RENDER_FRAME_COUNT);
 
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Memory,                bgfx_memory_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Transform,             bgfx_transform_t);
-BGFX_C99_STRUCT_SIZE_CHECK(bgfx::HMD::Eye,              bgfx_hmd_eye_t);
-BGFX_C99_STRUCT_SIZE_CHECK(bgfx::HMD,                   bgfx_hmd_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::Stats,                 bgfx_stats_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::VertexDecl,            bgfx_vertex_decl_t);
 BGFX_C99_STRUCT_SIZE_CHECK(bgfx::TransientIndexBuffer,  bgfx_transient_index_buffer_t);
@@ -4870,11 +4862,6 @@ BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type(void)
 BGFX_C_API const bgfx_caps_t* bgfx_get_caps(void)
 {
 	return (const bgfx_caps_t*)bgfx::getCaps();
-}
-
-BGFX_C_API const bgfx_hmd_t* bgfx_get_hmd(void)
-{
-	return (const bgfx_hmd_t*)bgfx::getHMD();
 }
 
 BGFX_C_API const bgfx_stats_t* bgfx_get_stats(void)
@@ -5823,7 +5810,6 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(frame)                                                \
 	BGFX_IMPORT_FUNC(get_renderer_type)                                    \
 	BGFX_IMPORT_FUNC(get_caps)                                             \
-	BGFX_IMPORT_FUNC(get_hmd)                                              \
 	BGFX_IMPORT_FUNC(get_stats)                                            \
 	BGFX_IMPORT_FUNC(alloc)                                                \
 	BGFX_IMPORT_FUNC(copy)                                                 \
