@@ -645,6 +645,11 @@ protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const char*);
     void warn(TInfoSink& infoSink, const char*);
+    void mergeCallGraphs(TInfoSink&, TIntermediate&);
+    void mergeModes(TInfoSink&, TIntermediate&);
+    void mergeTrees(TInfoSink&, TIntermediate&);
+    void seedIdMap(TMap<TString, int>& idMap, int& maxId);
+    void remapIds(const TMap<TString, int>& idMap, int idShift, TIntermediate&);
     void mergeBodies(TInfoSink&, TIntermSequence& globals, const TIntermSequence& unitGlobals);
     void mergeLinkerObjects(TInfoSink&, TIntermSequence& linkerObjects, const TIntermSequence& unitLinkerObjects);
     void mergeImplicitArraySizes(TType&, const TType&);
@@ -652,7 +657,7 @@ protected:
     void checkCallGraphCycles(TInfoSink&);
     void checkCallGraphBodies(TInfoSink&, bool keepUncalled);
     void inOutLocationCheck(TInfoSink&);
-    TIntermSequence& findLinkerObjects() const;
+    TIntermAggregate* findLinkerObjects() const;
     bool userOutputUsed() const;
     bool isSpecializationOperation(const TIntermOperator&) const;
     bool isNonuniformPropagating(TOperator) const;
@@ -674,6 +679,8 @@ protected:
     EShSource source;            // source language, known a bit later
     std::string entryPointName;
     std::string entryPointMangledName;
+    typedef std::list<TCall> TGraph;
+    TGraph callGraph;
 
     EProfile profile;                           // source profile
     int version;                                // source version
@@ -703,6 +710,7 @@ protected:
     bool hlslFunctionality1;
     int blendEquations;        // an 'or'ing of masks of shifts of TBlendEquationShift
     bool xfbMode;
+    std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     bool multiStream;
 
 #ifdef NV_EXTENSIONS
@@ -714,7 +722,7 @@ protected:
     std::array<unsigned int, EResCount> shiftBinding;
 
     // Per-descriptor-set shift values
-    std::array<std::map<int, int>, EResCount>  shiftBindingForSet;
+    std::array<std::map<int, int>, EResCount> shiftBindingForSet;
 
     std::vector<std::string> resourceSetBinding;
     bool autoMapBindings;
@@ -726,13 +734,9 @@ protected:
     bool useStorageBuffer;
     bool hlslIoMapping;
 
-    typedef std::list<TCall> TGraph;
-    TGraph callGraph;
-
     std::set<TString> ioAccessed;           // set of names of statically read/written I/O that might need extra checking
     std::vector<TIoRange> usedIo[4];        // sets of used locations, one for each of in, out, uniform, and buffers
     std::vector<TOffsetRange> usedAtomics;  // sets of bindings used by atomic counters
-    std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     std::unordered_set<int> usedConstantId; // specialization constant ids used
     std::set<TString> semanticNameSet;
 

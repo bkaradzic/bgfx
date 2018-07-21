@@ -1164,6 +1164,7 @@ public:
         constSubtree(nullptr)
           { name = n; }
     virtual int getId() const { return id; }
+    virtual void changeId(int i) { id = i; }
     virtual const TString& getName() const { return name; }
     virtual void traverse(TIntermTraverser*);
     virtual       TIntermSymbol* getAsSymbolNode()       { return this; }

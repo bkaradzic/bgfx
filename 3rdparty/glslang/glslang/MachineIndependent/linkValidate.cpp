@@ -77,12 +77,13 @@ void TIntermediate::warn(TInfoSink& infoSink, const char* message)
 //
 void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
 {
-    if (source == EShSourceNone)
-        source = unit.source;
+    mergeCallGraphs(infoSink, unit);
+    mergeModes(infoSink, unit);
+    mergeTrees(infoSink, unit);
+}
 
-    if (source != unit.source)
-        error(infoSink, "can't link compilation units from different source languages");
-
+void TIntermediate::mergeCallGraphs(TInfoSink& infoSink, TIntermediate& unit)
+{
     if (unit.getNumEntryPoints() > 0) {
         if (getNumEntryPoints() > 0)
             error(infoSink, "can't handle multiple entry points per stage");
@@ -92,35 +93,50 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
         }
     }
     numEntryPoints += unit.getNumEntryPoints();
+
+    callGraph.insert(callGraph.end(), unit.callGraph.begin(), unit.callGraph.end());
+}
+
+#define MERGE_MAX(member) member = std::max(member, unit.member)
+#define MERGE_TRUE(member) if (unit.member) member = unit.member;
+
+void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
+{
+    if (language != unit.language)
+        error(infoSink, "stages must match when linking into a single stage");
+
+    if (source == EShSourceNone)
+        source = unit.source;
+    if (source != unit.source)
+        error(infoSink, "can't link compilation units from different source languages");
+
+    if (treeRoot == nullptr) {
+        profile = unit.profile;
+        version = unit.version;
+        requestedExtensions = unit.requestedExtensions;
+    } else {
+        if ((profile == EEsProfile) != (unit.profile == EEsProfile))
+            error(infoSink, "Cannot cross link ES and desktop profiles");
+        else if (unit.profile == ECompatibilityProfile)
+            profile = ECompatibilityProfile;
+        version = std::max(version, unit.version);
+        requestedExtensions.insert(unit.requestedExtensions.begin(), unit.requestedExtensions.end());
+    }
+
+    MERGE_MAX(spvVersion.spv);
+    MERGE_MAX(spvVersion.vulkanGlsl);
+    MERGE_MAX(spvVersion.vulkan);
+    MERGE_MAX(spvVersion.openGl);
+
     numErrors += unit.getNumErrors();
     numPushConstants += unit.numPushConstants;
-    callGraph.insert(callGraph.end(), unit.callGraph.begin(), unit.callGraph.end());
 
-    if (originUpperLeft != unit.originUpperLeft || pixelCenterInteger != unit.pixelCenterInteger)
-        error(infoSink, "gl_FragCoord redeclarations must match across shaders");
-
-    if (! earlyFragmentTests)
-        earlyFragmentTests = unit.earlyFragmentTests;
-
-    if (!postDepthCoverage)
-        postDepthCoverage = unit.postDepthCoverage;
-
-    if (depthLayout == EldNone)
-        depthLayout = unit.depthLayout;
-    else if (depthLayout != unit.depthLayout)
-        error(infoSink, "Contradictory depth layouts");
-
-    blendEquations |= unit.blendEquations;
-
-    if (inputPrimitive == ElgNone)
-        inputPrimitive = unit.inputPrimitive;
-    else if (inputPrimitive != unit.inputPrimitive)
-        error(infoSink, "Contradictory input layout primitives");
-
-    if (outputPrimitive == ElgNone)
-        outputPrimitive = unit.outputPrimitive;
-    else if (outputPrimitive != unit.outputPrimitive)
-        error(infoSink, "Contradictory output layout primitives");
+    if (unit.invocations != TQualifier::layoutNotSet) {
+        if (invocations == TQualifier::layoutNotSet)
+            invocations = unit.invocations;
+        else if (invocations != unit.invocations)
+            error(infoSink, "number of invocations must match between compilation units");
+    }
 
     if (vertices == TQualifier::layoutNotSet)
         vertices = unit.vertices;
@@ -133,6 +149,19 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
             assert(0);
     }
 
+    if (inputPrimitive == ElgNone)
+        inputPrimitive = unit.inputPrimitive;
+    else if (inputPrimitive != unit.inputPrimitive)
+        error(infoSink, "Contradictory input layout primitives");
+
+    if (outputPrimitive == ElgNone)
+        outputPrimitive = unit.outputPrimitive;
+    else if (outputPrimitive != unit.outputPrimitive)
+        error(infoSink, "Contradictory output layout primitives");
+
+    if (originUpperLeft != unit.originUpperLeft || pixelCenterInteger != unit.pixelCenterInteger)
+        error(infoSink, "gl_FragCoord redeclarations must match across shaders");
+
     if (vertexSpacing == EvsNone)
         vertexSpacing = unit.vertexSpacing;
     else if (vertexSpacing != unit.vertexSpacing)
@@ -143,8 +172,7 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
     else if (vertexOrder != unit.vertexOrder)
         error(infoSink, "Contradictory triangle ordering");
 
-    if (unit.pointMode)
-        pointMode = true;
+    MERGE_TRUE(pointMode);
 
     for (int i = 0; i < 3; ++i) {
         if (localSize[i] > 1)
@@ -158,8 +186,21 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
             error(infoSink, "Contradictory local size specialization ids");
     }
 
-    if (unit.xfbMode)
-        xfbMode = true;
+    MERGE_TRUE(earlyFragmentTests);
+    MERGE_TRUE(postDepthCoverage);
+
+    if (depthLayout == EldNone)
+        depthLayout = unit.depthLayout;
+    else if (depthLayout != unit.depthLayout)
+        error(infoSink, "Contradictory depth layouts");
+
+    MERGE_TRUE(depthReplacing);
+    MERGE_TRUE(hlslFunctionality1);
+
+    blendEquations |= unit.blendEquations;
+
+    MERGE_TRUE(xfbMode);
+
     for (size_t b = 0; b < xfbBuffers.size(); ++b) {
         if (xfbBuffers[b].stride == TQualifier::layoutXfbStrideEnd)
             xfbBuffers[b].stride = unit.xfbBuffers[b].stride;
@@ -171,33 +212,172 @@ void TIntermediate::merge(TInfoSink& infoSink, TIntermediate& unit)
         // TODO: 4.4 link: enhanced layouts: compare ranges
     }
 
-    if (unit.treeRoot == 0)
+    MERGE_TRUE(multiStream);
+
+#ifdef NV_EXTENSIONS
+    MERGE_TRUE(layoutOverrideCoverage);
+    MERGE_TRUE(geoPassthroughEXT);
+#endif
+
+    for (unsigned int i = 0; i < unit.shiftBinding.size(); ++i) {
+        if (unit.shiftBinding[i] > 0)
+            setShiftBinding((TResourceType)i, unit.shiftBinding[i]);
+    }
+
+    for (unsigned int i = 0; i < unit.shiftBindingForSet.size(); ++i) {
+        for (auto it = unit.shiftBindingForSet[i].begin(); it != unit.shiftBindingForSet[i].end(); ++it)
+            setShiftBindingForSet((TResourceType)i, it->second, it->first);
+    }
+
+    resourceSetBinding.insert(resourceSetBinding.end(), unit.resourceSetBinding.begin(), unit.resourceSetBinding.end());
+
+    MERGE_TRUE(autoMapBindings);
+    MERGE_TRUE(autoMapLocations);
+    MERGE_TRUE(invertY);
+    MERGE_TRUE(flattenUniformArrays);
+    MERGE_TRUE(useUnknownFormat);
+    MERGE_TRUE(hlslOffsets);
+    MERGE_TRUE(useStorageBuffer);
+    MERGE_TRUE(hlslIoMapping);
+
+    // TODO: sourceFile
+    // TODO: sourceText
+    // TODO: processes
+
+    MERGE_TRUE(needToLegalize);
+    MERGE_TRUE(binaryDoubleOutput);
+}
+
+//
+// Merge the 'unit' AST into 'this' AST.
+// That includes rationalizing the unique IDs, which were set up independently,
+// and might have overlaps that are not the same symbol, or might have different
+// IDs for what should be the same shared symbol.
+//
+void TIntermediate::mergeTrees(TInfoSink& infoSink, TIntermediate& unit)
+{
+    if (unit.treeRoot == nullptr)
         return;
 
-    if (treeRoot == 0) {
+    if (treeRoot == nullptr) {
         treeRoot = unit.treeRoot;
-        version = unit.version;
-        requestedExtensions = unit.requestedExtensions;
         return;
     }
 
     // Getting this far means we have two existing trees to merge...
-
-    version = std::max(version, unit.version);
-    requestedExtensions.insert(unit.requestedExtensions.begin(), unit.requestedExtensions.end());
 
     // Get the top-level globals of each unit
     TIntermSequence& globals = treeRoot->getAsAggregate()->getSequence();
     TIntermSequence& unitGlobals = unit.treeRoot->getAsAggregate()->getSequence();
 
     // Get the linker-object lists
-    TIntermSequence& linkerObjects = findLinkerObjects();
-    TIntermSequence& unitLinkerObjects = unit.findLinkerObjects();
+    TIntermSequence& linkerObjects = findLinkerObjects()->getSequence();
+    const TIntermSequence& unitLinkerObjects = unit.findLinkerObjects()->getSequence();
+
+    // Map by global name to unique ID to rationalize the same object having
+    // differing IDs in different trees.
+    TMap<TString, int> idMap;
+    int maxId;
+    seedIdMap(idMap, maxId);
+    remapIds(idMap, maxId + 1, unit);
 
     mergeBodies(infoSink, globals, unitGlobals);
     mergeLinkerObjects(infoSink, linkerObjects, unitLinkerObjects);
-
     ioAccessed.insert(unit.ioAccessed.begin(), unit.ioAccessed.end());
+}
+
+// Traverser that seeds an ID map with all built-ins, and tracks the
+// maximum ID used.
+// (It would be nice to put this in a function, but that causes warnings
+// on having no bodies for the copy-constructor/operator=.)
+class TBuiltInIdTraverser : public TIntermTraverser {
+public:
+    TBuiltInIdTraverser(TMap<TString, int>& idMap) : idMap(idMap), maxId(0) { }
+    // If it's a built in, add it to the map.
+    // Track the max ID.
+    virtual void visitSymbol(TIntermSymbol* symbol)
+    {
+        const TQualifier& qualifier = symbol->getType().getQualifier();
+        if (qualifier.builtIn != EbvNone)
+            idMap[symbol->getName()] = symbol->getId();
+        maxId = std::max(maxId, symbol->getId());
+    }
+    int getMaxId() const { return maxId; }
+protected:
+    TBuiltInIdTraverser(TBuiltInIdTraverser&);
+    TBuiltInIdTraverser& operator=(TBuiltInIdTraverser&);
+    TMap<TString, int>& idMap;
+    int maxId;
+};
+
+// Traverser that seeds an ID map with non-builtins.
+// (It would be nice to put this in a function, but that causes warnings
+// on having no bodies for the copy-constructor/operator=.)
+class TUserIdTraverser : public TIntermTraverser {
+public:
+    TUserIdTraverser(TMap<TString, int>& idMap) : idMap(idMap) { }
+    // If its a non-built-in global, add it to the map.
+    virtual void visitSymbol(TIntermSymbol* symbol)
+    {
+        const TQualifier& qualifier = symbol->getType().getQualifier();
+        if (qualifier.builtIn == EbvNone)
+            idMap[symbol->getName()] = symbol->getId();
+    }
+
+protected:
+    TUserIdTraverser(TUserIdTraverser&);
+    TUserIdTraverser& operator=(TUserIdTraverser&);
+    TMap<TString, int>& idMap; // over biggest id
+};
+
+// Initialize the the ID map with what we know of 'this' AST.
+void TIntermediate::seedIdMap(TMap<TString, int>& idMap, int& maxId)
+{
+    // all built-ins everywhere need to align on IDs and contribute to the max ID
+    TBuiltInIdTraverser builtInIdTraverser(idMap);
+    treeRoot->traverse(&builtInIdTraverser);
+    maxId = builtInIdTraverser.getMaxId();
+
+    // user variables in the linker object list need to align on ids
+    TUserIdTraverser userIdTraverser(idMap);
+    findLinkerObjects()->traverse(&userIdTraverser);
+}
+
+// Traverser to map an AST ID to what was known from the seeding AST.
+// (It would be nice to put this in a function, but that causes warnings
+// on having no bodies for the copy-constructor/operator=.)
+class TRemapIdTraverser : public TIntermTraverser {
+public:
+    TRemapIdTraverser(const TMap<TString, int>& idMap, int idShift) : idMap(idMap), idShift(idShift) { }
+    // Do the mapping:
+    //  - if the same symbol, adopt the 'this' ID
+    //  - otherwise, ensure a unique ID by shifting to a new space
+    virtual void visitSymbol(TIntermSymbol* symbol)
+    {
+        const TQualifier& qualifier = symbol->getType().getQualifier();
+        bool remapped = false;
+        if (qualifier.isLinkable() || qualifier.builtIn != EbvNone) {
+            auto it = idMap.find(symbol->getName());
+            if (it != idMap.end()) {
+                symbol->changeId(it->second);
+                remapped = true;
+            }
+        }
+        if (!remapped)
+            symbol->changeId(symbol->getId() + idShift);
+    }
+protected:
+    TRemapIdTraverser(TRemapIdTraverser&);
+    TRemapIdTraverser& operator=(TRemapIdTraverser&);
+    const TMap<TString, int>& idMap;
+    int idShift;
+};
+
+void TIntermediate::remapIds(const TMap<TString, int>& idMap, int idShift, TIntermediate& unit)
+{
+    // Remap all IDs to either share or be unique, as dictated by the idMap and idShift.
+    TRemapIdTraverser idTraverser(idMap, idShift);
+    unit.getTreeRoot()->traverse(&idTraverser);
 }
 
 //
@@ -699,7 +879,7 @@ void TIntermediate::inOutLocationCheck(TInfoSink& infoSink)
 
     // TODO: linker functionality: location collision checking
 
-    TIntermSequence& linkObjects = findLinkerObjects();
+    TIntermSequence& linkObjects = findLinkerObjects()->getSequence();
     for (size_t i = 0; i < linkObjects.size(); ++i) {
         const TType& type = linkObjects[i]->getAsTyped()->getType();
         const TQualifier& qualifier = type.getQualifier();
@@ -718,7 +898,7 @@ void TIntermediate::inOutLocationCheck(TInfoSink& infoSink)
     }
 }
 
-TIntermSequence& TIntermediate::findLinkerObjects() const
+TIntermAggregate* TIntermediate::findLinkerObjects() const
 {
     // Get the top-level globals
     TIntermSequence& globals = treeRoot->getAsAggregate()->getSequence();
@@ -726,7 +906,7 @@ TIntermSequence& TIntermediate::findLinkerObjects() const
     // Get the last member of the sequences, expected to be the linker-object lists
     assert(globals.back()->getAsAggregate()->getOp() == EOpLinkerObjects);
 
-    return globals.back()->getAsAggregate()->getSequence();
+    return globals.back()->getAsAggregate();
 }
 
 // See if a variable was both a user-declared output and used.
@@ -734,7 +914,7 @@ TIntermSequence& TIntermediate::findLinkerObjects() const
 // is more useful, and perhaps the spec should be changed to reflect that.
 bool TIntermediate::userOutputUsed() const
 {
-    const TIntermSequence& linkerObjects = findLinkerObjects();
+    const TIntermSequence& linkerObjects = findLinkerObjects()->getSequence();
 
     bool found = false;
     for (size_t i = 0; i < linkerObjects.size(); ++i) {

@@ -911,6 +911,7 @@ void TGlslangToSpvTraverser::addIndirectionIndexCapabilities(const glslang::TTyp
 {
     if (indexType.getQualifier().isNonUniform()) {
         // deal with an asserted non-uniform index
+        // SPV_EXT_descriptor_indexing already added in TranslateNonUniformDecoration
         if (baseType.getBasicType() == glslang::EbtSampler) {
             if (baseType.getQualifier().hasAttachment())
                 builder.addCapability(spv::CapabilityInputAttachmentArrayNonUniformIndexingEXT);
@@ -931,12 +932,16 @@ void TGlslangToSpvTraverser::addIndirectionIndexCapabilities(const glslang::TTyp
     } else {
         // assume a dynamically uniform index
         if (baseType.getBasicType() == glslang::EbtSampler) {
-            if (baseType.getQualifier().hasAttachment())
+            if (baseType.getQualifier().hasAttachment()) {
+                builder.addExtension("SPV_EXT_descriptor_indexing");
                 builder.addCapability(spv::CapabilityInputAttachmentArrayDynamicIndexingEXT);
-            else if (baseType.isImage() && baseType.getSampler().dim == glslang::EsdBuffer)
+            } else if (baseType.isImage() && baseType.getSampler().dim == glslang::EsdBuffer) {
+                builder.addExtension("SPV_EXT_descriptor_indexing");
                 builder.addCapability(spv::CapabilityStorageTexelBufferArrayDynamicIndexingEXT);
-            else if (baseType.isTexture() && baseType.getSampler().dim == glslang::EsdBuffer)
+            } else if (baseType.isTexture() && baseType.getSampler().dim == glslang::EsdBuffer) {
+                builder.addExtension("SPV_EXT_descriptor_indexing");
                 builder.addCapability(spv::CapabilityUniformTexelBufferArrayDynamicIndexingEXT);
+            }
         }
     }
 }

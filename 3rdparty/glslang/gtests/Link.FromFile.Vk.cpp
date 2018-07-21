@@ -106,6 +106,7 @@ INSTANTIATE_TEST_CASE_P(
     Glsl, LinkTestVulkan,
     ::testing::ValuesIn(std::vector<std::vector<std::string>>({
         {"link1.vk.frag", "link2.vk.frag"},
+        {"spv.unit1.frag", "spv.unit2.frag", "spv.unit3.frag"},
     })),
 );
 // clang-format on
