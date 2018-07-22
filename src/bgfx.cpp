@@ -19,19 +19,19 @@ namespace bgfx
 #define BGFX_API_THREAD_MAGIC UINT32_C(0x78666762)
 
 #if BGFX_CONFIG_MULTITHREADED
-#	define BGFX_CHECK_API_THREAD() \
-				BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
-				BX_CHECK(BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
+#	define BGFX_CHECK_API_THREAD()                                  \
+		BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
+		BX_CHECK(BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
 #	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(BGFX_API_THREAD_MAGIC != s_threadIndex, "Must be called from render thread.")
 #else
 #	define BGFX_CHECK_API_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
 #endif // BGFX_CONFIG_MULTITHREADED
 
-#define BGFX_CHECK_CAPS(_caps, _msg) \
-		BX_CHECK(0 != (g_caps.supported & (_caps) ) \
-			, _msg " Use bgfx::getCaps to check " #_caps " backend renderer capabilities." \
-			);
+#define BGFX_CHECK_CAPS(_caps, _msg)                                                   \
+	BX_CHECK(0 != (g_caps.supported & (_caps) )                                        \
+		, _msg " Use bgfx::getCaps to check " #_caps " backend renderer capabilities." \
+		);
 
 #if BGFX_CONFIG_USE_TINYSTL
 	void* TinyStlAllocator::static_allocate(size_t _bytes)
@@ -1626,42 +1626,42 @@ namespace bgfx
 
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-#define CHECK_HANDLE_LEAK(_handleAlloc)                                                               \
-					BX_MACRO_BLOCK_BEGIN                                                              \
-						if (0 != _handleAlloc.getNumHandles() )                                       \
-						{                                                                             \
-							BX_TRACE("LEAK: " #_handleAlloc " %d (max: %d)"                           \
-								, _handleAlloc.getNumHandles()                                        \
-								, _handleAlloc.getMaxHandles()                                        \
-								);                                                                    \
-							for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-							{                                                                         \
-								BX_TRACE("\t%3d: %4d", ii, _handleAlloc.getHandleAt(ii) );            \
-							}                                                                         \
-						}                                                                             \
-					BX_MACRO_BLOCK_END
+#define CHECK_HANDLE_LEAK(_handleAlloc)                                               \
+	BX_MACRO_BLOCK_BEGIN                                                              \
+		if (0 != _handleAlloc.getNumHandles() )                                       \
+		{                                                                             \
+			BX_TRACE("LEAK: " #_handleAlloc " %d (max: %d)"                           \
+				, _handleAlloc.getNumHandles()                                        \
+				, _handleAlloc.getMaxHandles()                                        \
+				);                                                                    \
+			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
+			{                                                                         \
+				BX_TRACE("\t%3d: %4d", ii, _handleAlloc.getHandleAt(ii) );            \
+			}                                                                         \
+		}                                                                             \
+	BX_MACRO_BLOCK_END
 
-#define CHECK_HANDLE_LEAK_NAME(_handleAlloc, _type, _ref)                                             \
-					BX_MACRO_BLOCK_BEGIN                                                              \
-						if (0 != _handleAlloc.getNumHandles() )                                       \
-						{                                                                             \
-							BX_TRACE("LEAK: " #_handleAlloc " %d (max: %d)"                           \
-								, _handleAlloc.getNumHandles()                                        \
-								, _handleAlloc.getMaxHandles()                                        \
-								);                                                                    \
-							for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
-							{                                                                         \
-								uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
-								const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
-								BX_TRACE("\t%3d: %4d %s (count %d)"                                   \
-										, ii                                                          \
-										, idx                                                         \
-										, ref.m_name.getPtr()                                         \
-										, ref.m_refCount                                              \
-										);                                                            \
-							}                                                                         \
-						}                                                                             \
-					BX_MACRO_BLOCK_END
+#define CHECK_HANDLE_LEAK_NAME(_handleAlloc, _type, _ref)                             \
+	BX_MACRO_BLOCK_BEGIN                                                              \
+		if (0 != _handleAlloc.getNumHandles() )                                       \
+		{                                                                             \
+			BX_TRACE("LEAK: " #_handleAlloc " %d (max: %d)"                           \
+				, _handleAlloc.getNumHandles()                                        \
+				, _handleAlloc.getMaxHandles()                                        \
+				);                                                                    \
+			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii) \
+			{                                                                         \
+				uint16_t idx = _handleAlloc.getHandleAt(ii);                          \
+				const _type& ref = _ref[idx]; BX_UNUSED(ref);                         \
+				BX_TRACE("\t%3d: %4d %s (count %d)"                                   \
+						, ii                                                          \
+						, idx                                                         \
+						, ref.m_name.getPtr()                                         \
+						, ref.m_refCount                                              \
+						);                                                            \
+			}                                                                         \
+		}                                                                             \
+	BX_MACRO_BLOCK_END
 
 			CHECK_HANDLE_LEAK     (m_dynamicIndexBufferHandle                          );
 			CHECK_HANDLE_LEAK     (m_dynamicVertexBufferHandle                         );
@@ -2040,12 +2040,12 @@ namespace bgfx
 	typedef RendererContextI* (*RendererCreateFn)(const Init& _init);
 	typedef void (*RendererDestroyFn)();
 
-#define BGFX_RENDERER_CONTEXT(_namespace)                                   \
-			namespace _namespace                                            \
-			{                                                               \
-				extern RendererContextI* rendererCreate(const Init& _init); \
-				extern void rendererDestroy();                              \
-			}
+#define BGFX_RENDERER_CONTEXT(_namespace)                           \
+	namespace _namespace                                            \
+	{                                                               \
+		extern RendererContextI* rendererCreate(const Init& _init); \
+		extern void rendererDestroy();                              \
+	}
 
 	BGFX_RENDERER_CONTEXT(noop);
 	BGFX_RENDERER_CONTEXT(d3d9);
@@ -4431,16 +4431,20 @@ extern "C"
 	// When laptop setup has integrated and discrete GPU, following driver workarounds will
 	// select discrete GPU:
 
-	// Reference: https://docs.nvidia.com/gameworks/content/technologies/desktop/optimus.htm
+	// Reference:
+	//  - https://web.archive.org/web/20180722051003/https://docs.nvidia.com/gameworks/content/technologies/desktop/optimus.htm
+	//
 	__declspec(dllexport) uint32_t NvOptimusEnablement = UINT32_C(1);
 
-	// Reference: http://gpuopen.com/amdpowerxpressrequesthighperformance/
+	// Reference:
+	//  - https://web.archive.org/web/20180722051032/https://gpuopen.com/amdpowerxpressrequesthighperformance/
+	//
 	__declspec(dllexport) uint32_t AmdPowerXpressRequestHighPerformance = UINT32_C(1);
 }
 #endif // BX_PLATFORM_WINDOWS
 
 #define BGFX_TEXTURE_FORMAT_BIMG(_fmt) \
-			BX_STATIC_ASSERT(uint32_t(bgfx::TextureFormat::_fmt) == uint32_t(bimg::TextureFormat::_fmt) )
+	BX_STATIC_ASSERT(uint32_t(bgfx::TextureFormat::_fmt) == uint32_t(bimg::TextureFormat::_fmt) )
 
 BGFX_TEXTURE_FORMAT_BIMG(BC1);
 BGFX_TEXTURE_FORMAT_BIMG(BC2);
