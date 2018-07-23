@@ -190,7 +190,7 @@
         io.MouseDown[1] = my_mouse_buttons[1];
 
         // Call NewFrame(), after this point you can use ImGui::* functions anytime
-        // (So you want to try calling Newframe() as early as you can in your mainloop to be able to use imgui everywhere)
+        // (So you want to try calling NewFrame() as early as you can in your mainloop to be able to use imgui everywhere)
         ImGui::NewFrame();
 
         // Most of your application code here
@@ -305,6 +305,7 @@
  When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all imgui files.
  You can read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2017/07/22 (1.63) - changed ImGui::GetTime() return value from float to double to avoid accumulating floating point imprecisions over time.
  - 2018/07/08 (1.63) - style: renamed ImGuiCol_ModalWindowDarkening to ImGuiCol_ModalWindowDimBg for consistency with other features. Kept redirection enum (will obsolete).
  - 2018/07/06 (1.63) - removed per-window ImGuiWindowFlags_ResizeFromAnySide beta flag in favor of a global io.OptResizeWindowsFromEdges to enable the feature.
  - 2018/06/06 (1.62) - renamed GetGlyphRangesChinese() to GetGlyphRangesChineseFull() to distinguish other variants and discourage using the full set.
@@ -895,6 +896,7 @@ static void             NavUpdateWindowingList();
 static void             NavProcessItem(ImGuiWindow* window, const ImRect& nav_bb, const ImGuiID id);
 
 static void             UpdateMouseInputs();
+static void             UpdateMouseWheel();
 static void             UpdateManualResize(ImGuiWindow* window, const ImVec2& size_auto_fit, int* border_held, int resize_grip_count, ImU32 resize_grip_col[4]);
 static void             FocusFrontMostActiveWindow(ImGuiWindow* ignore_window);
 
@@ -2911,7 +2913,7 @@ ImDrawData* ImGui::GetDrawData()
     return g.DrawData.Valid ? &g.DrawData : NULL;
 }
 
-float ImGui::GetTime()
+double ImGui::GetTime()
 {
     return GImGui->Time;
 }
@@ -3671,7 +3673,7 @@ static void ImGui::UpdateMouseInputs()
         g.IO.MouseDoubleClicked[i] = false;
         if (g.IO.MouseClicked[i])
         {
-            if (g.Time - g.IO.MouseClickedTime[i] < g.IO.MouseDoubleClickTime)
+            if ((float)(g.Time - g.IO.MouseClickedTime[i]) < g.IO.MouseDoubleClickTime)
             {
                 ImVec2 delta_from_click_pos = IsMousePosValid(&g.IO.MousePos) ? (g.IO.MousePos - g.IO.MouseClickedPos[i]) : ImVec2(0.0f, 0.0f);
                 if (ImLengthSqr(delta_from_click_pos) < g.IO.MouseDoubleClickMaxDist * g.IO.MouseDoubleClickMaxDist)
@@ -3696,6 +3698,51 @@ static void ImGui::UpdateMouseInputs()
         }
         if (g.IO.MouseClicked[i]) // Clicking any mouse button reactivate mouse hovering which may have been deactivated by gamepad/keyboard navigation
             g.NavDisableMouseHover = false;
+    }
+}
+
+void ImGui::UpdateMouseWheel()
+{
+    ImGuiContext& g = *GImGui;
+    if (!g.HoveredWindow || g.HoveredWindow->Collapsed)
+        return;
+    if (g.IO.MouseWheel == 0.0f && g.IO.MouseWheelH == 0.0f)
+        return;
+
+    // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
+    ImGuiWindow* window = g.HoveredWindow;
+    ImGuiWindow* scroll_window = window;
+    while ((scroll_window->Flags & ImGuiWindowFlags_ChildWindow) && (scroll_window->Flags & ImGuiWindowFlags_NoScrollWithMouse) && !(scroll_window->Flags & ImGuiWindowFlags_NoScrollbar) && !(scroll_window->Flags & ImGuiWindowFlags_NoInputs) && scroll_window->ParentWindow)
+        scroll_window = scroll_window->ParentWindow;
+    const bool scroll_allowed = !(scroll_window->Flags & ImGuiWindowFlags_NoScrollWithMouse) && !(scroll_window->Flags & ImGuiWindowFlags_NoInputs);
+
+    if (g.IO.MouseWheel != 0.0f)
+    {
+        if (g.IO.KeyCtrl && g.IO.FontAllowUserScaling)
+        {
+            // Zoom / Scale window
+            const float new_font_scale = ImClamp(window->FontWindowScale + g.IO.MouseWheel * 0.10f, 0.50f, 2.50f);
+            const float scale = new_font_scale / window->FontWindowScale;
+            window->FontWindowScale = new_font_scale;
+
+            const ImVec2 offset = window->Size * (1.0f - scale) * (g.IO.MousePos - window->Pos) / window->Size;
+            window->Pos += offset;
+            window->Size *= scale;
+            window->SizeFull *= scale;
+        }
+        else if (!g.IO.KeyCtrl && scroll_allowed)
+        {
+            // Mouse wheel vertical scrolling
+            float scroll_amount = 5 * scroll_window->CalcFontSize();
+            scroll_amount = (float)(int)ImMin(scroll_amount, (scroll_window->ContentsRegionRect.GetHeight() + scroll_window->WindowPadding.y * 2.0f) * 0.67f);
+            SetWindowScrollY(scroll_window, scroll_window->Scroll.y - g.IO.MouseWheel * scroll_amount);
+        }
+    }
+    if (g.IO.MouseWheelH != 0.0f && scroll_allowed && !g.IO.KeyCtrl)
+    {
+        // Mouse wheel horizontal scrolling (for hardware that supports it)
+        float scroll_amount = scroll_window->CalcFontSize();
+        SetWindowScrollX(scroll_window, scroll_window->Scroll.x - g.IO.MouseWheelH * scroll_amount);
     }
 }
 
@@ -3812,6 +3859,8 @@ void ImGui::NewFrame()
     g.TooltipOverrideCount = 0;
     g.WindowsActiveCount = 0;
 
+    // Setup current font and draw list
+    g.IO.Fonts->Locked = true;
     SetCurrentFont(GetDefaultFont());
     IM_ASSERT(g.Font->IsLoaded());
     g.DrawListSharedData.ClipRectFullscreen = ImVec4(0.0f, 0.0f, g.IO.DisplaySize.x, g.IO.DisplaySize.y);
@@ -3888,45 +3937,7 @@ void ImGui::NewFrame()
     g.PlatformImePos = ImVec2(1.0f, 1.0f); // OS Input Method Editor showing on top-left of our window by default
 
     // Mouse wheel scrolling, scale
-    if (g.HoveredWindow && !g.HoveredWindow->Collapsed && (g.IO.MouseWheel != 0.0f || g.IO.MouseWheelH != 0.0f))
-    {
-        // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent (unless either ImGuiWindowFlags_NoInputs or ImGuiWindowFlags_NoScrollbar are also set).
-        ImGuiWindow* window = g.HoveredWindow;
-        ImGuiWindow* scroll_window = window;
-        while ((scroll_window->Flags & ImGuiWindowFlags_ChildWindow) && (scroll_window->Flags & ImGuiWindowFlags_NoScrollWithMouse) && !(scroll_window->Flags & ImGuiWindowFlags_NoScrollbar) && !(scroll_window->Flags & ImGuiWindowFlags_NoInputs) && scroll_window->ParentWindow)
-            scroll_window = scroll_window->ParentWindow;
-        const bool scroll_allowed = !(scroll_window->Flags & ImGuiWindowFlags_NoScrollWithMouse) && !(scroll_window->Flags & ImGuiWindowFlags_NoInputs);
-
-        if (g.IO.MouseWheel != 0.0f)
-        {
-            if (g.IO.KeyCtrl && g.IO.FontAllowUserScaling)
-            {
-                // Zoom / Scale window
-                const float new_font_scale = ImClamp(window->FontWindowScale + g.IO.MouseWheel * 0.10f, 0.50f, 2.50f);
-                const float scale = new_font_scale / window->FontWindowScale;
-                window->FontWindowScale = new_font_scale;
-
-                const ImVec2 offset = window->Size * (1.0f - scale) * (g.IO.MousePos - window->Pos) / window->Size;
-                window->Pos += offset;
-                window->Size *= scale;
-                window->SizeFull *= scale;
-            }
-            else if (!g.IO.KeyCtrl && scroll_allowed)
-            {
-                // Mouse wheel vertical scrolling
-                float scroll_amount = 5 * scroll_window->CalcFontSize();
-                scroll_amount = (float)(int)ImMin(scroll_amount, (scroll_window->ContentsRegionRect.GetHeight() + scroll_window->WindowPadding.y * 2.0f) * 0.67f);
-                SetWindowScrollY(scroll_window, scroll_window->Scroll.y - g.IO.MouseWheel * scroll_amount);
-            }
-        }
-        if (g.IO.MouseWheelH != 0.0f && scroll_allowed)
-        {
-            // Mouse wheel horizontal scrolling (for hardware that supports it)
-            float scroll_amount = scroll_window->CalcFontSize();
-            if (!g.IO.KeyCtrl && !(window->Flags & ImGuiWindowFlags_NoScrollWithMouse))
-                SetWindowScrollX(window, window->Scroll.x - g.IO.MouseWheelH * scroll_amount);
-        }
-    }
+    UpdateMouseWheel();
 
     // Pressing TAB activate widget focus
     if (g.ActiveId == 0 && g.NavWindow != NULL && g.NavWindow->Active && !(g.NavWindow->Flags & ImGuiWindowFlags_NoNavInputs) && !g.IO.KeyCtrl && IsKeyPressedMap(ImGuiKey_Tab, false))
@@ -4452,6 +4463,9 @@ void ImGui::EndFrame()
 
     IM_ASSERT(g.Windows.Size == g.WindowsSortBuffer.Size);  // we done something wrong
     g.Windows.swap(g.WindowsSortBuffer);
+
+    // Unlock font atlas
+    g.IO.Fonts->Locked = false;
 
     // Clear Input data for next frame
     g.IO.MouseWheel = g.IO.MouseWheelH = 0.0f;
