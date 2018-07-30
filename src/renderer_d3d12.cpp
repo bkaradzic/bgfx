@@ -2156,7 +2156,7 @@ namespace bgfx { namespace d3d12
 						, m_scd.format
 						, m_scd.flags
 						) );
-					m_backBufferColorIdx = m_scd.BufferCount-1;
+					m_backBufferColorIdx = m_scd.bufferCount-1;
 #endif // BX_PLATFORM_WINDOWS
 				}
 				else
