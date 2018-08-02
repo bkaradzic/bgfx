@@ -111,7 +111,7 @@ freebsd-release64: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Release
 freebsd: freebsd-debug32 freebsd-release32 freebsd-debug64 freebsd-release64 ## Build - FreeBSD x86/x64 Debug and Release
 
 .build/projects/gmake-mingw-gcc:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc gmake
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-gcc gmake
 mingw-gcc-debug32: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-gcc config=debug32
 mingw-gcc-release32: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x86 Release
