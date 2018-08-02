@@ -207,7 +207,7 @@ project "glslang"
 			"-Wno-deprecated-register",
 		}
 
-	configuration { "linux-*" }
+	configuration { "linux-gcc-*" }
 		buildoptions {
 			"-Wno-unused-but-set-variable",
 		}
@@ -308,7 +308,7 @@ project "glsl-optimizer"
 			"-Wno-deprecated-register",
 		}
 
-	configuration { "mingw* or linux" }
+	configuration { "mingw* or linux-gcc-*" }
 		buildoptions {
 			"-Wno-misleading-indentation",
 		}
