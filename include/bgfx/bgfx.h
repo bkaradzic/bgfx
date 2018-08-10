@@ -556,6 +556,13 @@ namespace bgfx
 
 		/// Called when a video capture begins.
 		///
+		/// @param[in] _width Image width.
+		/// @param[in] _height Image height.
+		/// @param[in] _pitch Number of bytes to skip between the start of
+		///   each horizontal line of the image.
+		/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
+		/// @param[in] _yflip If true, image origin is bottom left.
+		///
 		/// @attention C99 equivalent is `bgfx_callback_vtbl.capture_begin`.
 		///
 		virtual void captureBegin(
@@ -567,6 +574,9 @@ namespace bgfx
 			) = 0;
 
 		/// Called when a video capture ends.
+		///
+		/// @param[in] _data Image data.
+		/// @param[in] _size Image size.
 		///
 		/// @attention C99 equivalent is `bgfx_callback_vtbl.capture_end`.
 		///
