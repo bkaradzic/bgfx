@@ -42,6 +42,7 @@ float PixelShaderFunctionS(float inF0, float inF1, float inF2, uint inU0, int in
     float r021 = ddy_coarse(inF0);
     float r022 = ddy_fine(inF0);
     float r023 = degrees(inF0);
+    float r024 = distance(inF0, inF1);
     // EvaluateAttributeAtCentroid(inF0);
     // EvaluateAttributeAtSample(inF0, 0);
     // TODO: EvaluateAttributeSnapped(inF0, int2(1,2));

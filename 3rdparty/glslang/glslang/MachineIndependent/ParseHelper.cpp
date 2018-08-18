@@ -2655,16 +2655,10 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
     // second argument
     //   * the constructor's second argument must be a scalar of type
     //     *sampler* or *samplerShadow*
-    //   * the presence or absence of depth comparison (Shadow) must match
-    //     between the constructed sampler type and the type of the second argument
     if (  function[1].type->getBasicType() != EbtSampler ||
         ! function[1].type->getSampler().isPureSampler() ||
           function[1].type->isArray()) {
         error(loc, "sampler-constructor second argument must be a scalar type 'sampler'", token, "");
-        return true;
-    }
-    if (function.getType().getSampler().shadow != function[1].type->getSampler().shadow) {
-        error(loc, "sampler-constructor second argument presence of shadow must match constructor presence of shadow", token, "");
         return true;
     }
 
@@ -5917,8 +5911,14 @@ TIntermTyped* TParseContext::addConstructor(const TSourceLoc& loc, TIntermNode* 
 
     // Combined texture-sampler constructors are completely semantic checked
     // in constructorTextureSamplerError()
-    if (op == EOpConstructTextureSampler)
+    if (op == EOpConstructTextureSampler) {
+        if (aggrNode->getSequence()[1]->getAsTyped()->getType().getSampler().shadow) {
+            // Transfer depth into the texture (SPIR-V image) type, as a hint
+            // for tools to know this texture/image is a depth image.
+            aggrNode->getSequence()[0]->getAsTyped()->getWritableType().getSampler().shadow = true;
+        }
         return intermediate.setAggregateOperator(aggrNode, op, type, loc);
+    }
 
     TTypeList::const_iterator memberTypes;
     if (op == EOpConstructStruct)

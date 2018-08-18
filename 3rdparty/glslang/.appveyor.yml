@@ -40,7 +40,7 @@ build:
 
 build_script:
   - mkdir build && cd build
-  - cmake .. -DCMAKE_INSTALL_PREFIX=install
+  - cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_INSTALL_PREFIX=install ..
   - cmake --build . --config %CONFIGURATION% --target install
 
 test_script:

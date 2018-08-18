@@ -122,7 +122,6 @@ public:
     void integerCheck(const TIntermTyped* node, const char* token);
     void globalCheck(const TSourceLoc&, const char* token);
     bool constructorError(const TSourceLoc&, TIntermNode*, TFunction&, TOperator, TType&);
-    bool constructorTextureSamplerError(const TSourceLoc&, const TFunction&);
     void arraySizeCheck(const TSourceLoc&, TIntermTyped* expr, TArraySize&);
     void arraySizeRequiredCheck(const TSourceLoc&, const TArraySizes&);
     void structArrayCheck(const TSourceLoc&, const TType& structure);
