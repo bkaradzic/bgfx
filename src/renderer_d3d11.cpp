@@ -519,30 +519,33 @@ namespace bgfx { namespace d3d11
 
 	static BX_NO_INLINE bool getIntelExtensions(ID3D11Device* _device)
 	{
-		uint8_t temp[28];
-
-		bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
-		bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
-		bx::write(&writer, kIntelExtensionInterfaceVersion);
-		bx::write(&writer, UINT32_C(0) );
-		bx::write(&writer, UINT32_C(0) );
-
-		if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
+		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
 		{
-			bx::MemoryReader reader(&temp, sizeof(temp) );
-			bx::skip(&reader, 16);
+			uint8_t temp[28];
 
-			uint32_t version;
-			bx::read(&reader, version);
+			bx::StaticMemoryBlockWriter writer(&temp, sizeof(temp) );
+			bx::write(&writer, "INTCEXTNCAPSFUNC", 16);
+			bx::write(&writer, kIntelExtensionInterfaceVersion);
+			bx::write(&writer, UINT32_C(0) );
+			bx::write(&writer, UINT32_C(0) );
 
-			uint32_t driverVersion;
-			bx::read(&reader, driverVersion);
+			if (SUCCEEDED(setIntelExtension(_device, temp, sizeof(temp) ) ) )
+			{
+				bx::MemoryReader reader(&temp, sizeof(temp) );
+				bx::skip(&reader, 16);
 
-			return version <= driverVersion;
+				uint32_t version;
+				bx::read(&reader, version);
+
+				uint32_t driverVersion;
+				bx::read(&reader, driverVersion);
+
+				return version <= driverVersion;
+			}
 		}
 
 		return false;
-	};
+	}
 
 	void resume(ID3D11Device* _device)
 	{
