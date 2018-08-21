@@ -114,4 +114,10 @@
             <ExpandedItem>bgfx::s_ctx->m_declRef[idx]</ExpandedItem>
         </Expand>
     </Type>
+
+    <Type Name="bgfx::Encoder">
+        <Expand>
+            <ExpandedItem>(bgfx::EncoderImpl *)this</ExpandedItem>
+        </Expand>
+    </Type>
 </AutoVisualizer>
