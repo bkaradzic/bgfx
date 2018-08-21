@@ -420,11 +420,11 @@ public:
 
 					const uint32_t samplerFlags = 0
 						| BGFX_TEXTURE_RT
-						| BGFX_TEXTURE_MIN_POINT
-						| BGFX_TEXTURE_MAG_POINT
-						| BGFX_TEXTURE_MIP_POINT
-						| BGFX_TEXTURE_U_CLAMP
-						| BGFX_TEXTURE_V_CLAMP
+						| BGFX_SAMPLER_MIN_POINT
+						| BGFX_SAMPLER_MAG_POINT
+						| BGFX_SAMPLER_MIP_POINT
+						| BGFX_SAMPLER_U_CLAMP
+						| BGFX_SAMPLER_V_CLAMP
 						;
 					m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
 					m_gbufferTex[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);

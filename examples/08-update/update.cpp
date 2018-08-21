@@ -172,10 +172,10 @@ public:
 		// Create vertex stream declaration.
 		PosTexcoordVertex::init();
 
-		m_textures[ 0] = loadTexture("textures/texture_compression_bc1.ktx", BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP);
-		m_textures[ 1] = loadTexture("textures/texture_compression_bc2.ktx", BGFX_TEXTURE_U_CLAMP);
-		m_textures[ 2] = loadTexture("textures/texture_compression_bc3.ktx", BGFX_TEXTURE_V_CLAMP);
-		m_textures[ 3] = loadTexture("textures/texture_compression_etc1.ktx", BGFX_TEXTURE_U_BORDER | BGFX_TEXTURE_V_BORDER | BGFX_TEXTURE_BORDER_COLOR(1));
+		m_textures[ 0] = loadTexture("textures/texture_compression_bc1.ktx", BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+		m_textures[ 1] = loadTexture("textures/texture_compression_bc2.ktx", BGFX_SAMPLER_U_CLAMP);
+		m_textures[ 2] = loadTexture("textures/texture_compression_bc3.ktx", BGFX_SAMPLER_V_CLAMP);
+		m_textures[ 3] = loadTexture("textures/texture_compression_etc1.ktx", BGFX_SAMPLER_U_BORDER | BGFX_SAMPLER_V_BORDER | BGFX_SAMPLER_BORDER_COLOR(1));
 		m_textures[ 4] = loadTexture("textures/texture_compression_etc2.ktx");
 		m_textures[ 5] = loadTexture("textures/texture_compression_ptc12.pvr");
 		m_textures[ 6] = loadTexture("textures/texture_compression_ptc14.pvr");
@@ -214,17 +214,17 @@ public:
 
 			if (0 != (BGFX_CAPS_FORMAT_TEXTURE_3D & caps->formats[bgfx::TextureFormat::R8]) )
 			{
-				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R8,   BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem8);
+				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R8,   BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP|BGFX_SAMPLER_W_CLAMP, mem8);
 			}
 
 			if (0 != (BGFX_CAPS_FORMAT_TEXTURE_3D & caps->formats[bgfx::TextureFormat::R16F]) )
 			{
-				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R16F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem16f);
+				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R16F, BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP|BGFX_SAMPLER_W_CLAMP, mem16f);
 			}
 
 			if (0 != (BGFX_CAPS_FORMAT_TEXTURE_3D & caps->formats[bgfx::TextureFormat::R32F]) )
 			{
-				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R32F, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP, mem32f);
+				m_textures3d[m_numTextures3d++] = bgfx::createTexture3D(32, 32, 32, false, bgfx::TextureFormat::R32F, BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP|BGFX_SAMPLER_W_CLAMP, mem32f);
 			}
 		}
 
@@ -266,7 +266,7 @@ public:
 			, false
 			, 1
 			, bgfx::TextureFormat::BGRA8
-			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
+			, BGFX_SAMPLER_MIN_POINT|BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIP_POINT
 			);
 
 		if (m_blitSupported)
@@ -276,7 +276,7 @@ public:
 				, false
 				, 1
 				, bgfx::TextureFormat::BGRA8
-				, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT|BGFX_TEXTURE_BLIT_DST
+				, BGFX_SAMPLER_MIN_POINT|BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIP_POINT|BGFX_TEXTURE_BLIT_DST
 				);
 		}
 
@@ -297,7 +297,7 @@ public:
 			, false
 			, 1
 			, bgfx::TextureFormat::BGRA8
-			, BGFX_TEXTURE_MIN_POINT|BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIP_POINT
+			, BGFX_SAMPLER_MIN_POINT|BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIP_POINT
 			);
 
 		m_texture2dData = (uint8_t*)malloc(kTexture2dSize*kTexture2dSize*4);

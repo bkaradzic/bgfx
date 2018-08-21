@@ -1252,9 +1252,9 @@ int _main_(int _argc, char** _argv)
 		checkerBoard = bgfx::createTexture2D(checkerBoardSize, checkerBoardSize, false, 1
 			, bgfx::TextureFormat::BGRA8
 			, 0
-			| BGFX_TEXTURE_MIN_POINT
-			| BGFX_TEXTURE_MIP_POINT
-			| BGFX_TEXTURE_MAG_POINT
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_MAG_POINT
 			, mem
 			);
 	}
@@ -1813,9 +1813,9 @@ int _main_(int _argc, char** _argv)
 				bimg::Orientation::Enum orientation;
 				texture = loadTexture(fp.get()
 					, 0
-					| BGFX_TEXTURE_U_CLAMP
-					| BGFX_TEXTURE_V_CLAMP
-					| BGFX_TEXTURE_W_CLAMP
+					| BGFX_SAMPLER_U_CLAMP
+					| BGFX_SAMPLER_V_CLAMP
+					| BGFX_SAMPLER_W_CLAMP
 					, 0
 					, &view.m_textureInfo
 					, &orientation
@@ -2003,13 +2003,13 @@ int _main_(int _argc, char** _argv)
 			bgfx::setUniform(u_params, params);
 
 			const uint32_t textureFlags = 0
-				| BGFX_TEXTURE_U_CLAMP
-				| BGFX_TEXTURE_V_CLAMP
-				| BGFX_TEXTURE_W_CLAMP
+				| BGFX_SAMPLER_U_CLAMP
+				| BGFX_SAMPLER_V_CLAMP
+				| BGFX_SAMPLER_W_CLAMP
 				| (view.m_filter ? 0 : 0
-				| BGFX_TEXTURE_MIN_POINT
-				| BGFX_TEXTURE_MIP_POINT
-				| BGFX_TEXTURE_MAG_POINT
+				| BGFX_SAMPLER_MIN_POINT
+				| BGFX_SAMPLER_MIP_POINT
+				| BGFX_SAMPLER_MAG_POINT
 				  )
 				;
 

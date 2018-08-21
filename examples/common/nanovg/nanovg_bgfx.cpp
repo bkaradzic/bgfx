@@ -331,7 +331,7 @@ namespace
 						, false
 						, 1
 						, NVG_TEXTURE_RGBA == _type ? bgfx::TextureFormat::RGBA8 : bgfx::TextureFormat::R8
-						, BGFX_TEXTURE_NONE
+						, BGFX_SAMPLER_NONE
 						);
 
 		if (NULL != mem)

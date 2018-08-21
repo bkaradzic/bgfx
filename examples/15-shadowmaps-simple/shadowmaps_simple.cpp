@@ -146,7 +146,7 @@ public:
 					, false
 					, 1
 					, bgfx::TextureFormat::D16
-					, BGFX_TEXTURE_RT | BGFX_TEXTURE_COMPARE_LEQUAL
+					, BGFX_TEXTURE_RT | BGFX_SAMPLER_COMPARE_LEQUAL
 					),
 			};
 			shadowMapTexture = fbtextures[0];

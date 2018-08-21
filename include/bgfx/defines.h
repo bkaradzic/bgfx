@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(76)
+#define BGFX_API_VERSION UINT32_C(77)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define BGFX_STATE_WRITE_R                 UINT64_C(0x0000000000000001) //!< Enable R write.
@@ -334,34 +334,8 @@
 			| BGFX_BUFFER_COMPUTE_WRITE   \
 			)
 
-///
+/// Texture creation flags.
 #define BGFX_TEXTURE_NONE                UINT32_C(0x00000000) //!<
-#define BGFX_TEXTURE_U_MIRROR            UINT32_C(0x00000001) //!< Wrap U mode: Mirror
-#define BGFX_TEXTURE_U_CLAMP             UINT32_C(0x00000002) //!< Wrap U mode: Clamp
-#define BGFX_TEXTURE_U_BORDER            UINT32_C(0x00000003) //!< Wrap U mode: Border
-#define BGFX_TEXTURE_U_SHIFT             0                    //!<
-#define BGFX_TEXTURE_U_MASK              UINT32_C(0x00000003) //!<
-#define BGFX_TEXTURE_V_MIRROR            UINT32_C(0x00000004) //!< Wrap V mode: Mirror
-#define BGFX_TEXTURE_V_CLAMP             UINT32_C(0x00000008) //!< Wrap V mode: Clamp
-#define BGFX_TEXTURE_V_BORDER            UINT32_C(0x0000000c) //!< Wrap V mode: Border
-#define BGFX_TEXTURE_V_SHIFT             2                    //!<
-#define BGFX_TEXTURE_V_MASK              UINT32_C(0x0000000c) //!<
-#define BGFX_TEXTURE_W_MIRROR            UINT32_C(0x00000010) //!< Wrap W mode: Mirror
-#define BGFX_TEXTURE_W_CLAMP             UINT32_C(0x00000020) //!< Wrap W mode: Clamp
-#define BGFX_TEXTURE_W_BORDER            UINT32_C(0x00000030) //!< Wrap W mode: Border
-#define BGFX_TEXTURE_W_SHIFT             4                    //!<
-#define BGFX_TEXTURE_W_MASK              UINT32_C(0x00000030) //!<
-#define BGFX_TEXTURE_MIN_POINT           UINT32_C(0x00000040) //!< Min sampling mode: Point
-#define BGFX_TEXTURE_MIN_ANISOTROPIC     UINT32_C(0x00000080) //!< Min sampling mode: Anisotropic
-#define BGFX_TEXTURE_MIN_SHIFT           6                    //!<
-#define BGFX_TEXTURE_MIN_MASK            UINT32_C(0x000000c0) //!<
-#define BGFX_TEXTURE_MAG_POINT           UINT32_C(0x00000100) //!< Mag sampling mode: Point
-#define BGFX_TEXTURE_MAG_ANISOTROPIC     UINT32_C(0x00000200) //!< Mag sampling mode: Anisotropic
-#define BGFX_TEXTURE_MAG_SHIFT           8                    //!<
-#define BGFX_TEXTURE_MAG_MASK            UINT32_C(0x00000300) //!<
-#define BGFX_TEXTURE_MIP_POINT           UINT32_C(0x00000400) //!< Mip sampling mode: Point
-#define BGFX_TEXTURE_MIP_SHIFT           10                   //!<
-#define BGFX_TEXTURE_MIP_MASK            UINT32_C(0x00000400) //!<
 #define BGFX_TEXTURE_MSAA_SAMPLE         UINT32_C(0x00000800) //!< Texture will be used for MSAA sampling.
 #define BGFX_TEXTURE_RT                  UINT32_C(0x00001000) //!<
 #define BGFX_TEXTURE_RT_MSAA_X2          UINT32_C(0x00002000) //!< Render target MSAAx2 mode.
@@ -372,35 +346,64 @@
 #define BGFX_TEXTURE_RT_MSAA_MASK        UINT32_C(0x00007000) //!<
 #define BGFX_TEXTURE_RT_WRITE_ONLY       UINT32_C(0x00008000) //!< Render target will be used for writing only.
 #define BGFX_TEXTURE_RT_MASK             UINT32_C(0x0000f000) //!<
-#define BGFX_TEXTURE_COMPARE_LESS        UINT32_C(0x00010000) //!< Compare when sampling depth texture: less.
-#define BGFX_TEXTURE_COMPARE_LEQUAL      UINT32_C(0x00020000) //!< Compare when sampling depth texture: less or equal.
-#define BGFX_TEXTURE_COMPARE_EQUAL       UINT32_C(0x00030000) //!< Compare when sampling depth texture: equal.
-#define BGFX_TEXTURE_COMPARE_GEQUAL      UINT32_C(0x00040000) //!< Compare when sampling depth texture: greater or equal.
-#define BGFX_TEXTURE_COMPARE_GREATER     UINT32_C(0x00050000) //!< Compare when sampling depth texture: greater.
-#define BGFX_TEXTURE_COMPARE_NOTEQUAL    UINT32_C(0x00060000) //!< Compare when sampling depth texture: not equal.
-#define BGFX_TEXTURE_COMPARE_NEVER       UINT32_C(0x00070000) //!< Compare when sampling depth texture: never.
-#define BGFX_TEXTURE_COMPARE_ALWAYS      UINT32_C(0x00080000) //!< Compare when sampling depth texture: always.
-#define BGFX_TEXTURE_COMPARE_SHIFT       16                   //!<
-#define BGFX_TEXTURE_COMPARE_MASK        UINT32_C(0x000f0000) //!<
 #define BGFX_TEXTURE_COMPUTE_WRITE       UINT32_C(0x00100000) //!< Texture will be used for compute write.
 #define BGFX_TEXTURE_SRGB                UINT32_C(0x00200000) //!< Sample texture as sRGB.
 #define BGFX_TEXTURE_BLIT_DST            UINT32_C(0x00400000) //!< Texture will be used as blit destination.
 #define BGFX_TEXTURE_READ_BACK           UINT32_C(0x00800000) //!< Texture will be used for read back from GPU.
-#define BGFX_TEXTURE_BORDER_COLOR_SHIFT  24                   //!<
-#define BGFX_TEXTURE_BORDER_COLOR_MASK   UINT32_C(0x0f000000) //!<
-#define BGFX_TEXTURE_RESERVED_SHIFT      28                   //!<
-#define BGFX_TEXTURE_RESERVED_MASK       UINT32_C(0xf0000000) //!<
 
-#define BGFX_TEXTURE_BORDER_COLOR(_index) ( (_index << BGFX_TEXTURE_BORDER_COLOR_SHIFT) & BGFX_TEXTURE_BORDER_COLOR_MASK)
+/// Sampler flags.
+#define BGFX_SAMPLER_NONE                UINT32_C(0x00000000) //!<
+#define BGFX_SAMPLER_U_MIRROR            UINT32_C(0x00000001) //!< Wrap U mode: Mirror
+#define BGFX_SAMPLER_U_CLAMP             UINT32_C(0x00000002) //!< Wrap U mode: Clamp
+#define BGFX_SAMPLER_U_BORDER            UINT32_C(0x00000003) //!< Wrap U mode: Border
+#define BGFX_SAMPLER_U_SHIFT             0                    //!<
+#define BGFX_SAMPLER_U_MASK              UINT32_C(0x00000003) //!<
+#define BGFX_SAMPLER_V_MIRROR            UINT32_C(0x00000004) //!< Wrap V mode: Mirror
+#define BGFX_SAMPLER_V_CLAMP             UINT32_C(0x00000008) //!< Wrap V mode: Clamp
+#define BGFX_SAMPLER_V_BORDER            UINT32_C(0x0000000c) //!< Wrap V mode: Border
+#define BGFX_SAMPLER_V_SHIFT             2                    //!<
+#define BGFX_SAMPLER_V_MASK              UINT32_C(0x0000000c) //!<
+#define BGFX_SAMPLER_W_MIRROR            UINT32_C(0x00000010) //!< Wrap W mode: Mirror
+#define BGFX_SAMPLER_W_CLAMP             UINT32_C(0x00000020) //!< Wrap W mode: Clamp
+#define BGFX_SAMPLER_W_BORDER            UINT32_C(0x00000030) //!< Wrap W mode: Border
+#define BGFX_SAMPLER_W_SHIFT             4                    //!<
+#define BGFX_SAMPLER_W_MASK              UINT32_C(0x00000030) //!<
+#define BGFX_SAMPLER_MIN_POINT           UINT32_C(0x00000040) //!< Min sampling mode: Point
+#define BGFX_SAMPLER_MIN_ANISOTROPIC     UINT32_C(0x00000080) //!< Min sampling mode: Anisotropic
+#define BGFX_SAMPLER_MIN_SHIFT           6                    //!<
+#define BGFX_SAMPLER_MIN_MASK            UINT32_C(0x000000c0) //!<
+#define BGFX_SAMPLER_MAG_POINT           UINT32_C(0x00000100) //!< Mag sampling mode: Point
+#define BGFX_SAMPLER_MAG_ANISOTROPIC     UINT32_C(0x00000200) //!< Mag sampling mode: Anisotropic
+#define BGFX_SAMPLER_MAG_SHIFT           8                    //!<
+#define BGFX_SAMPLER_MAG_MASK            UINT32_C(0x00000300) //!<
+#define BGFX_SAMPLER_MIP_POINT           UINT32_C(0x00000400) //!< Mip sampling mode: Point
+#define BGFX_SAMPLER_MIP_SHIFT           10                   //!<
+#define BGFX_SAMPLER_MIP_MASK            UINT32_C(0x00000400) //!<
+#define BGFX_SAMPLER_COMPARE_LESS        UINT32_C(0x00010000) //!< Compare when sampling depth texture: less.
+#define BGFX_SAMPLER_COMPARE_LEQUAL      UINT32_C(0x00020000) //!< Compare when sampling depth texture: less or equal.
+#define BGFX_SAMPLER_COMPARE_EQUAL       UINT32_C(0x00030000) //!< Compare when sampling depth texture: equal.
+#define BGFX_SAMPLER_COMPARE_GEQUAL      UINT32_C(0x00040000) //!< Compare when sampling depth texture: greater or equal.
+#define BGFX_SAMPLER_COMPARE_GREATER     UINT32_C(0x00050000) //!< Compare when sampling depth texture: greater.
+#define BGFX_SAMPLER_COMPARE_NOTEQUAL    UINT32_C(0x00060000) //!< Compare when sampling depth texture: not equal.
+#define BGFX_SAMPLER_COMPARE_NEVER       UINT32_C(0x00070000) //!< Compare when sampling depth texture: never.
+#define BGFX_SAMPLER_COMPARE_ALWAYS      UINT32_C(0x00080000) //!< Compare when sampling depth texture: always.
+#define BGFX_SAMPLER_COMPARE_SHIFT       16                   //!<
+#define BGFX_SAMPLER_COMPARE_MASK        UINT32_C(0x000f0000) //!<
+#define BGFX_SAMPLER_BORDER_COLOR_SHIFT  24                   //!<
+#define BGFX_SAMPLER_BORDER_COLOR_MASK   UINT32_C(0x0f000000) //!<
+#define BGFX_SAMPLER_RESERVED_SHIFT      28                   //!<
+#define BGFX_SAMPLER_RESERVED_MASK       UINT32_C(0xf0000000) //!<
 
-#define BGFX_TEXTURE_SAMPLER_BITS_MASK (0 \
-			| BGFX_TEXTURE_U_MASK         \
-			| BGFX_TEXTURE_V_MASK         \
-			| BGFX_TEXTURE_W_MASK         \
-			| BGFX_TEXTURE_MIN_MASK       \
-			| BGFX_TEXTURE_MAG_MASK       \
-			| BGFX_TEXTURE_MIP_MASK       \
-			| BGFX_TEXTURE_COMPARE_MASK   \
+#define BGFX_SAMPLER_BORDER_COLOR(_index) ( (_index << BGFX_SAMPLER_BORDER_COLOR_SHIFT) & BGFX_SAMPLER_BORDER_COLOR_MASK)
+
+#define BGFX_SAMPLER_BITS_MASK (0 \
+			| BGFX_SAMPLER_U_MASK         \
+			| BGFX_SAMPLER_V_MASK         \
+			| BGFX_SAMPLER_W_MASK         \
+			| BGFX_SAMPLER_MIN_MASK       \
+			| BGFX_SAMPLER_MAG_MASK       \
+			| BGFX_SAMPLER_MIP_MASK       \
+			| BGFX_SAMPLER_COMPARE_MASK   \
 			)
 
 ///

@@ -304,11 +304,11 @@ public:
 
 		const uint32_t samplerFlags = 0
 			| BGFX_TEXTURE_RT
-			| BGFX_TEXTURE_MIN_POINT
-			| BGFX_TEXTURE_MAG_POINT
-			| BGFX_TEXTURE_MIP_POINT
-			| BGFX_TEXTURE_U_CLAMP
-			| BGFX_TEXTURE_V_CLAMP
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
+			| BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
 			;
 
 		// Make gbuffer and related textures
@@ -327,11 +327,11 @@ public:
 		// Make shadow buffer
 		const uint32_t rsmFlags = 0
 			| BGFX_TEXTURE_RT
-			| BGFX_TEXTURE_MIN_POINT
-			| BGFX_TEXTURE_MAG_POINT
-			| BGFX_TEXTURE_MIP_POINT
-			| BGFX_TEXTURE_U_CLAMP
-			| BGFX_TEXTURE_V_CLAMP
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
+			| BGFX_SAMPLER_MIP_POINT
+			| BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
 			;
 
 		// Reflective shadow map
@@ -553,7 +553,7 @@ public:
 			bgfx::setTexture(2, s_light,     bgfx::getTexture(m_lightBuffer, 0) );
 			bgfx::setTexture(3, s_depth,     bgfx::getTexture(m_gbuffer, GBUFFER_RT_DEPTH) );
 			bgfx::setTexture(4, s_shadowMap, bgfx::getTexture(m_shadowBuffer, SHADOW_RT_DEPTH)
-				, BGFX_TEXTURE_COMPARE_LEQUAL
+				, BGFX_SAMPLER_COMPARE_LEQUAL
 				);
 
 			// Uniforms for combine pass

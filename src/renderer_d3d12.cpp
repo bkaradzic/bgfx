@@ -1890,7 +1890,7 @@ namespace bgfx { namespace d3d12
 			m_commandList->SetGraphicsRootConstantBufferView(Rdt::CBV, gpuAddress);
 
 			TextureD3D12& texture = m_textures[_blitter.m_texture.idx];
-			uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = { texture.m_flags & BGFX_TEXTURE_SAMPLER_BITS_MASK };
+			uint32_t samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS] = { texture.m_flags & BGFX_SAMPLER_BITS_MASK };
 			uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, NULL);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::Sampler, m_samplerAllocator.get(samplerStateIdx) );
 			D3D12_GPU_DESCRIPTOR_HANDLE srvHandle;
@@ -3492,22 +3492,22 @@ namespace bgfx { namespace d3d12
 		{
 			uint32_t flags = _flags[ii];
 
-			const uint32_t cmpFunc   = (flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
-			const uint8_t  minFilter = s_textureFilter[0][(flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-			const uint8_t  magFilter = s_textureFilter[1][(flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-			const uint8_t  mipFilter = s_textureFilter[2][(flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+			const uint32_t cmpFunc   = (flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+			const uint8_t  minFilter = s_textureFilter[0][(flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
+			const uint8_t  magFilter = s_textureFilter[1][(flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
+			const uint8_t  mipFilter = s_textureFilter[2][(flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
 			const uint8_t  filter    = 0 == cmpFunc ? 0 : D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
 
 			D3D12_SAMPLER_DESC sd;
 			sd.Filter   = (D3D12_FILTER)(filter|minFilter|magFilter|mipFilter);
-			sd.AddressU = s_textureAddress[(flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-			sd.AddressV = s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-			sd.AddressW = s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
+			sd.AddressU = s_textureAddress[(flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
+			sd.AddressV = s_textureAddress[(flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
+			sd.AddressW = s_textureAddress[(flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
 			sd.MipLODBias     = float(BGFX_CONFIG_MIP_LOD_BIAS);
 			sd.MaxAnisotropy  = maxAnisotropy;
 			sd.ComparisonFunc = 0 == cmpFunc ? D3D12_COMPARISON_FUNC_NEVER : s_cmpFunc[cmpFunc];
 
-			uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
+			uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
 			if (NULL != _palette
 			&&  needBorderColor(flags) )
@@ -6100,10 +6100,10 @@ namespace bgfx { namespace d3d12
 												TextureD3D12& texture = m_textures[bind.m_idx];
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 												scratchBuffer.allocSrv(srvHandle[stage], texture);
-												samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
+												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_un.m_draw.m_textureFlags)
 													? bind.m_un.m_draw.m_textureFlags
 													: texture.m_flags
-													) & (BGFX_TEXTURE_SAMPLER_BITS_MASK | BGFX_TEXTURE_BORDER_COLOR_MASK | BGFX_TEXTURE_COMPARE_MASK)
+													) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK)
 													;
 
 												++numSet;

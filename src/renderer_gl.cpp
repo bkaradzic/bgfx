@@ -1650,9 +1650,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 	static void getFilters(uint32_t _flags, bool _hasMips, GLenum& _magFilter, GLenum& _minFilter)
 	{
-		const uint32_t mag = (_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT;
-		const uint32_t min = (_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT;
-		const uint32_t mip = (_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT;
+		const uint32_t mag = (_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT;
+		const uint32_t min = (_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT;
+		const uint32_t mip = (_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT;
 		_magFilter = s_textureFilterMag[mag];
 		_minFilter = s_textureFilterMin[min][_hasMips ? mip+1 : 0];
 	}
@@ -2435,7 +2435,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					m_srgbWriteControlSupport = s_extension[Extension::EXT_sRGB_write_control].m_supported;
 
 					m_borderColorSupport = s_extension[Extension::NV_texture_border_clamp].m_supported;
-					s_textureAddress[BGFX_TEXTURE_U_BORDER>>BGFX_TEXTURE_U_SHIFT] = s_extension[Extension::NV_texture_border_clamp].m_supported
+					s_textureAddress[BGFX_SAMPLER_U_BORDER>>BGFX_SAMPLER_U_SHIFT] = s_extension[Extension::NV_texture_border_clamp].m_supported
 						? GL_CLAMP_TO_BORDER
 						: GL_CLAMP_TO_EDGE
 						;
@@ -3336,13 +3336,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 			&&  m_samplerObjectSupport)
 			{
-				if (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags) )
+				if (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) )
 				{
-					const uint32_t index = (_flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
+					const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
-					_flags &= ~BGFX_TEXTURE_RESERVED_MASK;
-					_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
-					_flags |= _numMips<<BGFX_TEXTURE_RESERVED_SHIFT;
+					_flags &= ~BGFX_SAMPLER_RESERVED_MASK;
+					_flags &= BGFX_SAMPLER_BITS_MASK;
+					_flags |= _numMips<<BGFX_SAMPLER_RESERVED_SHIFT;
 
 					GLuint sampler;
 
@@ -3381,15 +3381,15 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 						GL_CHECK(glSamplerParameteri(sampler
 							, GL_TEXTURE_WRAP_S
-							, s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]
+							, s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]
 							) );
 						GL_CHECK(glSamplerParameteri(sampler
 							, GL_TEXTURE_WRAP_T
-							, s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]
+							, s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]
 							) );
 						GL_CHECK(glSamplerParameteri(sampler
 							, GL_TEXTURE_WRAP_R
-							, s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]
+							, s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT]
 							) );
 
 						GLenum minFilter;
@@ -3409,7 +3409,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							GL_CHECK(glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, _rgba) );
 						}
 
-						if (0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
+						if (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
 						&&  0.0f < m_maxAnisotropy)
 						{
 							GL_CHECK(glSamplerParameterf(sampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropy) );
@@ -3418,7 +3418,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 						||  m_shadowSamplersSupport)
 						{
-							const uint32_t cmpFunc = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
+							const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 							if (0 == cmpFunc)
 							{
 								GL_CHECK(glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
@@ -4918,7 +4918,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 	void TextureGL::destroy()
 	{
-		if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED)
+		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED)
 		&&  0 != m_id)
 		{
 			GL_CHECK(glBindTexture(m_target, 0) );
@@ -4936,7 +4936,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 	void TextureGL::overrideInternal(uintptr_t _ptr)
 	{
 		destroy();
-		m_flags |= BGFX_TEXTURE_INTERNAL_SHARED;
+		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_id = (GLuint)_ptr;
 	}
 
@@ -5055,18 +5055,18 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		{
 			// Force point sampling when texture format doesn't support linear sampling.
 			_flags &= ~(0
-				| BGFX_TEXTURE_MIN_MASK
-				| BGFX_TEXTURE_MAG_MASK
-				| BGFX_TEXTURE_MIP_MASK
+				| BGFX_SAMPLER_MIN_MASK
+				| BGFX_SAMPLER_MAG_MASK
+				| BGFX_SAMPLER_MIP_MASK
 				);
 			_flags |= 0
-				| BGFX_TEXTURE_MIN_POINT
-				| BGFX_TEXTURE_MAG_POINT
-				| BGFX_TEXTURE_MIP_POINT
+				| BGFX_SAMPLER_MIN_POINT
+				| BGFX_SAMPLER_MAG_POINT
+				| BGFX_SAMPLER_MIP_POINT
 				;
 		}
 
-		const uint32_t flags = (0 != (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags) ? m_flags : _flags) & BGFX_TEXTURE_SAMPLER_BITS_MASK;
+		const uint32_t flags = (0 != (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) ? m_flags : _flags) & BGFX_SAMPLER_BITS_MASK;
 
 		bool hasBorderColor = false;
 		bx::HashMurmur2A murmur;
@@ -5074,9 +5074,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		murmur.add(flags);
 		if (NULL != _rgba)
 		{
-			if (BGFX_TEXTURE_U_BORDER == (flags & BGFX_TEXTURE_U_BORDER)
-			||  BGFX_TEXTURE_V_BORDER == (flags & BGFX_TEXTURE_V_BORDER)
-			||  BGFX_TEXTURE_W_BORDER == (flags & BGFX_TEXTURE_W_BORDER) )
+			if (BGFX_SAMPLER_U_BORDER == (flags & BGFX_SAMPLER_U_BORDER)
+			||  BGFX_SAMPLER_V_BORDER == (flags & BGFX_SAMPLER_V_BORDER)
+			||  BGFX_SAMPLER_W_BORDER == (flags & BGFX_SAMPLER_W_BORDER) )
 			{
 				murmur.add(_rgba, 16);
 				hasBorderColor = true;
@@ -5090,8 +5090,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			const GLenum  targetMsaa = m_target;
 			const uint8_t numMips    = m_numMips;
 
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT]) );
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT]) );
+			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]) );
+			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]) );
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_extension[Extension::APPLE_texture_max_level].m_supported)
@@ -5101,7 +5101,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 			if (target == GL_TEXTURE_3D)
 			{
-				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT]) );
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT]) );
 			}
 
 			GLenum magFilter;
@@ -5121,7 +5121,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, _rgba) );
 			}
 
-			if (0 != (flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
+			if (0 != (flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
 			&&  0.0f < s_renderGL->m_maxAnisotropy)
 			{
 				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderGL->m_maxAnisotropy) );
@@ -5130,7 +5130,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
 			||  s_renderGL->m_shadowSamplersSupport)
 			{
-				const uint32_t cmpFunc = (flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
+				const uint32_t cmpFunc = (flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 				if (0 == cmpFunc)
 				{
 					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
@@ -5148,11 +5148,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 	void TextureGL::commit(uint32_t _stage, uint32_t _flags, const float _palette[][4])
 	{
-		const uint32_t flags = 0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+		const uint32_t flags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 			? _flags
 			: m_flags
 			;
-		const uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
+		const uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 
 		GL_CHECK(glActiveTexture(GL_TEXTURE0+_stage) );
 		GL_CHECK(glBindTexture(m_target, m_id) );

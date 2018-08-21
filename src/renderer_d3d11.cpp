@@ -2012,7 +2012,7 @@ namespace bgfx { namespace d3d11
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 			commitShaderConstants();
-			m_textures[_blitter.m_texture.idx].commit(0, BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER, NULL);
+			m_textures[_blitter.m_texture.idx].commit(0, BGFX_SAMPLER_INTERNAL_DEFAULT, NULL);
 			commitTextureStage();
 		}
 
@@ -2788,12 +2788,12 @@ namespace bgfx { namespace d3d11
 
 		ID3D11SamplerState* getSamplerState(uint32_t _flags, const float _rgba[4])
 		{
-			const uint32_t index = (_flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
-			_flags &= BGFX_TEXTURE_SAMPLER_BITS_MASK;
+			const uint32_t index = (_flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
+			_flags &= BGFX_SAMPLER_BITS_MASK;
 
 			// Force both min+max anisotropic, can't be set individually.
-			_flags |= 0 != (_flags & (BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC) )
-					? BGFX_TEXTURE_MIN_ANISOTROPIC|BGFX_TEXTURE_MAG_ANISOTROPIC
+			_flags |= 0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
+					? BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC
 					: 0
 					;
 
@@ -2835,17 +2835,17 @@ namespace bgfx { namespace d3d11
 
 			if (NULL == sampler)
 			{
-				const uint32_t cmpFunc   = (_flags&BGFX_TEXTURE_COMPARE_MASK)>>BGFX_TEXTURE_COMPARE_SHIFT;
-				const uint8_t  minFilter = s_textureFilter[0][(_flags&BGFX_TEXTURE_MIN_MASK)>>BGFX_TEXTURE_MIN_SHIFT];
-				const uint8_t  magFilter = s_textureFilter[1][(_flags&BGFX_TEXTURE_MAG_MASK)>>BGFX_TEXTURE_MAG_SHIFT];
-				const uint8_t  mipFilter = s_textureFilter[2][(_flags&BGFX_TEXTURE_MIP_MASK)>>BGFX_TEXTURE_MIP_SHIFT];
+				const uint32_t cmpFunc   = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+				const uint8_t  minFilter = s_textureFilter[0][(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
+				const uint8_t  magFilter = s_textureFilter[1][(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
+				const uint8_t  mipFilter = s_textureFilter[2][(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
 				const uint8_t  filter    = 0 == cmpFunc ? 0 : D3D11_COMPARISON_FILTERING_BIT;
 
 				D3D11_SAMPLER_DESC sd;
 				sd.Filter         = (D3D11_FILTER)(filter|minFilter|magFilter|mipFilter);
-				sd.AddressU       = s_textureAddress[(_flags&BGFX_TEXTURE_U_MASK)>>BGFX_TEXTURE_U_SHIFT];
-				sd.AddressV       = s_textureAddress[(_flags&BGFX_TEXTURE_V_MASK)>>BGFX_TEXTURE_V_SHIFT];
-				sd.AddressW       = s_textureAddress[(_flags&BGFX_TEXTURE_W_MASK)>>BGFX_TEXTURE_W_SHIFT];
+				sd.AddressU       = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
+				sd.AddressV       = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
+				sd.AddressW       = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
 				sd.MipLODBias     = float(BGFX_CONFIG_MIP_LOD_BIAS);
 				sd.MaxAnisotropy  = m_maxAnisotropy;
 				sd.ComparisonFunc = 0 == cmpFunc ? D3D11_COMPARISON_NEVER : s_cmpFunc[cmpFunc];
@@ -4333,7 +4333,7 @@ namespace bgfx { namespace d3d11
 		DX_RELEASE(m_rt, 0);
 		DX_RELEASE(m_srv, 0);
 		DX_RELEASE(m_uav, 0);
-		if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED) )
+		if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 		{
 			DX_RELEASE(m_ptr, 0);
 		}
@@ -4342,7 +4342,7 @@ namespace bgfx { namespace d3d11
 	void TextureD3D11::overrideInternal(uintptr_t _ptr)
 	{
 		destroy();
-		m_flags |= BGFX_TEXTURE_INTERNAL_SHARED;
+		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_ptr = (ID3D11Resource*)_ptr;
 
 		s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, NULL, &m_srv);
@@ -4410,11 +4410,11 @@ namespace bgfx { namespace d3d11
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
 		ts.m_srv[_stage] = m_srv;
-		uint32_t flags = 0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & _flags)
+		uint32_t flags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 			? _flags
 			: m_flags
 			;
-		uint32_t index = (flags & BGFX_TEXTURE_BORDER_COLOR_MASK) >> BGFX_TEXTURE_BORDER_COLOR_SHIFT;
+		uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags
 									, _palette[index])
 									;

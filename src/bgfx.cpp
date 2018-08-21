@@ -609,11 +609,11 @@ namespace bgfx
 		charsetFillTexture(vga8x8, rgba, 8, pitch, bpp);
 		charsetFillTexture(vga8x16, &rgba[8*pitch], 16, pitch, bpp);
 		m_texture = createTexture2D(width, height, false, 1, TextureFormat::R8
-						, BGFX_TEXTURE_MIN_POINT
-						| BGFX_TEXTURE_MAG_POINT
-						| BGFX_TEXTURE_MIP_POINT
-						| BGFX_TEXTURE_U_CLAMP
-						| BGFX_TEXTURE_V_CLAMP
+						, BGFX_SAMPLER_MIN_POINT
+						| BGFX_SAMPLER_MAG_POINT
+						| BGFX_SAMPLER_MIP_POINT
+						| BGFX_SAMPLER_U_CLAMP
+						| BGFX_SAMPLER_V_CLAMP
 						, mem
 						);
 
@@ -4541,9 +4541,9 @@ BGFX_TEXTURE_FORMAT_BIMG(Count);
 #define FLAGS_MASK_TEST(_flags, _mask) ( (_flags) == ( (_flags) & (_mask) ) )
 
 BX_STATIC_ASSERT(FLAGS_MASK_TEST(0
-	| BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER
-	| BGFX_TEXTURE_INTERNAL_SHARED
-	, BGFX_TEXTURE_RESERVED_MASK
+	| BGFX_SAMPLER_INTERNAL_DEFAULT
+	| BGFX_SAMPLER_INTERNAL_SHARED
+	, BGFX_SAMPLER_RESERVED_MASK
 	) );
 
 BX_STATIC_ASSERT(FLAGS_MASK_TEST(0

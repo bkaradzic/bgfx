@@ -318,7 +318,7 @@ namespace bgfx { namespace d3d9
 
 		void destroy(bool _resize = false)
 		{
-			if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED) )
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 			{
 				if (_resize)
 				{
@@ -340,7 +340,7 @@ namespace bgfx { namespace d3d9
 		void overrideInternal(uintptr_t _ptr)
 		{
 			destroy();
-			m_flags |= BGFX_TEXTURE_INTERNAL_SHARED;
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 			m_ptr = (IDirect3DBaseTexture9*)_ptr;
 		}
 

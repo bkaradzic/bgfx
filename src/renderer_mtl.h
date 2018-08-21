@@ -871,7 +871,7 @@ namespace bgfx { namespace mtl
 			  uint8_t _stage
 			, bool _vertex
 			, bool _fragment
-			, uint32_t _flags = BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER
+			, uint32_t _flags = BGFX_SAMPLER_INTERNAL_DEFAULT
 			);
 
 		Texture m_ptr;

@@ -590,11 +590,11 @@ public:
 		{
 			const uint32_t samplerFlags = 0
 				| BGFX_TEXTURE_RT
-				| BGFX_TEXTURE_MIN_POINT
-				| BGFX_TEXTURE_MAG_POINT
-				| BGFX_TEXTURE_MIP_POINT
-				| BGFX_TEXTURE_U_CLAMP
-				| BGFX_TEXTURE_V_CLAMP
+				| BGFX_SAMPLER_MIN_POINT
+				| BGFX_SAMPLER_MAG_POINT
+				| BGFX_SAMPLER_MIP_POINT
+				| BGFX_SAMPLER_U_CLAMP
+				| BGFX_SAMPLER_V_CLAMP
 				;
 
 			// Create buffers for the HiZ pass

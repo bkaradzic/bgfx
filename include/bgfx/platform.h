@@ -134,7 +134,7 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_override_internal_texture`.
 	///
-	uintptr_t overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE);
+	uintptr_t overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_SAMPLER_NONE);
 
 } // namespace bgfx
 
