@@ -89,7 +89,7 @@ namespace ImGui
                     struct FuncHolder
                     {
                         // FIXME: We should have a way to retrieve the text edit cursor position more easily in the API, this is rather tedious.
-                        static int Callback(ImGuiTextEditCallbackData* data)
+                        static int Callback(ImGuiInputTextCallbackData* data)
                         {
                             int* p_cursor_pos = (int*)data->UserData;
                             if (!data->HasSelection())
