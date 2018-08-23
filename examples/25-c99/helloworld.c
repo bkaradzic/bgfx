@@ -26,7 +26,7 @@ int32_t _main_(int32_t _argc, char** _argv)
 	bgfx_init_ctor(&init);
 
 	bgfx_init(&init);
-	bgfx_reset(width, height, reset);
+	bgfx_reset(width, height, reset, init.resolution.format);
 
 	// Enable debug text.
 	bgfx_set_debug(debug);

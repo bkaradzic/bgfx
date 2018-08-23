@@ -1158,6 +1158,7 @@ namespace bgfx
 		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_DEPTH),
 		CAPS_FLAGS(BGFX_CAPS_FRAGMENT_ORDERING),
 		CAPS_FLAGS(BGFX_CAPS_GRAPHICS_DEBUGGER),
+		CAPS_FLAGS(BGFX_CAPS_HDR10),
 		CAPS_FLAGS(BGFX_CAPS_HIDPI),
 		CAPS_FLAGS(BGFX_CAPS_INDEX32),
 		CAPS_FLAGS(BGFX_CAPS_INSTANCING),
@@ -2804,7 +2805,8 @@ namespace bgfx
 	}
 
 	Resolution::Resolution()
-		: width(1280)
+		: format(TextureFormat::RGBA8)
+		, width(1280)
 		, height(720)
 		, reset(BGFX_RESET_NONE)
 	{
@@ -2985,11 +2987,11 @@ error:
 		g_allocator   = NULL;
 	}
 
-	void reset(uint32_t _width, uint32_t _height, uint32_t _flags)
+	void reset(uint32_t _width, uint32_t _height, uint32_t _flags, TextureFormat::Enum _format)
 	{
 		BGFX_CHECK_API_THREAD();
 		BX_CHECK(0 == (_flags&BGFX_RESET_RESERVED_MASK), "Do not set reset reserved flags!");
-		s_ctx->reset(_width, _height, _flags);
+		s_ctx->reset(_width, _height, _flags, _format);
 	}
 
 	Encoder* begin()
@@ -4848,9 +4850,9 @@ BGFX_C_API void bgfx_shutdown(void)
 	return bgfx::shutdown();
 }
 
-BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags)
+BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags, bgfx_texture_format_t _format)
 {
-	bgfx::reset(_width, _height, _flags);
+	bgfx::reset(_width, _height, _flags, bgfx::TextureFormat::Enum(_format) );
 }
 
 BGFX_C_API uint32_t bgfx_frame(bool _capture)

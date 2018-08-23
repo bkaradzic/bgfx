@@ -598,6 +598,7 @@ typedef struct bgfx_allocator_vtbl_s
 /**/
 typedef struct bgfx_resolution_s
 {
+    bgfx_texture_format_t format;
     uint32_t width;
     uint32_t height;
     uint32_t reset;
@@ -682,7 +683,7 @@ BGFX_C_API bool bgfx_init(const bgfx_init_t* _init);
 BGFX_C_API void bgfx_shutdown(void);
 
 /**/
-BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags);
+BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags, bgfx_texture_format_t _format);
 
 /**/
 BGFX_C_API struct bgfx_encoder_s* bgfx_begin(void);

@@ -869,7 +869,7 @@ namespace bgfx { namespace d3d12
 				bx::memSet(&m_scd, 0, sizeof(m_scd) );
 				m_scd.width  = _init.resolution.width;
 				m_scd.height = _init.resolution.height;
-				m_scd.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				m_scd.format = s_textureFormat[_init.resolution.format].m_fmt;
 				m_scd.stereo  = false;
 
 				updateMsaa(m_scd.format);
@@ -2108,6 +2108,7 @@ namespace bgfx { namespace d3d12
 
 			if (m_resolution.width            !=  _resolution.width
 			||  m_resolution.height           !=  _resolution.height
+			||  m_resolution.format           !=  _resolution.format
 			|| (m_resolution.reset&maskFlags) != (_resolution.reset&maskFlags) )
 			{
 				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
@@ -2125,6 +2126,7 @@ namespace bgfx { namespace d3d12
 
 				m_scd.width  = _resolution.width;
 				m_scd.height = _resolution.height;
+				m_scd.format = s_textureFormat[_resolution.format].m_fmt;
 
 				preReset();
 
@@ -2138,24 +2140,9 @@ namespace bgfx { namespace d3d12
 					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(nodeMask) );
 					IUnknown* presentQueue[] ={ m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue, m_cmd.m_commandQueue };
 					BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
-
-					DX_CHECK(m_swapChain->ResizeBuffers1(
-						  m_scd.bufferCount
-						, m_scd.width
-						, m_scd.height
-						, m_scd.format
-						, m_scd.flags
-						, nodeMask
-						, presentQueue
-						) );
+					DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd, nodeMask, presentQueue) );
 #elif BX_PLATFORM_WINRT
-					DX_CHECK(m_swapChain->ResizeBuffers(
-						  m_scd.bufferCount
-						, m_scd.width
-						, m_scd.height
-						, m_scd.format
-						, m_scd.flags
-						) );
+					DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd);
 					m_backBufferColorIdx = m_scd.bufferCount-1;
 #endif // BX_PLATFORM_WINDOWS
 				}

@@ -604,9 +604,10 @@ namespace bgfx
 	{
 		Resolution();
 
-		uint32_t width;  //!< Backbuffer width.
-		uint32_t height; //!< Backbuffer height.
-		uint32_t reset;	 //!< Reset parameters.
+		TextureFormat::Enum format; //!< Backbuffer format.
+		uint32_t width;             //!< Backbuffer width.
+		uint32_t height;            //!< Backbuffer height.
+		uint32_t reset;	            //!< Reset parameters.
 	};
 
 	/// Initialization parameters used by `bgfx::init`.
@@ -1874,6 +1875,7 @@ namespace bgfx
 	///     occurs. Default behavior is that flip occurs before rendering new
 	///     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	///   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB backbuffer.
+	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
 	///
 	/// @attention This call doesn't actually change window size, it just
 	///   resizes back-buffer. Windowing code has to change window size.
@@ -1884,6 +1886,7 @@ namespace bgfx
 		  uint32_t _width
 		, uint32_t _height
 		, uint32_t _flags = BGFX_RESET_NONE
+		, TextureFormat::Enum _format = TextureFormat::Count
 		);
 
 	/// Begin submitting draw calls from thread.

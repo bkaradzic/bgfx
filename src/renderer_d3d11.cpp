@@ -964,8 +964,8 @@ namespace bgfx { namespace d3d11
 				if (NULL == g_platformData.backBuffer)
 				{
 #if BX_PLATFORM_WINDOWS
-					m_swapEffect      = DXGI_SWAP_EFFECT_DISCARD;
-					m_swapBufferCount = 1;
+					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+					m_swapBufferCount = 2;
 #else
 					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 					m_swapBufferCount = 2;
@@ -974,7 +974,7 @@ namespace bgfx { namespace d3d11
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.width  = _init.resolution.width;
 					m_scd.height = _init.resolution.height;
-					m_scd.format  = DXGI_FORMAT_R8G8B8A8_UNORM;
+					m_scd.format = s_textureFormat[_init.resolution.format].m_fmt;
 
 					updateMsaa(m_scd.format);
 					m_scd.sampleDesc  = s_msaa[(_init.resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
@@ -2075,8 +2075,8 @@ namespace bgfx { namespace d3d11
 					;
 				desc.Texture2D.MipSlice = 0;
 				desc.Format = (m_resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
-					? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
-					: DXGI_FORMAT_R8G8B8A8_UNORM
+					? m_scd.format == DXGI_FORMAT_R8G8B8A8_UNORM ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : m_scd.format
+					: m_scd.format
 					;
 
 				DX_CHECK(m_device->CreateRenderTargetView(color, &desc, &m_backBufferColor) );
@@ -2265,6 +2265,7 @@ namespace bgfx { namespace d3d11
 
 			if (m_resolution.width            !=  _resolution.width
 			||  m_resolution.height           !=  _resolution.height
+			||  m_resolution.format           !=  _resolution.format
 			|| (m_resolution.reset&maskFlags) != (_resolution.reset&maskFlags) )
 			{
 				uint32_t flags = _resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
@@ -2282,6 +2283,7 @@ namespace bgfx { namespace d3d11
 
 				m_scd.width  = _resolution.width;
 				m_scd.height = _resolution.height;
+				m_scd.format = s_textureFormat[_resolution.format].m_fmt;
 
 				preReset();
 
@@ -2299,13 +2301,8 @@ namespace bgfx { namespace d3d11
 					if (resize)
 					{
 						m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
-						DX_CHECK(m_swapChain->ResizeBuffers(
-							  m_swapBufferCount
-							, m_scd.width
-							, m_scd.height
-							, m_scd.format
-							, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
-							) );
+
+						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd) );
 					}
 					else
 					{

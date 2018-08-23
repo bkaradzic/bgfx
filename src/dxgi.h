@@ -82,7 +82,13 @@ namespace bgfx
 		void update(IUnknown* _device);
 
 		///
-		HRESULT createSwapChain(IUnknown* _device, const SwapChainDesc& _desc, SwapChainI** _swapChain);
+		HRESULT createSwapChain(IUnknown* _device, const SwapChainDesc& _scd, SwapChainI** _swapChain);
+
+		///
+		void updateHdr10(SwapChainI* _swapChain, const SwapChainDesc& _scd);
+
+		///
+		HRESULT resizeBuffers(SwapChainI* _swapChain, const SwapChainDesc& _scd, const uint32_t* _nodeMask = NULL, IUnknown* const* _presentQueue = NULL);
 
 		///
 		void trim();

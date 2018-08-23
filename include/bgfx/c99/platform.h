@@ -88,7 +88,7 @@ typedef struct bgfx_interface_vtbl
     void (*init_ctor)(bgfx_init_t* _init);
     bool (*init)(const bgfx_init_t* _init);
     void (*shutdown)();
-    void (*reset)(uint32_t _width, uint32_t _height, uint32_t _flags);
+    void (*reset)(uint32_t _width, uint32_t _height, uint32_t _flags, bgfx_texture_format_t _format);
     uint32_t (*frame)(bool _capture);
     bgfx_renderer_type_t (*get_renderer_type)();
     const bgfx_caps_t* (*get_caps)();
