@@ -103,7 +103,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#renderer">Renderer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#capabilities">Capabilities</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#statistics">Statistics</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#head-mounted-display">Head Mounted Display</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#platform-specific">Platform specific</a></li>
@@ -530,6 +529,15 @@
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.capture_begin</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_width</span></code>: Image width. </li>
+<li><code class="docutils literal"><span class="pre">_height</span></code>: Image height. </li>
+<li><code class="docutils literal"><span class="pre">_pitch</span></code>: Number of bytes to skip between the start of each horizontal line of the image. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_yflip</span></code>: If true, image origin is bottom left.</li>
+</ul>
+</dd>
 </dl>
 </p>
 </dd></dl>
@@ -582,8 +590,8 @@
 <div class="section" id="reset">
 <h4>Reset<a class="headerlink" href="#reset" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
-<dt id="_CPPv2N4bgfx5resetE8uint32_t8uint32_t8uint32_t">
-<span id="bgfx::reset__uint32_t.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1ab2506f91853a4c3bb0f25b581638291c"></span>void <code class="descclassname">bgfx::</code><code class="descname">reset</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_flags</em> = BGFX_RESET_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5resetE8uint32_t8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx5resetE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumE">
+<span id="bgfx::reset__uint32_t.uint32_t.uint32_t.TextureFormat::Enum"></span><span class="target" id="namespacebgfx_1acbf49c89c8ed64ac2ce9fbb08a52f7ab"></span>void <code class="descclassname">bgfx::</code><code class="descname">reset</code><span class="sig-paren">(</span>uint32_t <em>_width</em>, uint32_t <em>_height</em>, uint32_t <em>_flags</em> = BGFX_RESET_NONE, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5resetE8uint32_t8uint32_t8uint32_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reset graphic settings and back-buffer size. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -603,9 +611,10 @@
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_CAPTURE</span></code> - Begin screen capture.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_FLUSH_AFTER_RENDER</span></code> - Flush rendering after submitting to GPU.</li>
 <li><code class="docutils literal"><span class="pre">BGFX_RESET_FLIP_AFTER_RENDER</span></code> - This flag specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when <code class="docutils literal"><span class="pre">BGFX_CONFIG_MULTITHREADED=0</span></code>.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_RESET_SRGB_BACKBUFFER</span></code> - Enable sRGB backbuffer.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_RESET_SRGB_BACKBUFFER</span></code> - Enable sRGB backbuffer. </li>
 </ul>
 </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>.</li>
 </ul>
 </dd>
 </dl>
@@ -666,18 +675,6 @@
 <dd><p>Begin screen capture. </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_RESET_HMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_RESET_HMD_DEBUG&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_RESET_HMD_RECENTER&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
 <dl class="macro">
 <dt id="c.BGFX_RESET_FLUSH_AFTER_RENDER">
 <span class="target" id="defines_8h_1ae01ca78b058a1f7bf2358d61f7b52b03"></span><code class="descname">BGFX_RESET_FLUSH_AFTER_RENDER</code><a class="headerlink" href="#c.BGFX_RESET_FLUSH_AFTER_RENDER" title="Permalink to this definition">¶</a></dt>
@@ -694,6 +691,12 @@
 <dt id="c.BGFX_RESET_SRGB_BACKBUFFER">
 <span class="target" id="defines_8h_1a74813007bb4401a669842d101bc5da25"></span><code class="descname">BGFX_RESET_SRGB_BACKBUFFER</code><a class="headerlink" href="#c.BGFX_RESET_SRGB_BACKBUFFER" title="Permalink to this definition">¶</a></dt>
 <dd><p>Enable sRGB backbuffer. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_RESET_HDR10">
+<span class="target" id="defines_8h_1a970807be2daa1b810791647ed61371b2"></span><code class="descname">BGFX_RESET_HDR10</code><a class="headerlink" href="#c.BGFX_RESET_HDR10" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable HDR10 rendering. </p>
 </dd></dl>
 
 <dl class="macro">
@@ -1251,45 +1254,9 @@
 <div class="section" id="available-caps">
 <h5>Available Caps<a class="headerlink" href="#available-caps" title="Permalink to this headline">¶</a></h5>
 <dl class="macro">
-<dt id="c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">
-<span class="target" id="defines_8h_1a1316712571960b2e3c9daf12723041d7"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Texture compare less equal mode is supported. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_TEXTURE_COMPARE_ALL">
-<span class="target" id="defines_8h_1a9ebaab5c7f3b4b3289bb6b6b7bae9511"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_ALL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_ALL" title="Permalink to this definition">¶</a></dt>
-<dd><p>All texture compare modes are supported. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_TEXTURE_3D">
-<span class="target" id="defines_8h_1ad5f6d21a544dec64de111514b463566b"></span><code class="descname">BGFX_CAPS_TEXTURE_3D</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_3D" title="Permalink to this definition">¶</a></dt>
-<dd><p>3D textures are supported. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_VERTEX_ATTRIB_HALF">
-<span class="target" id="defines_8h_1ac7de569a09f05f83052c6b77c99db7fc"></span><code class="descname">BGFX_CAPS_VERTEX_ATTRIB_HALF</code><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ATTRIB_HALF" title="Permalink to this definition">¶</a></dt>
-<dd><p>Vertex attribute half-float is supported. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_INSTANCING">
-<span class="target" id="defines_8h_1a8fa31bcef4c9038b65a7e6e198792e04"></span><code class="descname">BGFX_CAPS_INSTANCING</code><a class="headerlink" href="#c.BGFX_CAPS_INSTANCING" title="Permalink to this definition">¶</a></dt>
-<dd><p>Instancing is supported. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_RENDERER_MULTITHREADED">
-<span class="target" id="defines_8h_1a7a915158233262d1e3efe18a12b4c3a6"></span><code class="descname">BGFX_CAPS_RENDERER_MULTITHREADED</code><a class="headerlink" href="#c.BGFX_CAPS_RENDERER_MULTITHREADED" title="Permalink to this definition">¶</a></dt>
-<dd><p>Renderer is on separate thread. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_FRAGMENT_DEPTH">
-<span class="target" id="defines_8h_1ad6427441adff7f8672d4f90eaa40698d"></span><code class="descname">BGFX_CAPS_FRAGMENT_DEPTH</code><a class="headerlink" href="#c.BGFX_CAPS_FRAGMENT_DEPTH" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fragment depth is accessible in fragment shader. </p>
+<dt id="c.BGFX_CAPS_ALPHA_TO_COVERAGE">
+<span class="target" id="defines_8h_1abd908a660ce2ecb66ac53f2fede98451"></span><code class="descname">BGFX_CAPS_ALPHA_TO_COVERAGE</code><a class="headerlink" href="#c.BGFX_CAPS_ALPHA_TO_COVERAGE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alpha to coverage is supported. </p>
 </dd></dl>
 
 <dl class="macro">
@@ -1305,25 +1272,9 @@
 </dd></dl>
 
 <dl class="macro">
-<dt id="c.BGFX_CAPS_FRAGMENT_ORDERING">
-<span class="target" id="defines_8h_1ae63f3a67435d3ab926ef8d7fd19ffe07"></span><code class="descname">BGFX_CAPS_FRAGMENT_ORDERING</code><a class="headerlink" href="#c.BGFX_CAPS_FRAGMENT_ORDERING" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fragment ordering is available in fragment shader. </p>
-</dd></dl>
-
-<dl class="macro">
-<dt id="c.BGFX_CAPS_SWAP_CHAIN">
-<span class="target" id="defines_8h_1afda15c358cd389b8ba58a31bf4406c75"></span><code class="descname">BGFX_CAPS_SWAP_CHAIN</code><a class="headerlink" href="#c.BGFX_CAPS_SWAP_CHAIN" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multiple windows are supported. </p>
-</dd></dl>
-
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_CAPS_HMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<dl class="macro">
-<dt id="c.BGFX_CAPS_INDEX32">
-<span class="target" id="defines_8h_1ab334337b725ebcfa588afc00ab838e77"></span><code class="descname">BGFX_CAPS_INDEX32</code><a class="headerlink" href="#c.BGFX_CAPS_INDEX32" title="Permalink to this definition">¶</a></dt>
-<dd><p>32-bit indices are supported. </p>
+<dt id="c.BGFX_CAPS_CONSERVATIVE_RASTER">
+<span class="target" id="defines_8h_1a01ba705fe5d7a67c47d2a6bd8ace6869"></span><code class="descname">BGFX_CAPS_CONSERVATIVE_RASTER</code><a class="headerlink" href="#c.BGFX_CAPS_CONSERVATIVE_RASTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Conservative rasterization is supported. </p>
 </dd></dl>
 
 <dl class="macro">
@@ -1333,9 +1284,75 @@
 </dd></dl>
 
 <dl class="macro">
+<dt id="c.BGFX_CAPS_FRAGMENT_DEPTH">
+<span class="target" id="defines_8h_1ad6427441adff7f8672d4f90eaa40698d"></span><code class="descname">BGFX_CAPS_FRAGMENT_DEPTH</code><a class="headerlink" href="#c.BGFX_CAPS_FRAGMENT_DEPTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fragment depth is accessible in fragment shader. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_FRAGMENT_ORDERING">
+<span class="target" id="defines_8h_1ae63f3a67435d3ab926ef8d7fd19ffe07"></span><code class="descname">BGFX_CAPS_FRAGMENT_ORDERING</code><a class="headerlink" href="#c.BGFX_CAPS_FRAGMENT_ORDERING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fragment ordering is available in fragment shader. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_GRAPHICS_DEBUGGER">
+<span class="target" id="defines_8h_1a09ab03b89a07295a645d15cc4ac1580d"></span><code class="descname">BGFX_CAPS_GRAPHICS_DEBUGGER</code><a class="headerlink" href="#c.BGFX_CAPS_GRAPHICS_DEBUGGER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Graphics debugger is present. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_HDR10">
+<span class="target" id="defines_8h_1af5cd44ec5f5eec4e8479d54bb9a9497e"></span><code class="descname">BGFX_CAPS_HDR10</code><a class="headerlink" href="#c.BGFX_CAPS_HDR10" title="Permalink to this definition">¶</a></dt>
+<dd><p>HDR10 rendering is supported. </p>
+</dd></dl>
+
+<dl class="macro">
 <dt id="c.BGFX_CAPS_HIDPI">
 <span class="target" id="defines_8h_1a917840ff950077d8f5964028e5854b42"></span><code class="descname">BGFX_CAPS_HIDPI</code><a class="headerlink" href="#c.BGFX_CAPS_HIDPI" title="Permalink to this definition">¶</a></dt>
 <dd><p>HiDPI rendering is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_INDEX32">
+<span class="target" id="defines_8h_1ab334337b725ebcfa588afc00ab838e77"></span><code class="descname">BGFX_CAPS_INDEX32</code><a class="headerlink" href="#c.BGFX_CAPS_INDEX32" title="Permalink to this definition">¶</a></dt>
+<dd><p>32-bit indices are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_INSTANCING">
+<span class="target" id="defines_8h_1a8fa31bcef4c9038b65a7e6e198792e04"></span><code class="descname">BGFX_CAPS_INSTANCING</code><a class="headerlink" href="#c.BGFX_CAPS_INSTANCING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instancing is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_OCCLUSION_QUERY">
+<span class="target" id="defines_8h_1a35626a97a17fc3e2f3b712a8221c38bf"></span><code class="descname">BGFX_CAPS_OCCLUSION_QUERY</code><a class="headerlink" href="#c.BGFX_CAPS_OCCLUSION_QUERY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Occlusion query is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_RENDERER_MULTITHREADED">
+<span class="target" id="defines_8h_1a7a915158233262d1e3efe18a12b4c3a6"></span><code class="descname">BGFX_CAPS_RENDERER_MULTITHREADED</code><a class="headerlink" href="#c.BGFX_CAPS_RENDERER_MULTITHREADED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renderer is on separate thread. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_SWAP_CHAIN">
+<span class="target" id="defines_8h_1afda15c358cd389b8ba58a31bf4406c75"></span><code class="descname">BGFX_CAPS_SWAP_CHAIN</code><a class="headerlink" href="#c.BGFX_CAPS_SWAP_CHAIN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiple windows are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_2D_ARRAY">
+<span class="target" id="defines_8h_1a5722ea49376c1f384e7d542d94454c8e"></span><code class="descname">BGFX_CAPS_TEXTURE_2D_ARRAY</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_2D_ARRAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>2D texture array is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_3D">
+<span class="target" id="defines_8h_1ad5f6d21a544dec64de111514b463566b"></span><code class="descname">BGFX_CAPS_TEXTURE_3D</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_3D" title="Permalink to this definition">¶</a></dt>
+<dd><p>3D textures are supported. </p>
 </dd></dl>
 
 <dl class="macro">
@@ -1345,15 +1362,51 @@
 </dd></dl>
 
 <dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_COMPARE_ALL">
+<span class="target" id="defines_8h_1a9ebaab5c7f3b4b3289bb6b6b7bae9511"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_ALL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_ALL" title="Permalink to this definition">¶</a></dt>
+<dd><p>All texture compare modes are supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL">
+<span class="target" id="defines_8h_1a1316712571960b2e3c9daf12723041d7"></span><code class="descname">BGFX_CAPS_TEXTURE_COMPARE_LEQUAL</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_COMPARE_LEQUAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture compare less equal mode is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_CUBE_ARRAY">
+<span class="target" id="defines_8h_1acf8f4db9728d92d43e352ae6abb4eb33"></span><code class="descname">BGFX_CAPS_TEXTURE_CUBE_ARRAY</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_CUBE_ARRAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cubemap texture array is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_TEXTURE_DIRECT_ACCESS">
+<span class="target" id="defines_8h_1a45a99a879cc6d2da668682b435523a52"></span><code class="descname">BGFX_CAPS_TEXTURE_DIRECT_ACCESS</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_DIRECT_ACCESS" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU direct access to GPU texture memory. </p>
+</dd></dl>
+
+<dl class="macro">
 <dt id="c.BGFX_CAPS_TEXTURE_READ_BACK">
 <span class="target" id="defines_8h_1ac2cd9bdd84fdce3e55b3054413094f0d"></span><code class="descname">BGFX_CAPS_TEXTURE_READ_BACK</code><a class="headerlink" href="#c.BGFX_CAPS_TEXTURE_READ_BACK" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read-back texture is supported. </p>
 </dd></dl>
 
 <dl class="macro">
-<dt id="c.BGFX_CAPS_OCCLUSION_QUERY">
-<span class="target" id="defines_8h_1a35626a97a17fc3e2f3b712a8221c38bf"></span><code class="descname">BGFX_CAPS_OCCLUSION_QUERY</code><a class="headerlink" href="#c.BGFX_CAPS_OCCLUSION_QUERY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Occlusion query is supported. </p>
+<dt id="c.BGFX_CAPS_VERTEX_ATTRIB_HALF">
+<span class="target" id="defines_8h_1ac7de569a09f05f83052c6b77c99db7fc"></span><code class="descname">BGFX_CAPS_VERTEX_ATTRIB_HALF</code><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ATTRIB_HALF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vertex attribute half-float is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_VERTEX_ATTRIB_UINT10">
+<span class="target" id="defines_8h_1a3f092ea38f4d3c1d46eda38393c88be6"></span><code class="descname">BGFX_CAPS_VERTEX_ATTRIB_UINT10</code><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ATTRIB_UINT10" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vertex attribute 10_10_10_2 is supported. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_CAPS_VERTEX_ID">
+<span class="target" id="defines_8h_1a63af3c34318335de4b4fa64af87dcc5c"></span><code class="descname">BGFX_CAPS_VERTEX_ID</code><a class="headerlink" href="#c.BGFX_CAPS_VERTEX_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rendering with VertexID only is supported. </p>
 </dd></dl>
 
 </div>
@@ -1618,29 +1671,6 @@
 </dd></dl>
 
 </div>
-<div class="section" id="head-mounted-display">
-<h4>Head Mounted Display<a class="headerlink" href="#head-mounted-display" title="Permalink to this headline">¶</a></h4>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygenfunction: Cannot find function &#8220;bgfx::getHMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygenstruct: Cannot find class &#8220;bgfx::HMD&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_HMD_NONE&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_HMD_DEVICE_RESOLUTION&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">doxygendefine: Cannot find define &#8220;BGFX_HMD_RENDERING&#8221; in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml</p>
-</div>
-</div>
 </div>
 <div class="section" id="platform-specific">
 <h3>Platform specific<a class="headerlink" href="#platform-specific" title="Permalink to this headline">¶</a></h3>
@@ -1806,7 +1836,7 @@ creating windows.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::overrideInternal__TextureHandle.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1ac24001a0eb88946cfb457a59940a3f88"></span>uintptr_t <code class="descclassname">bgfx::</code><code class="descname">overrideInternal</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_TEXTURE_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::overrideInternal__TextureHandle.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1a6b011373b9c788a9cef104999f640665"></span>uintptr_t <code class="descclassname">bgfx::</code><code class="descname">overrideInternal</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_SAMPLER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Override internal texture by creating new texture. Previously created internal texture will released. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -2477,7 +2507,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set view frame buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd>Not persistent after <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1ab2506f91853a4c3bb0f25b581638291c"><span><span class="pre">bgfx::reset</span></span></a></code> call.</dd>
+<dd>Not persistent after <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1acbf49c89c8ed64ac2ce9fbb08a52f7ab"><span><span class="pre">bgfx::reset</span></span></a></code> call.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_frame_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -5800,7 +5830,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx13createTextureEPK6Memory8uint32_t7uint8_tP11TextureInfo">
-<span id="bgfx::createTexture__MemoryCP.uint32_t.uint8_t.TextureInfoP"></span><span class="target" id="namespacebgfx_1aaa1bf4d4e000f393bc47f543cef7d6b4"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint32_t <em>_flags</em> = BGFX_TEXTURE_NONE, uint8_t <em>_skip</em> = 0, TextureInfo *<em>_info</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createTextureEPK6Memory8uint32_t7uint8_tP11TextureInfo" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture__MemoryCP.uint32_t.uint8_t.TextureInfoP"></span><span class="target" id="namespacebgfx_1aca798f1779754c7c22631a4cb3a0b5a4"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint32_t <em>_flags</em> = BGFX_SAMPLER_NONE, uint8_t <em>_skip</em> = 0, TextureInfo *<em>_info</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createTextureEPK6Memory8uint32_t7uint8_tP11TextureInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create texture from memory buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -5825,7 +5855,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTexture2D__uint16_t.uint16_t.b.uint16_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a64d7b53006299dd1ed9c5101407c426a"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_TEXTURE_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture2D__uint16_t.uint16_t.b.uint16_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a060d1c036178f7a2614e5d520978ffb0"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_SAMPLER_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create 2D texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5851,7 +5881,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createTexture2D__BackbufferRatio::Enum.b.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1ae2ac202cbfe159931a6dbdb823c8e069"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_TEXTURE_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture2D__BackbufferRatio::Enum.b.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1a3c40d5147d900dd51e96957925554aa4"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_SAMPLER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5899,7 +5929,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_tbN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTexture3D__uint16_t.uint16_t.uint16_t.b.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a05cdd0b2f9408ba3bf8a1877134613fe"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture3D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_hasMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_TEXTURE_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_tbN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture3D__uint16_t.uint16_t.uint16_t.b.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a42d9571cb097da330d7bfe8949eb9a91"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture3D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_hasMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_SAMPLER_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture3DE8uint16_t8uint16_t8uint16_tbN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create 3D texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -5949,7 +5979,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createTextureCubeE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_tPK6Memory">
-<span id="bgfx::createTextureCube__uint16_t.b.uint16_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a624f4b7ffa585e26564e6b5664d68eda"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTextureCube</code><span class="sig-paren">(</span>uint16_t <em>_size</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_TEXTURE_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createTextureCubeE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTextureCube__uint16_t.b.uint16_t.TextureFormat::Enum.uint32_t.MemoryCP"></span><span class="target" id="namespacebgfx_1ae5dbb340b51acfe280aa459765617722"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTextureCube</code><span class="sig-paren">(</span>uint16_t <em>_size</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_flags</em> = BGFX_SAMPLER_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createTextureCubeE8uint16_tb8uint16_tN13TextureFormat4EnumE8uint32_tPK6Memory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create Cube texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -6080,7 +6110,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Frame Buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createFrameBuffer__uint16_t.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1a51e6723db7d8375e211b2ae5046634b5"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em> = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createFrameBuffer__uint16_t.uint16_t.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1ad1848fd5810ab72328173895135fb60e"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em> = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer (simple). </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -6105,7 +6135,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t">
-<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1a721dad473bb58b7331864e95e6433c46"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em> = BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint32_t"></span><span class="target" id="namespacebgfx_1a0d213a6cc9b46d10afb20f5287bca95b"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint32_t <em>_textureFlags</em> = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
