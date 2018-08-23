@@ -575,9 +575,6 @@ namespace bgfx
 
 		/// Called when a video capture ends.
 		///
-		/// @param[in] _data Image data.
-		/// @param[in] _size Image size.
-		///
 		/// @attention C99 equivalent is `bgfx_callback_vtbl.capture_end`.
 		///
 		virtual void captureEnd() = 0;
