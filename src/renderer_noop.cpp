@@ -237,8 +237,24 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void submit(Frame* /*_render*/, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
+		void submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& /*_textVideoMemBlitter*/) override
 		{
+			const int64_t timerFreq = bx::getHPFrequency();
+			const int64_t timeBegin = bx::getHPCounter();
+
+			Stats& perfStats = _render->m_perfStats;
+			perfStats.cpuTimeBegin  = timeBegin;
+			perfStats.cpuTimeEnd    = timeBegin;
+			perfStats.cpuTimerFreq  = timerFreq;
+
+			perfStats.gpuTimeBegin  = 0;
+			perfStats.gpuTimeEnd    = 0;
+			perfStats.gpuTimerFreq  = 1000000000;
+
+			bx::memSet(perfStats.numPrims, 0, sizeof(perfStats.numPrims) );
+
+			perfStats.gpuMemoryMax  = -INT64_MAX;
+			perfStats.gpuMemoryUsed = -INT64_MAX;
 		}
 
 		void blitSetup(TextVideoMemBlitter& /*_blitter*/) override
