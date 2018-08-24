@@ -1683,7 +1683,7 @@ namespace bgfx { namespace d3d11
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint32_t _flags, uint8_t _skip) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
 		{
 			return m_textures[_handle.idx].create(_mem, _flags, _skip);
 		}
@@ -1783,11 +1783,11 @@ namespace bgfx { namespace d3d11
 			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) override
+		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat);
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -2938,7 +2938,7 @@ namespace bgfx { namespace d3d11
 			return uav;
 		}
 
-		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _mip, bool _compute = false)
+		ID3D11ShaderResourceView* getCachedSrv(TextureHandle _handle, uint8_t _mip, bool _compute = false, bool _stencil = false)
 		{
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -2946,6 +2946,7 @@ namespace bgfx { namespace d3d11
 			murmur.add(_mip);
 			murmur.add(0);
 			murmur.add(_compute);
+			murmur.add(_stencil);
 			uint32_t hash = murmur.end();
 
 			IUnknown** ptr = m_srvUavLru.find(hash);
@@ -2958,7 +2959,7 @@ namespace bgfx { namespace d3d11
 				const bool msaaSample = 1 < msaa.Count && 0 != (texture.m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
 				D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-				desc.Format = texture.getSrvFormat();
+				desc.Format = _stencil ? DXGI_FORMAT_X24_TYPELESS_G8_UINT : texture.getSrvFormat();
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
@@ -3990,7 +3991,7 @@ namespace bgfx { namespace d3d11
 		}
 	}
 
-	void* TextureD3D11::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
+	void* TextureD3D11::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
 	{
 		void* directAccessPtr = NULL;
 
@@ -4406,10 +4407,24 @@ namespace bgfx { namespace d3d11
 	void TextureD3D11::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4])
 	{
 		TextureStage& ts = s_renderD3D11->m_textureStage;
-		ts.m_srv[_stage] = m_srv;
-		uint32_t flags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
+
+		if (0 != (_flags & BGFX_SAMPLER_SAMPLE_STENCIL) )
+		{
+			ts.m_srv[_stage] = s_renderD3D11->getCachedSrv(
+				  TextureHandle{ uint16_t(this - s_renderD3D11->m_textures) }
+				, 0
+				, false
+				, true
+				);
+		}
+		else
+		{
+			ts.m_srv[_stage] = m_srv;
+		}
+
+		const uint32_t flags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
 			? _flags
-			: m_flags
+			: uint32_t(m_flags)
 			;
 		uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags
@@ -4471,10 +4486,11 @@ namespace bgfx { namespace d3d11
 		postReset();
 	}
 
-	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
+	void FrameBufferD3D11::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
 	{
 		SwapChainDesc scd;
 		bx::memCopy(&scd, &s_renderD3D11->m_scd, sizeof(SwapChainDesc) );
+		scd.format = TextureFormat::Count == _format ? scd.format : s_textureFormat[_format].m_fmt;
 		scd.width  = _width;
 		scd.height = _height;
 		scd.nwh    = _nwh;
@@ -5394,7 +5410,7 @@ namespace bgfx { namespace d3d11
 									else
 									{
 										srv[ii] = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_un.m_compute.m_mip, true);
-										sampler[ii] = s_renderD3D11->getSamplerState(texture.m_flags, NULL);
+										sampler[ii] = s_renderD3D11->getSamplerState(uint32_t(texture.m_flags), NULL);
 									}
 								}
 								break;

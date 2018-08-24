@@ -831,7 +831,7 @@ namespace bgfx { namespace mtl
 			m_program[_handle.idx].destroy();
 		}
 
-		void* createTexture(TextureHandle _handle, const Memory* _mem, uint32_t _flags, uint8_t _skip) override
+		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip) override
 		{
 			m_textures[_handle.idx].create(_mem, _flags, _skip);
 			return NULL;
@@ -921,11 +921,11 @@ namespace bgfx { namespace mtl
 			m_frameBuffers[_handle.idx].create(_num, _attachment);
 		}
 
-		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat) override
+		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _depthFormat);
+			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
@@ -2551,9 +2551,9 @@ namespace bgfx { namespace mtl
 		BufferMtl::create(_size, _data, _flags, stride, true);
 	}
 
-	void TextureMtl::create(const Memory* _mem, uint32_t _flags, uint8_t _skip)
+	void TextureMtl::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
 	{
-		m_sampler = s_renderMtl->getSamplerState(_flags);
+		m_sampler = s_renderMtl->getSamplerState(uint32_t(_flags) );
 
 		bimg::ImageContainer imageContainer;
 
@@ -2950,9 +2950,9 @@ namespace bgfx { namespace mtl
 		m_pixelFormatHash = murmur.end();
 	}
 
-	void FrameBufferMtl::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat)
+	void FrameBufferMtl::create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat)
 	{
-		BX_UNUSED(_denseIdx, _nwh, _width, _height, _depthFormat);
+		BX_UNUSED(_denseIdx, _nwh, _width, _height, _format, _depthFormat);
 	}
 
 	void FrameBufferMtl::postReset()

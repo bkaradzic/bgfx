@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(78)
+#define BGFX_API_VERSION UINT32_C(79)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define BGFX_STATE_WRITE_R                 UINT64_C(0x0000000000000001) //!< Enable R write.
@@ -335,21 +335,21 @@
 			)
 
 /// Texture creation flags.
-#define BGFX_TEXTURE_NONE                UINT32_C(0x00000000) //!<
-#define BGFX_TEXTURE_MSAA_SAMPLE         UINT32_C(0x00000800) //!< Texture will be used for MSAA sampling.
-#define BGFX_TEXTURE_RT                  UINT32_C(0x00001000) //!<
-#define BGFX_TEXTURE_RT_MSAA_X2          UINT32_C(0x00002000) //!< Render target MSAAx2 mode.
-#define BGFX_TEXTURE_RT_MSAA_X4          UINT32_C(0x00003000) //!< Render target MSAAx4 mode.
-#define BGFX_TEXTURE_RT_MSAA_X8          UINT32_C(0x00004000) //!< Render target MSAAx8 mode.
-#define BGFX_TEXTURE_RT_MSAA_X16         UINT32_C(0x00005000) //!< Render target MSAAx16 mode.
-#define BGFX_TEXTURE_RT_MSAA_SHIFT       12                   //!<
-#define BGFX_TEXTURE_RT_MSAA_MASK        UINT32_C(0x00007000) //!<
-#define BGFX_TEXTURE_RT_WRITE_ONLY       UINT32_C(0x00008000) //!< Render target will be used for writing only.
-#define BGFX_TEXTURE_RT_MASK             UINT32_C(0x0000f000) //!<
-#define BGFX_TEXTURE_COMPUTE_WRITE       UINT32_C(0x00100000) //!< Texture will be used for compute write.
-#define BGFX_TEXTURE_SRGB                UINT32_C(0x00200000) //!< Sample texture as sRGB.
-#define BGFX_TEXTURE_BLIT_DST            UINT32_C(0x00400000) //!< Texture will be used as blit destination.
-#define BGFX_TEXTURE_READ_BACK           UINT32_C(0x00800000) //!< Texture will be used for read back from GPU.
+#define BGFX_TEXTURE_NONE                UINT64_C(0x0000000000000000) //!<
+#define BGFX_TEXTURE_MSAA_SAMPLE         UINT64_C(0x0000000800000000) //!< Texture will be used for MSAA sampling.
+#define BGFX_TEXTURE_RT                  UINT64_C(0x0000001000000000) //!<
+#define BGFX_TEXTURE_RT_MSAA_X2          UINT64_C(0x0000002000000000) //!< Render target MSAAx2 mode.
+#define BGFX_TEXTURE_RT_MSAA_X4          UINT64_C(0x0000003000000000) //!< Render target MSAAx4 mode.
+#define BGFX_TEXTURE_RT_MSAA_X8          UINT64_C(0x0000004000000000) //!< Render target MSAAx8 mode.
+#define BGFX_TEXTURE_RT_MSAA_X16         UINT64_C(0x0000005000000000) //!< Render target MSAAx16 mode.
+#define BGFX_TEXTURE_RT_MSAA_SHIFT       36                           //!<
+#define BGFX_TEXTURE_RT_MSAA_MASK        UINT64_C(0x0000007000000000) //!<
+#define BGFX_TEXTURE_RT_WRITE_ONLY       UINT64_C(0x0000008000000000) //!< Render target will be used for writing only.
+#define BGFX_TEXTURE_RT_MASK             UINT64_C(0x000000f000000000) //!<
+#define BGFX_TEXTURE_COMPUTE_WRITE       UINT64_C(0x0000100000000000) //!< Texture will be used for compute write.
+#define BGFX_TEXTURE_SRGB                UINT64_C(0x0000200000000000) //!< Sample texture as sRGB.
+#define BGFX_TEXTURE_BLIT_DST            UINT64_C(0x0000400000000000) //!< Texture will be used as blit destination.
+#define BGFX_TEXTURE_READ_BACK           UINT64_C(0x0000800000000000) //!< Texture will be used for read back from GPU.
 
 /// Sampler flags.
 #define BGFX_SAMPLER_NONE                UINT32_C(0x00000000) //!<
@@ -389,6 +389,7 @@
 #define BGFX_SAMPLER_COMPARE_ALWAYS      UINT32_C(0x00080000) //!< Compare when sampling depth texture: always.
 #define BGFX_SAMPLER_COMPARE_SHIFT       16                   //!<
 #define BGFX_SAMPLER_COMPARE_MASK        UINT32_C(0x000f0000) //!<
+#define BGFX_SAMPLER_SAMPLE_STENCIL      UINT32_C(0x00100000) //!< Sample stencil instead of depth.
 #define BGFX_SAMPLER_BORDER_COLOR_SHIFT  24                   //!<
 #define BGFX_SAMPLER_BORDER_COLOR_MASK   UINT32_C(0x0f000000) //!<
 #define BGFX_SAMPLER_RESERVED_SHIFT      28                   //!<

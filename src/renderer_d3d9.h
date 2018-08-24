@@ -314,7 +314,7 @@ namespace bgfx { namespace d3d9
 		void dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth);
 		IDirect3DSurface9* getSurface(uint8_t _side = 0, uint8_t _mip = 0) const;
 
-		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
+		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 
 		void destroy(bool _resize = false)
 		{
@@ -371,7 +371,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DCubeTexture9*   m_stagingCube;
 		};
 
-		uint32_t m_flags;
+		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
@@ -395,7 +395,7 @@ namespace bgfx { namespace d3d9
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
 		uint16_t destroy();
 		HRESULT present();
 		void resolve() const;

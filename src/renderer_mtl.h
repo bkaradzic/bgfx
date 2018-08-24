@@ -849,7 +849,7 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
+		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 
 		void destroy()
 		{
@@ -878,7 +878,7 @@ namespace bgfx { namespace mtl
 		Texture m_ptrMSAA;
 		Texture m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
 		SamplerState m_sampler;
-		uint32_t m_flags;
+		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
@@ -904,6 +904,7 @@ namespace bgfx { namespace mtl
 			, void* _nwh
 			, uint32_t _width
 			, uint32_t _height
+			, TextureFormat::Enum _format
 			, TextureFormat::Enum _depthFormat
 			);
 		void postReset();

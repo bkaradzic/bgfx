@@ -2485,7 +2485,7 @@ namespace bgfx
 		, bool _cubeMap
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
-		, uint32_t _flags
+		, uint64_t _flags
 		);
 
 	/// Calculate amount of memory required for texture.
@@ -2530,7 +2530,7 @@ namespace bgfx
 	///
 	TextureHandle createTexture(
 		  const Memory* _mem
-		, uint32_t _flags = BGFX_SAMPLER_NONE
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, uint8_t _skip = 0
 		, TextureInfo* _info = NULL
 		);
@@ -2562,7 +2562,7 @@ namespace bgfx
 		, bool     _hasMips
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
-		, uint32_t _flags = BGFX_SAMPLER_NONE
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, const Memory* _mem = NULL
 		);
 
@@ -2589,7 +2589,7 @@ namespace bgfx
 		, bool _hasMips
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
-		, uint32_t _flags = BGFX_SAMPLER_NONE
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		);
 
 	/// Create 3D texture.
@@ -2617,7 +2617,7 @@ namespace bgfx
 		, uint16_t _depth
 		, bool _hasMips
 		, TextureFormat::Enum _format
-		, uint32_t _flags = BGFX_SAMPLER_NONE
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, const Memory* _mem = NULL
 		);
 
@@ -2646,7 +2646,7 @@ namespace bgfx
 		, bool _hasMips
 		, uint16_t _numLayers
 		, TextureFormat::Enum _format
-		, uint32_t _flags = BGFX_SAMPLER_NONE
+		, uint64_t _flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE
 		, const Memory* _mem = NULL
 		);
 
@@ -2828,7 +2828,7 @@ namespace bgfx
 		  uint16_t _width
 		, uint16_t _height
 		, TextureFormat::Enum _format
-		, uint32_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP
+		, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP
 		);
 
 	/// Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
@@ -2851,7 +2851,7 @@ namespace bgfx
 	FrameBufferHandle createFrameBuffer(
 		  BackbufferRatio::Enum _ratio
 		, TextureFormat::Enum _format
-		, uint32_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP
+		, uint64_t _textureFlags = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP
 		);
 
 	/// Create MRT frame buffer from texture handles (simple).
@@ -2894,6 +2894,7 @@ namespace bgfx
 	/// @param[in] _nwh OS' target native window handle.
 	/// @param[in] _width Window back buffer width.
 	/// @param[in] _height Window back buffer height.
+	/// @param[in] _format Window back buffer color format.
 	/// @param[in] _depthFormat Window back buffer depth format.
 	///
 	/// @returns Handle to frame buffer object.
@@ -2907,7 +2908,8 @@ namespace bgfx
 		  void* _nwh
 		, uint16_t _width
 		, uint16_t _height
-		, TextureFormat::Enum _depthFormat = TextureFormat::UnknownDepth
+		, TextureFormat::Enum _format      = TextureFormat::Count
+		, TextureFormat::Enum _depthFormat = TextureFormat::Count
 		);
 
 	/// Obtain texture handle of frame buffer attachment.

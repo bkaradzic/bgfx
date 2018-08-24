@@ -302,7 +302,7 @@ public:
 		// Light sphere
 		m_lightSphere = meshLoad("meshes/unit_sphere.bin");
 
-		const uint32_t samplerFlags = 0
+		const uint64_t tsFlags = 0
 			| BGFX_TEXTURE_RT
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT
@@ -312,20 +312,20 @@ public:
 			;
 
 		// Make gbuffer and related textures
-		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
-		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   samplerFlags);
+		m_gbufferTex[GBUFFER_RT_NORMAL] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
+		m_gbufferTex[GBUFFER_RT_COLOR]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
+		m_gbufferTex[GBUFFER_RT_DEPTH]  = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::D24,   tsFlags);
 		m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
 
 		// Make light buffer
-		m_lightBufferTex = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, samplerFlags);
+		m_lightBufferTex = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
 		bgfx::TextureHandle lightBufferRTs[] =  {
 			m_lightBufferTex
 		};
 		m_lightBuffer = bgfx::createFrameBuffer(BX_COUNTOF(lightBufferRTs), lightBufferRTs, true);
 
 		// Make shadow buffer
-		const uint32_t rsmFlags = 0
+		const uint64_t rsmFlags = 0
 			| BGFX_TEXTURE_RT
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT
@@ -340,8 +340,8 @@ public:
 				, SHADOW_MAP_DIM
 				, false
 				, 1
-				, bgfx::TextureFormat::BGRA8,
-				rsmFlags
+				, bgfx::TextureFormat::BGRA8
+				, rsmFlags
 				);
 
 		// Typical shadow map
@@ -350,12 +350,12 @@ public:
 				, SHADOW_MAP_DIM
 				, false
 				, 1
-				, bgfx::TextureFormat::D16,
-				BGFX_TEXTURE_RT/* | BGFX_TEXTURE_COMPARE_LEQUAL*/
+				, bgfx::TextureFormat::D16
+				, BGFX_TEXTURE_RT /* | BGFX_TEXTURE_COMPARE_LEQUAL*/
 				);  // Note I'm not setting BGFX_TEXTURE_COMPARE_LEQUAL.  Why?
-		// Normally a PCF shadow map such as this requires a compare.  However, this sample also
-		// reads from this texture in the lighting pass, and only uses the PCF capabilites in the
-		// combine pass, so the flag is disabled by default.
+					// Normally a PCF shadow map such as this requires a compare.  However, this sample also
+					// reads from this texture in the lighting pass, and only uses the PCF capabilites in the
+					// combine pass, so the flag is disabled by default.
 
 		m_shadowBuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_shadowBufferTex), m_shadowBufferTex, true);
 
