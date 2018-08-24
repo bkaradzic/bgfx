@@ -45,8 +45,8 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc       gmake
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx             gmake
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode4
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode4
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=osx           xcode8
+	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode8
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-arm     gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-mips    gmake
