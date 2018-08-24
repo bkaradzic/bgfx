@@ -440,12 +440,13 @@ namespace bgfx
 		bool allowTearing = false;
 
 #if BX_PLATFORM_WINDOWS
-		if (windowsVersionIs(Condition::GreaterEqual, 0x0604) )
-		{
-			// BK - CheckFeatureSupport with DXGI_FEATURE_PRESENT_ALLOW_TEARING
-			//      will crash on pre Windows 8. Issue #1356.
-			hr = m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
+		IDXGIFactory5 *factory5;
+		hr = m_factory->QueryInterface(IID_IDXGIFactory5, (void **)&factory5);
+
+		if (SUCCEEDED(hr)) {
+			hr = factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing) );
 			BX_TRACE("Allow tearing is %ssupported.", allowTearing ? "" : "not ");
+			factory5->Release();
 		}
 
 		DXGI_SWAP_CHAIN_DESC scd;

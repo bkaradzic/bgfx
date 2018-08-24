@@ -54,17 +54,17 @@ namespace bgfx
 	{
 #if BX_PLATFORM_WINDOWS
 		typedef ::IDXGIAdapter3   AdapterI;
-		typedef ::IDXGIFactory5   FactoryI;
+		typedef ::IDXGIFactory    FactoryI;
 		typedef ::IDXGISwapChain3 SwapChainI;
 		typedef ::IDXGIOutput     OutputI;
 #elif BX_PLATFORM_WINRT
 		typedef ::IDXGIAdapter    AdapterI;
-		typedef ::IDXGIFactory4   FactoryI;
+		typedef ::IDXGIFactory2   FactoryI;
 		typedef ::IDXGISwapChain1 SwapChainI;
 		typedef ::IDXGIOutput     OutputI;
 #else
 		typedef ::IDXGIAdapter    AdapterI;
-		typedef ::IDXGIFactory2   FactoryI;
+		typedef ::IDXGIFactory    FactoryI;
 		typedef ::IDXGISwapChain1 SwapChainI;
 		typedef ::IDXGIOutput     OutputI;
 #endif // BX_PLATFORM_WINDOWS
