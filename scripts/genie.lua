@@ -159,7 +159,7 @@ function exampleProjectDefaults()
 
 	if _OPTIONS["with-glfw"] then
 		defines { "ENTRY_CONFIG_USE_GLFW=1" }
-		links   { "glfw" }
+		links   { "glfw3" }
 
 		configuration { "linux or freebsd" }
 			links {
