@@ -456,7 +456,8 @@ namespace bgfx
 		scd.BufferDesc.Format = _scd.format;
 		scd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		scd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		scd.SampleDesc   = _scd.sampleDesc;
+		scd.SampleDesc.Count   = 1;
+		scd.SampleDesc.Quality = 0;
 		scd.BufferUsage  = _scd.bufferUsage;
 		scd.BufferCount  = _scd.bufferCount;
 		scd.OutputWindow = (HWND)_scd.nwh;
@@ -466,12 +467,6 @@ namespace bgfx
 			| _scd.flags
 			| (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0)
 			;
-
-		if (isType(_device, IID_ID3D12CommandQueue) )
-		{
-			scd.SampleDesc.Count   = 1;
-			scd.SampleDesc.Quality = 0;
-		}
 
 		hr = m_factory->CreateSwapChain(
 				  _device
@@ -484,19 +479,14 @@ namespace bgfx
 		scd.Height = _scd.height;
 		scd.Format = _scd.format;
 		scd.Stereo = _scd.stereo;
-		scd.SampleDesc  = _scd.sampleDesc;
+		scd.SampleDesc.Count   = 1;
+		scd.SampleDesc.Quality = 0;
 		scd.BufferUsage = _scd.bufferUsage;
 		scd.BufferCount = _scd.bufferCount;
 		scd.Scaling     = _scd.scaling;
 		scd.SwapEffect  = _scd.swapEffect;
 		scd.AlphaMode   = _scd.alphaMode;
 		scd.Flags       = _scd.flags;
-
-		if (isType(_device, IID_ID3D12CommandQueue) )
-		{
-			scd.SampleDesc.Count   = 1;
-			scd.SampleDesc.Quality = 0;
-		}
 
 		if (NULL == _scd.ndt)
 		{

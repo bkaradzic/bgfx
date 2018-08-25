@@ -2132,7 +2132,6 @@ namespace bgfx { namespace d3d12
 
 				DX_RELEASE(m_msaaRt, 0);
 
-				BX_UNUSED(resize);
 				if (resize)
 				{
 #if BX_PLATFORM_WINDOWS

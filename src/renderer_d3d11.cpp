@@ -996,6 +996,9 @@ namespace bgfx { namespace d3d11
 						, m_scd
 						, &m_swapChain
 						);
+
+					m_msaaRt = NULL;
+
 					if (FAILED(hr) )
 					{
 						// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL is not available on win7
@@ -1017,6 +1020,22 @@ namespace bgfx { namespace d3d11
 
 						m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
 						m_textVideoMem.clear();
+					}
+
+					if (1 < m_scd.sampleDesc.Count)
+					{
+						D3D11_TEXTURE2D_DESC desc;
+						desc.Width      = m_scd.width;
+						desc.Height     = m_scd.height;
+						desc.MipLevels  = 1;
+						desc.ArraySize  = 1;
+						desc.Format     = m_scd.format;
+						desc.SampleDesc = m_scd.sampleDesc;
+						desc.Usage      = D3D11_USAGE_DEFAULT;
+						desc.BindFlags  = D3D11_BIND_RENDER_TARGET;
+						desc.CPUAccessFlags = 0;
+						desc.MiscFlags      = 0;
+						DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &m_msaaRt) );
 					}
 
 #if BX_PLATFORM_WINDOWS
@@ -1485,6 +1504,7 @@ namespace bgfx { namespace d3d11
 			switch (errorState)
 			{
 			case ErrorState::LoadedDXGI:
+				DX_RELEASE(m_msaaRt, 0);
 				DX_RELEASE(m_swapChain, 0);
 				DX_RELEASE(m_deviceCtx, 0);
 				DX_RELEASE(m_device, 0);
@@ -1570,6 +1590,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			DX_RELEASE(m_annotation, 1);
+			DX_RELEASE(m_msaaRt, 0);
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);
 			DX_RELEASE(m_device, 0);
@@ -2065,8 +2086,11 @@ namespace bgfx { namespace d3d11
 		{
 			if (NULL != m_swapChain)
 			{
-				ID3D11Texture2D* color;
-				DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&color) );
+				ID3D11Texture2D* backBufferColor = NULL;
+				if (NULL == m_msaaRt)
+				{
+					DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBufferColor) );
+				}
 
 				D3D11_RENDER_TARGET_VIEW_DESC desc;
 				desc.ViewDimension = (m_resolution.reset & BGFX_RESET_MSAA_MASK)
@@ -2079,8 +2103,8 @@ namespace bgfx { namespace d3d11
 					: m_scd.format
 					;
 
-				DX_CHECK(m_device->CreateRenderTargetView(color, &desc, &m_backBufferColor) );
-				DX_RELEASE(color, 0);
+				DX_CHECK(m_device->CreateRenderTargetView(NULL == m_msaaRt ? backBufferColor : m_msaaRt, &desc, &m_backBufferColor) );
+				DX_RELEASE(backBufferColor, 0);
 			}
 
 			if (m_timerQuerySupport)
@@ -2111,7 +2135,7 @@ namespace bgfx { namespace d3d11
 
 			m_deviceCtx->OMSetRenderTargets(1, &m_backBufferColor, m_backBufferDepthStencil);
 
-			m_currentColor = m_backBufferColor;
+			m_currentColor        = m_backBufferColor;
 			m_currentDepthStencil = m_backBufferDepthStencil;
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
@@ -2298,6 +2322,8 @@ namespace bgfx { namespace d3d11
 				}
 				else
 				{
+					DX_RELEASE(m_msaaRt, 0);
+
 					if (resize)
 					{
 						m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
@@ -2311,23 +2337,28 @@ namespace bgfx { namespace d3d11
 
 						DX_RELEASE(m_swapChain, 0);
 
-						if (m_scd.sampleDesc.Count != 1)
-						{
-							m_scd.swapEffect  = DXGI_SWAP_EFFECT_DISCARD;
-							m_scd.bufferCount = 1;
-						}
-						else
-						{
-							m_scd.swapEffect  = m_swapEffect;
-							m_scd.bufferCount = m_swapBufferCount;
-						}
-
 						HRESULT hr;
 						hr = m_dxgi.createSwapChain(m_device
 								, m_scd
 								, &m_swapChain
 								);
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
+					}
+
+					if (1 < m_scd.sampleDesc.Count)
+					{
+						D3D11_TEXTURE2D_DESC desc;
+						desc.Width      = m_scd.width;
+						desc.Height     = m_scd.height;
+						desc.MipLevels  = 1;
+						desc.ArraySize  = 1;
+						desc.Format     = m_scd.format;
+						desc.SampleDesc = m_scd.sampleDesc;
+						desc.Usage      = D3D11_USAGE_DEFAULT;
+						desc.BindFlags  = D3D11_BIND_RENDER_TARGET;
+						desc.CPUAccessFlags = 0;
+						desc.MiscFlags      = 0;
+						DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &m_msaaRt) );
 					}
 				}
 
@@ -3320,6 +3351,7 @@ namespace bgfx { namespace d3d11
 		D3D_FEATURE_LEVEL m_featureLevel;
 
 		Dxgi::SwapChainI* m_swapChain;
+		ID3D11Texture2D*  m_msaaRt;
 
 		bool m_needPresent;
 		bool m_lost;
@@ -6214,6 +6246,14 @@ namespace bgfx { namespace d3d11
 		}
 
 		m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);
+
+		if (NULL != m_msaaRt)
+		{
+			ID3D11Texture2D* backBufferColor;
+			DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBufferColor) );
+			deviceCtx->ResolveSubresource(backBufferColor, 0, m_msaaRt, 0, m_scd.format);
+			DX_RELEASE(backBufferColor, 0);
+		}
 	}
 } /* namespace d3d11 */ } // namespace bgfx
 
