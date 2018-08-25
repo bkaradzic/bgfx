@@ -2515,8 +2515,8 @@ namespace bgfx
 	/// Create texture from memory buffer.
 	///
 	/// @param[in] _mem DDS, KTX or PVR texture data.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
-	///   is repeat.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
 	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
@@ -2543,8 +2543,8 @@ namespace bgfx
 	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
 	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
-	///   is repeat.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
 	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
@@ -2575,8 +2575,8 @@ namespace bgfx
 	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
 	///   `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
-	///   is repeat.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
 	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
@@ -2599,8 +2599,8 @@ namespace bgfx
 	/// @param[in] _depth Depth.
 	/// @param[in] _hasMips Indicates that texture contains full mip-map chain.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
-	///   is repeat.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
 	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
@@ -2628,8 +2628,8 @@ namespace bgfx
 	/// @param[in] _numLayers Number of layers in texture array. Must be 1 if caps
 	///   `BGFX_CAPS_TEXTURE_CUBE_ARRAY` flag is not set.
 	/// @param[in] _format Texture format. See: `TextureFormat::Enum`.
-	/// @param[in] _flags Default texture sampling mode is linear, and wrap mode
-	///   is repeat.
+	/// @param[in] _flags Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	///   flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	///   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	///     mode.
 	///   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
