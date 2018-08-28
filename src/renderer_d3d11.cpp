@@ -1806,6 +1806,16 @@ namespace bgfx { namespace d3d11
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
+			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
+			{
+				FrameBufferHandle handle = m_windows[ii];
+				if (isValid(handle)
+				&&  m_frameBuffers[handle.idx].m_nwh == _nwh)
+				{
+					destroyFrameBuffer(handle);
+				}
+			}
+
 			uint16_t denseIdx = m_numWindows++;
 			m_windows[denseIdx] = _handle;
 			m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
@@ -1820,8 +1830,12 @@ namespace bgfx { namespace d3d11
 				if (m_numWindows > 1)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
-					m_windows[denseIdx] = handle;
-					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
+					m_windows[m_numWindows]  = {kInvalidHandle};
+					if (m_numWindows != denseIdx)
+					{
+						m_windows[denseIdx] = handle;
+						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
+					}
 				}
 			}
 		}
@@ -4564,6 +4578,7 @@ namespace bgfx { namespace d3d11
 		DX_RELEASE(depthStencil, 0);
 
 		m_srv[0]   = NULL;
+		m_nwh      = _nwh;
 		m_denseIdx = _denseIdx;
 		m_num      = 1;
 	}
@@ -4575,6 +4590,7 @@ namespace bgfx { namespace d3d11
 		DX_RELEASE(m_swapChain, 0);
 
 		m_num   = 0;
+		m_nwh   = NULL;
 		m_numTh = 0;
 		m_needPresent = false;
 

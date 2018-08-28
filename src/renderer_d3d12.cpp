@@ -1658,11 +1658,13 @@ namespace bgfx { namespace d3d12
 		{
 			finishAll(true);
 
-			for (uint32_t ii = 0; ii < BX_COUNTOF(m_frameBuffers); ++ii)
+			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
-				if (m_frameBuffers[ii].m_nwh == _nwh)
+				FrameBufferHandle handle = m_windows[ii];
+				if (isValid(handle)
+				&&  m_frameBuffers[handle.idx].m_nwh == _nwh)
 				{
-					m_frameBuffers[ii].destroy();
+					destroyFrameBuffer(handle);
 				}
 			}
 
@@ -1687,8 +1689,12 @@ namespace bgfx { namespace d3d12
 				if (m_numWindows > 1)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
-					m_windows[denseIdx] = handle;
-					m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
+					m_windows[m_numWindows]  = {kInvalidHandle};
+					if (m_numWindows != denseIdx)
+					{
+						m_windows[denseIdx] = handle;
+						m_frameBuffers[handle.idx].m_denseIdx = denseIdx;
+					}
 				}
 			}
 		}
