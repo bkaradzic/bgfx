@@ -58,7 +58,7 @@
 #define atomicFetchAndOr(_mem, _data, _original)                     _original = atomicOr(_mem, _data)
 #define atomicFetchAndXor(_mem, _data, _original)                    _original = atomicXor(_mem, _data)
 #define atomicFetchAndExchange(_mem, _data, _original)               _original = atomicExchange(_mem, _data)
-#define atomicFetchCompareExchange(_mem, _compare, _data, _original) _original = atomicCompSwap(_mem,_compare, _data, _original)
+#define atomicFetchCompareExchange(_mem, _compare, _data, _original) _original = atomicCompSwap(_mem,_compare, _data)
 
 #else
 
