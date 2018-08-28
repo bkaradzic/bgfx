@@ -112,8 +112,12 @@ namespace bgfx
 		"uint2",
 		"uint3",
 		"uint4",
+		"isampler2D",
+		"usampler2D",
 		"isampler3D",
 		"usampler3D",
+		"isamplerCube",
+		"usamplerCube",
 		NULL
 	};
 
