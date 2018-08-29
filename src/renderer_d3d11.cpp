@@ -992,50 +992,53 @@ namespace bgfx { namespace d3d11
 					m_scd.ndt         = g_platformData.ndt;
 					m_scd.windowed    = true;
 
-					hr = m_dxgi.createSwapChain(m_device
-						, m_scd
-						, &m_swapChain
-						);
-
 					m_msaaRt = NULL;
 
-					if (FAILED(hr) )
+					if (NULL != m_scd.nwh)
 					{
-						// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL is not available on win7
-						// Try again with DXGI_SWAP_EFFECT_DISCARD
-						m_swapEffect      = DXGI_SWAP_EFFECT_DISCARD;
-						m_swapBufferCount = 1;
-
-						m_scd.bufferCount = m_swapBufferCount;
-						m_scd.swapEffect  = m_swapEffect;
 						hr = m_dxgi.createSwapChain(m_device
 							, m_scd
 							, &m_swapChain
 							);
-					}
-					else
-					{
-						m_resolution       = _init.resolution;
-						m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
-						m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
-						m_textVideoMem.clear();
-					}
+						if (FAILED(hr) )
+						{
+							// DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL is not available on win7
+							// Try again with DXGI_SWAP_EFFECT_DISCARD
+							m_swapEffect      = DXGI_SWAP_EFFECT_DISCARD;
+							m_swapBufferCount = 1;
 
-					if (1 < m_scd.sampleDesc.Count)
-					{
-						D3D11_TEXTURE2D_DESC desc;
-						desc.Width      = m_scd.width;
-						desc.Height     = m_scd.height;
-						desc.MipLevels  = 1;
-						desc.ArraySize  = 1;
-						desc.Format     = m_scd.format;
-						desc.SampleDesc = m_scd.sampleDesc;
-						desc.Usage      = D3D11_USAGE_DEFAULT;
-						desc.BindFlags  = D3D11_BIND_RENDER_TARGET;
-						desc.CPUAccessFlags = 0;
-						desc.MiscFlags      = 0;
-						DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &m_msaaRt) );
+							m_scd.bufferCount = m_swapBufferCount;
+							m_scd.swapEffect  = m_swapEffect;
+							hr = m_dxgi.createSwapChain(m_device
+								, m_scd
+								, &m_swapChain
+								);
+						}
+						else
+						{
+							m_resolution       = _init.resolution;
+							m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
+
+							m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+							m_textVideoMem.clear();
+						}
+
+						if (1 < m_scd.sampleDesc.Count)
+						{
+							D3D11_TEXTURE2D_DESC desc;
+							desc.Width      = m_scd.width;
+							desc.Height     = m_scd.height;
+							desc.MipLevels  = 1;
+							desc.ArraySize  = 1;
+							desc.Format     = m_scd.format;
+							desc.SampleDesc = m_scd.sampleDesc;
+							desc.Usage      = D3D11_USAGE_DEFAULT;
+							desc.BindFlags  = D3D11_BIND_RENDER_TARGET;
+							desc.CPUAccessFlags = 0;
+							desc.MiscFlags      = 0;
+							DX_CHECK(m_device->CreateTexture2D(&desc, NULL, &m_msaaRt) );
+						}
 					}
 
 #if BX_PLATFORM_WINDOWS
@@ -2167,8 +2170,7 @@ namespace bgfx { namespace d3d11
 
 		void flip() override
 		{
-			if (NULL != m_swapChain
-			&&  !m_lost)
+			if (!m_lost)
 			{
 				HRESULT hr = S_OK;
 				uint32_t syncInterval = BX_ENABLED(!BX_PLATFORM_WINDOWS)
@@ -2183,7 +2185,8 @@ namespace bgfx { namespace d3d11
 
 				if (SUCCEEDED(hr) )
 				{
-					if (m_needPresent)
+					if (NULL != m_swapChain
+					&&  m_needPresent)
 					{
 						hr = m_swapChain->Present(syncInterval, 0);
 

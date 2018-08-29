@@ -2879,8 +2879,7 @@ namespace bgfx
 		&&  NULL == g_platformData.backBufferDS
 		   )
 		{
-			BX_TRACE("bgfx platform data like window handle or backbuffer must be set.");
-			goto error;
+			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");
 		}
 
 		bx::memSet(&g_caps, 0, sizeof(g_caps) );
@@ -2921,7 +2920,7 @@ namespace bgfx
 			return true;
 		}
 
-error:
+//error:
 		BX_TRACE("Init failed.");
 
 		switch (errorState)

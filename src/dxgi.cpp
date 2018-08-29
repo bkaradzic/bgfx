@@ -240,7 +240,7 @@ namespace bgfx
 
 				IDXGIOutput* output;
 				for (uint32_t jj = 0
-					; DXGI_ERROR_NOT_FOUND != adapter->EnumOutputs(jj, &output)
+					; SUCCEEDED(adapter->EnumOutputs(jj, &output) )
 					; ++jj
 					)
 				{
