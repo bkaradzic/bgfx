@@ -641,10 +641,10 @@ namespace bgfx { namespace d3d11
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
-			: m_d3d9dll(NULL)
-			, m_d3d11dll(NULL)
-			, m_renderdocdll(NULL)
-			, m_agsdll(NULL)
+			: m_d3d9Dll(NULL)
+			, m_d3d11Dll(NULL)
+			, m_renderDocDll(NULL)
+			, m_agsDll(NULL)
 			, m_ags(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
@@ -696,7 +696,7 @@ namespace bgfx { namespace d3d11
 			if (_init.debug
 			||  _init.profile)
 			{
-				m_renderdocdll = loadRenderDoc();
+				m_renderDocDll = loadRenderDoc();
 			}
 
 			m_fbh.idx = kInvalidHandle;
@@ -704,25 +704,25 @@ namespace bgfx { namespace d3d11
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 			m_ags = NULL;
-			m_agsdll = bx::dlopen(
+			m_agsDll = bx::dlopen(
 #if BX_ARCH_32BIT
 				"amd_ags_x86.dll"
 #else
 				"amd_ags_x64.dll"
 #endif // BX_ARCH_32BIT
 				);
-			if (NULL != m_agsdll)
+			if (NULL != m_agsDll)
 			{
-				agsInit   = (PFN_AGS_INIT  )bx::dlsym(m_agsdll, "agsInit");
-				agsDeInit = (PFN_AGS_DEINIT)bx::dlsym(m_agsdll, "agsDeInit");
-				agsGetCrossfireGPUCount    = (PFN_AGS_GET_CROSSFIRE_GPU_COUNT )bx::dlsym(m_agsdll, "agsGetCrossfireGPUCount");
-				agsGetTotalGPUCount        = (PFN_AGS_GET_TOTAL_GPU_COUNT     )bx::dlsym(m_agsdll, "agsGetTotalGPUCount");
-				agsGetGPUMemorySize        = (PFN_AGS_GET_GPU_MEMORY_SIZE     )bx::dlsym(m_agsdll, "agsGetGPUMemorySize");
-				agsGetDriverVersionInfo    = (PFN_AGS_GET_DRIVER_VERSION_INFO )bx::dlsym(m_agsdll, "agsGetDriverVersionInfo");
-				agsDriverExtensions_Init   = (PFN_AGS_DRIVER_EXTENSIONS_INIT  )bx::dlsym(m_agsdll, "agsDriverExtensions_Init");
-				agsDriverExtensions_DeInit = (PFN_AGS_DRIVER_EXTENSIONS_DEINIT)bx::dlsym(m_agsdll, "agsDriverExtensions_DeInit");
-				agsDriverExtensions_MultiDrawInstancedIndirect        = (PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INSTANCED_INDIRECT        )bx::dlsym(m_agsdll, "agsDriverExtensions_MultiDrawInstancedIndirect");
-				agsDriverExtensions_MultiDrawIndexedInstancedIndirect = (PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INDEXED_INSTANCED_INDIRECT)bx::dlsym(m_agsdll, "agsDriverExtensions_MultiDrawIndexedInstancedIndirect");
+				agsInit   = (PFN_AGS_INIT  )bx::dlsym(m_agsDll, "agsInit");
+				agsDeInit = (PFN_AGS_DEINIT)bx::dlsym(m_agsDll, "agsDeInit");
+				agsGetCrossfireGPUCount    = (PFN_AGS_GET_CROSSFIRE_GPU_COUNT )bx::dlsym(m_agsDll, "agsGetCrossfireGPUCount");
+				agsGetTotalGPUCount        = (PFN_AGS_GET_TOTAL_GPU_COUNT     )bx::dlsym(m_agsDll, "agsGetTotalGPUCount");
+				agsGetGPUMemorySize        = (PFN_AGS_GET_GPU_MEMORY_SIZE     )bx::dlsym(m_agsDll, "agsGetGPUMemorySize");
+				agsGetDriverVersionInfo    = (PFN_AGS_GET_DRIVER_VERSION_INFO )bx::dlsym(m_agsDll, "agsGetDriverVersionInfo");
+				agsDriverExtensions_Init   = (PFN_AGS_DRIVER_EXTENSIONS_INIT  )bx::dlsym(m_agsDll, "agsDriverExtensions_Init");
+				agsDriverExtensions_DeInit = (PFN_AGS_DRIVER_EXTENSIONS_DEINIT)bx::dlsym(m_agsDll, "agsDriverExtensions_DeInit");
+				agsDriverExtensions_MultiDrawInstancedIndirect        = (PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INSTANCED_INDIRECT        )bx::dlsym(m_agsDll, "agsDriverExtensions_MultiDrawInstancedIndirect");
+				agsDriverExtensions_MultiDrawIndexedInstancedIndirect = (PFN_AGS_DRIVER_EXTENSIONS_MULTIDRAW_INDEXED_INSTANCED_INDIRECT)bx::dlsym(m_agsDll, "agsDriverExtensions_MultiDrawIndexedInstancedIndirect");
 
 				bool agsSupported = true
 					&& NULL != agsInit
@@ -778,17 +778,17 @@ namespace bgfx { namespace d3d11
 						m_ags = NULL;
 					}
 
-					bx::dlclose(m_agsdll);
-					m_agsdll = NULL;
+					bx::dlclose(m_agsDll);
+					m_agsDll = NULL;
 				}
 			}
 
 			m_nvapi.init();
 
 #if USE_D3D11_DYNAMIC_LIB
-			m_d3d11dll = bx::dlopen("d3d11.dll");
+			m_d3d11Dll = bx::dlopen("d3d11.dll");
 
-			if (NULL == m_d3d11dll)
+			if (NULL == m_d3d11Dll)
 			{
 				BX_TRACE("Init error: Failed to load d3d11.dll.");
 				goto error;
@@ -796,18 +796,18 @@ namespace bgfx { namespace d3d11
 
 			errorState = ErrorState::LoadedD3D11;
 
-			m_d3d9dll = NULL;
+			m_d3d9Dll = NULL;
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
 				// D3D11_1.h has ID3DUserDefinedAnnotation
 				// http://msdn.microsoft.com/en-us/library/windows/desktop/hh446881%28v=vs.85%29.aspx
-				m_d3d9dll = bx::dlopen("d3d9.dll");
-				if (NULL != m_d3d9dll)
+				m_d3d9Dll = bx::dlopen("d3d9.dll");
+				if (NULL != m_d3d9Dll)
 				{
-					D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker" );
-					D3DPERF_BeginEvent = (PFN_D3DPERF_BEGIN_EVENT)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
-					D3DPERF_EndEvent   = (PFN_D3DPERF_END_EVENT  )bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent"  );
+					D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9Dll, "D3DPERF_SetMarker" );
+					D3DPERF_BeginEvent = (PFN_D3DPERF_BEGIN_EVENT)bx::dlsym(m_d3d9Dll, "D3DPERF_BeginEvent");
+					D3DPERF_EndEvent   = (PFN_D3DPERF_END_EVENT  )bx::dlsym(m_d3d9Dll, "D3DPERF_EndEvent"  );
 					BX_CHECK(NULL != D3DPERF_SetMarker
 						  && NULL != D3DPERF_BeginEvent
 						  && NULL != D3DPERF_EndEvent
@@ -816,7 +816,7 @@ namespace bgfx { namespace d3d11
 				}
 			}
 
-			D3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11dll, "D3D11CreateDevice");
+			D3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)bx::dlsym(m_d3d11Dll, "D3D11CreateDevice");
 			if (NULL == D3D11CreateDevice)
 			{
 				BX_TRACE("Init error: Function D3D11CreateDevice not found.");
@@ -824,7 +824,6 @@ namespace bgfx { namespace d3d11
 			}
 #endif // USE_D3D11_DYNAMIC_LIB
 
-			HRESULT hr;
 			m_device = (ID3D11Device*)g_platformData.context;
 
 			if (!m_dxgi.init(g_caps) )
@@ -836,7 +835,7 @@ namespace bgfx { namespace d3d11
 
 			if (NULL == m_device)
 			{
-				if (NULL != m_renderdocdll)
+				if (NULL != m_renderDocDll)
 				{
 					setGraphicsDebuggerPresent(true);
 				}
@@ -854,6 +853,8 @@ namespace bgfx { namespace d3d11
 					D3D_FEATURE_LEVEL_9_2,
 #endif // BX_PLATFORM_WINRT
 				};
+
+				HRESULT hr = S_OK;
 
 				for (;;)
 				{
@@ -933,7 +934,7 @@ namespace bgfx { namespace d3d11
 				for (uint32_t ii = 0; ii < BX_COUNTOF(s_d3dDeviceIIDs); ++ii)
 				{
 					ID3D11Device* device;
-					hr = m_device->QueryInterface(s_d3dDeviceIIDs[ii], (void**)&device);
+					HRESULT hr = m_device->QueryInterface(s_d3dDeviceIIDs[ii], (void**)&device);
 					if (SUCCEEDED(hr) )
 					{
 						device->Release(); // BK - ignore ref count.
@@ -942,18 +943,19 @@ namespace bgfx { namespace d3d11
 					}
 				}
 
-				///
-				IDXGIDevice* renderdoc;
-				hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
-				if (SUCCEEDED(hr) )
-				{
-					setGraphicsDebuggerPresent(true);
-					DX_RELEASE(renderdoc, 2);
-				}
-				else
-				{
-					IUnknown* device = m_device;
-					setGraphicsDebuggerPresent(2 != getRefCount(device) );
+				{ ///
+					IDXGIDevice* renderdoc;
+					HRESULT hr = m_device->QueryInterface(IID_IDXGIDeviceRenderDoc, (void**)&renderdoc);
+					if (SUCCEEDED(hr) )
+					{
+						setGraphicsDebuggerPresent(true);
+						DX_RELEASE(renderdoc, 2);
+					}
+					else
+					{
+						IUnknown* device = m_device;
+						setGraphicsDebuggerPresent(2 != getRefCount(device) );
+					}
 				}
 
 				if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
@@ -963,6 +965,8 @@ namespace bgfx { namespace d3d11
 
 				if (NULL == g_platformData.backBuffer)
 				{
+					HRESULT hr = S_OK;
+
 #if BX_PLATFORM_WINDOWS
 					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 					m_swapBufferCount = 2;
@@ -1071,7 +1075,7 @@ namespace bgfx { namespace d3d11
 #if USE_D3D11_DYNAMIC_LIB
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
-				hr = m_deviceCtx->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&m_annotation);
+				HRESULT hr = m_deviceCtx->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&m_annotation);
 
 				if (SUCCEEDED(hr) )
 				{
@@ -1084,7 +1088,7 @@ namespace bgfx { namespace d3d11
 
 			if (_init.debug)
 			{
-				hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&m_infoQueue);
+				HRESULT hr = m_device->QueryInterface(IID_ID3D11InfoQueue, (void**)&m_infoQueue);
 
 				if (SUCCEEDED(hr) )
 				{
@@ -1210,7 +1214,7 @@ namespace bgfx { namespace d3d11
 					};
 
 					D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
-					hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &data, sizeof(data) );
 					if (SUCCEEDED(hr)
 					&&  data.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x)
 					{
@@ -1235,7 +1239,7 @@ namespace bgfx { namespace d3d11
 					};
 
 					D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT data;
-					hr = m_device->CheckFeatureSupport(D3D11_FEATURE(11) /*D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT*/, &data, sizeof(data) );
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE(11) /*D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT*/, &data, sizeof(data) );
 					if (SUCCEEDED(hr)
 					&&  data.SimpleInstancingSupported)
 					{
@@ -1252,7 +1256,7 @@ namespace bgfx { namespace d3d11
 					};
 
 					D3D11_FEATURE_DATA_D3D9_SHADOW_SUPPORT data;
-					hr = m_device->CheckFeatureSupport(D3D11_FEATURE(9) /*D3D11_FEATURE_D3D9_SHADOW_SUPPORT*/, &data, sizeof(data) );
+					HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE(9) /*D3D11_FEATURE_D3D9_SHADOW_SUPPORT*/, &data, sizeof(data) );
 					if (SUCCEEDED(hr)
 					&&  data.SupportsDepthAsTextureWithLessEqualComparisonFilter)
 					{
@@ -1282,7 +1286,7 @@ namespace bgfx { namespace d3d11
 
 							D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
 							data.InFormat = fmt;
-							hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
+							HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
 							if (SUCCEEDED(hr) )
 							{
 								support |= 0 != (data.OutFormatSupport & (0
@@ -1405,7 +1409,7 @@ namespace bgfx { namespace d3d11
 
 							D3D11_FEATURE_DATA_FORMAT_SUPPORT data; // D3D11_FEATURE_DATA_FORMAT_SUPPORT2
 							data.InFormat = fmtSrgb;
-							hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
+							HRESULT hr = m_device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT, &data, sizeof(data) );
 							if (SUCCEEDED(hr) )
 							{
 								support |= 0 != (data.OutFormatSupport & (0
@@ -1513,10 +1517,10 @@ namespace bgfx { namespace d3d11
 				DX_RELEASE(m_device, 0);
 
 #if USE_D3D11_DYNAMIC_LIB
-				if (NULL != m_d3d9dll)
+				if (NULL != m_d3d9Dll)
 				{
-					bx::dlclose(m_d3d9dll);
-					m_d3d9dll = NULL;
+					bx::dlclose(m_d3d9Dll);
+					m_d3d9Dll = NULL;
 				}
 #endif // USE_D3D11_DYNAMIC_LIB
 
@@ -1525,8 +1529,8 @@ namespace bgfx { namespace d3d11
 
 #if USE_D3D11_DYNAMIC_LIB
 			case ErrorState::LoadedD3D11:
-				bx::dlclose(m_d3d11dll);
-				m_d3d11dll = NULL;
+				bx::dlclose(m_d3d11Dll);
+				m_d3d11Dll = NULL;
 				BX_FALLTHROUGH;
 #endif // USE_D3D11_DYNAMIC_LIB
 
@@ -1540,10 +1544,10 @@ namespace bgfx { namespace d3d11
 					m_ags = NULL;
 				}
 
-				bx::dlclose(m_agsdll);
-				m_agsdll = NULL;
+				bx::dlclose(m_agsDll);
+				m_agsDll = NULL;
 
-				unloadRenderDoc(m_renderdocdll);
+				unloadRenderDoc(m_renderDocDll);
 				break;
 			}
 
@@ -1560,8 +1564,8 @@ namespace bgfx { namespace d3d11
 				m_ags = NULL;
 			}
 
-			bx::dlclose(m_agsdll);
-			m_agsdll = NULL;
+			bx::dlclose(m_agsDll);
+			m_agsDll = NULL;
 
 			m_deviceCtx->ClearState();
 
@@ -1601,17 +1605,17 @@ namespace bgfx { namespace d3d11
 			m_nvapi.shutdown();
 			m_dxgi.shutdown();
 
-			unloadRenderDoc(m_renderdocdll);
+			unloadRenderDoc(m_renderDocDll);
 
 #if USE_D3D11_DYNAMIC_LIB
-			if (NULL != m_d3d9dll)
+			if (NULL != m_d3d9Dll)
 			{
-				bx::dlclose(m_d3d9dll);
-				m_d3d9dll = NULL;
+				bx::dlclose(m_d3d9Dll);
+				m_d3d9Dll = NULL;
 			}
 
-			bx::dlclose(m_d3d11dll);
-			m_d3d11dll = NULL;
+			bx::dlclose(m_d3d11Dll);
+			m_d3d11Dll = NULL;
 #endif // USE_D3D11_DYNAMIC_LIB
 		}
 
@@ -2354,11 +2358,10 @@ namespace bgfx { namespace d3d11
 
 						DX_RELEASE(m_swapChain, 0);
 
-						HRESULT hr;
-						hr = m_dxgi.createSwapChain(m_device
-								, m_scd
-								, &m_swapChain
-								);
+						HRESULT hr = m_dxgi.createSwapChain(m_device
+							, m_scd
+							, &m_swapChain
+							);
 						BGFX_FATAL(SUCCEEDED(hr), bgfx::Fatal::UnableToInitialize, "Failed to create swap chain.");
 					}
 
@@ -3356,10 +3359,10 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void* m_d3d9dll;
-		void* m_d3d11dll;
-		void* m_renderdocdll;
-		void* m_agsdll;
+		void* m_d3d9Dll;
+		void* m_d3d11Dll;
+		void* m_renderDocDll;
+		void* m_agsDll;
 
 		Dxgi m_dxgi;
 		AGSContext* m_ags;
@@ -4547,8 +4550,7 @@ namespace bgfx { namespace d3d11
 
 		ID3D11Device* device = s_renderD3D11->m_device;
 
-		HRESULT hr;
-		hr = s_renderD3D11->m_dxgi.createSwapChain(device
+		HRESULT hr = s_renderD3D11->m_dxgi.createSwapChain(device
 			, scd
 			, &m_swapChain
 			);
@@ -6213,7 +6215,7 @@ namespace bgfx { namespace d3d11
 						);
 				}
 
-				if (NULL != m_renderdocdll)
+				if (NULL != m_renderDocDll)
 				{
 					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
 				}

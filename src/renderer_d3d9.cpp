@@ -443,9 +443,9 @@ namespace bgfx { namespace d3d9
 			m_params.BackBufferWidth  = rect.right-rect.left;
 			m_params.BackBufferHeight = rect.bottom-rect.top;
 
-			m_d3d9dll = bx::dlopen("d3d9.dll");
+			m_d3d9Dll = bx::dlopen("d3d9.dll");
 
-			if (NULL == m_d3d9dll)
+			if (NULL == m_d3d9Dll)
 			{
 				BX_TRACE("Init error: Failed to load d3d9.dll.");
 				goto error;
@@ -457,9 +457,9 @@ namespace bgfx { namespace d3d9
 
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
-				D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9dll, "D3DPERF_SetMarker");
-				D3DPERF_BeginEvent = (PFN_D3DPERF_BEGIN_EVENT)bx::dlsym(m_d3d9dll, "D3DPERF_BeginEvent");
-				D3DPERF_EndEvent   = (PFN_D3DPERF_END_EVENT  )bx::dlsym(m_d3d9dll, "D3DPERF_EndEvent");
+				D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9Dll, "D3DPERF_SetMarker");
+				D3DPERF_BeginEvent = (PFN_D3DPERF_BEGIN_EVENT)bx::dlsym(m_d3d9Dll, "D3DPERF_BeginEvent");
+				D3DPERF_EndEvent   = (PFN_D3DPERF_END_EVENT  )bx::dlsym(m_d3d9Dll, "D3DPERF_EndEvent");
 
 				BX_CHECK(NULL != D3DPERF_SetMarker
 					  && NULL != D3DPERF_BeginEvent
@@ -471,7 +471,7 @@ namespace bgfx { namespace d3d9
 			m_d3d9ex   = NULL;
 			m_deviceEx = NULL;
 
-			Direct3DCreate9Ex = (Direct3DCreate9ExFn)bx::dlsym(m_d3d9dll, "Direct3DCreate9Ex");
+			Direct3DCreate9Ex = (Direct3DCreate9ExFn)bx::dlsym(m_d3d9Dll, "Direct3DCreate9Ex");
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_DIRECT3D9EX)
 			&&  NULL != Direct3DCreate9Ex)
 			{
@@ -493,7 +493,7 @@ namespace bgfx { namespace d3d9
 
 			if (NULL == m_d3d9)
 			{
-				Direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9dll, "Direct3DCreate9");
+				Direct3DCreate9 = (Direct3DCreate9Fn)bx::dlsym(m_d3d9Dll, "Direct3DCreate9");
 
 				if (NULL == Direct3DCreate9)
 				{
@@ -885,7 +885,7 @@ namespace bgfx { namespace d3d9
 
 			case ErrorState::LoadedD3D9:
 				m_nvapi.shutdown();
-				bx::dlclose(m_d3d9dll);
+				bx::dlclose(m_d3d9Dll);
 				BX_FALLTHROUGH;
 
 			case ErrorState::Default:
@@ -933,7 +933,7 @@ namespace bgfx { namespace d3d9
 			}
 
 			m_nvapi.shutdown();
-			bx::dlclose(m_d3d9dll);
+			bx::dlclose(m_d3d9Dll);
 
 			m_initialized = false;
 		}
@@ -2206,7 +2206,7 @@ namespace bgfx { namespace d3d9
 
 		IDirect3DVertexDeclaration9* m_instanceDataDecls[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
-		void* m_d3d9dll;
+		void* m_d3d9Dll;
 		NvApi m_nvapi;
 		uint32_t m_adapter;
 		D3DDEVTYPE m_deviceType;

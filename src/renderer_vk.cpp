@@ -700,8 +700,8 @@ VK_IMPORT_DEVICE
 	{
 		RendererContextVK()
 			: m_allocatorCb(NULL)
-			, m_renderdocdll(NULL)
-			, m_vulkan1dll(NULL)
+			, m_renderDocDll(NULL)
+			, m_vulkan1Dll(NULL)
 			, m_maxAnisotropy(1)
 			, m_depthClamp(false)
 			, m_wireframe(false)
@@ -746,10 +746,10 @@ VK_IMPORT_DEVICE
 			if (_init.debug
 			||  _init.profile)
 			{
-				m_renderdocdll = loadRenderDoc();
+				m_renderDocDll = loadRenderDoc();
 			}
 
-			m_vulkan1dll = bx::dlopen(
+			m_vulkan1Dll = bx::dlopen(
 #if BX_PLATFORM_WINDOWS
 					"vulkan-1.dll"
 #elif BX_PLATFORM_ANDROID
@@ -759,7 +759,7 @@ VK_IMPORT_DEVICE
 #endif // BX_PLATFORM_*
 					);
 
-			if (NULL == m_vulkan1dll)
+			if (NULL == m_vulkan1Dll)
 			{
 				BX_TRACE("Init error: Failed to load vulkan dynamic library.");
 				goto error;
@@ -768,10 +768,10 @@ VK_IMPORT_DEVICE
 			errorState = ErrorState::LoadedVulkan1;
 
 			BX_TRACE("Shared library functions:");
-#define VK_IMPORT_FUNC(_optional, _func) \
-			_func = (PFN_##_func)bx::dlsym(m_vulkan1dll, #_func); \
-			BX_TRACE("\t%p " #_func, _func); \
-			imported &= _optional || NULL != _func
+#define VK_IMPORT_FUNC(_optional, _func)                  \
+	_func = (PFN_##_func)bx::dlsym(m_vulkan1Dll, #_func); \
+	BX_TRACE("\t%p " #_func, _func);                      \
+	imported &= _optional || NULL != _func
 VK_IMPORT
 #undef VK_IMPORT_FUNC
 
@@ -1842,10 +1842,10 @@ VK_IMPORT_DEVICE
 				BX_FALLTHROUGH;
 
 			case ErrorState::LoadedVulkan1:
-				bx::dlclose(m_vulkan1dll);
-				m_vulkan1dll  = NULL;
+				bx::dlclose(m_vulkan1Dll);
+				m_vulkan1Dll  = NULL;
 				m_allocatorCb = NULL;
-				unloadRenderDoc(m_renderdocdll);
+				unloadRenderDoc(m_renderDocDll);
 				BX_FALLTHROUGH;
 
 			case ErrorState::Default:
@@ -1938,10 +1938,10 @@ VK_IMPORT_DEVICE
 
 			vkDestroyInstance(m_instance, m_allocatorCb);
 
-			bx::dlclose(m_vulkan1dll);
-			m_vulkan1dll  = NULL;
+			bx::dlclose(m_vulkan1Dll);
+			m_vulkan1Dll  = NULL;
 			m_allocatorCb = NULL;
-			unloadRenderDoc(m_renderdocdll);
+			unloadRenderDoc(m_renderDocDll);
 		}
 
 		RendererType::Enum getRendererType() const override
@@ -3051,8 +3051,8 @@ VK_IMPORT_DEVICE
 		VkPipelineCache m_pipelineCache;
 		VkCommandPool m_commandPool;
 
-		void* m_renderdocdll;
-		void* m_vulkan1dll;
+		void* m_renderDocDll;
+		void* m_vulkan1Dll;
 
 		IndexBufferVK m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferVK m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -4528,7 +4528,7 @@ BX_UNUSED(presentMin, presentMax);
 //					, m_batch.m_stats.m_numImmediate[BatchD3D12::DrawIndexed]
 //					);
 
- 				if (NULL != m_renderdocdll)
+ 				if (NULL != m_renderDocDll)
  				{
  					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
  				}

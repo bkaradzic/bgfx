@@ -611,8 +611,8 @@ namespace bgfx { namespace d3d12
 	struct RendererContextD3D12 : public RendererContextI
 	{
 		RendererContextD3D12()
-			: m_d3d12dll(NULL)
-			, m_renderdocdll(NULL)
+			: m_d3d12Dll(NULL)
+			, m_renderDocDll(NULL)
 			, m_winPixEvent(NULL)
 			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
 			, m_swapChain(NULL)
@@ -670,24 +670,24 @@ namespace bgfx { namespace d3d12
 			if (_init.debug
 			||  _init.profile)
 			{
-				m_renderdocdll = loadRenderDoc();
+				m_renderDocDll = loadRenderDoc();
 			}
 
-			setGraphicsDebuggerPresent(NULL != m_renderdocdll || NULL != m_winPixEvent);
+			setGraphicsDebuggerPresent(NULL != m_renderDocDll || NULL != m_winPixEvent);
 
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(m_uniforms, 0, sizeof(m_uniforms) );
 			bx::memSet(&m_resolution, 0, sizeof(m_resolution) );
 
 #if USE_D3D12_DYNAMIC_LIB
-			m_kernel32dll = bx::dlopen("kernel32.dll");
-			if (NULL == m_kernel32dll)
+			m_kernel32Dll = bx::dlopen("kernel32.dll");
+			if (NULL == m_kernel32Dll)
 			{
 				BX_TRACE("Init error: Failed to load kernel32.dll.");
 				goto error;
 			}
 
-			CreateEventExA = (PFN_CREATE_EVENT_EX_A)bx::dlsym(m_kernel32dll, "CreateEventExA");
+			CreateEventExA = (PFN_CREATE_EVENT_EX_A)bx::dlsym(m_kernel32Dll, "CreateEventExA");
 			if (NULL == CreateEventExA)
 			{
 				BX_TRACE("Init error: Function CreateEventExA not found.");
@@ -698,8 +698,8 @@ namespace bgfx { namespace d3d12
 
 			m_nvapi.init();
 
-			m_d3d12dll = bx::dlopen("d3d12.dll");
-			if (NULL == m_d3d12dll)
+			m_d3d12Dll = bx::dlopen("d3d12.dll");
+			if (NULL == m_d3d12Dll)
 			{
 				BX_TRACE("Init error: Failed to load d3d12.dll.");
 				goto error;
@@ -707,16 +707,16 @@ namespace bgfx { namespace d3d12
 
 			errorState = ErrorState::LoadedD3D12;
 
-			D3D12EnableExperimentalFeatures = (PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES)bx::dlsym(m_d3d12dll, "D3D12EnableExperimentalFeatures");
+			D3D12EnableExperimentalFeatures = (PFN_D3D12_ENABLE_EXPERIMENTAL_FEATURES)bx::dlsym(m_d3d12Dll, "D3D12EnableExperimentalFeatures");
 			BX_WARN(NULL != D3D12EnableExperimentalFeatures, "Function D3D12EnableExperimentalFeatures not found.");
 
-			D3D12CreateDevice = (PFN_D3D12_CREATE_DEVICE)bx::dlsym(m_d3d12dll, "D3D12CreateDevice");
+			D3D12CreateDevice = (PFN_D3D12_CREATE_DEVICE)bx::dlsym(m_d3d12Dll, "D3D12CreateDevice");
 			BX_WARN(NULL != D3D12CreateDevice, "Function D3D12CreateDevice not found.");
 
-			D3D12GetDebugInterface = (PFN_D3D12_GET_DEBUG_INTERFACE)bx::dlsym(m_d3d12dll, "D3D12GetDebugInterface");
+			D3D12GetDebugInterface = (PFN_D3D12_GET_DEBUG_INTERFACE)bx::dlsym(m_d3d12Dll, "D3D12GetDebugInterface");
 			BX_WARN(NULL != D3D12GetDebugInterface, "Function D3D12GetDebugInterface not found.");
 
-			D3D12SerializeRootSignature = (PFN_D3D12_SERIALIZE_ROOT_SIGNATURE)bx::dlsym(m_d3d12dll, "D3D12SerializeRootSignature");
+			D3D12SerializeRootSignature = (PFN_D3D12_SERIALIZE_ROOT_SIGNATURE)bx::dlsym(m_d3d12Dll, "D3D12SerializeRootSignature");
 			BX_WARN(NULL != D3D12SerializeRootSignature, "Function D3D12SerializeRootSignature not found.");
 
 			if (NULL == D3D12CreateDevice
@@ -1304,11 +1304,11 @@ namespace bgfx { namespace d3d12
 #if USE_D3D12_DYNAMIC_LIB
 			case ErrorState::LoadedDXGI:
 			case ErrorState::LoadedD3D12:
-				bx::dlclose(m_d3d12dll);
+				bx::dlclose(m_d3d12Dll);
 				BX_FALLTHROUGH;
 
 			case ErrorState::LoadedKernel32:
-				bx::dlclose(m_kernel32dll);
+				bx::dlclose(m_kernel32Dll);
 				BX_FALLTHROUGH;
 
 #endif // USE_D3D12_DYNAMIC_LIB
@@ -1316,7 +1316,7 @@ namespace bgfx { namespace d3d12
 			default:
 				m_nvapi.shutdown();
 
-				unloadRenderDoc(m_renderdocdll);
+				unloadRenderDoc(m_renderDocDll);
 				bx::dlclose(m_winPixEvent);
 				m_winPixEvent = NULL;
 				break;
@@ -1383,14 +1383,14 @@ namespace bgfx { namespace d3d12
 			m_nvapi.shutdown();
 			m_dxgi.shutdown();
 
-			unloadRenderDoc(m_renderdocdll);
+			unloadRenderDoc(m_renderDocDll);
 
 			bx::dlclose(m_winPixEvent);
 			m_winPixEvent = NULL;
 
 #if USE_D3D12_DYNAMIC_LIB
-			bx::dlclose(m_d3d12dll);
-			bx::dlclose(m_kernel32dll);
+			bx::dlclose(m_d3d12Dll);
+			bx::dlclose(m_kernel32Dll);
 #endif // USE_D3D12_DYNAMIC_LIB
 		}
 
@@ -3161,9 +3161,9 @@ namespace bgfx { namespace d3d12
 		Dxgi m_dxgi;
 		NvApi m_nvapi;
 
-		void* m_kernel32dll;
-		void* m_d3d12dll;
-		void* m_renderdocdll;
+		void* m_kernel32Dll;
+		void* m_d3d12Dll;
+		void* m_renderDocDll;
 		void* m_winPixEvent;
 
 		D3D_FEATURE_LEVEL m_featureLevel;
@@ -6536,7 +6536,7 @@ namespace bgfx { namespace d3d12
 					, m_batch.m_stats.m_numImmediate[BatchD3D12::DrawIndexed]
 					);
 
-				if (NULL != m_renderdocdll)
+				if (NULL != m_renderDocDll)
 				{
 					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
 				}
