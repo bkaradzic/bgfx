@@ -5853,26 +5853,56 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::createTexture2D&#8221; with arguments (uint16_t, uint16_t, bool, uint16_t, TextureFormat::Enum, uint32_t, const Memory *) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_tPK6Memory">
+<span id="bgfx::createTexture2D__uint16_t.uint16_t.b.uint16_t.TextureFormat::Enum.uint64_t.MemoryCP"></span><span class="target" id="namespacebgfx_1a5164c7c2fb433f680dc888eaf752c31b"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint64_t <em>_flags</em> = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DE8uint16_t8uint16_tb8uint16_tN13TextureFormat4EnumE8uint64_tPK6Memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create 2D texture. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_texture_2d</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_width</span></code>: Width. </li>
+<li><code class="docutils literal"><span class="pre">_height</span></code>: Height. </li>
+<li><code class="docutils literal"><span class="pre">_hasMips</span></code>: Indicates that texture contains full mip-map chain. </li>
+<li><code class="docutils literal"><span class="pre">_numLayers</span></code>: Number of layers in texture array. Must be 1 if caps <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_2D_ARRAY</span></code> flag is not set. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_flags</span></code>: Texture creation (see <code class="docutils literal"><span class="pre">BGFX_TEXTURE_*</span></code>.), and sampler (see <code class="docutils literal"><span class="pre">BGFX_SAMPLER_*</span></code>) flags. Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</li>
+<li><code class="docutils literal"><span class="pre">_mem</span></code>: Texture data. If <code class="docutils literal"><span class="pre">_mem</span></code> is non-NULL, created texture will be immutable. If <code class="docutils literal"><span class="pre">_mem</span></code> is NULL content of the texture is uninitialized. When <code class="docutils literal"><span class="pre">_numLayers</span></code> is more than 1, expected memory layout is texture and all mips together for each array element.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- TextureHandle bgfx::createTexture2D(BackbufferRatio::Enum, bool, uint16_t, TextureFormat::Enum, uint64_t)
-- TextureHandle bgfx::createTexture2D(uint16_t, uint16_t, bool, uint16_t, TextureFormat::Enum, uint64_t, const Memory *)
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::createTexture2D&#8221; with arguments (BackbufferRatio::Enum, bool, uint16_t, TextureFormat::Enum, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint64_t">
+<span id="bgfx::createTexture2D__BackbufferRatio::Enum.b.uint16_t.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1a67620ab3afd29e7acdacd9180ae86cd4"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint64_t <em>_flags</em> = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint64_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_texture_2d_scaled</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_ratio</span></code>: Frame buffer size in respect to back-buffer size. See: <code class="docutils literal"><span class="pre">BackbufferRatio::Enum</span></code>. </li>
+<li><code class="docutils literal"><span class="pre">_hasMips</span></code>: Indicates that texture contains full mip-map chain. </li>
+<li><code class="docutils literal"><span class="pre">_numLayers</span></code>: Number of layers in texture array. Must be 1 if caps <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_2D_ARRAY</span></code> flag is not set. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_flags</span></code>: Texture creation (see <code class="docutils literal"><span class="pre">BGFX_TEXTURE_*</span></code>.), and sampler (see <code class="docutils literal"><span class="pre">BGFX_SAMPLER_*</span></code>) flags. Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- TextureHandle bgfx::createTexture2D(BackbufferRatio::Enum, bool, uint16_t, TextureFormat::Enum, uint64_t)
-- TextureHandle bgfx::createTexture2D(uint16_t, uint16_t, bool, uint16_t, TextureFormat::Enum, uint64_t, const Memory *)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx15updateTexture2DE13TextureHandle8uint16_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory8uint16_t">
 <span id="bgfx::updateTexture2D__TextureHandle.uint16_t.uint8_t.uint16_t.uint16_t.uint16_t.uint16_t.MemoryCP.uint16_t"></span><span class="target" id="namespacebgfx_1af47f352c1dcfd2c67dab1a58bb448541"></span>void <code class="descclassname">bgfx::</code><code class="descname">updateTexture2D</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, uint16_t <em>_layer</em>, uint8_t <em>_mip</em>, uint16_t <em>_x</em>, uint16_t <em>_y</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint16_t <em>_pitch</em> = UINT16_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15updateTexture2DE13TextureHandle8uint16_t7uint8_t8uint16_t8uint16_t8uint16_t8uint16_tPK6Memory8uint16_t" title="Permalink to this definition">¶</a></dt>
@@ -6078,32 +6108,55 @@ Potential matches:
 </div>
 <div class="section" id="frame-buffers">
 <h3>Frame Buffers<a class="headerlink" href="#frame-buffers" title="Permalink to this headline">¶</a></h3>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::createFrameBuffer&#8221; with arguments (uint16_t, uint16_t, TextureFormat::Enum, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint64_t">
+<span id="bgfx::createFrameBuffer__uint16_t.uint16_t.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1aa94cfbb370d1b658ffd8fceb305fe247"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint64_t <em>_textureFlags</em> = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE8uint16_t8uint16_tN13TextureFormat4EnumE8uint64_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer (simple). </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_width</span></code>: Texture width. </li>
+<li><code class="docutils literal"><span class="pre">_height</span></code>: Texture height. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_textureFlags</span></code>: Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- FrameBufferHandle bgfx::createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint64_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint16_t, uint16_t, TextureFormat::Enum, uint64_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const Attachment *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const TextureHandle *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum, TextureFormat::Enum)
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::createFrameBuffer&#8221; with arguments (BackbufferRatio::Enum, TextureFormat::Enum, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint64_t">
+<span id="bgfx::createFrameBuffer__BackbufferRatio::Enum.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1a6be2c49c878583ad701bc6eab72bc0af"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint64_t <em>_textureFlags</em> = BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEN15BackbufferRatio4EnumEN13TextureFormat4EnumE8uint64_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_scaled</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_ratio</span></code>: Frame buffer size in respect to back-buffer size. See: <code class="docutils literal"><span class="pre">BackbufferRatio::Enum</span></code>. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_textureFlags</span></code>: Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- FrameBufferHandle bgfx::createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint64_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint16_t, uint16_t, TextureFormat::Enum, uint64_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const Attachment *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const TextureHandle *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum, TextureFormat::Enum)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb">
 <span id="bgfx::createFrameBuffer__uint8_t.TextureHandleCP.b"></span><span class="target" id="namespacebgfx_1a24c15472da58c79e49b04cb8ed97a436"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>uint8_t <em>_num</em>, <em class="property">const</em> TextureHandle *<em>_handles</em>, bool <em>_destroyTextures</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferE7uint8_tPK13TextureHandleb" title="Permalink to this definition">¶</a></dt>
@@ -6124,19 +6177,30 @@ Potential matches:
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::createFrameBuffer&#8221; with arguments (void *, uint16_t, uint16_t, TextureFormat::Enum) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumEN13TextureFormat4EnumE">
+<span id="bgfx::createFrameBuffer__voidP.uint16_t.uint16_t.TextureFormat::Enum.TextureFormat::Enum"></span><span class="target" id="namespacebgfx_1a71ca85e47af91a6f74a9de1695357603"></span>FrameBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createFrameBuffer</code><span class="sig-paren">(</span>void *<em>_nwh</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_depthFormat</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx17createFrameBufferEPv8uint16_t8uint16_tN13TextureFormat4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create frame buffer for multiple window rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>Handle to frame buffer object.</dd>
+<dt><strong>Remark</strong></dt>
+<dd>Frame buffer cannot be used for sampling.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_frame_buffer_from_nwh</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_nwh</span></code>: OS&#8217; target native window handle. </li>
+<li><code class="docutils literal"><span class="pre">_width</span></code>: Window back buffer width. </li>
+<li><code class="docutils literal"><span class="pre">_height</span></code>: Window back buffer height. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Window back buffer color format. </li>
+<li><code class="docutils literal"><span class="pre">_depthFormat</span></code>: Window back buffer depth format.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- FrameBufferHandle bgfx::createFrameBuffer(BackbufferRatio::Enum, TextureFormat::Enum, uint64_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint16_t, uint16_t, TextureFormat::Enum, uint64_t)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const Attachment *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(uint8_t, const TextureHandle *, bool)
-- FrameBufferHandle bgfx::createFrameBuffer(void *, uint16_t, uint16_t, TextureFormat::Enum, TextureFormat::Enum)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 <dl class="class">
 <dt id="_CPPv2N4bgfx10AttachmentE">
 <span id="bgfx::Attachment"></span><span class="target" id="structbgfx_1_1_attachment"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Attachment</code><a class="headerlink" href="#_CPPv2N4bgfx10AttachmentE" title="Permalink to this definition">¶</a></dt>
