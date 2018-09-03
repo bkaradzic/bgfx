@@ -1110,7 +1110,7 @@ void fpp_domsg(struct Global *global,
     ;
   tp = file ? file->filename : 0;
   fpp_Error(global, "%s\"%s\", line %d: %s: ",
-        MSG_PREFIX, tp, global->infile->fp?global->line:file->line, severity);
+        MSG_PREFIX, tp, global->infile?(global->infile->fp?global->line:file->line):0, severity);
   if(global->error)
     global->error(global->userdata, ErrorMessage[error], arg);
 #if defined(UNIX)
