@@ -38,7 +38,7 @@
 #define _COMMON_INCLUDED_
 
 
-#if defined(__ANDROID__) || _MSC_VER < 1700
+#if defined(__ANDROID__)
 #include <sstream>
 namespace std {
 template<typename T>
