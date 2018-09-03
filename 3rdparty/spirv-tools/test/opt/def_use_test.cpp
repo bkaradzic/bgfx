@@ -13,33 +13,36 @@
 // limitations under the License.
 
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include "opt/build_module.h"
-#include "opt/def_use_manager.h"
-#include "opt/ir_context.h"
-#include "opt/module.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "source/opt/build_module.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
 #include "spirv-tools/libspirv.hpp"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
+namespace analysis {
 namespace {
 
 using ::testing::Contains;
 using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
 
-using namespace spvtools;
-using spvtools::opt::analysis::DefUseManager;
-
 // Returns the number of uses of |id|.
-uint32_t NumUses(const std::unique_ptr<ir::IRContext>& context, uint32_t id) {
+uint32_t NumUses(const std::unique_ptr<IRContext>& context, uint32_t id) {
   uint32_t count = 0;
   context->get_def_use_mgr()->ForEachUse(
-      id, [&count](ir::Instruction*, uint32_t) { ++count; });
+      id, [&count](Instruction*, uint32_t) { ++count; });
   return count;
 }
 
@@ -47,18 +50,18 @@ uint32_t NumUses(const std::unique_ptr<ir::IRContext>& context, uint32_t id) {
 //
 // If |id| is used multiple times in a single instruction, that instruction's
 // opcode will appear a corresponding number of times.
-std::vector<SpvOp> GetUseOpcodes(const std::unique_ptr<ir::IRContext>& context,
+std::vector<SpvOp> GetUseOpcodes(const std::unique_ptr<IRContext>& context,
                                  uint32_t id) {
   std::vector<SpvOp> opcodes;
   context->get_def_use_mgr()->ForEachUse(
-      id, [&opcodes](ir::Instruction* user, uint32_t) {
+      id, [&opcodes](Instruction* user, uint32_t) {
         opcodes.push_back(user->opcode());
       });
   return opcodes;
 }
 
 // Disassembles the given |inst| and returns the disassembly.
-std::string DisassembleInst(ir::Instruction* inst) {
+std::string DisassembleInst(Instruction* inst) {
   SpirvTools tools(SPV_ENV_UNIVERSAL_1_1);
 
   std::vector<uint32_t> binary;
@@ -103,7 +106,7 @@ void CheckDef(const InstDefUse& expected_defs_uses,
   }
 }
 
-using UserMap = std::unordered_map<uint32_t, std::vector<ir::Instruction*>>;
+using UserMap = std::unordered_map<uint32_t, std::vector<Instruction*>>;
 
 // Creates a mapping of all definitions to their users (except OpConstant).
 //
@@ -112,7 +115,7 @@ UserMap BuildAllUsers(const DefUseManager* mgr, uint32_t idBound) {
   UserMap userMap;
   for (uint32_t id = 0; id != idBound; ++id) {
     if (mgr->GetDef(id)) {
-      mgr->ForEachUser(id, [id, &userMap](ir::Instruction* user) {
+      mgr->ForEachUser(id, [id, &userMap](Instruction* user) {
         if (user->opcode() != SpvOpConstant) {
           userMap[id].push_back(user);
         }
@@ -190,13 +193,13 @@ TEST_P(ParseDefUseTest, Case) {
 
   // Build module.
   const std::vector<const char*> text = {tc.text};
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, JoinAllInsts(text),
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ASSERT_NE(nullptr, context);
 
   // Analyze def and use.
-  opt::analysis::DefUseManager manager(context->module());
+  DefUseManager manager(context->module());
 
   CheckDef(tc.du, manager.id_to_defs());
   CheckUse(tc.du, &manager, context->module()->IdBound());
@@ -483,8 +486,8 @@ INSTANTIATE_TEST_CASE_P(
               {6,
                 {
                   // Can't check constants properly
-                  //"%8 = OpConstant %6 0",
-                  //"%18 = OpConstant %6 1",
+                  // "%8 = OpConstant %6 0",
+                  // "%18 = OpConstant %6 1",
                   "%7 = OpPhi %6 %8 %4 %9 %5",
                   "%9 = OpIAdd %6 %7 %8",
                 }
@@ -504,7 +507,7 @@ INSTANTIATE_TEST_CASE_P(
               {9, {"%7 = OpPhi %6 %8 %4 %9 %5"}},
               {10,
                 {
-                  //"%12 = OpConstant %10 1.0",
+                  // "%12 = OpConstant %10 1.0",
                   "%11 = OpPhi %10 %12 %4 %13 %5",
                   "%13 = OpFAdd %10 %11 %12",
                 }
@@ -587,7 +590,7 @@ struct ReplaceUseCase {
 using ReplaceUseTest = ::testing::TestWithParam<ReplaceUseCase>;
 
 // Disassembles the given |module| and returns the disassembly.
-std::string DisassembleModule(ir::Module* module) {
+std::string DisassembleModule(Module* module) {
   SpirvTools tools(SPV_ENV_UNIVERSAL_1_1);
 
   std::vector<uint32_t> binary;
@@ -606,13 +609,13 @@ TEST_P(ReplaceUseTest, Case) {
 
   // Build module.
   const std::vector<const char*> text = {tc.before};
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, JoinAllInsts(text),
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ASSERT_NE(nullptr, context);
 
   // Force a re-build of def-use manager.
-  context->InvalidateAnalyses(ir::IRContext::Analysis::kAnalysisDefUse);
+  context->InvalidateAnalyses(IRContext::Analysis::kAnalysisDefUse);
   (void)context->get_def_use_mgr();
 
   // Do the substitution.
@@ -831,8 +834,8 @@ INSTANTIATE_TEST_CASE_P(
             {6,
               {
                 // Can't properly check constants
-                //"%8 = OpConstant %6 0",
-                //"%18 = OpConstant %6 1",
+                // "%8 = OpConstant %6 0",
+                // "%18 = OpConstant %6 1",
                 "%7 = OpPhi %6 %8 %4 %13 %5",
                 "%9 = OpIAdd %6 %7 %8"
               }
@@ -853,7 +856,7 @@ INSTANTIATE_TEST_CASE_P(
             {10,
               {
                 "%11 = OpPhi %10 %12 %4 %13 %5",
-                //"%12 = OpConstant %10 1",
+                // "%12 = OpConstant %10 1",
                 "%13 = OpFAdd %10 %9 %12"
               }
             },
@@ -961,13 +964,13 @@ TEST_P(KillDefTest, Case) {
 
   // Build module.
   const std::vector<const char*> text = {tc.before};
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, JoinAllInsts(text),
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ASSERT_NE(nullptr, context);
 
   // Analyze def and use.
-  opt::analysis::DefUseManager manager(context->module());
+  DefUseManager manager(context->module());
 
   // Do the substitution.
   for (const auto id : tc.ids_to_kill) context->KillDef(id);
@@ -1085,14 +1088,14 @@ INSTANTIATE_TEST_CASE_P(
             {4,
               {
                 "%7 = OpPhi %6 %8 %4 %9 %5",
-                //"%11 = OpPhi %10 %12 %4 %13 %5",
+                // "%11 = OpPhi %10 %12 %4 %13 %5",
               }
             },
             {5,
               {
                 "OpBranch %5",
                 "%7 = OpPhi %6 %8 %4 %9 %5",
-                //"%11 = OpPhi %10 %12 %4 %13 %5",
+                // "%11 = OpPhi %10 %12 %4 %13 %5",
                 "OpLoopMerge %19 %5 None",
                 "OpBranchConditional %17 %5 %19",
               }
@@ -1100,35 +1103,35 @@ INSTANTIATE_TEST_CASE_P(
             {6,
               {
                 // Can't properly check constants
-                //"%8 = OpConstant %6 0",
-                //"%18 = OpConstant %6 1",
+                // "%8 = OpConstant %6 0",
+                // "%18 = OpConstant %6 1",
                 "%7 = OpPhi %6 %8 %4 %9 %5",
-                //"%9 = OpIAdd %6 %7 %8"
+                // "%9 = OpIAdd %6 %7 %8"
               }
             },
             {7, {"%17 = OpSLessThan %16 %7 %18"}},
             {8,
               {
                 "%7 = OpPhi %6 %8 %4 %9 %5",
-                //"%9 = OpIAdd %6 %7 %8",
+                // "%9 = OpIAdd %6 %7 %8",
               }
             },
             // {9, {"%7 = OpPhi %6 %8 %4 %13 %5"}},
             {10,
               {
-                //"%11 = OpPhi %10 %12 %4 %13 %5",
-                //"%12 = OpConstant %10 1",
+                // "%11 = OpPhi %10 %12 %4 %13 %5",
+                // "%12 = OpConstant %10 1",
                 "%13 = OpFAdd %10 %11 %12"
               }
             },
             // {11, {"%13 = OpFAdd %10 %11 %12"}},
             {12,
               {
-                //"%11 = OpPhi %10 %12 %4 %13 %5",
+                // "%11 = OpPhi %10 %12 %4 %13 %5",
                 "%13 = OpFAdd %10 %11 %12"
               }
             },
-            //{13, {"%11 = OpPhi %10 %12 %4 %13 %5"}},
+            // {13, {"%11 = OpPhi %10 %12 %4 %13 %5"}},
             {16, {"%17 = OpSLessThan %16 %7 %18"}},
             {17, {"OpBranchConditional %17 %5 %19"}},
             {18, {"%17 = OpSLessThan %16 %7 %18"}},
@@ -1238,13 +1241,13 @@ TEST(DefUseTest, OpSwitch) {
       "      OpReturnValue %6 "
       "      OpFunctionEnd";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, original_text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ASSERT_NE(nullptr, context);
 
   // Force a re-build of def-use manager.
-  context->InvalidateAnalyses(ir::IRContext::Analysis::kAnalysisDefUse);
+  context->InvalidateAnalyses(IRContext::Analysis::kAnalysisDefUse);
   (void)context->get_def_use_mgr();
 
   // Do a bunch replacements.
@@ -1327,12 +1330,12 @@ TEST_P(AnalyzeInstDefUseTest, Case) {
   auto tc = GetParam();
 
   // Build module.
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, tc.module_text);
   ASSERT_NE(nullptr, context);
 
   // Analyze the instructions.
-  opt::analysis::DefUseManager manager(context->module());
+  DefUseManager manager(context->module());
 
   CheckDef(tc.expected_define_use, manager.id_to_defs());
   CheckUse(tc.expected_define_use, &manager, context->module()->IdBound());
@@ -1370,16 +1373,15 @@ INSTANTIATE_TEST_CASE_P(
 using AnalyzeInstDefUse = ::testing::Test;
 
 TEST(AnalyzeInstDefUse, UseWithNoResultId) {
-  ir::IRContext context(SPV_ENV_UNIVERSAL_1_2, nullptr);
+  IRContext context(SPV_ENV_UNIVERSAL_1_2, nullptr);
 
   // Analyze the instructions.
-  opt::analysis::DefUseManager manager(context.module());
+  DefUseManager manager(context.module());
 
-  ir::Instruction label(&context, SpvOpLabel, 0, 2, {});
+  Instruction label(&context, SpvOpLabel, 0, 2, {});
   manager.AnalyzeInstDefUse(&label);
 
-  ir::Instruction branch(&context, SpvOpBranch, 0, 0,
-                         {{SPV_OPERAND_TYPE_ID, {2}}});
+  Instruction branch(&context, SpvOpBranch, 0, 0, {{SPV_OPERAND_TYPE_ID, {2}}});
   manager.AnalyzeInstDefUse(&branch);
   context.module()->SetIdBound(3);
 
@@ -1400,14 +1402,14 @@ TEST(AnalyzeInstDefUse, AddNewInstruction) {
   const std::string input = "%1 = OpTypeBool";
 
   // Build module.
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, input);
   ASSERT_NE(nullptr, context);
 
   // Analyze the instructions.
-  opt::analysis::DefUseManager manager(context->module());
+  DefUseManager manager(context->module());
 
-  ir::Instruction newInst(context.get(), SpvOpConstantTrue, 1, 2, {});
+  Instruction newInst(context.get(), SpvOpConstantTrue, 1, 2, {});
   manager.AnalyzeInstDefUse(&newInst);
 
   InstDefUse expected = {
@@ -1439,17 +1441,17 @@ TEST_P(KillInstTest, Case) {
   auto tc = GetParam();
 
   // Build module.
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, tc.before,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ASSERT_NE(nullptr, context);
 
   // Force a re-build of the def-use manager.
-  context->InvalidateAnalyses(ir::IRContext::Analysis::kAnalysisDefUse);
+  context->InvalidateAnalyses(IRContext::Analysis::kAnalysisDefUse);
   (void)context->get_def_use_mgr();
 
   // KillInst
-  context->module()->ForEachInst([&tc, &context](ir::Instruction* inst) {
+  context->module()->ForEachInst([&tc, &context](Instruction* inst) {
     if (tc.indices_for_inst_to_kill.count(inst->result_id())) {
       context->KillInst(inst);
     }
@@ -1566,12 +1568,12 @@ TEST_P(GetAnnotationsTest, Case) {
   const GetAnnotationsTestCase& tc = GetParam();
 
   // Build module.
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, tc.code);
   ASSERT_NE(nullptr, context);
 
   // Get annotations
-  opt::analysis::DefUseManager manager(context->module());
+  DefUseManager manager(context->module());
   auto insts = manager.GetAnnotations(tc.id);
 
   // Check
@@ -1693,21 +1695,25 @@ TEST_F(UpdateUsesTest, KeepOldUses) {
       // clang-format on
   };
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, JoinAllInsts(text),
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   ASSERT_NE(nullptr, context);
 
   DefUseManager* def_use_mgr = context->get_def_use_mgr();
-  ir::Instruction* def = def_use_mgr->GetDef(9);
-  ir::Instruction* use = def_use_mgr->GetDef(10);
+  Instruction* def = def_use_mgr->GetDef(9);
+  Instruction* use = def_use_mgr->GetDef(10);
   def->SetOpcode(SpvOpCopyObject);
   def->SetInOperands({{SPV_OPERAND_TYPE_ID, {25}}});
   context->UpdateDefUse(def);
 
   auto users = def_use_mgr->id_to_users();
-  opt::analysis::UserEntry entry = {def, use};
+  UserEntry entry = {def, use};
   EXPECT_THAT(users, Contains(entry));
 }
 // clang-format on
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace analysis
+}  // namespace opt
+}  // namespace spvtools

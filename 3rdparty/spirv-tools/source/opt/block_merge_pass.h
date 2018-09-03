@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_BLOCK_MERGE_PASS_H_
-#define LIBSPIRV_OPT_BLOCK_MERGE_PASS_H_
+#ifndef SOURCE_OPT_BLOCK_MERGE_PASS_H_
+#define SOURCE_OPT_BLOCK_MERGE_PASS_H_
 
 #include <algorithm>
 #include <map>
@@ -24,11 +24,11 @@
 #include <unordered_set>
 #include <utility>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "ir_context.h"
-#include "module.h"
-#include "pass.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -38,30 +38,34 @@ class BlockMergePass : public Pass {
  public:
   BlockMergePass();
   const char* name() const override { return "merge-blocks"; }
-  Status Process(ir::IRContext*) override;
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse |
+           IRContext::kAnalysisInstrToBlockMapping |
+           IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
+           IRContext::kAnalysisNameMap;
+  }
 
  private:
   // Kill any OpName instruction referencing |inst|, then kill |inst|.
-  void KillInstAndName(ir::Instruction* inst);
+  void KillInstAndName(Instruction* inst);
 
   // Search |func| for blocks which have a single Branch to a block
   // with no other predecessors. Merge these blocks into a single block.
-  bool MergeBlocks(ir::Function* func);
+  bool MergeBlocks(Function* func);
 
   // Returns true if |block| (or |id|) contains a merge instruction.
-  bool IsHeader(ir::BasicBlock* block);
+  bool IsHeader(BasicBlock* block);
   bool IsHeader(uint32_t id);
 
   // Returns true if |block| (or |id|) is the merge target of a merge
   // instruction.
-  bool IsMerge(ir::BasicBlock* block);
+  bool IsMerge(BasicBlock* block);
   bool IsMerge(uint32_t id);
-
-  void Initialize(ir::IRContext* c);
-  Pass::Status ProcessImpl();
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_BLOCK_MERGE_PASS_H_
+#endif  // SOURCE_OPT_BLOCK_MERGE_PASS_H_

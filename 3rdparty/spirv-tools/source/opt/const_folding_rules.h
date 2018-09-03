@@ -12,17 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_CONST_FOLDING_RULES_H_
-#define LIBSPIRV_OPT_CONST_FOLDING_RULES_H_
+#ifndef SOURCE_OPT_CONST_FOLDING_RULES_H_
+#define SOURCE_OPT_CONST_FOLDING_RULES_H_
 
+#include <unordered_map>
 #include <vector>
 
-#include "constants.h"
-#include "def_use_manager.h"
-#include "folding_rules.h"
-#include "ir_builder.h"
-#include "ir_context.h"
-#include "latest_version_spirv_header.h"
+#include "source/opt/constants.h"
 
 namespace spvtools {
 namespace opt {
@@ -53,7 +49,7 @@ namespace opt {
 // fold an instruction, the later rules will not be attempted.
 
 using ConstantFoldingRule = std::function<const analysis::Constant*(
-    ir::Instruction* inst,
+    IRContext* ctx, Instruction* inst,
     const std::vector<const analysis::Constant*>& constants)>;
 
 class ConstantFoldingRules {
@@ -81,4 +77,4 @@ class ConstantFoldingRules {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_CONST_FOLDING_RULES_H_
+#endif  // SOURCE_OPT_CONST_FOLDING_RULES_H_

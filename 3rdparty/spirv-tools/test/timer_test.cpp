@@ -18,12 +18,9 @@
 #include "gtest/gtest.h"
 #include "source/util/timer.h"
 
+namespace spvtools {
+namespace utils {
 namespace {
-
-using ::spvutils::CumulativeTimer;
-using ::spvutils::PrintTimerDescription;
-using ::spvutils::ScopedTimer;
-using ::spvutils::Timer;
 
 // A mock class to mimic Timer class for a testing purpose. It has fixed
 // CPU/WALL/USR/SYS time, RSS delta, and the delta of the number of page faults.
@@ -140,4 +137,6 @@ TEST(MockCumulativeTimer, DoNothing) {
   if (ctimer) delete ctimer;
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace utils
+}  // namespace spvtools

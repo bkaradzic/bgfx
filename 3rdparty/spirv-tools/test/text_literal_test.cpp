@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "gmock/gmock.h"
-#include "message.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
-#include <string>
+namespace spvtools {
+namespace {
 
 using ::testing::Eq;
-namespace {
 
 TEST(TextLiteral, GoodI32) {
   spv_literal_t l;
@@ -166,31 +168,30 @@ using IntegerTest =
     spvtest::TextToBinaryTestBase<::testing::TestWithParam<TextLiteralCase>>;
 
 std::vector<uint32_t> successfulEncode(const TextLiteralCase& test,
-                                       libspirv::IdTypeClass type) {
+                                       IdTypeClass type) {
   spv_instruction_t inst;
   std::string message;
   auto capture_message = [&message](spv_message_level_t, const char*,
                                     const spv_position_t&,
                                     const char* m) { message = m; };
-  libspirv::IdType expected_type{test.bitwidth, test.is_signed, type};
+  IdType expected_type{test.bitwidth, test.is_signed, type};
   EXPECT_EQ(SPV_SUCCESS,
-            libspirv::AssemblyContext(nullptr, capture_message)
+            AssemblyContext(nullptr, capture_message)
                 .binaryEncodeNumericLiteral(test.text, SPV_ERROR_INVALID_TEXT,
                                             expected_type, &inst))
       << message;
   return inst.words;
 }
 
-std::string failedEncode(const TextLiteralCase& test,
-                         libspirv::IdTypeClass type) {
+std::string failedEncode(const TextLiteralCase& test, IdTypeClass type) {
   spv_instruction_t inst;
   std::string message;
   auto capture_message = [&message](spv_message_level_t, const char*,
                                     const spv_position_t&,
                                     const char* m) { message = m; };
-  libspirv::IdType expected_type{test.bitwidth, test.is_signed, type};
+  IdType expected_type{test.bitwidth, test.is_signed, type};
   EXPECT_EQ(SPV_ERROR_INVALID_TEXT,
-            libspirv::AssemblyContext(nullptr, capture_message)
+            AssemblyContext(nullptr, capture_message)
                 .binaryEncodeNumericLiteral(test.text, SPV_ERROR_INVALID_TEXT,
                                             expected_type, &inst));
   return message;
@@ -198,17 +199,15 @@ std::string failedEncode(const TextLiteralCase& test,
 
 TEST_P(IntegerTest, IntegerBounds) {
   if (GetParam().success) {
-    EXPECT_THAT(
-        successfulEncode(GetParam(), libspirv::IdTypeClass::kScalarIntegerType),
-        Eq(GetParam().expected_values));
+    EXPECT_THAT(successfulEncode(GetParam(), IdTypeClass::kScalarIntegerType),
+                Eq(GetParam().expected_values));
   } else {
     std::stringstream ss;
     ss << "Integer " << GetParam().text << " does not fit in a "
        << GetParam().bitwidth << "-bit "
        << (GetParam().is_signed ? "signed" : "unsigned") << " integer";
-    EXPECT_THAT(
-        failedEncode(GetParam(), libspirv::IdTypeClass::kScalarIntegerType),
-        Eq(ss.str()));
+    EXPECT_THAT(failedEncode(GetParam(), IdTypeClass::kScalarIntegerType),
+                Eq(ss.str()));
   }
 }
 
@@ -286,9 +285,8 @@ using IntegerLeadingMinusTest =
 
 TEST_P(IntegerLeadingMinusTest, CantHaveLeadingMinusOnUnsigned) {
   EXPECT_FALSE(GetParam().success);
-  EXPECT_THAT(
-      failedEncode(GetParam(), libspirv::IdTypeClass::kScalarIntegerType),
-      Eq("Cannot put a negative number in an unsigned literal"));
+  EXPECT_THAT(failedEncode(GetParam(), IdTypeClass::kScalarIntegerType),
+              Eq("Cannot put a negative number in an unsigned literal"));
 }
 
 // clang-format off
@@ -380,14 +378,14 @@ TEST(OverflowIntegerParse, Decimal) {
   std::string expected_message0 =
       "Invalid signed integer literal: " + signed_input;
   EXPECT_THAT(failedEncode(Make_Bad_Signed(64, signed_input.c_str()),
-                           libspirv::IdTypeClass::kScalarIntegerType),
+                           IdTypeClass::kScalarIntegerType),
               Eq(expected_message0));
 
   std::string unsigned_input = "18446744073709551616";
   std::string expected_message1 =
       "Invalid unsigned integer literal: " + unsigned_input;
   EXPECT_THAT(failedEncode(Make_Bad_Unsigned(64, unsigned_input.c_str()),
-                           libspirv::IdTypeClass::kScalarIntegerType),
+                           IdTypeClass::kScalarIntegerType),
               Eq(expected_message1));
 
   // TODO(dneto): When the given number doesn't have a leading sign,
@@ -395,7 +393,7 @@ TEST(OverflowIntegerParse, Decimal) {
   // asked for a signed number.  This is kind of weird, but it's an
   // artefact of how we do the parsing.
   EXPECT_THAT(failedEncode(Make_Bad_Signed(64, unsigned_input.c_str()),
-                           libspirv::IdTypeClass::kScalarIntegerType),
+                           IdTypeClass::kScalarIntegerType),
               Eq(expected_message1));
 }
 
@@ -403,11 +401,12 @@ TEST(OverflowIntegerParse, Hex) {
   std::string input = "0x10000000000000000";
   std::string expected_message = "Invalid unsigned integer literal: " + input;
   EXPECT_THAT(failedEncode(Make_Bad_Signed(64, input.c_str()),
-                           libspirv::IdTypeClass::kScalarIntegerType),
+                           IdTypeClass::kScalarIntegerType),
               Eq(expected_message));
   EXPECT_THAT(failedEncode(Make_Bad_Unsigned(64, input.c_str()),
-                           libspirv::IdTypeClass::kScalarIntegerType),
+                           IdTypeClass::kScalarIntegerType),
               Eq(expected_message));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

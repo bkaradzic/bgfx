@@ -12,28 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cfg.h"
-#include "cfa.h"
-#include "ir_builder.h"
-#include "ir_context.h"
-#include "module.h"
+#include "source/opt/cfg.h"
+
+#include <memory>
+#include <utility>
+
+#include "source/cfa.h"
+#include "source/opt/ir_builder.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
-namespace ir {
-
+namespace opt {
 namespace {
 
+using cbb_ptr = const opt::BasicBlock*;
+
 // Universal Limit of ResultID + 1
-const int kInvalidId = 0x400000;
+const int kMaxResultId = 0x400000;
 
 }  // namespace
 
-CFG::CFG(ir::Module* module)
+CFG::CFG(Module* module)
     : module_(module),
-      pseudo_entry_block_(std::unique_ptr<ir::Instruction>(
-          new ir::Instruction(module->context(), SpvOpLabel, 0, 0, {}))),
-      pseudo_exit_block_(std::unique_ptr<ir::Instruction>(new ir::Instruction(
-          module->context(), SpvOpLabel, 0, kInvalidId, {}))) {
+      pseudo_entry_block_(std::unique_ptr<Instruction>(
+          new Instruction(module->context(), SpvOpLabel, 0, 0, {}))),
+      pseudo_exit_block_(std::unique_ptr<Instruction>(new Instruction(
+          module->context(), SpvOpLabel, 0, kMaxResultId, {}))) {
   for (auto& fn : *module) {
     for (auto& blk : fn) {
       RegisterBlock(&blk);
@@ -41,7 +46,7 @@ CFG::CFG(ir::Module* module)
   }
 }
 
-void CFG::AddEdges(ir::BasicBlock* blk) {
+void CFG::AddEdges(BasicBlock* blk) {
   uint32_t blk_id = blk->id();
   // Force the creation of an entry, not all basic block have predecessors
   // (such as the entry blocks and some unreachables).
@@ -54,7 +59,7 @@ void CFG::AddEdges(ir::BasicBlock* blk) {
 void CFG::RemoveNonExistingEdges(uint32_t blk_id) {
   std::vector<uint32_t> updated_pred_list;
   for (uint32_t id : preds(blk_id)) {
-    const ir::BasicBlock* pred_blk = block(id);
+    const BasicBlock* pred_blk = block(id);
     bool has_branch = false;
     pred_blk->ForEachSuccessorLabel([&has_branch, blk_id](uint32_t succ) {
       if (succ == blk_id) {
@@ -67,8 +72,8 @@ void CFG::RemoveNonExistingEdges(uint32_t blk_id) {
   label2preds_.at(blk_id) = std::move(updated_pred_list);
 }
 
-void CFG::ComputeStructuredOrder(ir::Function* func, ir::BasicBlock* root,
-                                 std::list<ir::BasicBlock*>* order) {
+void CFG::ComputeStructuredOrder(Function* func, BasicBlock* root,
+                                 std::list<BasicBlock*>* order) {
   assert(module_->context()->get_feature_mgr()->HasCapability(
              SpvCapabilityShader) &&
          "This only works on structured control flow");
@@ -77,17 +82,30 @@ void CFG::ComputeStructuredOrder(ir::Function* func, ir::BasicBlock* root,
   ComputeStructuredSuccessors(func);
   auto ignore_block = [](cbb_ptr) {};
   auto ignore_edge = [](cbb_ptr, cbb_ptr) {};
-  auto get_structured_successors = [this](const ir::BasicBlock* b) {
+  auto get_structured_successors = [this](const BasicBlock* b) {
     return &(block2structured_succs_[b]);
   };
 
   // TODO(greg-lunarg): Get rid of const_cast by making moving const
   // out of the cfa.h prototypes and into the invoking code.
   auto post_order = [&](cbb_ptr b) {
-    order->push_front(const_cast<ir::BasicBlock*>(b));
+    order->push_front(const_cast<BasicBlock*>(b));
   };
-  spvtools::CFA<ir::BasicBlock>::DepthFirstTraversal(
-      root, get_structured_successors, ignore_block, post_order, ignore_edge);
+  CFA<BasicBlock>::DepthFirstTraversal(root, get_structured_successors,
+                                       ignore_block, post_order, ignore_edge);
+}
+
+void CFG::ForEachBlockInPostOrder(BasicBlock* bb,
+                                  const std::function<void(BasicBlock*)>& f) {
+  std::vector<BasicBlock*> po;
+  std::unordered_set<BasicBlock*> seen;
+  ComputePostOrderTraversal(bb, &po, &seen);
+
+  for (BasicBlock* current_bb : po) {
+    if (!IsPseudoExitBlock(current_bb) && !IsPseudoEntryBlock(current_bb)) {
+      f(current_bb);
+    }
+  }
 }
 
 void CFG::ForEachBlockInReversePostOrder(
@@ -103,7 +121,7 @@ void CFG::ForEachBlockInReversePostOrder(
   }
 }
 
-void CFG::ComputeStructuredSuccessors(ir::Function* func) {
+void CFG::ComputeStructuredSuccessors(Function* func) {
   block2structured_succs_.clear();
   for (auto& blk : *func) {
     // If no predecessors in function, make successor to pseudo entry.
@@ -129,8 +147,9 @@ void CFG::ComputeStructuredSuccessors(ir::Function* func) {
   }
 }
 
-void CFG::ComputePostOrderTraversal(BasicBlock* bb, vector<BasicBlock*>* order,
-                                    unordered_set<BasicBlock*>* seen) {
+void CFG::ComputePostOrderTraversal(BasicBlock* bb,
+                                    std::vector<BasicBlock*>* order,
+                                    std::unordered_set<BasicBlock*>* seen) {
   seen->insert(bb);
   static_cast<const BasicBlock*>(bb)->ForEachSuccessorLabel(
       [&order, &seen, this](const uint32_t sbid) {
@@ -142,11 +161,11 @@ void CFG::ComputePostOrderTraversal(BasicBlock* bb, vector<BasicBlock*>* order,
   order->push_back(bb);
 }
 
-BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
+BasicBlock* CFG::SplitLoopHeader(BasicBlock* bb) {
   assert(bb->GetLoopMergeInst() && "Expecting bb to be the header of a loop.");
 
   Function* fn = bb->GetParent();
-  IRContext* context = fn->context();
+  IRContext* context = module_->context();
 
   // Find the insertion point for the new bb.
   Function::iterator header_it = std::find_if(
@@ -156,7 +175,7 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
 
   const std::vector<uint32_t>& pred = preds(bb->id());
   // Find the back edge
-  ir::BasicBlock* latch_block = nullptr;
+  BasicBlock* latch_block = nullptr;
   Function::iterator latch_block_iter = header_it;
   while (++latch_block_iter != fn->end()) {
     // If blocks are in the proper order, then the only branch that appears
@@ -178,13 +197,13 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
     ++iter;
   }
 
-  std::unique_ptr<ir::BasicBlock> newBlock(
+  std::unique_ptr<BasicBlock> newBlock(
       bb->SplitBasicBlock(context, context->TakeNextId(), iter));
 
   // Insert the new bb in the correct position
   auto insert_pos = header_it;
   ++insert_pos;
-  ir::BasicBlock* new_header = &*insert_pos.InsertBefore(std::move(newBlock));
+  BasicBlock* new_header = &*insert_pos.InsertBefore(std::move(newBlock));
   new_header->SetParent(fn);
   uint32_t new_header_id = new_header->id();
   context->AnalyzeDefUse(new_header->GetLabelInst());
@@ -194,7 +213,7 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
 
   // Update bb mappings.
   context->set_instr_block(new_header->GetLabelInst(), new_header);
-  new_header->ForEachInst([new_header, context](ir::Instruction* inst) {
+  new_header->ForEachInst([new_header, context](Instruction* inst) {
     context->set_instr_block(inst, new_header);
   });
 
@@ -220,13 +239,11 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
     // Create a phi instruction if and only if the preheader_phi_ops has more
     // than one pair.
     if (preheader_phi_ops.size() > 2) {
-      opt::InstructionBuilder builder(
+      InstructionBuilder builder(
           context, &*bb->begin(),
-          ir::IRContext::kAnalysisDefUse |
-              ir::IRContext::kAnalysisInstrToBlockMapping);
+          IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
 
-      ir::Instruction* new_phi =
-          builder.AddPhi(phi->type_id(), preheader_phi_ops);
+      Instruction* new_phi = builder.AddPhi(phi->type_id(), preheader_phi_ops);
 
       // Add the OpPhi to the header bb.
       header_phi_ops.push_back({SPV_OPERAND_TYPE_ID, {new_phi->result_id()}});
@@ -239,7 +256,7 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
     }
 
     phi->RemoveFromList();
-    std::unique_ptr<ir::Instruction> phi_owner(phi);
+    std::unique_ptr<Instruction> phi_owner(phi);
     phi->SetInOperands(std::move(header_phi_ops));
     new_header->begin()->InsertBefore(std::move(phi_owner));
     context->set_instr_block(phi, new_header);
@@ -247,14 +264,13 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
   });
 
   // Add a branch to the new header.
-  opt::InstructionBuilder branch_builder(
+  InstructionBuilder branch_builder(
       context, bb,
-      ir::IRContext::kAnalysisDefUse |
-          ir::IRContext::kAnalysisInstrToBlockMapping);
-  bb->AddInstruction(MakeUnique<ir::Instruction>(
-      context, SpvOpBranch, 0, 0,
-      std::initializer_list<ir::Operand>{
-          {SPV_OPERAND_TYPE_ID, {new_header->id()}}}));
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  bb->AddInstruction(
+      MakeUnique<Instruction>(context, SpvOpBranch, 0, 0,
+                              std::initializer_list<Operand>{
+                                  {SPV_OPERAND_TYPE_ID, {new_header->id()}}}));
   context->AnalyzeUses(bb->terminator());
   context->set_instr_block(bb->terminator(), bb);
   label2preds_[new_header->id()].push_back(bb->id());
@@ -265,7 +281,7 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
       *id = new_header_id;
     }
   });
-  ir::Instruction* latch_branch = latch_block->terminator();
+  Instruction* latch_branch = latch_block->terminator();
   context->AnalyzeUses(latch_branch);
   label2preds_[new_header->id()].push_back(latch_block->id());
 
@@ -276,7 +292,7 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
   block_preds.erase(latch_pos);
 
   // Update the loop descriptors
-  if (context->AreAnalysesValid(ir::IRContext::kAnalysisLoopAnalysis)) {
+  if (context->AreAnalysesValid(IRContext::kAnalysisLoopAnalysis)) {
     LoopDescriptor* loop_desc = context->GetLoopDescriptor(bb->GetParent());
     Loop* loop = (*loop_desc)[bb->id()];
 
@@ -298,13 +314,5 @@ BasicBlock* CFG::SplitLoopHeader(ir::BasicBlock* bb) {
   return new_header;
 }
 
-unordered_set<BasicBlock*> CFG::FindReachableBlocks(BasicBlock* start) {
-  std::unordered_set<BasicBlock*> reachable_blocks;
-  ForEachBlockInReversePostOrder(start, [&reachable_blocks](BasicBlock* bb) {
-    reachable_blocks.insert(bb);
-  });
-  return reachable_blocks;
-}
-
-}  // namespace ir
+}  // namespace opt
 }  // namespace spvtools

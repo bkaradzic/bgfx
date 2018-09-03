@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_SIMPLIFICATION_PASS_H_
-#define LIBSPIRV_OPT_SIMPLIFICATION_PASS_H_
+#ifndef SOURCE_OPT_SIMPLIFICATION_PASS_H_
+#define SOURCE_OPT_SIMPLIFICATION_PASS_H_
 
-#include "function.h"
-#include "ir_context.h"
-#include "pass.h"
+#include "source/opt/function.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -26,24 +26,24 @@ namespace opt {
 class SimplificationPass : public Pass {
  public:
   const char* name() const override { return "simplify-instructions"; }
-  Status Process(ir::IRContext*) override;
-  virtual ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse |
-           ir::IRContext::kAnalysisInstrToBlockMapping |
-           ir::IRContext::kAnalysisDecorations |
-           ir::IRContext::kAnalysisCombinators | ir::IRContext::kAnalysisCFG |
-           ir::IRContext::kAnalysisDominatorAnalysis |
-           ir::IRContext::kAnalysisNameMap;
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse |
+           IRContext::kAnalysisInstrToBlockMapping |
+           IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
+           IRContext::kAnalysisCFG | IRContext::kAnalysisDominatorAnalysis |
+           IRContext::kAnalysisNameMap;
   }
 
  private:
   // Returns true if the module was changed.  The simplifier is called on every
   // instruction in |function| until nothing else in the function can be
   // simplified.
-  bool SimplifyFunction(ir::Function* function);
+  bool SimplifyFunction(Function* function);
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_SIMPLIFICATION_PASS_H_
+#endif  // SOURCE_OPT_SIMPLIFICATION_PASS_H_

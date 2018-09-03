@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <memory>
+#include <string>
 
-#include "opt/build_module.h"
-#include "opt/ir_context.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "source/opt/build_module.h"
+#include "source/opt/ir_context.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using CommonDominatorsTest = ::testing::Test;
 
 const std::string text = R"(
@@ -59,19 +62,18 @@ OpReturn
 OpFunctionEnd
 )";
 
-ir::BasicBlock* GetBlock(uint32_t id, std::unique_ptr<ir::IRContext>& context) {
+BasicBlock* GetBlock(uint32_t id, std::unique_ptr<IRContext>& context) {
   return context->get_instr_block(context->get_def_use_mgr()->GetDef(id));
 }
 
 TEST(CommonDominatorsTest, SameBlock) {
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, context);
 
-  ir::CFG cfg(context->module());
-  opt::DominatorAnalysis* analysis =
-      context->GetDominatorAnalysis(&*context->module()->begin(), cfg);
+  DominatorAnalysis* analysis =
+      context->GetDominatorAnalysis(&*context->module()->begin());
 
   for (auto& block : *context->module()->begin()) {
     EXPECT_EQ(&block, analysis->CommonDominator(&block, &block));
@@ -79,14 +81,13 @@ TEST(CommonDominatorsTest, SameBlock) {
 }
 
 TEST(CommonDominatorsTest, ParentAndChild) {
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, context);
 
-  ir::CFG cfg(context->module());
-  opt::DominatorAnalysis* analysis =
-      context->GetDominatorAnalysis(&*context->module()->begin(), cfg);
+  DominatorAnalysis* analysis =
+      context->GetDominatorAnalysis(&*context->module()->begin());
 
   EXPECT_EQ(
       GetBlock(1u, context),
@@ -100,14 +101,13 @@ TEST(CommonDominatorsTest, ParentAndChild) {
 }
 
 TEST(CommonDominatorsTest, BranchSplit) {
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, context);
 
-  ir::CFG cfg(context->module());
-  opt::DominatorAnalysis* analysis =
-      context->GetDominatorAnalysis(&*context->module()->begin(), cfg);
+  DominatorAnalysis* analysis =
+      context->GetDominatorAnalysis(&*context->module()->begin());
 
   EXPECT_EQ(
       GetBlock(3u, context),
@@ -118,14 +118,13 @@ TEST(CommonDominatorsTest, BranchSplit) {
 }
 
 TEST(CommonDominatorsTest, LoopContinueAndMerge) {
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, context);
 
-  ir::CFG cfg(context->module());
-  opt::DominatorAnalysis* analysis =
-      context->GetDominatorAnalysis(&*context->module()->begin(), cfg);
+  DominatorAnalysis* analysis =
+      context->GetDominatorAnalysis(&*context->module()->begin());
 
   EXPECT_EQ(
       GetBlock(5u, context),
@@ -133,14 +132,13 @@ TEST(CommonDominatorsTest, LoopContinueAndMerge) {
 }
 
 TEST(CommonDominatorsTest, NoCommonDominator) {
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, context);
 
-  ir::CFG cfg(context->module());
-  opt::DominatorAnalysis* analysis =
-      context->GetDominatorAnalysis(&*context->module()->begin(), cfg);
+  DominatorAnalysis* analysis =
+      context->GetDominatorAnalysis(&*context->module()->begin());
 
   EXPECT_EQ(nullptr, analysis->CommonDominator(GetBlock(10u, context),
                                                GetBlock(11u, context)));
@@ -148,4 +146,6 @@ TEST(CommonDominatorsTest, NoCommonDominator) {
                                                GetBlock(6u, context)));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

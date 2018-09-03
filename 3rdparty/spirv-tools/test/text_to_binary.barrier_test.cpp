@@ -15,11 +15,13 @@
 // Assembler tests for instructions in the "Barrier Instructions" section
 // of the SPIR-V spec.
 
-#include "unit_spirv.h"
+#include <string>
 
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::MakeInstruction;
@@ -78,10 +80,14 @@ TEST_F(OpMemoryBarrier, BadInvalidMemorySemanticsId) {
 
 using NamedMemoryBarrierTest = spvtest::TextToBinaryTest;
 
-TEST_F(NamedMemoryBarrierTest, OpcodeUnrecognizedInV10) {
-  EXPECT_THAT(CompileFailure("OpMemoryNamedBarrier %bar %scope %semantics",
-                             SPV_ENV_UNIVERSAL_1_0),
-              Eq("Invalid Opcode name 'OpMemoryNamedBarrier'"));
+// OpMemoryNamedBarrier is not in 1.0, but it is enabled by a capability.
+// We should be able to assemble it.  Validation checks are in another test
+// file.
+TEST_F(NamedMemoryBarrierTest, OpcodeAssemblesInV10) {
+  EXPECT_THAT(
+      CompiledInstructions("OpMemoryNamedBarrier %bar %scope %semantics",
+                           SPV_ENV_UNIVERSAL_1_0),
+      ElementsAre(spvOpcodeMake(4, SpvOpMemoryNamedBarrier), _, _, _));
 }
 
 TEST_F(NamedMemoryBarrierTest, ArgumentCount) {
@@ -114,9 +120,10 @@ TEST_F(NamedMemoryBarrierTest, ArgumentTypes) {
 
 using TypeNamedBarrierTest = spvtest::TextToBinaryTest;
 
-TEST_F(TypeNamedBarrierTest, OpcodeUnrecognizedInV10) {
-  EXPECT_THAT(CompileFailure("%t = OpTypeNamedBarrier", SPV_ENV_UNIVERSAL_1_0),
-              Eq("Invalid Opcode name 'OpTypeNamedBarrier'"));
+TEST_F(TypeNamedBarrierTest, OpcodeAssemblesInV10) {
+  EXPECT_THAT(
+      CompiledInstructions("%t = OpTypeNamedBarrier", SPV_ENV_UNIVERSAL_1_0),
+      ElementsAre(spvOpcodeMake(2, SpvOpTypeNamedBarrier), _));
 }
 
 TEST_F(TypeNamedBarrierTest, ArgumentCount) {
@@ -134,10 +141,11 @@ TEST_F(TypeNamedBarrierTest, ArgumentCount) {
 
 using NamedBarrierInitializeTest = spvtest::TextToBinaryTest;
 
-TEST_F(NamedBarrierInitializeTest, OpcodeUnrecognizedInV10) {
-  EXPECT_THAT(CompileFailure("%bar = OpNamedBarrierInitialize %type %count",
-                             SPV_ENV_UNIVERSAL_1_0),
-              Eq("Invalid Opcode name 'OpNamedBarrierInitialize'"));
+TEST_F(NamedBarrierInitializeTest, OpcodeAssemblesInV10) {
+  EXPECT_THAT(
+      CompiledInstructions("%bar = OpNamedBarrierInitialize %type %count",
+                           SPV_ENV_UNIVERSAL_1_0),
+      ElementsAre(spvOpcodeMake(4, SpvOpNamedBarrierInitialize), _, _, _));
 }
 
 TEST_F(NamedBarrierInitializeTest, ArgumentCount) {
@@ -158,4 +166,5 @@ TEST_F(NamedBarrierInitializeTest, ArgumentCount) {
          "found '\"extra\"'."));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

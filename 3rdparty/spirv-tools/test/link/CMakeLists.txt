@@ -12,42 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_spvtools_unittest(TARGET link_binary_version
-  SRCS binary_version_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
 
-add_spvtools_unittest(TARGET link_memory_model
-  SRCS memory_model_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
-
-add_spvtools_unittest(TARGET link_entry_points
-  SRCS entry_points_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
-
-add_spvtools_unittest(TARGET link_global_values_amount
-  SRCS global_values_amount_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
-
-add_spvtools_unittest(TARGET link_ids_limit
-  SRCS ids_limit_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
-
-add_spvtools_unittest(TARGET link_matching_imports_to_exports
-  SRCS matching_imports_to_exports_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
-
-add_spvtools_unittest(TARGET link_unique_ids
-  SRCS unique_ids_test.cpp
-  LIBS SPIRV-Tools-opt SPIRV-Tools-link
-)
-
-add_spvtools_unittest(TARGET link_partial_linkage
-  SRCS partial_linkage_test.cpp
+add_spvtools_unittest(TARGET link
+  SRCS
+       binary_version_test.cpp
+       entry_points_test.cpp
+       global_values_amount_test.cpp
+       ids_limit_test.cpp
+       matching_imports_to_exports_test.cpp
+       memory_model_test.cpp
+       partial_linkage_test.cpp
+       unique_ids_test.cpp
   LIBS SPIRV-Tools-opt SPIRV-Tools-link
 )

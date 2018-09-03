@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_NAME_MAPPER_H_
-#define LIBSPIRV_NAME_MAPPER_H_
+#ifndef SOURCE_NAME_MAPPER_H_
+#define SOURCE_NAME_MAPPER_H_
 
 #include <functional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
-#include "assembly_grammar.h"
+#include "source/assembly_grammar.h"
 #include "spirv-tools/libspirv.h"
 
-namespace libspirv {
+namespace spvtools {
 
 // A NameMapper maps SPIR-V Id values to names.  Each name is valid to use in
 // SPIR-V assembly.  The mapping is one-to-one, i.e. no two Ids map to the same
@@ -114,9 +114,9 @@ class FriendlyNameMapper {
   // The set of names that have a mapping in name_for_id_;
   std::unordered_set<std::string> used_names_;
   // The assembly grammar for the current context.
-  const libspirv::AssemblyGrammar grammar_;
+  const AssemblyGrammar grammar_;
 };
 
-}  // namespace libspirv
+}  // namespace spvtools
 
-#endif  // _LIBSPIRV_NAME_MAPPER_H_
+#endif  // SOURCE_NAME_MAPPER_H_

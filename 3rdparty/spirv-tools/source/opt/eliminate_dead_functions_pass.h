@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_ELIMINATE_DEAD_FUNCTIONS_PASS_H_
-#define LIBSPIRV_OPT_ELIMINATE_DEAD_FUNCTIONS_PASS_H_
+#ifndef SOURCE_OPT_ELIMINATE_DEAD_FUNCTIONS_PASS_H_
+#define SOURCE_OPT_ELIMINATE_DEAD_FUNCTIONS_PASS_H_
 
-#include "def_use_manager.h"
-#include "function.h"
-#include "mem_pass.h"
-#include "module.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/function.h"
+#include "source/opt/mem_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
@@ -27,17 +27,17 @@ namespace opt {
 class EliminateDeadFunctionsPass : public MemPass {
  public:
   const char* name() const override { return "eliminate-dead-functions"; }
-  Status Process(ir::IRContext* c) override;
+  Status Process() override;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse;
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse;
   }
 
  private:
-  void EliminateFunction(ir::Function* func);
+  void EliminateFunction(Function* func);
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_ELIMINATE_DEAD_FUNCTIONS_PASS_H_
+#endif  // SOURCE_OPT_ELIMINATE_DEAD_FUNCTIONS_PASS_H_

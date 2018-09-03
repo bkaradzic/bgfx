@@ -12,14 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <tuple>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
-#include "assembly_builder.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-using namespace spvtools;
 
 // Returns the types defining instructions commonly used in many tests.
 std::vector<std::string> CommonTypes() {
@@ -114,9 +119,9 @@ class UnifyConstantTest : public PassTest<T> {
 
     // optimized code
     std::string optimized_before_strip;
-    auto status = opt::Pass::Status::SuccessWithoutChange;
+    auto status = Pass::Status::SuccessWithoutChange;
     std::tie(optimized_before_strip, status) =
-        this->template SinglePassRunAndDisassemble<opt::UnifyConstantPass>(
+        this->template SinglePassRunAndDisassemble<UnifyConstantPass>(
             test_builder.GetCode(),
             /* skip_nop = */ true, /* do_validation = */ false);
     std::string optimized_without_opnames;
@@ -125,9 +130,9 @@ class UnifyConstantTest : public PassTest<T> {
         StripOpNameInstructionsToSet(optimized_before_strip);
 
     // Flag "status" should be returned correctly.
-    EXPECT_NE(opt::Pass::Status::Failure, status);
+    EXPECT_NE(Pass::Status::Failure, status);
     EXPECT_EQ(expected_without_opnames == original_without_opnames,
-              status == opt::Pass::Status::SuccessWithoutChange);
+              status == Pass::Status::SuccessWithoutChange);
     // Code except OpName instructions should be exactly the same.
     EXPECT_EQ(expected_without_opnames, optimized_without_opnames);
     // OpName instructions can be in different order, but the content must be
@@ -980,4 +985,6 @@ INSTANTIATE_TEST_CASE_P(Case, UnifyFrontEndConstantParamTest,
                             // clang-format on
                         })));
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

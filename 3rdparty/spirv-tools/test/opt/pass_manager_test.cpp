@@ -12,22 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gmock/gmock.h"
-
 #include <initializer_list>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "module_utils.h"
-#include "opt/make_unique.h"
-#include "pass_fixture.h"
+#include "gmock/gmock.h"
+#include "source/util/make_unique.h"
+#include "test/opt/module_utils.h"
+#include "test/opt/pass_fixture.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using spvtest::GetIdBound;
 using ::testing::Eq;
 
 // A null pass whose construtors accept arguments
-class NullPassWithArgs : public opt::NullPass {
+class NullPassWithArgs : public NullPass {
  public:
   NullPassWithArgs(uint32_t) {}
   NullPassWithArgs(std::string) {}
@@ -38,19 +42,19 @@ class NullPassWithArgs : public opt::NullPass {
 };
 
 TEST(PassManager, Interface) {
-  opt::PassManager manager;
+  PassManager manager;
   EXPECT_EQ(0u, manager.NumPasses());
 
-  manager.AddPass<opt::StripDebugInfoPass>();
+  manager.AddPass<StripDebugInfoPass>();
   EXPECT_EQ(1u, manager.NumPasses());
   EXPECT_STREQ("strip-debug", manager.GetPass(0)->name());
 
-  manager.AddPass(MakeUnique<opt::NullPass>());
+  manager.AddPass(MakeUnique<NullPass>());
   EXPECT_EQ(2u, manager.NumPasses());
   EXPECT_STREQ("strip-debug", manager.GetPass(0)->name());
   EXPECT_STREQ("null", manager.GetPass(1)->name());
 
-  manager.AddPass<opt::StripDebugInfoPass>();
+  manager.AddPass<StripDebugInfoPass>();
   EXPECT_EQ(3u, manager.NumPasses());
   EXPECT_STREQ("strip-debug", manager.GetPass(0)->name());
   EXPECT_STREQ("null", manager.GetPass(1)->name());
@@ -71,25 +75,25 @@ TEST(PassManager, Interface) {
 }
 
 // A pass that appends an OpNop instruction to the debug1 section.
-class AppendOpNopPass : public opt::Pass {
+class AppendOpNopPass : public Pass {
  public:
   const char* name() const override { return "AppendOpNop"; }
-  Status Process(ir::IRContext* irContext) override {
-    irContext->AddDebug1Inst(MakeUnique<ir::Instruction>(irContext));
+  Status Process() override {
+    context()->AddDebug1Inst(MakeUnique<Instruction>(context()));
     return Status::SuccessWithChange;
   }
 };
 
 // A pass that appends specified number of OpNop instructions to the debug1
 // section.
-class AppendMultipleOpNopPass : public opt::Pass {
+class AppendMultipleOpNopPass : public Pass {
  public:
   explicit AppendMultipleOpNopPass(uint32_t num_nop) : num_nop_(num_nop) {}
 
   const char* name() const override { return "AppendOpNop"; }
-  Status Process(ir::IRContext* irContext) override {
+  Status Process() override {
     for (uint32_t i = 0; i < num_nop_; i++) {
-      irContext->AddDebug1Inst(MakeUnique<ir::Instruction>(irContext));
+      context()->AddDebug1Inst(MakeUnique<Instruction>(context()));
     }
     return Status::SuccessWithChange;
   }
@@ -99,13 +103,13 @@ class AppendMultipleOpNopPass : public opt::Pass {
 };
 
 // A pass that duplicates the last instruction in the debug1 section.
-class DuplicateInstPass : public opt::Pass {
+class DuplicateInstPass : public Pass {
  public:
   const char* name() const override { return "DuplicateInst"; }
-  Status Process(ir::IRContext* irContext) override {
-    auto inst = MakeUnique<ir::Instruction>(
-        *(--irContext->debug1_end())->Clone(irContext));
-    irContext->AddDebug1Inst(std::move(inst));
+  Status Process() override {
+    auto inst =
+        MakeUnique<Instruction>(*(--context()->debug1_end())->Clone(context()));
+    context()->AddDebug1Inst(std::move(inst));
     return Status::SuccessWithChange;
   }
 };
@@ -135,15 +139,15 @@ TEST_F(PassManagerTest, Run) {
 }
 
 // A pass that appends an OpTypeVoid instruction that uses a given id.
-class AppendTypeVoidInstPass : public opt::Pass {
+class AppendTypeVoidInstPass : public Pass {
  public:
   explicit AppendTypeVoidInstPass(uint32_t result_id) : result_id_(result_id) {}
 
   const char* name() const override { return "AppendTypeVoidInstPass"; }
-  Status Process(ir::IRContext* irContext) override {
-    auto inst = MakeUnique<ir::Instruction>(
-        irContext, SpvOpTypeVoid, 0, result_id_, std::vector<ir::Operand>{});
-    irContext->AddType(std::move(inst));
+  Status Process() override {
+    auto inst = MakeUnique<Instruction>(context(), SpvOpTypeVoid, 0, result_id_,
+                                        std::vector<Operand>{});
+    context()->AddType(std::move(inst));
     return Status::SuccessWithChange;
   }
 
@@ -152,10 +156,10 @@ class AppendTypeVoidInstPass : public opt::Pass {
 };
 
 TEST(PassManager, RecomputeIdBoundAutomatically) {
-  opt::PassManager manager;
-  std::unique_ptr<ir::Module> module(new ir::Module());
-  ir::IRContext context(SPV_ENV_UNIVERSAL_1_2, std::move(module),
-                        manager.consumer());
+  PassManager manager;
+  std::unique_ptr<Module> module(new Module());
+  IRContext context(SPV_ENV_UNIVERSAL_1_2, std::move(module),
+                    manager.consumer());
   EXPECT_THAT(GetIdBound(*context.module()), Eq(0u));
 
   manager.Run(&context);
@@ -184,3 +188,5 @@ TEST(PassManager, RecomputeIdBoundAutomatically) {
 }
 
 }  // anonymous namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_TEST_OPT_FUNCTION_UTILS_H_
-#define LIBSPIRV_TEST_OPT_FUNCTION_UTILS_H_
+#ifndef TEST_OPT_FUNCTION_UTILS_H_
+#define TEST_OPT_FUNCTION_UTILS_H_
 
-#include "opt/function.h"
-#include "opt/module.h"
+#include "source/opt/function.h"
+#include "source/opt/module.h"
 
 namespace spvtest {
 
-spvtools::ir::Function* GetFunction(spvtools::ir::Module* module, uint32_t id) {
-  for (spvtools::ir::Function& f : *module) {
+inline spvtools::opt::Function* GetFunction(spvtools::opt::Module* module,
+                                            uint32_t id) {
+  for (spvtools::opt::Function& f : *module) {
     if (f.result_id() == id) {
       return &f;
     }
@@ -29,9 +30,9 @@ spvtools::ir::Function* GetFunction(spvtools::ir::Module* module, uint32_t id) {
   return nullptr;
 }
 
-const spvtools::ir::Function* GetFunction(const spvtools::ir::Module* module,
-                                          uint32_t id) {
-  for (const spvtools::ir::Function& f : *module) {
+inline const spvtools::opt::Function* GetFunction(
+    const spvtools::opt::Module* module, uint32_t id) {
+  for (const spvtools::opt::Function& f : *module) {
     if (f.result_id() == id) {
       return &f;
     }
@@ -39,9 +40,9 @@ const spvtools::ir::Function* GetFunction(const spvtools::ir::Module* module,
   return nullptr;
 }
 
-const spvtools::ir::BasicBlock* GetBasicBlock(const spvtools::ir::Function* fn,
-                                              uint32_t id) {
-  for (const spvtools::ir::BasicBlock& bb : *fn) {
+inline const spvtools::opt::BasicBlock* GetBasicBlock(
+    const spvtools::opt::Function* fn, uint32_t id) {
+  for (const spvtools::opt::BasicBlock& bb : *fn) {
     if (bb.id() == id) {
       return &bb;
     }
@@ -51,4 +52,4 @@ const spvtools::ir::BasicBlock* GetBasicBlock(const spvtools::ir::Function* fn,
 
 }  // namespace spvtest
 
-#endif  // LIBSPIRV_TEST_OPT_FUNCTION_UTILS_H_
+#endif  // TEST_OPT_FUNCTION_UTILS_H_

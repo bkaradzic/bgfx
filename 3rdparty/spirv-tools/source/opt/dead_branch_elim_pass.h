@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_DEAD_BRANCH_ELIM_PASS_H_
-#define LIBSPIRV_OPT_DEAD_BRANCH_ELIM_PASS_H_
+#ifndef SOURCE_OPT_DEAD_BRANCH_ELIM_PASS_H_
+#define SOURCE_OPT_DEAD_BRANCH_ELIM_PASS_H_
 
 #include <algorithm>
 #include <map>
@@ -23,26 +23,28 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "mem_pass.h"
-#include "module.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/mem_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
 
 // See optimizer.hpp for documentation.
 class DeadBranchElimPass : public MemPass {
-  using cbb_ptr = const ir::BasicBlock*;
+  using cbb_ptr = const BasicBlock*;
 
  public:
-  DeadBranchElimPass();
-  const char* name() const override { return "eliminate-dead-branches"; }
-  Status Process(ir::IRContext* context) override;
+  DeadBranchElimPass() = default;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse;
+  const char* name() const override { return "eliminate-dead-branches"; }
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
   }
 
  private:
@@ -55,7 +57,7 @@ class DeadBranchElimPass : public MemPass {
   bool GetConstInteger(uint32_t valId, uint32_t* value);
 
   // Add branch to |labelId| to end of block |bp|.
-  void AddBranch(uint32_t labelId, ir::BasicBlock* bp);
+  void AddBranch(uint32_t labelId, BasicBlock* bp);
 
   // For function |func|, look for BranchConditionals with constant condition
   // and convert to a Branch to the indicated label. Delete resulting dead
@@ -63,21 +65,21 @@ class DeadBranchElimPass : public MemPass {
   // invalid control flow.
   // TODO(greg-lunarg): Remove remaining constant conditional branches and dead
   // blocks.
-  bool EliminateDeadBranches(ir::Function* func);
+  bool EliminateDeadBranches(Function* func);
 
   // Returns the basic block containing |id|.
   // Note: this pass only requires correct instruction block mappings for the
   // input. This pass does not preserve the block mapping, so it is not kept
   // up-to-date during processing.
-  ir::BasicBlock* GetParentBlock(uint32_t id);
+  BasicBlock* GetParentBlock(uint32_t id);
 
   // Marks live blocks reachable from the entry of |func|. Simplifies constant
   // branches and switches as it proceeds, to limit the number of live blocks.
   // It is careful not to eliminate backedges even if they are dead, but the
   // header is live. Likewise, unreachable merge blocks named in live merge
   // instruction must be retained (though they may be clobbered).
-  bool MarkLiveBlocks(ir::Function* func,
-                      std::unordered_set<ir::BasicBlock*>* live_blocks);
+  bool MarkLiveBlocks(Function* func,
+                      std::unordered_set<BasicBlock*>* live_blocks);
 
   // Checks for unreachable merge and continue blocks with live headers; those
   // blocks must be retained. Continues are tracked separately so that a live
@@ -87,10 +89,9 @@ class DeadBranchElimPass : public MemPass {
   // |unreachable_continues| maps the id of an unreachable continue target to
   // the header block that declares it.
   void MarkUnreachableStructuredTargets(
-      const std::unordered_set<ir::BasicBlock*>& live_blocks,
-      std::unordered_set<ir::BasicBlock*>* unreachable_merges,
-      std::unordered_map<ir::BasicBlock*, ir::BasicBlock*>*
-          unreachable_continues);
+      const std::unordered_set<BasicBlock*>& live_blocks,
+      std::unordered_set<BasicBlock*>* unreachable_merges,
+      std::unordered_map<BasicBlock*, BasicBlock*>* unreachable_continues);
 
   // Fix phis in reachable blocks so that only live (or unremovable) incoming
   // edges are present. If the block now only has a single live incoming edge,
@@ -105,9 +106,8 @@ class DeadBranchElimPass : public MemPass {
   // |unreachable_continues| maps continue targets that cannot be reached to
   // merge instruction that declares them.
   bool FixPhiNodesInLiveBlocks(
-      ir::Function* func,
-      const std::unordered_set<ir::BasicBlock*>& live_blocks,
-      const std::unordered_map<ir::BasicBlock*, ir::BasicBlock*>&
+      Function* func, const std::unordered_set<BasicBlock*>& live_blocks,
+      const std::unordered_map<BasicBlock*, BasicBlock*>&
           unreachable_continues);
 
   // Erases dead blocks. Any block captured in |unreachable_merges| or
@@ -122,17 +122,28 @@ class DeadBranchElimPass : public MemPass {
   // |unreachable_continues| maps continue targets that cannot be reached to
   // corresponding header block that declares them.
   bool EraseDeadBlocks(
-      ir::Function* func,
-      const std::unordered_set<ir::BasicBlock*>& live_blocks,
-      const std::unordered_set<ir::BasicBlock*>& unreachable_merges,
-      const std::unordered_map<ir::BasicBlock*, ir::BasicBlock*>&
+      Function* func, const std::unordered_set<BasicBlock*>& live_blocks,
+      const std::unordered_set<BasicBlock*>& unreachable_merges,
+      const std::unordered_map<BasicBlock*, BasicBlock*>&
           unreachable_continues);
 
-  void Initialize(ir::IRContext* c);
-  Pass::Status ProcessImpl();
+  // Reorders blocks in reachable functions so that they satisfy dominator
+  // block ordering rules.
+  void FixBlockOrder();
+
+  // Return the first branch instruction that is a conditional branch to
+  // |merge_block_id|. Returns |nullptr| if not such branch exists. If there are
+  // multiple such branches, the first one is the one that would be executed
+  // first when running the code.  That is, the one that dominates all of the
+  // others.
+  //
+  // |start_block_id| must be a block whose innermost containing merge construct
+  // has |merge_block_id| as the merge block.
+  Instruction* FindFirstExitFromSelectionMerge(uint32_t start_block_id,
+                                               uint32_t merge_block_id);
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_DEAD_BRANCH_ELIM_PASS_H_
+#endif  // SOURCE_OPT_DEAD_BRANCH_ELIM_PASS_H_

@@ -14,12 +14,15 @@
 
 // Common validation fixtures for unit tests
 
-#ifndef LIBSPIRV_TEST_VALIDATE_FIXTURES_H_
-#define LIBSPIRV_TEST_VALIDATE_FIXTURES_H_
+#ifndef TEST_VAL_VAL_FIXTURES_H_
+#define TEST_VAL_VAL_FIXTURES_H_
+
+#include <memory>
+#include <string>
 
 #include "source/val/validation_state.h"
-#include "test_fixture.h"
-#include "unit_spirv.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
 namespace spvtest {
 
@@ -34,6 +37,8 @@ class ValidateBase : public ::testing::Test,
   // Returns the a spv_const_binary struct
   spv_const_binary get_const_binary();
 
+  // Checks that 'code' is valid SPIR-V text representation and stores the
+  // binary version for further method calls.
   void CompileSuccessfully(std::string code,
                            spv_target_env env = SPV_ENV_UNIVERSAL_1_0);
 
@@ -43,8 +48,7 @@ class ValidateBase : public ::testing::Test,
   // This function overwrites the word at the given index with a new word.
   void OverwriteAssembledBinary(uint32_t index, uint32_t word);
 
-  // Performs validation on the SPIR-V code and compares the result of the
-  // spvValidate function
+  // Performs validation on the SPIR-V code.
   spv_result_t ValidateInstructions(spv_target_env env = SPV_ENV_UNIVERSAL_1_0);
 
   // Performs validation. Returns the status and stores validation state into
@@ -59,7 +63,7 @@ class ValidateBase : public ::testing::Test,
   spv_binary binary_;
   spv_diagnostic diagnostic_;
   spv_validator_options options_;
-  std::unique_ptr<libspirv::ValidationState_t> vstate_;
+  std::unique_ptr<spvtools::val::ValidationState_t> vstate_;
 };
 
 template <typename T>
@@ -113,7 +117,7 @@ spv_result_t ValidateBase<T>::ValidateInstructions(spv_target_env env) {
 template <typename T>
 spv_result_t ValidateBase<T>::ValidateAndRetrieveValidationState(
     spv_target_env env) {
-  return spvtools::ValidateBinaryAndKeepValidationState(
+  return spvtools::val::ValidateBinaryAndKeepValidationState(
       ScopedContext(env).context, options_, get_const_binary()->code,
       get_const_binary()->wordCount, &diagnostic_, &vstate_);
 }
@@ -135,4 +139,5 @@ spv_position_t ValidateBase<T>::getErrorPosition() {
 }
 
 }  // namespace spvtest
-#endif
+
+#endif  // TEST_VAL_VAL_FIXTURES_H_

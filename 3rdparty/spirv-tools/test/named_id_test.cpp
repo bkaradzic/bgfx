@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
 #include <vector>
 
-#include "test_fixture.h"
-#include "unit_spirv.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using NamedIdTest = spvtest::TextToBinaryTest;
@@ -81,4 +83,5 @@ INSTANTIATE_TEST_CASE_P(
          {"5", false},          {"32", false},     {"foo", false},
          {"a%bar", false}})), );
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

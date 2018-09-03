@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "opt/value_number_table.h"
+#include <string>
 
-#include "assembly_builder.h"
 #include "gmock/gmock.h"
-#include "opt/build_module.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "source/opt/build_module.h"
+#include "source/opt/value_number_table.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
-
 using PrivateToLocalTest = PassTest<::testing::Test>;
 
 #ifdef SPIRV_EFFCEE
@@ -57,7 +57,7 @@ TEST_F(PrivateToLocalTest, ChangeToLocal) {
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<opt::PrivateToLocalPass>(text, false);
+  SinglePassRunAndMatch<PrivateToLocalPass>(text, false);
 }
 
 TEST_F(PrivateToLocalTest, ReuseExistingType) {
@@ -89,7 +89,7 @@ TEST_F(PrivateToLocalTest, ReuseExistingType) {
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<opt::PrivateToLocalPass>(text, false);
+  SinglePassRunAndMatch<PrivateToLocalPass>(text, false);
 }
 
 TEST_F(PrivateToLocalTest, UpdateAccessChain) {
@@ -127,7 +127,7 @@ TEST_F(PrivateToLocalTest, UpdateAccessChain) {
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<opt::PrivateToLocalPass>(text, false);
+  SinglePassRunAndMatch<PrivateToLocalPass>(text, false);
 }
 
 TEST_F(PrivateToLocalTest, UseTexelPointer) {
@@ -172,7 +172,7 @@ OpCapability SampledBuffer
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<opt::PrivateToLocalPass>(text, false);
+  SinglePassRunAndMatch<PrivateToLocalPass>(text, false);
 }
 
 TEST_F(PrivateToLocalTest, UsedInTwoFunctions) {
@@ -200,9 +200,9 @@ TEST_F(PrivateToLocalTest, UsedInTwoFunctions) {
                OpReturn
                OpFunctionEnd
   )";
-  auto result = SinglePassRunAndDisassemble<opt::StrengthReductionPass>(
+  auto result = SinglePassRunAndDisassemble<StrengthReductionPass>(
       text, /* skip_nop = */ true, /* do_validation = */ false);
-  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
 }
 
 TEST_F(PrivateToLocalTest, UsedInFunctionCall) {
@@ -234,9 +234,83 @@ TEST_F(PrivateToLocalTest, UsedInFunctionCall) {
                OpReturn
                OpFunctionEnd
   )";
-  auto result = SinglePassRunAndDisassemble<opt::StrengthReductionPass>(
+  auto result = SinglePassRunAndDisassemble<StrengthReductionPass>(
       text, /* skip_nop = */ true, /* do_validation = */ false);
-  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
 }
+
+TEST_F(PrivateToLocalTest, CreatePointerToAmbiguousStruct1) {
+  // Test that the correct pointer type is picked up.
+  const std::string text = R"(
+; CHECK: [[struct1:%[a-zA-Z_\d]+]] = OpTypeStruct
+; CHECK: [[struct2:%[a-zA-Z_\d]+]] = OpTypeStruct
+; CHECK: [[priv_ptr:%[\w]+]] = OpTypePointer Private [[struct1]]
+; CHECK: [[fuct_ptr2:%[\w]+]] = OpTypePointer Function [[struct2]]
+; CHECK: [[fuct_ptr1:%[\w]+]] = OpTypePointer Function [[struct1]]
+; CHECK: OpFunction
+; CHECK: OpLabel
+; CHECK-NEXT: [[newvar:%[a-zA-Z_\d]+]] = OpVariable [[fuct_ptr1]] Function
+; CHECK: OpLoad [[struct1]] [[newvar]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource GLSL 430
+          %3 = OpTypeVoid
+          %4 = OpTypeFunction %3
+          %5 = OpTypeFloat 32
+    %struct1 = OpTypeStruct %5
+    %struct2 = OpTypeStruct %5
+          %6 = OpTypePointer Private %struct1
+  %func_ptr2 = OpTypePointer Function %struct2
+          %8 = OpVariable %6 Private
+          %2 = OpFunction %3 None %4
+          %7 = OpLabel
+          %9 = OpLoad %struct1 %8
+               OpReturn
+               OpFunctionEnd
+  )";
+  SinglePassRunAndMatch<PrivateToLocalPass>(text, false);
+}
+
+TEST_F(PrivateToLocalTest, CreatePointerToAmbiguousStruct2) {
+  // Test that the correct pointer type is picked up.
+  const std::string text = R"(
+; CHECK: [[struct1:%[a-zA-Z_\d]+]] = OpTypeStruct
+; CHECK: [[struct2:%[a-zA-Z_\d]+]] = OpTypeStruct
+; CHECK: [[priv_ptr:%[\w]+]] = OpTypePointer Private [[struct2]]
+; CHECK: [[fuct_ptr1:%[\w]+]] = OpTypePointer Function [[struct1]]
+; CHECK: [[fuct_ptr2:%[\w]+]] = OpTypePointer Function [[struct2]]
+; CHECK: OpFunction
+; CHECK: OpLabel
+; CHECK-NEXT: [[newvar:%[a-zA-Z_\d]+]] = OpVariable [[fuct_ptr2]] Function
+; CHECK: OpLoad [[struct2]] [[newvar]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource GLSL 430
+          %3 = OpTypeVoid
+          %4 = OpTypeFunction %3
+          %5 = OpTypeFloat 32
+    %struct1 = OpTypeStruct %5
+    %struct2 = OpTypeStruct %5
+          %6 = OpTypePointer Private %struct2
+  %func_ptr2 = OpTypePointer Function %struct1
+          %8 = OpVariable %6 Private
+          %2 = OpFunction %3 None %4
+          %7 = OpLabel
+          %9 = OpLoad %struct2 %8
+               OpReturn
+               OpFunctionEnd
+  )";
+  SinglePassRunAndMatch<PrivateToLocalPass>(text, false);
+}
+
 #endif
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

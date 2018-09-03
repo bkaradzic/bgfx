@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_TEXT_HANDLER_H_
-#define LIBSPIRV_TEXT_HANDLER_H_
+#ifndef SOURCE_TEXT_HANDLER_H_
+#define SOURCE_TEXT_HANDLER_H_
 
 #include <iomanip>
+#include <set>
 #include <sstream>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
-#include "diagnostic.h"
-#include "instruction.h"
-#include "message.h"
+#include "source/diagnostic.h"
+#include "source/instruction.h"
+#include "source/text.h"
 #include "spirv-tools/libspirv.h"
-#include "text.h"
 
-namespace libspirv {
+namespace spvtools {
+
 // Structures
 
 // This is a lattice for tracking types.
@@ -117,7 +120,7 @@ class ClampToZeroIfUnsignedType<
 // Encapsulates the data used during the assembly of a SPIR-V module.
 class AssemblyContext {
  public:
-  AssemblyContext(spv_text text, const spvtools::MessageConsumer& consumer,
+  AssemblyContext(spv_text text, const MessageConsumer& consumer,
                   std::set<uint32_t>&& ids_to_preserve = std::set<uint32_t>())
       : current_position_({}),
         consumer_(consumer),
@@ -152,7 +155,7 @@ class AssemblyContext {
   // stream, and for the given error code. Any data written to this object will
   // show up in pDiagnsotic on destruction.
   DiagnosticStream diagnostic(spv_result_t error) {
-    return DiagnosticStream(current_position_, consumer_, error);
+    return DiagnosticStream(current_position_, consumer_, "", error);
   }
 
   // Returns a diagnostic object with the default assembly error code.
@@ -249,11 +252,13 @@ class AssemblyContext {
   // Maps an extended instruction import Id to the extended instruction type.
   std::unordered_map<uint32_t, spv_ext_inst_type_t> import_id_to_ext_inst_type_;
   spv_position_t current_position_;
-  spvtools::MessageConsumer consumer_;
+  MessageConsumer consumer_;
   spv_text text_;
   uint32_t bound_;
   uint32_t next_id_;
   std::set<uint32_t> ids_to_preserve_;
 };
-}  // namespace libspirv
-#endif  // _LIBSPIRV_TEXT_HANDLER_H_
+
+}  // namespace spvtools
+
+#endif  // SOURCE_TEXT_HANDLER_H_

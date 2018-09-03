@@ -17,22 +17,22 @@
 #include <string>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
-#include "val_fixtures.h"
+#include "test/unit_spirv.h"
+#include "test/val/val_fixtures.h"
 
+namespace spvtools {
+namespace val {
 namespace {
 
 using ::testing::HasSubstr;
 using ::testing::Not;
 
-using std::string;
-
 using ValidateTypeUnique = spvtest::ValidateBase<bool>;
 
 const spv_result_t kDuplicateTypeError = SPV_ERROR_INVALID_DATA;
 
-const string& GetHeader() {
-  static const string header = R"(
+const std::string& GetHeader() {
+  static const std::string header = R"(
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -64,8 +64,8 @@ OpMemoryModel Logical GLSL450
   return header;
 }
 
-const string& GetBody() {
-  static const string body = R"(
+const std::string& GetBody() {
+  static const std::string body = R"(
 %main = OpFunction %voidt None %vfunct
 %mainl = OpLabel
 %a = OpIAdd %uintt %const3 %val3
@@ -90,19 +90,19 @@ OpFunctionEnd
 
 // Returns expected error string if |opcode| produces a duplicate type
 // declaration.
-string GetErrorString(SpvOp opcode) {
+std::string GetErrorString(SpvOp opcode) {
   return "Duplicate non-aggregate type declarations are not allowed. Opcode: " +
          std::string(spvOpcodeString(opcode));
 }
 
 TEST_F(ValidateTypeUnique, success) {
-  string str = GetHeader() + GetBody();
+  std::string str = GetHeader() + GetBody();
   CompileSuccessfully(str.c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateTypeUnique, duplicate_void) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %boolt2 = OpTypeVoid
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -111,7 +111,7 @@ TEST_F(ValidateTypeUnique, duplicate_void) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_bool) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %boolt2 = OpTypeBool
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -120,7 +120,7 @@ TEST_F(ValidateTypeUnique, duplicate_bool) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_int) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %uintt2 = OpTypeInt 32 0
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -129,7 +129,7 @@ TEST_F(ValidateTypeUnique, duplicate_int) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_float) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %floatt2 = OpTypeFloat 32
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -138,7 +138,7 @@ TEST_F(ValidateTypeUnique, duplicate_float) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_vec3) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %vec3t2 = OpTypeVector %floatt 3
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -148,7 +148,7 @@ TEST_F(ValidateTypeUnique, duplicate_vec3) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_mat33) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %mat33t2 = OpTypeMatrix %vec3t 3
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -158,7 +158,7 @@ TEST_F(ValidateTypeUnique, duplicate_mat33) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_vfunc) {
-  string str = GetHeader() + R"(
+  std::string str = GetHeader() + R"(
 %vfunct2 = OpTypeFunction %voidt
 )" + GetBody();
   CompileSuccessfully(str.c_str());
@@ -168,7 +168,7 @@ TEST_F(ValidateTypeUnique, duplicate_vfunc) {
 }
 
 TEST_F(ValidateTypeUnique, duplicate_pipe_storage) {
-  string str = R"(
+  std::string str = R"(
 OpCapability Addresses
 OpCapability Kernel
 OpCapability Linkage
@@ -185,7 +185,7 @@ OpMemoryModel Physical32 OpenCL
 }
 
 TEST_F(ValidateTypeUnique, duplicate_named_barrier) {
-  string str = R"(
+  std::string str = R"(
 OpCapability Addresses
 OpCapability Kernel
 OpCapability Linkage
@@ -201,7 +201,7 @@ OpMemoryModel Physical32 OpenCL
 }
 
 TEST_F(ValidateTypeUnique, duplicate_forward_pointer) {
-  string str = R"(
+  std::string str = R"(
 OpCapability Addresses
 OpCapability Kernel
 OpCapability GenericPointer
@@ -219,7 +219,7 @@ OpTypeForwardPointer %ptr2 Generic
 }
 
 TEST_F(ValidateTypeUnique, duplicate_void_with_extension) {
-  string str = R"(
+  std::string str = R"(
 OpCapability Addresses
 OpCapability Kernel
 OpCapability Linkage
@@ -236,7 +236,7 @@ OpMemoryModel Physical32 OpenCL
 }
 
 TEST_F(ValidateTypeUnique, DuplicatePointerTypesNoExtension) {
-  string str = R"(
+  std::string str = R"(
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -245,13 +245,11 @@ OpMemoryModel Logical GLSL450
 %ptr2 = OpTypePointer Input %u32
 )";
   CompileSuccessfully(str.c_str());
-  ASSERT_EQ(kDuplicateTypeError, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr(GetErrorString(SpvOpTypePointer)));
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateTypeUnique, DuplicatePointerTypesWithExtension) {
-  string str = R"(
+  std::string str = R"(
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_variable_pointers"
@@ -266,4 +264,6 @@ OpMemoryModel Logical GLSL450
               Not(HasSubstr(GetErrorString(SpvOpTypePointer))));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

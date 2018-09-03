@@ -12,56 +12,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_REMOVE_DUPLICATES_PASS_H_
-#define LIBSPIRV_OPT_REMOVE_DUPLICATES_PASS_H_
+#ifndef SOURCE_OPT_REMOVE_DUPLICATES_PASS_H_
+#define SOURCE_OPT_REMOVE_DUPLICATES_PASS_H_
 
 #include <unordered_map>
+#include <vector>
 
-#include "decoration_manager.h"
-#include "def_use_manager.h"
-#include "ir_context.h"
-#include "module.h"
-#include "pass.h"
+#include "source/opt/decoration_manager.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
 
 using IdDecorationsList =
-    std::unordered_map<uint32_t, std::vector<ir::Instruction*>>;
+    std::unordered_map<uint32_t, std::vector<Instruction*>>;
 
 // See optimizer.hpp for documentation.
 class RemoveDuplicatesPass : public Pass {
  public:
   const char* name() const override { return "remove-duplicates"; }
-  Status Process(ir::IRContext*) override;
+  Status Process() override;
+
   // TODO(pierremoreau): Move this function somewhere else (e.g. pass.h or
   // within the type manager)
   // Returns whether two types are equal, and have the same decorations.
-  static bool AreTypesEqual(const ir::Instruction& inst1,
-                            const ir::Instruction& inst2,
-                            ir::IRContext* context);
+  static bool AreTypesEqual(const Instruction& inst1, const Instruction& inst2,
+                            IRContext* context);
 
  private:
-  // Remove duplicate capabilities from the module attached to |ir_context|.
+  // Remove duplicate capabilities from the module
   //
   // Returns true if the module was modified, false otherwise.
-  bool RemoveDuplicateCapabilities(ir::IRContext* ir_context) const;
-  // Remove duplicate extended instruction imports from the module attached to
-  // |ir_context|.
+  bool RemoveDuplicateCapabilities() const;
+  // Remove duplicate extended instruction imports from the module
   //
   // Returns true if the module was modified, false otherwise.
-  bool RemoveDuplicatesExtInstImports(ir::IRContext* ir_context) const;
-  // Remove duplicate types from the module attached to |ir_context|.
+  bool RemoveDuplicatesExtInstImports() const;
+  // Remove duplicate types from the module
   //
   // Returns true if the module was modified, false otherwise.
-  bool RemoveDuplicateTypes(ir::IRContext* ir_context) const;
-  // Remove duplicate decorations from the module attached to |ir_context|.
+  bool RemoveDuplicateTypes() const;
+  // Remove duplicate decorations from the module
   //
   // Returns true if the module was modified, false otherwise.
-  bool RemoveDuplicateDecorations(ir::IRContext* ir_context) const;
+  bool RemoveDuplicateDecorations() const;
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_REMOVE_DUPLICATES_PASS_H_
+#endif  // SOURCE_OPT_REMOVE_DUPLICATES_PASS_H_

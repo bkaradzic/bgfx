@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gmock/gmock.h"
-#include "linker_fixture.h"
+#include <string>
 
+#include "gmock/gmock.h"
+#include "test/link/linker_fixture.h"
+
+namespace spvtools {
 namespace {
 
 using ::testing::HasSubstr;
-
 using IdsLimit = spvtest::LinkerTest;
 
 TEST_F(IdsLimit, UnderLimit) {
@@ -66,4 +68,5 @@ TEST_F(IdsLimit, OverLimit) {
                         "the current ID bound."));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

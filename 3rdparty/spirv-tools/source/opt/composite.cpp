@@ -14,19 +14,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "composite.h"
-
-#include "ir_context.h"
-#include "iterator.h"
-#include "spirv/1.2/GLSL.std.450.h"
+#include "source/opt/composite.h"
 
 #include <vector>
+
+#include "source/opt/ir_context.h"
+#include "source/opt/iterator.h"
+#include "spirv/1.2/GLSL.std.450.h"
 
 namespace spvtools {
 namespace opt {
 
 bool ExtInsMatch(const std::vector<uint32_t>& extIndices,
-                 const ir::Instruction* insInst, const uint32_t extOffset) {
+                 const Instruction* insInst, const uint32_t extOffset) {
   uint32_t numIndices = static_cast<uint32_t>(extIndices.size()) - extOffset;
   if (numIndices != insInst->NumInOperands() - 2) return false;
   for (uint32_t i = 0; i < numIndices; ++i)
@@ -36,7 +36,7 @@ bool ExtInsMatch(const std::vector<uint32_t>& extIndices,
 }
 
 bool ExtInsConflict(const std::vector<uint32_t>& extIndices,
-                    const ir::Instruction* insInst, const uint32_t extOffset) {
+                    const Instruction* insInst, const uint32_t extOffset) {
   if (extIndices.size() - extOffset == insInst->NumInOperands() - 2)
     return false;
   uint32_t extNumIndices = static_cast<uint32_t>(extIndices.size()) - extOffset;

@@ -15,11 +15,14 @@
 // Assembler tests for instructions in the "Function" section of the
 // SPIR-V spec.
 
-#include "unit_spirv.h"
+#include <string>
+#include <vector>
 
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::EnumCase;
@@ -74,4 +77,5 @@ TEST_F(OpFunctionControlTest, WrongFunctionControl) {
 // TODO(dneto): OpFunctionEnd
 // TODO(dneto): OpFunctionCall
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

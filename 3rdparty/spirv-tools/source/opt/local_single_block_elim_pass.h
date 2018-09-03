@@ -14,20 +14,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_LOCAL_SINGLE_BLOCK_ELIM_PASS_H_
-#define LIBSPIRV_OPT_LOCAL_SINGLE_BLOCK_ELIM_PASS_H_
+#ifndef SOURCE_OPT_LOCAL_SINGLE_BLOCK_ELIM_PASS_H_
+#define SOURCE_OPT_LOCAL_SINGLE_BLOCK_ELIM_PASS_H_
 
 #include <algorithm>
 #include <map>
 #include <queue>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "mem_pass.h"
-#include "module.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/mem_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
@@ -36,11 +37,12 @@ namespace opt {
 class LocalSingleBlockLoadStoreElimPass : public MemPass {
  public:
   LocalSingleBlockLoadStoreElimPass();
-  const char* name() const override { return "eliminate-local-single-block"; }
-  Status Process(ir::IRContext* c) override;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse;
+  const char* name() const override { return "eliminate-local-single-block"; }
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
   }
 
  private:
@@ -57,7 +59,7 @@ class LocalSingleBlockLoadStoreElimPass : public MemPass {
   // load id with previous id and delete load. Finally, check if
   // remaining stores are useless, and delete store and variable
   // where possible. Assumes logical addressing.
-  bool LocalSingleBlockLoadStoreElim(ir::Function* func);
+  bool LocalSingleBlockLoadStoreElim(Function* func);
 
   // Initialize extensions whitelist
   void InitExtensions();
@@ -65,7 +67,7 @@ class LocalSingleBlockLoadStoreElimPass : public MemPass {
   // Return true if all extensions in this module are supported by this pass.
   bool AllExtensionsSupported() const;
 
-  void Initialize(ir::IRContext* c);
+  void Initialize();
   Pass::Status ProcessImpl();
 
   // Map from function scope variable to a store of that variable in the
@@ -73,14 +75,14 @@ class LocalSingleBlockLoadStoreElimPass : public MemPass {
   // at the start of each block and incrementally updated as the block
   // is scanned. The stores are candidates for elimination. The map is
   // conservatively cleared when a function call is encountered.
-  std::unordered_map<uint32_t, ir::Instruction*> var2store_;
+  std::unordered_map<uint32_t, Instruction*> var2store_;
 
   // Map from function scope variable to a load of that variable in the
   // current block whose value is currently valid. This map is cleared
   // at the start of each block and incrementally updated as the block
   // is scanned. The stores are candidates for elimination. The map is
   // conservatively cleared when a function call is encountered.
-  std::unordered_map<uint32_t, ir::Instruction*> var2load_;
+  std::unordered_map<uint32_t, Instruction*> var2load_;
 
   // Set of variables whose most recent store in the current block cannot be
   // deleted, for example, if there is a load of the variable which is
@@ -100,4 +102,4 @@ class LocalSingleBlockLoadStoreElimPass : public MemPass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_LOCAL_SINGLE_BLOCK_ELIM_PASS_H_
+#endif  // SOURCE_OPT_LOCAL_SINGLE_BLOCK_ELIM_PASS_H_

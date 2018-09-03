@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_CONSTRUCTS_H_
-#define LIBSPIRV_OPT_CONSTRUCTS_H_
+#ifndef SOURCE_OPT_FUNCTION_H_
+#define SOURCE_OPT_FUNCTION_H_
 
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
-#include "basic_block.h"
-#include "instruction.h"
-#include "iterator.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/instruction.h"
+#include "source/opt/iterator.h"
 
 namespace spvtools {
-namespace ir {
+namespace opt {
 
 class CFG;
 class IRContext;
@@ -53,10 +54,6 @@ class Function {
   Instruction& DefInst() { return *def_inst_; }
   const Instruction& DefInst() const { return *def_inst_; }
 
-  // Sets the enclosing module for this function.
-  void SetParent(Module* module) { module_ = module; }
-  // Gets the enclosing module for this function
-  Module* GetParent() const { return module_; }
   // Appends a parameter to this function.
   inline void AddParameter(std::unique_ptr<Instruction> p);
   // Appends a basic block to this function.
@@ -65,6 +62,13 @@ class Function {
   inline void AddBasicBlock(std::unique_ptr<BasicBlock> b, iterator ip);
   template <typename T>
   inline void AddBasicBlocks(T begin, T end, iterator ip);
+
+  // Move basic block with |id| to the position after |ip|. Both have to be
+  // contained in this function.
+  inline void MoveBasicBlockToAfter(uint32_t id, BasicBlock* ip);
+
+  // Delete all basic blocks that contain no instructions.
+  inline void RemoveEmptyBlocks();
 
   // Saves the given function end instruction.
   inline void SetFunctionEnd(std::unique_ptr<Instruction> end_inst);
@@ -95,7 +99,7 @@ class Function {
 
   // Returns an iterator to the basic block |id|.
   iterator FindBlock(uint32_t bb_id) {
-    return std::find_if(begin(), end(), [bb_id](const ir::BasicBlock& it_bb) {
+    return std::find_if(begin(), end(), [bb_id](const BasicBlock& it_bb) {
       return bb_id == it_bb.id();
     });
   }
@@ -112,10 +116,7 @@ class Function {
   void ForEachParam(const std::function<void(const Instruction*)>& f,
                     bool run_on_debug_line_insts = false) const;
 
-  // Returns the context of the current function.
-  IRContext* context() const { return def_inst_->context(); }
-
-  BasicBlock* InsertBasicBlockAfter(std::unique_ptr<ir::BasicBlock>&& new_block,
+  BasicBlock* InsertBasicBlockAfter(std::unique_ptr<BasicBlock>&& new_block,
                                     BasicBlock* position);
 
   // Pretty-prints all the basic blocks in this function into a std::string.
@@ -125,8 +126,6 @@ class Function {
   std::string PrettyPrint(uint32_t options = 0u) const;
 
  private:
-  // The enclosing module.
-  Module* module_;
   // The OpFunction instruction that begins the definition of this function.
   std::unique_ptr<Instruction> def_inst_;
   // All parameters to this function.
@@ -141,7 +140,7 @@ class Function {
 std::ostream& operator<<(std::ostream& str, const Function& func);
 
 inline Function::Function(std::unique_ptr<Instruction> def_inst)
-    : module_(nullptr), def_inst_(std::move(def_inst)), end_inst_() {}
+    : def_inst_(std::move(def_inst)), end_inst_() {}
 
 inline void Function::AddParameter(std::unique_ptr<Instruction> p) {
   params_.emplace_back(std::move(p));
@@ -162,11 +161,30 @@ inline void Function::AddBasicBlocks(T src_begin, T src_end, iterator ip) {
                  std::make_move_iterator(src_end));
 }
 
+inline void Function::MoveBasicBlockToAfter(uint32_t id, BasicBlock* ip) {
+  auto block_to_move = std::move(*FindBlock(id).Get());
+
+  assert(block_to_move->GetParent() == ip->GetParent() &&
+         "Both blocks have to be in the same function.");
+
+  InsertBasicBlockAfter(std::move(block_to_move), ip);
+  blocks_.erase(std::find(std::begin(blocks_), std::end(blocks_), nullptr));
+}
+
+inline void Function::RemoveEmptyBlocks() {
+  auto first_empty =
+      std::remove_if(std::begin(blocks_), std::end(blocks_),
+                     [](const std::unique_ptr<BasicBlock>& bb) -> bool {
+                       return bb->GetLabelInst()->opcode() == SpvOpNop;
+                     });
+  blocks_.erase(first_empty, std::end(blocks_));
+}
+
 inline void Function::SetFunctionEnd(std::unique_ptr<Instruction> end_inst) {
   end_inst_ = std::move(end_inst);
 }
 
-}  // namespace ir
+}  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_CONSTRUCTS_H_
+#endif  // SOURCE_OPT_FUNCTION_H_

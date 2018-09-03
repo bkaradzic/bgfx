@@ -3914,7 +3914,7 @@
         { "kind" : "IdRef",         "name" : "'Target'" },
         { "kind" : "Decoration" }
       ],
-      "extensions" : [ "SPV_GOOGLE_decorate_string" ],
+      "extensions" : [ "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1" ],
       "version" : "None"
     },
     {
@@ -3925,7 +3925,7 @@
         { "kind" : "LiteralInteger", "name" : "'Member'" },
         { "kind" : "Decoration" }
       ],
-      "extensions" : [ "SPV_GOOGLE_decorate_string" ],
+      "extensions" : [ "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1" ],
       "version" : "None"
     },
     {
@@ -3991,6 +3991,7 @@
         {
           "enumerant" : "ConstOffsets",
           "value" : "0x0020",
+          "capabilities" : [ "ImageGatherExtended" ],
           "parameters" : [
             { "kind" : "IdRef" }
           ]
@@ -5550,12 +5551,14 @@
           "enumerant" : "OverrideCoverageNV",
           "value" : 5248,
           "capabilities" : [ "SampleMaskOverrideCoverageNV" ],
+          "extensions" : [ "SPV_NV_sample_mask_override_coverage" ],
           "version" : "None"
         },
         {
           "enumerant" : "PassthroughNV",
           "value" : 5250,
           "capabilities" : [ "GeometryShaderPassthroughNV" ],
+          "extensions" : [ "SPV_NV_geometry_shader_passthrough" ],
           "version" : "None"
         },
         {
@@ -5568,6 +5571,7 @@
           "enumerant" : "SecondaryViewportRelativeNV",
           "value" : 5256,
           "capabilities" : [ "ShaderStereoViewNV" ],
+          "extensions" : [ "SPV_NV_stereo_view_rendering" ],
           "version" : "None",
           "parameters" : [
             { "kind" : "LiteralInteger", "name" : "'Offset'" }
@@ -5960,12 +5964,14 @@
           "enumerant" : "SecondaryPositionNV",
           "value" : 5257,
           "capabilities" : [ "ShaderStereoViewNV" ],
+          "extensions" : [ "SPV_NV_stereo_view_rendering" ],
           "version" : "None"
         },
         {
           "enumerant" : "SecondaryViewportMaskNV",
           "value" : 5258,
           "capabilities" : [ "ShaderStereoViewNV" ],
+          "extensions" : [ "SPV_NV_stereo_view_rendering" ],
           "version" : "None"
         },
         {
@@ -6043,17 +6049,23 @@
         {
           "enumerant" : "PartitionedReduceNV",
           "value" : 6,
-          "capabilities" : [ "GroupNonUniformPartitionedNV" ]
+          "capabilities" : [ "GroupNonUniformPartitionedNV" ],
+          "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
+          "version" : "None"
         },
         {
           "enumerant" : "PartitionedInclusiveScanNV",
           "value" : 7,
-          "capabilities" : [ "GroupNonUniformPartitionedNV" ]
+          "capabilities" : [ "GroupNonUniformPartitionedNV" ],
+          "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
+          "version" : "None"
         },
         {
           "enumerant" : "PartitionedExclusiveScanNV",
           "value" : 8,
-          "capabilities" : [ "GroupNonUniformPartitionedNV" ]
+          "capabilities" : [ "GroupNonUniformPartitionedNV" ],
+          "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
+          "version" : "None"
         }
       ]
     },
@@ -6260,8 +6272,7 @@
         },
         {
           "enumerant" : "Int8",
-          "value" : 39,
-          "capabilities" : [ "Kernel" ]
+          "value" : 39
         },
         {
           "enumerant" : "InputAttachment",
@@ -6516,6 +6527,25 @@
           "enumerant" : "SampleMaskPostDepthCoverage",
           "value" : 4447,
           "extensions" : [ "SPV_KHR_post_depth_coverage" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StorageBuffer8BitAccess",
+          "value" : 4448,
+          "extensions" : [ "SPV_KHR_8bit_storage" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "UniformAndStorageBuffer8BitAccess",
+          "value" : 4449,
+          "capabilities" : [ "StorageBuffer8BitAccess" ],
+          "extensions" : [ "SPV_KHR_8bit_storage" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "StoragePushConstant8",
+          "value" : 4450,
+          "extensions" : [ "SPV_KHR_8bit_storage" ],
           "version" : "None"
         },
         {

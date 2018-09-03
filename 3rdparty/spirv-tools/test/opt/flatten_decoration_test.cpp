@@ -13,14 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
+#include <string>
+#include <vector>
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "gmock/gmock.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 // Returns the initial part of the assembly text for a valid
 // SPIR-V module, including instructions prior to decorations.
@@ -75,7 +77,7 @@ TEST_P(FlattenDecorationTest, TransformsDecorations) {
   const auto after =
       PreambleAssembly() + GetParam().expected + TypesAndFunctionsAssembly();
 
-  SinglePassRunAndCheck<opt::FlattenDecorationPass>(before, after, false, true);
+  SinglePassRunAndCheck<FlattenDecorationPass>(before, after, false, true);
 }
 
 INSTANTIATE_TEST_CASE_P(NoUses, FlattenDecorationTest,
@@ -231,4 +233,6 @@ INSTANTIATE_TEST_CASE_P(UnrelatedDecorations, FlattenDecorationTest,
                              "OpMemberDecorate %Point 1 Offset 4\n"},
                         }), );
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

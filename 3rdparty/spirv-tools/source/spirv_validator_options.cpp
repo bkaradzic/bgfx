@@ -15,7 +15,7 @@
 #include <cassert>
 #include <cstring>
 
-#include "spirv_validator_options.h"
+#include "source/spirv_validator_options.h"
 
 bool spvParseUniversalLimitsOptions(const char* s, spv_validator_limit* type) {
   auto match = [s](const char* b) {
@@ -84,5 +84,15 @@ void spvValidatorOptionsSetRelaxStoreStruct(spv_validator_options options,
 
 void spvValidatorOptionsSetRelaxLogicalPointer(spv_validator_options options,
                                                bool val) {
-  options->relax_logcial_pointer = val;
+  options->relax_logical_pointer = val;
+}
+
+void spvValidatorOptionsSetRelaxBlockLayout(spv_validator_options options,
+                                            bool val) {
+  options->relax_block_layout = val;
+}
+
+void spvValidatorOptionsSetSkipBlockLayout(spv_validator_options options,
+                                           bool val) {
+  options->skip_block_layout = val;
 }

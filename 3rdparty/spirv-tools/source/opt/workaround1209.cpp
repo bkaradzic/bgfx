@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "workaround1209.h"
+#include "source/opt/workaround1209.h"
 
 #include <list>
+#include <memory>
 #include <stack>
+#include <utility>
 
 namespace spvtools {
 namespace opt {
 
-Pass::Status Workaround1209::Process(ir::IRContext* c) {
-  InitializeProcessing(c);
+Pass::Status Workaround1209::Process() {
   bool modified = false;
   modified = RemoveOpUnreachableInLoops();
   return (modified ? Status::SuccessWithChange : Status::SuccessWithoutChange);
@@ -30,14 +31,14 @@ Pass::Status Workaround1209::Process(ir::IRContext* c) {
 bool Workaround1209::RemoveOpUnreachableInLoops() {
   bool modified = false;
   for (auto& func : *get_module()) {
-    std::list<ir::BasicBlock*> structured_order;
+    std::list<BasicBlock*> structured_order;
     cfg()->ComputeStructuredOrder(&func, &*func.begin(), &structured_order);
 
     // Keep track of the loop merges.  The top of the stack will always be the
     // loop merge for the loop that immediately contains the basic block being
     // processed.
     std::stack<uint32_t> loop_merges;
-    for (ir::BasicBlock* bb : structured_order) {
+    for (BasicBlock* bb : structured_order) {
       if (!loop_merges.empty() && bb->id() == loop_merges.top()) {
         loop_merges.pop();
       }
@@ -47,10 +48,10 @@ bool Workaround1209::RemoveOpUnreachableInLoops() {
           // We found an OpUnreachable inside a loop.
           // Replace it with an unconditional branch to the loop merge.
           context()->KillInst(&*bb->tail());
-          std::unique_ptr<ir::Instruction> new_branch(
-              new ir::Instruction(context(), SpvOpBranch, 0, 0,
-                                  {{spv_operand_type_t::SPV_OPERAND_TYPE_ID,
-                                    {loop_merges.top()}}}));
+          std::unique_ptr<Instruction> new_branch(
+              new Instruction(context(), SpvOpBranch, 0, 0,
+                              {{spv_operand_type_t::SPV_OPERAND_TYPE_ID,
+                                {loop_merges.top()}}}));
           context()->AnalyzeDefUse(&*new_branch);
           bb->AddInstruction(std::move(new_branch));
           modified = true;

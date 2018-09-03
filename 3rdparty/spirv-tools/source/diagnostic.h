@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_DIAGNOSTIC_H_
-#define LIBSPIRV_DIAGNOSTIC_H_
+#ifndef SOURCE_DIAGNOSTIC_H_
+#define SOURCE_DIAGNOSTIC_H_
 
 #include <sstream>
 #include <string>
 
 #include "spirv-tools/libspirv.hpp"
 
-namespace libspirv {
+namespace spvtools {
 
 // A DiagnosticStream remembers the current position of the input and an error
 // code, and captures diagnostic messages via the left-shift operator.
@@ -28,10 +28,13 @@ namespace libspirv {
 // emitted during the destructor.
 class DiagnosticStream {
  public:
-  DiagnosticStream(spv_position_t position,
-                   const spvtools::MessageConsumer& consumer,
+  DiagnosticStream(spv_position_t position, const MessageConsumer& consumer,
+                   const std::string& disassembled_instruction,
                    spv_result_t error)
-      : position_(position), consumer_(consumer), error_(error) {}
+      : position_(position),
+        consumer_(consumer),
+        disassembled_instruction_(disassembled_instruction),
+        error_(error) {}
 
   // Creates a DiagnosticStream from an expiring DiagnosticStream.
   // The new object takes the contents of the other, and prevents the
@@ -56,7 +59,8 @@ class DiagnosticStream {
  private:
   std::ostringstream stream_;
   spv_position_t position_;
-  spvtools::MessageConsumer consumer_;  // Message consumer callback.
+  MessageConsumer consumer_;  // Message consumer callback.
+  std::string disassembled_instruction_;
   spv_result_t error_;
 };
 
@@ -70,6 +74,6 @@ void UseDiagnosticAsMessageConsumer(spv_context context,
 
 std::string spvResultToString(spv_result_t res);
 
-}  // namespace libspirv
+}  // namespace spvtools
 
-#endif  // LIBSPIRV_DIAGNOSTIC_H_
+#endif  // SOURCE_DIAGNOSTIC_H_

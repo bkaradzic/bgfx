@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
-
 #include <string>
 
+#include "test/unit_spirv.h"
+
+namespace spvtools {
 namespace {
 
-using libspirv::AssemblyContext;
 using spvtest::AutoText;
 
 TEST(TextStartsWithOp, YesAtStart) {
@@ -71,4 +71,5 @@ TEST(TextStartsWithOp, NoForNearlyValueGeneration) {
   EXPECT_FALSE(AssemblyContext(AutoText("%foo"), nullptr).isStartOfNewInst());
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

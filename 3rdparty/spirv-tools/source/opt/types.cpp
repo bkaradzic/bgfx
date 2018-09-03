@@ -16,8 +16,10 @@
 #include <cassert>
 #include <cstdint>
 #include <sstream>
+#include <unordered_set>
 
-#include "types.h"
+#include "source/opt/types.h"
+#include "source/util/make_unique.h"
 
 namespace spvtools {
 namespace opt {
@@ -94,9 +96,9 @@ bool Type::IsUniqueType(bool allowVariablePointers) const {
 std::unique_ptr<Type> Type::Clone() const {
   std::unique_ptr<Type> type;
   switch (kind_) {
-#define DeclareKindCase(kind)                \
-  case k##kind:                              \
-    type.reset(new kind(*this->As##kind())); \
+#define DeclareKindCase(kind)                   \
+  case k##kind:                                 \
+    type = MakeUnique<kind>(*this->As##kind()); \
     break;
     DeclareKindCase(Void);
     DeclareKindCase(Bool);
@@ -171,7 +173,12 @@ bool Type::operator==(const Type& other) const {
   }
 }
 
-void Type::GetHashWords(std::vector<uint32_t>* words) const {
+void Type::GetHashWords(std::vector<uint32_t>* words,
+                        std::unordered_set<const Type*>* seen) const {
+  if (!seen->insert(this).second) {
+    return;
+  }
+
   words->push_back(kind_);
   for (const auto& d : decorations_) {
     for (auto w : d) {
@@ -180,9 +187,9 @@ void Type::GetHashWords(std::vector<uint32_t>* words) const {
   }
 
   switch (kind_) {
-#define DeclareKindCase(type)             \
-  case k##type:                           \
-    As##type()->GetExtraHashWords(words); \
+#define DeclareKindCase(type)                   \
+  case k##type:                                 \
+    As##type()->GetExtraHashWords(words, seen); \
     break;
     DeclareKindCase(Void);
     DeclareKindCase(Bool);
@@ -212,6 +219,8 @@ void Type::GetHashWords(std::vector<uint32_t>* words) const {
       assert(false && "Unhandled type");
       break;
   }
+
+  seen->erase(this);
 }
 
 size_t Type::HashValue() const {
@@ -225,7 +234,7 @@ size_t Type::HashValue() const {
   return std::hash<std::u32string>()(h);
 }
 
-bool Integer::IsSame(const Type* that) const {
+bool Integer::IsSameImpl(const Type* that, IsSameCache*) const {
   const Integer* it = that->AsInteger();
   return it && width_ == it->width_ && signed_ == it->signed_ &&
          HasSameDecorations(that);
@@ -237,12 +246,13 @@ std::string Integer::str() const {
   return oss.str();
 }
 
-void Integer::GetExtraHashWords(std::vector<uint32_t>* words) const {
+void Integer::GetExtraHashWords(std::vector<uint32_t>* words,
+                                std::unordered_set<const Type*>*) const {
   words->push_back(width_);
   words->push_back(signed_);
 }
 
-bool Float::IsSame(const Type* that) const {
+bool Float::IsSameImpl(const Type* that, IsSameCache*) const {
   const Float* ft = that->AsFloat();
   return ft && width_ == ft->width_ && HasSameDecorations(that);
 }
@@ -253,7 +263,8 @@ std::string Float::str() const {
   return oss.str();
 }
 
-void Float::GetExtraHashWords(std::vector<uint32_t>* words) const {
+void Float::GetExtraHashWords(std::vector<uint32_t>* words,
+                              std::unordered_set<const Type*>*) const {
   words->push_back(width_);
 }
 
@@ -262,10 +273,11 @@ Vector::Vector(Type* type, uint32_t count)
   assert(type->AsBool() || type->AsInteger() || type->AsFloat());
 }
 
-bool Vector::IsSame(const Type* that) const {
+bool Vector::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Vector* vt = that->AsVector();
   if (!vt) return false;
-  return count_ == vt->count_ && element_type_->IsSame(vt->element_type_) &&
+  return count_ == vt->count_ &&
+         element_type_->IsSameImpl(vt->element_type_, seen) &&
          HasSameDecorations(that);
 }
 
@@ -275,8 +287,9 @@ std::string Vector::str() const {
   return oss.str();
 }
 
-void Vector::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  element_type_->GetHashWords(words);
+void Vector::GetExtraHashWords(std::vector<uint32_t>* words,
+                               std::unordered_set<const Type*>* seen) const {
+  element_type_->GetHashWords(words, seen);
   words->push_back(count_);
 }
 
@@ -285,10 +298,11 @@ Matrix::Matrix(Type* type, uint32_t count)
   assert(type->AsVector());
 }
 
-bool Matrix::IsSame(const Type* that) const {
+bool Matrix::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Matrix* mt = that->AsMatrix();
   if (!mt) return false;
-  return count_ == mt->count_ && element_type_->IsSame(mt->element_type_) &&
+  return count_ == mt->count_ &&
+         element_type_->IsSameImpl(mt->element_type_, seen) &&
          HasSameDecorations(that);
 }
 
@@ -298,8 +312,9 @@ std::string Matrix::str() const {
   return oss.str();
 }
 
-void Matrix::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  element_type_->GetHashWords(words);
+void Matrix::GetExtraHashWords(std::vector<uint32_t>* words,
+                               std::unordered_set<const Type*>* seen) const {
+  element_type_->GetHashWords(words, seen);
   words->push_back(count_);
 }
 
@@ -317,13 +332,14 @@ Image::Image(Type* type, SpvDim dimen, uint32_t d, bool array, bool multisample,
   // TODO(antiagainst): check sampled_type
 }
 
-bool Image::IsSame(const Type* that) const {
+bool Image::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Image* it = that->AsImage();
   if (!it) return false;
   return dim_ == it->dim_ && depth_ == it->depth_ && arrayed_ == it->arrayed_ &&
          ms_ == it->ms_ && sampled_ == it->sampled_ && format_ == it->format_ &&
          access_qualifier_ == it->access_qualifier_ &&
-         sampled_type_->IsSame(it->sampled_type_) && HasSameDecorations(that);
+         sampled_type_->IsSameImpl(it->sampled_type_, seen) &&
+         HasSameDecorations(that);
 }
 
 std::string Image::str() const {
@@ -334,8 +350,9 @@ std::string Image::str() const {
   return oss.str();
 }
 
-void Image::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  sampled_type_->GetHashWords(words);
+void Image::GetExtraHashWords(std::vector<uint32_t>* words,
+                              std::unordered_set<const Type*>* seen) const {
+  sampled_type_->GetHashWords(words, seen);
   words->push_back(dim_);
   words->push_back(depth_);
   words->push_back(arrayed_);
@@ -345,10 +362,11 @@ void Image::GetExtraHashWords(std::vector<uint32_t>* words) const {
   words->push_back(access_qualifier_);
 }
 
-bool SampledImage::IsSame(const Type* that) const {
+bool SampledImage::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const SampledImage* sit = that->AsSampledImage();
   if (!sit) return false;
-  return image_type_->IsSame(sit->image_type_) && HasSameDecorations(that);
+  return image_type_->IsSameImpl(sit->image_type_, seen) &&
+         HasSameDecorations(that);
 }
 
 std::string SampledImage::str() const {
@@ -357,8 +375,9 @@ std::string SampledImage::str() const {
   return oss.str();
 }
 
-void SampledImage::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  image_type_->GetHashWords(words);
+void SampledImage::GetExtraHashWords(
+    std::vector<uint32_t>* words, std::unordered_set<const Type*>* seen) const {
+  image_type_->GetHashWords(words, seen);
 }
 
 Array::Array(Type* type, uint32_t length_id)
@@ -366,11 +385,12 @@ Array::Array(Type* type, uint32_t length_id)
   assert(!type->AsVoid());
 }
 
-bool Array::IsSame(const Type* that) const {
+bool Array::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Array* at = that->AsArray();
   if (!at) return false;
   return length_id_ == at->length_id_ &&
-         element_type_->IsSame(at->element_type_) && HasSameDecorations(that);
+         element_type_->IsSameImpl(at->element_type_, seen) &&
+         HasSameDecorations(that);
 }
 
 std::string Array::str() const {
@@ -379,20 +399,24 @@ std::string Array::str() const {
   return oss.str();
 }
 
-void Array::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  element_type_->GetHashWords(words);
+void Array::GetExtraHashWords(std::vector<uint32_t>* words,
+                              std::unordered_set<const Type*>* seen) const {
+  element_type_->GetHashWords(words, seen);
   words->push_back(length_id_);
 }
+
+void Array::ReplaceElementType(const Type* type) { element_type_ = type; }
 
 RuntimeArray::RuntimeArray(Type* type)
     : Type(kRuntimeArray), element_type_(type) {
   assert(!type->AsVoid());
 }
 
-bool RuntimeArray::IsSame(const Type* that) const {
+bool RuntimeArray::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const RuntimeArray* rat = that->AsRuntimeArray();
   if (!rat) return false;
-  return element_type_->IsSame(rat->element_type_) && HasSameDecorations(that);
+  return element_type_->IsSameImpl(rat->element_type_, seen) &&
+         HasSameDecorations(that);
 }
 
 std::string RuntimeArray::str() const {
@@ -401,11 +425,16 @@ std::string RuntimeArray::str() const {
   return oss.str();
 }
 
-void RuntimeArray::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  element_type_->GetHashWords(words);
+void RuntimeArray::GetExtraHashWords(
+    std::vector<uint32_t>* words, std::unordered_set<const Type*>* seen) const {
+  element_type_->GetHashWords(words, seen);
 }
 
-Struct::Struct(const std::vector<Type*>& types)
+void RuntimeArray::ReplaceElementType(const Type* type) {
+  element_type_ = type;
+}
+
+Struct::Struct(const std::vector<const Type*>& types)
     : Type(kStruct), element_types_(types) {
   for (const auto* t : types) {
     (void)t;
@@ -423,7 +452,7 @@ void Struct::AddMemberDecoration(uint32_t index,
   element_decorations_[index].push_back(std::move(decoration));
 }
 
-bool Struct::IsSame(const Type* that) const {
+bool Struct::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Struct* st = that->AsStruct();
   if (!st) return false;
   if (element_types_.size() != st->element_types_.size()) return false;
@@ -432,7 +461,8 @@ bool Struct::IsSame(const Type* that) const {
   if (!HasSameDecorations(that)) return false;
 
   for (size_t i = 0; i < element_types_.size(); ++i) {
-    if (!element_types_[i]->IsSame(st->element_types_[i])) return false;
+    if (!element_types_[i]->IsSameImpl(st->element_types_[i], seen))
+      return false;
   }
   for (const auto& p : element_decorations_) {
     if (st->element_decorations_.count(p.first) == 0) return false;
@@ -454,9 +484,10 @@ std::string Struct::str() const {
   return oss.str();
 }
 
-void Struct::GetExtraHashWords(std::vector<uint32_t>* words) const {
+void Struct::GetExtraHashWords(std::vector<uint32_t>* words,
+                               std::unordered_set<const Type*>* seen) const {
   for (auto* t : element_types_) {
-    t->GetHashWords(words);
+    t->GetHashWords(words, seen);
   }
   for (const auto& pair : element_decorations_) {
     words->push_back(pair.first);
@@ -468,7 +499,7 @@ void Struct::GetExtraHashWords(std::vector<uint32_t>* words) const {
   }
 }
 
-bool Opaque::IsSame(const Type* that) const {
+bool Opaque::IsSameImpl(const Type* that, IsSameCache*) const {
   const Opaque* ot = that->AsOpaque();
   if (!ot) return false;
   return name_ == ot->name_ && HasSameDecorations(that);
@@ -480,7 +511,8 @@ std::string Opaque::str() const {
   return oss.str();
 }
 
-void Opaque::GetExtraHashWords(std::vector<uint32_t>* words) const {
+void Opaque::GetExtraHashWords(std::vector<uint32_t>* words,
+                               std::unordered_set<const Type*>*) const {
   for (auto c : name_) {
     words->push_back(static_cast<char32_t>(c));
   }
@@ -489,22 +521,33 @@ void Opaque::GetExtraHashWords(std::vector<uint32_t>* words) const {
 Pointer::Pointer(const Type* type, SpvStorageClass sc)
     : Type(kPointer), pointee_type_(type), storage_class_(sc) {}
 
-bool Pointer::IsSame(const Type* that) const {
+bool Pointer::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Pointer* pt = that->AsPointer();
   if (!pt) return false;
   if (storage_class_ != pt->storage_class_) return false;
-  if (!pointee_type_->IsSame(pt->pointee_type_)) return false;
+  auto p = seen->insert(std::make_pair(this, that->AsPointer()));
+  if (!p.second) {
+    return true;
+  }
+  bool same_pointee = pointee_type_->IsSameImpl(pt->pointee_type_, seen);
+  seen->erase(p.first);
+  if (!same_pointee) {
+    return false;
+  }
   return HasSameDecorations(that);
 }
 
 std::string Pointer::str() const { return pointee_type_->str() + "*"; }
 
-void Pointer::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  pointee_type_->GetHashWords(words);
+void Pointer::GetExtraHashWords(std::vector<uint32_t>* words,
+                                std::unordered_set<const Type*>* seen) const {
+  pointee_type_->GetHashWords(words, seen);
   words->push_back(storage_class_);
 }
 
-Function::Function(Type* ret_type, const std::vector<Type*>& params)
+void Pointer::SetPointeeType(const Type* type) { pointee_type_ = type; }
+
+Function::Function(Type* ret_type, const std::vector<const Type*>& params)
     : Type(kFunction), return_type_(ret_type), param_types_(params) {
   for (auto* t : params) {
     (void)t;
@@ -512,13 +555,13 @@ Function::Function(Type* ret_type, const std::vector<Type*>& params)
   }
 }
 
-bool Function::IsSame(const Type* that) const {
+bool Function::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Function* ft = that->AsFunction();
   if (!ft) return false;
-  if (!return_type_->IsSame(ft->return_type_)) return false;
+  if (!return_type_->IsSameImpl(ft->return_type_, seen)) return false;
   if (param_types_.size() != ft->param_types_.size()) return false;
   for (size_t i = 0; i < param_types_.size(); ++i) {
-    if (!param_types_[i]->IsSame(ft->param_types_[i])) return false;
+    if (!param_types_[i]->IsSameImpl(ft->param_types_[i], seen)) return false;
   }
   return HasSameDecorations(that);
 }
@@ -535,14 +578,17 @@ std::string Function::str() const {
   return oss.str();
 }
 
-void Function::GetExtraHashWords(std::vector<uint32_t>* words) const {
-  return_type_->GetHashWords(words);
+void Function::GetExtraHashWords(std::vector<uint32_t>* words,
+                                 std::unordered_set<const Type*>* seen) const {
+  return_type_->GetHashWords(words, seen);
   for (const auto* t : param_types_) {
-    t->GetHashWords(words);
+    t->GetHashWords(words, seen);
   }
 }
 
-bool Pipe::IsSame(const Type* that) const {
+void Function::SetReturnType(const Type* type) { return_type_ = type; }
+
+bool Pipe::IsSameImpl(const Type* that, IsSameCache*) const {
   const Pipe* pt = that->AsPipe();
   if (!pt) return false;
   return access_qualifier_ == pt->access_qualifier_ && HasSameDecorations(that);
@@ -554,11 +600,12 @@ std::string Pipe::str() const {
   return oss.str();
 }
 
-void Pipe::GetExtraHashWords(std::vector<uint32_t>* words) const {
+void Pipe::GetExtraHashWords(std::vector<uint32_t>* words,
+                             std::unordered_set<const Type*>*) const {
   words->push_back(access_qualifier_);
 }
 
-bool ForwardPointer::IsSame(const Type* that) const {
+bool ForwardPointer::IsSameImpl(const Type* that, IsSameCache*) const {
   const ForwardPointer* fpt = that->AsForwardPointer();
   if (!fpt) return false;
   return target_id_ == fpt->target_id_ &&
@@ -577,10 +624,11 @@ std::string ForwardPointer::str() const {
   return oss.str();
 }
 
-void ForwardPointer::GetExtraHashWords(std::vector<uint32_t>* words) const {
+void ForwardPointer::GetExtraHashWords(
+    std::vector<uint32_t>* words, std::unordered_set<const Type*>* seen) const {
   words->push_back(target_id_);
   words->push_back(storage_class_);
-  if (pointer_) pointer_->GetHashWords(words);
+  if (pointer_) pointer_->GetHashWords(words, seen);
 }
 
 }  // namespace analysis

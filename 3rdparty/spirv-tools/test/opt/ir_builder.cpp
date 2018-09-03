@@ -12,31 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <vector>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/build_module.h"
+#include "source/opt/instruction.h"
+#include "source/opt/ir_builder.h"
+#include "source/opt/type_manager.h"
+#include "spirv-tools/libspirv.hpp"
 
 #ifdef SPIRV_EFFCEE
 #include "effcee/effcee.h"
 #endif
 
-#include "opt/basic_block.h"
-#include "opt/ir_builder.h"
-
-#include "opt/build_module.h"
-#include "opt/instruction.h"
-#include "opt/type_manager.h"
-#include "spirv-tools/libspirv.hpp"
-
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
-using ir::IRContext;
-using Analysis = IRContext::Analysis;
 
 #ifdef SPIRV_EFFCEE
 
+using Analysis = IRContext::Analysis;
 using IRBuilderTest = ::testing::Test;
 
 bool Validate(const std::vector<uint32_t>& bin) {
@@ -51,7 +51,7 @@ bool Validate(const std::vector<uint32_t>& bin) {
   return error == 0;
 }
 
-void Match(const std::string& original, ir::IRContext* context,
+void Match(const std::string& original, IRContext* context,
            bool do_validation = true) {
   std::vector<uint32_t> bin;
   context->module()->ToBinary(&bin, true);
@@ -112,18 +112,18 @@ TEST_F(IRBuilderTest, TestInsnAddition) {
 )";
 
   {
-    std::unique_ptr<ir::IRContext> context =
+    std::unique_ptr<IRContext> context =
         BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
 
-    ir::BasicBlock* bb = context->cfg()->block(18);
+    BasicBlock* bb = context->cfg()->block(18);
 
     // Build managers.
     context->get_def_use_mgr();
     context->get_instr_block(nullptr);
 
-    opt::InstructionBuilder builder(context.get(), &*bb->begin());
-    ir::Instruction* phi1 = builder.AddPhi(7, {9, 14});
-    ir::Instruction* phi2 = builder.AddPhi(10, {16, 14});
+    InstructionBuilder builder(context.get(), &*bb->begin());
+    Instruction* phi1 = builder.AddPhi(7, {9, 14});
+    Instruction* phi2 = builder.AddPhi(10, {16, 14});
 
     // Make sure the InstructionBuilder did not update the def/use manager.
     EXPECT_EQ(context->get_def_use_mgr()->GetDef(phi1->result_id()), nullptr);
@@ -135,20 +135,19 @@ TEST_F(IRBuilderTest, TestInsnAddition) {
   }
 
   {
-    std::unique_ptr<ir::IRContext> context =
+    std::unique_ptr<IRContext> context =
         BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
 
     // Build managers.
     context->get_def_use_mgr();
     context->get_instr_block(nullptr);
 
-    ir::BasicBlock* bb = context->cfg()->block(18);
-    opt::InstructionBuilder builder(
+    BasicBlock* bb = context->cfg()->block(18);
+    InstructionBuilder builder(
         context.get(), &*bb->begin(),
-        ir::IRContext::kAnalysisDefUse |
-            ir::IRContext::kAnalysisInstrToBlockMapping);
-    ir::Instruction* phi1 = builder.AddPhi(7, {9, 14});
-    ir::Instruction* phi2 = builder.AddPhi(10, {16, 14});
+        IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+    Instruction* phi1 = builder.AddPhi(7, {9, 14});
+    Instruction* phi2 = builder.AddPhi(10, {16, 14});
 
     // Make sure InstructionBuilder updated the def/use manager
     EXPECT_NE(context->get_def_use_mgr()->GetDef(phi1->result_id()), nullptr);
@@ -197,28 +196,28 @@ TEST_F(IRBuilderTest, TestCondBranchAddition) {
 )";
 
   {
-    std::unique_ptr<ir::IRContext> context =
+    std::unique_ptr<IRContext> context =
         BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
 
-    ir::Function& fn = *context->module()->begin();
+    Function& fn = *context->module()->begin();
 
-    ir::BasicBlock& bb_merge = *fn.begin();
+    BasicBlock& bb_merge = *fn.begin();
 
-    fn.begin().InsertBefore(std::unique_ptr<ir::BasicBlock>(
-        new ir::BasicBlock(std::unique_ptr<ir::Instruction>(new ir::Instruction(
+    fn.begin().InsertBefore(std::unique_ptr<BasicBlock>(
+        new BasicBlock(std::unique_ptr<Instruction>(new Instruction(
             context.get(), SpvOpLabel, 0, context->TakeNextId(), {})))));
-    ir::BasicBlock& bb_true = *fn.begin();
+    BasicBlock& bb_true = *fn.begin();
     {
-      opt::InstructionBuilder builder(context.get(), &*bb_true.begin());
+      InstructionBuilder builder(context.get(), &*bb_true.begin());
       builder.AddBranch(bb_merge.id());
     }
 
-    fn.begin().InsertBefore(std::unique_ptr<ir::BasicBlock>(
-        new ir::BasicBlock(std::unique_ptr<ir::Instruction>(new ir::Instruction(
+    fn.begin().InsertBefore(std::unique_ptr<BasicBlock>(
+        new BasicBlock(std::unique_ptr<Instruction>(new Instruction(
             context.get(), SpvOpLabel, 0, context->TakeNextId(), {})))));
-    ir::BasicBlock& bb_cond = *fn.begin();
+    BasicBlock& bb_cond = *fn.begin();
 
-    opt::InstructionBuilder builder(context.get(), &bb_cond);
+    InstructionBuilder builder(context.get(), &bb_cond);
     // This also test consecutive instruction insertion: merge selection +
     // branch.
     builder.AddConditionalBranch(9, bb_true.id(), bb_merge.id(), bb_merge.id());
@@ -251,12 +250,12 @@ OpReturn
 OpFunctionEnd
 )";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
   EXPECT_NE(nullptr, context);
 
-  opt::InstructionBuilder builder(
-      context.get(), &*context->module()->begin()->begin()->begin());
+  InstructionBuilder builder(context.get(),
+                             &*context->module()->begin()->begin()->begin());
   EXPECT_NE(nullptr, builder.AddSelect(3u, 4u, 5u, 6u));
 
   Match(text, context.get());
@@ -284,12 +283,12 @@ OpReturn
 OpFunctionEnd
 )";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
   EXPECT_NE(nullptr, context);
 
-  opt::InstructionBuilder builder(
-      context.get(), &*context->module()->begin()->begin()->begin());
+  InstructionBuilder builder(context.get(),
+                             &*context->module()->begin()->begin()->begin());
   std::vector<uint32_t> ids = {3u, 4u, 4u, 3u};
   EXPECT_NE(nullptr, builder.AddCompositeConstruct(5u, ids));
 
@@ -317,12 +316,12 @@ OpReturn
 OpFunctionEnd
 )";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
   EXPECT_NE(nullptr, context);
 
-  opt::InstructionBuilder builder(
-      context.get(), &*context->module()->begin()->begin()->begin());
+  InstructionBuilder builder(context.get(),
+                             &*context->module()->begin()->begin()->begin());
   EXPECT_NE(nullptr, builder.Add32BitUnsignedIntegerConstant(13));
   EXPECT_NE(nullptr, builder.Add32BitSignedIntegerConstant(-1));
 
@@ -362,14 +361,14 @@ OpReturn
 OpFunctionEnd
 )";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_2, nullptr, text);
   EXPECT_NE(nullptr, context);
 
-  opt::InstructionBuilder builder(
-      context.get(), &*context->module()->begin()->begin()->begin());
-  ir::Instruction* const_1 = builder.Add32BitUnsignedIntegerConstant(13);
-  ir::Instruction* const_2 = builder.Add32BitSignedIntegerConstant(-1);
+  InstructionBuilder builder(context.get(),
+                             &*context->module()->begin()->begin()->begin());
+  Instruction* const_1 = builder.Add32BitUnsignedIntegerConstant(13);
+  Instruction* const_2 = builder.Add32BitSignedIntegerConstant(-1);
 
   EXPECT_NE(nullptr, const_1);
   EXPECT_NE(nullptr, const_2);
@@ -378,15 +377,15 @@ OpFunctionEnd
   EXPECT_EQ(const_1, builder.Add32BitUnsignedIntegerConstant(13));
   EXPECT_EQ(const_2, builder.Add32BitSignedIntegerConstant(-1));
 
-  ir::Instruction* const_3 = builder.Add32BitUnsignedIntegerConstant(1);
-  ir::Instruction* const_4 = builder.Add32BitSignedIntegerConstant(34);
+  Instruction* const_3 = builder.Add32BitUnsignedIntegerConstant(1);
+  Instruction* const_4 = builder.Add32BitSignedIntegerConstant(34);
 
   // Try adding different constants to make sure the type is reused.
   EXPECT_NE(nullptr, const_3);
   EXPECT_NE(nullptr, const_4);
 
-  ir::Instruction* const_5 = builder.Add32BitUnsignedIntegerConstant(0);
-  ir::Instruction* const_6 = builder.Add32BitSignedIntegerConstant(0);
+  Instruction* const_5 = builder.Add32BitUnsignedIntegerConstant(0);
+  Instruction* const_6 = builder.Add32BitSignedIntegerConstant(0);
 
   // Try adding 0 as both signed and unsigned.
   EXPECT_NE(nullptr, const_5);
@@ -412,4 +411,6 @@ OpFunctionEnd
 
 #endif  // SPIRV_EFFCEE
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 TEST(OpcodeSplit, Default) {
@@ -25,4 +26,5 @@ TEST(OpcodeSplit, Default) {
   ASSERT_EQ(23, opcode);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

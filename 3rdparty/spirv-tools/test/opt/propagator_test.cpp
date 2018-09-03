@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "opt/build_module.h"
-#include "opt/cfg.h"
-#include "opt/ir_context.h"
-#include "opt/pass.h"
-#include "opt/propagator.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "source/opt/build_module.h"
+#include "source/opt/cfg.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/pass.h"
+#include "source/opt/propagator.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using ::testing::UnorderedElementsAre;
 
@@ -41,8 +45,8 @@ class PropagatorTest : public testing::Test {
                              << input << "\n";
   }
 
-  bool Propagate(const opt::SSAPropagator::VisitFunction& visit_fn) {
-    opt::SSAPropagator propagator(ctx_.get(), visit_fn);
+  bool Propagate(const SSAPropagator::VisitFunction& visit_fn) {
+    SSAPropagator propagator(ctx_.get(), visit_fn);
     bool retval = false;
     for (auto& fn : *ctx_->module()) {
       retval |= propagator.Run(&fn);
@@ -58,7 +62,7 @@ class PropagatorTest : public testing::Test {
     return values_vec_;
   }
 
-  std::unique_ptr<ir::IRContext> ctx_;
+  std::unique_ptr<IRContext> ctx_;
   std::map<uint32_t, uint32_t> values_;
   std::vector<uint32_t> values_vec_;
 };
@@ -101,20 +105,19 @@ TEST_F(PropagatorTest, LocalPropagate) {
                )";
   Assemble(spv_asm);
 
-  const auto visit_fn = [this](ir::Instruction* instr,
-                               ir::BasicBlock** dest_bb) {
+  const auto visit_fn = [this](Instruction* instr, BasicBlock** dest_bb) {
     *dest_bb = nullptr;
     if (instr->opcode() == SpvOpStore) {
       uint32_t lhs_id = instr->GetSingleWordOperand(0);
       uint32_t rhs_id = instr->GetSingleWordOperand(1);
-      ir::Instruction* rhs_def = ctx_->get_def_use_mgr()->GetDef(rhs_id);
+      Instruction* rhs_def = ctx_->get_def_use_mgr()->GetDef(rhs_id);
       if (rhs_def->opcode() == SpvOpConstant) {
         uint32_t val = rhs_def->GetSingleWordOperand(2);
         values_[lhs_id] = val;
-        return opt::SSAPropagator::kInteresting;
+        return SSAPropagator::kInteresting;
       }
     }
-    return opt::SSAPropagator::kVarying;
+    return SSAPropagator::kVarying;
   };
 
   EXPECT_TRUE(Propagate(visit_fn));
@@ -168,37 +171,37 @@ TEST_F(PropagatorTest, PropagateThroughPhis) {
 
   Assemble(spv_asm);
 
-  ir::Instruction *phi_instr = nullptr;
-  const auto visit_fn = [this, &phi_instr](ir::Instruction* instr,
-                                           ir::BasicBlock** dest_bb) {
+  Instruction* phi_instr = nullptr;
+  const auto visit_fn = [this, &phi_instr](Instruction* instr,
+                                           BasicBlock** dest_bb) {
     *dest_bb = nullptr;
     if (instr->opcode() == SpvOpLoad) {
       uint32_t rhs_id = instr->GetSingleWordOperand(2);
-      ir::Instruction* rhs_def = ctx_->get_def_use_mgr()->GetDef(rhs_id);
+      Instruction* rhs_def = ctx_->get_def_use_mgr()->GetDef(rhs_id);
       if (rhs_def->opcode() == SpvOpConstant) {
         uint32_t val = rhs_def->GetSingleWordOperand(2);
         values_[instr->result_id()] = val;
-        return opt::SSAPropagator::kInteresting;
+        return SSAPropagator::kInteresting;
       }
     } else if (instr->opcode() == SpvOpPhi) {
       phi_instr = instr;
-      opt::SSAPropagator::PropStatus retval;
+      SSAPropagator::PropStatus retval;
       for (uint32_t i = 2; i < instr->NumOperands(); i += 2) {
         uint32_t phi_arg_id = instr->GetSingleWordOperand(i);
         auto it = values_.find(phi_arg_id);
         if (it != values_.end()) {
           EXPECT_EQ(it->second, 4u);
-          retval = opt::SSAPropagator::kInteresting;
+          retval = SSAPropagator::kInteresting;
           values_[instr->result_id()] = it->second;
         } else {
-          retval = opt::SSAPropagator::kNotInteresting;
+          retval = SSAPropagator::kNotInteresting;
           break;
         }
       }
       return retval;
     }
 
-    return opt::SSAPropagator::kVarying;
+    return SSAPropagator::kVarying;
   };
 
   EXPECT_TRUE(Propagate(visit_fn));
@@ -212,3 +215,5 @@ TEST_F(PropagatorTest, PropagateThroughPhis) {
 }
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

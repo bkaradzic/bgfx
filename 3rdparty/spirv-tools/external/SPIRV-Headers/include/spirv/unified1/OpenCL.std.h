@@ -24,6 +24,9 @@
 ** IN THE MATERIALS.
 */
 
+#ifndef OPENCLstd_H
+#define OPENCLstd_H
+
 namespace OpenCLLIB {
 
 enum Entrypoints {
@@ -208,3 +211,5 @@ enum Entrypoints {
 };
 
 } // end namespace OpenCLLIB
+
+#endif  // #ifndef OPENCLstd_H

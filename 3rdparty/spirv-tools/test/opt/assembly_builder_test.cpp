@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "assembly_builder.h"
+#include "test/opt/assembly_builder.h"
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using AssemblyBuilderTest = PassTest<::testing::Test>;
 
 TEST_F(AssemblyBuilderTest, MinimalShader) {
@@ -44,9 +45,8 @@ TEST_F(AssemblyBuilderTest, MinimalShader) {
       // clang-format on
   };
 
-  SinglePassRunAndCheck<opt::NullPass>(builder.GetCode(),
-                                       JoinAllInsts(expected),
-                                       /* skip_nop = */ false);
+  SinglePassRunAndCheck<NullPass>(builder.GetCode(), JoinAllInsts(expected),
+                                  /* skip_nop = */ false);
 }
 
 TEST_F(AssemblyBuilderTest, ShaderWithConstants) {
@@ -158,9 +158,8 @@ TEST_F(AssemblyBuilderTest, ShaderWithConstants) {
                 "OpFunctionEnd",
       // clang-format on
   };
-  SinglePassRunAndCheck<opt::NullPass>(builder.GetCode(),
-                                       JoinAllInsts(expected),
-                                       /* skip_nop = */ false);
+  SinglePassRunAndCheck<NullPass>(builder.GetCode(), JoinAllInsts(expected),
+                                  /* skip_nop = */ false);
 }
 
 TEST_F(AssemblyBuilderTest, SpecConstants) {
@@ -242,9 +241,8 @@ TEST_F(AssemblyBuilderTest, SpecConstants) {
       // clang-format on
   };
 
-  SinglePassRunAndCheck<opt::NullPass>(builder.GetCode(),
-                                       JoinAllInsts(expected),
-                                       /* skip_nop = */ false);
+  SinglePassRunAndCheck<NullPass>(builder.GetCode(), JoinAllInsts(expected),
+                                  /* skip_nop = */ false);
 }
 
 TEST_F(AssemblyBuilderTest, AppendNames) {
@@ -276,9 +274,10 @@ TEST_F(AssemblyBuilderTest, AppendNames) {
       // clang-format on
   };
 
-  SinglePassRunAndCheck<opt::NullPass>(builder.GetCode(),
-                                       JoinAllInsts(expected),
-                                       /* skip_nop = */ false);
+  SinglePassRunAndCheck<NullPass>(builder.GetCode(), JoinAllInsts(expected),
+                                  /* skip_nop = */ false);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

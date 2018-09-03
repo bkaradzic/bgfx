@@ -18,171 +18,57 @@ set(VAL_TEST_COMMON_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/val_fixtures.h
 )
 
-
-add_spvtools_unittest(TARGET val_capability
-  SRCS val_capability_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_cfg
-  SRCS val_cfg_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_id
-  SRCS val_id_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_layout
-  SRCS val_layout_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_ssa
-  SRCS val_ssa_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_storage
-  SRCS val_storage_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_state
-  SRCS val_state_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_data
-	SRCS val_data_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_type_unique
-	SRCS val_type_unique_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_arithmetics
-	SRCS val_arithmetics_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_composites
-	SRCS val_composites_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_conversion
-	SRCS val_conversion_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_derivatives
-	SRCS val_derivatives_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_logicals
-	SRCS val_logicals_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_bitwise
-	SRCS val_bitwise_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_builtins
-	SRCS val_builtins_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_image
-	SRCS val_image_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_atomics
-	SRCS val_atomics_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_barriers
-	SRCS val_barriers_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_primitives
-        SRCS val_primitives_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_ext_inst
-	SRCS val_ext_inst_test.cpp
+add_spvtools_unittest(TARGET val_abcde
+  SRCS
+       val_adjacency_test.cpp
+       val_arithmetics_test.cpp
+       val_atomics_test.cpp
+       val_barriers_test.cpp
+       val_bitwise_test.cpp
+       val_builtins_test.cpp
+       val_capability_test.cpp
+       val_cfg_test.cpp
+       val_composites_test.cpp
+       val_conversion_test.cpp
+       val_data_test.cpp
+       val_decoration_test.cpp
+       val_derivatives_test.cpp
+       val_explicit_reserved_test.cpp
+       val_extensions_test.cpp
+       val_ext_inst_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
 )
 
 add_spvtools_unittest(TARGET val_limits
-	SRCS val_limits_test.cpp
+  SRCS val_limits_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
 )
 
-add_spvtools_unittest(TARGET val_validation_state
-	SRCS val_validation_state_test.cpp
+add_spvtools_unittest(TARGET val_ijklmnop
+  SRCS
+       val_id_test.cpp
+       val_image_test.cpp
+       val_interfaces_test.cpp
+       val_layout_test.cpp
+       val_literals_test.cpp
+       val_logicals_test.cpp
+       val_non_uniform_test.cpp
+       val_primitives_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
 )
 
-add_spvtools_unittest(TARGET val_decoration
-	SRCS val_decoration_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_literals
-	SRCS val_literals_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_extensions
-	SRCS val_extensions_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_adjacency
-        SRCS val_adjacency_test.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET val_version
-        SRCS val_version_test.cpp
+add_spvtools_unittest(TARGET val_stuvw
+  SRCS
+       val_ssa_test.cpp
+       val_state_test.cpp
+       val_storage_test.cpp
+       val_type_unique_test.cpp
+       val_validation_state_test.cpp
+       val_version_test.cpp
+       val_webgpu_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
 )

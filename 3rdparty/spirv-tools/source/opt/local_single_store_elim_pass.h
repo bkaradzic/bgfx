@@ -14,130 +14,82 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_LOCAL_SINGLE_STORE_ELIM_PASS_H_
-#define LIBSPIRV_OPT_LOCAL_SINGLE_STORE_ELIM_PASS_H_
+#ifndef SOURCE_OPT_LOCAL_SINGLE_STORE_ELIM_PASS_H_
+#define SOURCE_OPT_LOCAL_SINGLE_STORE_ELIM_PASS_H_
 
 #include <algorithm>
 #include <map>
 #include <queue>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "mem_pass.h"
-#include "module.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/mem_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
 
 // See optimizer.hpp for documentation.
-class LocalSingleStoreElimPass : public MemPass {
-  using cbb_ptr = const ir::BasicBlock*;
+class LocalSingleStoreElimPass : public Pass {
+  using cbb_ptr = const BasicBlock*;
 
  public:
   LocalSingleStoreElimPass();
-  const char* name() const override { return "eliminate-local-single-store"; }
-  Status Process(ir::IRContext* irContext) override;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse;
+  const char* name() const override { return "eliminate-local-single-store"; }
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
   }
 
  private:
-  // Return true if all refs through |ptrId| are only loads or stores and
-  // cache ptrId in supported_ref_ptrs_. TODO(dnovillo): This function is
-  // replicated in other passes and it's slightly different in every pass. Is it
-  // possible to make one common implementation?
-  bool HasOnlySupportedRefs(uint32_t ptrId);
-
-  // Find all function scope variables in |func| that are stored to
-  // only once (SSA) and map to their stored value id. Only analyze
-  // variables of scalar, vector, matrix types and struct and array
-  // types comprising only these types. Currently this analysis is
-  // is not done in the presence of function calls. TODO(): Allow
-  // analysis in the presence of function calls.
-  void SingleStoreAnalyze(ir::Function* func);
-
-  using GetBlocksFunction =
-      std::function<const std::vector<ir::BasicBlock*>*(const ir::BasicBlock*)>;
-
-  /// Returns the block successors function for the augmented CFG.
-  GetBlocksFunction AugmentedCFGSuccessorsFunction() const;
-
-  /// Returns the block predecessors function for the augmented CFG.
-  GetBlocksFunction AugmentedCFGPredecessorsFunction() const;
-
-  // Calculate immediate dominators for |func|'s CFG. Leaves result
-  // in idom_. Entries for augmented CFG (pseudo blocks) are not created.
-  // TODO(dnovillo): Move to new CFG class.
-  void CalculateImmediateDominators(ir::Function* func);
-
-  // Return true if instruction in |blk0| at ordinal position |idx0|
-  // dominates instruction in |blk1| at position |idx1|.
-  bool Dominates(ir::BasicBlock* blk0, uint32_t idx0, ir::BasicBlock* blk1,
-                 uint32_t idx1);
-
-  // For each load of an SSA variable in |func|, replace all uses of
-  // the load with the value stored if the store dominates the load.
-  // Assumes that SingleStoreAnalyze() has just been run. Return true
-  // if any instructions are modified.
-  bool SingleStoreProcess(ir::Function* func);
-
   // Do "single-store" optimization of function variables defined only
   // with a single non-access-chain store in |func|. Replace all their
   // non-access-chain loads with the value that is stored and eliminate
   // any resulting dead code.
-  bool LocalSingleStoreElim(ir::Function* func);
+  bool LocalSingleStoreElim(Function* func);
 
   // Initialize extensions whitelist
-  void InitExtensions();
+  void InitExtensionWhiteList();
 
   // Return true if all extensions in this module are allowed by this pass.
   bool AllExtensionsSupported() const;
 
-  void Initialize(ir::IRContext* irContext);
   Pass::Status ProcessImpl();
 
-  // Map from block's label id to block
-  std::unordered_map<uint32_t, ir::BasicBlock*> label2block_;
+  // If there is a single store to |var_inst|, and it covers the entire
+  // variable, then replace all of the loads of the entire variable that are
+  // dominated by the store by the value that was stored.  Returns true if the
+  // module was changed.
+  bool ProcessVariable(Instruction* var_inst);
 
-  // Map from SSA Variable to its single store
-  std::unordered_map<uint32_t, ir::Instruction*> ssa_var2store_;
+  // Collects all of the uses of |var_inst| into |uses|.  This looks through
+  // OpObjectCopy's that copy the address of the variable, and collects those
+  // uses as well.
+  void FindUses(const Instruction* var_inst,
+                std::vector<Instruction*>* uses) const;
 
-  // Map from store to its ordinal position in its block.
-  std::unordered_map<ir::Instruction*, uint32_t> store2idx_;
+  // Returns a store to |var_inst| if
+  //   - it is a store to the entire variable,
+  //   - and there are no other instructions that may modify |var_inst|.
+  Instruction* FindSingleStoreAndCheckUses(
+      Instruction* var_inst, const std::vector<Instruction*>& users) const;
 
-  // Map from store to its block.
-  std::unordered_map<ir::Instruction*, ir::BasicBlock*> store2blk_;
+  // Returns true if the address that results from |inst| may be used as a base
+  // address in a store instruction or may be used to compute the base address
+  // of a store instruction.
+  bool FeedsAStore(Instruction* inst) const;
 
-  // Set of non-SSA Variables
-  std::unordered_set<uint32_t> non_ssa_vars_;
-
-  // Variables with only supported references, ie. loads and stores using
-  // variable directly or through non-ptr access chains.
-  std::unordered_set<uint32_t> supported_ref_ptrs_;
-
-  // CFG Predecessors
-  std::unordered_map<const ir::BasicBlock*, std::vector<ir::BasicBlock*>>
-      predecessors_map_;
-
-  // CFG Successors
-  std::unordered_map<const ir::BasicBlock*, std::vector<ir::BasicBlock*>>
-      successors_map_;
-
-  // CFG Augmented Predecessors
-  std::unordered_map<const ir::BasicBlock*, std::vector<ir::BasicBlock*>>
-      augmented_predecessors_map_;
-
-  // CFG Augmented Successors
-  std::unordered_map<const ir::BasicBlock*, std::vector<ir::BasicBlock*>>
-      augmented_successors_map_;
-
-  // Immediate Dominator Map
-  // If block has no idom it points to itself.
-  std::unordered_map<ir::BasicBlock*, ir::BasicBlock*> idom_;
+  // Replaces all of the loads in |uses| by the value stored in |store_inst|.
+  // The load instructions are then killed.
+  bool RewriteLoads(Instruction* store_inst,
+                    const std::vector<Instruction*>& uses);
 
   // Extensions supported by this pass.
   std::unordered_set<std::string> extensions_whitelist_;
@@ -146,4 +98,4 @@ class LocalSingleStoreElimPass : public MemPass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_LOCAL_SINGLE_STORE_ELIM_PASS_H_
+#endif  // SOURCE_OPT_LOCAL_SINGLE_STORE_ELIM_PASS_H_

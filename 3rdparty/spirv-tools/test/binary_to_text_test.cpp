@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
-
 #include <sstream>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "gmock/gmock.h"
-
 #include "source/spirv_constant.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::AutoText;
 using spvtest::ScopedContext;
 using spvtest::TextToBinaryTest;
-using std::get;
-using std::tuple;
 using ::testing::Combine;
 using ::testing::Eq;
 using ::testing::HasSubstr;
@@ -226,13 +226,13 @@ OpExecutionMode %1 LocalSizeHint 100 200 300
 }
 
 using RoundTripInstructionsTest = spvtest::TextToBinaryTestBase<
-    ::testing::TestWithParam<tuple<spv_target_env, std::string>>>;
+    ::testing::TestWithParam<std::tuple<spv_target_env, std::string>>>;
 
 TEST_P(RoundTripInstructionsTest, Sample) {
-  EXPECT_THAT(EncodeAndDecodeSuccessfully(get<1>(GetParam()),
+  EXPECT_THAT(EncodeAndDecodeSuccessfully(std::get<1>(GetParam()),
                                           SPV_BINARY_TO_TEXT_OPTION_NONE,
-                                          get<0>(GetParam())),
-              Eq(get<1>(GetParam())));
+                                          std::get<0>(GetParam())),
+              Eq(std::get<1>(GetParam())));
 }
 
 // clang-format off
@@ -550,4 +550,5 @@ INSTANTIATE_TEST_CASE_P(GeneratorStrings, GeneratorStringTest,
 
 // TODO(dneto): Test new instructions and enums in SPIR-V 1.3
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

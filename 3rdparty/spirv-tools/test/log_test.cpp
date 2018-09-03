@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "source/opt/log.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
-#include "message.h"
-#include "opt/log.h"
-
+namespace spvtools {
 namespace {
 
-using namespace spvtools;
 using ::testing::MatchesRegex;
 
 TEST(Log, Unimplemented) {
@@ -51,4 +49,5 @@ TEST(Log, Unreachable) {
   EXPECT_EQ(1, invocation);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

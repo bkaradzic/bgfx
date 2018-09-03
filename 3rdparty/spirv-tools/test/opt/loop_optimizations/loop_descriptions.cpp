@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "../assembly_builder.h"
-#include "../function_utils.h"
-#include "../pass_fixture.h"
-#include "../pass_utils.h"
-#include "opt/loop_descriptor.h"
-#include "opt/pass.h"
+#include "gmock/gmock.h"
+#include "source/opt/loop_descriptor.h"
+#include "source/opt/pass.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/function_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
-
 using PassClassTest = PassTest<::testing::Test>;
 
 /*
@@ -90,18 +89,18 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor& ld = *context->GetLoopDescriptor(f);
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor& ld = *context->GetLoopDescriptor(f);
 
   EXPECT_EQ(ld.NumLoops(), 1u);
 
-  ir::Loop& loop = ld.GetLoopByIndex(0);
+  Loop& loop = ld.GetLoopByIndex(0);
   EXPECT_EQ(loop.GetHeaderBlock(), spvtest::GetBasicBlock(f, 18));
   EXPECT_EQ(loop.GetLatchBlock(), spvtest::GetBasicBlock(f, 20));
   EXPECT_EQ(loop.GetMergeBlock(), spvtest::GetBasicBlock(f, 19));
@@ -187,18 +186,18 @@ TEST_F(PassClassTest, LoopWithNoPreHeader) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor& ld = *context->GetLoopDescriptor(f);
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor& ld = *context->GetLoopDescriptor(f);
 
   EXPECT_EQ(ld.NumLoops(), 2u);
 
-  ir::Loop* loop = ld[27];
+  Loop* loop = ld[27];
   EXPECT_EQ(loop->GetPreHeaderBlock(), nullptr);
   EXPECT_NE(loop->GetOrCreatePreHeaderBlock(), nullptr);
 }
@@ -285,16 +284,101 @@ TEST_F(PassClassTest, NoLoop) {
                OpFunctionEnd
   )";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 4);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 4);
+  LoopDescriptor ld{context.get(), f};
 
   EXPECT_EQ(ld.NumLoops(), 0u);
 }
 
+/*
+Generated from following GLSL with latch block artificially inserted to be
+seperate from continue.
+#version 430
+void main(void) {
+    float x[10];
+    for (int i = 0; i < 10; ++i) {
+      x[i] = i;
+    }
+}
+*/
+TEST_F(PassClassTest, LoopLatchNotContinue) {
+  const std::string text = R"(OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource GLSL 430
+               OpName %2 "main"
+               OpName %3 "i"
+               OpName %4 "x"
+          %5 = OpTypeVoid
+          %6 = OpTypeFunction %5
+          %7 = OpTypeInt 32 1
+          %8 = OpTypePointer Function %7
+          %9 = OpConstant %7 0
+         %10 = OpConstant %7 10
+         %11 = OpTypeBool
+         %12 = OpTypeFloat 32
+         %13 = OpTypeInt 32 0
+         %14 = OpConstant %13 10
+         %15 = OpTypeArray %12 %14
+         %16 = OpTypePointer Function %15
+         %17 = OpTypePointer Function %12
+         %18 = OpConstant %7 1
+          %2 = OpFunction %5 None %6
+         %19 = OpLabel
+          %3 = OpVariable %8 Function
+          %4 = OpVariable %16 Function
+               OpStore %3 %9
+               OpBranch %20
+         %20 = OpLabel
+         %21 = OpPhi %7 %9 %19 %22 %30
+               OpLoopMerge %24 %23 None
+               OpBranch %25
+         %25 = OpLabel
+         %26 = OpSLessThan %11 %21 %10
+               OpBranchConditional %26 %27 %24
+         %27 = OpLabel
+         %28 = OpConvertSToF %12 %21
+         %29 = OpAccessChain %17 %4 %21
+               OpStore %29 %28
+               OpBranch %23
+         %23 = OpLabel
+         %22 = OpIAdd %7 %21 %18
+               OpStore %3 %22
+               OpBranch %30
+         %30 = OpLabel
+               OpBranch %20
+         %24 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  std::unique_ptr<IRContext> context =
+      BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
+                  SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  Module* module = context->module();
+  EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
+                             << text << std::endl;
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
+
+  EXPECT_EQ(ld.NumLoops(), 1u);
+
+  Loop& loop = ld.GetLoopByIndex(0u);
+
+  EXPECT_NE(loop.GetLatchBlock(), loop.GetContinueBlock());
+
+  EXPECT_EQ(loop.GetContinueBlock()->id(), 23u);
+  EXPECT_EQ(loop.GetLatchBlock()->id(), 30u);
+}
+
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -26,6 +26,7 @@
 #ifndef JSON_TO_SPIRV
 #define JSON_TO_SPIRV
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <assert.h>

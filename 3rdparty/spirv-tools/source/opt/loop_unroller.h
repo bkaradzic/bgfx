@@ -14,7 +14,8 @@
 
 #ifndef SOURCE_OPT_LOOP_UNROLLER_H_
 #define SOURCE_OPT_LOOP_UNROLLER_H_
-#include "opt/pass.h"
+
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -25,12 +26,11 @@ class LoopUnroller : public Pass {
   LoopUnroller(bool fully_unroll, int unroll_factor)
       : Pass(), fully_unroll_(fully_unroll), unroll_factor_(unroll_factor) {}
 
-  const char* name() const override { return "Loop unroller"; }
+  const char* name() const override { return "loop-unroll"; }
 
-  Status Process(ir::IRContext* context) override;
+  Status Process() override;
 
  private:
-  ir::IRContext* context_;
   bool fully_unroll_;
   int unroll_factor_;
 };

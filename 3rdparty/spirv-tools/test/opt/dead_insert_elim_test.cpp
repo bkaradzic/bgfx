@@ -13,12 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <string>
 
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using DeadInsertElimTest = PassTest<::testing::Test>;
 
@@ -164,8 +166,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::DeadInsertElimPass>(
-      before_predefs + before, after_predefs + after, true, true);
+  SinglePassRunAndCheck<DeadInsertElimPass>(before_predefs + before,
+                                            after_predefs + after, true, true);
 }
 
 TEST_F(DeadInsertElimTest, DeadInsertInChainWithPhi) {
@@ -343,8 +345,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::DeadInsertElimPass>(
-      before_predefs + before, after_predefs + after, true, true);
+  SinglePassRunAndCheck<DeadInsertElimPass>(before_predefs + before,
+                                            after_predefs + after, true, true);
 }
 
 TEST_F(DeadInsertElimTest, DeadInsertTwoPasses) {
@@ -557,129 +559,13 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::DeadInsertElimPass>(
-      before_predefs + before, after_predefs + after, true, true);
-}
-
-TEST_F(DeadInsertElimTest, DeadInsertInCycleToDo) {
-  // Dead insert in chain with cycle. Demonstrates analysis can handle
-  // cycles in chains.
-  //
-  // TODO(greg-lunarg): Improve algorithm to remove dead insert into v.y. Will
-  // likely require similar logic to ADCE.
-  //
-  // Note: The SPIR-V assembly has had store/load elimination
-  // performed to allow the inserts and extracts to directly
-  // reference each other.
-  //
-  // #version 450
-  //
-  // layout (location=0) in vec4 In0;
-  // layout (location=1) in float In1;
-  // layout (location=2) in float In2;
-  // layout (location=0) out vec4 OutColor;
-  //
-  // layout(std140, binding = 0 ) uniform _Globals_
-  // {
-  //     int g_n  ;
-  // };
-  //
-  // void main()
-  // {
-  //     vec2 v = vec2(0.0, 1.0);
-  //     for (int i = 0; i < g_n; i++) {
-  //       v.x = v.x + 1;
-  //       v.y = v.y * 0.9; // dead
-  //     }
-  //     OutColor = vec4(v.x);
-  // }
-
-  const std::string assembly =
-      R"(OpCapability Shader
-%1 = OpExtInstImport "GLSL.std.450"
-OpMemoryModel Logical GLSL450
-OpEntryPoint Fragment %main "main" %OutColor %In0 %In1 %In2
-OpExecutionMode %main OriginUpperLeft
-OpSource GLSL 450
-OpName %main "main"
-OpName %_Globals_ "_Globals_"
-OpMemberName %_Globals_ 0 "g_n"
-OpName %_ ""
-OpName %OutColor "OutColor"
-OpName %In0 "In0"
-OpName %In1 "In1"
-OpName %In2 "In2"
-OpMemberDecorate %_Globals_ 0 Offset 0
-OpDecorate %_Globals_ Block
-OpDecorate %_ DescriptorSet 0
-OpDecorate %_ Binding 0
-OpDecorate %OutColor Location 0
-OpDecorate %In0 Location 0
-OpDecorate %In1 Location 1
-OpDecorate %In2 Location 2
-%void = OpTypeVoid
-%10 = OpTypeFunction %void
-%float = OpTypeFloat 32
-%v2float = OpTypeVector %float 2
-%_ptr_Function_v2float = OpTypePointer Function %v2float
-%float_0 = OpConstant %float 0
-%float_1 = OpConstant %float 1
-%16 = OpConstantComposite %v2float %float_0 %float_1
-%int = OpTypeInt 32 1
-%_ptr_Function_int = OpTypePointer Function %int
-%int_0 = OpConstant %int 0
-%_Globals_ = OpTypeStruct %int
-%_ptr_Uniform__Globals_ = OpTypePointer Uniform %_Globals_
-%_ = OpVariable %_ptr_Uniform__Globals_ Uniform
-%_ptr_Uniform_int = OpTypePointer Uniform %int
-%bool = OpTypeBool
-%float_0_75 = OpConstant %float 0.75
-%int_1 = OpConstant %int 1
-%v4float = OpTypeVector %float 4
-%_ptr_Output_v4float = OpTypePointer Output %v4float
-%OutColor = OpVariable %_ptr_Output_v4float Output
-%_ptr_Input_v4float = OpTypePointer Input %v4float
-%In0 = OpVariable %_ptr_Input_v4float Input
-%_ptr_Input_float = OpTypePointer Input %float
-%In1 = OpVariable %_ptr_Input_float Input
-%In2 = OpVariable %_ptr_Input_float Input
-%main = OpFunction %void None %10
-%29 = OpLabel
-OpBranch %30
-%30 = OpLabel
-%31 = OpPhi %v2float %16 %29 %32 %33
-%34 = OpPhi %int %int_0 %29 %35 %33
-OpLoopMerge %36 %33 None
-OpBranch %37
-%37 = OpLabel
-%38 = OpAccessChain %_ptr_Uniform_int %_ %int_0
-%39 = OpLoad %int %38
-%40 = OpSLessThan %bool %34 %39
-OpBranchConditional %40 %41 %36
-%41 = OpLabel
-%42 = OpCompositeExtract %float %31 0
-%43 = OpFAdd %float %42 %float_1
-%44 = OpCompositeInsert %v2float %43 %31 0
-%45 = OpCompositeExtract %float %44 1
-%46 = OpFMul %float %45 %float_0_75
-%32 = OpCompositeInsert %v2float %46 %44 1
-OpBranch %33
-%33 = OpLabel
-%35 = OpIAdd %int %34 %int_1
-OpBranch %30
-%36 = OpLabel
-%47 = OpCompositeExtract %float %31 0
-%48 = OpCompositeConstruct %v4float %47 %47 %47 %47
-OpStore %OutColor %48
-OpReturn
-OpFunctionEnd
-)";
-
-  SinglePassRunAndCheck<opt::DeadInsertElimPass>(assembly, assembly, true,
-                                                 true);
+  SinglePassRunAndCheck<DeadInsertElimPass>(before_predefs + before,
+                                            after_predefs + after, true, true);
 }
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

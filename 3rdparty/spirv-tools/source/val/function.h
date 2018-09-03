@@ -12,23 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_VAL_FUNCTION_H_
-#define LIBSPIRV_VAL_FUNCTION_H_
+#ifndef SOURCE_VAL_FUNCTION_H_
+#define SOURCE_VAL_FUNCTION_H_
 
 #include <functional>
 #include <list>
 #include <map>
 #include <set>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include "latest_version_spirv_header.h"
+#include "source/latest_version_spirv_header.h"
+#include "source/val/basic_block.h"
+#include "source/val/construct.h"
 #include "spirv-tools/libspirv.h"
-#include "val/basic_block.h"
-#include "val/construct.h"
 
-namespace libspirv {
+namespace spvtools {
+namespace val {
 
 struct bb_constr_type_pair_hash {
   std::size_t operator()(
@@ -331,7 +334,7 @@ class Function {
   /// constructs, the type of the construct should also be specified in order to
   /// get the unique construct.
   std::unordered_map<std::pair<const BasicBlock*, ConstructType>, Construct*,
-                     libspirv::bb_constr_type_pair_hash>
+                     bb_constr_type_pair_hash>
       entry_block_to_construct_;
 
   /// This map provides the header block for a given merge block.
@@ -351,6 +354,7 @@ class Function {
   std::set<uint32_t> function_call_targets_;
 };
 
-}  // namespace libspirv
+}  // namespace val
+}  // namespace spvtools
 
-#endif  /// LIBSPIRV_VAL_FUNCTION_H_
+#endif  // SOURCE_VAL_FUNCTION_H_

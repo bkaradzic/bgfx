@@ -13,12 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <string>
 
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using InlineOpaqueTest = PassTest<::testing::Test>;
 
@@ -72,7 +74,7 @@ OpDecorate %sampler15 DescriptorSet 0
   const std::string before =
       R"(%main = OpFunction %void None %12
 %28 = OpLabel
-%s0 = OpVariable %_ptr_Function_S_t Function 
+%s0 = OpVariable %_ptr_Function_S_t Function
 %param = OpVariable %_ptr_Function_S_t Function
 %29 = OpLoad %v2float %texCoords
 %30 = OpAccessChain %_ptr_Function_v2float %s0 %int_0
@@ -80,7 +82,7 @@ OpStore %30 %29
 %31 = OpLoad %18 %sampler15
 %32 = OpAccessChain %_ptr_Function_18 %s0 %int_2
 OpStore %32 %31
-%33 = OpLoad %S_t %s0 
+%33 = OpLoad %S_t %s0
 OpStore %param %33
 %34 = OpFunctionCall %void %foo_struct_S_t_vf2_vf21_ %param
 OpReturn
@@ -124,7 +126,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InlineOpaquePass>(
+  SinglePassRunAndCheck<InlineOpaquePass>(
       predefs + before + post_defs, predefs + after + post_defs, true, true);
 }
 
@@ -172,7 +174,7 @@ OpDecorate %sampler16 DescriptorSet 0
   const std::string before =
       R"(%main = OpFunction %void None %9
 %24 = OpLabel
-%25 = OpVariable %_ptr_Function_20 Function 
+%25 = OpVariable %_ptr_Function_20 Function
 %26 = OpFunctionCall %20 %foo_
 OpStore %25 %26
 %27 = OpLoad %20 %25
@@ -214,7 +216,7 @@ OpReturnValue %33
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InlineOpaquePass>(
+  SinglePassRunAndCheck<InlineOpaquePass>(
       predefs + before + post_defs, predefs + after + post_defs, true, true);
 }
 
@@ -271,7 +273,7 @@ OpDecorate %sampler15 DescriptorSet 0
   const std::string before =
       R"(%main2 = OpFunction %void None %13
 %29 = OpLabel
-%s0 = OpVariable %_ptr_Function_S_t Function 
+%s0 = OpVariable %_ptr_Function_S_t Function
 %param = OpVariable %_ptr_Function_S_t Function
 %30 = OpLoad %v2float %texCoords
 %31 = OpAccessChain %_ptr_Function_v2float %s0 %int_0
@@ -279,7 +281,7 @@ OpStore %31 %30
 %32 = OpLoad %19 %sampler15
 %33 = OpAccessChain %_ptr_Function_19 %s0 %int_2
 OpStore %33 %32
-%34 = OpLoad %S_t %s0 
+%34 = OpLoad %S_t %s0
 OpStore %param %34
 %35 = OpFunctionCall %void %foo_struct_S_t_vf2_vf21_ %param
 OpReturn
@@ -328,7 +330,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InlineOpaquePass>(
+  SinglePassRunAndCheck<InlineOpaquePass>(
       predefs + before + post_defs, predefs + after + post_defs, true, true);
 }
 
@@ -402,7 +404,9 @@ OpReturnValue %31
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InlineOpaquePass>(assembly, assembly, true, true);
+  SinglePassRunAndCheck<InlineOpaquePass>(assembly, assembly, true, true);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

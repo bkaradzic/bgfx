@@ -12,25 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include "message.h"
-#include "opt/build_module.h"
-#include "opt/module.h"
+#include "source/opt/build_module.h"
+#include "source/opt/module.h"
 #include "spirv-tools/libspirv.hpp"
+#include "test/opt/module_utils.h"
 
-#include "module_utils.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
 using ::testing::Eq;
 using spvtest::GetIdBound;
-using spvtools::ir::IRContext;
-using spvtools::ir::Module;
 
 TEST(ModuleTest, SetIdBound) {
   Module m;
@@ -140,4 +139,6 @@ OpFunctionEnd)";
   EXPECT_EQ(text, str.str());
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

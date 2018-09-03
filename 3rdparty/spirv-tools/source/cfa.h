@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SPVTOOLS_CFA_H_
-#define SPVTOOLS_CFA_H_
+#ifndef SOURCE_CFA_H_
+#define SOURCE_CFA_H_
 
 #include <algorithm>
 #include <cassert>
@@ -24,14 +24,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-using std::find;
-using std::function;
-using std::get;
-using std::pair;
-using std::unordered_map;
-using std::unordered_set;
-using std::vector;
 
 namespace spvtools {
 
@@ -111,8 +103,8 @@ class CFA {
   /// block
   /// without predecessors (such as the root node) is its own immediate
   /// dominator.
-  static vector<pair<BB*, BB*>> CalculateDominators(
-      const vector<cbb_ptr>& postorder, get_blocks_func predecessor_func);
+  static std::vector<std::pair<BB*, BB*>> CalculateDominators(
+      const std::vector<cbb_ptr>& postorder, get_blocks_func predecessor_func);
 
   // Computes a minimal set of root nodes required to traverse, in the forward
   // direction, the CFG represented by the given vector of blocks, and successor
@@ -133,7 +125,8 @@ class CFA {
 };
 
 template <class BB>
-bool CFA<BB>::FindInWorkList(const vector<block_info>& work_list, uint32_t id) {
+bool CFA<BB>::FindInWorkList(const std::vector<block_info>& work_list,
+                             uint32_t id) {
   for (const auto b : work_list) {
     if (b.block->id() == id) return true;
   }
@@ -141,19 +134,19 @@ bool CFA<BB>::FindInWorkList(const vector<block_info>& work_list, uint32_t id) {
 }
 
 template <class BB>
-void CFA<BB>::DepthFirstTraversal(const BB* entry,
-                                  get_blocks_func successor_func,
-                                  function<void(cbb_ptr)> preorder,
-                                  function<void(cbb_ptr)> postorder,
-                                  function<void(cbb_ptr, cbb_ptr)> backedge) {
-  unordered_set<uint32_t> processed;
+void CFA<BB>::DepthFirstTraversal(
+    const BB* entry, get_blocks_func successor_func,
+    std::function<void(cbb_ptr)> preorder,
+    std::function<void(cbb_ptr)> postorder,
+    std::function<void(cbb_ptr, cbb_ptr)> backedge) {
+  std::unordered_set<uint32_t> processed;
 
   /// NOTE: work_list is the sequence of nodes from the root node to the node
   /// being processed in the traversal
-  vector<block_info> work_list;
+  std::vector<block_info> work_list;
   work_list.reserve(10);
 
-  work_list.push_back({entry, begin(*successor_func(entry))});
+  work_list.push_back({entry, std::begin(*successor_func(entry))});
   preorder(entry);
   processed.insert(entry->id());
 
@@ -171,7 +164,7 @@ void CFA<BB>::DepthFirstTraversal(const BB* entry,
       if (processed.count(child->id()) == 0) {
         preorder(child);
         work_list.emplace_back(
-            block_info{child, begin(*successor_func(child))});
+            block_info{child, std::begin(*successor_func(child))});
         processed.insert(child->id());
       }
     }
@@ -179,15 +172,15 @@ void CFA<BB>::DepthFirstTraversal(const BB* entry,
 }
 
 template <class BB>
-vector<pair<BB*, BB*>> CFA<BB>::CalculateDominators(
-    const vector<cbb_ptr>& postorder, get_blocks_func predecessor_func) {
+std::vector<std::pair<BB*, BB*>> CFA<BB>::CalculateDominators(
+    const std::vector<cbb_ptr>& postorder, get_blocks_func predecessor_func) {
   struct block_detail {
     size_t dominator;  ///< The index of blocks's dominator in post order array
     size_t postorder_index;  ///< The index of the block in the post order array
   };
   const size_t undefined_dom = postorder.size();
 
-  unordered_map<cbb_ptr, block_detail> idoms;
+  std::unordered_map<cbb_ptr, block_detail> idoms;
   for (size_t i = 0; i < postorder.size(); i++) {
     idoms[postorder[i]] = {undefined_dom, i};
   }
@@ -197,14 +190,14 @@ vector<pair<BB*, BB*>> CFA<BB>::CalculateDominators(
   while (changed) {
     changed = false;
     for (auto b = postorder.rbegin() + 1; b != postorder.rend(); ++b) {
-      const vector<BB*>& predecessors = *predecessor_func(*b);
+      const std::vector<BB*>& predecessors = *predecessor_func(*b);
       // Find the first processed/reachable predecessor that is reachable
       // in the forward traversal.
-      auto res = find_if(begin(predecessors), end(predecessors),
-                         [&idoms, undefined_dom](BB* pred) {
-                           return idoms.count(pred) &&
-                                  idoms[pred].dominator != undefined_dom;
-                         });
+      auto res = std::find_if(std::begin(predecessors), std::end(predecessors),
+                              [&idoms, undefined_dom](BB* pred) {
+                                return idoms.count(pred) &&
+                                       idoms[pred].dominator != undefined_dom;
+                              });
       if (res == end(predecessors)) continue;
       const BB* idom = *res;
       size_t idom_idx = idoms[idom].postorder_index;
@@ -237,13 +230,29 @@ vector<pair<BB*, BB*>> CFA<BB>::CalculateDominators(
     }
   }
 
-  vector<pair<bb_ptr, bb_ptr>> out;
+  std::vector<std::pair<bb_ptr, bb_ptr>> out;
   for (auto idom : idoms) {
     // NOTE: performing a const cast for convenient usage with
     // UpdateImmediateDominators
-    out.push_back({const_cast<BB*>(get<0>(idom)),
-                   const_cast<BB*>(postorder[get<1>(idom).dominator])});
+    out.push_back({const_cast<BB*>(std::get<0>(idom)),
+                   const_cast<BB*>(postorder[std::get<1>(idom).dominator])});
   }
+
+  // Sort by postorder index to generate a deterministic ordering of edges.
+  std::sort(
+      out.begin(), out.end(),
+      [&idoms](const std::pair<bb_ptr, bb_ptr>& lhs,
+               const std::pair<bb_ptr, bb_ptr>& rhs) {
+        assert(lhs.first);
+        assert(lhs.second);
+        assert(rhs.first);
+        assert(rhs.second);
+        auto lhs_indices = std::make_pair(idoms[lhs.first].postorder_index,
+                                          idoms[lhs.second].postorder_index);
+        auto rhs_indices = std::make_pair(idoms[rhs.first].postorder_index,
+                                          idoms[rhs.second].postorder_index);
+        return lhs_indices < rhs_indices;
+      });
   return out;
 }
 
@@ -335,4 +344,4 @@ void CFA<BB>::ComputeAugmentedCFG(
 
 }  // namespace spvtools
 
-#endif  // SPVTOOLS_CFA_H_
+#endif  // SOURCE_CFA_H_

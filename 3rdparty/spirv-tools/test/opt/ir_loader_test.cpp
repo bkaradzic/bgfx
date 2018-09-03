@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
-#include "message.h"
-#include "opt/build_module.h"
-#include "opt/ir_context.h"
+#include "gtest/gtest.h"
+#include "source/opt/build_module.h"
+#include "source/opt/ir_context.h"
 #include "spirv-tools/libspirv.hpp"
 
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 void DoRoundTripCheck(const std::string& text) {
   SpirvTools t(SPV_ENV_UNIVERSAL_1_1);
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text);
   ASSERT_NE(nullptr, context) << "Failed to assemble\n" << text;
 
@@ -214,14 +217,14 @@ TEST(IrBuilder, OpUndefOutsideFunction) {
   // clang-format on
 
   SpirvTools t(SPV_ENV_UNIVERSAL_1_1);
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text);
   ASSERT_NE(nullptr, context);
 
   const auto opundef_count = std::count_if(
       context->module()->types_values_begin(),
       context->module()->types_values_end(),
-      [](const ir::Instruction& inst) { return inst.opcode() == SpvOpUndef; });
+      [](const Instruction& inst) { return inst.opcode() == SpvOpUndef; });
   EXPECT_EQ(3, opundef_count);
 
   std::vector<uint32_t> binary;
@@ -317,28 +320,28 @@ TEST(IrBuilder, KeepModuleProcessedInRightPlace) {
 // Checks the given |error_message| is reported when trying to build a module
 // from the given |assembly|.
 void DoErrorMessageCheck(const std::string& assembly,
-                         const std::string& error_message) {
-  auto consumer = [error_message](spv_message_level_t level, const char* source,
-                                  const spv_position_t& position,
-                                  const char* m) {
-    EXPECT_EQ(error_message, StringifyMessage(level, source, position, m));
+                         const std::string& error_message, uint32_t line_num) {
+  auto consumer = [error_message, line_num](spv_message_level_t, const char*,
+                                            const spv_position_t& position,
+                                            const char* m) {
+    EXPECT_EQ(error_message, m);
+    EXPECT_EQ(line_num, position.line);
   };
 
   SpirvTools t(SPV_ENV_UNIVERSAL_1_1);
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, std::move(consumer), assembly);
   EXPECT_EQ(nullptr, context);
 }
 
 TEST(IrBuilder, FunctionInsideFunction) {
   DoErrorMessageCheck("%2 = OpFunction %1 None %3\n%5 = OpFunction %4 None %6",
-                      "error: <instruction>:2:0:0: function inside function");
+                      "function inside function", 2);
 }
 
 TEST(IrBuilder, MismatchOpFunctionEnd) {
   DoErrorMessageCheck("OpFunctionEnd",
-                      "error: <instruction>:1:0:0: OpFunctionEnd without "
-                      "corresponding OpFunction");
+                      "OpFunctionEnd without corresponding OpFunction", 1);
 }
 
 TEST(IrBuilder, OpFunctionEndInsideBasicBlock) {
@@ -346,12 +349,12 @@ TEST(IrBuilder, OpFunctionEndInsideBasicBlock) {
       "%2 = OpFunction %1 None %3\n"
       "%4 = OpLabel\n"
       "OpFunctionEnd",
-      "error: <instruction>:3:0:0: OpFunctionEnd inside basic block");
+      "OpFunctionEnd inside basic block", 3);
 }
 
 TEST(IrBuilder, BasicBlockOutsideFunction) {
   DoErrorMessageCheck("OpCapability Shader\n%1 = OpLabel",
-                      "error: <instruction>:2:0:0: OpLabel outside function");
+                      "OpLabel outside function", 2);
 }
 
 TEST(IrBuilder, OpLabelInsideBasicBlock) {
@@ -359,26 +362,23 @@ TEST(IrBuilder, OpLabelInsideBasicBlock) {
       "%2 = OpFunction %1 None %3\n"
       "%4 = OpLabel\n"
       "%5 = OpLabel",
-      "error: <instruction>:3:0:0: OpLabel inside basic block");
+      "OpLabel inside basic block", 3);
 }
 
 TEST(IrBuilder, TerminatorOutsideFunction) {
-  DoErrorMessageCheck(
-      "OpReturn",
-      "error: <instruction>:1:0:0: terminator instruction outside function");
+  DoErrorMessageCheck("OpReturn", "terminator instruction outside function", 1);
 }
 
 TEST(IrBuilder, TerminatorOutsideBasicBlock) {
   DoErrorMessageCheck("%2 = OpFunction %1 None %3\nOpReturn",
-                      "error: <instruction>:2:0:0: terminator instruction "
-                      "outside basic block");
+                      "terminator instruction outside basic block", 2);
 }
 
 TEST(IrBuilder, NotAllowedInstAppearingInFunction) {
   DoErrorMessageCheck("%2 = OpFunction %1 None %3\n%5 = OpVariable %4 Function",
-                      "error: <instruction>:2:0:0: Non-OpFunctionParameter "
-                      "(opcode: 59) found inside function but outside basic "
-                      "block");
+                      "Non-OpFunctionParameter (opcode: 59) found inside "
+                      "function but outside basic block",
+                      2);
 }
 
 TEST(IrBuilder, UniqueIds) {
@@ -436,14 +436,16 @@ TEST(IrBuilder, UniqueIds) {
                "OpFunctionEnd\n";
   // clang-format on
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text);
   ASSERT_NE(nullptr, context);
 
   std::unordered_set<uint32_t> ids;
-  context->module()->ForEachInst([&ids](const ir::Instruction* inst) {
+  context->module()->ForEachInst([&ids](const Instruction* inst) {
     EXPECT_TRUE(ids.insert(inst->unique_id()).second);
   });
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "basic_block.h"
-#include "function.h"
-#include "ir_context.h"
-#include "module.h"
-#include "reflect.h"
-
-#include "make_unique.h"
+#include "source/opt/basic_block.h"
 
 #include <ostream>
 
-namespace spvtools {
-namespace ir {
+#include "source/opt/function.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
+#include "source/opt/reflect.h"
+#include "source/util/make_unique.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
 
 const uint32_t kLoopMergeContinueBlockIdInIdx = 1;
@@ -91,7 +90,7 @@ Instruction* BasicBlock::GetLoopMergeInst() {
 }
 
 void BasicBlock::KillAllInsts(bool killLabel) {
-  ForEachInst([killLabel](ir::Instruction* ip) {
+  ForEachInst([killLabel](Instruction* ip) {
     if (killLabel || ip->opcode() != SpvOpLabel) {
       ip->context()->KillInst(ip);
     }
@@ -140,7 +139,7 @@ void BasicBlock::ForEachSuccessorLabel(
   }
 }
 
-bool BasicBlock::IsSuccessor(const ir::BasicBlock* block) const {
+bool BasicBlock::IsSuccessor(const BasicBlock* block) const {
   uint32_t succId = block->id();
   bool isSuccessor = false;
   ForEachSuccessorLabel([&isSuccessor, succId](const uint32_t label) {
@@ -196,7 +195,7 @@ std::ostream& operator<<(std::ostream& str, const BasicBlock& block) {
 
 std::string BasicBlock::PrettyPrint(uint32_t options) const {
   std::ostringstream str;
-  ForEachInst([&str, options](const ir::Instruction* inst) {
+  ForEachInst([&str, options](const Instruction* inst) {
     str << inst->PrettyPrint(options);
     if (!IsTerminatorInst(inst->opcode())) {
       str << std::endl;
@@ -210,13 +209,36 @@ BasicBlock* BasicBlock::SplitBasicBlock(IRContext* context, uint32_t label_id,
   assert(!insts_.empty());
 
   BasicBlock* new_block = new BasicBlock(MakeUnique<Instruction>(
-      context, SpvOpLabel, 0, label_id, std::initializer_list<ir::Operand>{}));
+      context, SpvOpLabel, 0, label_id, std::initializer_list<Operand>{}));
 
   new_block->insts_.Splice(new_block->end(), &insts_, iter, end());
   new_block->SetParent(GetParent());
 
-  if (context->AreAnalysesValid(ir::IRContext::kAnalysisInstrToBlockMapping)) {
-    new_block->ForEachInst([new_block, context](ir::Instruction* inst) {
+  context->AnalyzeDefUse(new_block->GetLabelInst());
+
+  // Update the phi nodes in the successor blocks to reference the new block id.
+  const_cast<const BasicBlock*>(new_block)->ForEachSuccessorLabel(
+      [new_block, this, context](const uint32_t label) {
+        BasicBlock* target_bb = context->get_instr_block(label);
+        target_bb->ForEachPhiInst(
+            [this, new_block, context](Instruction* phi_inst) {
+              bool changed = false;
+              for (uint32_t i = 1; i < phi_inst->NumInOperands(); i += 2) {
+                if (phi_inst->GetSingleWordInOperand(i) == this->id()) {
+                  changed = true;
+                  phi_inst->SetInOperand(i, {new_block->id()});
+                }
+              }
+
+              if (changed) {
+                context->UpdateDefUse(phi_inst);
+              }
+            });
+      });
+
+  if (context->AreAnalysesValid(IRContext::kAnalysisInstrToBlockMapping)) {
+    context->set_instr_block(new_block->GetLabelInst(), new_block);
+    new_block->ForEachInst([new_block, context](Instruction* inst) {
       context->set_instr_block(inst, new_block);
     });
   }
@@ -224,5 +246,5 @@ BasicBlock* BasicBlock::SplitBasicBlock(IRContext* context, uint32_t label_id,
   return new_block;
 }
 
-}  // namespace ir
+}  // namespace opt
 }  // namespace spvtools

@@ -16,18 +16,18 @@
 #include <string>
 #include <vector>
 
-#include <gmock/gmock.h>
-
+#include "gmock/gmock.h"
 #include "source/util/bitutils.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
 
+namespace spvtools {
+namespace utils {
 namespace {
 
 using spvtest::Concatenate;
 using spvtest::MakeInstruction;
 using spvtest::ScopedContext;
 using spvtest::TextToBinaryTest;
-using spvutils::BitwiseCast;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
@@ -286,4 +286,6 @@ TEST_F(ImmediateIntTest, NotInteger) {
   EXPECT_THAT(CompileFailure("!12K"), StrEq("Invalid immediate integer: !12K"));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace utils
+}  // namespace spvtools

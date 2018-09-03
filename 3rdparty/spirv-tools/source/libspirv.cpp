@@ -14,7 +14,13 @@
 
 #include "spirv-tools/libspirv.hpp"
 
-#include "table.h"
+#include <iostream>
+
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "source/table.h"
 
 namespace spvtools {
 
@@ -35,7 +41,7 @@ Context& Context::operator=(Context&& other) {
 Context::~Context() { spvContextDestroy(context_); }
 
 void Context::SetMessageConsumer(MessageConsumer consumer) {
-  libspirv::SetContextMessageConsumer(context_, std::move(consumer));
+  SetContextMessageConsumer(context_, std::move(consumer));
 }
 
 spv_context& Context::CContext() { return context_; }
@@ -59,7 +65,7 @@ SpirvTools::SpirvTools(spv_target_env env) : impl_(new Impl(env)) {}
 SpirvTools::~SpirvTools() {}
 
 void SpirvTools::SetMessageConsumer(MessageConsumer consumer) {
-  libspirv::SetContextMessageConsumer(impl_->context, std::move(consumer));
+  SetContextMessageConsumer(impl_->context, std::move(consumer));
 }
 
 bool SpirvTools::Assemble(const std::string& text,
@@ -109,10 +115,17 @@ bool SpirvTools::Validate(const uint32_t* binary,
 }
 
 bool SpirvTools::Validate(const uint32_t* binary, const size_t binary_size,
-                          const spvtools::ValidatorOptions& options) const {
+                          const ValidatorOptions& options) const {
   spv_const_binary_t the_binary{binary, binary_size};
-  return spvValidateWithOptions(impl_->context, options, &the_binary,
-                                nullptr) == SPV_SUCCESS;
+  spv_diagnostic diagnostic = nullptr;
+  bool valid = spvValidateWithOptions(impl_->context, options, &the_binary,
+                                      &diagnostic) == SPV_SUCCESS;
+  if (!valid && impl_->context->consumer) {
+    impl_->context->consumer.operator()(
+        SPV_MSG_ERROR, nullptr, diagnostic->position, diagnostic->error);
+  }
+  spvDiagnosticDestroy(diagnostic);
+  return valid;
 }
 
 }  // namespace spvtools

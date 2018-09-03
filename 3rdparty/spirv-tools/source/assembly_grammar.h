@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_ASSEMBLY_GRAMMAR_H_
-#define LIBSPIRV_ASSEMBLY_GRAMMAR_H_
+#ifndef SOURCE_ASSEMBLY_GRAMMAR_H_
+#define SOURCE_ASSEMBLY_GRAMMAR_H_
 
-#include "enum_set.h"
-#include "latest_version_spirv_header.h"
-#include "operand.h"
+#include "source/enum_set.h"
+#include "source/latest_version_spirv_header.h"
+#include "source/operand.h"
+#include "source/table.h"
 #include "spirv-tools/libspirv.h"
-#include "table.h"
 
-namespace libspirv {
+namespace spvtools {
 
 // Encapsulates the grammar to use for SPIR-V assembly.
 // Contains methods to query for valid instructions and operands.
@@ -132,6 +132,7 @@ class AssemblyGrammar {
   const spv_opcode_table opcodeTable_;
   const spv_ext_inst_table extInstTable_;
 };
-}  // namespace libspirv
 
-#endif  // LIBSPIRV_ASSEMBLY_GRAMMAR_H_
+}  // namespace spvtools
+
+#endif  // SOURCE_ASSEMBLY_GRAMMAR_H_

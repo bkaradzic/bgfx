@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 TEST(BinaryEndianness, InvalidCode) {
@@ -49,4 +50,5 @@ TEST(BinaryEndianness, Big) {
   ASSERT_EQ(SPV_ENDIANNESS_BIG, endian);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

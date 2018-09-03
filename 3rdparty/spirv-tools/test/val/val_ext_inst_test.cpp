@@ -18,13 +18,17 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
-#include "val_fixtures.h"
+#include "test/unit_spirv.h"
+#include "test/val/val_fixtures.h"
 
+namespace spvtools {
+namespace val {
 namespace {
 
+using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::Not;
 
@@ -91,7 +95,18 @@ OpCapability Int64
   ss << capabilities_and_extensions;
   ss << "%extinst = OpExtInstImport \"GLSL.std.450\"\n";
   ss << "OpMemoryModel Logical GLSL450\n";
-  ss << "OpEntryPoint " << execution_model << " %main \"main\"\n";
+  ss << "OpEntryPoint " << execution_model << " %main \"main\""
+     << " %f32_output"
+     << " %f32vec2_output"
+     << " %u32_output"
+     << " %u32vec2_output"
+     << " %u64_output"
+     << " %f32_input"
+     << " %f32vec2_input"
+     << " %u32_input"
+     << " %u32vec2_input"
+     << " %u64_input"
+     << "\n";
 
   ss << R"(
 %void = OpTypeVoid
@@ -148,6 +163,7 @@ OpCapability Int64
 
 %f16_0 = OpConstant %f16 0
 %f16_1 = OpConstant %f16 1
+%f16_h = OpConstant %f16 0.5
 
 %u32_0 = OpConstant %u32 0
 %u32_1 = OpConstant %u32 1
@@ -216,6 +232,7 @@ OpCapability Int64
 
 %u64_input = OpVariable %u64_ptr_input Input
 
+%struct_f16_u16 = OpTypeStruct %f16 %u16
 %struct_f32_f32 = OpTypeStruct %f32 %f32
 %struct_f32_f32_f32 = OpTypeStruct %f32 %f32 %f32
 %struct_f32_u32 = OpTypeStruct %f32 %u32
@@ -1599,6 +1616,36 @@ TEST_F(ValidateExtInst, GlslStd450FrexpStructXWrongType) {
                         "member of Result Type struct"));
 }
 
+TEST_F(ValidateExtInst,
+       GlslStd450FrexpStructResultTypeStructRightInt16Member2) {
+  const std::string body = R"(
+%val1 = OpExtInst %struct_f16_u16 %extinst FrexpStruct %f16_h
+)";
+
+  const std::string extension = R"(
+OpExtension  "SPV_AMD_gpu_shader_int16"
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body, extension));
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateExtInst,
+       GlslStd450FrexpStructResultTypeStructWrongInt16Member2) {
+  const std::string body = R"(
+%val1 = OpExtInst %struct_f16_u16 %extinst FrexpStruct %f16_h
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body));
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("GLSL.std.450 FrexpStruct: "
+                        "expected Result Type to be a struct with two members, "
+                        "first member a float scalar or vector, second member "
+                        "a 32-bit int scalar or vector with the same number of "
+                        "components as the first member"));
+}
+
 TEST_P(ValidateGlslStd450Pack, Success) {
   const std::string ext_inst_name = GetParam();
   const uint32_t num_components = GetPackedNumComponents(ext_inst_name);
@@ -2326,21 +2373,30 @@ TEST_F(ValidateExtInst, GlslStd450RefractIntEta) {
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("GLSL.std.450 Refract: "
-                        "expected operand Eta to be a 16 or 32-bit "
-                        "float scalar"));
+                        "expected operand Eta to be a float scalar"));
 }
 
 TEST_F(ValidateExtInst, GlslStd450RefractFloat64Eta) {
+  // SPIR-V issue 337: Eta can be 64-bit float scalar.
   const std::string body = R"(
 %val1 = OpExtInst %f32vec2 %extinst Refract %f32vec2_01 %f32vec2_01 %f64_1
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body));
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateExtInst, GlslStd450RefractVectorEta) {
+  const std::string body = R"(
+%val1 = OpExtInst %f32vec2 %extinst Refract %f32vec2_01 %f32vec2_01 %f32vec2_01
 )";
 
   CompileSuccessfully(GenerateShaderCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("GLSL.std.450 Refract: "
-                        "expected operand Eta to be a 16 or 32-bit "
-                        "float scalar"));
+                        "expected operand Eta to be a float scalar"));
 }
 
 TEST_F(ValidateExtInst, GlslStd450InterpolateAtCentroidSuccess) {
@@ -5758,4 +5814,6 @@ INSTANTIATE_TEST_CASE_P(AllUpsampleLike, ValidateOpenCLStdUpsampleLike,
                             "s_upsample",
                         }), );
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

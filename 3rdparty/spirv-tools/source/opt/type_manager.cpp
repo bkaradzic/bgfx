@@ -12,28 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "type_manager.h"
+#include "source/opt/type_manager.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <utility>
 
-#include "ir_context.h"
-#include "log.h"
-#include "make_unique.h"
-#include "reflect.h"
-
-namespace {
-const int kSpvTypePointerStorageClass = 1;
-const int kSpvTypePointerTypeIdInIdx = 2;
-}  // namespace
+#include "source/opt/ir_context.h"
+#include "source/opt/log.h"
+#include "source/opt/reflect.h"
+#include "source/util/make_unique.h"
 
 namespace spvtools {
 namespace opt {
 namespace analysis {
+namespace {
 
-TypeManager::TypeManager(const MessageConsumer& consumer,
-                         spvtools::ir::IRContext* c)
+const int kSpvTypePointerStorageClass = 1;
+const int kSpvTypePointerTypeIdInIdx = 2;
+
+}  // namespace
+
+TypeManager::TypeManager(const MessageConsumer& consumer, IRContext* c)
     : consumer_(consumer), context_(c) {
   AnalyzeTypes(*c->module());
 }
@@ -41,6 +42,8 @@ TypeManager::TypeManager(const MessageConsumer& consumer,
 Type* TypeManager::GetType(uint32_t id) const {
   auto iter = id_to_type_.find(id);
   if (iter != id_to_type_.end()) return (*iter).second;
+  iter = id_to_incomplete_type_.find(id);
+  if (iter != id_to_incomplete_type_.end()) return (*iter).second;
   return nullptr;
 }
 
@@ -48,9 +51,9 @@ std::pair<Type*, std::unique_ptr<Pointer>> TypeManager::GetTypeAndPointerType(
     uint32_t id, SpvStorageClass sc) const {
   Type* type = GetType(id);
   if (type) {
-    return std::make_pair(type, MakeUnique<analysis::Pointer>(type, sc));
+    return std::make_pair(type, MakeUnique<Pointer>(type, sc));
   } else {
-    return std::make_pair(type, std::unique_ptr<analysis::Pointer>());
+    return std::make_pair(type, std::unique_ptr<Pointer>());
   }
 }
 
@@ -60,13 +63,107 @@ uint32_t TypeManager::GetId(const Type* type) const {
   return 0;
 }
 
-ForwardPointer* TypeManager::GetForwardPointer(uint32_t index) const {
-  if (index >= forward_pointers_.size()) return nullptr;
-  return forward_pointers_.at(index).get();
-}
+void TypeManager::AnalyzeTypes(const Module& module) {
+  // First pass through the types.  Any types that reference a forward pointer
+  // (directly or indirectly) are incomplete, and are added to incomplete types.
+  for (const auto* inst : module.GetTypes()) {
+    RecordIfTypeDefinition(*inst);
+  }
 
-void TypeManager::AnalyzeTypes(const spvtools::ir::Module& module) {
-  for (const auto* inst : module.GetTypes()) RecordIfTypeDefinition(*inst);
+  if (incomplete_types_.empty()) {
+    return;
+  }
+
+  // Get the real pointer definition for all of the forward pointers.
+  for (auto& type : incomplete_types_) {
+    if (type.type()->kind() == Type::kForwardPointer) {
+      auto* t = GetType(type.id());
+      assert(t);
+      auto* p = t->AsPointer();
+      assert(p);
+      type.type()->AsForwardPointer()->SetTargetPointer(p);
+    }
+  }
+
+  // Replaces the references to the forward pointers in the incomplete types.
+  for (auto& type : incomplete_types_) {
+    ReplaceForwardPointers(type.type());
+  }
+
+  // Delete the forward pointers now that they are not referenced anymore.
+  for (auto& type : incomplete_types_) {
+    if (type.type()->kind() == Type::kForwardPointer) {
+      type.ResetType(nullptr);
+    }
+  }
+
+  // Compare the complete types looking for types that are the same.  If there
+  // are two types that are the same, then replace one with the other.
+  // Continue until we reach a fixed point.
+  bool restart = true;
+  while (restart) {
+    restart = false;
+    for (auto it1 = incomplete_types_.begin(); it1 != incomplete_types_.end();
+         ++it1) {
+      uint32_t id1 = it1->id();
+      Type* type1 = it1->type();
+      if (!type1) {
+        continue;
+      }
+
+      for (auto it2 = it1 + 1; it2 != incomplete_types_.end(); ++it2) {
+        uint32_t id2 = it2->id();
+        (void)(id2 + id1);
+        Type* type2 = it2->type();
+        if (!type2) {
+          continue;
+        }
+
+        if (type1->IsSame(type2)) {
+          ReplaceType(type1, type2);
+          it2->ResetType(nullptr);
+          id_to_incomplete_type_[it2->id()] = type1;
+          restart = true;
+        }
+      }
+    }
+  }
+
+  // Add the remaining incomplete types to the type pool.
+  for (auto& type : incomplete_types_) {
+    if (type.type() && !type.type()->AsForwardPointer()) {
+      std::vector<Instruction*> decorations =
+          context()->get_decoration_mgr()->GetDecorationsFor(type.id(), true);
+      for (auto dec : decorations) {
+        AttachDecoration(*dec, type.type());
+      }
+      auto pair = type_pool_.insert(type.ReleaseType());
+      id_to_type_[type.id()] = pair.first->get();
+      type_to_id_[pair.first->get()] = type.id();
+      id_to_incomplete_type_.erase(type.id());
+    }
+  }
+
+  // Add a mapping for any ids that whose original type was replaced by an
+  // equivalent type.
+  for (auto& type : id_to_incomplete_type_) {
+    id_to_type_[type.first] = type.second;
+  }
+
+#ifndef NDEBUG
+  // Check if the type pool contains two types that are the same.  This
+  // is an indication that the hashing and comparision are wrong.  It
+  // will cause a problem if the type pool gets resized and everything
+  // is rehashed.
+  for (auto& i : type_pool_) {
+    for (auto& j : type_pool_) {
+      Type* ti = i.get();
+      Type* tj = j.get();
+      assert((ti == tj || !ti->IsSame(tj)) &&
+             "Type pool contains two types that are the same.");
+    }
+  }
+#endif
 }
 
 void TypeManager::RemoveId(uint32_t id) {
@@ -105,14 +202,14 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
   uint32_t id = GetId(type);
   if (id != 0) return id;
 
-  std::unique_ptr<ir::Instruction> typeInst;
+  std::unique_ptr<Instruction> typeInst;
   id = context()->TakeNextId();
   RegisterType(id, *type);
   switch (type->kind()) {
-#define DefineParameterlessCase(kind)                                          \
-  case Type::k##kind:                                                          \
-    typeInst.reset(new ir::Instruction(context(), SpvOpType##kind, 0, id,      \
-                                       std::initializer_list<ir::Operand>{})); \
+#define DefineParameterlessCase(kind)                                     \
+  case Type::k##kind:                                                     \
+    typeInst = MakeUnique<Instruction>(context(), SpvOpType##kind, 0, id, \
+                                       std::initializer_list<Operand>{}); \
     break;
     DefineParameterlessCase(Void);
     DefineParameterlessCase(Bool);
@@ -125,45 +222,45 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
     DefineParameterlessCase(NamedBarrier);
 #undef DefineParameterlessCase
     case Type::kInteger:
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypeInt, 0, id,
-          std::initializer_list<ir::Operand>{
+          std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_LITERAL_INTEGER, {type->AsInteger()->width()}},
               {SPV_OPERAND_TYPE_LITERAL_INTEGER,
-               {(type->AsInteger()->IsSigned() ? 1u : 0u)}}}));
+               {(type->AsInteger()->IsSigned() ? 1u : 0u)}}});
       break;
     case Type::kFloat:
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypeFloat, 0, id,
-          std::initializer_list<ir::Operand>{
-              {SPV_OPERAND_TYPE_LITERAL_INTEGER, {type->AsFloat()->width()}}}));
+          std::initializer_list<Operand>{
+              {SPV_OPERAND_TYPE_LITERAL_INTEGER, {type->AsFloat()->width()}}});
       break;
     case Type::kVector: {
       uint32_t subtype = GetTypeInstruction(type->AsVector()->element_type());
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeVector, 0, id,
-                              std::initializer_list<ir::Operand>{
-                                  {SPV_OPERAND_TYPE_ID, {subtype}},
-                                  {SPV_OPERAND_TYPE_LITERAL_INTEGER,
-                                   {type->AsVector()->element_count()}}}));
+      typeInst =
+          MakeUnique<Instruction>(context(), SpvOpTypeVector, 0, id,
+                                  std::initializer_list<Operand>{
+                                      {SPV_OPERAND_TYPE_ID, {subtype}},
+                                      {SPV_OPERAND_TYPE_LITERAL_INTEGER,
+                                       {type->AsVector()->element_count()}}});
       break;
     }
     case Type::kMatrix: {
       uint32_t subtype = GetTypeInstruction(type->AsMatrix()->element_type());
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeMatrix, 0, id,
-                              std::initializer_list<ir::Operand>{
-                                  {SPV_OPERAND_TYPE_ID, {subtype}},
-                                  {SPV_OPERAND_TYPE_LITERAL_INTEGER,
-                                   {type->AsMatrix()->element_count()}}}));
+      typeInst =
+          MakeUnique<Instruction>(context(), SpvOpTypeMatrix, 0, id,
+                                  std::initializer_list<Operand>{
+                                      {SPV_OPERAND_TYPE_ID, {subtype}},
+                                      {SPV_OPERAND_TYPE_LITERAL_INTEGER,
+                                       {type->AsMatrix()->element_count()}}});
       break;
     }
     case Type::kImage: {
       const Image* image = type->AsImage();
       uint32_t subtype = GetTypeInstruction(image->sampled_type());
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypeImage, 0, id,
-          std::initializer_list<ir::Operand>{
+          std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_ID, {subtype}},
               {SPV_OPERAND_TYPE_DIMENSIONALITY,
                {static_cast<uint32_t>(image->dim())}},
@@ -176,45 +273,42 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
               {SPV_OPERAND_TYPE_SAMPLER_IMAGE_FORMAT,
                {static_cast<uint32_t>(image->format())}},
               {SPV_OPERAND_TYPE_ACCESS_QUALIFIER,
-               {static_cast<uint32_t>(image->access_qualifier())}}}));
+               {static_cast<uint32_t>(image->access_qualifier())}}});
       break;
     }
     case Type::kSampledImage: {
       uint32_t subtype =
           GetTypeInstruction(type->AsSampledImage()->image_type());
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeSampledImage, 0, id,
-                              std::initializer_list<ir::Operand>{
-                                  {SPV_OPERAND_TYPE_ID, {subtype}}}));
+      typeInst = MakeUnique<Instruction>(
+          context(), SpvOpTypeSampledImage, 0, id,
+          std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {subtype}}});
       break;
     }
     case Type::kArray: {
       uint32_t subtype = GetTypeInstruction(type->AsArray()->element_type());
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypeArray, 0, id,
-          std::initializer_list<ir::Operand>{
+          std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_ID, {subtype}},
-              {SPV_OPERAND_TYPE_ID, {type->AsArray()->LengthId()}}}));
+              {SPV_OPERAND_TYPE_ID, {type->AsArray()->LengthId()}}});
       break;
     }
     case Type::kRuntimeArray: {
       uint32_t subtype =
           GetTypeInstruction(type->AsRuntimeArray()->element_type());
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeRuntimeArray, 0, id,
-                              std::initializer_list<ir::Operand>{
-                                  {SPV_OPERAND_TYPE_ID, {subtype}}}));
+      typeInst = MakeUnique<Instruction>(
+          context(), SpvOpTypeRuntimeArray, 0, id,
+          std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {subtype}}});
       break;
     }
     case Type::kStruct: {
-      std::vector<ir::Operand> ops;
+      std::vector<Operand> ops;
       const Struct* structTy = type->AsStruct();
       for (auto ty : structTy->element_types()) {
-        ops.push_back(
-            ir::Operand(SPV_OPERAND_TYPE_ID, {GetTypeInstruction(ty)}));
+        ops.push_back(Operand(SPV_OPERAND_TYPE_ID, {GetTypeInstruction(ty)}));
       }
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeStruct, 0, id, ops));
+      typeInst =
+          MakeUnique<Instruction>(context(), SpvOpTypeStruct, 0, id, ops);
       break;
     }
     case Type::kOpaque: {
@@ -224,51 +318,50 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
       std::vector<uint32_t> words(size / 4 + 1, 0);
       char* dst = reinterpret_cast<char*>(words.data());
       strncpy(dst, opaque->name().c_str(), size);
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeOpaque, 0, id,
-                              std::initializer_list<ir::Operand>{
-                                  {SPV_OPERAND_TYPE_LITERAL_STRING, words}}));
+      typeInst = MakeUnique<Instruction>(
+          context(), SpvOpTypeOpaque, 0, id,
+          std::initializer_list<Operand>{
+              {SPV_OPERAND_TYPE_LITERAL_STRING, words}});
       break;
     }
     case Type::kPointer: {
       const Pointer* pointer = type->AsPointer();
       uint32_t subtype = GetTypeInstruction(pointer->pointee_type());
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypePointer, 0, id,
-          std::initializer_list<ir::Operand>{
+          std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_STORAGE_CLASS,
                {static_cast<uint32_t>(pointer->storage_class())}},
-              {SPV_OPERAND_TYPE_ID, {subtype}}}));
+              {SPV_OPERAND_TYPE_ID, {subtype}}});
       break;
     }
     case Type::kFunction: {
-      std::vector<ir::Operand> ops;
+      std::vector<Operand> ops;
       const Function* function = type->AsFunction();
-      ops.push_back(ir::Operand(SPV_OPERAND_TYPE_ID,
-                                {GetTypeInstruction(function->return_type())}));
+      ops.push_back(Operand(SPV_OPERAND_TYPE_ID,
+                            {GetTypeInstruction(function->return_type())}));
       for (auto ty : function->param_types()) {
-        ops.push_back(
-            ir::Operand(SPV_OPERAND_TYPE_ID, {GetTypeInstruction(ty)}));
+        ops.push_back(Operand(SPV_OPERAND_TYPE_ID, {GetTypeInstruction(ty)}));
       }
-      typeInst.reset(
-          new ir::Instruction(context(), SpvOpTypeFunction, 0, id, ops));
+      typeInst =
+          MakeUnique<Instruction>(context(), SpvOpTypeFunction, 0, id, ops);
       break;
     }
     case Type::kPipe:
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypePipe, 0, id,
-          std::initializer_list<ir::Operand>{
+          std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_ACCESS_QUALIFIER,
-               {static_cast<uint32_t>(type->AsPipe()->access_qualifier())}}}));
+               {static_cast<uint32_t>(type->AsPipe()->access_qualifier())}}});
       break;
     case Type::kForwardPointer:
-      typeInst.reset(new ir::Instruction(
+      typeInst = MakeUnique<Instruction>(
           context(), SpvOpTypeForwardPointer, 0, 0,
-          std::initializer_list<ir::Operand>{
+          std::initializer_list<Operand>{
               {SPV_OPERAND_TYPE_ID, {type->AsForwardPointer()->target_id()}},
               {SPV_OPERAND_TYPE_STORAGE_CLASS,
                {static_cast<uint32_t>(
-                   type->AsForwardPointer()->storage_class())}}}));
+                   type->AsForwardPointer()->storage_class())}}});
       break;
     default:
       assert(false && "Unexpected type");
@@ -282,18 +375,17 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
 
 uint32_t TypeManager::FindPointerToType(uint32_t type_id,
                                         SpvStorageClass storage_class) {
-  opt::analysis::Type* pointeeTy = context()->get_type_mgr()->GetType(type_id);
-  opt::analysis::Pointer pointerTy(pointeeTy, storage_class);
-  if (type_id == context()->get_type_mgr()->GetId(pointeeTy)) {
+  Type* pointeeTy = GetType(type_id);
+  Pointer pointerTy(pointeeTy, storage_class);
+  if (pointeeTy->IsUniqueType(true)) {
     // Non-ambiguous type. Get the pointer type through the type manager.
-    return context()->get_type_mgr()->GetTypeInstruction(&pointerTy);
+    return GetTypeInstruction(&pointerTy);
   }
 
   // Ambiguous type, do a linear search.
-  ir::Module::inst_iterator type_itr =
-      context()->module()->types_values_begin();
+  Module::inst_iterator type_itr = context()->module()->types_values_begin();
   for (; type_itr != context()->module()->types_values_end(); ++type_itr) {
-    const ir::Instruction* type_inst = &*type_itr;
+    const Instruction* type_inst = &*type_itr;
     if (type_inst->opcode() == SpvOpTypePointer &&
         type_inst->GetSingleWordOperand(kSpvTypePointerTypeIdInIdx) ==
             type_id &&
@@ -304,12 +396,11 @@ uint32_t TypeManager::FindPointerToType(uint32_t type_id,
 
   // Must create the pointer type.
   uint32_t resultId = context()->TakeNextId();
-  std::unique_ptr<ir::Instruction> type_inst(new ir::Instruction(
-      context(), SpvOpTypePointer, 0, resultId,
-      {{spv_operand_type_t::SPV_OPERAND_TYPE_STORAGE_CLASS,
-        {uint32_t(storage_class)}},
-       {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {type_id}}}));
-  context()->AnalyzeDefUse(type_inst.get());
+  std::unique_ptr<Instruction> type_inst(
+      new Instruction(context(), SpvOpTypePointer, 0, resultId,
+                      {{spv_operand_type_t::SPV_OPERAND_TYPE_STORAGE_CLASS,
+                        {uint32_t(storage_class)}},
+                       {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {type_id}}}));
   context()->AddType(std::move(type_inst));
   context()->get_type_mgr()->RegisterType(resultId, pointerTy);
   return resultId;
@@ -332,20 +423,19 @@ void TypeManager::AttachDecorations(uint32_t id, const Type* type) {
 void TypeManager::CreateDecoration(uint32_t target,
                                    const std::vector<uint32_t>& decoration,
                                    uint32_t element) {
-  std::vector<ir::Operand> ops;
-  ops.push_back(ir::Operand(SPV_OPERAND_TYPE_ID, {target}));
+  std::vector<Operand> ops;
+  ops.push_back(Operand(SPV_OPERAND_TYPE_ID, {target}));
   if (element != 0) {
-    ops.push_back(ir::Operand(SPV_OPERAND_TYPE_LITERAL_INTEGER, {element}));
+    ops.push_back(Operand(SPV_OPERAND_TYPE_LITERAL_INTEGER, {element}));
   }
-  ops.push_back(ir::Operand(SPV_OPERAND_TYPE_DECORATION, {decoration[0]}));
+  ops.push_back(Operand(SPV_OPERAND_TYPE_DECORATION, {decoration[0]}));
   for (size_t i = 1; i < decoration.size(); ++i) {
-    ops.push_back(
-        ir::Operand(SPV_OPERAND_TYPE_LITERAL_INTEGER, {decoration[i]}));
+    ops.push_back(Operand(SPV_OPERAND_TYPE_LITERAL_INTEGER, {decoration[i]}));
   }
-  context()->AddAnnotationInst(MakeUnique<ir::Instruction>(
+  context()->AddAnnotationInst(MakeUnique<Instruction>(
       context(), (element == 0 ? SpvOpDecorate : SpvOpMemberDecorate), 0, 0,
       ops));
-  ir::Instruction* inst = &*--context()->annotation_end();
+  Instruction* inst = &*--context()->annotation_end();
   context()->get_def_use_mgr()->AnalyzeInstUse(inst);
 }
 
@@ -360,7 +450,8 @@ Type* TypeManager::RebuildType(const Type& type) {
 #define DefineNoSubtypeCase(kind)             \
   case Type::k##kind:                         \
     rebuilt_ty.reset(type.Clone().release()); \
-    break;
+    return type_pool_.insert(std::move(rebuilt_ty)).first->get();
+
     DefineNoSubtypeCase(Void);
     DefineNoSubtypeCase(Bool);
     DefineNoSubtypeCase(Integer);
@@ -378,55 +469,54 @@ Type* TypeManager::RebuildType(const Type& type) {
     case Type::kVector: {
       const Vector* vec_ty = type.AsVector();
       const Type* ele_ty = vec_ty->element_type();
-      rebuilt_ty.reset(
-          new Vector(RebuildType(*ele_ty), vec_ty->element_count()));
+      rebuilt_ty =
+          MakeUnique<Vector>(RebuildType(*ele_ty), vec_ty->element_count());
       break;
     }
     case Type::kMatrix: {
       const Matrix* mat_ty = type.AsMatrix();
       const Type* ele_ty = mat_ty->element_type();
-      rebuilt_ty.reset(
-          new Matrix(RebuildType(*ele_ty), mat_ty->element_count()));
+      rebuilt_ty =
+          MakeUnique<Matrix>(RebuildType(*ele_ty), mat_ty->element_count());
       break;
     }
     case Type::kImage: {
       const Image* image_ty = type.AsImage();
       const Type* ele_ty = image_ty->sampled_type();
-      rebuilt_ty.reset(new Image(RebuildType(*ele_ty), image_ty->dim(),
-                                 image_ty->depth(), image_ty->is_arrayed(),
-                                 image_ty->is_multisampled(),
-                                 image_ty->sampled(), image_ty->format(),
-                                 image_ty->access_qualifier()));
+      rebuilt_ty =
+          MakeUnique<Image>(RebuildType(*ele_ty), image_ty->dim(),
+                            image_ty->depth(), image_ty->is_arrayed(),
+                            image_ty->is_multisampled(), image_ty->sampled(),
+                            image_ty->format(), image_ty->access_qualifier());
       break;
     }
     case Type::kSampledImage: {
       const SampledImage* image_ty = type.AsSampledImage();
       const Type* ele_ty = image_ty->image_type();
-      rebuilt_ty.reset(
-
-          new SampledImage(RebuildType(*ele_ty)));
+      rebuilt_ty = MakeUnique<SampledImage>(RebuildType(*ele_ty));
       break;
     }
     case Type::kArray: {
       const Array* array_ty = type.AsArray();
       const Type* ele_ty = array_ty->element_type();
-      rebuilt_ty.reset(new Array(RebuildType(*ele_ty), array_ty->LengthId()));
+      rebuilt_ty =
+          MakeUnique<Array>(RebuildType(*ele_ty), array_ty->LengthId());
       break;
     }
     case Type::kRuntimeArray: {
       const RuntimeArray* array_ty = type.AsRuntimeArray();
       const Type* ele_ty = array_ty->element_type();
-      rebuilt_ty.reset(new RuntimeArray(RebuildType(*ele_ty)));
+      rebuilt_ty = MakeUnique<RuntimeArray>(RebuildType(*ele_ty));
       break;
     }
     case Type::kStruct: {
       const Struct* struct_ty = type.AsStruct();
-      std::vector<Type*> subtypes;
+      std::vector<const Type*> subtypes;
       subtypes.reserve(struct_ty->element_types().size());
       for (const auto* ele_ty : struct_ty->element_types()) {
         subtypes.push_back(RebuildType(*ele_ty));
       }
-      rebuilt_ty.reset(new Struct(subtypes));
+      rebuilt_ty = MakeUnique<Struct>(subtypes);
       Struct* rebuilt_struct = rebuilt_ty->AsStruct();
       for (auto pair : struct_ty->element_decorations()) {
         uint32_t index = pair.first;
@@ -441,25 +531,25 @@ Type* TypeManager::RebuildType(const Type& type) {
     case Type::kPointer: {
       const Pointer* pointer_ty = type.AsPointer();
       const Type* ele_ty = pointer_ty->pointee_type();
-      rebuilt_ty.reset(
-          new Pointer(RebuildType(*ele_ty), pointer_ty->storage_class()));
+      rebuilt_ty = MakeUnique<Pointer>(RebuildType(*ele_ty),
+                                       pointer_ty->storage_class());
       break;
     }
     case Type::kFunction: {
       const Function* function_ty = type.AsFunction();
       const Type* ret_ty = function_ty->return_type();
-      std::vector<Type*> param_types;
+      std::vector<const Type*> param_types;
       param_types.reserve(function_ty->param_types().size());
       for (const auto* param_ty : function_ty->param_types()) {
         param_types.push_back(RebuildType(*param_ty));
       }
-      rebuilt_ty.reset(new Function(RebuildType(*ret_ty), param_types));
+      rebuilt_ty = MakeUnique<Function>(RebuildType(*ret_ty), param_types);
       break;
     }
     case Type::kForwardPointer: {
       const ForwardPointer* forward_ptr_ty = type.AsForwardPointer();
-      rebuilt_ty.reset(new ForwardPointer(forward_ptr_ty->target_id(),
-                                          forward_ptr_ty->storage_class()));
+      rebuilt_ty = MakeUnique<ForwardPointer>(forward_ptr_ty->target_id(),
+                                              forward_ptr_ty->storage_class());
       const Pointer* target_ptr = forward_ptr_ty->target_pointer();
       if (target_ptr) {
         rebuilt_ty->AsForwardPointer()->SetTargetPointer(
@@ -496,9 +586,8 @@ Type* TypeManager::GetRegisteredType(const Type* type) {
   return GetType(id);
 }
 
-Type* TypeManager::RecordIfTypeDefinition(
-    const spvtools::ir::Instruction& inst) {
-  if (!spvtools::ir::IsTypeInst(inst.opcode())) return nullptr;
+Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
+  if (!IsTypeInst(inst.opcode())) return nullptr;
 
   Type* type = nullptr;
   switch (inst.opcode()) {
@@ -544,42 +633,79 @@ Type* TypeManager::RecordIfTypeDefinition(
     case SpvOpTypeArray:
       type = new Array(GetType(inst.GetSingleWordInOperand(0)),
                        inst.GetSingleWordInOperand(1));
+      if (id_to_incomplete_type_.count(inst.GetSingleWordInOperand(0))) {
+        incomplete_types_.emplace_back(inst.result_id(), type);
+        id_to_incomplete_type_[inst.result_id()] = type;
+        return type;
+      }
       break;
     case SpvOpTypeRuntimeArray:
       type = new RuntimeArray(GetType(inst.GetSingleWordInOperand(0)));
+      if (id_to_incomplete_type_.count(inst.GetSingleWordInOperand(0))) {
+        incomplete_types_.emplace_back(inst.result_id(), type);
+        id_to_incomplete_type_[inst.result_id()] = type;
+        return type;
+      }
       break;
     case SpvOpTypeStruct: {
-      std::vector<Type*> element_types;
+      std::vector<const Type*> element_types;
+      bool incomplete_type = false;
       for (uint32_t i = 0; i < inst.NumInOperands(); ++i) {
-        element_types.push_back(GetType(inst.GetSingleWordInOperand(i)));
+        uint32_t type_id = inst.GetSingleWordInOperand(i);
+        element_types.push_back(GetType(type_id));
+        if (id_to_incomplete_type_.count(type_id)) {
+          incomplete_type = true;
+        }
       }
       type = new Struct(element_types);
+
+      if (incomplete_type) {
+        incomplete_types_.emplace_back(inst.result_id(), type);
+        id_to_incomplete_type_[inst.result_id()] = type;
+        return type;
+      }
     } break;
     case SpvOpTypeOpaque: {
       const uint32_t* data = inst.GetInOperand(0).words.data();
       type = new Opaque(reinterpret_cast<const char*>(data));
     } break;
     case SpvOpTypePointer: {
-      auto* ptr = new Pointer(
-          GetType(inst.GetSingleWordInOperand(1)),
+      uint32_t pointee_type_id = inst.GetSingleWordInOperand(1);
+      type = new Pointer(
+          GetType(pointee_type_id),
           static_cast<SpvStorageClass>(inst.GetSingleWordInOperand(0)));
-      // Let's see if somebody forward references this pointer.
-      for (auto* fp : unresolved_forward_pointers_) {
-        if (fp->target_id() == inst.result_id()) {
-          fp->SetTargetPointer(ptr);
-          unresolved_forward_pointers_.erase(fp);
-          break;
-        }
+
+      if (id_to_incomplete_type_.count(pointee_type_id)) {
+        incomplete_types_.emplace_back(inst.result_id(), type);
+        id_to_incomplete_type_[inst.result_id()] = type;
+        return type;
       }
-      type = ptr;
+      id_to_incomplete_type_.erase(inst.result_id());
+
     } break;
     case SpvOpTypeFunction: {
-      Type* return_type = GetType(inst.GetSingleWordInOperand(0));
-      std::vector<Type*> param_types;
-      for (uint32_t i = 1; i < inst.NumInOperands(); ++i) {
-        param_types.push_back(GetType(inst.GetSingleWordInOperand(i)));
+      bool incomplete_type = false;
+      uint32_t return_type_id = inst.GetSingleWordInOperand(0);
+      if (id_to_incomplete_type_.count(return_type_id)) {
+        incomplete_type = true;
       }
+      Type* return_type = GetType(return_type_id);
+      std::vector<const Type*> param_types;
+      for (uint32_t i = 1; i < inst.NumInOperands(); ++i) {
+        uint32_t param_type_id = inst.GetSingleWordInOperand(i);
+        param_types.push_back(GetType(param_type_id));
+        if (id_to_incomplete_type_.count(param_type_id)) {
+          incomplete_type = true;
+        }
+      }
+
       type = new Function(return_type, param_types);
+
+      if (incomplete_type) {
+        incomplete_types_.emplace_back(inst.result_id(), type);
+        id_to_incomplete_type_[inst.result_id()] = type;
+        return type;
+      }
     } break;
     case SpvOpTypeEvent:
       type = new Event();
@@ -599,12 +725,12 @@ Type* TypeManager::RecordIfTypeDefinition(
       break;
     case SpvOpTypeForwardPointer: {
       // Handling of forward pointers is different from the other types.
-      auto* fp = new ForwardPointer(
-          inst.GetSingleWordInOperand(0),
-          static_cast<SpvStorageClass>(inst.GetSingleWordInOperand(1)));
-      forward_pointers_.emplace_back(fp);
-      unresolved_forward_pointers_.insert(fp);
-      return fp;
+      uint32_t target_id = inst.GetSingleWordInOperand(0);
+      type = new ForwardPointer(target_id, static_cast<SpvStorageClass>(
+                                               inst.GetSingleWordInOperand(1)));
+      incomplete_types_.emplace_back(target_id, type);
+      id_to_incomplete_type_[target_id] = type;
+      return type;
     }
     case SpvOpTypePipeStorage:
       type = new PipeStorage();
@@ -618,28 +744,24 @@ Type* TypeManager::RecordIfTypeDefinition(
   }
 
   uint32_t id = inst.result_id();
-  if (id == 0) {
-    SPIRV_ASSERT(consumer_, inst.opcode() == SpvOpTypeForwardPointer,
-                 "instruction without result id found");
-  } else {
-    SPIRV_ASSERT(consumer_, type != nullptr,
-                 "type should not be nullptr at this point");
-    std::vector<ir::Instruction*> decorations =
-        context()->get_decoration_mgr()->GetDecorationsFor(id, true);
-    for (auto dec : decorations) {
-      AttachDecoration(*dec, type);
-    }
-    std::unique_ptr<Type> unique(type);
-    auto pair = type_pool_.insert(std::move(unique));
-    id_to_type_[id] = pair.first->get();
-    type_to_id_[pair.first->get()] = id;
+  SPIRV_ASSERT(consumer_, id != 0, "instruction without result id found");
+  SPIRV_ASSERT(consumer_, type != nullptr,
+               "type should not be nullptr at this point");
+  std::vector<Instruction*> decorations =
+      context()->get_decoration_mgr()->GetDecorationsFor(id, true);
+  for (auto dec : decorations) {
+    AttachDecoration(*dec, type);
   }
+  std::unique_ptr<Type> unique(type);
+  auto pair = type_pool_.insert(std::move(unique));
+  id_to_type_[id] = pair.first->get();
+  type_to_id_[pair.first->get()] = id;
   return type;
 }
 
-void TypeManager::AttachDecoration(const ir::Instruction& inst, Type* type) {
+void TypeManager::AttachDecoration(const Instruction& inst, Type* type) {
   const SpvOp opcode = inst.opcode();
-  if (!ir::IsAnnotationInst(opcode)) return;
+  if (!IsAnnotationInst(opcode)) return;
 
   switch (opcode) {
     case SpvOpDecorate: {
@@ -672,22 +794,131 @@ void TypeManager::AttachDecoration(const ir::Instruction& inst, Type* type) {
 const Type* TypeManager::GetMemberType(
     const Type* parent_type, const std::vector<uint32_t>& access_chain) {
   for (uint32_t element_index : access_chain) {
-    if (const analysis::Struct* struct_type = parent_type->AsStruct()) {
+    if (const Struct* struct_type = parent_type->AsStruct()) {
       parent_type = struct_type->element_types()[element_index];
-    } else if (const analysis::Array* array_type = parent_type->AsArray()) {
+    } else if (const Array* array_type = parent_type->AsArray()) {
       parent_type = array_type->element_type();
-    } else if (const analysis::RuntimeArray* runtime_array_type =
+    } else if (const RuntimeArray* runtime_array_type =
                    parent_type->AsRuntimeArray()) {
       parent_type = runtime_array_type->element_type();
-    } else if (const analysis::Vector* vector_type = parent_type->AsVector()) {
+    } else if (const Vector* vector_type = parent_type->AsVector()) {
       parent_type = vector_type->element_type();
-    } else if (const analysis::Matrix* matrix_type = parent_type->AsMatrix()) {
+    } else if (const Matrix* matrix_type = parent_type->AsMatrix()) {
       parent_type = matrix_type->element_type();
     } else {
       assert(false && "Trying to get a member of a type without members.");
     }
   }
   return parent_type;
+}
+
+void TypeManager::ReplaceForwardPointers(Type* type) {
+  switch (type->kind()) {
+    case Type::kArray: {
+      const ForwardPointer* element_type =
+          type->AsArray()->element_type()->AsForwardPointer();
+      if (element_type) {
+        type->AsArray()->ReplaceElementType(element_type->target_pointer());
+      }
+    } break;
+    case Type::kRuntimeArray: {
+      const ForwardPointer* element_type =
+          type->AsRuntimeArray()->element_type()->AsForwardPointer();
+      if (element_type) {
+        type->AsRuntimeArray()->ReplaceElementType(
+            element_type->target_pointer());
+      }
+    } break;
+    case Type::kStruct: {
+      auto& member_types = type->AsStruct()->element_types();
+      for (auto& member_type : member_types) {
+        if (member_type->AsForwardPointer()) {
+          member_type = member_type->AsForwardPointer()->target_pointer();
+          assert(member_type);
+        }
+      }
+    } break;
+    case Type::kPointer: {
+      const ForwardPointer* pointee_type =
+          type->AsPointer()->pointee_type()->AsForwardPointer();
+      if (pointee_type) {
+        type->AsPointer()->SetPointeeType(pointee_type->target_pointer());
+      }
+    } break;
+    case Type::kFunction: {
+      Function* func_type = type->AsFunction();
+      const ForwardPointer* return_type =
+          func_type->return_type()->AsForwardPointer();
+      if (return_type) {
+        func_type->SetReturnType(return_type->target_pointer());
+      }
+
+      auto& param_types = func_type->param_types();
+      for (auto& param_type : param_types) {
+        if (param_type->AsForwardPointer()) {
+          param_type = param_type->AsForwardPointer()->target_pointer();
+        }
+      }
+    } break;
+    default:
+      break;
+  }
+}
+
+void TypeManager::ReplaceType(Type* new_type, Type* original_type) {
+  assert(original_type->kind() == new_type->kind() &&
+         "Types must be the same for replacement.\n");
+  for (auto& p : incomplete_types_) {
+    Type* type = p.type();
+    if (!type) {
+      continue;
+    }
+
+    switch (type->kind()) {
+      case Type::kArray: {
+        const Type* element_type = type->AsArray()->element_type();
+        if (element_type == original_type) {
+          type->AsArray()->ReplaceElementType(new_type);
+        }
+      } break;
+      case Type::kRuntimeArray: {
+        const Type* element_type = type->AsRuntimeArray()->element_type();
+        if (element_type == original_type) {
+          type->AsRuntimeArray()->ReplaceElementType(new_type);
+        }
+      } break;
+      case Type::kStruct: {
+        auto& member_types = type->AsStruct()->element_types();
+        for (auto& member_type : member_types) {
+          if (member_type == original_type) {
+            member_type = new_type;
+          }
+        }
+      } break;
+      case Type::kPointer: {
+        const Type* pointee_type = type->AsPointer()->pointee_type();
+        if (pointee_type == original_type) {
+          type->AsPointer()->SetPointeeType(new_type);
+        }
+      } break;
+      case Type::kFunction: {
+        Function* func_type = type->AsFunction();
+        const Type* return_type = func_type->return_type();
+        if (return_type == original_type) {
+          func_type->SetReturnType(new_type);
+        }
+
+        auto& param_types = func_type->param_types();
+        for (auto& param_type : param_types) {
+          if (param_type == original_type) {
+            param_type = new_type;
+          }
+        }
+      } break;
+      default:
+        break;
+    }
+  }
 }
 
 }  // namespace analysis

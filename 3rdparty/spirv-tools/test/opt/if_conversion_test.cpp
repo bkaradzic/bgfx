@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "assembly_builder.h"
+#include <string>
+
 #include "gmock/gmock.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using IfConversionTest = PassTest<::testing::Test>;
 
@@ -58,7 +60,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::IfConversion>(text, true);
+  SinglePassRunAndMatch<IfConversion>(text, true);
 }
 
 TEST_F(IfConversionTest, TestSimpleHalfIfTrue) {
@@ -93,7 +95,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::IfConversion>(text, true);
+  SinglePassRunAndMatch<IfConversion>(text, true);
 }
 
 TEST_F(IfConversionTest, TestSimpleHalfIfExtraBlock) {
@@ -130,7 +132,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::IfConversion>(text, true);
+  SinglePassRunAndMatch<IfConversion>(text, true);
 }
 
 TEST_F(IfConversionTest, TestSimpleHalfIfFalse) {
@@ -165,7 +167,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::IfConversion>(text, true);
+  SinglePassRunAndMatch<IfConversion>(text, true);
 }
 
 TEST_F(IfConversionTest, TestVectorSplat) {
@@ -207,7 +209,98 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::IfConversion>(text, true);
+  SinglePassRunAndMatch<IfConversion>(text, true);
+}
+
+TEST_F(IfConversionTest, CodeMotionSameValue) {
+  const std::string text = R"(
+; CHECK: [[var:%\w+]] = OpVariable
+; CHECK: OpFunction
+; CHECK: OpLabel
+; CHECK-NOT: OpLabel
+; CHECK: [[add:%\w+]] = OpIAdd %uint %uint_0 %uint_1
+; CHECK: OpSelectionMerge [[merge_lab:%\w+]] None
+; CHECK-NEXT: OpBranchConditional
+; CHECK: [[merge_lab]] = OpLabel
+; CHECK-NOT: OpLabel
+; CHECK: OpStore [[var]] [[add]]
+                    OpCapability Shader
+                    OpMemoryModel Logical GLSL450
+                    OpEntryPoint Vertex %1 "func" %2
+            %void = OpTypeVoid
+            %uint = OpTypeInt 32 0
+          %uint_0 = OpConstant %uint 0
+          %uint_1 = OpConstant %uint 1
+%_ptr_Output_uint = OpTypePointer Output %uint
+               %2 = OpVariable %_ptr_Output_uint Output
+               %8 = OpTypeFunction %void
+            %bool = OpTypeBool
+            %true = OpConstantTrue %bool
+               %1 = OpFunction %void None %8
+              %11 = OpLabel
+                    OpSelectionMerge %12 None
+                    OpBranchConditional %true %13 %15
+              %13 = OpLabel
+              %14 = OpIAdd %uint %uint_0 %uint_1
+                    OpBranch %12
+              %15 = OpLabel
+              %16 = OpIAdd %uint %uint_0 %uint_1
+                    OpBranch %12
+              %12 = OpLabel
+              %17 = OpPhi %uint %16 %15 %14 %13
+                    OpStore %2 %17
+                    OpReturn
+                    OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<IfConversion>(text, true);
+}
+
+TEST_F(IfConversionTest, CodeMotionMultipleInstructions) {
+  const std::string text = R"(
+; CHECK: [[var:%\w+]] = OpVariable
+; CHECK: OpFunction
+; CHECK: OpLabel
+; CHECK-NOT: OpLabel
+; CHECK: [[a1:%\w+]] = OpIAdd %uint %uint_0 %uint_1
+; CHECK: [[a2:%\w+]] = OpIAdd %uint [[a1]] %uint_1
+; CHECK: OpSelectionMerge [[merge_lab:%\w+]] None
+; CHECK-NEXT: OpBranchConditional
+; CHECK: [[merge_lab]] = OpLabel
+; CHECK-NOT: OpLabel
+; CHECK: OpStore [[var]] [[a2]]
+                    OpCapability Shader
+                    OpMemoryModel Logical GLSL450
+                    OpEntryPoint Vertex %1 "func" %2
+            %void = OpTypeVoid
+            %uint = OpTypeInt 32 0
+          %uint_0 = OpConstant %uint 0
+          %uint_1 = OpConstant %uint 1
+%_ptr_Output_uint = OpTypePointer Output %uint
+               %2 = OpVariable %_ptr_Output_uint Output
+               %8 = OpTypeFunction %void
+            %bool = OpTypeBool
+            %true = OpConstantTrue %bool
+               %1 = OpFunction %void None %8
+              %11 = OpLabel
+                    OpSelectionMerge %12 None
+                    OpBranchConditional %true %13 %15
+              %13 = OpLabel
+              %a1 = OpIAdd %uint %uint_0 %uint_1
+              %a2 = OpIAdd %uint %a1 %uint_1
+                    OpBranch %12
+              %15 = OpLabel
+              %b1 = OpIAdd %uint %uint_0 %uint_1
+              %b2 = OpIAdd %uint %b1 %uint_1
+                    OpBranch %12
+              %12 = OpLabel
+              %17 = OpPhi %uint %b2 %15 %a2 %13
+                    OpStore %2 %17
+                    OpReturn
+                    OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<IfConversion>(text, true);
 }
 #endif  // SPIRV_EFFCEE
 
@@ -234,7 +327,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::IfConversion>(text, text, true, true);
+  SinglePassRunAndCheck<IfConversion>(text, text, true, true);
 }
 
 TEST_F(IfConversionTest, LoopUntouched) {
@@ -263,7 +356,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::IfConversion>(text, text, true, true);
+  SinglePassRunAndCheck<IfConversion>(text, text, true, true);
 }
 
 TEST_F(IfConversionTest, TooManyPredecessors) {
@@ -296,7 +389,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::IfConversion>(text, text, true, true);
+  SinglePassRunAndCheck<IfConversion>(text, text, true, true);
 }
 
 TEST_F(IfConversionTest, NoCodeMotion) {
@@ -326,7 +419,56 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::IfConversion>(text, text, true, true);
+  SinglePassRunAndCheck<IfConversion>(text, text, true, true);
 }
 
-}  // anonymous namespace
+TEST_F(IfConversionTest, NoCodeMotionImmovableInst) {
+  const std::string text = R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %1 "func" %2
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%uint_0 = OpConstant %uint 0
+%uint_1 = OpConstant %uint 1
+%_ptr_Output_uint = OpTypePointer Output %uint
+%2 = OpVariable %_ptr_Output_uint Output
+%8 = OpTypeFunction %void
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%1 = OpFunction %void None %8
+%11 = OpLabel
+OpSelectionMerge %12 None
+OpBranchConditional %true %13 %14
+%13 = OpLabel
+OpSelectionMerge %15 None
+OpBranchConditional %true %16 %15
+%16 = OpLabel
+%17 = OpIAdd %uint %uint_0 %uint_1
+OpBranch %15
+%15 = OpLabel
+%18 = OpPhi %uint %uint_0 %13 %17 %16
+%19 = OpIAdd %uint %18 %uint_1
+OpBranch %12
+%14 = OpLabel
+OpSelectionMerge %20 None
+OpBranchConditional %true %21 %20
+%21 = OpLabel
+%22 = OpIAdd %uint %uint_0 %uint_1
+OpBranch %20
+%20 = OpLabel
+%23 = OpPhi %uint %uint_0 %14 %22 %21
+%24 = OpIAdd %uint %23 %uint_1
+OpBranch %12
+%12 = OpLabel
+%25 = OpPhi %uint %24 %20 %19 %15
+OpStore %2 %25
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<IfConversion>(text, text, true, true);
+}
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -14,16 +14,15 @@
 
 #include <string>
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+#include "source/opt/licm_pass.h"
+#include "test/opt/pass_fixture.h"
 
-#include "../pass_fixture.h"
-#include "opt/licm_pass.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
-
 using PassClassTest = PassTest<::testing::Test>;
 
 /*
@@ -278,7 +277,9 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::LICMPass>(before_hoist, after_hoist, true);
+  SinglePassRunAndCheck<LICMPass>(before_hoist, after_hoist, true);
 }
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

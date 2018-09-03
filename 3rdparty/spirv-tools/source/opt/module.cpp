@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "module.h"
+#include "source/opt/module.h"
 
 #include <algorithm>
 #include <cstring>
 #include <ostream>
 
-#include "operand.h"
-#include "reflect.h"
+#include "source/operand.h"
+#include "source/opt/reflect.h"
 
 namespace spvtools {
-namespace ir {
+namespace opt {
 
 std::vector<Instruction*> Module::GetTypes() {
   std::vector<Instruction*> type_insts;
@@ -65,8 +65,8 @@ uint32_t Module::GetGlobalValue(SpvOp opcode) const {
 
 void Module::AddGlobalValue(SpvOp opcode, uint32_t result_id,
                             uint32_t type_id) {
-  std::unique_ptr<ir::Instruction> newGlobal(
-      new ir::Instruction(context(), opcode, type_id, result_id, {}));
+  std::unique_ptr<Instruction> newGlobal(
+      new Instruction(context(), opcode, type_id, result_id, {}));
   AddGlobalValue(std::move(newGlobal));
 }
 
@@ -160,7 +160,7 @@ uint32_t Module::GetExtInstImportId(const char* extstr) {
 }
 
 std::ostream& operator<<(std::ostream& str, const Module& module) {
-  module.ForEachInst([&str](const ir::Instruction* inst) {
+  module.ForEachInst([&str](const Instruction* inst) {
     str << *inst;
     if (inst->opcode() != SpvOpFunctionEnd) {
       str << std::endl;
@@ -169,5 +169,5 @@ std::ostream& operator<<(std::ostream& str, const Module& module) {
   return str;
 }
 
-}  // namespace ir
+}  // namespace opt
 }  // namespace spvtools

@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostic.h"
+#include "source/diagnostic.h"
 
 #include <cassert>
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
-#include "table.h"
+#include "source/table.h"
 
 // Diagnostic API
 
@@ -57,20 +58,23 @@ spv_result_t spvDiagnosticPrint(const spv_diagnostic diagnostic) {
               << diagnostic->position.column + 1 << ": " << diagnostic->error
               << "\n";
     return SPV_SUCCESS;
-  } else {
-    // NOTE: Assume this is a binary position
-    std::cerr << "error: " << diagnostic->position.index << ": "
-              << diagnostic->error << "\n";
-    return SPV_SUCCESS;
   }
+
+  // NOTE: Assume this is a binary position
+  std::cerr << "error: ";
+  if (diagnostic->position.index > 0)
+    std::cerr << diagnostic->position.index << ": ";
+  std::cerr << diagnostic->error << "\n";
+  return SPV_SUCCESS;
 }
 
-namespace libspirv {
+namespace spvtools {
 
 DiagnosticStream::DiagnosticStream(DiagnosticStream&& other)
     : stream_(),
       position_(other.position_),
       consumer_(other.consumer_),
+      disassembled_instruction_(std::move(other.disassembled_instruction_)),
       error_(other.error_) {
   // Prevent the other object from emitting output during destruction.
   other.error_ = SPV_FAILED_MATCH;
@@ -102,6 +106,9 @@ DiagnosticStream::~DiagnosticStream() {
       default:
         break;
     }
+    if (disassembled_instruction_.size() > 0)
+      stream_ << std::endl << "  " << disassembled_instruction_ << std::endl;
+
     consumer_(level, "input", position_, stream_.str().c_str());
   }
 }
@@ -117,7 +124,7 @@ void UseDiagnosticAsMessageConsumer(spv_context context,
     spvDiagnosticDestroy(*diagnostic);  // Avoid memory leak.
     *diagnostic = spvDiagnosticCreate(&p, message);
   };
-  libspirv::SetContextMessageConsumer(context, std::move(create_diagnostic));
+  SetContextMessageConsumer(context, std::move(create_diagnostic));
 }
 
 std::string spvResultToString(spv_result_t res) {
@@ -183,4 +190,4 @@ std::string spvResultToString(spv_result_t res) {
   return out;
 }
 
-}  // namespace libspirv
+}  // namespace spvtools

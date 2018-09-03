@@ -17,9 +17,11 @@
 #include <string>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
-#include "val_fixtures.h"
+#include "test/unit_spirv.h"
+#include "test/val/val_fixtures.h"
 
+namespace spvtools {
+namespace val {
 namespace {
 
 using ::testing::HasSubstr;
@@ -916,4 +918,6 @@ TEST_F(ValidateLogicals, OpSGreaterThanDifferentBitWidth) {
                         "width: SGreaterThan"));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

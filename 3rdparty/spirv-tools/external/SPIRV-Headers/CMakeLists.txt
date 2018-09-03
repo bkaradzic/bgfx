@@ -28,7 +28,7 @@
 # The SPIR-V headers from the SPIR-V Registry
 # https://www.khronos.org/registry/spir-v/
 #
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.11)
 project(SPIRV-Headers)
 
 # There are two ways to use this project.
@@ -42,10 +42,19 @@ project(SPIRV-Headers)
 # directory.  To install the headers:
 #   1. mkdir build ; cd build
 #   2. cmake ..
-#   3. cmake --build . install-headers
+#   3. cmake --build . --target install
 
-file(GLOB_RECURSE FILES include/spirv/*)
+file(GLOB_RECURSE HEADER_FILES
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    include/spirv/*)
+foreach(HEADER_FILE ${HEADER_FILES})
+    get_filename_component(HEADER_INSTALL_DIR ${HEADER_FILE} PATH)
+    install(FILES ${HEADER_FILE} DESTINATION ${HEADER_INSTALL_DIR})
+endforeach()
+
+# legacy
 add_custom_target(install-headers
-  COMMAND cmake -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv ${CMAKE_INSTALL_PREFIX}/include/spirv)
+    COMMAND cmake -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv
+        $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/include/spirv)
 
 add_subdirectory(example)

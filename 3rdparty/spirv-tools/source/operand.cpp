@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "operand.h"
+#include "source/operand.h"
 
 #include <assert.h>
 #include <string.h>
 #include <algorithm>
 
-#include "macro.h"
-#include "spirv_constant.h"
-#include "spirv_target_env.h"
+#include "source/macro.h"
+#include "source/spirv_constant.h"
+#include "source/spirv_target_env.h"
 
 // For now, assume unified1 contains up to SPIR-V 1.3 and no later
 // SPIR-V version.
@@ -55,16 +55,17 @@ spv_result_t spvOperandTableNameLookup(spv_target_env env,
     if (type != group.type) continue;
     for (uint64_t index = 0; index < group.count; ++index) {
       const auto& entry = group.entries[index];
-      // We considers the current operand as available as long as
+      // We consider the current operand as available as long as
       // 1. The target environment satisfies the minimal requirement of the
       //    operand; or
-      // 2. There is at least one extension enabling this operand.
+      // 2. There is at least one extension enabling this operand; or
+      // 3. There is at least one capability enabling this operand.
       //
       // Note that the second rule assumes the extension enabling this operand
       // is indeed requested in the SPIR-V code; checking that should be
       // validator's work.
       if ((spvVersionForTargetEnv(env) >= entry.minVersion ||
-           entry.numExtensions > 0u) &&
+           entry.numExtensions > 0u || entry.numCapabilities > 0u) &&
           nameLength == strlen(entry.name) &&
           !strncmp(entry.name, name, nameLength)) {
         *pEntry = &entry;
@@ -109,16 +110,17 @@ spv_result_t spvOperandTableValueLookup(spv_target_env env,
     // opcode value.
     for (auto it = std::lower_bound(beg, end, needle, comp);
          it != end && it->value == value; ++it) {
-      // We considers the current operand as available as long as
+      // We consider the current operand as available as long as
       // 1. The target environment satisfies the minimal requirement of the
       //    operand; or
-      // 2. There is at least one extension enabling this operand.
+      // 2. There is at least one extension enabling this operand; or
+      // 3. There is at least one capability enabling this operand.
       //
       // Note that the second rule assumes the extension enabling this operand
       // is indeed requested in the SPIR-V code; checking that should be
       // validator's work.
       if (spvVersionForTargetEnv(env) >= it->minVersion ||
-          it->numExtensions > 0u) {
+          it->numExtensions > 0u || it->numCapabilities > 0u) {
         *pEntry = it;
         return SPV_SUCCESS;
       }
@@ -244,8 +246,9 @@ const char* spvOperandTypeStr(spv_operand_type_t type) {
 void spvPushOperandTypes(const spv_operand_type_t* types,
                          spv_operand_pattern_t* pattern) {
   const spv_operand_type_t* endTypes;
-  for (endTypes = types; *endTypes != SPV_OPERAND_TYPE_NONE; ++endTypes)
-    ;
+  for (endTypes = types; *endTypes != SPV_OPERAND_TYPE_NONE; ++endTypes) {
+  }
+
   while (endTypes-- != types) {
     pattern->push_back(*endTypes);
   }
@@ -413,6 +416,7 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
   std::function<bool(unsigned index)> out;
   switch (opcode) {
     case SpvOpExecutionMode:
+    case SpvOpExecutionModeId:
     case SpvOpEntryPoint:
     case SpvOpName:
     case SpvOpMemberName:

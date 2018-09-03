@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <string>
 
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using StripLineReflectInfoTest = PassTest<::testing::Test>;
 
@@ -40,7 +42,7 @@ OpMemoryModel Logical Simple
 %float = OpTypeFloat 32
 )";
 
-  SinglePassRunAndCheck<opt::StripReflectInfoPass>(before, after, false);
+  SinglePassRunAndCheck<StripReflectInfoPass>(before, after, false);
 }
 
 TEST_F(StripLineReflectInfoTest, StripHlslCounterBuffer) {
@@ -59,7 +61,9 @@ OpMemoryModel Logical Simple
 %float = OpTypeFloat 32
 )";
 
-  SinglePassRunAndCheck<opt::StripReflectInfoPass>(before, after, false);
+  SinglePassRunAndCheck<StripReflectInfoPass>(before, after, false);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -158,7 +158,7 @@ extern int yydebug;
     FLAT = 368,
     SMOOTH = 369,
     LAYOUT = 370,
-    __EXPLICITINTERPAMD = 371,
+    EXPLICITINTERPAMD = 371,
     MAT2X2 = 372,
     MAT2X3 = 373,
     MAT2X4 = 374,

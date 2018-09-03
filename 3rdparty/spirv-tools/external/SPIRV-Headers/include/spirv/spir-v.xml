@@ -68,7 +68,8 @@
         <id value="16"  vendor="X-LEGEND"   tool="Mesa-IR/SPIR-V Translator" comment="Contact Metora Wang, github:metora/MesaGLSLCompiler"/>
         <id value="17"  vendor="Khronos" tool="SPIR-V Tools Linker" comment="Contact David Neto, dneto@google.com"/>
         <id value="18"  vendor="Wine" tool="VKD3D Shader Compiler" comment="Contact wine-devel@winehq.org"/>
-        <unused start="19" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
+        <id value="19"  vendor="Clay" tool="Clay Shader Compiler" comment="Contact info@clayengine.com"/>
+        <unused start="20" end="0xFFFF" comment="Tool ID range reservable for future use by vendors"/>
     </ids>
 
     <!-- SECTION: SPIR-V Opcodes and Enumerants -->

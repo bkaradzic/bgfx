@@ -1,6 +1,92 @@
 Revision history for SPIRV-Tools
 
-v2018.3-dev 2018-04-06
+v2018.5-dev 2018-07-08
+ - General:
+   - Support Chromium GN build
+   - Use Kokoro bots:
+     - Disable Travis-CI bots
+     - Disable AppVeyor VisualStudio Release builds. Keep VS 2017 Debug build
+   - Don't check export symbols on OSX (Darwin): some installations don't have 'objdump'
+   - Reorganize source files and namespaces
+   - Fixes for ClangTidy, and whitespace (passes 'git cl presumit --all -uf')
+   - Fix unused param compile warnings/errors when Effcee not present
+   - Avoid including time headers when timer functionality is disabled
+   - #1688: Use binary mode on stdin; fixes "spirv-dis <foo.spv" on Windows
+ - Optimizer
+   - Add API to register passes by string name
+   - Fold a vector shuffle feeding a vector shuffle
+   - Add -combine-access-chains transform
+   - Refactor how IRContext is handled by passes
+   - Improve bookkeeping for instruction result type and result id
+   - #1721: Fix size bug when folding vector shuffles
+   - #1722: Fix size infinite loop when folding vector shuffles
+   - #1724: Fix finding a constant of a specific type
+   - #1727: Dead branch elim: Reorder blocks if needed to satisfy dominance rule
+   - #1729: Handle VariablePointers cases in various optimizations
+   - #1731: Fix vector shuffle with literal id indicating undef value
+ - Validator
+   - Improve error messages
+   - Use libspirv::Instruction where possible
+   - Add option to skip all block layout checks
+   - #1685: Vulkan permits non-monotonic offsets for block members
+   - #1697: Enforce block layout rules even when using relaxed block layout option
+   - #1719: Fix line number for vector shuffle valiation error
+
+v2018.4 2018-07-08
+ - General:
+   - Support SPV_KHR_8bit_storage
+   - Add gclient and presubmit configurations
+   - Enable Kokoro build bots (#1625)
+   - Group tests into fewer executables, reduces load on CI
+   - Port test script to Python 3
+   - Symbol export tests respect SPIRV_SKIP_TESTS
+   - #1596: Operand lookup succeeds if enabled by a capability
+   - #1624: Instruction lookup succeeds if enabled by a capability
+   - Refactoring namespaces:
+     - #1678: Change libspirv to spvtools
+     - Code in source/utils moved into spvtools::utils
+     - Code in source/comp moved into spvtools::comp
+ - Optimizer:
+   - Remove insert-extract-elim pass. Use simplification pass instead.
+   - Preserve instruction-to-block mapping in most passes, to reduce runtime.
+   - Small vector optimization for operands
+   - Add pass to move Private variables to Function. Increase opportunity to optimize.
+   - Fixes:
+     #1120: Check static uses of entry point interfaces
+     #1372: Avoid merging some structs, to preserve names for reflection
+     #1577: Scalar replacement uses only undecorated types.
+     #1578: Fix handling of forward-pointer types, and types embedding pointers
+       to themselves.
+     #1591: Inliner: Callee variable with initializer should have a store at the call site.
+     #1634: Fix crash: Use type id in vector type lookup
+     #1649: Fix assert in compact-ids pass
+     Fix constant folder: ensure it uses the right type
+     #1659: Folding rules added to IRContext. Avoids leak.
+ - Validator
+   - Add work-in-progress WebGPU environment. Disallows OpUndef
+   - #670, #1581: Improve error messages; disassemble instruction
+   - #491: Check structured switches
+   - #937: Check layout rules for Block and BufferBlock in Uniform, StorageBuffer, PushConstant
+   - #1281: Check invalid branches into structured constructs
+   - #1522: Disallow array-of-arrays with DescriptorSets
+   - #1577: Allow duplicate pointer types.
+   - #1581: Better messages: output ID names along with numbers in more cases.
+   - #1597: Check Vulkan 1.1 capabilities
+   - #1618: Check invalid exit from structured case construct
+   - #1622: Run IdPass before DataRulesPass
+   - #1632: Reduce test time by artificially lowering limits in limit test
+   - #1638: Block-decorated structs member order must respect offset order
+   - #1657: Improve CFG validation diagnostics
+   - Khronos SPIR-V #337: GLSL.std.450 Refract instruction Eta param can be any float scalar.
+   - #1606: PushConstant Blocks follow storage-buffer layout rules
+   - #1664: Check layout of StorageBuffer variables with Block decoration, using storage buffer
+     rules
+   - #1666: Layout validation should permit {vec3; float} packing
+   - #1637, #1668: Layout validation uses RowMajor, ArrayStride, MatrixStride properly
+ - Linker
+   - Avoid buffer overrun when creating OpModuleProcessed
+
+v2018.3 2018-05-25
  - General:
    - Support SPV_EXT_descriptor_indexing
    - Support SPV_GOOGLE_decorate_string
@@ -12,31 +98,69 @@ v2018.3-dev 2018-04-06
      attributes in the "unified1" SPIR-V core grammar.
    - Disassembler: Emit more digits on floating point, to reliably reproduce all
      significand bits.  (Use std::max_digits10 instead of std::digits10)
+   - Fix compilation for old XCode versions: Explicit construction required for std::set.
  - Optimizer:
    - Add --strip-reflect
    - Add --time-report
+   - Add --loop-fission
+   - Add lop fusion.
+   - Add loop peeling pass and internal utility.
+   - Improve optimizer runtime.
    - Merge-return now works with structured control flow.
    - New (faster) SSA rewriter to convert local loads and stores to SSA IDs and phis.
      Can replace load/store elimination passes.
    - Fix instruction folding case: insertion that feeds and extract, when the extract
      remains.
+   - Fold OpDot.
+   - Fold OpFNegate.
+   - Fold multply and divide of same value.
+   - Fold FClamp feeding a compare.
+   - Fold OpLoad feeding an extract, to reduce excessive copying. (#1547)
+   - Fold Fmix feeding an extract.
+   - Use simplification pass instead of insert-extract elimination.
+   - Constant fold OpVectorTimesScalar.
    - Copy propagate arrays, in simple cases.
+   - Aggressive dead code elimination: Can remove more instructions, e.g. derivatives.
+   - Aggressive dead code elimination: Remove Workgroup variables that are written but not read.
    - Better handling of OpImageTexelPointer
-   - Add loop peeling internal utility.
    - Initial utilities for scalar evolution.
+   - Add Vector dead code elimination.
+   - Each pass can only run once.
+   - Allow code hosting in if-conversion.
+   - Add external interface for adding a PassToken, so external code can make their own
+     passes.
+   - Fixes:
+     #1404: Don't optimize away the compute compute workgroup size constant.
+     #1407: Remove a bad assertion
+     #1456: Fix bug in SSA rewriter related to variables updated in loops.
+     #1487: Fix long runtime in Dead insertion elimination: Don't revist select phi nodes.
+     #1492: Aggressive dead code elimination can remove OpDecorateStringGOOGLE.
+     #1527: Fix inlining of functions having OpKill and OpUnreachable.
+     #1559: Fix assert failure in reduce-load-size pass.
+     #1556: Aggressive dead code elimination: Fix handling of OpCopyMemory.
  - Validator:
    - Check Vulkan built-in variables
    - Check Vulkan-specific atomic result type rule.
    - Relax control barrier check for SPIR-V 1.3.  Fixes #1427
    - Check OpPhi.
+   - Check OpMemoryModel.
    - Stop checking sizes derived from spec-constants.
    - Re-enable checks for OpUConvert.
+   - Vulkan: Fix check for PrimitiveId: Permit as Input in fragment shader.
+   - Validate binary version for the given target environment.
+   - Add tests for OpBranch checks.
+   - Vulkan 1.1: Check scope for non-uniform subgroup operations.
+   - Fix checks for SPV_AMD_gpu_shader_int16.
+   - Fix logical layout check for OpDecorateId.
+   - Fix checks for ViewportIndex & Layer for Vulkan and SPV_EXT_shader_viewport_index_layer.
+   - Fixes:
+     #1470: Vulkan: Don't restrict WorkgroupSize to Input storage class.
+     #1469: Vulkan: Permit Subgroup memory scope for Vulkan 1.1.
+     #1472: Per-vertex variable validation fixes.
+     #1483: Valdiate barrier execution scopes for Vulkan 1.1.
  - Fixes:
    #898: Linker properly removes FuncParamAttr from imported symbols.
    #924, #1174: Fix handling of decoration groups in optimizer, linker.
-   #1404: Don't optimize away the compute compute workgroup size constant.
-   #1407: Remove a bad assertion
-   #1456: Fix bug in SSA rewriter related to variables updated in loops.
 
 v2018.2 2018-03-07
  - General:

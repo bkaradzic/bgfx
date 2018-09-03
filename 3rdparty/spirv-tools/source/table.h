@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_TABLE_H_
-#define LIBSPIRV_TABLE_H_
+#ifndef SOURCE_TABLE_H_
+#define SOURCE_TABLE_H_
 
-#include "latest_version_spirv_header.h"
+#include "source/latest_version_spirv_header.h"
 
-#include "extensions.h"
-#include "message.h"
+#include "source/extensions.h"
 #include "spirv-tools/libspirv.hpp"
 
 typedef struct spv_opcode_desc_t {
@@ -38,7 +37,7 @@ typedef struct spv_opcode_desc_t {
   // assembler, binary parser, and disassembler ignore this rule, so you can
   // freely process invalid modules.
   const uint32_t numExtensions;
-  const libspirv::Extension* extensions;
+  const spvtools::Extension* extensions;
   // Minimal core SPIR-V version required for this feature, if without
   // extensions. ~0u means reserved for future use. ~0u and non-empty extension
   // lists means only available in extensions.
@@ -55,7 +54,7 @@ typedef struct spv_operand_desc_t {
   // assembler, binary parser, and disassembler ignore this rule, so you can
   // freely process invalid modules.
   const uint32_t numExtensions;
-  const libspirv::Extension* extensions;
+  const spvtools::Extension* extensions;
   const spv_operand_type_t operandTypes[16];  // TODO: Smaller/larger?
   // Minimal core SPIR-V version required for this feature, if without
   // extensions. ~0u means reserved for future use. ~0u and non-empty extension
@@ -114,12 +113,12 @@ struct spv_context_t {
   spvtools::MessageConsumer consumer;
 };
 
-namespace libspirv {
+namespace spvtools {
+
 // Sets the message consumer to |consumer| in the given |context|. The original
 // message consumer will be overwritten.
-void SetContextMessageConsumer(spv_context context,
-                               spvtools::MessageConsumer consumer);
-}  // namespace libspirv
+void SetContextMessageConsumer(spv_context context, MessageConsumer consumer);
+}  // namespace spvtools
 
 // Populates *table with entries for env.
 spv_result_t spvOpcodeTableGet(spv_opcode_table* table, spv_target_env env);
@@ -130,4 +129,4 @@ spv_result_t spvOperandTableGet(spv_operand_table* table, spv_target_env env);
 // Populates *table with entries for env.
 spv_result_t spvExtInstTableGet(spv_ext_inst_table* table, spv_target_env env);
 
-#endif  // LIBSPIRV_TABLE_H_
+#endif  // SOURCE_TABLE_H_

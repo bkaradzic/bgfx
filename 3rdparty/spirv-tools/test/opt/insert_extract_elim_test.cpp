@@ -13,12 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <string>
 
+#include "source/opt/simplification_pass.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using InsertExtractElimTest = PassTest<::testing::Test>;
 
@@ -99,8 +102,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs + before, predefs + after,
+                                            true, true);
 }
 
 TEST_F(InsertExtractElimTest, OptimizeAcrossNonConflictingInsert) {
@@ -184,8 +187,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs + before, predefs + after,
+                                            true, true);
 }
 
 TEST_F(InsertExtractElimTest, OptimizeOpaque) {
@@ -235,9 +238,9 @@ OpDecorate %sampler15 DescriptorSet 0
   const std::string before =
       R"(%main = OpFunction %void None %9
 %25 = OpLabel
-%s0 = OpVariable %_ptr_Function_S_t Function 
+%s0 = OpVariable %_ptr_Function_S_t Function
 %26 = OpLoad %v2float %texCoords
-%27 = OpLoad %S_t %s0 
+%27 = OpLoad %S_t %s0
 %28 = OpCompositeInsert %S_t %26 %27 0
 %29 = OpLoad %15 %sampler15
 %30 = OpCompositeInsert %S_t %29 %28 2
@@ -266,8 +269,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs + before, predefs + after,
+                                            true, true);
 }
 
 TEST_F(InsertExtractElimTest, OptimizeNestedStruct) {
@@ -395,8 +398,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs + before, predefs + after,
+                                            true, true);
 }
 
 TEST_F(InsertExtractElimTest, ConflictingInsertPreventsOptimization) {
@@ -463,8 +466,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(assembly, assembly, true,
-                                                    true);
+  SinglePassRunAndCheck<SimplificationPass>(assembly, assembly, true, true);
 }
 
 TEST_F(InsertExtractElimTest, ConflictingInsertPreventsOptimization2) {
@@ -580,15 +582,15 @@ OpFunctionEnd
 %24 = OpCompositeInsert %S_t %float_1 %23 1 1
 %25 = OpLoad %v4float %BaseColor
 %26 = OpCompositeInsert %S_t %25 %24 1
-%27 = OpCompositeExtract %float %26 1 1
+%27 = OpCompositeExtract %float %25 1
 %28 = OpCompositeConstruct %v4float %27 %float_0 %float_0 %float_0
 OpStore %gl_FragColor %28
 OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      before_predefs + before, after_predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(before_predefs + before,
+                                            after_predefs + after, true, true);
 }
 
 TEST_F(InsertExtractElimTest, MixWithConstants) {
@@ -689,8 +691,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs + before, predefs + after,
+                                            true, true);
 }
 
 TEST_F(InsertExtractElimTest, VectorShuffle1) {
@@ -713,7 +715,7 @@ TEST_F(InsertExtractElimTest, VectorShuffle1) {
   //     OutColor = vec4(v.y);
   // }
 
-  const std::string predefs =
+  const std::string predefs_before =
       R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -743,6 +745,10 @@ OpDecorate %OutColor Location 0
 %_ptr_Function_float = OpTypePointer Function %float
 )";
 
+  const std::string predefs_after = predefs_before +
+                                    "%24 = OpConstantComposite %v4float "
+                                    "%float_1 %float_1 %float_1 %float_1\n";
+
   const std::string before =
       R"(%main = OpFunction %void None %7
 %17 = OpLabel
@@ -764,14 +770,13 @@ OpFunctionEnd
 %19 = OpLoad %float %bc2
 %20 = OpCompositeConstruct %v4float %18 %19 %float_0 %float_1
 %21 = OpVectorShuffle %v4float %20 %20 2 3 0 1
-%23 = OpCompositeConstruct %v4float %float_1 %float_1 %float_1 %float_1
-OpStore %OutColor %23
+OpStore %OutColor %24
 OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs_before + before,
+                                            predefs_after + after, true, true);
 }
 
 TEST_F(InsertExtractElimTest, VectorShuffle2) {
@@ -796,7 +801,7 @@ TEST_F(InsertExtractElimTest, VectorShuffle2) {
   //     OutColor = vec4(v.y);
   // }
 
-  const std::string predefs =
+  const std::string predefs_before =
       R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -826,6 +831,37 @@ OpDecorate %OutColor Location 0
 %_ptr_Function_float = OpTypePointer Function %float
 )";
 
+  const std::string predefs_after =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %bc %bc2 %OutColor
+OpExecutionMode %main OriginUpperLeft
+OpSource GLSL 450
+OpName %main "main"
+OpName %bc "bc"
+OpName %bc2 "bc2"
+OpName %OutColor "OutColor"
+OpDecorate %bc Location 0
+OpDecorate %bc2 Location 1
+OpDecorate %OutColor Location 0
+%void = OpTypeVoid
+%7 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%v4float = OpTypeVector %float 4
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+%_ptr_Input_float = OpTypePointer Input %float
+%bc = OpVariable %_ptr_Input_float Input
+%bc2 = OpVariable %_ptr_Input_float Input
+%float_0 = OpConstant %float 0
+%float_1 = OpConstant %float 1
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%OutColor = OpVariable %_ptr_Output_v4float Output
+%uint = OpTypeInt 32 0
+%_ptr_Function_float = OpTypePointer Function %float
+%24 = OpConstantComposite %v4float %float_1 %float_1 %float_1 %float_1
+)";
+
   const std::string before =
       R"(%main = OpFunction %void None %7
 %17 = OpLabel
@@ -847,17 +883,18 @@ OpFunctionEnd
 %19 = OpLoad %float %bc2
 %20 = OpCompositeConstruct %v4float %18 %19 %float_0 %float_1
 %21 = OpVectorShuffle %v4float %20 %20 2 7 0 1
-%23 = OpCompositeConstruct %v4float %float_1 %float_1 %float_1 %float_1
-OpStore %OutColor %23
+OpStore %OutColor %24
 OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::InsertExtractElimPass>(
-      predefs + before, predefs + after, true, true);
+  SinglePassRunAndCheck<SimplificationPass>(predefs_before + before,
+                                            predefs_after + after, true, true);
 }
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -35,10 +35,7 @@ Pull requests can be made to
 mkdir build
 cd build
 cmake ..
-# Linux
-cmake --build . --target install-headers
-# Windows
-cmake --build . --config Debug --target install-headers
+cmake --build . --target install
 ```
 
 Then, for example, you will have `/usr/local/include/spirv/unified1/spirv.h`

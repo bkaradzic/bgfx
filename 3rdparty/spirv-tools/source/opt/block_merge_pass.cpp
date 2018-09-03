@@ -14,17 +14,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "block_merge_pass.h"
+#include "source/opt/block_merge_pass.h"
 
-#include "ir_context.h"
-#include "iterator.h"
+#include <vector>
+
+#include "source/opt/ir_context.h"
+#include "source/opt/iterator.h"
 
 namespace spvtools {
 namespace opt {
 
-void BlockMergePass::KillInstAndName(ir::Instruction* inst) {
-  std::vector<ir::Instruction*> to_kill;
-  get_def_use_mgr()->ForEachUser(inst, [&to_kill](ir::Instruction* user) {
+void BlockMergePass::KillInstAndName(Instruction* inst) {
+  std::vector<Instruction*> to_kill;
+  get_def_use_mgr()->ForEachUser(inst, [&to_kill](Instruction* user) {
     if (user->opcode() == SpvOpName) {
       to_kill.push_back(user);
     }
@@ -35,13 +37,13 @@ void BlockMergePass::KillInstAndName(ir::Instruction* inst) {
   context()->KillInst(inst);
 }
 
-bool BlockMergePass::MergeBlocks(ir::Function* func) {
+bool BlockMergePass::MergeBlocks(Function* func) {
   bool modified = false;
   for (auto bi = func->begin(); bi != func->end();) {
     // Find block with single successor which has no other predecessors.
     auto ii = bi->end();
     --ii;
-    ir::Instruction* br = &*ii;
+    Instruction* br = &*ii;
     if (br->opcode() != SpvOpBranch) {
       ++bi;
       continue;
@@ -69,14 +71,14 @@ bool BlockMergePass::MergeBlocks(ir::Function* func) {
       continue;
     }
 
-    ir::Instruction* merge_inst = bi->GetMergeInst();
+    Instruction* merge_inst = bi->GetMergeInst();
     if (pred_is_header && lab_id != merge_inst->GetSingleWordInOperand(0u)) {
       // If this is a header block and the successor is not its merge, we must
       // be careful about which blocks we are willing to merge together.
       // OpLoopMerge must be followed by a conditional or unconditional branch.
       // The merge must be a loop merge because a selection merge cannot be
       // followed by an unconditional branch.
-      ir::BasicBlock* succ_block = context()->get_instr_block(lab_id);
+      BasicBlock* succ_block = context()->get_instr_block(lab_id);
       SpvOp succ_term_op = succ_block->terminator()->opcode();
       assert(merge_inst->opcode() == SpvOpLoopMerge);
       if (succ_term_op != SpvOpBranch &&
@@ -94,7 +96,15 @@ bool BlockMergePass::MergeBlocks(ir::Function* func) {
     // If bi is sbi's only predecessor, it dominates sbi and thus
     // sbi must follow bi in func's ordering.
     assert(sbi != func->end());
+
+    // Update the inst-to-block mapping for the instructions in sbi.
+    for (auto& inst : *sbi) {
+      context()->set_instr_block(&inst, &*bi);
+    }
+
+    // Now actually move the instructions.
     bi->AddInstructions(&*sbi);
+
     if (merge_inst) {
       if (pred_is_header && lab_id == merge_inst->GetSingleWordInOperand(0u)) {
         // Merging the header and merge blocks, so remove the structured control
@@ -114,7 +124,7 @@ bool BlockMergePass::MergeBlocks(ir::Function* func) {
   return modified;
 }
 
-bool BlockMergePass::IsHeader(ir::BasicBlock* block) {
+bool BlockMergePass::IsHeader(BasicBlock* block) {
   return block->GetMergeInst() != nullptr;
 }
 
@@ -123,7 +133,7 @@ bool BlockMergePass::IsHeader(uint32_t id) {
 }
 
 bool BlockMergePass::IsMerge(uint32_t id) {
-  return !get_def_use_mgr()->WhileEachUse(id, [](ir::Instruction* user,
+  return !get_def_use_mgr()->WhileEachUse(id, [](Instruction* user,
                                                  uint32_t index) {
     SpvOp op = user->opcode();
     if ((op == SpvOpLoopMerge || op == SpvOpSelectionMerge) && index == 0u) {
@@ -133,25 +143,16 @@ bool BlockMergePass::IsMerge(uint32_t id) {
   });
 }
 
-bool BlockMergePass::IsMerge(ir::BasicBlock* block) {
-  return IsMerge(block->id());
-}
+bool BlockMergePass::IsMerge(BasicBlock* block) { return IsMerge(block->id()); }
 
-void BlockMergePass::Initialize(ir::IRContext* c) { InitializeProcessing(c); }
-
-Pass::Status BlockMergePass::ProcessImpl() {
+Pass::Status BlockMergePass::Process() {
   // Process all entry point functions.
-  ProcessFunction pfn = [this](ir::Function* fp) { return MergeBlocks(fp); };
+  ProcessFunction pfn = [this](Function* fp) { return MergeBlocks(fp); };
   bool modified = ProcessEntryPointCallTree(pfn, get_module());
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
-BlockMergePass::BlockMergePass() {}
-
-Pass::Status BlockMergePass::Process(ir::IRContext* c) {
-  Initialize(c);
-  return ProcessImpl();
-}
+BlockMergePass::BlockMergePass() = default;
 
 }  // namespace opt
 }  // namespace spvtools

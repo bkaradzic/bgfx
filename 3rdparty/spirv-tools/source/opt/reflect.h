@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_REFLECT_H_
-#define LIBSPIRV_OPT_REFLECT_H_
+#ifndef SOURCE_OPT_REFLECT_H_
+#define SOURCE_OPT_REFLECT_H_
 
-#include "latest_version_spirv_header.h"
+#include "source/latest_version_spirv_header.h"
 
 namespace spvtools {
-namespace ir {
+namespace opt {
 
 // Note that as SPIR-V evolves over time, new opcodes may appear. So the
 // following functions tend to be outdated and should be updated when SPIR-V
@@ -59,7 +59,7 @@ inline bool IsTerminatorInst(SpvOp opcode) {
   return opcode >= SpvOpBranch && opcode <= SpvOpUnreachable;
 }
 
-}  // namespace ir
+}  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_REFLECT_H_
+#endif  // SOURCE_OPT_REFLECT_H_

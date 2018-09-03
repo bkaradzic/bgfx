@@ -41,6 +41,8 @@
 #include "../Public/ShaderLang.h"
 #include "Versions.h"
 
+#include <string>
+#include <vector>
 #include <algorithm>
 #include <set>
 #include <array>
@@ -349,7 +351,7 @@ public:
         if (hlslOffsets)
             processes.addProcess("hlsl-offsets");
     }
-    bool usingHlslOFfsets() const { return hlslOffsets; }
+    bool usingHlslOffsets() const { return hlslOffsets; }
     void setUseStorageBuffer()
     {
         useStorageBuffer = true;

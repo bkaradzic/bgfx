@@ -14,14 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dead_insert_elim_pass.h"
+#include "source/opt/dead_insert_elim_pass.h"
 
-#include "composite.h"
-#include "ir_context.h"
-#include "iterator.h"
+#include "source/opt/composite.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/iterator.h"
 #include "spirv/1.2/GLSL.std.450.h"
-
-#include <vector>
 
 namespace spvtools {
 namespace opt {
@@ -38,7 +36,7 @@ const uint32_t kInsertCompositeIdInIdx = 1;
 
 }  // anonymous namespace
 
-uint32_t DeadInsertElimPass::NumComponents(ir::Instruction* typeInst) {
+uint32_t DeadInsertElimPass::NumComponents(Instruction* typeInst) {
   switch (typeInst->opcode()) {
     case SpvOpTypeVector: {
       return typeInst->GetSingleWordInOperand(kTypeVectorCountInIdx);
@@ -49,10 +47,10 @@ uint32_t DeadInsertElimPass::NumComponents(ir::Instruction* typeInst) {
     case SpvOpTypeArray: {
       uint32_t lenId =
           typeInst->GetSingleWordInOperand(kTypeArrayLengthIdInIdx);
-      ir::Instruction* lenInst = get_def_use_mgr()->GetDef(lenId);
+      Instruction* lenInst = get_def_use_mgr()->GetDef(lenId);
       if (lenInst->opcode() != SpvOpConstant) return 0;
       uint32_t lenTypeId = lenInst->type_id();
-      ir::Instruction* lenTypeInst = get_def_use_mgr()->GetDef(lenTypeId);
+      Instruction* lenTypeInst = get_def_use_mgr()->GetDef(lenTypeId);
       // TODO(greg-lunarg): Support non-32-bit array length
       if (lenTypeInst->GetSingleWordInOperand(kTypeIntWidthInIdx) != 32)
         return 0;
@@ -65,11 +63,11 @@ uint32_t DeadInsertElimPass::NumComponents(ir::Instruction* typeInst) {
   }
 }
 
-void DeadInsertElimPass::MarkInsertChain(ir::Instruction* insertChain,
-                                         std::vector<uint32_t>* pExtIndices,
-                                         uint32_t extOffset) {
+void DeadInsertElimPass::MarkInsertChain(
+    Instruction* insertChain, std::vector<uint32_t>* pExtIndices,
+    uint32_t extOffset, std::unordered_set<uint32_t>* visited_phis) {
   // Not currently optimizing array inserts.
-  ir::Instruction* typeInst = get_def_use_mgr()->GetDef(insertChain->type_id());
+  Instruction* typeInst = get_def_use_mgr()->GetDef(insertChain->type_id());
   if (typeInst->opcode() == SpvOpTypeArray) return;
   // Insert chains are only composed of inserts and phis
   if (insertChain->opcode() != SpvOpCompositeInsert &&
@@ -84,12 +82,13 @@ void DeadInsertElimPass::MarkInsertChain(ir::Instruction* insertChain,
       for (uint32_t i = 0; i < cnum; i++) {
         extIndices.clear();
         extIndices.push_back(i);
-        MarkInsertChain(insertChain, &extIndices, 0);
+        std::unordered_set<uint32_t> sub_visited_phis;
+        MarkInsertChain(insertChain, &extIndices, 0, &sub_visited_phis);
       }
       return;
     }
   }
-  ir::Instruction* insInst = insertChain;
+  Instruction* insInst = insertChain;
   while (insInst->opcode() == SpvOpCompositeInsert) {
     // If no extract indices, mark insert and inserted object (which might
     // also be an insert chain) and continue up the chain though the input
@@ -101,33 +100,37 @@ void DeadInsertElimPass::MarkInsertChain(ir::Instruction* insertChain,
     if (pExtIndices == nullptr) {
       liveInserts_.insert(insInst->result_id());
       uint32_t objId = insInst->GetSingleWordInOperand(kInsertObjectIdInIdx);
-      MarkInsertChain(get_def_use_mgr()->GetDef(objId), nullptr, 0);
-    }
+      std::unordered_set<uint32_t> obj_visited_phis;
+      MarkInsertChain(get_def_use_mgr()->GetDef(objId), nullptr, 0,
+                      &obj_visited_phis);
     // If extract indices match insert, we are done. Mark insert and
     // inserted object.
-    else if (ExtInsMatch(*pExtIndices, insInst, extOffset)) {
+    } else if (ExtInsMatch(*pExtIndices, insInst, extOffset)) {
       liveInserts_.insert(insInst->result_id());
       uint32_t objId = insInst->GetSingleWordInOperand(kInsertObjectIdInIdx);
-      MarkInsertChain(get_def_use_mgr()->GetDef(objId), nullptr, 0);
+      std::unordered_set<uint32_t> obj_visited_phis;
+      MarkInsertChain(get_def_use_mgr()->GetDef(objId), nullptr, 0,
+                      &obj_visited_phis);
       break;
-    }
     // If non-matching intersection, mark insert
-    else if (ExtInsConflict(*pExtIndices, insInst, extOffset)) {
+    } else if (ExtInsConflict(*pExtIndices, insInst, extOffset)) {
       liveInserts_.insert(insInst->result_id());
       // If more extract indices than insert, we are done. Use remaining
       // extract indices to mark inserted object.
       uint32_t numInsertIndices = insInst->NumInOperands() - 2;
       if (pExtIndices->size() - extOffset > numInsertIndices) {
         uint32_t objId = insInst->GetSingleWordInOperand(kInsertObjectIdInIdx);
+        std::unordered_set<uint32_t> obj_visited_phis;
         MarkInsertChain(get_def_use_mgr()->GetDef(objId), pExtIndices,
-                        extOffset + numInsertIndices);
+                        extOffset + numInsertIndices, &obj_visited_phis);
         break;
-      }
       // If fewer extract indices than insert, also mark inserted object and
       // continue up chain.
-      else {
+      } else {
         uint32_t objId = insInst->GetSingleWordInOperand(kInsertObjectIdInIdx);
-        MarkInsertChain(get_def_use_mgr()->GetDef(objId), nullptr, 0);
+        std::unordered_set<uint32_t> obj_visited_phis;
+        MarkInsertChain(get_def_use_mgr()->GetDef(objId), nullptr, 0,
+                        &obj_visited_phis);
       }
     }
     // Get next insert in chain
@@ -139,14 +142,8 @@ void DeadInsertElimPass::MarkInsertChain(ir::Instruction* insertChain,
   if (insInst->opcode() != SpvOpPhi) return;
   // Mark phi visited to prevent potential infinite loop. If phi is already
   // visited, return to avoid infinite loop.
-  auto iter = visitedPhis_.find(insInst->result_id());
-  if (iter == visitedPhis_.end()) {
-    iter = visitedPhis_.emplace(insInst->result_id(), true).first;
-  } else if (iter->second) {
-    return;
-  } else {
-    iter->second = true;
-  }
+  if (visited_phis->count(insInst->result_id()) != 0) return;
+  visited_phis->insert(insInst->result_id());
 
   // Phis may have duplicate inputs values for different edges, prune incoming
   // ids lists before recursing.
@@ -157,15 +154,12 @@ void DeadInsertElimPass::MarkInsertChain(ir::Instruction* insertChain,
   std::sort(ids.begin(), ids.end());
   auto new_end = std::unique(ids.begin(), ids.end());
   for (auto id_iter = ids.begin(); id_iter != new_end; ++id_iter) {
-    ir::Instruction* pi = get_def_use_mgr()->GetDef(*id_iter);
-    MarkInsertChain(pi, pExtIndices, extOffset);
+    Instruction* pi = get_def_use_mgr()->GetDef(*id_iter);
+    MarkInsertChain(pi, pExtIndices, extOffset, visited_phis);
   }
-
-  // Unmark phi when done visiting.
-  iter->second = false;
 }
 
-bool DeadInsertElimPass::EliminateDeadInserts(ir::Function* func) {
+bool DeadInsertElimPass::EliminateDeadInserts(Function* func) {
   bool modified = false;
   bool lastmodified = true;
   // Each pass can delete dead instructions, thus potentially revealing
@@ -177,7 +171,7 @@ bool DeadInsertElimPass::EliminateDeadInserts(ir::Function* func) {
   return modified;
 }
 
-bool DeadInsertElimPass::EliminateDeadInsertsOnePass(ir::Function* func) {
+bool DeadInsertElimPass::EliminateDeadInsertsOnePass(Function* func) {
   bool modified = false;
   liveInserts_.clear();
   visitedPhis_.clear();
@@ -186,7 +180,7 @@ bool DeadInsertElimPass::EliminateDeadInsertsOnePass(ir::Function* func) {
     for (auto ii = bi->begin(); ii != bi->end(); ++ii) {
       // Only process Inserts and composite Phis
       SpvOp op = ii->opcode();
-      ir::Instruction* typeInst = get_def_use_mgr()->GetDef(ii->type_id());
+      Instruction* typeInst = get_def_use_mgr()->GetDef(ii->type_id());
       if (op != SpvOpCompositeInsert &&
           (op != SpvOpPhi || !spvOpcodeIsComposite(typeInst->opcode())))
         continue;
@@ -201,7 +195,7 @@ bool DeadInsertElimPass::EliminateDeadInsertsOnePass(ir::Function* func) {
         }
       }
       const uint32_t id = ii->result_id();
-      get_def_use_mgr()->ForEachUser(id, [&ii, this](ir::Instruction* user) {
+      get_def_use_mgr()->ForEachUser(id, [&ii, this](Instruction* user) {
         switch (user->opcode()) {
           case SpvOpCompositeInsert:
           case SpvOpPhi:
@@ -216,18 +210,19 @@ bool DeadInsertElimPass::EliminateDeadInsertsOnePass(ir::Function* func) {
               ++icnt;
             });
             // Mark all inserts in chain that intersect with extract
-            MarkInsertChain(&*ii, &extIndices, 0);
+            std::unordered_set<uint32_t> visited_phis;
+            MarkInsertChain(&*ii, &extIndices, 0, &visited_phis);
           } break;
           default: {
             // Mark inserts in chain for all components
-            MarkInsertChain(&*ii, nullptr, 0);
+            MarkInsertChain(&*ii, nullptr, 0, nullptr);
           } break;
         }
       });
     }
   }
   // Find and disconnect dead inserts
-  std::vector<ir::Instruction*> dead_instructions;
+  std::vector<Instruction*> dead_instructions;
   for (auto bi = func->begin(); bi != func->end(); ++bi) {
     for (auto ii = bi->begin(); ii != bi->end(); ++ii) {
       if (ii->opcode() != SpvOpCompositeInsert) continue;
@@ -242,9 +237,9 @@ bool DeadInsertElimPass::EliminateDeadInsertsOnePass(ir::Function* func) {
   }
   // DCE dead inserts
   while (!dead_instructions.empty()) {
-    ir::Instruction* inst = dead_instructions.back();
+    Instruction* inst = dead_instructions.back();
     dead_instructions.pop_back();
-    DCEInst(inst, [&dead_instructions](ir::Instruction* other_inst) {
+    DCEInst(inst, [&dead_instructions](Instruction* other_inst) {
       auto i = std::find(dead_instructions.begin(), dead_instructions.end(),
                          other_inst);
       if (i != dead_instructions.end()) {
@@ -255,24 +250,13 @@ bool DeadInsertElimPass::EliminateDeadInsertsOnePass(ir::Function* func) {
   return modified;
 }
 
-void DeadInsertElimPass::Initialize(ir::IRContext* c) {
-  InitializeProcessing(c);
-}
-
-Pass::Status DeadInsertElimPass::ProcessImpl() {
+Pass::Status DeadInsertElimPass::Process() {
   // Process all entry point functions.
-  ProcessFunction pfn = [this](ir::Function* fp) {
+  ProcessFunction pfn = [this](Function* fp) {
     return EliminateDeadInserts(fp);
   };
   bool modified = ProcessEntryPointCallTree(pfn, get_module());
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
-}
-
-DeadInsertElimPass::DeadInsertElimPass() {}
-
-Pass::Status DeadInsertElimPass::Process(ir::IRContext* c) {
-  Initialize(c);
-  return ProcessImpl();
 }
 
 }  // namespace opt

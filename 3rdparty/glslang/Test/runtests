@@ -130,13 +130,13 @@ diff -b $BASEDIR/spv.looseUniformNoLoc.vert.out $TARGETDIR/spv.looseUniformNoLoc
 # Testing debug information
 #
 echo Testing SPV Debug Information
-$EXE -g --relaxed-errors --suppress-warnings --aml --amb --hlsl-offsets --nsf \
+$EXE -g --relaxed-errors --suppress-warnings --aml --amb --hlsl-offsets --nsf --spirv-val \
      -G -H spv.debugInfo.frag --rsb frag 3 > $TARGETDIR/spv.debugInfo.frag.out
 diff -b $BASEDIR/spv.debugInfo.frag.out $TARGETDIR/spv.debugInfo.frag.out || HASERROR=1
-$EXE -g -Od --target-env vulkan1.1 --relaxed-errors --suppress-warnings --aml --hlsl-offsets --nsf \
+$EXE -g -Od --target-env vulkan1.1 --relaxed-errors --suppress-warnings --aml --hlsl-offsets --nsf --spirv-val \
      -G -H spv.debugInfo.frag --rsb frag 3 > $TARGETDIR/spv.debugInfo.1.1.frag.out
 diff -b $BASEDIR/spv.debugInfo.1.1.frag.out $TARGETDIR/spv.debugInfo.1.1.frag.out || HASERROR=1
-$EXE -g -D -Od -e newMain -g --amb --aml --fua --hlsl-iomap --nsf --sib 1 --ssb 2 --sbb 3 --stb 4 --suavb 5 --sub 6 \
+$EXE -g -D -Od -e newMain -g --amb --aml --fua --hlsl-iomap --nsf --spirv-val --sib 1 --ssb 2 --sbb 3 --stb 4 --suavb 5 --sub 6 \
      --sep origMain -H -Od spv.hlslDebugInfo.vert --rsb vert t0 0 0 > $TARGETDIR/spv.hlslDebugInfo.frag.out
 diff -b $BASEDIR/spv.hlslDebugInfo.frag.out $TARGETDIR/spv.hlslDebugInfo.frag.out || HASERROR=1
 

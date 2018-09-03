@@ -12,23 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_TYPE_MANAGER_H_
-#define LIBSPIRV_OPT_TYPE_MANAGER_H_
+#ifndef SOURCE_OPT_TYPE_MANAGER_H_
+#define SOURCE_OPT_TYPE_MANAGER_H_
 
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include "module.h"
+#include "source/opt/module.h"
+#include "source/opt/types.h"
 #include "spirv-tools/libspirv.hpp"
-#include "types.h"
 
 namespace spvtools {
-namespace ir {
-class IRContext;
-}  // namespace ir
 namespace opt {
+
+class IRContext;
+
 namespace analysis {
 
 // Hashing functor.
@@ -75,7 +76,7 @@ class TypeManager {
   // will be communicated to the outside via the given message |consumer|.
   // This instance only keeps a reference to the |consumer|, so the |consumer|
   // should outlive this instance.
-  TypeManager(const MessageConsumer& consumer, spvtools::ir::IRContext* c);
+  TypeManager(const MessageConsumer& consumer, IRContext* c);
 
   TypeManager(const TypeManager&) = delete;
   TypeManager(TypeManager&&) = delete;
@@ -93,11 +94,6 @@ class TypeManager {
   // Iterators for all types contained in this manager.
   IdToTypeMap::const_iterator begin() const { return id_to_type_.cbegin(); }
   IdToTypeMap::const_iterator end() const { return id_to_type_.cend(); }
-
-  // Returns the forward pointer type at the given |index|.
-  ForwardPointer* GetForwardPointer(uint32_t index) const;
-  // Returns the number of forward pointer types hold in this manager.
-  size_t NumForwardPointers() const { return forward_pointers_.size(); }
 
   // Returns a pair of the type and pointer to the type in |sc|.
   //
@@ -146,14 +142,31 @@ class TypeManager {
   using TypePool =
       std::unordered_set<std::unique_ptr<Type>, HashTypeUniquePointer,
                          CompareTypeUniquePointers>;
-  using ForwardPointerVector = std::vector<std::unique_ptr<ForwardPointer>>;
+
+  class UnresolvedType {
+   public:
+    UnresolvedType(uint32_t i, Type* t) : id_(i), type_(t) {}
+    UnresolvedType(const UnresolvedType&) = delete;
+    UnresolvedType(UnresolvedType&& that)
+        : id_(that.id_), type_(std::move(that.type_)) {}
+
+    uint32_t id() { return id_; }
+    Type* type() { return type_.get(); }
+    std::unique_ptr<Type>&& ReleaseType() { return std::move(type_); }
+    void ResetType(Type* t) { type_.reset(t); }
+
+   private:
+    uint32_t id_;
+    std::unique_ptr<Type> type_;
+  };
+  using IdToUnresolvedType = std::vector<UnresolvedType>;
 
   // Analyzes the types and decorations on types in the given |module|.
-  void AnalyzeTypes(const spvtools::ir::Module& module);
+  void AnalyzeTypes(const Module& module);
 
-  spvtools::ir::IRContext* context() { return context_; }
+  IRContext* context() { return context_; }
 
-  // Attachs the decorations on |type| to |id|.
+  // Attaches the decorations on |type| to |id|.
   void AttachDecorations(uint32_t id, const Type* type);
 
   // Create the annotation instruction.
@@ -166,30 +179,40 @@ class TypeManager {
 
   // Creates and returns a type from the given SPIR-V |inst|. Returns nullptr if
   // the given instruction is not for defining a type.
-  Type* RecordIfTypeDefinition(const spvtools::ir::Instruction& inst);
+  Type* RecordIfTypeDefinition(const Instruction& inst);
   // Attaches the decoration encoded in |inst| to |type|. Does nothing if the
   // given instruction is not a decoration instruction. Assumes the target is
   // |type| (e.g. should be called in loop of |type|'s decorations).
-  void AttachDecoration(const spvtools::ir::Instruction& inst, Type* type);
+  void AttachDecoration(const Instruction& inst, Type* type);
 
   // Returns an equivalent pointer to |type| built in terms of pointers owned by
   // |type_pool_|. For example, if |type| is a vec3 of bool, it will be rebuilt
   // replacing the bool subtype with one owned by |type_pool_|.
   Type* RebuildType(const Type& type);
 
+  // Completes the incomplete type |type|, by replaces all references to
+  // ForwardPointer by the defining Pointer.
+  void ReplaceForwardPointers(Type* type);
+
+  // Replaces all references to |original_type| in |incomplete_types_| by
+  // |new_type|.
+  void ReplaceType(Type* new_type, Type* original_type);
+
   const MessageConsumer& consumer_;  // Message consumer.
-  spvtools::ir::IRContext* context_;
+  IRContext* context_;
   IdToTypeMap id_to_type_;  // Mapping from ids to their type representations.
   TypeToIdMap type_to_id_;  // Mapping from types to their defining ids.
   TypePool type_pool_;      // Memory owner of type pointers.
-  ForwardPointerVector forward_pointers_;  // All forward pointer declarations.
-  // All unresolved forward pointer declarations.
-  // Refers the contents in the above vector.
-  std::unordered_set<ForwardPointer*> unresolved_forward_pointers_;
+  IdToUnresolvedType incomplete_types_;  // All incomplete types.  Stored in an
+                                         // std::vector to make traversals
+                                         // deterministic.
+
+  IdToTypeMap id_to_incomplete_type_;  // Maps ids to their type representations
+                                       // for incomplete types.
 };
 
 }  // namespace analysis
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_TYPE_MANAGER_H_
+#endif  // SOURCE_OPT_TYPE_MANAGER_H_

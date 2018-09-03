@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-
-#include "message.h"
+#include "gtest/gtest.h"
+#include "source/table.h"
 #include "spirv-tools/libspirv.h"
-#include "table.h"
 
+namespace spvtools {
 namespace {
-
-using namespace spvtools;
 
 // TODO(antiagainst): Use public C API for setting the consumer once exists.
 #ifndef SPIRV_TOOLS_SHAREDLIB
-void SetContextMessageConsumer(spv_context context,
-                               spvtools::MessageConsumer consumer) {
-  libspirv::SetContextMessageConsumer(context, consumer);
+void SetContextMessageConsumer(spv_context context, MessageConsumer consumer) {
+  spvtools::SetContextMessageConsumer(context, consumer);
 }
 #else
-void SetContextMessageConsumer(spv_context, spvtools::MessageConsumer) {}
+void SetContextMessageConsumer(spv_context, MessageConsumer) {}
 #endif
 
 // The default consumer is a null std::function.
@@ -194,8 +190,10 @@ TEST(CInterface, SpecifyConsumerNullDiagnosticForValidating) {
         // TODO(antiagainst): what validation reports is not a word offset here.
         // It is inconsistent with diassembler. Should be fixed.
         EXPECT_EQ(1u, position.index);
-        EXPECT_STREQ("Nop cannot appear before the memory model instruction",
-                     message);
+        EXPECT_STREQ(
+            "Nop cannot appear before the memory model instruction\n"
+            "  OpNop\n",
+            message);
       });
 
   spv_binary binary = nullptr;
@@ -287,12 +285,15 @@ TEST(CInterface, SpecifyConsumerSpecifyDiagnosticForValidating) {
   EXPECT_EQ(SPV_ERROR_INVALID_LAYOUT, spvValidate(context, &b, &diagnostic));
 
   EXPECT_EQ(0, invocation);  // Consumer should not be invoked at all.
-  EXPECT_STREQ("Nop cannot appear before the memory model instruction",
-               diagnostic->error);
+  EXPECT_STREQ(
+      "Nop cannot appear before the memory model instruction\n"
+      "  OpNop\n",
+      diagnostic->error);
 
   spvDiagnosticDestroy(diagnostic);
   spvBinaryDestroy(binary);
   spvContextDestroy(context);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

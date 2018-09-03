@@ -14,19 +14,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_UTIL_COMPOSITE_PASS_H_
-#define LIBSPIRV_UTIL_COMPOSITE_PASS_H_
+#ifndef SOURCE_OPT_COMPOSITE_H_
+#define SOURCE_OPT_COMPOSITE_H_
 
 #include <algorithm>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "ir_context.h"
-#include "module.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
@@ -34,7 +35,7 @@ namespace opt {
 // Return true if the extract indices in |extIndices| starting at |extOffset|
 // match indices of insert |insInst|.
 bool ExtInsMatch(const std::vector<uint32_t>& extIndices,
-                 const ir::Instruction* insInst, const uint32_t extOffset);
+                 const Instruction* insInst, const uint32_t extOffset);
 
 // Return true if indices in |extIndices| starting at |extOffset| and
 // indices of insert |insInst| conflict, specifically, if the insert
@@ -42,9 +43,9 @@ bool ExtInsMatch(const std::vector<uint32_t>& extIndices,
 // or less bits than the extract specifies, meaning the exact value being
 // inserted cannot be used to replace the extract.
 bool ExtInsConflict(const std::vector<uint32_t>& extIndices,
-                    const ir::Instruction* insInst, const uint32_t extOffset);
+                    const Instruction* insInst, const uint32_t extOffset);
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_UTIL_COMPOSITE_PASS_H_
+#endif  // SOURCE_OPT_COMPOSITE_H_

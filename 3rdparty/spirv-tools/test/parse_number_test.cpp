@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -19,13 +20,10 @@
 #include "source/util/parse_number.h"
 #include "spirv-tools/libspirv.h"
 
+namespace spvtools {
+namespace utils {
 namespace {
-using spvutils::EncodeNumberStatus;
-using spvutils::NumberType;
-using spvutils::ParseAndEncodeFloatingPointNumber;
-using spvutils::ParseAndEncodeIntegerNumber;
-using spvutils::ParseAndEncodeNumber;
-using spvutils::ParseNumber;
+
 using testing::Eq;
 using testing::IsNull;
 using testing::NotNull;
@@ -191,7 +189,7 @@ TEST(ParseFloat, Overflow) {
   // range values.  When it does overflow, the value is set to the
   // nearest finite value, matching C++11 behavior for operator>>
   // on floating point.
-  spvutils::HexFloat<spvutils::FloatProxy<float>> f(0.0f);
+  HexFloat<FloatProxy<float>> f(0.0f);
 
   EXPECT_TRUE(ParseNumber("1e38", &f));
   EXPECT_EQ(1e38f, f.value().getAsFloat());
@@ -236,7 +234,7 @@ TEST(ParseDouble, Overflow) {
   // range values.  When it does overflow, the value is set to the
   // nearest finite value, matching C++11 behavior for operator>>
   // on floating point.
-  spvutils::HexFloat<spvutils::FloatProxy<double>> f(0.0);
+  HexFloat<FloatProxy<double>> f(0.0);
 
   EXPECT_TRUE(ParseNumber("1e38", &f));
   EXPECT_EQ(1e38, f.value().getAsFloat());
@@ -256,7 +254,7 @@ TEST(ParseFloat16, Overflow) {
   // range values.  When it does overflow, the value is set to the
   // nearest finite value, matching C++11 behavior for operator>>
   // on floating point.
-  spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>> f(0);
+  HexFloat<FloatProxy<Float16>> f(0);
 
   EXPECT_FALSE(ParseNumber(nullptr, &f));
   EXPECT_TRUE(ParseNumber("-0.0", &f));
@@ -967,4 +965,6 @@ TEST(ParseAndEncodeNumber, Sample) {
   EXPECT_EQ(EncodeNumberStatus::kSuccess, rc);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace utils
+}  // namespace spvtools

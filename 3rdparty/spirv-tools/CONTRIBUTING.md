@@ -87,6 +87,9 @@ usual things:
 *   Identify potential functional problems.
 *   Identify code duplication.
 *   Ensure the unit tests have enough coverage.
+*   Ensure continuous integration (CI) bots run on the PR. If not run (in the
+    case of PRs by external contributors), add the "kokoro:run" label to the
+    pull request which will trigger running all CI jobs.
 
 When looking for functional problems, there are some common problems reviewers
 should pay particular attention to:

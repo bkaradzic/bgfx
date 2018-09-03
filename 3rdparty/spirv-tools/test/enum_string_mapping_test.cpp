@@ -15,14 +15,15 @@
 // Tests for OpExtension validator rules.
 
 #include <string>
+#include <utility>
+#include <vector>
 
-#include "enum_string_mapping.h"
-#include "extensions.h"
 #include "gtest/gtest.h"
+#include "source/enum_string_mapping.h"
+#include "source/extensions.h"
 
+namespace spvtools {
 namespace {
-
-using ::libspirv::Extension;
 
 using ::testing::Values;
 using ::testing::ValuesIn;
@@ -38,8 +39,7 @@ TEST_P(ExtensionTest, TestExtensionFromString) {
   const Extension extension = param.first;
   const std::string extension_str = param.second;
   Extension result_extension;
-  ASSERT_TRUE(libspirv::GetExtensionFromString(extension_str.c_str(),
-                                               &result_extension));
+  ASSERT_TRUE(GetExtensionFromString(extension_str.c_str(), &result_extension));
   EXPECT_EQ(extension, result_extension);
 }
 
@@ -47,21 +47,20 @@ TEST_P(ExtensionTest, TestExtensionToString) {
   const std::pair<Extension, std::string>& param = GetParam();
   const Extension extension = param.first;
   const std::string extension_str = param.second;
-  const std::string result_str = libspirv::ExtensionToString(extension);
+  const std::string result_str = ExtensionToString(extension);
   EXPECT_EQ(extension_str, result_str);
 }
 
 TEST_P(UnknownExtensionTest, TestExtensionFromStringFails) {
   Extension result_extension;
-  ASSERT_FALSE(
-      libspirv::GetExtensionFromString(GetParam().c_str(), &result_extension));
+  ASSERT_FALSE(GetExtensionFromString(GetParam().c_str(), &result_extension));
 }
 
 TEST_P(CapabilityTest, TestCapabilityToString) {
   const std::pair<SpvCapability, std::string>& param = GetParam();
   const SpvCapability capability = param.first;
   const std::string capability_str = param.second;
-  const std::string result_str = libspirv::CapabilityToString(capability);
+  const std::string result_str = CapabilityToString(capability);
   EXPECT_EQ(capability_str, result_str);
 }
 
@@ -87,6 +86,7 @@ INSTANTIATE_TEST_CASE_P(
         {Extension::kSPV_GOOGLE_decorate_string, "SPV_GOOGLE_decorate_string"},
         {Extension::kSPV_GOOGLE_hlsl_functionality1,
          "SPV_GOOGLE_hlsl_functionality1"},
+        {Extension::kSPV_KHR_8bit_storage, "SPV_KHR_8bit_storage"},
     })));
 
 INSTANTIATE_TEST_CASE_P(UnknownExtensions, UnknownExtensionTest,
@@ -191,4 +191,5 @@ INSTANTIATE_TEST_CASE_P(
          {SpvCapabilityShaderStereoViewNV, "ShaderStereoViewNV"},
          {SpvCapabilityPerViewAttributesNV, "PerViewAttributesNV"}})), );
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

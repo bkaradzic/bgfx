@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "assembly_builder.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
-
 #include <algorithm>
 #include <cstdarg>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using EliminateDeadConstantBasicTest = PassTest<::testing::Test>;
 
@@ -73,7 +75,7 @@ TEST_F(EliminateDeadConstantBasicTest, BasicAllDeadConstants) {
             });
       });
 
-  SinglePassRunAndCheck<opt::EliminateDeadConstantPass>(
+  SinglePassRunAndCheck<EliminateDeadConstantPass>(
       JoinAllInsts(text), expected_disassembly, /* skip_nop = */ true);
 }
 
@@ -129,7 +131,7 @@ TEST_F(EliminateDeadConstantBasicTest, BasicNoneDeadConstants) {
       // clang-format on
   };
   // All constants are used, so none of them should be eliminated.
-  SinglePassRunAndCheck<opt::EliminateDeadConstantPass>(
+  SinglePassRunAndCheck<EliminateDeadConstantPass>(
       JoinAllInsts(text), JoinAllInsts(text), /* skip_nop = */ true);
 }
 
@@ -191,7 +193,7 @@ TEST_P(EliminateDeadConstantTest, Custom) {
   const std::string expected = builder.GetCode();
   builder.AppendTypesConstantsGlobals(tc.dead_consts);
   const std::string assembly_with_dead_const = builder.GetCode();
-  SinglePassRunAndCheck<opt::EliminateDeadConstantPass>(
+  SinglePassRunAndCheck<EliminateDeadConstantPass>(
       assembly_with_dead_const, expected, /*  skip_nop = */ true);
 }
 
@@ -839,4 +841,7 @@ INSTANTIATE_TEST_CASE_P(
         // Long Def-Use chain with swizzle
         // clang-format on
     })));
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

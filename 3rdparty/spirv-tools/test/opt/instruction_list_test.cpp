@@ -14,18 +14,18 @@
 
 #include <algorithm>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "source/opt/instruction.h"
+#include "source/opt/instruction_list.h"
 
-#include "opt/instruction.h"
-#include "opt/instruction_list.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using Instruction = spvtools::ir::Instruction;
-using InstructionList = spvtools::ir::InstructionList;
 using ::testing::ContainerEq;
 using ::testing::ElementsAre;
 using InstructionListTest = ::testing::Test;
@@ -109,4 +109,7 @@ TEST(InstructionListTest, InsertBefore2) {
   }
   EXPECT_THAT(output, ContainerEq(created_instructions));
 }
+
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_VAL_INSTRUCTION_H_
-#define LIBSPIRV_VAL_INSTRUCTION_H_
+#ifndef SOURCE_VAL_INSTRUCTION_H_
+#define SOURCE_VAL_INSTRUCTION_H_
 
 #include <cassert>
 #include <cstdint>
@@ -21,10 +21,11 @@
 #include <utility>
 #include <vector>
 
+#include "source/table.h"
 #include "spirv-tools/libspirv.h"
-#include "table.h"
 
-namespace libspirv {
+namespace spvtools {
+namespace val {
 
 class BasicBlock;
 class Function;
@@ -33,9 +34,7 @@ class Function;
 /// instruction's result id
 class Instruction {
  public:
-  explicit Instruction(const spv_parsed_instruction_t* inst,
-                       Function* defining_function = nullptr,
-                       BasicBlock* defining_block = nullptr);
+  explicit Instruction(const spv_parsed_instruction_t* inst);
 
   /// Registers the use of the Instruction in instruction \p inst at \p index
   void RegisterUse(const Instruction* inst, uint32_t index);
@@ -47,10 +46,12 @@ class Instruction {
   /// Returns the Function where the instruction was defined. nullptr if it was
   /// defined outside of a Function
   const Function* function() const { return function_; }
+  void set_function(Function* func) { function_ = func; }
 
   /// Returns the BasicBlock where the instruction was defined. nullptr if it
   /// was defined outside of a BasicBlock
   const BasicBlock* block() const { return block_; }
+  void set_block(BasicBlock* b) { block_ = b; }
 
   /// Returns a vector of pairs of all references to this instruction's result
   /// id. The first element is the instruction in which this result id was
@@ -66,6 +67,11 @@ class Instruction {
   /// The words used to define the Instruction
   const std::vector<uint32_t>& words() const { return words_; }
 
+  /// Returns the operand at |idx|.
+  const spv_parsed_operand_t& operand(size_t idx) const {
+    return operands_[idx];
+  }
+
   /// The operands of the Instruction
   const std::vector<spv_parsed_operand_t>& operands() const {
     return operands_;
@@ -74,25 +80,34 @@ class Instruction {
   /// Provides direct access to the stored C instruction object.
   const spv_parsed_instruction_t& c_inst() const { return inst_; }
 
+  /// Provides direct access to instructions spv_ext_inst_type_t object.
+  const spv_ext_inst_type_t& ext_inst_type() const {
+    return inst_.ext_inst_type;
+  }
+
   // Casts the words belonging to the operand under |index| to |T| and returns.
   template <typename T>
   T GetOperandAs(size_t index) const {
-    const spv_parsed_operand_t& operand = operands_.at(index);
-    assert(operand.num_words * 4 >= sizeof(T));
-    assert(operand.offset + operand.num_words <= inst_.num_words);
-    return *reinterpret_cast<const T*>(&words_[operand.offset]);
+    const spv_parsed_operand_t& o = operands_.at(index);
+    assert(o.num_words * 4 >= sizeof(T));
+    assert(o.offset + o.num_words <= inst_.num_words);
+    return *reinterpret_cast<const T*>(&words_[o.offset]);
   }
+
+  size_t LineNum() const { return line_num_; }
+  void SetLineNum(size_t pos) { line_num_ = pos; }
 
  private:
   const std::vector<uint32_t> words_;
   const std::vector<spv_parsed_operand_t> operands_;
   spv_parsed_instruction_t inst_;
+  size_t line_num_ = 0;
 
   /// The function in which this instruction was declared
-  Function* function_;
+  Function* function_ = nullptr;
 
   /// The basic block in which this instruction was declared
-  BasicBlock* block_;
+  BasicBlock* block_ = nullptr;
 
   /// This is a vector of pairs of all references to this instruction's result
   /// id. The first element is the instruction in which this result id was
@@ -101,26 +116,25 @@ class Instruction {
   std::vector<std::pair<const Instruction*, uint32_t>> uses_;
 };
 
-#define OPERATOR(OP)                                                \
-  bool operator OP(const Instruction& lhs, const Instruction& rhs); \
-  bool operator OP(const Instruction& lhs, uint32_t rhs)
+bool operator<(const Instruction& lhs, const Instruction& rhs);
+bool operator<(const Instruction& lhs, uint32_t rhs);
+bool operator==(const Instruction& lhs, const Instruction& rhs);
+bool operator==(const Instruction& lhs, uint32_t rhs);
 
-OPERATOR(<);
-OPERATOR(==);
-#undef OPERATOR
-
-}  // namespace libspirv
+}  // namespace val
+}  // namespace spvtools
 
 // custom specialization of std::hash for Instruction
 namespace std {
 template <>
-struct hash<libspirv::Instruction> {
-  typedef libspirv::Instruction argument_type;
+struct hash<spvtools::val::Instruction> {
+  typedef spvtools::val::Instruction argument_type;
   typedef std::size_t result_type;
   result_type operator()(const argument_type& inst) const {
     return hash<uint32_t>()(inst.id());
   }
 };
+
 }  // namespace std
 
-#endif  // LIBSPIRV_VAL_INSTRUCTION_H_
+#endif  // SOURCE_VAL_INSTRUCTION_H_

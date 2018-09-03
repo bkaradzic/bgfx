@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <vector>
+
 #include "gmock/gmock.h"
-
-#include "test_fixture.h"
-#include "unit_spirv.h"
-
 #include "source/name_mapper.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
-using libspirv::FriendlyNameMapper;
-using libspirv::NameMapper;
+namespace spvtools {
+namespace {
+
 using spvtest::ScopedContext;
 using ::testing::Eq;
 
-namespace {
-
 TEST(TrivialNameTest, Samples) {
-  auto mapper = libspirv::GetTrivialNameMapper();
+  auto mapper = GetTrivialNameMapper();
   EXPECT_EQ(mapper(1), "1");
   EXPECT_EQ(mapper(1999), "1999");
   EXPECT_EQ(mapper(1024), "1024");
@@ -343,4 +343,5 @@ INSTANTIATE_TEST_CASE_P(
         {"%1 = OpTypeBool\n%2 = OpConstantFalse %1", 2, "false"},
     }), );
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

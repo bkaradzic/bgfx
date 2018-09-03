@@ -109,7 +109,7 @@ def compose_extension_list(exts):
       a string containing the braced list of extensions named by exts.
     """
     return "{" + ", ".join(
-        ['libspirv::Extension::k{}'.format(e) for e in exts]) + "}"
+        ['spvtools::Extension::k{}'.format(e) for e in exts]) + "}"
 
 
 def get_extension_array_name(extensions):
@@ -133,7 +133,7 @@ def generate_extension_arrays(extensions):
     """
     extensions = sorted(set([tuple(e) for e in extensions if e]))
     arrays = [
-        'static const libspirv::Extension {}[] = {};'.format(
+        'static const spvtools::Extension {}[] = {};'.format(
             get_extension_array_name(e), compose_extension_list(e))
         for e in extensions]
     return '\n'.join(arrays)

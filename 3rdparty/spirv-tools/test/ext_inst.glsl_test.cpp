@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
-#include "latest_version_glsl_std_450_header.h"
-#include "unit_spirv.h"
+#include "source/latest_version_glsl_std_450_header.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 /// Context for an extended instruction.
@@ -197,4 +199,5 @@ INSTANTIATE_TEST_CASE_P(
         {"NClamp", "%5 %5 %5", 81, 8, {5, 5, 5}},
     })), );
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

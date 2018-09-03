@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "print.h"
+#include "source/print.h"
 
 #if defined(SPIRV_ANDROID) || defined(SPIRV_LINUX) || defined(SPIRV_MAC) || \
     defined(SPIRV_FREEBSD)
-namespace libspirv {
+namespace spvtools {
 
 clr::reset::operator const char*() { return "\x1b[0m"; }
 
@@ -30,11 +30,11 @@ clr::yellow::operator const char*() { return "\x1b[33m"; }
 
 clr::blue::operator const char*() { return "\x1b[34m"; }
 
-}  // namespace libspirv
+}  // namespace spvtools
 #elif defined(SPIRV_WINDOWS)
 #include <windows.h>
 
-namespace libspirv {
+namespace spvtools {
 
 static void SetConsoleForegroundColorPrimary(HANDLE hConsole, WORD color) {
   // Get screen buffer information from console handle
@@ -105,9 +105,9 @@ clr::blue::operator const char*() {
   return "\x1b[94m";
 }
 
-}  // namespace libspirv
+}  // namespace spvtools
 #else
-namespace libspirv {
+namespace spvtools {
 
 clr::reset::operator const char*() { return ""; }
 
@@ -121,5 +121,5 @@ clr::yellow::operator const char*() { return ""; }
 
 clr::blue::operator const char*() { return ""; }
 
-}  // namespace libspirv
+}  // namespace spvtools
 #endif

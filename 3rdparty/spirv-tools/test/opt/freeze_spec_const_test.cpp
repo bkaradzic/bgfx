@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
-
 #include <algorithm>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
-namespace {
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-using namespace spvtools;
+namespace spvtools {
+namespace opt {
+namespace {
 
 struct FreezeSpecConstantValueTypeTestCase {
   const char* type_decl;
@@ -40,7 +42,7 @@ TEST_P(FreezeSpecConstantValueTypeTest, PrimaryType) {
   std::vector<const char*> expected = {
       "OpCapability Shader", "OpMemoryModel Logical GLSL450",
       test_case.type_decl, test_case.expected_frozen_const};
-  SinglePassRunAndCheck<opt::FreezeSpecConstantValuePass>(
+  SinglePassRunAndCheck<FreezeSpecConstantValuePass>(
       JoinAllInsts(text), JoinAllInsts(expected), /* skip_nop = */ false);
 }
 
@@ -121,8 +123,11 @@ TEST_F(FreezeSpecConstantValueRemoveDecorationTest,
         << "replace_str:\n"
         << p.second << "\n";
   }
-  SinglePassRunAndCheck<opt::FreezeSpecConstantValuePass>(
-      JoinAllInsts(text), expected_disassembly,
-      /* skip_nop = */ true);
+  SinglePassRunAndCheck<FreezeSpecConstantValuePass>(JoinAllInsts(text),
+                                                     expected_disassembly,
+                                                     /* skip_nop = */ true);
 }
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

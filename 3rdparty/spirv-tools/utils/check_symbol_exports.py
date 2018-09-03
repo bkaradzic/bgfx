@@ -35,7 +35,8 @@ def command_output(cmd, directory):
     p = subprocess.Popen(cmd,
                          cwd=directory,
                          stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+                         stderr=subprocess.PIPE,
+                         universal_newlines=True)
     (stdout, _) = p.communicate()
     if p.returncode != 0:
         raise RuntimeError('Failed to run %s in %s' % (cmd, directory))

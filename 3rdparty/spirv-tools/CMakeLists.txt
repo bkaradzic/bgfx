@@ -29,6 +29,7 @@ enable_testing()
 set(SPIRV_TOOLS "SPIRV-Tools")
 
 include(GNUInstallDirs)
+include(cmake/setup_build.cmake)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -67,11 +68,15 @@ endif()
 option(SPIRV_BUILD_COMPRESSION "Build SPIR-V compressing codec" OFF)
 
 option(SPIRV_WERROR "Enable error on warning" ON)
-if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
+if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR (("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") AND (NOT CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")))
   set(COMPILER_IS_LIKE_GNU TRUE)
 endif()
 if(${COMPILER_IS_LIKE_GNU})
   set(SPIRV_WARNINGS -Wall -Wextra -Wnon-virtual-dtor -Wno-missing-field-initializers)
+
+  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    set(SPIRV_WARNINGS ${SPIRV_WARNINGS} -Wno-self-assign)
+  endif()
 
   option(SPIRV_WARN_EVERYTHING "Enable -Weverything" ${SPIRV_WARN_EVERYTHING})
   if(${SPIRV_WARN_EVERYTHING})
@@ -97,7 +102,7 @@ elseif(MSVC)
   endif()
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 
 option(SPIRV_COLOR_TERMINAL "Enable color terminal output" ON)
 if(${SPIRV_COLOR_TERMINAL})
@@ -168,15 +173,22 @@ endif()
 
 find_host_package(PythonInterp)
 
+# Check for symbol exports on Linux.
+# At the moment, this check will fail on the OSX build machines for the Android NDK.
+# It appears they don't have objdump.
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   macro(spvtools_check_symbol_exports TARGET)
-    add_test(NAME spirv-tools-symbol-exports-${TARGET}
-             COMMAND ${PYTHON_EXECUTABLE}
-             ${spirv-tools_SOURCE_DIR}/utils/check_symbol_exports.py "$<TARGET_FILE:${TARGET}>")
+    if (NOT "${SPIRV_SKIP_TESTS}")
+      add_test(NAME spirv-tools-symbol-exports-${TARGET}
+               COMMAND ${PYTHON_EXECUTABLE}
+               ${spirv-tools_SOURCE_DIR}/utils/check_symbol_exports.py "$<TARGET_FILE:${TARGET}>")
+    endif()
   endmacro()
 else()
   macro(spvtools_check_symbol_exports TARGET)
-    message("Skipping symbol exports test for ${TARGET}")
+    if (NOT "${SPIRV_SKIP_TESTS}")
+      message("Skipping symbol exports test for ${TARGET}")
+    endif()
   endmacro()
 endif()
 

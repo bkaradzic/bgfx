@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
+#include <vector>
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+#include "test/opt/pass_fixture.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-using namespace spvtools;
 
 using testing::Eq;
-
 using SpecIdToValueStrMap =
-    opt::SetSpecConstantDefaultValuePass::SpecIdToValueStrMap;
+    SetSpecConstantDefaultValuePass::SpecIdToValueStrMap;
 using SpecIdToValueBitPatternMap =
-    opt::SetSpecConstantDefaultValuePass::SpecIdToValueBitPatternMap;
+    SetSpecConstantDefaultValuePass::SpecIdToValueBitPatternMap;
 
 struct DefaultValuesStringParsingTestCase {
   const char* default_values_str;
@@ -37,9 +38,8 @@ using DefaultValuesStringParsingTest =
 
 TEST_P(DefaultValuesStringParsingTest, TestCase) {
   const auto& tc = GetParam();
-  auto actual_map =
-      opt::SetSpecConstantDefaultValuePass::ParseDefaultValuesString(
-          tc.default_values_str);
+  auto actual_map = SetSpecConstantDefaultValuePass::ParseDefaultValuesString(
+      tc.default_values_str);
   if (tc.expect_success) {
     EXPECT_NE(nullptr, actual_map);
     if (actual_map) {
@@ -144,7 +144,7 @@ using SetSpecConstantDefaultValueInStringFormParamTest = PassTest<
 
 TEST_P(SetSpecConstantDefaultValueInStringFormParamTest, TestCase) {
   const auto& tc = GetParam();
-  SinglePassRunAndCheck<opt::SetSpecConstantDefaultValuePass>(
+  SinglePassRunAndCheck<SetSpecConstantDefaultValuePass>(
       tc.code, tc.expected, /* skip_nop = */ false, tc.default_values);
 }
 
@@ -606,7 +606,7 @@ using SetSpecConstantDefaultValueInBitPatternFormParamTest =
 
 TEST_P(SetSpecConstantDefaultValueInBitPatternFormParamTest, TestCase) {
   const auto& tc = GetParam();
-  SinglePassRunAndCheck<opt::SetSpecConstantDefaultValuePass>(
+  SinglePassRunAndCheck<SetSpecConstantDefaultValuePass>(
       tc.code, tc.expected, /* skip_nop = */ false, tc.default_values);
 }
 
@@ -1072,4 +1072,6 @@ INSTANTIATE_TEST_CASE_P(
         },
     }));
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

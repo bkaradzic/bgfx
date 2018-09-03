@@ -12,37 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+#include "source/opt/loop_unroller.h"
+#include "source/opt/loop_utils.h"
+#include "source/opt/pass.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/function_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-#include "../assembly_builder.h"
-#include "../function_utils.h"
-#include "../pass_fixture.h"
-#include "../pass_utils.h"
-#include "opt/loop_unroller.h"
-#include "opt/loop_utils.h"
-#include "opt/pass.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
+using PassClassTest = PassTest<::testing::Test>;
 
 template <int factor>
-class PartialUnrollerTestPass : public opt::Pass {
+class PartialUnrollerTestPass : public Pass {
  public:
   PartialUnrollerTestPass() : Pass() {}
 
   const char* name() const override { return "Loop unroller"; }
 
-  Status Process(ir::IRContext* context) override {
+  Status Process() override {
     bool changed = false;
-    for (ir::Function& f : *context->module()) {
-      ir::LoopDescriptor& loop_descriptor = *context->GetLoopDescriptor(&f);
+    for (Function& f : *context()->module()) {
+      LoopDescriptor& loop_descriptor = *context()->GetLoopDescriptor(&f);
       for (auto& loop : loop_descriptor) {
-        opt::LoopUtils loop_utils{context, &loop};
+        LoopUtils loop_utils{context(), &loop};
         if (loop_utils.PartiallyUnroll(factor)) {
           changed = true;
         }
@@ -53,8 +55,6 @@ class PartialUnrollerTestPass : public opt::Pass {
     return Pass::Status::SuccessWithoutChange;
   }
 };
-
-using PassClassTest = PassTest<::testing::Test>;
 
 /*
 Generated from the following GLSL
@@ -68,7 +68,7 @@ void main() {
 */
 TEST_F(PassClassTest, CheckUpperBound) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -120,18 +120,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -150,7 +150,7 @@ void main() {
 */
 TEST_F(PassClassTest, UnrollNestedLoopsInvalid) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -220,16 +220,16 @@ OpReturn
 OpFunctionEnd
 )";
 
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
 }
 
 /*
@@ -247,7 +247,7 @@ void main(){
 */
 TEST_F(PassClassTest, BreakInBody) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -301,16 +301,16 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
 }
 
 /*
@@ -328,7 +328,7 @@ void main(){
 */
 TEST_F(PassClassTest, ContinueInBody) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -382,16 +382,16 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
 }
 
 /*
@@ -409,7 +409,7 @@ void main(){
 */
 TEST_F(PassClassTest, ReturnInBody) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -464,7 +464,7 @@ OpFunctionEnd
 )";
   // clang-format on
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
 }
 
 /*
@@ -479,7 +479,7 @@ void main() {
 */
 TEST_F(PassClassTest, MultipleConditionsSingleVariable) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -519,18 +519,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -549,7 +549,7 @@ void main() {
 */
 TEST_F(PassClassTest, MultipleConditionsMultipleVariables) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -591,18 +591,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -620,7 +620,7 @@ void main() {
 */
 TEST_F(PassClassTest, FloatingPointLoop) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -662,18 +662,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -692,7 +692,7 @@ void main() {
 */
 TEST_F(PassClassTest, InductionPhiOutsideLoop) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -739,18 +739,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -791,7 +791,7 @@ void main() {
 */
 TEST_F(PassClassTest, UnsupportedLoopTypes) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -957,18 +957,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -986,7 +986,7 @@ void main(void) {
 */
 TEST_F(PassClassTest, NegativeNumberOfIterations) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
   const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1031,18 +1031,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -1063,7 +1063,7 @@ void main(void) {
 */
 TEST_F(PassClassTest, MultipleStepOperations) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1111,18 +1111,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -1143,7 +1143,7 @@ void main(void) {
 
 TEST_F(PassClassTest, ConditionFalseFromStartGreaterThan) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1190,18 +1190,18 @@ OpReturn
 OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -1221,7 +1221,7 @@ void main(void) {
 */
 TEST_F(PassClassTest, ConditionFalseFromStartGreaterThanOrEqual) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1269,18 +1269,18 @@ OpFunctionEnd
 )";
 
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -1300,7 +1300,7 @@ void main(void) {
 */
 TEST_F(PassClassTest, ConditionFalseFromStartLessThan) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1348,18 +1348,18 @@ OpFunctionEnd
 )";
 
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
@@ -1379,7 +1379,7 @@ void main(void) {
 */
 TEST_F(PassClassTest, ConditionFalseFromStartLessThanEqual) {
   // clang-format off
-  // With opt::LocalMultiStoreElimPass
+  // With LocalMultiStoreElimPass
 const std::string text = R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -1427,20 +1427,22 @@ OpFunctionEnd
 )";
 
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  opt::LoopUnroller loop_unroller;
+  LoopUnroller loop_unroller;
   SetDisassembleOptions(SPV_BINARY_TO_TEXT_OPTION_NO_HEADER);
 
   // Make sure the pass doesn't run
-  SinglePassRunAndCheck<opt::LoopUnroller>(text, text, false);
+  SinglePassRunAndCheck<LoopUnroller>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<1>>(text, text, false);
   SinglePassRunAndCheck<PartialUnrollerTestPass<2>>(text, text, false);
 }
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

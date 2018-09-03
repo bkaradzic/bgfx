@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_manager.h"
+#include "source/opt/pass_manager.h"
 
 #include <iostream>
+#include <string>
 #include <vector>
 
-#include "ir_context.h"
+#include "source/opt/ir_context.h"
+#include "source/util/timer.h"
 #include "spirv-tools/libspirv.hpp"
-#include "util/timer.h"
 
 namespace spvtools {
 
 namespace opt {
 
-Pass::Status PassManager::Run(ir::IRContext* context) {
+Pass::Status PassManager::Run(IRContext* context) {
   auto status = Pass::Status::SuccessWithoutChange;
 
   // If print_all_stream_ is not null, prints the disassembly of the module
@@ -43,12 +44,15 @@ Pass::Status PassManager::Run(ir::IRContext* context) {
   };
 
   SPIRV_TIMER_DESCRIPTION(time_report_stream_, /* measure_mem_usage = */ true);
-  for (const auto& pass : passes_) {
+  for (auto& pass : passes_) {
     print_disassembly("; IR before pass ", pass.get());
     SPIRV_TIMER_SCOPED(time_report_stream_, (pass ? pass->name() : ""), true);
     const auto one_status = pass->Run(context);
     if (one_status == Pass::Status::Failure) return one_status;
     if (one_status == Pass::Status::SuccessWithChange) status = one_status;
+
+    // Reset the pass to free any memory used by the pass.
+    pass.reset(nullptr);
   }
   print_disassembly("; IR after last pass", nullptr);
 

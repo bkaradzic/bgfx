@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_INLINE_OPAQUE_PASS_H_
-#define LIBSPIRV_OPT_INLINE_OPAQUE_PASS_H_
+#ifndef SOURCE_OPT_INLINE_OPAQUE_PASS_H_
+#define SOURCE_OPT_INLINE_OPAQUE_PASS_H_
 
 #include <algorithm>
 #include <list>
@@ -23,9 +23,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "def_use_manager.h"
-#include "inline_pass.h"
-#include "module.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/inline_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
@@ -34,7 +34,7 @@ namespace opt {
 class InlineOpaquePass : public InlinePass {
  public:
   InlineOpaquePass();
-  Status Process(ir::IRContext* c) override;
+  Status Process() override;
 
   const char* name() const override { return "inline-entry-points-opaque"; }
 
@@ -43,18 +43,18 @@ class InlineOpaquePass : public InlinePass {
   bool IsOpaqueType(uint32_t typeId);
 
   // Return true if function call |callInst| has opaque argument or return type
-  bool HasOpaqueArgsOrReturn(const ir::Instruction* callInst);
+  bool HasOpaqueArgsOrReturn(const Instruction* callInst);
 
   // Inline all function calls in |func| that have opaque params or return
   // type. Inline similarly all code that is inlined into func. Return true
   // if func is modified.
-  bool InlineOpaque(ir::Function* func);
+  bool InlineOpaque(Function* func);
 
-  void Initialize(ir::IRContext* c);
+  void Initialize();
   Pass::Status ProcessImpl();
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_INLINE_OPAQUE_PASS_H_
+#endif  // SOURCE_OPT_INLINE_OPAQUE_PASS_H_

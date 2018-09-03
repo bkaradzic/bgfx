@@ -17,15 +17,15 @@
 #include <string>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
-#include "val_fixtures.h"
+#include "test/unit_spirv.h"
+#include "test/val/val_fixtures.h"
 
+namespace spvtools {
+namespace val {
 namespace {
 
 using ::testing::HasSubstr;
 using ::testing::Not;
-
-using std::string;
 
 using ValidateArithmetics = spvtest::ValidateBase<bool>;
 
@@ -1273,4 +1273,6 @@ TEST_F(ValidateArithmetics, SMulExtendedResultTypeMembersNotIdentical) {
                 "SMulExtended"));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

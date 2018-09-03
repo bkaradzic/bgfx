@@ -14,39 +14,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_LOCAL_SSA_ELIM_PASS_H_
-#define LIBSPIRV_OPT_LOCAL_SSA_ELIM_PASS_H_
+#ifndef SOURCE_OPT_LOCAL_SSA_ELIM_PASS_H_
+#define SOURCE_OPT_LOCAL_SSA_ELIM_PASS_H_
 
 #include <algorithm>
 #include <map>
 #include <queue>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "mem_pass.h"
-#include "module.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/mem_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
 
 // See optimizer.hpp for documentation.
 class LocalMultiStoreElimPass : public MemPass {
-  using cbb_ptr = const ir::BasicBlock*;
+  using cbb_ptr = const BasicBlock*;
 
  public:
   using GetBlocksFunction =
-      std::function<std::vector<ir::BasicBlock*>*(const ir::BasicBlock*)>;
+      std::function<std::vector<BasicBlock*>*(const BasicBlock*)>;
 
   LocalMultiStoreElimPass();
-  const char* name() const override { return "eliminate-local-multi-store"; }
-  Status Process(ir::IRContext* c) override;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse |
-           ir::IRContext::kAnalysisInstrToBlockMapping;
+  const char* name() const override { return "eliminate-local-multi-store"; }
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
   }
 
  private:
@@ -56,7 +58,6 @@ class LocalMultiStoreElimPass : public MemPass {
   // Return true if all extensions in this module are allowed by this pass.
   bool AllExtensionsSupported() const;
 
-  void Initialize(ir::IRContext* c);
   Pass::Status ProcessImpl();
 
   // Extensions supported by this pass.
@@ -66,4 +67,4 @@ class LocalMultiStoreElimPass : public MemPass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_LOCAL_SSA_ELIM_PASS_H_
+#endif  // SOURCE_OPT_LOCAL_SSA_ELIM_PASS_H_

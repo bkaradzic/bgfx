@@ -12,25 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "compact_ids_pass.h"
-#include "ir_context.h"
+#include "source/opt/compact_ids_pass.h"
 
 #include <cassert>
 #include <unordered_map>
 
+#include "source/opt/ir_context.h"
+
 namespace spvtools {
 namespace opt {
 
-using ir::Instruction;
-using ir::Operand;
-
-Pass::Status CompactIdsPass::Process(ir::IRContext* c) {
-  InitializeProcessing(c);
-
+Pass::Status CompactIdsPass::Process() {
   bool modified = false;
   std::unordered_map<uint32_t, uint32_t> result_id_mapping;
 
-  c->module()->ForEachInst(
+  context()->module()->ForEachInst(
       [&result_id_mapping, &modified](Instruction* inst) {
         auto operand = inst->begin();
         while (operand != inst->end()) {
@@ -64,7 +60,7 @@ Pass::Status CompactIdsPass::Process(ir::IRContext* c) {
       true);
 
   if (modified)
-    c->module()->SetIdBound(
+    context()->module()->SetIdBound(
         static_cast<uint32_t>(result_id_mapping.size() + 1));
 
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;

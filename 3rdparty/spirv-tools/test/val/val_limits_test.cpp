@@ -19,25 +19,26 @@
 #include <utility>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
-#include "val_fixtures.h"
+#include "test/unit_spirv.h"
+#include "test/val/val_fixtures.h"
 
+namespace spvtools {
+namespace val {
 namespace {
 
-using std::string;
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
 
 using ValidateLimits = spvtest::ValidateBase<bool>;
 
-string header = R"(
+std::string header = R"(
      OpCapability Shader
      OpCapability Linkage
      OpMemoryModel Logical GLSL450
 )";
 
 TEST_F(ValidateLimits, IdLargerThanBoundBad) {
-  string str = header + R"(
+  std::string str = header + R"(
 ;  %i32 has ID 1
 %i32    = OpTypeInt 32 1
 %c      = OpConstant %i32 100
@@ -55,7 +56,7 @@ TEST_F(ValidateLimits, IdLargerThanBoundBad) {
 }
 
 TEST_F(ValidateLimits, IdEqualToBoundBad) {
-  string str = header + R"(
+  std::string str = header + R"(
 ;  %i32 has ID 1
 %i32    = OpTypeInt 32 1
 %c      = OpConstant %i32 100
@@ -406,8 +407,11 @@ TEST_F(ValidateLimits, CustomizedNumGlobalVarsBad) {
 }
 
 // Valid: module has 524,287 local variables.
-TEST_F(ValidateLimits, NumLocalVarsGood) {
-  int num_locals = 524287;
+// Note: AppVeyor limits process time to 300s.  For a VisualStudio Debug
+// build, going up to 524287 local variables gets too close to that
+// limit.  So test with an artificially lowered limit.
+TEST_F(ValidateLimits, NumLocalVarsGoodArtificiallyLowLimit5K) {
+  int num_locals = 5000;
   std::ostringstream spirv;
   spirv << header << R"(
  %int      = OpTypeInt 32 0
@@ -428,12 +432,16 @@ TEST_F(ValidateLimits, NumLocalVarsGood) {
   )";
 
   CompileSuccessfully(spirv.str());
+  // Artificially limit it.
+  spvValidatorOptionsSetUniversalLimit(
+      options_, spv_validator_limit_max_local_variables, num_locals);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 // Invalid: module has 524,288 local variables (limit is 524,287).
-TEST_F(ValidateLimits, NumLocalVarsBad) {
-  int num_locals = 524288;
+// Artificially limit the check to 5001.
+TEST_F(ValidateLimits, NumLocalVarsBadArtificiallyLowLimit5K) {
+  int num_locals = 5001;
   std::ostringstream spirv;
   spirv << header << R"(
  %int      = OpTypeInt 32 0
@@ -454,10 +462,12 @@ TEST_F(ValidateLimits, NumLocalVarsBad) {
   )";
 
   CompileSuccessfully(spirv.str());
+  spvValidatorOptionsSetUniversalLimit(
+      options_, spv_validator_limit_max_local_variables, 5000u);
   EXPECT_EQ(SPV_ERROR_INVALID_BINARY, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Number of local variables ('Function' Storage Class) "
-                        "exceeded the valid limit (524287)."));
+                        "exceeded the valid limit (5000)."));
 }
 
 // Valid: module has 100 local variables (limit is 100).
@@ -683,7 +693,7 @@ TEST_F(ValidateLimits, CustomizedControlFlowDepthBad) {
 // continue target is the loop iteself. It also exercises the case where a loop
 // is unreachable.
 TEST_F(ValidateLimits, ControlFlowNoEntryToLoopGood) {
-  string str = header + R"(
+  std::string str = header + R"(
            OpName %entry "entry"
            OpName %loop "loop"
            OpName %exit "exit"
@@ -703,4 +713,6 @@ TEST_F(ValidateLimits, ControlFlowNoEntryToLoopGood) {
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

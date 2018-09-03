@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_TOOLS_IO_H_
-#define LIBSPIRV_TOOLS_IO_H_
+#ifndef TOOLS_IO_H_
+#define TOOLS_IO_H_
 
 #include <cstdint>
 #include <cstdio>
@@ -21,13 +21,15 @@
 
 // Appends the content from the file named as |filename| to |data|, assuming
 // each element in the file is of type |T|. The file is opened with the given
-// |mode|. If |filename| is nullptr or "-", reads from the standard input. If
-// any error occurs, writes error messages to standard error and returns false.
+// |mode|. If |filename| is nullptr or "-", reads from the standard input, but
+// reopened with the given mode. If any error occurs, writes error messages to
+// standard error and returns false.
 template <typename T>
 bool ReadFile(const char* filename, const char* mode, std::vector<T>* data) {
   const int buf_size = 1024;
   const bool use_file = filename && strcmp("-", filename);
-  if (FILE* fp = (use_file ? fopen(filename, mode) : stdin)) {
+  if (FILE* fp =
+          (use_file ? fopen(filename, mode) : freopen(nullptr, mode, stdin))) {
     T buf[buf_size];
     while (size_t len = fread(buf, sizeof(T), buf_size, fp)) {
       data->insert(data->end(), buf, buf + len);
@@ -39,7 +41,10 @@ bool ReadFile(const char* filename, const char* mode, std::vector<T>* data) {
       }
     } else {
       if (sizeof(T) != 1 && (ftell(fp) % sizeof(T))) {
-        fprintf(stderr, "error: corrupted word found in file '%s'\n", filename);
+        fprintf(
+            stderr,
+            "error: file size should be a multiple of %zd; file '%s' corrupt\n",
+            sizeof(T), filename);
         return false;
       }
     }
@@ -74,4 +79,4 @@ bool WriteFile(const char* filename, const char* mode, const T* data,
   return true;
 }
 
-#endif  // LIBSPIRV_TOOLS_IO_H_
+#endif  // TOOLS_IO_H_

@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "strip_debug_info_pass.h"
-#include "ir_context.h"
+#include "source/opt/strip_debug_info_pass.h"
+#include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace opt {
 
-Pass::Status StripDebugInfoPass::Process(ir::IRContext* irContext) {
-  bool modified = !irContext->debugs1().empty() ||
-                  !irContext->debugs2().empty() ||
-                  !irContext->debugs3().empty();
-  irContext->debug_clear();
+Pass::Status StripDebugInfoPass::Process() {
+  bool modified = !context()->debugs1().empty() ||
+                  !context()->debugs2().empty() ||
+                  !context()->debugs3().empty();
+  context()->debug_clear();
 
-  irContext->module()->ForEachInst([&modified](ir::Instruction* inst) {
+  context()->module()->ForEachInst([&modified](Instruction* inst) {
     modified |= !inst->dbg_line_insts().empty();
     inst->dbg_line_insts().clear();
   });

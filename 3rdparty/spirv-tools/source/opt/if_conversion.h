@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_IF_CONVERSION_H_
-#define LIBSPIRV_OPT_IF_CONVERSION_H_
+#ifndef SOURCE_OPT_IF_CONVERSION_H_
+#define SOURCE_OPT_IF_CONVERSION_H_
 
-#include "basic_block.h"
-#include "ir_builder.h"
-#include "pass.h"
-#include "types.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/ir_builder.h"
+#include "source/opt/pass.h"
+#include "source/opt/types.h"
 
 namespace spvtools {
 namespace opt {
@@ -27,13 +27,12 @@ namespace opt {
 class IfConversion : public Pass {
  public:
   const char* name() const override { return "if-conversion"; }
-  Status Process(ir::IRContext* context) override;
+  Status Process() override;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse |
-           ir::IRContext::kAnalysisDominatorAnalysis |
-           ir::IRContext::kAnalysisInstrToBlockMapping |
-           ir::IRContext::kAnalysisCFG | ir::IRContext::kAnalysisNameMap;
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse | IRContext::kAnalysisDominatorAnalysis |
+           IRContext::kAnalysisInstrToBlockMapping | IRContext::kAnalysisCFG |
+           IRContext::kAnalysisNameMap;
   }
 
  private:
@@ -42,14 +41,14 @@ class IfConversion : public Pass {
   bool CheckType(uint32_t id);
 
   // Returns the basic block containing |id|.
-  ir::BasicBlock* GetBlock(uint32_t id);
+  BasicBlock* GetBlock(uint32_t id);
 
   // Returns the basic block for the |predecessor|'th index predecessor of
   // |phi|.
-  ir::BasicBlock* GetIncomingBlock(ir::Instruction* phi, uint32_t predecessor);
+  BasicBlock* GetIncomingBlock(Instruction* phi, uint32_t predecessor);
 
   // Returns the instruction defining the |predecessor|'th index of |phi|.
-  ir::Instruction* GetIncomingValue(ir::Instruction* phi, uint32_t predecessor);
+  Instruction* GetIncomingValue(Instruction* phi, uint32_t predecessor);
 
   // Returns the id of a OpCompositeConstruct boolean vector. The composite has
   // the same number of elements as |vec_data_ty| and each member is |cond|.
@@ -60,17 +59,30 @@ class IfConversion : public Pass {
                           InstructionBuilder* builder);
 
   // Returns true if none of |phi|'s users are in |block|.
-  bool CheckPhiUsers(ir::Instruction* phi, ir::BasicBlock* block);
+  bool CheckPhiUsers(Instruction* phi, BasicBlock* block);
 
   // Returns |false| if |block| is not appropriate to transform. Only
   // transforms blocks with two predecessors. Neither incoming block can be
   // dominated by |block|. Both predecessors must share a common dominator that
   // is terminated by a conditional branch.
-  bool CheckBlock(ir::BasicBlock* block, DominatorAnalysis* dominators,
-                  ir::BasicBlock** common);
+  bool CheckBlock(BasicBlock* block, DominatorAnalysis* dominators,
+                  BasicBlock** common);
+
+  // Moves |inst| to |target_block| if it does not already dominate the block.
+  // Any instructions that |inst| depends on are move if necessary.  It is
+  // assumed that |inst| can be hoisted to |target_block| as defined by
+  // |CanHoistInstruction|.  |dominators| is the dominator analysis for the
+  // function that contains |target_block|.
+  void HoistInstruction(Instruction* inst, BasicBlock* target_block,
+                        DominatorAnalysis* dominators);
+
+  // Returns true if it is legal to move |inst| and the instructions it depends
+  // on to |target_block| if they do not already dominate |target_block|.
+  bool CanHoistInstruction(Instruction* inst, BasicBlock* target_block,
+                           DominatorAnalysis* dominators);
 };
 
 }  //  namespace opt
 }  //  namespace spvtools
 
-#endif  //  LIBSPIRV_OPT_IF_CONVERSION_H_
+#endif  //  SOURCE_OPT_IF_CONVERSION_H_

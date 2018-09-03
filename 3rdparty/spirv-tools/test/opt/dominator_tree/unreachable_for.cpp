@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+#include "source/opt/dominator_analysis.h"
+#include "source/opt/pass.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/function_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-#include "../assembly_builder.h"
-#include "../function_utils.h"
-#include "../pass_fixture.h"
-#include "../pass_utils.h"
-#include "opt/dominator_analysis.h"
-#include "opt/pass.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
-
 using PassClassTest = PassTest<::testing::Test>;
 
 /*
@@ -81,16 +81,15 @@ TEST_F(PassClassTest, UnreachableNestedIfs) {
          OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
 
-  const ir::Function* f = spvtest::GetFunction(module, 4);
-  ir::CFG cfg(module);
-  opt::DominatorAnalysis* analysis = context->GetDominatorAnalysis(f, cfg);
+  const Function* f = spvtest::GetFunction(module, 4);
+  DominatorAnalysis* analysis = context->GetDominatorAnalysis(f);
   EXPECT_TRUE(analysis->Dominates(5, 5));
   EXPECT_TRUE(analysis->Dominates(5, 10));
   EXPECT_TRUE(analysis->Dominates(5, 14));
@@ -118,3 +117,5 @@ TEST_F(PassClassTest, UnreachableNestedIfs) {
 }
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

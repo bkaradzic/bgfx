@@ -12,28 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "simplification_pass.h"
+#include "source/opt/simplification_pass.h"
 
 #include <set>
 #include <unordered_set>
 #include <vector>
 
-#include "fold.h"
+#include "source/opt/fold.h"
 
 namespace spvtools {
 namespace opt {
 
-Pass::Status SimplificationPass::Process(ir::IRContext* c) {
-  InitializeProcessing(c);
+Pass::Status SimplificationPass::Process() {
   bool modified = false;
 
-  for (ir::Function& function : *get_module()) {
+  for (Function& function : *get_module()) {
     modified |= SimplifyFunction(&function);
   }
   return (modified ? Status::SuccessWithChange : Status::SuccessWithoutChange);
 }
 
-bool SimplificationPass::SimplifyFunction(ir::Function* function) {
+bool SimplificationPass::SimplifyFunction(Function* function) {
   bool modified = false;
   // Phase 1: Traverse all instructions in dominance order.
   // The second phase will only be on the instructions whose inputs have changed
@@ -41,27 +40,28 @@ bool SimplificationPass::SimplifyFunction(ir::Function* function) {
   // only instructions whose inputs do not necessarily dominate the use, we keep
   // track of the OpPhi instructions already seen, and add them to the work list
   // for phase 2 when needed.
-  std::vector<ir::Instruction*> work_list;
-  std::unordered_set<ir::Instruction*> process_phis;
-  std::unordered_set<ir::Instruction*> inst_to_kill;
-  std::unordered_set<ir::Instruction*> in_work_list;
+  std::vector<Instruction*> work_list;
+  std::unordered_set<Instruction*> process_phis;
+  std::unordered_set<Instruction*> inst_to_kill;
+  std::unordered_set<Instruction*> in_work_list;
+  const InstructionFolder& folder = context()->get_instruction_folder();
 
   cfg()->ForEachBlockInReversePostOrder(
       function->entry().get(),
       [&modified, &process_phis, &work_list, &in_work_list, &inst_to_kill,
-       this](ir::BasicBlock* bb) {
-        for (ir::Instruction* inst = &*bb->begin(); inst;
-             inst = inst->NextNode()) {
+       folder, this](BasicBlock* bb) {
+        for (Instruction* inst = &*bb->begin(); inst; inst = inst->NextNode()) {
           if (inst->opcode() == SpvOpPhi) {
             process_phis.insert(inst);
           }
 
-          if (inst->opcode() == SpvOpCopyObject || FoldInstruction(inst)) {
+          if (inst->opcode() == SpvOpCopyObject ||
+              folder.FoldInstruction(inst)) {
             modified = true;
             context()->AnalyzeUses(inst);
             get_def_use_mgr()->ForEachUser(inst, [&work_list, &process_phis,
                                                   &in_work_list](
-                                                     ir::Instruction* use) {
+                                                     Instruction* use) {
               if (process_phis.count(use) && in_work_list.insert(use).second) {
                 work_list.push_back(use);
               }
@@ -69,6 +69,9 @@ bool SimplificationPass::SimplifyFunction(ir::Function* function) {
             if (inst->opcode() == SpvOpCopyObject) {
               context()->ReplaceAllUsesWith(inst->result_id(),
                                             inst->GetSingleWordInOperand(0));
+              inst_to_kill.insert(inst);
+              in_work_list.insert(inst);
+            } else if (inst->opcode() == SpvOpNop) {
               inst_to_kill.insert(inst);
               in_work_list.insert(inst);
             }
@@ -80,13 +83,13 @@ bool SimplificationPass::SimplifyFunction(ir::Function* function) {
   //          done.  This time we add all users to the work list because phase 1
   //          has already finished.
   for (size_t i = 0; i < work_list.size(); ++i) {
-    ir::Instruction* inst = work_list[i];
+    Instruction* inst = work_list[i];
     in_work_list.erase(inst);
-    if (inst->opcode() == SpvOpCopyObject || FoldInstruction(inst)) {
+    if (inst->opcode() == SpvOpCopyObject || folder.FoldInstruction(inst)) {
       modified = true;
       context()->AnalyzeUses(inst);
       get_def_use_mgr()->ForEachUser(
-          inst, [&work_list, &in_work_list](ir::Instruction* use) {
+          inst, [&work_list, &in_work_list](Instruction* use) {
             if (!use->IsDecoration() && use->opcode() != SpvOpName &&
                 in_work_list.insert(use).second) {
               work_list.push_back(use);
@@ -98,12 +101,15 @@ bool SimplificationPass::SimplifyFunction(ir::Function* function) {
                                       inst->GetSingleWordInOperand(0));
         inst_to_kill.insert(inst);
         in_work_list.insert(inst);
+      } else if (inst->opcode() == SpvOpNop) {
+        inst_to_kill.insert(inst);
+        in_work_list.insert(inst);
       }
     }
   }
 
   // Phase 3: Kill instructions we know are no longer needed.
-  for (ir::Instruction* inst : inst_to_kill) {
+  for (Instruction* inst : inst_to_kill) {
     context()->KillInst(inst);
   }
 

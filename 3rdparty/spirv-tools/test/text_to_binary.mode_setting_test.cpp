@@ -15,18 +15,20 @@
 // Assembler tests for instructions in the "Mode-Setting" section of the
 // SPIR-V spec.
 
-#include "unit_spirv.h"
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::EnumCase;
 using spvtest::MakeInstruction;
 using spvtest::MakeVector;
-using std::get;
-using std::tuple;
 using ::testing::Combine;
 using ::testing::Eq;
 using ::testing::TestWithParam;
@@ -134,17 +136,18 @@ TEST_F(OpEntryPointTest, WrongModel) {
 
 // Test OpExecutionMode
 using OpExecutionModeTest = spvtest::TextToBinaryTestBase<
-    TestWithParam<tuple<spv_target_env, EnumCase<SpvExecutionMode>>>>;
+    TestWithParam<std::tuple<spv_target_env, EnumCase<SpvExecutionMode>>>>;
 
 TEST_P(OpExecutionModeTest, AnyExecutionMode) {
   // This string should assemble, but should not validate.
   std::stringstream input;
-  input << "OpExecutionMode %1 " << get<1>(GetParam()).name();
-  for (auto operand : get<1>(GetParam()).operands()) input << " " << operand;
-  EXPECT_THAT(
-      CompiledInstructions(input.str(), get<0>(GetParam())),
-      Eq(MakeInstruction(SpvOpExecutionMode, {1, get<1>(GetParam()).value()},
-                         get<1>(GetParam()).operands())));
+  input << "OpExecutionMode %1 " << std::get<1>(GetParam()).name();
+  for (auto operand : std::get<1>(GetParam()).operands())
+    input << " " << operand;
+  EXPECT_THAT(CompiledInstructions(input.str(), std::get<0>(GetParam())),
+              Eq(MakeInstruction(SpvOpExecutionMode,
+                                 {1, std::get<1>(GetParam()).value()},
+                                 std::get<1>(GetParam()).operands())));
 }
 
 #define CASE(NAME) SpvExecutionMode##NAME, #NAME
@@ -295,4 +298,5 @@ TEST_F(TextToBinaryCapability, BadInvalidCapability) {
 
 // TODO(dneto): OpExecutionMode
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

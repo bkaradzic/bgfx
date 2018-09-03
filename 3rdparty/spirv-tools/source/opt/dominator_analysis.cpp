@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dominator_analysis.h"
+#include "source/opt/dominator_analysis.h"
 
 #include <unordered_set>
 
-#include "ir_context.h"
+#include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace opt {
 
-ir::BasicBlock* DominatorAnalysisBase::CommonDominator(
-    ir::BasicBlock* b1, ir::BasicBlock* b2) const {
+BasicBlock* DominatorAnalysisBase::CommonDominator(BasicBlock* b1,
+                                                   BasicBlock* b2) const {
   if (!b1 || !b2) return nullptr;
 
-  std::unordered_set<ir::BasicBlock*> seen;
-  ir::BasicBlock* block = b1;
+  std::unordered_set<BasicBlock*> seen;
+  BasicBlock* block = b1;
   while (block && seen.insert(block).second) {
     block = ImmediateDominator(block);
   }
@@ -39,8 +39,7 @@ ir::BasicBlock* DominatorAnalysisBase::CommonDominator(
   return block;
 }
 
-bool DominatorAnalysisBase::Dominates(ir::Instruction* a,
-                                      ir::Instruction* b) const {
+bool DominatorAnalysisBase::Dominates(Instruction* a, Instruction* b) const {
   if (!a || !b) {
     return false;
   }
@@ -49,23 +48,19 @@ bool DominatorAnalysisBase::Dominates(ir::Instruction* a,
     return true;
   }
 
-  ir::BasicBlock* bb_a = a->context()->get_instr_block(a);
-  ir::BasicBlock* bb_b = b->context()->get_instr_block(b);
+  BasicBlock* bb_a = a->context()->get_instr_block(a);
+  BasicBlock* bb_b = b->context()->get_instr_block(b);
 
   if (bb_a != bb_b) {
     return tree_.Dominates(bb_a, bb_b);
   }
 
-  for (ir::Instruction& inst : *bb_a) {
-    if (&inst == a) {
+  Instruction* current_inst = a;
+  while ((current_inst = current_inst->NextNode())) {
+    if (current_inst == b) {
       return true;
-    } else if (&inst == b) {
-      return false;
     }
   }
-  assert(false &&
-         "We did not find the load or store in the block they are "
-         "supposed to be in.");
   return false;
 }
 

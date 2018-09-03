@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "opcode.h"
+#include "source/opcode.h"
 
 #include <assert.h>
 #include <string.h>
@@ -20,12 +20,12 @@
 #include <algorithm>
 #include <cstdlib>
 
-#include "instruction.h"
-#include "macro.h"
+#include "source/instruction.h"
+#include "source/macro.h"
+#include "source/spirv_constant.h"
+#include "source/spirv_endian.h"
+#include "source/spirv_target_env.h"
 #include "spirv-tools/libspirv.h"
-#include "spirv_constant.h"
-#include "spirv_endian.h"
-#include "spirv_target_env.h"
 
 namespace {
 struct OpcodeDescPtrLen {
@@ -33,7 +33,7 @@ struct OpcodeDescPtrLen {
   uint32_t len;
 };
 
-#include "core.insts-unified1.inc"  // defines kOpcodeTableEntries_1_3
+#include "core.insts-unified1.inc"
 
 static const spv_opcode_table_t kOpcodeTable = {ARRAY_SIZE(kOpcodeTableEntries),
                                                 kOpcodeTableEntries};
@@ -108,7 +108,7 @@ spv_result_t spvOpcodeTableNameLookup(spv_target_env env,
     // is indeed requested in the SPIR-V code; checking that should be
     // validator's work.
     if ((spvVersionForTargetEnv(env) >= entry.minVersion ||
-         entry.numExtensions > 0u) &&
+         entry.numExtensions > 0u || entry.numCapabilities > 0u) &&
         nameLength == strlen(entry.name) &&
         !strncmp(name, entry.name, nameLength)) {
       // NOTE: Found out Opcode!
@@ -153,7 +153,7 @@ spv_result_t spvOpcodeTableValueLookup(spv_target_env env,
     // is indeed requested in the SPIR-V code; checking that should be
     // validator's work.
     if (spvVersionForTargetEnv(env) >= it->minVersion ||
-        it->numExtensions > 0u) {
+        it->numExtensions > 0u || it->numCapabilities > 0u) {
       *pEntry = it;
       return SPV_SUCCESS;
     }
@@ -449,6 +449,135 @@ bool spvOpcodeIsBaseOpaqueType(SpvOp opcode) {
     case SpvOpTypeForwardPointer:
     case SpvOpTypePipeStorage:
     case SpvOpTypeNamedBarrier:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeIsNonUniformGroupOperation(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpGroupNonUniformElect:
+    case SpvOpGroupNonUniformAll:
+    case SpvOpGroupNonUniformAny:
+    case SpvOpGroupNonUniformAllEqual:
+    case SpvOpGroupNonUniformBroadcast:
+    case SpvOpGroupNonUniformBroadcastFirst:
+    case SpvOpGroupNonUniformBallot:
+    case SpvOpGroupNonUniformInverseBallot:
+    case SpvOpGroupNonUniformBallotBitExtract:
+    case SpvOpGroupNonUniformBallotBitCount:
+    case SpvOpGroupNonUniformBallotFindLSB:
+    case SpvOpGroupNonUniformBallotFindMSB:
+    case SpvOpGroupNonUniformShuffle:
+    case SpvOpGroupNonUniformShuffleXor:
+    case SpvOpGroupNonUniformShuffleUp:
+    case SpvOpGroupNonUniformShuffleDown:
+    case SpvOpGroupNonUniformIAdd:
+    case SpvOpGroupNonUniformFAdd:
+    case SpvOpGroupNonUniformIMul:
+    case SpvOpGroupNonUniformFMul:
+    case SpvOpGroupNonUniformSMin:
+    case SpvOpGroupNonUniformUMin:
+    case SpvOpGroupNonUniformFMin:
+    case SpvOpGroupNonUniformSMax:
+    case SpvOpGroupNonUniformUMax:
+    case SpvOpGroupNonUniformFMax:
+    case SpvOpGroupNonUniformBitwiseAnd:
+    case SpvOpGroupNonUniformBitwiseOr:
+    case SpvOpGroupNonUniformBitwiseXor:
+    case SpvOpGroupNonUniformLogicalAnd:
+    case SpvOpGroupNonUniformLogicalOr:
+    case SpvOpGroupNonUniformLogicalXor:
+    case SpvOpGroupNonUniformQuadBroadcast:
+    case SpvOpGroupNonUniformQuadSwap:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool spvOpcodeIsScalarizable(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpPhi:
+    case SpvOpCopyObject:
+    case SpvOpConvertFToU:
+    case SpvOpConvertFToS:
+    case SpvOpConvertSToF:
+    case SpvOpConvertUToF:
+    case SpvOpUConvert:
+    case SpvOpSConvert:
+    case SpvOpFConvert:
+    case SpvOpQuantizeToF16:
+    case SpvOpVectorInsertDynamic:
+    case SpvOpSNegate:
+    case SpvOpFNegate:
+    case SpvOpIAdd:
+    case SpvOpFAdd:
+    case SpvOpISub:
+    case SpvOpFSub:
+    case SpvOpIMul:
+    case SpvOpFMul:
+    case SpvOpUDiv:
+    case SpvOpSDiv:
+    case SpvOpFDiv:
+    case SpvOpUMod:
+    case SpvOpSRem:
+    case SpvOpSMod:
+    case SpvOpFRem:
+    case SpvOpFMod:
+    case SpvOpVectorTimesScalar:
+    case SpvOpIAddCarry:
+    case SpvOpISubBorrow:
+    case SpvOpUMulExtended:
+    case SpvOpSMulExtended:
+    case SpvOpShiftRightLogical:
+    case SpvOpShiftRightArithmetic:
+    case SpvOpShiftLeftLogical:
+    case SpvOpBitwiseOr:
+    case SpvOpBitwiseAnd:
+    case SpvOpNot:
+    case SpvOpBitFieldInsert:
+    case SpvOpBitFieldSExtract:
+    case SpvOpBitFieldUExtract:
+    case SpvOpBitReverse:
+    case SpvOpBitCount:
+    case SpvOpIsNan:
+    case SpvOpIsInf:
+    case SpvOpIsFinite:
+    case SpvOpIsNormal:
+    case SpvOpSignBitSet:
+    case SpvOpLessOrGreater:
+    case SpvOpOrdered:
+    case SpvOpUnordered:
+    case SpvOpLogicalEqual:
+    case SpvOpLogicalNotEqual:
+    case SpvOpLogicalOr:
+    case SpvOpLogicalAnd:
+    case SpvOpLogicalNot:
+    case SpvOpSelect:
+    case SpvOpIEqual:
+    case SpvOpINotEqual:
+    case SpvOpUGreaterThan:
+    case SpvOpSGreaterThan:
+    case SpvOpUGreaterThanEqual:
+    case SpvOpSGreaterThanEqual:
+    case SpvOpULessThan:
+    case SpvOpSLessThan:
+    case SpvOpULessThanEqual:
+    case SpvOpSLessThanEqual:
+    case SpvOpFOrdEqual:
+    case SpvOpFUnordEqual:
+    case SpvOpFOrdNotEqual:
+    case SpvOpFUnordNotEqual:
+    case SpvOpFOrdLessThan:
+    case SpvOpFUnordLessThan:
+    case SpvOpFOrdGreaterThan:
+    case SpvOpFUnordGreaterThan:
+    case SpvOpFOrdLessThanEqual:
+    case SpvOpFUnordLessThanEqual:
+    case SpvOpFOrdGreaterThanEqual:
+    case SpvOpFUnordGreaterThanEqual:
       return true;
     default:
       return false;

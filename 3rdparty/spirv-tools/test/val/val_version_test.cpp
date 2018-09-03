@@ -12,15 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <tuple>
+
 #include "gmock/gmock.h"
-#include "val_fixtures.h"
+#include "test/val/val_fixtures.h"
 
-using namespace spvtest;
+namespace spvtools {
+namespace val {
+namespace {
+
 using ::testing::HasSubstr;
-using std::make_tuple;
 
-using ValidateVersion =
-    ValidateBase<std::tuple<spv_target_env, spv_target_env, std::string, bool>>;
+using ValidateVersion = spvtest::ValidateBase<
+    std::tuple<spv_target_env, spv_target_env, std::string, bool>>;
 
 const std::string vulkan_spirv = R"(
 OpCapability Shader
@@ -63,6 +68,7 @@ std::string version(spv_target_env env) {
       return "1.2";
     case SPV_ENV_UNIVERSAL_1_3:
     case SPV_ENV_VULKAN_1_1:
+    case SPV_ENV_WEBGPU_0:
       return "1.3";
     default:
       return "0";
@@ -89,176 +95,184 @@ TEST_P(ValidateVersion, version) {
 INSTANTIATE_TEST_CASE_P(Universal, ValidateVersion,
   ::testing::Values(
     //         Binary version,        Target environment
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_VULKAN_1_0,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_0,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_2,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_3,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_5,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_VULKAN_1_0,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_0,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_2,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_3,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_OPENGL_4_5,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_WEBGPU_0,      vulkan_spirv, true),
 
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_1, SPV_ENV_WEBGPU_0,      vulkan_spirv, true),
 
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_WEBGPU_0,      vulkan_spirv, true),
 
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false)
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_UNIVERSAL_1_3, SPV_ENV_WEBGPU_0,      vulkan_spirv, true)
   )
 );
 
 INSTANTIATE_TEST_CASE_P(Vulkan, ValidateVersion,
   ::testing::Values(
     //         Binary version,        Target environment
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_0,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_0,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_2,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_3,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_5,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_0,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_0,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_2,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_3,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_OPENGL_4_5,    vulkan_spirv, true),
 
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
-    make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false)
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_1, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_2, vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_UNIVERSAL_1_3, vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_VULKAN_1_1,    vulkan_spirv, true),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_0,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_1,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_2,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_3,    vulkan_spirv, false),
+    std::make_tuple(SPV_ENV_VULKAN_1_1, SPV_ENV_OPENGL_4_5,    vulkan_spirv, false)
   )
 );
 
 INSTANTIATE_TEST_CASE_P(OpenCL, ValidateVersion,
   ::testing::Values(
     //         Binary version,     Target environment
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
 
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_1, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
 
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_2_0,          opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_2_1,          opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_1_2,          opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_2_0,          opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_2_1,          opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_2_2, SPV_ENV_OPENCL_1_2,          opencl_spirv, false),
 
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_1_2,          opencl_spirv, true)
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_1_2, SPV_ENV_OPENCL_1_2,          opencl_spirv, true)
   )
 );
 
 INSTANTIATE_TEST_CASE_P(OpenCLEmbedded, ValidateVersion,
   ::testing::Values(
     //         Binary version,              Target environment
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
 
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_2_0,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_2_1,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_1, SPV_ENV_OPENCL_1_2,          opencl_spirv, true),
 
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_2_0,          opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_2_1,          opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, false),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
-    make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_1_2,          opencl_spirv, false)
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_1,       opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_2,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_UNIVERSAL_1_3,       opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_2_0,          opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_2_1,          opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_2_2,          opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_EMBEDDED_2_0, opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_EMBEDDED_2_1, opencl_spirv, false),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_EMBEDDED_2_2, opencl_spirv, true),
+    std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_2, SPV_ENV_OPENCL_1_2,          opencl_spirv, false)
   )
 );
 // clang-format on
+
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

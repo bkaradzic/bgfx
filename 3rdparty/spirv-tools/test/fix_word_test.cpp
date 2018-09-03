@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 TEST(FixWord, Default) {
@@ -59,4 +60,5 @@ TEST(FixDoubleWord, Reorder) {
   ASSERT_EQ(result, spvFixDoubleWord(low, high, endian));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

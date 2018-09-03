@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include <string>
+#include <vector>
 
-#include <gmock/gmock.h>
-#include "latest_version_opencl_std_header.h"
-#include "test_fixture.h"
+#include "gmock/gmock.h"
+#include "source/latest_version_opencl_std_header.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::Concatenate;
@@ -366,4 +369,5 @@ INSTANTIATE_TEST_CASE_P(
 #undef CASE2Lit
 #undef CASE3Round
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

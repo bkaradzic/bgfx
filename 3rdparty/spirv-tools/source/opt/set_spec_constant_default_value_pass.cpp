@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "set_spec_constant_default_value_pass.h"
+#include "source/opt/set_spec_constant_default_value_pass.h"
 
 #include <algorithm>
 #include <cctype>
@@ -20,22 +20,22 @@
 #include <tuple>
 #include <vector>
 
-#include "def_use_manager.h"
-#include "ir_context.h"
-#include "make_unique.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/type_manager.h"
+#include "source/opt/types.h"
+#include "source/util/make_unique.h"
+#include "source/util/parse_number.h"
 #include "spirv-tools/libspirv.h"
-#include "type_manager.h"
-#include "types.h"
-#include "util/parse_number.h"
 
 namespace spvtools {
 namespace opt {
 
 namespace {
-using spvutils::EncodeNumberStatus;
-using spvutils::NumberType;
-using spvutils::ParseAndEncodeNumber;
-using spvutils::ParseNumber;
+using utils::EncodeNumberStatus;
+using utils::NumberType;
+using utils::ParseAndEncodeNumber;
+using utils::ParseNumber;
 
 // Given a numeric value in a null-terminated c string and the expected type of
 // the value, parses the string and encodes it in a vector of words. If the
@@ -112,7 +112,7 @@ std::vector<uint32_t> ParseDefaultValueBitPattern(
 
 // Returns true if the given instruction's result id could have a SpecId
 // decoration.
-bool CanHaveSpecIdDecoration(const ir::Instruction& inst) {
+bool CanHaveSpecIdDecoration(const Instruction& inst) {
   switch (inst.opcode()) {
     case SpvOp::SpvOpSpecConstant:
     case SpvOp::SpvOpSpecConstantFalse:
@@ -127,8 +127,8 @@ bool CanHaveSpecIdDecoration(const ir::Instruction& inst) {
 // decoration, finds the spec constant defining instruction which is the real
 // target of the SpecId decoration. Returns the spec constant defining
 // instruction if such an instruction is found, otherwise returns a nullptr.
-ir::Instruction* GetSpecIdTargetFromDecorationGroup(
-    const ir::Instruction& decoration_group_defining_inst,
+Instruction* GetSpecIdTargetFromDecorationGroup(
+    const Instruction& decoration_group_defining_inst,
     analysis::DefUseManager* def_use_mgr) {
   // Find the OpGroupDecorate instruction which consumes the given decoration
   // group. Note that the given decoration group has SpecId decoration, which
@@ -136,9 +136,9 @@ ir::Instruction* GetSpecIdTargetFromDecorationGroup(
   // consumed by different OpGroupDecorate instructions. Therefore we only need
   // the first OpGroupDecoration instruction that uses the given decoration
   // group.
-  ir::Instruction* group_decorate_inst = nullptr;
+  Instruction* group_decorate_inst = nullptr;
   if (def_use_mgr->WhileEachUser(&decoration_group_defining_inst,
-                                 [&group_decorate_inst](ir::Instruction* user) {
+                                 [&group_decorate_inst](Instruction* user) {
                                    if (user->opcode() ==
                                        SpvOp::SpvOpGroupDecorate) {
                                      group_decorate_inst = user;
@@ -155,12 +155,12 @@ ir::Instruction* GetSpecIdTargetFromDecorationGroup(
   // instruction. If the OpGroupDecorate instruction has different target ids
   // or a target id is not defined by an eligible spec cosntant instruction,
   // returns a nullptr.
-  ir::Instruction* target_inst = nullptr;
+  Instruction* target_inst = nullptr;
   for (uint32_t i = 1; i < group_decorate_inst->NumInOperands(); i++) {
     // All the operands of a OpGroupDecorate instruction should be of type
     // SPV_OPERAND_TYPE_ID.
     uint32_t candidate_id = group_decorate_inst->GetSingleWordInOperand(i);
-    ir::Instruction* candidate_inst = def_use_mgr->GetDef(candidate_id);
+    Instruction* candidate_inst = def_use_mgr->GetDef(candidate_id);
 
     if (!candidate_inst) {
       continue;
@@ -190,10 +190,7 @@ ir::Instruction* GetSpecIdTargetFromDecorationGroup(
 }
 }  // namespace
 
-Pass::Status SetSpecConstantDefaultValuePass::Process(
-    ir::IRContext* irContext) {
-  InitializeProcessing(irContext);
-
+Pass::Status SetSpecConstantDefaultValuePass::Process() {
   // The operand index of decoration target in an OpDecorate instruction.
   const uint32_t kTargetIdOperandIndex = 0;
   // The operand index of the decoration literal in an OpDecorate instruction.
@@ -216,7 +213,7 @@ Pass::Status SetSpecConstantDefaultValuePass::Process(
   // is found for a spec id, the string will be parsed according to the target
   // spec constant type. The parsed value will be used to replace the original
   // default value of the target spec constant.
-  for (ir::Instruction& inst : irContext->annotations()) {
+  for (Instruction& inst : context()->annotations()) {
     // Only process 'OpDecorate SpecId' instructions
     if (inst.opcode() != SpvOp::SpvOpDecorate) continue;
     if (inst.NumOperands() != kOpDecorateSpecIdNumOperands) continue;
@@ -231,8 +228,8 @@ Pass::Status SetSpecConstantDefaultValuePass::Process(
 
     // Find the spec constant defining instruction. Note that the
     // target_id might be a decoration group id.
-    ir::Instruction* spec_inst = nullptr;
-    if (ir::Instruction* target_inst = get_def_use_mgr()->GetDef(target_id)) {
+    Instruction* spec_inst = nullptr;
+    if (Instruction* target_inst = get_def_use_mgr()->GetDef(target_id)) {
       if (target_inst->opcode() == SpvOp::SpvOpDecorationGroup) {
         spec_inst =
             GetSpecIdTargetFromDecorationGroup(*target_inst, get_def_use_mgr());

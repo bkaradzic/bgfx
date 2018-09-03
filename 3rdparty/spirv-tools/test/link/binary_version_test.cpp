@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gmock/gmock.h"
-#include "linker_fixture.h"
+#include <string>
 
+#include "gmock/gmock.h"
+#include "test/link/linker_fixture.h"
+
+namespace spvtools {
 namespace {
 
 using BinaryVersion = spvtest::LinkerTest;
@@ -53,4 +56,5 @@ TEST_F(BinaryVersion, LinkerChoosesMaxSpirvVersion) {
   EXPECT_EQ(0x00000600u, linked_binary[1]);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

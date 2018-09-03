@@ -146,7 +146,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> F16VEC2 F16VEC3 F16VEC4 F16MAT2 F16MAT3 F16MAT4
 %token <lex> F32VEC2 F32VEC3 F32VEC4 F32MAT2 F32MAT3 F32MAT4
 %token <lex> F64VEC2 F64VEC3 F64VEC4 F64MAT2 F64MAT3 F64MAT4
-%token <lex> NOPERSPECTIVE FLAT SMOOTH LAYOUT __EXPLICITINTERPAMD
+%token <lex> NOPERSPECTIVE FLAT SMOOTH LAYOUT EXPLICITINTERPAMD
 
 %token <lex> MAT2X2 MAT2X3 MAT2X4
 %token <lex> MAT3X2 MAT3X3 MAT3X4
@@ -1135,7 +1135,7 @@ interpolation_qualifier
         $$.init($1.loc);
         $$.qualifier.nopersp = true;
     }
-    | __EXPLICITINTERPAMD {
+    | EXPLICITINTERPAMD {
 #ifdef AMD_EXTENSIONS
         parseContext.globalCheck($1.loc, "__explicitInterpAMD");
         parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_AMD_shader_explicit_vertex_parameter, "explicit interpolation");

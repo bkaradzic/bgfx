@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_FEATURE_MANAGER_H_
-#define LIBSPIRV_OPT_FEATURE_MANAGER_H_
+#ifndef SOURCE_OPT_FEATURE_MANAGER_H_
+#define SOURCE_OPT_FEATURE_MANAGER_H_
 
-#include "assembly_grammar.h"
-#include "extensions.h"
-#include "module.h"
+#include "source/assembly_grammar.h"
+#include "source/extensions.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
@@ -25,13 +25,10 @@ namespace opt {
 // Tracks features enabled by a module. The IRContext has a FeatureManager.
 class FeatureManager {
  public:
-  explicit FeatureManager(const libspirv::AssemblyGrammar& grammar)
-      : grammar_(grammar) {}
+  explicit FeatureManager(const AssemblyGrammar& grammar) : grammar_(grammar) {}
 
   // Returns true if |ext| is an enabled extension in the module.
-  bool HasExtension(libspirv::Extension ext) const {
-    return extensions_.Contains(ext);
-  }
+  bool HasExtension(Extension ext) const { return extensions_.Contains(ext); }
 
   // Returns true if |cap| is an enabled capability in the module.
   bool HasCapability(SpvCapability cap) const {
@@ -39,12 +36,10 @@ class FeatureManager {
   }
 
   // Analyzes |module| and records enabled extensions and capabilities.
-  void Analyze(ir::Module* module);
+  void Analyze(Module* module);
 
-  libspirv::CapabilitySet* GetCapabilities() { return &capabilities_; }
-  const libspirv::CapabilitySet* GetCapabilities() const {
-    return &capabilities_;
-  }
+  CapabilitySet* GetCapabilities() { return &capabilities_; }
+  const CapabilitySet* GetCapabilities() const { return &capabilities_; }
 
   uint32_t GetExtInstImportId_GLSLstd450() const {
     return extinst_importid_GLSLstd450_;
@@ -52,26 +47,26 @@ class FeatureManager {
 
  private:
   // Analyzes |module| and records enabled extensions.
-  void AddExtensions(ir::Module* module);
+  void AddExtensions(Module* module);
 
   // Adds the given |capability| and all implied capabilities into the current
   // FeatureManager.
   void AddCapability(SpvCapability capability);
 
   // Analyzes |module| and records enabled capabilities.
-  void AddCapabilities(ir::Module* module);
+  void AddCapabilities(Module* module);
 
   // Analyzes |module| and records imported external instruction sets.
-  void AddExtInstImportIds(ir::Module* module);
+  void AddExtInstImportIds(Module* module);
 
   // Auxiliary object for querying SPIR-V grammar facts.
-  const libspirv::AssemblyGrammar& grammar_;
+  const AssemblyGrammar& grammar_;
 
   // The enabled extensions.
-  libspirv::ExtensionSet extensions_;
+  ExtensionSet extensions_;
 
   // The enabled capabilities.
-  libspirv::CapabilitySet capabilities_;
+  CapabilitySet capabilities_;
 
   // Common external instruction import ids, cached for performance.
   uint32_t extinst_importid_GLSLstd450_ = 0;
@@ -80,4 +75,4 @@ class FeatureManager {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_FEATURE_MANAGER_H_
+#endif  // SOURCE_OPT_FEATURE_MANAGER_H_

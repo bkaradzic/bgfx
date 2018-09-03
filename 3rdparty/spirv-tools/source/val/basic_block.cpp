@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "val/basic_block.h"
+#include "source/val/basic_block.h"
 
 #include <algorithm>
 #include <utility>
 #include <vector>
 
-using std::vector;
-
-namespace libspirv {
+namespace spvtools {
+namespace val {
 
 BasicBlock::BasicBlock(uint32_t label_id)
     : id_(label_id),
@@ -29,7 +28,9 @@ BasicBlock::BasicBlock(uint32_t label_id)
       predecessors_(),
       successors_(),
       type_(0),
-      reachable_(false) {}
+      reachable_(false),
+      label_(nullptr),
+      terminator_(nullptr) {}
 
 void BasicBlock::SetImmediateDominator(BasicBlock* dom_block) {
   immediate_dominator_ = dom_block;
@@ -52,7 +53,8 @@ BasicBlock* BasicBlock::immediate_post_dominator() {
   return immediate_post_dominator_;
 }
 
-void BasicBlock::RegisterSuccessors(const vector<BasicBlock*>& next_blocks) {
+void BasicBlock::RegisterSuccessors(
+    const std::vector<BasicBlock*>& next_blocks) {
   for (auto& block : next_blocks) {
     block->predecessors_.push_back(this);
     successors_.push_back(block);
@@ -142,4 +144,6 @@ bool operator!=(const BasicBlock::DominatorIterator& lhs,
 const BasicBlock*& BasicBlock::DominatorIterator::operator*() {
   return current_;
 }
-}  // namespace libspirv
+
+}  // namespace val
+}  // namespace spvtools

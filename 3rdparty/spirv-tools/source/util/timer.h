@@ -14,8 +14,8 @@
 
 // Contains utils for getting resource utilization
 
-#ifndef LIBSPIRV_UTIL_TIMER_H_
-#define LIBSPIRV_UTIL_TIMER_H_
+#ifndef SOURCE_UTIL_TIMER_H_
+#define SOURCE_UTIL_TIMER_H_
 
 #if defined(SPIRV_TIMER_ENABLED)
 
@@ -23,16 +23,17 @@
 #include <cassert>
 #include <iostream>
 
-// A macro to call spvutils::PrintTimerDescription(std::ostream*, bool). The
-// first argument must be given as std::ostream*. If it is NULL, the function
-// does nothing. Otherwise, it prints resource types measured by Timer class.
-// The second is optional and if it is true, the function also prints resource
-// type fields related to memory. Otherwise, it does not print memory related
-// fields. Its default is false. In usual, this must be placed before calling
-// Timer::Report() to inform what those fields printed by Timer::Report()
-// indicate (or spvutils::PrintTimerDescription() must be used instead).
+// A macro to call spvtools::utils::PrintTimerDescription(std::ostream*, bool).
+// The first argument must be given as std::ostream*. If it is NULL, the
+// function does nothing. Otherwise, it prints resource types measured by Timer
+// class. The second is optional and if it is true, the function also prints
+// resource type fields related to memory. Otherwise, it does not print memory
+// related fields. Its default is false. In usual, this must be placed before
+// calling Timer::Report() to inform what those fields printed by
+// Timer::Report() indicate (or spvtools::utils::PrintTimerDescription() must be
+// used instead).
 #define SPIRV_TIMER_DESCRIPTION(...) \
-  spvutils::PrintTimerDescription(__VA_ARGS__)
+  spvtools::utils::PrintTimerDescription(__VA_ARGS__)
 
 // Creates an object of ScopedTimer to measure the resource utilization for the
 // scope surrounding it as the following example:
@@ -47,10 +48,12 @@
 //
 //   }   // <-- end of this scope. The destructor of ScopedTimer prints tag and
 //              the resource utilization to std::cout.
-#define SPIRV_TIMER_SCOPED(...) \
-  spvutils::ScopedTimer<spvutils::Timer> timer##__LINE__(__VA_ARGS__)
+#define SPIRV_TIMER_SCOPED(...)                                         \
+  spvtools::utils::ScopedTimer<spvtools::utils::Timer> timer##__LINE__( \
+      __VA_ARGS__)
 
-namespace spvutils {
+namespace spvtools {
+namespace utils {
 
 // Prints the description of resource types measured by Timer class. If |out| is
 // NULL, it does nothing. Otherwise, it prints resource types. The second is
@@ -78,7 +81,7 @@ enum UsageStatus {
 // only when |measure_mem_usage| given to the constructor is true. This class
 // should be used as the following example:
 //
-//   spvutils::Timer timer(std::cout);
+//   spvtools::utils::Timer timer(std::cout);
 //   timer.Start();       // <-- set |usage_before_|, |wall_before_|,
 //                               and |cpu_before_|
 //
@@ -232,7 +235,8 @@ class Timer {
 //
 //     /* ... code out of interest ... */
 //
-//     spvutils::ScopedTimer<spvutils::Timer> scopedtimer(std::cout, tag);
+//     spvtools::utils::ScopedTimer<spvtools::utils::Timer>
+//     scopedtimer(std::cout, tag);
 //
 //     /* ... lines of code that we want to know its resource usage ... */
 //
@@ -375,7 +379,8 @@ class CumulativeTimer : public Timer {
   long pgfaults_;
 };
 
-}  // namespace spvutils
+}  // namespace utils
+}  // namespace spvtools
 
 #else  // defined(SPIRV_TIMER_ENABLED)
 
@@ -384,4 +389,4 @@ class CumulativeTimer : public Timer {
 
 #endif  // defined(SPIRV_TIMER_ENABLED)
 
-#endif  // LIBSPIRV_UTIL_TIMER_H_
+#endif  // SOURCE_UTIL_TIMER_H_

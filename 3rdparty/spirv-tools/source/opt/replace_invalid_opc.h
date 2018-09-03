@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_REPLACE_INVALID_OPC_H_
-#define LIBSPIRV_OPT_REPLACE_INVALID_OPC_H_
+#ifndef SOURCE_OPT_REPLACE_INVALID_OPC_H_
+#define SOURCE_OPT_REPLACE_INVALID_OPC_H_
 
-#include "pass.h"
+#include <string>
+
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -26,8 +28,8 @@ namespace opt {
 // value, the instruction will simply be deleted.
 class ReplaceInvalidOpcodePass : public Pass {
  public:
-  const char* name() const override { return "replace-invalid-opcodes"; }
-  Status Process(ir::IRContext*) override;
+  const char* name() const override { return "replace-invalid-opcode"; }
+  Status Process() override;
 
  private:
   // Returns the execution model that is used by every entry point in the
@@ -38,16 +40,16 @@ class ReplaceInvalidOpcodePass : public Pass {
   // Replaces all instructions in |function| that are invalid with execution
   // model |mode|, but valid for another shader model, with a special constant
   // value.  See |GetSpecialConstant|.
-  bool RewriteFunction(ir::Function* function, SpvExecutionModel mode);
+  bool RewriteFunction(Function* function, SpvExecutionModel mode);
 
   // Returns true if |inst| is valid for fragment shaders only.
-  bool IsFragmentShaderOnlyInstruction(ir::Instruction* inst);
+  bool IsFragmentShaderOnlyInstruction(Instruction* inst);
 
   // Replaces all uses of the result of |inst|, if there is one, with the id of
   // a special constant.  Then |inst| is killed.  |inst| cannot be a block
   // terminator because the basic block will then become invalid.  |inst| is no
   // longer valid after calling this function.
-  void ReplaceInstruction(ir::Instruction* inst, const char* source,
+  void ReplaceInstruction(Instruction* inst, const char* source,
                           uint32_t line_number, uint32_t column_number);
 
   // Returns the id of a constant with type |type_id|.  The type must be an
@@ -62,4 +64,4 @@ class ReplaceInvalidOpcodePass : public Pass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_REPLACE_INVALID_OPC_H_
+#endif  // SOURCE_OPT_REPLACE_INVALID_OPC_H_

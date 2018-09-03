@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "source/operand.h"
+#include "test/unit_spirv.h"
+
+namespace spvtools {
+namespace {
 
 using ::testing::Eq;
-
-namespace {
 
 TEST(OperandPattern, InitiallyEmpty) {
   spv_operand_pattern_t empty;
@@ -262,4 +264,5 @@ TEST(AlternatePatternFollowingImmediate, ResultIdBack) {
                                SPV_OPERAND_TYPE_RESULT_ID}));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

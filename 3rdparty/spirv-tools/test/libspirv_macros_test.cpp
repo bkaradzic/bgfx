@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 TEST(Macros, BitShiftInnerParens) { ASSERT_EQ(65536, SPV_BIT(2 << 3)); }
 
 TEST(Macros, BitShiftOuterParens) { ASSERT_EQ(15, SPV_BIT(4) - 1); }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

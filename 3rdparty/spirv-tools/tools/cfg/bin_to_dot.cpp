@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bin_to_dot.h"
+#include "tools/cfg/bin_to_dot.h"
 
 #include <cassert>
 #include <iostream>
 #include <utility>
 #include <vector>
 
-#include "assembly_grammar.h"
-#include "name_mapper.h"
+#include "source/assembly_grammar.h"
+#include "source/name_mapper.h"
 
 namespace {
 
@@ -31,7 +31,7 @@ const char* kContinueStyle = "style=dotted";
 // a SPIR-V module.
 class DotConverter {
  public:
-  DotConverter(libspirv::NameMapper name_mapper, std::iostream* out)
+  DotConverter(spvtools::NameMapper name_mapper, std::iostream* out)
       : name_mapper_(std::move(name_mapper)), out_(*out) {}
 
   // Emits the graph preamble.
@@ -73,7 +73,7 @@ class DotConverter {
   uint32_t continue_target_ = 0;
 
   // An object for mapping Ids to names.
-  libspirv::NameMapper name_mapper_;
+  spvtools::NameMapper name_mapper_;
 
   // The output stream.
   std::ostream& out_;
@@ -171,10 +171,10 @@ spv_result_t BinaryToDot(const spv_const_context context, const uint32_t* words,
   // Invalid arguments return error codes, but don't necessarily generate
   // diagnostics.  These are programmer errors, not user errors.
   if (!diagnostic) return SPV_ERROR_INVALID_DIAGNOSTIC;
-  const libspirv::AssemblyGrammar grammar(context);
+  const spvtools::AssemblyGrammar grammar(context);
   if (!grammar.isValid()) return SPV_ERROR_INVALID_TABLE;
 
-  libspirv::FriendlyNameMapper friendly_mapper(context, words, num_words);
+  spvtools::FriendlyNameMapper friendly_mapper(context, words, num_words);
   DotConverter converter(friendly_mapper.GetNameMapper(), out);
   converter.Begin();
   if (auto error = spvBinaryParse(context, &converter, words, num_words,

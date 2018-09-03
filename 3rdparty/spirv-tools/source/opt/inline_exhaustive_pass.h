@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_INLINE_EXHAUSTIVE_PASS_H_
-#define LIBSPIRV_OPT_INLINE_EXHAUSTIVE_PASS_H_
+#ifndef SOURCE_OPT_INLINE_EXHAUSTIVE_PASS_H_
+#define SOURCE_OPT_INLINE_EXHAUSTIVE_PASS_H_
 
 #include <algorithm>
 #include <list>
@@ -23,9 +23,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "def_use_manager.h"
-#include "inline_pass.h"
-#include "module.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/inline_pass.h"
+#include "source/opt/module.h"
 
 namespace spvtools {
 namespace opt {
@@ -34,20 +34,20 @@ namespace opt {
 class InlineExhaustivePass : public InlinePass {
  public:
   InlineExhaustivePass();
-  Status Process(ir::IRContext* c) override;
+  Status Process() override;
 
   const char* name() const override { return "inline-entry-points-exhaustive"; }
 
  private:
   // Exhaustively inline all function calls in func as well as in
   // all code that is inlined into func. Return true if func is modified.
-  bool InlineExhaustive(ir::Function* func);
+  bool InlineExhaustive(Function* func);
 
-  void Initialize(ir::IRContext* c);
+  void Initialize();
   Pass::Status ProcessImpl();
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_INLINE_EXHAUSTIVE_PASS_H_
+#endif  // SOURCE_OPT_INLINE_EXHAUSTIVE_PASS_H_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "text_handler.h"
+#include "source/text_handler.h"
 
 #include <algorithm>
 #include <cassert>
@@ -20,17 +20,19 @@
 #include <cstring>
 #include <tuple>
 
-#include "assembly_grammar.h"
-#include "binary.h"
-#include "ext_inst.h"
-#include "instruction.h"
-#include "opcode.h"
-#include "text.h"
-#include "util/bitutils.h"
-#include "util/hex_float.h"
-#include "util/parse_number.h"
+#include "source/assembly_grammar.h"
+#include "source/binary.h"
+#include "source/ext_inst.h"
+#include "source/instruction.h"
+#include "source/opcode.h"
+#include "source/text.h"
+#include "source/util/bitutils.h"
+#include "source/util/hex_float.h"
+#include "source/util/parse_number.h"
 
+namespace spvtools {
 namespace {
+
 // Advances |text| to the start of the next line and writes the new position to
 // |position|.
 spv_result_t advanceLine(spv_text text, spv_position position) {
@@ -105,9 +107,9 @@ spv_result_t getWord(spv_text text, spv_position position, std::string* word) {
       return SPV_SUCCESS;
     }
     const char ch = text->str[position->index];
-    if (ch == '\\')
+    if (ch == '\\') {
       escaping = !escaping;
-    else {
+    } else {
       switch (ch) {
         case '"':
           if (!escaping) quoting = !quoting;
@@ -144,9 +146,7 @@ bool startsWithOp(spv_text text, spv_position position) {
   return ('O' == ch0 && 'p' == ch1 && ('A' <= ch2 && ch2 <= 'Z'));
 }
 
-}  // anonymous namespace
-
-namespace libspirv {
+}  // namespace
 
 const IdType kUnknownType = {0, false, IdTypeClass::kBottom};
 
@@ -157,7 +157,7 @@ const IdType kUnknownType = {0, false, IdTypeClass::kBottom};
 uint32_t AssemblyContext::spvNamedIdAssignOrGet(const char* textValue) {
   if (!ids_to_preserve_.empty()) {
     uint32_t id = 0;
-    if (spvutils::ParseNumber(textValue, &id)) {
+    if (spvtools::utils::ParseNumber(textValue, &id)) {
       if (ids_to_preserve_.find(id) != ids_to_preserve_.end()) {
         bound_ = std::max(bound_, id + 1);
         return id;
@@ -185,35 +185,35 @@ uint32_t AssemblyContext::spvNamedIdAssignOrGet(const char* textValue) {
 uint32_t AssemblyContext::getBound() const { return bound_; }
 
 spv_result_t AssemblyContext::advance() {
-  return ::advance(text_, &current_position_);
+  return spvtools::advance(text_, &current_position_);
 }
 
 spv_result_t AssemblyContext::getWord(std::string* word,
                                       spv_position next_position) {
   *next_position = current_position_;
-  return ::getWord(text_, next_position, word);
+  return spvtools::getWord(text_, next_position, word);
 }
 
 bool AssemblyContext::startsWithOp() {
-  return ::startsWithOp(text_, &current_position_);
+  return spvtools::startsWithOp(text_, &current_position_);
 }
 
 bool AssemblyContext::isStartOfNewInst() {
   spv_position_t pos = current_position_;
-  if (::advance(text_, &pos)) return false;
-  if (::startsWithOp(text_, &pos)) return true;
+  if (spvtools::advance(text_, &pos)) return false;
+  if (spvtools::startsWithOp(text_, &pos)) return true;
 
   std::string word;
   pos = current_position_;
-  if (::getWord(text_, &pos, &word)) return false;
+  if (spvtools::getWord(text_, &pos, &word)) return false;
   if ('%' != word.front()) return false;
 
-  if (::advance(text_, &pos)) return false;
-  if (::getWord(text_, &pos, &word)) return false;
+  if (spvtools::advance(text_, &pos)) return false;
+  if (spvtools::getWord(text_, &pos, &word)) return false;
   if ("=" != word) return false;
 
-  if (::advance(text_, &pos)) return false;
-  if (::startsWithOp(text_, &pos)) return true;
+  if (spvtools::advance(text_, &pos)) return false;
+  if (spvtools::startsWithOp(text_, &pos)) return true;
   return false;
 }
 
@@ -239,9 +239,9 @@ spv_result_t AssemblyContext::binaryEncodeU32(const uint32_t value,
 spv_result_t AssemblyContext::binaryEncodeNumericLiteral(
     const char* val, spv_result_t error_code, const IdType& type,
     spv_instruction_t* pInst) {
-  using spvutils::EncodeNumberStatus;
+  using spvtools::utils::EncodeNumberStatus;
   // Populate the NumberType from the IdType for parsing.
-  spvutils::NumberType number_type;
+  spvtools::utils::NumberType number_type;
   switch (type.type_class) {
     case IdTypeClass::kOtherType:
       return diagnostic(SPV_ERROR_INTERNAL)
@@ -389,9 +389,9 @@ std::set<uint32_t> AssemblyContext::GetNumericIds() const {
   std::set<uint32_t> ids;
   for (const auto& kv : named_ids_) {
     uint32_t id;
-    if (spvutils::ParseNumber(kv.first.c_str(), &id)) ids.insert(id);
+    if (spvtools::utils::ParseNumber(kv.first.c_str(), &id)) ids.insert(id);
   }
   return ids;
 }
 
-}  // namespace libspirv
+}  // namespace spvtools

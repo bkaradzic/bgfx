@@ -14,15 +14,31 @@
 
 #ifndef SOURCE_OPT_LOOP_UTILS_H_
 #define SOURCE_OPT_LOOP_UTILS_H_
+
 #include <list>
 #include <memory>
+#include <unordered_map>
 #include <vector>
-#include "opt/ir_context.h"
-#include "opt/loop_descriptor.h"
+
+#include "source/opt/ir_context.h"
+#include "source/opt/loop_descriptor.h"
 
 namespace spvtools {
 
 namespace opt {
+
+// Class to gather some metrics about a Region Of Interest (ROI).
+// So far it counts the number of instructions in a ROI (excluding debug
+// and label instructions) per basic block and in total.
+struct CodeMetrics {
+  void Analyze(const Loop& loop);
+
+  // The number of instructions per basic block in the ROI.
+  std::unordered_map<uint32_t, size_t> block_sizes_;
+
+  // Number of instruction in the ROI.
+  size_t roi_size_;
+};
 
 // LoopUtils is used to encapsulte loop optimizations and from the passes which
 // use them. Any pass which needs a loop optimization should do it through this
@@ -32,7 +48,10 @@ class LoopUtils {
   // Holds a auxiliary results of the loop cloning procedure.
   struct LoopCloningResult {
     using ValueMapTy = std::unordered_map<uint32_t, uint32_t>;
-    using BlockMapTy = std::unordered_map<uint32_t, ir::BasicBlock*>;
+    using BlockMapTy = std::unordered_map<uint32_t, BasicBlock*>;
+    using PtrMap = std::unordered_map<Instruction*, Instruction*>;
+
+    PtrMap ptr_map_;
 
     // Mapping between the original loop ids and the new one.
     ValueMapTy value_map_;
@@ -41,10 +60,10 @@ class LoopUtils {
     // Mapping between the cloned loop blocks to original one.
     BlockMapTy new_to_old_bb_;
     // List of cloned basic block.
-    std::vector<std::unique_ptr<ir::BasicBlock>> cloned_bb_;
+    std::vector<std::unique_ptr<BasicBlock>> cloned_bb_;
   };
 
-  LoopUtils(ir::IRContext* context, ir::Loop* loop)
+  LoopUtils(IRContext* context, Loop* loop)
       : context_(context),
         loop_desc_(
             context->GetLoopDescriptor(loop->GetHeaderBlock()->GetParent())),
@@ -95,9 +114,14 @@ class LoopUtils {
   // The function preserves the def/use, cfg and instr to block analyses.
   // The cloned loop nest will be added to the loop descriptor and will have
   // ownership.
-  ir::Loop* CloneLoop(
-      LoopCloningResult* cloning_result,
-      const std::vector<ir::BasicBlock*>& ordered_loop_blocks) const;
+  Loop* CloneLoop(LoopCloningResult* cloning_result,
+                  const std::vector<BasicBlock*>& ordered_loop_blocks) const;
+  // Clone |loop_| and remap its instructions, as above. Overload to compute
+  // loop block ordering within method rather than taking in as parameter.
+  Loop* CloneLoop(LoopCloningResult* cloning_result) const;
+
+  // Clone the |loop_| and make the new loop branch to the second loop on exit.
+  Loop* CloneAndAttachLoopToHeader(LoopCloningResult* cloning_result);
 
   // Perfom a partial unroll of |loop| by given |factor|. This will copy the
   // body of the loop |factor| times. So a |factor| of one would give a new loop
@@ -129,26 +153,26 @@ class LoopUtils {
   void Finalize();
 
   // Returns the context associate to |loop_|.
-  ir::IRContext* GetContext() { return context_; }
+  IRContext* GetContext() { return context_; }
   // Returns the loop descriptor owning |loop_|.
-  ir::LoopDescriptor* GetLoopDescriptor() { return loop_desc_; }
+  LoopDescriptor* GetLoopDescriptor() { return loop_desc_; }
   // Returns the loop on which the object operates on.
-  ir::Loop* GetLoop() const { return loop_; }
+  Loop* GetLoop() const { return loop_; }
   // Returns the function that |loop_| belong to.
-  ir::Function* GetFunction() const { return &function_; }
+  Function* GetFunction() const { return &function_; }
 
  private:
-  ir::IRContext* context_;
-  ir::LoopDescriptor* loop_desc_;
-  ir::Loop* loop_;
-  ir::Function& function_;
+  IRContext* context_;
+  LoopDescriptor* loop_desc_;
+  Loop* loop_;
+  Function& function_;
 
   // Populates the loop nest of |new_loop| according to |loop_| nest.
-  void PopulateLoopNest(ir::Loop* new_loop,
+  void PopulateLoopNest(Loop* new_loop,
                         const LoopCloningResult& cloning_result) const;
 
   // Populates |new_loop| descriptor according to |old_loop|'s one.
-  void PopulateLoopDesc(ir::Loop* new_loop, ir::Loop* old_loop,
+  void PopulateLoopDesc(Loop* new_loop, Loop* old_loop,
                         const LoopCloningResult& cloning_result) const;
 };
 

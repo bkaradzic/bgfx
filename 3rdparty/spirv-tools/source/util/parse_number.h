@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_UTIL_PARSE_NUMBER_H_
-#define LIBSPIRV_UTIL_PARSE_NUMBER_H_
+#ifndef SOURCE_UTIL_PARSE_NUMBER_H_
+#define SOURCE_UTIL_PARSE_NUMBER_H_
 
 #include <functional>
 #include <string>
 #include <tuple>
 
+#include "source/util/hex_float.h"
 #include "spirv-tools/libspirv.h"
-#include "util/hex_float.h"
 
-namespace spvutils {
+namespace spvtools {
+namespace utils {
 
 // A struct to hold the expected type information for the number in text to be
 // parsed.
@@ -245,6 +246,7 @@ EncodeNumberStatus ParseAndEncodeNumber(const char* text,
                                         std::function<void(uint32_t)> emit,
                                         std::string* error_msg);
 
-}  // namespace spvutils
+}  // namespace utils
+}  // namespace spvtools
 
-#endif  // LIBSPIRV_UTIL_PARSE_NUMBER_H_
+#endif  // SOURCE_UTIL_PARSE_NUMBER_H_

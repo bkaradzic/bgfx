@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_ID_DESCRIPTOR_H_
-#define LIBSPIRV_ID_DESCRIPTOR_H_
+#ifndef SOURCE_ID_DESCRIPTOR_H_
+#define SOURCE_ID_DESCRIPTOR_H_
 
 #include <unordered_map>
 #include <vector>
 
 #include "spirv-tools/libspirv.hpp"
 
-namespace libspirv {
+namespace spvtools {
 
 using CustomHashFunc = std::function<uint32_t(const std::vector<uint32_t>&)>;
 
@@ -58,6 +58,6 @@ class IdDescriptorCollection {
   std::vector<uint32_t> words_;
 };
 
-}  // namespace libspirv
+}  // namespace spvtools
 
-#endif  // LIBSPIRV_ID_DESCRIPTOR_H_
+#endif  // SOURCE_ID_DESCRIPTOR_H_

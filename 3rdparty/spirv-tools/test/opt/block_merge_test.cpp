@@ -13,12 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <string>
 
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using BlockMergeTest = PassTest<::testing::Test>;
 
@@ -84,8 +86,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::BlockMergePass>(predefs + before, predefs + after,
-                                             true, true);
+  SinglePassRunAndCheck<BlockMergePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(BlockMergeTest, EmptyBlock) {
@@ -154,8 +156,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::BlockMergePass>(predefs + before, predefs + after,
-                                             true, true);
+  SinglePassRunAndCheck<BlockMergePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 TEST_F(BlockMergeTest, NestedInControlFlow) {
@@ -267,8 +269,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::BlockMergePass>(predefs + before, predefs + after,
-                                             true, true);
+  SinglePassRunAndCheck<BlockMergePass>(predefs + before, predefs + after, true,
+                                        true);
 }
 
 #ifdef SPIRV_EFFCEE
@@ -306,7 +308,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, UpdateMergeInstruction) {
@@ -342,7 +344,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, TwoMergeBlocksCannotBeMerged) {
@@ -383,7 +385,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, MergeContinue) {
@@ -415,7 +417,7 @@ OpUnreachable
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, TwoHeadersCannotBeMerged) {
@@ -452,7 +454,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, RemoveStructuredDeclaration) {
@@ -516,7 +518,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(assembly, true);
+  SinglePassRunAndMatch<BlockMergePass>(assembly, true);
 }
 
 TEST_F(BlockMergeTest, DontMergeKill) {
@@ -548,7 +550,7 @@ OpUnreachable
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, DontMergeUnreachable) {
@@ -580,7 +582,7 @@ OpUnreachable
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, DontMergeReturn) {
@@ -612,7 +614,7 @@ OpUnreachable
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, DontMergeSwitch) {
@@ -648,7 +650,7 @@ OpUnreachable
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 
 TEST_F(BlockMergeTest, DontMergeReturnValue) {
@@ -687,7 +689,7 @@ OpUnreachable
 OpFunctionEnd
 )";
 
-  SinglePassRunAndMatch<opt::BlockMergePass>(text, true);
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
 #endif  // SPIRV_EFFCEE
 
@@ -696,4 +698,6 @@ OpFunctionEnd
 //    More complex control flow
 //    Others?
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

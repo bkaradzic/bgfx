@@ -12,29 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include "assembly_builder.h"
-#include "function_utils.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "gmock/gmock.h"
+#include "source/opt/iterator.h"
+#include "source/opt/loop_descriptor.h"
+#include "source/opt/pass.h"
+#include "source/opt/scalar_analysis.h"
+#include "source/opt/tree_iterator.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/function_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-#include "opt/iterator.h"
-#include "opt/loop_descriptor.h"
-#include "opt/pass.h"
-#include "opt/scalar_analysis.h"
-#include "opt/tree_iterator.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
-
 using ScalarAnalysisTest = PassTest<::testing::Test>;
 
 /*
@@ -99,18 +97,18 @@ TEST_F(ScalarAnalysisTest, BasicEvolutionTest) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 4);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 4);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  const ir::Instruction* store = nullptr;
-  const ir::Instruction* load = nullptr;
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 11)) {
+  const Instruction* store = nullptr;
+  const Instruction* load = nullptr;
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 11)) {
     if (inst.opcode() == SpvOp::SpvOpStore) {
       store = &inst;
     }
@@ -122,36 +120,35 @@ TEST_F(ScalarAnalysisTest, BasicEvolutionTest) {
   EXPECT_NE(load, nullptr);
   EXPECT_NE(store, nullptr);
 
-  ir::Instruction* access_chain =
+  Instruction* access_chain =
       context->get_def_use_mgr()->GetDef(load->GetSingleWordInOperand(0));
 
-  ir::Instruction* child = context->get_def_use_mgr()->GetDef(
+  Instruction* child = context->get_def_use_mgr()->GetDef(
       access_chain->GetSingleWordInOperand(1));
-  const opt::SENode* node = analysis.AnalyzeInstruction(child);
+  const SENode* node = analysis.AnalyzeInstruction(child);
 
   EXPECT_NE(node, nullptr);
 
   // Unsimplified node should have the form of ADD(REC(0,1), 1)
-  EXPECT_EQ(node->GetType(), opt::SENode::Add);
+  EXPECT_EQ(node->GetType(), SENode::Add);
 
-  const opt::SENode* child_1 = node->GetChild(0);
-  EXPECT_TRUE(child_1->GetType() == opt::SENode::Constant ||
-              child_1->GetType() == opt::SENode::RecurrentAddExpr);
+  const SENode* child_1 = node->GetChild(0);
+  EXPECT_TRUE(child_1->GetType() == SENode::Constant ||
+              child_1->GetType() == SENode::RecurrentAddExpr);
 
-  const opt::SENode* child_2 = node->GetChild(1);
-  EXPECT_TRUE(child_2->GetType() == opt::SENode::Constant ||
-              child_2->GetType() == opt::SENode::RecurrentAddExpr);
+  const SENode* child_2 = node->GetChild(1);
+  EXPECT_TRUE(child_2->GetType() == SENode::Constant ||
+              child_2->GetType() == SENode::RecurrentAddExpr);
 
-  opt::SENode* simplified =
-      analysis.SimplifyExpression(const_cast<opt::SENode*>(node));
+  SENode* simplified = analysis.SimplifyExpression(const_cast<SENode*>(node));
   // Simplified should be in the form of REC(1,1)
-  EXPECT_EQ(simplified->GetType(), opt::SENode::RecurrentAddExpr);
+  EXPECT_EQ(simplified->GetType(), SENode::RecurrentAddExpr);
 
-  EXPECT_EQ(simplified->GetChild(0)->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified->GetChild(0)->GetType(), SENode::Constant);
   EXPECT_EQ(simplified->GetChild(0)->AsSEConstantNode()->FoldToSingleValue(),
             1);
 
-  EXPECT_EQ(simplified->GetChild(1)->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified->GetChild(1)->GetType(), SENode::Constant);
   EXPECT_EQ(simplified->GetChild(1)->AsSEConstantNode()->FoldToSingleValue(),
             1);
 
@@ -228,17 +225,17 @@ TEST_F(ScalarAnalysisTest, LoadTest) {
                OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 2);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  const ir::Instruction* load = nullptr;
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 28)) {
+  const Instruction* load = nullptr;
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 28)) {
     if (inst.opcode() == SpvOp::SpvOpLoad) {
       load = &inst;
     }
@@ -246,40 +243,39 @@ TEST_F(ScalarAnalysisTest, LoadTest) {
 
   EXPECT_NE(load, nullptr);
 
-  ir::Instruction* access_chain =
+  Instruction* access_chain =
       context->get_def_use_mgr()->GetDef(load->GetSingleWordInOperand(0));
 
-  ir::Instruction* child = context->get_def_use_mgr()->GetDef(
+  Instruction* child = context->get_def_use_mgr()->GetDef(
       access_chain->GetSingleWordInOperand(1));
-  //  const opt::SENode* node =
+  //  const SENode* node =
   //  analysis.GetNodeFromInstruction(child->unique_id());
 
-  const opt::SENode* node = analysis.AnalyzeInstruction(child);
+  const SENode* node = analysis.AnalyzeInstruction(child);
 
   EXPECT_NE(node, nullptr);
 
   // Unsimplified node should have the form of ADD(REC(0,1), X)
-  EXPECT_EQ(node->GetType(), opt::SENode::Add);
+  EXPECT_EQ(node->GetType(), SENode::Add);
 
-  const opt::SENode* child_1 = node->GetChild(0);
-  EXPECT_TRUE(child_1->GetType() == opt::SENode::ValueUnknown ||
-              child_1->GetType() == opt::SENode::RecurrentAddExpr);
+  const SENode* child_1 = node->GetChild(0);
+  EXPECT_TRUE(child_1->GetType() == SENode::ValueUnknown ||
+              child_1->GetType() == SENode::RecurrentAddExpr);
 
-  const opt::SENode* child_2 = node->GetChild(1);
-  EXPECT_TRUE(child_2->GetType() == opt::SENode::ValueUnknown ||
-              child_2->GetType() == opt::SENode::RecurrentAddExpr);
+  const SENode* child_2 = node->GetChild(1);
+  EXPECT_TRUE(child_2->GetType() == SENode::ValueUnknown ||
+              child_2->GetType() == SENode::RecurrentAddExpr);
 
-  opt::SENode* simplified =
-      analysis.SimplifyExpression(const_cast<opt::SENode*>(node));
-  EXPECT_EQ(simplified->GetType(), opt::SENode::RecurrentAddExpr);
+  SENode* simplified = analysis.SimplifyExpression(const_cast<SENode*>(node));
+  EXPECT_EQ(simplified->GetType(), SENode::RecurrentAddExpr);
 
-  const opt::SERecurrentNode* rec = simplified->AsSERecurrentNode();
+  const SERecurrentNode* rec = simplified->AsSERecurrentNode();
 
   EXPECT_NE(rec->GetChild(0), rec->GetChild(1));
 
-  EXPECT_EQ(rec->GetOffset()->GetType(), opt::SENode::ValueUnknown);
+  EXPECT_EQ(rec->GetOffset()->GetType(), SENode::ValueUnknown);
 
-  EXPECT_EQ(rec->GetCoefficient()->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(rec->GetCoefficient()->GetType(), SENode::Constant);
   EXPECT_EQ(rec->GetCoefficient()->AsSEConstantNode()->FoldToSingleValue(), 1u);
 }
 
@@ -345,17 +341,17 @@ TEST_F(ScalarAnalysisTest, SimplifySimple) {
                OpFunctionEnd
     )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 2);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  const ir::Instruction* load = nullptr;
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 21)) {
+  const Instruction* load = nullptr;
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 21)) {
     if (inst.opcode() == SpvOp::SpvOpLoad && inst.result_id() == 33) {
       load = &inst;
     }
@@ -363,24 +359,23 @@ TEST_F(ScalarAnalysisTest, SimplifySimple) {
 
   EXPECT_NE(load, nullptr);
 
-  ir::Instruction* access_chain =
+  Instruction* access_chain =
       context->get_def_use_mgr()->GetDef(load->GetSingleWordInOperand(0));
 
-  ir::Instruction* child = context->get_def_use_mgr()->GetDef(
+  Instruction* child = context->get_def_use_mgr()->GetDef(
       access_chain->GetSingleWordInOperand(1));
 
-  const opt::SENode* node = analysis.AnalyzeInstruction(child);
+  const SENode* node = analysis.AnalyzeInstruction(child);
 
   // Unsimplified is a very large graph with an add at the top.
   EXPECT_NE(node, nullptr);
-  EXPECT_EQ(node->GetType(), opt::SENode::Add);
+  EXPECT_EQ(node->GetType(), SENode::Add);
 
   // Simplified node should resolve down to a constant expression as the loads
   // will eliminate themselves.
-  opt::SENode* simplified =
-      analysis.SimplifyExpression(const_cast<opt::SENode*>(node));
+  SENode* simplified = analysis.SimplifyExpression(const_cast<SENode*>(node));
 
-  EXPECT_EQ(simplified->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified->GetType(), SENode::Constant);
   EXPECT_EQ(simplified->AsSEConstantNode()->FoldToSingleValue(), 33u);
 }
 
@@ -496,21 +491,21 @@ TEST_F(ScalarAnalysisTest, Simplify) {
                OpFunctionEnd
 )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 4);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 4);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  const ir::Instruction* loads[6];
-  const ir::Instruction* stores[6];
+  const Instruction* loads[6];
+  const Instruction* stores[6];
   int load_count = 0;
   int store_count = 0;
 
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 22)) {
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 22)) {
     if (inst.opcode() == SpvOp::SpvOpLoad) {
       loads[load_count] = &inst;
       ++load_count;
@@ -524,14 +519,14 @@ TEST_F(ScalarAnalysisTest, Simplify) {
   EXPECT_EQ(load_count, 6);
   EXPECT_EQ(store_count, 6);
 
-  ir::Instruction* load_access_chain;
-  ir::Instruction* store_access_chain;
-  ir::Instruction* load_child;
-  ir::Instruction* store_child;
-  opt::SENode* load_node;
-  opt::SENode* store_node;
-  opt::SENode* subtract_node;
-  opt::SENode* simplified_node;
+  Instruction* load_access_chain;
+  Instruction* store_access_chain;
+  Instruction* load_child;
+  Instruction* store_child;
+  SENode* load_node;
+  SENode* store_node;
+  SENode* subtract_node;
+  SENode* simplified_node;
 
   // Testing [i] - [i] == 0
   load_access_chain =
@@ -549,7 +544,7 @@ TEST_F(ScalarAnalysisTest, Simplify) {
 
   subtract_node = analysis.CreateSubtraction(store_node, load_node);
   simplified_node = analysis.SimplifyExpression(subtract_node);
-  EXPECT_EQ(simplified_node->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified_node->GetType(), SENode::Constant);
   EXPECT_EQ(simplified_node->AsSEConstantNode()->FoldToSingleValue(), 0u);
 
   // Testing [i] - [i-1] == 1
@@ -569,7 +564,7 @@ TEST_F(ScalarAnalysisTest, Simplify) {
   subtract_node = analysis.CreateSubtraction(store_node, load_node);
   simplified_node = analysis.SimplifyExpression(subtract_node);
 
-  EXPECT_EQ(simplified_node->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified_node->GetType(), SENode::Constant);
   EXPECT_EQ(simplified_node->AsSEConstantNode()->FoldToSingleValue(), 1u);
 
   // Testing [i] - [i+1] == -1
@@ -588,7 +583,7 @@ TEST_F(ScalarAnalysisTest, Simplify) {
 
   subtract_node = analysis.CreateSubtraction(store_node, load_node);
   simplified_node = analysis.SimplifyExpression(subtract_node);
-  EXPECT_EQ(simplified_node->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified_node->GetType(), SENode::Constant);
   EXPECT_EQ(simplified_node->AsSEConstantNode()->FoldToSingleValue(), -1);
 
   // Testing [i+1] - [i+1] == 0
@@ -607,7 +602,7 @@ TEST_F(ScalarAnalysisTest, Simplify) {
 
   subtract_node = analysis.CreateSubtraction(store_node, load_node);
   simplified_node = analysis.SimplifyExpression(subtract_node);
-  EXPECT_EQ(simplified_node->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified_node->GetType(), SENode::Constant);
   EXPECT_EQ(simplified_node->AsSEConstantNode()->FoldToSingleValue(), 0u);
 
   // Testing [i+N] - [i+N] == 0
@@ -627,7 +622,7 @@ TEST_F(ScalarAnalysisTest, Simplify) {
   subtract_node = analysis.CreateSubtraction(store_node, load_node);
 
   simplified_node = analysis.SimplifyExpression(subtract_node);
-  EXPECT_EQ(simplified_node->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(simplified_node->GetType(), SENode::Constant);
   EXPECT_EQ(simplified_node->AsSEConstantNode()->FoldToSingleValue(), 0u);
 
   // Testing [i] - [i+N] == -N
@@ -646,7 +641,7 @@ TEST_F(ScalarAnalysisTest, Simplify) {
 
   subtract_node = analysis.CreateSubtraction(store_node, load_node);
   simplified_node = analysis.SimplifyExpression(subtract_node);
-  EXPECT_EQ(simplified_node->GetType(), opt::SENode::Negative);
+  EXPECT_EQ(simplified_node->GetType(), SENode::Negative);
 }
 
 /*
@@ -735,21 +730,21 @@ TEST_F(ScalarAnalysisTest, SimplifyMultiplyInductions) {
                OpReturn
                OpFunctionEnd
     )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 2);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  const ir::Instruction* loads[2] = {nullptr, nullptr};
-  const ir::Instruction* stores[2] = {nullptr, nullptr};
+  const Instruction* loads[2] = {nullptr, nullptr};
+  const Instruction* stores[2] = {nullptr, nullptr};
   int load_count = 0;
   int store_count = 0;
 
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 31)) {
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 31)) {
     if (inst.opcode() == SpvOp::SpvOpLoad) {
       loads[load_count] = &inst;
       ++load_count;
@@ -763,19 +758,19 @@ TEST_F(ScalarAnalysisTest, SimplifyMultiplyInductions) {
   EXPECT_EQ(load_count, 2);
   EXPECT_EQ(store_count, 2);
 
-  ir::Instruction* load_access_chain =
+  Instruction* load_access_chain =
       context->get_def_use_mgr()->GetDef(loads[0]->GetSingleWordInOperand(0));
-  ir::Instruction* store_access_chain =
+  Instruction* store_access_chain =
       context->get_def_use_mgr()->GetDef(stores[0]->GetSingleWordInOperand(0));
 
-  ir::Instruction* load_child = context->get_def_use_mgr()->GetDef(
+  Instruction* load_child = context->get_def_use_mgr()->GetDef(
       load_access_chain->GetSingleWordInOperand(1));
-  ir::Instruction* store_child = context->get_def_use_mgr()->GetDef(
+  Instruction* store_child = context->get_def_use_mgr()->GetDef(
       store_access_chain->GetSingleWordInOperand(1));
 
-  opt::SENode* store_node = analysis.AnalyzeInstruction(store_child);
+  SENode* store_node = analysis.AnalyzeInstruction(store_child);
 
-  opt::SENode* store_simplified = analysis.SimplifyExpression(store_node);
+  SENode* store_simplified = analysis.SimplifyExpression(store_node);
 
   load_access_chain =
       context->get_def_use_mgr()->GetDef(loads[1]->GetSingleWordInOperand(0));
@@ -786,11 +781,11 @@ TEST_F(ScalarAnalysisTest, SimplifyMultiplyInductions) {
   store_child = context->get_def_use_mgr()->GetDef(
       store_access_chain->GetSingleWordInOperand(1));
 
-  opt::SENode* second_store =
+  SENode* second_store =
       analysis.SimplifyExpression(analysis.AnalyzeInstruction(store_child));
-  opt::SENode* second_load =
+  SENode* second_load =
       analysis.SimplifyExpression(analysis.AnalyzeInstruction(load_child));
-  opt::SENode* combined_add = analysis.SimplifyExpression(
+  SENode* combined_add = analysis.SimplifyExpression(
       analysis.CreateAddNode(second_load, second_store));
 
   // We're checking that the two recurrent expression have been correctly
@@ -872,19 +867,19 @@ TEST_F(ScalarAnalysisTest, SimplifyNegativeSteps) {
                OpReturn
                OpFunctionEnd
     )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 2);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  const ir::Instruction* loads[1] = {nullptr};
+  const Instruction* loads[1] = {nullptr};
   int load_count = 0;
 
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 29)) {
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 29)) {
     if (inst.opcode() == SpvOp::SpvOpLoad) {
       loads[load_count] = &inst;
       ++load_count;
@@ -893,38 +888,38 @@ TEST_F(ScalarAnalysisTest, SimplifyNegativeSteps) {
 
   EXPECT_EQ(load_count, 1);
 
-  ir::Instruction* load_access_chain =
+  Instruction* load_access_chain =
       context->get_def_use_mgr()->GetDef(loads[0]->GetSingleWordInOperand(0));
-  ir::Instruction* load_child = context->get_def_use_mgr()->GetDef(
+  Instruction* load_child = context->get_def_use_mgr()->GetDef(
       load_access_chain->GetSingleWordInOperand(1));
 
-  opt::SENode* load_node = analysis.AnalyzeInstruction(load_child);
+  SENode* load_node = analysis.AnalyzeInstruction(load_child);
 
   EXPECT_TRUE(load_node);
-  EXPECT_EQ(load_node->GetType(), opt::SENode::RecurrentAddExpr);
+  EXPECT_EQ(load_node->GetType(), SENode::RecurrentAddExpr);
   EXPECT_TRUE(load_node->AsSERecurrentNode());
 
-  opt::SENode* child_1 = load_node->AsSERecurrentNode()->GetCoefficient();
-  opt::SENode* child_2 = load_node->AsSERecurrentNode()->GetOffset();
+  SENode* child_1 = load_node->AsSERecurrentNode()->GetCoefficient();
+  SENode* child_2 = load_node->AsSERecurrentNode()->GetOffset();
 
-  EXPECT_EQ(child_1->GetType(), opt::SENode::Constant);
-  EXPECT_EQ(child_2->GetType(), opt::SENode::Constant);
+  EXPECT_EQ(child_1->GetType(), SENode::Constant);
+  EXPECT_EQ(child_2->GetType(), SENode::Constant);
 
   EXPECT_EQ(child_1->AsSEConstantNode()->FoldToSingleValue(), -1);
   EXPECT_EQ(child_2->AsSEConstantNode()->FoldToSingleValue(), 0u);
 
-  opt::SERecurrentNode* load_simplified =
+  SERecurrentNode* load_simplified =
       analysis.SimplifyExpression(load_node)->AsSERecurrentNode();
 
   EXPECT_TRUE(load_simplified);
   EXPECT_EQ(load_node, load_simplified);
 
-  EXPECT_EQ(load_simplified->GetType(), opt::SENode::RecurrentAddExpr);
+  EXPECT_EQ(load_simplified->GetType(), SENode::RecurrentAddExpr);
   EXPECT_TRUE(load_simplified->AsSERecurrentNode());
 
-  opt::SENode* simplified_child_1 =
+  SENode* simplified_child_1 =
       load_simplified->AsSERecurrentNode()->GetCoefficient();
-  opt::SENode* simplified_child_2 =
+  SENode* simplified_child_2 =
       load_simplified->AsSERecurrentNode()->GetOffset();
 
   EXPECT_EQ(child_1, simplified_child_1);
@@ -1017,19 +1012,19 @@ TEST_F(ScalarAnalysisTest, SimplifyInductionsAndLoads) {
                OpReturn
                OpFunctionEnd
     )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 2);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  std::vector<const ir::Instruction*> loads{};
-  std::vector<const ir::Instruction*> stores{};
+  std::vector<const Instruction*> loads{};
+  std::vector<const Instruction*> stores{};
 
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 30)) {
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 30)) {
     if (inst.opcode() == SpvOp::SpvOpLoad) {
       loads.push_back(&inst);
     }
@@ -1041,81 +1036,77 @@ TEST_F(ScalarAnalysisTest, SimplifyInductionsAndLoads) {
   EXPECT_EQ(loads.size(), 3u);
   EXPECT_EQ(stores.size(), 2u);
   {
-    ir::Instruction* store_access_chain = context->get_def_use_mgr()->GetDef(
+    Instruction* store_access_chain = context->get_def_use_mgr()->GetDef(
         stores[0]->GetSingleWordInOperand(0));
 
-    ir::Instruction* store_child = context->get_def_use_mgr()->GetDef(
+    Instruction* store_child = context->get_def_use_mgr()->GetDef(
         store_access_chain->GetSingleWordInOperand(1));
 
-    opt::SENode* store_node = analysis.AnalyzeInstruction(store_child);
+    SENode* store_node = analysis.AnalyzeInstruction(store_child);
 
-    opt::SENode* store_simplified = analysis.SimplifyExpression(store_node);
+    SENode* store_simplified = analysis.SimplifyExpression(store_node);
 
-    ir::Instruction* load_access_chain =
+    Instruction* load_access_chain =
         context->get_def_use_mgr()->GetDef(loads[1]->GetSingleWordInOperand(0));
 
-    ir::Instruction* load_child = context->get_def_use_mgr()->GetDef(
+    Instruction* load_child = context->get_def_use_mgr()->GetDef(
         load_access_chain->GetSingleWordInOperand(1));
 
-    opt::SENode* load_node = analysis.AnalyzeInstruction(load_child);
+    SENode* load_node = analysis.AnalyzeInstruction(load_child);
 
-    opt::SENode* load_simplified = analysis.SimplifyExpression(load_node);
+    SENode* load_simplified = analysis.SimplifyExpression(load_node);
 
-    opt::SENode* difference =
+    SENode* difference =
         analysis.CreateSubtraction(store_simplified, load_simplified);
 
-    opt::SENode* difference_simplified =
-        analysis.SimplifyExpression(difference);
+    SENode* difference_simplified = analysis.SimplifyExpression(difference);
 
     // Check that i+2*N  -  i*N, turns into just N when both sides have already
     // been simplified into a single recurrent expression.
-    EXPECT_EQ(difference_simplified->GetType(), opt::SENode::ValueUnknown);
+    EXPECT_EQ(difference_simplified->GetType(), SENode::ValueUnknown);
 
     // Check that the inverse, i*N - i+2*N turns into -N.
-    opt::SENode* difference_inverse = analysis.SimplifyExpression(
+    SENode* difference_inverse = analysis.SimplifyExpression(
         analysis.CreateSubtraction(load_simplified, store_simplified));
 
-    EXPECT_EQ(difference_inverse->GetType(), opt::SENode::Negative);
-    EXPECT_EQ(difference_inverse->GetChild(0)->GetType(),
-              opt::SENode::ValueUnknown);
+    EXPECT_EQ(difference_inverse->GetType(), SENode::Negative);
+    EXPECT_EQ(difference_inverse->GetChild(0)->GetType(), SENode::ValueUnknown);
     EXPECT_EQ(difference_inverse->GetChild(0), difference_simplified);
   }
 
   {
-    ir::Instruction* store_access_chain = context->get_def_use_mgr()->GetDef(
+    Instruction* store_access_chain = context->get_def_use_mgr()->GetDef(
         stores[1]->GetSingleWordInOperand(0));
 
-    ir::Instruction* store_child = context->get_def_use_mgr()->GetDef(
+    Instruction* store_child = context->get_def_use_mgr()->GetDef(
         store_access_chain->GetSingleWordInOperand(1));
-    opt::SENode* store_node = analysis.AnalyzeInstruction(store_child);
-    opt::SENode* store_simplified = analysis.SimplifyExpression(store_node);
+    SENode* store_node = analysis.AnalyzeInstruction(store_child);
+    SENode* store_simplified = analysis.SimplifyExpression(store_node);
 
-    ir::Instruction* load_access_chain =
+    Instruction* load_access_chain =
         context->get_def_use_mgr()->GetDef(loads[2]->GetSingleWordInOperand(0));
 
-    ir::Instruction* load_child = context->get_def_use_mgr()->GetDef(
+    Instruction* load_child = context->get_def_use_mgr()->GetDef(
         load_access_chain->GetSingleWordInOperand(1));
 
-    opt::SENode* load_node = analysis.AnalyzeInstruction(load_child);
+    SENode* load_node = analysis.AnalyzeInstruction(load_child);
 
-    opt::SENode* load_simplified = analysis.SimplifyExpression(load_node);
+    SENode* load_simplified = analysis.SimplifyExpression(load_node);
 
-    opt::SENode* difference =
+    SENode* difference =
         analysis.CreateSubtraction(store_simplified, load_simplified);
-    opt::SENode* difference_simplified =
-        analysis.SimplifyExpression(difference);
+    SENode* difference_simplified = analysis.SimplifyExpression(difference);
 
     // Check that 2*i + 2*N + 1  -  2*i + N + 1, turns into just N when both
     // sides have already been simplified into a single recurrent expression.
-    EXPECT_EQ(difference_simplified->GetType(), opt::SENode::ValueUnknown);
+    EXPECT_EQ(difference_simplified->GetType(), SENode::ValueUnknown);
 
     // Check that the inverse, (2*i + N + 1)  -  (2*i + 2*N + 1) turns into -N.
-    opt::SENode* difference_inverse = analysis.SimplifyExpression(
+    SENode* difference_inverse = analysis.SimplifyExpression(
         analysis.CreateSubtraction(load_simplified, store_simplified));
 
-    EXPECT_EQ(difference_inverse->GetType(), opt::SENode::Negative);
-    EXPECT_EQ(difference_inverse->GetChild(0)->GetType(),
-              opt::SENode::ValueUnknown);
+    EXPECT_EQ(difference_inverse->GetType(), SENode::Negative);
+    EXPECT_EQ(difference_inverse->GetChild(0)->GetType(), SENode::ValueUnknown);
     EXPECT_EQ(difference_inverse->GetChild(0), difference_simplified);
   }
 }
@@ -1191,38 +1182,40 @@ TEST_F(ScalarAnalysisTest, InductionWithVariantStep) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  opt::ScalarEvolutionAnalysis analysis{context.get()};
+  const Function* f = spvtest::GetFunction(module, 2);
+  ScalarEvolutionAnalysis analysis{context.get()};
 
-  std::vector<const ir::Instruction*> phis{};
+  std::vector<const Instruction*> phis{};
 
-  for (const ir::Instruction& inst : *spvtest::GetBasicBlock(f, 21)) {
+  for (const Instruction& inst : *spvtest::GetBasicBlock(f, 21)) {
     if (inst.opcode() == SpvOp::SpvOpPhi) {
       phis.push_back(&inst);
     }
   }
 
   EXPECT_EQ(phis.size(), 2u);
-  opt::SENode* phi_node_1 = analysis.AnalyzeInstruction(phis[0]);
-  opt::SENode* phi_node_2 = analysis.AnalyzeInstruction(phis[1]);
+  SENode* phi_node_1 = analysis.AnalyzeInstruction(phis[0]);
+  SENode* phi_node_2 = analysis.AnalyzeInstruction(phis[1]);
   phi_node_1->DumpDot(std::cout, true);
   EXPECT_NE(phi_node_1, nullptr);
   EXPECT_NE(phi_node_2, nullptr);
 
-  EXPECT_EQ(phi_node_1->GetType(), opt::SENode::RecurrentAddExpr);
-  EXPECT_EQ(phi_node_2->GetType(), opt::SENode::CanNotCompute);
+  EXPECT_EQ(phi_node_1->GetType(), SENode::RecurrentAddExpr);
+  EXPECT_EQ(phi_node_2->GetType(), SENode::CanNotCompute);
 
-  opt::SENode* simplified_1 = analysis.SimplifyExpression(phi_node_1);
-  opt::SENode* simplified_2 = analysis.SimplifyExpression(phi_node_2);
+  SENode* simplified_1 = analysis.SimplifyExpression(phi_node_1);
+  SENode* simplified_2 = analysis.SimplifyExpression(phi_node_2);
 
-  EXPECT_EQ(simplified_1->GetType(), opt::SENode::RecurrentAddExpr);
-  EXPECT_EQ(simplified_2->GetType(), opt::SENode::CanNotCompute);
+  EXPECT_EQ(simplified_1->GetType(), SENode::RecurrentAddExpr);
+  EXPECT_EQ(simplified_2->GetType(), SENode::CanNotCompute);
 }
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

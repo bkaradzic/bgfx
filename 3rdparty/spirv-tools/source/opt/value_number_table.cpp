@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "value_number_table.h"
+#include "source/opt/value_number_table.h"
 
 #include <algorithm>
 
-#include "cfg.h"
+#include "source/opt/cfg.h"
+#include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace opt {
 
-uint32_t ValueNumberTable::GetValueNumber(
-    spvtools::ir::Instruction* inst) const {
+uint32_t ValueNumberTable::GetValueNumber(Instruction* inst) const {
   assert(inst->result_id() != 0 &&
          "inst must have a result id to get a value number.");
 
@@ -34,7 +34,11 @@ uint32_t ValueNumberTable::GetValueNumber(
   return 0;
 }
 
-uint32_t ValueNumberTable::AssignValueNumber(ir::Instruction* inst) {
+uint32_t ValueNumberTable::GetValueNumber(uint32_t id) const {
+  return GetValueNumber(context()->get_def_use_mgr()->GetDef(id));
+}
+
+uint32_t ValueNumberTable::AssignValueNumber(Instruction* inst) {
   // If it already has a value return that.
   uint32_t value = GetValueNumber(inst);
   if (value != 0) {
@@ -103,19 +107,19 @@ uint32_t ValueNumberTable::AssignValueNumber(ir::Instruction* inst) {
 
   // Replace all of the operands by their value number.  The sign bit will be
   // set to distinguish between an id and a value number.
-  ir::Instruction value_ins(context(), inst->opcode(), inst->type_id(),
-                            inst->result_id(), {});
+  Instruction value_ins(context(), inst->opcode(), inst->type_id(),
+                        inst->result_id(), {});
   for (uint32_t o = 0; o < inst->NumInOperands(); ++o) {
-    const ir::Operand& op = inst->GetInOperand(o);
+    const Operand& op = inst->GetInOperand(o);
     if (spvIsIdType(op.type)) {
       uint32_t id_value = op.words[0];
       auto use_id_to_val = id_to_value_.find(id_value);
       if (use_id_to_val != id_to_value_.end()) {
         id_value = (1 << 31) | use_id_to_val->second;
       }
-      value_ins.AddOperand(ir::Operand(op.type, {id_value}));
+      value_ins.AddOperand(Operand(op.type, {id_value}));
     } else {
-      value_ins.AddOperand(ir::Operand(op.type, op.words));
+      value_ins.AddOperand(Operand(op.type, op.words));
     }
   }
 
@@ -163,11 +167,11 @@ void ValueNumberTable::BuildDominatorTreeValueNumberTable() {
     }
   }
 
-  for (ir::Function& func : *context()->module()) {
+  for (Function& func : *context()->module()) {
     // For best results we want to traverse the code in reverse post order.
     // This happens naturally because of the forward referencing rules.
-    for (ir::BasicBlock& block : func) {
-      for (ir::Instruction& inst : block) {
+    for (BasicBlock& block : func) {
+      for (Instruction& inst : block) {
         if (inst.result_id() != 0) {
           AssignValueNumber(&inst);
         }
@@ -176,8 +180,8 @@ void ValueNumberTable::BuildDominatorTreeValueNumberTable() {
   }
 }
 
-bool ComputeSameValue::operator()(const ir::Instruction& lhs,
-                                  const ir::Instruction& rhs) const {
+bool ComputeSameValue::operator()(const Instruction& lhs,
+                                  const Instruction& rhs) const {
   if (lhs.result_id() == 0 || rhs.result_id() == 0) {
     return false;
   }
@@ -204,8 +208,7 @@ bool ComputeSameValue::operator()(const ir::Instruction& lhs,
       lhs.result_id(), rhs.result_id());
 }
 
-std::size_t ValueTableHash::operator()(
-    const spvtools::ir::Instruction& inst) const {
+std::size_t ValueTableHash::operator()(const Instruction& inst) const {
   // We hash the opcode and in-operands, not the result, because we want
   // instructions that are the same except for the result to hash to the
   // same value.

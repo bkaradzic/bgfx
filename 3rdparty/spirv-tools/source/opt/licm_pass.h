@@ -15,12 +15,13 @@
 #ifndef SOURCE_OPT_LICM_PASS_H_
 #define SOURCE_OPT_LICM_PASS_H_
 
-#include "opt/basic_block.h"
-#include "opt/instruction.h"
-#include "opt/loop_descriptor.h"
-#include "opt/pass.h"
-
 #include <queue>
+#include <vector>
+
+#include "source/opt/basic_block.h"
+#include "source/opt/instruction.h"
+#include "source/opt/loop_descriptor.h"
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -30,7 +31,7 @@ class LICMPass : public Pass {
   LICMPass() {}
 
   const char* name() const override { return "loop-invariant-code-motion"; }
-  Status Process(ir::IRContext*) override;
+  Status Process() override;
 
  private:
   // Searches the IRContext for functions and processes each, moving invariants
@@ -40,26 +41,24 @@ class LICMPass : public Pass {
 
   // Checks the function for loops, calling ProcessLoop on each one found.
   // Returns true if a change was made to the function, false otherwise.
-  bool ProcessFunction(ir::Function* f);
+  bool ProcessFunction(Function* f);
 
   // Checks for invariants in the loop and attempts to move them to the loops
   // preheader. Works from inner loop to outer when nested loops are found.
   // Returns true if a change was made to the loop, false otherwise.
-  bool ProcessLoop(ir::Loop* loop, ir::Function* f);
+  bool ProcessLoop(Loop* loop, Function* f);
 
   // Analyses each instruction in |bb|, hoisting invariants to |pre_header_bb|.
   // Each child of |bb| wrt to |dom_tree| is pushed to |loop_bbs|
-  bool AnalyseAndHoistFromBB(ir::Loop* loop, ir::Function* f,
-                             ir::BasicBlock* bb,
-                             std::vector<ir::BasicBlock*>* loop_bbs);
+  bool AnalyseAndHoistFromBB(Loop* loop, Function* f, BasicBlock* bb,
+                             std::vector<BasicBlock*>* loop_bbs);
 
   // Returns true if |bb| is immediately contained in |loop|
-  bool IsImmediatelyContainedInLoop(ir::Loop* loop, ir::Function* f,
-                                    ir::BasicBlock* bb);
+  bool IsImmediatelyContainedInLoop(Loop* loop, Function* f, BasicBlock* bb);
 
   // Move the instruction to the given BasicBlock
   // This method will update the instruction to block mapping for the context
-  void HoistInstruction(ir::Loop* loop, ir::Instruction* inst);
+  void HoistInstruction(Loop* loop, Instruction* inst);
 };
 
 }  // namespace opt

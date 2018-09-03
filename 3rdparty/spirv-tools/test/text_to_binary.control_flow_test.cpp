@@ -16,23 +16,21 @@
 // SPIR-V spec.
 
 #include <sstream>
+#include <string>
 #include <tuple>
 #include <vector>
 
-#include "unit_spirv.h"
-
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::Concatenate;
 using spvtest::EnumCase;
 using spvtest::MakeInstruction;
 using spvtest::TextToBinaryTest;
-using std::get;
-using std::ostringstream;
-using std::tuple;
 using ::testing::Combine;
 using ::testing::Eq;
 using ::testing::TestWithParam;
@@ -79,14 +77,14 @@ TEST_F(OpSelectionMergeTest, WrongSelectionControl) {
 // Test OpLoopMerge
 
 using OpLoopMergeTest = spvtest::TextToBinaryTestBase<
-    TestWithParam<tuple<spv_target_env, EnumCase<int>>>>;
+    TestWithParam<std::tuple<spv_target_env, EnumCase<int>>>>;
 
 TEST_P(OpLoopMergeTest, AnySingleLoopControlMask) {
-  const auto ctrl = get<1>(GetParam());
-  ostringstream input;
+  const auto ctrl = std::get<1>(GetParam());
+  std::ostringstream input;
   input << "OpLoopMerge %merge %continue " << ctrl.name();
   for (auto num : ctrl.operands()) input << " " << num;
-  EXPECT_THAT(CompiledInstructions(input.str(), get<0>(GetParam())),
+  EXPECT_THAT(CompiledInstructions(input.str(), std::get<0>(GetParam())),
               Eq(MakeInstruction(SpvOpLoopMerge, {1, 2, ctrl.value()},
                                  ctrl.operands())));
 }
@@ -392,4 +390,5 @@ INSTANTIATE_TEST_CASE_P(
 // TODO(dneto): OpLifetimeStart
 // TODO(dneto): OpLifetimeStop
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

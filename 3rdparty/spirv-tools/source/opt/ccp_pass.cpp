@@ -16,13 +16,16 @@
 //
 //      Constant propagation with conditional branches,
 //      Wegman and Zadeck, ACM TOPLAS 13(2):181-210.
-#include "ccp_pass.h"
-#include "fold.h"
-#include "function.h"
-#include "module.h"
-#include "propagator.h"
+
+#include "source/opt/ccp_pass.h"
 
 #include <algorithm>
+#include <limits>
+
+#include "source/opt/fold.h"
+#include "source/opt/function.h"
+#include "source/opt/module.h"
+#include "source/opt/propagator.h"
 
 namespace spvtools {
 namespace opt {
@@ -38,15 +41,14 @@ const uint32_t kVaryingSSAId = std::numeric_limits<uint32_t>::max();
 
 bool CCPPass::IsVaryingValue(uint32_t id) const { return id == kVaryingSSAId; }
 
-SSAPropagator::PropStatus CCPPass::MarkInstructionVarying(
-    ir::Instruction* instr) {
+SSAPropagator::PropStatus CCPPass::MarkInstructionVarying(Instruction* instr) {
   assert(instr->result_id() != 0 &&
          "Instructions with no result cannot be marked varying.");
   values_[instr->result_id()] = kVaryingSSAId;
   return SSAPropagator::kVarying;
 }
 
-SSAPropagator::PropStatus CCPPass::VisitPhi(ir::Instruction* phi) {
+SSAPropagator::PropStatus CCPPass::VisitPhi(Instruction* phi) {
   uint32_t meet_val_id = 0;
 
   // Implement the lattice meet operation. The result of this Phi instruction is
@@ -100,7 +102,7 @@ SSAPropagator::PropStatus CCPPass::VisitPhi(ir::Instruction* phi) {
   return SSAPropagator::kInteresting;
 }
 
-SSAPropagator::PropStatus CCPPass::VisitAssignment(ir::Instruction* instr) {
+SSAPropagator::PropStatus CCPPass::VisitAssignment(Instruction* instr) {
   assert(instr->result_id() != 0 &&
          "Expecting an instruction that produces a result");
 
@@ -133,8 +135,9 @@ SSAPropagator::PropStatus CCPPass::VisitAssignment(ir::Instruction* instr) {
     }
     return it->second;
   };
-  ir::Instruction* folded_inst =
-      opt::FoldInstructionToConstant(instr, map_func);
+  Instruction* folded_inst =
+      context()->get_instruction_folder().FoldInstructionToConstant(instr,
+                                                                    map_func);
   if (folded_inst != nullptr) {
     // We do not want to change the body of the function by adding new
     // instructions.  When folding we can only generate new constants.
@@ -167,8 +170,8 @@ SSAPropagator::PropStatus CCPPass::VisitAssignment(ir::Instruction* instr) {
   return MarkInstructionVarying(instr);
 }
 
-SSAPropagator::PropStatus CCPPass::VisitBranch(ir::Instruction* instr,
-                                               ir::BasicBlock** dest_bb) const {
+SSAPropagator::PropStatus CCPPass::VisitBranch(Instruction* instr,
+                                               BasicBlock** dest_bb) const {
   assert(instr->IsBranch() && "Expected a branch instruction.");
 
   *dest_bb = nullptr;
@@ -249,8 +252,8 @@ SSAPropagator::PropStatus CCPPass::VisitBranch(ir::Instruction* instr,
   return SSAPropagator::kInteresting;
 }
 
-SSAPropagator::PropStatus CCPPass::VisitInstruction(ir::Instruction* instr,
-                                                    ir::BasicBlock** dest_bb) {
+SSAPropagator::PropStatus CCPPass::VisitInstruction(Instruction* instr,
+                                                    BasicBlock** dest_bb) {
   *dest_bb = nullptr;
   if (instr->opcode() == SpvOpPhi) {
     return VisitPhi(instr);
@@ -274,14 +277,13 @@ bool CCPPass::ReplaceValues() {
   return retval;
 }
 
-bool CCPPass::PropagateConstants(ir::Function* fp) {
+bool CCPPass::PropagateConstants(Function* fp) {
   // Mark function parameters as varying.
-  fp->ForEachParam([this](const ir::Instruction* inst) {
+  fp->ForEachParam([this](const Instruction* inst) {
     values_[inst->result_id()] = kVaryingSSAId;
   });
 
-  const auto visit_fn = [this](ir::Instruction* instr,
-                               ir::BasicBlock** dest_bb) {
+  const auto visit_fn = [this](Instruction* instr, BasicBlock** dest_bb) {
     return VisitInstruction(instr, dest_bb);
   };
 
@@ -295,9 +297,7 @@ bool CCPPass::PropagateConstants(ir::Function* fp) {
   return false;
 }
 
-void CCPPass::Initialize(ir::IRContext* c) {
-  InitializeProcessing(c);
-
+void CCPPass::Initialize() {
   const_mgr_ = context()->get_constant_mgr();
 
   // Populate the constant table with values from constant declarations in the
@@ -314,13 +314,11 @@ void CCPPass::Initialize(ir::IRContext* c) {
   }
 }
 
-Pass::Status CCPPass::Process(ir::IRContext* c) {
-  Initialize(c);
+Pass::Status CCPPass::Process() {
+  Initialize();
 
   // Process all entry point functions.
-  ProcessFunction pfn = [this](ir::Function* fp) {
-    return PropagateConstants(fp);
-  };
+  ProcessFunction pfn = [this](Function* fp) { return PropagateConstants(fp); };
   bool modified = ProcessReachableCallTree(pfn, context());
   return modified ? Pass::Status::SuccessWithChange
                   : Pass::Status::SuccessWithoutChange;

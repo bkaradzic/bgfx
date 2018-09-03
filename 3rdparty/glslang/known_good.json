@@ -5,7 +5,7 @@
       "site" : "github",
       "subrepo" : "KhronosGroup/SPIRV-Tools",
       "subdir" : "External/spirv-tools",
-      "commit" : "714bf84e58abd9573488fc365707fb8f288ca73c"
+      "commit" : "6d27a8350fbc339909834a6ef339c805cb1ab69b"
     },
     {
       "name" : "spirv-tools/external/spirv-headers",

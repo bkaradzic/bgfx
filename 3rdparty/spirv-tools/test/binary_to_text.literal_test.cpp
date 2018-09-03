@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unit_spirv.h"
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
-using ::testing::Eq;
-
+namespace spvtools {
 namespace {
 
+using ::testing::Eq;
 using RoundTripLiteralsTest =
     spvtest::TextToBinaryTestBase<::testing::TestWithParam<std::string>>;
 
@@ -69,4 +72,5 @@ INSTANTIATE_TEST_CASE_P(
     }),);
 // clang-format on
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

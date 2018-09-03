@@ -15,14 +15,16 @@
 // Assembler tests for instructions in the "Group Instrucions" section of the
 // SPIR-V spec.
 
-#include "unit_spirv.h"
-
 #include <cstdint>
 #include <limits>
+#include <string>
+#include <vector>
 
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
 using spvtest::Concatenate;
@@ -574,8 +576,8 @@ INSTANTIATE_TEST_CASE_P(
   "%1 = OpTypeFloat 32\n%2 = OpConstant %1 0x1.0018p+128\n",     // +nan
   "%1 = OpTypeFloat 32\n%2 = OpConstant %1 0x1.01ep+128\n",      // +nan
   "%1 = OpTypeFloat 32\n%2 = OpConstant %1 0x1.fffffep+128\n",   // +nan
-  "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1p+1024\n",                //-inf
-  "%1 = OpTypeFloat 64\n%2 = OpConstant %1 0x1p+1024\n",                 //+inf
+  "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1p+1024\n",                // -inf
+  "%1 = OpTypeFloat 64\n%2 = OpConstant %1 0x1p+1024\n",                 // +inf
   "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1.8p+1024\n",              // -nan
   "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1.0fp+1024\n",             // -nan
   "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1.0000000000001p+1024\n",  // -nan
@@ -824,4 +826,5 @@ INSTANTIATE_TEST_CASE_P(
 // TODO(dneto): OpSpecConstantComposite
 // TODO(dneto): Negative tests for OpSpecConstantOp
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

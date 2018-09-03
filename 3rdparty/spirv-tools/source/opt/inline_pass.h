@@ -14,93 +14,91 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_INLINE_PASS_H_
-#define LIBSPIRV_OPT_INLINE_PASS_H_
+#ifndef SOURCE_OPT_INLINE_PASS_H_
+#define SOURCE_OPT_INLINE_PASS_H_
 
 #include <algorithm>
 #include <list>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
-#include "decoration_manager.h"
-#include "module.h"
-#include "pass.h"
+#include "source/opt/decoration_manager.h"
+#include "source/opt/module.h"
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
 
 // See optimizer.hpp for documentation.
 class InlinePass : public Pass {
-  using cbb_ptr = const ir::BasicBlock*;
+  using cbb_ptr = const BasicBlock*;
 
  public:
   using GetBlocksFunction =
-      std::function<std::vector<ir::BasicBlock*>*(const ir::BasicBlock*)>;
+      std::function<std::vector<BasicBlock*>*(const BasicBlock*)>;
 
-  InlinePass();
   virtual ~InlinePass() = default;
 
  protected:
+  InlinePass();
 
   // Add pointer to type to module and return resultId.
   uint32_t AddPointerToType(uint32_t type_id, SpvStorageClass storage_class);
 
   // Add unconditional branch to labelId to end of block block_ptr.
-  void AddBranch(uint32_t labelId, std::unique_ptr<ir::BasicBlock>* block_ptr);
+  void AddBranch(uint32_t labelId, std::unique_ptr<BasicBlock>* block_ptr);
 
   // Add conditional branch to end of block |block_ptr|.
   void AddBranchCond(uint32_t cond_id, uint32_t true_id, uint32_t false_id,
-                     std::unique_ptr<ir::BasicBlock>* block_ptr);
+                     std::unique_ptr<BasicBlock>* block_ptr);
 
   // Add unconditional branch to labelId to end of block block_ptr.
   void AddLoopMerge(uint32_t merge_id, uint32_t continue_id,
-                    std::unique_ptr<ir::BasicBlock>* block_ptr);
+                    std::unique_ptr<BasicBlock>* block_ptr);
 
   // Add store of valId to ptrId to end of block block_ptr.
   void AddStore(uint32_t ptrId, uint32_t valId,
-                std::unique_ptr<ir::BasicBlock>* block_ptr);
+                std::unique_ptr<BasicBlock>* block_ptr);
 
   // Add load of ptrId into resultId to end of block block_ptr.
   void AddLoad(uint32_t typeId, uint32_t resultId, uint32_t ptrId,
-               std::unique_ptr<ir::BasicBlock>* block_ptr);
+               std::unique_ptr<BasicBlock>* block_ptr);
 
   // Return new label.
-  std::unique_ptr<ir::Instruction> NewLabel(uint32_t label_id);
+  std::unique_ptr<Instruction> NewLabel(uint32_t label_id);
 
   // Returns the id for the boolean false value. Looks in the module first
   // and creates it if not found. Remembers it for future calls.
   uint32_t GetFalseId();
 
   // Map callee params to caller args
-  void MapParams(ir::Function* calleeFn, ir::BasicBlock::iterator call_inst_itr,
+  void MapParams(Function* calleeFn, BasicBlock::iterator call_inst_itr,
                  std::unordered_map<uint32_t, uint32_t>* callee2caller);
 
   // Clone and map callee locals
-  void CloneAndMapLocals(
-      ir::Function* calleeFn,
-      std::vector<std::unique_ptr<ir::Instruction>>* new_vars,
-      std::unordered_map<uint32_t, uint32_t>* callee2caller);
+  void CloneAndMapLocals(Function* calleeFn,
+                         std::vector<std::unique_ptr<Instruction>>* new_vars,
+                         std::unordered_map<uint32_t, uint32_t>* callee2caller);
 
   // Create return variable for callee clone code if needed. Return id
   // if created, otherwise 0.
-  uint32_t CreateReturnVar(
-      ir::Function* calleeFn,
-      std::vector<std::unique_ptr<ir::Instruction>>* new_vars);
+  uint32_t CreateReturnVar(Function* calleeFn,
+                           std::vector<std::unique_ptr<Instruction>>* new_vars);
 
   // Return true if instruction must be in the same block that its result
   // is used.
-  bool IsSameBlockOp(const ir::Instruction* inst) const;
+  bool IsSameBlockOp(const Instruction* inst) const;
 
   // Clone operands which must be in same block as consumer instructions.
   // Look in preCallSB for instructions that need cloning. Look in
   // postCallSB for instructions already cloned. Add cloned instruction
   // to postCallSB.
-  void CloneSameBlockOps(
-      std::unique_ptr<ir::Instruction>* inst,
-      std::unordered_map<uint32_t, uint32_t>* postCallSB,
-      std::unordered_map<uint32_t, ir::Instruction*>* preCallSB,
-      std::unique_ptr<ir::BasicBlock>* block_ptr);
+  void CloneSameBlockOps(std::unique_ptr<Instruction>* inst,
+                         std::unordered_map<uint32_t, uint32_t>* postCallSB,
+                         std::unordered_map<uint32_t, Instruction*>* preCallSB,
+                         std::unique_ptr<BasicBlock>* block_ptr);
 
   // Return in new_blocks the result of inlining the call at call_inst_itr
   // within its block at call_block_itr. The block at call_block_itr can
@@ -116,13 +114,13 @@ class InlinePass : public Pass {
   // Also return in new_vars additional OpVariable instructions required by
   // and to be inserted into the caller function after the block at
   // call_block_itr is replaced with new_blocks.
-  void GenInlineCode(std::vector<std::unique_ptr<ir::BasicBlock>>* new_blocks,
-                     std::vector<std::unique_ptr<ir::Instruction>>* new_vars,
-                     ir::BasicBlock::iterator call_inst_itr,
-                     ir::UptrVectorIterator<ir::BasicBlock> call_block_itr);
+  void GenInlineCode(std::vector<std::unique_ptr<BasicBlock>>* new_blocks,
+                     std::vector<std::unique_ptr<Instruction>>* new_vars,
+                     BasicBlock::iterator call_inst_itr,
+                     UptrVectorIterator<BasicBlock> call_block_itr);
 
   // Return true if |inst| is a function call that can be inlined.
-  bool IsInlinableFunctionCall(const ir::Instruction* inst);
+  bool IsInlinableFunctionCall(const Instruction* inst);
 
   // Compute structured successors for function |func|.
   // A block's structured successors are the blocks it branches to
@@ -131,39 +129,39 @@ class InlinePass : public Pass {
   // This assures correct depth first search in the presence of early
   // returns and kills. If the successor vector contain duplicates
   // if the merge block, they are safely ignored by DFS.
-  void ComputeStructuredSuccessors(ir::Function* func);
+  void ComputeStructuredSuccessors(Function* func);
 
   // Return function to return ordered structure successors for a given block
   // Assumes ComputeStructuredSuccessors() has been called.
   GetBlocksFunction StructuredSuccessorsFunction();
 
   // Return true if |func| has multiple returns
-  bool HasMultipleReturns(ir::Function* func);
+  bool HasMultipleReturns(Function* func);
 
   // Return true if |func| has no return in a loop. The current analysis
   // requires structured control flow, so return false if control flow not
   // structured ie. module is not a shader.
-  bool HasNoReturnInLoop(ir::Function* func);
+  bool HasNoReturnInLoop(Function* func);
 
   // Find all functions with multiple returns and no returns in loops
-  void AnalyzeReturns(ir::Function* func);
+  void AnalyzeReturns(Function* func);
 
   // Return true if |func| is a function that can be inlined.
-  bool IsInlinableFunction(ir::Function* func);
+  bool IsInlinableFunction(Function* func);
 
   // Update phis in succeeding blocks to point to new last block
   void UpdateSucceedingPhis(
-      std::vector<std::unique_ptr<ir::BasicBlock>>& new_blocks);
+      std::vector<std::unique_ptr<BasicBlock>>& new_blocks);
 
   // Initialize state for optimization of |module|
-  void InitializeInline(ir::IRContext* c);
+  void InitializeInline();
 
   // Map from function's result id to function.
-  std::unordered_map<uint32_t, ir::Function*> id2function_;
+  std::unordered_map<uint32_t, Function*> id2function_;
 
   // Map from block's label id to block. TODO(dnovillo): This is superfluous wrt
-  // opt::CFG. It has functionality not present in opt::CFG. Consolidate.
-  std::unordered_map<uint32_t, ir::BasicBlock*> id2block_;
+  // CFG. It has functionality not present in CFG. Consolidate.
+  std::unordered_map<uint32_t, BasicBlock*> id2block_;
 
   // Set of ids of functions with multiple returns.
   std::set<uint32_t> multi_return_funcs_;
@@ -179,13 +177,13 @@ class InlinePass : public Pass {
 
   // Map from block to its structured successor blocks. See
   // ComputeStructuredSuccessors() for definition. TODO(dnovillo): This is
-  // superfluous wrt opt::CFG, but it seems to be computed in a slightly
+  // superfluous wrt CFG, but it seems to be computed in a slightly
   // different way in the inliner. Can these be consolidated?
-  std::unordered_map<const ir::BasicBlock*, std::vector<ir::BasicBlock*>>
+  std::unordered_map<const BasicBlock*, std::vector<BasicBlock*>>
       block2structured_succs_;
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_INLINE_PASS_H_
+#endif  // SOURCE_OPT_INLINE_PASS_H_

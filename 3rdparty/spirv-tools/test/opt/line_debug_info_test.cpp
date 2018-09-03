@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
-
 // A pass turning all none debug line instructions into Nop.
-class NopifyPass : public opt::Pass {
+class NopifyPass : public Pass {
  public:
   const char* name() const override { return "NopifyPass"; }
-  Status Process(ir::IRContext* irContext) override {
+  Status Process() override {
     bool modified = false;
-    irContext->module()->ForEachInst(
-        [&modified](ir::Instruction* inst) {
+    context()->module()->ForEachInst(
+        [&modified](Instruction* inst) {
           inst->ToNop();
           modified = true;
         },
@@ -108,4 +108,6 @@ TEST_F(PassTestForLineDebugInfo, KeepLineDebugInfo) {
                                     /* skip_nop = */ true);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

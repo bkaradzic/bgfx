@@ -683,7 +683,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["smooth"] =                  SMOOTH;
     (*KeywordMap)["flat"] =                    FLAT;
 #ifdef AMD_EXTENSIONS
-    (*KeywordMap)["__explicitInterpAMD"] =     __EXPLICITINTERPAMD;
+    (*KeywordMap)["__explicitInterpAMD"] =     EXPLICITINTERPAMD;
 #endif
     (*KeywordMap)["centroid"] =                CENTROID;
     (*KeywordMap)["precise"] =                 PRECISE;
@@ -1490,7 +1490,7 @@ int TScanContext::tokenizeIdentifier()
         return keyword;
 
 #ifdef AMD_EXTENSIONS
-    case __EXPLICITINTERPAMD:
+    case EXPLICITINTERPAMD:
         if (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
             parseContext.extensionTurnedOn(E_GL_AMD_shader_explicit_vertex_parameter))
             return keyword;

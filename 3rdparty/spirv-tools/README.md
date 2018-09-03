@@ -1,7 +1,9 @@
 # SPIR-V Tools
 
-[![Build Status](https://travis-ci.org/KhronosGroup/SPIRV-Tools.svg?branch=master)](https://travis-ci.org/KhronosGroup/SPIRV-Tools)
 [![Build status](https://ci.appveyor.com/api/projects/status/gpue87cesrx3pi0d/branch/master?svg=true)](https://ci.appveyor.com/project/Khronoswebmaster/spirv-tools/branch/master)
+<img alt="Linux" src="kokoro/img/linux.png" width="20px" height="20px" hspace="2px"/>![Linux Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_linux_release.svg)
+<img alt="MacOS" src="kokoro/img/macos.png" width="20px" height="20px" hspace="2px"/>![MacOS Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_macos_release.svg)
+<img alt="Windows" src="kokoro/img/windows.png" width="20px" height="20px" hspace="2px"/>![Windows Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_windows_release.svg)
 
 ## Overview
 
@@ -273,6 +275,26 @@ Additionally, you can pass additional C preprocessor definitions to SPIRV-Tools
 via setting `SPIRV_TOOLS_EXTRA_DEFINITIONS`. For example, by setting it to
 `/D_ITERATOR_DEBUG_LEVEL=0` on Windows, you can disable checked iterators and
 iterator debugging.
+
+### Android
+
+SPIR-V Tools supports building static libraries `libSPIRV-Tools.a` and
+`libSPIRV-Tools-opt.a` for Android:
+
+```
+cd <spirv-dir>
+
+export ANDROID_NDK=/path/to/your/ndk
+
+mkdir build && cd build
+mkdir libs
+mkdir app
+
+$ANDROID_NDK/ndk-build -C ../android_test     \
+                      NDK_PROJECT_PATH=.      \
+                      NDK_LIBS_OUT=`pwd`/libs \
+                      NDK_APP_OUT=`pwd`/app
+```
 
 ## Library
 

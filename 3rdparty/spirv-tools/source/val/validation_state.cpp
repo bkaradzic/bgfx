@@ -12,25 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "val/validation_state.h"
+#include "source/val/validation_state.h"
 
 #include <cassert>
+#include <stack>
+#include <utility>
 
-#include "opcode.h"
-#include "val/basic_block.h"
-#include "val/construct.h"
-#include "val/function.h"
+#include "source/opcode.h"
+#include "source/spirv_target_env.h"
+#include "source/val/basic_block.h"
+#include "source/val/construct.h"
+#include "source/val/function.h"
+#include "spirv-tools/libspirv.h"
 
-using std::deque;
-using std::make_pair;
-using std::pair;
-using std::string;
-using std::unordered_map;
-using std::vector;
-
-namespace libspirv {
-
+namespace spvtools {
+namespace val {
 namespace {
+
 bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
   // See Section 2.4
   bool out = false;
@@ -41,7 +39,9 @@ bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
     case kLayoutExtInstImport: out = op == SpvOpExtInstImport; break;
     case kLayoutMemoryModel:   out = op == SpvOpMemoryModel;   break;
     case kLayoutEntryPoint:    out = op == SpvOpEntryPoint;    break;
-    case kLayoutExecutionMode: out = op == SpvOpExecutionMode; break;
+    case kLayoutExecutionMode:
+      out = op == SpvOpExecutionMode || op == SpvOpExecutionModeId;
+      break;
     case kLayoutDebug1:
       switch (op) {
         case SpvOpSourceContinued:
@@ -111,6 +111,7 @@ bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
         case SpvOpMemoryModel:
         case SpvOpEntryPoint:
         case SpvOpExecutionMode:
+        case SpvOpExecutionModeId:
         case SpvOpSourceContinued:
         case SpvOpSource:
         case SpvOpSourceExtension:
@@ -135,13 +136,26 @@ bool IsInstructionInLayoutSection(ModuleLayoutSection layout, SpvOp op) {
   return out;
 }
 
-}  // anonymous namespace
+// Counts the number of instructions and functions in the file.
+spv_result_t CountInstructions(void* user_data,
+                               const spv_parsed_instruction_t* inst) {
+  ValidationState_t& _ = *(reinterpret_cast<ValidationState_t*>(user_data));
+  if (inst->opcode == SpvOpFunction) _.increment_total_functions();
+  _.increment_total_instructions();
+
+  return SPV_SUCCESS;
+}
+
+}  // namespace
 
 ValidationState_t::ValidationState_t(const spv_const_context ctx,
-                                     const spv_const_validator_options opt)
+                                     const spv_const_validator_options opt,
+                                     const uint32_t* words,
+                                     const size_t num_words)
     : context_(ctx),
       options_(opt),
-      instruction_counter_(0),
+      words_(words),
+      num_words_(num_words),
       unresolved_forward_ids_{},
       operand_names_{},
       current_layout_section_(kLayoutCapabilities),
@@ -154,10 +168,42 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
       local_vars_(),
       struct_nesting_depth_(),
       grammar_(ctx),
-      addressing_model_(SpvAddressingModelLogical),
-      memory_model_(SpvMemoryModelSimple),
+      addressing_model_(SpvAddressingModelMax),
+      memory_model_(SpvMemoryModelMax),
       in_function_(false) {
   assert(opt && "Validator options may not be Null.");
+
+  const auto env = context_->target_env;
+
+  if (spvIsVulkanEnv(env)) {
+    // Vulkan 1.1 includes VK_KHR_relaxed_block_layout in core.
+    if (env != SPV_ENV_VULKAN_1_0) {
+      features_.env_relaxed_block_layout = true;
+    }
+  }
+
+  switch (env) {
+    case SPV_ENV_WEBGPU_0:
+      features_.bans_op_undef = true;
+      break;
+    default:
+      break;
+  }
+
+  // Only attempt to count if we have words, otherwise let the other validation
+  // fail and generate an error.
+  if (num_words > 0) {
+    // Count the number of instructions in the binary.
+    spvBinaryParse(ctx, this, words, num_words,
+                   /* parsed_header = */ nullptr, CountInstructions,
+                   /* diagnostic = */ nullptr);
+    preallocateStorage();
+  }
+}
+
+void ValidationState_t::preallocateStorage() {
+  ordered_instructions_.reserve(total_instructions_);
+  module_functions_.reserve(total_functions_);
 }
 
 spv_result_t ValidationState_t::ForwardDeclareId(uint32_t id) {
@@ -179,11 +225,11 @@ bool ValidationState_t::IsForwardPointer(uint32_t id) const {
   return (forward_pointer_ids_.find(id) != forward_pointer_ids_.end());
 }
 
-void ValidationState_t::AssignNameToId(uint32_t id, string name) {
+void ValidationState_t::AssignNameToId(uint32_t id, std::string name) {
   operand_names_[id] = name;
 }
 
-string ValidationState_t::getIdName(uint32_t id) const {
+std::string ValidationState_t::getIdName(uint32_t id) const {
   std::stringstream out;
   out << id;
   if (operand_names_.find(id) != end(operand_names_)) {
@@ -192,9 +238,9 @@ string ValidationState_t::getIdName(uint32_t id) const {
   return out.str();
 }
 
-string ValidationState_t::getIdOrName(uint32_t id) const {
+std::string ValidationState_t::getIdOrName(uint32_t id) const {
   std::stringstream out;
-  if (operand_names_.find(id) != end(operand_names_)) {
+  if (operand_names_.find(id) != std::end(operand_names_)) {
     out << operand_names_.at(id);
   } else {
     out << id;
@@ -206,14 +252,14 @@ size_t ValidationState_t::unresolved_forward_id_count() const {
   return unresolved_forward_ids_.size();
 }
 
-vector<uint32_t> ValidationState_t::UnresolvedForwardIds() const {
-  vector<uint32_t> out(begin(unresolved_forward_ids_),
-                       end(unresolved_forward_ids_));
+std::vector<uint32_t> ValidationState_t::UnresolvedForwardIds() const {
+  std::vector<uint32_t> out(std::begin(unresolved_forward_ids_),
+                            std::end(unresolved_forward_ids_));
   return out;
 }
 
 bool ValidationState_t::IsDefinedId(uint32_t id) const {
-  return all_definitions_.find(id) != end(all_definitions_);
+  return all_definitions_.find(id) != std::end(all_definitions_);
 }
 
 const Instruction* ValidationState_t::FindDef(uint32_t id) const {
@@ -226,11 +272,6 @@ Instruction* ValidationState_t::FindDef(uint32_t id) {
   auto it = all_definitions_.find(id);
   if (it == all_definitions_.end()) return nullptr;
   return it->second;
-}
-
-// Increments the instruction count. Used for diagnostic
-int ValidationState_t::increment_instruction_count() {
-  return instruction_counter_++;
 }
 
 ModuleLayoutSection ValidationState_t::current_layout_section() const {
@@ -249,13 +290,18 @@ bool ValidationState_t::IsOpcodeInCurrentLayoutSection(SpvOp op) {
   return IsInstructionInLayoutSection(current_layout_section_, op);
 }
 
-DiagnosticStream ValidationState_t::diag(spv_result_t error_code) const {
-  return libspirv::DiagnosticStream(
-      {0, 0, static_cast<size_t>(instruction_counter_)}, context_->consumer,
-      error_code);
+DiagnosticStream ValidationState_t::diag(spv_result_t error_code,
+                                         const Instruction* inst) const {
+  std::string disassembly;
+  if (inst) disassembly = Disassemble(*inst);
+
+  return DiagnosticStream({0, 0, inst ? inst->LineNum() : 0},
+                          context_->consumer, disassembly, error_code);
 }
 
-deque<Function>& ValidationState_t::functions() { return module_functions_; }
+std::vector<Function>& ValidationState_t::functions() {
+  return module_functions_;
+}
 
 Function& ValidationState_t::current_function() {
   assert(in_function_body());
@@ -269,6 +315,12 @@ const Function& ValidationState_t::current_function() const {
 
 const Function* ValidationState_t::function(uint32_t id) const {
   const auto it = id_to_function_.find(id);
+  if (it == id_to_function_.end()) return nullptr;
+  return it->second;
+}
+
+Function* ValidationState_t::function(uint32_t id) {
+  auto it = id_to_function_.find(id);
   if (it == id_to_function_.end()) return nullptr;
   return it->second;
 }
@@ -297,6 +349,12 @@ void ValidationState_t::RegisterCapability(SpvCapability cap) {
   switch (cap) {
     case SpvCapabilityKernel:
       features_.group_ops_reduce_and_scans = true;
+      break;
+    case SpvCapabilityInt8:
+    case SpvCapabilityStorageBuffer8BitAccess:
+    case SpvCapabilityUniformAndStorageBuffer8BitAccess:
+    case SpvCapabilityStoragePushConstant8:
+      features_.declare_int8_type = true;
       break;
     case SpvCapabilityInt16:
       features_.declare_int16_type = true;
@@ -400,29 +458,54 @@ spv_result_t ValidationState_t::RegisterFunctionEnd() {
   return SPV_SUCCESS;
 }
 
-void ValidationState_t::RegisterInstruction(
-    const spv_parsed_instruction_t& inst) {
-  if (in_function_body()) {
-    ordered_instructions_.emplace_back(&inst, &current_function(),
-                                       current_function().current_block());
-  } else {
-    ordered_instructions_.emplace_back(&inst, nullptr, nullptr);
+Instruction* ValidationState_t::AddOrderedInstruction(
+    const spv_parsed_instruction_t* inst) {
+  ordered_instructions_.emplace_back(inst);
+  ordered_instructions_.back().SetLineNum(ordered_instructions_.size());
+  return &ordered_instructions_.back();
+}
+
+// Improves diagnostic messages by collecting names of IDs
+void ValidationState_t::RegisterDebugInstruction(const Instruction* inst) {
+  switch (inst->opcode()) {
+    case SpvOpName: {
+      const auto target = inst->GetOperandAs<uint32_t>(0);
+      const auto* str = reinterpret_cast<const char*>(inst->words().data() +
+                                                      inst->operand(1).offset);
+      AssignNameToId(target, str);
+      break;
+    }
+    case SpvOpMemberName: {
+      const auto target = inst->GetOperandAs<uint32_t>(0);
+      const auto* str = reinterpret_cast<const char*>(inst->words().data() +
+                                                      inst->operand(2).offset);
+      AssignNameToId(target, str);
+      break;
+    }
+    case SpvOpSourceContinued:
+    case SpvOpSource:
+    case SpvOpSourceExtension:
+    case SpvOpString:
+    case SpvOpLine:
+    case SpvOpNoLine:
+    default:
+      break;
   }
-  uint32_t id = ordered_instructions_.back().id();
-  if (id) {
-    all_definitions_.insert(make_pair(id, &ordered_instructions_.back()));
-  }
+}
+
+void ValidationState_t::RegisterInstruction(Instruction* inst) {
+  if (inst->id()) all_definitions_.insert(std::make_pair(inst->id(), inst));
 
   // If the instruction is using an OpTypeSampledImage as an operand, it should
   // be recorded. The validator will ensure that all usages of an
   // OpTypeSampledImage and its definition are in the same basic block.
-  for (uint16_t i = 0; i < inst.num_operands; ++i) {
-    const spv_parsed_operand_t& operand = inst.operands[i];
+  for (uint16_t i = 0; i < inst->operands().size(); ++i) {
+    const spv_parsed_operand_t& operand = inst->operand(i);
     if (SPV_OPERAND_TYPE_ID == operand.type) {
-      const uint32_t operand_word = inst.words[operand.offset];
+      const uint32_t operand_word = inst->word(operand.offset);
       Instruction* operand_inst = FindDef(operand_word);
       if (operand_inst && SpvOpSampledImage == operand_inst->opcode()) {
-        RegisterSampledImageConsumer(operand_word, inst.result_id);
+        RegisterSampledImageConsumer(operand_word, inst->id());
       }
     }
   }
@@ -447,20 +530,20 @@ uint32_t ValidationState_t::getIdBound() const { return id_bound_; }
 
 void ValidationState_t::setIdBound(const uint32_t bound) { id_bound_ = bound; }
 
-bool ValidationState_t::RegisterUniqueTypeDeclaration(
-    const spv_parsed_instruction_t& inst) {
+bool ValidationState_t::RegisterUniqueTypeDeclaration(const Instruction* inst) {
   std::vector<uint32_t> key;
-  key.push_back(static_cast<uint32_t>(inst.opcode));
-  for (int index = 0; index < inst.num_operands; ++index) {
-    const spv_parsed_operand_t& operand = inst.operands[index];
+  key.push_back(static_cast<uint32_t>(inst->opcode()));
+  for (size_t index = 0; index < inst->operands().size(); ++index) {
+    const spv_parsed_operand_t& operand = inst->operand(index);
 
     if (operand.type == SPV_OPERAND_TYPE_RESULT_ID) continue;
 
     const int words_begin = operand.offset;
     const int words_end = words_begin + operand.num_words;
-    assert(words_end <= static_cast<int>(inst.num_words));
+    assert(words_end <= static_cast<int>(inst->words().size()));
 
-    key.insert(key.end(), inst.words + words_begin, inst.words + words_end);
+    key.insert(key.end(), inst->words().begin() + words_begin,
+               inst->words().begin() + words_end);
   }
 
   return unique_type_declarations_.insert(std::move(key)).second;
@@ -744,12 +827,9 @@ bool ValidationState_t::GetPointerTypeInfo(uint32_t id, uint32_t* data_type,
   return true;
 }
 
-uint32_t ValidationState_t::GetOperandTypeId(
-    const spv_parsed_instruction_t* inst, size_t operand_index) const {
-  assert(operand_index < inst->num_operands);
-  const spv_parsed_operand_t& operand = inst->operands[operand_index];
-  assert(operand.num_words == 1);
-  return GetTypeId(inst->words[operand.offset]);
+uint32_t ValidationState_t::GetOperandTypeId(const Instruction* inst,
+                                             size_t operand_index) const {
+  return GetTypeId(inst->GetOperandAs<uint32_t>(operand_index));
 }
 
 bool ValidationState_t::GetConstantValUint64(uint32_t id, uint64_t* val) const {
@@ -780,7 +860,7 @@ std::tuple<bool, bool, uint32_t> ValidationState_t::EvalInt32IfConst(
   assert(inst);
   const uint32_t type = inst->type_id();
 
-  if (!IsIntScalarType(type) || GetBitWidth(type) != 32) {
+  if (type == 0 || !IsIntScalarType(type) || GetBitWidth(type) != 32) {
     return std::make_tuple(false, false, 0);
   }
 
@@ -792,4 +872,52 @@ std::tuple<bool, bool, uint32_t> ValidationState_t::EvalInt32IfConst(
   return std::make_tuple(true, true, inst->word(3));
 }
 
-}  // namespace libspirv
+void ValidationState_t::ComputeFunctionToEntryPointMapping() {
+  for (const uint32_t entry_point : entry_points()) {
+    std::stack<uint32_t> call_stack;
+    std::set<uint32_t> visited;
+    call_stack.push(entry_point);
+    while (!call_stack.empty()) {
+      const uint32_t called_func_id = call_stack.top();
+      call_stack.pop();
+      if (!visited.insert(called_func_id).second) continue;
+
+      function_to_entry_points_[called_func_id].push_back(entry_point);
+
+      const Function* called_func = function(called_func_id);
+      if (called_func) {
+        // Other checks should error out on this invalid SPIR-V.
+        for (const uint32_t new_call : called_func->function_call_targets()) {
+          call_stack.push(new_call);
+        }
+      }
+    }
+  }
+}
+
+const std::vector<uint32_t>& ValidationState_t::FunctionEntryPoints(
+    uint32_t func) const {
+  auto iter = function_to_entry_points_.find(func);
+  if (iter == function_to_entry_points_.end()) {
+    return empty_ids_;
+  } else {
+    return iter->second;
+  }
+}
+
+std::string ValidationState_t::Disassemble(const Instruction& inst) const {
+  const spv_parsed_instruction_t& c_inst(inst.c_inst());
+  return Disassemble(c_inst.words, c_inst.num_words);
+}
+
+std::string ValidationState_t::Disassemble(const uint32_t* words,
+                                           uint16_t num_words) const {
+  uint32_t disassembly_options = SPV_BINARY_TO_TEXT_OPTION_NO_HEADER |
+                                 SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES;
+
+  return spvInstructionBinaryToText(context()->target_env, words, num_words,
+                                    words_, num_words_, disassembly_options);
+}
+
+}  // namespace val
+}  // namespace spvtools

@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_LOCAL_REDUNDANCY_ELIMINATION_H_
-#define LIBSPIRV_OPT_LOCAL_REDUNDANCY_ELIMINATION_H_
+#ifndef SOURCE_OPT_LOCAL_REDUNDANCY_ELIMINATION_H_
+#define SOURCE_OPT_LOCAL_REDUNDANCY_ELIMINATION_H_
 
-#include "ir_context.h"
-#include "pass.h"
-#include "value_number_table.h"
+#include <map>
+
+#include "source/opt/ir_context.h"
+#include "source/opt/pass.h"
+#include "source/opt/value_number_table.h"
 
 namespace spvtools {
 namespace opt {
@@ -32,14 +34,14 @@ namespace opt {
 class LocalRedundancyEliminationPass : public Pass {
  public:
   const char* name() const override { return "local-redundancy-elimination"; }
-  Status Process(ir::IRContext*) override;
-  virtual ir::IRContext::Analysis GetPreservedAnalyses() override {
-    return ir::IRContext::kAnalysisDefUse |
-           ir::IRContext::kAnalysisInstrToBlockMapping |
-           ir::IRContext::kAnalysisDecorations |
-           ir::IRContext::kAnalysisCombinators | ir::IRContext::kAnalysisCFG |
-           ir::IRContext::kAnalysisDominatorAnalysis |
-           ir::IRContext::kAnalysisNameMap;
+  Status Process() override;
+
+  IRContext::Analysis GetPreservedAnalyses() override {
+    return IRContext::kAnalysisDefUse |
+           IRContext::kAnalysisInstrToBlockMapping |
+           IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
+           IRContext::kAnalysisCFG | IRContext::kAnalysisDominatorAnalysis |
+           IRContext::kAnalysisNameMap;
   }
 
  protected:
@@ -54,7 +56,7 @@ class LocalRedundancyEliminationPass : public Pass {
   // dominates |bb|.
   //
   // Returns true if the module is changed.
-  bool EliminateRedundanciesInBB(ir::BasicBlock* block,
+  bool EliminateRedundanciesInBB(BasicBlock* block,
                                  const ValueNumberTable& vnTable,
                                  std::map<uint32_t, uint32_t>* value_to_ids);
 };
@@ -62,4 +64,4 @@ class LocalRedundancyEliminationPass : public Pass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_LOCAL_REDUNDANCY_ELIMINATION_H_
+#endif  // SOURCE_OPT_LOCAL_REDUNDANCY_ELIMINATION_H_

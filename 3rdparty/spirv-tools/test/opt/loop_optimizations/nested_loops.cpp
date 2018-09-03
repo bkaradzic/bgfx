@@ -12,26 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include "../assembly_builder.h"
-#include "../function_utils.h"
-#include "../pass_fixture.h"
-#include "../pass_utils.h"
+#include "gmock/gmock.h"
+#include "source/opt/iterator.h"
+#include "source/opt/loop_descriptor.h"
+#include "source/opt/pass.h"
+#include "source/opt/tree_iterator.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/function_utils.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-#include "opt/iterator.h"
-#include "opt/loop_descriptor.h"
-#include "opt/pass.h"
-#include "opt/tree_iterator.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
 
 bool Validate(const std::vector<uint32_t>& bin) {
@@ -150,14 +149,14 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor& ld = *context->GetLoopDescriptor(f);
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor& ld = *context->GetLoopDescriptor(f);
 
   EXPECT_EQ(ld.NumLoops(), 3u);
 
@@ -166,7 +165,7 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
   // Not a loop header.
   EXPECT_EQ(ld[20], nullptr);
 
-  ir::Loop& parent_loop = *ld[21];
+  Loop& parent_loop = *ld[21];
   EXPECT_TRUE(parent_loop.HasNestedLoops());
   EXPECT_FALSE(parent_loop.IsNested());
   EXPECT_EQ(parent_loop.GetDepth(), 1u);
@@ -175,7 +174,7 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
   EXPECT_EQ(parent_loop.GetLatchBlock(), spvtest::GetBasicBlock(f, 23));
   EXPECT_EQ(parent_loop.GetMergeBlock(), spvtest::GetBasicBlock(f, 22));
 
-  ir::Loop& child_loop_1 = *ld[28];
+  Loop& child_loop_1 = *ld[28];
   EXPECT_FALSE(child_loop_1.HasNestedLoops());
   EXPECT_TRUE(child_loop_1.IsNested());
   EXPECT_EQ(child_loop_1.GetDepth(), 2u);
@@ -184,7 +183,7 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
   EXPECT_EQ(child_loop_1.GetLatchBlock(), spvtest::GetBasicBlock(f, 30));
   EXPECT_EQ(child_loop_1.GetMergeBlock(), spvtest::GetBasicBlock(f, 29));
 
-  ir::Loop& child_loop_2 = *ld[37];
+  Loop& child_loop_2 = *ld[37];
   EXPECT_FALSE(child_loop_2.HasNestedLoops());
   EXPECT_TRUE(child_loop_2.IsNested());
   EXPECT_EQ(child_loop_2.GetDepth(), 2u);
@@ -194,7 +193,7 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
   EXPECT_EQ(child_loop_2.GetMergeBlock(), spvtest::GetBasicBlock(f, 38));
 }
 
-static void CheckLoopBlocks(ir::Loop* loop,
+static void CheckLoopBlocks(Loop* loop,
                             std::unordered_set<uint32_t>* expected_ids) {
   SCOPED_TRACE("Check loop " + std::to_string(loop->GetHeaderBlock()->id()));
   for (uint32_t bb_id : loop->GetBlocks()) {
@@ -336,14 +335,14 @@ TEST_F(PassClassTest, TripleNestedLoop) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor& ld = *context->GetLoopDescriptor(f);
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor& ld = *context->GetLoopDescriptor(f);
 
   EXPECT_EQ(ld.NumLoops(), 4u);
 
@@ -360,7 +359,7 @@ TEST_F(PassClassTest, TripleNestedLoop) {
     std::unordered_set<uint32_t> basic_block_in_loop = {
         {23, 26, 29, 30, 33, 36, 40, 41, 44, 47, 43,
          42, 39, 50, 53, 56, 52, 51, 32, 31, 25}};
-    ir::Loop* loop = ld[23];
+    Loop* loop = ld[23];
     CheckLoopBlocks(loop, &basic_block_in_loop);
 
     EXPECT_TRUE(loop->HasNestedLoops());
@@ -378,7 +377,7 @@ TEST_F(PassClassTest, TripleNestedLoop) {
   {
     std::unordered_set<uint32_t> basic_block_in_loop = {
         {30, 33, 36, 40, 41, 44, 47, 43, 42, 39, 50, 53, 56, 52, 51, 32}};
-    ir::Loop* loop = ld[30];
+    Loop* loop = ld[30];
     CheckLoopBlocks(loop, &basic_block_in_loop);
 
     EXPECT_TRUE(loop->HasNestedLoops());
@@ -395,7 +394,7 @@ TEST_F(PassClassTest, TripleNestedLoop) {
 
   {
     std::unordered_set<uint32_t> basic_block_in_loop = {{41, 44, 47, 43}};
-    ir::Loop* loop = ld[41];
+    Loop* loop = ld[41];
     CheckLoopBlocks(loop, &basic_block_in_loop);
 
     EXPECT_FALSE(loop->HasNestedLoops());
@@ -412,7 +411,7 @@ TEST_F(PassClassTest, TripleNestedLoop) {
 
   {
     std::unordered_set<uint32_t> basic_block_in_loop = {{50, 53, 56, 52}};
-    ir::Loop* loop = ld[50];
+    Loop* loop = ld[50];
     CheckLoopBlocks(loop, &basic_block_in_loop);
 
     EXPECT_FALSE(loop->HasNestedLoops());
@@ -429,11 +428,10 @@ TEST_F(PassClassTest, TripleNestedLoop) {
 
   // Make sure LoopDescriptor gives us the inner most loop when we query for
   // loops.
-  for (const ir::BasicBlock& bb : *f) {
-    if (ir::Loop* loop = ld[&bb]) {
-      for (ir::Loop& sub_loop :
-           ir::make_range(++opt::TreeDFIterator<ir::Loop>(loop),
-                          opt::TreeDFIterator<ir::Loop>())) {
+  for (const BasicBlock& bb : *f) {
+    if (Loop* loop = ld[&bb]) {
+      for (Loop& sub_loop :
+           make_range(++TreeDFIterator<Loop>(loop), TreeDFIterator<Loop>())) {
         EXPECT_FALSE(sub_loop.IsInsideLoop(bb.id()));
       }
     }
@@ -560,19 +558,19 @@ TEST_F(PassClassTest, LoopParentTest) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor& ld = *context->GetLoopDescriptor(f);
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor& ld = *context->GetLoopDescriptor(f);
 
   EXPECT_EQ(ld.NumLoops(), 4u);
 
   {
-    ir::Loop& loop = *ld[22];
+    Loop& loop = *ld[22];
     EXPECT_TRUE(loop.HasNestedLoops());
     EXPECT_FALSE(loop.IsNested());
     EXPECT_EQ(loop.GetDepth(), 1u);
@@ -580,7 +578,7 @@ TEST_F(PassClassTest, LoopParentTest) {
   }
 
   {
-    ir::Loop& loop = *ld[29];
+    Loop& loop = *ld[29];
     EXPECT_TRUE(loop.HasNestedLoops());
     EXPECT_TRUE(loop.IsNested());
     EXPECT_EQ(loop.GetDepth(), 2u);
@@ -588,7 +586,7 @@ TEST_F(PassClassTest, LoopParentTest) {
   }
 
   {
-    ir::Loop& loop = *ld[36];
+    Loop& loop = *ld[36];
     EXPECT_FALSE(loop.HasNestedLoops());
     EXPECT_TRUE(loop.IsNested());
     EXPECT_EQ(loop.GetDepth(), 3u);
@@ -596,7 +594,7 @@ TEST_F(PassClassTest, LoopParentTest) {
   }
 
   {
-    ir::Loop& loop = *ld[47];
+    Loop& loop = *ld[47];
     EXPECT_FALSE(loop.HasNestedLoops());
     EXPECT_TRUE(loop.IsNested());
     EXPECT_EQ(loop.GetDepth(), 2u);
@@ -701,21 +699,21 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
                OpFunctionEnd
   )";
   // clang-format on
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor& ld = *context->GetLoopDescriptor(f);
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor& ld = *context->GetLoopDescriptor(f);
   // No invalidation of the cfg should occur during this test.
-  ir::CFG* cfg = context->cfg();
+  CFG* cfg = context->cfg();
 
   EXPECT_EQ(ld.NumLoops(), 3u);
 
   {
-    ir::Loop& loop = *ld[16];
+    Loop& loop = *ld[16];
     EXPECT_TRUE(loop.HasNestedLoops());
     EXPECT_FALSE(loop.IsNested());
     EXPECT_EQ(loop.GetDepth(), 1u);
@@ -723,7 +721,7 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
   }
 
   {
-    ir::Loop& loop = *ld[33];
+    Loop& loop = *ld[33];
     EXPECT_EQ(loop.GetPreHeaderBlock(), nullptr);
     EXPECT_NE(loop.GetOrCreatePreHeaderBlock(), nullptr);
     // Make sure the loop descriptor was properly updated.
@@ -736,12 +734,11 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
       EXPECT_TRUE(pred_set.count(30));
       EXPECT_TRUE(pred_set.count(31));
       // Check the phi instructions.
-      loop.GetPreHeaderBlock()->ForEachPhiInst(
-          [&pred_set](ir::Instruction* phi) {
-            for (uint32_t i = 1; i < phi->NumInOperands(); i += 2) {
-              EXPECT_TRUE(pred_set.count(phi->GetSingleWordInOperand(i)));
-            }
-          });
+      loop.GetPreHeaderBlock()->ForEachPhiInst([&pred_set](Instruction* phi) {
+        for (uint32_t i = 1; i < phi->NumInOperands(); i += 2) {
+          EXPECT_TRUE(pred_set.count(phi->GetSingleWordInOperand(i)));
+        }
+      });
     }
     {
       const std::vector<uint32_t>& preds =
@@ -751,7 +748,7 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
       EXPECT_TRUE(pred_set.count(loop.GetPreHeaderBlock()->id()));
       EXPECT_TRUE(pred_set.count(35));
       // Check the phi instructions.
-      loop.GetHeaderBlock()->ForEachPhiInst([&pred_set](ir::Instruction* phi) {
+      loop.GetHeaderBlock()->ForEachPhiInst([&pred_set](Instruction* phi) {
         for (uint32_t i = 1; i < phi->NumInOperands(); i += 2) {
           EXPECT_TRUE(pred_set.count(phi->GetSingleWordInOperand(i)));
         }
@@ -760,14 +757,14 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
   }
 
   {
-    ir::Loop& loop = *ld[41];
+    Loop& loop = *ld[41];
     EXPECT_EQ(loop.GetPreHeaderBlock(), nullptr);
     EXPECT_NE(loop.GetOrCreatePreHeaderBlock(), nullptr);
     EXPECT_EQ(ld[loop.GetPreHeaderBlock()], nullptr);
     EXPECT_EQ(cfg->preds(loop.GetPreHeaderBlock()->id()).size(), 1u);
     EXPECT_EQ(cfg->preds(loop.GetPreHeaderBlock()->id())[0], 25u);
     // Check the phi instructions.
-    loop.GetPreHeaderBlock()->ForEachPhiInst([](ir::Instruction* phi) {
+    loop.GetPreHeaderBlock()->ForEachPhiInst([](Instruction* phi) {
       EXPECT_EQ(phi->NumInOperands(), 2u);
       EXPECT_EQ(phi->GetSingleWordInOperand(1), 25u);
     });
@@ -779,7 +776,7 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
       EXPECT_TRUE(pred_set.count(loop.GetPreHeaderBlock()->id()));
       EXPECT_TRUE(pred_set.count(44));
       // Check the phi instructions.
-      loop.GetHeaderBlock()->ForEachPhiInst([&pred_set](ir::Instruction* phi) {
+      loop.GetHeaderBlock()->ForEachPhiInst([&pred_set](Instruction* phi) {
         for (uint32_t i = 1; i < phi->NumInOperands(); i += 2) {
           EXPECT_TRUE(pred_set.count(phi->GetSingleWordInOperand(i)));
         }
@@ -794,3 +791,5 @@ TEST_F(PassClassTest, CreatePreheaderTest) {
 }
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

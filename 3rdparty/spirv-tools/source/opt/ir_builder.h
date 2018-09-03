@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_IR_BUILDER_H_
-#define LIBSPIRV_OPT_IR_BUILDER_H_
+#ifndef SOURCE_OPT_IR_BUILDER_H_
+#define SOURCE_OPT_IR_BUILDER_H_
 
-#include "opt/basic_block.h"
-#include "opt/constants.h"
-#include "opt/instruction.h"
-#include "opt/ir_context.h"
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include "source/opt/basic_block.h"
+#include "source/opt/constants.h"
+#include "source/opt/instruction.h"
+#include "source/opt/ir_context.h"
+
 namespace spvtools {
 namespace opt {
 
@@ -33,13 +39,13 @@ const uint32_t kInvalidId = std::numeric_limits<uint32_t>::max();
 //   - Instruction to block analysis
 class InstructionBuilder {
  public:
-  using InsertionPointTy = spvtools::ir::BasicBlock::iterator;
+  using InsertionPointTy = BasicBlock::iterator;
 
   // Creates an InstructionBuilder, all new instructions will be inserted before
   // the instruction |insert_before|.
   InstructionBuilder(
-      ir::IRContext* context, ir::Instruction* insert_before,
-      ir::IRContext::Analysis preserved_analyses = ir::IRContext::kAnalysisNone)
+      IRContext* context, Instruction* insert_before,
+      IRContext::Analysis preserved_analyses = IRContext::kAnalysisNone)
       : InstructionBuilder(context, context->get_instr_block(insert_before),
                            InsertionPointTy(insert_before),
                            preserved_analyses) {}
@@ -47,17 +53,17 @@ class InstructionBuilder {
   // Creates an InstructionBuilder, all new instructions will be inserted at the
   // end of the basic block |parent_block|.
   InstructionBuilder(
-      ir::IRContext* context, ir::BasicBlock* parent_block,
-      ir::IRContext::Analysis preserved_analyses = ir::IRContext::kAnalysisNone)
+      IRContext* context, BasicBlock* parent_block,
+      IRContext::Analysis preserved_analyses = IRContext::kAnalysisNone)
       : InstructionBuilder(context, parent_block, parent_block->end(),
                            preserved_analyses) {}
 
   // Creates a new selection merge instruction.
   // The id |merge_id| is the merge basic block id.
-  ir::Instruction* AddSelectionMerge(
+  Instruction* AddSelectionMerge(
       uint32_t merge_id,
       uint32_t selection_control = SpvSelectionControlMaskNone) {
-    std::unique_ptr<ir::Instruction> new_branch_merge(new ir::Instruction(
+    std::unique_ptr<Instruction> new_branch_merge(new Instruction(
         GetContext(), SpvOpSelectionMerge, 0, 0,
         {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {merge_id}},
          {spv_operand_type_t::SPV_OPERAND_TYPE_SELECTION_CONTROL,
@@ -68,8 +74,8 @@ class InstructionBuilder {
   // Creates a new branch instruction to |label_id|.
   // Note that the user must make sure the final basic block is
   // well formed.
-  ir::Instruction* AddBranch(uint32_t label_id) {
-    std::unique_ptr<ir::Instruction> new_branch(new ir::Instruction(
+  Instruction* AddBranch(uint32_t label_id) {
+    std::unique_ptr<Instruction> new_branch(new Instruction(
         GetContext(), SpvOpBranch, 0, 0,
         {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {label_id}}}));
     return AddInstruction(std::move(new_branch));
@@ -90,14 +96,14 @@ class InstructionBuilder {
   // selection merge instruction.
   // Note that the user must make sure the final basic block is
   // well formed.
-  ir::Instruction* AddConditionalBranch(
+  Instruction* AddConditionalBranch(
       uint32_t cond_id, uint32_t true_id, uint32_t false_id,
       uint32_t merge_id = kInvalidId,
       uint32_t selection_control = SpvSelectionControlMaskNone) {
     if (merge_id != kInvalidId) {
       AddSelectionMerge(merge_id, selection_control);
     }
-    std::unique_ptr<ir::Instruction> new_branch(new ir::Instruction(
+    std::unique_ptr<Instruction> new_branch(new Instruction(
         GetContext(), SpvOpBranchConditional, 0, 0,
         {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {cond_id}},
          {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {true_id}},
@@ -118,28 +124,28 @@ class InstructionBuilder {
   // selection merge instruction.
   // Note that the user must make sure the final basic block is
   // well formed.
-  ir::Instruction* AddSwitch(
+  Instruction* AddSwitch(
       uint32_t selector_id, uint32_t default_id,
-      const std::vector<std::pair<std::vector<uint32_t>, uint32_t>>& targets,
+      const std::vector<std::pair<Operand::OperandData, uint32_t>>& targets,
       uint32_t merge_id = kInvalidId,
       uint32_t selection_control = SpvSelectionControlMaskNone) {
     if (merge_id != kInvalidId) {
       AddSelectionMerge(merge_id, selection_control);
     }
-    std::vector<ir::Operand> operands;
+    std::vector<Operand> operands;
     operands.emplace_back(
-        ir::Operand{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {selector_id}});
+        Operand{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {selector_id}});
     operands.emplace_back(
-        ir::Operand{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {default_id}});
+        Operand{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {default_id}});
     for (auto& target : targets) {
       operands.emplace_back(
-          ir::Operand{spv_operand_type_t::SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER,
-                      target.first});
-      operands.emplace_back(ir::Operand{spv_operand_type_t::SPV_OPERAND_TYPE_ID,
-                                        {target.second}});
+          Operand{spv_operand_type_t::SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER,
+                  target.first});
+      operands.emplace_back(
+          Operand{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {target.second}});
     }
-    std::unique_ptr<ir::Instruction> new_switch(
-        new ir::Instruction(GetContext(), SpvOpSwitch, 0, 0, operands));
+    std::unique_ptr<Instruction> new_switch(
+        new Instruction(GetContext(), SpvOpSwitch, 0, 0, operands));
     return AddInstruction(std::move(new_switch));
   }
 
@@ -147,14 +153,13 @@ class InstructionBuilder {
   // The id |type| must be the id of the phi instruction's type.
   // The vector |incomings| must be a sequence of pairs of <definition id,
   // parent id>.
-  ir::Instruction* AddPhi(uint32_t type,
-                          const std::vector<uint32_t>& incomings) {
+  Instruction* AddPhi(uint32_t type, const std::vector<uint32_t>& incomings) {
     assert(incomings.size() % 2 == 0 && "A sequence of pairs is expected");
-    std::vector<ir::Operand> phi_ops;
+    std::vector<Operand> phi_ops;
     for (size_t i = 0; i < incomings.size(); i++) {
       phi_ops.push_back({SPV_OPERAND_TYPE_ID, {incomings[i]}});
     }
-    std::unique_ptr<ir::Instruction> phi_inst(new ir::Instruction(
+    std::unique_ptr<Instruction> phi_inst(new Instruction(
         GetContext(), SpvOpPhi, type, GetContext()->TakeNextId(), phi_ops));
     return AddInstruction(std::move(phi_inst));
   }
@@ -164,8 +169,8 @@ class InstructionBuilder {
   // |op1| and |op2| types.
   // The id |op1| is the left hand side of the operation.
   // The id |op2| is the right hand side of the operation.
-  ir::Instruction* AddIAdd(uint32_t type, uint32_t op1, uint32_t op2) {
-    std::unique_ptr<ir::Instruction> inst(new ir::Instruction(
+  Instruction* AddIAdd(uint32_t type, uint32_t op1, uint32_t op2) {
+    std::unique_ptr<Instruction> inst(new Instruction(
         GetContext(), SpvOpIAdd, type, GetContext()->TakeNextId(),
         {{SPV_OPERAND_TYPE_ID, {op1}}, {SPV_OPERAND_TYPE_ID, {op2}}}));
     return AddInstruction(std::move(inst));
@@ -175,10 +180,10 @@ class InstructionBuilder {
   // The id |op1| is the left hand side of the operation.
   // The id |op2| is the right hand side of the operation.
   // It is assumed that |op1| and |op2| have the same underlying type.
-  ir::Instruction* AddULessThan(uint32_t op1, uint32_t op2) {
+  Instruction* AddULessThan(uint32_t op1, uint32_t op2) {
     analysis::Bool bool_type;
     uint32_t type = GetContext()->get_type_mgr()->GetId(&bool_type);
-    std::unique_ptr<ir::Instruction> inst(new ir::Instruction(
+    std::unique_ptr<Instruction> inst(new Instruction(
         GetContext(), SpvOpULessThan, type, GetContext()->TakeNextId(),
         {{SPV_OPERAND_TYPE_ID, {op1}}, {SPV_OPERAND_TYPE_ID, {op2}}}));
     return AddInstruction(std::move(inst));
@@ -188,10 +193,10 @@ class InstructionBuilder {
   // The id |op1| is the left hand side of the operation.
   // The id |op2| is the right hand side of the operation.
   // It is assumed that |op1| and |op2| have the same underlying type.
-  ir::Instruction* AddSLessThan(uint32_t op1, uint32_t op2) {
+  Instruction* AddSLessThan(uint32_t op1, uint32_t op2) {
     analysis::Bool bool_type;
     uint32_t type = GetContext()->get_type_mgr()->GetId(&bool_type);
-    std::unique_ptr<ir::Instruction> inst(new ir::Instruction(
+    std::unique_ptr<Instruction> inst(new Instruction(
         GetContext(), SpvOpSLessThan, type, GetContext()->TakeNextId(),
         {{SPV_OPERAND_TYPE_ID, {op1}}, {SPV_OPERAND_TYPE_ID, {op2}}}));
     return AddInstruction(std::move(inst));
@@ -201,8 +206,8 @@ class InstructionBuilder {
   // |op1|. The id |op1| is the left hand side of the operation. The id |op2| is
   // the right hand side of the operation. It is assumed that |op1| and |op2|
   // have the same underlying type.
-  ir::Instruction* AddLessThan(uint32_t op1, uint32_t op2) {
-    ir::Instruction* op1_insn = context_->get_def_use_mgr()->GetDef(op1);
+  Instruction* AddLessThan(uint32_t op1, uint32_t op2) {
+    Instruction* op1_insn = context_->get_def_use_mgr()->GetDef(op1);
     analysis::Type* type =
         GetContext()->get_type_mgr()->GetType(op1_insn->type_id());
     analysis::Integer* int_type = type->AsInteger();
@@ -218,41 +223,40 @@ class InstructionBuilder {
   // |type| must match the types of |true_value| and |false_value|. It is up to
   // the caller to ensure that |cond| is a correct type (bool or vector of
   // bool) for |type|.
-  ir::Instruction* AddSelect(uint32_t type, uint32_t cond, uint32_t true_value,
-                             uint32_t false_value) {
-    std::unique_ptr<ir::Instruction> select(new ir::Instruction(
+  Instruction* AddSelect(uint32_t type, uint32_t cond, uint32_t true_value,
+                         uint32_t false_value) {
+    std::unique_ptr<Instruction> select(new Instruction(
         GetContext(), SpvOpSelect, type, GetContext()->TakeNextId(),
-        std::initializer_list<ir::Operand>{
-            {SPV_OPERAND_TYPE_ID, {cond}},
-            {SPV_OPERAND_TYPE_ID, {true_value}},
-            {SPV_OPERAND_TYPE_ID, {false_value}}}));
+        std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {cond}},
+                                       {SPV_OPERAND_TYPE_ID, {true_value}},
+                                       {SPV_OPERAND_TYPE_ID, {false_value}}}));
     return AddInstruction(std::move(select));
   }
 
   // Adds a signed int32 constant to the binary.
   // The |value| parameter is the constant value to be added.
-  ir::Instruction* Add32BitSignedIntegerConstant(int32_t value) {
+  Instruction* Add32BitSignedIntegerConstant(int32_t value) {
     return Add32BitConstantInteger<int32_t>(value, true);
   }
 
   // Create a composite construct.
   // |type| should be a composite type and the number of elements it has should
   // match the size od |ids|.
-  ir::Instruction* AddCompositeConstruct(uint32_t type,
-                                         const std::vector<uint32_t>& ids) {
-    std::vector<ir::Operand> ops;
+  Instruction* AddCompositeConstruct(uint32_t type,
+                                     const std::vector<uint32_t>& ids) {
+    std::vector<Operand> ops;
     for (auto id : ids) {
       ops.emplace_back(SPV_OPERAND_TYPE_ID,
                        std::initializer_list<uint32_t>{id});
     }
-    std::unique_ptr<ir::Instruction> construct(
-        new ir::Instruction(GetContext(), SpvOpCompositeConstruct, type,
-                            GetContext()->TakeNextId(), ops));
+    std::unique_ptr<Instruction> construct(
+        new Instruction(GetContext(), SpvOpCompositeConstruct, type,
+                        GetContext()->TakeNextId(), ops));
     return AddInstruction(std::move(construct));
   }
   // Adds an unsigned int32 constant to the binary.
   // The |value| parameter is the constant value to be added.
-  ir::Instruction* Add32BitUnsignedIntegerConstant(uint32_t value) {
+  Instruction* Add32BitUnsignedIntegerConstant(uint32_t value) {
     return Add32BitConstantInteger<uint32_t>(value, false);
   }
 
@@ -261,7 +265,7 @@ class InstructionBuilder {
   // signed constant otherwise as an unsigned constant. If |sign| is false the
   // value must not be a negative number.
   template <typename T>
-  ir::Instruction* Add32BitConstantInteger(T value, bool sign) {
+  Instruction* Add32BitConstantInteger(T value, bool sign) {
     // Assert that we are not trying to store a negative number in an unsigned
     // type.
     if (!sign)
@@ -285,55 +289,64 @@ class InstructionBuilder {
     uint32_t word = value;
 
     // Create the constant value.
-    const opt::analysis::Constant* constant =
+    const analysis::Constant* constant =
         GetContext()->get_constant_mgr()->GetConstant(rebuilt_type, {word});
 
     // Create the OpConstant instruction using the type and the value.
     return GetContext()->get_constant_mgr()->GetDefiningInstruction(constant);
   }
 
-  ir::Instruction* AddCompositeExtract(
-      uint32_t type, uint32_t id_of_composite,
-      const std::vector<uint32_t>& index_list) {
-    std::vector<ir::Operand> operands;
+  Instruction* AddCompositeExtract(uint32_t type, uint32_t id_of_composite,
+                                   const std::vector<uint32_t>& index_list) {
+    std::vector<Operand> operands;
     operands.push_back({SPV_OPERAND_TYPE_ID, {id_of_composite}});
 
     for (uint32_t index : index_list) {
       operands.push_back({SPV_OPERAND_TYPE_LITERAL_INTEGER, {index}});
     }
 
-    std::unique_ptr<ir::Instruction> new_inst(
-        new ir::Instruction(GetContext(), SpvOpCompositeExtract, type,
-                            GetContext()->TakeNextId(), operands));
+    std::unique_ptr<Instruction> new_inst(
+        new Instruction(GetContext(), SpvOpCompositeExtract, type,
+                        GetContext()->TakeNextId(), operands));
     return AddInstruction(std::move(new_inst));
   }
 
   // Creates an unreachable instruction.
-  ir::Instruction* AddUnreachable() {
-    std::unique_ptr<ir::Instruction> select(
-        new ir::Instruction(GetContext(), SpvOpUnreachable, 0, 0,
-                            std::initializer_list<ir::Operand>{}));
+  Instruction* AddUnreachable() {
+    std::unique_ptr<Instruction> select(
+        new Instruction(GetContext(), SpvOpUnreachable, 0, 0,
+                        std::initializer_list<Operand>{}));
     return AddInstruction(std::move(select));
   }
 
-  ir::Instruction* AddAccessChain(uint32_t type_id, uint32_t base_ptr_id,
-                                  std::vector<uint32_t> ids) {
-    std::vector<ir::Operand> operands;
+  Instruction* AddAccessChain(uint32_t type_id, uint32_t base_ptr_id,
+                              std::vector<uint32_t> ids) {
+    std::vector<Operand> operands;
     operands.push_back({SPV_OPERAND_TYPE_ID, {base_ptr_id}});
 
     for (uint32_t index_id : ids) {
       operands.push_back({SPV_OPERAND_TYPE_ID, {index_id}});
     }
 
-    std::unique_ptr<ir::Instruction> new_inst(
-        new ir::Instruction(GetContext(), SpvOpAccessChain, type_id,
-                            GetContext()->TakeNextId(), operands));
+    std::unique_ptr<Instruction> new_inst(
+        new Instruction(GetContext(), SpvOpAccessChain, type_id,
+                        GetContext()->TakeNextId(), operands));
+    return AddInstruction(std::move(new_inst));
+  }
+
+  Instruction* AddLoad(uint32_t type_id, uint32_t base_ptr_id) {
+    std::vector<Operand> operands;
+    operands.push_back({SPV_OPERAND_TYPE_ID, {base_ptr_id}});
+
+    std::unique_ptr<Instruction> new_inst(
+        new Instruction(GetContext(), SpvOpLoad, type_id,
+                        GetContext()->TakeNextId(), operands));
     return AddInstruction(std::move(new_inst));
   }
 
   // Inserts the new instruction before the insertion point.
-  ir::Instruction* AddInstruction(std::unique_ptr<ir::Instruction>&& insn) {
-    ir::Instruction* insn_ptr = &*insert_before_.InsertBefore(std::move(insn));
+  Instruction* AddInstruction(std::unique_ptr<Instruction>&& insn) {
+    Instruction* insn_ptr = &*insert_before_.InsertBefore(std::move(insn));
     UpdateInstrToBlockMapping(insn_ptr);
     UpdateDefUseMgr(insn_ptr);
     return insn_ptr;
@@ -344,68 +357,65 @@ class InstructionBuilder {
 
   // Change the insertion point to insert before the instruction
   // |insert_before|.
-  void SetInsertPoint(ir::Instruction* insert_before) {
+  void SetInsertPoint(Instruction* insert_before) {
     parent_ = context_->get_instr_block(insert_before);
     insert_before_ = InsertionPointTy(insert_before);
   }
 
   // Change the insertion point to insert at the end of the basic block
   // |parent_block|.
-  void SetInsertPoint(ir::BasicBlock* parent_block) {
+  void SetInsertPoint(BasicBlock* parent_block) {
     parent_ = parent_block;
     insert_before_ = parent_block->end();
   }
 
   // Returns the context which instructions are constructed for.
-  ir::IRContext* GetContext() const { return context_; }
+  IRContext* GetContext() const { return context_; }
 
   // Returns the set of preserved analyses.
-  inline ir::IRContext::Analysis GetPreservedAnalysis() const {
+  inline IRContext::Analysis GetPreservedAnalysis() const {
     return preserved_analyses_;
   }
 
  private:
-  InstructionBuilder(ir::IRContext* context, ir::BasicBlock* parent,
+  InstructionBuilder(IRContext* context, BasicBlock* parent,
                      InsertionPointTy insert_before,
-                     ir::IRContext::Analysis preserved_analyses)
+                     IRContext::Analysis preserved_analyses)
       : context_(context),
         parent_(parent),
         insert_before_(insert_before),
         preserved_analyses_(preserved_analyses) {
-    assert(!(preserved_analyses_ &
-             ~(ir::IRContext::kAnalysisDefUse |
-               ir::IRContext::kAnalysisInstrToBlockMapping)));
+    assert(!(preserved_analyses_ & ~(IRContext::kAnalysisDefUse |
+                                     IRContext::kAnalysisInstrToBlockMapping)));
   }
 
   // Returns true if the users requested to update |analysis|.
-  inline bool IsAnalysisUpdateRequested(
-      ir::IRContext::Analysis analysis) const {
+  inline bool IsAnalysisUpdateRequested(IRContext::Analysis analysis) const {
     return preserved_analyses_ & analysis;
   }
 
   // Updates the def/use manager if the user requested it. If he did not request
   // an update, this function does nothing.
-  inline void UpdateDefUseMgr(ir::Instruction* insn) {
-    if (IsAnalysisUpdateRequested(ir::IRContext::kAnalysisDefUse))
+  inline void UpdateDefUseMgr(Instruction* insn) {
+    if (IsAnalysisUpdateRequested(IRContext::kAnalysisDefUse))
       GetContext()->get_def_use_mgr()->AnalyzeInstDefUse(insn);
   }
 
   // Updates the instruction to block analysis if the user requested it. If he
   // did not request an update, this function does nothing.
-  inline void UpdateInstrToBlockMapping(ir::Instruction* insn) {
-    if (IsAnalysisUpdateRequested(
-            ir::IRContext::kAnalysisInstrToBlockMapping) &&
+  inline void UpdateInstrToBlockMapping(Instruction* insn) {
+    if (IsAnalysisUpdateRequested(IRContext::kAnalysisInstrToBlockMapping) &&
         parent_)
       GetContext()->set_instr_block(insn, parent_);
   }
 
-  ir::IRContext* context_;
-  ir::BasicBlock* parent_;
+  IRContext* context_;
+  BasicBlock* parent_;
   InsertionPointTy insert_before_;
-  const ir::IRContext::Analysis preserved_analyses_;
+  const IRContext::Analysis preserved_analyses_;
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_IR_BUILDER_H_
+#endif  // SOURCE_OPT_IR_BUILDER_H_

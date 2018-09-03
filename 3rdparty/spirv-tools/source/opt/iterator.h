@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_ITERATOR_H_
-#define LIBSPIRV_OPT_ITERATOR_H_
+#ifndef SOURCE_OPT_ITERATOR_H_
+#define SOURCE_OPT_ITERATOR_H_
 
 #include <cstddef>  // for ptrdiff_t
 #include <iterator>
 #include <memory>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace spvtools {
-namespace ir {
+namespace opt {
 
 // An ad hoc iterator class for std::vector<std::unique_ptr<|ValueType|>>. The
 // purpose of this iterator class is to provide transparent access to those
@@ -166,6 +167,105 @@ inline IteratorRange<IteratorType> make_const_range(
           IteratorType(&container, container.cend())};
 }
 
+// Wrapping iterator class that only consider elements that satisfy the given
+// predicate |Predicate|. When moving to the next element of the iterator, the
+// FilterIterator will iterate over the range until it finds an element that
+// satisfies |Predicate| or reaches the end of the iterator.
+//
+// Currently this iterator is always an input iterator.
+template <typename SubIterator, typename Predicate>
+class FilterIterator
+    : public std::iterator<
+          std::input_iterator_tag, typename SubIterator::value_type,
+          typename SubIterator::difference_type, typename SubIterator::pointer,
+          typename SubIterator::reference> {
+ public:
+  // Iterator interface.
+  using iterator_category = typename SubIterator::iterator_category;
+  using value_type = typename SubIterator::value_type;
+  using pointer = typename SubIterator::pointer;
+  using reference = typename SubIterator::reference;
+  using difference_type = typename SubIterator::difference_type;
+
+  using Range = IteratorRange<FilterIterator>;
+
+  FilterIterator(const IteratorRange<SubIterator>& iteration_range,
+                 Predicate predicate)
+      : cur_(iteration_range.begin()),
+        end_(iteration_range.end()),
+        predicate_(predicate) {
+    if (!IsPredicateSatisfied()) {
+      MoveToNextPosition();
+    }
+  }
+
+  FilterIterator(const SubIterator& end, Predicate predicate)
+      : FilterIterator({end, end}, predicate) {}
+
+  inline FilterIterator& operator++() {
+    MoveToNextPosition();
+    return *this;
+  }
+  inline FilterIterator operator++(int) {
+    FilterIterator old = *this;
+    MoveToNextPosition();
+    return old;
+  }
+
+  reference operator*() const { return *cur_; }
+  pointer operator->() { return &*cur_; }
+
+  inline bool operator==(const FilterIterator& rhs) const {
+    return cur_ == rhs.cur_ && end_ == rhs.end_;
+  }
+  inline bool operator!=(const FilterIterator& rhs) const {
+    return !(*this == rhs);
+  }
+
+  // Returns the underlying iterator.
+  SubIterator Get() const { return cur_; }
+
+  // Returns the sentinel iterator.
+  FilterIterator GetEnd() const { return FilterIterator(end_, predicate_); }
+
+ private:
+  // Returns true if the predicate is satisfied or the current iterator reached
+  // the end.
+  bool IsPredicateSatisfied() { return cur_ == end_ || predicate_(*cur_); }
+
+  void MoveToNextPosition() {
+    if (cur_ == end_) return;
+
+    do {
+      ++cur_;
+    } while (!IsPredicateSatisfied());
+  }
+
+  SubIterator cur_;
+  SubIterator end_;
+  Predicate predicate_;
+};
+
+template <typename SubIterator, typename Predicate>
+FilterIterator<SubIterator, Predicate> MakeFilterIterator(
+    const IteratorRange<SubIterator>& sub_iterator_range, Predicate predicate) {
+  return FilterIterator<SubIterator, Predicate>(sub_iterator_range, predicate);
+}
+
+template <typename SubIterator, typename Predicate>
+FilterIterator<SubIterator, Predicate> MakeFilterIterator(
+    const SubIterator& begin, const SubIterator& end, Predicate predicate) {
+  return MakeFilterIterator(make_range(begin, end), predicate);
+}
+
+template <typename SubIterator, typename Predicate>
+typename FilterIterator<SubIterator, Predicate>::Range MakeFilterIteratorRange(
+    const SubIterator& begin, const SubIterator& end, Predicate predicate) {
+  return typename FilterIterator<SubIterator, Predicate>::Range(
+      MakeFilterIterator(begin, end, predicate),
+      MakeFilterIterator(end, end, predicate));
+}
+
 template <typename VT, bool IC>
 inline UptrVectorIterator<VT, IC>& UptrVectorIterator<VT, IC>::operator++() {
   ++iterator_;
@@ -252,7 +352,7 @@ inline
   return UptrVectorIterator(container_, container_->begin() + index);
 }
 
-}  // namespace ir
+}  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_ITERATOR_H_
+#endif  // SOURCE_OPT_ITERATOR_H_

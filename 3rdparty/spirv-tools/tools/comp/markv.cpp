@@ -19,13 +19,15 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
-#include "markv_model_factory.h"
 #include "source/comp/markv.h"
 #include "source/spirv_target_env.h"
 #include "source/table.h"
 #include "spirv-tools/optimizer.hpp"
+#include "tools/comp/markv_model_factory.h"
 #include "tools/io.h"
 
 namespace {
@@ -138,7 +140,8 @@ int main(int argc, char** argv) {
   bool want_comments = false;
   bool validate_spirv_binary = false;
 
-  spvtools::MarkvModelType model_type = spvtools::kMarkvModelUnknown;
+  spvtools::comp::MarkvModelType model_type =
+      spvtools::comp::kMarkvModelUnknown;
 
   for (int argi = 2; argi < argc; ++argi) {
     if ('-' == argv[argi][0]) {
@@ -167,17 +170,17 @@ int main(int argc, char** argv) {
           } else if (0 == strcmp(argv[argi], "--validate")) {
             validate_spirv_binary = true;
           } else if (0 == strcmp(argv[argi], "--model=shader_lite")) {
-            if (model_type != spvtools::kMarkvModelUnknown)
+            if (model_type != spvtools::comp::kMarkvModelUnknown)
               fprintf(stderr, "error: More than one model specified\n");
-            model_type = spvtools::kMarkvModelShaderLite;
+            model_type = spvtools::comp::kMarkvModelShaderLite;
           } else if (0 == strcmp(argv[argi], "--model=shader_mid")) {
-            if (model_type != spvtools::kMarkvModelUnknown)
+            if (model_type != spvtools::comp::kMarkvModelUnknown)
               fprintf(stderr, "error: More than one model specified\n");
-            model_type = spvtools::kMarkvModelShaderMid;
+            model_type = spvtools::comp::kMarkvModelShaderMid;
           } else if (0 == strcmp(argv[argi], "--model=shader_max")) {
-            if (model_type != spvtools::kMarkvModelUnknown)
+            if (model_type != spvtools::comp::kMarkvModelUnknown)
               fprintf(stderr, "error: More than one model specified\n");
-            model_type = spvtools::kMarkvModelShaderMax;
+            model_type = spvtools::comp::kMarkvModelShaderMax;
           } else {
             print_usage(argv[0]);
             return 1;
@@ -206,34 +209,34 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (model_type == spvtools::kMarkvModelUnknown)
-    model_type = spvtools::kMarkvModelShaderLite;
+  if (model_type == spvtools::comp::kMarkvModelUnknown)
+    model_type = spvtools::comp::kMarkvModelShaderLite;
 
-  const auto no_comments = spvtools::MarkvLogConsumer();
+  const auto no_comments = spvtools::comp::MarkvLogConsumer();
   const auto output_to_stderr = [](const std::string& str) {
     std::cerr << str;
   };
 
   ScopedContext ctx(kSpvEnv);
 
-  std::unique_ptr<spvtools::MarkvModel> model =
-      spvtools::CreateMarkvModel(model_type);
+  std::unique_ptr<spvtools::comp::MarkvModel> model =
+      spvtools::comp::CreateMarkvModel(model_type);
 
   std::vector<uint32_t> spirv;
   std::vector<uint8_t> markv;
 
-  spvtools::MarkvCodecOptions options;
+  spvtools::comp::MarkvCodecOptions options;
   options.validate_spirv_binary = validate_spirv_binary;
 
   if (task == kEncode) {
     if (!ReadFile<uint32_t>(input_filename, "rb", &spirv)) return 1;
     assert(!spirv.empty());
 
-    if (SPV_SUCCESS !=
-        spvtools::SpirvToMarkv(ctx.context, spirv, options, *model,
-                               DiagnosticsMessageHandler,
-                               want_comments ? output_to_stderr : no_comments,
-                               spvtools::MarkvDebugConsumer(), &markv)) {
+    if (SPV_SUCCESS != spvtools::comp::SpirvToMarkv(
+                           ctx.context, spirv, options, *model,
+                           DiagnosticsMessageHandler,
+                           want_comments ? output_to_stderr : no_comments,
+                           spvtools::comp::MarkvDebugConsumer(), &markv)) {
       std::cerr << "error: Failed to encode " << input_filename << " to MARK-V "
                 << std::endl;
       return 1;
@@ -245,11 +248,11 @@ int main(int argc, char** argv) {
     if (!ReadFile<uint8_t>(input_filename, "rb", &markv)) return 1;
     assert(!markv.empty());
 
-    if (SPV_SUCCESS !=
-        spvtools::MarkvToSpirv(ctx.context, markv, options, *model,
-                               DiagnosticsMessageHandler,
-                               want_comments ? output_to_stderr : no_comments,
-                               spvtools::MarkvDebugConsumer(), &spirv)) {
+    if (SPV_SUCCESS != spvtools::comp::MarkvToSpirv(
+                           ctx.context, markv, options, *model,
+                           DiagnosticsMessageHandler,
+                           want_comments ? output_to_stderr : no_comments,
+                           spvtools::comp::MarkvDebugConsumer(), &spirv)) {
       std::cerr << "error: Failed to decode " << input_filename << " to SPIR-V "
                 << std::endl;
       return 1;
@@ -285,11 +288,11 @@ int main(int argc, char** argv) {
       return true;
     };
 
-    if (SPV_SUCCESS !=
-        spvtools::SpirvToMarkv(ctx.context, spirv_before, options, *model,
-                               DiagnosticsMessageHandler,
-                               want_comments ? output_to_stderr : no_comments,
-                               encoder_debug_consumer, &markv)) {
+    if (SPV_SUCCESS != spvtools::comp::SpirvToMarkv(
+                           ctx.context, spirv_before, options, *model,
+                           DiagnosticsMessageHandler,
+                           want_comments ? output_to_stderr : no_comments,
+                           encoder_debug_consumer, &markv)) {
       std::cerr << "error: Failed to encode " << input_filename << " to MARK-V "
                 << std::endl;
       return 1;
@@ -355,7 +358,7 @@ int main(int argc, char** argv) {
     };
 
     std::vector<uint32_t> spirv_after;
-    const spv_result_t decoding_result = spvtools::MarkvToSpirv(
+    const spv_result_t decoding_result = spvtools::comp::MarkvToSpirv(
         ctx.context, markv, options, *model, DiagnosticsMessageHandler,
         want_comments ? output_to_stderr : no_comments, decoder_debug_consumer,
         &spirv_after);

@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_MERGE_RETURN_PASS_H_
-#define LIBSPIRV_OPT_MERGE_RETURN_PASS_H_
+#ifndef SOURCE_OPT_MERGE_RETURN_PASS_H_
+#define SOURCE_OPT_MERGE_RETURN_PASS_H_
 
-#include "basic_block.h"
-#include "function.h"
-#include "mem_pass.h"
-
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "source/opt/basic_block.h"
+#include "source/opt/function.h"
+#include "source/opt/mem_pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -103,11 +104,11 @@ class MergeReturnPass : public MemPass {
         final_return_block_(nullptr) {}
 
   const char* name() const override { return "merge-return"; }
-  Status Process(ir::IRContext*) override;
+  Status Process() override;
 
-  ir::IRContext::Analysis GetPreservedAnalyses() override {
-    // return ir::IRContext::kAnalysisDefUse;
-    return ir::IRContext::kAnalysisNone;
+  IRContext::Analysis GetPreservedAnalyses() override {
+    // return IRContext::kAnalysisDefUse;
+    return IRContext::kAnalysisNone;
   }
 
  private:
@@ -116,7 +117,7 @@ class MergeReturnPass : public MemPass {
   // contain selection construct and the inner most loop construct.
   class StructuredControlState {
    public:
-    StructuredControlState(ir::Instruction* loop, ir::Instruction* merge)
+    StructuredControlState(Instruction* loop, Instruction* merge)
         : loop_merge_(loop), current_merge_(merge) {}
 
     StructuredControlState(const StructuredControlState&) = default;
@@ -145,29 +146,29 @@ class MergeReturnPass : public MemPass {
                  : 0;
     }
 
-    ir::Instruction* LoopMergeInst() const { return loop_merge_; }
+    Instruction* LoopMergeInst() const { return loop_merge_; }
 
    private:
-    ir::Instruction* loop_merge_;
-    ir::Instruction* current_merge_;
+    Instruction* loop_merge_;
+    Instruction* current_merge_;
   };
 
   // Returns all BasicBlocks terminated by OpReturn or OpReturnValue in
   // |function|.
-  std::vector<ir::BasicBlock*> CollectReturnBlocks(ir::Function* function);
+  std::vector<BasicBlock*> CollectReturnBlocks(Function* function);
 
   // Creates a new basic block with a single return. If |function| returns a
   // value, a phi node is created to select the correct value to return.
   // Replaces old returns with an unconditional branch to the new block.
-  void MergeReturnBlocks(ir::Function* function,
-                         const std::vector<ir::BasicBlock*>& returnBlocks);
+  void MergeReturnBlocks(Function* function,
+                         const std::vector<BasicBlock*>& returnBlocks);
 
   // Merges the return instruction in |function| so that it has a single return
   // statement.  It is assumed that |function| has structured control flow, and
   // that |return_blocks| is a list of all of the basic blocks in |function|
   // that have a return.
-  void ProcessStructured(ir::Function* function,
-                         const std::vector<ir::BasicBlock*>& return_blocks);
+  void ProcessStructured(Function* function,
+                         const std::vector<BasicBlock*>& return_blocks);
 
   // Changes an OpReturn* or OpUnreachable instruction at the end of |block|
   // into a store to |return_flag_|, a store to |return_value_| (if necessary),
@@ -178,7 +179,7 @@ class MergeReturnPass : public MemPass {
   //
   // Note this will break the semantics.  To fix this, PredicateBlock will have
   // to be called on the merge block the branch targets.
-  void ProcessStructuredBlock(ir::BasicBlock* block);
+  void ProcessStructuredBlock(BasicBlock* block);
 
   // Creates a variable used to store whether or not the control flow has
   // traversed a block that used to have a return.  A pointer to the instruction
@@ -192,7 +193,7 @@ class MergeReturnPass : public MemPass {
   // Adds a store that stores true to |return_flag_| immediately before the
   // terminator of |block|. It is assumed that |AddReturnFlag| has already been
   // called.
-  void RecordReturned(ir::BasicBlock* block);
+  void RecordReturned(BasicBlock* block);
 
   // Adds an instruction that stores the value being returned in the
   // OpReturnValue in |block|.  The value is stored to |return_value_|, and the
@@ -201,35 +202,53 @@ class MergeReturnPass : public MemPass {
   // If |block| does not contain an OpReturnValue, then this function has no
   // effect. If |block| contains an OpReturnValue, then |AddReturnValue| must
   // have already been called to create the variable to store to.
-  void RecordReturnValue(ir::BasicBlock* block);
+  void RecordReturnValue(BasicBlock* block);
 
   // Adds an unconditional branch in |block| that branches to |target|.  It also
   // adds stores to |return_flag_| and |return_value_| as needed.
   // |AddReturnFlag| and |AddReturnValue| must have already been called.
-  void BranchToBlock(ir::BasicBlock* block, uint32_t target);
+  void BranchToBlock(BasicBlock* block, uint32_t target);
 
-  // Returns true if we need to pridicate |block| where |tail_block| is the
+  // Returns true if we need to predicate |block| where |tail_block| is the
   // merge point.  (See |PredicateBlocks|).  There is no need to predicate if
   // there is no code that could be executed.
-  bool RequiresPredication(const ir::BasicBlock* block,
-                           const ir::BasicBlock* tail_block) const;
+  bool RequiresPredication(const BasicBlock* block,
+                           const BasicBlock* tail_block) const;
 
-  // For every basic block that is reachable from a basic block in
-  // |return_blocks|, extra code is added to jump around any code that should
-  // not be executed because the original code would have already returned. This
-  // involves adding new selections constructs to jump around these
-  // instructions.
-  void PredicateBlocks(const std::vector<ir::BasicBlock*>& return_blocks);
+  // For every basic block that is reachable from |return_block|, extra code is
+  // added to jump around any code that should not be executed because the
+  // original code would have already returned. This involves adding new
+  // selections constructs to jump around these instructions.
+  //
+  // If new blocks that are created will be added to |order|.  This way a call
+  // can traverse these new block in structured order.
+  void PredicateBlocks(BasicBlock* return_block,
+                       std::unordered_set<BasicBlock*>* pSet,
+                       std::list<BasicBlock*>* order);
+
+  // Add a conditional branch at the start of |block| that either jumps to
+  // |merge_block| or the original code in |block| depending on the value in
+  // |return_flag_|.
+  //
+  // If new blocks that are created will be added to |order|.  This way a call
+  // can traverse these new block in structured order.
+  void BreakFromConstruct(BasicBlock* block, BasicBlock* merge_block,
+                          std::unordered_set<BasicBlock*>* predicated,
+                          std::list<BasicBlock*>* order);
 
   // Add the predication code (see |PredicateBlocks|) to |tail_block| if it
   // requires predication.  |tail_block| and any new blocks that are known to
   // not require predication will be added to |predicated|.
-  void PredicateBlock(ir::BasicBlock* block, ir::BasicBlock* tail_block,
-                      std::unordered_set<ir::BasicBlock*>* predicated);
+  //
+  // If new blocks that are created will be added to |order|.  This way a call
+  // can traverse these new block in structured order.
+  void PredicateBlock(BasicBlock* block, BasicBlock* tail_block,
+                      std::unordered_set<BasicBlock*>* predicated,
+                      std::list<BasicBlock*>* order);
 
   // Add an |OpReturn| or |OpReturnValue| to the end of |block|.  If an
   // |OpReturnValue| is needed, the return value is loaded from |return_value_|.
-  void CreateReturn(ir::BasicBlock* block);
+  void CreateReturn(BasicBlock* block);
 
   // Creates a block at the end of the function that will become the single
   // return block at the end of the pass.
@@ -239,8 +258,8 @@ class MergeReturnPass : public MemPass {
   // |predecessor|.  Any uses of the result of |inst| that are no longer
   // dominated by |inst|, are replaced with the result of the new |OpPhi|
   // instruction.
-  void CreatePhiNodesForInst(ir::BasicBlock* merge_block, uint32_t predecessor,
-                             ir::Instruction& inst);
+  void CreatePhiNodesForInst(BasicBlock* merge_block, uint32_t predecessor,
+                             Instruction& inst);
 
   // Traverse the nodes in |new_merge_nodes_|, and adds the OpPhi instructions
   // that are needed to make the code correct.  It is assumed that at this point
@@ -250,18 +269,16 @@ class MergeReturnPass : public MemPass {
   // Creates any new phi nodes that are needed in |bb| now that |pred| is no
   // longer the only block that preceedes |bb|.  |header_id| is the id of the
   // basic block for the loop or selection construct that merges at |bb|.
-  void AddNewPhiNodes(ir::BasicBlock* bb, ir::BasicBlock* pred,
-                      uint32_t header_id);
+  void AddNewPhiNodes(BasicBlock* bb, BasicBlock* pred, uint32_t header_id);
 
   // Saves |block| to a list of basic block that will require OpPhi nodes to be
   // added by calling |AddNewPhiNodes|.  It is assumed that |block| used to have
   // a single predecessor, |single_original_pred|, but now has more.
-  void MarkForNewPhiNodes(ir::BasicBlock* block,
-                          ir::BasicBlock* single_original_pred);
+  void MarkForNewPhiNodes(BasicBlock* block, BasicBlock* single_original_pred);
 
   // Return the original single predcessor of |block| if it was flagged as
   // having a single predecessor.  |nullptr| is returned otherwise.
-  ir::BasicBlock* MarkedSinglePred(ir::BasicBlock* block) {
+  BasicBlock* MarkedSinglePred(BasicBlock* block) {
     auto it = new_merge_nodes_.find(block);
     if (it != new_merge_nodes_.end()) {
       return it->second;
@@ -270,38 +287,50 @@ class MergeReturnPass : public MemPass {
     }
   }
 
+  // Modifies existing OpPhi instruction in |target| block to account for the
+  // new edge from |new_source|.  The value for that edge will be an Undef. If
+  // |target| only had a single predecessor, then it is marked as needing new
+  // phi nodes.  See |MarkForNewPhiNodes|.
+  void UpdatePhiNodes(BasicBlock* new_source, BasicBlock* target);
+
   StructuredControlState& CurrentState() { return state_.back(); }
+
+  // Inserts |new_element| into |list| after the first occurrence of |element|.
+  // |element| must be in |list| at least once.
+  void InsertAfterElement(BasicBlock* element, BasicBlock* new_element,
+                          std::list<BasicBlock*>* list);
 
   // A stack used to keep track of the innermost contain loop and selection
   // constructs.
   std::vector<StructuredControlState> state_;
 
   // The current function being transformed.
-  ir::Function* function_;
+  Function* function_;
 
   // The |OpVariable| instruction defining a boolean variable used to keep track
   // of whether or not the function is trying to return.
-  ir::Instruction* return_flag_;
+  Instruction* return_flag_;
 
   // The |OpVariable| instruction defining a variabled to used to keep track of
   // the value that was returned when passing through a block that use to
   // contain an |OpReturnValue|.
-  ir::Instruction* return_value_;
+  Instruction* return_value_;
 
   // The instruction defining the boolean constant true.
-  ir::Instruction* constant_true_;
+  Instruction* constant_true_;
 
   // The basic block that is suppose to become the contain the only return value
   // after processing the current function.
-  ir::BasicBlock* final_return_block_;
+  BasicBlock* final_return_block_;
+
   // This map contains the set of nodes that use to have a single predcessor,
   // but now have more.  They will need new OpPhi nodes.  For each of the nodes,
   // it is mapped to it original single predcessor.  It is assumed there are no
   // values that will need a phi on the new edges.
-  std::unordered_map<ir::BasicBlock*, ir::BasicBlock*> new_merge_nodes_;
+  std::unordered_map<BasicBlock*, BasicBlock*> new_merge_nodes_;
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_MERGE_RETURN_PASS_H_
+#endif  // SOURCE_OPT_MERGE_RETURN_PASS_H_

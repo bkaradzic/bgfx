@@ -14,13 +14,14 @@
 
 #include <algorithm>
 #include <sstream>
+#include <utility>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
-using libspirv::DiagnosticStream;
 using ::testing::Eq;
 
 // Returns a newly created diagnostic value.
@@ -68,16 +69,16 @@ TEST(Diagnostic, PrintInvalidDiagnostic) {
 TEST(DiagnosticStream, ConversionToResultType) {
   // Check after the DiagnosticStream object is destroyed.
   spv_result_t value;
-  { value = DiagnosticStream({}, nullptr, SPV_ERROR_INVALID_TEXT); }
+  { value = DiagnosticStream({}, nullptr, "", SPV_ERROR_INVALID_TEXT); }
   EXPECT_EQ(SPV_ERROR_INVALID_TEXT, value);
 
   // Check implicit conversion via plain assignment.
-  value = DiagnosticStream({}, nullptr, SPV_SUCCESS);
+  value = DiagnosticStream({}, nullptr, "", SPV_SUCCESS);
   EXPECT_EQ(SPV_SUCCESS, value);
 
   // Check conversion via constructor.
   EXPECT_EQ(SPV_FAILED_MATCH,
-            spv_result_t(DiagnosticStream({}, nullptr, SPV_FAILED_MATCH)));
+            spv_result_t(DiagnosticStream({}, nullptr, "", SPV_FAILED_MATCH)));
 }
 
 TEST(
@@ -94,7 +95,7 @@ TEST(
 
   // Enclose the DiagnosticStream variables in a scope to force destruction.
   {
-    DiagnosticStream ds0({}, consumer, SPV_ERROR_INVALID_BINARY);
+    DiagnosticStream ds0({}, consumer, "", SPV_ERROR_INVALID_BINARY);
     ds0 << "First";
     DiagnosticStream ds1(std::move(ds0));
     ds1 << "Second";
@@ -103,4 +104,47 @@ TEST(
   EXPECT_THAT(messages.str(), Eq("FirstSecond"));
 }
 
-}  // anonymous namespace
+TEST(DiagnosticStream, MoveConstructorCanBeDirectlyShiftedTo) {
+  std::ostringstream messages;
+  int message_count = 0;
+  auto consumer = [&messages, &message_count](spv_message_level_t, const char*,
+                                              const spv_position_t&,
+                                              const char* msg) {
+    message_count++;
+    messages << msg;
+  };
+
+  // Enclose the DiagnosticStream variables in a scope to force destruction.
+  {
+    DiagnosticStream ds0({}, consumer, "", SPV_ERROR_INVALID_BINARY);
+    ds0 << "First";
+    std::move(ds0) << "Second";
+  }
+  EXPECT_THAT(message_count, Eq(1));
+  EXPECT_THAT(messages.str(), Eq("FirstSecond"));
+}
+
+TEST(DiagnosticStream, DiagnosticFromLambdaReturnCanStillBeUsed) {
+  std::ostringstream messages;
+  int message_count = 0;
+  auto consumer = [&messages, &message_count](spv_message_level_t, const char*,
+                                              const spv_position_t&,
+                                              const char* msg) {
+    message_count++;
+    messages << msg;
+  };
+
+  {
+    auto emitter = [&consumer]() -> DiagnosticStream {
+      DiagnosticStream ds0({}, consumer, "", SPV_ERROR_INVALID_BINARY);
+      ds0 << "First";
+      return ds0;
+    };
+    emitter() << "Second";
+  }
+  EXPECT_THAT(message_count, Eq(1));
+  EXPECT_THAT(messages.str(), Eq("FirstSecond"));
+}
+
+}  // namespace
+}  // namespace spvtools

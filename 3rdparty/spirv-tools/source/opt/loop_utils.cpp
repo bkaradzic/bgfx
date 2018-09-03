@@ -16,24 +16,25 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include "cfa.h"
-#include "opt/cfg.h"
-#include "opt/ir_builder.h"
-#include "opt/ir_context.h"
-#include "opt/loop_descriptor.h"
-#include "opt/loop_utils.h"
+#include "source/cfa.h"
+#include "source/opt/cfg.h"
+#include "source/opt/ir_builder.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/loop_descriptor.h"
+#include "source/opt/loop_utils.h"
 
 namespace spvtools {
 namespace opt {
 
 namespace {
 // Return true if |bb| is dominated by at least one block in |exits|
-static inline bool DominatesAnExit(
-    ir::BasicBlock* bb, const std::unordered_set<ir::BasicBlock*>& exits,
-    const opt::DominatorTree& dom_tree) {
-  for (ir::BasicBlock* e_bb : exits)
+static inline bool DominatesAnExit(BasicBlock* bb,
+                                   const std::unordered_set<BasicBlock*>& exits,
+                                   const DominatorTree& dom_tree) {
+  for (BasicBlock* e_bb : exits)
     if (dom_tree.Dominates(bb, e_bb)) return true;
   return false;
 }
@@ -47,9 +48,9 @@ static inline bool DominatesAnExit(
 // instruction to merge the incoming value according to exit blocks definition.
 class LCSSARewriter {
  public:
-  LCSSARewriter(ir::IRContext* context, const opt::DominatorTree& dom_tree,
-                const std::unordered_set<ir::BasicBlock*>& exit_bb,
-                ir::BasicBlock* merge_block)
+  LCSSARewriter(IRContext* context, const DominatorTree& dom_tree,
+                const std::unordered_set<BasicBlock*>& exit_bb,
+                BasicBlock* merge_block)
       : context_(context),
         cfg_(context_->cfg()),
         dom_tree_(dom_tree),
@@ -57,7 +58,7 @@ class LCSSARewriter {
         merge_block_id_(merge_block ? merge_block->id() : 0) {}
 
   struct UseRewriter {
-    explicit UseRewriter(LCSSARewriter* base, const ir::Instruction& def_insn)
+    explicit UseRewriter(LCSSARewriter* base, const Instruction& def_insn)
         : base_(base), def_insn_(def_insn) {}
     // Rewrites the use of |def_insn_| by the instruction |user| at the index
     // |operand_index| in terms of phi instruction. This recursively builds new
@@ -68,8 +69,7 @@ class LCSSARewriter {
     // block. This operation does not update the def/use manager, instead it
     // records what needs to be updated. The actual update is performed by
     // UpdateManagers.
-    void RewriteUse(ir::BasicBlock* bb, ir::Instruction* user,
-                    uint32_t operand_index) {
+    void RewriteUse(BasicBlock* bb, Instruction* user, uint32_t operand_index) {
       assert(
           (user->opcode() != SpvOpPhi || bb != GetParent(user)) &&
           "The root basic block must be the incoming edge if |user| is a phi "
@@ -79,7 +79,7 @@ class LCSSARewriter {
              "not "
              "phi instruction");
 
-      ir::Instruction* new_def = GetOrBuildIncoming(bb->id());
+      Instruction* new_def = GetOrBuildIncoming(bb->id());
 
       user->SetOperand(operand_index, {new_def->result_id()});
       rewritten_.insert(user);
@@ -87,29 +87,28 @@ class LCSSARewriter {
 
     // In-place update of some managers (avoid full invalidation).
     inline void UpdateManagers() {
-      opt::analysis::DefUseManager* def_use_mgr =
-          base_->context_->get_def_use_mgr();
+      analysis::DefUseManager* def_use_mgr = base_->context_->get_def_use_mgr();
       // Register all new definitions.
-      for (ir::Instruction* insn : rewritten_) {
+      for (Instruction* insn : rewritten_) {
         def_use_mgr->AnalyzeInstDef(insn);
       }
       // Register all new uses.
-      for (ir::Instruction* insn : rewritten_) {
+      for (Instruction* insn : rewritten_) {
         def_use_mgr->AnalyzeInstUse(insn);
       }
     }
 
    private:
     // Return the basic block that |instr| belongs to.
-    ir::BasicBlock* GetParent(ir::Instruction* instr) {
+    BasicBlock* GetParent(Instruction* instr) {
       return base_->context_->get_instr_block(instr);
     }
 
     // Builds a phi instruction for the basic block |bb|. The function assumes
     // that |defining_blocks| contains the list of basic block that define the
     // usable value for each predecessor of |bb|.
-    inline ir::Instruction* CreatePhiInstruction(
-        ir::BasicBlock* bb, const std::vector<uint32_t>& defining_blocks) {
+    inline Instruction* CreatePhiInstruction(
+        BasicBlock* bb, const std::vector<uint32_t>& defining_blocks) {
       std::vector<uint32_t> incomings;
       const std::vector<uint32_t>& bb_preds = base_->cfg_->preds(bb->id());
       assert(bb_preds.size() == defining_blocks.size());
@@ -118,10 +117,9 @@ class LCSSARewriter {
             GetOrBuildIncoming(defining_blocks[i])->result_id());
         incomings.push_back(bb_preds[i]);
       }
-      opt::InstructionBuilder builder(
-          base_->context_, &*bb->begin(),
-          ir::IRContext::kAnalysisInstrToBlockMapping);
-      ir::Instruction* incoming_phi =
+      InstructionBuilder builder(base_->context_, &*bb->begin(),
+                                 IRContext::kAnalysisInstrToBlockMapping);
+      Instruction* incoming_phi =
           builder.AddPhi(def_insn_.type_id(), incomings);
 
       rewritten_.insert(incoming_phi);
@@ -130,18 +128,17 @@ class LCSSARewriter {
 
     // Builds a phi instruction for the basic block |bb|, all incoming values
     // will be |value|.
-    inline ir::Instruction* CreatePhiInstruction(ir::BasicBlock* bb,
-                                                 const ir::Instruction& value) {
+    inline Instruction* CreatePhiInstruction(BasicBlock* bb,
+                                             const Instruction& value) {
       std::vector<uint32_t> incomings;
       const std::vector<uint32_t>& bb_preds = base_->cfg_->preds(bb->id());
       for (size_t i = 0; i < bb_preds.size(); i++) {
         incomings.push_back(value.result_id());
         incomings.push_back(bb_preds[i]);
       }
-      opt::InstructionBuilder builder(
-          base_->context_, &*bb->begin(),
-          ir::IRContext::kAnalysisInstrToBlockMapping);
-      ir::Instruction* incoming_phi =
+      InstructionBuilder builder(base_->context_, &*bb->begin(),
+                                 IRContext::kAnalysisInstrToBlockMapping);
+      Instruction* incoming_phi =
           builder.AddPhi(def_insn_.type_id(), incomings);
 
       rewritten_.insert(incoming_phi);
@@ -153,21 +150,21 @@ class LCSSARewriter {
     //   - return the common def used by all predecessors;
     //   - if there is no common def, then we build a new phi instr at the
     //     beginning of |bb_id| and return this new instruction.
-    ir::Instruction* GetOrBuildIncoming(uint32_t bb_id) {
+    Instruction* GetOrBuildIncoming(uint32_t bb_id) {
       assert(base_->cfg_->block(bb_id) != nullptr && "Unknown basic block");
 
-      ir::Instruction*& incoming_phi = bb_to_phi_[bb_id];
+      Instruction*& incoming_phi = bb_to_phi_[bb_id];
       if (incoming_phi) {
         return incoming_phi;
       }
 
-      ir::BasicBlock* bb = &*base_->cfg_->block(bb_id);
+      BasicBlock* bb = &*base_->cfg_->block(bb_id);
       // If this is an exit basic block, look if there already is an eligible
       // phi instruction. An eligible phi has |def_insn_| as all incoming
       // values.
       if (base_->exit_bb_.count(bb)) {
         // Look if there is an eligible phi in this block.
-        if (!bb->WhileEachPhiInst([&incoming_phi, this](ir::Instruction* phi) {
+        if (!bb->WhileEachPhiInst([&incoming_phi, this](Instruction* phi) {
               for (uint32_t i = 0; i < phi->NumInOperands(); i += 2) {
                 if (phi->GetSingleWordInOperand(i) != def_insn_.result_id())
                   return true;
@@ -208,9 +205,9 @@ class LCSSARewriter {
     }
 
     LCSSARewriter* base_;
-    const ir::Instruction& def_insn_;
-    std::unordered_map<uint32_t, ir::Instruction*> bb_to_phi_;
-    std::unordered_set<ir::Instruction*> rewritten_;
+    const Instruction& def_insn_;
+    std::unordered_map<uint32_t, Instruction*> bb_to_phi_;
+    std::unordered_set<Instruction*> rewritten_;
   };
 
  private:
@@ -226,7 +223,7 @@ class LCSSARewriter {
     if (defining_blocks.size()) return defining_blocks;
 
     // Check if one of the loop exit basic block dominates |bb_id|.
-    for (const ir::BasicBlock* e_bb : exit_bb_) {
+    for (const BasicBlock* e_bb : exit_bb_) {
       if (dom_tree_.Dominates(e_bb->id(), bb_id)) {
         defining_blocks.push_back(e_bb->id());
         return defining_blocks;
@@ -255,10 +252,10 @@ class LCSSARewriter {
     return defining_blocks;
   }
 
-  ir::IRContext* context_;
-  ir::CFG* cfg_;
-  const opt::DominatorTree& dom_tree_;
-  const std::unordered_set<ir::BasicBlock*>& exit_bb_;
+  IRContext* context_;
+  CFG* cfg_;
+  const DominatorTree& dom_tree_;
+  const std::unordered_set<BasicBlock*>& exit_bb_;
   uint32_t merge_block_id_;
   // This map represent the set of known paths. For each key, the vector
   // represent the set of blocks holding the definition to be used to build the
@@ -274,25 +271,25 @@ class LCSSARewriter {
 // Make the set |blocks| closed SSA. The set is closed SSA if all the uses
 // outside the set are phi instructions in exiting basic block set (hold by
 // |lcssa_rewriter|).
-inline void MakeSetClosedSSA(ir::IRContext* context, ir::Function* function,
+inline void MakeSetClosedSSA(IRContext* context, Function* function,
                              const std::unordered_set<uint32_t>& blocks,
-                             const std::unordered_set<ir::BasicBlock*>& exit_bb,
+                             const std::unordered_set<BasicBlock*>& exit_bb,
                              LCSSARewriter* lcssa_rewriter) {
-  ir::CFG& cfg = *context->cfg();
-  opt::DominatorTree& dom_tree =
-      context->GetDominatorAnalysis(function, cfg)->GetDomTree();
-  opt::analysis::DefUseManager* def_use_manager = context->get_def_use_mgr();
+  CFG& cfg = *context->cfg();
+  DominatorTree& dom_tree =
+      context->GetDominatorAnalysis(function)->GetDomTree();
+  analysis::DefUseManager* def_use_manager = context->get_def_use_mgr();
 
   for (uint32_t bb_id : blocks) {
-    ir::BasicBlock* bb = cfg.block(bb_id);
+    BasicBlock* bb = cfg.block(bb_id);
     // If bb does not dominate an exit block, then it cannot have escaping defs.
     if (!DominatesAnExit(bb, exit_bb, dom_tree)) continue;
-    for (ir::Instruction& inst : *bb) {
+    for (Instruction& inst : *bb) {
       LCSSARewriter::UseRewriter rewriter(lcssa_rewriter, inst);
       def_use_manager->ForEachUse(
           &inst, [&blocks, &rewriter, &exit_bb, context](
-                     ir::Instruction* use, uint32_t operand_index) {
-            ir::BasicBlock* use_parent = context->get_instr_block(use);
+                     Instruction* use, uint32_t operand_index) {
+            BasicBlock* use_parent = context->get_instr_block(use);
             assert(use_parent);
             if (blocks.count(use_parent->id())) return;
 
@@ -320,26 +317,25 @@ inline void MakeSetClosedSSA(ir::IRContext* context, ir::Function* function,
 }  // namespace
 
 void LoopUtils::CreateLoopDedicatedExits() {
-  ir::Function* function = loop_->GetHeaderBlock()->GetParent();
-  ir::LoopDescriptor& loop_desc = *context_->GetLoopDescriptor(function);
-  ir::CFG& cfg = *context_->cfg();
-  opt::analysis::DefUseManager* def_use_mgr = context_->get_def_use_mgr();
+  Function* function = loop_->GetHeaderBlock()->GetParent();
+  LoopDescriptor& loop_desc = *context_->GetLoopDescriptor(function);
+  CFG& cfg = *context_->cfg();
+  analysis::DefUseManager* def_use_mgr = context_->get_def_use_mgr();
 
-  const ir::IRContext::Analysis PreservedAnalyses =
-      ir::IRContext::kAnalysisDefUse |
-      ir::IRContext::kAnalysisInstrToBlockMapping;
+  const IRContext::Analysis PreservedAnalyses =
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
 
   // Gathers the set of basic block that are not in this loop and have at least
   // one predecessor in the loop and one not in the loop.
   std::unordered_set<uint32_t> exit_bb_set;
   loop_->GetExitBlocks(&exit_bb_set);
 
-  std::unordered_set<ir::BasicBlock*> new_loop_exits;
+  std::unordered_set<BasicBlock*> new_loop_exits;
   bool made_change = false;
   // For each block, we create a new one that gathers all branches from
   // the loop and fall into the block.
   for (uint32_t non_dedicate_id : exit_bb_set) {
-    ir::BasicBlock* non_dedicate = cfg.block(non_dedicate_id);
+    BasicBlock* non_dedicate = cfg.block(non_dedicate_id);
     const std::vector<uint32_t>& bb_pred = cfg.preds(non_dedicate_id);
     // Ignore the block if all the predecessors are in the loop.
     if (std::all_of(bb_pred.begin(), bb_pred.end(),
@@ -349,23 +345,22 @@ void LoopUtils::CreateLoopDedicatedExits() {
     }
 
     made_change = true;
-    ir::Function::iterator insert_pt = function->begin();
+    Function::iterator insert_pt = function->begin();
     for (; insert_pt != function->end() && &*insert_pt != non_dedicate;
          ++insert_pt) {
     }
     assert(insert_pt != function->end() && "Basic Block not found");
 
     // Create the dedicate exit basic block.
-    ir::BasicBlock& exit = *insert_pt.InsertBefore(
-        std::unique_ptr<ir::BasicBlock>(new ir::BasicBlock(
-            std::unique_ptr<ir::Instruction>(new ir::Instruction(
-                context_, SpvOpLabel, 0, context_->TakeNextId(), {})))));
+    BasicBlock& exit = *insert_pt.InsertBefore(std::unique_ptr<BasicBlock>(
+        new BasicBlock(std::unique_ptr<Instruction>(new Instruction(
+            context_, SpvOpLabel, 0, context_->TakeNextId(), {})))));
     exit.SetParent(function);
 
     // Redirect in loop predecessors to |exit| block.
     for (uint32_t exit_pred_id : bb_pred) {
       if (loop_->IsInsideLoop(exit_pred_id)) {
-        ir::BasicBlock* pred_block = cfg.block(exit_pred_id);
+        BasicBlock* pred_block = cfg.block(exit_pred_id);
         pred_block->ForEachSuccessorLabel([non_dedicate, &exit](uint32_t* id) {
           if (*id == non_dedicate->id()) *id = exit.id();
         });
@@ -380,50 +375,50 @@ void LoopUtils::CreateLoopDedicatedExits() {
     def_use_mgr->AnalyzeInstDefUse(exit.GetLabelInst());
     context_->set_instr_block(exit.GetLabelInst(), &exit);
 
-    opt::InstructionBuilder builder(context_, &exit, PreservedAnalyses);
+    InstructionBuilder builder(context_, &exit, PreservedAnalyses);
     // Now jump from our dedicate basic block to the old exit.
     // We also reset the insert point so all instructions are inserted before
     // the branch.
     builder.SetInsertPoint(builder.AddBranch(non_dedicate->id()));
-    non_dedicate->ForEachPhiInst([&builder, &exit, def_use_mgr,
-                                  this](ir::Instruction* phi) {
-      // New phi operands for this instruction.
-      std::vector<uint32_t> new_phi_op;
-      // Phi operands for the dedicated exit block.
-      std::vector<uint32_t> exit_phi_op;
-      for (uint32_t i = 0; i < phi->NumInOperands(); i += 2) {
-        uint32_t def_id = phi->GetSingleWordInOperand(i);
-        uint32_t incoming_id = phi->GetSingleWordInOperand(i + 1);
-        if (loop_->IsInsideLoop(incoming_id)) {
-          exit_phi_op.push_back(def_id);
-          exit_phi_op.push_back(incoming_id);
-        } else {
-          new_phi_op.push_back(def_id);
-          new_phi_op.push_back(incoming_id);
-        }
-      }
+    non_dedicate->ForEachPhiInst(
+        [&builder, &exit, def_use_mgr, this](Instruction* phi) {
+          // New phi operands for this instruction.
+          std::vector<uint32_t> new_phi_op;
+          // Phi operands for the dedicated exit block.
+          std::vector<uint32_t> exit_phi_op;
+          for (uint32_t i = 0; i < phi->NumInOperands(); i += 2) {
+            uint32_t def_id = phi->GetSingleWordInOperand(i);
+            uint32_t incoming_id = phi->GetSingleWordInOperand(i + 1);
+            if (loop_->IsInsideLoop(incoming_id)) {
+              exit_phi_op.push_back(def_id);
+              exit_phi_op.push_back(incoming_id);
+            } else {
+              new_phi_op.push_back(def_id);
+              new_phi_op.push_back(incoming_id);
+            }
+          }
 
-      // Build the new phi instruction dedicated exit block.
-      ir::Instruction* exit_phi = builder.AddPhi(phi->type_id(), exit_phi_op);
-      // Build the new incoming branch.
-      new_phi_op.push_back(exit_phi->result_id());
-      new_phi_op.push_back(exit.id());
-      // Rewrite operands.
-      uint32_t idx = 0;
-      for (; idx < new_phi_op.size(); idx++)
-        phi->SetInOperand(idx, {new_phi_op[idx]});
-      // Remove extra operands, from last to first (more efficient).
-      for (uint32_t j = phi->NumInOperands() - 1; j >= idx; j--)
-        phi->RemoveInOperand(j);
-      // Update the def/use manager for this |phi|.
-      def_use_mgr->AnalyzeInstUse(phi);
-    });
+          // Build the new phi instruction dedicated exit block.
+          Instruction* exit_phi = builder.AddPhi(phi->type_id(), exit_phi_op);
+          // Build the new incoming branch.
+          new_phi_op.push_back(exit_phi->result_id());
+          new_phi_op.push_back(exit.id());
+          // Rewrite operands.
+          uint32_t idx = 0;
+          for (; idx < new_phi_op.size(); idx++)
+            phi->SetInOperand(idx, {new_phi_op[idx]});
+          // Remove extra operands, from last to first (more efficient).
+          for (uint32_t j = phi->NumInOperands() - 1; j >= idx; j--)
+            phi->RemoveInOperand(j);
+          // Update the def/use manager for this |phi|.
+          def_use_mgr->AnalyzeInstUse(phi);
+        });
     // Update the CFG.
     cfg.RegisterBlock(&exit);
     cfg.RemoveNonExistingEdges(non_dedicate->id());
     new_loop_exits.insert(&exit);
     // If non_dedicate is in a loop, add the new dedicated exit in that loop.
-    if (ir::Loop* parent_loop = loop_desc[non_dedicate])
+    if (Loop* parent_loop = loop_desc[non_dedicate])
       parent_loop->AddBasicBlock(&exit);
   }
 
@@ -433,20 +428,20 @@ void LoopUtils::CreateLoopDedicatedExits() {
 
   if (made_change) {
     context_->InvalidateAnalysesExceptFor(
-        PreservedAnalyses | ir::IRContext::kAnalysisCFG |
-        ir::IRContext::Analysis::kAnalysisLoopAnalysis);
+        PreservedAnalyses | IRContext::kAnalysisCFG |
+        IRContext::Analysis::kAnalysisLoopAnalysis);
   }
 }
 
 void LoopUtils::MakeLoopClosedSSA() {
   CreateLoopDedicatedExits();
 
-  ir::Function* function = loop_->GetHeaderBlock()->GetParent();
-  ir::CFG& cfg = *context_->cfg();
-  opt::DominatorTree& dom_tree =
-      context_->GetDominatorAnalysis(function, cfg)->GetDomTree();
+  Function* function = loop_->GetHeaderBlock()->GetParent();
+  CFG& cfg = *context_->cfg();
+  DominatorTree& dom_tree =
+      context_->GetDominatorAnalysis(function)->GetDomTree();
 
-  std::unordered_set<ir::BasicBlock*> exit_bb;
+  std::unordered_set<BasicBlock*> exit_bb;
   {
     std::unordered_set<uint32_t> exit_bb_id;
     loop_->GetExitBlocks(&exit_bb_id);
@@ -476,27 +471,94 @@ void LoopUtils::MakeLoopClosedSSA() {
   }
 
   context_->InvalidateAnalysesExceptFor(
-      ir::IRContext::Analysis::kAnalysisDefUse |
-      ir::IRContext::Analysis::kAnalysisCFG |
-      ir::IRContext::Analysis::kAnalysisDominatorAnalysis |
-      ir::IRContext::Analysis::kAnalysisLoopAnalysis);
+      IRContext::Analysis::kAnalysisCFG |
+      IRContext::Analysis::kAnalysisDominatorAnalysis |
+      IRContext::Analysis::kAnalysisLoopAnalysis);
 }
 
-ir::Loop* LoopUtils::CloneLoop(
+Loop* LoopUtils::CloneLoop(LoopCloningResult* cloning_result) const {
+  // Compute the structured order of the loop basic blocks and store it in the
+  // vector ordered_loop_blocks.
+  std::vector<BasicBlock*> ordered_loop_blocks;
+  loop_->ComputeLoopStructuredOrder(&ordered_loop_blocks);
+
+  // Clone the loop.
+  return CloneLoop(cloning_result, ordered_loop_blocks);
+}
+
+Loop* LoopUtils::CloneAndAttachLoopToHeader(LoopCloningResult* cloning_result) {
+  // Clone the loop.
+  Loop* new_loop = CloneLoop(cloning_result);
+
+  // Create a new exit block/label for the new loop.
+  std::unique_ptr<Instruction> new_label{new Instruction(
+      context_, SpvOp::SpvOpLabel, 0, context_->TakeNextId(), {})};
+  std::unique_ptr<BasicBlock> new_exit_bb{new BasicBlock(std::move(new_label))};
+  new_exit_bb->SetParent(loop_->GetMergeBlock()->GetParent());
+
+  // Create an unconditional branch to the header block.
+  InstructionBuilder builder{context_, new_exit_bb.get()};
+  builder.AddBranch(loop_->GetHeaderBlock()->id());
+
+  // Save the ids of the new and old merge block.
+  const uint32_t old_merge_block = loop_->GetMergeBlock()->id();
+  const uint32_t new_merge_block = new_exit_bb->id();
+
+  // Replace the uses of the old merge block in the new loop with the new merge
+  // block.
+  for (std::unique_ptr<BasicBlock>& basic_block : cloning_result->cloned_bb_) {
+    for (Instruction& inst : *basic_block) {
+      // For each operand in each instruction check if it is using the old merge
+      // block and change it to be the new merge block.
+      auto replace_merge_use = [old_merge_block,
+                                new_merge_block](uint32_t* id) {
+        if (*id == old_merge_block) *id = new_merge_block;
+      };
+      inst.ForEachInOperand(replace_merge_use);
+    }
+  }
+
+  const uint32_t old_header = loop_->GetHeaderBlock()->id();
+  const uint32_t new_header = new_loop->GetHeaderBlock()->id();
+  analysis::DefUseManager* def_use = context_->get_def_use_mgr();
+
+  def_use->ForEachUse(old_header,
+                      [new_header, this](Instruction* inst, uint32_t operand) {
+                        if (!this->loop_->IsInsideLoop(inst))
+                          inst->SetOperand(operand, {new_header});
+                      });
+
+  def_use->ForEachUse(
+      loop_->GetOrCreatePreHeaderBlock()->id(),
+      [new_merge_block, this](Instruction* inst, uint32_t operand) {
+        if (this->loop_->IsInsideLoop(inst))
+          inst->SetOperand(operand, {new_merge_block});
+
+      });
+  new_loop->SetMergeBlock(new_exit_bb.get());
+
+  new_loop->SetPreHeaderBlock(loop_->GetPreHeaderBlock());
+
+  // Add the new block into the cloned instructions.
+  cloning_result->cloned_bb_.push_back(std::move(new_exit_bb));
+
+  return new_loop;
+}
+
+Loop* LoopUtils::CloneLoop(
     LoopCloningResult* cloning_result,
-    const std::vector<ir::BasicBlock*>& ordered_loop_blocks) const {
+    const std::vector<BasicBlock*>& ordered_loop_blocks) const {
   analysis::DefUseManager* def_use_mgr = context_->get_def_use_mgr();
 
-  std::unique_ptr<ir::Loop> new_loop = MakeUnique<ir::Loop>(context_);
-  if (loop_->HasParent()) new_loop->SetParent(loop_->GetParent());
+  std::unique_ptr<Loop> new_loop = MakeUnique<Loop>(context_);
 
-  ir::CFG& cfg = *context_->cfg();
+  CFG& cfg = *context_->cfg();
 
   // Clone and place blocks in a SPIR-V compliant order (dominators first).
-  for (ir::BasicBlock* old_bb : ordered_loop_blocks) {
+  for (BasicBlock* old_bb : ordered_loop_blocks) {
     // For each basic block in the loop, we clone it and register the mapping
     // between old and new ids.
-    ir::BasicBlock* new_bb = old_bb->Clone(context_);
+    BasicBlock* new_bb = old_bb->Clone(context_);
     new_bb->SetParent(&function_);
     new_bb->GetLabelInst()->SetResultId(context_->TakeNextId());
     def_use_mgr->AnalyzeInstDef(new_bb->GetLabelInst());
@@ -509,24 +571,26 @@ ir::Loop* LoopUtils::CloneLoop(
 
     if (loop_->IsInsideLoop(old_bb)) new_loop->AddBasicBlock(new_bb);
 
-    for (auto& inst : *new_bb) {
-      if (inst.HasResultId()) {
-        uint32_t old_result_id = inst.result_id();
-        inst.SetResultId(context_->TakeNextId());
-        cloning_result->value_map_[old_result_id] = inst.result_id();
+    for (auto new_inst = new_bb->begin(), old_inst = old_bb->begin();
+         new_inst != new_bb->end(); ++new_inst, ++old_inst) {
+      cloning_result->ptr_map_[&*new_inst] = &*old_inst;
+      if (new_inst->HasResultId()) {
+        new_inst->SetResultId(context_->TakeNextId());
+        cloning_result->value_map_[old_inst->result_id()] =
+            new_inst->result_id();
 
         // Only look at the defs for now, uses are not updated yet.
-        def_use_mgr->AnalyzeInstDef(&inst);
+        def_use_mgr->AnalyzeInstDef(&*new_inst);
       }
     }
   }
 
   // All instructions (including all labels) have been cloned,
   // remap instruction operands id with the new ones.
-  for (std::unique_ptr<ir::BasicBlock>& bb_ref : cloning_result->cloned_bb_) {
-    ir::BasicBlock* bb = bb_ref.get();
+  for (std::unique_ptr<BasicBlock>& bb_ref : cloning_result->cloned_bb_) {
+    BasicBlock* bb = bb_ref.get();
 
-    for (ir::Instruction& insn : *bb) {
+    for (Instruction& insn : *bb) {
       insn.ForEachInId([cloning_result](uint32_t* old_id) {
         // If the operand is defined in the loop, remap the id.
         auto id_it = cloning_result->value_map_.find(*old_id);
@@ -548,32 +612,31 @@ ir::Loop* LoopUtils::CloneLoop(
 }
 
 void LoopUtils::PopulateLoopNest(
-    ir::Loop* new_loop, const LoopCloningResult& cloning_result) const {
-  std::unordered_map<ir::Loop*, ir::Loop*> loop_mapping;
+    Loop* new_loop, const LoopCloningResult& cloning_result) const {
+  std::unordered_map<Loop*, Loop*> loop_mapping;
   loop_mapping[loop_] = new_loop;
 
   if (loop_->HasParent()) loop_->GetParent()->AddNestedLoop(new_loop);
   PopulateLoopDesc(new_loop, loop_, cloning_result);
 
-  for (ir::Loop& sub_loop :
-       ir::make_range(++opt::TreeDFIterator<ir::Loop>(loop_),
-                      opt::TreeDFIterator<ir::Loop>())) {
-    ir::Loop* cloned = new ir::Loop(context_);
-    if (ir::Loop* parent = loop_mapping[sub_loop.GetParent()])
+  for (Loop& sub_loop :
+       make_range(++TreeDFIterator<Loop>(loop_), TreeDFIterator<Loop>())) {
+    Loop* cloned = new Loop(context_);
+    if (Loop* parent = loop_mapping[sub_loop.GetParent()])
       parent->AddNestedLoop(cloned);
     loop_mapping[&sub_loop] = cloned;
     PopulateLoopDesc(cloned, &sub_loop, cloning_result);
   }
 
-  loop_desc_->AddLoopNest(std::unique_ptr<ir::Loop>(new_loop));
+  loop_desc_->AddLoopNest(std::unique_ptr<Loop>(new_loop));
 }
 
 // Populates |new_loop| descriptor according to |old_loop|'s one.
 void LoopUtils::PopulateLoopDesc(
-    ir::Loop* new_loop, ir::Loop* old_loop,
+    Loop* new_loop, Loop* old_loop,
     const LoopCloningResult& cloning_result) const {
   for (uint32_t bb_id : old_loop->GetBlocks()) {
-    ir::BasicBlock* bb = cloning_result.old_to_new_bb_.at(bb_id);
+    BasicBlock* bb = cloning_result.old_to_new_bb_.at(bb_id);
     new_loop->AddBasicBlock(bb);
   }
   new_loop->SetHeaderBlock(
@@ -581,12 +644,15 @@ void LoopUtils::PopulateLoopDesc(
   if (old_loop->GetLatchBlock())
     new_loop->SetLatchBlock(
         cloning_result.old_to_new_bb_.at(old_loop->GetLatchBlock()->id()));
+  if (old_loop->GetContinueBlock())
+    new_loop->SetContinueBlock(
+        cloning_result.old_to_new_bb_.at(old_loop->GetContinueBlock()->id()));
   if (old_loop->GetMergeBlock()) {
     auto it =
         cloning_result.old_to_new_bb_.find(old_loop->GetMergeBlock()->id());
-    ir::BasicBlock* bb = it != cloning_result.old_to_new_bb_.end()
-                             ? it->second
-                             : old_loop->GetMergeBlock();
+    BasicBlock* bb = it != cloning_result.old_to_new_bb_.end()
+                         ? it->second
+                         : old_loop->GetMergeBlock();
     new_loop->SetMergeBlock(bb);
   }
   if (old_loop->GetPreHeaderBlock()) {
@@ -595,6 +661,27 @@ void LoopUtils::PopulateLoopDesc(
     if (it != cloning_result.old_to_new_bb_.end()) {
       new_loop->SetPreHeaderBlock(it->second);
     }
+  }
+}
+
+// Class to gather some metrics about a region of interest.
+void CodeMetrics::Analyze(const Loop& loop) {
+  CFG& cfg = *loop.GetContext()->cfg();
+
+  roi_size_ = 0;
+  block_sizes_.clear();
+
+  for (uint32_t id : loop.GetBlocks()) {
+    const BasicBlock* bb = cfg.block(id);
+    size_t bb_size = 0;
+    bb->ForEachInst([&bb_size](const Instruction* insn) {
+      if (insn->opcode() == SpvOpLabel) return;
+      if (insn->IsNop()) return;
+      if (insn->opcode() == SpvOpPhi) return;
+      bb_size++;
+    });
+    block_sizes_[bb->id()] = bb_size;
+    roi_size_ += bb_size;
   }
 }
 

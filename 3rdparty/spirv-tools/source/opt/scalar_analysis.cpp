@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "opt/scalar_analysis.h"
+#include "source/opt/scalar_analysis.h"
 
 #include <algorithm>
 #include <functional>
 #include <string>
 #include <utility>
 
-#include "opt/ir_context.h"
+#include "source/opt/ir_context.h"
 
 // Transforms a given scalar operation instruction into a DAG representation.
 //
@@ -48,8 +48,8 @@ namespace opt {
 
 uint32_t SENode::NumberOfNodes = 0;
 
-ScalarEvolutionAnalysis::ScalarEvolutionAnalysis(ir::IRContext* context)
-    : context_(context) {
+ScalarEvolutionAnalysis::ScalarEvolutionAnalysis(IRContext* context)
+    : context_(context), pretend_equal_{} {
   // Create and cached the CantComputeNode.
   cached_cant_compute_ =
       GetCachedOrAdd(std::unique_ptr<SECantCompute>(new SECantCompute(this)));
@@ -73,14 +73,22 @@ SENode* ScalarEvolutionAnalysis::CreateConstant(int64_t integer) {
 }
 
 SENode* ScalarEvolutionAnalysis::CreateRecurrentExpression(
-    const ir::Loop* loop, SENode* offset, SENode* coefficient) {
+    const Loop* loop, SENode* offset, SENode* coefficient) {
   assert(loop && "Recurrent add expressions must have a valid loop.");
 
   // If operands are can't compute then the whole graph is can't compute.
   if (offset->IsCantCompute() || coefficient->IsCantCompute())
     return CreateCantComputeNode();
 
-  std::unique_ptr<SERecurrentNode> phi_node{new SERecurrentNode(this, loop)};
+  const Loop* loop_to_use = nullptr;
+  if (pretend_equal_[loop]) {
+    loop_to_use = pretend_equal_[loop];
+  } else {
+    loop_to_use = loop;
+  }
+
+  std::unique_ptr<SERecurrentNode> phi_node{
+      new SERecurrentNode(this, loop_to_use)};
   phi_node->AddOffset(offset);
   phi_node->AddCoefficient(coefficient);
 
@@ -88,10 +96,10 @@ SENode* ScalarEvolutionAnalysis::CreateRecurrentExpression(
 }
 
 SENode* ScalarEvolutionAnalysis::AnalyzeMultiplyOp(
-    const ir::Instruction* multiply) {
+    const Instruction* multiply) {
   assert(multiply->opcode() == SpvOp::SpvOpIMul &&
          "Multiply node did not come from a multiply instruction");
-  opt::analysis::DefUseManager* def_use = context_->get_def_use_mgr();
+  analysis::DefUseManager* def_use = context_->get_def_use_mgr();
 
   SENode* op1 =
       AnalyzeInstruction(def_use->GetDef(multiply->GetSingleWordInOperand(0)));
@@ -154,8 +162,7 @@ SENode* ScalarEvolutionAnalysis::CreateAddNode(SENode* operand_1,
   return GetCachedOrAdd(std::move(add_node));
 }
 
-SENode* ScalarEvolutionAnalysis::AnalyzeInstruction(
-    const ir::Instruction* inst) {
+SENode* ScalarEvolutionAnalysis::AnalyzeInstruction(const Instruction* inst) {
   auto itr = recurrent_node_map_.find(inst);
   if (itr != recurrent_node_map_.end()) return itr->second;
 
@@ -188,7 +195,7 @@ SENode* ScalarEvolutionAnalysis::AnalyzeInstruction(
   return output;
 }
 
-SENode* ScalarEvolutionAnalysis::AnalyzeConstant(const ir::Instruction* inst) {
+SENode* ScalarEvolutionAnalysis::AnalyzeConstant(const Instruction* inst) {
   if (inst->opcode() == SpvOp::SpvOpConstantNull) return CreateConstant(0);
 
   assert(inst->opcode() == SpvOp::SpvOpConstant);
@@ -196,12 +203,12 @@ SENode* ScalarEvolutionAnalysis::AnalyzeConstant(const ir::Instruction* inst) {
   int64_t value = 0;
 
   // Look up the instruction in the constant manager.
-  const opt::analysis::Constant* constant =
+  const analysis::Constant* constant =
       context_->get_constant_mgr()->FindDeclaredConstant(inst->result_id());
 
   if (!constant) return CreateCantComputeNode();
 
-  const opt::analysis::IntConstant* int_constant = constant->AsIntConstant();
+  const analysis::IntConstant* int_constant = constant->AsIntConstant();
 
   // Exit out if it is a 64 bit integer.
   if (!int_constant || int_constant->words().size() != 1)
@@ -218,12 +225,12 @@ SENode* ScalarEvolutionAnalysis::AnalyzeConstant(const ir::Instruction* inst) {
 
 // Handles both addition and subtraction. If the |sub| flag is set then the
 // addition will be op1+(-op2) otherwise op1+op2.
-SENode* ScalarEvolutionAnalysis::AnalyzeAddOp(const ir::Instruction* inst) {
+SENode* ScalarEvolutionAnalysis::AnalyzeAddOp(const Instruction* inst) {
   assert((inst->opcode() == SpvOp::SpvOpIAdd ||
           inst->opcode() == SpvOp::SpvOpISub) &&
          "Add node must be created from a OpIAdd or OpISub instruction");
 
-  opt::analysis::DefUseManager* def_use = context_->get_def_use_mgr();
+  analysis::DefUseManager* def_use = context_->get_def_use_mgr();
 
   SENode* op1 =
       AnalyzeInstruction(def_use->GetDef(inst->GetSingleWordInOperand(0)));
@@ -239,30 +246,29 @@ SENode* ScalarEvolutionAnalysis::AnalyzeAddOp(const ir::Instruction* inst) {
   return CreateAddNode(op1, op2);
 }
 
-SENode* ScalarEvolutionAnalysis::AnalyzePhiInstruction(
-    const ir::Instruction* phi) {
+SENode* ScalarEvolutionAnalysis::AnalyzePhiInstruction(const Instruction* phi) {
   // The phi should only have two incoming value pairs.
   if (phi->NumInOperands() != 4) {
     return CreateCantComputeNode();
   }
 
-  opt::analysis::DefUseManager* def_use = context_->get_def_use_mgr();
+  analysis::DefUseManager* def_use = context_->get_def_use_mgr();
 
   // Get the basic block this instruction belongs to.
-  ir::BasicBlock* basic_block =
-      context_->get_instr_block(const_cast<ir::Instruction*>(phi));
+  BasicBlock* basic_block =
+      context_->get_instr_block(const_cast<Instruction*>(phi));
 
   // And then the function that the basic blocks belongs to.
-  ir::Function* function = basic_block->GetParent();
+  Function* function = basic_block->GetParent();
 
   // Use the function to get the loop descriptor.
-  ir::LoopDescriptor* loop_descriptor = context_->GetLoopDescriptor(function);
+  LoopDescriptor* loop_descriptor = context_->GetLoopDescriptor(function);
 
   // We only handle phis in loops at the moment.
   if (!loop_descriptor) return CreateCantComputeNode();
 
   // Get the innermost loop which this block belongs to.
-  ir::Loop* loop = (*loop_descriptor)[basic_block->id()];
+  Loop* loop = (*loop_descriptor)[basic_block->id()];
 
   // If the loop doesn't exist or doesn't have a preheader or latch block, exit
   // out.
@@ -270,7 +276,14 @@ SENode* ScalarEvolutionAnalysis::AnalyzePhiInstruction(
       loop->GetHeaderBlock() != basic_block)
     return recurrent_node_map_[phi] = CreateCantComputeNode();
 
-  std::unique_ptr<SERecurrentNode> phi_node{new SERecurrentNode(this, loop)};
+  const Loop* loop_to_use = nullptr;
+  if (pretend_equal_[loop]) {
+    loop_to_use = pretend_equal_[loop];
+  } else {
+    loop_to_use = loop;
+  }
+  std::unique_ptr<SERecurrentNode> phi_node{
+      new SERecurrentNode(this, loop_to_use)};
 
   // We add the node to this map to allow it to be returned before the node is
   // fully built. This is needed as the subsequent call to AnalyzeInstruction
@@ -283,7 +296,7 @@ SENode* ScalarEvolutionAnalysis::AnalyzePhiInstruction(
     uint32_t value_id = phi->GetSingleWordInOperand(i);
     uint32_t incoming_label_id = phi->GetSingleWordInOperand(i + 1);
 
-    ir::Instruction* value_inst = def_use->GetDef(value_id);
+    Instruction* value_inst = def_use->GetDef(value_id);
     SENode* value_node = AnalyzeInstruction(value_inst);
 
     // If any operand is CantCompute then the whole graph is CantCompute.
@@ -337,7 +350,7 @@ SENode* ScalarEvolutionAnalysis::AnalyzePhiInstruction(
 }
 
 SENode* ScalarEvolutionAnalysis::CreateValueUnknownNode(
-    const ir::Instruction* inst) {
+    const Instruction* inst) {
   std::unique_ptr<SEValueUnknown> load_node{
       new SEValueUnknown(this, inst->result_id())};
   return GetCachedOrAdd(std::move(load_node));
@@ -360,11 +373,11 @@ SENode* ScalarEvolutionAnalysis::GetCachedOrAdd(
   return raw_ptr_to_node;
 }
 
-bool ScalarEvolutionAnalysis::IsLoopInvariant(const ir::Loop* loop,
+bool ScalarEvolutionAnalysis::IsLoopInvariant(const Loop* loop,
                                               const SENode* node) const {
   for (auto itr = node->graph_cbegin(); itr != node->graph_cend(); ++itr) {
     if (const SERecurrentNode* rec = itr->AsSERecurrentNode()) {
-      const ir::BasicBlock* header = rec->GetLoop()->GetHeaderBlock();
+      const BasicBlock* header = rec->GetLoop()->GetHeaderBlock();
 
       // If the loop which the recurrent expression belongs to is either |loop
       // or a nested loop inside |loop| then we assume it is variant.
@@ -382,7 +395,7 @@ bool ScalarEvolutionAnalysis::IsLoopInvariant(const ir::Loop* loop,
 }
 
 SENode* ScalarEvolutionAnalysis::GetCoefficientFromRecurrentTerm(
-    SENode* node, const ir::Loop* loop) {
+    SENode* node, const Loop* loop) {
   // Traverse the DAG to find the recurrent expression belonging to |loop|.
   for (auto itr = node->graph_begin(); itr != node->graph_end(); ++itr) {
     SERecurrentNode* rec = itr->AsSERecurrentNode();
@@ -419,7 +432,7 @@ SENode* ScalarEvolutionAnalysis::UpdateChildNode(SENode* parent,
 // Rebuild the |node| eliminating, if it exists, the recurrent term which
 // belongs to the |loop|.
 SENode* ScalarEvolutionAnalysis::BuildGraphWithoutRecurrentTerm(
-    SENode* node, const ir::Loop* loop) {
+    SENode* node, const Loop* loop) {
   // If the node is already a recurrent expression belonging to loop then just
   // return the offset.
   SERecurrentNode* recurrent = node->AsSERecurrentNode();
@@ -452,8 +465,8 @@ SENode* ScalarEvolutionAnalysis::BuildGraphWithoutRecurrentTerm(
 
 // Return the recurrent term belonging to |loop| if it appears in the graph
 // starting at |node| or null if it doesn't.
-SERecurrentNode* ScalarEvolutionAnalysis::GetRecurrentTerm(
-    SENode* node, const ir::Loop* loop) {
+SERecurrentNode* ScalarEvolutionAnalysis::GetRecurrentTerm(SENode* node,
+                                                           const Loop* loop) {
   for (auto itr = node->graph_begin(); itr != node->graph_end(); ++itr) {
     SERecurrentNode* rec = itr->AsSERecurrentNode();
     if (rec && rec->GetLoop() == loop) {
@@ -632,6 +645,343 @@ void SENode::DumpDot(std::ostream& out, bool recurse) const {
     out << unique_id << " -> " << child_unique_id << " \n";
     if (recurse) child->DumpDot(out, true);
   }
+}
+
+namespace {
+class IsGreaterThanZero {
+ public:
+  explicit IsGreaterThanZero(IRContext* context) : context_(context) {}
+
+  // Determine if the value of |node| is always strictly greater than zero if
+  // |or_equal_zero| is false or greater or equal to zero if |or_equal_zero| is
+  // true. It returns true is the evaluation was able to conclude something, in
+  // which case the result is stored in |result|.
+  // The algorithm work by going through all the nodes and determine the
+  // sign of each of them.
+  bool Eval(const SENode* node, bool or_equal_zero, bool* result) {
+    *result = false;
+    switch (Visit(node)) {
+      case Signedness::kPositiveOrNegative: {
+        return false;
+      }
+      case Signedness::kStrictlyNegative: {
+        *result = false;
+        break;
+      }
+      case Signedness::kNegative: {
+        if (!or_equal_zero) {
+          return false;
+        }
+        *result = false;
+        break;
+      }
+      case Signedness::kStrictlyPositive: {
+        *result = true;
+        break;
+      }
+      case Signedness::kPositive: {
+        if (!or_equal_zero) {
+          return false;
+        }
+        *result = true;
+        break;
+      }
+    }
+    return true;
+  }
+
+ private:
+  enum class Signedness {
+    kPositiveOrNegative,  // Yield a value positive or negative.
+    kStrictlyNegative,    // Yield a value strictly less than 0.
+    kNegative,            // Yield a value less or equal to 0.
+    kStrictlyPositive,    // Yield a value strictly greater than 0.
+    kPositive             // Yield a value greater or equal to 0.
+  };
+
+  // Combine the signedness according to arithmetic rules of a given operator.
+  using Combiner = std::function<Signedness(Signedness, Signedness)>;
+
+  // Returns a functor to interpret the signedness of 2 expressions as if they
+  // were added.
+  Combiner GetAddCombiner() const {
+    return [](Signedness lhs, Signedness rhs) {
+      switch (lhs) {
+        case Signedness::kPositiveOrNegative:
+          break;
+        case Signedness::kStrictlyNegative:
+          if (rhs == Signedness::kStrictlyNegative ||
+              rhs == Signedness::kNegative)
+            return lhs;
+          break;
+        case Signedness::kNegative: {
+          if (rhs == Signedness::kStrictlyNegative)
+            return Signedness::kStrictlyNegative;
+          if (rhs == Signedness::kNegative) return Signedness::kNegative;
+          break;
+        }
+        case Signedness::kStrictlyPositive: {
+          if (rhs == Signedness::kStrictlyPositive ||
+              rhs == Signedness::kPositive) {
+            return Signedness::kStrictlyPositive;
+          }
+          break;
+        }
+        case Signedness::kPositive: {
+          if (rhs == Signedness::kStrictlyPositive)
+            return Signedness::kStrictlyPositive;
+          if (rhs == Signedness::kPositive) return Signedness::kPositive;
+          break;
+        }
+      }
+      return Signedness::kPositiveOrNegative;
+    };
+  }
+
+  // Returns a functor to interpret the signedness of 2 expressions as if they
+  // were multiplied.
+  Combiner GetMulCombiner() const {
+    return [](Signedness lhs, Signedness rhs) {
+      switch (lhs) {
+        case Signedness::kPositiveOrNegative:
+          break;
+        case Signedness::kStrictlyNegative: {
+          switch (rhs) {
+            case Signedness::kPositiveOrNegative: {
+              break;
+            }
+            case Signedness::kStrictlyNegative: {
+              return Signedness::kStrictlyPositive;
+            }
+            case Signedness::kNegative: {
+              return Signedness::kPositive;
+            }
+            case Signedness::kStrictlyPositive: {
+              return Signedness::kStrictlyNegative;
+            }
+            case Signedness::kPositive: {
+              return Signedness::kNegative;
+            }
+          }
+          break;
+        }
+        case Signedness::kNegative: {
+          switch (rhs) {
+            case Signedness::kPositiveOrNegative: {
+              break;
+            }
+            case Signedness::kStrictlyNegative:
+            case Signedness::kNegative: {
+              return Signedness::kPositive;
+            }
+            case Signedness::kStrictlyPositive:
+            case Signedness::kPositive: {
+              return Signedness::kNegative;
+            }
+          }
+          break;
+        }
+        case Signedness::kStrictlyPositive: {
+          return rhs;
+        }
+        case Signedness::kPositive: {
+          switch (rhs) {
+            case Signedness::kPositiveOrNegative: {
+              break;
+            }
+            case Signedness::kStrictlyNegative:
+            case Signedness::kNegative: {
+              return Signedness::kNegative;
+            }
+            case Signedness::kStrictlyPositive:
+            case Signedness::kPositive: {
+              return Signedness::kPositive;
+            }
+          }
+          break;
+        }
+      }
+      return Signedness::kPositiveOrNegative;
+    };
+  }
+
+  Signedness Visit(const SENode* node) {
+    switch (node->GetType()) {
+      case SENode::Constant:
+        return Visit(node->AsSEConstantNode());
+        break;
+      case SENode::RecurrentAddExpr:
+        return Visit(node->AsSERecurrentNode());
+        break;
+      case SENode::Negative:
+        return Visit(node->AsSENegative());
+        break;
+      case SENode::CanNotCompute:
+        return Visit(node->AsSECantCompute());
+        break;
+      case SENode::ValueUnknown:
+        return Visit(node->AsSEValueUnknown());
+        break;
+      case SENode::Add:
+        return VisitExpr(node, GetAddCombiner());
+        break;
+      case SENode::Multiply:
+        return VisitExpr(node, GetMulCombiner());
+        break;
+    }
+    return Signedness::kPositiveOrNegative;
+  }
+
+  // Returns the signedness of a constant |node|.
+  Signedness Visit(const SEConstantNode* node) {
+    if (0 == node->FoldToSingleValue()) return Signedness::kPositive;
+    if (0 < node->FoldToSingleValue()) return Signedness::kStrictlyPositive;
+    if (0 > node->FoldToSingleValue()) return Signedness::kStrictlyNegative;
+    return Signedness::kPositiveOrNegative;
+  }
+
+  // Returns the signedness of an unknown |node| based on its type.
+  Signedness Visit(const SEValueUnknown* node) {
+    Instruction* insn = context_->get_def_use_mgr()->GetDef(node->ResultId());
+    analysis::Type* type = context_->get_type_mgr()->GetType(insn->type_id());
+    assert(type && "Can't retrieve a type for the instruction");
+    analysis::Integer* int_type = type->AsInteger();
+    assert(type && "Can't retrieve an integer type for the instruction");
+    return int_type->IsSigned() ? Signedness::kPositiveOrNegative
+                                : Signedness::kPositive;
+  }
+
+  // Returns the signedness of a recurring expression.
+  Signedness Visit(const SERecurrentNode* node) {
+    Signedness coeff_sign = Visit(node->GetCoefficient());
+    // SERecurrentNode represent an affine expression in the range [0,
+    // loop_bound], so the result cannot be strictly positive or negative.
+    switch (coeff_sign) {
+      default:
+        break;
+      case Signedness::kStrictlyNegative:
+        coeff_sign = Signedness::kNegative;
+        break;
+      case Signedness::kStrictlyPositive:
+        coeff_sign = Signedness::kPositive;
+        break;
+    }
+    return GetAddCombiner()(coeff_sign, Visit(node->GetOffset()));
+  }
+
+  // Returns the signedness of a negation |node|.
+  Signedness Visit(const SENegative* node) {
+    switch (Visit(*node->begin())) {
+      case Signedness::kPositiveOrNegative: {
+        return Signedness::kPositiveOrNegative;
+      }
+      case Signedness::kStrictlyNegative: {
+        return Signedness::kStrictlyPositive;
+      }
+      case Signedness::kNegative: {
+        return Signedness::kPositive;
+      }
+      case Signedness::kStrictlyPositive: {
+        return Signedness::kStrictlyNegative;
+      }
+      case Signedness::kPositive: {
+        return Signedness::kNegative;
+      }
+    }
+    return Signedness::kPositiveOrNegative;
+  }
+
+  Signedness Visit(const SECantCompute*) {
+    return Signedness::kPositiveOrNegative;
+  }
+
+  // Returns the signedness of a binary expression by using the combiner
+  // |reduce|.
+  Signedness VisitExpr(
+      const SENode* node,
+      std::function<Signedness(Signedness, Signedness)> reduce) {
+    Signedness result = Visit(*node->begin());
+    for (const SENode* operand : make_range(++node->begin(), node->end())) {
+      if (result == Signedness::kPositiveOrNegative) {
+        return Signedness::kPositiveOrNegative;
+      }
+      result = reduce(result, Visit(operand));
+    }
+    return result;
+  }
+
+  IRContext* context_;
+};
+}  // namespace
+
+bool ScalarEvolutionAnalysis::IsAlwaysGreaterThanZero(SENode* node,
+                                                      bool* is_gt_zero) const {
+  return IsGreaterThanZero(context_).Eval(node, false, is_gt_zero);
+}
+
+bool ScalarEvolutionAnalysis::IsAlwaysGreaterOrEqualToZero(
+    SENode* node, bool* is_ge_zero) const {
+  return IsGreaterThanZero(context_).Eval(node, true, is_ge_zero);
+}
+
+namespace {
+
+// Remove |node| from the |mul| chain (of the form A * ... * |node| * ... * Z),
+// if |node| is not in the chain, returns the original chain.
+static SENode* RemoveOneNodeFromMultiplyChain(SEMultiplyNode* mul,
+                                              const SENode* node) {
+  SENode* lhs = mul->GetChildren()[0];
+  SENode* rhs = mul->GetChildren()[1];
+  if (lhs == node) {
+    return rhs;
+  }
+  if (rhs == node) {
+    return lhs;
+  }
+  if (lhs->AsSEMultiplyNode()) {
+    SENode* res = RemoveOneNodeFromMultiplyChain(lhs->AsSEMultiplyNode(), node);
+    if (res != lhs)
+      return mul->GetParentAnalysis()->CreateMultiplyNode(res, rhs);
+  }
+  if (rhs->AsSEMultiplyNode()) {
+    SENode* res = RemoveOneNodeFromMultiplyChain(rhs->AsSEMultiplyNode(), node);
+    if (res != rhs)
+      return mul->GetParentAnalysis()->CreateMultiplyNode(res, rhs);
+  }
+
+  return mul;
+}
+}  // namespace
+
+std::pair<SExpression, int64_t> SExpression::operator/(
+    SExpression rhs_wrapper) const {
+  SENode* lhs = node_;
+  SENode* rhs = rhs_wrapper.node_;
+  // Check for division by 0.
+  if (rhs->AsSEConstantNode() &&
+      !rhs->AsSEConstantNode()->FoldToSingleValue()) {
+    return {scev_->CreateCantComputeNode(), 0};
+  }
+
+  // Trivial case.
+  if (lhs->AsSEConstantNode() && rhs->AsSEConstantNode()) {
+    int64_t lhs_value = lhs->AsSEConstantNode()->FoldToSingleValue();
+    int64_t rhs_value = rhs->AsSEConstantNode()->FoldToSingleValue();
+    return {scev_->CreateConstant(lhs_value / rhs_value),
+            lhs_value % rhs_value};
+  }
+
+  // look for a "c U / U" pattern.
+  if (lhs->AsSEMultiplyNode()) {
+    assert(lhs->GetChildren().size() == 2 &&
+           "More than 2 operand for a multiply node.");
+    SENode* res = RemoveOneNodeFromMultiplyChain(lhs->AsSEMultiplyNode(), rhs);
+    if (res != lhs) {
+      return {res, 0};
+    }
+  }
+
+  return {scev_->CreateCantComputeNode(), 0};
 }
 
 }  // namespace opt

@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unify_const_pass.h"
+#include "source/opt/unify_const_pass.h"
 
+#include <memory>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
-#include "def_use_manager.h"
-#include "ir_context.h"
-#include "make_unique.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/util/make_unique.h"
 
 namespace spvtools {
 namespace opt {
@@ -39,7 +41,7 @@ class ResultIdTrie {
   // is found, creates a trie node with those keys, stores the instruction's
   // result id and returns that result id. If an existing result id is found,
   // returns the existing result id.
-  uint32_t LookupEquivalentResultFor(const ir::Instruction& inst) {
+  uint32_t LookupEquivalentResultFor(const Instruction& inst) {
     auto keys = GetLookUpKeys(inst);
     auto* node = root_.get();
     for (uint32_t key : keys) {
@@ -85,7 +87,7 @@ class ResultIdTrie {
 
   // Returns a vector of the opcode followed by the words in the raw SPIR-V
   // instruction encoding but without the result id.
-  std::vector<uint32_t> GetLookUpKeys(const ir::Instruction& inst) {
+  std::vector<uint32_t> GetLookUpKeys(const Instruction& inst) {
     std::vector<uint32_t> keys;
     // Need to use the opcode, otherwise there might be a conflict with the
     // following case when <op>'s binary value equals xx's id:
@@ -103,12 +105,13 @@ class ResultIdTrie {
 };
 }  // anonymous namespace
 
-Pass::Status UnifyConstantPass::Process(ir::IRContext* c) {
-  InitializeProcessing(c);
+Pass::Status UnifyConstantPass::Process() {
   bool modified = false;
   ResultIdTrie defined_constants;
 
-  for( ir::Instruction* next_instruction, *inst = &*(context()->types_values_begin()); inst; inst = next_instruction) {
+  for (Instruction *next_instruction,
+       *inst = &*(context()->types_values_begin());
+       inst; inst = next_instruction) {
     next_instruction = inst->NextNode();
 
     // Do not handle the instruction when there are decorations upon the result

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_UTIL_HEX_FLOAT_H_
-#define LIBSPIRV_UTIL_HEX_FLOAT_H_
+#ifndef SOURCE_UTIL_HEX_FLOAT_H_
+#define SOURCE_UTIL_HEX_FLOAT_H_
 
 #include <cassert>
 #include <cctype>
@@ -24,7 +24,7 @@
 #include <sstream>
 #include <vector>
 
-#include "bitutils.h"
+#include "source/util/bitutils.h"
 
 #ifndef __GNUC__
 #define GCC_VERSION 0
@@ -33,7 +33,8 @@
   (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #endif
 
-namespace spvutils {
+namespace spvtools {
+namespace utils {
 
 class Float16 {
  public:
@@ -317,8 +318,7 @@ class HexFloat {
   // The representation of the fraction, not the actual bits. This
   // includes the leading bit that is usually implicit.
   static const uint_type fraction_represent_mask =
-      spvutils::SetBits<uint_type, 0,
-                        num_fraction_bits + num_overflow_bits>::get;
+      SetBits<uint_type, 0, num_fraction_bits + num_overflow_bits>::get;
 
   // The topmost bit in the nibble-aligned fraction.
   static const uint_type fraction_top_bit =
@@ -332,14 +332,14 @@ class HexFloat {
   // The mask for the encoded fraction. It does not include the
   // implicit bit.
   static const uint_type fraction_encode_mask =
-      spvutils::SetBits<uint_type, 0, num_fraction_bits>::get;
+      SetBits<uint_type, 0, num_fraction_bits>::get;
 
   // The bit that is used as a sign.
   static const uint_type sign_mask = uint_type(1) << top_bit_left_shift;
 
   // The bits that represent the exponent.
   static const uint_type exponent_mask =
-      spvutils::SetBits<uint_type, num_fraction_bits, num_exponent_bits>::get;
+      SetBits<uint_type, num_fraction_bits, num_exponent_bits>::get;
 
   // How far left the exponent is shifted.
   static const uint32_t exponent_left_shift = num_fraction_bits;
@@ -568,7 +568,7 @@ class HexFloat {
     static const uint_type throwaway_mask_bits =
         num_throwaway_bits > 0 ? num_throwaway_bits : 0;
     static const uint_type throwaway_mask =
-        spvutils::SetBits<uint_type, 0, throwaway_mask_bits>::get;
+        SetBits<uint_type, 0, throwaway_mask_bits>::get;
 
     *carry_bit = false;
     other_uint_type out_val = 0;
@@ -1143,6 +1143,8 @@ inline std::ostream& operator<<<Float16>(std::ostream& os,
   os << HexFloat<FloatProxy<Float16>>(value);
   return os;
 }
-}  // namespace spvutils
 
-#endif  // LIBSPIRV_UTIL_HEX_FLOAT_H_
+}  // namespace utils
+}  // namespace spvtools
+
+#endif  // SOURCE_UTIL_HEX_FLOAT_H_

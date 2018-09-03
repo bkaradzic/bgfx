@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "local_redundancy_elimination.h"
+#include "source/opt/local_redundancy_elimination.h"
 
-#include "value_number_table.h"
+#include "source/opt/value_number_table.h"
 
 namespace spvtools {
 namespace opt {
 
-Pass::Status LocalRedundancyEliminationPass::Process(ir::IRContext* c) {
-  InitializeProcessing(c);
-
+Pass::Status LocalRedundancyEliminationPass::Process() {
   bool modified = false;
   ValueNumberTable vnTable(context());
 
@@ -39,11 +37,11 @@ Pass::Status LocalRedundancyEliminationPass::Process(ir::IRContext* c) {
 }
 
 bool LocalRedundancyEliminationPass::EliminateRedundanciesInBB(
-    ir::BasicBlock* block, const ValueNumberTable& vnTable,
+    BasicBlock* block, const ValueNumberTable& vnTable,
     std::map<uint32_t, uint32_t>* value_to_ids) {
   bool modified = false;
 
-  auto func = [this, &vnTable, &modified, value_to_ids](ir::Instruction* inst) {
+  auto func = [this, &vnTable, &modified, value_to_ids](Instruction* inst) {
     if (inst->result_id() == 0) {
       return;
     }

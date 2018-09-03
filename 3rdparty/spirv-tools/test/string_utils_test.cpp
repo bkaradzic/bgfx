@@ -18,10 +18,9 @@
 #include "source/util/string_utils.h"
 #include "spirv-tools/libspirv.h"
 
+namespace spvtools {
+namespace utils {
 namespace {
-
-using ::spvutils::CardinalToOrdinal;
-using ::spvutils::ToString;
 
 TEST(ToString, Int) {
   EXPECT_EQ("0", ToString(0));
@@ -187,4 +186,6 @@ TEST(CardinalToOrdinal, Test) {
   EXPECT_EQ("1225th", CardinalToOrdinal(1225));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace utils
+}  // namespace spvtools

@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <string>
 
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using CFGCleanupTest = PassTest<::testing::Test>;
 
@@ -79,8 +81,8 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::CFGCleanupPass>(
-      declarations + body_before, declarations + body_after, true, true);
+  SinglePassRunAndCheck<CFGCleanupPass>(declarations + body_before,
+                                        declarations + body_after, true, true);
 }
 
 TEST_F(CFGCleanupTest, RemoveDecorations) {
@@ -142,7 +144,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::CFGCleanupPass>(before, after, true, true);
+  SinglePassRunAndCheck<CFGCleanupPass>(before, after, true, true);
 }
 
 TEST_F(CFGCleanupTest, UpdatePhis) {
@@ -226,7 +228,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::CFGCleanupPass>(before, after, true, true);
+  SinglePassRunAndCheck<CFGCleanupPass>(before, after, true, true);
 }
 
 TEST_F(CFGCleanupTest, RemoveNamedLabels) {
@@ -261,7 +263,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::CFGCleanupPass>(before, after, true, true);
+  SinglePassRunAndCheck<CFGCleanupPass>(before, after, true, true);
 }
 
 TEST_F(CFGCleanupTest, RemovePhiArgsFromFarBlocks) {
@@ -359,7 +361,7 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::CFGCleanupPass>(before, after, true, true);
+  SinglePassRunAndCheck<CFGCleanupPass>(before, after, true, true);
 }
 
 TEST_F(CFGCleanupTest, RemovePhiConstantArgs) {
@@ -438,6 +440,9 @@ OpReturn
 OpFunctionEnd
 )";
 
-  SinglePassRunAndCheck<opt::CFGCleanupPass>(before, after, true, true);
+  SinglePassRunAndCheck<CFGCleanupPass>(before, after, true, true);
 }
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

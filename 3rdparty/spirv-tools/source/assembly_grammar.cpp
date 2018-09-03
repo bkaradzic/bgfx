@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "assembly_grammar.h"
+#include "source/assembly_grammar.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 
-#include "ext_inst.h"
-#include "opcode.h"
-#include "operand.h"
-#include "table.h"
+#include "source/ext_inst.h"
+#include "source/opcode.h"
+#include "source/operand.h"
+#include "source/table.h"
 
+namespace spvtools {
 namespace {
 
 /// @brief Parses a mask expression string for the given operand type.
@@ -164,9 +165,7 @@ static_assert(59 == sizeof(kOpSpecConstantOpcodes)/sizeof(kOpSpecConstantOpcodes
 const size_t kNumOpSpecConstantOpcodes =
     sizeof(kOpSpecConstantOpcodes) / sizeof(kOpSpecConstantOpcodes[0]);
 
-}  // anonymous namespace
-
-namespace libspirv {
+}  // namespace
 
 bool AssemblyGrammar::isValid() const {
   return operandTable_ && opcodeTable_ && extInstTable_;
@@ -260,4 +259,5 @@ void AssemblyGrammar::pushOperandTypesForMask(
     spv_operand_pattern_t* pattern) const {
   spvPushOperandTypesForMask(target_env_, operandTable_, type, mask, pattern);
 }
-}  // namespace libspirv
+
+}  // namespace spvtools

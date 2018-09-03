@@ -12,27 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "gmock/gmock.h"
+#include "source/opt/build_module.h"
+#include "source/opt/loop_descriptor.h"
+#include "source/opt/loop_utils.h"
+#include "source/opt/pass.h"
+#include "test/opt//assembly_builder.h"
+#include "test/opt/function_utils.h"
 
 #ifdef SPIRV_EFFCEE
 #include "effcee/effcee.h"
 #endif
 
-#include "../assembly_builder.h"
-#include "../function_utils.h"
-
-#include "opt/build_module.h"
-#include "opt/loop_descriptor.h"
-#include "opt/loop_utils.h"
-#include "opt/pass.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 #ifdef SPIRV_EFFCEE
 
@@ -48,7 +46,7 @@ bool Validate(const std::vector<uint32_t>& bin) {
   return error == 0;
 }
 
-void Match(const std::string& original, ir::IRContext* context,
+void Match(const std::string& original, IRContext* context,
            bool do_validation = true) {
   std::vector<uint32_t> bin;
   context->module()->ToBinary(&bin, true);
@@ -136,18 +134,18 @@ TEST_F(LCSSATest, SimpleLCSSA) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
 
-  ir::Loop* loop = ld[17];
+  Loop* loop = ld[17];
   EXPECT_FALSE(loop->IsLCSSA());
-  opt::LoopUtils Util(context.get(), loop);
+  LoopUtils Util(context.get(), loop);
   Util.MakeLoopClosedSSA();
   EXPECT_TRUE(loop->IsLCSSA());
   Match(text, context.get());
@@ -222,18 +220,18 @@ TEST_F(LCSSATest, PhiReuseLCSSA) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
 
-  ir::Loop* loop = ld[17];
+  Loop* loop = ld[17];
   EXPECT_FALSE(loop->IsLCSSA());
-  opt::LoopUtils Util(context.get(), loop);
+  LoopUtils Util(context.get(), loop);
   Util.MakeLoopClosedSSA();
   EXPECT_TRUE(loop->IsLCSSA());
   Match(text, context.get());
@@ -321,18 +319,18 @@ TEST_F(LCSSATest, DualLoopLCSSA) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
 
-  ir::Loop* loop = ld[16];
+  Loop* loop = ld[16];
   EXPECT_FALSE(loop->IsLCSSA());
-  opt::LoopUtils Util(context.get(), loop);
+  LoopUtils Util(context.get(), loop);
   Util.MakeLoopClosedSSA();
   EXPECT_TRUE(loop->IsLCSSA());
   Match(text, context.get());
@@ -414,18 +412,18 @@ TEST_F(LCSSATest, PhiUserLCSSA) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
 
-  ir::Loop* loop = ld[19];
+  Loop* loop = ld[19];
   EXPECT_FALSE(loop->IsLCSSA());
-  opt::LoopUtils Util(context.get(), loop);
+  LoopUtils Util(context.get(), loop);
   Util.MakeLoopClosedSSA();
   EXPECT_TRUE(loop->IsLCSSA());
   Match(text, context.get());
@@ -509,18 +507,18 @@ TEST_F(LCSSATest, LCSSAWithBreak) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
 
-  ir::Loop* loop = ld[19];
+  Loop* loop = ld[19];
   EXPECT_FALSE(loop->IsLCSSA());
-  opt::LoopUtils Util(context.get(), loop);
+  LoopUtils Util(context.get(), loop);
   Util.MakeLoopClosedSSA();
   EXPECT_TRUE(loop->IsLCSSA());
   Match(text, context.get());
@@ -592,18 +590,18 @@ TEST_F(LCSSATest, LCSSAUseInNonEligiblePhi) {
                OpReturn
                OpFunctionEnd
   )";
-  std::unique_ptr<ir::IRContext> context =
+  std::unique_ptr<IRContext> context =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  ir::Module* module = context->module();
+  Module* module = context->module();
   EXPECT_NE(nullptr, module) << "Assembling failed for shader:\n"
                              << text << std::endl;
-  const ir::Function* f = spvtest::GetFunction(module, 2);
-  ir::LoopDescriptor ld{f};
+  const Function* f = spvtest::GetFunction(module, 2);
+  LoopDescriptor ld{context.get(), f};
 
-  ir::Loop* loop = ld[12];
+  Loop* loop = ld[12];
   EXPECT_FALSE(loop->IsLCSSA());
-  opt::LoopUtils Util(context.get(), loop);
+  LoopUtils Util(context.get(), loop);
   Util.MakeLoopClosedSSA();
   EXPECT_TRUE(loop->IsLCSSA());
   Match(text, context.get());
@@ -612,3 +610,5 @@ TEST_F(LCSSATest, LCSSAUseInNonEligiblePhi) {
 #endif  // SPIRV_EFFCEE
 
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

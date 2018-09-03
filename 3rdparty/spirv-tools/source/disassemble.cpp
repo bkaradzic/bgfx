@@ -21,20 +21,22 @@
 #include <iomanip>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 
-#include "assembly_grammar.h"
-#include "binary.h"
-#include "diagnostic.h"
-#include "disassemble.h"
-#include "ext_inst.h"
-#include "name_mapper.h"
-#include "opcode.h"
-#include "parsed_operand.h"
-#include "print.h"
+#include "source/assembly_grammar.h"
+#include "source/binary.h"
+#include "source/diagnostic.h"
+#include "source/disassemble.h"
+#include "source/ext_inst.h"
+#include "source/name_mapper.h"
+#include "source/opcode.h"
+#include "source/parsed_operand.h"
+#include "source/print.h"
+#include "source/spirv_constant.h"
+#include "source/spirv_endian.h"
+#include "source/util/hex_float.h"
+#include "source/util/make_unique.h"
 #include "spirv-tools/libspirv.h"
-#include "spirv_constant.h"
-#include "spirv_endian.h"
-#include "util/hex_float.h"
 
 namespace {
 
@@ -42,8 +44,8 @@ namespace {
 // representation.
 class Disassembler {
  public:
-  Disassembler(const libspirv::AssemblyGrammar& grammar, uint32_t options,
-               libspirv::NameMapper name_mapper)
+  Disassembler(const spvtools::AssemblyGrammar& grammar, uint32_t options,
+               spvtools::NameMapper name_mapper)
       : grammar_(grammar),
         print_(spvIsInBitfield(SPV_BINARY_TO_TEXT_OPTION_PRINT, options)),
         color_(spvIsInBitfield(SPV_BINARY_TO_TEXT_OPTION_COLOR, options)),
@@ -75,7 +77,7 @@ class Disassembler {
  private:
   enum { kStandardIndent = 15 };
 
-  using out_stream = libspirv::out_stream;
+  using out_stream = spvtools::out_stream;
 
   // Emits an operand for the given instruction, where the instruction
   // is at offset words from the start of the binary.
@@ -87,30 +89,30 @@ class Disassembler {
 
   // Resets the output color, if color is turned on.
   void ResetColor() {
-    if (color_) out_.get() << libspirv::clr::reset{print_};
+    if (color_) out_.get() << spvtools::clr::reset{print_};
   }
   // Sets the output to grey, if color is turned on.
   void SetGrey() {
-    if (color_) out_.get() << libspirv::clr::grey{print_};
+    if (color_) out_.get() << spvtools::clr::grey{print_};
   }
   // Sets the output to blue, if color is turned on.
   void SetBlue() {
-    if (color_) out_.get() << libspirv::clr::blue{print_};
+    if (color_) out_.get() << spvtools::clr::blue{print_};
   }
   // Sets the output to yellow, if color is turned on.
   void SetYellow() {
-    if (color_) out_.get() << libspirv::clr::yellow{print_};
+    if (color_) out_.get() << spvtools::clr::yellow{print_};
   }
   // Sets the output to red, if color is turned on.
   void SetRed() {
-    if (color_) out_.get() << libspirv::clr::red{print_};
+    if (color_) out_.get() << spvtools::clr::red{print_};
   }
   // Sets the output to green, if color is turned on.
   void SetGreen() {
-    if (color_) out_.get() << libspirv::clr::green{print_};
+    if (color_) out_.get() << spvtools::clr::green{print_};
   }
 
-  const libspirv::AssemblyGrammar& grammar_;
+  const spvtools::AssemblyGrammar& grammar_;
   const bool print_;  // Should we also print to the standard output stream?
   const bool color_;  // Should we print in colour?
   const int indent_;  // How much to indent. 0 means don't indent
@@ -121,7 +123,7 @@ class Disassembler {
   const bool header_;     // Should we output header as the leading comment?
   const bool show_byte_offset_;  // Should we print byte offset, in hex?
   size_t byte_offset_;           // The number of bytes processed so far.
-  libspirv::NameMapper name_mapper_;
+  spvtools::NameMapper name_mapper_;
 };
 
 spv_result_t Disassembler::HandleHeader(spv_endianness_t endian,
@@ -230,7 +232,7 @@ void Disassembler::EmitOperand(const spv_parsed_instruction_t& inst,
     case SPV_OPERAND_TYPE_LITERAL_INTEGER:
     case SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER: {
       SetRed();
-      libspirv::EmitNumericLiteral(&stream_, inst, operand);
+      spvtools::EmitNumericLiteral(&stream_, inst, operand);
       ResetColor();
     } break;
     case SPV_OPERAND_TYPE_LITERAL_STRING: {
@@ -399,7 +401,7 @@ spv_result_t DisassembleTargetInstruction(
   return SPV_SUCCESS;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 spv_result_t spvBinaryToText(const spv_const_context context,
                              const uint32_t* code, const size_t wordCount,
@@ -408,18 +410,18 @@ spv_result_t spvBinaryToText(const spv_const_context context,
   spv_context_t hijack_context = *context;
   if (pDiagnostic) {
     *pDiagnostic = nullptr;
-    libspirv::UseDiagnosticAsMessageConsumer(&hijack_context, pDiagnostic);
+    spvtools::UseDiagnosticAsMessageConsumer(&hijack_context, pDiagnostic);
   }
 
-  const libspirv::AssemblyGrammar grammar(&hijack_context);
+  const spvtools::AssemblyGrammar grammar(&hijack_context);
   if (!grammar.isValid()) return SPV_ERROR_INVALID_TABLE;
 
   // Generate friendly names for Ids if requested.
-  std::unique_ptr<libspirv::FriendlyNameMapper> friendly_mapper;
-  libspirv::NameMapper name_mapper = libspirv::GetTrivialNameMapper();
+  std::unique_ptr<spvtools::FriendlyNameMapper> friendly_mapper;
+  spvtools::NameMapper name_mapper = spvtools::GetTrivialNameMapper();
   if (options & SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES) {
-    friendly_mapper.reset(
-        new libspirv::FriendlyNameMapper(&hijack_context, code, wordCount));
+    friendly_mapper = spvtools::MakeUnique<spvtools::FriendlyNameMapper>(
+        &hijack_context, code, wordCount);
     name_mapper = friendly_mapper->GetNameMapper();
   }
 
@@ -441,18 +443,18 @@ std::string spvtools::spvInstructionBinaryToText(const spv_target_env env,
                                                  const size_t wordCount,
                                                  const uint32_t options) {
   spv_context context = spvContextCreate(env);
-  const libspirv::AssemblyGrammar grammar(context);
+  const spvtools::AssemblyGrammar grammar(context);
   if (!grammar.isValid()) {
     spvContextDestroy(context);
     return "";
   }
 
   // Generate friendly names for Ids if requested.
-  std::unique_ptr<libspirv::FriendlyNameMapper> friendly_mapper;
-  libspirv::NameMapper name_mapper = libspirv::GetTrivialNameMapper();
+  std::unique_ptr<spvtools::FriendlyNameMapper> friendly_mapper;
+  spvtools::NameMapper name_mapper = spvtools::GetTrivialNameMapper();
   if (options & SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES) {
-    friendly_mapper.reset(
-        new libspirv::FriendlyNameMapper(context, code, wordCount));
+    friendly_mapper = spvtools::MakeUnique<spvtools::FriendlyNameMapper>(
+        context, code, wordCount);
     name_mapper = friendly_mapper->GetNameMapper();
   }
 

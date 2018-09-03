@@ -14,44 +14,50 @@
 
 // Validation tests for illegal instructions
 
-#include "unit_spirv.h"
+#include <string>
 
 #include "gmock/gmock.h"
-#include "test_fixture.h"
+#include "test/test_fixture.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
 namespace {
 
+using ::spvtest::MakeInstruction;
 using ::testing::Eq;
 
-using ReservedSamplingInstTest = spvtest::TextToBinaryTest;
+using ReservedSamplingInstTest = RoundTripTest;
 
 TEST_F(ReservedSamplingInstTest, OpImageSparseSampleProjImplicitLod) {
-  const std::string input = "OpImageSparseSampleProjImplicitLod %1 %2 %3\n";
-  EXPECT_THAT(CompileFailure(input),
-              Eq("Invalid Opcode name 'OpImageSparseSampleProjImplicitLod'"));
+  std::string input = "%2 = OpImageSparseSampleProjImplicitLod %1 %3 %4\n";
+  EXPECT_THAT(
+      CompiledInstructions(input, SPV_ENV_UNIVERSAL_1_0),
+      Eq(MakeInstruction(SpvOpImageSparseSampleProjImplicitLod, {1, 2, 3, 4})));
 }
 
 TEST_F(ReservedSamplingInstTest, OpImageSparseSampleProjExplicitLod) {
-  const std::string input =
-      "OpImageSparseSampleProjExplicitLod %1 %2 %3 Lod %4\n";
-  EXPECT_THAT(CompileFailure(input),
-              Eq("Invalid Opcode name 'OpImageSparseSampleProjExplicitLod'"));
+  std::string input =
+      "%2 = OpImageSparseSampleProjExplicitLod %1 %3 %4 Lod %5\n";
+  EXPECT_THAT(CompiledInstructions(input, SPV_ENV_UNIVERSAL_1_0),
+              Eq(MakeInstruction(SpvOpImageSparseSampleProjExplicitLod,
+                                 {1, 2, 3, 4, SpvImageOperandsLodMask, 5})));
 }
 
 TEST_F(ReservedSamplingInstTest, OpImageSparseSampleProjDrefImplicitLod) {
-  const std::string input =
-      "OpImageSparseSampleProjDrefImplicitLod %1 %2 %3 %4\n";
-  EXPECT_THAT(
-      CompileFailure(input),
-      Eq("Invalid Opcode name 'OpImageSparseSampleProjDrefImplicitLod'"));
+  std::string input =
+      "%2 = OpImageSparseSampleProjDrefImplicitLod %1 %3 %4 %5\n";
+  EXPECT_THAT(CompiledInstructions(input, SPV_ENV_UNIVERSAL_1_0),
+              Eq(MakeInstruction(SpvOpImageSparseSampleProjDrefImplicitLod,
+                                 {1, 2, 3, 4, 5})));
 }
 
 TEST_F(ReservedSamplingInstTest, OpImageSparseSampleProjDrefExplicitLod) {
-  const std::string input =
-      "OpImageSparseSampleProjDrefExplicitLod %1 %2 %3 %4 Lod %5\n";
-  EXPECT_THAT(
-      CompileFailure(input),
-      Eq("Invalid Opcode name 'OpImageSparseSampleProjDrefExplicitLod'"));
+  std::string input =
+      "%2 = OpImageSparseSampleProjDrefExplicitLod %1 %3 %4 %5 Lod %6\n";
+  EXPECT_THAT(CompiledInstructions(input, SPV_ENV_UNIVERSAL_1_0),
+              Eq(MakeInstruction(SpvOpImageSparseSampleProjDrefExplicitLod,
+                                 {1, 2, 3, 4, 5, SpvImageOperandsLodMask, 6})));
 }
 
 }  // namespace
+}  // namespace spvtools

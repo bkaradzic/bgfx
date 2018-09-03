@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_ENUM_SET_H
-#define LIBSPIRV_ENUM_SET_H
+#ifndef SOURCE_ENUM_SET_H_
+#define SOURCE_ENUM_SET_H_
 
 #include <cstdint>
 #include <functional>
@@ -21,9 +21,10 @@
 #include <set>
 #include <utility>
 
-#include "latest_version_spirv_header.h"
+#include "source/latest_version_spirv_header.h"
+#include "source/util/make_unique.h"
 
-namespace libspirv {
+namespace spvtools {
 
 // A set of values of a 32-bit enum type.
 // It is fast and compact for the common case, where enum values
@@ -152,7 +153,7 @@ class EnumSet {
   // allocated if one doesn't exist yet.  Returns overflow_set_.
   OverflowSetType& Overflow() {
     if (overflow_.get() == nullptr) {
-      overflow_.reset(new OverflowSetType);
+      overflow_ = MakeUnique<OverflowSetType>();
     }
     return *overflow_;
   }
@@ -167,6 +168,6 @@ class EnumSet {
 // A set of SpvCapability, optimized for small capability values.
 using CapabilitySet = EnumSet<SpvCapability>;
 
-}  // namespace libspirv
+}  // namespace spvtools
 
-#endif  // LIBSPIRV_ENUM_SET_H
+#endif  // SOURCE_ENUM_SET_H_

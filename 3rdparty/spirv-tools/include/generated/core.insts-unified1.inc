@@ -31,13 +31,13 @@ static const SpvCapability pygen_variable_caps_SubgroupImageBlockIOINTEL[] = {Sp
 static const SpvCapability pygen_variable_caps_SubgroupShuffleINTEL[] = {SpvCapabilitySubgroupShuffleINTEL};
 static const SpvCapability pygen_variable_caps_SubgroupVoteKHR[] = {SpvCapabilitySubgroupVoteKHR};
 
-static const libspirv::Extension pygen_variable_exts_SPV_AMD_shader_ballot[] = {libspirv::Extension::kSPV_AMD_shader_ballot};
-static const libspirv::Extension pygen_variable_exts_SPV_AMD_shader_fragment_mask[] = {libspirv::Extension::kSPV_AMD_shader_fragment_mask};
-static const libspirv::Extension pygen_variable_exts_SPV_GOOGLE_decorate_string[] = {libspirv::Extension::kSPV_GOOGLE_decorate_string};
-static const libspirv::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {libspirv::Extension::kSPV_GOOGLE_hlsl_functionality1};
-static const libspirv::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {libspirv::Extension::kSPV_KHR_shader_ballot};
-static const libspirv::Extension pygen_variable_exts_SPV_KHR_subgroup_vote[] = {libspirv::Extension::kSPV_KHR_subgroup_vote};
-static const libspirv::Extension pygen_variable_exts_SPV_NV_shader_subgroup_partitioned[] = {libspirv::Extension::kSPV_NV_shader_subgroup_partitioned};
+static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_ballot[] = {spvtools::Extension::kSPV_AMD_shader_ballot};
+static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_fragment_mask[] = {spvtools::Extension::kSPV_AMD_shader_fragment_mask};
+static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_decorate_string, spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
+static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
+static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {spvtools::Extension::kSPV_KHR_shader_ballot};
+static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_vote[] = {spvtools::Extension::kSPV_KHR_subgroup_vote};
+static const spvtools::Extension pygen_variable_exts_SPV_NV_shader_subgroup_partitioned[] = {spvtools::Extension::kSPV_NV_shader_subgroup_partitioned};
 
 static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"Nop", SpvOpNop, 0, nullptr, 0, {}, 0, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
@@ -405,6 +405,6 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"SubgroupBlockWriteINTEL", SpvOpSubgroupBlockWriteINTEL, 1, pygen_variable_caps_SubgroupBufferBlockIOINTEL, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu},
   {"SubgroupImageBlockReadINTEL", SpvOpSubgroupImageBlockReadINTEL, 1, pygen_variable_caps_SubgroupImageBlockIOINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu},
   {"SubgroupImageBlockWriteINTEL", SpvOpSubgroupImageBlockWriteINTEL, 1, pygen_variable_caps_SubgroupImageBlockIOINTEL, 3, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 0, nullptr, 0xffffffffu},
-  {"DecorateStringGOOGLE", SpvOpDecorateStringGOOGLE, 0, nullptr, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 1, pygen_variable_exts_SPV_GOOGLE_decorate_string, 0xffffffffu},
-  {"MemberDecorateStringGOOGLE", SpvOpMemberDecorateStringGOOGLE, 0, nullptr, 3, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 1, pygen_variable_exts_SPV_GOOGLE_decorate_string, 0xffffffffu}
+  {"DecorateStringGOOGLE", SpvOpDecorateStringGOOGLE, 0, nullptr, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 2, pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1, 0xffffffffu},
+  {"MemberDecorateStringGOOGLE", SpvOpMemberDecorateStringGOOGLE, 0, nullptr, 3, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER, SPV_OPERAND_TYPE_DECORATION}, 0, 0, 2, pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1, 0xffffffffu}
 };

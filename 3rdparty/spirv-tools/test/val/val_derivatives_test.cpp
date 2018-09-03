@@ -16,9 +16,11 @@
 #include <string>
 
 #include "gmock/gmock.h"
-#include "unit_spirv.h"
-#include "val_fixtures.h"
+#include "test/unit_spirv.h"
+#include "test/val/val_fixtures.h"
 
+namespace spvtools {
+namespace val {
 namespace {
 
 using ::testing::HasSubstr;
@@ -38,7 +40,10 @@ OpCapability DerivativeControl
 
   ss << capabilities_and_extensions;
   ss << "OpMemoryModel Logical GLSL450\n";
-  ss << "OpEntryPoint " << execution_model << " %main \"main\"\n";
+  ss << "OpEntryPoint " << execution_model << " %main \"main\""
+     << " %f32_var_input"
+     << " %f32vec4_var_input"
+     << "\n";
 
   ss << R"(
 %void = OpTypeVoid
@@ -145,4 +150,6 @@ TEST_F(ValidateDerivatives, OpDPdxWrongExecutionModel) {
           "Derivative instructions require Fragment execution model: DPdx"));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace val
+}  // namespace spvtools

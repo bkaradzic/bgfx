@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
 #include <vector>
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-#include "assembly_builder.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
 
-using namespace spvtools;
 using ::testing::HasSubstr;
-
 using EliminateDeadFunctionsBasicTest = PassTest<::testing::Test>;
 
 TEST_F(EliminateDeadFunctionsBasicTest, BasicDeleteDeadFunction) {
@@ -61,7 +61,7 @@ TEST_F(EliminateDeadFunctionsBasicTest, BasicDeleteDeadFunction) {
   };
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  SinglePassRunAndCheck<opt::EliminateDeadFunctionsPass>(
+  SinglePassRunAndCheck<EliminateDeadFunctionsPass>(
       JoinAllInsts(Concat(common_code, dead_function)),
       JoinAllInsts(common_code), /* skip_nop = */ true);
 }
@@ -98,9 +98,9 @@ TEST_F(EliminateDeadFunctionsBasicTest, BasicKeepLiveFunction) {
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   std::string assembly = JoinAllInsts(text);
-  auto result = SinglePassRunAndDisassemble<opt::EliminateDeadFunctionsPass>(
+  auto result = SinglePassRunAndDisassemble<EliminateDeadFunctionsPass>(
       assembly, /* skip_nop = */ true, /* do_validation = */ false);
-  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
   EXPECT_EQ(assembly, std::get<0>(result));
 }
 
@@ -137,9 +137,9 @@ TEST_F(EliminateDeadFunctionsBasicTest, BasicKeepExportFunctions) {
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   std::string assembly = JoinAllInsts(text);
-  auto result = SinglePassRunAndDisassemble<opt::EliminateDeadFunctionsPass>(
+  auto result = SinglePassRunAndDisassemble<EliminateDeadFunctionsPass>(
       assembly, /* skip_nop = */ true, /* do_validation = */ false);
-  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
   EXPECT_EQ(assembly, std::get<0>(result));
 }
 
@@ -200,7 +200,10 @@ OpFunctionEnd
 )";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  SinglePassRunAndCheck<opt::EliminateDeadFunctionsPass>(text, expected_output,
-                                                         /* skip_nop = */ true);
+  SinglePassRunAndCheck<EliminateDeadFunctionsPass>(text, expected_output,
+                                                    /* skip_nop = */ true);
 }
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

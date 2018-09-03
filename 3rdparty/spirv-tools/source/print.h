@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_PRINT_H_
-#define LIBSPIRV_PRINT_H_
+#ifndef SOURCE_PRINT_H_
+#define SOURCE_PRINT_H_
 
 #include <iostream>
 #include <sstream>
 
-namespace libspirv {
+namespace spvtools {
 
 // Wrapper for out stream selection.
 class out_stream {
@@ -70,6 +70,6 @@ struct blue {
 };
 }  // namespace clr
 
-}  // namespace libspirv
+}  // namespace spvtools
 
-#endif  // LIBSPIRV_PRINT_H_
+#endif  // SOURCE_PRINT_H_

@@ -15,21 +15,21 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 
-#include <gmock/gmock.h>
-
+#include "gmock/gmock.h"
 #include "source/util/hex_float.h"
-#include "unit_spirv.h"
+#include "test/unit_spirv.h"
 
+namespace spvtools {
+namespace utils {
 namespace {
-using spvutils::BitwiseCast;
-using spvutils::Float16;
-using spvutils::FloatProxy;
-using spvutils::HexFloat;
-using spvutils::ParseNormalFloat;
+
 using ::testing::Eq;
 
 // In this file "encode" means converting a number into a string,
@@ -50,7 +50,7 @@ using RoundTripDoubleTest = ::testing::TestWithParam<double>;
 template <typename T>
 std::string EncodeViaHexFloat(const T& value) {
   std::stringstream ss;
-  ss << spvutils::HexFloat<T>(value);
+  ss << HexFloat<T>(value);
   return ss.str();
 }
 
@@ -68,7 +68,7 @@ TEST_P(HexDoubleTest, EncodeCorrectly) {
 // Decodes a hex-float string.
 template <typename T>
 FloatProxy<T> Decode(const std::string& str) {
-  spvutils::HexFloat<FloatProxy<T>> decoded(0.f);
+  HexFloat<FloatProxy<T>> decoded(0.f);
   EXPECT_TRUE((std::stringstream(str) >> decoded).eof());
   return decoded.value();
 }
@@ -229,8 +229,8 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::ValuesIn(std::vector<
                         std::pair<FloatProxy<double>, std::string>>({
         // Various NAN and INF cases
-        {uint64_t(0xFFF0000000000000LL), "-0x1p+1024"},                //-inf
-        {uint64_t(0x7FF0000000000000LL), "0x1p+1024"},                 //+inf
+        {uint64_t(0xFFF0000000000000LL), "-0x1p+1024"},                // -inf
+        {uint64_t(0x7FF0000000000000LL), "0x1p+1024"},                 // +inf
         {uint64_t(0xFFF8000000000000LL), "-0x1.8p+1024"},              // -nan
         {uint64_t(0xFFF0F00000000000LL), "-0x1.0fp+1024"},             // -nan
         {uint64_t(0xFFF0000000000001LL), "-0x1.0000000000001p+1024"},  // -nan
@@ -575,13 +575,12 @@ INSTANTIATE_TEST_CASE_P(
 // double is used so that unbiased_exponent can be used with the output
 // of ldexp directly.
 int32_t unbiased_exponent(double f) {
-  return spvutils::HexFloat<spvutils::FloatProxy<float>>(static_cast<float>(f))
+  return HexFloat<FloatProxy<float>>(static_cast<float>(f))
       .getUnbiasedNormalizedExponent();
 }
 
 int16_t unbiased_half_exponent(uint16_t f) {
-  return spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>>(f)
-      .getUnbiasedNormalizedExponent();
+  return HexFloat<FloatProxy<Float16>>(f).getUnbiasedNormalizedExponent();
 }
 
 TEST(HexFloatOperationTest, UnbiasedExponent) {
@@ -591,9 +590,9 @@ TEST(HexFloatOperationTest, UnbiasedExponent) {
   EXPECT_EQ(42, unbiased_exponent(ldexp(1.0f, 42)));
   EXPECT_EQ(125, unbiased_exponent(ldexp(1.0f, 125)));
 
-  EXPECT_EQ(128, spvutils::HexFloat<spvutils::FloatProxy<float>>(
-                     std::numeric_limits<float>::infinity())
-                     .getUnbiasedNormalizedExponent());
+  EXPECT_EQ(128,
+            HexFloat<FloatProxy<float>>(std::numeric_limits<float>::infinity())
+                .getUnbiasedNormalizedExponent());
 
   EXPECT_EQ(-100, unbiased_exponent(ldexp(1.0f, -100)));
   EXPECT_EQ(-127, unbiased_exponent(ldexp(1.0f, -127)));  // First denorm
@@ -633,7 +632,7 @@ float float_fractions(const std::vector<uint32_t>& fractions) {
 // raised to the power of exp.
 uint32_t normalized_significand(const std::vector<uint32_t>& fractions,
                                 uint32_t exp) {
-  return spvutils::HexFloat<spvutils::FloatProxy<float>>(
+  return HexFloat<FloatProxy<float>>(
              static_cast<float>(ldexp(float_fractions(fractions), exp)))
       .getNormalizedSignificand();
 }
@@ -674,11 +673,16 @@ TEST(HexFloatOperationTest, NormalizedSignificand) {
   // For denormalized numbers we expect the normalized significand to
   // shift as if it were normalized. This means, in practice that the
   // top_most set bit will be cut off. Looks very similar to above (on purpose)
-  EXPECT_EQ(bits_set({}), normalized_significand({0}, -127));
-  EXPECT_EQ(bits_set({3}), normalized_significand({0, 4}, -128));
-  EXPECT_EQ(bits_set({3}), normalized_significand({0, 4}, -127));
-  EXPECT_EQ(bits_set({}), normalized_significand({22}, -127));
-  EXPECT_EQ(bits_set({0}), normalized_significand({21, 22}, -127));
+  EXPECT_EQ(bits_set({}),
+            normalized_significand({0}, static_cast<uint32_t>(-127)));
+  EXPECT_EQ(bits_set({3}),
+            normalized_significand({0, 4}, static_cast<uint32_t>(-128)));
+  EXPECT_EQ(bits_set({3}),
+            normalized_significand({0, 4}, static_cast<uint32_t>(-127)));
+  EXPECT_EQ(bits_set({}),
+            normalized_significand({22}, static_cast<uint32_t>(-127)));
+  EXPECT_EQ(bits_set({0}),
+            normalized_significand({21, 22}, static_cast<uint32_t>(-127)));
 }
 
 // Returns the 32-bit floating point value created by
@@ -686,7 +690,7 @@ TEST(HexFloatOperationTest, NormalizedSignificand) {
 // on a HexFloat<FloatProxy<float>>
 float set_from_sign(bool negative, int32_t unbiased_exponent,
                     uint32_t significand, bool round_denorm_up) {
-  spvutils::HexFloat<spvutils::FloatProxy<float>> f(0.f);
+  HexFloat<FloatProxy<float>> f(0.f);
   f.setFromSignUnbiasedExponentAndNormalizedSignificand(
       negative, unbiased_exponent, significand, round_denorm_up);
   return f.value().getAsFloat();
@@ -729,17 +733,16 @@ TEST(HexFloatOperationTests,
 TEST(HexFloatOperationTests, NonRounding) {
   // Rounding from 32-bit hex-float to 32-bit hex-float should be trivial,
   // except in the denorm case which is a bit more complex.
-  using HF = spvutils::HexFloat<spvutils::FloatProxy<float>>;
+  using HF = HexFloat<FloatProxy<float>>;
   bool carry_bit = false;
 
-  spvutils::round_direction rounding[] = {
-      spvutils::round_direction::kToZero,
-      spvutils::round_direction::kToNearestEven,
-      spvutils::round_direction::kToPositiveInfinity,
-      spvutils::round_direction::kToNegativeInfinity};
+  round_direction rounding[] = {round_direction::kToZero,
+                                round_direction::kToNearestEven,
+                                round_direction::kToPositiveInfinity,
+                                round_direction::kToNegativeInfinity};
 
   // Everything fits, so this should be straight-forward
-  for (spvutils::round_direction round : rounding) {
+  for (round_direction round : rounding) {
     EXPECT_EQ(bits_set({}),
               HF(0.f).getRoundedNormalizedSignificand<HF>(round, &carry_bit));
     EXPECT_FALSE(carry_bit);
@@ -767,18 +770,18 @@ TEST(HexFloatOperationTests, NonRounding) {
   }
 }
 
-using RD = spvutils::round_direction;
+using RD = round_direction;
 struct RoundSignificandCase {
   float source_float;
   std::pair<int16_t, bool> expected_results;
-  spvutils::round_direction round;
+  round_direction round;
 };
 
 using HexFloatRoundTest = ::testing::TestWithParam<RoundSignificandCase>;
 
 TEST_P(HexFloatRoundTest, RoundDownToFP16) {
-  using HF = spvutils::HexFloat<spvutils::FloatProxy<float>>;
-  using HF16 = spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>>;
+  using HF = HexFloat<FloatProxy<float>>;
+  using HF16 = HexFloat<FloatProxy<Float16>>;
 
   HF input_value(GetParam().source_float);
   bool carry_bit = false;
@@ -846,18 +849,17 @@ struct UpCastSignificandCase {
 using HexFloatRoundUpSignificandTest =
     ::testing::TestWithParam<UpCastSignificandCase>;
 TEST_P(HexFloatRoundUpSignificandTest, Widening) {
-  using HF = spvutils::HexFloat<spvutils::FloatProxy<float>>;
-  using HF16 = spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>>;
+  using HF = HexFloat<FloatProxy<float>>;
+  using HF16 = HexFloat<FloatProxy<Float16>>;
   bool carry_bit = false;
 
-  spvutils::round_direction rounding[] = {
-      spvutils::round_direction::kToZero,
-      spvutils::round_direction::kToNearestEven,
-      spvutils::round_direction::kToPositiveInfinity,
-      spvutils::round_direction::kToNegativeInfinity};
+  round_direction rounding[] = {round_direction::kToZero,
+                                round_direction::kToNearestEven,
+                                round_direction::kToPositiveInfinity,
+                                round_direction::kToNegativeInfinity};
 
   // Everything fits, so everything should just be bit-shifts.
-  for (spvutils::round_direction round : rounding) {
+  for (round_direction round : rounding) {
     carry_bit = false;
     HF16 input_value(GetParam().source_half);
     EXPECT_EQ(
@@ -884,19 +886,19 @@ INSTANTIATE_TEST_CASE_P(
 struct DownCastTest {
   float source_float;
   uint16_t expected_half;
-  std::vector<spvutils::round_direction> directions;
+  std::vector<round_direction> directions;
 };
 
-std::string get_round_text(spvutils::round_direction direction) {
+std::string get_round_text(round_direction direction) {
 #define CASE(round_direction) \
   case round_direction:       \
     return #round_direction
 
   switch (direction) {
-    CASE(spvutils::round_direction::kToZero);
-    CASE(spvutils::round_direction::kToPositiveInfinity);
-    CASE(spvutils::round_direction::kToNegativeInfinity);
-    CASE(spvutils::round_direction::kToNearestEven);
+    CASE(round_direction::kToZero);
+    CASE(round_direction::kToPositiveInfinity);
+    CASE(round_direction::kToNegativeInfinity);
+    CASE(round_direction::kToNearestEven);
   }
 #undef CASE
   return "";
@@ -905,15 +907,15 @@ std::string get_round_text(spvutils::round_direction direction) {
 using HexFloatFP32To16Tests = ::testing::TestWithParam<DownCastTest>;
 
 TEST_P(HexFloatFP32To16Tests, NarrowingCasts) {
-  using HF = spvutils::HexFloat<spvutils::FloatProxy<float>>;
-  using HF16 = spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>>;
+  using HF = HexFloat<FloatProxy<float>>;
+  using HF16 = HexFloat<FloatProxy<Float16>>;
   HF f(GetParam().source_float);
   for (auto round : GetParam().directions) {
     HF16 half(0);
     f.castTo(half, round);
     EXPECT_EQ(GetParam().expected_half, half.value().getAsFloat().get_value())
         << get_round_text(round) << "  " << std::hex
-        << spvutils::BitwiseCast<uint32_t>(GetParam().source_float)
+        << BitwiseCast<uint32_t>(GetParam().source_float)
         << " cast to: " << half.value().getAsFloat().get_value();
   }
 }
@@ -1021,23 +1023,22 @@ struct UpCastCase {
 
 using HexFloatFP16To32Tests = ::testing::TestWithParam<UpCastCase>;
 TEST_P(HexFloatFP16To32Tests, WideningCasts) {
-  using HF = spvutils::HexFloat<spvutils::FloatProxy<float>>;
-  using HF16 = spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>>;
+  using HF = HexFloat<FloatProxy<float>>;
+  using HF16 = HexFloat<FloatProxy<Float16>>;
   HF16 f(GetParam().source_half);
 
-  spvutils::round_direction rounding[] = {
-      spvutils::round_direction::kToZero,
-      spvutils::round_direction::kToNearestEven,
-      spvutils::round_direction::kToPositiveInfinity,
-      spvutils::round_direction::kToNegativeInfinity};
+  round_direction rounding[] = {round_direction::kToZero,
+                                round_direction::kToNearestEven,
+                                round_direction::kToPositiveInfinity,
+                                round_direction::kToNegativeInfinity};
 
   // Everything fits, so everything should just be bit-shifts.
-  for (spvutils::round_direction round : rounding) {
+  for (round_direction round : rounding) {
     HF flt(0.f);
     f.castTo(flt, round);
     EXPECT_EQ(GetParam().expected_float, flt.value().getAsFloat())
         << get_round_text(round) << "  " << std::hex
-        << spvutils::BitwiseCast<uint16_t>(GetParam().source_half)
+        << BitwiseCast<uint16_t>(GetParam().source_half)
         << " cast to: " << flt.value().getAsFloat();
   }
 }
@@ -1066,16 +1067,15 @@ INSTANTIATE_TEST_CASE_P(
     })), );
 
 TEST(HexFloatOperationTests, NanTests) {
-  using HF = spvutils::HexFloat<spvutils::FloatProxy<float>>;
-  using HF16 = spvutils::HexFloat<spvutils::FloatProxy<spvutils::Float16>>;
-  spvutils::round_direction rounding[] = {
-      spvutils::round_direction::kToZero,
-      spvutils::round_direction::kToNearestEven,
-      spvutils::round_direction::kToPositiveInfinity,
-      spvutils::round_direction::kToNegativeInfinity};
+  using HF = HexFloat<FloatProxy<float>>;
+  using HF16 = HexFloat<FloatProxy<Float16>>;
+  round_direction rounding[] = {round_direction::kToZero,
+                                round_direction::kToNearestEven,
+                                round_direction::kToPositiveInfinity,
+                                round_direction::kToNegativeInfinity};
 
   // Everything fits, so everything should just be bit-shifts.
-  for (spvutils::round_direction round : rounding) {
+  for (round_direction round : rounding) {
     HF16 f16(0);
     HF f(0.f);
     HF(std::numeric_limits<float>::quiet_NaN()).castTo(f16, round);
@@ -1326,4 +1326,6 @@ TEST(FloatProxy, Lowest) {
 }
 
 // TODO(awoloszyn): Add fp16 tests and HexFloatTraits.
-}  // anonymous namespace
+}  // namespace
+}  // namespace utils
+}  // namespace spvtools

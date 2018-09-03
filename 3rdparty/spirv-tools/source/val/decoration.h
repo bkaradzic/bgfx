@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_VAL_DECORATION_H_
-#define LIBSPIRV_VAL_DECORATION_H_
+#ifndef SOURCE_VAL_DECORATION_H_
+#define SOURCE_VAL_DECORATION_H_
 
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
 
-#include "latest_version_spirv_header.h"
+#include "source/latest_version_spirv_header.h"
 
-namespace libspirv {
+namespace spvtools {
+namespace val {
 
 // An object of this class represents a specific decoration including its
 // parameters (if any). Decorations are used by OpDecorate and OpMemberDecorate,
@@ -82,6 +83,7 @@ class Decoration {
   int struct_member_index_;
 };
 
-}  // namespace libspirv
+}  // namespace val
+}  // namespace spvtools
 
-#endif  /// LIBSPIRV_VAL_DECORATION_H_
+#endif  // SOURCE_VAL_DECORATION_H_

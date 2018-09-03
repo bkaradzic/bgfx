@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SPIRV_TOOLS_LIBSPIRV_HPP_
-#define SPIRV_TOOLS_LIBSPIRV_HPP_
+#ifndef INCLUDE_SPIRV_TOOLS_LIBSPIRV_HPP_
+#define INCLUDE_SPIRV_TOOLS_LIBSPIRV_HPP_
 
 #include <functional>
 #include <memory>
@@ -79,6 +79,17 @@ class ValidatorOptions {
 
   void SetRelaxStructStore(bool val) {
     spvValidatorOptionsSetRelaxStoreStruct(options_, val);
+  }
+
+  // Enables VK_KHR_relaxed_block_layout when validating standard
+  // uniform/storage buffer layout.
+  void SetRelaxBlockLayout(bool val) {
+    spvValidatorOptionsSetRelaxBlockLayout(options_, val);
+  }
+
+  // Skips validating standard uniform/storage buffer layout.
+  void SetSkipBlockLayout(bool val) {
+    spvValidatorOptionsSetSkipBlockLayout(options_, val);
   }
 
   // Records whether or not the validator should relax the rules on pointer
@@ -171,4 +182,4 @@ class SpirvTools {
 
 }  // namespace spvtools
 
-#endif  // SPIRV_TOOLS_LIBSPIRV_HPP_
+#endif  // INCLUDE_SPIRV_TOOLS_LIBSPIRV_HPP_

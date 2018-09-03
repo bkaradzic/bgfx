@@ -12,32 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <gmock/gmock.h>
+#include "gmock/gmock.h"
+#include "source/opt/pass.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
-#include "assembly_builder.h"
-#include "opt/pass.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
-
+namespace spvtools {
+namespace opt {
 namespace {
-using namespace spvtools;
-class DummyPass : public opt::Pass {
+
+class DummyPass : public Pass {
  public:
   const char* name() const override { return "dummy-pass"; }
-  Status Process(ir::IRContext* irContext) override {
-    return irContext ? Status::SuccessWithoutChange : Status::Failure;
-  }
+  Status Process() override { return Status::SuccessWithoutChange; }
 };
-}  // namespace
 
-namespace {
-
-using namespace spvtools;
 using ::testing::UnorderedElementsAre;
-
 using PassClassTest = PassTest<::testing::Test>;
 
 TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
@@ -76,14 +71,14 @@ TEST_F(PassClassTest, BasicVisitFromEntryPoint) {
 )";
   // clang-format on
 
-  std::unique_ptr<ir::IRContext> localContext =
+  std::unique_ptr<IRContext> localContext =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, localContext) << "Assembling failed for shader:\n"
                                    << text << std::endl;
   DummyPass testPass;
   std::vector<uint32_t> processed;
-  opt::Pass::ProcessFunction mark_visited = [&processed](ir::Function* fp) {
+  Pass::ProcessFunction mark_visited = [&processed](Function* fp) {
     processed.push_back(fp->result_id());
     return false;
   };
@@ -132,7 +127,7 @@ TEST_F(PassClassTest, BasicVisitReachable) {
 )";
   // clang-format on
 
-  std::unique_ptr<ir::IRContext> localContext =
+  std::unique_ptr<IRContext> localContext =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, localContext) << "Assembling failed for shader:\n"
@@ -140,7 +135,7 @@ TEST_F(PassClassTest, BasicVisitReachable) {
 
   DummyPass testPass;
   std::vector<uint32_t> processed;
-  opt::Pass::ProcessFunction mark_visited = [&processed](ir::Function* fp) {
+  Pass::ProcessFunction mark_visited = [&processed](Function* fp) {
     processed.push_back(fp->result_id());
     return false;
   };
@@ -184,7 +179,7 @@ TEST_F(PassClassTest, BasicVisitOnlyOnce) {
 )";
   // clang-format on
 
-  std::unique_ptr<ir::IRContext> localContext =
+  std::unique_ptr<IRContext> localContext =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, localContext) << "Assembling failed for shader:\n"
@@ -192,7 +187,7 @@ TEST_F(PassClassTest, BasicVisitOnlyOnce) {
 
   DummyPass testPass;
   std::vector<uint32_t> processed;
-  opt::Pass::ProcessFunction mark_visited = [&processed](ir::Function* fp) {
+  Pass::ProcessFunction mark_visited = [&processed](Function* fp) {
     processed.push_back(fp->result_id());
     return false;
   };
@@ -226,7 +221,7 @@ TEST_F(PassClassTest, BasicDontVisitExportedVariable) {
 )";
   // clang-format on
 
-  std::unique_ptr<ir::IRContext> localContext =
+  std::unique_ptr<IRContext> localContext =
       BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
                   SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   EXPECT_NE(nullptr, localContext) << "Assembling failed for shader:\n"
@@ -234,11 +229,14 @@ TEST_F(PassClassTest, BasicDontVisitExportedVariable) {
 
   DummyPass testPass;
   std::vector<uint32_t> processed;
-  opt::Pass::ProcessFunction mark_visited = [&processed](ir::Function* fp) {
+  Pass::ProcessFunction mark_visited = [&processed](Function* fp) {
     processed.push_back(fp->result_id());
     return false;
   };
   testPass.ProcessReachableCallTree(mark_visited, localContext.get());
   EXPECT_THAT(processed, UnorderedElementsAre(10));
 }
+
 }  // namespace
+}  // namespace opt
+}  // namespace spvtools

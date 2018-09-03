@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_WORKAROUND1209_H_
-#define LIBSPIRV_OPT_WORKAROUND1209_H_
+#ifndef SOURCE_OPT_WORKAROUND1209_H_
+#define SOURCE_OPT_WORKAROUND1209_H_
 
-#include "pass.h"
+#include "source/opt/pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -24,7 +24,7 @@ namespace opt {
 class Workaround1209 : public Pass {
  public:
   const char* name() const override { return "workaround-1209"; }
-  Status Process(ir::IRContext*) override;
+  Status Process() override;
 
  private:
   // There is at least one driver where an OpUnreachable found in a loop is not
@@ -38,4 +38,4 @@ class Workaround1209 : public Pass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_WORKAROUND1209_H_
+#endif  // SOURCE_OPT_WORKAROUND1209_H_

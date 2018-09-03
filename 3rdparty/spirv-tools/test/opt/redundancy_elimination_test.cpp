@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "opt/value_number_table.h"
+#include <string>
 
-#include "assembly_builder.h"
 #include "gmock/gmock.h"
-#include "opt/build_module.h"
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include "source/opt/build_module.h"
+#include "source/opt/value_number_table.h"
+#include "test/opt/assembly_builder.h"
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
 
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
-
 using RedundancyEliminationTest = PassTest<::testing::Test>;
 
 #ifdef SPIRV_EFFCEE
@@ -55,7 +55,7 @@ TEST_F(RedundancyEliminationTest, RemoveRedundantLocalAdd) {
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<opt::RedundancyEliminationPass>(text, false);
+  SinglePassRunAndMatch<RedundancyEliminationPass>(text, false);
 }
 
 // Remove a redundant add across basic blocks.
@@ -84,7 +84,7 @@ TEST_F(RedundancyEliminationTest, RemoveRedundantAdd) {
                OpReturn
                OpFunctionEnd
   )";
-  SinglePassRunAndMatch<opt::RedundancyEliminationPass>(text, false);
+  SinglePassRunAndMatch<RedundancyEliminationPass>(text, false);
 }
 
 // Remove a redundant add going through a multiple basic blocks.
@@ -120,7 +120,7 @@ TEST_F(RedundancyEliminationTest, RemoveRedundantAddDiamond) {
                OpFunctionEnd
 
   )";
-  SinglePassRunAndMatch<opt::RedundancyEliminationPass>(text, false);
+  SinglePassRunAndMatch<RedundancyEliminationPass>(text, false);
 }
 
 // Remove a redundant add in a side node.
@@ -156,7 +156,7 @@ TEST_F(RedundancyEliminationTest, RemoveRedundantAddInSideNode) {
                OpFunctionEnd
 
   )";
-  SinglePassRunAndMatch<opt::RedundancyEliminationPass>(text, false);
+  SinglePassRunAndMatch<RedundancyEliminationPass>(text, false);
 }
 
 // Remove a redundant add whose value is in the result of a phi node.
@@ -196,7 +196,7 @@ TEST_F(RedundancyEliminationTest, RemoveRedundantAddWithPhi) {
                OpFunctionEnd
 
   )";
-  SinglePassRunAndMatch<opt::RedundancyEliminationPass>(text, false);
+  SinglePassRunAndMatch<RedundancyEliminationPass>(text, false);
 }
 
 // Keep the add because it is redundant on some paths, but not all paths.
@@ -230,9 +230,9 @@ TEST_F(RedundancyEliminationTest, KeepPartiallyRedundantAdd) {
                OpFunctionEnd
 
   )";
-  auto result = SinglePassRunAndDisassemble<opt::RedundancyEliminationPass>(
+  auto result = SinglePassRunAndDisassemble<RedundancyEliminationPass>(
       text, /* skip_nop = */ true, /* do_validation = */ false);
-  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
 }
 
 // Keep the add.  Even if it is redundant on all paths, there is no single id
@@ -268,9 +268,13 @@ TEST_F(RedundancyEliminationTest, KeepRedundantAddWithoutPhi) {
                OpFunctionEnd
 
   )";
-  auto result = SinglePassRunAndDisassemble<opt::RedundancyEliminationPass>(
+  auto result = SinglePassRunAndDisassemble<RedundancyEliminationPass>(
       text, /* skip_nop = */ true, /* do_validation = */ false);
-  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
 }
+
 #endif
-}  // anonymous namespace
+
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

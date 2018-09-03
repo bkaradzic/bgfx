@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gmock/gmock.h"
-#include "linker_fixture.h"
+#include <string>
 
+#include "gmock/gmock.h"
+#include "test/link/linker_fixture.h"
+
+namespace spvtools {
 namespace {
 
 using ::testing::HasSubstr;
@@ -87,7 +90,7 @@ OpDecorate %1 LinkageAttributes "foo" Export
 )";
 
   spvtest::Binary linked_binary;
-  spvtools::LinkerOptions options;
+  LinkerOptions options;
   options.SetCreateLibrary(true);
   EXPECT_EQ(SPV_SUCCESS, AssembleAndLink({body}, &linked_binary, options))
       << GetErrorMessage();
@@ -396,4 +399,5 @@ OpFunctionEnd
   EXPECT_EQ(expected_res, res_body);
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

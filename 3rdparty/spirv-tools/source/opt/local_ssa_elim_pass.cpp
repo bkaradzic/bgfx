@@ -14,21 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "local_ssa_elim_pass.h"
+#include "source/opt/local_ssa_elim_pass.h"
 
-#include "cfa.h"
-#include "iterator.h"
-#include "ssa_rewrite_pass.h"
+#include "source/cfa.h"
+#include "source/opt/iterator.h"
+#include "source/opt/ssa_rewrite_pass.h"
 
 namespace spvtools {
 namespace opt {
-
-void LocalMultiStoreElimPass::Initialize(ir::IRContext* c) {
-  InitializeProcessing(c);
-
-  // Initialize extension whitelist
-  InitExtensions();
-}
 
 bool LocalMultiStoreElimPass::AllExtensionsSupported() const {
   // If any extension not in whitelist, return false
@@ -54,17 +47,18 @@ Pass::Status LocalMultiStoreElimPass::ProcessImpl() {
   // Do not process if any disallowed extensions are enabled
   if (!AllExtensionsSupported()) return Status::SuccessWithoutChange;
   // Process functions
-  ProcessFunction pfn = [this](ir::Function* fp) {
+  ProcessFunction pfn = [this](Function* fp) {
     return SSARewriter(this).RewriteFunctionIntoSSA(fp);
   };
   bool modified = ProcessEntryPointCallTree(pfn, get_module());
   return modified ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
-LocalMultiStoreElimPass::LocalMultiStoreElimPass() {}
+LocalMultiStoreElimPass::LocalMultiStoreElimPass() = default;
 
-Pass::Status LocalMultiStoreElimPass::Process(ir::IRContext* c) {
-  Initialize(c);
+Pass::Status LocalMultiStoreElimPass::Process() {
+  // Initialize extension whitelist
+  InitExtensions();
   return ProcessImpl();
 }
 

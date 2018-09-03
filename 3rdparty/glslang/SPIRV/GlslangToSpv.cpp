@@ -54,15 +54,6 @@ namespace spv {
 #endif
 }
 
-#if ENABLE_OPT
-    #include "spirv-tools/optimizer.hpp"
-    #include "message.h"
-#endif
-
-#if ENABLE_OPT
-using namespace spvtools;
-#endif
-
 // Glslang includes
 #include "../glslang/MachineIndependent/localintermediate.h"
 #include "../glslang/MachineIndependent/SymbolTable.h"
@@ -3220,7 +3211,7 @@ void TGlslangToSpvTraverser::updateMemberOffset(const glslang::TType& structType
     //       adjusting this late means inconsistencies with earlier code, which for reflection is an issue
     // Until reflection is brought in sync with these adjustments, don't apply to $Global,
     // which is the most likely to rely on reflection, and least likely to rely implicit layouts
-    if (glslangIntermediate->usingHlslOFfsets() &&
+    if (glslangIntermediate->usingHlslOffsets() &&
         ! memberType.isArray() && memberType.isVector() && structType.getTypeName().compare("$Global") != 0) {
         int dummySize;
         int componentAlignment = glslangIntermediate->getBaseAlignmentScalar(memberType, dummySize);
@@ -6971,7 +6962,7 @@ void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, 
     if (out.fail())
         printf("ERROR: Failed to open file: %s\n", baseName);
     out << "\t// " << 
-        glslang::GetSpirvGeneratorVersion() << "." << GLSLANG_MINOR_VERSION << "." << GLSLANG_PATCH_LEVEL <<
+        GetSpirvGeneratorVersion() << "." << GLSLANG_MINOR_VERSION << "." << GLSLANG_PATCH_LEVEL <<
         std::endl;
     if (varName != nullptr) {
         out << "\t #pragma once" << std::endl;
@@ -6998,13 +6989,13 @@ void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, 
 //
 // Set up the glslang traversal
 //
-void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv, SpvOptions* options)
+void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>& spirv, SpvOptions* options)
 {
     spv::SpvBuildLogger logger;
     GlslangToSpv(intermediate, spirv, &logger, options);
 }
 
-void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
+void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>& spirv,
                   spv::SpvBuildLogger* logger, SpvOptions* options)
 {
     TIntermNode* root = intermediate.getTreeRoot();
@@ -7012,11 +7003,11 @@ void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsign
     if (root == 0)
         return;
 
-    glslang::SpvOptions defaultOptions;
+    SpvOptions defaultOptions;
     if (options == nullptr)
         options = &defaultOptions;
 
-    glslang::GetThreadPoolAllocator().push();
+    GetThreadPoolAllocator().push();
 
     TGlslangToSpvTraverser it(intermediate.getSpv().spv, &intermediate, logger, *options);
     root->traverse(&it);
@@ -7026,53 +7017,18 @@ void GlslangToSpv(const glslang::TIntermediate& intermediate, std::vector<unsign
 #if ENABLE_OPT
     // If from HLSL, run spirv-opt to "legalize" the SPIR-V for Vulkan
     // eg. forward and remove memory writes of opaque types.
-    if ((intermediate.getSource() == EShSourceHlsl ||
-                options->optimizeSize) &&
-            !options->disableOptimizer) {
-        spv_target_env target_env = SPV_ENV_UNIVERSAL_1_2;
+    if ((intermediate.getSource() == EShSourceHlsl || options->optimizeSize) && !options->disableOptimizer)
+        SpirvToolsLegalize(intermediate, spirv, logger, options);
 
-        spvtools::Optimizer optimizer(target_env);
-        optimizer.SetMessageConsumer([](spv_message_level_t level,
-                                         const char* source,
-                                         const spv_position_t& position,
-                                         const char* message) {
-            std::cerr << StringifyMessage(level, source, position, message)
-                      << std::endl;
-        });
+    if (options->validate)
+        SpirvToolsValidate(intermediate, spirv, logger);
 
-        optimizer.RegisterPass(CreateMergeReturnPass());
-        optimizer.RegisterPass(CreateInlineExhaustivePass());
-        optimizer.RegisterPass(CreateEliminateDeadFunctionsPass());
-        optimizer.RegisterPass(CreateScalarReplacementPass());
-        optimizer.RegisterPass(CreateLocalAccessChainConvertPass());
-        optimizer.RegisterPass(CreateLocalSingleBlockLoadStoreElimPass());
-        optimizer.RegisterPass(CreateLocalSingleStoreElimPass());
-        optimizer.RegisterPass(CreateSimplificationPass());
-        optimizer.RegisterPass(CreateAggressiveDCEPass());
-        optimizer.RegisterPass(CreateDeadInsertElimPass());
-        optimizer.RegisterPass(CreateAggressiveDCEPass());
-        optimizer.RegisterPass(CreateDeadBranchElimPass());
-        optimizer.RegisterPass(CreateBlockMergePass());
-        optimizer.RegisterPass(CreateLocalMultiStoreElimPass());
-        optimizer.RegisterPass(CreateIfConversionPass());
-        optimizer.RegisterPass(CreateSimplificationPass());
-        optimizer.RegisterPass(CreateAggressiveDCEPass());
-        optimizer.RegisterPass(CreateDeadInsertElimPass());
-        if (options->optimizeSize) {
-            optimizer.RegisterPass(CreateRedundancyEliminationPass());
-            // TODO(greg-lunarg): Add this when AMD driver issues are resolved
-            // optimizer.RegisterPass(CreateCommonUniformElimPass());
-        }
-        optimizer.RegisterPass(CreateAggressiveDCEPass());
-        optimizer.RegisterPass(CreateCFGCleanupPass());
-        optimizer.RegisterLegalizationPasses();
+    if (options->disassemble)
+        SpirvToolsDisassemble(std::cout, spirv);
 
-        if (!optimizer.Run(spirv.data(), spirv.size(), &spirv))
-            return;
-    }
 #endif
 
-    glslang::GetThreadPoolAllocator().pop();
+    GetThreadPoolAllocator().pop();
 }
 
 }; // end namespace glslang

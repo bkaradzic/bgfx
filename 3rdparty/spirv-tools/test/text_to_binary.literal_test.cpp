@@ -14,8 +14,11 @@
 
 // Assembler tests for literal numbers and literal strings.
 
-#include "test_fixture.h"
+#include <string>
 
+#include "test/test_fixture.h"
+
+namespace spvtools {
 namespace {
 
 using spvtest::TextToBinaryTest;
@@ -118,4 +121,5 @@ TEST_F(TextToBinaryTest, LiteralStringUTF8LongEncodings) {
             CompileFailure("OpName %target \"" + bad_1_arg_string + "\"\n"));
 }
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace spvtools

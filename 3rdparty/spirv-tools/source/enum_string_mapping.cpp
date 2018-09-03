@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "enum_string_mapping.h"
+#include "source/enum_string_mapping.h"
 
 #include <algorithm>
 #include <cassert>
@@ -20,10 +20,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "extensions.h"
+#include "source/extensions.h"
 
-namespace libspirv {
+namespace spvtools {
 
 #include "enum_string_mapping.inc"
 
-}  // namespace libspirv
+}  // namespace spvtools

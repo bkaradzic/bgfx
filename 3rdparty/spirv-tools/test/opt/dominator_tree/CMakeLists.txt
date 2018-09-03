@@ -13,67 +13,18 @@
 # limitations under the License.
 
 
-add_spvtools_unittest(TARGET dominator_analysis_simple
-    SRCS ../function_utils.h
-         simple.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_post
-    SRCS ../function_utils.h
-         post.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_nested_ifs
-    SRCS ../function_utils.h
-         nested_ifs.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_nested_ifs_post
-    SRCS ../function_utils.h
-         nested_ifs_post.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_nested_loops
-    SRCS ../function_utils.h
-         nested_loops.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_nested_loops_with_unreachables
-    SRCS ../function_utils.h
-         nested_loops_with_unreachables.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_switch_case_fallthrough
-    SRCS ../function_utils.h
-         switch_case_fallthrough.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_unreachable_for
-    SRCS ../function_utils.h
-         unreachable_for.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_analysis_unreachable_for_post
-    SRCS ../function_utils.h
-         unreachable_for_post.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_generated
-    SRCS ../function_utils.h
-         generated.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET dominator_common_dominators
-    SRCS common_dominators.cpp
-    LIBS SPIRV-Tools-opt
+add_spvtools_unittest(TARGET dominator_analysis
+  SRCS ../function_utils.h
+       common_dominators.cpp
+       generated.cpp
+       nested_ifs.cpp
+       nested_ifs_post.cpp
+       nested_loops.cpp
+       nested_loops_with_unreachables.cpp
+       post.cpp
+       simple.cpp
+       switch_case_fallthrough.cpp
+       unreachable_for.cpp
+       unreachable_for_post.cpp
+  LIBS SPIRV-Tools-opt
 )

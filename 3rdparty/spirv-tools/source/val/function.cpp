@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "val/function.h"
+#include "source/val/function.h"
 
 #include <cassert>
 
@@ -22,19 +22,13 @@
 #include <unordered_set>
 #include <utility>
 
-#include "cfa.h"
-#include "val/basic_block.h"
-#include "val/construct.h"
-#include "validate.h"
+#include "source/cfa.h"
+#include "source/val/basic_block.h"
+#include "source/val/construct.h"
+#include "source/val/validate.h"
 
-using std::ignore;
-using std::list;
-using std::make_pair;
-using std::pair;
-using std::tie;
-using std::vector;
-
-namespace libspirv {
+namespace spvtools {
+namespace val {
 
 // Universal Limit of ResultID + 1
 static const uint32_t kInvalidId = 0x400000;
@@ -139,12 +133,12 @@ spv_result_t Function::RegisterBlock(uint32_t block_id, bool is_definition) {
   return SPV_SUCCESS;
 }
 
-void Function::RegisterBlockEnd(vector<uint32_t> next_list,
+void Function::RegisterBlockEnd(std::vector<uint32_t> next_list,
                                 SpvOp branch_instruction) {
   assert(
       current_block_ &&
       "RegisterBlockEnd can only be called when parsing a binary in a block");
-  vector<BasicBlock*> next_blocks;
+  std::vector<BasicBlock*> next_blocks;
   next_blocks.reserve(next_list.size());
 
   std::unordered_map<uint32_t, BasicBlock>::iterator inserted_block;
@@ -195,16 +189,18 @@ size_t Function::undefined_block_count() const {
   return undefined_blocks_.size();
 }
 
-const vector<BasicBlock*>& Function::ordered_blocks() const {
+const std::vector<BasicBlock*>& Function::ordered_blocks() const {
   return ordered_blocks_;
 }
-vector<BasicBlock*>& Function::ordered_blocks() { return ordered_blocks_; }
+std::vector<BasicBlock*>& Function::ordered_blocks() { return ordered_blocks_; }
 
 const BasicBlock* Function::current_block() const { return current_block_; }
 BasicBlock* Function::current_block() { return current_block_; }
 
-const list<Construct>& Function::constructs() const { return cfg_constructs_; }
-list<Construct>& Function::constructs() { return cfg_constructs_; }
+const std::list<Construct>& Function::constructs() const {
+  return cfg_constructs_;
+}
+std::list<Construct>& Function::constructs() { return cfg_constructs_; }
 
 const BasicBlock* Function::first_block() const {
   if (ordered_blocks_.empty()) return nullptr;
@@ -218,30 +214,31 @@ BasicBlock* Function::first_block() {
 bool Function::IsBlockType(uint32_t merge_block_id, BlockType type) const {
   bool ret = false;
   const BasicBlock* block;
-  tie(block, ignore) = GetBlock(merge_block_id);
+  std::tie(block, std::ignore) = GetBlock(merge_block_id);
   if (block) {
     ret = block->is_type(type);
   }
   return ret;
 }
 
-pair<const BasicBlock*, bool> Function::GetBlock(uint32_t block_id) const {
+std::pair<const BasicBlock*, bool> Function::GetBlock(uint32_t block_id) const {
   const auto b = blocks_.find(block_id);
   if (b != end(blocks_)) {
     const BasicBlock* block = &(b->second);
     bool defined =
-        undefined_blocks_.find(block->id()) == end(undefined_blocks_);
-    return make_pair(block, defined);
+        undefined_blocks_.find(block->id()) == std::end(undefined_blocks_);
+    return std::make_pair(block, defined);
   } else {
-    return make_pair(nullptr, false);
+    return std::make_pair(nullptr, false);
   }
 }
 
-pair<BasicBlock*, bool> Function::GetBlock(uint32_t block_id) {
+std::pair<BasicBlock*, bool> Function::GetBlock(uint32_t block_id) {
   const BasicBlock* out;
   bool defined;
-  tie(out, defined) = const_cast<const Function*>(this)->GetBlock(block_id);
-  return make_pair(const_cast<BasicBlock*>(out), defined);
+  std::tie(out, defined) =
+      const_cast<const Function*>(this)->GetBlock(block_id);
+  return std::make_pair(const_cast<BasicBlock*>(out), defined);
 }
 
 Function::GetBlocksFunction Function::AugmentedCFGSuccessorsFunction() const {
@@ -275,7 +272,7 @@ void Function::ComputeAugmentedCFG() {
   // the predecessors of the pseudo exit block.
   auto succ_func = [](const BasicBlock* b) { return b->successors(); };
   auto pred_func = [](const BasicBlock* b) { return b->predecessors(); };
-  spvtools::CFA<BasicBlock>::ComputeAugmentedCFG(
+  CFA<BasicBlock>::ComputeAugmentedCFG(
       ordered_blocks_, &pseudo_entry_block_, &pseudo_exit_block_,
       &augmented_successors_map_, &augmented_predecessors_map_, succ_func,
       pred_func);
@@ -386,4 +383,5 @@ bool Function::IsCompatibleWithExecutionModel(SpvExecutionModel model,
   return return_value;
 }
 
-}  // namespace libspirv
+}  // namespace val
+}  // namespace spvtools

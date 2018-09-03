@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSPIRV_OPT_PASS_H_
-#define LIBSPIRV_OPT_PASS_H_
+#ifndef SOURCE_OPT_PASS_H_
+#define SOURCE_OPT_PASS_H_
 
 #include <algorithm>
 #include <map>
@@ -22,10 +22,10 @@
 #include <unordered_set>
 #include <utility>
 
-#include "basic_block.h"
-#include "def_use_manager.h"
-#include "ir_context.h"
-#include "module.h"
+#include "source/opt/basic_block.h"
+#include "source/opt/def_use_manager.h"
+#include "source/opt/ir_context.h"
+#include "source/opt/module.h"
 #include "spirv-tools/libspirv.hpp"
 
 namespace spvtools {
@@ -45,14 +45,7 @@ class Pass {
     SuccessWithoutChange = 0x11,
   };
 
-  using ProcessFunction = std::function<bool(ir::Function*)>;
-
-  // Constructs a new pass.
-  //
-  // The constructed instance will have an empty message consumer, which just
-  // ignores all messages from the library. Use SetMessageConsumer() to supply
-  // one if messages are of concern.
-  Pass();
+  using ProcessFunction = std::function<bool(Function*)>;
 
   // Destructs the pass.
   virtual ~Pass() = default;
@@ -87,26 +80,29 @@ class Pass {
   }
 
   // Returns a pointer to the current module for this pass.
-  ir::Module* get_module() const { return context_->module(); }
+  Module* get_module() const { return context_->module(); }
+
+  // Sets the pointer to the current context for this pass.
+  void SetContextForTesting(IRContext* ctx) { context_ = ctx; }
 
   // Returns a pointer to the current context for this pass.
-  ir::IRContext* context() const { return context_; }
+  IRContext* context() const { return context_; }
 
   // Returns a pointer to the CFG for current module.
-  ir::CFG* cfg() const { return context()->cfg(); }
+  CFG* cfg() const { return context()->cfg(); }
 
   // Add to |todo| all ids of functions called in |func|.
-  void AddCalls(ir::Function* func, std::queue<uint32_t>* todo);
+  void AddCalls(Function* func, std::queue<uint32_t>* todo);
 
   // Applies |pfn| to every function in the call trees that are rooted at the
   // entry points.  Returns true if any call |pfn| returns true.  By convention
   // |pfn| should return true if it modified the module.
-  bool ProcessEntryPointCallTree(ProcessFunction& pfn, ir::Module* module);
+  bool ProcessEntryPointCallTree(ProcessFunction& pfn, Module* module);
 
   // Applies |pfn| to every function in the call trees rooted at the entry
   // points and exported functions.  Returns true if any call |pfn| returns
   // true.  By convention |pfn| should return true if it modified the module.
-  bool ProcessReachableCallTree(ProcessFunction& pfn, ir::IRContext* irContext);
+  bool ProcessReachableCallTree(ProcessFunction& pfn, IRContext* irContext);
 
   // Applies |pfn| to every function in the call trees rooted at the elements of
   // |roots|.  Returns true if any call to |pfn| returns true.  By convention
@@ -114,34 +110,39 @@ class Pass {
   // |roots| will be empty.
   bool ProcessCallTreeFromRoots(
       ProcessFunction& pfn,
-      const std::unordered_map<uint32_t, ir::Function*>& id2function,
+      const std::unordered_map<uint32_t, Function*>& id2function,
       std::queue<uint32_t>* roots);
 
   // Run the pass on the given |module|. Returns Status::Failure if errors occur
-  // when
-  // processing. Returns the corresponding Status::Success if processing is
+  // when processing. Returns the corresponding Status::Success if processing is
   // successful to indicate whether changes are made to the module.  If there
   // were any changes it will also invalidate the analyses in the IRContext
   // that are not preserved.
-  virtual Status Run(ir::IRContext* ctx) final;
+  //
+  // It is an error if |Run| is called twice with the same instance of the pass.
+  // If this happens the return value will be |Failure|.
+  Status Run(IRContext* ctx);
 
   // Returns the set of analyses that the pass is guaranteed to preserve.
-  virtual ir::IRContext::Analysis GetPreservedAnalyses() {
-    return ir::IRContext::kAnalysisNone;
+  virtual IRContext::Analysis GetPreservedAnalyses() {
+    return IRContext::kAnalysisNone;
   }
 
   // Return type id for |ptrInst|'s pointee
-  uint32_t GetPointeeTypeId(const ir::Instruction* ptrInst) const;
+  uint32_t GetPointeeTypeId(const Instruction* ptrInst) const;
 
  protected:
-  // Initialize basic data structures for the pass. This sets up the def-use
-  // manager, module and other attributes.
-  virtual void InitializeProcessing(ir::IRContext* c) { context_ = c; }
+  // Constructs a new pass.
+  //
+  // The constructed instance will have an empty message consumer, which just
+  // ignores all messages from the library. Use SetMessageConsumer() to supply
+  // one if messages are of concern.
+  Pass();
 
   // Processes the given |module|. Returns Status::Failure if errors occur when
   // processing. Returns the corresponding Status::Success if processing is
   // succesful to indicate whether changes are made to the module.
-  virtual Status Process(ir::IRContext* context) = 0;
+  virtual Status Process() = 0;
 
   // Return the next available SSA id and increment it.
   uint32_t TakeNextId() { return context_->TakeNextId(); }
@@ -150,10 +151,15 @@ class Pass {
   MessageConsumer consumer_;  // Message consumer.
 
   // The context that this pass belongs to.
-  ir::IRContext* context_;
+  IRContext* context_;
+
+  // An instance of a pass can only be run once because it is too hard to
+  // enforce proper resetting of internal state for each instance.  This member
+  // is used to check that we do not run the same instance twice.
+  bool already_run_;
 };
 
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // LIBSPIRV_OPT_PASS_H_
+#endif  // SOURCE_OPT_PASS_H_

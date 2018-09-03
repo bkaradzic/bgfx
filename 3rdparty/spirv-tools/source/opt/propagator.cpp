@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "propagator.h"
+#include "source/opt/propagator.h"
 
 namespace spvtools {
 namespace opt {
 
 void SSAPropagator::AddControlEdge(const Edge& edge) {
-  ir::BasicBlock* dest_bb = edge.dest;
+  BasicBlock* dest_bb = edge.dest;
 
   // Refuse to add the exit block to the work list.
   if (dest_bb == ctx_->cfg()->pseudo_exit_block()) {
@@ -36,14 +36,14 @@ void SSAPropagator::AddControlEdge(const Edge& edge) {
   blocks_.push(dest_bb);
 }
 
-void SSAPropagator::AddSSAEdges(ir::Instruction* instr) {
+void SSAPropagator::AddSSAEdges(Instruction* instr) {
   // Ignore instructions that produce no result.
   if (instr->result_id() == 0) {
     return;
   }
 
   get_def_use_mgr()->ForEachUser(
-      instr->result_id(), [this](ir::Instruction* use_instr) {
+      instr->result_id(), [this](Instruction* use_instr) {
         // If the basic block for |use_instr| has not been simulated yet, do
         // nothing.  The instruction |use_instr| will be simulated next time the
         // block is scheduled.
@@ -57,17 +57,17 @@ void SSAPropagator::AddSSAEdges(ir::Instruction* instr) {
       });
 }
 
-bool SSAPropagator::IsPhiArgExecutable(ir::Instruction* phi, uint32_t i) const {
-  ir::BasicBlock* phi_bb = ctx_->get_instr_block(phi);
+bool SSAPropagator::IsPhiArgExecutable(Instruction* phi, uint32_t i) const {
+  BasicBlock* phi_bb = ctx_->get_instr_block(phi);
 
   uint32_t in_label_id = phi->GetSingleWordOperand(i + 1);
-  ir::Instruction* in_label_instr = get_def_use_mgr()->GetDef(in_label_id);
-  ir::BasicBlock* in_bb = ctx_->get_instr_block(in_label_instr);
+  Instruction* in_label_instr = get_def_use_mgr()->GetDef(in_label_id);
+  BasicBlock* in_bb = ctx_->get_instr_block(in_label_instr);
 
   return IsEdgeExecutable(Edge(in_bb, phi_bb));
 }
 
-bool SSAPropagator::SetStatus(ir::Instruction* inst, PropStatus status) {
+bool SSAPropagator::SetStatus(Instruction* inst, PropStatus status) {
   bool has_old_status = false;
   PropStatus old_status = kVarying;
   if (HasStatus(inst)) {
@@ -84,7 +84,7 @@ bool SSAPropagator::SetStatus(ir::Instruction* inst, PropStatus status) {
   return status_changed;
 }
 
-bool SSAPropagator::Simulate(ir::Instruction* instr) {
+bool SSAPropagator::Simulate(Instruction* instr) {
   bool changed = false;
 
   // Don't bother visiting instructions that should not be simulated again.
@@ -92,7 +92,7 @@ bool SSAPropagator::Simulate(ir::Instruction* instr) {
     return changed;
   }
 
-  ir::BasicBlock* dest_bb = nullptr;
+  BasicBlock* dest_bb = nullptr;
   PropStatus status = visit_fn_(instr, &dest_bb);
   bool status_changed = SetStatus(instr, status);
 
@@ -107,7 +107,7 @@ bool SSAPropagator::Simulate(ir::Instruction* instr) {
     // If |instr| is a block terminator, add all the control edges out of its
     // block.
     if (instr->IsBlockTerminator()) {
-      ir::BasicBlock* block = ctx_->get_instr_block(instr);
+      BasicBlock* block = ctx_->get_instr_block(instr);
       for (const auto& e : bb_succs_.at(block)) {
         AddControlEdge(e);
       }
@@ -145,7 +145,7 @@ bool SSAPropagator::Simulate(ir::Instruction* instr) {
              "malformed Phi arguments");
 
       uint32_t arg_id = instr->GetSingleWordOperand(i);
-      ir::Instruction* arg_def_instr = get_def_use_mgr()->GetDef(arg_id);
+      Instruction* arg_def_instr = get_def_use_mgr()->GetDef(arg_id);
       if (!IsPhiArgExecutable(instr, i) || ShouldSimulateAgain(arg_def_instr)) {
         has_operands_to_simulate = true;
         break;
@@ -157,7 +157,7 @@ bool SSAPropagator::Simulate(ir::Instruction* instr) {
     // also be simulated again.
     has_operands_to_simulate =
         !instr->WhileEachInId([this](const uint32_t* use) {
-          ir::Instruction* def_instr = get_def_use_mgr()->GetDef(*use);
+          Instruction* def_instr = get_def_use_mgr()->GetDef(*use);
           if (ShouldSimulateAgain(def_instr)) {
             return false;
           }
@@ -172,7 +172,7 @@ bool SSAPropagator::Simulate(ir::Instruction* instr) {
   return changed;
 }
 
-bool SSAPropagator::Simulate(ir::BasicBlock* block) {
+bool SSAPropagator::Simulate(BasicBlock* block) {
   if (block == ctx_->cfg()->pseudo_exit_block()) {
     return false;
   }
@@ -183,12 +183,12 @@ bool SSAPropagator::Simulate(ir::BasicBlock* block) {
   // operand can be simulated.
   bool changed = false;
   block->ForEachPhiInst(
-      [&changed, this](ir::Instruction* instr) { changed |= Simulate(instr); });
+      [&changed, this](Instruction* instr) { changed |= Simulate(instr); });
 
   // If this is the first time this block is being simulated, simulate every
   // statement in it.
   if (!BlockHasBeenSimulated(block)) {
-    block->ForEachInst([this, &changed](ir::Instruction* instr) {
+    block->ForEachInst([this, &changed](Instruction* instr) {
       if (instr->opcode() != SpvOpPhi) {
         changed |= Simulate(instr);
       }
@@ -206,9 +206,9 @@ bool SSAPropagator::Simulate(ir::BasicBlock* block) {
   return changed;
 }
 
-void SSAPropagator::Initialize(ir::Function* fn) {
+void SSAPropagator::Initialize(Function* fn) {
   // Compute predecessor and successor blocks for every block in |fn|'s CFG.
-  // TODO(dnovillo): Move this to ir::CFG and always build them. Alternately,
+  // TODO(dnovillo): Move this to CFG and always build them. Alternately,
   // move it to IRContext and build CFG preds/succs on-demand.
   bb_succs_[ctx_->cfg()->pseudo_entry_block()].push_back(
       Edge(ctx_->cfg()->pseudo_entry_block(), fn->entry().get()));
@@ -216,7 +216,7 @@ void SSAPropagator::Initialize(ir::Function* fn) {
   for (auto& block : *fn) {
     const auto& const_block = block;
     const_block.ForEachSuccessorLabel([this, &block](const uint32_t label_id) {
-      ir::BasicBlock* succ_bb =
+      BasicBlock* succ_bb =
           ctx_->get_instr_block(get_def_use_mgr()->GetDef(label_id));
       bb_succs_[&block].push_back(Edge(&block, succ_bb));
       bb_preds_[succ_bb].push_back(Edge(succ_bb, &block));
@@ -236,7 +236,7 @@ void SSAPropagator::Initialize(ir::Function* fn) {
   }
 }
 
-bool SSAPropagator::Run(ir::Function* fn) {
+bool SSAPropagator::Run(Function* fn) {
   Initialize(fn);
 
   bool changed = false;
@@ -252,7 +252,7 @@ bool SSAPropagator::Run(ir::Function* fn) {
 
     // Simulate edges from the SSA queue.
     if (!ssa_edge_uses_.empty()) {
-      ir::Instruction* instr = ssa_edge_uses_.front();
+      Instruction* instr = ssa_edge_uses_.front();
       changed |= Simulate(instr);
       ssa_edge_uses_.pop();
     }
@@ -261,7 +261,7 @@ bool SSAPropagator::Run(ir::Function* fn) {
 #ifndef NDEBUG
   // Verify all visited values have settled. No value that has been simulated
   // should end on not interesting.
-  fn->ForEachInst([this](ir::Instruction* inst) {
+  fn->ForEachInst([this](Instruction* inst) {
     assert(
         (!HasStatus(inst) || Status(inst) != SSAPropagator::kNotInteresting) &&
         "Unsettled value");

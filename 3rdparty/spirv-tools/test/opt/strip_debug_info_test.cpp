@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pass_fixture.h"
-#include "pass_utils.h"
+#include <vector>
 
+#include "test/opt/pass_fixture.h"
+#include "test/opt/pass_utils.h"
+
+namespace spvtools {
+namespace opt {
 namespace {
-
-using namespace spvtools;
 
 using StripLineDebugInfoTest = PassTest<::testing::Test>;
 
@@ -51,9 +53,9 @@ TEST_F(StripLineDebugInfoTest, LineNoLine) {
                "OpFunctionEnd",
       // clang-format on
   };
-  SinglePassRunAndCheck<opt::StripDebugInfoPass>(JoinAllInsts(text),
-                                                 JoinNonDebugInsts(text),
-                                                 /* skip_nop = */ false);
+  SinglePassRunAndCheck<StripDebugInfoPass>(JoinAllInsts(text),
+                                            JoinNonDebugInsts(text),
+                                            /* skip_nop = */ false);
 
   // Let's add more debug instruction before the "OpString" instruction.
   const std::vector<const char*> more_text = {
@@ -67,9 +69,9 @@ TEST_F(StripLineDebugInfoTest, LineNoLine) {
       "OpName %2 \"main\"",
   };
   text.insert(text.begin() + 4, more_text.cbegin(), more_text.cend());
-  SinglePassRunAndCheck<opt::StripDebugInfoPass>(JoinAllInsts(text),
-                                                 JoinNonDebugInsts(text),
-                                                 /* skip_nop = */ false);
+  SinglePassRunAndCheck<StripDebugInfoPass>(JoinAllInsts(text),
+                                            JoinNonDebugInsts(text),
+                                            /* skip_nop = */ false);
 }
 
 using StripDebugInfoTest = PassTest<::testing::TestWithParam<const char*>>;
@@ -80,9 +82,9 @@ TEST_P(StripDebugInfoTest, Kind) {
       "OpMemoryModel Logical GLSL450",
       GetParam(),
   };
-  SinglePassRunAndCheck<opt::StripDebugInfoPass>(JoinAllInsts(text),
-                                                 JoinNonDebugInsts(text),
-                                                 /* skip_nop = */ false);
+  SinglePassRunAndCheck<StripDebugInfoPass>(JoinAllInsts(text),
+                                            JoinNonDebugInsts(text),
+                                            /* skip_nop = */ false);
 }
 
 // Test each possible non-line debug instruction.
@@ -100,4 +102,6 @@ INSTANTIATE_TEST_CASE_P(
     })));
 // clang-format on
 
-}  // anonymous namespace
+}  // namespace
+}  // namespace opt
+}  // namespace spvtools

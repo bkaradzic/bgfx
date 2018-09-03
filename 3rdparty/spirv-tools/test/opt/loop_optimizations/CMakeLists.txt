@@ -13,80 +13,28 @@
 # limitations under the License.
 
 
-add_spvtools_unittest(TARGET loop_descriptor_simple
-    SRCS ../function_utils.h
-        loop_descriptions.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET loop_descriptor_nested
-    SRCS ../function_utils.h
-        nested_loops.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET lcssa_test
-    SRCS ../function_utils.h
-        lcssa.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET licm_all_loop_types
-    SRCS ../function_utils.h
-        hoist_all_loop_types.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET licm_hoist_independent_loops
-    SRCS ../function_utils.h
-        hoist_from_independent_loops.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET licm_hoist_double_nested_loops
-    SRCS ../function_utils.h
-        hoist_double_nested_loops.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET licm_hoist_single_nested_loops
-    SRCS ../function_utils.h
-        hoist_single_nested_loops.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET licm_hoist_simple_case
-    SRCS ../function_utils.h
-        hoist_simple_case.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET licm_hoist_no_preheader
-    SRCS ../function_utils.h
-        hoist_without_preheader.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET loop_unroll_simple
-    SRCS ../function_utils.h
-        unroll_simple.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET loop_unroll_assumtion_checks
-    SRCS ../function_utils.h
-        unroll_assumptions.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET unswitch_test
-    SRCS ../function_utils.h
-        unswitch.cpp
-    LIBS SPIRV-Tools-opt
-)
-
-add_spvtools_unittest(TARGET peeling_test
-    SRCS ../function_utils.h
-        peeling.cpp
-    LIBS SPIRV-Tools-opt
+add_spvtools_unittest(TARGET opt_loops
+  SRCS ../function_utils.h
+       dependence_analysis.cpp
+       dependence_analysis_helpers.cpp
+       fusion_compatibility.cpp
+       fusion_illegal.cpp
+       fusion_legal.cpp
+       fusion_pass.cpp
+       hoist_all_loop_types.cpp
+       hoist_double_nested_loops.cpp
+       hoist_from_independent_loops.cpp
+       hoist_simple_case.cpp
+       hoist_single_nested_loops.cpp
+       hoist_without_preheader.cpp
+       lcssa.cpp
+       loop_descriptions.cpp
+       loop_fission.cpp
+       nested_loops.cpp
+       peeling.cpp
+       peeling_pass.cpp
+       unroll_assumptions.cpp
+       unroll_simple.cpp
+       unswitch.cpp
+  LIBS SPIRV-Tools-opt
 )
