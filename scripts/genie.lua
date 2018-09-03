@@ -51,10 +51,10 @@ newoption {
 
 dofile "bgfx-environment.lua"
 
-local BUILD_DIR = path.getabsolute("../.build3")
+local BUILD_DIR = path.getabsolute("../.build")
 
 solution "bgfx"
-	bgfxSolutionDefaults(BUILD_DIR)
+	configureBgfxSolution(BUILD_DIR)
 	startproject "example-00-helloworld"
 
 function copyLib()

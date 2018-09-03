@@ -45,7 +45,7 @@ if _OPTIONS["with-profiler"] then
 	}
 end
 
-function bgfxSolutionDefaults(BUILD_DIR)
+function configureBgfxSolution(BUILD_DIR)
     configurations {
 		"Debug",
 		"Release",
