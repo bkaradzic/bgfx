@@ -15,7 +15,7 @@
 #ifndef SOURCE_OPT_CONSTANTS_H_
 #define SOURCE_OPT_CONSTANTS_H_
 
-#include <cinttypes>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <unordered_map>
