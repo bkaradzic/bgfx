@@ -16,11 +16,11 @@ indent_size  = 4
 indent_style = tab
 indent_size  = 4
 
-[ocornut-imgui/*]
+[dear-imgui/*]
 indent_style = space
 indent_size  = 4
 
-[ocornut-imgui/*.inl]
+[dear-imgui/*.inl]
 indent_style = space
 indent_size  = 4
 
