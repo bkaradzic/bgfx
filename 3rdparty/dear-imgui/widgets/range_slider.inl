@@ -4,6 +4,12 @@
 namespace ImGui
 {
 
+extern template
+IMGUI_API float RoundScalarWithFormatT<float, float>(const char* format, ImGuiDataType data_type, float v);
+
+extern template
+IMGUI_API float SliderCalcRatioFromValueT<float, float>(ImGuiDataType data_type, float v, float v_min, float v_max, float power, float linear_zero_pos);
+
 // ~80% common code with ImGui::SliderBehavior
 bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v2, float v_min, float v_max, float power, int decimal_precision, ImGuiSliderFlags flags)
 {
@@ -87,7 +93,7 @@ bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v
             snprintf(fmt, 64, "%%.%df", decimal_precision);
 
             // Round past decimal precision
-            new_value = RoundScalarWithFormat<float, float>(fmt, ImGuiDataType_Float, new_value);
+            new_value = RoundScalarWithFormatT<float, float>(fmt, ImGuiDataType_Float, new_value);
             if (*v1 != new_value || *v2 != new_value)
             {
                 if (fabsf(*v1 - new_value) < fabsf(*v2 - new_value))
@@ -108,7 +114,7 @@ bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v
     }
 
     // Calculate slider grab positioning
-    float grab_t = SliderBehaviorCalcRatioFromValue<float, float>(ImGuiDataType_Float, *v1, v_min, v_max, power, linear_zero_pos);
+    float grab_t = SliderCalcRatioFromValueT<float, float>(ImGuiDataType_Float, *v1, v_min, v_max, power, linear_zero_pos);
 
     // Draw
     if (!is_horizontal)
@@ -122,7 +128,7 @@ bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v
     window->DrawList->AddRectFilled(grab_bb1.Min, grab_bb1.Max, GetColorU32(g.ActiveId == id ? ImGuiCol_SliderGrabActive : ImGuiCol_SliderGrab), style.GrabRounding);
 
     // Calculate slider grab positioning
-    grab_t = SliderBehaviorCalcRatioFromValue<float, float>(ImGuiDataType_Float, *v2, v_min, v_max, power, linear_zero_pos);
+    grab_t = SliderCalcRatioFromValueT<float, float>(ImGuiDataType_Float, *v2, v_min, v_max, power, linear_zero_pos);
 
     // Draw
     if (!is_horizontal)
