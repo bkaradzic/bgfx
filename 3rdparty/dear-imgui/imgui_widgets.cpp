@@ -1880,6 +1880,11 @@ float ImGui::SliderCalcRatioFromValueT(ImGuiDataType data_type, TYPE v, TYPE v_m
 namespace ImGui
 {
 
+float RoundScalarWithFormatFloat(const char* format, ImGuiDataType data_type, float v)
+{
+    return RoundScalarWithFormatT<float, float>(format, data_type, v);
+}
+
 float SliderCalcRatioFromValueFloat(ImGuiDataType data_type, float v, float v_min, float v_max, float power, float linear_zero_pos)
 {
     return SliderCalcRatioFromValueT<float, float>(data_type, v, v_min, v_max, power, linear_zero_pos);

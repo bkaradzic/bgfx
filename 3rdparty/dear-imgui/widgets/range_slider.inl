@@ -4,11 +4,7 @@
 namespace ImGui
 {
 
-extern template
-IMGUI_API float RoundScalarWithFormatT<float, float>(const char* format, ImGuiDataType data_type, float v);
-
-extern template
-IMGUI_API float SliderCalcRatioFromValueT<float, float>(ImGuiDataType data_type, float v, float v_min, float v_max, float power, float linear_zero_pos);
+extern float RoundScalarWithFormatFloat(const char* format, ImGuiDataType data_type, float v);
 
 extern float SliderCalcRatioFromValueFloat(ImGuiDataType data_type, float v, float v_min, float v_max, float power, float linear_zero_pos);
 
@@ -95,7 +91,7 @@ bool RangeSliderBehavior(const ImRect& frame_bb, ImGuiID id, float* v1, float* v
             snprintf(fmt, 64, "%%.%df", decimal_precision);
 
             // Round past decimal precision
-            new_value = RoundScalarWithFormatT<float, float>(fmt, ImGuiDataType_Float, new_value);
+            new_value = RoundScalarWithFormatFloat(fmt, ImGuiDataType_Float, new_value);
             if (*v1 != new_value || *v2 != new_value)
             {
                 if (fabsf(*v1 - new_value) < fabsf(*v2 - new_value))
