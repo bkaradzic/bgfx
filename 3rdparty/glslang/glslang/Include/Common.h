@@ -37,9 +37,9 @@
 #ifndef _COMMON_INCLUDED_
 #define _COMMON_INCLUDED_
 
+#include <sstream>
 
 #if defined(__ANDROID__)
-#include <sstream>
 namespace std {
 template<typename T>
 std::string to_string(const T& val) {
