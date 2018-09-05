@@ -1119,8 +1119,6 @@ namespace bgfx { namespace d3d11
 					filter.DenyList.pIDList = idlist;
 
 					m_infoQueue->PushStorageFilter(&filter);
-
-					DX_RELEASE(m_infoQueue, 3);
 				}
 			}
 
@@ -1511,6 +1509,8 @@ namespace bgfx { namespace d3d11
 			switch (errorState)
 			{
 			case ErrorState::LoadedDXGI:
+				DX_RELEASE(m_annotation, 1);
+				DX_RELEASE_WARNONLY(m_infoQueue, 0);
 				DX_RELEASE(m_msaaRt, 0);
 				DX_RELEASE(m_swapChain, 0);
 				DX_RELEASE(m_deviceCtx, 0);
@@ -1597,6 +1597,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			DX_RELEASE(m_annotation, 1);
+			DX_RELEASE_WARNONLY(m_infoQueue, 0);
 			DX_RELEASE(m_msaaRt, 0);
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);

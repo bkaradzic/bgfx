@@ -979,8 +979,6 @@ namespace bgfx { namespace d3d12
 						filter.DenyList.NumCategories = BX_COUNTOF(catlist);
 						filter.DenyList.pCategoryList = catlist;
 						m_infoQueue->PushStorageFilter(&filter);
-
-						DX_RELEASE_WARNONLY(m_infoQueue, 0);
 					}
 				}
 #endif // BX_PLATFORM_WINDOWS
@@ -1363,6 +1361,10 @@ namespace bgfx { namespace d3d12
 			{
 				m_textures[ii].destroy();
 			}
+
+#if BX_PLATFORM_WINDOWS
+			DX_RELEASE_WARNONLY(m_infoQueue, 0);
+#endif // BX_PLATFORM_WINDOWS
 
 			DX_RELEASE(m_rtvDescriptorHeap, 0);
 			DX_RELEASE(m_dsvDescriptorHeap, 0);
