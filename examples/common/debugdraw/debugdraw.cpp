@@ -15,6 +15,10 @@
 #include <bx/uint32_t.h>
 #include <bx/handlealloc.h>
 
+#ifndef DEBUG_DRAW_CONFIG_MAX_GEOMETRY
+#	define DEBUG_DRAW_CONFIG_MAX_GEOMETRY 256
+#endif // DEBUG_DRAW_CONFIG_MAX_GEOMETRY
+
 struct DebugVertex
 {
 	float m_x;
@@ -397,16 +401,16 @@ struct SpriteT
 	RectPack2DT<256>              m_ra;
 };
 
-template<uint16_t MaxHandlesT = 256>
+template<uint16_t MaxHandlesT = DEBUG_DRAW_CONFIG_MAX_GEOMETRY>
 struct GeometryT
 {
 	GeometryT()
 	{
 	}
 
-	GeometryHandle create(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	GeometryHandle create(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const void* _indices, bool _index32)
 	{
-		BX_UNUSED(_numVertices, _vertices, _numIndices, _indices);
+		BX_UNUSED(_numVertices, _vertices, _numIndices, _indices, _index32);
 
 		GeometryHandle handle = { m_handleAlloc.alloc() };
 
@@ -425,28 +429,32 @@ struct GeometryT
 				, 0
 				, _indices
 				, _numIndices
-				, false
+				, _index32
 				);
+
+			const uint32_t indexSize = _index32 ? sizeof(uint32_t) : sizeof(uint16_t);
 
 			const uint32_t numIndices = 0
 				+ geometry.m_topologyNumIndices[0]
 				+ geometry.m_topologyNumIndices[1]
 				;
-			const bgfx::Memory* mem = bgfx::alloc(numIndices*sizeof(uint16_t) );
-			uint16_t* indices = (uint16_t*)mem->data;
+			const bgfx::Memory* mem = bgfx::alloc(numIndices*indexSize );
+			uint8_t* indexData = mem->data;
 
-			bx::memCopy(&indices[0], _indices, _numIndices*sizeof(uint16_t) );
-
+			bx::memCopy(indexData, _indices, _numIndices*indexSize );
 			bgfx::topologyConvert(
 				  bgfx::TopologyConvert::TriListToLineList
-				, &indices[geometry.m_topologyNumIndices[0] ]
-				, geometry.m_topologyNumIndices[1]*sizeof(uint16_t)
+				, &indexData[geometry.m_topologyNumIndices[0]*indexSize ]
+				, geometry.m_topologyNumIndices[1]*indexSize
 				, _indices
 				, _numIndices
-				, false
+				, _index32
 				);
 
-			geometry.m_ibh = bgfx::createIndexBuffer(mem);
+			geometry.m_ibh = bgfx::createIndexBuffer(
+				  mem
+				, _index32 ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE
+				);
 		}
 
 		return handle;
@@ -549,7 +557,7 @@ struct Mesh
 };
 
 typedef SpriteT<256, SPRITE_TEXTURE_SIZE> Sprite;
-typedef GeometryT<256> Geometry;
+typedef GeometryT<DEBUG_DRAW_CONFIG_MAX_GEOMETRY> Geometry;
 
 struct DebugDrawShared
 {
@@ -965,11 +973,11 @@ struct DebugDrawShared
 		m_sprite.destroy(_handle);
 	}
 
-	GeometryHandle createGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+	GeometryHandle createGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const void* _indices, bool _index32)
 	{
 		bx::MutexScope lock(m_lock);
 
-		return m_geometry.create(_numVertices, _vertices, _numIndices, _indices);
+		return m_geometry.create(_numVertices, _vertices, _numIndices, _indices, _index32);
 	}
 
 	void destroy(GeometryHandle _handle)
@@ -1097,10 +1105,13 @@ struct DebugDrawEncoderImpl
 		}
 	}
 
-	void setTransform(const void* _mtx, uint16_t _num = 1)
+	void setTransform(const void* _mtx, uint16_t _num = 1, bool _flush = true)
 	{
 		BX_CHECK(State::Count != m_state);
-		flush();
+		if (_flush)
+		{
+			flush();
+		}
 
 		MatrixStack& stack = m_mtxStack[m_mtxStackCurrent];
 
@@ -1129,11 +1140,14 @@ struct DebugDrawEncoderImpl
 		setTranslate(_pos[0], _pos[1], _pos[2]);
 	}
 
-	void pushTransform(const void* _mtx, uint16_t _num)
+	void pushTransform(const void* _mtx, uint16_t _num, bool _flush = true)
 	{
 		BX_CHECK(m_mtxStackCurrent < BX_COUNTOF(m_mtxStack), "Out of matrix stack!");
 		BX_CHECK(State::Count != m_state);
-		flush();
+		if (_flush)
+		{
+			flush();
+		}
 
 		float* mtx = NULL;
 
@@ -1154,13 +1168,16 @@ struct DebugDrawEncoderImpl
 		}
 
 		m_mtxStackCurrent++;
-		setTransform(mtx, _num);
+		setTransform(mtx, _num, _flush);
 	}
 
-	void popTransform()
+	void popTransform(bool _flush = true)
 	{
 		BX_CHECK(State::Count != m_state);
-		flush();
+		if (_flush)
+		{
+			flush();
+		}
 
 		m_mtxStackCurrent--;
 	}
@@ -1561,17 +1578,43 @@ struct DebugDrawEncoderImpl
 			bx::memCopy(tvb.data, _vertices, _numVertices * DebugMeshVertex::ms_decl.m_stride);
 			m_encoder->setVertexBuffer(0, &tvb);
 
+			const Attrib& attrib = m_attrib[m_stack];
+			const bool wireframe = _lineList || attrib.m_wireframe;
+			setUParams(attrib, wireframe);
+
 			if (0 < _numIndices)
 			{
+				uint32_t numIndices = _numIndices;
 				bgfx::TransientIndexBuffer tib;
-				bgfx::allocTransientIndexBuffer(&tib, _numIndices);
-				bx::memCopy(tib.data, _indices, _numIndices * sizeof(uint16_t) );
+				if (!_lineList && wireframe)
+				{
+					numIndices = bgfx::topologyConvert(
+						  bgfx::TopologyConvert::TriListToLineList
+						, NULL
+						, 0
+						, _indices
+						, _numIndices
+						, false
+						);
+
+
+					bgfx::allocTransientIndexBuffer(&tib, numIndices);
+					bgfx::topologyConvert(
+						  bgfx::TopologyConvert::TriListToLineList
+						, tib.data
+						, numIndices * sizeof(uint16_t)
+						, _indices
+						, _numIndices
+						, false
+					);
+				}
+				else
+				{
+					bgfx::allocTransientIndexBuffer(&tib, numIndices);
+					bx::memCopy(tib.data, _indices, numIndices * sizeof(uint16_t) );
+				}
 				m_encoder->setIndexBuffer(&tib);
 			}
-
-			const Attrib& attrib = m_attrib[m_stack];
-			const bool wireframe = _lineList;
-			setUParams(attrib, wireframe);
 
 			m_encoder->setTransform(m_mtxStack[m_mtxStackCurrent].mtx);
 			bgfx::ProgramHandle program = s_dds.m_program[wireframe ? Program::FillMesh : Program::FillLitMesh];
@@ -1949,7 +1992,7 @@ struct DebugDrawEncoderImpl
 				? uint8_t(Mesh::CylinderMaxLod)
 				: attrib.m_lod
 				;
-			draw(Mesh::Enum(Mesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
+			 draw(Mesh::Enum(Mesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
 		}
 	}
 
@@ -2115,6 +2158,7 @@ struct DebugDrawEncoderImpl
 		moveTo(_axis, 0.0f, -halfExtent);
 		lineTo(_axis, 0.0f,  halfExtent);
 
+		popTransform();
 		pop();
 	}
 
@@ -2141,7 +2185,7 @@ struct DebugDrawEncoderImpl
 
 	void draw(Mesh::Enum _mesh, const float* _mtx, uint16_t _num, bool _wireframe)
 	{
-		pushTransform(_mtx, _num);
+		pushTransform(_mtx, _num, false /* flush */);
 
 		const Mesh& mesh = s_dds.m_mesh[_mesh];
 
@@ -2162,7 +2206,7 @@ struct DebugDrawEncoderImpl
 		m_encoder->setVertexBuffer(0, s_dds.m_vbh, mesh.m_startVertex, mesh.m_numVertices);
 		m_encoder->submit(m_viewId, s_dds.m_program[_wireframe ? Program::Fill : Program::FillLit]);
 
-		popTransform();
+		popTransform(false /* flush */);
 	}
 
 	void softFlush()
@@ -2331,9 +2375,9 @@ void ddDestroy(SpriteHandle _handle)
 	s_dds.destroy(_handle);
 }
 
-GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const uint16_t* _indices)
+GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const void* _indices, bool _index32)
 {
-	return s_dds.createGeometry(_numVertices, _vertices, _numIndices, _indices);
+	return s_dds.createGeometry(_numVertices, _vertices, _numIndices, _indices, _index32);
 }
 
 void ddDestroy(GeometryHandle _handle)

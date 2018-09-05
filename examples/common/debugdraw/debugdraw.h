@@ -45,7 +45,7 @@ SpriteHandle ddCreateSprite(uint16_t _width, uint16_t _height, const void* _data
 void ddDestroy(SpriteHandle _handle);
 
 ///
-GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const uint16_t* _indices = NULL);
+GeometryHandle ddCreateGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices = 0, const void* _indices = NULL, bool _index32 = false);
 
 ///
 void ddDestroy(GeometryHandle _handle);
