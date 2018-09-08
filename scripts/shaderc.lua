@@ -204,6 +204,7 @@ project "glslang"
 			"-Wno-return-type",
 			"-Wno-shadow",
 			"-Wno-sign-compare",
+			"-Wno-switch",
 			"-Wno-undef",
 			"-Wno-unknown-pragmas",
 			"-Wno-unused-function",
