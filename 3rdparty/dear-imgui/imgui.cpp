@@ -1,4 +1,4 @@
-// dear imgui, v1.65
+// dear imgui, v1.66 WIP
 // (main code and documentation)
 
 // Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp for demo code.
@@ -3285,7 +3285,12 @@ void ImGui::Shutdown(ImGuiContext* context)
 
     // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
     if (g.SettingsLoaded && g.IO.IniFilename != NULL)
+    {
+        ImGuiContext* backup_context = GImGui;
+        SetCurrentContext(context);
         SaveIniSettingsToDisk(g.IO.IniFilename);
+        SetCurrentContext(backup_context);
+    }
 
     // Clear everything else
     for (int i = 0; i < g.Windows.Size; i++)
@@ -4186,7 +4191,7 @@ static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFl
             if (ImLengthSqr(settings->Size) > 0.00001f)
                 size = ImFloor(settings->Size);
         }
-    window->Size = window->SizeFull = window->SizeFullAtLastBegin = size;
+    window->Size = window->SizeFull = window->SizeFullAtLastBegin = ImFloor(size);
     window->DC.CursorMaxPos = window->Pos; // So first call to CalcSizeContents() doesn't return crazy values
 
     if ((flags & ImGuiWindowFlags_AlwaysAutoResize) != 0)
@@ -5658,7 +5663,7 @@ static void SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiCond con
     if (size.x > 0.0f)
     {
         window->AutoFitFramesX = 0;
-        window->SizeFull.x = size.x;
+        window->SizeFull.x = ImFloor(size.x);
     }
     else
     {
@@ -5668,7 +5673,7 @@ static void SetWindowSize(ImGuiWindow* window, const ImVec2& size, ImGuiCond con
     if (size.y > 0.0f)
     {
         window->AutoFitFramesY = 0;
-        window->SizeFull.y = size.y;
+        window->SizeFull.y = ImFloor(size.y);
     }
     else
     {
