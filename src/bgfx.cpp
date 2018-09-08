@@ -1268,6 +1268,7 @@ namespace bgfx
 		LIMITS(maxShaders);
 		LIMITS(maxTextures);
 		LIMITS(maxTextureSamplers);
+		LIMITS(maxComputeBindings);
 		LIMITS(maxVertexDecls);
 		LIMITS(maxVertexStreams);
 		LIMITS(maxIndexBuffers);
@@ -2837,6 +2838,13 @@ namespace bgfx
 			return false;
 		}
 
+		if (1   <= _init.limits.maxEncoders
+		&&  128 <= _init.limits.maxEncoders)
+		{
+			BX_TRACE("init.limits.maxEncoders must be between 1 and 128.");
+			return false;
+		}
+
 		struct ErrorState
 		{
 			enum Enum
@@ -2893,6 +2901,7 @@ namespace bgfx
 		g_caps.limits.maxShaders              = BGFX_CONFIG_MAX_SHADERS;
 		g_caps.limits.maxTextures             = BGFX_CONFIG_MAX_TEXTURES;
 		g_caps.limits.maxTextureSamplers      = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+		g_caps.limits.maxComputeBindings      = 0;
 		g_caps.limits.maxVertexDecls          = BGFX_CONFIG_MAX_VERTEX_DECLS;
 		g_caps.limits.maxVertexStreams        = 1;
 		g_caps.limits.maxIndexBuffers         = BGFX_CONFIG_MAX_INDEX_BUFFERS;
@@ -3168,7 +3177,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_HANDLE("setTexture/UniformHandle", s_ctx->m_uniformHandle, _sampler);
 		BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", s_ctx->m_textureHandle, _handle);
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxTextureSamplers, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxTextureSamplers);
 		BGFX_ENCODER(setTexture(_stage, _sampler, _handle, _flags) );
 	}
 
@@ -3206,21 +3215,21 @@ namespace bgfx
 
 	void Encoder::setBuffer(uint8_t _stage, IndexBufferHandle _handle, Access::Enum _access)
 	{
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_indexBufferHandle, _handle);
 		BGFX_ENCODER(setBuffer(_stage, _handle, _access) );
 	}
 
 	void Encoder::setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
 	{
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_vertexBufferHandle, _handle);
 		BGFX_ENCODER(setBuffer(_stage, _handle, _access) );
 	}
 
 	void Encoder::setBuffer(uint8_t _stage, DynamicIndexBufferHandle _handle, Access::Enum _access)
 	{
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_dynamicIndexBufferHandle, _handle);
 		const DynamicIndexBuffer& dib = s_ctx->m_dynamicIndexBuffers[_handle.idx];
 		BGFX_ENCODER(setBuffer(_stage, dib.m_handle, _access) );
@@ -3228,7 +3237,7 @@ namespace bgfx
 
 	void Encoder::setBuffer(uint8_t _stage, DynamicVertexBufferHandle _handle, Access::Enum _access)
 	{
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_dynamicVertexBufferHandle, _handle);
 		const DynamicVertexBuffer& dvb = s_ctx->m_dynamicVertexBuffers[_handle.idx];
 		BGFX_ENCODER(setBuffer(_stage, dvb.m_handle, _access) );
@@ -3236,7 +3245,7 @@ namespace bgfx
 
 	void Encoder::setBuffer(uint8_t _stage, IndirectBufferHandle _handle, Access::Enum _access)
 	{
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE("setBuffer", s_ctx->m_vertexBufferHandle, _handle);
 		VertexBufferHandle handle = { _handle.idx };
 		BGFX_ENCODER(setBuffer(_stage, handle, _access) );
@@ -3244,7 +3253,7 @@ namespace bgfx
 
 	void Encoder::setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
 	{
-		BX_CHECK(_stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, "Invalid stage %d (max %d).", _stage, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
+		BX_CHECK(_stage < g_caps.limits.maxComputeBindings, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxComputeBindings);
 		BGFX_CHECK_HANDLE_INVALID_OK("setImage/TextureHandle", s_ctx->m_textureHandle, _handle);
 		_format = TextureFormat::Count == _format
 			? TextureFormat::Enum(s_ctx->m_textureRef[_handle.idx].m_format)

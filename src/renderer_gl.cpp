@@ -2321,9 +2321,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					: 0
 					;
 
-				g_caps.limits.maxTextureSize   = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
-				g_caps.limits.maxTextureLayers = uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) );
-				g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+				g_caps.limits.maxTextureSize     = uint16_t(glGet(GL_MAX_TEXTURE_SIZE) );
+				g_caps.limits.maxTextureLayers   = uint16_t(bx::max(glGet(GL_MAX_ARRAY_TEXTURE_LAYERS), 1) );
+				g_caps.limits.maxComputeBindings = computeSupport ? BGFX_MAX_COMPUTE_BINDINGS : 0;
+				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
 				||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
@@ -6333,6 +6334,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			|| (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) && s_extension[Extension::ARB_compute_shader].m_supported)
 			||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
 			;
+		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
@@ -6499,7 +6501,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						GL_CHECK(glUseProgram(program.m_id) );
 
 						GLbitfield barrier = 0;
-						for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+						for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
 						{
 							const Binding& bind = renderBind.m_bind[ii];
 							if (kInvalidHandle != bind.m_idx)

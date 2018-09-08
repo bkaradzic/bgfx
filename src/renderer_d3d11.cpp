@@ -40,7 +40,7 @@ namespace bgfx { namespace d3d11
 		}
 
 		ID3D11Buffer*              m_buffer[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-		ID3D11UnorderedAccessView* m_uav[D3D11_PS_CS_UAV_REGISTER_COUNT];
+		ID3D11UnorderedAccessView* m_uav[D3D11_1_UAV_SLOT_COUNT];
 		ID3D11ShaderResourceView*  m_srv[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
 		ID3D11SamplerState*        m_sampler[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
 		ID3D11RenderTargetView*    m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFERS];
@@ -1177,6 +1177,12 @@ namespace bgfx { namespace d3d11
 				}
 				else
 				{
+					g_caps.limits.maxComputeBindings = bx::min(BGFX_MAX_COMPUTE_BINDINGS
+						, 1 <= m_deviceInterfaceVersion
+						? D3D11_1_UAV_SLOT_COUNT
+						: D3D11_PS_CS_UAV_REGISTER_COUNT
+						);
+
 					g_caps.supported |= BGFX_CAPS_TEXTURE_COMPARE_ALL;
 					g_caps.limits.maxTextureSize   = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 					g_caps.limits.maxTextureLayers = D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
@@ -2226,10 +2232,12 @@ namespace bgfx { namespace d3d11
 
 		void invalidateCompute()
 		{
+			const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+
 			m_deviceCtx->CSSetShader(NULL, NULL, 0);
-			m_deviceCtx->CSSetUnorderedAccessViews(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_uav, NULL);
-			m_deviceCtx->CSSetShaderResources(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_srv);
-			m_deviceCtx->CSSetSamplers(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_sampler);
+			m_deviceCtx->CSSetUnorderedAccessViews(0, maxComputeBindings, s_zero.m_uav, NULL);
+			m_deviceCtx->CSSetShaderResources(0, maxComputeBindings, s_zero.m_srv);
+			m_deviceCtx->CSSetSamplers(0, maxComputeBindings, s_zero.m_sampler);
 		}
 
 		void updateMsaa(DXGI_FORMAT _format) const
@@ -5226,6 +5234,8 @@ namespace bgfx { namespace d3d11
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
+		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
@@ -5443,7 +5453,7 @@ namespace bgfx { namespace d3d11
 					ID3D11ShaderResourceView*  srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
 					ID3D11SamplerState*    sampler[BGFX_MAX_COMPUTE_BINDINGS] = {};
 
-					for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+					for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
 					{
 						const Binding& bind = renderBind.m_bind[ii];
 						if (kInvalidHandle != bind.m_idx)
@@ -5493,7 +5503,7 @@ namespace bgfx { namespace d3d11
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 					{
 						// Quiet validation: Resource being set to CS UnorderedAccessView slot 0 is still bound on input!
-						deviceCtx->CSSetShaderResources(0, BGFX_MAX_COMPUTE_BINDINGS, s_zero.m_srv);
+						deviceCtx->CSSetShaderResources(0, maxComputeBindings, s_zero.m_srv);
 					}
 					deviceCtx->CSSetUnorderedAccessViews(0, BX_COUNTOF(uav), uav, NULL);
 					deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);

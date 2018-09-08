@@ -977,8 +977,9 @@ VK_IMPORT_INSTANCE
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
-				g_caps.limits.maxTextureSize   = m_deviceProperties.limits.maxImageDimension2D;
-				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_deviceProperties.limits.maxFragmentOutputAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+				g_caps.limits.maxTextureSize     = m_deviceProperties.limits.maxImageDimension2D;
+				g_caps.limits.maxFBAttachments   = uint8_t(bx::uint32_min(m_deviceProperties.limits.maxFragmentOutputAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+				g_caps.limits.maxComputeBindings = BGFX_MAX_COMPUTE_BINDINGS;
 
 				{
 //					VkFormatProperties fp;
@@ -3694,6 +3695,8 @@ VK_DESTROY
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
+		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
@@ -3878,7 +3881,7 @@ BX_UNUSED(currentSamplerStateIdx);
 //							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 //							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
 //
-//							for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+//							for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
 //							{
 //								const Binding& bind = renderBind.m_bind[ii];
 //								if (kInvalidHandle != bind.m_idx)
@@ -3927,7 +3930,7 @@ BX_UNUSED(currentSamplerStateIdx);
 //								}
 //							}
 //
-//							uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, _render->m_colorPalette);
+//							uint16_t samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette);
 //							if (samplerStateIdx != currentSamplerStateIdx)
 //							{
 //								currentSamplerStateIdx = samplerStateIdx;

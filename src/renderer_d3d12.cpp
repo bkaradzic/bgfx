@@ -1088,10 +1088,11 @@ namespace bgfx { namespace d3d12
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					);
-				g_caps.limits.maxTextureSize   = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-				g_caps.limits.maxTextureLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
-				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
-				g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+				g_caps.limits.maxTextureSize     = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+				g_caps.limits.maxTextureLayers   = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+				g_caps.limits.maxFBAttachments   = bx::min<uint8_t>(16, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+				g_caps.limits.maxComputeBindings = bx::min(D3D12_UAV_SLOT_COUNT, BGFX_MAX_COMPUTE_BINDINGS);
+				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
@@ -5605,6 +5606,8 @@ namespace bgfx { namespace d3d12
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
+		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
@@ -5802,7 +5805,7 @@ namespace bgfx { namespace d3d12
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
 
-							for (uint32_t ii = 0; ii < BGFX_MAX_COMPUTE_BINDINGS; ++ii)
+							for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
 							{
 								const Binding& bind = renderBind.m_bind[ii];
 								if (kInvalidHandle != bind.m_idx)
@@ -5852,7 +5855,7 @@ namespace bgfx { namespace d3d12
 								}
 							}
 
-							uint16_t samplerStateIdx = getSamplerState(samplerFlags, BGFX_MAX_COMPUTE_BINDINGS, _render->m_colorPalette);
+							uint16_t samplerStateIdx = getSamplerState(samplerFlags, maxComputeBindings, _render->m_colorPalette);
 							if (samplerStateIdx != currentSamplerStateIdx)
 							{
 								currentSamplerStateIdx = samplerStateIdx;

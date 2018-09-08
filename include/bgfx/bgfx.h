@@ -722,6 +722,7 @@ namespace bgfx
 			uint32_t maxShaders;              //!< Maximum number of shader handles.
 			uint32_t maxTextures;             //!< Maximum number of texture handles.
 			uint32_t maxTextureSamplers;      //!< Maximum number of texture samplers.
+			uint32_t maxComputeBindings;      //!< Maximum number of compute bindings.
 			uint32_t maxVertexDecls;          //!< Maximum number of vertex format declarations.
 			uint32_t maxVertexStreams;        //!< Maximum number of vertex streams.
 			uint32_t maxIndexBuffers;         //!< Maximum number of index buffer handles.

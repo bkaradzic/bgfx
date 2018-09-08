@@ -509,6 +509,7 @@ typedef struct bgfx_caps_limits_s
     uint32_t maxShaders;
     uint32_t maxTextures;
     uint32_t maxTextureSamplers;
+    uint32_t maxComputeBindings;
     uint32_t maxVertexDecls;
     uint32_t maxVertexStreams;
     uint32_t maxIndexBuffers;
