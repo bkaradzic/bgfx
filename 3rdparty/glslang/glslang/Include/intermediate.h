@@ -592,6 +592,8 @@ enum TOperator {
     EOpAtomicXor,
     EOpAtomicExchange,
     EOpAtomicCompSwap,
+    EOpAtomicLoad,
+    EOpAtomicStore,
 
     EOpAtomicCounterIncrement, // results in pre-increment value
     EOpAtomicCounterDecrement, // results in post-decrement value
@@ -784,6 +786,8 @@ enum TOperator {
     EOpImageAtomicXor,
     EOpImageAtomicExchange,
     EOpImageAtomicCompSwap,
+    EOpImageAtomicLoad,
+    EOpImageAtomicStore,
 
     EOpSubpassLoad,
     EOpSubpassLoadMS,

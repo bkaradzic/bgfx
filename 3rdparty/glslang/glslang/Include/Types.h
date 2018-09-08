@@ -462,6 +462,11 @@ public:
     void clearMemory()
     {
         coherent     = false;
+        devicecoherent = false;
+        queuefamilycoherent = false;
+        workgroupcoherent = false;
+        subgroupcoherent  = false;
+        nonprivate = false;
         volatil      = false;
         restrict     = false;
         readonly     = false;
@@ -499,6 +504,11 @@ public:
     bool patch        : 1;
     bool sample       : 1;
     bool coherent     : 1;
+    bool devicecoherent : 1;
+    bool queuefamilycoherent : 1;
+    bool workgroupcoherent : 1;
+    bool subgroupcoherent  : 1;
+    bool nonprivate   : 1;
     bool volatil      : 1;
     bool restrict     : 1;
     bool readonly     : 1;
@@ -508,7 +518,11 @@ public:
 
     bool isMemory() const
     {
-        return coherent || volatil || restrict || readonly || writeonly;
+        return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly || nonprivate;
+    }
+    bool isMemoryQualifierImageAndSSBOOnly() const
+    {
+        return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly;
     }
     bool isInterpolation() const
     {
@@ -1713,6 +1727,16 @@ public:
             appendStr(" sample");
         if (qualifier.coherent)
             appendStr(" coherent");
+        if (qualifier.devicecoherent)
+            appendStr(" devicecoherent");
+        if (qualifier.queuefamilycoherent)
+            appendStr(" queuefamilycoherent");
+        if (qualifier.workgroupcoherent)
+            appendStr(" workgroupcoherent");
+        if (qualifier.subgroupcoherent)
+            appendStr(" subgroupcoherent");
+        if (qualifier.nonprivate)
+            appendStr(" nonprivate");
         if (qualifier.volatil)
             appendStr(" volatile");
         if (qualifier.restrict)

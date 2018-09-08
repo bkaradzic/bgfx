@@ -194,6 +194,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_KHR_shader_subgroup_shuffle_relative] = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_clustered]        = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_quad]             = EBhDisable;
+    extensionBehavior[E_GL_KHR_memory_scope_semantics]           = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_non_constant_global_initializers] = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_image_load_formatted]             = EBhDisable;

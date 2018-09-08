@@ -87,6 +87,7 @@ enum MemoryModel {
     MemoryModelSimple = 0,
     MemoryModelGLSL450 = 1,
     MemoryModelOpenCL = 2,
+    MemoryModelVulkanKHR = 3,
     MemoryModelMax = 0x7fffffff,
 };
 
@@ -275,6 +276,10 @@ enum ImageOperandsShift {
     ImageOperandsConstOffsetsShift = 5,
     ImageOperandsSampleShift = 6,
     ImageOperandsMinLodShift = 7,
+    ImageOperandsMakeTexelAvailableKHRShift = 8,
+    ImageOperandsMakeTexelVisibleKHRShift = 9,
+    ImageOperandsNonPrivateTexelKHRShift = 10,
+    ImageOperandsVolatileTexelKHRShift = 11,
     ImageOperandsMax = 0x7fffffff,
 };
 
@@ -288,6 +293,10 @@ enum ImageOperandsMask {
     ImageOperandsConstOffsetsMask = 0x00000020,
     ImageOperandsSampleMask = 0x00000040,
     ImageOperandsMinLodMask = 0x00000080,
+    ImageOperandsMakeTexelAvailableKHRMask = 0x00000100,
+    ImageOperandsMakeTexelVisibleKHRMask = 0x00000200,
+    ImageOperandsNonPrivateTexelKHRMask = 0x00000400,
+    ImageOperandsVolatileTexelKHRMask = 0x00000800,
 };
 
 enum FPFastMathModeShift {
@@ -528,6 +537,9 @@ enum MemorySemanticsShift {
     MemorySemanticsCrossWorkgroupMemoryShift = 9,
     MemorySemanticsAtomicCounterMemoryShift = 10,
     MemorySemanticsImageMemoryShift = 11,
+    MemorySemanticsOutputMemoryKHRShift = 12,
+    MemorySemanticsMakeAvailableKHRShift = 13,
+    MemorySemanticsMakeVisibleKHRShift = 14,
     MemorySemanticsMax = 0x7fffffff,
 };
 
@@ -543,12 +555,18 @@ enum MemorySemanticsMask {
     MemorySemanticsCrossWorkgroupMemoryMask = 0x00000200,
     MemorySemanticsAtomicCounterMemoryMask = 0x00000400,
     MemorySemanticsImageMemoryMask = 0x00000800,
+    MemorySemanticsOutputMemoryKHRMask = 0x00001000,
+    MemorySemanticsMakeAvailableKHRMask = 0x00002000,
+    MemorySemanticsMakeVisibleKHRMask = 0x00004000,
 };
 
 enum MemoryAccessShift {
     MemoryAccessVolatileShift = 0,
     MemoryAccessAlignedShift = 1,
     MemoryAccessNontemporalShift = 2,
+    MemoryAccessMakePointerAvailableKHRShift = 3,
+    MemoryAccessMakePointerVisibleKHRShift = 4,
+    MemoryAccessNonPrivatePointerKHRShift = 5,
     MemoryAccessMax = 0x7fffffff,
 };
 
@@ -557,6 +575,9 @@ enum MemoryAccessMask {
     MemoryAccessVolatileMask = 0x00000001,
     MemoryAccessAlignedMask = 0x00000002,
     MemoryAccessNontemporalMask = 0x00000004,
+    MemoryAccessMakePointerAvailableKHRMask = 0x00000008,
+    MemoryAccessMakePointerVisibleKHRMask = 0x00000010,
+    MemoryAccessNonPrivatePointerKHRMask = 0x00000020,
 };
 
 enum Scope {
@@ -565,6 +586,7 @@ enum Scope {
     ScopeWorkgroup = 2,
     ScopeSubgroup = 3,
     ScopeInvocation = 4,
+    ScopeQueueFamilyKHR = 5,
     ScopeMax = 0x7fffffff,
 };
 
@@ -708,6 +730,8 @@ enum Capability {
     CapabilityInputAttachmentArrayNonUniformIndexingEXT = 5310,
     CapabilityUniformTexelBufferArrayNonUniformIndexingEXT = 5311,
     CapabilityStorageTexelBufferArrayNonUniformIndexingEXT = 5312,
+    CapabilityVulkanMemoryModelKHR = 5345,
+    CapabilityVulkanMemoryModelDeviceScopeKHR = 5346,
     CapabilitySubgroupShuffleINTEL = 5568,
     CapabilitySubgroupBufferBlockIOINTEL = 5569,
     CapabilitySubgroupImageBlockIOINTEL = 5570,

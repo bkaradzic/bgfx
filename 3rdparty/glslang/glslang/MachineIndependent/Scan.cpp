@@ -380,6 +380,11 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["varying"] =                 VARYING;
     (*KeywordMap)["buffer"] =                  BUFFER;
     (*KeywordMap)["coherent"] =                COHERENT;
+    (*KeywordMap)["devicecoherent"] =          DEVICECOHERENT;
+    (*KeywordMap)["queuefamilycoherent"] =     QUEUEFAMILYCOHERENT;
+    (*KeywordMap)["workgroupcoherent"] =       WORKGROUPCOHERENT;
+    (*KeywordMap)["subgroupcoherent"] =        SUBGROUPCOHERENT;
+    (*KeywordMap)["nonprivate"] =              NONPRIVATE;
     (*KeywordMap)["restrict"] =                RESTRICT;
     (*KeywordMap)["readonly"] =                READONLY;
     (*KeywordMap)["writeonly"] =               WRITEONLY;
@@ -937,6 +942,11 @@ int TScanContext::tokenizeIdentifier()
         return es30ReservedFromGLSL(420);
 
     case COHERENT:
+    case DEVICECOHERENT:
+    case QUEUEFAMILYCOHERENT:
+    case WORKGROUPCOHERENT:
+    case SUBGROUPCOHERENT:
+    case NONPRIVATE:
     case RESTRICT:
     case READONLY:
     case WRITEONLY:

@@ -524,11 +524,16 @@ void TIntermediate::mergeErrorCheck(TInfoSink& infoSink, const TIntermSymbol& sy
     }
 
     // Memory...
-    if (symbol.getQualifier().coherent  != unitSymbol.getQualifier().coherent ||
-        symbol.getQualifier().volatil   != unitSymbol.getQualifier().volatil ||
-        symbol.getQualifier().restrict  != unitSymbol.getQualifier().restrict ||
-        symbol.getQualifier().readonly  != unitSymbol.getQualifier().readonly ||
-        symbol.getQualifier().writeonly != unitSymbol.getQualifier().writeonly) {
+    if (symbol.getQualifier().coherent          != unitSymbol.getQualifier().coherent ||
+        symbol.getQualifier().devicecoherent    != unitSymbol.getQualifier().devicecoherent ||
+        symbol.getQualifier().queuefamilycoherent  != unitSymbol.getQualifier().queuefamilycoherent ||
+        symbol.getQualifier().workgroupcoherent != unitSymbol.getQualifier().workgroupcoherent ||
+        symbol.getQualifier().subgroupcoherent  != unitSymbol.getQualifier().subgroupcoherent ||
+        symbol.getQualifier().nonprivate        != unitSymbol.getQualifier().nonprivate ||
+        symbol.getQualifier().volatil           != unitSymbol.getQualifier().volatil ||
+        symbol.getQualifier().restrict          != unitSymbol.getQualifier().restrict ||
+        symbol.getQualifier().readonly          != unitSymbol.getQualifier().readonly ||
+        symbol.getQualifier().writeonly         != unitSymbol.getQualifier().writeonly) {
         error(infoSink, "Memory qualifiers must match:");
         writeTypeComparison = true;
     }

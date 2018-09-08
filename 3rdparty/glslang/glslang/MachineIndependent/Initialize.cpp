@@ -935,27 +935,49 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append(
             "uint atomicAdd(coherent volatile inout uint, uint);"
             " int atomicAdd(coherent volatile inout  int,  int);"
+            "uint atomicAdd(coherent volatile inout uint, uint, int, int, int);"
+            " int atomicAdd(coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicMin(coherent volatile inout uint, uint);"
             " int atomicMin(coherent volatile inout  int,  int);"
+            "uint atomicMin(coherent volatile inout uint, uint, int, int, int);"
+            " int atomicMin(coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicMax(coherent volatile inout uint, uint);"
             " int atomicMax(coherent volatile inout  int,  int);"
+            "uint atomicMax(coherent volatile inout uint, uint, int, int, int);"
+            " int atomicMax(coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicAnd(coherent volatile inout uint, uint);"
             " int atomicAnd(coherent volatile inout  int,  int);"
+            "uint atomicAnd(coherent volatile inout uint, uint, int, int, int);"
+            " int atomicAnd(coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicOr (coherent volatile inout uint, uint);"
             " int atomicOr (coherent volatile inout  int,  int);"
+            "uint atomicOr (coherent volatile inout uint, uint, int, int, int);"
+            " int atomicOr (coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicXor(coherent volatile inout uint, uint);"
             " int atomicXor(coherent volatile inout  int,  int);"
+            "uint atomicXor(coherent volatile inout uint, uint, int, int, int);"
+            " int atomicXor(coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicExchange(coherent volatile inout uint, uint);"
             " int atomicExchange(coherent volatile inout  int,  int);"
+            "uint atomicExchange(coherent volatile inout uint, uint, int, int, int);"
+            " int atomicExchange(coherent volatile inout  int,  int, int, int, int);"
 
             "uint atomicCompSwap(coherent volatile inout uint, uint, uint);"
             " int atomicCompSwap(coherent volatile inout  int,  int,  int);"
+            "uint atomicCompSwap(coherent volatile inout uint, uint, uint, int, int, int, int, int);"
+            " int atomicCompSwap(coherent volatile inout  int,  int,  int, int, int, int, int, int);"
+
+            "uint atomicLoad(coherent volatile in uint, int, int, int);"
+            " int atomicLoad(coherent volatile in  int, int, int, int);"
+
+            "void atomicStore(coherent volatile out uint, uint, int, int, int);"
+            "void atomicStore(coherent volatile out  int,  int, int, int, int);"
 
             "\n");
     }
@@ -965,23 +987,49 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append(
             "uint64_t atomicMin(coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicMin(coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicMin(coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicMin(coherent volatile inout  int64_t,  int64_t, int, int, int);"
 
             "uint64_t atomicMax(coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicMax(coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicMax(coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicMax(coherent volatile inout  int64_t,  int64_t, int, int, int);"
 
             "uint64_t atomicAnd(coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicAnd(coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicAnd(coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicAnd(coherent volatile inout  int64_t,  int64_t, int, int, int);"
 
             "uint64_t atomicOr (coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicOr (coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicOr (coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicOr (coherent volatile inout  int64_t,  int64_t, int, int, int);"
 
             "uint64_t atomicXor(coherent volatile inout uint64_t, uint64_t);"
             " int64_t atomicXor(coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicXor(coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicXor(coherent volatile inout  int64_t,  int64_t, int, int, int);"
 
-            " int64_t atomicAdd(coherent volatile inout int64_t, int64_t);"
-            " int64_t atomicExchange(coherent volatile inout int64_t, int64_t);"
-            " int64_t atomicCompSwap(coherent volatile inout int64_t, int64_t, int64_t);"
+            "uint64_t atomicAdd(coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicAdd(coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicAdd(coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicAdd(coherent volatile inout  int64_t,  int64_t, int, int, int);"
 
+            "uint64_t atomicExchange(coherent volatile inout uint64_t, uint64_t);"
+            " int64_t atomicExchange(coherent volatile inout  int64_t,  int64_t);"
+            "uint64_t atomicExchange(coherent volatile inout uint64_t, uint64_t, int, int, int);"
+            " int64_t atomicExchange(coherent volatile inout  int64_t,  int64_t, int, int, int);"
+
+            "uint64_t atomicCompSwap(coherent volatile inout uint64_t, uint64_t, uint64_t);"
+            " int64_t atomicCompSwap(coherent volatile inout  int64_t,  int64_t,  int64_t);"
+            "uint64_t atomicCompSwap(coherent volatile inout uint64_t, uint64_t, uint64_t, int, int, int, int, int);"
+            " int64_t atomicCompSwap(coherent volatile inout  int64_t,  int64_t,  int64_t, int, int, int, int, int);"
+
+            "uint64_t atomicLoad(coherent volatile in uint64_t, int, int, int);"
+            " int64_t atomicLoad(coherent volatile in  int64_t, int, int, int);"
+
+            "void atomicStore(coherent volatile out uint64_t, uint64_t, int, int, int);"
+            "void atomicStore(coherent volatile out  int64_t,  int64_t, int, int, int);"
             "\n");
     }
 #endif
@@ -4693,6 +4741,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             );
     }
 
+    commonBuiltins.append("void controlBarrier(int, int, int, int);\n"
+                          "void memoryBarrier(int, int, int);\n");
+
     //============================================================================
     //
     // Prototypes for built-in functions seen by fragment shaders only.
@@ -5807,6 +5858,28 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    if ((profile != EEsProfile && version >= 420) ||
+        (profile == EEsProfile && version >= 310)) {
+        commonBuiltins.append("const int gl_ScopeDevice      = 1;\n");
+        commonBuiltins.append("const int gl_ScopeWorkgroup   = 2;\n");
+        commonBuiltins.append("const int gl_ScopeSubgroup    = 3;\n");
+        commonBuiltins.append("const int gl_ScopeInvocation  = 4;\n");
+        commonBuiltins.append("const int gl_ScopeQueueFamily = 5;\n");
+
+        commonBuiltins.append("const int gl_SemanticsRelaxed         = 0x0;\n");
+        commonBuiltins.append("const int gl_SemanticsAcquire         = 0x2;\n");
+        commonBuiltins.append("const int gl_SemanticsRelease         = 0x4;\n");
+        commonBuiltins.append("const int gl_SemanticsAcquireRelease  = 0x8;\n");
+        commonBuiltins.append("const int gl_SemanticsMakeAvailable   = 0x2000;\n");
+        commonBuiltins.append("const int gl_SemanticsMakeVisible     = 0x4000;\n");
+
+        commonBuiltins.append("const int gl_StorageSemanticsNone     = 0x0;\n");
+        commonBuiltins.append("const int gl_StorageSemanticsBuffer   = 0x40;\n");
+        commonBuiltins.append("const int gl_StorageSemanticsShared   = 0x100;\n");
+        commonBuiltins.append("const int gl_StorageSemanticsImage    = 0x800;\n");
+        commonBuiltins.append("const int gl_StorageSemanticsOutput   = 0x1000;\n");
+    }
+
     // printf("%s\n", commonBuiltins.c_str());
     // printf("%s\n", stageBuiltins[EShLangFragment].c_str());
 }
@@ -6106,23 +6179,44 @@ void TBuiltIns::addImageFunctions(TSampler sampler, const TString& typeName, int
                 " imageAtomicExchange(volatile coherent "
             };
 
-            for (size_t i = 0; i < numBuiltins; ++i) {
+            // Loop twice to add prototypes with/without scope/semantics
+            for (int j = 0; j < 2; ++j) {
+                for (size_t i = 0; i < numBuiltins; ++i) {
+                    commonBuiltins.append(dataType);
+                    commonBuiltins.append(atomicFunc[i]);
+                    commonBuiltins.append(imageParams);
+                    commonBuiltins.append(", ");
+                    commonBuiltins.append(dataType);
+                    if (j == 1) {
+                        commonBuiltins.append(", int, int, int");
+                    }
+                    commonBuiltins.append(");\n");
+                }
+
                 commonBuiltins.append(dataType);
-                commonBuiltins.append(atomicFunc[i]);
+                commonBuiltins.append(" imageAtomicCompSwap(volatile coherent ");
                 commonBuiltins.append(imageParams);
                 commonBuiltins.append(", ");
                 commonBuiltins.append(dataType);
+                commonBuiltins.append(", ");
+                commonBuiltins.append(dataType);
+                if (j == 1) {
+                    commonBuiltins.append(", int, int, int, int, int");
+                }
                 commonBuiltins.append(");\n");
             }
 
             commonBuiltins.append(dataType);
-            commonBuiltins.append(" imageAtomicCompSwap(volatile coherent ");
+            commonBuiltins.append(" imageAtomicLoad(volatile coherent ");
+            commonBuiltins.append(imageParams);
+            commonBuiltins.append(", int, int, int);\n");
+
+            commonBuiltins.append("void imageAtomicStore(volatile coherent ");
             commonBuiltins.append(imageParams);
             commonBuiltins.append(", ");
             commonBuiltins.append(dataType);
-            commonBuiltins.append(", ");
-            commonBuiltins.append(dataType);
-            commonBuiltins.append(");\n");
+            commonBuiltins.append(", int, int, int);\n");
+
         } else {
             // not int or uint
             // GL_ARB_ES3_1_compatibility
@@ -7969,6 +8063,26 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("shadow2DEXT",        1, &E_GL_EXT_shadow_samplers);
             symbolTable.setFunctionExtensions("shadow2DProjEXT",    1, &E_GL_EXT_shadow_samplers);
         }
+
+        if (spvVersion.vulkan > 0) {
+            symbolTable.setVariableExtensions("gl_ScopeDevice",             1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_ScopeWorkgroup",          1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_ScopeSubgroup",           1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_ScopeInvocation",         1, &E_GL_KHR_memory_scope_semantics);
+
+            symbolTable.setVariableExtensions("gl_SemanticsRelaxed",        1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsAcquire",        1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsRelease",        1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsAcquireRelease", 1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsMakeAvailable",  1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsMakeVisible",    1, &E_GL_KHR_memory_scope_semantics);
+
+            symbolTable.setVariableExtensions("gl_StorageSemanticsNone",    1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_StorageSemanticsBuffer",  1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_StorageSemanticsShared",  1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_StorageSemanticsImage",   1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_StorageSemanticsOutput",  1, &E_GL_KHR_memory_scope_semantics);
+        }
         break;
 
     case EShLangCompute:
@@ -8002,6 +8116,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("memoryBarrierShared",        1, &E_GL_ARB_compute_shader);
             symbolTable.setFunctionExtensions("groupMemoryBarrier",         1, &E_GL_ARB_compute_shader);
         }
+
+        symbolTable.setFunctionExtensions("controlBarrier",                 1, &E_GL_KHR_memory_scope_semantics);
 
         // GL_ARB_shader_ballot
         if (profile != EEsProfile) {
@@ -8213,6 +8329,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("all",          EOpAll);
 
     symbolTable.relateToOperator("barrier",                    EOpBarrier);
+    symbolTable.relateToOperator("controlBarrier",             EOpBarrier);
     symbolTable.relateToOperator("memoryBarrier",              EOpMemoryBarrier);
     symbolTable.relateToOperator("memoryBarrierAtomicCounter", EOpMemoryBarrierAtomicCounter);
     symbolTable.relateToOperator("memoryBarrierBuffer",        EOpMemoryBarrierBuffer);
@@ -8226,6 +8343,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("atomicXor",      EOpAtomicXor);
     symbolTable.relateToOperator("atomicExchange", EOpAtomicExchange);
     symbolTable.relateToOperator("atomicCompSwap", EOpAtomicCompSwap);
+    symbolTable.relateToOperator("atomicLoad",     EOpAtomicLoad);
+    symbolTable.relateToOperator("atomicStore",    EOpAtomicStore);
 
     symbolTable.relateToOperator("atomicCounterIncrement", EOpAtomicCounterIncrement);
     symbolTable.relateToOperator("atomicCounterDecrement", EOpAtomicCounterDecrement);
@@ -8270,6 +8389,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         symbolTable.relateToOperator("imageAtomicXor",          EOpImageAtomicXor);
         symbolTable.relateToOperator("imageAtomicExchange",     EOpImageAtomicExchange);
         symbolTable.relateToOperator("imageAtomicCompSwap",     EOpImageAtomicCompSwap);
+        symbolTable.relateToOperator("imageAtomicLoad",         EOpImageAtomicLoad);
+        symbolTable.relateToOperator("imageAtomicStore",        EOpImageAtomicStore);
 
         symbolTable.relateToOperator("subpassLoad",             EOpSubpassLoad);
         symbolTable.relateToOperator("subpassLoadMS",           EOpSubpassLoadMS);

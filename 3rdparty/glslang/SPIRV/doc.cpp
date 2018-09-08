@@ -117,9 +117,10 @@ const char* AddressingString(int addr)
 const char* MemoryString(int mem)
 {
     switch (mem) {
-    case 0:  return "Simple";
-    case 1:  return "GLSL450";
-    case 2:  return "OpenCL";
+    case MemoryModelSimple:     return "Simple";
+    case MemoryModelGLSL450:    return "GLSL450";
+    case MemoryModelOpenCL:     return "OpenCL";
+    case MemoryModelVulkanKHR:  return "VulkanKHR";
 
     default: return "Bad";
     }
@@ -499,19 +500,23 @@ const char* ImageChannelDataTypeString(int type)
     }
 }
 
-const int ImageOperandsCeiling = 8;
+const int ImageOperandsCeiling = 12;
 
 const char* ImageOperandsString(int format)
 {
     switch (format) {
-    case 0: return "Bias";
-    case 1: return "Lod";
-    case 2: return "Grad";
-    case 3: return "ConstOffset";
-    case 4: return "Offset";
-    case 5: return "ConstOffsets";
-    case 6: return "Sample";
-    case 7: return "MinLod";
+    case ImageOperandsBiasShift:                    return "Bias";
+    case ImageOperandsLodShift:                     return "Lod";
+    case ImageOperandsGradShift:                    return "Grad";
+    case ImageOperandsConstOffsetShift:             return "ConstOffset";
+    case ImageOperandsOffsetShift:                  return "Offset";
+    case ImageOperandsConstOffsetsShift:            return "ConstOffsets";
+    case ImageOperandsSampleShift:                  return "Sample";
+    case ImageOperandsMinLodShift:                  return "MinLod";
+    case ImageOperandsMakeTexelAvailableKHRShift:   return "MakeTexelAvailableKHR";
+    case ImageOperandsMakeTexelVisibleKHRShift:     return "MakeTexelVisibleKHR";
+    case ImageOperandsNonPrivateTexelKHRShift:      return "NonPrivateTexelKHR";
+    case ImageOperandsVolatileTexelKHRShift:        return "VolatileTexelKHR";
 
     case ImageOperandsCeiling:
     default:
@@ -645,12 +650,17 @@ const char* MemorySemanticsString(int mem)
     }
 }
 
+const int MemoryAccessCeiling = 6;
+
 const char* MemoryAccessString(int mem)
 {
     switch (mem) {
-    case 0:  return "Volatile";
-    case 1:  return "Aligned";
-    case 2:  return "Nontemporal";
+    case MemoryAccessVolatileShift:                 return "Volatile";
+    case MemoryAccessAlignedShift:                  return "Aligned";
+    case MemoryAccessNontemporalShift:              return "Nontemporal";
+    case MemoryAccessMakePointerAvailableKHRShift:  return "MakePointerAvailableKHR";
+    case MemoryAccessMakePointerVisibleKHRShift:    return "MakePointerVisibleKHR";
+    case MemoryAccessNonPrivatePointerKHRShift:     return "NonPrivatePointerKHR";
 
     default: return "Bad";
     }
@@ -832,6 +842,9 @@ const char* CapabilityString(int info)
     case CapabilityInputAttachmentArrayNonUniformIndexingEXT:    return "CapabilityInputAttachmentArrayNonUniformIndexingEXT";
     case CapabilityUniformTexelBufferArrayNonUniformIndexingEXT: return "CapabilityUniformTexelBufferArrayNonUniformIndexingEXT";
     case CapabilityStorageTexelBufferArrayNonUniformIndexingEXT: return "CapabilityStorageTexelBufferArrayNonUniformIndexingEXT";
+
+    case CapabilityVulkanMemoryModelKHR:                return "CapabilityVulkanMemoryModelKHR";
+    case CapabilityVulkanMemoryModelDeviceScopeKHR:     return "CapabilityVulkanMemoryModelDeviceScopeKHR";
 
     default: return "Bad";
     }
@@ -1245,6 +1258,7 @@ EnumParameters DecorationParams[DecorationCeiling];
 EnumParameters LoopControlParams[FunctionControlCeiling];
 EnumParameters SelectionControlParams[SelectControlCeiling];
 EnumParameters FunctionControlParams[FunctionControlCeiling];
+EnumParameters MemoryAccessParams[MemoryAccessCeiling];
 
 // Set up all the parameterizing descriptions of the opcodes, operands, etc.
 void Parameterize()
@@ -1400,7 +1414,7 @@ void Parameterize()
     OperandClassParams[OperandLoop].set(LoopControlCeiling, LoopControlString, LoopControlParams, true);
     OperandClassParams[OperandFunction].set(FunctionControlCeiling, FunctionControlString, FunctionControlParams, true);
     OperandClassParams[OperandMemorySemantics].set(0, MemorySemanticsString, nullptr, true);
-    OperandClassParams[OperandMemoryAccess].set(0, MemoryAccessString, nullptr, true);
+    OperandClassParams[OperandMemoryAccess].set(MemoryAccessCeiling, MemoryAccessString, MemoryAccessParams, true);
     OperandClassParams[OperandScope].set(0, ScopeString, nullptr);
     OperandClassParams[OperandGroupOperation].set(0, GroupOperationString, nullptr);
     OperandClassParams[OperandKernelEnqueueFlags].set(0, KernelEnqueueFlagsString, nullptr);
@@ -1522,10 +1536,14 @@ void Parameterize()
 
     InstructionDesc[OpLoad].operands.push(OperandId, "'Pointer'");
     InstructionDesc[OpLoad].operands.push(OperandMemoryAccess, "", true);
+    InstructionDesc[OpLoad].operands.push(OperandLiteralNumber, "", true);
+    InstructionDesc[OpLoad].operands.push(OperandId, "", true);
 
     InstructionDesc[OpStore].operands.push(OperandId, "'Pointer'");
     InstructionDesc[OpStore].operands.push(OperandId, "'Object'");
     InstructionDesc[OpStore].operands.push(OperandMemoryAccess, "", true);
+    InstructionDesc[OpStore].operands.push(OperandLiteralNumber, "", true);
+    InstructionDesc[OpStore].operands.push(OperandId, "", true);
 
     InstructionDesc[OpPhi].operands.push(OperandVariableIds, "'Variable, Parent, ...'");
 

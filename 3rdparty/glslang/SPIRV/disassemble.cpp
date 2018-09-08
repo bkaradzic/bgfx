@@ -535,6 +535,11 @@ void SpirvStream::disassembleInstruction(Id resultId, Id /*typeId*/, Op opCode, 
         case OperandLiteralString:
             numOperands -= disassembleString();
             break;
+        case OperandMemoryAccess:
+            outputMask(OperandMemoryAccess, stream[word++]);
+            --numOperands;
+            disassembleIds(numOperands);
+            return;
         default:
             assert(operandClass >= OperandSource && operandClass < OperandOpcode);
 

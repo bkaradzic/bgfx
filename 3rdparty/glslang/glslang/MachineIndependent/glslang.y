@@ -141,7 +141,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> VEC2 VEC3 VEC4
 %token <lex> MAT2 MAT3 MAT4 CENTROID IN OUT INOUT
 %token <lex> UNIFORM PATCH SAMPLE BUFFER SHARED NONUNIFORM
-%token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY
+%token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY DEVICECOHERENT QUEUEFAMILYCOHERENT WORKGROUPCOHERENT SUBGROUPCOHERENT NONPRIVATE
 %token <lex> DVEC2 DVEC3 DVEC4 DMAT2 DMAT3 DMAT4
 %token <lex> F16VEC2 F16VEC3 F16VEC4 F16MAT2 F16MAT3 F16MAT4
 %token <lex> F32VEC2 F32VEC3 F32VEC4 F32MAT2 F32MAT3 F32MAT4
@@ -1316,6 +1316,31 @@ storage_qualifier
     | COHERENT {
         $$.init($1.loc);
         $$.qualifier.coherent = true;
+    }
+    | DEVICECOHERENT {
+        $$.init($1.loc);
+        parseContext.requireExtensions($1.loc, 1, &E_GL_KHR_memory_scope_semantics, "devicecoherent");
+        $$.qualifier.devicecoherent = true;
+    }
+    | QUEUEFAMILYCOHERENT {
+        $$.init($1.loc);
+        parseContext.requireExtensions($1.loc, 1, &E_GL_KHR_memory_scope_semantics, "queuefamilycoherent");
+        $$.qualifier.queuefamilycoherent = true;
+    }
+    | WORKGROUPCOHERENT {
+        $$.init($1.loc);
+        parseContext.requireExtensions($1.loc, 1, &E_GL_KHR_memory_scope_semantics, "workgroupcoherent");
+        $$.qualifier.workgroupcoherent = true;
+    }
+    | SUBGROUPCOHERENT {
+        $$.init($1.loc);
+        parseContext.requireExtensions($1.loc, 1, &E_GL_KHR_memory_scope_semantics, "subgroupcoherent");
+        $$.qualifier.subgroupcoherent = true;
+    }
+    | NONPRIVATE {
+        $$.init($1.loc);
+        parseContext.requireExtensions($1.loc, 1, &E_GL_KHR_memory_scope_semantics, "nonprivate");
+        $$.qualifier.nonprivate = true;
     }
     | VOLATILE {
         $$.init($1.loc);

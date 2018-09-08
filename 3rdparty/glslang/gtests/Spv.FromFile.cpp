@@ -286,6 +286,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.matrix.frag",
         "spv.matrix2.frag",
         "spv.memoryQualifier.frag",
+        "spv.memoryScopeSemantics.comp",
+        "spv.memoryScopeSemantics_Error.comp",
         "spv.merge-unreachable.frag",
         "spv.multiStruct.comp",
         "spv.multiStructFuncall.frag",

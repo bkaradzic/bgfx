@@ -267,6 +267,10 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
         if (tokens.size() != 1)
             error(loc, "extra tokens", "#pragma", "");
         intermediate.setUseStorageBuffer();
+    } else if (spvVersion.spv > 0 && tokens[0].compare("use_vulkan_memory_model") == 0) {
+        if (tokens.size() != 1)
+            error(loc, "extra tokens", "#pragma", "");
+        intermediate.setUseVulkanMemoryModel();
     } else if (tokens[0].compare("once") == 0) {
         warn(loc, "not implemented", "#pragma once", "");
     } else if (tokens[0].compare("glslang_binary_double_output") == 0)
@@ -1028,8 +1032,16 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                         const char* message = "argument cannot drop memory qualifier when passed to formal parameter";
                         if (argQualifier.volatil && ! formalQualifier.volatil)
                             error(arguments->getLoc(), message, "volatile", "");
-                        if (argQualifier.coherent && ! formalQualifier.coherent)
+                        if (argQualifier.coherent && ! (formalQualifier.devicecoherent || formalQualifier.coherent))
                             error(arguments->getLoc(), message, "coherent", "");
+                        if (argQualifier.devicecoherent && ! (formalQualifier.devicecoherent || formalQualifier.coherent))
+                            error(arguments->getLoc(), message, "devicecoherent", "");
+                        if (argQualifier.queuefamilycoherent && ! (formalQualifier.queuefamilycoherent || formalQualifier.devicecoherent || formalQualifier.coherent))
+                            error(arguments->getLoc(), message, "queuefamilycoherent", "");
+                        if (argQualifier.workgroupcoherent && ! (formalQualifier.workgroupcoherent || formalQualifier.queuefamilycoherent || formalQualifier.devicecoherent || formalQualifier.coherent))
+                            error(arguments->getLoc(), message, "workgroupcoherent", "");
+                        if (argQualifier.subgroupcoherent && ! (formalQualifier.subgroupcoherent || formalQualifier.workgroupcoherent || formalQualifier.queuefamilycoherent || formalQualifier.devicecoherent || formalQualifier.coherent))
+                            error(arguments->getLoc(), message, "subgroupcoherent", "");
                         if (argQualifier.readonly && ! formalQualifier.readonly)
                             error(arguments->getLoc(), message, "readonly", "");
                         if (argQualifier.writeonly && ! formalQualifier.writeonly)
@@ -1428,6 +1440,159 @@ TIntermTyped* TParseContext::addOutputArgumentConversions(const TFunction& funct
     return conversionTree;
 }
 
+void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction& fnCandidate, const TIntermOperator& callNode)
+{
+    const TIntermSequence* argp = &callNode.getAsAggregate()->getSequence();
+
+    const int gl_SemanticsRelaxed         = 0x0;
+    const int gl_SemanticsAcquire         = 0x2;
+    const int gl_SemanticsRelease         = 0x4;
+    const int gl_SemanticsAcquireRelease  = 0x8;
+    const int gl_SemanticsMakeAvailable   = 0x2000;
+    const int gl_SemanticsMakeVisible     = 0x4000;
+
+    const int gl_StorageSemanticsNone     = 0x0;
+    const int gl_StorageSemanticsBuffer   = 0x40;
+    const int gl_StorageSemanticsShared   = 0x100;
+    const int gl_StorageSemanticsImage    = 0x800;
+    const int gl_StorageSemanticsOutput   = 0x1000;
+
+
+    unsigned int semantics = 0, storageClassSemantics = 0;
+    unsigned int semantics2 = 0, storageClassSemantics2 = 0;
+
+    // Grab the semantics and storage class semantics from the operands, based on opcode
+    switch (callNode.getOp()) {
+    case EOpAtomicAdd:
+    case EOpAtomicMin:
+    case EOpAtomicMax:
+    case EOpAtomicAnd:
+    case EOpAtomicOr:
+    case EOpAtomicXor:
+    case EOpAtomicExchange:
+    case EOpAtomicStore:
+        storageClassSemantics = (*argp)[3]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    case EOpAtomicLoad:
+        storageClassSemantics = (*argp)[2]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[3]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    case EOpAtomicCompSwap:
+        storageClassSemantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics2 = (*argp)[6]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics2 = (*argp)[7]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+
+    case EOpImageAtomicAdd:
+    case EOpImageAtomicMin:
+    case EOpImageAtomicMax:
+    case EOpImageAtomicAnd:
+    case EOpImageAtomicOr:
+    case EOpImageAtomicXor:
+    case EOpImageAtomicExchange:
+    case EOpImageAtomicStore:
+        storageClassSemantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    case EOpImageAtomicLoad:
+        storageClassSemantics = (*argp)[3]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[4]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    case EOpImageAtomicCompSwap:
+        storageClassSemantics = (*argp)[5]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[6]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        storageClassSemantics2 = (*argp)[7]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics2 = (*argp)[8]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+
+    case EOpBarrier:
+        storageClassSemantics = (*argp)[2]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[3]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    case EOpMemoryBarrier:
+        storageClassSemantics = (*argp)[1]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        semantics = (*argp)[2]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    }
+
+    if ((semantics & gl_SemanticsAcquire) && 
+        (callNode.getOp() == EOpAtomicStore || callNode.getOp() == EOpImageAtomicStore)) {
+        error(loc, "gl_SemanticsAcquire must not be used with (image) atomic store",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((semantics & gl_SemanticsRelease) && 
+        (callNode.getOp() == EOpAtomicLoad || callNode.getOp() == EOpImageAtomicLoad)) {
+        error(loc, "gl_SemanticsRelease must not be used with (image) atomic load",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((semantics & gl_SemanticsAcquireRelease) && 
+        (callNode.getOp() == EOpAtomicStore || callNode.getOp() == EOpImageAtomicStore || 
+         callNode.getOp() == EOpAtomicLoad  || callNode.getOp() == EOpImageAtomicLoad)) {
+        error(loc, "gl_SemanticsAcquireRelease must not be used with (image) atomic load/store",
+              fnCandidate.getName().c_str(), "");
+    }
+    if (((semantics | semantics2) & ~(gl_SemanticsAcquire |
+                                      gl_SemanticsRelease |
+                                      gl_SemanticsAcquireRelease |
+                                      gl_SemanticsMakeAvailable |
+                                      gl_SemanticsMakeVisible))) {
+        error(loc, "Invalid semantics value", fnCandidate.getName().c_str(), "");
+    }
+    if (((storageClassSemantics | storageClassSemantics2) & ~(gl_StorageSemanticsBuffer |
+                                                              gl_StorageSemanticsShared |
+                                                              gl_StorageSemanticsImage |
+                                                              gl_StorageSemanticsOutput))) {
+        error(loc, "Invalid storage class semantics value", fnCandidate.getName().c_str(), "");
+    }
+
+    if (callNode.getOp() == EOpMemoryBarrier) {
+        if (!IsPow2(semantics & (gl_SemanticsAcquire | gl_SemanticsRelease | gl_SemanticsAcquireRelease))) {
+            error(loc, "Semantics must include exactly one of gl_SemanticsRelease, gl_SemanticsAcquire, or "
+                       "gl_SemanticsAcquireRelease", fnCandidate.getName().c_str(), "");
+        }
+    } else {
+        if (semantics & (gl_SemanticsAcquire | gl_SemanticsRelease | gl_SemanticsAcquireRelease)) {
+            if (!IsPow2(semantics & (gl_SemanticsAcquire | gl_SemanticsRelease | gl_SemanticsAcquireRelease))) {
+                error(loc, "Semantics must not include multiple of gl_SemanticsRelease, gl_SemanticsAcquire, or "
+                           "gl_SemanticsAcquireRelease", fnCandidate.getName().c_str(), "");
+            }
+        }
+        if (semantics2 & (gl_SemanticsAcquire | gl_SemanticsRelease | gl_SemanticsAcquireRelease)) {
+            if (!IsPow2(semantics2 & (gl_SemanticsAcquire | gl_SemanticsRelease | gl_SemanticsAcquireRelease))) {
+                error(loc, "semUnequal must not include multiple of gl_SemanticsRelease, gl_SemanticsAcquire, or "
+                           "gl_SemanticsAcquireRelease", fnCandidate.getName().c_str(), "");
+            }
+        }
+    }
+    if (callNode.getOp() == EOpMemoryBarrier) {
+        if (storageClassSemantics == 0) {
+            error(loc, "Storage class semantics must not be zero", fnCandidate.getName().c_str(), "");
+        }
+    }
+    if (callNode.getOp() == EOpBarrier && semantics != 0 && storageClassSemantics == 0) {
+        error(loc, "Storage class semantics must not be zero", fnCandidate.getName().c_str(), "");
+    }
+    if ((callNode.getOp() == EOpAtomicCompSwap || callNode.getOp() == EOpImageAtomicCompSwap) &&
+        (semantics2 & (gl_SemanticsRelease | gl_SemanticsAcquireRelease))) {
+        error(loc, "semUnequal must not be gl_SemanticsRelease or gl_SemanticsAcquireRelease",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((semantics & gl_SemanticsMakeAvailable) &&
+        !(semantics & (gl_SemanticsRelease | gl_SemanticsAcquireRelease))) {
+        error(loc, "gl_SemanticsMakeAvailable requires gl_SemanticsRelease or gl_SemanticsAcquireRelease",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((semantics & gl_SemanticsMakeVisible) &&
+        !(semantics & (gl_SemanticsAcquire | gl_SemanticsAcquireRelease))) {
+        error(loc, "gl_SemanticsMakeVisible requires gl_SemanticsAcquire or gl_SemanticsAcquireRelease",
+              fnCandidate.getName().c_str(), "");
+    }
+
+}
+
+
 //
 // Do additional checking of built-in function calls that is not caught
 // by normal semantic checks on argument type, extension tagging, etc.
@@ -1656,6 +1821,8 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpImageAtomicXor:
     case EOpImageAtomicExchange:
     case EOpImageAtomicCompSwap:
+    case EOpImageAtomicLoad:
+    case EOpImageAtomicStore:
     {
         // Make sure the image types have the correct layout() format and correct argument types
         const TType& imageType = arg0->getType();
@@ -1669,10 +1836,14 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                 error(loc, "only supported on image with format r32f", fnCandidate.getName().c_str(), "");
         }
 
+        if (argp->size() > 4) {
+            requireExtensions(loc, 1, &E_GL_KHR_memory_scope_semantics, fnCandidate.getName().c_str());
+            memorySemanticsCheck(loc, fnCandidate, callNode);
+        }
+
         break;
     }
 
-#ifdef NV_EXTENSIONS
     case EOpAtomicAdd:
     case EOpAtomicMin:
     case EOpAtomicMax:
@@ -1681,13 +1852,19 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
     case EOpAtomicXor:
     case EOpAtomicExchange:
     case EOpAtomicCompSwap:
+    case EOpAtomicLoad:
+    case EOpAtomicStore:
     {
-        if (arg0->getType().getBasicType() == EbtInt64 || arg0->getType().getBasicType() == EbtUint64)
+        if (argp->size() > 3) {
+            requireExtensions(loc, 1, &E_GL_KHR_memory_scope_semantics, fnCandidate.getName().c_str());
+            memorySemanticsCheck(loc, fnCandidate, callNode);
+        }
+#ifdef NV_EXTENSIONS
+        else if (arg0->getType().getBasicType() == EbtInt64 || arg0->getType().getBasicType() == EbtUint64)
             requireExtensions(loc, 1, &E_GL_NV_shader_atomic_int64, fnCandidate.getName().c_str());
-
+#endif
         break;
     }
-#endif
 
     case EOpInterpolateAtCentroid:
     case EOpInterpolateAtSample:
@@ -1748,6 +1925,14 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                 error(loc, "argument must be at least 1", "cluster size", "");
             else if (!IsPow2(size))
                 error(loc, "argument must be a power of 2", "cluster size", "");
+        }
+        break;
+
+    case EOpBarrier:
+    case EOpMemoryBarrier:
+        if (argp->size() > 0) {
+            requireExtensions(loc, 1, &E_GL_KHR_memory_scope_semantics, fnCandidate.getName().c_str());
+            memorySemanticsCheck(loc, fnCandidate, callNode);
         }
         break;
 
@@ -2806,8 +2991,11 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
     if (! symbolTable.atGlobalLevel())
         return;
 
-    if (qualifier.isMemory() && ! publicType.isImage() && publicType.qualifier.storage != EvqBuffer)
+    if (qualifier.isMemoryQualifierImageAndSSBOOnly() && ! publicType.isImage() && publicType.qualifier.storage != EvqBuffer) {
         error(loc, "memory qualifiers cannot be used on this type", "", "");
+    } else if (qualifier.isMemory() && (publicType.basicType != EbtSampler) && !publicType.qualifier.isUniformOrBuffer()) {
+        error(loc, "memory qualifiers cannot be used on this type", "", "");
+    }
 
     if (qualifier.storage == EvqBuffer && publicType.basicType != EbtBlock)
         error(loc, "buffers can be declared only as blocks", "buffer", "");
@@ -3020,6 +3208,13 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
     if (dst.precision == EpqNone || (force && src.precision != EpqNone))
         dst.precision = src.precision;
 
+    if (!force && ((src.coherent && (dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent)) ||
+                   (src.devicecoherent && (dst.coherent || dst.queuefamilycoherent || dst.workgroupcoherent || dst.subgroupcoherent)) ||
+                   (src.queuefamilycoherent && (dst.coherent || dst.devicecoherent || dst.workgroupcoherent || dst.subgroupcoherent)) ||
+                   (src.workgroupcoherent && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.subgroupcoherent)) ||
+                   (src.subgroupcoherent  && (dst.coherent || dst.devicecoherent || dst.queuefamilycoherent || dst.workgroupcoherent)))) {
+        error(loc, "only one coherent/devicecoherent/queuefamilycoherent/workgroupcoherent/subgroupcoherent qualifier allowed", GetPrecisionQualifierString(src.precision), "");
+    }
     // Layout qualifiers
     mergeObjectLayoutQualifiers(dst, src, false);
 
@@ -3038,6 +3233,11 @@ void TParseContext::mergeQualifiers(const TSourceLoc& loc, TQualifier& dst, cons
     MERGE_SINGLETON(patch);
     MERGE_SINGLETON(sample);
     MERGE_SINGLETON(coherent);
+    MERGE_SINGLETON(devicecoherent);
+    MERGE_SINGLETON(queuefamilycoherent);
+    MERGE_SINGLETON(workgroupcoherent);
+    MERGE_SINGLETON(subgroupcoherent);
+    MERGE_SINGLETON(nonprivate);
     MERGE_SINGLETON(volatil);
     MERGE_SINGLETON(restrict);
     MERGE_SINGLETON(readonly);
@@ -3862,6 +4062,11 @@ void TParseContext::paramCheckFix(const TSourceLoc& loc, const TQualifier& quali
     if (qualifier.isMemory()) {
         type.getQualifier().volatil   = qualifier.volatil;
         type.getQualifier().coherent  = qualifier.coherent;
+        type.getQualifier().devicecoherent  = qualifier.devicecoherent ;
+        type.getQualifier().queuefamilycoherent  = qualifier.queuefamilycoherent;
+        type.getQualifier().workgroupcoherent  = qualifier.workgroupcoherent;
+        type.getQualifier().subgroupcoherent  = qualifier.subgroupcoherent;
+        type.getQualifier().nonprivate = qualifier.nonprivate;
         type.getQualifier().readonly  = qualifier.readonly;
         type.getQualifier().writeonly = qualifier.writeonly;
         type.getQualifier().restrict  = qualifier.restrict;

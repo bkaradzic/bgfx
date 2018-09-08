@@ -148,6 +148,7 @@ const char* const E_GL_KHR_shader_subgroup_shuffle          = "GL_KHR_shader_sub
 const char* const E_GL_KHR_shader_subgroup_shuffle_relative = "GL_KHR_shader_subgroup_shuffle_relative";
 const char* const E_GL_KHR_shader_subgroup_clustered        = "GL_KHR_shader_subgroup_clustered";
 const char* const E_GL_KHR_shader_subgroup_quad             = "GL_KHR_shader_subgroup_quad";
+const char* const E_GL_KHR_memory_scope_semantics           = "GL_KHR_memory_scope_semantics";
 
 const char* const E_GL_EXT_shader_non_constant_global_initializers = "GL_EXT_shader_non_constant_global_initializers";
 const char* const E_GL_EXT_shader_image_load_formatted = "GL_EXT_shader_image_load_formatted";

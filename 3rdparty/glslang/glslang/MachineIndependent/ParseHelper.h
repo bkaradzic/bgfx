@@ -323,6 +323,7 @@ public:
     TFunction* handleConstructorCall(const TSourceLoc&, const TPublicType&);
     void handlePrecisionQualifier(const TSourceLoc&, TQualifier&, TPrecisionQualifier);
     void checkPrecisionQualifier(const TSourceLoc&, TPrecisionQualifier);
+    void memorySemanticsCheck(const TSourceLoc&, const TFunction&, const TIntermOperator& callNode);
 
     void assignError(const TSourceLoc&, const char* op, TString left, TString right);
     void unaryOpError(const TSourceLoc&, const char* op, TString operand);
