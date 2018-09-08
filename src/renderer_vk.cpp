@@ -3696,6 +3696,7 @@ VK_DESTROY
 		viewScissorRect.clear();
 
 		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+		BX_UNUSED(maxComputeBindings);
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
