@@ -1018,15 +1018,19 @@ namespace bgfx { namespace d3d11
 								, m_scd
 								, &m_swapChain
 								);
-						}
-						else
-						{
-							m_resolution       = _init.resolution;
-							m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
 
-							m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
-							m_textVideoMem.clear();
+							if (FAILED(hr) )
+							{
+								BX_TRACE("Init error: Failed to create swap chain.");
+								goto error;
+							}
 						}
+
+						m_resolution       = _init.resolution;
+						m_resolution.reset = _init.resolution.reset & (~BGFX_RESET_INTERNAL_FORCE);
+
+						m_textVideoMem.resize(false, _init.resolution.width, _init.resolution.height);
+						m_textVideoMem.clear();
 
 						if (1 < m_scd.sampleDesc.Count)
 						{
