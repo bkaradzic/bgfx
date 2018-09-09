@@ -2237,11 +2237,12 @@ namespace bgfx { namespace d3d11
 		void invalidateCompute()
 		{
 			const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+			const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
 
 			m_deviceCtx->CSSetShader(NULL, NULL, 0);
 			m_deviceCtx->CSSetUnorderedAccessViews(0, maxComputeBindings, s_zero.m_uav, NULL);
-			m_deviceCtx->CSSetShaderResources(0, maxComputeBindings, s_zero.m_srv);
-			m_deviceCtx->CSSetSamplers(0, maxComputeBindings, s_zero.m_sampler);
+			m_deviceCtx->CSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+			m_deviceCtx->CSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
 		}
 
 		void updateMsaa(DXGI_FORMAT _format) const
@@ -2934,15 +2935,17 @@ namespace bgfx { namespace d3d11
 
 		void commitTextureStage()
 		{
+			const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
+
 			// vertex texture fetch not supported on 9_1 through 9_3
 			if (m_featureLevel > D3D_FEATURE_LEVEL_9_3)
 			{
-				m_deviceCtx->VSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
-				m_deviceCtx->VSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_sampler);
+				m_deviceCtx->VSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
+				m_deviceCtx->VSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
 			}
 
-			m_deviceCtx->PSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_srv);
-			m_deviceCtx->PSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, m_textureStage.m_sampler);
+			m_deviceCtx->PSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
+			m_deviceCtx->PSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
 		}
 
 		void invalidateTextureStage()
@@ -5239,6 +5242,7 @@ namespace bgfx { namespace d3d11
 		viewScissorRect.clear();
 
 		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+		const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
 		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
@@ -5398,11 +5402,11 @@ namespace bgfx { namespace d3d11
 						deviceCtx->IASetVertexBuffers(0, 2, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
 						deviceCtx->IASetIndexBuffer(NULL, DXGI_FORMAT_R16_UINT, 0);
 
-						deviceCtx->VSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, s_zero.m_srv);
-						deviceCtx->PSSetShaderResources(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, s_zero.m_srv);
+						deviceCtx->VSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
+						deviceCtx->PSSetShaderResources(0, maxTextureSamplers, s_zero.m_srv);
 
-						deviceCtx->VSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, s_zero.m_sampler);
-						deviceCtx->PSSetSamplers(0, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, s_zero.m_sampler);
+						deviceCtx->VSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
+						deviceCtx->PSSetSamplers(0, maxTextureSamplers, s_zero.m_sampler);
 					}
 
 					const RenderCompute& compute = renderItem.compute;
@@ -5509,9 +5513,10 @@ namespace bgfx { namespace d3d11
 						// Quiet validation: Resource being set to CS UnorderedAccessView slot 0 is still bound on input!
 						deviceCtx->CSSetShaderResources(0, maxComputeBindings, s_zero.m_srv);
 					}
-					deviceCtx->CSSetUnorderedAccessViews(0, BX_COUNTOF(uav), uav, NULL);
-					deviceCtx->CSSetShaderResources(0, BX_COUNTOF(srv), srv);
-					deviceCtx->CSSetSamplers(0, BX_COUNTOF(sampler), sampler);
+
+					deviceCtx->CSSetUnorderedAccessViews(0, maxComputeBindings, uav, NULL);
+					deviceCtx->CSSetShaderResources(0, maxTextureSamplers, srv);
+					deviceCtx->CSSetSamplers(0, maxTextureSamplers, sampler);
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
@@ -5771,7 +5776,7 @@ namespace bgfx { namespace d3d11
 
 				{
 					uint32_t changes = 0;
-					for (uint8_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+					for (uint8_t stage = 0; stage < maxTextureSamplers; ++stage)
 					{
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
