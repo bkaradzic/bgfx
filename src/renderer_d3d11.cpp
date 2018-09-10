@@ -1182,7 +1182,7 @@ namespace bgfx { namespace d3d11
 				else
 				{
 					g_caps.limits.maxComputeBindings = bx::min(BGFX_MAX_COMPUTE_BINDINGS
-						, 1 <= m_deviceInterfaceVersion
+						, D3D_FEATURE_LEVEL_11_1 <= m_featureLevel
 						? D3D11_1_UAV_SLOT_COUNT
 						: D3D11_PS_CS_UAV_REGISTER_COUNT
 						);
