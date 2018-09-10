@@ -419,9 +419,12 @@ namespace bgfx { namespace d3d12
 	static inline D3D12_HEAP_PROPERTIES ID3D12DeviceGetCustomHeapProperties(ID3D12Device *device, UINT nodeMask, D3D12_HEAP_TYPE heapType)
 	{
 		// NOTICE: gcc trick for return struct
-		typedef void (STDMETHODCALLTYPE ID3D12Device::*GetCustomHeapProperties_f)(D3D12_HEAP_PROPERTIES *, UINT, D3D12_HEAP_TYPE);
+		union {
+			D3D12_HEAP_PROPERTIES (STDMETHODCALLTYPE ID3D12Device::*w)(UINT, D3D12_HEAP_TYPE);
+			void (STDMETHODCALLTYPE ID3D12Device::*f)(D3D12_HEAP_PROPERTIES *, UINT, D3D12_HEAP_TYPE);
+		} conversion = { &ID3D12Device::GetCustomHeapProperties };
 		D3D12_HEAP_PROPERTIES ret;
-		(device->*(GetCustomHeapProperties_f)(&ID3D12Device::GetCustomHeapProperties))(&ret, nodeMask, heapType);
+		(device->*conversion.f)(&ret, nodeMask, heapType);
 		return ret;
 	}
 
@@ -563,8 +566,11 @@ namespace bgfx { namespace d3d12
 		return _heap->GetCPUDescriptorHandleForHeapStart();
 #else
 		D3D12_CPU_DESCRIPTOR_HANDLE handle;
-		typedef void (WINAPI ID3D12DescriptorHeap::*PFN_GET_CPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(D3D12_CPU_DESCRIPTOR_HANDLE *);
-		(_heap->*(PFN_GET_CPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(&ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart) )(&handle);
+		union {
+			D3D12_CPU_DESCRIPTOR_HANDLE (WINAPI ID3D12DescriptorHeap::*w)();
+			void (WINAPI ID3D12DescriptorHeap::*f)(D3D12_CPU_DESCRIPTOR_HANDLE *);
+		} conversion = { &ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart };
+		(_heap->*conversion.f)(&handle);
 		return handle;
 #endif // BX_COMPILER_MSVC
 	}
@@ -575,8 +581,11 @@ namespace bgfx { namespace d3d12
 		return _heap->GetGPUDescriptorHandleForHeapStart();
 #else
 		D3D12_GPU_DESCRIPTOR_HANDLE handle;
-		typedef void (WINAPI ID3D12DescriptorHeap::*PFN_GET_GPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(D3D12_GPU_DESCRIPTOR_HANDLE *);
-		(_heap->*(PFN_GET_GPU_DESCRIPTOR_HANDLE_FOR_HEAP_START)(&ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart) )(&handle);
+		union {
+			D3D12_GPU_DESCRIPTOR_HANDLE (WINAPI ID3D12DescriptorHeap::*w)();
+			void (WINAPI ID3D12DescriptorHeap::*f)(D3D12_GPU_DESCRIPTOR_HANDLE *);
+		} conversion = { &ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart };
+		(_heap->*conversion.f)(&handle);
 		return handle;
 #endif // BX_COMPILER_MSVC
 	}
@@ -586,9 +595,12 @@ namespace bgfx { namespace d3d12
 #if BX_COMPILER_MSVC
 		return _resource->GetDesc();
 #else
-		typedef void (STDMETHODCALLTYPE ID3D12Resource::*PFN_GET_GET_DESC)(D3D12_RESOURCE_DESC*);
 		D3D12_RESOURCE_DESC desc;
-		(_resource->*(PFN_GET_GET_DESC)(&ID3D12Resource::GetDesc))(&desc);
+		union {
+			D3D12_RESOURCE_DESC (STDMETHODCALLTYPE ID3D12Resource::*w)();
+			void (STDMETHODCALLTYPE ID3D12Resource::*f)(D3D12_RESOURCE_DESC *);
+		} conversion = { &ID3D12Resource::GetDesc };
+		(_resource->*conversion.f)(&desc);
 		return desc;
 #endif // BX_COMPILER_MSVC
 	}
