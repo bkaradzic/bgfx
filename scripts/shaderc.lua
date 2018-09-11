@@ -335,7 +335,7 @@ project "fcpp"
 		"NWORK=65536",
 		"NBUFF=65536",
 		"OLD_PREPROCESSOR=0",
-		"MSG_PREFIX=\"Preprocessor: \"",
+--		"MSG_PREFIX=\"Preprocessor: \"",
 	}
 
 	files {
