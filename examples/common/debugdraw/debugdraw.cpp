@@ -361,6 +361,8 @@ struct SpriteT
 
 	SpriteHandle create(uint16_t _width, uint16_t _height)
 	{
+		bx::MutexScope lock(m_lock);
+
 		SpriteHandle handle = { bx::kInvalidHandle };
 
 		if (m_handleAlloc.getNumHandles() < m_handleAlloc.getMaxHandles() )
@@ -396,6 +398,7 @@ struct SpriteT
 		return m_pack[_sprite.idx];
 	}
 
+	bx::Mutex                     m_lock;
 	bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
 	Pack2D                        m_pack[MaxHandlesT];
 	RectPack2DT<256>              m_ra;
@@ -412,7 +415,11 @@ struct GeometryT
 	{
 		BX_UNUSED(_numVertices, _vertices, _numIndices, _indices, _index32);
 
-		GeometryHandle handle = { m_handleAlloc.alloc() };
+		GeometryHandle handle;
+		{
+			bx::MutexScope lock(m_lock);
+			handle = { m_handleAlloc.alloc() };
+		}
 
 		if (isValid(handle) )
 		{
@@ -462,6 +469,7 @@ struct GeometryT
 
 	void destroy(GeometryHandle _handle)
 	{
+		bx::MutexScope lock(m_lock);
 		Geometry& geometry = m_geometry[_handle.idx];
 		bgfx::destroy(geometry.m_vbh);
 		bgfx::destroy(geometry.m_ibh);
@@ -484,6 +492,7 @@ struct GeometryT
 		uint32_t m_topologyNumIndices[2];
 	};
 
+	bx::Mutex m_lock;
 	bx::HandleAllocT<MaxHandlesT> m_handleAlloc;
 	Geometry m_geometry[MaxHandlesT];
 };
@@ -944,8 +953,6 @@ struct DebugDrawShared
 
 	SpriteHandle createSprite(uint16_t _width, uint16_t _height, const void* _data)
 	{
-		bx::MutexScope lock(m_lock);
-
 		SpriteHandle handle = m_sprite.create(_width, _height);
 
 		if (isValid(handle) )
@@ -968,27 +975,20 @@ struct DebugDrawShared
 
 	void destroy(SpriteHandle _handle)
 	{
-		bx::MutexScope lock(m_lock);
-
 		m_sprite.destroy(_handle);
 	}
 
 	GeometryHandle createGeometry(uint32_t _numVertices, const DdVertex* _vertices, uint32_t _numIndices, const void* _indices, bool _index32)
 	{
-		bx::MutexScope lock(m_lock);
-
 		return m_geometry.create(_numVertices, _vertices, _numIndices, _indices, _index32);
 	}
 
 	void destroy(GeometryHandle _handle)
 	{
-		bx::MutexScope lock(m_lock);
-
 		m_geometry.destroy(_handle);
 	}
 
 	bx::AllocatorI* m_allocator;
-	bx::Mutex m_lock;
 
 	Sprite m_sprite;
 	Geometry m_geometry;
