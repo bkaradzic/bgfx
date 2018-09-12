@@ -666,7 +666,9 @@ namespace bgfx
 	///
 	typedef void (*ReleaseFn)(void* _ptr, void* _userData);
 
-	/// Memory obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
+	/// Memory must be obtained by calling `bgfx::alloc`, `bgfx::copy`, or `bgfx::makeRef`.
+	///
+	/// @attention It is illegal to create this structure on stack and pass it to any bgfx API.
 	///
 	/// @attention C99 equivalent is `bgfx_memory_t`.
 	///
