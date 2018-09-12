@@ -22,7 +22,7 @@ namespace bgfx
 #	define BGFX_CHECK_API_THREAD()                                  \
 		BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
 		BX_CHECK(BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
-#	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(BGFX_API_THREAD_MAGIC != s_threadIndex, "Must be called from render thread.")
+#	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(~BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from render thread.")
 #else
 #	define BGFX_CHECK_API_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
@@ -1081,6 +1081,11 @@ namespace bgfx
 	{
 		if (BX_ENABLED(BGFX_CONFIG_MULTITHREADED) )
 		{
+			if (s_renderFrameCalled)
+			{
+				BGFX_CHECK_RENDER_THREAD();
+			}
+
 			if (NULL == s_ctx)
 			{
 				s_renderFrameCalled = true;
@@ -1088,7 +1093,6 @@ namespace bgfx
 				return RenderFrame::NoContext;
 			}
 
-			BGFX_CHECK_RENDER_THREAD();
 			int32_t msecs = -1 == _msecs
 				? BGFX_CONFIG_API_SEMAPHORE_TIMEOUT
 				: _msecs
@@ -2953,6 +2957,7 @@ namespace bgfx
 				s_allocatorStub = NULL;
 			}
 
+			s_renderFrameCalled = false;
 			s_threadIndex = 0;
 			g_callback    = NULL;
 			g_allocator   = NULL;
@@ -2993,6 +2998,7 @@ namespace bgfx
 			s_allocatorStub = NULL;
 		}
 
+		s_renderFrameCalled = false;
 		s_threadIndex = 0;
 		g_callback    = NULL;
 		g_allocator   = NULL;
