@@ -964,6 +964,8 @@ namespace bgfx { namespace d3d12
 				m_numWindows = 1;
 
 #if BX_PLATFORM_WINDOWS
+				m_infoQueue = NULL;
+
 				DX_CHECK(m_dxgi.m_factory->MakeWindowAssociation( (HWND)g_platformData.nwh
 					, 0
 					| DXGI_MWA_NO_WINDOW_CHANGES
@@ -3191,7 +3193,7 @@ namespace bgfx { namespace d3d12
 		ID3D12Resource*   m_msaaRt;
 
 #if BX_PLATFORM_WINDOWS
-		ID3D12InfoQueue* m_infoQueue = nullptr;
+		ID3D12InfoQueue* m_infoQueue;
 #endif // BX_PLATFORM_WINDOWS
 
 		int64_t m_presentElapsed;
