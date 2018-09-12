@@ -3191,7 +3191,7 @@ namespace bgfx { namespace d3d12
 		ID3D12Resource*   m_msaaRt;
 
 #if BX_PLATFORM_WINDOWS
-		ID3D12InfoQueue* m_infoQueue;
+		ID3D12InfoQueue* m_infoQueue = nullptr;
 #endif // BX_PLATFORM_WINDOWS
 
 		int64_t m_presentElapsed;
