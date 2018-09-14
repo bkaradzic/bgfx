@@ -76,6 +76,8 @@ namespace bgfx
 	 * https://developer.nvidia.com/nvidia-aftermath
 	 */
 
+	typedef int32_t (*PFN_NVAFTERMATH_DX11_INITIALIZE)(int32_t _version, int32_t _flags, const ID3D11Device* _device);
+	typedef int32_t (*PFN_NVAFTERMATH_DX11_CREATECONTEXTHANDLE)(const ID3D11DeviceContext* _deviceCtx, NvAftermathContextHandle** _outContextHandle);
 	typedef int32_t (*PFN_NVAFTERMATH_DX12_INITIALIZE)(int32_t _version, int32_t _flags, const ID3D12Device* _device);
 	typedef int32_t (*PFN_NVAFTERMATH_DX12_CREATECONTEXTHANDLE)(const ID3D12CommandList* _commandList, NvAftermathContextHandle** _outContextHandle);
 	typedef int32_t (*PFN_NVAFTERMATH_RELEASECONTEXTHANDLE)(const NvAftermathContextHandle* _contextHandle);
@@ -84,6 +86,8 @@ namespace bgfx
 	typedef int32_t (*PFN_NVAFTERMATH_GETDEVICESTATUS)(void* _outStatus);
 	typedef int32_t (*PFN_NVAFTERMATH_GETPAGEFAULTINFORMATION)(void* _outPageFaultInformation);
 
+	static PFN_NVAFTERMATH_DX11_INITIALIZE          nvAftermathDx11Initialize;
+	static PFN_NVAFTERMATH_DX11_CREATECONTEXTHANDLE nvAftermathDx11CreateContextHandle;
 	static PFN_NVAFTERMATH_DX12_INITIALIZE          nvAftermathDx12Initialize;
 	static PFN_NVAFTERMATH_DX12_CREATECONTEXTHANDLE nvAftermathDx12CreateContextHandle;
 	static PFN_NVAFTERMATH_RELEASECONTEXTHANDLE     nvAftermathReleaseContextHandle;
@@ -213,7 +217,7 @@ namespace bgfx
 		}
 	}
 
-	bool NvApi::initAftermath(const ID3D12Device* _device, const ID3D12CommandList* _commandList)
+	bool NvApi::loadAftermath()
 	{
 		m_nvAftermathDll = bx::dlopen(
 			"GFSDK_Aftermath_Lib."
@@ -227,6 +231,8 @@ namespace bgfx
 
 		if (NULL != m_nvAftermathDll)
 		{
+			nvAftermathDx11Initialize          = (PFN_NVAFTERMATH_DX11_INITIALIZE         )bx::dlsym(m_nvAftermathDll, "GFSDK_Aftermath_DX11_Initialize");
+			nvAftermathDx11CreateContextHandle = (PFN_NVAFTERMATH_DX11_CREATECONTEXTHANDLE)bx::dlsym(m_nvAftermathDll, "GFSDK_Aftermath_DX11_CreateContextHandle");
 			nvAftermathDx12Initialize          = (PFN_NVAFTERMATH_DX12_INITIALIZE         )bx::dlsym(m_nvAftermathDll, "GFSDK_Aftermath_DX12_Initialize");
 			nvAftermathDx12CreateContextHandle = (PFN_NVAFTERMATH_DX12_CREATECONTEXTHANDLE)bx::dlsym(m_nvAftermathDll, "GFSDK_Aftermath_DX12_CreateContextHandle");
 			nvAftermathReleaseContextHandle	   = (PFN_NVAFTERMATH_RELEASECONTEXTHANDLE    )bx::dlsym(m_nvAftermathDll, "GFSDK_Aftermath_ReleaseContextHandle");
@@ -236,6 +242,8 @@ namespace bgfx
 			nvAftermathGetPageFaultInformation = (PFN_NVAFTERMATH_GETPAGEFAULTINFORMATION )bx::dlsym(m_nvAftermathDll, "GFSDK_Aftermath_GetPageFaultInformation");
 
 			bool initialized = true
+				&& NULL != nvAftermathDx11Initialize
+				&& NULL != nvAftermathDx11CreateContextHandle
 				&& NULL != nvAftermathDx12Initialize
 				&& NULL != nvAftermathDx12CreateContextHandle
 				&& NULL != nvAftermathReleaseContextHandle
@@ -247,25 +255,37 @@ namespace bgfx
 
 			if (initialized)
 			{
-				int32_t result;
-				result = nvAftermathDx12Initialize(0x13, 1, _device);
+				return true;
+			}
+
+			shutdownAftermath();
+		}
+
+		return false;
+	}
+
+	bool NvApi::initAftermath(const ID3D11Device* _device, const ID3D11DeviceContext* _deviceCtx)
+	{
+		if (loadAftermath() )
+		{
+			int32_t result;
+			result = nvAftermathDx11Initialize(0x13, 1, _device);
+			if (1 == result)
+			{
+				result = nvAftermathDx11CreateContextHandle(_deviceCtx, &m_aftermathHandle);
+				BX_WARN(1 == result, "NV Aftermath: nvAftermathDx12CreateContextHandle failed %x", result);
+
 				if (1 == result)
 				{
-					result = nvAftermathDx12CreateContextHandle(_commandList, &m_aftermathHandle);
-					BX_WARN(1 == result, "NV Aftermath: nvAftermathDx12CreateContextHandle failed %x", result);
-
-					if (1 == result)
-					{
-						return true;
-					}
+					return true;
 				}
-				else
+			}
+			else
+			{
+				switch (result)
 				{
-					switch (result)
-					{
-					case int32_t(0xbad0000a): BX_TRACE("NV Aftermath: Debug layer not compatible with Aftermath."); break;
-					default:                  BX_TRACE("NV Aftermath: Failed to initialize."); break;
-					}
+				case int32_t(0xbad0000a): BX_TRACE("NV Aftermath: Debug layer not compatible with Aftermath."); break;
+				default:                  BX_TRACE("NV Aftermath: Failed to initialize."); break;
 				}
 			}
 
@@ -273,6 +293,50 @@ namespace bgfx
 		}
 
 		return false;
+	}
+
+	bool NvApi::initAftermath(const ID3D12Device* _device, const ID3D12CommandList* _commandList)
+	{
+		if (loadAftermath() )
+		{
+			int32_t result;
+			result = nvAftermathDx12Initialize(0x13, 1, _device);
+			if (1 == result)
+			{
+				result = nvAftermathDx12CreateContextHandle(_commandList, &m_aftermathHandle);
+				BX_WARN(1 == result, "NV Aftermath: nvAftermathDx12CreateContextHandle failed %x", result);
+
+				if (1 == result)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				switch (result)
+				{
+				case int32_t(0xbad0000a): BX_TRACE("NV Aftermath: Debug layer not compatible with Aftermath."); break;
+				default:                  BX_TRACE("NV Aftermath: Failed to initialize."); break;
+				}
+			}
+
+			shutdownAftermath();
+		}
+
+		return false;
+	}
+
+	NvAftermathDeviceStatus::Enum NvApi::getDeviceStatus() const
+	{
+		if (NULL != m_aftermathHandle)
+		{
+			int32_t status;
+			nvAftermathGetDeviceStatus(&status);
+
+			return NvAftermathDeviceStatus::Enum(status);
+		}
+
+		return NvAftermathDeviceStatus::NotInitialized;
 	}
 
 	void NvApi::shutdownAftermath()

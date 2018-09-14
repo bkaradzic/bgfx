@@ -1512,6 +1512,8 @@ namespace bgfx { namespace d3d11
 				postReset();
 			}
 
+			m_nvapi.initAftermath(m_device, m_deviceCtx);
+
 			g_internalData.context = m_device;
 			return true;
 
