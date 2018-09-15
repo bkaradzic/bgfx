@@ -1303,6 +1303,13 @@ namespace bgfx
 			, uint32_t _num
 			);
 
+		/// Set number of instances for auto generated instances use in conjuction
+		/// with gl_InstanceID.
+		///
+		/// @param[in] _numInstances Number of instances.
+		///
+		/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+		/// @attention C99 equivalent is `bgfx_set_instance_count`.
 		///
 		void setInstanceCount(uint32_t _numInstances);
 
@@ -3636,6 +3643,13 @@ namespace bgfx
 		, uint32_t _num
 		);
 
+	/// Set number of instances for auto generated instances use in conjuction
+	/// with gl_InstanceID.
+	///
+	/// @param[in] _numInstances Number of instances.
+	///
+	/// @attention Availability depends on: `BGFX_CAPS_VERTEX_ID`.
+	/// @attention C99 equivalent is `bgfx_set_instance_count`.
 	///
 	void setInstanceCount(uint32_t _numInstances);
 
