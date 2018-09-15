@@ -1181,6 +1181,12 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx4Caps6Limits18maxComputeBindingsE">
+<span id="bgfx::Caps::Limits::maxComputeBindings__uint32_t"></span><span class="target" id="structbgfx_1_1_caps_1_1_limits_1a2cf3ef61b8359023fd73ba6cd9f47a64"></span>uint32_t <code class="descname">maxComputeBindings</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits18maxComputeBindingsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of compute bindings. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx4Caps6Limits14maxVertexDeclsE">
 <span id="bgfx::Caps::Limits::maxVertexDecls__uint32_t"></span><span class="target" id="structbgfx_1_1_caps_1_1_limits_1a94bbdf9e33aa717cc93d3984952ac8a9"></span>uint32_t <code class="descname">maxVertexDecls</code><a class="headerlink" href="#_CPPv2N4bgfx4Caps6Limits14maxVertexDeclsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum number of vertex format declarations. </p>
@@ -3037,6 +3043,24 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx7Encoder16setInstanceCountE8uint32_t">
+<span id="bgfx::Encoder::setInstanceCount__uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1ac8450ebbbf04678db6d2c59ea86178a8"></span>void <code class="descname">setInstanceCount</code><span class="sig-paren">(</span>uint32_t <em>_numInstances</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder16setInstanceCountE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of instances for auto generated instances use in conjuction with gl_InstanceID. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_count</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_numInstances</span></code>: Number of instances.</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">
 <span id="bgfx::Encoder::setTexture__uint8_t.UniformHandle.TextureHandle.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1ababcdc9b1bf89fe863573c5629c1ea31"></span>void <code class="descname">setTexture</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint32_t <em>_flags</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set texture stage for draw primitive. </p>
@@ -3867,6 +3891,24 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx14setVertexCountE8uint32_t">
+<span id="bgfx::setVertexCount__uint32_t"></span><span class="target" id="namespacebgfx_1ad86de33993e8c57ee016d5af8a2c51bd"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexCount</code><span class="sig-paren">(</span>uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setVertexCountE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of vertices for auto generated vertices use in conjuction with gl_VertexID. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_count</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices.</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer">
 <span id="bgfx::setInstanceDataBuffer__InstanceDataBufferCP"></span><span class="target" id="namespacebgfx_1aa99e46d4c06aacf639114d727eac87dd"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceDataBuffer</code><span class="sig-paren">(</span><em class="property">const</em> InstanceDataBuffer *<em>_idb</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx21setInstanceDataBufferEPK18InstanceDataBuffer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set instance data buffer for draw primitive. </p>
@@ -3930,6 +3972,24 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Vertex buffer. </li>
 <li><code class="docutils literal"><span class="pre">_start</span></code>: First instance data. </li>
 <li><code class="docutils literal"><span class="pre">_num</span></code>: Number of data instances.</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx16setInstanceCountE8uint32_t">
+<span id="bgfx::setInstanceCount__uint32_t"></span><span class="target" id="namespacebgfx_1aa41e297fd85870c1773f498cb7e51b05"></span>void <code class="descclassname">bgfx::</code><code class="descname">setInstanceCount</code><span class="sig-paren">(</span>uint32_t <em>_numInstances</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16setInstanceCountE8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of instances for auto generated instances use in conjuction with gl_InstanceID. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_count</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_numInstances</span></code>: Number of instances.</li>
 </ul>
 </dd>
 </dl>
@@ -4304,8 +4364,10 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="class">
 <dt id="_CPPv2N4bgfx6MemoryE">
 <span id="bgfx::Memory"></span><span class="target" id="structbgfx_1_1_memory"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Memory</code><a class="headerlink" href="#_CPPv2N4bgfx6MemoryE" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#structbgfx_1_1_memory"><span>Memory</span></a> obtained by calling <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span><span class="pre">bgfx::alloc</span></span></a></code>, <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1abef77615b85f71391e7eda16f24dc5b7"><span><span class="pre">bgfx::copy</span></span></a></code>, or <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a8dc7bf9f26afcc6f61dc602dfed09044"><span><span class="pre">bgfx::makeRef</span></span></a></code>. </p>
+<dd><p><a class="reference internal" href="#structbgfx_1_1_memory"><span>Memory</span></a> must be obtained by calling <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1aef1ce8b4b2523171deb7a0dd48cafe38"><span><span class="pre">bgfx::alloc</span></span></a></code>, <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1abef77615b85f71391e7eda16f24dc5b7"><span><span class="pre">bgfx::copy</span></span></a></code>, or <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a8dc7bf9f26afcc6f61dc602dfed09044"><span><span class="pre">bgfx::makeRef</span></span></a></code>. </p>
 <p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>It is illegal to create this structure on stack and pass it to any bgfx API.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_memory_t</span></code>. </dd>
 </dl>
