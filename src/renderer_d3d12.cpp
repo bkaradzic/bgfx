@@ -835,6 +835,7 @@ namespace bgfx { namespace d3d12
 
 #if BX_PLATFORM_XBOXONE
 			m_device->SetDebugErrorFilterX(0x73EC9EAF, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_BREAKS);
+			m_device->SetDebugErrorFilterX(0x8EC9B15C, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_OUTPUT);
 #endif // BX_PLATFORM_XBOXONE
 
 			if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
@@ -5866,6 +5867,11 @@ namespace bgfx { namespace d3d12
 										}
 										break;
 									}
+								}
+								else
+								{
+									samplerFlags[ii] = 0;
+									scratchBuffer.allocEmpty(srvHandle[ii]);
 								}
 							}
 
