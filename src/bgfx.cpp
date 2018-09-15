@@ -5702,7 +5702,7 @@ BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_e
 
 BGFX_C_API void bgfx_encoder_set_instance_count(bgfx_encoder_s* _encoder, uint32_t _numInstances)
 {
-	BGFX_ENCODER(setVertexCount(_numInstances) );
+	BGFX_ENCODER(setInstanceCount(_numInstances) );
 }
 
 BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags)
