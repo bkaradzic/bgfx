@@ -67,6 +67,11 @@
 #include "iomapper.h"
 #include "Initialize.h"
 
+// TODO: this really shouldn't be here, it is only because of the trial addition
+// of printing pre-processed tokens, which requires knowing the string literal
+// token to print ", but none of that seems appropriate for this file.
+#include "preprocessor/PpTokens.h"
+
 namespace { // anonymous namespace for file-local functions and symbols
 
 // Total number of successful initializers of glslang: a refcount
@@ -965,6 +970,8 @@ private:
 // DoPreprocessing is a valid ProcessingContext template argument,
 // which only performs the preprocessing step of compilation.
 // It places the result in the "string" argument to its constructor.
+//
+// This is not an officially supported or fully working path.
 struct DoPreprocessing {
     explicit DoPreprocessing(std::string* string): outputString(string) {}
     bool operator()(TParseContextBase& parseContext, TPpContext& ppContext,
@@ -1072,7 +1079,11 @@ struct DoPreprocessing {
                 outputBuffer += ' ';
             }
             lastToken = token;
+            if (token == PpAtomConstString)
+                outputBuffer += "\"";
             outputBuffer += ppToken.name;
+            if (token == PpAtomConstString)
+                outputBuffer += "\"";
         } while (true);
         outputBuffer += '\n';
         *outputString = std::move(outputBuffer);
@@ -1122,6 +1133,9 @@ struct DoFullParse{
 // Return: True if there were no issues found in preprocessing,
 //         False if during preprocessing any unknown version, pragmas or
 //         extensions were found.
+//
+// NOTE: Doing just preprocessing to obtain a correct preprocessed shader string
+// is not an officially supported or fully working path.
 bool PreprocessDeferred(
     TCompiler* compiler,
     const char* const shaderStrings[],
@@ -1726,6 +1740,9 @@ bool TShader::parse(const TBuiltInResource* builtInResources, int defaultVersion
 
 // Fill in a string with the result of preprocessing ShaderStrings
 // Returns true if all extensions, pragmas and version strings were valid.
+//
+// NOTE: Doing just preprocessing to obtain a correct preprocessed shader string
+// is not an officially supported or fully working path.
 bool TShader::preprocess(const TBuiltInResource* builtInResources,
                          int defaultVersion, EProfile defaultProfile,
                          bool forceDefaultVersionAndProfile,

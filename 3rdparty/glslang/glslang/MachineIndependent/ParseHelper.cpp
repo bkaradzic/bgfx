@@ -1858,11 +1858,15 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         if (argp->size() > 3) {
             requireExtensions(loc, 1, &E_GL_KHR_memory_scope_semantics, fnCandidate.getName().c_str());
             memorySemanticsCheck(loc, fnCandidate, callNode);
-        }
+        } else if (arg0->getType().getBasicType() == EbtInt64 || arg0->getType().getBasicType() == EbtUint64) {
 #ifdef NV_EXTENSIONS
-        else if (arg0->getType().getBasicType() == EbtInt64 || arg0->getType().getBasicType() == EbtUint64)
-            requireExtensions(loc, 1, &E_GL_NV_shader_atomic_int64, fnCandidate.getName().c_str());
+            const char* const extensions[2] = { E_GL_NV_shader_atomic_int64,
+                                                E_GL_EXT_shader_atomic_int64 };
+            requireExtensions(loc, 2, extensions, fnCandidate.getName().c_str());
+#else
+            requireExtensions(loc, 1, &E_GL_EXT_shader_atomic_int64, fnCandidate.getName().c_str());
 #endif
+        }
         break;
     }
 

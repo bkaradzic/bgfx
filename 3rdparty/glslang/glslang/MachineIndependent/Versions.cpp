@@ -196,6 +196,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_KHR_shader_subgroup_quad]             = EBhDisable;
     extensionBehavior[E_GL_KHR_memory_scope_semantics]           = EBhDisable;
 
+    extensionBehavior[E_GL_EXT_shader_atomic_int64]              = EBhDisable;
+
     extensionBehavior[E_GL_EXT_shader_non_constant_global_initializers] = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_image_load_formatted]             = EBhDisable;
     extensionBehavior[E_GL_EXT_post_depth_coverage]                     = EBhDisable;
@@ -380,6 +382,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_KHR_shader_subgroup_shuffle_relative 1\n"
             "#define GL_KHR_shader_subgroup_clustered 1\n"
             "#define GL_KHR_shader_subgroup_quad 1\n"
+
+            "#define E_GL_EXT_shader_atomic_int64 1\n"
 
 #ifdef AMD_EXTENSIONS
             "#define GL_AMD_shader_ballot 1\n"

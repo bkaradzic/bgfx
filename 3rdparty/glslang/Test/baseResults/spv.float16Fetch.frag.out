@@ -27,7 +27,6 @@ error: Capability Float16 is not allowed by Vulkan 1.0 specification (or require
                               Capability StorageInputOutput16
                               Capability Float16ImageAMD
                               Capability ImageGatherBiasLodAMD
-                              Extension  "SPV_AMD_gpu_shader_half_float"
                               Extension  "SPV_AMD_gpu_shader_half_float_fetch"
                               Extension  "SPV_AMD_texture_gather_bias_lod"
                               Extension  "SPV_KHR_16bit_storage"

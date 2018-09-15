@@ -14,7 +14,6 @@ error: Capability Float16 is not allowed by Vulkan 1.0 specification (or require
                               Capability Int16
                               Capability StorageUniform16
                               Capability StorageInputOutput16
-                              Extension  "SPV_AMD_gpu_shader_half_float"
                               Extension  "SPV_AMD_gpu_shader_int16"
                               Extension  "SPV_KHR_16bit_storage"
                1:             ExtInstImport  "GLSL.std.450"

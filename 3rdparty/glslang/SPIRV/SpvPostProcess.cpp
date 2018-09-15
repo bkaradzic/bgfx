@@ -120,6 +120,25 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
     case OpSConvert:
     case OpUConvert:
         break;
+    case OpExtInst:
+        switch (inst.getImmediateOperand(1)) {
+#if AMD_EXTENSIONS
+        case GLSLstd450Frexp:
+        case GLSLstd450FrexpStruct:
+            if (getSpvVersion() < glslang::EShTargetSpv_1_3 && containsType(typeId, OpTypeInt, 16))
+                addExtension(spv::E_SPV_AMD_gpu_shader_int16);
+            break;
+        case GLSLstd450InterpolateAtCentroid:
+        case GLSLstd450InterpolateAtSample:
+        case GLSLstd450InterpolateAtOffset:
+            if (getSpvVersion() < glslang::EShTargetSpv_1_3 && containsType(typeId, OpTypeFloat, 16))
+                addExtension(spv::E_SPV_AMD_gpu_shader_half_float);
+            break;
+#endif
+        default:
+            break;
+        }
+        break;
     default:
         if (basicTypeOp == OpTypeFloat && width == 16)
             addCapability(CapabilityFloat16);
