@@ -1303,6 +1303,9 @@ namespace bgfx
 			, uint32_t _num
 			);
 
+		///
+		void setInstanceCount(uint32_t _numInstances);
+
 		/// Set texture stage for draw primitive.
 		///
 		/// @param[in] _stage Texture unit.
@@ -3632,6 +3635,9 @@ namespace bgfx
 		, uint32_t _start
 		, uint32_t _num
 		);
+
+	///
+	void setInstanceCount(uint32_t _numInstances);
 
 	/// Set texture stage for draw primitive.
 	///

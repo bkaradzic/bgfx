@@ -3179,6 +3179,12 @@ namespace bgfx
 			) );
 	}
 
+	void Encoder::setInstanceCount(uint32_t _numInstances)
+	{
+		BGFX_CHECK_CAPS(BGFX_CAPS_VERTEX_ID, "Auto generated instances are not supported!");
+		BGFX_ENCODER(setInstanceCount(_numInstances) );
+	}
+
 	void Encoder::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 	{
 		BGFX_CHECK_HANDLE("setTexture/UniformHandle", s_ctx->m_uniformHandle, _sampler);
@@ -4351,6 +4357,12 @@ namespace bgfx
 		s_ctx->m_encoder0->setInstanceDataBuffer(_handle, _startVertex, _num);
 	}
 
+	void setInstanceCount(uint32_t _numInstances)
+	{
+		BGFX_CHECK_API_THREAD();
+		s_ctx->m_encoder0->setInstanceCount(_numInstances);
+	}
+
 	void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 	{
 		BGFX_CHECK_API_THREAD();
@@ -5480,6 +5492,11 @@ BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_v
 	bgfx::setInstanceDataBuffer(handle.cpp, _startVertex, _num);
 }
 
+BGFX_C_API void bgfx_set_instance_count(uint32_t _numInstances)
+{
+	bgfx::setInstanceCount(_numInstances);
+}
+
 BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags)
 {
 	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
@@ -5681,6 +5698,11 @@ BGFX_C_API void bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer(bgfx_e
 {
 	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
 	BGFX_ENCODER(setInstanceDataBuffer(handle.cpp, _startVertex, _num) );
+}
+
+BGFX_C_API void bgfx_encoder_set_instance_count(bgfx_encoder_s* _encoder, uint32_t _numInstances)
+{
+	BGFX_ENCODER(setVertexCount(_numInstances) );
 }
 
 BGFX_C_API void bgfx_encoder_set_texture(bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags)
@@ -5937,6 +5959,7 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(encoder_set_instance_data_buffer)                     \
 	BGFX_IMPORT_FUNC(encoder_set_instance_data_from_vertex_buffer)         \
 	BGFX_IMPORT_FUNC(encoder_set_instance_data_from_dynamic_vertex_buffer) \
+	BGFX_IMPORT_FUNC(encoder_set_instance_count)                           \
 	BGFX_IMPORT_FUNC(encoder_set_texture)                                  \
 	BGFX_IMPORT_FUNC(encoder_touch)                                        \
 	BGFX_IMPORT_FUNC(encoder_submit)                                       \

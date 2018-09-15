@@ -2290,6 +2290,12 @@ namespace bgfx
 			m_draw.m_instanceDataBuffer = _handle;
 		}
 
+		void setInstanceCount(uint32_t _numInstances)
+		{
+			BX_CHECK(!isValid(m_draw.m_instanceDataBuffer), "Instance buffer already set.");
+			m_draw.m_numInstances = _numInstances;
+		}
+
 		void setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
 		{
 			Binding& bind = m_bind.m_bind[_stage];

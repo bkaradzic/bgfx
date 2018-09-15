@@ -993,6 +993,9 @@ BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_han
 BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
 
 /**/
+BGFX_C_API void bgfx_set_instance_count(uint32_t _numInstances);
+
+/**/
 BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
 
 /**/

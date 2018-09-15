@@ -187,6 +187,7 @@ typedef struct bgfx_interface_vtbl
     void (*encoder_set_instance_data_buffer)(struct bgfx_encoder_s* _encoder, const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num);
     void (*encoder_set_instance_data_from_vertex_buffer)(struct bgfx_encoder_s* _encoder, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
     void (*encoder_set_instance_data_from_dynamic_vertex_buffer)(struct bgfx_encoder_s* _encoder, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);
+    void (*encoder_set_instance_count)(struct bgfx_encoder_s* _encoder, uint32_t _numInstance);
     void (*encoder_set_texture)(struct bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
     void (*encoder_touch)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id);
     void (*encoder_submit)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState);
