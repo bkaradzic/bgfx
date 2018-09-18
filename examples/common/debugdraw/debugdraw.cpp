@@ -1873,13 +1873,19 @@ struct DebugDrawEncoderImpl
 		else
 		{
 			float mtx[16];
-			bx::mtxFromNormal(mtx, _normal, _size*0.5f, _center);
+			bx::mtxFromNormal(mtx, _normal, _size*0.5f, _center, attrib.m_spin);
 			draw(Mesh::Quad, mtx, 1, false);
 		}
 	}
 
 	void drawQuad(SpriteHandle _handle, const float* _normal, const float* _center, float _size)
 	{
+		if (!isValid(_handle) )
+		{
+			drawQuad(_normal, _center, _size);
+			return;
+		}
+
 		if (m_posQuad == BX_COUNTOF(m_cacheQuad) )
 		{
 			flushQuad();
