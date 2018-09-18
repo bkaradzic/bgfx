@@ -605,6 +605,7 @@ namespace bgfx
 		uint32_t width;             //!< Backbuffer width.
 		uint32_t height;            //!< Backbuffer height.
 		uint32_t reset;	            //!< Reset parameters.
+		uint8_t  maxFrameLatency;   //!< Maximum frame latency.
 	};
 
 	/// Initialization parameters used by `bgfx::init`.

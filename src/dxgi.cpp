@@ -319,38 +319,6 @@ namespace bgfx
 				: (uint16_t)m_adapterDesc.VendorId
 				;
 			_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
-
-			{
-				IDXGIDevice* dxgiDevice = NULL;
-				hr = E_FAIL;
-				for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
-				{
-					hr = m_factory->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&dxgiDevice);
-					BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii, hr);
-
-					if (SUCCEEDED(hr))
-					{
-#if BX_COMPILER_MSVC
-						BX_PRAGMA_DIAGNOSTIC_PUSH();
-						BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4530) // warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-						try
-						{
-							// QueryInterface above can succeed, but getting adapter call might crash on Win7.
-							hr = dxgiDevice->GetAdapter(reinterpret_cast<IDXGIAdapter**>(&adapter) );
-						}
-						catch (...)
-						{
-							BX_TRACE("Failed to get adapter for IID_IDXGIDevice%d.", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii);
-							DX_RELEASE(dxgiDevice, 0);
-							hr = E_FAIL;
-						}
-						BX_PRAGMA_DIAGNOSTIC_POP();
-#else
-						hr = dxgiDevice->GetAdapter(reinterpret_cast<IDXGIAdapter**>(&adapter) );
-#endif // BX_COMPILER_MSVC
-					}
-				}
-			}
 		}
 
 		return true;
@@ -371,64 +339,26 @@ namespace bgfx
 
 	void Dxgi::update(IUnknown* _device)
 	{
+		IDXGIDevice* dxgiDevice = NULL;
+		HRESULT hr = E_FAIL;
+		for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
+		{
+			hr = _device->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&dxgiDevice);
+			BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii, hr);
+		}
+
 		if (NULL == m_factory)
 		{
-			IDXGIDevice* dxgiDevice = NULL;
-			HRESULT hr = E_FAIL;
-			for (uint32_t ii = 0; ii < BX_COUNTOF(s_dxgiDeviceIIDs) && FAILED(hr); ++ii)
-			{
-				hr = _device->QueryInterface(s_dxgiDeviceIIDs[ii], (void**)&dxgiDevice);
-				BX_TRACE("DXGI device 11.%d, hr %x", BX_COUNTOF(s_dxgiDeviceIIDs) - 1 - ii, hr);
-
-				if (SUCCEEDED(hr) )
-				{
-					DX_CHECK(dxgiDevice->GetAdapter(reinterpret_cast<IDXGIAdapter**>(&m_adapter) ) );
-					DX_RELEASE(dxgiDevice, 1);
-				}
-			}
+			DX_CHECK(dxgiDevice->GetAdapter(reinterpret_cast<IDXGIAdapter**>(&m_adapter) ) );
 
 			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
 			hr = m_adapter->GetDesc(&m_adapterDesc);
 			BX_WARN(SUCCEEDED(hr), "Adapter GetDesc failed 0x%08x.", hr);
 
 			DX_CHECK(m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory) );
-
-#if 0
-			bx::memSet(&m_adapterDesc, 0, sizeof(m_adapterDesc) );
-//	NOTICE:
-//		LUID STDMETHODCALLTYPE ID3D12Device::GetAdapterLuid() has a different behaviour in gcc ,
-//		because gcc64 returns small struct in RAX, but the microsoft implemention of ID3D12Device::GetAdapterLuid() in d3d12.dll
-//		pass the struct LUID's address as the second parameter.
-			typedef void (STDMETHODCALLTYPE ID3D12Device::*ID3D12Device_GetAdapterLuid_f)(LUID *);
-			(m_device->*(ID3D12Device_GetAdapterLuid_f)(&ID3D12Device::GetAdapterLuid))(&luid);
-			AdapterI* adapter;
-			for (uint32_t ii = 0; DXGI_ERROR_NOT_FOUND != m_factory->EnumAdapters(ii, reinterpret_cast<IDXGIAdapter**>(&adapter) ); ++ii)
-			{
-				adapter->GetDesc(&m_adapterDesc);
-				if (m_adapterDesc.AdapterLuid.LowPart  == luid.LowPart
-				&&  m_adapterDesc.AdapterLuid.HighPart == luid.HighPart)
-				{
-					if (NULL == m_adapter)
-					{
-						m_adapter = adapter;
-					}
-					else
-					{
-#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-						DX_RELEASE(adapter, 0);
-#else
-						DX_RELEASE(adapter, 2);
-#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
-					}
-					break;
-				}
-				DX_RELEASE(adapter, 0);
-			}
-
-			g_caps.vendorId = (uint16_t)m_adapterDesc.VendorId;
-			g_caps.deviceId = (uint16_t)m_adapterDesc.DeviceId;
-#endif // 0
 		}
+
+		DX_RELEASE(dxgiDevice, 1);
 	}
 
 	static const GUID IID_ID3D12CommandQueue = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
@@ -469,10 +399,21 @@ namespace bgfx
 			;
 
 		hr = m_factory->CreateSwapChain(
-				  _device
-				, &scd
-				, reinterpret_cast<IDXGISwapChain**>(_swapChain)
-				);
+			  _device
+			, &scd
+			, reinterpret_cast<IDXGISwapChain**>(_swapChain)
+			);
+
+		if (SUCCEEDED(hr) )
+		{
+			IDXGIDevice1* dxgiDevice1;
+			_device->QueryInterface(IID_IDXGIDevice1, (void**)&dxgiDevice1);
+			if (NULL != dxgiDevice1)
+			{
+				dxgiDevice1->SetMaximumFrameLatency(_scd.maxFrameLatency);
+				DX_RELEASE(dxgiDevice1, 1);
+			}
+		}
 #else
 		DXGI_SWAP_CHAIN_DESC1 scd;
 		scd.Width  = _scd.width;
@@ -491,12 +432,12 @@ namespace bgfx
 		if (NULL == _scd.ndt)
 		{
 			hr = m_factory->CreateSwapChainForCoreWindow(
-					  _device
-					, (::IUnknown*)_scd.nwh
-					, &scd
-					, NULL
-					, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
-					);
+				  _device
+				, (::IUnknown*)_scd.nwh
+				, &scd
+				, NULL
+				, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
+				);
 		}
 		else if (reinterpret_cast<void*>(1) == _scd.ndt)
 		{
@@ -505,11 +446,11 @@ namespace bgfx
 		else
 		{
 			hr = m_factory->CreateSwapChainForComposition(
-					  _device
-					, &scd
-					, NULL
-					, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
-					);
+				  _device
+				, &scd
+				, NULL
+				, reinterpret_cast<IDXGISwapChain1**>(_swapChain)
+				);
 			if (FAILED(hr) )
 			{
 				return hr;

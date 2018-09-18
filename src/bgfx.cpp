@@ -2817,6 +2817,7 @@ namespace bgfx
 		, width(1280)
 		, height(720)
 		, reset(BGFX_RESET_NONE)
+		, maxFrameLatency(0)
 	{
 	}
 

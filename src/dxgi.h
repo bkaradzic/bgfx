@@ -38,6 +38,7 @@ namespace bgfx
 		DXGI_SWAP_EFFECT swapEffect;
 		DXGI_ALPHA_MODE alphaMode;
 		uint32_t flags;
+		uint8_t maxFrameLatency;
 		void* nwh;
 		void* ndt;
 		bool windowed;

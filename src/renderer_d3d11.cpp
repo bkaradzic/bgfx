@@ -989,12 +989,14 @@ namespace bgfx { namespace d3d11
 						? DXGI_SCALING_NONE
 						: DXGI_SCALING_STRETCH
 						;
-					m_scd.swapEffect  = m_swapEffect;
-					m_scd.alphaMode   = DXGI_ALPHA_MODE_IGNORE;
-					m_scd.flags       = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-					m_scd.nwh         = g_platformData.nwh;
-					m_scd.ndt         = g_platformData.ndt;
-					m_scd.windowed    = true;
+					m_scd.swapEffect = m_swapEffect;
+					m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
+					m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+					m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, 3);
+					m_scd.nwh             = g_platformData.nwh;
+					m_scd.ndt             = g_platformData.ndt;
+					m_scd.windowed        = true;
 
 					m_msaaRt = NULL;
 

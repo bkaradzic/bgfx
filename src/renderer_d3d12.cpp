@@ -898,9 +898,11 @@ namespace bgfx { namespace d3d12
 				m_scd.swapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 				m_scd.alphaMode  = DXGI_ALPHA_MODE_IGNORE;
 				m_scd.flags      = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-				m_scd.nwh        = g_platformData.nwh;
-				m_scd.ndt        = g_platformData.ndt;
-				m_scd.windowed   = true;
+
+				m_scd.maxFrameLatency = bx::min<uint8_t>(_init.resolution.maxFrameLatency, 3);
+				m_scd.nwh             = g_platformData.nwh;
+				m_scd.ndt             = g_platformData.ndt;
+				m_scd.windowed        = true;
 
 				m_backBufferColorIdx = m_scd.bufferCount-1;
 
