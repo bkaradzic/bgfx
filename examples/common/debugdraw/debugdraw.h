@@ -99,6 +99,12 @@ struct DebugDrawEncoder
 	void setTranslate(float _x, float _y, float _z);
 
 	///
+	void pushTransform(const void* _mtx);
+
+	///
+	void popTransform();
+
+	///
 	void moveTo(float _x, float _y, float _z = 0.0f);
 
 	///

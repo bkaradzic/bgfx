@@ -106,6 +106,21 @@ struct DebugMeshVertex
 
 bgfx::VertexDecl DebugMeshVertex::ms_decl;
 
+static DebugShapeVertex s_quadVertices[4] =
+{
+	{-1.0f, 0.0f,  1.0f, { 0, 0, 0, 0 } },
+	{ 1.0f, 0.0f,  1.0f, { 0, 0, 0, 0 } },
+	{-1.0f, 0.0f, -1.0f, { 0, 0, 0, 0 } },
+	{ 1.0f, 0.0f, -1.0f, { 0, 0, 0, 0 } },
+
+};
+
+static const uint16_t s_quadIndices[6] =
+{
+	0, 1, 2,
+	1, 3, 2,
+};
+
 static DebugShapeVertex s_cubeVertices[8] =
 {
 	{-1.0f,  1.0f,  1.0f, { 0, 0, 0, 0 } },
@@ -549,6 +564,8 @@ struct Mesh
 		Capsule2,
 		Capsule3,
 
+		Quad,
+
 		Cube,
 
 		Count,
@@ -895,6 +912,15 @@ struct DebugDrawShared
 			startIndex  += numIndices + numLineListIndices;
 		}
 
+		m_mesh[Mesh::Quad].m_startVertex = startVertex;
+		m_mesh[Mesh::Quad].m_numVertices = BX_COUNTOF(s_quadVertices);
+		m_mesh[Mesh::Quad].m_startIndex[0] = startIndex;
+		m_mesh[Mesh::Quad].m_numIndices[0] = BX_COUNTOF(s_quadIndices);
+		m_mesh[Mesh::Quad].m_startIndex[1] = 0;
+		m_mesh[Mesh::Quad].m_numIndices[1] = 0;
+		startVertex += BX_COUNTOF(s_quadVertices);
+		startIndex  += BX_COUNTOF(s_quadIndices);
+
 		m_mesh[Mesh::Cube].m_startVertex = startVertex;
 		m_mesh[Mesh::Cube].m_numVertices = BX_COUNTOF(s_cubeVertices);
 		m_mesh[Mesh::Cube].m_startIndex[0] = startIndex;
@@ -907,7 +933,7 @@ struct DebugDrawShared
 		const bgfx::Memory* vb = bgfx::alloc(startVertex*stride);
 		const bgfx::Memory* ib = bgfx::alloc(startIndex*sizeof(uint16_t) );
 
-		for (uint32_t mesh = Mesh::Sphere0; mesh < Mesh::Cube; ++mesh)
+		for (uint32_t mesh = Mesh::Sphere0; mesh < Mesh::Quad; ++mesh)
 		{
 			Mesh::Enum id = Mesh::Enum(mesh);
 			bx::memCopy(&vb->data[m_mesh[id].m_startVertex * stride]
@@ -923,6 +949,16 @@ struct DebugDrawShared
 			BX_FREE(m_allocator, vertices[id]);
 			BX_FREE(m_allocator, indices[id]);
 		}
+
+		bx::memCopy(&vb->data[m_mesh[Mesh::Quad].m_startVertex * stride]
+			, s_quadVertices
+			, sizeof(s_quadVertices)
+			);
+
+		bx::memCopy(&ib->data[m_mesh[Mesh::Quad].m_startIndex[0] * sizeof(uint16_t)]
+			, s_quadIndices
+			, sizeof(s_quadIndices)
+			);
 
 		bx::memCopy(&vb->data[m_mesh[Mesh::Cube].m_startVertex * stride]
 			, s_cubeVertices
@@ -1793,45 +1829,53 @@ struct DebugDrawEncoderImpl
 	void drawQuad(const float* _normal, const float* _center, float _size)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
+		if (attrib.m_wireframe)
+		{
+			float udir[3];
+			float vdir[3];
 
-		float udir[3];
-		float vdir[3];
+			bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
 
-		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
+			const float halfExtent = _size*0.5f;
 
-		const float halfExtent = _size*0.5f;
+			float umin[3];
+			bx::vec3Mul(umin, udir, -halfExtent);
 
-		float umin[3];
-		bx::vec3Mul(umin, udir, -halfExtent);
+			float umax[3];
+			bx::vec3Mul(umax, udir,  halfExtent);
 
-		float umax[3];
-		bx::vec3Mul(umax, udir,  halfExtent);
+			float vmin[3];
+			bx::vec3Mul(vmin, vdir, -halfExtent);
 
-		float vmin[3];
-		bx::vec3Mul(vmin, vdir, -halfExtent);
+			float vmax[3];
+			bx::vec3Mul(vmax, vdir,  halfExtent);
 
-		float vmax[3];
-		bx::vec3Mul(vmax, vdir,  halfExtent);
+			float pt[3];
+			float tmp[3];
+			bx::vec3Add(tmp, umin, vmin);
+			bx::vec3Add(pt, _center, tmp);
+			moveTo(pt);
 
-		float pt[3];
-		float tmp[3];
-		bx::vec3Add(tmp, umin, vmin);
-		bx::vec3Add(pt, _center, tmp);
-		moveTo(pt);
+			bx::vec3Add(tmp, umax, vmin);
+			bx::vec3Add(pt, _center, tmp);
+			lineTo(pt);
 
-		bx::vec3Add(tmp, umax, vmin);
-		bx::vec3Add(pt, _center, tmp);
-		lineTo(pt);
+			bx::vec3Add(tmp, umax, vmax);
+			bx::vec3Add(pt, _center, tmp);
+			lineTo(pt);
 
-		bx::vec3Add(tmp, umax, vmax);
-		bx::vec3Add(pt, _center, tmp);
-		lineTo(pt);
+			bx::vec3Add(tmp, umin, vmax);
+			bx::vec3Add(pt, _center, tmp);
+			lineTo(pt);
 
-		bx::vec3Add(tmp, umin, vmax);
-		bx::vec3Add(pt, _center, tmp);
-		lineTo(pt);
-
-		close();
+			close();
+		}
+		else
+		{
+			float mtx[16];
+			bx::mtxFromNormal(mtx, _normal, _size*0.5f, _center);
+			draw(Mesh::Quad, mtx, 1, false);
+		}
 	}
 
 	void drawQuad(SpriteHandle _handle, const float* _normal, const float* _center, float _size)
@@ -2670,6 +2714,16 @@ void DebugDrawEncoder::setTransform(const void* _mtx)
 void DebugDrawEncoder::setTranslate(float _x, float _y, float _z)
 {
 	DEBUG_DRAW_ENCODER(setTranslate(_x, _y, _z) );
+}
+
+void DebugDrawEncoder::pushTransform(const void* _mtx)
+{
+	DEBUG_DRAW_ENCODER(pushTransform(_mtx, 1) );
+}
+
+void DebugDrawEncoder::popTransform()
+{
+	DEBUG_DRAW_ENCODER(popTransform() );
 }
 
 void DebugDrawEncoder::moveTo(float _x, float _y, float _z)
