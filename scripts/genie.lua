@@ -448,7 +448,6 @@ or _OPTIONS["with-combined-examples"] then
 		, "36-sky"
 		, "37-gpudrivenrendering"
 		, "38-bloom"
-
 		)
 
 	-- C99 source doesn't compile under WinRT settings
