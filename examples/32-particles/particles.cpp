@@ -407,10 +407,11 @@ public:
 
 			imguiEndFrame();
 
-			ddBegin(0);
+			DebugDrawEncoder dde;
+			dde.begin(0);
 
 			float center[3] = { 0.0f, 0.0f, 0.0f };
-			ddDrawGrid(Axis::Y, center);
+			dde.drawGrid(Axis::Y, center);
 
 			float eye[3];
 			cameraGetPosition(eye);
@@ -424,14 +425,14 @@ public:
 			{
 				Aabb aabb;
 				psGetAabb(m_emitter[currentEmitter].m_handle, aabb);
-				ddPush();
-					ddSetWireframe(true);
-					ddSetColor(0xff0000ff);
-					ddDraw(aabb);
-				ddPop();
+				dde.push();
+					dde.setWireframe(true);
+					dde.setColor(0xff0000ff);
+					dde.draw(aabb);
+				dde.pop();
 			}
 
-			ddEnd();
+			dde.end();
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
