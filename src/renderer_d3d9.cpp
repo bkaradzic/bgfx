@@ -1091,7 +1091,7 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(texture.m_texture2d->UnlockRect(_mip) );
 		}
 
-		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) override
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
 			TextureD3D9& texture = m_textures[_handle.idx];
 
@@ -1106,7 +1106,7 @@ namespace bgfx { namespace d3d9
 			tc.m_width     = _width;
 			tc.m_height    = _height;
 			tc.m_depth     = 0;
-			tc.m_numLayers = 1;
+			tc.m_numLayers = _numLayers;
 			tc.m_numMips   = _numMips;
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;

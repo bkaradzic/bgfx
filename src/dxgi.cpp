@@ -358,7 +358,7 @@ namespace bgfx
 			DX_CHECK(m_adapter->GetParent(IID_IDXGIFactory2, (void**)&m_factory) );
 		}
 
-		DX_RELEASE(dxgiDevice, 1);
+		DX_RELEASE(dxgiDevice, 2);
 	}
 
 	static const GUID IID_ID3D12CommandQueue = { 0x0ec870a6, 0x5d7e, 0x4c22, { 0x8c, 0xfc, 0x5b, 0xaa, 0xe0, 0x76, 0x16, 0xed } };
@@ -411,7 +411,7 @@ namespace bgfx
 			if (NULL != dxgiDevice1)
 			{
 				dxgiDevice1->SetMaximumFrameLatency(_scd.maxFrameLatency);
-				DX_RELEASE(dxgiDevice1, 1);
+				DX_RELEASE(dxgiDevice1, 3);
 			}
 		}
 #else

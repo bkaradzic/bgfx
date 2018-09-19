@@ -2654,7 +2654,7 @@ namespace bgfx
 		virtual void updateTexture(TextureHandle _handle, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem) = 0;
 		virtual void updateTextureEnd() = 0;
 		virtual void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) = 0;
-		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) = 0;
+		virtual void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) = 0;
 		virtual void overrideInternal(TextureHandle _handle, uintptr_t _ptr) = 0;
 		virtual uintptr_t getInternal(TextureHandle _handle) = 0;
 		virtual void destroyTexture(TextureHandle _handle) = 0;
@@ -2770,6 +2770,7 @@ namespace bgfx
 						, uint16_t(m_init.resolution.width)
 						, uint16_t(m_init.resolution.height)
 						, textureRef.m_numMips
+						, textureRef.m_numLayers
 						);
 					m_init.resolution.reset |= BGFX_RESET_INTERNAL_FORCE;
 				}
@@ -3912,6 +3913,7 @@ namespace bgfx
 				, _info->format
 				, _info->storageSize
 				, imageContainer.m_numMips
+				, imageContainer.m_numLayers
 				, 0 != (g_caps.supported & BGFX_CAPS_TEXTURE_DIRECT_ACCESS)
 				, _immutable
 				, 0 != (_flags & BGFX_TEXTURE_RT_MASK)
@@ -3992,7 +3994,7 @@ namespace bgfx
 			return m_frames + 2;
 		}
 
-		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips)
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers)
 		{
 			const TextureRef& textureRef = m_textureRef[_handle.idx];
 			BX_CHECK(BackbufferRatio::Count != textureRef.m_bbRatio, "");
@@ -4012,6 +4014,7 @@ namespace bgfx
 			cmdbuf.write(_width);
 			cmdbuf.write(_height);
 			cmdbuf.write(_numMips);
+			cmdbuf.write(_numLayers);
 		}
 
 		void textureTakeOwnership(TextureHandle _handle)
@@ -4706,6 +4709,7 @@ namespace bgfx
 				, TextureFormat::Enum _format
 				, uint32_t _storageSize
 				, uint8_t _numMips
+				, uint16_t _numLayers
 				, bool _ptrPending
 				, bool _immutable
 				, bool _rt
@@ -4717,6 +4721,7 @@ namespace bgfx
 				m_bbRatio     = uint8_t(_ratio);
 				m_format      = uint8_t(_format);
 				m_numMips     = _numMips;
+				m_numLayers   = _numLayers;
 				m_owned       = false;
 				m_immutable   = _immutable;
 				m_rt          = _rt;
@@ -4729,6 +4734,7 @@ namespace bgfx
 			uint8_t  m_bbRatio;
 			uint8_t  m_format;
 			uint8_t  m_numMips;
+			uint16_t m_numLayers;
 			bool     m_owned;
 			bool     m_immutable;
 			bool     m_rt;

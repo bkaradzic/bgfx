@@ -872,7 +872,7 @@ namespace bgfx { namespace mtl
 			texture.m_ptr.getBytes(_data, srcWidth*bpp/8, 0, region, _mip, 0);
 		}
 
-		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips) override
+		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers) override
 		{
 			TextureMtl& texture = m_textures[_handle.idx];
 
@@ -887,7 +887,7 @@ namespace bgfx { namespace mtl
 			tc.m_width     = _width;
 			tc.m_height    = _height;
 			tc.m_depth     = 0;
-			tc.m_numLayers = 1;
+			tc.m_numLayers = _numLayers;
 			tc.m_numMips   = _numMips;
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;

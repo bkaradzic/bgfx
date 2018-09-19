@@ -2615,7 +2615,10 @@ namespace bgfx
 					uint8_t numMips;
 					_cmdbuf.read(numMips);
 
-					m_renderCtx->resizeTexture(handle, width, height, numMips);
+					uint16_t numLayers;
+					_cmdbuf.read(numLayers);
+
+					m_renderCtx->resizeTexture(handle, width, height, numMips, numLayers);
 				}
 				break;
 
