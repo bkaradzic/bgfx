@@ -1,6 +1,35 @@
 [bgfx](https://github.com/bkaradzic/bgfx) - Cross-platform rendering library
 ============================================================================
 
+Bloom Demo
+-------------------------------------------------------
+
+This fork of bgfx includes a demo implementation of a bloom post-processing effect.
+It was based on the bloom technique described in 
+[NEXT GENERATION POST PROCESSING IN CALL OF DUTY: ADVANCED WARFARE
+](http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare)
+
+Our implementation of this technique can be found at `examples/38-bloom`
+
+Build steps:
+
+```
+git clone https://github.com/Erkaman/bgfx.git
+git clone git://github.com/bkaradzic/bx.git
+git clone git://github.com/bkaradzic/bimg.git
+```
+
+and remember to check out the correct branch:
+
+```
+cd bgfx
+git checkout bloom-demo
+```
+
+the remaining compilation steps, are the same as for [bgfx](https://bkaradzic.github.io/bgfx/build.html)
+
+
+
 [![Build Status](https://travis-ci.org/bkaradzic/bgfx.svg?branch=master)](https://travis-ci.org/bkaradzic/bgfx)
 [![Build status](https://ci.appveyor.com/api/projects/status/ipa3ojgeaet1oko5?svg=true)](https://ci.appveyor.com/project/bkaradzic/bgfx)
 [![License](https://img.shields.io/badge/license-BSD--2%20clause-blue.svg)](https://bkaradzic.github.io/bgfx/license.html)
