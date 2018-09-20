@@ -1524,7 +1524,7 @@ namespace bgfx { namespace d3d11
 			{
 			case ErrorState::LoadedDXGI:
 				DX_RELEASE(m_annotation, 1);
-				DX_RELEASE_WARNONLY(m_infoQueue, 0);
+				DX_RELEASE_W(m_infoQueue, 0);
 				DX_RELEASE(m_msaaRt, 0);
 				DX_RELEASE(m_swapChain, 0);
 				DX_RELEASE(m_deviceCtx, 0);
@@ -1611,7 +1611,7 @@ namespace bgfx { namespace d3d11
 			}
 
 			DX_RELEASE(m_annotation, 1);
-			DX_RELEASE_WARNONLY(m_infoQueue, 0);
+			DX_RELEASE_W(m_infoQueue, 0);
 			DX_RELEASE(m_msaaRt, 0);
 			DX_RELEASE(m_swapChain, 0);
 			DX_RELEASE(m_deviceCtx, 0);

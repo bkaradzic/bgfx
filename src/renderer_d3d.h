@@ -122,7 +122,8 @@ namespace bgfx
 #endif // BGFX_CONFIG_DEBUG_OBJECT_NAME
 
 #define DX_RELEASE(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_CHECK)
-#define DX_RELEASE_WARNONLY(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
+#define DX_RELEASE_W(_ptr, _expected) _DX_RELEASE(_ptr, _expected, BX_WARN)
+#define DX_RELEASE_I(_ptr) _DX_RELEASE(_ptr, 0, BX_NOOP)
 
 	typedef int     (WINAPI* PFN_D3DPERF_BEGIN_EVENT)(DWORD _color, LPCWSTR _name);
 	typedef int     (WINAPI* PFN_D3DPERF_END_EVENT)();
@@ -204,7 +205,7 @@ namespace bgfx
 			typename HashMap::iterator it = m_hashMap.find(_key);
 			if (it != m_hashMap.end() )
 			{
-				DX_RELEASE_WARNONLY(it->second, 0);
+				DX_RELEASE_W(it->second, 0);
 				m_hashMap.erase(it);
 			}
 		}

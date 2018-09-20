@@ -97,8 +97,10 @@ struct BgfxCallback : public bgfx::CallbackI
 	{
 	}
 
-	virtual void fatal(bgfx::Fatal::Enum _code, const char* _str) override
+	virtual void fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str) override
 	{
+		BX_UNUSED(_filePath, _line);
+
 		// Something unexpected happened, inform user and bail out.
 		bx::debugPrintf("Fatal error: 0x%08x: %s", _code, _str);
 

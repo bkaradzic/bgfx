@@ -62,10 +62,11 @@ namespace bgfx { namespace noop
 			}
 
 			// Pretend we have no limits
-			g_caps.limits.maxTextureSize   = 16384;
-			g_caps.limits.maxTextureLayers = 2048;
-			g_caps.limits.maxFBAttachments = BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS;
-			g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
+			g_caps.limits.maxTextureSize     = 16384;
+			g_caps.limits.maxTextureLayers   = 2048;
+			g_caps.limits.maxComputeBindings = g_caps.limits.maxTextureSamplers;
+			g_caps.limits.maxFBAttachments   = BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS;
+			g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 		}
 
 		~RendererContextNOOP()

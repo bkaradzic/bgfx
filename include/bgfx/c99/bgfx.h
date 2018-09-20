@@ -567,7 +567,7 @@ typedef struct bgfx_callback_interface_s
 /**/
 typedef struct bgfx_callback_vtbl_s
 {
-    void (*fatal)(bgfx_callback_interface_t* _this, bgfx_fatal_t _code, const char* _str);
+    void (*fatal)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, bgfx_fatal_t _code, const char* _str);
     void (*trace_vargs)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, const char* _format, va_list _argList);
     void (*profiler_begin)(bgfx_callback_interface_t* _this, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line);
     void (*profiler_begin_literal)(bgfx_callback_interface_t* _this, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line);

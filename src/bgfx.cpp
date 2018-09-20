@@ -54,7 +54,7 @@ namespace bgfx
 		{
 		}
 
-		virtual void fatal(Fatal::Enum _code, const char* _str) override
+		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
 		{
 			if (Fatal::DebugCheck == _code)
 			{
@@ -62,7 +62,7 @@ namespace bgfx
 			}
 			else
 			{
-				BX_TRACE("0x%08x: %s", _code, _str);
+				bgfx::trace(_filePath, _line, "BGFX 0x%08x: %s\n", _code, _str);
 				BX_UNUSED(_code, _str);
 				abort();
 			}
@@ -387,29 +387,29 @@ namespace bgfx
 		return s_graphicsDebuggerPresent;
 	}
 
-	void fatal(Fatal::Enum _code, const char* _format, ...)
+	void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...)
 	{
 		va_list argList;
 		va_start(argList, _format);
 
+		char temp[8192];
+		char* out = temp;
+		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
+		if ( (int32_t)sizeof(temp) < len)
+		{
+			out = (char*)alloca(len+1);
+			len = bx::vsnprintf(out, len, _format, argList);
+		}
+		out[len] = '\0';
+
 		if (BX_UNLIKELY(NULL == g_callback) )
 		{
-			bx::debugPrintfVargs(_format, argList);
+			bx::debugPrintf("%s(%d): BGFX 0x%08x: %s", _filePath, _line, _code, out);
 			abort();
 		}
 		else
 		{
-			char temp[8192];
-			char* out = temp;
-			int32_t len = bx::vsnprintf(out, sizeof(temp), _format, argList);
-			if ( (int32_t)sizeof(temp) < len)
-			{
-				out = (char*)alloca(len+1);
-				len = bx::vsnprintf(out, len, _format, argList);
-			}
-			out[len] = '\0';
-
-			g_callback->fatal(_code, out);
+			g_callback->fatal(_filePath, _line, _code, out);
 		}
 
 		va_end(argList);
@@ -4684,9 +4684,9 @@ namespace bgfx
 		{
 		}
 
-		virtual void fatal(Fatal::Enum _code, const char* _str) override
+		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
 		{
-			m_interface->vtbl->fatal(m_interface, (bgfx_fatal_t)_code, _str);
+			m_interface->vtbl->fatal(m_interface, _filePath, _line, (bgfx_fatal_t)_code, _str);
 		}
 
 		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override

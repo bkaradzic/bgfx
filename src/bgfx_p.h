@@ -67,7 +67,7 @@ namespace bgfx
 #if BX_COMPILER_CLANG_ANALYZER
 	void __attribute__( (analyzer_noreturn) ) fatal(Fatal::Enum _code, const char* _format, ...);
 #else
-	void fatal(Fatal::Enum _code, const char* _format, ...);
+	void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _format, ...);
 #endif // BX_COMPILER_CLANG_ANALYZER
 
 	void trace(const char* _filePath, uint16_t _line, const char* _format, ...);
@@ -89,21 +89,21 @@ namespace bgfx
 					}                                             \
 				BX_MACRO_BLOCK_END
 
-#define _BX_CHECK(_condition, _format, ...)                                           \
-				BX_MACRO_BLOCK_BEGIN                                                  \
-					if (!BX_IGNORE_C4127(_condition) )                                \
-					{                                                                 \
-						BX_TRACE("CHECK " _format, ##__VA_ARGS__);                    \
-						bgfx::fatal(bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
-					}                                                                 \
+#define _BX_CHECK(_condition, _format, ...)                                                                         \
+				BX_MACRO_BLOCK_BEGIN                                                                                \
+					if (!BX_IGNORE_C4127(_condition) )                                                              \
+					{                                                                                               \
+						BX_TRACE("CHECK " _format, ##__VA_ARGS__);                                                  \
+						bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
+					}                                                                                               \
 				BX_MACRO_BLOCK_END
 
-#define BGFX_FATAL(_condition, _err, _format, ...)       \
-			BX_MACRO_BLOCK_BEGIN                         \
-				if (!BX_IGNORE_C4127(_condition) )       \
-				{                                        \
-					fatal(_err, _format, ##__VA_ARGS__); \
-				}                                        \
+#define BGFX_FATAL(_condition, _err, _format, ...)                                     \
+			BX_MACRO_BLOCK_BEGIN                                                       \
+				if (!BX_IGNORE_C4127(_condition) )                                     \
+				{                                                                      \
+					fatal(__FILE__, uint16_t(__LINE__), _err, _format, ##__VA_ARGS__); \
+				}                                                                      \
 			BX_MACRO_BLOCK_END
 
 #include <bx/allocator.h>

@@ -1381,7 +1381,7 @@ namespace bgfx { namespace d3d12
 			}
 
 #if BX_PLATFORM_WINDOWS
-			DX_RELEASE_WARNONLY(m_infoQueue, 0);
+			DX_RELEASE_W(m_infoQueue, 0);
 #endif // BX_PLATFORM_WINDOWS
 
 			DX_RELEASE(m_rtvDescriptorHeap, 0);

@@ -430,7 +430,12 @@ namespace bgfx
 		///
 		/// @attention C99 equivalent is `bgfx_callback_vtbl.fatal`.
 		///
-		virtual void fatal(Fatal::Enum _code, const char* _str) = 0;
+		virtual void fatal(
+			  const char* _filePath
+			, uint16_t _line
+			, Fatal::Enum _code
+			, const char* _str
+			) = 0;
 
 		/// Print debug message.
 		///
