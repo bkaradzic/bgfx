@@ -350,8 +350,8 @@
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Functions</p>
 <dl class="function">
-<dt id="_CPPv2N4bgfx9CallbackI5fatalEN5Fatal4EnumEPKc">
-<span id="bgfx::CallbackI::fatal__Fatal::Enum.cCP"></span><span class="target" id="structbgfx_1_1_callback_i_1af750c41067cd6ee600d841cf557065aa"></span><em class="property">virtual</em> void <code class="descname">fatal</code><span class="sig-paren">(</span>Fatal::Enum <em>_code</em>, <em class="property">const</em> char *<em>_str</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI5fatalEN5Fatal4EnumEPKc" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx9CallbackI5fatalEPKc8uint16_tN5Fatal4EnumEPKc">
+<span id="bgfx::CallbackI::fatal__cCP.uint16_t.Fatal::Enum.cCP"></span><span class="target" id="structbgfx_1_1_callback_i_1af6da8564f008e91fddf441175d18850b"></span><em class="property">virtual</em> void <code class="descname">fatal</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>_filePath</em>, uint16_t <em>_line</em>, Fatal::Enum <em>_code</em>, <em class="property">const</em> char *<em>_str</em><span class="sig-paren">)</span> = 0<a class="headerlink" href="#_CPPv2N4bgfx9CallbackI5fatalEPKc8uint16_tN5Fatal4EnumEPKc" title="Permalink to this definition">¶</a></dt>
 <dd><p>This callback is called on unrecoverable errors. It&#8217;s not safe to continue (Exluding _code <code class="docutils literal"><span class="pre">Fatal::DebugCheck</span></code>), inform the user and terminate the application. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
@@ -1657,7 +1657,7 @@
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats9viewStatsE">
-<span id="bgfx::Stats::viewStats__ViewStatsP"></span><span class="target" id="structbgfx_1_1_stats_1ae16496ef386b462267436e1bbd3d5f72"></span>ViewStats *<code class="descname">viewStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats9viewStatsE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::Stats::viewStats__ViewStatsP"></span><span class="target" id="structbgfx_1_1_stats_1ae16496ef386b462267436e1bbd3d5f72"></span><a class="reference internal" href="#_CPPv2N4bgfx9ViewStatsE" title="bgfx::ViewStats">ViewStats</a> *<code class="descname">viewStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats9viewStatsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array of View stats. </p>
 </dd></dl>
 
@@ -1669,8 +1669,72 @@
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx5Stats12encoderStatsE">
-<span id="bgfx::Stats::encoderStats__EncoderStatsP"></span><span class="target" id="structbgfx_1_1_stats_1abf32715c9e2f41f01545fa0f0f5dd821"></span>EncoderStats *<code class="descname">encoderStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12encoderStatsE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::Stats::encoderStats__EncoderStatsP"></span><span class="target" id="structbgfx_1_1_stats_1abf32715c9e2f41f01545fa0f0f5dd821"></span><a class="reference internal" href="#_CPPv2N4bgfx12EncoderStatsE" title="bgfx::EncoderStats">EncoderStats</a> *<code class="descname">encoderStats</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats12encoderStatsE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array of encoder stats. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx9ViewStatsE">
+<span id="bgfx::ViewStats"></span><span class="target" id="structbgfx_1_1_view_stats"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">ViewStats</code><a class="headerlink" href="#_CPPv2N4bgfx9ViewStatsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>View stats. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_view_stats_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx9ViewStats4nameE">
+<span id="bgfx::ViewStats::name__cA"></span><span class="target" id="structbgfx_1_1_view_stats_1a8c2383b3c9757cfc5fabf62e28ad5bea"></span>char <code class="descname">name</code>[256]<a class="headerlink" href="#_CPPv2N4bgfx9ViewStats4nameE" title="Permalink to this definition">¶</a></dt>
+<dd><p>View name. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx9ViewStats4viewE">
+<span id="bgfx::ViewStats::view__ViewId"></span><span class="target" id="structbgfx_1_1_view_stats_1aa66982ced24c30af890b6ef7dcdb8b96"></span>ViewId <code class="descname">view</code><a class="headerlink" href="#_CPPv2N4bgfx9ViewStats4viewE" title="Permalink to this definition">¶</a></dt>
+<dd><p>View id. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx9ViewStats14cpuTimeElapsedE">
+<span id="bgfx::ViewStats::cpuTimeElapsed__int64_t"></span><span class="target" id="structbgfx_1_1_view_stats_1ae352f1df82767ee0cd75ebd348ccc4dc"></span>int64_t <code class="descname">cpuTimeElapsed</code><a class="headerlink" href="#_CPPv2N4bgfx9ViewStats14cpuTimeElapsedE" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU (submit) time elapsed. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx9ViewStats14gpuTimeElapsedE">
+<span id="bgfx::ViewStats::gpuTimeElapsed__int64_t"></span><span class="target" id="structbgfx_1_1_view_stats_1aab02959cb4de332d936dd72f697ef8a8"></span>int64_t <code class="descname">gpuTimeElapsed</code><a class="headerlink" href="#_CPPv2N4bgfx9ViewStats14gpuTimeElapsedE" title="Permalink to this definition">¶</a></dt>
+<dd><p>GPU time elapsed. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx12EncoderStatsE">
+<span id="bgfx::EncoderStats"></span><span class="target" id="structbgfx_1_1_encoder_stats"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">EncoderStats</code><a class="headerlink" href="#_CPPv2N4bgfx12EncoderStatsE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#structbgfx_1_1_encoder"><span>Encoder</span></a> stats. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_stats_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx12EncoderStats12cpuTimeBeginE">
+<span id="bgfx::EncoderStats::cpuTimeBegin__int64_t"></span><span class="target" id="structbgfx_1_1_encoder_stats_1a2bd30a1424393fb1aa91ad0e9bc9d97b"></span>int64_t <code class="descname">cpuTimeBegin</code><a class="headerlink" href="#_CPPv2N4bgfx12EncoderStats12cpuTimeBeginE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#structbgfx_1_1_encoder"><span>Encoder</span></a> thread CPU submit begin time. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx12EncoderStats10cpuTimeEndE">
+<span id="bgfx::EncoderStats::cpuTimeEnd__int64_t"></span><span class="target" id="structbgfx_1_1_encoder_stats_1a543bd134253fe768a5165b361ab8cfa1"></span>int64_t <code class="descname">cpuTimeEnd</code><a class="headerlink" href="#_CPPv2N4bgfx12EncoderStats10cpuTimeEndE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#structbgfx_1_1_encoder"><span>Encoder</span></a> thread CPU submit end time. </p>
 </dd></dl>
 
 </div>
