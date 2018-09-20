@@ -1,8 +1,7 @@
 /*
- * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * Copyright 2018 Eric Arnebäck. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
- 
+
  * The bloom effect was based on the following presentation:
  * http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare
  */
@@ -12,7 +11,6 @@
 #include "imgui/imgui.h"
 #include "camera.h"
 #include "bounds.h"
-#include <math.h>
 
 namespace
 {
@@ -39,7 +37,7 @@ struct PosVertex
 	float m_x;
 	float m_y;
 	float m_z;
-	
+
 	static void init()
 	{
 		ms_decl
@@ -75,7 +73,7 @@ struct PosTexCoord0Vertex
 
 bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
 
-float cs = 0.29f;
+constexpr float cs = 0.29f;
 
 static PosVertex s_cubeVertices[24] =
 {
@@ -212,60 +210,62 @@ public:
 
 		// Set geometry pass view clear state.
 		bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
-				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
-				, 1.0f
-				, 0
-				, 0
-			    , 0
-				);
+			, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
+			, 1.0f
+			, 0
+			, 0
+			, 0
+			);
 
 		// we need to clear the textures in the chain, before downsampling into them.
-		for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii) {
+		for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
+		{
 			bgfx::setViewClear(RENDER_PASS_DOWNSAMPLE0_ID + ii
 				, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 				, 1.0f
 				, 0
 				, 0
-			);
+				);
 		}
-		
+
 		// Create vertex stream declaration.
 		PosVertex::init();
 		PosTexCoord0Vertex::init();
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
-				bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-				, PosVertex::ms_decl
-				);
+			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
+			, PosVertex::ms_decl
+			);
 
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
-		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
-		s_tex = bgfx::createUniform("s_tex", bgfx::UniformType::Int1);
-		s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);
-		s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Int1);
+		s_albedo    = bgfx::createUniform("s_albedo",    bgfx::UniformType::Int1);
+		s_tex       = bgfx::createUniform("s_tex",       bgfx::UniformType::Int1);
+		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Int1);
+		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Int1);
 		u_pixelSize = bgfx::createUniform("u_pixelSize", bgfx::UniformType::Vec4);
 		u_intensity = bgfx::createUniform("u_intensity", bgfx::UniformType::Vec4);
-		u_color = bgfx::createUniform("u_color", bgfx::UniformType::Vec4);
-		u_mtx            = bgfx::createUniform("u_mtx",            bgfx::UniformType::Mat4);
-		
+		u_color     = bgfx::createUniform("u_color",     bgfx::UniformType::Vec4);
+		u_mtx       = bgfx::createUniform("u_mtx",       bgfx::UniformType::Mat4);
+
 		// Create program from shaders.
-		m_geomProgram    = loadProgram("vs_albedo_output",       "fs_albedo_output");
-		m_downsampleProgram   = loadProgram("vs_fullscreen",      "fs_downsample");
-		m_upsampleProgram = loadProgram("vs_fullscreen", "fs_upsample");
-		m_combineProgram = loadProgram("vs_fullscreen",    "fs_bloom_combine");
+		m_geomProgram       = loadProgram("vs_albedo_output", "fs_albedo_output");
+		m_downsampleProgram = loadProgram("vs_fullscreen",    "fs_downsample");
+		m_upsampleProgram   = loadProgram("vs_fullscreen",    "fs_upsample");
+		m_combineProgram    = loadProgram("vs_fullscreen",    "fs_bloom_combine");
 
 		m_gbufferTex[0].idx = bgfx::kInvalidHandle;
 		m_gbufferTex[1].idx = bgfx::kInvalidHandle;
 		m_gbufferTex[2].idx = bgfx::kInvalidHandle;
-		m_gbuffer.idx = bgfx::kInvalidHandle;
+		m_gbuffer.idx       = bgfx::kInvalidHandle;
 
-		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii) {
-			m_texChainFb[ii].idx = bgfx::kInvalidHandle;
+		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii)
+		{
+			m_texChainFb[ii].idx  = bgfx::kInvalidHandle;
 			m_texChainTex[ii].idx = bgfx::kInvalidHandle;
 		}
-		
+
 		// Imgui.
 		imguiCreate();
 
@@ -281,7 +281,7 @@ public:
 		m_oldReset  = m_reset;
 
 		m_scrollArea = 0;
-		
+
 		cameraCreate();
 
 		const float initialPos[3] = { 0.0f, 0.0f, -15.0f };
@@ -313,7 +313,7 @@ public:
 		bgfx::destroy(m_downsampleProgram);
 		bgfx::destroy(m_upsampleProgram);
 		bgfx::destroy(m_combineProgram);
-		
+
 		bgfx::destroy(s_albedo);
 		bgfx::destroy(s_tex);
 		bgfx::destroy(s_depth);
@@ -334,15 +334,16 @@ public:
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
-			imguiBeginFrame(m_mouseState.m_mx
-					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-					, m_mouseState.m_mz
-					, uint16_t(m_width)
-					, uint16_t(m_height)
-					);
+			imguiBeginFrame(
+				  m_mouseState.m_mx
+				, m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				, m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
 
 			showExampleDialog(this);
 
@@ -385,7 +386,7 @@ public:
 					{
 						bgfx::destroy(m_gbuffer);
 					}
-					
+
 					const uint64_t tsFlags = 0
 						| BGFX_TEXTURE_RT
 						| BGFX_SAMPLER_U_CLAMP
@@ -399,32 +400,38 @@ public:
 							bgfx::destroy(m_texChainFb[ii]);
 						}
 
-						m_texChainTex[ii] = bgfx::createTexture2D((uint16_t)m_width / (uint16_t)pow(2, ii), (uint16_t)m_height / (uint16_t)pow(2, ii), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags);
-						m_texChainFb[ii] = bgfx::createFrameBuffer(1, &m_texChainTex[ii], true);	
+						m_texChainTex[ii] = bgfx::createTexture2D(
+							  (uint16_t)m_width  / (uint16_t)bx::pow(2.0f, ii)
+							, (uint16_t)m_height / (uint16_t)bx::pow(2.0f, ii)
+							, false
+							, 1
+							, bgfx::TextureFormat::RGBA32F
+							, tsFlags
+							);
+					m_texChainFb[ii]  = bgfx::createFrameBuffer(1, &m_texChainTex[ii], true);
 					}
 
 					m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags);
 					m_gbufferTex[1] = m_texChainTex[0];
 					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags);
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
-
 				}
 
 				ImGui::SetNextWindowPos(
-					  ImVec2(m_width/7.0f, m_height - m_height / 2.0f - 10.0f  )
+					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 					, ImGuiCond_FirstUseEver
-					);
+				);
 				ImGui::SetNextWindowSize(
-					  ImVec2(m_width / 5.0f, m_height / 3.0f)
+					ImVec2(m_width / 5.0f, m_height / 6.0f)
 					, ImGuiCond_FirstUseEver
-					);
+				);
 				ImGui::Begin("Settings"
 					, NULL
 					, 0
-					);
+				);
 
 				ImGui::SliderFloat("intensity", &m_intensity, 0.0f, 3.0f);
-				
+
 				ImGui::End();
 
 				// Update camera.
@@ -438,20 +445,23 @@ public:
 				{
 					bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, uint16_t(m_width), uint16_t(m_height) );
 
-					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii) {			
-						bgfx::setViewRect(RENDER_PASS_DOWNSAMPLE0_ID + ii, 0, 0,
-							uint16_t(m_width / (uint16_t)pow(2, ii+1)),
-							uint16_t(m_height / (uint16_t)pow(2, ii+1)));
+					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
+					{
+						bgfx::setViewRect(RENDER_PASS_DOWNSAMPLE0_ID + ii, 0, 0
+							, uint16_t(m_width  / (uint16_t)bx::pow(2.0f, ii+1) )
+							, uint16_t(m_height / (uint16_t)bx::pow(2.0f, ii+1) )
+							);
 					}
 
-					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii) {
-
-						bgfx::setViewRect(RENDER_PASS_UPSAMPLE0_ID + ii, 0, 0,
-							uint16_t(m_width / (uint16_t)pow(2, TEX_CHAIN_LEN-ii - 2)),
-							uint16_t(m_height / (uint16_t)pow(2, TEX_CHAIN_LEN - ii - 2)));
+					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
+					{
+						bgfx::setViewRect(RENDER_PASS_UPSAMPLE0_ID + ii, 0, 0
+							, uint16_t(m_width  / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - ii - 2) )
+							, uint16_t(m_height / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - ii - 2) )
+							);
 					}
 
-					bx::mtxProj(proj, 60.0f, float(m_width) / float(m_height), 0.1f, 100.0f, m_caps->homogeneousDepth);			
+					bx::mtxProj(proj, 60.0f, float(m_width) / float(m_height), 0.1f, 100.0f, m_caps->homogeneousDepth);
 					bgfx::setViewFrameBuffer(RENDER_PASS_GEOMETRY_ID, m_gbuffer);
 					bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
 
@@ -459,13 +469,15 @@ public:
 
 					bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, m_caps->homogeneousDepth);
 
-					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii) {
+					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
+					{
 						bgfx::setViewTransform(RENDER_PASS_DOWNSAMPLE0_ID + ii, NULL, proj);
 						bgfx::setViewFrameBuffer(RENDER_PASS_DOWNSAMPLE0_ID + ii, m_texChainFb[ii+1]);
 					}
 
-					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii) {
-						bgfx::setViewTransform(RENDER_PASS_UPSAMPLE0_ID + ii, NULL, proj);					
+					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
+					{
+						bgfx::setViewTransform(RENDER_PASS_UPSAMPLE0_ID + ii, NULL, proj);
 						bgfx::setViewFrameBuffer(RENDER_PASS_UPSAMPLE0_ID + ii, m_texChainFb[TEX_CHAIN_LEN - ii - 2]);
 					}
 
@@ -474,7 +486,8 @@ public:
 
 				const uint32_t dim = 7;
 				const int COLS = 5;
-				float color[4*COLS] = {
+				float color[4*COLS] =
+				{
 					0.0f, 1.0f, 0.0f, 1.0f,
 					1.0f, 0.0f, 0.0f, 1.0f,
 					0.0f, 0.0f, 1.0f, 1.0f,
@@ -495,14 +508,11 @@ public:
 
 					t += 0.07f * time;
 
-//					float r = (float)sin(0.47f * time * 2.0f * 3.14f) * 1.0f + 1.9f;
-					float r = (float)sin(0.47f * time * 2.0f * 3.14f) * 1.0f + 1.4f;
+					float r = bx::sin(0.47f * time * 2.0f * 3.14f) * 1.0f + 1.4f;
 
-					//r = 1.9f;
-
-					mtx[12] = (float)sin(t * 2.0f * 3.14f)*r;
-					mtx[13] = (float)cos(t * 2.0f * 3.14f)*r;
-					mtx[14] = 0.2f * ((float)xx / (float)dim);
+					mtx[12] = bx::sin(t * 2.0f * 3.14f)*r;
+					mtx[13] = bx::cos(t * 2.0f * 3.14f)*r;
+					mtx[14] = 0.2f * (float)xx / (float)dim;
 
 					// Set transform for draw call.
 					bgfx::setTransform(mtx);
@@ -525,12 +535,14 @@ public:
 				}
 
 				// now downsample.
-				for(uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
+				for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
 				{
-					float pixelSize[4] = {
-						1.0f / (float)(m_width / (uint16_t)pow(2, ii + 1)),
-						1.0f / (float)(m_height / (uint16_t)pow(2, ii + 1)), 0.0f, 0.0f };
-					
+					float pixelSize[4] =
+					{
+						1.0f / (float)(m_width  / (uint16_t)bx::pow(2.0f, ii + 1)),
+						1.0f / (float)(m_height / (uint16_t)bx::pow(2.0f, ii + 1)), 0.0f, 0.0f
+					};
+
 					bgfx::setUniform(u_pixelSize, pixelSize);
 					bgfx::setTexture(0, s_tex, m_texChainTex[ii]);
 
@@ -538,26 +550,30 @@ public:
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
 					);
-						
+
 					screenSpaceQuad((float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-					bgfx::submit(RENDER_PASS_DOWNSAMPLE0_ID + ii, m_downsampleProgram);			
+					bgfx::submit(RENDER_PASS_DOWNSAMPLE0_ID + ii, m_downsampleProgram);
 				}
 
 				// now upsample.
 				for (uint16_t ii = 0; ii < TEX_CHAIN_LEN - 1; ++ii)
 				{
-					float pixelSize[4] = {
-						1.0f / (float)(m_width / (uint16_t)pow(2, TEX_CHAIN_LEN - 2 - ii)),
-						1.0f / (float)(m_height / (uint16_t)pow(2, TEX_CHAIN_LEN - 2 - ii)), 0.0f, 0.0f };
-					float intensity[4] = { m_intensity, 0.0f, 0.0f, 0.0f };
+					const float pixelSize[4] =
+					{
+						1.0f / (float)(m_width  / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - 2 - ii) ),
+						1.0f / (float)(m_height / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - 2 - ii) ),
+						0.0f,
+						0.0f
+					};
+					const float intensity[4] = { m_intensity, 0.0f, 0.0f, 0.0f };
 
 					bgfx::setUniform(u_pixelSize, pixelSize);
 					bgfx::setUniform(u_intensity, intensity);
 
 					// Combine color and light buffers.
 					bgfx::setTexture(0, s_tex, m_texChainTex[TEX_CHAIN_LEN - 1 - ii]);
-					
-					// as we upscale, we also sum with the previous mip level. We do this by alpha blending. 
+
+					// as we upscale, we also sum with the previous mip level. We do this by alpha blending.
 					bgfx::setState(
 						0
 						| BGFX_STATE_WRITE_RGB
@@ -577,7 +593,7 @@ public:
 						| BGFX_STATE_WRITE_A
 						);
 				screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-				bgfx::submit(RENDER_PASS_COMBINE_ID, m_combineProgram);			
+				bgfx::submit(RENDER_PASS_COMBINE_ID, m_combineProgram);
 			}
 
 			imguiEndFrame();
@@ -594,7 +610,7 @@ public:
 
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::IndexBufferHandle m_ibh;
-	
+
 	bgfx::UniformHandle s_albedo;
 	bgfx::UniformHandle s_tex;
 	bgfx::UniformHandle s_depth;
@@ -605,16 +621,16 @@ public:
 
 
 	bgfx::UniformHandle u_mtx;
-	
+
 	bgfx::ProgramHandle m_geomProgram;
 	bgfx::ProgramHandle m_downsampleProgram;
 	bgfx::ProgramHandle m_upsampleProgram;
 	bgfx::ProgramHandle m_combineProgram;
 
 	bgfx::TextureHandle m_gbufferTex[3];
-	
+
 	bgfx::FrameBufferHandle m_gbuffer;
-	
+
 	bgfx::FrameBufferHandle m_texChainFb[TEX_CHAIN_LEN];
 	bgfx::TextureHandle m_texChainTex[TEX_CHAIN_LEN];
 
