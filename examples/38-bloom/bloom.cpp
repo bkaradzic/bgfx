@@ -16,16 +16,16 @@ namespace
 {
 
 // pass that render the geometry of the boxes.
-#define RENDER_PASS_GEOMETRY_ID       0
+#define RENDER_PASS_GEOMETRY_ID 0
 
 // the first downsample pass.
 #define RENDER_PASS_DOWNSAMPLE0_ID 1
 
 // the first upsample pass.
-#define RENDER_PASS_UPSAMPLE0_ID ((TEX_CHAIN_LEN-1)  + 1)
+#define RENDER_PASS_UPSAMPLE0_ID ( (TEX_CHAIN_LEN-1)  + 1)
 
 // the final pass the combines the bloom with the g-buffer.
-#define RENDER_PASS_COMBINE_ID ((TEX_CHAIN_LEN-1) + 1 + (TEX_CHAIN_LEN-1))
+#define RENDER_PASS_COMBINE_ID ( (TEX_CHAIN_LEN-1) + 1 + (TEX_CHAIN_LEN-1) )
 
 // number of downsampled and then upsampled textures(used for bloom.)
 #define TEX_CHAIN_LEN 5
@@ -300,10 +300,10 @@ public:
 			bgfx::destroy(m_gbuffer);
 		}
 
-		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii) {
+		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii)
+		{
 			bgfx::destroy(m_texChainTex[ii]);
 			bgfx::destroy(m_texChainFb[ii]);
-
 		}
 
 		bgfx::destroy(m_ibh);
@@ -393,22 +393,24 @@ public:
 						| BGFX_SAMPLER_V_CLAMP
 						;
 
-					for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii) {
-
+					for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii)
+					{
 						if (bgfx::isValid(m_texChainFb[ii]))
 						{
 							bgfx::destroy(m_texChainFb[ii]);
 						}
 
+						const float dim = bx::pow(2.0f, float(ii) );
+
 						m_texChainTex[ii] = bgfx::createTexture2D(
-							  (uint16_t)m_width  / (uint16_t)bx::pow(2.0f, ii)
-							, (uint16_t)m_height / (uint16_t)bx::pow(2.0f, ii)
+							  (uint16_t)(m_width  / dim)
+							, (uint16_t)(m_height / dim)
 							, false
 							, 1
 							, bgfx::TextureFormat::RGBA32F
 							, tsFlags
 							);
-					m_texChainFb[ii]  = bgfx::createFrameBuffer(1, &m_texChainTex[ii], true);
+						m_texChainFb[ii]  = bgfx::createFrameBuffer(1, &m_texChainTex[ii], true);
 					}
 
 					m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags);
@@ -447,17 +449,21 @@ public:
 
 					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
 					{
+						const float dim = bx::pow(2.0f, float(ii + 1) );
+
 						bgfx::setViewRect(RENDER_PASS_DOWNSAMPLE0_ID + ii, 0, 0
-							, uint16_t(m_width  / (uint16_t)bx::pow(2.0f, ii+1) )
-							, uint16_t(m_height / (uint16_t)bx::pow(2.0f, ii+1) )
+							, uint16_t(m_width  / dim)
+							, uint16_t(m_height / dim)
 							);
 					}
 
 					for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
 					{
+						const float dim = bx::pow(2.0f, float(TEX_CHAIN_LEN - ii - 2) );
+
 						bgfx::setViewRect(RENDER_PASS_UPSAMPLE0_ID + ii, 0, 0
-							, uint16_t(m_width  / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - ii - 2) )
-							, uint16_t(m_height / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - ii - 2) )
+							, uint16_t(m_width  / dim)
+							, uint16_t(m_height / dim)
 							);
 					}
 
@@ -484,7 +490,7 @@ public:
 					bgfx::setViewTransform(RENDER_PASS_COMBINE_ID, NULL, proj);
 				}
 
-				const uint32_t dim = 7;
+				const uint32_t num = 7;
 				const int COLS = 5;
 				float color[4*COLS] =
 				{
@@ -496,7 +502,7 @@ public:
 				};
 
 				// render a whole bunch of colored cubes to the g-buffer.
-				for (uint32_t xx = 0; xx < dim; ++xx)
+				for (uint32_t xx = 0; xx < num; ++xx)
 				{
 					bgfx::setUniform(u_color, &color[4 *  (xx % COLS)   ]);
 
@@ -504,15 +510,13 @@ public:
 
 					bx::mtxIdentity(mtx);
 
-					float t = (float)xx / (float)dim;
-
-					t += 0.07f * time;
+					const float tt = (float)xx / (float)num + 0.07f * time;
 
 					float r = bx::sin(0.47f * time * 2.0f * 3.14f) * 1.0f + 1.4f;
 
-					mtx[12] = bx::sin(t * 2.0f * 3.14f)*r;
-					mtx[13] = bx::cos(t * 2.0f * 3.14f)*r;
-					mtx[14] = 0.2f * (float)xx / (float)dim;
+					mtx[12] = bx::sin(tt * 2.0f * 3.14f)*r;
+					mtx[13] = bx::cos(tt * 2.0f * 3.14f)*r;
+					mtx[14] = 0.2f * (float)xx / (float)num;
 
 					// Set transform for draw call.
 					bgfx::setTransform(mtx);
@@ -528,7 +532,7 @@ public:
 						| BGFX_STATE_WRITE_Z
 						| BGFX_STATE_DEPTH_TEST_LESS
 						| BGFX_STATE_MSAA
-					);
+						);
 
 					// Submit primitive for rendering to view 0.
 					bgfx::submit(RENDER_PASS_GEOMETRY_ID, m_geomProgram);
@@ -537,10 +541,13 @@ public:
 				// now downsample.
 				for (uint16_t ii = 0; ii < TEX_CHAIN_LEN-1; ++ii)
 				{
-					float pixelSize[4] =
+					const float dim = bx::pow(2.0f, float(ii + 1) );
+					const float pixelSize[4] =
 					{
-						1.0f / (float)(m_width  / (uint16_t)bx::pow(2.0f, ii + 1)),
-						1.0f / (float)(m_height / (uint16_t)bx::pow(2.0f, ii + 1)), 0.0f, 0.0f
+						1.0f / (m_width  / dim),
+						1.0f / (m_height / dim),
+						0.0f,
+						0.0f,
 					};
 
 					bgfx::setUniform(u_pixelSize, pixelSize);
@@ -549,7 +556,7 @@ public:
 					bgfx::setState(0
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
-					);
+						);
 
 					screenSpaceQuad((float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
 					bgfx::submit(RENDER_PASS_DOWNSAMPLE0_ID + ii, m_downsampleProgram);
@@ -558,12 +565,14 @@ public:
 				// now upsample.
 				for (uint16_t ii = 0; ii < TEX_CHAIN_LEN - 1; ++ii)
 				{
+					const float dim = bx::pow(2.0f, float(TEX_CHAIN_LEN - 2 - ii) );
+
 					const float pixelSize[4] =
 					{
-						1.0f / (float)(m_width  / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - 2 - ii) ),
-						1.0f / (float)(m_height / (uint16_t)bx::pow(2.0f, TEX_CHAIN_LEN - 2 - ii) ),
+						1.0f / (float)(m_width  / dim),
+						1.0f / (float)(m_height / dim),
 						0.0f,
-						0.0f
+						0.0f,
 					};
 					const float intensity[4] = { m_intensity, 0.0f, 0.0f, 0.0f };
 
@@ -579,7 +588,7 @@ public:
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
 						| BGFX_STATE_BLEND_ADD
-					);
+						);
 
 					screenSpaceQuad((float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
 					bgfx::submit(RENDER_PASS_UPSAMPLE0_ID + ii, m_upsampleProgram);
