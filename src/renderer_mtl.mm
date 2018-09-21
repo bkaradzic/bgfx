@@ -1950,6 +1950,8 @@ namespace bgfx { namespace mtl
 				VertexDescriptor vertexDesc = m_vertexDescriptor;
 				reset(vertexDesc);
 
+				bool attrSet[Attrib::Count] = {};
+
 				uint8_t stream = 0;
 				for (; stream < _numStreams; ++stream)
 				{
@@ -1957,7 +1959,7 @@ namespace bgfx { namespace mtl
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
 						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
-						uint32_t loc = program.m_attributes[attr];
+						const uint32_t loc = program.m_attributes[attr];
 
 						uint8_t num;
 						AttribType::Enum type;
@@ -1973,24 +1975,32 @@ namespace bgfx { namespace mtl
 							vertexDesc.attributes[loc].offset      = vertexDecl.m_offset[attr];
 
 							BX_TRACE("attrib: %s format: %d offset: %d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
+
+							attrSet[attr] = true;
 						}
-//						else
-//						{	// NOTE: missing attribute: using dummy attribute with smallest possible size
-//							vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
-//							vertexDesc.attributes[loc].bufferIndex = 1;
-//							vertexDesc.attributes[loc].offset      = 0;
-//						}
 					}
 
 					vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
 					vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
 				}
 
+				for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
+				{
+					Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
+					const uint32_t loc = program.m_attributes[attr];
+					if (!attrSet[attr])
+					{
+						vertexDesc.attributes[loc].format      = MTLVertexFormatUChar2;
+						vertexDesc.attributes[loc].bufferIndex = 1;
+						vertexDesc.attributes[loc].offset      = 0;
+					}
+				}
+
 				if (0 < _numInstanceData)
 				{
 					for (uint32_t ii = 0; UINT16_MAX != program.m_instanceData[ii]; ++ii)
 					{
-						uint32_t loc = program.m_instanceData[ii];
+						const uint32_t loc = program.m_instanceData[ii];
 						vertexDesc.attributes[loc].format      = MTLVertexFormatFloat4;
 						vertexDesc.attributes[loc].bufferIndex = stream+1;
 						vertexDesc.attributes[loc].offset      = ii*16;
