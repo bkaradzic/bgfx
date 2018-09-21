@@ -264,7 +264,6 @@ public:
 		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii)
 		{
 			m_texChainFb[ii]  = BGFX_INVALID_HANDLE;
-			m_texChainTex[ii] = BGFX_INVALID_HANDLE;
 		}
 
 		// Imgui.
@@ -402,21 +401,18 @@ public:
 
 						const float dim = float(1 << ii);
 
-						m_texChainTex[ii] = bgfx::createTexture2D(
+						m_texChainFb[ii]  = bgfx::createFrameBuffer(
 							  (uint16_t)(m_width  / dim)
 							, (uint16_t)(m_height / dim)
-							, false
-							, 1
 							, bgfx::TextureFormat::RGBA32F
 							, tsFlags
 							);
-						m_texChainFb[ii]  = bgfx::createFrameBuffer(1, &m_texChainTex[ii], true);
 					}
 
 					bgfx::TextureHandle gbufferTex[] =
 					{
 						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags),
-						m_texChainTex[0],
+						bgfx::getTexture(m_texChainFb[0]),
 						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags),
 					};
 
@@ -424,17 +420,17 @@ public:
 				}
 
 				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 					, ImGuiCond_FirstUseEver
-				);
+					);
 				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 5.0f, m_height / 6.0f)
+					  ImVec2(m_width / 5.0f, m_height / 6.0f)
 					, ImGuiCond_FirstUseEver
-				);
+					);
 				ImGui::Begin("Settings"
 					, NULL
 					, 0
-				);
+					);
 
 				ImGui::SliderFloat("intensity", &m_intensity, 0.0f, 3.0f);
 
@@ -497,12 +493,12 @@ public:
 				const uint32_t kNum = 9;
 				const int kNumColors = 5;
 				const float color[4*kNumColors] =
-				{
-					0.0f, 1.0f, 0.0f, 1.0f,
-					1.0f, 0.0f, 0.0f, 1.0f,
-					0.0f, 0.0f, 1.0f, 1.0f,
-					1.0f, 0.0f, 1.0f, 1.0f,
-					0.0f, 1.0f, 1.0f, 1.0f,
+				{   // Palette: http://www.colourlovers.com/palette/3647908/RGB_Ice_Cream
+					0.847f*0.2f, 0.365f*0.2f, 0.408f*0.2f, 1.0f,
+					0.976f*0.2f, 0.827f*0.2f, 0.533f*0.2f, 1.0f,
+					0.533f*0.2f, 0.867f*0.2f, 0.741f*0.2f, 1.0f,
+					0.894f*0.2f, 0.620f*0.2f, 0.416f*0.2f, 1.0f,
+					0.584f*0.2f, 0.788f*0.2f, 0.882f*0.2f, 1.0f,
 				};
 
 				// Render a whole bunch of colored cubes to the g-buffer.
@@ -554,7 +550,7 @@ public:
 					};
 
 					bgfx::setUniform(u_pixelSize, pixelSize);
-					bgfx::setTexture(0, s_tex, m_texChainTex[ii]);
+					bgfx::setTexture(0, s_tex, bgfx::getTexture(m_texChainFb[ii]) );
 
 					bgfx::setState(0
 						| BGFX_STATE_WRITE_RGB
@@ -583,7 +579,7 @@ public:
 					bgfx::setUniform(u_intensity, intensity);
 
 					// Combine color and light buffers.
-					bgfx::setTexture(0, s_tex, m_texChainTex[TEX_CHAIN_LEN - 1 - ii]);
+					bgfx::setTexture(0, s_tex, bgfx::getTexture(m_texChainFb[TEX_CHAIN_LEN - 1 - ii]) );
 
 					// As we upscale, we also sum with the previous mip level. We do this by alpha blending.
 					bgfx::setState(0
@@ -598,7 +594,7 @@ public:
 
 				// Do final pass, that combines the bloom with the g-buffer.
 				bgfx::setTexture(0, s_albedo, bgfx::getTexture(m_gbuffer, 0) );
-				bgfx::setTexture(1, s_light, m_texChainTex[0]);
+				bgfx::setTexture(1, s_light,  bgfx::getTexture(m_texChainFb[0]) );
 				bgfx::setState(0
 					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_WRITE_A
@@ -639,9 +635,7 @@ public:
 	bgfx::ProgramHandle m_combineProgram;
 
 	bgfx::FrameBufferHandle m_gbuffer;
-
 	bgfx::FrameBufferHandle m_texChainFb[TEX_CHAIN_LEN];
-	bgfx::TextureHandle     m_texChainTex[TEX_CHAIN_LEN];
 
 	uint32_t m_width;
 	uint32_t m_height;
