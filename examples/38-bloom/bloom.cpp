@@ -259,15 +259,12 @@ public:
 		m_upsampleProgram   = loadProgram("vs_fullscreen",    "fs_upsample");
 		m_combineProgram    = loadProgram("vs_fullscreen",    "fs_bloom_combine");
 
-		m_gbufferTex[0].idx = bgfx::kInvalidHandle;
-		m_gbufferTex[1].idx = bgfx::kInvalidHandle;
-		m_gbufferTex[2].idx = bgfx::kInvalidHandle;
-		m_gbuffer.idx       = bgfx::kInvalidHandle;
+		m_gbuffer = BGFX_INVALID_HANDLE;
 
 		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii)
 		{
-			m_texChainFb[ii].idx  = bgfx::kInvalidHandle;
-			m_texChainTex[ii].idx = bgfx::kInvalidHandle;
+			m_texChainFb[ii]  = BGFX_INVALID_HANDLE;
+			m_texChainTex[ii] = BGFX_INVALID_HANDLE;
 		}
 
 		// Imgui.
@@ -306,7 +303,6 @@ public:
 
 		for (int ii = 0; ii < TEX_CHAIN_LEN; ++ii)
 		{
-			bgfx::destroy(m_texChainTex[ii]);
 			bgfx::destroy(m_texChainFb[ii]);
 		}
 
@@ -417,10 +413,14 @@ public:
 						m_texChainFb[ii]  = bgfx::createFrameBuffer(1, &m_texChainTex[ii], true);
 					}
 
-					m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags);
-					m_gbufferTex[1] = m_texChainTex[0];
-					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags);
-					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(m_gbufferTex), m_gbufferTex, true);
+					bgfx::TextureHandle gbufferTex[] =
+					{
+						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::RGBA32F, tsFlags),
+						m_texChainTex[0],
+						bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags),
+					};
+
+					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferTex), gbufferTex, true);
 				}
 
 				ImGui::SetNextWindowPos(
@@ -597,7 +597,7 @@ public:
 				}
 
 				// Do final pass, that combines the bloom with the g-buffer.
-				bgfx::setTexture(0, s_albedo, m_gbufferTex[0]);
+				bgfx::setTexture(0, s_albedo, bgfx::getTexture(m_gbuffer, 0) );
 				bgfx::setTexture(1, s_light, m_texChainTex[0]);
 				bgfx::setState(0
 					| BGFX_STATE_WRITE_RGB
@@ -637,8 +637,6 @@ public:
 	bgfx::ProgramHandle m_downsampleProgram;
 	bgfx::ProgramHandle m_upsampleProgram;
 	bgfx::ProgramHandle m_combineProgram;
-
-	bgfx::TextureHandle m_gbufferTex[3];
 
 	bgfx::FrameBufferHandle m_gbuffer;
 
