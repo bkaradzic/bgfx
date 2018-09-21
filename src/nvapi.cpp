@@ -151,18 +151,19 @@ namespace bgfx
 					if (initialized)
 					{
 						m_nvGpu = physicalGpus[0];
+
+						initialized = NULL != m_nvGpu;
+						if (initialized)
+						{
+							char name[64];
+							nvApiGpuGetFullName(m_nvGpu, name);
+							BX_TRACE("%s", name);
+						}
+						else
+						{
+							nvApiUnload();
+						}
 					}
-
-					char name[64];
-					nvApiGpuGetFullName(m_nvGpu, name);
-					BX_TRACE("%s", name);
-				}
-
-				initialized = NULL != m_nvGpu;
-
-				if (!initialized)
-				{
-					nvApiUnload();
 				}
 			}
 
