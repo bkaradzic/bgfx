@@ -1907,7 +1907,9 @@ namespace bgfx
 
 	/// Begin submitting draw calls from thread.
 	///
-	Encoder* begin();
+	/// @param[in] _forThread Explicitly request an encoder for a worker thread.
+	///
+	Encoder* begin(bool _forThread = false);
 
 	/// End submitting draw calls from thread.
 	///
