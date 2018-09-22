@@ -350,6 +350,7 @@
 #define BGFX_TEXTURE_SRGB                UINT64_C(0x0000200000000000) //!< Sample texture as sRGB.
 #define BGFX_TEXTURE_BLIT_DST            UINT64_C(0x0000400000000000) //!< Texture will be used as blit destination.
 #define BGFX_TEXTURE_READ_BACK           UINT64_C(0x0000800000000000) //!< Texture will be used for read back from GPU.
+#define BGFX_TEXTURE_NO_MIP_AUTOGEN      UINT64_C(0x0000f00000000000) //!< Texture will not have mipmaps auto generated.
 
 /// Sampler flags.
 #define BGFX_SAMPLER_NONE                UINT32_C(0x00000000) //!<

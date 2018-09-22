@@ -5191,7 +5191,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 	void TextureGL::resolve() const
 	{
 		const bool renderTarget = 0 != (m_flags&BGFX_TEXTURE_RT_MASK);
+		const bool mipAutoGen   = 0 == (m_flags&BGFX_TEXTURE_NO_MIP_AUTOGEN);
 		if (renderTarget
+		&&  mipAutoGen
 		&&  1 < m_numMips)
 		{
 			GL_CHECK(glBindTexture(m_target, m_id) );

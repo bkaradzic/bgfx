@@ -3140,7 +3140,9 @@ namespace bgfx { namespace d3d9
 				) );
 			DX_RELEASE(surface, 1);
 
-			if (1 < m_numMips)
+			const bool mipAutoGen = 0 == (m_flags&BGFX_TEXTURE_NO_MIP_AUTOGEN);
+			if (1 < m_numMips
+			&&	mipAutoGen)
 			{
 				m_ptr->GenerateMipSubLevels();
 			}
