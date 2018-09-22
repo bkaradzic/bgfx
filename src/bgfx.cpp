@@ -1749,12 +1749,12 @@ namespace bgfx
 		}
 	}
 
-	Encoder* Context::begin()
+	Encoder* Context::begin(bool _forThread)
 	{
 		EncoderImpl* encoder = &m_encoder[0];
 
 #if BGFX_CONFIG_MULTITHREADED
-		if (BGFX_API_THREAD_MAGIC != s_threadIndex)
+		if (_forThread || BGFX_API_THREAD_MAGIC != s_threadIndex)
 		{
 			bx::MutexScope scopeLock(m_encoderApiLock);
 
@@ -3015,9 +3015,9 @@ namespace bgfx
 		s_ctx->reset(_width, _height, _flags, _format);
 	}
 
-	Encoder* begin()
+	Encoder* begin(bool _forThread)
 	{
-		return s_ctx->begin();
+		return s_ctx->begin(_forThread);
 	}
 
 #define BGFX_ENCODER(_func) reinterpret_cast<EncoderImpl*>(this)->_func

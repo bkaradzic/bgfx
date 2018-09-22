@@ -4507,7 +4507,7 @@ namespace bgfx
 			}
 		}
 
-		BGFX_API_FUNC(Encoder* begin() );
+		BGFX_API_FUNC(Encoder* begin(bool _forThread) );
 
 		BGFX_API_FUNC(void end(Encoder* _encoder) );
 
