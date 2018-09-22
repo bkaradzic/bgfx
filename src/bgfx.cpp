@@ -1767,6 +1767,8 @@ namespace bgfx
 			encoder = &m_encoder[idx];
 			encoder->begin(m_submit, uint8_t(idx) );
 		}
+#else
+		BX_UNUSED(_forThread);
 #endif // BGFX_CONFIG_MULTITHREADED
 
 		return reinterpret_cast<Encoder*>(encoder);
