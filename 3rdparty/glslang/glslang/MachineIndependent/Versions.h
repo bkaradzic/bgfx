@@ -207,6 +207,12 @@ const char* const E_GL_NV_shader_atomic_int64                   = "GL_NV_shader_
 const char* const E_GL_NV_conservative_raster_underestimation   = "GL_NV_conservative_raster_underestimation";
 const char* const E_GL_NV_shader_noperspective_interpolation    = "GL_NV_shader_noperspective_interpolation";
 const char* const E_GL_NV_shader_subgroup_partitioned           = "GL_NV_shader_subgroup_partitioned";
+const char* const E_GL_NV_shading_rate_image                    = "GL_NV_shading_rate_image";
+const char* const E_GL_NVX_raytracing                           = "GL_NVX_raytracing";
+const char* const E_GL_NV_fragment_shader_barycentric           = "GL_NV_fragment_shader_barycentric";
+const char* const E_GL_NV_compute_shader_derivatives            = "GL_NV_compute_shader_derivatives";
+const char* const E_GL_NV_shader_texture_footprint              = "GL_NV_shader_texture_footprint";
+const char* const E_GL_NV_mesh_shader                           = "GL_NV_mesh_shader";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

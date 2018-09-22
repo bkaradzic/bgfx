@@ -956,7 +956,13 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpSparseTextureGatherLodOffsets:  out.debug << "sparseTextureGatherLodOffsets";   break;
     case EOpSparseImageLoadLod:             out.debug << "sparseImageLoadLod";              break;
 #endif
-
+#ifdef NV_EXTENSIONS
+    case EOpImageSampleFootprintNV:             out.debug << "imageSampleFootprintNV";          break;
+    case EOpImageSampleFootprintClampNV:        out.debug << "imageSampleFootprintClampNV";     break;
+    case EOpImageSampleFootprintLodNV:          out.debug << "imageSampleFootprintLodNV";       break;
+    case EOpImageSampleFootprintGradNV:         out.debug << "imageSampleFootprintGradNV";      break;
+    case EOpImageSampleFootprintGradClampNV:    out.debug << "mageSampleFootprintGradClampNV";  break;
+#endif
     case EOpAddCarry:                   out.debug << "addCarry";              break;
     case EOpSubBorrow:                  out.debug << "subBorrow";             break;
     case EOpUMulExtended:               out.debug << "uMulExtended";          break;
@@ -1041,6 +1047,14 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
 
     case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
     case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
+
+#ifdef NV_EXTENSIONS
+    case EOpTraceNV:                          out.debug << "traceNVX"; break;
+    case EOpReportIntersectionNV:             out.debug << "reportIntersectionNVX"; break;
+    case EOpIgnoreIntersectionNV:             out.debug << "ignoreIntersectionNVX"; break;
+    case EOpTerminateRayNV:                   out.debug << "terminateRayNVX"; break;
+    case EOpWritePackedPrimitiveIndices4x8NV: out.debug << "writePackedPrimitiveIndices4x8NV"; break;
+#endif
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }
@@ -1445,6 +1459,16 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
         }
         break;
 
+#ifdef NV_EXTENSIONS
+    case EShLangMeshNV:
+        infoSink.debug << "max_vertices = " << vertices << "\n";
+        infoSink.debug << "max_primitives = " << primitives << "\n";
+        infoSink.debug << "output primitive = " << TQualifier::getGeometryString(outputPrimitive) << "\n";
+        // Fall through
+
+    case EShLangTaskNV:
+        // Fall through
+#endif
     case EShLangCompute:
         infoSink.debug << "local_size = (" << localSize[0] << ", " << localSize[1] << ", " << localSize[2] << ")\n";
         {

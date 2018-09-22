@@ -140,13 +140,13 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> U8VEC2  U8VEC3  U8VEC4
 %token <lex> VEC2 VEC3 VEC4
 %token <lex> MAT2 MAT3 MAT4 CENTROID IN OUT INOUT
-%token <lex> UNIFORM PATCH SAMPLE BUFFER SHARED NONUNIFORM
+%token <lex> UNIFORM PATCH SAMPLE BUFFER SHARED NONUNIFORM PAYLOADNV PAYLOADINNV HITATTRNV
 %token <lex> COHERENT VOLATILE RESTRICT READONLY WRITEONLY DEVICECOHERENT QUEUEFAMILYCOHERENT WORKGROUPCOHERENT SUBGROUPCOHERENT NONPRIVATE
 %token <lex> DVEC2 DVEC3 DVEC4 DMAT2 DMAT3 DMAT4
 %token <lex> F16VEC2 F16VEC3 F16VEC4 F16MAT2 F16MAT3 F16MAT4
 %token <lex> F32VEC2 F32VEC3 F32VEC4 F32MAT2 F32MAT3 F32MAT4
 %token <lex> F64VEC2 F64VEC3 F64VEC4 F64MAT2 F64MAT3 F64MAT4
-%token <lex> NOPERSPECTIVE FLAT SMOOTH LAYOUT EXPLICITINTERPAMD
+%token <lex> NOPERSPECTIVE FLAT SMOOTH LAYOUT EXPLICITINTERPAMD PERVERTEXNV PERPRIMITIVENV PERVIEWNV PERTASKNV
 
 %token <lex> MAT2X2 MAT2X3 MAT2X4
 %token <lex> MAT3X2 MAT3X3 MAT3X4
@@ -164,6 +164,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> F64MAT3X2 F64MAT3X3 F64MAT3X4
 %token <lex> F64MAT4X2 F64MAT4X3 F64MAT4X4
 %token <lex> ATOMIC_UINT
+%token <lex> ACCSTRUCTNV
 
 // combined image/sampler
 %token <lex> SAMPLER1D SAMPLER2D SAMPLER3D SAMPLERCUBE SAMPLER1DSHADOW SAMPLER2DSHADOW
@@ -1144,6 +1145,40 @@ interpolation_qualifier
         $$.qualifier.explicitInterp = true;
 #endif
     }
+    | PERVERTEXNV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "pervertexNV");
+        parseContext.profileRequires($1.loc, ECoreProfile, 0, E_GL_NV_fragment_shader_barycentric, "fragment shader barycentric");
+        parseContext.profileRequires($1.loc, ECompatibilityProfile, 0, E_GL_NV_fragment_shader_barycentric, "fragment shader barycentric");
+        parseContext.profileRequires($1.loc, EEsProfile, 0, E_GL_NV_fragment_shader_barycentric, "fragment shader barycentric");
+        $$.init($1.loc);
+        $$.qualifier.pervertexNV = true;
+#endif
+    }
+    | PERPRIMITIVENV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "perprimitiveNV");
+        parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "perprimitiveNV");
+        $$.init($1.loc);
+        $$.qualifier.perPrimitiveNV = true;
+#endif
+    }
+    | PERVIEWNV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "perviewNV");
+        parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "perviewNV");
+        $$.init($1.loc);
+        $$.qualifier.perViewNV = true;
+#endif
+    }
+    | PERTASKNV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "taskNV");
+        parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "taskNV");
+        $$.init($1.loc);
+        $$.qualifier.perTaskNV = true;
+#endif
+    }
     ;
 
 layout_qualifier
@@ -1305,11 +1340,45 @@ storage_qualifier
         $$.init($1.loc);
         $$.qualifier.storage = EvqBuffer;
     }
+    | HITATTRNV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "hitAttributeNVX");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangIntersectNVMask | EShLangClosestHitNVMask
+            | EShLangAnyHitNVMask), "hitAttributeNVX");
+        parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NVX_raytracing, "hitAttributeNVX");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqHitAttrNV;
+#endif
+    }
+    | PAYLOADNV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "rayPayloadNVX");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangRayGenNVMask | EShLangClosestHitNVMask |
+            EShLangAnyHitNVMask | EShLangMissNVMask), "rayPayloadNVX");
+        parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NVX_raytracing, "rayPayloadNVX");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqPayloadNV;
+#endif
+    }
+    | PAYLOADINNV {
+#ifdef NV_EXTENSIONS
+        parseContext.globalCheck($1.loc, "rayPayloadInNVX");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangClosestHitNVMask |
+            EShLangAnyHitNVMask | EShLangMissNVMask), "rayPayloadInNVX");
+        parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NVX_raytracing, "rayPayloadInNVX");
+        $$.init($1.loc);
+        $$.qualifier.storage = EvqPayloadInNV;
+#endif
+    }
     | SHARED {
         parseContext.globalCheck($1.loc, "shared");
         parseContext.profileRequires($1.loc, ECoreProfile | ECompatibilityProfile, 430, E_GL_ARB_compute_shader, "shared");
         parseContext.profileRequires($1.loc, EEsProfile, 310, 0, "shared");
+#ifdef NV_EXTENSIONS
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangComputeMask | EShLangMeshNVMask | EShLangTaskNVMask), "shared");
+#else
         parseContext.requireStage($1.loc, EShLangCompute, "shared");
+#endif
         $$.init($1.loc);
         $$.qualifier.storage = EvqShared;
     }
@@ -2138,6 +2207,12 @@ type_specifier_nonarray
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtDouble;
         $$.setMatrix(4, 4);
+    }
+    | ACCSTRUCTNV {
+#ifdef NV_EXTENSIONS
+       $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+       $$.basicType = EbtAccStructNV;
+#endif
     }
     | ATOMIC_UINT {
         parseContext.vulkanRemoved($1.loc, "atomic counter types");

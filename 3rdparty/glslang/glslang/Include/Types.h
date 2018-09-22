@@ -457,6 +457,12 @@ public:
 #ifdef AMD_EXTENSIONS
         explicitInterp = false;
 #endif
+#ifdef NV_EXTENSIONS
+        pervertexNV = false;
+        perPrimitiveNV = false;
+        perViewNV = false;
+        perTaskNV = false;
+#endif
     }
 
     void clearMemory()
@@ -501,6 +507,12 @@ public:
 #ifdef AMD_EXTENSIONS
     bool explicitInterp : 1;
 #endif
+#ifdef NV_EXTENSIONS
+    bool pervertexNV  : 1;
+    bool perPrimitiveNV : 1;
+    bool perViewNV : 1;
+    bool perTaskNV : 1;
+#endif
     bool patch        : 1;
     bool sample       : 1;
     bool coherent     : 1;
@@ -524,6 +536,7 @@ public:
     {
         return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly;
     }
+
     bool isInterpolation() const
     {
 #ifdef AMD_EXTENSIONS
@@ -532,15 +545,21 @@ public:
         return flat || smooth || nopersp;
 #endif
     }
+
 #ifdef AMD_EXTENSIONS
     bool isExplicitInterpolation() const
     {
         return explicitInterp;
     }
 #endif
+
     bool isAuxiliary() const
     {
+#ifdef NV_EXTENSIONS
+        return centroid || patch || sample || pervertexNV;
+#else
         return centroid || patch || sample;
+#endif
     }
 
     bool isPipeInput() const
@@ -607,6 +626,33 @@ public:
         }
     }
 
+    bool isPerPrimitive() const
+    {
+#ifdef NV_EXTENSIONS
+        return perPrimitiveNV;
+#else
+        return false;
+#endif
+    }
+
+    bool isPerView() const
+    {
+#ifdef NV_EXTENSIONS
+        return perViewNV;
+#else
+        return false;
+#endif
+    }
+
+    bool isTaskMemory() const
+    {
+#ifdef NV_EXTENSIONS
+        return perTaskNV;
+#else
+        return false;
+#endif
+    }
+
     bool isIo() const
     {
         switch (storage) {
@@ -656,6 +702,13 @@ public:
             return ! patch && (isPipeInput() || isPipeOutput());
         case EShLangTessEvaluation:
             return ! patch && isPipeInput();
+#ifdef NV_EXTENSIONS
+        case EShLangFragment:
+            return pervertexNV && isPipeInput();
+        case EShLangMeshNV:
+            return ! perTaskNV && isPipeOutput();
+#endif
+
         default:
             return false;
         }
@@ -672,6 +725,7 @@ public:
         layoutViewportRelative = false;
         // -2048 as the default value indicating layoutSecondaryViewportRelative is not set
         layoutSecondaryViewportRelativeOffset = -2048;
+        layoutShaderRecordNV = false;
 #endif
 
         clearInterstageLayout();
@@ -705,6 +759,9 @@ public:
                hasAnyLocation() ||
                hasStream() ||
                hasFormat() ||
+#ifdef NV_EXTENSIONS
+               layoutShaderRecordNV ||
+#endif
                layoutPushConstant;
     }
     bool hasLayout() const
@@ -758,6 +815,7 @@ public:
     bool layoutPassthrough;
     bool layoutViewportRelative;
     int layoutSecondaryViewportRelativeOffset;
+    bool layoutShaderRecordNV;
 #endif
 
     bool hasUniformLayout() const
@@ -1035,7 +1093,7 @@ struct TShaderQualifiers {
     bool pixelCenterInteger;  // fragment shader
     bool originUpperLeft;     // fragment shader
     int invocations;
-    int vertices;             // both for tessellation "vertices" and geometry "max_vertices"
+    int vertices;             // for tessellation "vertices", geometry & mesh "max_vertices"
     TVertexSpacing spacing;
     TVertexOrder order;
     bool pointMode;
@@ -1048,7 +1106,10 @@ struct TShaderQualifiers {
     int numViews;             // multiview extenstions
 
 #ifdef NV_EXTENSIONS
-    bool layoutOverrideCoverage;    // true if layout override_coverage set
+    bool layoutOverrideCoverage;        // true if layout override_coverage set
+    bool layoutDerivativeGroupQuads;    // true if layout derivative_group_quadsNV set
+    bool layoutDerivativeGroupLinear;   // true if layout derivative_group_linearNV set
+    int primitives;                     // mesh shader "max_primitives"DerivativeGroupLinear;   // true if layout derivative_group_linearNV set
 #endif
 
     void init()
@@ -1073,7 +1134,10 @@ struct TShaderQualifiers {
         blendEquation = false;
         numViews = TQualifier::layoutNotSet;
 #ifdef NV_EXTENSIONS
-        layoutOverrideCoverage = false;
+        layoutOverrideCoverage      = false;
+        layoutDerivativeGroupQuads  = false;
+        layoutDerivativeGroupLinear = false;
+        primitives                  = TQualifier::layoutNotSet;
 #endif
     }
 
@@ -1118,6 +1182,12 @@ struct TShaderQualifiers {
 #ifdef NV_EXTENSIONS
         if (src.layoutOverrideCoverage)
             layoutOverrideCoverage = src.layoutOverrideCoverage;
+        if (src.layoutDerivativeGroupQuads)
+            layoutDerivativeGroupQuads = src.layoutDerivativeGroupQuads;
+        if (src.layoutDerivativeGroupLinear)
+            layoutDerivativeGroupLinear = src.layoutDerivativeGroupLinear;
+        if (src.primitives != TQualifier::layoutNotSet)
+            primitives = src.primitives;
 #endif
     }
 };
@@ -1416,7 +1486,11 @@ public:
         }
         return false;
     }
-    virtual bool isOpaque() const { return basicType == EbtSampler || basicType == EbtAtomicUint; }
+    virtual bool isOpaque() const { return basicType == EbtSampler || basicType == EbtAtomicUint
+#ifdef NV_EXTENSIONS
+        || basicType == EbtAccStructNV
+#endif
+        ; }
     virtual bool isBuiltIn() const { return getQualifier().builtIn != EbvNone; }
 
     // "Image" is a superset of "Subpass"
@@ -1604,6 +1678,9 @@ public:
         case EbtSampler:           return "sampler/image";
         case EbtStruct:            return "structure";
         case EbtBlock:             return "block";
+#ifdef NV_EXTENSIONS
+        case EbtAccStructNV:       return "accelerationStructureNVX";
+#endif
         default:                   return "unknown type";
         }
     }
@@ -1699,6 +1776,8 @@ public:
                     appendStr(" layoutSecondaryViewportRelativeOffset=");
                     appendInt(qualifier.layoutSecondaryViewportRelativeOffset);
                 }
+                if (qualifier.layoutShaderRecordNV)
+                    appendStr(" shaderRecordNVX");
 #endif
 
                 appendStr(")");
@@ -1720,6 +1799,16 @@ public:
 #ifdef AMD_EXTENSIONS
         if (qualifier.explicitInterp)
             appendStr(" __explicitInterpAMD");
+#endif
+#ifdef NV_EXTENSIONS
+        if (qualifier.pervertexNV)
+            appendStr(" pervertexNV");
+        if (qualifier.perPrimitiveNV)
+            appendStr(" perprimitiveNV");
+        if (qualifier.perViewNV)
+            appendStr(" perviewNV");
+        if (qualifier.perTaskNV)
+            appendStr(" taskNV");
 #endif
         if (qualifier.patch)
             appendStr(" patch");

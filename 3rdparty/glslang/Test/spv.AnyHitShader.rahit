@@ -1,0 +1,26 @@
+#version 460
+#extension GL_NVX_raytracing : enable
+layout(location = 1) rayPayloadInNVX vec4 incomingPayload;
+void main()
+{
+	uvec2 v0 = gl_LaunchIDNVX;
+	uvec2 v1 = gl_LaunchSizeNVX;
+	int v2 = gl_PrimitiveID;
+	int v3 = gl_InstanceID;
+	int v4 = gl_InstanceCustomIndexNVX;
+	vec3 v5 = gl_WorldRayOriginNVX;
+	vec3 v6 = gl_WorldRayDirectionNVX;
+	vec3 v7 = gl_ObjectRayOriginNVX;
+	vec3 v8 = gl_ObjectRayDirectionNVX;
+	float v9 = gl_RayTminNVX;
+	float v10 = gl_RayTmaxNVX;
+	float v11 = gl_HitTNVX;
+	uint v12 = gl_HitKindNVX;
+	mat4x3 v13 = gl_ObjectToWorldNVX;
+	mat4x3 v14 = gl_WorldToObjectNVX;
+	incomingPayload = vec4(0.5f);
+	if (v2 == 1)
+	    ignoreIntersectionNVX();
+	else
+	    terminateRayNVX();
+}

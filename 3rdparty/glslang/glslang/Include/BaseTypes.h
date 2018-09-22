@@ -62,6 +62,10 @@ enum TBasicType {
     EbtStruct,
     EbtBlock,
 
+#ifdef NV_EXTENSIONS
+    EbtAccStructNV,
+#endif
+
     // HLSL types that live only temporarily.
     EbtString,
 
@@ -87,6 +91,12 @@ enum TStorageQualifier {
     EvqUniform,       // read only, shared with app
     EvqBuffer,        // read/write, shared with app
     EvqShared,        // compute shader's read/write 'shared' qualifier
+
+#ifdef NV_EXTENSIONS
+    EvqPayloadNV,
+    EvqPayloadInNV,
+    EvqHitAttrNV,
+#endif
 
     // parameters
     EvqIn,            // also, for 'in' in the grammar before we know if it's a pipeline input or an 'in' parameter
@@ -227,6 +237,32 @@ enum TBuiltInVariable {
     EbvPositionPerViewNV,
     EbvViewportMaskPerViewNV,
     EbvFragFullyCoveredNV,
+    EbvFragmentSizeNV,
+    EbvInvocationsPerPixelNV,
+    // raytracing
+    EbvLaunchIdNV,
+    EbvLaunchSizeNV,
+    EbvInstanceCustomIndexNV,
+    EbvWorldRayOriginNV,
+    EbvWorldRayDirectionNV,
+    EbvObjectRayOriginNV,
+    EbvObjectRayDirectionNV,
+    EbvRayTminNV,
+    EbvRayTmaxNV,
+    EbvHitTNV,
+    EbvHitKindNV,
+    EbvObjectToWorldNV,
+    EbvWorldToObjectNV,
+    EbvBaryCoordNV,
+    EbvBaryCoordNoPerspNV,
+    EbvTaskCountNV,
+    EbvPrimitiveCountNV,
+    EbvPrimitiveIndicesNV,
+    EbvClipDistancePerViewNV,
+    EbvCullDistancePerViewNV,
+    EbvLayerPerViewNV,
+    EbvMeshViewCountNV,
+    EbvMeshViewIndicesNV,
 #endif 
 
     // HLSL built-ins that live only temporarily, until they get remapped
@@ -273,6 +309,11 @@ __inline const char* GetStorageQualifierString(TStorageQualifier q)
     case EvqPointCoord:     return "gl_PointCoord";  break;
     case EvqFragColor:      return "fragColor";      break;
     case EvqFragDepth:      return "gl_FragDepth";   break;
+#ifdef NV_EXTENSIONS
+    case EvqPayloadNV:      return "rayPayloadNVX";   break;
+    case EvqPayloadInNV:    return "rayPayloadInNVX"; break;
+    case EvqHitAttrNV:      return "hitAttributeNVX"; break;
+#endif
     default:                return "unknown qualifier";
     }
 }
@@ -365,6 +406,31 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvPositionPerViewNV:          return "PositionPerViewNV";
     case EbvViewportMaskPerViewNV:      return "ViewportMaskPerViewNV";
     case EbvFragFullyCoveredNV:         return "FragFullyCoveredNV";
+    case EbvFragmentSizeNV:             return "FragmentSizeNV";
+    case EbvInvocationsPerPixelNV:      return "InvocationsPerPixelNV";
+    case EbvLaunchIdNV:                 return "LaunchIdNVX";
+    case EbvLaunchSizeNV:               return "LaunchSizeNVX";
+    case EbvInstanceCustomIndexNV:      return "InstanceCustomIndexNVX";
+    case EbvWorldRayOriginNV:           return "WorldRayOriginNVX";
+    case EbvWorldRayDirectionNV:        return "WorldRayDirectionNVX";
+    case EbvObjectRayOriginNV:          return "ObjectRayOriginNVX";
+    case EbvObjectRayDirectionNV:       return "ObjectRayDirectionNVX";
+    case EbvRayTminNV:                  return "ObjectRayTminNVX";
+    case EbvRayTmaxNV:                  return "ObjectRayTmaxNVX";
+    case EbvHitTNV:                     return "HitTNVX";
+    case EbvHitKindNV:                  return "HitKindNVX";
+    case EbvObjectToWorldNV:            return "ObjectToWorldNVX";
+    case EbvWorldToObjectNV:            return "WorldToObjectNVX";
+    case EbvBaryCoordNV:                return "BaryCoordNV";
+    case EbvBaryCoordNoPerspNV:         return "BaryCoordNoPerspNV";
+    case EbvTaskCountNV:                return "TaskCountNV";
+    case EbvPrimitiveCountNV:           return "PrimitiveCountNV";
+    case EbvPrimitiveIndicesNV:         return "PrimitiveIndicesNV";
+    case EbvClipDistancePerViewNV:      return "ClipDistancePerViewNV";
+    case EbvCullDistancePerViewNV:      return "CullDistancePerViewNV";
+    case EbvLayerPerViewNV:             return "LayerPerViewNV";
+    case EbvMeshViewCountNV:            return "MeshViewCountNV";
+    case EbvMeshViewIndicesNV:          return "MeshViewIndicesNV";
 #endif 
     default:                      return "unknown built-in variable";
     }

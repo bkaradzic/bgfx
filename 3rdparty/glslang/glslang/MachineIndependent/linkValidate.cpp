@@ -141,13 +141,27 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
     if (vertices == TQualifier::layoutNotSet)
         vertices = unit.vertices;
     else if (vertices != unit.vertices) {
-        if (language == EShLangGeometry)
+        if (language == EShLangGeometry
+#ifdef NV_EXTENSIONS
+            || language == EShLangMeshNV
+#endif
+            )
             error(infoSink, "Contradictory layout max_vertices values");
         else if (language == EShLangTessControl)
             error(infoSink, "Contradictory layout vertices values");
         else
             assert(0);
     }
+#ifdef NV_EXTENSIONS
+    if (primitives == TQualifier::layoutNotSet)
+        primitives = unit.primitives;
+    else if (primitives != unit.primitives) {
+        if (language == EShLangMeshNV)
+            error(infoSink, "Contradictory layout max_primitives values");
+        else
+            assert(0);
+    }
+#endif
 
     if (inputPrimitive == ElgNone)
         inputPrimitive = unit.inputPrimitive;
@@ -265,6 +279,13 @@ void TIntermediate::mergeTrees(TInfoSink& infoSink, TIntermediate& unit)
     }
 
     // Getting this far means we have two existing trees to merge...
+#ifdef NV_EXTENSIONS
+    numShaderRecordNVBlocks += unit.numShaderRecordNVBlocks;
+#endif
+
+#ifdef NV_EXTENSIONS
+    numTaskNVBlocks += unit.numTaskNVBlocks;
+#endif
 
     // Get the top-level globals of each unit
     TIntermSequence& globals = treeRoot->getAsAggregate()->getSequence();
@@ -690,6 +711,31 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
         break;
     case EShLangCompute:
         break;
+
+#ifdef NV_EXTENSIONS
+    case EShLangRayGenNV:
+    case EShLangIntersectNV:
+    case EShLangAnyHitNV:
+    case EShLangClosestHitNV:
+    case EShLangMissNV:
+    case EShLangCallableNV:
+        if (numShaderRecordNVBlocks > 1)
+            error(infoSink, "Only one shaderRecordNVX buffer block is allowed per stage");
+        break;
+    case EShLangMeshNV:
+        if (outputPrimitive == ElgNone)
+            error(infoSink, "At least one shader must specify an output layout primitive");
+        if (vertices == TQualifier::layoutNotSet)
+            error(infoSink, "At least one shader must specify a layout(max_vertices = value)");
+        if (primitives == TQualifier::layoutNotSet)
+            error(infoSink, "At least one shader must specify a layout(max_primitives = value)");
+        // fall through
+    case EShLangTaskNV:
+        if (numTaskNVBlocks > 1)
+            error(infoSink, "Only one taskNV interface block is allowed per shader");
+        break;
+#endif
+
     default:
         error(infoSink, "Unknown Stage.");
         break;
@@ -960,7 +1006,7 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         return -1;
 
     int size;
-    if (qualifier.isUniformOrBuffer()) {
+    if (qualifier.isUniformOrBuffer() || qualifier.isTaskMemory()) {
         if (type.isSizedArray())
             size = type.getCumulativeArraySize();
         else
@@ -1111,10 +1157,19 @@ int TIntermediate::computeTypeLocationSize(const TType& type, EShLanguage stage)
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
         // TODO: are there valid cases of having an unsized array with a location?  If so, running this code too early.
         TType elementType(type, 0);
-        if (type.isSizedArray())
+        if (type.isSizedArray()
+#ifdef NV_EXTENSIONS
+            && !type.getQualifier().isPerView()
+#endif
+            )
             return type.getOuterArraySize() * computeTypeLocationSize(elementType, stage);
-        else
+        else {
+#ifdef NV_EXTENSIONS
+            // unset perViewNV attributes for arrayed per-view outputs: "perviewNV vec4 v[MAX_VIEWS][3];"
+            elementType.getQualifier().perViewNV = false;
+#endif
             return computeTypeLocationSize(elementType, stage);
+        }
     }
 
     // "The locations consumed by block and structure members are determined by applying the rules above

@@ -503,6 +503,21 @@ Id Builder::makeSampledImageType(Id imageType)
     return type->getResultId();
 }
 
+#ifdef NV_EXTENSIONS
+Id Builder::makeAccelerationStructureNVType()
+{
+    Instruction *type;
+    if (groupedTypes[OpTypeAccelerationStructureNVX].size() == 0) {
+        type = new Instruction(getUniqueId(), NoType, OpTypeAccelerationStructureNVX);
+        constantsTypesGlobals.push_back(std::unique_ptr<Instruction>(type));
+        module.mapInstruction(type);
+    } else {
+        type = groupedTypes[OpTypeAccelerationStructureNVX].back();
+    }
+
+    return type->getResultId();
+}
+#endif
 Id Builder::getDerefTypeId(Id resultId) const
 {
     Id typeId = getTypeId(resultId);
@@ -1377,7 +1392,7 @@ void Builder::createNoResultOp(Op opCode, Id operand)
     buildPoint->addInstruction(std::unique_ptr<Instruction>(op));
 }
 
-// An opcode that has multiple operands, no result id, and no type
+// An opcode that has one or more operands, no result id, and no type
 void Builder::createNoResultOp(Op opCode, const std::vector<Id>& operands)
 {
     Instruction* op = new Instruction(opCode);
@@ -1654,6 +1669,13 @@ Id Builder::createTextureCall(Decoration precision, Id resultType, bool sparse, 
     if (parameters.component != NoResult)
         texArgs[numArgs++] = parameters.component;
 
+#ifdef NV_EXTENSIONS
+    if (parameters.granularity != NoResult)
+        texArgs[numArgs++] = parameters.granularity;
+    if (parameters.coarse != NoResult)
+        texArgs[numArgs++] = parameters.coarse;
+#endif 
+
     //
     // Set up the optional arguments
     //
@@ -1725,6 +1747,10 @@ Id Builder::createTextureCall(Decoration precision, Id resultType, bool sparse, 
             opCode = OpImageSparseFetch;
         else
             opCode = OpImageFetch;
+#ifdef NV_EXTENSIONS
+    } else if (parameters.granularity && parameters.coarse) {
+        opCode = OpImageSampleFootprintNV;
+#endif
     } else if (gather) {
         if (parameters.Dref)
             if (sparse)

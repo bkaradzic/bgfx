@@ -691,11 +691,24 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["__explicitInterpAMD"] =     EXPLICITINTERPAMD;
 #endif
     (*KeywordMap)["centroid"] =                CENTROID;
+#ifdef NV_EXTENSIONS
+    (*KeywordMap)["pervertexNV"] =             PERVERTEXNV;
+#endif
     (*KeywordMap)["precise"] =                 PRECISE;
     (*KeywordMap)["invariant"] =               INVARIANT;
     (*KeywordMap)["packed"] =                  PACKED;
     (*KeywordMap)["resource"] =                RESOURCE;
     (*KeywordMap)["superp"] =                  SUPERP;
+
+#ifdef NV_EXTENSIONS
+    (*KeywordMap)["rayPayloadNVX"] =            PAYLOADNV;
+    (*KeywordMap)["rayPayloadInNVX"] =          PAYLOADINNV;
+    (*KeywordMap)["hitAttributeNVX"] =          HITATTRNV;
+    (*KeywordMap)["accelerationStructureNVX"] = ACCSTRUCTNV;
+    (*KeywordMap)["perprimitiveNV"] =          PERPRIMITIVENV;
+    (*KeywordMap)["perviewNV"] =               PERVIEWNV;
+    (*KeywordMap)["taskNV"] =                  PERTASKNV;
+#endif
 
     ReservedSet = new std::unordered_set<const char*, str_hash, str_eq>;
 
@@ -934,6 +947,18 @@ int TScanContext::tokenizeIdentifier()
             (parseContext.profile != EEsProfile && parseContext.version < 430))
             return identifierOrType();
         return keyword;
+
+#ifdef NV_EXTENSIONS
+    case PAYLOADNV:
+    case PAYLOADINNV:
+    case HITATTRNV:
+    case ACCSTRUCTNV:
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            (parseContext.profile != EEsProfile && parseContext.version >= 460
+                 && parseContext.extensionTurnedOn(E_GL_NVX_raytracing)))
+            return keyword;
+        return identifierOrType();
+#endif
 
     case ATOMIC_UINT:
         if ((parseContext.profile == EEsProfile && parseContext.version >= 310) ||
@@ -1507,6 +1532,15 @@ int TScanContext::tokenizeIdentifier()
         return identifierOrType();
 #endif
 
+#ifdef NV_EXTENSIONS
+    case PERVERTEXNV:
+        if (((parseContext.profile != EEsProfile && parseContext.version >= 450) ||
+            (parseContext.profile == EEsProfile && parseContext.version >= 320)) &&
+            parseContext.extensionTurnedOn(E_GL_NV_fragment_shader_barycentric))
+            return keyword;
+        return identifierOrType();
+#endif
+
     case FLAT:
         if (parseContext.profile == EEsProfile && parseContext.version < 300)
             reservedWord();
@@ -1552,6 +1586,16 @@ int TScanContext::tokenizeIdentifier()
         bool reserved = parseContext.profile == EEsProfile || parseContext.version >= 130;
         return identifierOrReserved(reserved);
     }
+
+#ifdef NV_EXTENSIONS
+    case PERPRIMITIVENV:
+    case PERVIEWNV:
+    case PERTASKNV:
+        if (parseContext.profile != EEsProfile &&
+            (parseContext.version >= 450 || parseContext.extensionTurnedOn(E_GL_NV_mesh_shader)))
+            return keyword;
+        return identifierOrType();
+#endif
 
     default:
         parseContext.infoSink.info.message(EPrefixInternalError, "Unknown glslang keyword", loc);

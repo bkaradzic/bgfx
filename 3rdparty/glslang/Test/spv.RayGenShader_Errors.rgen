@@ -1,0 +1,40 @@
+#version 460
+#extension GL_NVX_raytracing : enable
+hitAttributeNVX vec4 payload;                               // ERROR, hitattributeNVX unsupported in this stage 
+rayPayloadInNVX vec4 payloadIn;                             // ERROR, rayPayloadIn unsupported in this stage
+layout(shaderRecordNVX) uniform ublock                      // ERROR, shaderRecordNVX unsupported on uniform blocks
+{
+    float a;
+};
+layout(binding = 0, shaderRecordNVX) buffer bblock {        // ERROR, binding unsupported on shaderRecordNVX blocks
+    float b;
+};
+layout(set = 0, shaderRecordNVX) buffer bblock2 {           // ERROR, set unsupported on shaderRecordNVX blocks
+    float c;
+};
+layout(shaderRecordNVX) buffer bblock3 {
+    float d;
+};
+layout(shaderRecordNVX) buffer bblock4 {                    // ERROR, cannot have more than one shaderRecordNVX block
+    float e;
+};
+void main()
+{
+    accelerationStructureNVX a = 0;
+    int e0 = gl_PrimitiveID;                                // ERROR, unsupported builtin in stage
+    int e1 = gl_InstanceID;                                 // ERROR, unsupported builtin in stage
+    int e3 = gl_InstanceCustomIndexNVX;                     // ERROR, unsupported builtin in stage
+    vec3 e4 = gl_WorldRayOriginNVX;                         // ERROR, unsupported builtin in stage
+    vec3 e5 = gl_WorldRayDirectionNVX;                      // ERROR, unsupported builtin in stage
+    vec3 e6 = gl_ObjectRayOriginNVX;                        // ERROR, unsupported builtin in stage
+    vec3 e7 = gl_ObjectRayDirectionNVX;                     // ERROR, unsupported builtin in stage
+    float e8 = gl_RayTminNVX;                               // ERROR, unsupported builtin in stage
+    float e9 = gl_RayTmaxNVX;                               // ERROR, unsupported builtin in stage
+    mat4x3 e10 = gl_ObjectToWorldNVX;                       // ERROR, unsupported builtin in stage
+    mat4x3 e11 = gl_WorldToObjectNVX;                       // ERROR, unsupported builtin in stage
+    float e12 = gl_HitTNVX;                                 // ERROR, unsupported builtin in stage
+    float e13 = gl_HitKindNVX;                              // ERROR, unsupported builtin in stage
+    reportIntersectionNVX(1.0, 1U);                         // ERROR, unsupported builtin in stage
+    ignoreIntersectionNVX();                                // ERROR, unsupported builtin in stage
+    terminateRayNVX();                                      // ERROR, unsupported builtin in stage
+}

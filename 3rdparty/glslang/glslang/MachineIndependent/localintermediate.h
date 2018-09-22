@@ -206,6 +206,17 @@ class TSymbolTable;
 class TSymbol;
 class TVariable;
 
+#ifdef NV_EXTENSIONS
+//
+// Texture and Sampler transformation mode.
+//
+enum ComputeDerivativeMode {
+    LayoutDerivativeNone,         // default layout as SPV_NV_compute_shader_derivatives not enabled
+    LayoutDerivativeGroupQuads,   // derivative_group_quadsNV
+    LayoutDerivativeGroupLinear,  // derivative_group_linearNV
+};
+#endif
+
 //
 // Set of helper functions to help parse and build the tree.
 //
@@ -225,6 +236,10 @@ public:
 #ifdef NV_EXTENSIONS
         layoutOverrideCoverage(false),
         geoPassthroughEXT(false),
+        numShaderRecordNVBlocks(0),
+        computeDerivativeMode(LayoutDerivativeNone),
+        primitives(TQualifier::layoutNotSet),
+        numTaskNVBlocks(0),
 #endif
         autoMapBindings(false),
         autoMapLocations(false),
@@ -415,6 +430,11 @@ public:
     int getNumEntryPoints() const { return numEntryPoints; }
     int getNumErrors() const { return numErrors; }
     void addPushConstantCount() { ++numPushConstants; }
+#ifdef NV_EXTENSIONS
+    void addShaderRecordNVCount() { ++numShaderRecordNVBlocks; }
+    void addTaskNVCount() { ++numTaskNVBlocks; }
+#endif
+
     bool isRecursive() const { return recursive; }
 
     TIntermSymbol* addSymbol(const TVariable&);
@@ -622,6 +642,16 @@ public:
     bool getLayoutOverrideCoverage() const { return layoutOverrideCoverage; }
     void setGeoPassthroughEXT() { geoPassthroughEXT = true; }
     bool getGeoPassthroughEXT() const { return geoPassthroughEXT; }
+    void setLayoutDerivativeMode(ComputeDerivativeMode mode) { computeDerivativeMode = mode; }
+    ComputeDerivativeMode getLayoutDerivativeModeNone() const { return computeDerivativeMode; }
+    bool setPrimitives(int m)
+    {
+        if (primitives != TQualifier::layoutNotSet)
+            return primitives == m;
+        primitives = m;
+        return true;
+    }
+    int getPrimitives() const { return primitives; }
 #endif
 
     const char* addSemanticName(const TString& name)
@@ -725,6 +755,10 @@ protected:
 #ifdef NV_EXTENSIONS
     bool layoutOverrideCoverage;
     bool geoPassthroughEXT;
+    int numShaderRecordNVBlocks;
+    ComputeDerivativeMode computeDerivativeMode;
+    int primitives;
+    int numTaskNVBlocks;
 #endif
 
     // Base shift values

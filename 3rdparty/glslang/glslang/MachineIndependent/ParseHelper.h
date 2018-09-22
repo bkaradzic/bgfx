@@ -298,8 +298,8 @@ public:
     void fixIoArraySize(const TSourceLoc&, TType&);
     void ioArrayCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void handleIoResizeArrayAccess(const TSourceLoc&, TIntermTyped* base);
-    void checkIoArraysConsistency(const TSourceLoc&, bool tailOnly = false);
-    int getIoArrayImplicitSize() const;
+    void checkIoArraysConsistency(const TSourceLoc&, bool tailOnly = false, bool isPerPrimitive = false);
+    int getIoArrayImplicitSize(bool isPerPrimitive = false) const;
     void checkIoArrayConsistency(const TSourceLoc&, int requiredSize, const char* feature, TType&, const TString&);
 
     TIntermTyped* handleBinaryMath(const TSourceLoc&, const char* str, TOperator op, TIntermTyped* left, TIntermTyped* right);
@@ -348,6 +348,9 @@ public:
     void boolCheck(const TSourceLoc&, const TPublicType&);
     void samplerCheck(const TSourceLoc&, const TType&, const TString& identifier, TIntermTyped* initializer);
     void atomicUintCheck(const TSourceLoc&, const TType&, const TString& identifier);
+#ifdef NV_EXTENSIONS
+    void accStructNVCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
+#endif
     void transparentOpaqueCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void memberQualifierCheck(glslang::TPublicType&);
     void globalQualifierFixCheck(const TSourceLoc&, TQualifier&);
@@ -423,6 +426,9 @@ public:
     // Determine loop control from attributes
     void handleLoopAttributes(const TAttributes& attributes, TIntermNode*);
 
+#ifdef NV_EXTENSIONS
+    void resizeMeshViewDimension(const TSourceLoc&, TType&);
+#endif
 protected:
     void nonInitConstCheck(const TSourceLoc&, TString& identifier, TType& type);
     void inheritGlobalDefaults(TQualifier& dst) const;

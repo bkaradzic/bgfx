@@ -1,0 +1,19 @@
+#version 460
+#extension GL_NVX_raytracing : enable
+layout(binding = 0, set = 0) uniform accelerationStructureNVX accNV;
+layout(location = 0) rayPayloadNVX vec4 payload;
+layout(shaderRecordNVX) buffer block
+{
+	float arr[4];
+	vec4 pad;
+};
+void main()
+{
+    uint lx = gl_LaunchIDNVX.x;
+    uint ly = gl_LaunchIDNVX.y;
+    uint sx = gl_LaunchSizeNVX.x;
+    uint sy = gl_LaunchSizeNVX.y;
+    traceNVX(accNV, lx, ly, sx, sy, 0u, vec3(0.0f), 0.5f, vec3(1.0f), 0.75f, 1);
+    arr[3] = 1.0f;
+    pad = payload;
+}
