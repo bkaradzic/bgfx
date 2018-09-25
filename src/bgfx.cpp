@@ -4682,71 +4682,136 @@ namespace bgfx
 {
 	struct CallbackC99 : public CallbackI
 	{
+		CallbackC99(bgfx_callback_interface_t * cb)
+		{
+			struct stub {
+				static void destructor(void *ud) {
+					BX_UNUSED(ud);
+				}
+				static void fatal(void* ud, const char* _filePath, uint16_t _line, bgfx_fatal_t _code, const char* _str) {
+					BX_UNUSED(ud, _filePath, _line, _code, _str);
+				}
+				static void trace_vargs(void* ud, const char* _filePath, uint16_t _line, const char* _format, va_list _argList) {
+					BX_UNUSED(ud, _filePath, _line, _format, _argList);
+				}
+				static void profiler_begin(void* ud, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) {
+					BX_UNUSED(ud, _name, _abgr, _filePath, _line);
+				}
+				static void profiler_begin_literal(void* ud, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) {
+					BX_UNUSED(ud, _name, _abgr, _filePath, _line);
+				}
+				static void profiler_end(void* ud) {
+					BX_UNUSED(ud);
+				}
+				static uint32_t cache_read_size(void* ud, uint64_t _id) {
+					BX_UNUSED(ud, _id);
+					return 0;
+				}
+				static bool cache_read(void* ud, uint64_t _id, void* _data, uint32_t _size) {
+					BX_UNUSED(ud, _id, _data, _size);
+					return false;
+				}
+				static void cache_write(void* ud, uint64_t _id, const void* _data, uint32_t _size) {
+					BX_UNUSED(ud, _id, _data, _size);
+				}
+				static void screen_shot(void* ud, const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) {
+					BX_UNUSED(ud, _filePath, _width, _height, _pitch, _data, _size, _yflip);
+				}
+				static void capture_begin(void* ud, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip) {
+					BX_UNUSED(ud, _width, _height, _pitch, _format, _yflip);
+				}
+				static void capture_end(void* ud) {
+					BX_UNUSED(ud);
+				}
+				static void capture_frame(void* ud, const void* _data, uint32_t _size) {
+					BX_UNUSED(ud, _data, _size);
+				}
+			};
+
+			m_interface.ud = cb->ud;
+#define COPY_CALLBACK(api_name) m_interface.api_name = cb->api_name ? cb->api_name : stub::api_name;
+			COPY_CALLBACK(destructor)
+			COPY_CALLBACK(fatal)
+			COPY_CALLBACK(trace_vargs)
+			COPY_CALLBACK(profiler_begin)
+			COPY_CALLBACK(profiler_begin_literal)
+			COPY_CALLBACK(profiler_end)
+			COPY_CALLBACK(cache_read_size)
+			COPY_CALLBACK(cache_read)
+			COPY_CALLBACK(cache_write)
+			COPY_CALLBACK(screen_shot)
+			COPY_CALLBACK(capture_begin)
+			COPY_CALLBACK(capture_end)
+			COPY_CALLBACK(capture_frame)
+#undef COPY_CALLBACK
+		}
+
 		virtual ~CallbackC99()
 		{
+			m_interface.destructor(m_interface.ud);
 		}
 
 		virtual void fatal(const char* _filePath, uint16_t _line, Fatal::Enum _code, const char* _str) override
 		{
-			m_interface->vtbl->fatal(m_interface, _filePath, _line, (bgfx_fatal_t)_code, _str);
+			m_interface.fatal(m_interface.ud, _filePath, _line, (bgfx_fatal_t)_code, _str);
 		}
 
 		virtual void traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList) override
 		{
-			m_interface->vtbl->trace_vargs(m_interface, _filePath, _line, _format, _argList);
+			m_interface.trace_vargs(m_interface.ud, _filePath, _line, _format, _argList);
 		}
 
 		virtual void profilerBegin(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override
 		{
-			m_interface->vtbl->profiler_begin(m_interface, _name, _abgr, _filePath, _line);
+			m_interface.profiler_begin(m_interface.ud, _name, _abgr, _filePath, _line);
 		}
 
 		virtual void profilerBeginLiteral(const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line) override
 		{
-			m_interface->vtbl->profiler_begin_literal(m_interface, _name, _abgr, _filePath, _line);
+			m_interface.profiler_begin_literal(m_interface.ud, _name, _abgr, _filePath, _line);
 		}
 
 		virtual void profilerEnd() override
 		{
-			m_interface->vtbl->profiler_end(m_interface);
+			m_interface.profiler_end(m_interface.ud);
 		}
 
 		virtual uint32_t cacheReadSize(uint64_t _id) override
 		{
-			return m_interface->vtbl->cache_read_size(m_interface, _id);
+			return m_interface.cache_read_size(m_interface.ud, _id);
 		}
 
 		virtual bool cacheRead(uint64_t _id, void* _data, uint32_t _size) override
 		{
-			return m_interface->vtbl->cache_read(m_interface, _id, _data, _size);
+			return m_interface.cache_read(m_interface.ud, _id, _data, _size);
 		}
 
 		virtual void cacheWrite(uint64_t _id, const void* _data, uint32_t _size) override
 		{
-			m_interface->vtbl->cache_write(m_interface, _id, _data, _size);
+			m_interface.cache_write(m_interface.ud, _id, _data, _size);
 		}
 
 		virtual void screenShot(const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip) override
 		{
-			m_interface->vtbl->screen_shot(m_interface, _filePath, _width, _height, _pitch, _data, _size, _yflip);
+			m_interface.screen_shot(m_interface.ud, _filePath, _width, _height, _pitch, _data, _size, _yflip);
 		}
 
 		virtual void captureBegin(uint32_t _width, uint32_t _height, uint32_t _pitch, TextureFormat::Enum _format, bool _yflip) override
 		{
-			m_interface->vtbl->capture_begin(m_interface, _width, _height, _pitch, (bgfx_texture_format_t)_format, _yflip);
+			m_interface.capture_begin(m_interface.ud, _width, _height, _pitch, (bgfx_texture_format_t)_format, _yflip);
 		}
 
 		virtual void captureEnd() override
 		{
-			m_interface->vtbl->capture_end(m_interface);
+			m_interface.capture_end(m_interface.ud);
 		}
 
 		virtual void captureFrame(const void* _data, uint32_t _size) override
 		{
-			m_interface->vtbl->capture_frame(m_interface, _data, _size);
+			m_interface.capture_frame(m_interface.ud, _data, _size);
 		}
 
-		bgfx_callback_interface_t* m_interface;
+		bgfx_callback_interface_t m_interface;
 	};
 
 	class AllocatorC99 : public bx::AllocatorI
@@ -4754,14 +4819,17 @@ namespace bgfx
 	public:
 		virtual ~AllocatorC99()
 		{
+			if (m_interface.destructor) {
+				m_interface.destructor(m_interface.ud);
+			}
 		}
 
 		virtual void* realloc(void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line) override
 		{
-			return m_interface->vtbl->realloc(m_interface, _ptr, _size, _align, _file, _line);
+			return m_interface.realloc(m_interface.ud, _ptr, _size, _align, _file, _line);
 		}
 
-		bgfx_allocator_interface_t* m_interface;
+		bgfx_allocator_interface_t m_interface;
 	};
 
 } // namespace bgfx
@@ -4871,15 +4939,14 @@ BGFX_C_API bool bgfx_init(const bgfx_init_t* _init)
 
 	if (init.callback != NULL)
 	{
-		static bgfx::CallbackC99 s_callback;
-		s_callback.m_interface = init.callback;
+		static bgfx::CallbackC99 s_callback(init.callback);
 		init.callback = reinterpret_cast<bgfx_callback_interface_t *>(&s_callback);
 	}
 
 	if (init.allocator != NULL)
 	{
 		static bgfx::AllocatorC99 s_allocator;
-		s_allocator.m_interface = init.allocator;
+		s_allocator.m_interface = *init.allocator;
 		init.allocator = reinterpret_cast<bgfx_allocator_interface_t *>(&s_allocator);
 	}
 
