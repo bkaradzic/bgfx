@@ -3312,6 +3312,8 @@ namespace bgfx
 	void Encoder::blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
+		BGFX_CHECK_HANDLE("blit/src TextureHandle", s_ctx->m_textureHandle, _src);
+		BGFX_CHECK_HANDLE("blit/dst TextureHandle", s_ctx->m_textureHandle, _dst);
 		const Context::TextureRef& src = s_ctx->m_textureRef[_src.idx];
 		const Context::TextureRef& dst = s_ctx->m_textureRef[_dst.idx];
 		BX_CHECK(src.m_format == dst.m_format
