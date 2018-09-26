@@ -152,6 +152,7 @@ namespace bgfx
 		bool preferFlowControl;
 		bool backwardsCompatibility;
 		bool warningsAreErrors;
+		bool keepIntermediate;
 
 		bool optimize;
 		uint32_t optimizationLevel;

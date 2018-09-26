@@ -168,6 +168,7 @@ namespace bgfx
 		, preferFlowControl(false)
 		, backwardsCompatibility(false)
 		, warningsAreErrors(false)
+		, keepIntermediate(false)
 		, optimize(false)
 		, optimizationLevel(3)
 	{
@@ -192,6 +193,7 @@ namespace bgfx
 			"\t  preferFlowControl: %s\n"
 			"\t  backwardsCompatibility: %s\n"
 			"\t  warningsAreErrors: %s\n"
+			"\t  keepIntermediate: %s\n"
 			"\t  optimize: %s\n"
 			"\t  optimizationLevel: %d\n"
 
@@ -211,6 +213,7 @@ namespace bgfx
 			, preferFlowControl ? "true" : "false"
 			, backwardsCompatibility ? "true" : "false"
 			, warningsAreErrors ? "true" : "false"
+			, keepIntermediate ? "true" : "false"
 			, optimize ? "true" : "false"
 			, optimizationLevel
 			);
@@ -2272,14 +2275,15 @@ namespace bgfx
 			options.profile = profile;
 		}
 
-		{	// hlsl only
-			options.debugInformation = cmdLine.hasArg('\0', "debug");
-			options.avoidFlowControl = cmdLine.hasArg('\0', "avoid-flow-control");
-			options.noPreshader = cmdLine.hasArg('\0', "no-preshader");
-			options.partialPrecision = cmdLine.hasArg('\0', "partial-precision");
-			options.preferFlowControl = cmdLine.hasArg('\0', "prefer-flow-control");
+		{
+			options.debugInformation       = cmdLine.hasArg('\0', "debug");
+			options.avoidFlowControl       = cmdLine.hasArg('\0', "avoid-flow-control");
+			options.noPreshader            = cmdLine.hasArg('\0', "no-preshader");
+			options.partialPrecision       = cmdLine.hasArg('\0', "partial-precision");
+			options.preferFlowControl      = cmdLine.hasArg('\0', "prefer-flow-control");
 			options.backwardsCompatibility = cmdLine.hasArg('\0', "backwards-compatibility");
-			options.warningsAreErrors = cmdLine.hasArg('\0', "Werror");
+			options.warningsAreErrors      = cmdLine.hasArg('\0', "Werror");
+			options.keepIntermediate       = cmdLine.hasArg('\0', "keep-intermediate");
 
 			uint32_t optimization = 3;
 			if (cmdLine.hasArg(optimization, 'O') )
