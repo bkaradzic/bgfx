@@ -471,6 +471,7 @@ namespace bgfx { namespace mtl
 			retain(m_device);
 			m_metalLayer.device      = m_device;
 			m_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+			m_metalLayer.magnificationFilter = kCAFilterNearest;
 
 			m_cmd.init(m_device);
 			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
