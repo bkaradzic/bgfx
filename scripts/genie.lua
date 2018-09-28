@@ -388,7 +388,20 @@ end
 dofile "bgfx.lua"
 
 group "libs"
-bgfxProject("", "StaticLib", {})
+
+local function split_define(str)
+	local ret = {}
+	if str then
+		for v in string.gmatch(str, "%S+") do
+			table.insert(ret, v)
+		end
+	end
+	return ret
+end
+
+local userdefines = split_define(os.getenv("BGFX_DEFINES") or "")
+
+bgfxProject("", "StaticLib", userdefines)
 
 dofile(path.join(BX_DIR,   "scripts/bx.lua"))
 dofile(path.join(BIMG_DIR, "scripts/bimg.lua"))
@@ -458,7 +471,7 @@ end
 
 if _OPTIONS["with-shared-lib"] then
 	group "libs"
-	bgfxProject("-shared-lib", "SharedLib", {})
+	bgfxProject("-shared-lib", "SharedLib", userdefines)
 end
 
 if _OPTIONS["with-tools"] then
