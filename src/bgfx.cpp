@@ -4047,7 +4047,7 @@ namespace bgfx
 			, "Invalid texture format for color (%s)."
 			, bimg::getName(bimg::TextureFormat::Enum(_format) )
 			);
-		BX_CHECK(_format == TextureFormat::Count || bimg::isDepth(bimg::TextureFormat::Enum(_depthFormat) )
+		BX_CHECK(_depthFormat == TextureFormat::Count || bimg::isDepth(bimg::TextureFormat::Enum(_depthFormat) )
 			, "Invalid texture format for depth (%s)."
 			, bimg::getName(bimg::TextureFormat::Enum(_depthFormat) )
 			);
