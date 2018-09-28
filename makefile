@@ -23,8 +23,12 @@ endif
 
 # $(info $(OS))
 
+ifneq ($(DEFINE),)
+GENIEDEFINE=--define="$(DEFINE)"
+endif
+
 BX_DIR?=../bx
-GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie
+GENIE?=$(BX_DIR)/tools/bin/$(OS)/genie $(GENIEDEFINE)
 NINJA?=$(BX_DIR)/tools/bin/$(OS)/ninja
 
 .PHONY: help
