@@ -156,8 +156,8 @@ namespace bgfx
 		{ 0, 0 }, // FIRSTBIT_HI
 		{ 0, 0 }, // FIRSTBIT_LO
 		{ 0, 0 }, // FIRSTBIT_SHI
-		{ 0, 0 }, // UBFE
-		{ 0, 0 }, // IBFE
+		{ 4, 0 }, // UBFE
+		{ 4, 0 }, // IBFE
 		{ 5, 0 }, // BFI
 		{ 0, 0 }, // BFREV
 		{ 5, 0 }, // SWAPC
