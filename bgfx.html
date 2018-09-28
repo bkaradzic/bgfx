@@ -2597,9 +2597,17 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <h3>Encoder<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>API for multi-threaded submission.</p>
 <dl class="function">
-<dt id="_CPPv2N4bgfx5beginEv">
-<span id="bgfx::begin"></span><span class="target" id="namespacebgfx_1ad9800f61a086fe35076e141c1198fc80"></span><a class="reference internal" href="#_CPPv2N4bgfx7EncoderE" title="bgfx::Encoder">Encoder</a> *<code class="descclassname">bgfx::</code><code class="descname">begin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5beginEv" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx5beginEb">
+<span id="bgfx::begin__b"></span><span class="target" id="namespacebgfx_1ab17077b57dbb5f1aba9911aca555d100"></span><a class="reference internal" href="#_CPPv2N4bgfx7EncoderE" title="bgfx::Encoder">Encoder</a> *<code class="descclassname">bgfx::</code><code class="descname">begin</code><span class="sig-paren">(</span>bool <em>_forThread</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx5beginEb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Begin submitting draw calls from thread. </p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_forThread</span></code>: Explicitly request an encoder for a worker thread. </li>
+</ul>
+</dd>
+</dl>
+</p>
 </dd></dl>
 
 <dl class="function">
@@ -2611,7 +2619,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dl class="class">
 <dt id="_CPPv2N4bgfx7EncoderE">
 <span id="bgfx::Encoder"></span><span class="target" id="structbgfx_1_1_encoder"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Encoder</code><a class="headerlink" href="#_CPPv2N4bgfx7EncoderE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encoders are used for submitting draw calls from multiple threads. Only one encoder per thread should be used. Use <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1ad9800f61a086fe35076e141c1198fc80"><span><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
+<dd><p>Encoders are used for submitting draw calls from multiple threads. Only one encoder per thread should be used. Use <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1ab17077b57dbb5f1aba9911aca555d100"><span><span class="pre">bgfx::begin()</span></span></a></code> to obtain an encoder for a thread. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder</span></code>. </dd>
@@ -5931,16 +5939,84 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+<dl class="class">
+<dt id="_CPPv2N4bgfx11TextureInfoE">
+<span id="bgfx::TextureInfo"></span><span class="target" id="structbgfx_1_1_texture_info"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TextureInfo</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfoE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture info. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_texture_info_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo6formatE">
+<span id="bgfx::TextureInfo::format__TextureFormat::Enum"></span><span class="target" id="structbgfx_1_1_texture_info_1ad0efbc4181697f7d6c56808be2f1e138"></span><a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <code class="descname">format</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo6formatE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture format. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo11storageSizeE">
+<span id="bgfx::TextureInfo::storageSize__uint32_t"></span><span class="target" id="structbgfx_1_1_texture_info_1a49ce6106d8eb4aa6b26f798c152b2d0d"></span>uint32_t <code class="descname">storageSize</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo11storageSizeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total amount of bytes required to store texture. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo5widthE">
+<span id="bgfx::TextureInfo::width__uint16_t"></span><span class="target" id="structbgfx_1_1_texture_info_1a5a9c554958a2d2d039bb3594ac87e5ab"></span>uint16_t <code class="descname">width</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo5widthE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture width. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo6heightE">
+<span id="bgfx::TextureInfo::height__uint16_t"></span><span class="target" id="structbgfx_1_1_texture_info_1aef88aff888246b3f26e8ce5eb59da546"></span>uint16_t <code class="descname">height</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo6heightE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture height. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo5depthE">
+<span id="bgfx::TextureInfo::depth__uint16_t"></span><span class="target" id="structbgfx_1_1_texture_info_1afe3fb6aa842fadafe389a396db8d6fb8"></span>uint16_t <code class="descname">depth</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo5depthE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture depth. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo9numLayersE">
+<span id="bgfx::TextureInfo::numLayers__uint16_t"></span><span class="target" id="structbgfx_1_1_texture_info_1adf5283a6c14310b4c57a6f64a357f7cd"></span>uint16_t <code class="descname">numLayers</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo9numLayersE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of layers in texture array. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo7numMipsE">
+<span id="bgfx::TextureInfo::numMips__uint8_t"></span><span class="target" id="structbgfx_1_1_texture_info_1a0c381eb6e68dd577a4cbcb5600b1b613"></span>uint8_t <code class="descname">numMips</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo7numMipsE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of MIP maps. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo12bitsPerPixelE">
+<span id="bgfx::TextureInfo::bitsPerPixel__uint8_t"></span><span class="target" id="structbgfx_1_1_texture_info_1a5696ec9eee2fcacaab72ab30081417ac"></span>uint8_t <code class="descname">bitsPerPixel</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo12bitsPerPixelE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format bits per pixel. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx11TextureInfo7cubeMapE">
+<span id="bgfx::TextureInfo::cubeMap__b"></span><span class="target" id="structbgfx_1_1_texture_info_1a74ae39231524ae3ddad50cf26fe0f07c"></span>bool <code class="descname">cubeMap</code><a class="headerlink" href="#_CPPv2N4bgfx11TextureInfo7cubeMapE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Texture is cubemap. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE">
-<span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.b.uint16_t.TextureFormat::Enum"></span><span class="target" id="namespacebgfx_1afad0573ceede40bc76bb9fe7c938655c"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span>TextureInfo &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::calcTextureSize__TextureInfoR.uint16_t.uint16_t.uint16_t.b.b.uint16_t.TextureFormat::Enum"></span><span class="target" id="namespacebgfx_1afad0573ceede40bc76bb9fe7c938655c"></span>void <code class="descclassname">bgfx::</code><code class="descname">calcTextureSize</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N4bgfx11TextureInfoE" title="bgfx::TextureInfo">TextureInfo</a> &amp;<em>_info</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint16_t <em>_depth</em>, bool <em>_cubeMap</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15calcTextureSizeER11TextureInfo8uint16_t8uint16_t8uint16_tbb8uint16_tN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate amount of memory required for texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_calc_texture_size</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_info</span></code>: Resulting texture info structure. </li>
+<li><code class="docutils literal"><span class="pre">_info</span></code>: Resulting texture info structure. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_info"><span><span class="pre">TextureInfo</span></span></a></code>. </li>
 <li><code class="docutils literal"><span class="pre">_width</span></code>: Width. </li>
 <li><code class="docutils literal"><span class="pre">_height</span></code>: Height. </li>
 <li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth dimension of volume texture. </li>
@@ -5956,7 +6032,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv2N4bgfx13createTextureEPK6Memory8uint64_t7uint8_tP11TextureInfo">
-<span id="bgfx::createTexture__MemoryCP.uint64_t.uint8_t.TextureInfoP"></span><span class="target" id="namespacebgfx_1a0d47613a70e82fb734b058f6a707cef5"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint64_t <em>_flags</em> = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, uint8_t <em>_skip</em> = 0, TextureInfo *<em>_info</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createTextureEPK6Memory8uint64_t7uint8_tP11TextureInfo" title="Permalink to this definition">¶</a></dt>
+<span id="bgfx::createTexture__MemoryCP.uint64_t.uint8_t.TextureInfoP"></span><span class="target" id="namespacebgfx_1a0d47613a70e82fb734b058f6a707cef5"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, uint64_t <em>_flags</em> = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE, uint8_t <em>_skip</em> = 0, <a class="reference internal" href="#_CPPv2N4bgfx11TextureInfoE" title="bgfx::TextureInfo">TextureInfo</a> *<em>_info</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx13createTextureEPK6Memory8uint64_t7uint8_tP11TextureInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create texture from memory buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
