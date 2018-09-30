@@ -450,15 +450,15 @@
 #define BGFX_CAPS_SWAP_CHAIN             UINT64_C(0x0000000000008000) //!< Multiple windows are supported.
 #define BGFX_CAPS_TEXTURE_2D_ARRAY       UINT64_C(0x0000000000010000) //!< 2D texture array is supported.
 #define BGFX_CAPS_TEXTURE_3D             UINT64_C(0x0000000000020000) //!< 3D textures are supported.
-#define BGFX_CAPS_TEXTURE_BLIT           UINT64_C(0x00000000000c0000) //!< Texture blit is supported.
-#define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000080000) //!< All texture compare modes are supported.
+#define BGFX_CAPS_TEXTURE_BLIT           UINT64_C(0x0000000000040000) //!< Texture blit is supported.
+#define BGFX_CAPS_TEXTURE_COMPARE_ALL    UINT64_C(0x0000000000180000) //!< All texture compare modes are supported.
 #define BGFX_CAPS_TEXTURE_COMPARE_LEQUAL UINT64_C(0x0000000000100000) //!< Texture compare less equal mode is supported.
 #define BGFX_CAPS_TEXTURE_CUBE_ARRAY     UINT64_C(0x0000000000200000) //!< Cubemap texture array is supported.
 #define BGFX_CAPS_TEXTURE_DIRECT_ACCESS  UINT64_C(0x0000000000400000) //!< CPU direct access to GPU texture memory.
 #define BGFX_CAPS_TEXTURE_READ_BACK      UINT64_C(0x0000000000800000) //!< Read-back texture is supported.
-#define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000000800000) //!< Vertex attribute half-float is supported.
-#define BGFX_CAPS_VERTEX_ATTRIB_UINT10   UINT64_C(0x0000000001000000) //!< Vertex attribute 10_10_10_2 is supported.
-#define BGFX_CAPS_VERTEX_ID              UINT64_C(0x0000000002000000) //!< Rendering with VertexID only is supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000001000000) //!< Vertex attribute half-float is supported.
+#define BGFX_CAPS_VERTEX_ATTRIB_UINT10   UINT64_C(0x0000000002000000) //!< Vertex attribute 10_10_10_2 is supported.
+#define BGFX_CAPS_VERTEX_ID              UINT64_C(0x0000000004000000) //!< Rendering with VertexID only is supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT16_C(0x0000) //!< Texture format is not supported.
