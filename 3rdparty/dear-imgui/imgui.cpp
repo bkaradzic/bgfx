@@ -8269,6 +8269,12 @@ const ImGuiPayload* ImGui::AcceptDragDropPayload(const char* type, ImGuiDragDrop
     return &payload;
 }
 
+const ImGuiPayload* ImGui::GetDragDropPayload()
+{
+    ImGuiContext& g = *GImGui;
+    return g.DragDropActive ? &g.DragDropPayload : NULL;
+}
+
 // We don't really use/need this now, but added it for the sake of consistency and because we might need it later.
 void ImGui::EndDragDropTarget()
 {
