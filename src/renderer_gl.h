@@ -1329,6 +1329,7 @@ namespace bgfx { namespace gl
 		void destroy();
 		void init();
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
+		void unbindInstanceData() const;
 
 		void bindAttributesBegin()
 		{
