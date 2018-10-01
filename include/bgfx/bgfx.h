@@ -422,6 +422,8 @@ namespace bgfx
 		/// It's not safe to continue (Exluding _code `Fatal::DebugCheck`),
 		/// inform the user and terminate the application.
 		///
+		/// @param[in] _filePath File path where fatal message was generated.
+		/// @param[in] _line Line where fatal message was generated.
 		/// @param[in] _code Fatal error code.
 		/// @param[in] _str More information about error.
 		///
@@ -642,7 +644,8 @@ namespace bgfx
 		bool debug;   //!< Enable device for debuging.
 		bool profile; //!< Enable device for profiling.
 
-		Resolution resolution; //!< Backbuffer resolution and reset parameters.
+		/// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
+		Resolution resolution;
 
 		struct Limits
 		{
