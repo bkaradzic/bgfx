@@ -243,8 +243,8 @@
 
 <dl class="member">
 <dt id="_CPPv2N4bgfx4Init10resolutionE">
-<span id="bgfx::Init::resolution__Resolution"></span><span class="target" id="structbgfx_1_1_init_1a12f9e2f7f7a8514e1bd58a8aee137b1a"></span>Resolution <code class="descname">resolution</code><a class="headerlink" href="#_CPPv2N4bgfx4Init10resolutionE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Backbuffer resolution and reset parameters. </p>
+<span id="bgfx::Init::resolution__Resolution"></span><span class="target" id="structbgfx_1_1_init_1a12f9e2f7f7a8514e1bd58a8aee137b1a"></span><a class="reference internal" href="#_CPPv2N4bgfx10ResolutionE" title="bgfx::Resolution">Resolution</a> <code class="descname">resolution</code><a class="headerlink" href="#_CPPv2N4bgfx4Init10resolutionE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backbuffer resolution and reset parameters. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_resolution"><span><span class="pre">bgfx::Resolution</span></span></a></code>. </p>
 </dd></dl>
 
 <dl class="member">
@@ -286,6 +286,50 @@
 </div>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N4bgfx10ResolutionE">
+<span id="bgfx::Resolution"></span><span class="target" id="structbgfx_1_1_resolution"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Resolution</code><a class="headerlink" href="#_CPPv2N4bgfx10ResolutionE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backbuffer resolution and reset parameters. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_resolution_t</span></code>. </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Resolution6formatE">
+<span id="bgfx::Resolution::format__TextureFormat::Enum"></span><span class="target" id="structbgfx_1_1_resolution_1a3781358001b210ea4ca4118d9a9df6ce"></span><a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <code class="descname">format</code><a class="headerlink" href="#_CPPv2N4bgfx10Resolution6formatE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backbuffer format. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Resolution5widthE">
+<span id="bgfx::Resolution::width__uint32_t"></span><span class="target" id="structbgfx_1_1_resolution_1ad310354c75d3b7319ecfeb637b8755d6"></span>uint32_t <code class="descname">width</code><a class="headerlink" href="#_CPPv2N4bgfx10Resolution5widthE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backbuffer width. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Resolution6heightE">
+<span id="bgfx::Resolution::height__uint32_t"></span><span class="target" id="structbgfx_1_1_resolution_1a08cb2efb1e931b334bfbf376a8aa9198"></span>uint32_t <code class="descname">height</code><a class="headerlink" href="#_CPPv2N4bgfx10Resolution6heightE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backbuffer height. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Resolution5resetE">
+<span id="bgfx::Resolution::reset__uint32_t"></span><span class="target" id="structbgfx_1_1_resolution_1a312be1875802ea5a0b09aafb1f99e1cd"></span>uint32_t <code class="descname">reset</code><a class="headerlink" href="#_CPPv2N4bgfx10Resolution5resetE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset parameters. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Resolution15maxFrameLatencyE">
+<span id="bgfx::Resolution::maxFrameLatency__uint8_t"></span><span class="target" id="structbgfx_1_1_resolution_1a3e7f134dc8917547a41a83946311e4fe"></span>uint8_t <code class="descname">maxFrameLatency</code><a class="headerlink" href="#_CPPv2N4bgfx10Resolution15maxFrameLatencyE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum frame latency. </p>
+</dd></dl>
+
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -360,6 +404,8 @@
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_callback_vtbl.fatal</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_filePath</span></code>: File path where fatal message was generated. </li>
+<li><code class="docutils literal"><span class="pre">_line</span></code>: Line where fatal message was generated. </li>
 <li><code class="docutils literal"><span class="pre">_code</span></code>: Fatal error code. </li>
 <li><code class="docutils literal"><span class="pre">_str</span></code>: More information about error.</li>
 </ul>
@@ -3558,6 +3604,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </div>
 <div class="section" id="state-flags">
 <h4>State Flags<a class="headerlink" href="#state-flags" title="Permalink to this headline">¶</a></h4>
+<p><strong>Write</strong></p>
 <dl class="macro">
 <dt id="c.BGFX_STATE_WRITE_R">
 <span class="target" id="defines_8h_1af089d9292e8742a9bbc8f31e9959ac8f"></span><code class="descname">BGFX_STATE_WRITE_R</code><a class="headerlink" href="#c.BGFX_STATE_WRITE_R" title="Permalink to this definition">¶</a></dt>
@@ -3595,10 +3642,231 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Enable depth write. </p>
 </dd></dl>
 
+<p><strong>Depth Test</strong></p>
 <dl class="macro">
-<dt id="c.BGFX_STATE_DEFAULT">
-<span class="target" id="defines_8h_1a7f87ba52187999ca674a61ccc27170db"></span><code class="descname">BGFX_STATE_DEFAULT</code><a class="headerlink" href="#c.BGFX_STATE_DEFAULT" title="Permalink to this definition">¶</a></dt>
-<dd><p>Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored). </p>
+<dt id="c.BGFX_STATE_DEPTH_TEST_LESS">
+<span class="target" id="defines_8h_1a82f539526fd6c6bcd358183eadff8aee"></span><code class="descname">BGFX_STATE_DEPTH_TEST_LESS</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_LESS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Depth test state. When <code class="docutils literal"><span class="pre">BGFX_STATE_DEPTH_</span></code> is not specified depth test will be disabled. </p>
+<p>Enable depth test, less. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_LEQUAL">
+<span class="target" id="defines_8h_1a338abca053787cd01d39109b8e8a9af5"></span><code class="descname">BGFX_STATE_DEPTH_TEST_LEQUAL</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_LEQUAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, less or equal. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_EQUAL">
+<span class="target" id="defines_8h_1ad208b703e5d4b4f59b7ffffecf9c9c83"></span><code class="descname">BGFX_STATE_DEPTH_TEST_EQUAL</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_EQUAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, equal. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_GEQUAL">
+<span class="target" id="defines_8h_1a2242d82ed1763b25c407663565f77c5b"></span><code class="descname">BGFX_STATE_DEPTH_TEST_GEQUAL</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_GEQUAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, greater or equal. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_GREATER">
+<span class="target" id="defines_8h_1a73192746d5c1af9691a62ff933b8dcc4"></span><code class="descname">BGFX_STATE_DEPTH_TEST_GREATER</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_GREATER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, greater. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_NOTEQUAL">
+<span class="target" id="defines_8h_1a3fee8e3c5e964b83de7ccc48f2c622f9"></span><code class="descname">BGFX_STATE_DEPTH_TEST_NOTEQUAL</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_NOTEQUAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, not equal. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_NEVER">
+<span class="target" id="defines_8h_1af07451bb52a9a7cdac6f7866eb8d3be8"></span><code class="descname">BGFX_STATE_DEPTH_TEST_NEVER</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_NEVER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, never. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_DEPTH_TEST_ALWAYS">
+<span class="target" id="defines_8h_1a68a8a92967cc243e2709f9c847161944"></span><code class="descname">BGFX_STATE_DEPTH_TEST_ALWAYS</code><a class="headerlink" href="#c.BGFX_STATE_DEPTH_TEST_ALWAYS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable depth test, always. </p>
+</dd></dl>
+
+<p><strong>Blend Mode</strong></p>
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_ZERO">
+<span class="target" id="defines_8h_1a83c6a122447a96a550121522d24bffd0"></span><code class="descname">BGFX_STATE_BLEND_ZERO</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_ZERO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use BGFX_STATE_BLEND_FUNC(_src, _dst) or BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA) helper macros. </p>
+<p>0, 0, 0, 0 </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_ONE">
+<span class="target" id="defines_8h_1a4c95af5b187ce05923cace405c675ca7"></span><code class="descname">BGFX_STATE_BLEND_ONE</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_ONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>1, 1, 1, 1 </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_SRC_COLOR">
+<span class="target" id="defines_8h_1aa47f521f6912a95bb27f9d88301a69f1"></span><code class="descname">BGFX_STATE_BLEND_SRC_COLOR</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_SRC_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rs, Gs, Bs, As. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_INV_SRC_COLOR">
+<span class="target" id="defines_8h_1abde93bba126cc742dc4fdc7044b25578"></span><code class="descname">BGFX_STATE_BLEND_INV_SRC_COLOR</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_INV_SRC_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>1-Rs, 1-Gs, 1-Bs, 1-As </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_SRC_ALPHA">
+<span class="target" id="defines_8h_1a1b45f14c0d16f731be0c09aeb480ca48"></span><code class="descname">BGFX_STATE_BLEND_SRC_ALPHA</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_SRC_ALPHA" title="Permalink to this definition">¶</a></dt>
+<dd><p>As, As, As, As. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_INV_SRC_ALPHA">
+<span class="target" id="defines_8h_1a5a97ef785bca9f4b8dbac77918487ced"></span><code class="descname">BGFX_STATE_BLEND_INV_SRC_ALPHA</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_INV_SRC_ALPHA" title="Permalink to this definition">¶</a></dt>
+<dd><p>1-As, 1-As, 1-As, 1-As </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_DST_ALPHA">
+<span class="target" id="defines_8h_1a706fd845bc836aa9ffe4559765bb9610"></span><code class="descname">BGFX_STATE_BLEND_DST_ALPHA</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_DST_ALPHA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ad, Ad, Ad, Ad. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_INV_DST_ALPHA">
+<span class="target" id="defines_8h_1a58d78040bf888a9612a1c4e1cf9c21a6"></span><code class="descname">BGFX_STATE_BLEND_INV_DST_ALPHA</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_INV_DST_ALPHA" title="Permalink to this definition">¶</a></dt>
+<dd><p>1-Ad, 1-Ad, 1-Ad ,1-Ad </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_DST_COLOR">
+<span class="target" id="defines_8h_1a7391b64b51d2b74c3c2ad517d2f6d4ff"></span><code class="descname">BGFX_STATE_BLEND_DST_COLOR</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_DST_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rd, Gd, Bd, Ad. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_INV_DST_COLOR">
+<span class="target" id="defines_8h_1ac502ca5c583f0702a8c20405ca4f49cc"></span><code class="descname">BGFX_STATE_BLEND_INV_DST_COLOR</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_INV_DST_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>1-Rd, 1-Gd, 1-Bd, 1-Ad </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_SRC_ALPHA_SAT">
+<span class="target" id="defines_8h_1a6177100a26b919276943bf3a524820ca"></span><code class="descname">BGFX_STATE_BLEND_SRC_ALPHA_SAT</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_SRC_ALPHA_SAT" title="Permalink to this definition">¶</a></dt>
+<dd><p>f, f, f, 1; f = min(As, 1-Ad) </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_FACTOR">
+<span class="target" id="defines_8h_1a9acab36d73abf4b321564049d85ce435"></span><code class="descname">BGFX_STATE_BLEND_FACTOR</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_FACTOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend factor. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_INV_FACTOR">
+<span class="target" id="defines_8h_1a14e3f8dcce6f420eeedb63f3978d9b36"></span><code class="descname">BGFX_STATE_BLEND_INV_FACTOR</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_INV_FACTOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>1-Blend factor </p>
+</dd></dl>
+
+<p><strong>Blend Equaation</strong></p>
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_EQUATION_ADD">
+<span class="target" id="defines_8h_1a2ffd46032b927db10fcce998d1a3fddd"></span><code class="descname">BGFX_STATE_BLEND_EQUATION_ADD</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_EQUATION_ADD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use BGFX_STATE_BLEND_EQUATION(_equation) or BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA) helper macros. </p>
+<p>Blend add: src + dst. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_EQUATION_SUB">
+<span class="target" id="defines_8h_1a076e59b04d2620ad7177aa5fb1f88a72"></span><code class="descname">BGFX_STATE_BLEND_EQUATION_SUB</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_EQUATION_SUB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend subtract: src - dst. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_EQUATION_REVSUB">
+<span class="target" id="defines_8h_1a1e33171674e13e6b2026eacaca5153ce"></span><code class="descname">BGFX_STATE_BLEND_EQUATION_REVSUB</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_EQUATION_REVSUB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend reverse subtract: dst - src. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_EQUATION_MIN">
+<span class="target" id="defines_8h_1ada996865b2ed3b57838384365d0fd54f"></span><code class="descname">BGFX_STATE_BLEND_EQUATION_MIN</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_EQUATION_MIN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend min: min(src, dst). </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_EQUATION_MAX">
+<span class="target" id="defines_8h_1adc74502a8c753f009e2b4d64cb6ebeb6"></span><code class="descname">BGFX_STATE_BLEND_EQUATION_MAX</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_EQUATION_MAX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blend max: max(src, dst). </p>
+</dd></dl>
+
+<p><strong>Primitive Culling</strong></p>
+<dl class="macro">
+<dt id="c.BGFX_STATE_CULL_CW">
+<span class="target" id="defines_8h_1ab73af147b6161cea1a3d2e92940e0452"></span><code class="descname">BGFX_STATE_CULL_CW</code><a class="headerlink" href="#c.BGFX_STATE_CULL_CW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cull state. When <code class="docutils literal"><span class="pre">BGFX_STATE_CULL_*</span></code> is not specified culling will be disabled. </p>
+<p>Cull clockwise triangles. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_CULL_CCW">
+<span class="target" id="defines_8h_1adc22d33e1b38799d1c0da7d94123004d"></span><code class="descname">BGFX_STATE_CULL_CCW</code><a class="headerlink" href="#c.BGFX_STATE_CULL_CCW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cull counter-clockwise triangles. </p>
+</dd></dl>
+
+<p><strong>Primitive Type</strong></p>
+<dl class="macro">
+<dt id="c.BGFX_STATE_PT_TRISTRIP">
+<span class="target" id="defines_8h_1a7b2bc219533a33b2010affe65087591f"></span><code class="descname">BGFX_STATE_PT_TRISTRIP</code><a class="headerlink" href="#c.BGFX_STATE_PT_TRISTRIP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tristrip. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_PT_LINES">
+<span class="target" id="defines_8h_1adb0d8c8504ff0615c4fcfba6b55bfa57"></span><code class="descname">BGFX_STATE_PT_LINES</code><a class="headerlink" href="#c.BGFX_STATE_PT_LINES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lines. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_PT_LINESTRIP">
+<span class="target" id="defines_8h_1a15538233471ae90244e5c52380f16270"></span><code class="descname">BGFX_STATE_PT_LINESTRIP</code><a class="headerlink" href="#c.BGFX_STATE_PT_LINESTRIP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Line strip. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_PT_POINTS">
+<span class="target" id="defines_8h_1ab4afe6a6879f20b9e5b7ce8e0d94bc1c"></span><code class="descname">BGFX_STATE_PT_POINTS</code><a class="headerlink" href="#c.BGFX_STATE_PT_POINTS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Points. </p>
+</dd></dl>
+
+<p><strong>Misc</strong></p>
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_INDEPENDENT">
+<span class="target" id="defines_8h_1a292f5264de6046161f4d20a008db6c23"></span><code class="descname">BGFX_STATE_BLEND_INDEPENDENT</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_INDEPENDENT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable blend independent. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_BLEND_ALPHA_TO_COVERAGE">
+<span class="target" id="defines_8h_1aa2831e25d0b111f009b11ff82a2799a7"></span><code class="descname">BGFX_STATE_BLEND_ALPHA_TO_COVERAGE</code><a class="headerlink" href="#c.BGFX_STATE_BLEND_ALPHA_TO_COVERAGE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable alpha to coverage. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_MSAA">
+<span class="target" id="defines_8h_1aed65ada612c8d17b6002a0f36c453e55"></span><code class="descname">BGFX_STATE_MSAA</code><a class="headerlink" href="#c.BGFX_STATE_MSAA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable MSAA write when writing into MSAA frame buffer. This flag is ignored when not writing into MSAA frame buffer. </p>
+<p>Enable MSAA rasterization. </p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.BGFX_STATE_LINEAA">
+<span class="target" id="defines_8h_1a0668fde1f928de351846c15cc574aea7"></span><code class="descname">BGFX_STATE_LINEAA</code><a class="headerlink" href="#c.BGFX_STATE_LINEAA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable line AA rasterization. </p>
 </dd></dl>
 
 </div>
