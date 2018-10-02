@@ -612,7 +612,7 @@ int TParseContext::getIoArrayImplicitSize(bool isPerPrimitive) const
         return 3; //Number of vertices for Fragment shader is always three.
     else if (language == EShLangMeshNV) {
         if (isPerPrimitive) {
-            return intermediate.getPrimitives() != TQualifier::layoutNotSet ? intermediate.getPrimitives() : 0;            
+            return intermediate.getPrimitives() != TQualifier::layoutNotSet ? intermediate.getPrimitives() : 0;
         } else {
             return intermediate.getVertices() != TQualifier::layoutNotSet ? intermediate.getVertices() : 0;
         }
@@ -1559,6 +1559,8 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     case EOpMemoryBarrier:
         storageClassSemantics = (*argp)[1]->getAsConstantUnion()->getConstArray()[0].getIConst();
         semantics = (*argp)[2]->getAsConstantUnion()->getConstArray()[0].getIConst();
+        break;
+    default:
         break;
     }
 
@@ -3600,6 +3602,14 @@ void TParseContext::arraySizesCheck(const TSourceLoc& loc, const TQualifier& qua
                 extensionsTurnedOn(Num_AEP_tessellation_shader, AEP_tessellation_shader))
                 return;
         break;
+#ifdef NV_EXTENSIONS
+    case EShLangMeshNV:
+        if (qualifier.storage == EvqVaryingOut)
+            if ((profile == EEsProfile && version >= 320) ||
+                extensionTurnedOn(E_GL_NV_mesh_shader))
+                return;
+        break;
+#endif
     default:
         break;
     }
@@ -4460,6 +4470,12 @@ void TParseContext::finish()
         if (profile != EEsProfile && version < 430)
             requireExtensions(getCurrentLoc(), 1, &E_GL_ARB_compute_shader, "compute shaders");
         break;
+#ifdef NV_EXTENSIONS
+    case EShLangTaskNV:
+    case EShLangMeshNV:
+        requireExtensions(getCurrentLoc(), 1, &E_GL_NV_mesh_shader, "mesh shaders");
+        break;
+#endif
     default:
         break;
     }
@@ -4963,12 +4979,14 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
 #ifdef NV_EXTENSIONS
     case EShLangMeshNV:
         if (id == "max_vertices") {
+            requireExtensions(loc, 1, &E_GL_NV_mesh_shader, "max_vertices");
             publicType.shaderQualifiers.vertices = value;
             if (value > resources.maxMeshOutputVerticesNV)
                 error(loc, "too large, must be less than gl_MaxMeshOutputVerticesNV", "max_vertices", "");
             return;
         }
         if (id == "max_primitives") {
+            requireExtensions(loc, 1, &E_GL_NV_mesh_shader, "max_primitives");
             publicType.shaderQualifiers.primitives = value;
             if (value > resources.maxMeshOutputPrimitivesNV)
                 error(loc, "too large, must be less than gl_MaxMeshOutputPrimitivesNV", "max_primitives", "");
@@ -4983,7 +5001,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         if (id.compare(0, 11, "local_size_") == 0) {
 #ifdef NV_EXTENSIONS
             if (language == EShLangMeshNV || language == EShLangTaskNV) {
-                profileRequires(loc, ~EEsProfile, 450, E_GL_NV_mesh_shader, "gl_WorkGroupSize");
+                requireExtensions(loc, 1, &E_GL_NV_mesh_shader, "gl_WorkGroupSize");
             }
             else
 #endif

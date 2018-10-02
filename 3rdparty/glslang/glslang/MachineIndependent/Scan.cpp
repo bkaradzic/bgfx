@@ -1591,8 +1591,9 @@ int TScanContext::tokenizeIdentifier()
     case PERPRIMITIVENV:
     case PERVIEWNV:
     case PERTASKNV:
-        if (parseContext.profile != EEsProfile &&
-            (parseContext.version >= 450 || parseContext.extensionTurnedOn(E_GL_NV_mesh_shader)))
+        if ((parseContext.profile != EEsProfile && parseContext.version >= 450) ||
+            (parseContext.profile == EEsProfile && parseContext.version >= 320) ||
+            parseContext.extensionTurnedOn(E_GL_NV_mesh_shader))
             return keyword;
         return identifierOrType();
 #endif

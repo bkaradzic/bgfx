@@ -1158,7 +1158,9 @@ interpolation_qualifier
     | PERPRIMITIVENV {
 #ifdef NV_EXTENSIONS
         parseContext.globalCheck($1.loc, "perprimitiveNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangFragmentMask | EShLangMeshNVMask), "perprimitiveNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "perprimitiveNV");
+        parseContext.profileRequires($1.loc, EEsProfile, 320, E_GL_NV_mesh_shader, "perprimitiveNV");
         $$.init($1.loc);
         $$.qualifier.perPrimitiveNV = true;
 #endif
@@ -1166,7 +1168,9 @@ interpolation_qualifier
     | PERVIEWNV {
 #ifdef NV_EXTENSIONS
         parseContext.globalCheck($1.loc, "perviewNV");
+        parseContext.requireStage($1.loc, EShLangMeshNV, "perviewNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "perviewNV");
+        parseContext.profileRequires($1.loc, EEsProfile, 320, E_GL_NV_mesh_shader, "perviewNV");
         $$.init($1.loc);
         $$.qualifier.perViewNV = true;
 #endif
@@ -1174,7 +1178,9 @@ interpolation_qualifier
     | PERTASKNV {
 #ifdef NV_EXTENSIONS
         parseContext.globalCheck($1.loc, "taskNV");
+        parseContext.requireStage($1.loc, (EShLanguageMask)(EShLangTaskNVMask | EShLangMeshNVMask), "taskNV");
         parseContext.profileRequires($1.loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "taskNV");
+        parseContext.profileRequires($1.loc, EEsProfile, 320, E_GL_NV_mesh_shader, "taskNV");
         $$.init($1.loc);
         $$.qualifier.perTaskNV = true;
 #endif

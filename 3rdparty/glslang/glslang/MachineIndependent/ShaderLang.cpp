@@ -361,13 +361,16 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMissNV, source,
             infoSink, commonTable, symbolTables);
     }
+
     // check for mesh
-    if (profile != EEsProfile && version >= 450)
+    if ((profile != EEsProfile && version >= 450) ||
+        (profile == EEsProfile && version >= 320))
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMeshNV, source,
                                    infoSink, commonTable, symbolTables);
 
     // check for task
-    if (profile != EEsProfile && version >= 450)
+    if ((profile != EEsProfile && version >= 450) ||
+        (profile == EEsProfile && version >= 320))
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTaskNV, source,
                                    infoSink, commonTable, symbolTables);
 #endif
@@ -600,6 +603,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     case EShLangIntersectNV:
     case EShLangAnyHitNV:
     case EShLangClosestHitNV:
+    case EShLangMissNV:
     case EShLangCallableNV:
         if (profile == EEsProfile || version < 460) {
             correct = false;
@@ -609,11 +613,11 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
         break;
     case EShLangMeshNV:
     case EShLangTaskNV:
-        if ((profile == EEsProfile) ||
+        if ((profile == EEsProfile && version < 320) ||
             (profile != EEsProfile && version < 450)) {
             correct = false;
-            infoSink.info.message(EPrefixError, "#version: mesh/task shaders require non-es profile with version 450 or above");
-            version = 450;
+            infoSink.info.message(EPrefixError, "#version: mesh/task shaders require es profile with version 320 or above, or non-es profile with version 450 or above");
+            version = profile == EEsProfile ? 320 : 450;
         }
 #endif
     default:

@@ -137,16 +137,26 @@ namespace bgfx { namespace spirv
 		8,     // MaxCullDistances
 		8,     // MaxCombinedClipAndCullDistances
 		4,     // MaxSamples
-		{      // limits
-			1, // nonInductiveForLoops
-			1, // whileLoops
-			1, // doWhileLoops
-			1, // generalUniformIndexing
-			1, // generalAttributeMatrixVectorIndexing
-			1, // generalVaryingIndexing
-			1, // generalSamplerIndexing
-			1, // generalVariableIndexing
-			1, // generalConstantMatrixVectorIndexing
+		0,     // maxMeshOutputVerticesNV;
+		0,     // maxMeshOutputPrimitivesNV;
+		0,     // maxMeshWorkGroupSizeX_NV;
+		0,     // maxMeshWorkGroupSizeY_NV;
+		0,     // maxMeshWorkGroupSizeZ_NV;
+		0,     // maxTaskWorkGroupSizeX_NV;
+		0,     // maxTaskWorkGroupSizeY_NV;
+		0,     // maxTaskWorkGroupSizeZ_NV;
+		0,     // maxMeshViewCountNV
+
+		{ // limits
+			true, // nonInductiveForLoops
+			true, // whileLoops
+			true, // doWhileLoops
+			true, // generalUniformIndexing
+			true, // generalAttributeMatrixVectorIndexing
+			true, // generalVaryingIndexing
+			true, // generalSamplerIndexing
+			true, // generalVariableIndexing
+			true, // generalConstantMatrixVectorIndexing
 		},
 	};
 
