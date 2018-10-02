@@ -1351,6 +1351,8 @@ namespace bgfx { namespace gl
 			}
 		}
 
+		void unbindAttributes();
+
 		GLuint m_id;
 
 		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
