@@ -484,9 +484,9 @@ namespace bgfx { namespace mtl
 			m_textureDescriptor = newTextureDescriptor();
 			m_samplerDescriptor = newSamplerDescriptor();
 
-			for (uint8_t i=0; i < MTL_MAX_FRAMES_IN_FLIGHT; ++i)
+			for (uint8_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
 			{
-				m_uniformBuffers[i] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
+				m_uniformBuffers[ii] = m_device.newBufferWithLength(UNIFORM_BUFFER_SIZE, 0);
 			}
 
 			m_uniformBufferVertexOffset   = 0;
@@ -571,6 +571,7 @@ namespace bgfx { namespace mtl
 				g_caps.limits.maxFBAttachments = 8;
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
 			}
+
 			g_caps.limits.maxTextureLayers = 2048;
 			g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
@@ -676,7 +677,7 @@ namespace bgfx { namespace mtl
 				}
 			}
 
-			for (uint32_t ii=1; ii<5; ++ii)
+			for (uint32_t ii = 1; ii < 5; ++ii)
 			{
 				if (!m_device.supportsTextureSampleCount(s_msaa[ii]) )
 				{

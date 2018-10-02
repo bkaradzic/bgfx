@@ -967,13 +967,15 @@ namespace bgfx { namespace d3d11
 				{
 					HRESULT hr = S_OK;
 
+					m_swapEffect =
 #if BX_PLATFORM_WINDOWS
-					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-					m_swapBufferCount = 2;
+						DXGI_SWAP_EFFECT_FLIP_DISCARD
 #else
-					m_swapEffect      = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-					m_swapBufferCount = 2;
+						DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
 #endif // !BX_PLATFORM_WINDOWS
+						;
+
+					m_swapBufferCount = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
 
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.width  = _init.resolution.width;

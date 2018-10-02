@@ -890,7 +890,7 @@ namespace bgfx { namespace d3d12
 				m_scd.sampleDesc = s_msaa[(_init.resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 				m_scd.bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				m_scd.bufferCount = bx::uint32_min(BX_COUNTOF(m_backBufferColor), 4);
+				m_scd.bufferCount = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BX_COUNTOF(m_backBufferColor) );
 				m_scd.scaling = 0 == g_platformData.ndt
 					? DXGI_SCALING_NONE
 					: DXGI_SCALING_STRETCH
@@ -3213,11 +3213,11 @@ namespace bgfx { namespace d3d12
 		D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
 		D3D12_CPU_DESCRIPTOR_HANDLE* m_currentColor;
 		D3D12_CPU_DESCRIPTOR_HANDLE* m_currentDepthStencil;
-		ID3D12Resource* m_backBufferColor[4];
-		uint64_t m_backBufferColorFence[4];
+		ID3D12Resource* m_backBufferColor[BGFX_CONFIG_MAX_BACK_BUFFERS];
+		uint64_t m_backBufferColorFence[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		ID3D12Resource* m_backBufferDepthStencil;
 
-		ScratchBufferD3D12 m_scratchBuffer[4];
+		ScratchBufferD3D12 m_scratchBuffer[BGFX_CONFIG_MAX_BACK_BUFFERS];
 		DescriptorAllocatorD3D12 m_samplerAllocator;
 
 		ID3D12RootSignature*    m_rootSignature;

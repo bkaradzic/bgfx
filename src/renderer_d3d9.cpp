@@ -425,8 +425,8 @@ namespace bgfx { namespace d3d9
 			m_params.BackBufferWidth  = _init.resolution.width;
 			m_params.BackBufferHeight = _init.resolution.height;
 			m_params.BackBufferFormat = adapterFormat;
-			m_params.BackBufferCount = 1;
-			m_params.MultiSampleType = D3DMULTISAMPLE_NONE;
+			m_params.BackBufferCount  = bx::clamp<uint8_t>(_init.resolution.numBackBuffers, 2, BGFX_CONFIG_MAX_BACK_BUFFERS);
+			m_params.MultiSampleType  = D3DMULTISAMPLE_NONE;
 			m_params.MultiSampleQuality = 0;
 			m_params.EnableAutoDepthStencil = TRUE;
 			m_params.AutoDepthStencilFormat = D3DFMT_D24S8;
