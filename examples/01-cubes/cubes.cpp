@@ -106,8 +106,8 @@ static const char* s_ptNames[]
 
 static const uint64_t s_ptState[]
 {
-	BGFX_STATE_PT_TRISTRIP,
 	UINT64_C(0),
+	BGFX_STATE_PT_TRISTRIP,
 	BGFX_STATE_PT_LINES,
 	BGFX_STATE_PT_POINTS,
 };
@@ -166,13 +166,13 @@ public:
 		// Create static index buffer for triangle strip rendering.
 		m_ibh[0] = bgfx::createIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
-			bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip) )
+			bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList) )
 			);
 
 		// Create static index buffer for triangle list rendering.
 		m_ibh[1] = bgfx::createIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
-			bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList) )
+			bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip) )
 			);
 
 		// Create static index buffer for triangle list rendering.
