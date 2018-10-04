@@ -507,8 +507,8 @@
 #define BGFX_SUBMIT_RESERVED_MASK  UINT8_C(0x80) //!< Internal bits mask.
 
 ///
-#define BGFX_RESOLVE_NONE          UINT8_C(0x00) //!<
-#define BGFX_RESOLVE_AUTO_GEN_MIPS UINT8_C(0x01) //!<
+#define BGFX_RESOLVE_NONE          UINT8_C(0x00) //!< No resolve flags.
+#define BGFX_RESOLVE_AUTO_GEN_MIPS UINT8_C(0x01) //!< Auto-generate mip maps on resolve.
 
 ///
 #define BGFX_PCI_ID_NONE                UINT16_C(0x0000) //!< Autoselect adapter.

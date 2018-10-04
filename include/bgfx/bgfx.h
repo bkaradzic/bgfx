@@ -851,7 +851,7 @@ namespace bgfx
 		TextureHandle handle; //!< Texture handle.
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice.
-		uint8_t  resolve;     //!<
+		uint8_t  resolve;     //!< Resolve flags. See: `BGFX_RESOLVE_*`
 	};
 
 	/// Transform data.
@@ -2901,7 +2901,7 @@ namespace bgfx
 	/// mip level.
 	///
 	/// @param[in] _num Number of texture attachments.
-	/// @param[in] _attachment Attachment texture info. See: `Attachment`.
+	/// @param[in] _attachment Attachment texture info. See: `bgfx::Attachment`.
 	/// @param[in] _destroyTextures If true, textures will be destroyed when
 	///   frame buffer is destroyed.
 	///
