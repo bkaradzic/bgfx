@@ -851,6 +851,7 @@ namespace bgfx
 		TextureHandle handle; //!< Texture handle.
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice.
+		uint8_t  resolve;     //!<
 	};
 
 	/// Transform data.

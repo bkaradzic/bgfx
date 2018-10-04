@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(85)
+#define BGFX_API_VERSION UINT32_C(86)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define BGFX_STATE_WRITE_R                 UINT64_C(0x0000000000000001) //!< Enable R write.
@@ -505,6 +505,10 @@
 
 #define BGFX_SUBMIT_RESERVED_SHIFT 7             //!< Internal bits shift.
 #define BGFX_SUBMIT_RESERVED_MASK  UINT8_C(0x80) //!< Internal bits mask.
+
+///
+#define BGFX_RESOLVE_NONE          UINT8_C(0x00) //!<
+#define BGFX_RESOLVE_AUTO_GEN_MIPS UINT8_C(0x01) //!<
 
 ///
 #define BGFX_PCI_ID_NONE                UINT16_C(0x0000) //!< Autoselect adapter.

@@ -485,6 +485,7 @@ typedef struct bgfx_attachment_s
     bgfx_texture_handle_t handle;
     uint16_t mip;
     uint16_t layer;
+    uint8_t  resolve;
 
 } bgfx_attachment_t;
 

@@ -4017,9 +4017,10 @@ namespace bgfx
 		for (uint8_t ii = 0; ii < _num; ++ii)
 		{
 			Attachment& at = attachment[ii];
-			at.handle = _handles[ii];
-			at.mip    = 0;
-			at.layer  = 0;
+			at.handle  = _handles[ii];
+			at.mip     = 0;
+			at.layer   = 0;
+			at.resolve = BGFX_RESOLVE_AUTO_GEN_MIPS;
 		}
 		return createFrameBuffer(_num, attachment, _destroyTextures);
 	}
