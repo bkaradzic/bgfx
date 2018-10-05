@@ -2582,6 +2582,25 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
+<dt id="_CPPv2N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle">
+<span id="bgfx::setViewFrameBuffer__ViewId.FrameBufferHandle"></span><span class="target" id="namespacebgfx_1a25661fb8ab782ebc22ccfe10fe19e016"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewFrameBuffer</code><span class="sig-paren">(</span>ViewId <em>_id</em>, FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set view frame buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Remark</strong></dt>
+<dd>Not persistent after <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1acbf49c89c8ed64ac2ce9fbb08a52f7ab"><span><span class="pre">bgfx::reset</span></span></a></code> call.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_frame_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Frame buffer handle. Passing <code class="docutils literal"><span class="pre">BGFX_INVALID_HANDLE</span></code> as frame buffer handle will draw primitives from this view into default back buffer.</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv7uint8_tPKv">
 <span id="bgfx::setViewTransform__ViewId.voidCP.voidCP.uint8_t.voidCP"></span><span class="target" id="namespacebgfx_1a707f5822ab3d885f14c4d0e575ab3b3f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewTransform</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <em class="property">const</em> void *<em>_view</em>, <em class="property">const</em> void *<em>_projL</em>, uint8_t <em>_flags</em> = BGFX_VIEW_STEREO, <em class="property">const</em> void *<em>_projR</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view view and projection matrices, all draw primitives in this view will use these matrices. </p>
@@ -2624,18 +2643,15 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle">
-<span id="bgfx::setViewFrameBuffer__ViewId.FrameBufferHandle"></span><span class="target" id="namespacebgfx_1a25661fb8ab782ebc22ccfe10fe19e016"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewFrameBuffer</code><span class="sig-paren">(</span>ViewId <em>_id</em>, FrameBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18setViewFrameBufferE6ViewId17FrameBufferHandle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set view frame buffer. </p>
+<dt id="_CPPv2N4bgfx9resetViewE6ViewId">
+<span id="bgfx::resetView__ViewId"></span><span class="target" id="namespacebgfx_1a9346ecd01e2f32d41a0824be501d818c"></span>void <code class="descclassname">bgfx::</code><code class="descname">resetView</code><span class="sig-paren">(</span>ViewId <em>_id</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx9resetViewE6ViewId" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset all view settings to default. </p>
 <p><dl class="docutils">
-<dt><strong>Remark</strong></dt>
-<dd>Not persistent after <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1acbf49c89c8ed64ac2ce9fbb08a52f7ab"><span><span class="pre">bgfx::reset</span></span></a></code> call.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_frame_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_reset_view</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Frame buffer handle. Passing <code class="docutils literal"><span class="pre">BGFX_INVALID_HANDLE</span></code> as frame buffer handle will draw primitives from this view into default back buffer.</li>
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id.</li>
 </ul>
 </dd>
 </dl>
