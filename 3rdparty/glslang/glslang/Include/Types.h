@@ -1644,6 +1644,11 @@ public:
     {
         if (isUnsizedArray() && !(skipNonvariablyIndexed || isArrayVariablyIndexed()))
             changeOuterArraySize(getImplicitArraySize());
+#ifdef NV_EXTENSIONS
+        // For multi-dim per-view arrays, set unsized inner dimension size to 1
+        if (qualifier.isPerView() && arraySizes && arraySizes->isInnerUnsized())
+            arraySizes->clearInnerUnsized();
+#endif
         if (isStruct() && structure->size() > 0) {
             int lastMember = (int)structure->size() - 1;
             for (int i = 0; i < lastMember; ++i)

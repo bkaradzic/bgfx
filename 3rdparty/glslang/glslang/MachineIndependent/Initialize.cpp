@@ -5296,8 +5296,8 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "float gl_ClipDistance[];"
                 "float gl_CullDistance[];"
                 "perviewNV vec4 gl_PositionPerViewNV[];"
-                "perviewNV float gl_ClipDistancePerViewNV[][8];"
-                "perviewNV float gl_CullDistancePerViewNV[][8];"
+                "perviewNV float gl_ClipDistancePerViewNV[][];"
+                "perviewNV float gl_CullDistancePerViewNV[][];"
             "} gl_MeshVerticesNV[];"
         );
 
@@ -5309,7 +5309,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "int gl_ViewportIndex;"
                 "int gl_ViewportMask[];"
                 "perviewNV int gl_LayerPerViewNV[];"
-                "perviewNV int gl_ViewportMaskPerViewNV[][1];"
+                "perviewNV int gl_ViewportMaskPerViewNV[][];"
             "} gl_MeshPrimitivesNV[];"
         );
 

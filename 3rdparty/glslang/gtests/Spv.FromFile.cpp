@@ -524,6 +524,9 @@ INSTANTIATE_TEST_CASE_P(
     "spv.meshShaderPerViewUserDefined.mesh",
     "spv.meshShaderSharedMem.mesh",
     "spv.meshShaderTaskMem.mesh",
+    "spv.320.meshShaderUserDefined.mesh",
+    "spv.meshShaderRedeclBuiltins.mesh",
+    "spv.meshShaderRedeclPerViewBuiltins.mesh",
     "spv.meshTaskShader.task",
 })),
 FileNameAsCustomTestSuffix

@@ -40,6 +40,8 @@ config("glslang_public") {
 }
 
 source_set("glslang_sources") {
+  public_configs = [ ":glslang_public" ]
+
   sources = [
     "OGLCompilersDLL/InitializeDll.cpp",
     "OGLCompilersDLL/InitializeDll.h",
@@ -152,12 +154,14 @@ source_set("glslang_sources") {
 }
 
 static_library("glslang_static") {
-  public_configs = [ ":glslang_public" ]
-
   deps = [
     ":glslang_sources",
   ]
-  complete_static_lib = true
+
+  # Without this the macOS linker complains that the static library is empty
+  if (is_mac) {
+    complete_static_lib = true
+  }
 
   configs -= [ "//build/config/compiler:chromium_code" ]
   configs += [ "//build/config/compiler:no_chromium_code" ]

@@ -689,17 +689,9 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
     case EShLangGeometry:
         if (inputPrimitive == ElgNone)
             error(infoSink, "At least one shader must specify an input layout primitive");
-        if (outputPrimitive == ElgNone
-#ifdef NV_EXTENSIONS
-            && !getGeoPassthroughEXT()
-#endif
-            )
+        if (outputPrimitive == ElgNone)
             error(infoSink, "At least one shader must specify an output layout primitive");
-        if (vertices == TQualifier::layoutNotSet
-#ifdef NV_EXTENSIONS
-            && !getGeoPassthroughEXT()
-#endif
-           )
+        if (vertices == TQualifier::layoutNotSet)
             error(infoSink, "At least one shader must specify a layout(max_vertices = value)");
         break;
     case EShLangFragment:
@@ -723,6 +715,17 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             error(infoSink, "Only one shaderRecordNVX buffer block is allowed per stage");
         break;
     case EShLangMeshNV:
+        // NV_mesh_shader doesn't allow use of both single-view and per-view builtins.
+        if (inIoAccessed("gl_Position") && inIoAccessed("gl_PositionPerViewNV"))
+            error(infoSink, "Can only use one of gl_Position or gl_PositionPerViewNV");
+        if (inIoAccessed("gl_ClipDistance") && inIoAccessed("gl_ClipDistancePerViewNV"))
+            error(infoSink, "Can only use one of gl_ClipDistance or gl_ClipDistancePerViewNV");
+        if (inIoAccessed("gl_CullDistance") && inIoAccessed("gl_CullDistancePerViewNV"))
+            error(infoSink, "Can only use one of gl_CullDistance or gl_CullDistancePerViewNV");
+        if (inIoAccessed("gl_Layer") && inIoAccessed("gl_LayerPerViewNV"))
+            error(infoSink, "Can only use one of gl_Layer or gl_LayerPerViewNV");
+        if (inIoAccessed("gl_ViewportMask") && inIoAccessed("gl_ViewportMaskPerViewNV"))
+            error(infoSink, "Can only use one of gl_ViewportMask or gl_ViewportMaskPerViewNV");
         if (outputPrimitive == ElgNone)
             error(infoSink, "At least one shader must specify an output layout primitive");
         if (vertices == TQualifier::layoutNotSet)

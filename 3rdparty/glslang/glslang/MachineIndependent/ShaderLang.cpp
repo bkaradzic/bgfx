@@ -1759,6 +1759,14 @@ void TShader::setAutoMapBindings(bool map)              { intermediate->setAutoM
 void TShader::setInvertY(bool invert)                   { intermediate->setInvertY(invert); }
 // Fragile: currently within one stage: simple auto-assignment of location
 void TShader::setAutoMapLocations(bool map)             { intermediate->setAutoMapLocations(map); }
+void TShader::addUniformLocationOverride(const char* name, int loc)
+{
+    intermediate->addUniformLocationOverride(name, loc);
+}
+void TShader::setUniformLocationBase(int base)
+{
+    intermediate->setUniformLocationBase(base);
+}
 // See comment above TDefaultHlslIoMapper in iomapper.cpp:
 void TShader::setHlslIoMapping(bool hlslIoMap)          { intermediate->setHlslIoMapping(hlslIoMap); }
 void TShader::setFlattenUniformArrays(bool flatten)     { intermediate->setFlattenUniformArrays(flatten); }

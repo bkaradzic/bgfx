@@ -252,7 +252,8 @@ public:
         hlslIoMapping(false),
         textureSamplerTransformMode(EShTexSampTransKeep),
         needToLegalize(false),
-        binaryDoubleOutput(false)
+        binaryDoubleOutput(false),
+        uniformLocationBase(0)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -671,6 +672,23 @@ public:
     void addProcessArgument(const std::string& arg) { processes.addArgument(arg); }
     const std::vector<std::string>& getProcesses() const { return processes.getProcesses(); }
 
+    void addUniformLocationOverride(const TString& name, int location)
+    {
+            uniformLocationOverrides[name] = location;
+    }
+
+    int getUniformLocationOverride(const TString& name) const
+    {
+            auto pos = uniformLocationOverrides.find(name);
+            if (pos == uniformLocationOverrides.end())
+                    return -1;
+            else
+                    return pos->second;
+    }
+
+    void setUniformLocationBase(int base) { uniformLocationBase = base; }
+    int getUniformLocationBase() const { return uniformLocationBase; }
+
     void setNeedsLegalization() { needToLegalize = true; }
     bool needsLegalization() const { return needToLegalize; }
 
@@ -795,6 +813,9 @@ protected:
 
     bool needToLegalize;
     bool binaryDoubleOutput;
+
+    std::unordered_map<TString, int> uniformLocationOverrides;
+    int uniformLocationBase;
 
 private:
     void operator=(TIntermediate&); // prevent assignments
