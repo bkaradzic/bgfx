@@ -2991,17 +2991,34 @@ namespace bgfx { namespace mtl
 				}
 				else
 				{
+					NSView *contentView;
+
+					if ([nvh isKindOfClass:[NSView class]])
+					{
+						contentView = (NSView*)nvh;
+					}
+					else if ([nvh isKindOfClass:[NSWindow class]])
+					{
+						NSWindow* nsWindow = (NSWindow*)nvh;
+						contentView = [nsWindow contentView];
+					}
+					else
+					{
+						BX_WARN(0, "Unable to create Metal device. Please set platform data window to an NSWindow, NSView, or CAMetalLayer");
+						return;
+					}
+
 					NSWindow* nsWindow = (NSWindow*)_nwh;
-					CALayer* layer = nsWindow.contentView.layer;
+					CALayer* layer = contentView.layer;
 					if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
 					{
 						m_metalLayer = (CAMetalLayer*)layer;
 					}
 					else
 					{
-						[nsWindow.contentView setWantsLayer:YES];
+						[contentView setWantsLayer:YES];
 						m_metalLayer = [CAMetalLayer layer];
-						[nsWindow.contentView setLayer:m_metalLayer];
+						[contentView setLayer:m_metalLayer];
 					}
 				}
 			}
