@@ -912,6 +912,7 @@ namespace bgfx
 
 		uint32_t numDraw;                   //!< Number of draw calls submitted.
 		uint32_t numCompute;                //!< Number of compute calls submitted.
+		uint32_t numBlit;                   //!< Number of blit calls submitted.
 		uint32_t maxGpuLatency;             //!< GPU driver latency.
 
 		uint16_t numDynamicIndexBuffers;    //!< Number of used dynamic index buffers.

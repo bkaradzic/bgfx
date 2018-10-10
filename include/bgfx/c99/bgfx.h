@@ -374,6 +374,7 @@ typedef struct bgfx_stats_s
 
     uint32_t numDraw;
     uint32_t numCompute;
+    uint32_t numBlit;
     uint32_t maxGpuLatency;
 
     uint16_t numDynamicIndexBuffers;
