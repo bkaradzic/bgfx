@@ -174,6 +174,14 @@ D3DWriteBlobToFile(_In_ ID3DBlob* pBlob,
 #define D3DCOMPILE_EFFECT_ALLOW_SLOW_OPS            (1 << 1)
 
 //----------------------------------------------------------------------------
+// D3DCOMPILE Flags2:
+// -----------------
+// Root signature flags. (passed in Flags2)
+#define D3DCOMPILE_FLAGS2_FORCE_ROOT_SIGNATURE_LATEST		0
+#define D3DCOMPILE_FLAGS2_FORCE_ROOT_SIGNATURE_1_0			(1 << 4)
+#define D3DCOMPILE_FLAGS2_FORCE_ROOT_SIGNATURE_1_1			(1 << 5)
+
+//----------------------------------------------------------------------------
 // D3DCompile:
 // ----------
 // Compile source text into bytecode appropriate for the given target.
@@ -303,9 +311,9 @@ D3DReflect(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData,
 
 HRESULT WINAPI
 D3DReflectLibrary(__in_bcount(SrcDataSize) LPCVOID pSrcData,
-                  SIZE_T SrcDataSize,
-	              REFIID riid,
-                  LPVOID * ppReflector);
+                  __in SIZE_T SrcDataSize,
+	              __in REFIID riid,
+                  __out LPVOID * ppReflector);
 
 //----------------------------------------------------------------------------
 // D3DDisassemble:
@@ -350,7 +358,7 @@ D3DDisassembleRegion(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData,
 // Shader linking and Function Linking Graph (FLG) APIs
 //----------------------------------------------------------------------------
 HRESULT WINAPI
-D3DCreateLinker(interface ID3D11Linker ** ppLinker);
+D3DCreateLinker(__out interface ID3D11Linker ** ppLinker);
 
 HRESULT WINAPI
 D3DLoadModule(_In_ LPCVOID pSrcData,
