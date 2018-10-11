@@ -1368,7 +1368,7 @@ namespace bgfx
 		void submit(
 			  ViewId _id
 			, ProgramHandle _program
-			, int32_t _depth = 0
+			, uint32_t _depth = 0
 			, bool _preserveState = false
 			);
 
@@ -1387,7 +1387,7 @@ namespace bgfx
 			  ViewId _id
 			, ProgramHandle _program
 			, OcclusionQueryHandle _occlusionQuery
-			, int32_t _depth = 0
+			, uint32_t _depth = 0
 			, bool _preserveState = false
 			);
 
@@ -1411,7 +1411,7 @@ namespace bgfx
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
 			, uint16_t _num = 1
-			, int32_t _depth = 0
+			, uint32_t _depth = 0
 			, bool _preserveState = false
 			);
 
@@ -3710,7 +3710,7 @@ namespace bgfx
 	void submit(
 		  ViewId _id
 		, ProgramHandle _program
-		, int32_t _depth = 0
+		, uint32_t _depth = 0
 		, bool _preserveState = false
 		);
 
@@ -3729,7 +3729,7 @@ namespace bgfx
 		  ViewId _id
 		, ProgramHandle _program
 		, OcclusionQueryHandle _occlusionQuery
-		, int32_t _depth = 0
+		, uint32_t _depth = 0
 		, bool _preserveState = false
 		);
 
@@ -3753,7 +3753,7 @@ namespace bgfx
 		, IndirectBufferHandle _indirectHandle
 		, uint16_t _start = 0
 		, uint16_t _num = 1
-		, int32_t _depth = 0
+		, uint32_t _depth = 0
 		, bool _preserveState = false
 		);
 
