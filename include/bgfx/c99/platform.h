@@ -190,9 +190,9 @@ typedef struct bgfx_interface_vtbl
     void (*encoder_set_instance_count)(struct bgfx_encoder_s* _encoder, uint32_t _numInstance);
     void (*encoder_set_texture)(struct bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags);
     void (*encoder_touch)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id);
-    void (*encoder_submit)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, int32_t _depth, bool _preserveState);
-    void (*encoder_submit_occlusion_query)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, int32_t _depth, bool _preserveState);
-    void (*encoder_submit_indirect)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, int32_t _depth, bool _preserveState);
+    void (*encoder_submit)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _depth, bool _preserveState);
+    void (*encoder_submit_occlusion_query)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, bool _preserveState);
+    void (*encoder_submit_indirect)(struct bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, bool _preserveState);
     void (*encoder_set_image)(struct bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*encoder_set_compute_index_buffer)(struct bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access);
     void (*encoder_set_compute_vertex_buffer)(struct bgfx_encoder_s* _encoder, uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access);
