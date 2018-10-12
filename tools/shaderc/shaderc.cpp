@@ -1200,24 +1200,27 @@ namespace bgfx
 			}
 		}
 
-		if (raw)
+		if (!_options.preprocessOnly)
 		{
 			if ('f' == _options.shaderType)
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
-				bx::write(_writer, inputHash);
 			}
 			else if ('v' == _options.shaderType)
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
-				bx::write(_writer, outputHash);
 			}
 			else
 			{
 				bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
-				bx::write(_writer, outputHash);
 			}
 
+			bx::write(_writer, inputHash);
+			bx::write(_writer, outputHash);
+		}
+
+		if (raw)
+		{
 			if (0 != glsl)
 			{
 				bx::write(_writer, uint16_t(0) );
@@ -1337,9 +1340,6 @@ namespace bgfx
 
 					{
 						std::string code;
-
-						bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
-						bx::write(_writer, outputHash);
 
 						if (0 != glsl
 						||  0 != essl)
@@ -1824,22 +1824,6 @@ namespace bgfx
 
 					{
 						std::string code;
-
-						if ('f' == _options.shaderType)
-						{
-							bx::write(_writer, BGFX_CHUNK_MAGIC_FSH);
-							bx::write(_writer, inputHash);
-						}
-						else if ('v' == _options.shaderType)
-						{
-							bx::write(_writer, BGFX_CHUNK_MAGIC_VSH);
-							bx::write(_writer, outputHash);
-						}
-						else
-						{
-							bx::write(_writer, BGFX_CHUNK_MAGIC_CSH);
-							bx::write(_writer, outputHash);
-						}
 
 						if (0 != glsl
 						||  0 != essl

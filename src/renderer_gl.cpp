@@ -5266,8 +5266,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			break;
 		}
 
-		uint32_t iohash;
-		bx::read(&reader, iohash);
+		uint32_t inputHash;
+		bx::read(&reader, inputHash);
+
+		uint32_t outputHash;
+		bx::read(&reader, outputHash);
 
 		uint16_t count;
 		bx::read(&reader, count);

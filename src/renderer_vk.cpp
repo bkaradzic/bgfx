@@ -3450,8 +3450,11 @@ VK_DESTROY
 
 		bool fragment = BGFX_CHUNK_MAGIC_FSH == magic;
 
-		uint32_t iohash;
-		bx::read(&reader, iohash);
+		uint32_t inputHash;
+		bx::read(&reader, inputHash);
+
+		uint32_t outputHash;
+		bx::read(&reader, outputHash);
 
 		uint16_t count;
 		bx::read(&reader, count);
@@ -3584,7 +3587,8 @@ VK_DESTROY
 
 		bx::HashMurmur2A murmur;
 		murmur.begin();
-		murmur.add(iohash);
+		murmur.add(inputHash);
+		murmur.add(outputHash);
 		murmur.add(m_code->data, m_code->size);
 		murmur.add(m_numAttrs);
 		murmur.add(m_attrMask,  m_numAttrs);
