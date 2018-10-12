@@ -3437,21 +3437,35 @@ VK_DESTROY
 
 		VkShaderStageFlagBits shaderStage;
 		BX_UNUSED(shaderStage);
-		switch (magic)
-		{
-		case BGFX_CHUNK_MAGIC_CSH: shaderStage = VK_SHADER_STAGE_COMPUTE_BIT;  break;
-		case BGFX_CHUNK_MAGIC_FSH: shaderStage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
-		case BGFX_CHUNK_MAGIC_VSH: shaderStage = VK_SHADER_STAGE_VERTEX_BIT;   break;
 
-		default:
-			BGFX_FATAL(false, Fatal::InvalidShader, "Unknown shader format %x.", magic);
-			break;
+		if (isShaderType(magic, 'C') )
+		{
+			shaderStage = VK_SHADER_STAGE_COMPUTE_BIT;
+		}
+		else if (isShaderType(magic, 'F') )
+		{
+			shaderStage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		}
+		else if (isShaderType(magic, 'V') )
+		{
+			shaderStage = VK_SHADER_STAGE_VERTEX_BIT;
 		}
 
-		bool fragment = BGFX_CHUNK_MAGIC_FSH == magic;
+		const bool fragment = isShaderType(magic, 'F');
 
-		uint32_t iohash;
-		bx::read(&reader, iohash);
+		uint32_t hashIn;
+		bx::read(&reader, hashIn);
+
+		uint32_t hashOut;
+
+		if (isShaderVerLess(magic, 6) )
+		{
+			hashOut = hashIn;
+		}
+		else
+		{
+			bx::read(&reader, hashOut);
+		}
 
 		uint16_t count;
 		bx::read(&reader, count);
@@ -3460,7 +3474,7 @@ VK_DESTROY
 		m_numUniforms = count;
 
 		BX_TRACE("%s Shader consts %d"
-			, BGFX_CHUNK_MAGIC_FSH == magic ? "Fragment" : BGFX_CHUNK_MAGIC_VSH == magic ? "Vertex" : "Compute"
+			, getShaderTypeName(magic)
 			, count
 			);
 
@@ -3584,7 +3598,8 @@ VK_DESTROY
 
 		bx::HashMurmur2A murmur;
 		murmur.begin();
-		murmur.add(iohash);
+		murmur.add(hashIn);
+		murmur.add(hashOut);
 		murmur.add(m_code->data, m_code->size);
 		murmur.add(m_numAttrs);
 		murmur.add(m_attrMask,  m_numAttrs);

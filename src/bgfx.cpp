@@ -1392,6 +1392,26 @@ namespace bgfx
 		return s_topologyName[bx::min(_topology, Topology::PointList)];
 	}
 
+	const char* getShaderTypeName(uint32_t _magic)
+	{
+		if (isShaderType(_magic, 'C') )
+		{
+			return "Compute";
+		}
+		else if (isShaderType(_magic, 'F') )
+		{
+			return "Fragment";
+		}
+		else if (isShaderType(_magic, 'V') )
+		{
+			return "Vertex";
+		}
+
+		BX_CHECK(false, "Invalid shader type!");
+
+		return NULL;
+	}
+
 	static TextureFormat::Enum s_emulatedFormats[] =
 	{
 		TextureFormat::BC1,

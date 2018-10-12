@@ -75,14 +75,23 @@ namespace bgfx
 		uint32_t magic;
 		bx::peek(_reader, magic);
 
-		if (BGFX_CHUNK_MAGIC_CSH == magic
-		||  BGFX_CHUNK_MAGIC_FSH == magic
-		||  BGFX_CHUNK_MAGIC_VSH == magic)
+		if (isShaderBin(magic) )
 		{
 			bx::read(_reader, magic);
 
-			uint32_t iohash;
-			bx::read(_reader, iohash, _err);
+			uint32_t hashIn;
+			bx::read(_reader, hashIn);
+
+			uint32_t hashOut;
+
+			if (isShaderVerLess(magic, 6) )
+			{
+				hashOut = hashIn;
+			}
+			else
+			{
+				bx::read(_reader, hashOut);
+			}
 
 			uint16_t count;
 			bx::read(_reader, count, _err);
