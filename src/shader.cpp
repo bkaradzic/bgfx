@@ -81,8 +81,11 @@ namespace bgfx
 		{
 			bx::read(_reader, magic);
 
-			uint32_t iohash;
-			bx::read(_reader, iohash, _err);
+			uint32_t inputHash;
+			bx::read(_reader, inputHash);
+
+			uint32_t outputHash;
+			bx::read(_reader, outputHash);
 
 			uint16_t count;
 			bx::read(_reader, count, _err);

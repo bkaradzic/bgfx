@@ -3550,8 +3550,11 @@ namespace bgfx
 				return handle;
 			}
 
-			uint32_t iohash;
-			bx::read(&reader, iohash, &err);
+			uint32_t inputHash;
+			bx::read(&reader, inputHash, &err);
+
+			uint32_t outputHash;
+			bx::read(&reader, outputHash, &err);
 
 			uint16_t count;
 			bx::read(&reader, count, &err);
@@ -3575,11 +3578,12 @@ namespace bgfx
 			bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
 			BX_CHECK(ok, "Shader already exists!"); BX_UNUSED(ok);
 
-			ShaderRef& sr = m_shaderRef[handle.idx];
-			sr.m_refCount = 1;
-			sr.m_hash     = iohash;
-			sr.m_num      = 0;
-			sr.m_uniforms = NULL;
+			ShaderRef& sr   = m_shaderRef[handle.idx];
+			sr.m_refCount   = 1;
+			sr.m_inputHash  = inputHash;
+			sr.m_outputHash = outputHash;
+			sr.m_num        = 0;
+			sr.m_uniforms   = NULL;
 
 			UniformHandle* uniforms = (UniformHandle*)alloca(count*sizeof(UniformHandle) );
 
@@ -3745,7 +3749,7 @@ namespace bgfx
 			{
 				const ShaderRef& vsr = m_shaderRef[_vsh.idx];
 				const ShaderRef& fsr = m_shaderRef[_fsh.idx];
-				if (vsr.m_hash != fsr.m_hash)
+				if (vsr.m_outputHash != fsr.m_inputHash)
 				{
 					BX_TRACE("Vertex shader output doesn't match fragment shader input.");
 					return BGFX_INVALID_HANDLE;
@@ -4682,7 +4686,8 @@ namespace bgfx
 		{
 			UniformHandle* m_uniforms;
 			String   m_name;
-			uint32_t m_hash;
+			uint32_t m_inputHash;
+			uint32_t m_outputHash;
 			int16_t  m_refCount;
 			uint16_t m_num;
 		};
