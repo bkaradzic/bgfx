@@ -888,6 +888,35 @@ namespace bgfx { namespace mtl
 		uint8_t m_numMips;
 	};
 
+	struct FrameBufferMtl;
+
+	struct SwapChainMtl
+	{
+		SwapChainMtl()
+			: m_metalLayer(nil)
+			, m_drawable(nil)
+			, m_backBufferColorMSAA()
+			, m_backBufferDepth()
+			, m_backBufferStencil()
+			, m_maxAnisotropy(0)
+		{
+		}
+
+		~SwapChainMtl();
+
+		void init(void* _nwh);
+		void resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags);
+
+		id<CAMetalDrawable> currentDrawable();
+
+		CAMetalLayer* m_metalLayer;
+		id <CAMetalDrawable> m_drawable;
+		Texture m_backBufferColorMSAA;
+		Texture m_backBufferDepth;
+		Texture m_backBufferStencil;
+		uint32_t m_maxAnisotropy;
+	};
+
 	struct FrameBufferMtl
 	{
 		FrameBufferMtl()
@@ -910,6 +939,7 @@ namespace bgfx { namespace mtl
 		void postReset();
 		uint16_t destroy();
 
+		SwapChainMtl* m_swapChain;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;
