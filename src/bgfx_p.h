@@ -85,7 +85,7 @@ namespace bgfx
 				BX_MACRO_BLOCK_BEGIN                              \
 					if (!BX_IGNORE_C4127(_condition) )            \
 					{                                             \
-						BX_TRACE("WARN " _format, ##__VA_ARGS__); \
+						_BX_TRACE("WARN " _format, ##__VA_ARGS__); \
 					}                                             \
 				BX_MACRO_BLOCK_END
 
@@ -93,7 +93,7 @@ namespace bgfx
 				BX_MACRO_BLOCK_BEGIN                                                                                \
 					if (!BX_IGNORE_C4127(_condition) )                                                              \
 					{                                                                                               \
-						BX_TRACE("CHECK " _format, ##__VA_ARGS__);                                                  \
+						_BX_TRACE("CHECK " _format, ##__VA_ARGS__);                                                  \
 						bgfx::fatal(__FILE__, uint16_t(__LINE__), bgfx::Fatal::DebugCheck, _format, ##__VA_ARGS__); \
 					}                                                                                               \
 				BX_MACRO_BLOCK_END
