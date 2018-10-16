@@ -600,6 +600,21 @@ namespace bgfx
 	{
 	}
 
+	/// Platform data.
+	///
+	/// @attention C99 equivalent is `bgfx_platform_data_t`.
+	///
+	struct PlatformData
+	{
+		PlatformData();
+
+		void* ndt;          //!< Native display type.
+		void* nwh;          //!< Native window handle.
+		void* context;      //!< GL context, or D3D device.
+		void* backBuffer;   //!< GL backbuffer, or D3D render target view.
+		void* backBufferDS; //!< Backbuffer depth/stencil.
+	};
+
 	/// Backbuffer resolution and reset parameters.
 	///
 	/// @attention C99 equivalent is `bgfx_resolution_t`.
@@ -644,6 +659,9 @@ namespace bgfx
 
 		bool debug;   //!< Enable device for debuging.
 		bool profile; //!< Enable device for profiling.
+
+		/// Platform data.
+		PlatformData platformData;
 
 		/// Backbuffer resolution and reset parameters. See: `bgfx::Resolution`.
 		Resolution resolution;

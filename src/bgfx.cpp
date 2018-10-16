@@ -1449,6 +1449,19 @@ namespace bgfx
 		m_init = _init;
 		m_init.resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
 
+		if (g_platformData.ndt          == NULL
+		&&  g_platformData.nwh          == NULL
+		&&  g_platformData.context      == NULL
+		&&  g_platformData.backBuffer   == NULL
+		&&  g_platformData.backBufferDS == NULL)
+		{
+			bx::memCopy(&g_platformData, &m_init.platformData, sizeof(PlatformData) );
+		}
+		else
+		{
+			bx::memCopy(&m_init.platformData, &g_platformData, sizeof(PlatformData) );
+		}
+
 		m_exit    = false;
 		m_flipped = true;
 		m_frames  = 0;
@@ -2837,6 +2850,15 @@ namespace bgfx
 		return s_rendererCreator[_type].name;
 	}
 
+	PlatformData::PlatformData()
+		: ndt(NULL)
+		, nwh(NULL)
+		, context(NULL)
+		, backBuffer(NULL)
+		, backBufferDS(NULL)
+	{
+	}
+
 	Resolution::Resolution()
 		: format(TextureFormat::RGBA8)
 		, width(1280)
@@ -2911,11 +2933,11 @@ namespace bgfx
 		if (true
 		&&  !BX_ENABLED(BX_PLATFORM_EMSCRIPTEN || BX_PLATFORM_PS4)
 		&&  RendererType::Noop != _init.type
-		&&  NULL == g_platformData.ndt
-		&&  NULL == g_platformData.nwh
-		&&  NULL == g_platformData.context
-		&&  NULL == g_platformData.backBuffer
-		&&  NULL == g_platformData.backBufferDS
+		&&  NULL == _init.platformData.ndt
+		&&  NULL == _init.platformData.nwh
+		&&  NULL == _init.platformData.context
+		&&  NULL == _init.platformData.backBuffer
+		&&  NULL == _init.platformData.backBufferDS
 		   )
 		{
 			BX_TRACE("bgfx platform data like window handle or backbuffer is not set, creating headless device.");

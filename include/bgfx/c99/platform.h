@@ -33,17 +33,6 @@ typedef enum bgfx_render_frame
  */
 BGFX_C_API bgfx_render_frame_t bgfx_render_frame(int32_t _msecs);
 
-typedef struct bgfx_platform_data
-{
-    void* ndt;
-    void* nwh;
-    void* context;
-    void* backBuffer;
-    void* backBufferDS;
-    void* session;
-
-} bgfx_platform_data_t;
-
 /**/
 BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data);
 

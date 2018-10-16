@@ -599,6 +599,17 @@ typedef struct bgfx_allocator_vtbl_s
 } bgfx_allocator_vtbl_t;
 
 /**/
+typedef struct bgfx_platform_data
+{
+    void* ndt;
+    void* nwh;
+    void* context;
+    void* backBuffer;
+    void* backBufferDS;
+
+} bgfx_platform_data_t;
+
+/**/
 typedef struct bgfx_resolution_s
 {
     bgfx_texture_format_t format;
@@ -628,8 +639,9 @@ typedef struct bgfx_init_s
     bool debug;
     bool profile;
 
-    bgfx_resolution_t  resolution;
-    bgfx_init_limits_t limits;
+    bgfx_platform_data_t platformData;
+    bgfx_resolution_t    resolution;
+    bgfx_init_limits_t   limits;
 
     bgfx_callback_interface_t*  callback;
     bgfx_allocator_interface_t* allocator;
