@@ -1166,6 +1166,15 @@ namespace bgfx
 		ViewId   m_view;
 	};
 
+	BX_ALIGN_DECL_16(struct) Srt
+	{
+		float rotate[4];
+		float translate[3];
+		float pad0;
+		float scale[3];
+		float pad1;
+	};
+
 	BX_ALIGN_DECL_16(struct) Matrix4
 	{
 		union
