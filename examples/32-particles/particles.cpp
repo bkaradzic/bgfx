@@ -207,11 +207,9 @@ struct Emitter
 	void gizmo(const float* _view, const float* _proj)
 	{
 		float mtx[16];
-		bx::mtxSRT(mtx
-				, 1.0f, 1.0f, 1.0f
-				, m_uniforms.m_angle[0],    m_uniforms.m_angle[1],    m_uniforms.m_angle[2]
-				, m_uniforms.m_position[0], m_uniforms.m_position[1], m_uniforms.m_position[2]
-				);
+		float scale[3];
+
+		ImGuizmo::RecomposeMatrixFromComponents(m_uniforms.m_position, m_uniforms.m_angle, scale, mtx);
 
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
@@ -224,7 +222,6 @@ struct Emitter
 				, mtx
 				);
 
-		float scale[3];
 		ImGuizmo::DecomposeMatrixToComponents(mtx, m_uniforms.m_position, m_uniforms.m_angle, scale);
 	}
 };
