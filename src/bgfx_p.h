@@ -472,6 +472,7 @@ namespace bgfx
 	bool isGraphicsDebuggerPresent();
 	void release(const Memory* _mem);
 	const char* getAttribName(Attrib::Enum _attr);
+	const char* getAttribNameShort(Attrib::Enum _attr);
 	void getTextureSizeFromRatio(BackbufferRatio::Enum _ratio, uint16_t& _width, uint16_t& _height);
 	TextureFormat::Enum getViableTextureFormat(const bimg::ImageContainer& _imageContainer);
 	const char* getName(TextureFormat::Enum _fmt);
