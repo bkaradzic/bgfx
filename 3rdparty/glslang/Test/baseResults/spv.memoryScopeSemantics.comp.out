@@ -158,12 +158,12 @@ spv.memoryScopeSemantics.comp
            72(y):     20(ptr) Variable Function
               19:      6(int) AtomicIAdd 10(atomi) 12 18 11
                               Store 8(origi) 19
-              25:     15(int) Load 24(value) MakePointerVisibleKHR 26
+              25:     15(int) Load 24(value) MakePointerVisibleKHR NonPrivatePointerKHR 26
               27:     15(int) AtomicAnd 23(atomu) 16 17 25
                               Store 21(origu) 27
               31:      6(int) AtomicLoad 10(atomi) 12 30
                               Store 8(origi) 31
-              32:     15(int) Load 24(value) MakePointerVisibleKHR 26
+              32:     15(int) Load 24(value) MakePointerVisibleKHR NonPrivatePointerKHR 26
                               AtomicStore 23(atomu) 12 33 32
               41:     40(ptr) ImageTexelPointer 36(imagei) 39 17
               42:      6(int) AtomicLoad 41 12 30
@@ -177,7 +177,7 @@ spv.memoryScopeSemantics.comp
                               Store 21(origu) 53
               54:     15(int) AtomicXor 23(atomu) 12 17 52
                               Store 21(origu) 54
-              55:     15(int) Load 24(value) MakePointerVisibleKHR 26
+              55:     15(int) Load 24(value) MakePointerVisibleKHR NonPrivatePointerKHR 26
               56:     15(int) AtomicUMin 23(atomu) 12 17 55
                               Store 21(origu) 56
               58:      6(int) AtomicSMax 10(atomi) 12 17 57
@@ -185,7 +185,7 @@ spv.memoryScopeSemantics.comp
               59:      6(int) Load 8(origi)
               60:      6(int) AtomicExchange 10(atomi) 12 17 59
                               Store 8(origi) 60
-              62:     15(int) Load 24(value) MakePointerVisibleKHR 26
+              62:     15(int) Load 24(value) MakePointerVisibleKHR NonPrivatePointerKHR 26
               64:     15(int) AtomicCompareExchange 23(atomu) 12 63 63 62 61
                               Store 21(origu) 64
               69:     68(ptr) AccessChain 67(bufferu) 38
@@ -231,8 +231,8 @@ spv.memoryScopeSemantics.comp
              124:         118 Load 123
              129:  128(fvec4) ImageSampleExplicitLod 124 127 Lod NonPrivateTexelKHR 126
              134:130(int64_t) AtomicUMax 132(atomu64) 12 17 133
-                              Store 132(atomu64) 134 MakePointerAvailableKHR 26
-             139:130(int64_t) Load 132(atomu64) MakePointerVisibleKHR 26
+                              Store 132(atomu64) 134 MakePointerAvailableKHR NonPrivatePointerKHR 26
+             139:130(int64_t) Load 132(atomu64) MakePointerVisibleKHR NonPrivatePointerKHR 26
              140:135(int64_t) Bitcast 139
              141:135(int64_t) AtomicCompareExchange 137(atomi64) 12 63 63 140 138
                               Return

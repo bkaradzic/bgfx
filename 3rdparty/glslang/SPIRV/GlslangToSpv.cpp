@@ -554,11 +554,11 @@ spv::Builder::AccessChain::CoherentFlags TGlslangToSpvTraverser::TranslateCohere
     flags.subgroupcoherent = type.getQualifier().subgroupcoherent;
     // *coherent variables are implicitly nonprivate in GLSL
     flags.nonprivate = type.getQualifier().nonprivate ||
-                       type.getQualifier().subgroupcoherent ||
-                       type.getQualifier().workgroupcoherent ||
-                       type.getQualifier().queuefamilycoherent ||
-                       type.getQualifier().devicecoherent ||
-                       type.getQualifier().coherent;
+                       flags.subgroupcoherent ||
+                       flags.workgroupcoherent ||
+                       flags.queuefamilycoherent ||
+                       flags.devicecoherent ||
+                       flags.coherent;
     flags.volatil = type.getQualifier().volatil;
     flags.isImage = type.getBasicType() == glslang::EbtSampler;
     return flags;

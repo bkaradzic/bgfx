@@ -1897,7 +1897,8 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
                 error(loc, "only supported on image with format r32f", fnCandidate.getName().c_str(), "");
         }
 
-        if (argp->size() > 4) {
+        const size_t maxArgs = imageType.getSampler().isMultiSample() ? 5 : 4;
+        if (argp->size() > maxArgs) {
             requireExtensions(loc, 1, &E_GL_KHR_memory_scope_semantics, fnCandidate.getName().c_str());
             memorySemanticsCheck(loc, fnCandidate, callNode);
         }
