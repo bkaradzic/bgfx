@@ -522,11 +522,11 @@ namespace bgfx { namespace hlsl
 						, bindDesc.BindCount
 						);
 
-					const char * end = bx::strFind(bindDesc.Name, "Sampler");
-					if (NULL != end)
+					bx::StringView end = bx::strFind(bindDesc.Name, "Sampler");
+					if (!end.isEmpty() )
 					{
 						Uniform un;
-						un.name.assign(bindDesc.Name, (end - bindDesc.Name) );
+						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
 						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Int1);
 						un.num = 1;
 						un.regIndex = uint16_t(bindDesc.BindPoint);
@@ -626,10 +626,10 @@ namespace bgfx { namespace hlsl
 
 			if (!hlslfp.empty())
 			{
-				const char* logfp = bx::strFind(log, hlslfp.c_str());
-				if (NULL != logfp)
+				bx::StringView logfp = bx::strFind(log, hlslfp.c_str() );
+				if (!logfp.isEmpty() )
 				{
-					log = logfp + hlslfp.length();
+					log = logfp.getPtr() + hlslfp.length();
 				}
 			}
 
@@ -703,7 +703,7 @@ namespace bgfx { namespace hlsl
 							// included in the uniform blob that the application must upload
 							// we can't just remove them, because unused functions might still reference
 							// them and cause a compile error when they're gone
-							if (!!bx::findIdentifierMatch(strLine.c_str(), it->c_str() ) )
+							if (!bx::findIdentifierMatch(strLine.c_str(), it->c_str() ).isEmpty() )
 							{
 								strLine = strLine.replace(index, strLength, "static");
 								unusedUniforms.erase(it);

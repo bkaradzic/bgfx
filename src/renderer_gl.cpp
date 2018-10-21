@@ -1073,10 +1073,10 @@ namespace bgfx { namespace gl
 			while (pos < end)
 			{
 				uint32_t len;
-				const char* space = bx::strFind(pos, ' ');
-				if (NULL != space)
+				bx::StringView space = bx::strFind(pos, ' ');
+				if (!space.isEmpty() )
 				{
-					len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
+					len = bx::uint32_min(sizeof(name), (uint32_t)(space.getPtr() - pos) );
 				}
 				else
 				{
@@ -1855,8 +1855,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				;
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31)
-			&&  0    == bx::strCmp(m_vendor, "Imagination Technologies")
-			&&  NULL != bx::strFind(m_version, "(SDK 3.5@3510720)") )
+			&&  0 == bx::strCmp(m_vendor, "Imagination Technologies")
+			&&  !bx::strFind(m_version, "(SDK 3.5@3510720)").isEmpty() )
 			{
 				// Skip initializing extensions that are broken in emulator.
 				s_extension[Extension::ARB_program_interface_query     ].m_initialize =
@@ -1864,8 +1864,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 
 			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
-			&&  0    == bx::strCmp(m_vendor, "Imagination Technologies")
-			&&  NULL != bx::strFind(m_version, "1.8@905891") )
+			&&  0 == bx::strCmp(m_vendor, "Imagination Technologies")
+			&&  !bx::strFind(m_version, "1.8@905891").isEmpty() )
 			{
 				m_workaround.m_detachShader = false;
 			}
@@ -1883,10 +1883,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					while (pos < end)
 					{
 						uint32_t len;
-						const char* space = bx::strFind(pos, ' ');
-						if (NULL != space)
+						const bx::StringView space = bx::strFind(pos, ' ');
+						if (!space.isEmpty() )
 						{
-							len = bx::uint32_min(sizeof(name), (uint32_t)(space - pos) );
+							len = bx::uint32_min(sizeof(name), (uint32_t)(space.getPtr() - pos) );
 						}
 						else
 						{
@@ -4279,19 +4279,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 			num = bx::uint32_max(num, 1);
 
-			int offset = 0;
-			char* array = const_cast<char*>(bx::strFind(name, '[') );
-			if (NULL != array)
+			int32_t offset = 0;
+			const bx::StringView array = bx::strFind(name, '[');
+			if (!array.isEmpty() )
 			{
+				name[array.getPtr() - name] = '\0';
 				BX_TRACE("--- %s", name);
-				*array = '\0';
-				array++;
-				char* end = const_cast<char*>(bx::strFind(array, ']') );
-				if (NULL != end)
-				{ // Some devices (Amazon Fire) might not return terminating brace.
-					*end = '\0';
-					offset = atoi(array);
-				}
+				const bx::StringView end = bx::strFind(array.getPtr()+1, ']');
+				bx::fromString(&offset, bx::StringView(array.getPtr()+1, end.getPtr() ) );
 			}
 
 			switch (gltype)
@@ -5318,15 +5313,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		m_id = glCreateShader(m_type);
 		BX_WARN(0 != m_id, "Failed to create shader.");
 
-		const char* code = (const char*)reader.getDataPtr();
+		bx::StringView code( (const char*)reader.getDataPtr(), shaderSize);
 
 		if (0 != m_id)
 		{
 			if (GL_COMPUTE_SHADER != m_type
 			&&  0 != bx::strCmp(code, "#version 430", 12) )
 			{
-				int32_t codeLen = (int32_t)bx::strLen(code);
-				int32_t tempLen = codeLen + (4<<10);
+				int32_t tempLen = code.getLength() + (4<<10);
 				char* temp = (char*)alloca(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
@@ -5341,22 +5335,22 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						);
 
 					bool usesDerivatives = s_extension[Extension::OES_standard_derivatives].m_supported
-						&& bx::findIdentifierMatch(code, s_OES_standard_derivatives)
+						&& !bx::findIdentifierMatch(code, s_OES_standard_derivatives).isEmpty()
 						;
 
-					bool usesFragData  = !!bx::findIdentifierMatch(code, "gl_FragData");
+					bool usesFragData  = !bx::findIdentifierMatch(code, "gl_FragData").isEmpty();
 
-					bool usesFragDepth = !!bx::findIdentifierMatch(code, "gl_FragDepth");
+					bool usesFragDepth = !bx::findIdentifierMatch(code, "gl_FragDepth").isEmpty();
 
-					bool usesShadowSamplers = !!bx::findIdentifierMatch(code, s_EXT_shadow_samplers);
+					bool usesShadowSamplers = !bx::findIdentifierMatch(code, s_EXT_shadow_samplers).isEmpty();
 
 					bool usesTexture3D = s_extension[Extension::OES_texture_3D].m_supported
-						&& bx::findIdentifierMatch(code, s_texture3D)
+						&& !bx::findIdentifierMatch(code, s_texture3D).isEmpty()
 						;
 
-					bool usesTextureLod = !!bx::findIdentifierMatch(code, s_EXT_shader_texture_lod);
+					bool usesTextureLod = !bx::findIdentifierMatch(code, s_EXT_shader_texture_lod).isEmpty();
 
-					bool usesFragmentOrdering = !!bx::findIdentifierMatch(code, "beginFragmentShaderOrdering");
+					bool usesFragmentOrdering = !bx::findIdentifierMatch(code, "beginFragmentShaderOrdering").isEmpty();
 
 					if (usesDerivatives)
 					{
@@ -5479,30 +5473,35 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, m_type == GL_FRAGMENT_SHADER ? "mediump" : "highp"
 							);
 
-					bx::write(&writer, code, codeLen);
+					bx::write(&writer, code);
 					bx::write(&writer, '\0');
 
 					if (insertFragDepth)
 					{
-						const char* entry = bx::strFind(temp, "void main ()");
-						if (NULL != entry)
+						bx::StringView shader(temp);
+						bx::StringView entry = bx::strFind(shader, "void main ()");
+						if (!entry.isEmpty() )
 						{
-							char* brace = const_cast<char*>(bx::strFind(entry, "{") );
-							if (NULL != brace)
+							entry.set(entry.getTerm(), shader.getTerm() );
+							bx::StringView brace = bx::strFind(entry, "{");
+							if (!brace.isEmpty() )
 							{
-								const char* end = bx::strmb(brace, '{', '}');
+								const char* end = bx::strmb(brace.getPtr(), '{', '}');
 								if (NULL != end)
 								{
-									strins(brace+1, "\n  float bgfx_FragDepth = 0.0;\n");
+									strins(const_cast<char*>(brace.getPtr()+1), "\n  float bgfx_FragDepth = 0.0;\n");
 								}
 							}
 						}
 					}
 
 					// Replace all instances of gl_FragDepth with bgfx_FragDepth.
-					for (const char* fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth"); NULL != fragDepth; fragDepth = bx::findIdentifierMatch(fragDepth, "gl_FragDepth") )
+					for (bx::StringView fragDepth = bx::findIdentifierMatch(temp, "gl_FragDepth")
+						; !fragDepth.isEmpty()
+						; fragDepth = bx::findIdentifierMatch(fragDepth, "gl_FragDepth")
+						)
 					{
-						char* insert = const_cast<char*>(fragDepth);
+						char* insert = const_cast<char*>(fragDepth.getPtr() );
 						strins(insert, "bg");
 						bx::memCopy(insert + 2, "fx", 2);
 					}
@@ -5512,18 +5511,18 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					const bool usesTextureLod = true
 						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
-						&& bx::findIdentifierMatch(code, s_ARB_shader_texture_lod)
+						&& !bx::findIdentifierMatch(code, s_ARB_shader_texture_lod).isEmpty()
 						;
-					const bool usesGpuShader4   = !!bx::findIdentifierMatch(code, s_EXT_gpu_shader4);
-					const bool usesGpuShader5   = !!bx::findIdentifierMatch(code, s_ARB_gpu_shader5);
-					const bool usesIUsamplers   = !!bx::findIdentifierMatch(code, s_uisamplers);
-					const bool usesUint         = !!bx::findIdentifierMatch(code, s_uint);
-					const bool usesTexelFetch   = !!bx::findIdentifierMatch(code, s_texelFetch);
-					const bool usesTextureArray = !!bx::findIdentifierMatch(code, s_textureArray);
-					const bool usesTexture3D    = !!bx::findIdentifierMatch(code, s_texture3D);
-					const bool usesTextureMS    = !!bx::findIdentifierMatch(code, s_ARB_texture_multisample);
-					const bool usesPacking      = !!bx::findIdentifierMatch(code, s_ARB_shading_language_packing);
-					const bool usesInterpQ      = !!bx::findIdentifierMatch(code, s_intepolationQualifier);
+					const bool usesGpuShader4   = !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty();
+					const bool usesGpuShader5   = !bx::findIdentifierMatch(code, s_ARB_gpu_shader5).isEmpty();
+					const bool usesIUsamplers   = !bx::findIdentifierMatch(code, s_uisamplers).isEmpty();
+					const bool usesUint         = !bx::findIdentifierMatch(code, s_uint).isEmpty();
+					const bool usesTexelFetch   = !bx::findIdentifierMatch(code, s_texelFetch).isEmpty();
+					const bool usesTextureArray = !bx::findIdentifierMatch(code, s_textureArray).isEmpty();
+					const bool usesTexture3D    = !bx::findIdentifierMatch(code, s_texture3D).isEmpty();
+					const bool usesTextureMS    = !bx::findIdentifierMatch(code, s_ARB_texture_multisample).isEmpty();
+					const bool usesPacking      = !bx::findIdentifierMatch(code, s_ARB_shading_language_packing).isEmpty();
+					const bool usesInterpQ      = !bx::findIdentifierMatch(code, s_intepolationQualifier).isEmpty();
 
 					uint32_t version = BX_ENABLED(BX_PLATFORM_OSX) ? 120
 						:  usesTextureArray
@@ -5617,13 +5616,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 						uint32_t fragData = 0;
 
-						if (!!bx::findIdentifierMatch(code, "gl_FragData") )
+						if (!bx::findIdentifierMatch(code, "gl_FragData").isEmpty() )
 						{
 							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == bx::strFind(code, tmpFragData) ? 0 : ii+1);
+								fragData = bx::uint32_max(fragData, bx::strFind(code, tmpFragData).isEmpty() ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
@@ -5669,7 +5668,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							);
 					}
 
-					bx::write(&writer, code, codeLen);
+					bx::write(&writer, code);
 					bx::write(&writer, '\0');
 				}
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)
@@ -5717,19 +5716,19 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 						uint32_t fragData = 0;
 
-						if (!!bx::findIdentifierMatch(code, "gl_FragData") )
+						if (!bx::findIdentifierMatch(code, "gl_FragData").isEmpty() )
 						{
 							for (uint32_t ii = 0, num = g_caps.limits.maxFBAttachments; ii < num; ++ii)
 							{
 								char tmpFragData[16];
 								bx::snprintf(tmpFragData, BX_COUNTOF(tmpFragData), "gl_FragData[%d]", ii);
-								fragData = bx::uint32_max(fragData, NULL == bx::strFind(code, tmpFragData) ? 0 : ii+1);
+								fragData = bx::uint32_max(fragData, bx::strFind(code, tmpFragData).isEmpty() ? 0 : ii+1);
 							}
 
 							BGFX_FATAL(0 != fragData, Fatal::InvalidShader, "Unable to find and patch gl_FragData!");
 						}
 
-						if (!!bx::findIdentifierMatch(code, "beginFragmentShaderOrdering") )
+						if (!bx::findIdentifierMatch(code, "beginFragmentShaderOrdering").isEmpty() )
 						{
 							if (s_extension[Extension::INTEL_fragment_shader_ordering].m_supported)
 							{
@@ -5741,7 +5740,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							}
 						}
 
-						if (!!bx::findIdentifierMatch(code, s_ARB_texture_multisample) )
+						if (!bx::findIdentifierMatch(code, s_ARB_texture_multisample).isEmpty() )
 						{
 							writeString(&writer, "#extension GL_ARB_texture_multisample : enable\n");
 						}
@@ -5772,11 +5771,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								);
 					}
 
-					bx::write(&writer, code, codeLen);
+					bx::write(&writer, code.getPtr(), code.getLength() );
 					bx::write(&writer, '\0');
 				}
 
-				code = temp;
+				code.set(temp);
 			}
 			else if (GL_COMPUTE_SHADER == m_type)
 			{
@@ -5793,7 +5792,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				writeString(&writer, "#define texture3DGrad   textureGrad\n");
 				writeString(&writer, "#define textureCubeGrad textureGrad\n");
 
-				bx::write(&writer, code+bx::strLen("#version 430"), codeLen);
+				bx::write(&writer, code.getPtr()+bx::strLen("#version 430"), codeLen);
 				bx::write(&writer, '\0');
 
 				code = temp;
@@ -5817,10 +5816,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					if (err.isOk() )
 					{
 						str[len] = '\0';
-						const char* eol = bx::streol(str);
-						if (eol != str)
+						bx::StringView eol = bx::strFindEol(str);
+						if (eol.getPtr() != str)
 						{
-							*const_cast<char*>(eol) = '\0';
+							*const_cast<char*>(eol.getPtr() ) = '\0';
 						}
 						BX_TRACE("%3d %s", line, str);
 					}

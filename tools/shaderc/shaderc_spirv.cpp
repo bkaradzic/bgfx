@@ -629,13 +629,13 @@ namespace bgfx { namespace spirv
 				int32_t start   = 0;
 				int32_t end     = INT32_MAX;
 
-				const char* err = bx::strFind(log, "ERROR:");
+				bx::StringView err = bx::strFind(log, "ERROR:");
 
 				bool found = false;
 
-				if (NULL != err)
+				if (!err.isEmpty() )
 				{
-					found = 2 == sscanf(err, "ERROR: %u:%u: '", &source, &line);
+					found = 2 == sscanf(err.getPtr(), "ERROR: %u:%u: '", &source, &line);
 					if (found)
 					{
 						++line;
@@ -703,7 +703,7 @@ namespace bgfx { namespace spirv
 									// included in the uniform blob that the application must upload
 									// we can't just remove them, because unused functions might still reference
 									// them and cause a compile error when they're gone
-									if (!!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii) ) )
+									if (!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii) ).isEmpty() )
 									{
 										found = true;
 										break;

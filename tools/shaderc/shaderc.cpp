@@ -478,12 +478,12 @@ namespace bgfx
 		replace[len] = '\0';
 
 		BX_CHECK(len >= bx::strLen(_replace), "");
-		for (const char* ptr = bx::strFind(_str, _find)
-			; NULL != ptr
-			; ptr = bx::strFind(ptr + len, _find)
+		for (bx::StringView ptr = bx::strFind(_str, _find)
+			; !ptr.isEmpty()
+			; ptr = bx::strFind(ptr.getPtr() + len, _find)
 			)
 		{
-			bx::memCopy(const_cast<char*>(ptr), replace, len);
+			bx::memCopy(const_cast<char*>(ptr.getPtr() ), replace, len);
 		}
 	}
 
@@ -619,16 +619,16 @@ namespace bgfx
 		{
 			char* start = scratch(_includeDir);
 
-			for (char* split = const_cast<char*>(bx::strFind(start, ';') )
-				; NULL != split
-				; split = const_cast<char*>(bx::strFind(start, ';') )
+			for (bx::StringView split = bx::strFind(start, ';')
+				; !split.isEmpty()
+				; split = bx::strFind(start, ';')
 				)
 			{
-				*split = '\0';
+				*const_cast<char*>(split.getPtr() ) = '\0';
 				m_tagptr->tag = FPPTAG_INCLUDE_DIR;
 				m_tagptr->data = start;
 				m_tagptr++;
-				start = split + 1;
+				start = const_cast<char*>(split.getPtr() ) + 1;
 			}
 
 			m_tagptr->tag = FPPTAG_INCLUDE_DIR;
@@ -734,7 +734,7 @@ namespace bgfx
 	uint32_t parseInOut(InOut& _inout, const char* _str, const char* _eol)
 	{
 		uint32_t hash = 0;
-		_str = bx::strws(_str);
+		_str = bx::strLTrimSpace(_str).getPtr();
 
 		if (_str < _eol)
 		{
@@ -748,7 +748,7 @@ namespace bgfx
 					std::string token;
 					token.assign(_str, delim-_str);
 					_inout.push_back(token);
-					_str = bx::strws(delim + 1);
+					_str = bx::strLTrimSpace(delim + 1).getPtr();
 				}
 			}
 			while (delim < _eol && _str < _eol && NULL != delim);
@@ -798,8 +798,8 @@ namespace bgfx
 		bx::FilePath fp(_filePath);
 		char tmp[bx::kMaxFilePath];
 		bx::strCopy(tmp, BX_COUNTOF(tmp), fp.getFileName() );
-		const char* base = bx::strFind(_filePath, tmp);
-		return base;
+		bx::StringView base = bx::strFind(_filePath, tmp);
+		return base.isEmpty() ? NULL : base.getPtr();
 	}
 
 	// c - compute
@@ -1049,20 +1049,25 @@ namespace bgfx
 
 		VaryingMap varyingMap;
 		const char* parse = _varying;
+		bx::StringView term(parse);
 
 		bool usesInterpolationQualifiers = false;
 
 		while (NULL !=  parse
 		&&     '\0' != *parse)
 		{
-			parse = bx::strws(parse);
-			const char* eol = bx::strFind(parse, ';');
-			if (NULL == eol)
+			parse = bx::strLTrimSpace(parse).getPtr();
+			bx::StringView eol = bx::strFind(parse, ';');
+			if (eol.isEmpty() )
 			{
-				eol = bx::streol(parse);
+				eol = bx::strFindEol(parse);
+			}
+			else
+			{
+				eol.set(eol.getPtr(), term.getTerm() );
 			}
 
-			if (NULL != eol)
+			if (!eol.isEmpty() )
 			{
 				const char* precision = NULL;
 				const char* interpolation = NULL;
@@ -1073,7 +1078,7 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "highp", 5) )
 				{
 					precision = typen;
-					typen = parse = bx::strws(bx::strSkipWord(parse) );
+					typen = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
 				}
 
 				if (0 == bx::strCmp(typen, "flat", 4)
@@ -1082,21 +1087,21 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
 					interpolation = typen;
-					typen = parse = bx::strws(bx::strSkipWord(parse) );
+					typen = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
 					usesInterpolationQualifiers = true;
 				}
 
-				const char* name      = parse = bx::strws(bx::strSkipWord(parse) );
-				const char* column    = parse = bx::strws(bx::strSkipWord(parse) );
-				const char* semantics = parse = bx::strws( (*parse == ':' ? ++parse : parse) );
-				const char* assign    = parse = bx::strws(bx::strSkipWord(parse) );
-				const char* init      = parse = bx::strws( (*parse == '=' ? ++parse : parse) );
+				const char* name      = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+				const char* column    = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+				const char* semantics = parse = bx::strLTrimSpace( (*parse == ':' ? ++parse : parse) ).getPtr();
+				const char* assign    = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+				const char* init      = parse = bx::strLTrimSpace( (*parse == '=' ? ++parse : parse) ).getPtr();
 
-				if (typen < eol
-				&&  name < eol
-				&&  column < eol
+				if (typen < eol.getPtr()
+				&&  name < eol.getPtr()
+				&&  column < eol.getPtr()
 				&&  ':' == *column
-				&&  semantics < eol)
+				&&  semantics < eol.getPtr() )
 				{
 					Varying var;
 					if (NULL != precision)
@@ -1119,17 +1124,17 @@ namespace bgfx
 						var.m_semantics = "BINORMAL";
 					}
 
-					if (assign < eol
+					if (assign < eol.getPtr()
 					&&  '=' == *assign
-					&&  init < eol)
+					&&  init < eol.getPtr() )
 					{
-						var.m_init.assign(init, eol-init);
+						var.m_init.assign(init, eol.getPtr()-init);
 					}
 
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = bx::strws(bx::strnl(eol) );
+				parse = bx::strLTrimSpace(bx::strFindNl(eol) ).getPtr();
 			}
 		}
 
@@ -1169,27 +1174,27 @@ namespace bgfx
 
 			strNormalizeEol(data);
 
-			input = const_cast<char*>(bx::strws(data) );
+			input = const_cast<char*>(bx::strLTrimSpace(data).getPtr() );
 			while (input[0] == '$')
 			{
-				const char* str = bx::strws(input+1);
-				const char* eol = bx::streol(str);
-				const char* nl  = bx::strnl(eol);
-				input = const_cast<char*>(nl);
+				const char* str = bx::strLTrimSpace(input+1).getPtr();
+				bx::StringView eol = bx::strFindEol(str);
+				bx::StringView nl  = bx::strFindNl(eol);
+				input = const_cast<char*>(nl.getPtr() );
 
 				if (0 == bx::strCmp(str, "input", 5) )
 				{
 					str += 5;
-					const char* comment = bx::strFind(str, "//");
-					eol = NULL != comment && comment < eol ? comment : eol;
-					inputHash = parseInOut(shaderInputs, str, eol);
+					bx::StringView comment = bx::strFind(str, "//");
+					eol = !comment.isEmpty() && comment.getPtr() < eol.getPtr() ? comment.getPtr() : eol;
+					inputHash = parseInOut(shaderInputs, str, eol.getPtr() );
 				}
 				else if (0 == bx::strCmp(str, "output", 6) )
 				{
 					str += 6;
-					const char* comment = bx::strFind(str, "//");
-					eol = NULL != comment && comment < eol ? comment : eol;
-					outputHash = parseInOut(shaderOutputs, str, eol);
+					bx::StringView comment = bx::strFind(str, "//");
+					eol = !comment.isEmpty() && comment.getPtr() < eol.getPtr() ? comment.getPtr() : eol;
+					outputHash = parseInOut(shaderOutputs, str, eol.getPtr() );
 				}
 				else if (0 == bx::strCmp(str, "raw", 3) )
 				{
@@ -1197,7 +1202,7 @@ namespace bgfx
 					str += 3;
 				}
 
-				input = const_cast<char*>(bx::strws(input) );
+				input = const_cast<char*>(bx::strLTrimSpace(input).getPtr() );
 			}
 		}
 
@@ -1244,8 +1249,8 @@ namespace bgfx
 		}
 		else if ('c' == _options.shaderType) // Compute
 		{
-			char* entry = const_cast<char*>(bx::strFind(input, "void main()") );
-			if (NULL == entry)
+			bx::StringView entry = bx::strFind(input, "void main()");
+			if (entry.isEmpty() )
 			{
 				fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
 			}
@@ -1281,17 +1286,17 @@ namespace bgfx
 						"#define mat4 float4x4\n"
 						);
 
-					entry[4] = '_';
+					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
 					preprocessor.writef("#define void_main()");
 					preprocessor.writef(" \\\n\tvoid main(");
 
 					uint32_t arg = 0;
 
-					const bool hasLocalInvocationID    = NULL != bx::strFind(input, "gl_LocalInvocationID");
-					const bool hasLocalInvocationIndex = NULL != bx::strFind(input, "gl_LocalInvocationIndex");
-					const bool hasGlobalInvocationID   = NULL != bx::strFind(input, "gl_GlobalInvocationID");
-					const bool hasWorkGroupID          = NULL != bx::strFind(input, "gl_WorkGroupID");
+					const bool hasLocalInvocationID    = !bx::strFind(input, "gl_LocalInvocationID").isEmpty();
+					const bool hasLocalInvocationIndex = !bx::strFind(input, "gl_LocalInvocationIndex").isEmpty();
+					const bool hasGlobalInvocationID   = !bx::strFind(input, "gl_GlobalInvocationID").isEmpty();
+					const bool hasWorkGroupID          = !bx::strFind(input, "gl_WorkGroupID").isEmpty();
 
 					if (hasLocalInvocationID)
 					{
@@ -1415,8 +1420,9 @@ namespace bgfx
 		}
 		else // Vertex/Fragment
 		{
-			char* entry = const_cast<char*>(bx::strFind(input, "void main()") );
-			if (NULL == entry)
+			bx::StringView shader(input);
+			bx::StringView entry = bx::strFind(shader, "void main()");
+			if (entry.isEmpty() )
 			{
 				fprintf(stderr, "Shader entry point 'void main()' is not found.\n");
 			}
@@ -1516,21 +1522,21 @@ namespace bgfx
 							);
 					}
 
-					entry[4] = '_';
+					*const_cast<char*>(entry.getPtr() + 4) = '_';
 
 					if ('f' == _options.shaderType)
 					{
-						const char* insert = bx::strFind(entry, "{");
-						if (NULL != insert)
+						bx::StringView insert = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						if (!insert.isEmpty() )
 						{
-							insert = strInsert(const_cast<char*>(insert+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
+							insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\nvec4 bgfx_VoidFrag = vec4_splat(0.0);\n");
 						}
 
-						const bool hasFragColor   = NULL != bx::strFind(input, "gl_FragColor");
-						const bool hasFragCoord   = NULL != bx::strFind(input, "gl_FragCoord") || hlsl > 3 || hlsl == 2;
-						const bool hasFragDepth   = NULL != bx::strFind(input, "gl_FragDepth");
-						const bool hasFrontFacing = NULL != bx::strFind(input, "gl_FrontFacing");
-						const bool hasPrimitiveId = NULL != bx::strFind(input, "gl_PrimitiveID");
+						const bool hasFragColor   = !bx::strFind(input, "gl_FragColor").isEmpty();
+						const bool hasFragCoord   = !bx::strFind(input, "gl_FragCoord").isEmpty() || hlsl > 3 || hlsl == 2;
+						const bool hasFragDepth   = !bx::strFind(input, "gl_FragDepth").isEmpty();
+						const bool hasFrontFacing = !bx::strFind(input, "gl_FrontFacing").isEmpty();
+						const bool hasPrimitiveId = !bx::strFind(input, "gl_PrimitiveID").isEmpty();
 
 						bool hasFragData[8] = {};
 						uint32_t numFragData = 0;
@@ -1538,7 +1544,7 @@ namespace bgfx
 						{
 							char temp[32];
 							bx::snprintf(temp, BX_COUNTOF(temp), "gl_FragData[%d]", ii);
-							hasFragData[ii] = NULL != bx::strFind(input, temp);
+							hasFragData[ii] = !bx::strFind(input, temp).isEmpty();
 							numFragData += hasFragData[ii];
 						}
 
@@ -1553,11 +1559,11 @@ namespace bgfx
 							// targets.
 							hasFragData[0] |= hasFragColor || d3d < 11;
 
-							if (NULL != insert
+							if (!insert.isEmpty()
 							&&  d3d < 11
 							&&  !hasFragColor)
 							{
-								insert = strInsert(const_cast<char*>(insert+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
+								insert = strInsert(const_cast<char*>(insert.getPtr()+1), "\ngl_FragColor = bgfx_VoidFrag;\n");
 							}
 						}
 
@@ -1663,13 +1669,13 @@ namespace bgfx
 					}
 					else if ('v' == _options.shaderType)
 					{
-						const bool hasVertexId    = NULL != bx::strFind(input, "gl_VertexID");
-						const bool hasInstanceId  = NULL != bx::strFind(input, "gl_InstanceID");
+						const bool hasVertexId    = !bx::strFind(input, "gl_VertexID").isEmpty();
+						const bool hasInstanceId  = !bx::strFind(input, "gl_InstanceID").isEmpty();
 
-						const char* brace = bx::strFind(entry, "{");
-						if (NULL != brace)
+						bx::StringView brace = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
+						if (!brace.isEmpty() )
 						{
-							const char* end = bx::strmb(brace, '{', '}');
+							const char* end = bx::strmb(brace.getPtr(), '{', '}');
 							if (NULL != end)
 							{
 								strInsert(const_cast<char*>(end), "__RETURN__;\n");
@@ -1853,7 +1859,7 @@ namespace bgfx
 						||  0 != essl
 						||  0 != metal)
 						{
-							if (NULL != bx::strFind(preprocessor.m_preprocessed.c_str(), "layout(std430") )
+							if (!bx::strFind(preprocessor.m_preprocessed.c_str(), "layout(std430").isEmpty() )
 							{
 								glsl = 430;
 							}
@@ -1861,21 +1867,21 @@ namespace bgfx
 							if (glsl < 400)
 							{
 								const bool usesTextureLod   = false
-									|| !!bx::findIdentifierMatch(input, s_ARB_shader_texture_lod)
-									|| !!bx::findIdentifierMatch(input, s_EXT_shader_texture_lod)
+									|| !bx::findIdentifierMatch(input, s_ARB_shader_texture_lod).isEmpty()
+									|| !bx::findIdentifierMatch(input, s_EXT_shader_texture_lod).isEmpty()
 									;
-								const bool usesInstanceID   = !!bx::strFind(input, "gl_InstanceID");
-								const bool usesGpuShader4   = !!bx::findIdentifierMatch(input, s_EXT_gpu_shader4);
-								const bool usesGpuShader5   = !!bx::findIdentifierMatch(input, s_ARB_gpu_shader5);
-								const bool usesTexelFetch   = !!bx::findIdentifierMatch(input, s_texelFetch);
-								const bool usesTextureMS    = !!bx::findIdentifierMatch(input, s_ARB_texture_multisample);
-								const bool usesTextureArray = !!bx::findIdentifierMatch(input, s_textureArray);
-								const bool usesPacking      = !!bx::findIdentifierMatch(input, s_ARB_shading_language_packing);
+								const bool usesInstanceID   = !bx::findIdentifierMatch(input, "gl_InstanceID").isEmpty();
+								const bool usesGpuShader4   = !bx::findIdentifierMatch(input, s_EXT_gpu_shader4).isEmpty();
+								const bool usesGpuShader5   = !bx::findIdentifierMatch(input, s_ARB_gpu_shader5).isEmpty();
+								const bool usesTexelFetch   = !bx::findIdentifierMatch(input, s_texelFetch).isEmpty();
+								const bool usesTextureMS    = !bx::findIdentifierMatch(input, s_ARB_texture_multisample).isEmpty();
+								const bool usesTextureArray = !bx::findIdentifierMatch(input, s_textureArray).isEmpty();
+								const bool usesPacking      = !bx::findIdentifierMatch(input, s_ARB_shading_language_packing).isEmpty();
 
 								if (0 == essl)
 								{
 									const bool need130 = 120 == glsl && (false
-										|| bx::findIdentifierMatch(input, s_130)
+										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
 										);
@@ -2072,17 +2078,17 @@ namespace bgfx
 											);
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, s_OES_standard_derivatives) )
+									if (!bx::findIdentifierMatch(input, s_OES_standard_derivatives).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_standard_derivatives : enable\n");
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, s_OES_texture_3D) )
+									if (!bx::findIdentifierMatch(input, s_OES_texture_3D).isEmpty() )
 									{
 										bx::stringPrintf(code, "#extension GL_OES_texture_3D : enable\n");
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, s_EXT_shadow_samplers) )
+									if (!bx::findIdentifierMatch(input, s_EXT_shadow_samplers).isEmpty() )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_shadow_samplers : enable\n"
@@ -2105,7 +2111,7 @@ namespace bgfx
 											);
 									}
 
-									if (NULL != bx::findIdentifierMatch(input, "gl_FragDepth") )
+									if (!bx::findIdentifierMatch(input, "gl_FragDepth").isEmpty() )
 									{
 										bx::stringPrintf(code
 											, "#extension GL_EXT_frag_depth : enable\n"
@@ -2357,15 +2363,11 @@ namespace bgfx
 		while (NULL != defines
 		&&    '\0'  != *defines)
 		{
-			defines = bx::strws(defines);
-			const char* eol = bx::strFind(defines, ';');
-			if (NULL == eol)
-			{
-				eol = defines + bx::strLen(defines);
-			}
-			std::string define(defines, eol);
+			defines = bx::strLTrimSpace(defines).getPtr();
+			bx::StringView eol = bx::strFind(defines, ';');
+			std::string define(defines, eol.getPtr() );
 			options.defines.push_back(define.c_str() );
-			defines = ';' == *eol ? eol+1 : eol;
+			defines = ';' == *eol.getPtr() ? eol.getPtr()+1 : eol.getPtr();
 		}
 
 		std::string commandLineComment = "// shaderc command line:\n//";

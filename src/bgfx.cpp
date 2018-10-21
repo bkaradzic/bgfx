@@ -510,13 +510,13 @@ namespace bgfx
 
 	static uint8_t parseAttrTo(char*& _ptr, char _to, uint8_t _default)
 	{
-		const char* str = bx::strFind(_ptr, _to);
-		if (NULL != str
-		&&  3 > str-_ptr)
+		const bx::StringView str = bx::strFind(_ptr, _to);
+		if (!str.isEmpty()
+		&&  3 > str.getPtr()-_ptr)
 		{
 			char tmp[4];
 
-			int32_t len = int32_t(str-_ptr);
+			int32_t len = int32_t(str.getPtr()-_ptr);
 			bx::strCopy(tmp, sizeof(tmp), _ptr, len);
 
 			uint8_t attr = uint8_t(atoi(tmp) );

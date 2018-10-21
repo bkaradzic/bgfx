@@ -504,10 +504,11 @@ int main(int _argc, const char* _argv[])
 	uint32_t len = sizeof(commandLine);
 	int argc;
 	char* argv[64];
-	const char* next = data;
-	do
+
+	for (bx::StringView next(data, size); !next.isEmpty(); )
 	{
 		next = bx::tokenizeCommandLine(next, commandLine, len, argc, argv, BX_COUNTOF(argv), '\n');
+
 		if (0 < argc)
 		{
 			if (0 == bx::strCmp(argv[0], "#") )
@@ -537,60 +538,63 @@ int main(int _argc, const char* _argv[])
 					}
 					else
 					{
-						index.m_vbc = 0;
+						index.m_vbc = 0; 
 					}
 
-					const char* vertex = argv[edge+1];
-					char* texcoord = const_cast<char*>(bx::strFind(vertex, '/') );
-					if (NULL != texcoord)
 					{
-						*texcoord++ = '\0';
-
-						char* normal = const_cast<char*>(bx::strFind(texcoord, '/') );
-						if (NULL != normal)
+						bx::StringView triplet(argv[edge + 1]);
+						bx::StringView vertex(triplet);
+						bx::StringView texcoord = bx::strFind(triplet, '/');
+						if (!texcoord.isEmpty())
 						{
-							*normal++ = '\0';
-							int32_t nn;
-							bx::fromString(&nn, normal);
-							index.m_normal = (nn < 0) ? nn+numNormals : nn-1;
+							vertex.set(vertex.getPtr(), texcoord.getPtr());
+
+							const bx::StringView normal = bx::strFind(bx::StringView(texcoord.getPtr() + 1, triplet.getTerm()), '/');
+							if (!normal.isEmpty())
+							{
+								int32_t nn;
+								bx::fromString(&nn, bx::StringView(normal.getPtr() + 1, triplet.getTerm()));
+								index.m_normal = (nn < 0) ? nn + numNormals : nn - 1;
+							}
+
+							texcoord.set(texcoord.getPtr() + 1, normal.getPtr());
+
+							// https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
+							if (!texcoord.isEmpty())
+							{
+								int32_t tex;
+								bx::fromString(&tex, texcoord);
+								index.m_texcoord = (tex < 0) ? tex + numTexcoords : tex - 1;
+							}
 						}
 
-						// https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
-						if(*texcoord != '\0')
-						{
-							int32_t tex;
-							bx::fromString(&tex, texcoord);
-							index.m_texcoord = (tex < 0) ? tex+numTexcoords : tex-1;
-						}
+						int32_t pos;
+						bx::fromString(&pos, vertex);
+						index.m_position = (pos < 0) ? pos + numPositions : pos - 1;
 					}
 
-					int32_t pos;
-					bx::fromString(&pos, vertex);
-					index.m_position = (pos < 0) ? pos+numPositions : pos-1;
-
-					uint64_t hash0 = index.m_position;
-					uint64_t hash1 = uint64_t(index.m_texcoord)<<20;
-					uint64_t hash2 = uint64_t(index.m_normal)<<40;
-					uint64_t hash3 = uint64_t(index.m_vbc)<<60;
-					uint64_t hash = hash0^hash1^hash2^hash3;
+					const uint64_t hash0 = uint64_t(index.m_position)<< 0;
+					const uint64_t hash1 = uint64_t(index.m_texcoord)<<20;
+					const uint64_t hash2 = uint64_t(index.m_normal  )<<40;
+					const uint64_t hash3 = uint64_t(index.m_vbc     )<<60;
+					const uint64_t hash  = hash0^hash1^hash2^hash3;
 
 					stl::pair<Index3Map::iterator, bool> result = indexMap.insert(stl::make_pair(hash, index) );
 					if (!result.second)
 					{
 						Index3& oldIndex = result.first->second;
 						BX_UNUSED(oldIndex);
-						BX_CHECK(oldIndex.m_position == index.m_position
+						BX_CHECK(true
+							&& oldIndex.m_position == index.m_position
 							&& oldIndex.m_texcoord == index.m_texcoord
-							&& oldIndex.m_normal == index.m_normal
+							&& oldIndex.m_normal   == index.m_normal
 							, "Hash collision!"
 							);
 					}
 
 					switch (edge)
 					{
-					case 0:
-					case 1:
-					case 2:
+					case 0:	case 1:	case 2:
 						triangle.m_index[edge] = hash;
 						if (2 == edge)
 						{
@@ -613,6 +617,7 @@ int main(int _argc, const char* _argv[])
 							triangle.m_index[1] = triangle.m_index[2];
 							triangle.m_index[2] = hash;
 						}
+
 						triangles.push_back(triangle);
 						break;
 					}
@@ -660,7 +665,8 @@ int main(int _argc, const char* _argv[])
 					{
 					case 4:
 						texcoord.z = (float)atof(argv[3]);
-						// fallthrough
+						BX_FALLTHROUGH;
+
 					case 3:
 						texcoord.y = (float)atof(argv[2]);
 						break;
@@ -726,7 +732,6 @@ int main(int _argc, const char* _argv[])
 
 		++num;
 	}
-	while ('\0' != *next);
 
 	group.m_numTriangles = (uint32_t)(triangles.size() ) - group.m_startTriangle;
 	if (0 < group.m_numTriangles)
@@ -838,6 +843,7 @@ int main(int _argc, const char* _argv[])
 			break;
 		}
 	}
+
 	decl.end();
 
 	uint32_t stride = decl.getStride();
@@ -877,7 +883,7 @@ int main(int _argc, const char* _argv[])
 		for (uint32_t tri = groupIt->m_startTriangle, end = tri + groupIt->m_numTriangles; tri < end; ++tri)
 		{
 			if (0 != bx::strCmp(material.c_str(), groupIt->m_material.c_str() )
-			||  65533 < numVertices)
+			||  65533 <= numVertices)
 			{
 				prim.m_numVertices = numVertices - prim.m_startVertex;
 				prim.m_numIndices  = numIndices  - prim.m_startIndex;
@@ -900,7 +906,8 @@ int main(int _argc, const char* _argv[])
 					triangleReorder(indexData + prim1.m_startIndex, prim1.m_numIndices, numVertices, 32);
 					if (compress)
 					{
-						triangleCompress(&memWriter
+						triangleCompress(
+							  &memWriter
 							, indexData  + prim1.m_startIndex
 							, prim1.m_numIndices
 							, vertexData + prim1.m_startVertex
@@ -930,11 +937,11 @@ int main(int _argc, const char* _argv[])
 				}
 
 				vertices = vertexData;
-				indices = indexData;
+				indices  = indexData;
 				numVertices = 0;
-				numIndices = 0;
+				numIndices  = 0;
 				prim.m_startVertex = 0;
-				prim.m_startIndex = 0;
+				prim.m_startIndex  = 0;
 				++numPrimitives;
 
 				material = groupIt->m_material;

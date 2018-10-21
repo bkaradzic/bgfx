@@ -89,7 +89,7 @@ namespace bgfx
 
 			uint32_t pos = m_pos;
 			const char* str = &m_str[pos];
-			const char* nl = bx::strnl(str);
+			const char* nl = bx::strFindNl(str).getPtr();
 			pos += (uint32_t)(nl - str);
 
 			const char* eol = &m_str[pos];

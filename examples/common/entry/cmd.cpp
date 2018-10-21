@@ -37,7 +37,7 @@ struct CmdContext
 
 	void exec(const char* _cmd)
 	{
-		for (const char* next = _cmd; '\0' != *next; _cmd = next)
+		for (bx::StringView next(_cmd); !next.isEmpty(); _cmd = next.getPtr() )
 		{
 			char commandLine[1024];
 			uint32_t size = sizeof(commandLine);
@@ -62,14 +62,14 @@ struct CmdContext
 
 				case -1:
 					{
-						stl::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
+						stl::string tmp(_cmd, next.getPtr()-_cmd - (next.isEmpty() ? 0 : 1) );
 						DBG("Command '%s' doesn't exist.", tmp.c_str() );
 					}
 					break;
 
 				default:
 					{
-						stl::string tmp(_cmd, next-_cmd - (*next == '\0' ? 0 : 1) );
+						stl::string tmp(_cmd, next.getPtr()-_cmd - (next.isEmpty() ? 0 : 1) );
 						DBG("Failed '%s' err: %d.", tmp.c_str(), err);
 					}
 					break;

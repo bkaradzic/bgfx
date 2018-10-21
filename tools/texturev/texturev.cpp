@@ -634,10 +634,11 @@ struct View
 			{
 				if (0 == (item->d_type & DT_DIR) )
 				{
-					const char* ext = bx::strRFind(item->d_name, '.');
-					if (NULL != ext)
+					const bx::StringView fileName(item->d_name);
+					bx::StringView ext = bx::strRFind(fileName, '.');
+					if (!ext.isEmpty() )
 					{
-						ext += 1;
+						ext.set(ext.getPtr()+1, fileName.getTerm() );
 						bool supported = false;
 						for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 						{

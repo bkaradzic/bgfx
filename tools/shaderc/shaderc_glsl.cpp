@@ -72,7 +72,7 @@ namespace bgfx { namespace glsl
 		// Trim all directives.
 		while ('#' == *optimizedShader)
 		{
-			optimizedShader = bx::strnl(optimizedShader);
+			optimizedShader = bx::strFindNl(optimizedShader).getPtr();
 		}
 
 		{
@@ -107,14 +107,14 @@ namespace bgfx { namespace glsl
 			const char* parse = optimizedShader;
 
 			while (NULL != parse
-				&&  *parse != '\0')
+				&& *parse != '\0')
 			{
-				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, ';');
-				if (NULL != eol)
+				parse = bx::strLTrimSpace(parse).getPtr();
+				const bx::StringView eol = bx::strFind(parse, ';');
+				if (!eol.isEmpty() )
 				{
 					const char* qualifier = parse;
-					parse = bx::strws(bx::strSkipWord(parse) );
+					parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
 
 					if (0 == bx::strCmp(qualifier, "attribute", 9)
 					||  0 == bx::strCmp(qualifier, "varying",   7)
@@ -123,14 +123,14 @@ namespace bgfx { namespace glsl
 					   )
 					{
 						// skip attributes and varyings.
-						parse = eol + 1;
+						parse = eol.getPtr() + 1;
 						continue;
 					}
 
 					if (0 == bx::strCmp(parse, "tmpvar", 6) )
 					{
 						// skip temporaries
-						parse = eol + 1;
+						parse = eol.getPtr() + 1;
 						continue;
 					}
 
@@ -149,7 +149,7 @@ namespace bgfx { namespace glsl
 					||  0 == bx::strCmp(typen, "highp", 5) )
 					{
 						precision = typen;
-						typen = parse = bx::strws(bx::strSkipWord(parse) );
+						typen = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
 					}
 
 					BX_UNUSED(precision);
@@ -166,23 +166,23 @@ namespace bgfx { namespace glsl
 						bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
 					}
 
-					const char* name = parse = bx::strws(parse);
+					const char* name = parse = bx::strLTrimSpace(parse).getPtr();
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strFind(bx::StringView(name, int32_t(eol-parse) ), "[");
-					if (NULL != array)
+					bx::StringView array = bx::strFind(bx::StringView(name, int32_t(eol.getPtr()-parse) ), "[");
+					if (!array.isEmpty() )
 					{
-						bx::strCopy(uniformName, int32_t(array-name+1), name);
+						bx::strCopy(uniformName, int32_t(array.getPtr()-name+1), name);
 
 						char arraySize[32];
-						const char* end = bx::strFind(bx::StringView(array, int32_t(eol-array) ), "]");
-						bx::strCopy(arraySize, int32_t(end-array), array+1);
+						bx::StringView end = bx::strFind(bx::StringView(array.getPtr(), int32_t(eol.getPtr()-array.getPtr() ) ), "]");
+						bx::strCopy(arraySize, int32_t(end.getPtr()-array.getPtr() ), array.getPtr()+1);
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
 					{
-						bx::strCopy(uniformName, int32_t(eol-name+1), name);
+						bx::strCopy(uniformName, int32_t(eol.getPtr() -name+1), name);
 					}
 
 					Uniform un;
@@ -199,49 +199,51 @@ namespace bgfx { namespace glsl
 						uniforms.push_back(un);
 					}
 
-					parse = eol + 1;
+					parse = eol.getPtr() + 1;
 				}
 			}
 		}
 		else
 		{
-			const char* parse = bx::strFind(optimizedShader, "struct xlatMtlShaderUniform {");
-			const char* end   = parse;
-			if (NULL != parse)
+			const bx::StringView optShader(optimizedShader);
+			bx::StringView parse = bx::strFind(optimizedShader, "struct xlatMtlShaderUniform {");
+			bx::StringView end   = parse;
+			if (!parse.isEmpty() )
 			{
-				parse += bx::strLen("struct xlatMtlShaderUniform {");
-				end   =  bx::strFind(parse, "};");
+				parse.set(parse.getPtr() + bx::strLen("struct xlatMtlShaderUniform {"), optShader.getTerm() );
+				end = bx::strFind(parse, "};");
 			}
 
-			while ( parse < end
-			&&     *parse != '\0')
+			while ( parse.getPtr() < end.getPtr()
+			&&     !parse.isEmpty() )
 			{
-				parse = bx::strws(parse);
-				const char* eol = bx::strFind(parse, ';');
-				if (NULL != eol)
+				parse.set(bx::strLTrimSpace(parse).getPtr(), optShader.getTerm() );
+				const bx::StringView eol = bx::strFind(parse, ';');
+				if (!eol.isEmpty() )
 				{
-					const char* typen = parse;
+					const char* typen = parse.getPtr();
 
 					char uniformType[256];
-					parse = bx::strSkipWord(parse);
-					bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
-					const char* name = parse = bx::strws(parse);
+					parse = bx::strSkipWord(parse.getPtr() );
+					bx::strCopy(uniformType, int32_t(parse.getPtr()-typen+1), typen);
+					const char* name = bx::strLTrimSpace(parse).getPtr();
+					parse.set(name, optShader.getTerm() );
 
 					char uniformName[256];
 					uint8_t num = 1;
-					const char* array = bx::strFind(bx::StringView(name, int32_t(eol-parse) ), "[");
-					if (NULL != array)
+					bx::StringView array = bx::strFind(bx::StringView(name, int32_t(eol.getPtr()-parse.getPtr() ) ), "[");
+					if (!array.isEmpty() )
 					{
-						bx::strCopy(uniformName, int32_t(array-name+1), name);
+						bx::strCopy(uniformName, int32_t(array.getPtr()-name+1), name);
 
 						char arraySize[32];
-						const char* arrayEnd = bx::strFind(bx::StringView(array, int32_t(eol-array) ), "]");
-						bx::strCopy(arraySize, int32_t(arrayEnd-array), array+1);
+						bx::StringView arrayEnd = bx::strFind(bx::StringView(array.getPtr(), int32_t(eol.getPtr()-array.getPtr() ) ), "]");
+						bx::strCopy(arraySize, int32_t(arrayEnd.getPtr()-array.getPtr() ), array.getPtr()+1);
 						num = uint8_t(atoi(arraySize) );
 					}
 					else
 					{
-						bx::strCopy(uniformName, int32_t(eol-name+1), name);
+						bx::strCopy(uniformName, int32_t(eol.getPtr()-name+1), name);
 					}
 
 					Uniform un;
@@ -258,7 +260,7 @@ namespace bgfx { namespace glsl
 						uniforms.push_back(un);
 					}
 
-					parse = eol + 1;
+					parse = eol.getPtr() + 1;
 				}
 			}
 		}

@@ -227,7 +227,7 @@ namespace bgfx
 							}
 
 							if (BX_ENABLED(BGFX_CONFIG_DEBUG_PERFHUD)
-							&&  0 != bx::strFind(description, "PerfHUD") )
+							&&  !bx::strFind(description, "PerfHUD").isEmpty() )
 							{
 								m_adapter = adapter;
 								m_driverType = D3D_DRIVER_TYPE_REFERENCE;

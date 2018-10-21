@@ -1544,6 +1544,13 @@ namespace bgfx { namespace gl
 		{
 		}
 
+		LineReader(const bx::StringView& _str)
+			: m_str(_str.getPtr() )
+			, m_pos(0)
+			, m_size(_str.getLength() )
+		{
+		}
+
 		virtual int32_t read(void* _data, int32_t _size, bx::Error* _err) override
 		{
 			if (m_str[m_pos] == '\0'
@@ -1555,7 +1562,7 @@ namespace bgfx { namespace gl
 
 			uint32_t pos = m_pos;
 			const char* str = &m_str[pos];
-			const char* nl = bx::strnl(str);
+			const char* nl = bx::strFindNl(str).getPtr();
 			pos += (uint32_t)(nl - str);
 
 			const char* eol = &m_str[pos];
