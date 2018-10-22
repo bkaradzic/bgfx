@@ -519,9 +519,11 @@ namespace bgfx
 			int32_t len = int32_t(str.getPtr()-_ptr);
 			bx::strCopy(tmp, sizeof(tmp), _ptr, len);
 
-			uint8_t attr = uint8_t(atoi(tmp) );
+			uint32_t attr;
+			bx::fromString(&attr, tmp);
+
 			_ptr += len+1;
-			return attr;
+			return uint8_t(attr);
 		}
 
 		return _default;
