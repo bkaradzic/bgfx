@@ -178,7 +178,9 @@ namespace bgfx { namespace glsl
 						char arraySize[32];
 						bx::StringView end = bx::strFind(bx::StringView(array.getPtr(), int32_t(eol.getPtr()-array.getPtr() ) ), "]");
 						bx::strCopy(arraySize, int32_t(end.getPtr()-array.getPtr() ), array.getPtr()+1);
-						num = uint8_t(atoi(arraySize) );
+						uint32_t tmp;
+						bx::fromString(&tmp, arraySize);
+						num = uint8_t(tmp);
 					}
 					else
 					{
@@ -239,7 +241,9 @@ namespace bgfx { namespace glsl
 						char arraySize[32];
 						bx::StringView arrayEnd = bx::strFind(bx::StringView(array.getPtr(), int32_t(eol.getPtr()-array.getPtr() ) ), "]");
 						bx::strCopy(arraySize, int32_t(arrayEnd.getPtr()-array.getPtr() ), array.getPtr()+1);
-						num = uint8_t(atoi(arraySize) );
+						uint32_t tmp;
+						bx::fromString(&tmp, arraySize);
+						num = uint8_t(tmp);
 					}
 					else
 					{

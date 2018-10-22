@@ -922,7 +922,7 @@ namespace bgfx
 			}
 			else
 			{
-				glsl = atoi(profile);
+				bx::fromString(&glsl, profile);
 			}
 		}
 		else

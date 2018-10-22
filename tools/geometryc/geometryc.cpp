@@ -450,7 +450,10 @@ int main(int _argc, const char* _argv[])
 	const char* scaleArg = cmdLine.findOption('s', "scale");
 	if (NULL != scaleArg)
 	{
-		scale = (float)atof(scaleArg);
+		if (!bx::fromString(&scale, scaleArg))
+		{
+			scale = 1.0f;
+		}
 	}
 
 	bool compress = cmdLine.hasArg('c', "compress");
@@ -640,9 +643,9 @@ int main(int _argc, const char* _argv[])
 				if (0 == bx::strCmp(argv[0], "vn") )
 				{
 					Vector3 normal;
-					normal.x = (float)atof(argv[1]);
-					normal.y = (float)atof(argv[2]);
-					normal.z = (float)atof(argv[3]);
+					bx::fromString(&normal.x, argv[1]);
+					bx::fromString(&normal.y, argv[2]);
+					bx::fromString(&normal.z, argv[3]);
 
 					normals.push_back(normal);
 				}
@@ -658,17 +661,19 @@ int main(int _argc, const char* _argv[])
 				else if (0 == bx::strCmp(argv[0], "vt") )
 				{
 					Vector3 texcoord;
-					texcoord.x = (float)atof(argv[1]);
 					texcoord.y = 0.0f;
 					texcoord.z = 0.0f;
+
+					bx::fromString(&texcoord.x, argv[1]);
+
 					switch (argc)
 					{
 					case 4:
-						texcoord.z = (float)atof(argv[3]);
+						bx::fromString(&texcoord.z, argv[3]);
 						BX_FALLTHROUGH;
 
 					case 3:
-						texcoord.y = (float)atof(argv[2]);
+						bx::fromString(&texcoord.y, argv[2]);
 						break;
 
 					default:
@@ -679,13 +684,18 @@ int main(int _argc, const char* _argv[])
 				}
 				else
 				{
-					float px = (float)atof(argv[1]);
-					float py = (float)atof(argv[2]);
-					float pz = (float)atof(argv[3]);
-					float pw = 1.0f;
+					float px, py, pz, pw;
+					bx::fromString(&px, argv[1]);
+					bx::fromString(&py, argv[2]);
+					bx::fromString(&pz, argv[3]);
+
 					if (argc > 4)
 					{
-						pw = (float)atof(argv[4]);
+						bx::fromString(&pw, argv[4]);
+					}
+					else
+					{
+						pw = 1.0f;
 					}
 
 					float invW = scale/pw;
