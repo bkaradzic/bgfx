@@ -3941,11 +3941,19 @@ namespace bgfx
 			return;
 		}
 
-		bool formatSupported = 0 != (g_caps.formats[_format] & (0
+		bool formatSupported;
+		if (0 != (_flags & (BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY)) )
+		{
+			formatSupported = 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER);
+		}
+		else
+		{
+			formatSupported = 0 != (g_caps.formats[_format] & (0
 				| BGFX_CAPS_FORMAT_TEXTURE_2D
 				| BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED
 				| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 				) );
+		}
 		uint16_t srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB;
 
 		if (_cubeMap)

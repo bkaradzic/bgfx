@@ -1571,8 +1571,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			? tfi.m_internalFmtSrgb
 			: tfi.m_internalFmt
 			;
-		if (GL_ZERO == internalFmt
-		||  !tfi.m_supported)
+		if (GL_ZERO == internalFmt)
 		{
 			return false;
 		}
@@ -5911,11 +5910,27 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 					if (0 != texture.m_rbo)
 					{
-						GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
-							, attachment
-							, GL_RENDERBUFFER
-							, texture.m_rbo
-							) );
+#if !(BGFX_CONFIG_RENDERER_OPENGL >= 30 || BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+						if (GL_DEPTH_STENCIL_ATTACHMENT == attachment)
+						{
+							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+								, GL_DEPTH_ATTACHMENT
+								, GL_RENDERBUFFER
+								, texture.m_rbo
+								) );
+							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+								, GL_STENCIL_ATTACHMENT
+								, GL_RENDERBUFFER
+								, texture.m_rbo
+								) );
+						}
+						else
+#endif
+							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
+								, attachment
+								, GL_RENDERBUFFER
+								, texture.m_rbo
+								) );
 					}
 					else
 					{
