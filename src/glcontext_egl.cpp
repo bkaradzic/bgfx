@@ -196,7 +196,7 @@ EGL_IMPORT
 			dumpExtensions(extensions);
 
 			// https://www.khronos.org/registry/EGL/extensions/ANDROID/EGL_ANDROID_recordable.txt
-			const bool hasEglAndroidRecordable = !!bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable");
+			const bool hasEglAndroidRecordable = !bx::findIdentifierMatch(extensions, "EGL_ANDROID_recordable").isEmpty();
 
 			EGLint attrs[] =
 			{
@@ -256,8 +256,8 @@ EGL_IMPORT
 			m_surface = eglCreateWindowSurface(m_display, m_config, nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
-			const bool hasEglKhrCreateContext = !!bx::findIdentifierMatch(extensions, "EGL_KHR_create_context");
-			const bool hasEglKhrNoError       = !!bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error");
+			const bool hasEglKhrCreateContext = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context").isEmpty();
+			const bool hasEglKhrNoError       = !bx::findIdentifierMatch(extensions, "EGL_KHR_create_context_no_error").isEmpty();
 
 			const uint32_t gles = BGFX_CONFIG_RENDERER_OPENGLES;
 

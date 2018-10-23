@@ -1060,7 +1060,7 @@ namespace bgfx
 			bx::StringView eol = bx::strFind(parse, ';');
 			if (eol.isEmpty() )
 			{
-				eol = bx::strFindEol(parse);
+				eol = bx::strFindEol(bx::StringView(parse, term.getTerm() ) );
 			}
 			else
 			{
@@ -1134,7 +1134,7 @@ namespace bgfx
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = bx::strLTrimSpace(bx::strFindNl(eol) ).getPtr();
+				parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) ).getPtr();
 			}
 		}
 
