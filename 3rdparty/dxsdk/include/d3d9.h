@@ -2021,8 +2021,8 @@ typedef struct IDirect3DQuery9 *LPDIRECT3DQUERY9, *PDIRECT3DQUERY9;
 
 
 /*********************
-/* D3D9Ex interfaces
-/*********************/
+ * D3D9Ex interfaces
+ *********************/
 
 HRESULT WINAPI Direct3DCreate9Ex(UINT SDKVersion, IDirect3D9Ex**);
 
