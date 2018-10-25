@@ -4592,6 +4592,15 @@ namespace bgfx { namespace d3d11
 			);
 		BGFX_FATAL(SUCCEEDED(hr), Fatal::UnableToInitialize, "Failed to create swap chain.");
 
+#if BX_PLATFORM_WINDOWS
+		DX_CHECK(s_renderD3D11->m_dxgi.m_factory->MakeWindowAssociation(
+			  (HWND)_nwh
+			, 0
+			| DXGI_MWA_NO_WINDOW_CHANGES
+			| DXGI_MWA_NO_ALT_ENTER
+			) );
+#endif // BX_PLATFORM_WINDOWS
+
 		ID3D11Resource* ptr;
 		DX_CHECK(m_swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&ptr) );
 		DX_CHECK(device->CreateRenderTargetView(ptr, NULL, &m_rtv[0]) );
