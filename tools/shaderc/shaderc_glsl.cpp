@@ -104,17 +104,15 @@ namespace bgfx { namespace glsl
 
 		if (target != kGlslTargetMetal)
 		{
-			const char* parse = optimizedShader;
+			bx::StringView parse(optimizedShader);
 
-			while (NULL != parse
-				&& *parse != '\0')
+			while (!parse.isEmpty() )
 			{
-				parse = bx::strLTrimSpace(parse).getPtr();
-				const bx::StringView eol = bx::strFind(parse, ';');
+				parse = bx::strLTrimSpace(parse);
+				bx::StringView eol = bx::strFind(parse, ';');
 				if (!eol.isEmpty() )
 				{
-					const char* qualifier = parse;
-					parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+					bx::StringView qualifier = nextWord(parse);
 
 					if (0 == bx::strCmp(qualifier, "attribute", 9)
 					||  0 == bx::strCmp(qualifier, "varying",   7)
@@ -123,39 +121,38 @@ namespace bgfx { namespace glsl
 					   )
 					{
 						// skip attributes and varyings.
-						parse = eol.getPtr() + 1;
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
 						continue;
 					}
 
 					if (0 == bx::strCmp(parse, "tmpvar", 6) )
 					{
 						// skip temporaries
-						parse = eol.getPtr() + 1;
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
 						continue;
 					}
 
 					if (0 != bx::strCmp(qualifier, "uniform", 7) )
 					{
 						// end if there is no uniform keyword.
-						parse = NULL;
+						parse.clear();
 						continue;
 					}
 
-					const char* precision = NULL;
-					const char* typen = parse;
+					bx::StringView precision;
+					bx::StringView typen = nextWord(parse);
 
 					if (0 == bx::strCmp(typen, "lowp", 4)
 					||  0 == bx::strCmp(typen, "mediump", 7)
 					||  0 == bx::strCmp(typen, "highp", 5) )
 					{
 						precision = typen;
-						typen = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+						typen = nextWord(parse);
 					}
 
 					BX_UNUSED(precision);
 
 					char uniformType[256];
-					parse = bx::strSkipWord(parse);
 
 					if (0 == bx::strCmp(typen, "sampler", 7) )
 					{
@@ -163,28 +160,20 @@ namespace bgfx { namespace glsl
 					}
 					else
 					{
-						bx::strCopy(uniformType, int32_t(parse-typen+1), typen);
+						bx::strCopy(uniformType, BX_COUNTOF(uniformType), typen);
 					}
 
-					const char* name = parse = bx::strLTrimSpace(parse).getPtr();
+					bx::StringView name = nextWord(parse);
 
-					char uniformName[256];
 					uint8_t num = 1;
-					bx::StringView array = bx::strFind(bx::StringView(name, int32_t(eol.getPtr()-parse) ), "[");
-					if (!array.isEmpty() )
+					bx::StringView array = bx::strSubstr(parse, 0, 1);
+					if (0 == bx::strCmp(array, "[", 1) )
 					{
-						bx::strCopy(uniformName, int32_t(array.getPtr()-name+1), name);
+						parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
 
-						char arraySize[32];
-						bx::StringView end = bx::strFind(bx::StringView(array.getPtr(), int32_t(eol.getPtr()-array.getPtr() ) ), "]");
-						bx::strCopy(arraySize, int32_t(end.getPtr()-array.getPtr() ), array.getPtr()+1);
 						uint32_t tmp;
-						bx::fromString(&tmp, arraySize);
+						bx::fromString(&tmp, parse);
 						num = uint8_t(tmp);
-					}
-					else
-					{
-						bx::strCopy(uniformName, int32_t(eol.getPtr() -name+1), name);
 					}
 
 					Uniform un;
@@ -192,16 +181,17 @@ namespace bgfx { namespace glsl
 
 					if (UniformType::Count != un.type)
 					{
-						BX_TRACE("name: %s (type %d, num %d)", uniformName, un.type, num);
+						un.name.assign(name.getPtr(), name.getTerm());
 
-						un.name = uniformName;
+						BX_TRACE("name: %s (type %d, num %d)", un.name.c_str(), un.type, num);
+
 						un.num = num;
 						un.regIndex = 0;
 						un.regCount = num;
 						uniforms.push_back(un);
 					}
 
-					parse = eol.getPtr() + 1;
+					parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), parse.getTerm() ) ) );
 				}
 			}
 		}
@@ -226,7 +216,7 @@ namespace bgfx { namespace glsl
 					const char* typen = parse.getPtr();
 
 					char uniformType[256];
-					parse = bx::strSkipWord(parse.getPtr() );
+					parse = bx::strWord(parse).getPtr();
 					bx::strCopy(uniformType, int32_t(parse.getPtr()-typen+1), typen);
 					const char* name = bx::strLTrimSpace(parse).getPtr();
 					parse.set(name, optShader.getTerm() );

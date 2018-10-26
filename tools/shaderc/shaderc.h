@@ -105,6 +105,8 @@ namespace bgfx
 		uint32_t m_size;
 	};
 
+	bx::StringView nextWord(bx::StringView& _parse);
+
 #define BGFX_UNIFORM_FRAGMENTBIT UINT8_C(0x10)
 #define BGFX_UNIFORM_SAMPLERBIT  UINT8_C(0x20)
 

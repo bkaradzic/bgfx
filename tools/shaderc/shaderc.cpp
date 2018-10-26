@@ -879,6 +879,13 @@ namespace bgfx
 			);
 	}
 
+	bx::StringView nextWord(bx::StringView& _parse)
+	{
+		bx::StringView word = bx::strWord(bx::strLTrimSpace(_parse) );
+		_parse = bx::strLTrimSpace(bx::StringView(word.getTerm(), _parse.getTerm() ) );
+		return word;
+	}
+
 	bool compileShader(const char* _varying, const char* _comment, char* _shader, uint32_t _shaderLen, Options& _options, bx::FileWriter* _writer)
 	{
 		uint32_t glsl  = 0;
@@ -1048,37 +1055,34 @@ namespace bgfx
 		bool compiled = false;
 
 		VaryingMap varyingMap;
-		const char* parse = _varying;
+		bx::StringView parse(_varying);
 		bx::StringView term(parse);
 
 		bool usesInterpolationQualifiers = false;
 
-		while (NULL !=  parse
-		&&     '\0' != *parse)
+		while (!parse.isEmpty() )
 		{
-			parse = bx::strLTrimSpace(parse).getPtr();
+			parse = bx::strLTrimSpace(parse);
 			bx::StringView eol = bx::strFind(parse, ';');
 			if (eol.isEmpty() )
 			{
-				eol = bx::strFindEol(bx::StringView(parse, term.getTerm() ) );
-			}
-			else
-			{
-				eol.set(eol.getPtr(), term.getTerm() );
+				eol = bx::strFindEol(parse);
 			}
 
 			if (!eol.isEmpty() )
 			{
-				const char* precision = NULL;
-				const char* interpolation = NULL;
-				const char* typen = parse;
+				eol.set(eol.getPtr() + 1, parse.getTerm() );
+
+				bx::StringView precision;
+				bx::StringView interpolation;
+				bx::StringView typen = nextWord(parse);
 
 				if (0 == bx::strCmp(typen, "lowp", 4)
 				||  0 == bx::strCmp(typen, "mediump", 7)
 				||  0 == bx::strCmp(typen, "highp", 5) )
 				{
 					precision = typen;
-					typen = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+					typen = nextWord(parse);
 				}
 
 				if (0 == bx::strCmp(typen, "flat", 4)
@@ -1087,36 +1091,45 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
 					interpolation = typen;
-					typen = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
+					typen = nextWord(parse);
 					usesInterpolationQualifiers = true;
 				}
 
-				const char* name      = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
-				const char* column    = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
-				const char* semantics = parse = bx::strLTrimSpace( (*parse == ':' ? ++parse : parse) ).getPtr();
-				const char* assign    = parse = bx::strLTrimSpace(bx::strSkipWord(parse) ).getPtr();
-				const char* init      = parse = bx::strLTrimSpace( (*parse == '=' ? ++parse : parse) ).getPtr();
+				bx::StringView name   = nextWord(parse);
+				bx::StringView column = bx::strSubstr(parse, 0, 1);
+				bx::StringView semantics;
+				if (0 == bx::strCmp(column, ":", 1) )
+				{
+					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+					semantics = nextWord(parse);
+				}
 
-				if (typen < eol.getPtr()
-				&&  name < eol.getPtr()
-				&&  column < eol.getPtr()
-				&&  ':' == *column
-				&&  semantics < eol.getPtr() )
+				bx::StringView assign = bx::strSubstr(parse, 0, 1);
+				bx::StringView init;
+				if (0 == bx::strCmp(assign, "=", 1))
+				{
+					parse = bx::strLTrimSpace(bx::StringView(parse.getPtr() + 1, parse.getTerm() ) );
+					init.set(parse.getPtr(), eol.getPtr() );
+				}
+
+				if (!typen.isEmpty()
+				&&  !name.isEmpty()
+				&&  !semantics.isEmpty() )
 				{
 					Varying var;
-					if (NULL != precision)
+					if (!precision.isEmpty() )
 					{
-						var.m_precision.assign(precision, bx::strSkipWord(precision)-precision);
+						var.m_precision.assign(precision.getPtr(), precision.getTerm() );
 					}
 
-					if (NULL != interpolation)
+					if (!interpolation.isEmpty() )
 					{
-						var.m_interpolation.assign(interpolation, bx::strSkipWord(interpolation)-interpolation);
+						var.m_interpolation.assign(interpolation.getPtr(), interpolation.getTerm() );
 					}
 
-					var.m_type.assign(typen, bx::strSkipWord(typen)-typen);
-					var.m_name.assign(name, bx::strSkipWord(name)-name);
-					var.m_semantics.assign(semantics, bx::strSkipWord(semantics)-semantics);
+					var.m_type.assign(typen.getPtr(), typen.getTerm() );
+					var.m_name.assign(name.getPtr(), name.getTerm() );
+					var.m_semantics.assign(semantics.getPtr(), semantics.getTerm() );
 
 					if (d3d == 9
 					&&  var.m_semantics == "BITANGENT")
@@ -1124,17 +1137,15 @@ namespace bgfx
 						var.m_semantics = "BINORMAL";
 					}
 
-					if (assign < eol.getPtr()
-					&&  '=' == *assign
-					&&  init < eol.getPtr() )
+					if (!init.isEmpty() )
 					{
-						var.m_init.assign(init, eol.getPtr()-init);
+						var.m_init.assign(init.getPtr(), init.getTerm() );
 					}
 
 					varyingMap.insert(std::make_pair(var.m_name, var) );
 				}
 
-				parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) ).getPtr();
+				parse = bx::strLTrimSpace(bx::strFindNl(bx::StringView(eol.getPtr(), term.getTerm() ) ) );
 			}
 		}
 
