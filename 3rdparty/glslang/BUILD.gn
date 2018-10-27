@@ -152,18 +152,3 @@ source_set("glslang_sources") {
     "${spirv_tools_dir}:spvtools_opt",
   ]
 }
-
-static_library("glslang_static") {
-  deps = [
-    ":glslang_sources",
-  ]
-
-  # Without this the macOS linker complains that the static library is empty
-  if (is_mac) {
-    complete_static_lib = true
-  }
-
-  configs -= [ "//build/config/compiler:chromium_code" ]
-  configs += [ "//build/config/compiler:no_chromium_code" ]
-}
-

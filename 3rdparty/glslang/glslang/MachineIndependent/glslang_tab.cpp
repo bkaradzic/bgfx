@@ -948,7 +948,7 @@ static const yytype_uint16 yyrline[] =
      820,   825,   834,   834,   845,   849,   856,   863,   866,   873,
      881,   901,   924,   939,   964,   975,   985,   995,  1005,  1014,
     1017,  1021,  1025,  1030,  1038,  1043,  1048,  1053,  1058,  1067,
-    1078,  1105,  1114,  1121,  1128,  1139,  1148,  1158,  1168,  1178,
+    1078,  1105,  1114,  1121,  1128,  1139,  1148,  1158,  1170,  1179,
     1191,  1197,  1200,  1207,  1211,  1215,  1223,  1232,  1235,  1246,
     1249,  1252,  1256,  1260,  1264,  1268,  1274,  1278,  1290,  1304,
     1309,  1315,  1321,  1328,  1334,  1339,  1344,  1349,  1359,  1369,
@@ -5515,40 +5515,40 @@ yyreduce:
 #line 1158 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
 #ifdef NV_EXTENSIONS
+        // No need for profile version or extension check. Shader stage already checks both.
         parseContext.globalCheck((yyvsp[0].lex).loc, "perprimitiveNV");
         parseContext.requireStage((yyvsp[0].lex).loc, (EShLanguageMask)(EShLangFragmentMask | EShLangMeshNVMask), "perprimitiveNV");
-        parseContext.profileRequires((yyvsp[0].lex).loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "perprimitiveNV");
-        parseContext.profileRequires((yyvsp[0].lex).loc, EEsProfile, 320, E_GL_NV_mesh_shader, "perprimitiveNV");
+        // Fragment shader stage doesn't check for extension. So we explicitly add below extension check.
+        if (parseContext.language == EShLangFragment)
+            parseContext.requireExtensions((yyvsp[0].lex).loc, 1, &E_GL_NV_mesh_shader, "perprimitiveNV");
         (yyval.interm.type).init((yyvsp[0].lex).loc);
         (yyval.interm.type).qualifier.perPrimitiveNV = true;
 #endif
     }
-#line 5527 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 5529 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 138:
-#line 1168 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 1170 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
 #ifdef NV_EXTENSIONS
+        // No need for profile version or extension check. Shader stage already checks both.
         parseContext.globalCheck((yyvsp[0].lex).loc, "perviewNV");
         parseContext.requireStage((yyvsp[0].lex).loc, EShLangMeshNV, "perviewNV");
-        parseContext.profileRequires((yyvsp[0].lex).loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "perviewNV");
-        parseContext.profileRequires((yyvsp[0].lex).loc, EEsProfile, 320, E_GL_NV_mesh_shader, "perviewNV");
         (yyval.interm.type).init((yyvsp[0].lex).loc);
         (yyval.interm.type).qualifier.perViewNV = true;
 #endif
     }
-#line 5542 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
+#line 5543 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */
     break;
 
   case 139:
-#line 1178 "MachineIndependent/glslang.y" /* yacc.c:1646  */
+#line 1179 "MachineIndependent/glslang.y" /* yacc.c:1646  */
     {
 #ifdef NV_EXTENSIONS
+        // No need for profile version or extension check. Shader stage already checks both.
         parseContext.globalCheck((yyvsp[0].lex).loc, "taskNV");
         parseContext.requireStage((yyvsp[0].lex).loc, (EShLanguageMask)(EShLangTaskNVMask | EShLangMeshNVMask), "taskNV");
-        parseContext.profileRequires((yyvsp[0].lex).loc, ECoreProfile, 450, E_GL_NV_mesh_shader, "taskNV");
-        parseContext.profileRequires((yyvsp[0].lex).loc, EEsProfile, 320, E_GL_NV_mesh_shader, "taskNV");
         (yyval.interm.type).init((yyvsp[0].lex).loc);
         (yyval.interm.type).qualifier.perTaskNV = true;
 #endif

@@ -114,8 +114,8 @@ void SpirvToolsValidate(const glslang::TIntermediate& intermediate, std::vector<
 
 // Apply the SPIRV-Tools optimizer to generated SPIR-V, for the purpose of
 // legalizing HLSL SPIR-V.
-void SpirvToolsLegalize(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
-                        spv::SpvBuildLogger* logger, const SpvOptions* options)
+void SpirvToolsLegalize(const glslang::TIntermediate&, std::vector<unsigned int>& spirv,
+                        spv::SpvBuildLogger*, const SpvOptions* options)
 {
     spv_target_env target_env = SPV_ENV_UNIVERSAL_1_2;
 

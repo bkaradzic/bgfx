@@ -241,6 +241,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.8bitstorage_Error-int.frag",
         "spv.8bitstorage-uint.frag",
         "spv.8bitstorage_Error-uint.frag",
+        "spv.8bitstorage-ubo.vert",
+        "spv.8bitstorage-ssbo.vert",
         "spv.accessChain.frag",
         "spv.aggOps.frag",
         "spv.always-discard.frag",
@@ -365,6 +367,8 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     Glsl, CompileVulkan1_1ToSpirvTest,
     ::testing::ValuesIn(std::vector<std::string>({
+        "spv.1.3.8bitstorage-ubo.vert",
+        "spv.1.3.8bitstorage-ssbo.vert",
         "spv.deviceGroup.frag",
         "spv.drawParams.vert",
         "spv.int8.frag",
@@ -528,6 +532,7 @@ INSTANTIATE_TEST_CASE_P(
     "spv.meshShaderRedeclBuiltins.mesh",
     "spv.meshShaderRedeclPerViewBuiltins.mesh",
     "spv.meshTaskShader.task",
+    "spv.perprimitiveNV.frag",
 })),
 FileNameAsCustomTestSuffix
 );

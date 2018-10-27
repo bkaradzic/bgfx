@@ -664,7 +664,8 @@ public:
     const std::string& getSourceFile() const { return sourceFile; }
     void addSourceText(const char* text) { sourceText = sourceText + text; }
     const std::string& getSourceText() const { return sourceText; }
-    void addProcesses(const std::vector<std::string>& p) {
+    void addProcesses(const std::vector<std::string>& p)
+    {
         for (int i = 0; i < (int)p.size(); ++i)
             processes.addProcess(p[i]);
     }
@@ -672,18 +673,20 @@ public:
     void addProcessArgument(const std::string& arg) { processes.addArgument(arg); }
     const std::vector<std::string>& getProcesses() const { return processes.getProcesses(); }
 
-    void addUniformLocationOverride(const TString& name, int location)
+    void addUniformLocationOverride(const char* nameStr, int location)
     {
-            uniformLocationOverrides[name] = location;
+        std::string name = nameStr;
+        uniformLocationOverrides[name] = location;
     }
 
-    int getUniformLocationOverride(const TString& name) const
+    int getUniformLocationOverride(const char* nameStr) const
     {
-            auto pos = uniformLocationOverrides.find(name);
-            if (pos == uniformLocationOverrides.end())
-                    return -1;
-            else
-                    return pos->second;
+        std::string name = nameStr;
+        auto pos = uniformLocationOverrides.find(name);
+        if (pos == uniformLocationOverrides.end())
+            return -1;
+        else
+            return pos->second;
     }
 
     void setUniformLocationBase(int base) { uniformLocationBase = base; }
@@ -814,7 +817,7 @@ protected:
     bool needToLegalize;
     bool binaryDoubleOutput;
 
-    std::unordered_map<TString, int> uniformLocationOverrides;
+    std::unordered_map<std::string, int> uniformLocationOverrides;
     int uniformLocationBase;
 
 private:

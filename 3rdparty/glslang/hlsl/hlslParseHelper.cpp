@@ -97,9 +97,6 @@ HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& int
 
     if (language == EShLangGeometry)
         globalOutputDefaults.layoutStream = 0;
-
-    if (spvVersion.spv == 0 || spvVersion.vulkan == 0)
-        infoSink.info << "ERROR: HLSL currently only supported when requesting SPIR-V for Vulkan.\n";
 }
 
 HlslParseContext::~HlslParseContext()

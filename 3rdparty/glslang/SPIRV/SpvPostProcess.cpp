@@ -208,7 +208,7 @@ void Builder::postProcess(const Instruction& inst)
 }
 
 // Called for each instruction in a reachable block.
-void Builder::postProcessReachable(const Instruction& inst)
+void Builder::postProcessReachable(const Instruction&)
 {
     // did have code here, but questionable to do so without deleting the instructions
 }

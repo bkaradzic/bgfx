@@ -166,13 +166,14 @@ diff -b $BASEDIR/hlsl.-D-U.frag.out $TARGETDIR/hlsl.-D-U.frag.out || HASERROR=1
 # Test --client and --target-env
 #
 echo "Testing --client and --target-env"
-$EXE --client vulkan100      spv.targetVulkan.vert || HASERROR=1
-$EXE --client opengl100      spv.targetOpenGL.vert || HASERROR=1
-$EXE --target-env vulkan1.0  spv.targetVulkan.vert || HASERROR=1
-$EXE --target-env vulkan1.1  spv.targetVulkan.vert || HASERROR=1
-$EXE --target-env opengl     spv.targetOpenGL.vert || HASERROR=1
-$EXE -V100                   spv.targetVulkan.vert || HASERROR=1
-$EXE -G100                   spv.targetOpenGL.vert || HASERROR=1
+$EXE --client vulkan100       spv.targetVulkan.vert || HASERROR=1
+$EXE --client opengl100       spv.targetOpenGL.vert || HASERROR=1
+$EXE --target-env vulkan1.0   spv.targetVulkan.vert || HASERROR=1
+$EXE --target-env vulkan1.1   spv.targetVulkan.vert || HASERROR=1
+$EXE --target-env opengl      spv.targetOpenGL.vert || HASERROR=1
+$EXE -V100                    spv.targetVulkan.vert || HASERROR=1
+$EXE -G100                    spv.targetOpenGL.vert || HASERROR=1
+$EXE --target-env spirv1.2 -V spv.targetVulkan.vert || HASERROR=1
 
 #
 # Testing GLSL entry point rename
@@ -208,6 +209,7 @@ diff -b $BASEDIR/hlsl.y-negate-3.vert.out $TARGETDIR/hlsl.y-negate-3.vert.out ||
 #
 # Testing hlsl_functionality1
 #
+echo "Testing hlsl_functionality1"
 $EXE -H -e main -D -Od -fhlsl_functionality1 hlsl.structbuffer.incdec.frag > \
     $TARGETDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out
 diff -b $BASEDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out $TARGETDIR/hlsl.structbuffer.incdec.frag.hlslfun1.out || HASERROR=1
@@ -218,6 +220,7 @@ diff -b $BASEDIR/hlsl.noSemantic.functionality1.comp.out $TARGETDIR/hlsl.noSeman
 #
 # Testing HLSL-specific PP feature expansion
 #
+echo "Testing HLSL-specific PP feature expansion"
 $EXE -D -E hlsl.pp.expand.frag > $TARGETDIR/hlsl.pp.expand.frag.out 2> $TARGETDIR/hlsl.pp.expand.frag.err
 diff -b $BASEDIR/hlsl.pp.expand.frag.out $TARGETDIR/hlsl.pp.expand.frag.out || HASERROR=1
 diff -b $BASEDIR/hlsl.pp.expand.frag.err $TARGETDIR/hlsl.pp.expand.frag.err || HASERROR=1

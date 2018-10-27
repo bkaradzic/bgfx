@@ -76,6 +76,10 @@ TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, b
     globalBufferDefaults.layoutMatrix = ElmColumnMajor;
     globalBufferDefaults.layoutPacking = spvVersion.spv != 0 ? ElpStd430 : ElpShared;
 
+    // use storage buffer on SPIR-V 1.3 and up
+    if (spvVersion.spv >= EShTargetSpv_1_3)
+        intermediate.setUseStorageBuffer();
+
     globalInputDefaults.clear();
     globalOutputDefaults.clear();
 
@@ -1503,14 +1507,14 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
 {
     const TIntermSequence* argp = &callNode.getAsAggregate()->getSequence();
 
-    const int gl_SemanticsRelaxed         = 0x0;
+    //const int gl_SemanticsRelaxed         = 0x0;
     const int gl_SemanticsAcquire         = 0x2;
     const int gl_SemanticsRelease         = 0x4;
     const int gl_SemanticsAcquireRelease  = 0x8;
     const int gl_SemanticsMakeAvailable   = 0x2000;
     const int gl_SemanticsMakeVisible     = 0x4000;
 
-    const int gl_StorageSemanticsNone     = 0x0;
+    //const int gl_StorageSemanticsNone     = 0x0;
     const int gl_StorageSemanticsBuffer   = 0x40;
     const int gl_StorageSemanticsShared   = 0x100;
     const int gl_StorageSemanticsImage    = 0x800;
@@ -4514,6 +4518,8 @@ void TParseContext::finish()
         break;
 #ifdef NV_EXTENSIONS
     case EShLangTaskNV:
+        requireExtensions(getCurrentLoc(), 1, &E_GL_NV_mesh_shader, "task shaders");
+        break;
     case EShLangMeshNV:
         requireExtensions(getCurrentLoc(), 1, &E_GL_NV_mesh_shader, "mesh shaders");
         break;

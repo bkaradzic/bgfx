@@ -457,7 +457,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 
         int location = intermediate.getUniformLocationOverride(name);
         if (location != -1)
-                return location;
+            return location;
 
         location = nextUniformLocation;
 

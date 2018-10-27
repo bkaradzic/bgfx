@@ -161,13 +161,17 @@ const char* shaderStageName = nullptr;
 const char* variableName = nullptr;
 bool HlslEnable16BitTypes = false;
 std::vector<std::string> IncludeDirectoryList;
-int ClientInputSemanticsVersion = 100;                  // maps to, say, #define VULKAN 100
-glslang::EShTargetClientVersion VulkanClientVersion =
-                          glslang::EShTargetVulkan_1_0; // would map to, say, Vulkan 1.0
-glslang::EShTargetClientVersion OpenGLClientVersion =
-                          glslang::EShTargetOpenGL_450; // doesn't influence anything yet, but maps to OpenGL 4.50
-glslang::EShTargetLanguageVersion TargetVersion =
-                          glslang::EShTargetSpv_1_0;    // maps to, say, SPIR-V 1.0
+
+// Source environment
+// (source 'Client' is currently the same as target 'Client')
+int ClientInputSemanticsVersion = 100;
+
+// Target environment
+glslang::EShClient Client = glslang::EShClientNone;  // will stay EShClientNone if only validating
+glslang::EShTargetClientVersion ClientVersion;       // not valid until Client is set
+glslang::EShTargetLanguage TargetLanguage = glslang::EShTargetNone;
+glslang::EShTargetLanguageVersion TargetVersion;     // not valid until TargetLanguage is set
+
 std::vector<std::string> Processes;                     // what should be recorded by OpModuleProcessed, or equivalent
 
 // Per descriptor-set binding base data
@@ -421,6 +425,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
 
     // minimum needed (without overriding something else) to target Vulkan SPIR-V
     const auto setVulkanSpv = []() {
+        if (Client == glslang::EShClientNone)
+            ClientVersion = glslang::EShTargetVulkan_1_0;
+        Client = glslang::EShClientVulkan;
         Options |= EOptionSpv;
         Options |= EOptionVulkanRules;
         Options |= EOptionLinkProgram;
@@ -428,6 +435,9 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
 
     // minimum needed (without overriding something else) to target OpenGL SPIR-V
     const auto setOpenGlSpv = []() {
+        if (Client == glslang::EShClientNone)
+            ClientVersion = glslang::EShTargetOpenGL_450;
+        Client = glslang::EShClientOpenGL;
         Options |= EOptionSpv;
         Options |= EOptionLinkProgram;
         // undo a -H default to Vulkan
@@ -561,16 +571,30 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         if (argc > 1) {
                             if (strcmp(argv[1], "vulkan1.0") == 0) {
                                 setVulkanSpv();
-                                VulkanClientVersion = glslang::EShTargetVulkan_1_0;
+                                ClientVersion = glslang::EShTargetVulkan_1_0;
                             } else if (strcmp(argv[1], "vulkan1.1") == 0) {
                                 setVulkanSpv();
-                                TargetVersion = glslang::EShTargetSpv_1_3;
-                                VulkanClientVersion = glslang::EShTargetVulkan_1_1;
+                                ClientVersion = glslang::EShTargetVulkan_1_1;
                             } else if (strcmp(argv[1], "opengl") == 0) {
                                 setOpenGlSpv();
-                                OpenGLClientVersion = glslang::EShTargetOpenGL_450;
+                                ClientVersion = glslang::EShTargetOpenGL_450;
+                            } else if (strcmp(argv[1], "spirv1.0") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_0;
+                            } else if (strcmp(argv[1], "spirv1.1") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_1;
+                            } else if (strcmp(argv[1], "spirv1.2") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_2;
+                            } else if (strcmp(argv[1], "spirv1.3") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_3;
+                            } else if (strcmp(argv[1], "spirv1.4") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_4;
                             } else
-                                Error("--target-env expected vulkan1.0, vulkan1.1, or opengl");
+                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, opengl, spirv1.0, spirv1.1, spirv1.2, or spirv1.3");
                         }
                         bumpArg();
                     } else if (lowerword == "variable-name" || // synonyms
@@ -604,7 +628,7 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                 Options |= EOptionOutputPreprocessed;
                 break;
             case 'G':
-                // OpenGL Client
+                // OpenGL client
                 setOpenGlSpv();
                 if (argv[0][2] != 0)
                     ClientInputSemanticsVersion = getAttachedNumber("-G<num> client input semantics");
@@ -736,6 +760,28 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
     if ((Options & EOptionFlattenUniformArrays) != 0 &&
         (Options & EOptionReadHlsl) == 0)
         Error("uniform array flattening only valid when compiling HLSL source.");
+
+    // rationalize client and target language
+    if (TargetLanguage == glslang::EShTargetNone) {
+        switch (ClientVersion) {
+        case glslang::EShTargetVulkan_1_0:
+            TargetLanguage = glslang::EShTargetSpv;
+            TargetVersion = glslang::EShTargetSpv_1_0;
+            break;
+        case glslang::EShTargetVulkan_1_1:
+            TargetLanguage = glslang::EShTargetSpv;
+            TargetVersion = glslang::EShTargetSpv_1_3;
+            break;
+        case glslang::EShTargetOpenGL_450:
+            TargetLanguage = glslang::EShTargetSpv;
+            TargetVersion = glslang::EShTargetSpv_1_0;
+            break;
+        default:
+            break;
+        }
+    }
+    if (TargetLanguage != glslang::EShTargetNone && Client == glslang::EShClientNone)
+        Error("To generate SPIR-V, also specify client semantics. See -G and -V.");
 }
 
 //
@@ -936,18 +982,11 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
         // Set up the environment, some subsettings take precedence over earlier
         // ways of setting things.
         if (Options & EOptionSpv) {
-            if (Options & EOptionVulkanRules) {
-                shader->setEnvInput((Options & EOptionReadHlsl) ? glslang::EShSourceHlsl
-                                                                : glslang::EShSourceGlsl,
-                                        compUnit.stage, glslang::EShClientVulkan, ClientInputSemanticsVersion);
-                shader->setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
-            } else {
-                shader->setEnvInput((Options & EOptionReadHlsl) ? glslang::EShSourceHlsl
-                                                                : glslang::EShSourceGlsl,
-                                        compUnit.stage, glslang::EShClientOpenGL, ClientInputSemanticsVersion);
-                shader->setEnvClient(glslang::EShClientOpenGL, OpenGLClientVersion);
-            }
-            shader->setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+            shader->setEnvInput((Options & EOptionReadHlsl) ? glslang::EShSourceHlsl
+                                                            : glslang::EShSourceGlsl,
+                                compUnit.stage, Client, ClientInputSemanticsVersion);
+            shader->setEnvClient(Client, ClientVersion);
+            shader->setEnvTarget(TargetLanguage, TargetVersion);
             if (targetHlslFunctionality1)
                 shader->setEnvTargetHlslFunctionality1();
         }
@@ -961,8 +1000,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             includer.pushExternalLocalDirectory(dir); });
         if (Options & EOptionOutputPreprocessed) {
             std::string str;
-            if (shader->preprocess(&Resources, defaultVersion, ENoProfile, false, false,
-                                   messages, &str, includer)) {
+            if (shader->preprocess(&Resources, defaultVersion, ENoProfile, false, false, messages, &str, includer)) {
                 PutsIfNonEmpty(str.c_str());
             } else {
                 CompileFailed = true;
@@ -971,6 +1009,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
             StderrIfNonEmpty(shader->getInfoDebugLog());
             continue;
         }
+
         if (! shader->parse(&Resources, defaultVersion, false, messages, includer))
             CompileFailed = true;
 
@@ -1167,13 +1206,15 @@ int singleMain()
 
     ProcessConfigFile();
 
+    if ((Options & EOptionReadHlsl) && !((Options & EOptionOutputPreprocessed) || (Options & EOptionSpv)))
+        Error("ERROR: HLSL requires SPIR-V code generation (or preprocessing only)");
+
     //
     // Two modes:
     // 1) linking all arguments together, single-threaded, new C++ interface
     // 2) independent arguments, can be tackled by multiple asynchronous threads, for testing thread safety, using the old handle interface
     //
-    if (Options & EOptionLinkProgram ||
-        Options & EOptionOutputPreprocessed) {
+    if (Options & (EOptionLinkProgram | EOptionOutputPreprocessed)) {
         glslang::InitializeProcess();
         glslang::InitializeProcess();  // also test reference counting of users
         glslang::InitializeProcess();  // also test reference counting of users
@@ -1513,12 +1554,16 @@ void usage()
            "  --sep                             synonym for --source-entrypoint\n"
            "  --stdin                           read from stdin instead of from a file;\n"
            "                                    requires providing the shader stage using -S\n"
-           "  --target-env {vulkan1.0 | vulkan1.1 | opengl} \n"
+           "  --target-env {vulkan1.0 | vulkan1.1 | opengl | \n"
+           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3}\n"
            "                                    set execution environment that emitted code\n"
-           "                                    will execute in (as opposed to the language\n"
+           "                                    will execute in (versus source language\n"
            "                                    semantics selected by --client) defaults:\n"
            "                                     * 'vulkan1.0' under '--client vulkan<ver>'\n"
            "                                     * 'opengl' under '--client opengl<ver>'\n"
+           "                                     * 'spirv1.0' under --target-env vulkan1.0\n"
+           "                                     * 'spirv1.3' under --target-env vulkan1.1\n"
+           "                                    multiple --targen-env can be specified.\n"
            "  --variable-name <name>\n"
            "  --vn <name>                       creates a C header file that contains a\n"
            "                                    uint32_t array named <name>\n"

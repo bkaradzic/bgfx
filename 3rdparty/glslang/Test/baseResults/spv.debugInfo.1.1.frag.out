@@ -88,6 +88,7 @@ void main()
                               ModuleProcessed  "suppress-warnings"
                               ModuleProcessed  "hlsl-offsets"
                               ModuleProcessed  "entry-point main"
+                              ModuleProcessed  "use-storage-buffer"
                               Decorate 24(inv) Location 0
                               Decorate 52(outv) Location 0
                               MemberDecorate 53(S) 0 Offset 0

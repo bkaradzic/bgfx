@@ -842,9 +842,12 @@ void TParseVersions::checkExtensionStage(const TSourceLoc& loc, const char * con
 {
 #ifdef NV_EXTENSIONS
     // GL_NV_mesh_shader extension is only allowed in task/mesh shaders
-    if (strcmp(extension, "GL_NV_mesh_shader") == 0)
-        requireStage(loc, (EShLanguageMask)(EShLangTaskNVMask | EShLangMeshNVMask),
+    if (strcmp(extension, "GL_NV_mesh_shader") == 0) {
+        requireStage(loc, (EShLanguageMask)(EShLangTaskNVMask | EShLangMeshNVMask | EShLangFragmentMask),
                      "#extension GL_NV_mesh_shader");
+        profileRequires(loc, ECoreProfile, 450, 0, "#extension GL_NV_mesh_shader");
+        profileRequires(loc, EEsProfile, 320, 0, "#extension GL_NV_mesh_shader");
+    }
 #endif
 }
 

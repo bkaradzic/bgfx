@@ -1265,14 +1265,14 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion, const gl
         std::string text;
         const std::vector<std::string>& processes = glslangIntermediate->getProcesses();
         for (int p = 0; p < (int)processes.size(); ++p) {
-            if (glslangIntermediate->getSpv().spv < 0x00010100) {
+            if (glslangIntermediate->getSpv().spv < glslang::EShTargetSpv_1_1) {
                 text.append("// OpModuleProcessed ");
                 text.append(processes[p]);
                 text.append("\n");
             } else
                 builder.addModuleProcessed(processes[p]);
         }
-        if (glslangIntermediate->getSpv().spv < 0x00010100 && (int)processes.size() > 0)
+        if (glslangIntermediate->getSpv().spv < glslang::EShTargetSpv_1_1 && (int)processes.size() > 0)
             text.append("#line 1\n");
         text.append(glslangIntermediate->getSourceText());
         builder.setSourceText(text);
@@ -2812,8 +2812,9 @@ spv::Id TGlslangToSpvTraverser::createSpvVariable(const glslang::TIntermSymbol* 
         } else if (storageClass == spv::StorageClassUniform) {
             builder.addExtension(spv::E_SPV_KHR_8bit_storage);
             builder.addCapability(spv::CapabilityUniformAndStorageBuffer8BitAccess);
-            if (node->getType().getQualifier().storage == glslang::EvqBuffer)
-                builder.addCapability(spv::CapabilityStorageBuffer8BitAccess);
+        } else if (storageClass == spv::StorageClassStorageBuffer) {
+            builder.addExtension(spv::E_SPV_KHR_8bit_storage);
+            builder.addCapability(spv::CapabilityStorageBuffer8BitAccess);
         }
     }
 
@@ -7202,15 +7203,29 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
 void TGlslangToSpvTraverser::addMeshNVDecoration(spv::Id id, int member, const glslang::TQualifier& qualifier)
 {
     if (member >= 0) {
-        if (qualifier.perPrimitiveNV)
+        if (qualifier.perPrimitiveNV) {
+            // Need to add capability/extension for fragment shader.
+            // Mesh shader already adds this by default.
+            if (glslangIntermediate->getStage() == EShLangFragment) {
+                builder.addCapability(spv::CapabilityMeshShadingNV);
+                builder.addExtension(spv::E_SPV_NV_mesh_shader);
+            }
             builder.addMemberDecoration(id, (unsigned)member, spv::DecorationPerPrimitiveNV);
+        }
         if (qualifier.perViewNV)
             builder.addMemberDecoration(id, (unsigned)member, spv::DecorationPerViewNV);
         if (qualifier.perTaskNV)
             builder.addMemberDecoration(id, (unsigned)member, spv::DecorationPerTaskNV);
     } else {
-        if (qualifier.perPrimitiveNV)
+        if (qualifier.perPrimitiveNV) {
+            // Need to add capability/extension for fragment shader.
+            // Mesh shader already adds this by default.
+            if (glslangIntermediate->getStage() == EShLangFragment) {
+                builder.addCapability(spv::CapabilityMeshShadingNV);
+                builder.addExtension(spv::E_SPV_NV_mesh_shader);
+            }
             builder.addDecoration(id, spv::DecorationPerPrimitiveNV);
+        }
         if (qualifier.perViewNV)
             builder.addDecoration(id, spv::DecorationPerViewNV);
         if (qualifier.perTaskNV)
