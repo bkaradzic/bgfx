@@ -207,7 +207,7 @@ struct Emitter
 	void gizmo(const float* _view, const float* _proj)
 	{
 		float mtx[16];
-		float scale[3];
+		float scale[3] = { 1.0f, 1.0f, 1.0f };
 
 		ImGuizmo::RecomposeMatrixFromComponents(m_uniforms.m_position, m_uniforms.m_angle, scale, mtx);
 
