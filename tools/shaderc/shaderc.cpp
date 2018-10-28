@@ -1686,10 +1686,10 @@ namespace bgfx
 						bx::StringView brace = bx::strFind(bx::StringView(entry.getPtr(), shader.getTerm() ), "{");
 						if (!brace.isEmpty() )
 						{
-							const char* end = bx::strmb(brace.getPtr(), '{', '}');
-							if (NULL != end)
+							bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
+							if (!block.isEmpty() )
 							{
-								strInsert(const_cast<char*>(end), "__RETURN__;\n");
+								strInsert(const_cast<char*>(block.getTerm() ), "__RETURN__;\n");
 							}
 						}
 

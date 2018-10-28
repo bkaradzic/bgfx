@@ -5463,8 +5463,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							bx::StringView brace = bx::strFind(entry, "{");
 							if (!brace.isEmpty() )
 							{
-								const char* end = bx::strmb(brace.getPtr(), '{', '}');
-								if (NULL != end)
+								bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
+								if (!block.isEmpty() )
 								{
 									strins(const_cast<char*>(brace.getPtr()+1), "\n  float bgfx_FragDepth = 0.0;\n");
 								}
