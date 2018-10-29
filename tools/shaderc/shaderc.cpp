@@ -652,8 +652,10 @@ namespace bgfx
 
 			int32_t len = bx::strLen(_input)+1;
 			char* temp = new char[len];
-			bx::eolLF(temp, len, _input);
-			m_input += temp;
+			bx::StringView normalized = bx::normalizeEolLf(temp, len, _input);
+			std::string str;
+			str.assign(normalized.getPtr(), normalized.getTerm() );
+			m_input += str;
 			delete [] temp;
 
 			fppTag* tagptr = m_tagptr;
