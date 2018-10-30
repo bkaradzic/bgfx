@@ -1691,7 +1691,7 @@ namespace bgfx
 							bx::StringView block = bx::strFindBlock(bx::StringView(brace.getPtr(), shader.getTerm() ), '{', '}');
 							if (!block.isEmpty() )
 							{
-								strInsert(const_cast<char*>(block.getTerm() ), "__RETURN__;\n");
+								strInsert(const_cast<char*>(block.getTerm()-1), "__RETURN__;\n");
 							}
 						}
 
