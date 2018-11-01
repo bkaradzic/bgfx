@@ -4618,8 +4618,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					, _depth
 					) );
 			}
-
-			if (computeWrite)
+			else if (computeWrite)
 			{
 				if (_target == GL_TEXTURE_3D)
 				{
