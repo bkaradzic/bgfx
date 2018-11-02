@@ -3112,8 +3112,8 @@ namespace bgfx
 			return false;
 		}
 
-		if (1   >= _init.limits.maxEncoders
-		&&  128 <= _init.limits.maxEncoders)
+		if (1   > _init.limits.maxEncoders
+		||  128 < _init.limits.maxEncoders)
 		{
 			BX_TRACE("init.limits.maxEncoders must be between 1 and 128.");
 			return false;
