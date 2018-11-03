@@ -5059,23 +5059,29 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
 #ifdef NV_EXTENSIONS
 
-    // Builtins for GL_NV_raytracing
+    // Builtins for GL_NV_ray_tracing
     if (profile != EEsProfile && version >= 460) {
         stageBuiltins[EShLangRayGenNV].append(
-            "void traceNVX(accelerationStructureNVX,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void executeCallableNV(uint, int);"
             "\n");
         stageBuiltins[EShLangIntersectNV].append(
-            "bool reportIntersectionNVX(float, uint);"
+            "bool reportIntersectionNV(float, uint);"
             "\n");
         stageBuiltins[EShLangAnyHitNV].append(
-            "void ignoreIntersectionNVX();"
-            "void terminateRayNVX();"
+            "void ignoreIntersectionNV();"
+            "void terminateRayNV();"
             "\n");
         stageBuiltins[EShLangClosestHitNV].append(
-            "void traceNVX(accelerationStructureNVX,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void executeCallableNV(uint, int);"
             "\n");
         stageBuiltins[EShLangMissNV].append(
-            "void traceNVX(accelerationStructureNVX,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void traceNV(accelerationStructureNV,uint,uint,uint,uint,uint,vec3,float,vec3,float,int);"
+            "void executeCallableNV(uint, int);"
+            "\n");
+        stageBuiltins[EShLangCallableNV].append(
+            "void executeCallableNV(uint, int);"
             "\n");
     }
 
@@ -6107,79 +6113,94 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
 #ifdef NV_EXTENSIONS
-    // GL_NV_raytracing
+    // GL_NV_ray_tracing
     if (profile != EEsProfile && version >= 460) {
 
         const char *constRayFlags =
-            "const uint gl_RayFlagsNoneNVX = 0U;"
-            "const uint gl_RayFlagsOpaqueNVX = 1U;"
-            "const uint gl_RayFlagsNoOpaqueNVX = 2U;"
-            "const uint gl_RayFlagsTerminateOnFirstHitNVX = 4U;"
-            "const uint gl_RayFlagsSkipClosestHitShaderNVX = 8U;"
-            "const uint gl_RayFlagsCullBackFacingTrianglesNVX = 16U;"
-            "const uint gl_RayFlagsCullFrontFacingTrianglesNVX = 32U;"
-            "const uint gl_RayFlagsCullOpaqueNVX = 64U;"
-            "const uint gl_RayFlagsCullNoOpaqueNVX = 128U;"
+            "const uint gl_RayFlagsNoneNV = 0U;"
+            "const uint gl_RayFlagsOpaqueNV = 1U;"
+            "const uint gl_RayFlagsNoOpaqueNV = 2U;"
+            "const uint gl_RayFlagsTerminateOnFirstHitNV = 4U;"
+            "const uint gl_RayFlagsSkipClosestHitShaderNV = 8U;"
+            "const uint gl_RayFlagsCullBackFacingTrianglesNV = 16U;"
+            "const uint gl_RayFlagsCullFrontFacingTrianglesNV = 32U;"
+            "const uint gl_RayFlagsCullOpaqueNV = 64U;"
+            "const uint gl_RayFlagsCullNoOpaqueNV = 128U;"
             "\n";
         const char *rayGenDecls =
-            "in    uvec2  gl_LaunchIDNVX;"
-            "in    uvec2  gl_LaunchSizeNVX;"
+            "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchSizeNV;"
             "\n";
         const char *intersectDecls =
-            "in    uvec2  gl_LaunchIDNVX;"
-            "in    uvec2  gl_LaunchSizeNVX;"
+            "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchSizeNV;"
             "in     int   gl_PrimitiveID;"
             "in     int   gl_InstanceID;"
-            "in     int   gl_InstanceCustomIndexNVX;"
-            "in    vec3   gl_WorldRayOriginNVX;"
-            "in    vec3   gl_WorldRayDirectionNVX;"
-            "in    vec3   gl_ObjectRayOriginNVX;"
-            "in    vec3   gl_ObjectRayDirectionNVX;"
-            "in    float  gl_RayTminNVX;"
-            "in    float  gl_RayTmaxNVX;"
-            "in    mat4x3 gl_ObjectToWorldNVX;"
-            "in    mat4x3 gl_WorldToObjectNVX;"
+            "in     int   gl_InstanceCustomIndexNV;"
+            "in    vec3   gl_WorldRayOriginNV;"
+            "in    vec3   gl_WorldRayDirectionNV;"
+            "in    vec3   gl_ObjectRayOriginNV;"
+            "in    vec3   gl_ObjectRayDirectionNV;"
+            "in    float  gl_RayTminNV;"
+            "in    float  gl_RayTmaxNV;"
+            "in    mat4x3 gl_ObjectToWorldNV;"
+            "in    mat4x3 gl_WorldToObjectNV;"
+            "in    uint   gl_IncomingRayFlagsNV;"
             "\n";
         const char *hitDecls =
-            "in    uvec2  gl_LaunchIDNVX;"
-            "in    uvec2  gl_LaunchSizeNVX;"
+            "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchSizeNV;"
             "in     int   gl_PrimitiveID;"
             "in     int   gl_InstanceID;"
-            "in     int   gl_InstanceCustomIndexNVX;"
-            "in    vec3   gl_WorldRayOriginNVX;"
-            "in    vec3   gl_WorldRayDirectionNVX;"
-            "in    vec3   gl_ObjectRayOriginNVX;"
-            "in    vec3   gl_ObjectRayDirectionNVX;"
-            "in    float  gl_RayTminNVX;"
-            "in    float  gl_RayTmaxNVX;"
-            "in    float  gl_HitTNVX;"
-            "in    uint   gl_HitKindNVX;"
-            "in    mat4x3 gl_ObjectToWorldNVX;"
-            "in    mat4x3 gl_WorldToObjectNVX;"
+            "in     int   gl_InstanceCustomIndexNV;"
+            "in    vec3   gl_WorldRayOriginNV;"
+            "in    vec3   gl_WorldRayDirectionNV;"
+            "in    vec3   gl_ObjectRayOriginNV;"
+            "in    vec3   gl_ObjectRayDirectionNV;"
+            "in    float  gl_RayTminNV;"
+            "in    float  gl_RayTmaxNV;"
+            "in    float  gl_HitTNV;"
+            "in    uint   gl_HitKindNV;"
+            "in    mat4x3 gl_ObjectToWorldNV;"
+            "in    mat4x3 gl_WorldToObjectNV;"
+            "in    uint   gl_IncomingRayFlagsNV;"
             "\n";
         const char *missDecls =
-            "in    uvec2  gl_LaunchIDNVX;"
-            "in    uvec2  gl_LaunchSizeNVX;"
-            "in    vec3   gl_WorldRayOriginNVX;"
-            "in    vec3   gl_WorldRayDirectionNVX;"
-            "in    vec3   gl_ObjectRayOriginNVX;"
-            "in    vec3   gl_ObjectRayDirectionNVX;"
-            "in    float  gl_RayTminNVX;"
-            "in    float  gl_RayTmaxNVX;"
+            "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchSizeNV;"
+            "in    vec3   gl_WorldRayOriginNV;"
+            "in    vec3   gl_WorldRayDirectionNV;"
+            "in    vec3   gl_ObjectRayOriginNV;"
+            "in    vec3   gl_ObjectRayDirectionNV;"
+            "in    float  gl_RayTminNV;"
+            "in    float  gl_RayTmaxNV;"
+            "in    uint   gl_IncomingRayFlagsNV;"
+            "\n";
+
+        const char *callableDecls =
+            "in    uvec3  gl_LaunchIDNV;"
+            "in    uvec3  gl_LaunchSizeNV;"
+            "in    uint   gl_IncomingRayFlagsNV;"
             "\n";
 
         stageBuiltins[EShLangRayGenNV].append(rayGenDecls);
         stageBuiltins[EShLangRayGenNV].append(constRayFlags);
 
         stageBuiltins[EShLangIntersectNV].append(intersectDecls);
+        stageBuiltins[EShLangIntersectNV].append(constRayFlags);
 
         stageBuiltins[EShLangAnyHitNV].append(hitDecls);
+        stageBuiltins[EShLangAnyHitNV].append(constRayFlags);
 
         stageBuiltins[EShLangClosestHitNV].append(hitDecls);
         stageBuiltins[EShLangClosestHitNV].append(constRayFlags);
 
         stageBuiltins[EShLangMissNV].append(missDecls);
         stageBuiltins[EShLangMissNV].append(constRayFlags);
+
+        stageBuiltins[EShLangCallableNV].append(callableDecls);
+        stageBuiltins[EShLangCallableNV].append(constRayFlags);
+
     }
     if ((profile != EEsProfile && version >= 140)) {
         const char *deviceIndex =
@@ -8600,39 +8621,43 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     case EShLangAnyHitNV:
     case EShLangClosestHitNV:
     case EShLangMissNV:
+    case EShLangCallableNV:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.setVariableExtensions("gl_LaunchIDNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_LaunchSizeNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_PrimitiveID", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_InstanceID", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_InstanceCustomIndexNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_WorldRayOriginNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_WorldRayDirectionNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_ObjectRayOriginNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_ObjectRayDirectionNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_RayTminNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_RayTmaxNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_HitTNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_HitKindNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_ObjectToWorldNVX", 1, &E_GL_NVX_raytracing);
-            symbolTable.setVariableExtensions("gl_WorldToObjectNVX", 1, &E_GL_NVX_raytracing);
+            symbolTable.setVariableExtensions("gl_LaunchIDNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_LaunchSizeNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_PrimitiveID", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_InstanceID", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_InstanceCustomIndexNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldRayOriginNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldRayDirectionNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectRayOriginNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectRayDirectionNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_RayTminNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_RayTmaxNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_HitTNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_HitKindNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_ObjectToWorldNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_WorldToObjectNV", 1, &E_GL_NV_ray_tracing);
+            symbolTable.setVariableExtensions("gl_IncomingRayFlagsNV", 1, &E_GL_NV_ray_tracing);
+
             symbolTable.setVariableExtensions("gl_DeviceIndex", 1, &E_GL_EXT_device_group);
 
-            BuiltInVariable("gl_LaunchIDNVX",           EbvLaunchIdNV,           symbolTable);
-            BuiltInVariable("gl_LaunchSizeNVX",         EbvLaunchSizeNV,         symbolTable);
+            BuiltInVariable("gl_LaunchIDNV",            EbvLaunchIdNV,           symbolTable);
+            BuiltInVariable("gl_LaunchSizeNV",          EbvLaunchSizeNV,         symbolTable);
             BuiltInVariable("gl_PrimitiveID",           EbvPrimitiveId,          symbolTable);
             BuiltInVariable("gl_InstanceID",            EbvInstanceId,           symbolTable);
-            BuiltInVariable("gl_InstanceCustomIndexNVX",EbvInstanceCustomIndexNV,symbolTable);
-            BuiltInVariable("gl_WorldRayOriginNVX",     EbvWorldRayOriginNV,     symbolTable);
-            BuiltInVariable("gl_WorldRayDirectionNVX",  EbvWorldRayDirectionNV,  symbolTable);
-            BuiltInVariable("gl_ObjectRayOriginNVX",    EbvObjectRayOriginNV,    symbolTable);
-            BuiltInVariable("gl_ObjectRayDirectionNVX", EbvObjectRayDirectionNV, symbolTable);
-            BuiltInVariable("gl_RayTminNVX",            EbvRayTminNV,            symbolTable);
-            BuiltInVariable("gl_RayTmaxNVX",            EbvRayTmaxNV,            symbolTable);
-            BuiltInVariable("gl_HitTNVX",               EbvHitTNV,               symbolTable);
-            BuiltInVariable("gl_HitKindNVX",            EbvHitKindNV,            symbolTable);
-            BuiltInVariable("gl_ObjectToWorldNVX",      EbvObjectToWorldNV,      symbolTable);
-            BuiltInVariable("gl_WorldToObjectNVX",      EbvWorldToObjectNV,      symbolTable);
+            BuiltInVariable("gl_InstanceCustomIndexNV", EbvInstanceCustomIndexNV,symbolTable);
+            BuiltInVariable("gl_WorldRayOriginNV",      EbvWorldRayOriginNV,     symbolTable);
+            BuiltInVariable("gl_WorldRayDirectionNV",   EbvWorldRayDirectionNV,  symbolTable);
+            BuiltInVariable("gl_ObjectRayOriginNV",     EbvObjectRayOriginNV,    symbolTable);
+            BuiltInVariable("gl_ObjectRayDirectionNV",  EbvObjectRayDirectionNV, symbolTable);
+            BuiltInVariable("gl_RayTminNV",             EbvRayTminNV,            symbolTable);
+            BuiltInVariable("gl_RayTmaxNV",             EbvRayTmaxNV,            symbolTable);
+            BuiltInVariable("gl_HitTNV",                EbvHitTNV,               symbolTable);
+            BuiltInVariable("gl_HitKindNV",             EbvHitKindNV,            symbolTable);
+            BuiltInVariable("gl_ObjectToWorldNV",       EbvObjectToWorldNV,      symbolTable);
+            BuiltInVariable("gl_WorldToObjectNV",       EbvWorldToObjectNV,      symbolTable);
+            BuiltInVariable("gl_IncomingRayFlagsNV",    EbvIncomingRayFlagsNV,   symbolTable);
             BuiltInVariable("gl_DeviceIndex",           EbvDeviceIndex,          symbolTable);
         } 
         break;
@@ -9373,17 +9398,24 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     case EShLangRayGenNV:
     case EShLangClosestHitNV:
     case EShLangMissNV:
-        if (profile != EEsProfile && version >= 460)
-            symbolTable.relateToOperator("traceNVX", EOpTraceNV);
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.relateToOperator("traceNV", EOpTraceNV);
+            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallableNV);
+        }
         break;
     case EShLangIntersectNV:
         if (profile != EEsProfile && version >= 460)
-            symbolTable.relateToOperator("reportIntersectionNVX", EOpReportIntersectionNV);
+            symbolTable.relateToOperator("reportIntersectionNV", EOpReportIntersectionNV);
         break;
     case EShLangAnyHitNV:
         if (profile != EEsProfile && version >= 460) {
-            symbolTable.relateToOperator("ignoreIntersectionNVX", EOpIgnoreIntersectionNV);
-            symbolTable.relateToOperator("terminateRayNVX", EOpTerminateRayNV);
+            symbolTable.relateToOperator("ignoreIntersectionNV", EOpIgnoreIntersectionNV);
+            symbolTable.relateToOperator("terminateRayNV", EOpTerminateRayNV);
+        }
+        break;
+    case EShLangCallableNV:
+        if (profile != EEsProfile && version >= 460) {
+            symbolTable.relateToOperator("executeCallableNV", EOpExecuteCallableNV);
         }
         break;
     case EShLangMeshNV:

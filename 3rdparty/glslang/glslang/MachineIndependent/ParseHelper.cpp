@@ -1872,6 +1872,17 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
         break;
     }
 
+#ifdef NV_EXTENSIONS
+    case EOpTraceNV:
+        if (!(*argp)[10]->getAsConstantUnion())
+            error(loc, "argument must be compile-time constant", "payload number", "");
+        break;
+    case EOpExecuteCallableNV:
+        if (!(*argp)[1]->getAsConstantUnion())
+            error(loc, "argument must be compile-time constant", "callable data number", "");
+        break;
+#endif
+
     case EOpTextureQuerySamples:
     case EOpImageQuerySamples:
         // GL_ARB_shader_texture_image_samples
@@ -2990,9 +3001,9 @@ void TParseContext::accStructNVCheck(const TSourceLoc& loc, const TType& type, c
         return;
 
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtAccStructNV))
-        error(loc, "non-uniform struct contains an accelerationStructureNVX:", type.getBasicTypeString().c_str(), identifier.c_str());
+        error(loc, "non-uniform struct contains an accelerationStructureNV:", type.getBasicTypeString().c_str(), identifier.c_str());
     else if (type.getBasicType() == EbtAccStructNV && type.getQualifier().storage != EvqUniform)
-        error(loc, "accelerationStructureNVX can only be used in uniform variables or function parameters:",
+        error(loc, "accelerationStructureNV can only be used in uniform variables or function parameters:",
             type.getBasicTypeString().c_str(), identifier.c_str());
 
 }
@@ -4778,7 +4789,7 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
         if (language == EShLangRayGenNV || language == EShLangIntersectNV ||
         language == EShLangAnyHitNV || language == EShLangClosestHitNV ||
         language == EShLangMissNV || language == EShLangCallableNV) {
-            if (id == "shaderrecordnvx") {
+            if (id == "shaderrecordnv") {
                 publicType.qualifier.layoutShaderRecordNV = true;
                 return;
             }
@@ -5236,7 +5247,7 @@ void TParseContext::layoutObjectCheck(const TSourceLoc& loc, const TSymbol& symb
                     error(loc, "can only specify on a uniform block", "push_constant", "");
 #ifdef NV_EXTENSIONS
                 if (qualifier.layoutShaderRecordNV)
-                    error(loc, "can only specify on a buffer block", "shaderRecordNVX", "");
+                    error(loc, "can only specify on a buffer block", "shaderRecordNV", "");
 #endif
             }
             break;
@@ -5315,6 +5326,8 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
         case EvqPayloadNV:
         case EvqPayloadInNV:
         case EvqHitAttrNV:
+        case EvqCallableDataNV:
+        case EvqCallableDataInNV:
             break;
 #endif
         default:
@@ -5457,7 +5470,7 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
 
 #ifdef NV_EXTENSIONS
     if (qualifier.layoutShaderRecordNV && type.getBasicType() != EbtBlock)
-        error(loc, "can only be used with a block", "shaderRecordNVX", "");
+        error(loc, "can only be used with a block", "shaderRecordNV", "");
 #endif
 
     // input attachment
@@ -5598,11 +5611,15 @@ void TParseContext::layoutQualifierCheck(const TSourceLoc& loc, const TQualifier
 #ifdef NV_EXTENSIONS
     if (qualifier.layoutShaderRecordNV) {
         if (qualifier.storage != EvqBuffer)
-            error(loc, "can only be used with a buffer", "shaderRecordNVX", "");
+            error(loc, "can only be used with a buffer", "shaderRecordNV", "");
         if (qualifier.hasBinding())
-            error(loc, "cannot be used with shaderRecordNVX", "binding", "");
+            error(loc, "cannot be used with shaderRecordNV", "binding", "");
         if (qualifier.hasSet())
-            error(loc, "cannot be used with shaderRecordNVX", "set", "");
+            error(loc, "cannot be used with shaderRecordNV", "set", "");
+
+    }
+    if (qualifier.storage == EvqHitAttrNV && qualifier.hasLayout()) {
+        error(loc, "cannot apply layout qualifiers to hitAttributeNV variable", "hitAttributeNV", "");
     }
 #endif
 }
@@ -6963,18 +6980,27 @@ void TParseContext::blockStageIoCheck(const TSourceLoc& loc, const TQualifier& q
         break;
 #ifdef NV_EXTENSIONS
     case EvqPayloadNV:
-        profileRequires(loc, ~EEsProfile, 450, E_GL_NVX_raytracing, "rayPayloadNVX block");
+        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "rayPayloadNV block");
         requireStage(loc, (EShLanguageMask)(EShLangRayGenNVMask | EShLangAnyHitNVMask | EShLangClosestHitNVMask | EShLangMissNVMask),
-            "rayPayloadNVX block");
+            "rayPayloadNV block");
         break;
     case EvqPayloadInNV:
-        profileRequires(loc, ~EEsProfile, 450, E_GL_NVX_raytracing, "rayPayloadInNVX block");
+        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "rayPayloadInNV block");
         requireStage(loc, (EShLanguageMask)(EShLangAnyHitNVMask | EShLangClosestHitNVMask | EShLangMissNVMask),
-            "rayPayloadInNVX block");
+            "rayPayloadInNV block");
         break;
     case EvqHitAttrNV:
-        profileRequires(loc, ~EEsProfile, 450, E_GL_NVX_raytracing, "hitAttributeNVX block");
-        requireStage(loc, (EShLanguageMask)(EShLangIntersectNVMask | EShLangAnyHitNVMask | EShLangClosestHitNVMask), "hitAttributeNVX block");
+        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "hitAttributeNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangIntersectNVMask | EShLangAnyHitNVMask | EShLangClosestHitNVMask), "hitAttributeNV block");
+        break;
+    case EvqCallableDataNV:
+        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "callableDataNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangRayGenNVMask | EShLangClosestHitNVMask | EShLangMissNVMask | EShLangCallableNVMask),
+            "callableDataNV block");
+        break;
+    case EvqCallableDataInNV:
+        profileRequires(loc, ~EEsProfile, 460, E_GL_NV_ray_tracing, "callableDataInNV block");
+        requireStage(loc, (EShLanguageMask)(EShLangCallableNVMask), "callableDataInNV block");
         break;
 #endif
     default:
@@ -7503,7 +7529,7 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
         error(loc, "cannot declare a default, can only be used on a scalar", "constant_id", "");
 #ifdef NV_EXTENSIONS
     if (qualifier.layoutShaderRecordNV)
-        error(loc, "cannot declare a default, can only be used on a block", "shaderRecordNVX", "");
+        error(loc, "cannot declare a default, can only be used on a block", "shaderRecordNV", "");
 #endif
 }
 

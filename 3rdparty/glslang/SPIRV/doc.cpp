@@ -106,12 +106,12 @@ const char* ExecutionModelString(int model)
     default: return "Bad";
 
 #ifdef NV_EXTENSIONS
-    case ExecutionModelRayGenerationNVX: return "RayGenerationNVX";
-    case ExecutionModelIntersectionNVX:  return "IntersectionNVX";
-    case ExecutionModelAnyHitNVX:        return "AnyHitNVX";
-    case ExecutionModelClosestHitNVX:    return "ClosestHitNVX";
-    case ExecutionModelMissNVX:          return "MissNVX";
-    case ExecutionModelCallableNVX:      return "CallableNVX";
+    case ExecutionModelRayGenerationNV: return "RayGenerationNV";
+    case ExecutionModelIntersectionNV:  return "IntersectionNV";
+    case ExecutionModelAnyHitNV:        return "AnyHitNV";
+    case ExecutionModelClosestHitNV:    return "ClosestHitNV";
+    case ExecutionModelMissNV:          return "MissNV";
+    case ExecutionModelCallableNV:      return "CallableNV";
 #endif
 
     }
@@ -212,10 +212,12 @@ const char* StorageClassString(int StorageClass)
     case 12: return "StorageBuffer";
 
 #ifdef NV_EXTENSIONS
-    case StorageClassRayPayloadNVX:         return "RayPayloadNVX";
-    case StorageClassHitAttributeNVX:       return "HitAttributeNVX";
-    case StorageClassIncomingRayPayloadNVX: return "IncomingRayPayloadNVX";
-    case StorageClassShaderRecordBufferNVX: return "ShaderRecordBufferNVX";
+    case StorageClassRayPayloadNV:            return "RayPayloadNV";
+    case StorageClassHitAttributeNV:          return "HitAttributeNV";
+    case StorageClassIncomingRayPayloadNV:    return "IncomingRayPayloadNV";
+    case StorageClassShaderRecordBufferNV:    return "ShaderRecordBufferNV";
+    case StorageClassCallableDataNV:          return "CallableDataNV";
+    case StorageClassIncomingCallableDataNV:  return "IncomingCallableDataNV";
 #endif
 
     default: return "Bad";
@@ -367,19 +369,20 @@ const char* BuiltInString(int builtIn)
 #endif
 
 #ifdef NV_EXTENSIONS
-    case BuiltInLaunchIdNVX:                return "LaunchIdNVX";
-    case BuiltInLaunchSizeNVX:              return "LaunchSizeNVX";
-    case BuiltInWorldRayOriginNVX:          return "WorldRayOriginNVX";
-    case BuiltInWorldRayDirectionNVX:       return "WorldRayDirectionNVX";
-    case BuiltInObjectRayOriginNVX:         return "ObjectRayOriginNVX";
-    case BuiltInObjectRayDirectionNVX:      return "ObjectRayDirectionNVX";
-    case BuiltInRayTminNVX:                 return "RayTminNVX";
-    case BuiltInRayTmaxNVX:                 return "RayTmaxNVX";
-    case BuiltInInstanceCustomIndexNVX:     return "InstanceCustomIndexNVX";
-    case BuiltInObjectToWorldNVX:           return "ObjectToWorldNVX";
-    case BuiltInWorldToObjectNVX:           return "WorldToObjectNVX";
-    case BuiltInHitTNVX:                    return "HitTNVX";
-    case BuiltInHitKindNVX:                 return "HitKindNVX";
+    case BuiltInLaunchIdNV:                 return "LaunchIdNV";
+    case BuiltInLaunchSizeNV:               return "LaunchSizeNV";
+    case BuiltInWorldRayOriginNV:           return "WorldRayOriginNV";
+    case BuiltInWorldRayDirectionNV:        return "WorldRayDirectionNV";
+    case BuiltInObjectRayOriginNV:          return "ObjectRayOriginNV";
+    case BuiltInObjectRayDirectionNV:       return "ObjectRayDirectionNV";
+    case BuiltInRayTminNV:                  return "RayTminNV";
+    case BuiltInRayTmaxNV:                  return "RayTmaxNV";
+    case BuiltInInstanceCustomIndexNV:      return "InstanceCustomIndexNV";
+    case BuiltInObjectToWorldNV:            return "ObjectToWorldNV";
+    case BuiltInWorldToObjectNV:            return "WorldToObjectNV";
+    case BuiltInHitTNV:                     return "HitTNV";
+    case BuiltInHitKindNV:                  return "HitKindNV";
+    case BuiltInIncomingRayFlagsNV:         return "IncomingRayFlagsNV";
     case BuiltInViewportMaskNV:             return "ViewportMaskNV";
     case BuiltInSecondaryPositionNV:        return "SecondaryPositionNV";
     case BuiltInSecondaryViewportMaskNV:    return "SecondaryViewportMaskNV";
@@ -889,7 +892,7 @@ const char* CapabilityString(int info)
     case CapabilityShaderStereoViewNV:              return "ShaderStereoViewNV";
     case CapabilityPerViewAttributesNV:             return "PerViewAttributesNV";
     case CapabilityGroupNonUniformPartitionedNV:    return "GroupNonUniformPartitionedNV";
-    case CapabilityRaytracingNVX:                   return "RaytracingNVX";
+    case CapabilityRayTracingNV:                    return "RayTracingNV";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
     case CapabilityFragmentBarycentricNV:           return "FragmentBarycentricNV";
@@ -1308,11 +1311,12 @@ const char* OpcodeString(int op)
 
 #ifdef NV_EXTENSIONS
     case OpGroupNonUniformPartitionNV:       return "OpGroupNonUniformPartitionNV";
-    case OpReportIntersectionNVX:            return "OpReportIntersectionNVX";
-    case OpIgnoreIntersectionNVX:            return "OpIgnoreIntersectionNVX";
-    case OpTerminateRayNVX:                  return "OpTerminateRayNVX";
-    case OpTraceNVX:                         return "OpTraceNVX";
-    case OpTypeAccelerationStructureNVX:     return "OpTypeAccelerationStructureNVX";
+    case OpReportIntersectionNV:             return "OpReportIntersectionNV";
+    case OpIgnoreIntersectionNV:             return "OpIgnoreIntersectionNV";
+    case OpTerminateRayNV:                   return "OpTerminateRayNV";
+    case OpTraceNV:                          return "OpTraceNV";
+    case OpTypeAccelerationStructureNV:      return "OpTypeAccelerationStructureNV";
+    case OpExecuteCallableNV:                return "OpExecuteCallableNV";
     case OpImageSampleFootprintNV:           return "OpImageSampleFootprintNV";
     case OpWritePackedPrimitiveIndices4x8NV: return "OpWritePackedPrimitiveIndices4x8NV";
 #endif
@@ -2662,28 +2666,32 @@ void Parameterize()
 #ifdef NV_EXTENSIONS
     InstructionDesc[OpGroupNonUniformPartitionNV].operands.push(OperandId, "X");
 
-    InstructionDesc[OpTypeAccelerationStructureNVX].setResultAndType(true, false);
+    InstructionDesc[OpTypeAccelerationStructureNV].setResultAndType(true, false);
 
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'NV Acceleration Structure'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'Ray Flags'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'Cull Mask'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'SBT Record Offset'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'SBT Record Stride'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'Miss Index'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'Ray Origin'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'TMin'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'Ray Direction'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'TMax'");
-    InstructionDesc[OpTraceNVX].operands.push(OperandId, "'Payload'");
-    InstructionDesc[OpTraceNVX].setResultAndType(false, false);
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'NV Acceleration Structure'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'Ray Flags'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'Cull Mask'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'SBT Record Offset'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'SBT Record Stride'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'Miss Index'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'Ray Origin'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'TMin'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'Ray Direction'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'TMax'");
+    InstructionDesc[OpTraceNV].operands.push(OperandId, "'Payload'");
+    InstructionDesc[OpTraceNV].setResultAndType(false, false);
 
-    InstructionDesc[OpReportIntersectionNVX].operands.push(OperandId, "'Hit Parameter'");
-    InstructionDesc[OpReportIntersectionNVX].operands.push(OperandId, "'Hit Kind'");
+    InstructionDesc[OpReportIntersectionNV].operands.push(OperandId, "'Hit Parameter'");
+    InstructionDesc[OpReportIntersectionNV].operands.push(OperandId, "'Hit Kind'");
 
-    InstructionDesc[OpIgnoreIntersectionNVX].setResultAndType(false, false);
+    InstructionDesc[OpIgnoreIntersectionNV].setResultAndType(false, false);
 
-    InstructionDesc[OpTerminateRayNVX].setResultAndType(false, false);
+    InstructionDesc[OpTerminateRayNV].setResultAndType(false, false);
     
+    InstructionDesc[OpExecuteCallableNV].operands.push(OperandId, "SBT Record Index");
+    InstructionDesc[OpExecuteCallableNV].operands.push(OperandId, "CallableData ID");
+    InstructionDesc[OpExecuteCallableNV].setResultAndType(false, false);
+
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Sampled Image'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Coordinate'");
     InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Granularity'");

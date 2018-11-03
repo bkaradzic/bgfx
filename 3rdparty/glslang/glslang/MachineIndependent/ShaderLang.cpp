@@ -360,6 +360,8 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
             infoSink, commonTable, symbolTables);
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangMissNV, source,
             infoSink, commonTable, symbolTables);
+        InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangCallableNV, source,
+            infoSink, commonTable, symbolTables);
     }
 
     // check for mesh
@@ -607,7 +609,7 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     case EShLangCallableNV:
         if (profile == EEsProfile || version < 460) {
             correct = false;
-            infoSink.info.message(EPrefixError, "#version: raytracing shaders require non-es profile with version 460 or above");
+            infoSink.info.message(EPrefixError, "#version: ray tracing shaders require non-es profile with version 460 or above");
             version = 460;
         }
         break;

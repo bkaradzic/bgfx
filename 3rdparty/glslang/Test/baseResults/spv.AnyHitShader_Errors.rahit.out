@@ -1,7 +1,7 @@
 spv.AnyHitShader_Errors.rahit
-ERROR: 0:8: 'assign' :  l-value required "payload" (cannot modify hitAttributeNVX in this stage)
-ERROR: 0:9: 'reportIntersectionNVX' : no matching overloaded function found 
-ERROR: 0:10: 'traceNVX' : no matching overloaded function found 
+ERROR: 0:8: 'assign' :  l-value required "payload" (cannot modify hitAttributeNV in this stage)
+ERROR: 0:9: 'reportIntersectionNV' : no matching overloaded function found 
+ERROR: 0:10: 'traceNV' : no matching overloaded function found 
 ERROR: 3 compilation errors.  No code generated.
 
 

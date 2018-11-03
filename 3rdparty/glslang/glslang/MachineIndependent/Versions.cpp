@@ -236,7 +236,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_shader_noperspective_interpolation]    = EBhDisable;
     extensionBehavior[E_GL_NV_shader_subgroup_partitioned]           = EBhDisable;
     extensionBehavior[E_GL_NV_shading_rate_image]                    = EBhDisable;
-    extensionBehavior[E_GL_NVX_raytracing]                           = EBhDisable;
+    extensionBehavior[E_GL_NV_ray_tracing]                           = EBhDisable;
     extensionBehavior[E_GL_NV_fragment_shader_barycentric]           = EBhDisable;
     extensionBehavior[E_GL_NV_compute_shader_derivatives]            = EBhDisable;
     extensionBehavior[E_GL_NV_shader_texture_footprint]              = EBhDisable;
@@ -412,7 +412,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_conservative_raster_underestimation 1\n"
             "#define GL_NV_shader_subgroup_partitioned 1\n"
             "#define GL_NV_shading_rate_image 1\n"
-            "#define GL_NVX_raytracing 1\n"
+            "#define GL_NV_ray_tracing 1\n"
             "#define GL_NV_fragment_shader_barycentric 1\n"
             "#define GL_NV_compute_shader_derivatives 1\n"
             "#define GL_NV_shader_texture_footprint 1\n"

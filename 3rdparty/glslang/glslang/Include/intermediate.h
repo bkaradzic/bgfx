@@ -898,6 +898,7 @@ enum TOperator {
     EOpReportIntersectionNV,
     EOpIgnoreIntersectionNV,
     EOpTerminateRayNV,
+    EOpExecuteCallableNV,
     EOpWritePackedPrimitiveIndices4x8NV,
 #endif
     //

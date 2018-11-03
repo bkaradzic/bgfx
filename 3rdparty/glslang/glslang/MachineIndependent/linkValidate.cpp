@@ -712,7 +712,7 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
     case EShLangMissNV:
     case EShLangCallableNV:
         if (numShaderRecordNVBlocks > 1)
-            error(infoSink, "Only one shaderRecordNVX buffer block is allowed per stage");
+            error(infoSink, "Only one shaderRecordNV buffer block is allowed per stage");
         break;
     case EShLangMeshNV:
         // NV_mesh_shader doesn't allow use of both single-view and per-view builtins.

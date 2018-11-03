@@ -517,6 +517,8 @@ INSTANTIATE_TEST_CASE_P(
     "spv.ClosestHitShader_Errors.rchit",
     "spv.MissShader.rmiss",
     "spv.MissShader_Errors.rmiss",
+    "spv.RayCallable.rcall",
+    "spv.RayCallable_Errors.rcall",
     "spv.fragmentShaderBarycentric.frag",
     "spv.fragmentShaderBarycentric2.frag",
     "spv.computeShaderDerivatives.comp",

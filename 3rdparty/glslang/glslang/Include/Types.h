@@ -1684,7 +1684,7 @@ public:
         case EbtStruct:            return "structure";
         case EbtBlock:             return "block";
 #ifdef NV_EXTENSIONS
-        case EbtAccStructNV:       return "accelerationStructureNVX";
+        case EbtAccStructNV:       return "accelerationStructureNV";
 #endif
         default:                   return "unknown type";
         }
@@ -1782,7 +1782,7 @@ public:
                     appendInt(qualifier.layoutSecondaryViewportRelativeOffset);
                 }
                 if (qualifier.layoutShaderRecordNV)
-                    appendStr(" shaderRecordNVX");
+                    appendStr(" shaderRecordNV");
 #endif
 
                 appendStr(")");

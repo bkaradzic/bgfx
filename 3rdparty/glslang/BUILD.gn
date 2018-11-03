@@ -58,7 +58,6 @@ source_set("glslang_sources") {
     "SPIRV/SpvBuilder.cpp",
     "SPIRV/SpvBuilder.h",
     "SPIRV/SpvPostProcess.cpp",
-    "SPIRV/SpvPostProcess.h",
     "SPIRV/bitutils.h",
     "SPIRV/disassemble.cpp",
     "SPIRV/disassemble.h",
