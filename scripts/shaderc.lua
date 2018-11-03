@@ -309,6 +309,7 @@ project "glsl-optimizer"
 			"-Wno-sign-compare",
 			"-Wno-unused-function",
 			"-Wno-unused-parameter",
+			"-Wno-misleading-indentation",
 		}
 
 		removebuildoptions {
