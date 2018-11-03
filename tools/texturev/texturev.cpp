@@ -235,6 +235,8 @@ struct View
 		, m_flipH(0.0f)
 		, m_flipV(0.0f)
 		, m_transitionTime(1.0f)
+		, m_width(1280)
+		, m_height(720)
 		, m_filter(true)
 		, m_fit(true)
 		, m_alpha(false)
@@ -698,6 +700,16 @@ struct View
 			{
 				m_transitionTime = 1.0f;
 			}
+
+			if (!bx::fromString(&m_width, settings.get("view/width") ) )
+			{
+				m_width = 1280;
+			}
+
+			if (!bx::fromString(&m_height, settings.get("view/height") ) )
+			{
+				m_height = 720;
+			}
 		}
 	}
 
@@ -713,6 +725,12 @@ struct View
 			char tmp[256];
 			bx::toString(tmp, sizeof(tmp), m_transitionTime);
 			settings.set("view/transition", tmp);
+
+			bx::toString(tmp, sizeof(tmp), m_width);
+			settings.set("view/width", tmp);
+
+			bx::toString(tmp, sizeof(tmp), m_height);
+			settings.set("view/height", tmp);
 
 			bx::FileWriter writer;
 			if (bx::open(&writer, filePath) )
@@ -748,6 +766,8 @@ struct View
 	float    m_flipH;
 	float    m_flipV;
 	float    m_transitionTime;
+	uint32_t m_width;
+	uint32_t m_height;
 	bool     m_filter;
 	bool     m_fit;
 	bool     m_alpha;
@@ -1162,10 +1182,7 @@ int _main_(int _argc, char** _argv)
 		return bx::kExitFailure;
 	}
 
-	uint32_t width  = 1280;
-	uint32_t height = 720;
-	uint32_t debug  = BGFX_DEBUG_TEXT;
-	uint32_t reset  = BGFX_RESET_VSYNC;
+	uint32_t debug = BGFX_DEBUG_TEXT;
 
 	inputAddBindings(s_bindingName[Binding::App],  s_binding[Binding::App]);
 	inputAddBindings(s_bindingName[Binding::View], s_binding[Binding::View]);
@@ -1174,9 +1191,14 @@ int _main_(int _argc, char** _argv)
 	cmdAdd("view", cmdView, &view);
 
 	entry::setWindowFlags(entry::WindowHandle{0}, ENTRY_WINDOW_FLAG_ASPECT_RATIO, false);
+	entry::setWindowSize(entry::WindowHandle{0}, view.m_width, view.m_height);
 
-	bgfx::init();
-	bgfx::reset(width, height, reset);
+	bgfx::Init init;
+	init.resolution.width = view.m_width;
+	init.resolution.width = view.m_height;
+	init.resolution.reset = BGFX_RESET_VSYNC;
+
+	bgfx::init(init);
 
 	// Set view 0 clear state.
 	bgfx::setViewClear(BACKGROUND_VIEW_ID
@@ -1310,11 +1332,11 @@ int _main_(int _argc, char** _argv)
 
 		entry::WindowState windowState;
 		entry::MouseState mouseStatePrev;
-		while (!entry::processWindowEvents(windowState, debug, reset) )
+		while (!entry::processWindowEvents(windowState, debug, init.resolution.reset) )
 		{
 			const entry::MouseState& mouseState = windowState.m_mouse;
-			width  = windowState.m_width;
-			height = windowState.m_height;
+			view.m_width  = windowState.m_width;
+			view.m_height = windowState.m_height;
 
 			if (!windowState.m_dropFile.isEmpty() )
 			{
@@ -1328,8 +1350,8 @@ int _main_(int _argc, char** _argv)
 				| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 				| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 				,  mouseState.m_mz
-				,  uint16_t(width)
-				,  uint16_t(height)
+				,  uint16_t(view.m_width)
+				,  uint16_t(view.m_height)
 				);
 
 			bool modalWindow = view.m_help || view.m_about;
@@ -1897,8 +1919,8 @@ int _main_(int _argc, char** _argv)
 			bx::mtxOrtho(
 				  ortho
 				, 0.0f
-				, float(width)
-				, float(height)
+				, float(view.m_width)
+				, float(view.m_height)
 				, 0.0f
 				, 0.0f
 				, 1000.0f
@@ -1906,16 +1928,16 @@ int _main_(int _argc, char** _argv)
 				, caps->homogeneousDepth
 				);
 			bgfx::setViewTransform(BACKGROUND_VIEW_ID, NULL, ortho);
-			bgfx::setViewRect(BACKGROUND_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
+			bgfx::setViewRect(BACKGROUND_VIEW_ID, 0, 0, uint16_t(view.m_width), uint16_t(view.m_height) );
 
 			setGeometry(Geometry::Quad
 				, 0
 				, 0
-				, width
-				, height
+				, view.m_width
+				, view.m_height
 				, view.m_alpha || !bgfx::isValid(texture) ? UINT32_MAX : 0
-				, float(width )/float(checkerBoardSize)
-				, float(height)/float(checkerBoardSize)
+				, float(view.m_width )/float(checkerBoardSize)
+				, float(view.m_height)/float(checkerBoardSize)
 				);
 			bgfx::setTexture(0
 				, s_texColor
@@ -1933,17 +1955,17 @@ int _main_(int _argc, char** _argv)
 			float py = posy.getValue();
 			bx::mtxOrtho(
 				  ortho
-				, px-width/2.0f
-				, px+width/2.0f
-				, py+height/2.0f
-				, py-height/2.0f
+				, px-view.m_width/2.0f
+				, px+view.m_width/2.0f
+				, py+view.m_height/2.0f
+				, py-view.m_height/2.0f
 				, -10.0f
 				,  10.0f
 				, 0.0f
 				, caps->homogeneousDepth
 				);
 			bgfx::setViewTransform(IMAGE_VIEW_ID, NULL, ortho);
-			bgfx::setViewRect(IMAGE_VIEW_ID, 0, 0, uint16_t(width), uint16_t(height) );
+			bgfx::setViewRect(IMAGE_VIEW_ID, 0, 0, uint16_t(view.m_width), uint16_t(view.m_height) );
 
 			bgfx::dbgTextClear();
 
@@ -1958,8 +1980,8 @@ int _main_(int _argc, char** _argv)
 				result[0] = bx::round(bx::abs(result[0]) );
 				result[1] = bx::round(bx::abs(result[1]) );
 
-				scale.set(bx::min(float(width)  / result[0]
-					,             float(height) / result[1])
+				scale.set(bx::min(float(view.m_width)  / result[0]
+					,             float(view.m_height) / result[1])
 					, 0.1f*view.m_transitionTime
 					);
 			}

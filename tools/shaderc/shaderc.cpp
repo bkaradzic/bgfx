@@ -300,7 +300,7 @@ namespace bgfx
 	class Bin2cWriter : public bx::FileWriter
 	{
 	public:
-		Bin2cWriter(const char* _name)
+		Bin2cWriter(const bx::StringView& _name)
 			: m_name(_name)
 		{
 		}
@@ -331,7 +331,7 @@ namespace bgfx
 			const uint8_t* data = &m_buffer[0];
 			uint32_t size = (uint32_t)m_buffer.size();
 
-			outf("static const uint8_t %s[%d] =\n{\n", m_name.c_str(), size);
+			outf("static const uint8_t %.*s[%d] =\n{\n", m_name.getLength(), m_name.getPtr(), size);
 
 			if (NULL != data)
 			{
@@ -394,7 +394,7 @@ namespace bgfx
 		}
 
 		std::string m_filePath;
-		std::string m_name;
+		bx::StringView m_name;
 		typedef std::vector<uint8_t> Buffer;
 		Buffer m_buffer;
 	};
@@ -795,13 +795,10 @@ namespace bgfx
 		strReplace(_data, find, "bgfx_VoidFrag");
 	}
 
-	const char* baseName(const char* _filePath)
+	bx::StringView baseName(const bx::StringView& _filePath)
 	{
 		bx::FilePath fp(_filePath);
-		char tmp[bx::kMaxFilePath];
-		bx::strCopy(tmp, BX_COUNTOF(tmp), fp.getFileName() );
-		bx::StringView base = bx::strFind(_filePath, tmp);
-		return base.isEmpty() ? NULL : base.getPtr();
+		return bx::strFind(_filePath, fp.getBaseName() );
 	}
 
 	// c - compute
@@ -849,7 +846,7 @@ namespace bgfx
 			  "  -f <file path>                Input file path.\n"
 			  "  -i <include path>             Include path (for multiple paths use -i multiple times).\n"
 			  "  -o <file path>                Output file path.\n"
-			  "      --bin2c <file path>       Generate C header file.\n"
+			  "      --bin2c [array name]      Generate C header file. If array name is not specified base file name will be used as name.\n"
 			  "      --depends                 Generate makefile style depends file.\n"
 			  "      --platform <platform>     Target platform.\n"
 			  "           android\n"
@@ -2320,30 +2317,37 @@ namespace bgfx
 			}
 		}
 
-		const char* bin2c = NULL;
+		bx::StringView bin2c;
 		if (cmdLine.hasArg("bin2c") )
 		{
-			bin2c = cmdLine.findOption("bin2c");
-			if (NULL == bin2c)
+			const char* bin2cArg = cmdLine.findOption("bin2c");
+			if (NULL != bin2cArg)
+			{
+				bin2c.set(bin2cArg);
+			}
+			else
 			{
 				bin2c = baseName(outFilePath);
-				uint32_t len = (uint32_t)bx::strLen(bin2c);
-				char* temp = (char*)alloca(len+1);
-				for (char *out = temp; *bin2c != '\0';)
+				if (!bin2c.isEmpty() )
 				{
-					char ch = *bin2c++;
-					if (isalnum(ch) )
+					char* temp = (char*)alloca(bin2c.getLength()+1);
+					for (uint32_t ii = 0, num = bin2c.getLength(); ii < num; ++ii)
 					{
-						*out++ = ch;
+						char ch = bin2c.getPtr()[ii];
+						if (bx::isAlphaNum(ch) )
+						{
+							temp[ii] = ch;
+						}
+						else
+						{
+							temp[ii] = '_';
+						}
 					}
-					else
-					{
-						*out++ = '_';
-					}
-				}
-				temp[len] = '\0';
 
-				bin2c = temp;
+					temp[bin2c.getLength()] = '\0';
+
+					bin2c = temp;
+				}
 			}
 		}
 
@@ -2363,13 +2367,11 @@ namespace bgfx
 
 		std::string dir;
 		{
-			const char* base = baseName(filePath);
+			bx::FilePath fp(filePath);
+			bx::StringView path(fp.getPath() );
 
-			if (base != filePath)
-			{
-				dir.assign(filePath, base-filePath);
-				options.includeDirs.push_back(dir.c_str());
-			}
+			dir.assign(path.getPtr(), path.getTerm() );
+			options.includeDirs.push_back(dir);
 		}
 
 		const char* defines = cmdLine.findOption("define");
@@ -2435,7 +2437,7 @@ namespace bgfx
 
 			bx::FileWriter* writer = NULL;
 
-			if (NULL != bin2c)
+			if (!bin2c.isEmpty() )
 			{
 				writer = new Bin2cWriter(bin2c);
 			}
