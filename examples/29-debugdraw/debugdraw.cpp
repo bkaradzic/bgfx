@@ -698,14 +698,18 @@ public:
 			dde.pop();
 
 			{
-				Plane plane { { 0.0f, 1.0f, 0.0f }, 2.0f };
+				const float normal[] = { 0.0f,  1.0f, 0.0f };
+				const float pos[]    = { 0.0f, -2.0f, 0.0f };
+
+				Plane plane;
+				bx::calcPlane(plane.m_normal, normal, pos);
+
 				dde.setColor(false
 					|| intersect(&dde, ray, plane)
 					? selected
 					: 0xffffffff
 					);
 
-				const float pos[] = { 0.0f, -2.0f, 0.0f };
 				dde.drawGrid(Axis::Y, pos, 20, 1.0f);
 			}
 
