@@ -693,12 +693,21 @@ public:
 				dde.setWireframe(wireframe);
 				dde.setColor(wireframe ? 0xffff00ff : 0xff00ff00);
 				dde.draw(m_bunny);
+				dde.setTransform(NULL);
 			}
 			dde.pop();
 
-			dde.setTranslate(0.0f, -2.0f, 0.0f);
-			dde.drawGrid(Axis::Y, zero, 20, 1.0f);
-			dde.setTransform(NULL);
+			{
+				Plane plane { { 0.0f, 1.0f, 0.0f }, 2.0f };
+				dde.setColor(false
+					|| intersect(&dde, ray, plane)
+					? selected
+					: 0xffffffff
+					);
+
+				const float pos[] = { 0.0f, -2.0f, 0.0f };
+				dde.drawGrid(Axis::Y, pos, 20, 1.0f);
+			}
 
 			dde.drawFrustum(mtxVp);
 
