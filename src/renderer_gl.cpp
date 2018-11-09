@@ -2276,7 +2276,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					: 0
 					;
 
-				if (NULL == glPolygonMode)
+				if (BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
+				||  NULL == glPolygonMode)
 				{
 					glPolygonMode = stubPolygonMode;
 				}
