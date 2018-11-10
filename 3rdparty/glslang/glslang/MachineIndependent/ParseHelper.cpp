@@ -4041,7 +4041,7 @@ void TParseContext::redeclareBuiltinBlock(const TSourceLoc& loc, TTypeList& newT
     if (currentBlockQualifier.storage == EvqVaryingOut && globalOutputDefaults.hasXfbBuffer()) {
         if (!currentBlockQualifier.hasXfbBuffer())
             currentBlockQualifier.layoutXfbBuffer = globalOutputDefaults.layoutXfbBuffer;
-        fixBlockXfbOffsets(currentBlockQualifier, newTypeList);
+        fixXfbOffsets(currentBlockQualifier, newTypeList);
     }
 
     // Edit and error check the container against the redeclaration
@@ -6116,6 +6116,11 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     // fix up
     fixOffset(loc, *symbol);
 
+    if (symbol->getType().getBasicType() == EbtStruct) {
+       fixXfbOffsets(symbol->getWritableType().getQualifier(),
+                     *(symbol->getWritableType().getWritableStruct()));
+    }
+
     return initNode;
 }
 
@@ -6840,7 +6845,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
 
     // Process the members
     fixBlockLocations(loc, currentBlockQualifier, typeList, memberWithLocation, memberWithoutLocation);
-    fixBlockXfbOffsets(currentBlockQualifier, typeList);
+    fixXfbOffsets(currentBlockQualifier, typeList);
     fixBlockUniformOffsets(currentBlockQualifier, typeList);
     for (unsigned int member = 0; member < typeList.size(); ++member)
         layoutTypeCheck(typeList[member].loc, *typeList[member].type);
@@ -7091,7 +7096,7 @@ void TParseContext::fixBlockLocations(const TSourceLoc& loc, TQualifier& qualifi
     }
 }
 
-void TParseContext::fixBlockXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
+void TParseContext::fixXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
 {
     // "If a block is qualified with xfb_offset, all its
     // members are assigned transform feedback buffer offsets. If a block is not qualified with xfb_offset, any
