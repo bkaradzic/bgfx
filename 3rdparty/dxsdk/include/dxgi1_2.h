@@ -113,6 +113,9 @@ extern "C"{
 /* interface __MIDL_itf_dxgi1_2_0000_0000 */
 /* [local] */ 
 
+#include <winapifamily.h>
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
 extern RPC_IF_HANDLE __MIDL_itf_dxgi1_2_0000_0000_v0_0_c_ifspec;
@@ -503,6 +506,10 @@ EXTERN_C const IID IID_IDXGIOutputDuplication;
 /* interface __MIDL_itf_dxgi1_2_0000_0002 */
 /* [local] */ 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+#pragma region App Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 typedef 
 enum DXGI_ALPHA_MODE
     {
@@ -2439,6 +2446,8 @@ EXTERN_C const IID IID_IDXGIOutput1;
 /* interface __MIDL_itf_dxgi1_2_0000_0009 */
 /* [local] */ 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
 DEFINE_GUID(IID_IDXGIDisplayControl,0xea9dbf1a,0xc88e,0x4486,0x85,0x4a,0x98,0xaa,0x01,0x38,0xf3,0x0c);
 DEFINE_GUID(IID_IDXGIOutputDuplication,0x191cfac3,0xa341,0x470d,0xb2,0x6e,0xa8,0x64,0xf4,0x28,0x31,0x9c);
 DEFINE_GUID(IID_IDXGISurface2,0xaba496dd,0xb617,0x4cb8,0xa8,0x66,0xbc,0x44,0xd7,0xeb,0x1f,0xa2);

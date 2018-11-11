@@ -106,6 +106,9 @@ extern "C"{
 /* interface __MIDL_itf_dxgi1_3_0000_0000 */
 /* [local] */ 
 
+#include <winapifamily.h>
+#pragma region App Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 #define DXGI_CREATE_FACTORY_DEBUG 0x1
 HRESULT WINAPI CreateDXGIFactory2(UINT Flags, REFIID riid, _COM_Outptr_ void **ppFactory);
 HRESULT WINAPI DXGIGetDebugInterface1(UINT Flags, REFIID riid, _COM_Outptr_ void **pDebug);
@@ -1318,6 +1321,10 @@ EXTERN_C const IID IID_IDXGIFactory3;
 /* interface __MIDL_itf_dxgi1_3_0000_0004 */
 /* [local] */ 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
+#pragma region App Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 typedef struct DXGI_DECODE_SWAP_CHAIN_DESC
     {
     UINT Flags;
@@ -1788,6 +1795,10 @@ enum DXGI_OVERLAY_SUPPORT_FLAG
         DXGI_OVERLAY_SUPPORT_FLAG_SCALING	= 0x2
     } 	DXGI_OVERLAY_SUPPORT_FLAG;
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
+#pragma region App Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 
 
 extern RPC_IF_HANDLE __MIDL_itf_dxgi1_3_0000_0007_v0_0_c_ifspec;
@@ -2082,6 +2093,8 @@ EXTERN_C const IID IID_IDXGIOutput3;
 /* interface __MIDL_itf_dxgi1_3_0000_0008 */
 /* [local] */ 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
 DEFINE_GUID(IID_IDXGIDevice3,0x6007896c,0x3244,0x4afd,0xbf,0x18,0xa6,0xd3,0xbe,0xda,0x50,0x23);
 DEFINE_GUID(IID_IDXGISwapChain2,0xa8be2ac4,0x199f,0x4946,0xb3,0x31,0x79,0x59,0x9f,0xb9,0x8d,0xe7);
 DEFINE_GUID(IID_IDXGIOutput2,0x595e39d1,0x2724,0x4663,0x99,0xb1,0xda,0x96,0x9d,0xe2,0x83,0x64);

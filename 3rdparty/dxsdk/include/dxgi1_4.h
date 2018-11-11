@@ -78,6 +78,9 @@ extern "C"{
 /* interface __MIDL_itf_dxgi1_4_0000_0000 */
 /* [local] */ 
 
+#include <winapifamily.h>
+#pragma region App Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 typedef 
 enum DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG
     {
@@ -1467,6 +1470,8 @@ EXTERN_C const IID IID_IDXGIAdapter3;
 /* interface __MIDL_itf_dxgi1_4_0000_0004 */
 /* [local] */ 
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
 DEFINE_GUID(IID_IDXGISwapChain3,0x94d99bdb,0xf1f8,0x4ab0,0xb2,0x36,0x7d,0xa0,0x17,0x0e,0xda,0xb1);
 DEFINE_GUID(IID_IDXGIOutput4,0xdc7dca35,0x2196,0x414d,0x9F,0x53,0x61,0x78,0x84,0x03,0x2a,0x60);
 DEFINE_GUID(IID_IDXGIFactory4,0x1bc6ea02,0xef36,0x464f,0xbf,0x0c,0x21,0xca,0x39,0xe5,0x16,0x8a);
