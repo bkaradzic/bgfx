@@ -425,6 +425,10 @@ EXTERN_C const IID IID_ID3D12VideoDecoderHeap;
 
 
 
+
+
+
+
 #endif 	/* __ID3D12VideoDecoderHeap_INTERFACE_DEFINED__ */
 
 
@@ -673,6 +677,10 @@ EXTERN_C const IID IID_ID3D12VideoDecoder;
 
 
 #endif 	/* C style interface */
+
+
+
+
 
 
 
@@ -1074,6 +1082,10 @@ EXTERN_C const IID IID_ID3D12VideoProcessor;
 
 
 #endif 	/* C style interface */
+
+
+
+
 
 
 

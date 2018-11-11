@@ -10,6 +10,7 @@
 #ifndef __D3DCOMPILER_H__
 #define __D3DCOMPILER_H__
 
+#include <winapifamily.h>
 
 // Current name of the DLL shipped in the same SDK as this header.
 
@@ -40,6 +41,8 @@ extern "C" {
 #endif //__cplusplus
 
 
+#pragma region Application Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 
 //----------------------------------------------------------------------------
 // D3DReadFileToBlob:
@@ -123,6 +126,16 @@ D3DWriteBlobToFile(_In_ ID3DBlob* pBlob,
 // D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY
 //   This enables older shaders to compile to 4_0 targets.
 //
+// D3DCOMPILE_DEBUG_NAME_FOR_SOURCE
+//   This enables a debug name to be generated based on source information.
+//   It requires D3DCOMPILE_DEBUG to be set, and is exclusive with
+//   D3DCOMPILE_DEBUG_NAME_FOR_BINARY.
+//
+// D3DCOMPILE_DEBUG_NAME_FOR_BINARY
+//   This enables a debug name to be generated based on compiled information.
+//   It requires D3DCOMPILE_DEBUG to be set, and is exclusive with
+//   D3DCOMPILE_DEBUG_NAME_FOR_SOURCE.
+//
 //----------------------------------------------------------------------------
 
 #define D3DCOMPILE_DEBUG                                (1 << 0)
@@ -149,6 +162,8 @@ D3DWriteBlobToFile(_In_ ID3DBlob* pBlob,
 #define D3DCOMPILE_RESOURCES_MAY_ALIAS                  (1 << 19)
 #define D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES   (1 << 20)
 #define D3DCOMPILE_ALL_RESOURCES_BOUND                  (1 << 21)
+#define D3DCOMPILE_DEBUG_NAME_FOR_SOURCE                (1 << 22)
+#define D3DCOMPILE_DEBUG_NAME_FOR_BINARY                (1 << 23)
 
 //----------------------------------------------------------------------------
 // D3DCOMPILE_EFFECT flags:
@@ -463,6 +478,7 @@ typedef enum D3D_BLOB_PART
     D3D_BLOB_PDB,
     D3D_BLOB_PRIVATE_DATA,
     D3D_BLOB_ROOT_SIGNATURE,
+    D3D_BLOB_DEBUG_NAME,
 
     // Test parts are only produced by special compiler versions and so
     // are usually not present in shaders.
@@ -540,8 +556,12 @@ D3DDecompressShaders(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData,
                      _Out_writes_(uNumShaders) ID3DBlob** ppShaders,
                      _Out_opt_ UINT* pTotalShaders);
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
+#pragma endregion
 
 
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 //----------------------------------------------------------------------------
 // D3DDisassemble10Effect:
@@ -555,6 +575,8 @@ D3DDisassemble10Effect(_In_ interface ID3D10Effect *pEffect,
                        _In_ UINT Flags,
                        _Out_ ID3DBlob** ppDisassembly);
 
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
+#pragma endregion
 
 
 #ifdef __cplusplus
