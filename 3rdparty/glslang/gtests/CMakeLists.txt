@@ -25,7 +25,7 @@ if(BUILD_TESTING)
             # -- Remapper tests
             ${CMAKE_CURRENT_SOURCE_DIR}/Remap.FromFile.cpp)
 
-        PCH(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/pch.cpp)
+        glslang_pch(TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/pch.cpp)
 
         add_executable(glslangtests ${TEST_SOURCES})
         set_property(TARGET glslangtests PROPERTY FOLDER tests)

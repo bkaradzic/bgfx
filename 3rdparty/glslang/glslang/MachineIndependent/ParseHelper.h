@@ -403,7 +403,7 @@ public:
     void blockStageIoCheck(const TSourceLoc&, const TQualifier&);
     void blockQualifierCheck(const TSourceLoc&, const TQualifier&, bool instanceName);
     void fixBlockLocations(const TSourceLoc&, TQualifier&, TTypeList&, bool memberWithLocation, bool memberWithoutLocation);
-    void fixBlockXfbOffsets(TQualifier&, TTypeList&);
+    void fixXfbOffsets(TQualifier&, TTypeList&);
     void fixBlockUniformOffsets(TQualifier&, TTypeList&);
     void addQualifierToExisting(const TSourceLoc&, TQualifier, const TString& identifier);
     void addQualifierToExisting(const TSourceLoc&, TQualifier, TIdentifierList&);

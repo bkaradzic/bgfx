@@ -152,6 +152,7 @@ void SpirvToolsLegalize(const glslang::TIntermediate&, std::vector<unsigned int>
             out << std::endl;
         });
 
+    optimizer.RegisterPass(spvtools::CreateDeadBranchElimPass());
     optimizer.RegisterPass(spvtools::CreateMergeReturnPass());
     optimizer.RegisterPass(spvtools::CreateInlineExhaustivePass());
     optimizer.RegisterPass(spvtools::CreateEliminateDeadFunctionsPass());

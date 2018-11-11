@@ -17,7 +17,7 @@ set(HEADERS
     hlslGrammar.h
     hlslParseables.h)
 
-PCH(SOURCES pch.cpp)
+glslang_pch(SOURCES pch.cpp)
 
 add_library(HLSL ${LIB_TYPE} ${SOURCES} ${HEADERS})
 set_property(TARGET HLSL PROPERTY FOLDER hlsl)

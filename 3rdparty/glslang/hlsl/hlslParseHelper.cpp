@@ -8555,7 +8555,7 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
 
     // Process the members
     fixBlockLocations(loc, type.getQualifier(), typeList, memberWithLocation, memberWithoutLocation);
-    fixBlockXfbOffsets(type.getQualifier(), typeList);
+    fixXfbOffsets(type.getQualifier(), typeList);
     fixBlockUniformOffsets(type.getQualifier(), typeList);
 
     // reverse merge, so that currentBlockQualifier now has all layout information
@@ -8638,7 +8638,7 @@ void HlslParseContext::fixBlockLocations(const TSourceLoc& loc, TQualifier& qual
     }
 }
 
-void HlslParseContext::fixBlockXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
+void HlslParseContext::fixXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
 {
     // "If a block is qualified with xfb_offset, all its
     // members are assigned transform feedback buffer offsets. If a block is not qualified with xfb_offset, any
