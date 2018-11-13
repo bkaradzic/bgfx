@@ -5306,6 +5306,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				char* temp = (char*)alloca(tempLen);
 				bx::StaticMemoryBlockWriter writer(temp, tempLen);
 
+				bx::Error err;
+
 				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES)
 				&&  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES < 30) )
 				{
@@ -5446,7 +5448,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						}
 					}
 
-					bx::writePrintf(&writer, "precision %s float;\n"
+					bx::write(&writer, &err, "precision %s float;\n"
 						, m_type == GL_FRAGMENT_SHADER ? "mediump" : "highp"
 						);
 
@@ -5515,7 +5517,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 					if (0 != version)
 					{
-						bx::writePrintf(&writer, "#version %d\n", version);
+						bx::write(&writer, &err, "#version %d\n", version);
 					}
 
 					if (usesTextureLod)
@@ -5607,7 +5609,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 						if (0 != fragData)
 						{
-							bx::writePrintf(&writer, "out vec4 bgfx_FragData[%d];\n", fragData);
+							bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
 							bx::write(&writer, "#define gl_FragData bgfx_FragData\n");
 						}
 						else
@@ -5655,7 +5657,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
 					{
-						bx::writePrintf(&writer
+						bx::write(&writer, &err
 							, "#version 300 es\n"
 							  "precision %s float;\n"
 							, m_type == GL_FRAGMENT_SHADER ? "mediump" : "highp"
@@ -5730,7 +5732,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 						if (0 != fragData)
 						{
-							bx::writePrintf(&writer, "out vec4 bgfx_FragData[%d];\n", fragData);
+							bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
 							bx::write(&writer, "#define gl_FragData bgfx_FragData\n");
 						}
 						else
