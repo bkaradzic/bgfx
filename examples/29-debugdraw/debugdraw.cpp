@@ -566,13 +566,10 @@ public:
 
 			_dde->setColor(0xff0000ff);
 
-			float tmp[3];
-			bx::vec3Mul(tmp, hit.m_normal, 0.7f);
+			const bx::Vec3 tmp = bx::mul(hit.m_normal, 0.7f);
+			const bx::Vec3 end = bx::add(hit.m_pos, tmp);
 
-			float end[3];
-			bx::vec3Add(end, hit.m_pos, tmp);
-
-			_dde->drawCone(hit.m_pos, end, 0.1f);
+			_dde->drawCone(&hit.m_pos.x, &end.x, 0.1f);
 
 			_dde->pop();
 
@@ -702,7 +699,7 @@ public:
 				const float pos[]    = { 0.0f, -2.0f, 0.0f };
 
 				Plane plane;
-				bx::calcPlane(plane.m_normal, normal, pos);
+				bx::calcPlane(&plane.m_normal.x, normal, pos);
 
 				dde.setColor(false
 					|| intersect(&dde, ray, plane)
@@ -723,17 +720,17 @@ public:
 				dde.draw(sphere);
 				dde.setWireframe(false);
 
-				sphere.m_center[0] = -2.0f;
+				sphere.m_center.x = -2.0f;
 				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xc0ffc0ff);
 				dde.setLod(2);
 				dde.draw(sphere);
 
-				sphere.m_center[0] = -4.0f;
+				sphere.m_center.x = -4.0f;
 				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xa0f0ffff);
 				dde.setLod(1);
 				dde.draw(sphere);
 
-				sphere.m_center[0] = -6.0f;
+				sphere.m_center.x = -6.0f;
 				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xffc0ff00);
 				dde.setLod(0);
 				dde.draw(sphere);
@@ -823,7 +820,7 @@ public:
 				};
 
 				float up[3] = { 0.0f, 4.0f, 0.0f };
-				bx::vec3MulMtx(cylinder.m_end, up, mtx);
+				bx::vec3MulMtx(&cylinder.m_end.x, up, mtx);
 				dde.setColor(intersect(&dde, ray, cylinder) ? selected : 0xffffffff);
 				dde.draw(cylinder);
 

@@ -554,24 +554,24 @@ public:
 					Sphere lightPosRadius;
 
 					float lightTime = time * m_lightAnimationSpeed * (bx::sin(light/float(m_numLights) * bx::kPiHalf ) * 0.5f + 0.5f);
-					lightPosRadius.m_center[0] = bx::sin( ( (lightTime + light*0.47f) + bx::kPiHalf*1.37f ) )*offset;
-					lightPosRadius.m_center[1] = bx::cos( ( (lightTime + light*0.69f) + bx::kPiHalf*1.49f ) )*offset;
-					lightPosRadius.m_center[2] = bx::sin( ( (lightTime + light*0.37f) + bx::kPiHalf*1.57f ) )*2.0f;
-					lightPosRadius.m_radius = 2.0f;
+					lightPosRadius.m_center.x = bx::sin( ( (lightTime + light*0.47f) + bx::kPiHalf*1.37f ) )*offset;
+					lightPosRadius.m_center.y = bx::cos( ( (lightTime + light*0.69f) + bx::kPiHalf*1.49f ) )*offset;
+					lightPosRadius.m_center.z = bx::sin( ( (lightTime + light*0.37f) + bx::kPiHalf*1.57f ) )*2.0f;
+					lightPosRadius.m_radius   = 2.0f;
 
 					Aabb aabb;
 					toAabb(aabb, lightPosRadius);
 
 					float box[8][3] =
 					{
-						{ aabb.m_min[0], aabb.m_min[1], aabb.m_min[2] },
-						{ aabb.m_min[0], aabb.m_min[1], aabb.m_max[2] },
-						{ aabb.m_min[0], aabb.m_max[1], aabb.m_min[2] },
-						{ aabb.m_min[0], aabb.m_max[1], aabb.m_max[2] },
-						{ aabb.m_max[0], aabb.m_min[1], aabb.m_min[2] },
-						{ aabb.m_max[0], aabb.m_min[1], aabb.m_max[2] },
-						{ aabb.m_max[0], aabb.m_max[1], aabb.m_min[2] },
-						{ aabb.m_max[0], aabb.m_max[1], aabb.m_max[2] },
+						{ aabb.m_min.x, aabb.m_min.y, aabb.m_min.z },
+						{ aabb.m_min.x, aabb.m_min.y, aabb.m_max.z },
+						{ aabb.m_min.x, aabb.m_max.y, aabb.m_min.z },
+						{ aabb.m_min.x, aabb.m_max.y, aabb.m_max.z },
+						{ aabb.m_max.x, aabb.m_min.y, aabb.m_min.z },
+						{ aabb.m_max.x, aabb.m_min.y, aabb.m_max.z },
+						{ aabb.m_max.x, aabb.m_max.y, aabb.m_min.z },
+						{ aabb.m_max.x, aabb.m_max.y, aabb.m_max.z },
 					};
 
 					float xyz[3];

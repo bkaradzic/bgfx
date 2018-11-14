@@ -1426,29 +1426,29 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
 		{
-			moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_min[2]);
+			moveTo(_aabb.m_min.x, _aabb.m_min.y, _aabb.m_min.z);
+			lineTo(_aabb.m_max.x, _aabb.m_min.y, _aabb.m_min.z);
+			lineTo(_aabb.m_max.x, _aabb.m_max.y, _aabb.m_min.z);
+			lineTo(_aabb.m_min.x, _aabb.m_max.y, _aabb.m_min.z);
 			close();
 
-			moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_max[2]);
-			lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_max[2]);
-			lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_max[2]);
-			lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_min.x, _aabb.m_min.y, _aabb.m_max.z);
+			lineTo(_aabb.m_max.x, _aabb.m_min.y, _aabb.m_max.z);
+			lineTo(_aabb.m_max.x, _aabb.m_max.y, _aabb.m_max.z);
+			lineTo(_aabb.m_min.x, _aabb.m_max.y, _aabb.m_max.z);
 			close();
 
-			moveTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_min[0], _aabb.m_min[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_min.x, _aabb.m_min.y, _aabb.m_min.z);
+			lineTo(_aabb.m_min.x, _aabb.m_min.y, _aabb.m_max.z);
 
-			moveTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_max[0], _aabb.m_min[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_max.x, _aabb.m_min.y, _aabb.m_min.z);
+			lineTo(_aabb.m_max.x, _aabb.m_min.y, _aabb.m_max.z);
 
-			moveTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_min[0], _aabb.m_max[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_min.x, _aabb.m_max.y, _aabb.m_min.z);
+			lineTo(_aabb.m_min.x, _aabb.m_max.y, _aabb.m_max.z);
 
-			moveTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_min[2]);
-			lineTo(_aabb.m_max[0], _aabb.m_max[1], _aabb.m_max[2]);
+			moveTo(_aabb.m_max.x, _aabb.m_max.y, _aabb.m_min.z);
+			lineTo(_aabb.m_max.x, _aabb.m_max.y, _aabb.m_max.z);
 		}
 		else
 		{
@@ -1460,12 +1460,12 @@ struct DebugDrawEncoderImpl
 
 	void draw(const Cylinder& _cylinder, bool _capsule)
 	{
-		drawCylinder(_cylinder.m_pos, _cylinder.m_end, _cylinder.m_radius, _capsule);
+		drawCylinder(&_cylinder.m_pos.x, &_cylinder.m_end.x, _cylinder.m_radius, _capsule);
 	}
 
 	void draw(const Disk& _disk)
 	{
-		drawCircle(_disk.m_normal, _disk.m_center, _disk.m_radius, 0.0f);
+		drawCircle(&_disk.m_normal.x, &_disk.m_center.x, _disk.m_radius, 0.0f);
 	}
 
 	void draw(const Obb& _obb)
@@ -1518,9 +1518,9 @@ struct DebugDrawEncoderImpl
 			, 0.0f
 			, 0.0f
 			, 0.0f
-			, _sphere.m_center[0]
-			, _sphere.m_center[1]
-			, _sphere.m_center[2]
+			, _sphere.m_center.x
+			, _sphere.m_center.y
+			, _sphere.m_center.z
 			);
 		uint8_t lod = attrib.m_lod > Mesh::SphereMaxLod
 			? uint8_t(Mesh::SphereMaxLod)
@@ -1663,39 +1663,39 @@ struct DebugDrawEncoderImpl
 		Plane planes[6];
 		buildFrustumPlanes(planes, _viewProj);
 
-		float points[24];
-		intersectPlanes(&points[ 0], planes[0], planes[2], planes[4]);
-		intersectPlanes(&points[ 3], planes[0], planes[3], planes[4]);
-		intersectPlanes(&points[ 6], planes[0], planes[3], planes[5]);
-		intersectPlanes(&points[ 9], planes[0], planes[2], planes[5]);
-		intersectPlanes(&points[12], planes[1], planes[2], planes[4]);
-		intersectPlanes(&points[15], planes[1], planes[3], planes[4]);
-		intersectPlanes(&points[18], planes[1], planes[3], planes[5]);
-		intersectPlanes(&points[21], planes[1], planes[2], planes[5]);
+		bx::Vec3 points[8];
+		points[0] = intersectPlanes(planes[0], planes[2], planes[4]);
+		points[1] = intersectPlanes(planes[0], planes[3], planes[4]);
+		points[2] = intersectPlanes(planes[0], planes[3], planes[5]);
+		points[3] = intersectPlanes(planes[0], planes[2], planes[5]);
+		points[4] = intersectPlanes(planes[1], planes[2], planes[4]);
+		points[5] = intersectPlanes(planes[1], planes[3], planes[4]);
+		points[6] = intersectPlanes(planes[1], planes[3], planes[5]);
+		points[7] = intersectPlanes(planes[1], planes[2], planes[5]);
 
-		moveTo(&points[ 0]);
-		lineTo(&points[ 3]);
-		lineTo(&points[ 6]);
-		lineTo(&points[ 9]);
+		moveTo(&points[0].x);
+		lineTo(&points[1].x);
+		lineTo(&points[2].x);
+		lineTo(&points[3].x);
 		close();
 
-		moveTo(&points[12]);
-		lineTo(&points[15]);
-		lineTo(&points[18]);
-		lineTo(&points[21]);
+		moveTo(&points[4].x);
+		lineTo(&points[5].x);
+		lineTo(&points[6].x);
+		lineTo(&points[7].x);
 		close();
 
-		moveTo(&points[ 0]);
-		lineTo(&points[12]);
+		moveTo(&points[0].x);
+		lineTo(&points[4].x);
 
-		moveTo(&points[ 3]);
-		lineTo(&points[15]);
+		moveTo(&points[1].x);
+		lineTo(&points[5].x);
 
-		moveTo(&points[ 6]);
-		lineTo(&points[18]);
+		moveTo(&points[2].x);
+		lineTo(&points[6].x);
 
-		moveTo(&points[ 9]);
-		lineTo(&points[21]);
+		moveTo(&points[3].x);
+		lineTo(&points[7].x);
 	}
 
 	void drawFrustum(const void* _viewProj)
@@ -2029,11 +2029,15 @@ struct DebugDrawEncoderImpl
 			draw(Mesh::Enum(Mesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
 
 			Sphere sphere;
-			bx::vec3Move(sphere.m_center, _from);
-			sphere.m_radius = _radius;
+			sphere.m_center.x = _from[0];
+			sphere.m_center.y = _from[1];
+			sphere.m_center.z = _from[2];
+			sphere.m_radius   = _radius;
 			draw(sphere);
 
-			bx::vec3Move(sphere.m_center, _to);
+			sphere.m_center.x = _to[0];
+			sphere.m_center.y = _to[1];
+			sphere.m_center.z = _to[2];
 			draw(sphere);
 		}
 		else
@@ -2579,7 +2583,7 @@ void DebugDrawEncoder::draw(const Sphere& _sphere)
 
 void DebugDrawEncoder::draw(const Cone& _cone)
 {
-	DEBUG_DRAW_ENCODER(drawCone(_cone.m_pos, _cone.m_end, _cone.m_radius) );
+	DEBUG_DRAW_ENCODER(drawCone(&_cone.m_pos.x, &_cone.m_end.x, _cone.m_radius) );
 }
 
 void DebugDrawEncoder::draw(GeometryHandle _handle)

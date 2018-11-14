@@ -10,102 +10,88 @@
 void aabbToObb(Obb& _obb, const Aabb& _aabb)
 {
 	bx::memSet(_obb.m_mtx, 0, sizeof(_obb.m_mtx) );
-	_obb.m_mtx[ 0] = (_aabb.m_max[0] - _aabb.m_min[0]) * 0.5f;
-	_obb.m_mtx[ 5] = (_aabb.m_max[1] - _aabb.m_min[1]) * 0.5f;
-	_obb.m_mtx[10] = (_aabb.m_max[2] - _aabb.m_min[2]) * 0.5f;
-	_obb.m_mtx[12] = (_aabb.m_min[0] + _aabb.m_max[0]) * 0.5f;
-	_obb.m_mtx[13] = (_aabb.m_min[1] + _aabb.m_max[1]) * 0.5f;
-	_obb.m_mtx[14] = (_aabb.m_min[2] + _aabb.m_max[2]) * 0.5f;
+	_obb.m_mtx[ 0] = (_aabb.m_max.x - _aabb.m_min.x) * 0.5f;
+	_obb.m_mtx[ 5] = (_aabb.m_max.y - _aabb.m_min.y) * 0.5f;
+	_obb.m_mtx[10] = (_aabb.m_max.z - _aabb.m_min.z) * 0.5f;
+	_obb.m_mtx[12] = (_aabb.m_min.x + _aabb.m_max.x) * 0.5f;
+	_obb.m_mtx[13] = (_aabb.m_min.y + _aabb.m_max.y) * 0.5f;
+	_obb.m_mtx[14] = (_aabb.m_min.z + _aabb.m_max.z) * 0.5f;
 	_obb.m_mtx[15] = 1.0f;
 }
 
 void toAabb(Aabb& _aabb, const Obb& _obb)
 {
-	float xyz[3] = { 1.0f, 1.0f, 1.0f };
+	bx::Vec3 xyz = { 1.0f, 1.0f, 1.0f };
+	bx::Vec3 tmp = bx::mul(xyz, _obb.m_mtx);
 
-	float tmp[3];
-	bx::vec3MulMtx(tmp, xyz, _obb.m_mtx);
-
-	bx::vec3Move(_aabb.m_min, tmp);
-	bx::vec3Move(_aabb.m_max, tmp);
+	_aabb.m_min = tmp;
+	_aabb.m_max = tmp;
 
 	for (uint32_t ii = 1; ii < 8; ++ii)
 	{
-		xyz[0] = ii & 1 ? -1.0f : 1.0f;
-		xyz[1] = ii & 2 ? -1.0f : 1.0f;
-		xyz[2] = ii & 4 ? -1.0f : 1.0f;
-		bx::vec3MulMtx(tmp, xyz, _obb.m_mtx);
+		xyz.x = ii & 1 ? -1.0f : 1.0f;
+		xyz.y = ii & 2 ? -1.0f : 1.0f;
+		xyz.z = ii & 4 ? -1.0f : 1.0f;
+		tmp = bx::mul(xyz, _obb.m_mtx);
 
-		bx::vec3Min(_aabb.m_min, _aabb.m_min, tmp);
-		bx::vec3Max(_aabb.m_max, _aabb.m_max, tmp);
+		_aabb.m_min = bx::min(_aabb.m_min, tmp);
+		_aabb.m_max = bx::max(_aabb.m_max, tmp);
 	}
 }
 
 void toAabb(Aabb& _aabb, const Sphere& _sphere)
 {
-	float radius = _sphere.m_radius;
-	bx::vec3Sub(_aabb.m_min, _sphere.m_center, radius);
-	bx::vec3Add(_aabb.m_max, _sphere.m_center, radius);
+	const float radius = _sphere.m_radius;
+	_aabb.m_min = bx::sub(_sphere.m_center, radius);
+	_aabb.m_max = bx::add(_sphere.m_center, radius);
 }
 
 void toAabb(Aabb& _aabb, const Disk& _disk)
 {
-	// Reference: http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
-	float nsq[3];
-	bx::vec3Mul(nsq, _disk.m_normal, _disk.m_normal);
+	// Reference:
+	// https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	const bx::Vec3 nsq = bx::mul(_disk.m_normal, _disk.m_normal);
+	const bx::Vec3 one = { 1.0f, 1.0f, 1.0f };
+	const bx::Vec3 tmp = bx::sub(one, nsq);
+	const float inv = 1.0f / (tmp.x*tmp.y*tmp.z);
 
-	float one[3] = { 1.0f, 1.0f, 1.0f };
-	float tmp[3];
-	bx::vec3Sub(tmp, one, nsq);
+	const bx::Vec3 extent =
+	{
+		_disk.m_radius * tmp.x * bx::sqrt((nsq.x + nsq.y * nsq.z) * inv),
+		_disk.m_radius * tmp.y * bx::sqrt((nsq.y + nsq.z * nsq.x) * inv),
+		_disk.m_radius * tmp.z * bx::sqrt((nsq.z + nsq.x * nsq.y) * inv),
+	};
 
-	const float inv = 1.0f / (tmp[0]*tmp[1]*tmp[2]);
-
-	float extent[3];
-	extent[0] = _disk.m_radius * tmp[0] * bx::sqrt( (nsq[0] + nsq[1] * nsq[2]) * inv);
-	extent[1] = _disk.m_radius * tmp[1] * bx::sqrt( (nsq[1] + nsq[2] * nsq[0]) * inv);
-	extent[2] = _disk.m_radius * tmp[2] * bx::sqrt( (nsq[2] + nsq[0] * nsq[1]) * inv);
-
-	bx::vec3Sub(_aabb.m_min, _disk.m_center, extent);
-	bx::vec3Add(_aabb.m_max, _disk.m_center, extent);
+	_aabb.m_min = bx::sub(_disk.m_center, extent);
+	_aabb.m_max = bx::add(_disk.m_center, extent);
 }
 
 void toAabb(Aabb& _aabb, const Cylinder& _cylinder)
 {
-	// Reference: http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
-	float axis[3];
-	bx::vec3Sub(axis, _cylinder.m_end, _cylinder.m_pos);
+	// Reference:
+	// https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	const bx::Vec3 axis = bx::sub(_cylinder.m_end, _cylinder.m_pos);
+	const bx::Vec3 asq  = bx::mul(axis, axis);
+	const bx::Vec3 nsq  = bx::mul(asq, 1.0f/bx::dot(axis, axis) );
+	const bx::Vec3 one  = { 1.0f, 1.0f, 1.0f };
+	const bx::Vec3 tmp  = bx::sub(one, nsq);
 
-	float asq[3];
-	bx::vec3Mul(asq, axis, axis);
+	const float inv = 1.0f / (tmp.x*tmp.y*tmp.z);
 
-	float nsq[3];
-	bx::vec3Mul(nsq, asq, 1.0f/bx::vec3Dot(axis, axis) );
+	const bx::Vec3 extent =
+	{
+		_cylinder.m_radius * tmp.x * bx::sqrt( (nsq.x + nsq.y * nsq.z) * inv),
+		_cylinder.m_radius * tmp.y * bx::sqrt( (nsq.y + nsq.z * nsq.x) * inv),
+		_cylinder.m_radius * tmp.z * bx::sqrt( (nsq.z + nsq.x * nsq.y) * inv),
+	};
 
-	float one[3] = { 1.0f, 1.0f, 1.0f };
-	float tmp[3];
-	bx::vec3Sub(tmp, one, nsq);
+	const bx::Vec3 minP = bx::sub(_cylinder.m_pos, extent);
+	const bx::Vec3 minE = bx::sub(_cylinder.m_end, extent);
+	const bx::Vec3 maxP = bx::add(_cylinder.m_pos, extent);
+	const bx::Vec3 maxE = bx::add(_cylinder.m_end, extent);
 
-	const float inv = 1.0f / (tmp[0]*tmp[1]*tmp[2]);
-
-	float extent[3];
-	extent[0] = _cylinder.m_radius * tmp[0] * bx::sqrt( (nsq[0] + nsq[1] * nsq[2]) * inv);
-	extent[1] = _cylinder.m_radius * tmp[1] * bx::sqrt( (nsq[1] + nsq[2] * nsq[0]) * inv);
-	extent[2] = _cylinder.m_radius * tmp[2] * bx::sqrt( (nsq[2] + nsq[0] * nsq[1]) * inv);
-
-	float minP[3];
-	bx::vec3Sub(minP, _cylinder.m_pos, extent);
-
-	float minE[3];
-	bx::vec3Sub(minE, _cylinder.m_end, extent);
-
-	float maxP[3];
-	bx::vec3Add(maxP, _cylinder.m_pos, extent);
-
-	float maxE[3];
-	bx::vec3Add(maxE, _cylinder.m_end, extent);
-
-	bx::vec3Min(_aabb.m_min, minP, minE);
-	bx::vec3Max(_aabb.m_max, maxP, maxE);
+	_aabb.m_min = bx::min(minP, minE);
+	_aabb.m_max = bx::max(maxP, maxE);
 }
 
 void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
@@ -118,12 +104,12 @@ void aabbTransformToObb(Obb& _obb, const Aabb& _aabb, const float* _mtx)
 
 void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	float min[3], max[3];
+	bx::Vec3 min, max;
 	uint8_t* vertex = (uint8_t*)_vertices;
 	float* position = (float*)vertex;
-	min[0] = max[0] = position[0];
-	min[1] = max[1] = position[1];
-	min[2] = max[2] = position[2];
+	min.x = max.x = position[0];
+	min.y = max.y = position[1];
+	min.z = max.z = position[2];
 	vertex += _stride;
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
@@ -131,35 +117,30 @@ void toAabb(Aabb& _aabb, const void* _vertices, uint32_t _numVertices, uint32_t 
 		position = (float*)vertex;
 		vertex += _stride;
 
-		float xx = position[0];
-		float yy = position[1];
-		float zz = position[2];
-		min[0] = bx::min(xx, min[0]);
-		min[1] = bx::min(yy, min[1]);
-		min[2] = bx::min(zz, min[2]);
-		max[0] = bx::max(xx, max[0]);
-		max[1] = bx::max(yy, max[1]);
-		max[2] = bx::max(zz, max[2]);
+		bx::Vec3 pos =
+		{
+			position[0],
+			position[1],
+			position[2],
+		};
+		min = bx::min(pos, min);
+		max = bx::max(pos, max);
 	}
 
-	_aabb.m_min[0] = min[0];
-	_aabb.m_min[1] = min[1];
-	_aabb.m_min[2] = min[2];
-	_aabb.m_max[0] = max[0];
-	_aabb.m_max[1] = max[1];
-	_aabb.m_max[2] = max[2];
+	_aabb.m_min = min;
+	_aabb.m_max = max;
 }
 
 void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _numVertices, uint32_t _stride)
 {
-	float min[3], max[3];
+	bx::Vec3 min, max;
 	uint8_t* vertex = (uint8_t*)_vertices;
 
 	float position[3];
 	bx::vec3MulMtx(position, (float*)vertex, _mtx);
-	min[0] = max[0] = position[0];
-	min[1] = max[1] = position[1];
-	min[2] = max[2] = position[2];
+	min.x = max.x = position[0];
+	min.y = max.y = position[1];
+	min.z = max.z = position[2];
 	vertex += _stride;
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
@@ -167,57 +148,53 @@ void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _num
 		bx::vec3MulMtx(position, (float*)vertex, _mtx);
 		vertex += _stride;
 
-		float xx = position[0];
-		float yy = position[1];
-		float zz = position[2];
-		min[0] = bx::min(xx, min[0]);
-		min[1] = bx::min(yy, min[1]);
-		min[2] = bx::min(zz, min[2]);
-		max[0] = bx::max(xx, max[0]);
-		max[1] = bx::max(yy, max[1]);
-		max[2] = bx::max(zz, max[2]);
+		bx::Vec3 pos =
+		{
+			position[0],
+			position[1],
+			position[2],
+		};
+		min = bx::min(pos, min);
+		max = bx::max(pos, max);
 	}
 
-	_aabb.m_min[0] = min[0];
-	_aabb.m_min[1] = min[1];
-	_aabb.m_min[2] = min[2];
-	_aabb.m_max[0] = max[0];
-	_aabb.m_max[1] = max[1];
-	_aabb.m_max[2] = max[2];
+	_aabb.m_min = min;
+	_aabb.m_max = max;
 }
 
 float calcAreaAabb(const Aabb& _aabb)
 {
-	float ww = _aabb.m_max[0] - _aabb.m_min[0];
-	float hh = _aabb.m_max[1] - _aabb.m_min[1];
-	float dd = _aabb.m_max[2] - _aabb.m_min[2];
+	const float ww = _aabb.m_max.x - _aabb.m_min.x;
+	const float hh = _aabb.m_max.y - _aabb.m_min.y;
+	const float dd = _aabb.m_max.z - _aabb.m_min.z;
 	return 2.0f * (ww*hh + ww*dd + hh*dd);
 }
 
 void aabbExpand(Aabb& _aabb, float _factor)
 {
-	_aabb.m_min[0] -= _factor;
-	_aabb.m_min[1] -= _factor;
-	_aabb.m_min[2] -= _factor;
-	_aabb.m_max[0] += _factor;
-	_aabb.m_max[1] += _factor;
-	_aabb.m_max[2] += _factor;
+	_aabb.m_min.x -= _factor;
+	_aabb.m_min.y -= _factor;
+	_aabb.m_min.z -= _factor;
+	_aabb.m_max.x += _factor;
+	_aabb.m_max.y += _factor;
+	_aabb.m_max.z += _factor;
 }
 
 void aabbExpand(Aabb& _aabb, const float* _pos)
 {
-	bx::vec3Min(_aabb.m_min, _aabb.m_min, _pos);
-	bx::vec3Max(_aabb.m_max, _aabb.m_max, _pos);
+	const bx::Vec3 pos = { _pos[0], _pos[1], _pos[2] };
+	_aabb.m_min = bx::min(_aabb.m_min, pos);
+	_aabb.m_max = bx::max(_aabb.m_max, pos);
 }
 
 uint32_t aabbOverlapTest(const Aabb& _aabb0, const Aabb& _aabb1)
 {
-	const uint32_t ltMinX = _aabb0.m_max[0] < _aabb1.m_min[0];
-	const uint32_t gtMaxX = _aabb0.m_min[0] > _aabb1.m_max[0];
-	const uint32_t ltMinY = _aabb0.m_max[1] < _aabb1.m_min[1];
-	const uint32_t gtMaxY = _aabb0.m_min[1] > _aabb1.m_max[1];
-	const uint32_t ltMinZ = _aabb0.m_max[2] < _aabb1.m_min[2];
-	const uint32_t gtMaxZ = _aabb0.m_min[2] > _aabb1.m_max[2];
+	const uint32_t ltMinX = _aabb0.m_max.x < _aabb1.m_min.x;
+	const uint32_t gtMaxX = _aabb0.m_min.x > _aabb1.m_max.x;
+	const uint32_t ltMinY = _aabb0.m_max.y < _aabb1.m_min.y;
+	const uint32_t gtMaxY = _aabb0.m_min.y > _aabb1.m_max.y;
+	const uint32_t ltMinZ = _aabb0.m_max.z < _aabb1.m_min.z;
+	const uint32_t gtMaxZ = _aabb0.m_min.z > _aabb1.m_max.z;
 
 	return 0
 		| (ltMinX<<0)
@@ -282,10 +259,12 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	Aabb aabb;
 	toAabb(aabb, _vertices, _numVertices, _stride);
 
-	float center[3];
-	center[0] = (aabb.m_min[0] + aabb.m_max[0]) * 0.5f;
-	center[1] = (aabb.m_min[1] + aabb.m_max[1]) * 0.5f;
-	center[2] = (aabb.m_min[2] + aabb.m_max[2]) * 0.5f;
+	bx::Vec3 center =
+	{
+		(aabb.m_min.x + aabb.m_max.x) * 0.5f,
+		(aabb.m_min.y + aabb.m_max.y) * 0.5f,
+		(aabb.m_min.z + aabb.m_max.z) * 0.5f,
+	};
 
 	float maxDistSq = 0.0f;
 	uint8_t* vertex = (uint8_t*)_vertices;
@@ -295,15 +274,14 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 		float* position = (float*)vertex;
 		vertex += _stride;
 
-		float xx = position[0] - center[0];
-		float yy = position[1] - center[1];
-		float zz = position[2] - center[2];
-
-		float distSq = xx*xx + yy*yy + zz*zz;
+		const float xx = position[0] - center.x;
+		const float yy = position[1] - center.y;
+		const float zz = position[2] - center.z;
+		const float distSq = xx*xx + yy*yy + zz*zz;
 		maxDistSq = bx::max(distSq, maxDistSq);
 	}
 
-	bx::vec3Move(_sphere.m_center, center);
+	_sphere.m_center = center;
 	_sphere.m_radius = bx::sqrt(maxDistSq);
 }
 
@@ -313,22 +291,24 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 
 	uint8_t* vertex = (uint8_t*)_vertices;
 
-	float center[3];
+	bx::Vec3 center;
 	float* position = (float*)&vertex[0];
-	bx::vec3Move(center, position);
+	center.x = position[0];
+	center.y = position[1];
+	center.z = position[2];
 
 	position = (float*)&vertex[1*_stride];
-	center[0] += position[0];
-	center[1] += position[1];
-	center[2] += position[2];
+	center.x += position[0];
+	center.y += position[1];
+	center.z += position[2];
 
-	center[0] *= 0.5f;
-	center[1] *= 0.5f;
-	center[2] *= 0.5f;
+	center.x *= 0.5f;
+	center.y *= 0.5f;
+	center.z *= 0.5f;
 
-	float xx = position[0] - center[0];
-	float yy = position[1] - center[1];
-	float zz = position[2] - center[2];
+	float xx = position[0] - center.x;
+	float yy = position[1] - center.y;
+	float zz = position[2] - center.z;
 	float maxDistSq = xx*xx + yy*yy + zz*zz;
 
 	float radiusStep = _step * 0.37f;
@@ -341,18 +321,18 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 		{
 			position = (float*)&vertex[index*_stride];
 
-			xx = position[0] - center[0];
-			yy = position[1] - center[1];
-			zz = position[2] - center[2];
+			xx = position[0] - center.x;
+			yy = position[1] - center.y;
+			zz = position[2] - center.z;
 			float distSq = xx*xx + yy*yy + zz*zz;
 
 			if (distSq > maxDistSq)
 			{
 				done = false;
 
-				center[0] += xx * radiusStep;
-				center[1] += yy * radiusStep;
-				center[2] += zz * radiusStep;
+				center.x += xx * radiusStep;
+				center.y += yy * radiusStep;
+				center.z += zz * radiusStep;
 				maxDistSq = bx::lerp(maxDistSq, distSq, _step);
 
 				break;
@@ -361,13 +341,13 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 
 	} while (!done);
 
-	bx::vec3Move(_sphere.m_center, center);
+	_sphere.m_center = center;
 	_sphere.m_radius = bx::sqrt(maxDistSq);
 }
 
-void calcPlaneUv(const Plane& _plane, float* _udir, float* _vdir)
+void calcPlaneUv(const Plane& _plane, bx::Vec3& _udir, bx::Vec3& _vdir)
 {
-	bx::vec3TangentFrame(_plane.m_normal, _udir, _vdir);
+	bx::calcTangentFrame(_udir, _vdir, _plane.m_normal);
 }
 
 void buildFrustumPlanes(Plane* _result, const float* _viewProj)
@@ -389,131 +369,108 @@ void buildFrustumPlanes(Plane* _result, const float* _viewProj)
 	Plane& top    = _result[4];
 	Plane& bottom = _result[5];
 
-	near.m_normal[0] = xw - xz;
-	near.m_normal[1] = yw - yz;
-	near.m_normal[2] = zw - zz;
-	near.m_dist      = ww - wz;
+	near.m_normal.x = xw - xz;
+	near.m_normal.y = yw - yz;
+	near.m_normal.z = zw - zz;
+	near.m_dist     = ww - wz;
 
-	far.m_normal[0] = xw + xz;
-	far.m_normal[1] = yw + yz;
-	far.m_normal[2] = zw + zz;
-	far.m_dist      = ww + wz;
+	far.m_normal.x = xw + xz;
+	far.m_normal.y = yw + yz;
+	far.m_normal.z = zw + zz;
+	far.m_dist     = ww + wz;
 
 	const float xx = _viewProj[ 0];
 	const float yx = _viewProj[ 4];
 	const float zx = _viewProj[ 8];
 	const float wx = _viewProj[12];
 
-	left.m_normal[0] = xw - xx;
-	left.m_normal[1] = yw - yx;
-	left.m_normal[2] = zw - zx;
-	left.m_dist      = ww - wx;
+	left.m_normal.x = xw - xx;
+	left.m_normal.y = yw - yx;
+	left.m_normal.z = zw - zx;
+	left.m_dist     = ww - wx;
 
-	right.m_normal[0] = xw + xx;
-	right.m_normal[1] = yw + yx;
-	right.m_normal[2] = zw + zx;
-	right.m_dist      = ww + wx;
+	right.m_normal.x = xw + xx;
+	right.m_normal.y = yw + yx;
+	right.m_normal.z = zw + zx;
+	right.m_dist     = ww + wx;
 
 	const float xy = _viewProj[ 1];
 	const float yy = _viewProj[ 5];
 	const float zy = _viewProj[ 9];
 	const float wy = _viewProj[13];
 
-	top.m_normal[0] = xw + xy;
-	top.m_normal[1] = yw + yy;
-	top.m_normal[2] = zw + zy;
-	top.m_dist      = ww + wy;
+	top.m_normal.x = xw + xy;
+	top.m_normal.y = yw + yy;
+	top.m_normal.z = zw + zy;
+	top.m_dist     = ww + wy;
 
-	bottom.m_normal[0] = xw - xy;
-	bottom.m_normal[1] = yw - yy;
-	bottom.m_normal[2] = zw - zy;
+	bottom.m_normal.x = xw - xy;
+	bottom.m_normal.y = yw - yy;
+	bottom.m_normal.z = zw - zy;
 	bottom.m_dist      = ww - wy;
 
 	Plane* plane = _result;
 	for (uint32_t ii = 0; ii < 6; ++ii)
 	{
-		float invLen = 1.0f / bx::vec3Norm(plane->m_normal, plane->m_normal);
+		const float len = bx::length(plane->m_normal);
+		plane->m_normal = bx::normalize(plane->m_normal);
+		float invLen = 1.0f / len;
 		plane->m_dist *= invLen;
 		++plane;
 	}
 }
 
-void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const Plane& _pc)
+bx::Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc)
 {
-	float axb[3];
-	bx::vec3Cross(axb, _pa.m_normal, _pb.m_normal);
+	const bx::Vec3 axb  = bx::cross(_pa.m_normal, _pb.m_normal);
+	const bx::Vec3 bxc  = bx::cross(_pb.m_normal, _pc.m_normal);
+	const bx::Vec3 cxa  = bx::cross(_pc.m_normal, _pa.m_normal);
+	const bx::Vec3 tmp0 = bx::mul(bxc, _pa.m_dist);
+	const bx::Vec3 tmp1 = bx::mul(cxa, _pb.m_dist);
+	const bx::Vec3 tmp2 = bx::mul(axb, _pc.m_dist);
+	const bx::Vec3 tmp3 = bx::add(tmp0, tmp1);
+	const bx::Vec3 tmp4 = bx::add(tmp3, tmp2);
 
-	float bxc[3];
-	bx::vec3Cross(bxc, _pb.m_normal, _pc.m_normal);
+	const float denom = bx::dot(_pa.m_normal, bxc);
+	const bx::Vec3 result = bx::mul(tmp4, -1.0f/denom);
 
-	float cxa[3];
-	bx::vec3Cross(cxa, _pc.m_normal, _pa.m_normal);
-
-	float tmp0[3];
-	bx::vec3Mul(tmp0, bxc, _pa.m_dist);
-
-	float tmp1[3];
-	bx::vec3Mul(tmp1, cxa, _pb.m_dist);
-
-	float tmp2[3];
-	bx::vec3Mul(tmp2, axb, _pc.m_dist);
-
-	float tmp[3];
-	bx::vec3Add(tmp, tmp0, tmp1);
-	bx::vec3Add(tmp0, tmp, tmp2);
-
-	float denom = bx::vec3Dot(_pa.m_normal, bxc);
-	bx::vec3Mul(_result, tmp0, -1.0f/denom);
+	return result;
 }
 
 Ray makeRay(float _x, float _y, const float* _invVp)
 {
 	Ray ray;
 
-	const float near[3] = { _x, _y, 0.0f };
-	bx::vec3MulMtxH(ray.m_pos, near, _invVp);
+	const bx::Vec3 near = { _x, _y, 0.0f };
+	ray.m_pos = bx::mulH(near, _invVp);
 
-	float tmp[3];
-	const float far[3]  = { _x, _y, 1.0f };
-	bx::vec3MulMtxH(tmp, far, _invVp);
+	const bx::Vec3 far = { _x, _y, 1.0f };
+	bx::Vec3 tmp = bx::mulH(far, _invVp);
 
-	float dir[3];
-	bx::vec3Sub(dir, tmp, ray.m_pos);
-	bx::vec3Norm(ray.m_dir, dir);
+	const bx::Vec3 dir = bx::sub(tmp, ray.m_pos);
+	ray.m_dir = bx::normalize(dir);
 
 	return ray;
 }
 
-inline void getPointAt(float* _result, const Ray& _ray, float _t)
+inline bx::Vec3 getPointAt(const Ray& _ray, float _t)
 {
-	float tmp[3];
-	bx::vec3Mul(tmp, _ray.m_dir, _t);
-	bx::vec3Add(_result, _ray.m_pos, tmp);
+	return bx::add(bx::mul(_ray.m_dir, _t), _ray.m_pos);
 }
 
 bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 {
-	float invDir[3];
-	bx::vec3Rcp(invDir, _ray.m_dir);
+	const bx::Vec3 invDir = bx::rcp(_ray.m_dir);
+	const bx::Vec3 tmp0   = bx::sub(_aabb.m_min, _ray.m_pos);
+	const bx::Vec3 t0     = bx::mul(tmp0, invDir);
+	const bx::Vec3 tmp1   = bx::sub(_aabb.m_max, _ray.m_pos);
+	const bx::Vec3 t1     = bx::mul(tmp1, invDir);
 
-	float tmp[3];
+	const bx::Vec3 min = bx::min(t0, t1);
+	const bx::Vec3 max = bx::max(t0, t1);
 
-	float t0[3];
-	bx::vec3Sub(tmp, _aabb.m_min, _ray.m_pos);
-	bx::vec3Mul(t0, tmp, invDir);
-
-	float t1[3];
-	bx::vec3Sub(tmp, _aabb.m_max, _ray.m_pos);
-	bx::vec3Mul(t1, tmp, invDir);
-
-	float min[3];
-	bx::vec3Min(min, t0, t1);
-
-	float max[3];
-	bx::vec3Max(max, t0, t1);
-
-	const float tmin = bx::max(min[0], min[1], min[2]);
-	const float tmax = bx::min(max[0], max[1], max[2]);
+	const float tmin = bx::max(min.x, min.y, min.z);
+	const float tmax = bx::min(max.x, max.y, max.z);
 
 	if (tmax < 0.0f
 	||  tmin > tmax)
@@ -523,12 +480,12 @@ bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		_hit->m_normal[0] = float( (t1[0] == tmin) - (t0[0] == tmin) );
-		_hit->m_normal[1] = float( (t1[1] == tmin) - (t0[1] == tmin) );
-		_hit->m_normal[2] = float( (t1[2] == tmin) - (t0[2] == tmin) );
+		_hit->m_normal.x = float( (t1.x == tmin) - (t0.x == tmin) );
+		_hit->m_normal.y = float( (t1.y == tmin) - (t0.y == tmin) );
+		_hit->m_normal.z = float( (t1.z == tmin) - (t0.z == tmin) );
 
 		_hit->m_dist = tmin;
-		getPointAt(_hit->m_pos, _ray, tmin);
+		_hit->m_pos  = getPointAt(_ray, tmin);
 	}
 
 	return true;
@@ -554,19 +511,17 @@ bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 	bx::mtxInverse(mtxInv, _obb.m_mtx);
 
 	Ray obbRay;
-	bx::vec3MulMtx(obbRay.m_pos, _ray.m_pos, mtxInv);
-	bx::vec3MulMtxXyz0(obbRay.m_dir, _ray.m_dir, mtxInv);
+	obbRay.m_pos = bx::mul(_ray.m_pos, mtxInv);
+	obbRay.m_dir = bx::mulXyz0(_ray.m_dir, mtxInv);
 
 	if (intersect(obbRay, s_kUnitAabb, _hit) )
 	{
 		if (NULL != _hit)
 		{
-			float tmp[3];
-			bx::vec3MulMtx(tmp, _hit->m_pos, _obb.m_mtx);
-			bx::vec3Move(_hit->m_pos, tmp);
+			_hit->m_pos = bx::mul(_hit->m_pos, _obb.m_mtx);
 
-			bx::vec3MulMtxXyz0(tmp, _hit->m_normal, _obb.m_mtx);
-			bx::vec3Norm(_hit->m_normal, tmp);
+			const bx::Vec3 tmp = bx::mulXyz0(_hit->m_normal, _obb.m_mtx);
+			_hit->m_normal = bx::normalize(tmp);
 		}
 
 		return true;
@@ -578,17 +533,16 @@ bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 {
 	Plane plane;
-	bx::vec3Move(plane.m_normal, _disk.m_normal);
-	plane.m_dist = -bx::vec3Dot(_disk.m_center, _disk.m_normal);
+	plane.m_normal = _disk.m_normal;
+	plane.m_dist = -bx::dot(_disk.m_center, _disk.m_normal);
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
 
 	if (intersect(_ray, plane, _hit) )
 	{
-		float tmp[3];
-		bx::vec3Sub(tmp, _disk.m_center, _hit->m_pos);
-		return bx::vec3Dot(tmp, tmp) <= bx::square(_disk.m_radius);
+		const bx::Vec3 tmp = bx::sub(_disk.m_center, _hit->m_pos);
+		return bx::dot(tmp, tmp) <= bx::square(_disk.m_radius);
 	}
 
 	return false;
@@ -596,32 +550,26 @@ bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 
 static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Hit* _hit)
 {
-	float axis[3];
-	bx::vec3Sub(axis, _cylinder.m_end, _cylinder.m_pos);
+	bx::Vec3 axis = bx::sub(_cylinder.m_end, _cylinder.m_pos);
+	const bx::Vec3 rc   = bx::sub(_ray.m_pos, _cylinder.m_pos);
+	const bx::Vec3 dxa  = bx::cross(_ray.m_dir, axis);
 
-	float rc[3];
-	bx::vec3Sub(rc, _ray.m_pos, _cylinder.m_pos);
-
-	float normal[3];
-	bx::vec3Cross(normal, _ray.m_dir, axis);
-
-	const float len  = bx::vec3Norm(normal, normal);
-	const float dist = bx::abs(bx::vec3Dot(rc, normal) );
+	const float len = bx::length(dxa);
+	const bx::Vec3 normal = bx::normalize(dxa);
+	const float dist = bx::abs(bx::dot(rc, normal) );
 
 	if (dist > _cylinder.m_radius)
 	{
 		return false;
 	}
 
-	float vo[3];
-	bx::vec3Cross(vo, rc, axis);
-	const float t0 = -bx::vec3Dot(vo, normal) / len;
+	bx::Vec3 vo = bx::cross(rc, axis);
+	const float t0 = -bx::dot(vo, normal) / len;
 
-	bx::vec3Cross(vo, normal, axis);
-	bx::vec3Norm(vo, vo);
+	vo = bx::normalize(bx::cross(normal, axis) );
 
 	const float rsq   = bx::square(_cylinder.m_radius);
-	const float ddoto = bx::vec3Dot(_ray.m_dir, vo);
+	const float ddoto = bx::dot(_ray.m_dir, vo);
 	const float ss    = t0 - bx::abs(bx::sqrt(rsq - bx::square(dist) ) / ddoto);
 
 	if (0.0f > ss)
@@ -629,12 +577,12 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 		return false;
 	}
 
-	float point[3];
-	getPointAt(point, _ray, ss);
+	const bx::Vec3 point = getPointAt(_ray, ss);
 
-	const float axisLen = bx::vec3Norm(axis, axis);
-	const float pdota   = bx::vec3Dot(_cylinder.m_pos, axis);
-	const float height  = bx::vec3Dot(point, axis) - pdota;
+	const float axisLen = bx::length(axis);
+	axis = bx::normalize(axis);
+	const float pdota  = bx::dot(_cylinder.m_pos, axis);
+	const float height = bx::dot(point, axis) - pdota;
 
 	if (height > 0.0f
 	&&  height < axisLen)
@@ -642,14 +590,12 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 		if (NULL != _hit)
 		{
 			const float t1 = height / axisLen;
-			float pointOnAxis[3];
-			bx::vec3Lerp(pointOnAxis, _cylinder.m_pos, _cylinder.m_end, t1);
+			const bx::Vec3 pointOnAxis = bx::lerp(_cylinder.m_pos, _cylinder.m_end, t1);
 
-			bx::vec3Move(_hit->m_pos, point);
+			_hit->m_pos = point;
 
-			float tmp[3];
-			bx::vec3Sub(tmp, point, pointOnAxis);
-			bx::vec3Norm(_hit->m_normal, tmp);
+			const bx::Vec3 tmp = bx::sub(point, pointOnAxis);
+			_hit->m_normal = bx::normalize(tmp);
 
 			_hit->m_dist = ss;
 		}
@@ -659,17 +605,14 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 
 	if (_capsule)
 	{
-		const float rdota = bx::vec3Dot(_ray.m_pos, axis);
+		const float rdota = bx::dot(_ray.m_pos, axis);
 		const float pp    = rdota - pdota;
 		const float t1    = pp / axisLen;
 
-		float pointOnAxis[3];
-		bx::vec3Lerp(pointOnAxis, _cylinder.m_pos, _cylinder.m_end, t1);
+		const bx::Vec3 pointOnAxis = bx::lerp(_cylinder.m_pos, _cylinder.m_end, t1);
+		const bx::Vec3 axisToRay   = bx::sub(_ray.m_pos, pointOnAxis);
 
-		float axisToRay[3];
-		bx::vec3Sub(axisToRay, _ray.m_pos, pointOnAxis);
-
-		if (_cylinder.m_radius < bx::vec3Length(axisToRay)
+		if (_cylinder.m_radius < bx::length(axisToRay)
 		&&  0.0f > ss)
 		{
 			return false;
@@ -678,38 +621,37 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 		Sphere sphere;
 		sphere.m_radius = _cylinder.m_radius;
 
-		bx::vec3Move(sphere.m_center, 0.0f >= height
+		sphere.m_center = 0.0f >= height
 			? _cylinder.m_pos
 			: _cylinder.m_end
-			);
+			;
 
 		return intersect(_ray, sphere, _hit);
 	}
 
 	Plane plane;
-	float pos[3];
+	bx::Vec3 pos;
 
 	if (0.0f >= height)
 	{
-		bx::vec3Neg(plane.m_normal, axis);
-		bx::vec3Move(pos, _cylinder.m_pos);
+		plane.m_normal = bx::neg(axis);
+		pos = _cylinder.m_pos;
 	}
 	else
 	{
-		bx::vec3Move(plane.m_normal, axis);
-		bx::vec3Move(pos, _cylinder.m_end);
+		plane.m_normal = axis;
+		pos = _cylinder.m_end;
 	}
 
-	plane.m_dist = -bx::vec3Dot(pos, plane.m_normal);
+	plane.m_dist = -bx::dot(pos, plane.m_normal);
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
 
 	if (intersect(_ray, plane, _hit) )
 	{
-		float tmp[3];
-		bx::vec3Sub(tmp, pos, _hit->m_pos);
-		return bx::vec3Dot(tmp, tmp) <= rsq;
+		const bx::Vec3 tmp = bx::sub(pos, _hit->m_pos);
+		return bx::dot(tmp, tmp) <= rsq;
 	}
 
 	return false;
@@ -728,32 +670,30 @@ bool intersect(const Ray& _ray, const Capsule& _capsule, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 {
-	float axis[3];
-	bx::vec3Sub(axis, _cone.m_pos, _cone.m_end);
+	const bx::Vec3 axis = bx::sub(_cone.m_pos, _cone.m_end);
 
-	float normal[3];
-	const float len = bx::vec3Norm(normal, axis);
+	const float len = bx::length(axis);
+	const bx::Vec3 normal = bx::normalize(axis);
 
 	Disk disk;
-	bx::vec3Move(disk.m_center, _cone.m_pos);
-	bx::vec3Move(disk.m_normal, normal);
+	disk.m_center = _cone.m_pos;
+	disk.m_normal = normal;
 	disk.m_radius = _cone.m_radius;
 
 	Hit tmpInt;
 	Hit* out = NULL != _hit ? _hit : &tmpInt;
 	bool hit = intersect(_ray, disk, out);
 
-	float ro[3];
-	bx::vec3Sub(ro, _ray.m_pos, _cone.m_end);
+	const bx::Vec3 ro = bx::sub(_ray.m_pos, _cone.m_end);
 
 	const float hyp    = bx::sqrt(bx::square(_cone.m_radius) + bx::square(len) );
 	const float cosaSq = bx::square(len/hyp);
-	const float ndoto  = bx::vec3Dot(normal, ro);
-	const float ndotd  = bx::vec3Dot(normal, _ray.m_dir);
+	const float ndoto  = bx::dot(normal, ro);
+	const float ndotd  = bx::dot(normal, _ray.m_dir);
 
 	const float aa = bx::square(ndotd) - cosaSq;
-	const float bb = 2.0f * (ndotd*ndoto - bx::vec3Dot(_ray.m_dir, ro)*cosaSq);
-	const float cc = bx::square(ndoto) - bx::vec3Dot(ro, ro)*cosaSq;
+	const float bb = 2.0f * (ndotd*ndoto - bx::dot(_ray.m_dir, ro)*cosaSq);
+	const float cc = bx::square(ndoto) - bx::dot(ro, ro)*cosaSq;
 
 	float det = bb*bb - 4.0f*aa*cc;
 
@@ -779,13 +719,10 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 		return hit;
 	}
 
-	float hitPos[3];
-	getPointAt(hitPos, _ray, tt);
+	const bx::Vec3 hitPos = getPointAt(_ray, tt);
+	const bx::Vec3 point  = bx::sub(hitPos, _cone.m_end);
 
-	float point[3];
-	bx::vec3Sub(point, hitPos, _cone.m_end);
-
-	const float hh = bx::vec3Dot(normal, point);
+	const float hh = bx::dot(normal, point);
 
 	if (0.0f > hh
 	||  len  < hh)
@@ -799,16 +736,13 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 		||  tt < _hit->m_dist)
 		{
 			_hit->m_dist = tt;
+			_hit->m_pos  = hitPos;
 
-			bx::vec3Move(_hit->m_pos, hitPos);
+			const float scale = hh / bx::dot(point, point);
+			const bx::Vec3 pointScaled = bx::mul(point, scale);
 
-			const float scale = hh / bx::vec3Dot(point, point);
-			float pointScaled[3];
-			bx::vec3Mul(pointScaled, point, scale);
-
-			float tmp[3];
-			bx::vec3Sub(tmp, pointScaled, normal);
-			bx::vec3Norm(_hit->m_normal, tmp);
+			const bx::Vec3 tmp = bx::sub(pointScaled, normal);
+			_hit->m_normal = bx::normalize(tmp);
 		}
 	}
 
@@ -817,13 +751,13 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 {
-	float equation = bx::vec3Dot(_ray.m_pos, _plane.m_normal) + _plane.m_dist;
+	float equation = bx::dot(_ray.m_pos, _plane.m_normal) + _plane.m_dist;
 	if (0.0f > equation)
 	{
 		return false;
 	}
 
-	float ndotd = bx::vec3Dot(_ray.m_dir, _plane.m_normal);
+	float ndotd = bx::dot(_ray.m_dir, _plane.m_normal);
 	if (0.0f < ndotd)
 	{
 		return false;
@@ -831,12 +765,11 @@ bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		bx::vec3Move(_hit->m_normal, _plane.m_normal);
+		_hit->m_normal = _plane.m_normal;
 
 		float tt = -equation/ndotd;
 		_hit->m_dist = tt;
-
-		getPointAt(_hit->m_pos, _ray, tt);
+		_hit->m_pos  = getPointAt(_ray, tt);
 	}
 
 	return true;
@@ -844,17 +777,16 @@ bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 {
-	float rs[3];
-	bx::vec3Sub(rs, _ray.m_pos, _sphere.m_center);
+	const bx::Vec3 rs = bx::sub(_ray.m_pos, _sphere.m_center);
 
-	const float bb = bx::vec3Dot(rs, _ray.m_dir);
+	const float bb = bx::dot(rs, _ray.m_dir);
 	if (0.0f < bb)
 	{
 		return false;
 	}
 
-	const float aa = bx::vec3Dot(_ray.m_dir, _ray.m_dir);
-	const float cc = bx::vec3Dot(rs, rs) - bx::square(_sphere.m_radius);
+	const float aa = bx::dot(_ray.m_dir, _ray.m_dir);
+	const float cc = bx::dot(rs, rs) - bx::square(_sphere.m_radius);
 
 	const float discriminant = bb*bb - aa*cc;
 
@@ -876,13 +808,11 @@ bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 	{
 		_hit->m_dist = tt;
 
-		float point[3];
-		getPointAt(point, _ray, tt);
-		bx::vec3Move(_hit->m_pos, point);
+		const bx::Vec3 point = getPointAt(_ray, tt);
+		_hit->m_pos = point;
 
-		float tmp[3];
-		bx::vec3Sub(tmp, point, _sphere.m_center);
-		bx::vec3Norm(_hit->m_normal, tmp);
+		const bx::Vec3 tmp = bx::sub(point, _sphere.m_center);
+		_hit->m_normal = bx::normalize(tmp);
 	}
 
 	return true;
@@ -890,22 +820,12 @@ bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit)
 {
-	float edge10[3];
-	bx::vec3Sub(edge10, _triangle.m_v1, _triangle.m_v0);
-
-	float edge02[3];
-	bx::vec3Sub(edge02, _triangle.m_v0, _triangle.m_v2);
-
-	float normal[3];
-	bx::vec3Cross(normal, edge02, edge10);
-
-	float vo[3];
-	bx::vec3Sub(vo, _triangle.m_v0, _ray.m_pos);
-
-	float dxo[3];
-	bx::vec3Cross(dxo, _ray.m_dir, vo);
-
-	const float det = bx::vec3Dot(normal, _ray.m_dir);
+	const bx::Vec3 edge10 = bx::sub(_triangle.m_v1, _triangle.m_v0);
+	const bx::Vec3 edge02 = bx::sub(_triangle.m_v0, _triangle.m_v2);
+	const bx::Vec3 normal = bx::cross(edge02, edge10);
+	const bx::Vec3 vo     = bx::sub(_triangle.m_v0, _ray.m_pos);
+	const bx::Vec3 dxo    = bx::cross(_ray.m_dir, vo);
+	const float det = bx::dot(normal, _ray.m_dir);
 
 	if (det > 0.0f)
 	{
@@ -913,8 +833,8 @@ bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit)
 	}
 
 	const float invDet = 1.0f/det;
-	const float bz = bx::vec3Dot(dxo, edge02) * invDet;
-	const float by = bx::vec3Dot(dxo, edge10) * invDet;
+	const float bz = bx::dot(dxo, edge02) * invDet;
+	const float by = bx::dot(dxo, edge10) * invDet;
 	const float bx = 1.0f - by - bz;
 
 	if (bx < 0.0f || by < 0.0f || bz < 0.0f)
@@ -924,12 +844,11 @@ bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		bx::vec3Norm(_hit->m_normal, normal);
+		_hit->m_normal = bx::normalize(normal);
 
-		const float tt = bx::vec3Dot(normal, vo) * invDet;
+		const float tt = bx::dot(normal, vo) * invDet;
 		_hit->m_dist = tt;
-
-		getPointAt(_hit->m_pos, _ray, tt);
+		_hit->m_pos  = getPointAt(_ray, tt);
 	}
 
 	return true;

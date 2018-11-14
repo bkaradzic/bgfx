@@ -6,37 +6,39 @@
 #ifndef BOUNDS_H_HEADER_GUARD
 #define BOUNDS_H_HEADER_GUARD
 
+#include <bx/math.h>
+
 struct Aabb
 {
-	float m_min[3];
-	float m_max[3];
+	bx::Vec3 m_min;
+	bx::Vec3 m_max;
 };
 
 struct Cylinder
 {
-	float m_pos[3];
-	float m_end[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_end;
 	float m_radius;
 };
 
 struct Capsule
 {
-	float m_pos[3];
-	float m_end[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_end;
 	float m_radius;
 };
 
 struct Cone
 {
-	float m_pos[3];
-	float m_end[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_end;
 	float m_radius;
 };
 
 struct Disk
 {
-	float m_center[3];
-	float m_normal[3];
+	bx::Vec3 m_center;
+	bx::Vec3 m_normal;
 	float m_radius;
 };
 
@@ -47,33 +49,33 @@ struct Obb
 
 struct Plane
 {
-	float m_normal[3];
+	bx::Vec3 m_normal;
 	float m_dist;
 };
 
 struct Ray
 {
-	float m_pos[3];
-	float m_dir[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_dir;
 };
 
 struct Sphere
 {
-	float m_center[3];
+	bx::Vec3 m_center;
 	float m_radius;
 };
 
 struct Tris
 {
-	float m_v0[3];
-	float m_v1[3];
-	float m_v2[3];
+	bx::Vec3 m_v0;
+	bx::Vec3 m_v1;
+	bx::Vec3 m_v2;
 };
 
 struct Hit
 {
-	float m_pos[3];
-	float m_normal[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_normal;
 	float m_dist;
 };
 
@@ -124,7 +126,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 void buildFrustumPlanes(Plane* _planes, const float* _viewProj);
 
 /// Returns point from 3 intersecting planes.
-void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const Plane& _pc);
+bx::Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc);
 
 /// Make screen space ray from x, y coordinate and inverse view-projection matrix.
 Ray makeRay(float _x, float _y, const float* _invVp);
