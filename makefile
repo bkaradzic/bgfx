@@ -49,7 +49,6 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --xcode=ios           xcode8
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-arm     gmake
-	$(GENIE)              --with-combined-examples                   --gcc=android-mips    gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-x86     gmake
 	$(GENIE)              --with-combined-examples                   --gcc=asmjs           gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
@@ -65,14 +64,6 @@ android-arm-debug: .build/projects/gmake-android-arm ## Build - Android ARM Debu
 android-arm-release: .build/projects/gmake-android-arm ## Build - Android ARM Release
 	$(MAKE) -R -C .build/projects/gmake-android-arm config=release
 android-arm: android-arm-debug android-arm-release ## Build - Android ARM Debug and Release
-
-.build/projects/gmake-android-mips:
-	$(GENIE) --gcc=android-mips gmake
-android-mips-debug: .build/projects/gmake-android-mips ## Build - Android MIPS Debug
-	$(MAKE) -R -C .build/projects/gmake-android-mips config=debug
-android-mips-release: .build/projects/gmake-android-mips ## Build - Android MIPS Release
-	$(MAKE) -R -C .build/projects/gmake-android-mips config=release
-android-mips: android-mips-debug android-mips-release ## Build - Android MIPS Debug and Release
 
 .build/projects/gmake-android-x86:
 	$(GENIE) --gcc=android-x86 gmake
