@@ -3908,15 +3908,15 @@ BX_UNUSED(currentSamplerStateIdx);
 //										{
 //											TextureD3D12& texture = m_textures[bind.m_idx];
 //
-//											if (Access::Read != bind.m_un.m_compute.m_access)
+//											if (Access::Read != bind.m_access)
 //											{
 //												texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-//												scratchBuffer.allocUav(srvHandle[ii], texture, bind.m_un.m_compute.m_mip);
+//												scratchBuffer.allocUav(srvHandle[ii], texture, bind.m_mip);
 //											}
 //											else
 //											{
 //												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-//												scratchBuffer.allocSrv(srvHandle[ii], texture, bind.m_un.m_compute.m_mip);
+//												scratchBuffer.allocSrv(srvHandle[ii], texture, bind.m_mip);
 //												samplerFlags[ii] = texture.m_flags;
 //											}
 //										}
@@ -3930,7 +3930,7 @@ BX_UNUSED(currentSamplerStateIdx);
 //												: m_vertexBuffers[bind.m_idx]
 //												;
 //
-//											if (Access::Read != bind.m_un.m_compute.m_access)
+//											if (Access::Read != bind.m_access)
 //											{
 //												buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 //												scratchBuffer.allocUav(srvHandle[ii], buffer);
@@ -4158,8 +4158,8 @@ BX_UNUSED(currentSamplerStateIdx);
 //										TextureD3D12& texture = m_textures[bind.m_idx];
 //										texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 //										scratchBuffer.allocSrv(srvHandle[stage], texture);
-//										samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_un.m_draw.m_textureFlags)
-//											? bind.m_un.m_draw.m_textureFlags
+//										samplerFlags[stage] = (0 == (BGFX_TEXTURE_INTERNAL_DEFAULT_SAMPLER & bind.m_textureFlags)
+//											? bind.m_textureFlags
 //											: texture.m_flags
 //											) & (BGFX_TEXTURE_SAMPLER_BITS_MASK|BGFX_TEXTURE_BORDER_COLOR_MASK)
 //											;

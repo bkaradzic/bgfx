@@ -1479,24 +1479,12 @@ namespace bgfx
 			Count
 		};
 
+		uint32_t m_samplerFlags;
 		uint16_t m_idx;
 		uint8_t  m_type;
-
-		union
-		{
-			struct
-			{
-				uint32_t m_textureFlags;
-			} m_draw;
-
-			struct
-			{
-				uint8_t  m_format;
-				uint8_t  m_access;
-				uint8_t  m_mip;
-			} m_compute;
-
-		} m_un;
+		uint8_t  m_format;
+		uint8_t  m_access;
+		uint8_t  m_mip;
 	};
 
 	struct Stream
@@ -1522,7 +1510,7 @@ namespace bgfx
 				Binding& bind = m_bind[ii];
 				bind.m_idx = kInvalidHandle;
 				bind.m_type = 0;
-				bind.m_un.m_draw.m_textureFlags = 0;
+				bind.m_samplerFlags = 0;
 			}
 		};
 
@@ -2326,7 +2314,7 @@ namespace bgfx
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::Texture);
-			bind.m_un.m_draw.m_textureFlags = (_flags&BGFX_SAMPLER_INTERNAL_DEFAULT)
+			bind.m_samplerFlags = (_flags&BGFX_SAMPLER_INTERNAL_DEFAULT)
 				? BGFX_SAMPLER_INTERNAL_DEFAULT
 				: _flags
 				;
@@ -2343,9 +2331,9 @@ namespace bgfx
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::IndexBuffer);
-			bind.m_un.m_compute.m_format = 0;
-			bind.m_un.m_compute.m_access = uint8_t(_access);
-			bind.m_un.m_compute.m_mip    = 0;
+			bind.m_format = 0;
+			bind.m_access = uint8_t(_access);
+			bind.m_mip    = 0;
 		}
 
 		void setBuffer(uint8_t _stage, VertexBufferHandle _handle, Access::Enum _access)
@@ -2353,9 +2341,9 @@ namespace bgfx
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::VertexBuffer);
-			bind.m_un.m_compute.m_format = 0;
-			bind.m_un.m_compute.m_access = uint8_t(_access);
-			bind.m_un.m_compute.m_mip    = 0;
+			bind.m_format = 0;
+			bind.m_access = uint8_t(_access);
+			bind.m_mip    = 0;
 		}
 
 		void setImage(uint8_t _stage, TextureHandle _handle, uint8_t _mip, Access::Enum _access, TextureFormat::Enum _format)
@@ -2363,9 +2351,9 @@ namespace bgfx
 			Binding& bind = m_bind.m_bind[_stage];
 			bind.m_idx    = _handle.idx;
 			bind.m_type   = uint8_t(Binding::Image);
-			bind.m_un.m_compute.m_format = uint8_t(_format);
-			bind.m_un.m_compute.m_access = uint8_t(_access);
-			bind.m_un.m_compute.m_mip    = _mip;
+			bind.m_format = uint8_t(_format);
+			bind.m_access = uint8_t(_access);
+			bind.m_mip    = _mip;
 		}
 
 		void discard()

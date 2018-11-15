@@ -3951,8 +3951,8 @@ namespace bgfx { namespace mtl
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
 
-						if (current.m_idx                      != bind.m_idx
-						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
+						if (current.m_idx          != bind.m_idx
+						||  current.m_samplerFlags != bind.m_samplerFlags
 						||  programChanged)
 						{
 							if (kInvalidHandle != bind.m_idx)
@@ -3961,7 +3961,7 @@ namespace bgfx { namespace mtl
 								texture.commit(samplerInfo.m_index
 									, !samplerInfo.m_fragment
 									, samplerInfo.m_fragment
-									, bind.m_un.m_draw.m_textureFlags
+									, bind.m_samplerFlags
 									);
 							}
 						}

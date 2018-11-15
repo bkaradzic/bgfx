@@ -4514,9 +4514,7 @@ namespace bgfx { namespace d3d11
 			: uint32_t(m_flags)
 			;
 		uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
-		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags
-									, _palette[index])
-									;
+		ts.m_sampler[_stage] = s_renderD3D11->getSamplerState(flags, _palette[index]);
 	}
 
 	void TextureD3D11::resolve(uint8_t _resolve) const
@@ -5487,32 +5485,36 @@ namespace bgfx { namespace d3d11
 					}
 					BX_UNUSED(programChanged);
 					ID3D11UnorderedAccessView* uav[BGFX_MAX_COMPUTE_BINDINGS] = {};
-					ID3D11ShaderResourceView*  srv[BGFX_MAX_COMPUTE_BINDINGS] = {};
-					ID3D11SamplerState*    sampler[BGFX_MAX_COMPUTE_BINDINGS] = {};
 
-					for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
+					for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
 					{
-						const Binding& bind = renderBind.m_bind[ii];
+						const Binding& bind = renderBind.m_bind[stage];
 						if (kInvalidHandle != bind.m_idx)
 						{
 							switch (bind.m_type)
 							{
 							case Binding::Image:
-							case Binding::Texture:
 								{
 									TextureD3D11& texture = m_textures[bind.m_idx];
-									if (Access::Read != bind.m_un.m_compute.m_access)
+									if (Access::Read != bind.m_access)
 									{
-										uav[ii] = 0 == bind.m_un.m_compute.m_mip
+										uav[stage] = 0 == bind.m_mip
 											? texture.m_uav
-											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_un.m_compute.m_mip)
+											: s_renderD3D11->getCachedUav(texture.getHandle(), bind.m_mip)
 											;
 									}
 									else
 									{
-										srv[ii] = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_un.m_compute.m_mip, true);
-										sampler[ii] = s_renderD3D11->getSamplerState(uint32_t(texture.m_flags), NULL);
+										m_textureStage.m_srv[stage]     = s_renderD3D11->getCachedSrv(texture.getHandle(), bind.m_mip, true);
+										m_textureStage.m_sampler[stage] = s_renderD3D11->getSamplerState(uint32_t(texture.m_flags), NULL);
 									}
+								}
+								break;
+
+							case Binding::Texture:
+								{
+									TextureD3D11& texture = m_textures[bind.m_idx];
+									texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
 								}
 								break;
 
@@ -5523,13 +5525,13 @@ namespace bgfx { namespace d3d11
 										? m_indexBuffers[bind.m_idx]
 										: m_vertexBuffers[bind.m_idx]
 										;
-									if (Access::Read != bind.m_un.m_compute.m_access)
+									if (Access::Read != bind.m_access)
 									{
-										uav[ii] = buffer.m_uav;
+										uav[stage] = buffer.m_uav;
 									}
 									else
 									{
-										srv[ii] = buffer.m_srv;
+										m_textureStage.m_srv[stage] = buffer.m_srv;
 									}
 								}
 								break;
@@ -5544,8 +5546,8 @@ namespace bgfx { namespace d3d11
 					}
 
 					deviceCtx->CSSetUnorderedAccessViews(0, maxComputeBindings, uav, NULL);
-					deviceCtx->CSSetShaderResources(0, maxTextureSamplers, srv);
-					deviceCtx->CSSetSamplers(0, maxTextureSamplers, sampler);
+					deviceCtx->CSSetShaderResources(0, maxTextureSamplers, m_textureStage.m_srv);
+					deviceCtx->CSSetSamplers(0, maxTextureSamplers, m_textureStage.m_sampler);
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
@@ -5809,9 +5811,9 @@ namespace bgfx { namespace d3d11
 					{
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
-						if (current.m_idx != bind.m_idx
-						||  current.m_type != bind.m_type
-						||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
+						if (current.m_idx          != bind.m_idx
+						||  current.m_type         != bind.m_type
+						||  current.m_samplerFlags != bind.m_samplerFlags
 						||  programChanged)
 						{
 							if (kInvalidHandle != bind.m_idx)
@@ -5821,7 +5823,7 @@ namespace bgfx { namespace d3d11
 								case Binding::Texture:
 									{
 										TextureD3D11& texture = m_textures[bind.m_idx];
-										texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+										texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
 									}
 									break;
 

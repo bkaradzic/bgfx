@@ -6552,13 +6552,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								case Binding::Texture:
 									{
 										TextureGL& texture = m_textures[bind.m_idx];
-										texture.commit(ii, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+										texture.commit(ii, bind.m_samplerFlags, _render->m_colorPalette);
 									}
 									break;
 
 								case Binding::Image:
 									{
-										if (Access::Read == bind.m_un.m_compute.m_access)
+										if (Access::Read == bind.m_access)
 										{
 											TextureGL& texture = m_textures[bind.m_idx];
 											texture.commit(ii, uint32_t(texture.m_flags), _render->m_colorPalette);
@@ -6568,11 +6568,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 											const TextureGL& texture = m_textures[bind.m_idx];
 											GL_CHECK(glBindImageTexture(ii
 												, texture.m_id
-												, bind.m_un.m_compute.m_mip
+												, bind.m_mip
 												, texture.isCubeMap() ? GL_TRUE : GL_FALSE
 												, 0
-												, s_access[bind.m_un.m_compute.m_access]
-												, s_imageFormat[bind.m_un.m_compute.m_format])
+												, s_access[bind.m_access]
+												, s_imageFormat[bind.m_format])
 												);
 											barrier |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
 										}
@@ -7061,9 +7061,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						{
 							const Binding& bind = renderBind.m_bind[stage];
 							Binding& current = currentBind.m_bind[stage];
-							if (current.m_idx != bind.m_idx
-							||  current.m_type != bind.m_type
-							||  current.m_un.m_draw.m_textureFlags != bind.m_un.m_draw.m_textureFlags
+							if (current.m_idx          != bind.m_idx
+							||  current.m_type         != bind.m_type
+							||  current.m_samplerFlags != bind.m_samplerFlags
 							||  programChanged)
 							{
 								if (kInvalidHandle != bind.m_idx)
@@ -7073,7 +7073,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 									case Binding::Texture:
 										{
 											TextureGL& texture = m_textures[bind.m_idx];
-											texture.commit(stage, bind.m_un.m_draw.m_textureFlags, _render->m_colorPalette);
+											texture.commit(stage, bind.m_samplerFlags, _render->m_colorPalette);
 										}
 										break;
 

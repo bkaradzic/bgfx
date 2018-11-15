@@ -5877,29 +5877,41 @@ namespace bgfx { namespace d3d12
 							D3D12_GPU_DESCRIPTOR_HANDLE srvHandle[BGFX_MAX_COMPUTE_BINDINGS] = {};
 							uint32_t samplerFlags[BGFX_MAX_COMPUTE_BINDINGS] = {};
 
-							for (uint32_t ii = 0; ii < maxComputeBindings; ++ii)
+							for (uint8_t stage = 0; stage < maxComputeBindings; ++stage)
 							{
-								const Binding& bind = renderBind.m_bind[ii];
+								const Binding& bind = renderBind.m_bind[stage];
 								if (kInvalidHandle != bind.m_idx)
 								{
 									switch (bind.m_type)
 									{
 									case Binding::Image:
-									case Binding::Texture:
 										{
 											TextureD3D12& texture = m_textures[bind.m_idx];
 
-											if (Access::Read != bind.m_un.m_compute.m_access)
+											if (Access::Read != bind.m_access)
 											{
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-												scratchBuffer.allocUav(srvHandle[ii], texture, bind.m_un.m_compute.m_mip);
+												scratchBuffer.allocUav(srvHandle[stage], texture, bind.m_mip);
 											}
 											else
 											{
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[ii], texture, bind.m_un.m_compute.m_mip);
-												samplerFlags[ii] = uint32_t(texture.m_flags);
+												scratchBuffer.allocSrv(srvHandle[stage], texture, bind.m_mip);
+												samplerFlags[stage] = uint32_t(texture.m_flags);
 											}
+										}
+										break;
+
+									case Binding::Texture:
+										{
+											TextureD3D12& texture = m_textures[bind.m_idx];
+											texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
+											scratchBuffer.allocSrv(srvHandle[stage], texture);
+											samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+												? bind.m_samplerFlags
+												: texture.m_flags
+												) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK)
+												;
 										}
 										break;
 
@@ -5911,15 +5923,15 @@ namespace bgfx { namespace d3d12
 												: m_vertexBuffers[bind.m_idx]
 												;
 
-											if (Access::Read != bind.m_un.m_compute.m_access)
+											if (Access::Read != bind.m_access)
 											{
 												buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-												scratchBuffer.allocUav(srvHandle[ii], buffer);
+												scratchBuffer.allocUav(srvHandle[stage], buffer);
 											}
 											else
 											{
 												buffer.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
-												scratchBuffer.allocSrv(srvHandle[ii], buffer);
+												scratchBuffer.allocSrv(srvHandle[stage], buffer);
 											}
 										}
 										break;
@@ -5927,8 +5939,8 @@ namespace bgfx { namespace d3d12
 								}
 								else
 								{
-									samplerFlags[ii] = 0;
-									scratchBuffer.allocEmpty(srvHandle[ii]);
+									samplerFlags[stage] = 0;
+									scratchBuffer.allocEmpty(srvHandle[stage]);
 								}
 							}
 
@@ -6199,8 +6211,8 @@ namespace bgfx { namespace d3d12
 												TextureD3D12& texture = m_textures[bind.m_idx];
 												texture.setState(m_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 												scratchBuffer.allocSrv(srvHandle[stage], texture);
-												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_un.m_draw.m_textureFlags)
-													? bind.m_un.m_draw.m_textureFlags
+												samplerFlags[stage] = (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & bind.m_samplerFlags)
+													? bind.m_samplerFlags
 													: texture.m_flags
 													) & (BGFX_SAMPLER_BITS_MASK | BGFX_SAMPLER_BORDER_COLOR_MASK | BGFX_SAMPLER_COMPARE_MASK)
 													;
@@ -6219,7 +6231,7 @@ namespace bgfx { namespace d3d12
 													: m_vertexBuffers[bind.m_idx]
 													;
 
-												if (Access::Read != bind.m_un.m_compute.m_access)
+												if (Access::Read != bind.m_access)
 												{
 													buffer.setState(m_commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 													scratchBuffer.allocUav(srvHandle[stage], buffer);
