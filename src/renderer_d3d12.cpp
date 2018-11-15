@@ -4354,7 +4354,7 @@ namespace bgfx { namespace d3d12
 				, _state
 				);
 
-			bx::xchg(m_state, _state);
+			bx::swap(m_state, _state);
 		}
 
 		return _state;
@@ -4955,7 +4955,7 @@ namespace bgfx { namespace d3d12
 				, _state
 				);
 
-			bx::xchg(m_state, _state);
+			bx::swap(m_state, _state);
 		}
 
 		return _state;
@@ -5287,7 +5287,7 @@ namespace bgfx { namespace d3d12
 
 			DX_RELEASE(colorBuffer, 0);
 
-			bx::xchg(m_state, _state);
+			bx::swap(m_state, _state);
 		}
 
 		return _state;

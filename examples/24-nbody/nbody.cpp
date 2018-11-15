@@ -365,8 +365,8 @@ public:
 					bgfx::dispatch(0, m_updateInstancesProgram, uint16_t(m_paramsData.dispatchSize), 1, 1);
 				}
 
-				bx::xchg(m_currPositionBuffer0, m_currPositionBuffer1);
-				bx::xchg(m_prevPositionBuffer0, m_prevPositionBuffer1);
+				bx::swap(m_currPositionBuffer0, m_currPositionBuffer1);
+				bx::swap(m_prevPositionBuffer0, m_prevPositionBuffer1);
 
 				// Update camera.
 				cameraUpdate(deltaTime, m_mouseState);

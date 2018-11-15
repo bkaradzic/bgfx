@@ -2097,7 +2097,7 @@ namespace bgfx
 
 		m_submit->finish();
 
-		bx::xchg(m_render, m_submit);
+		bx::swap(m_render, m_submit);
 
 		bx::memCopy(m_render->m_occlusion, m_submit->m_occlusion, sizeof(m_submit->m_occlusion) );
 

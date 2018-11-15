@@ -39,7 +39,6 @@ clean: ## Clean all intermediate files.
 	@mkdir .build
 
 projgen: ## Generate project files for all configurations.
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2015
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2017
 	$(GENIE) --with-tools --with-combined-examples                   --vs=winstore100      vs2017
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
@@ -124,18 +123,6 @@ mingw-clang-debug64: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x6
 mingw-clang-release64: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x64 Release
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=release64
 mingw-clang: mingw-clang-debug32 mingw-clang-release32 mingw-clang-debug64 mingw-clang-release64 ## Build - MinGW Clang x86/x64 Debug and Release
-
-.build/projects/vs2015:
-	$(GENIE) --with-tools --with-combined-examples --with-shared-lib vs2015
-vs2015-debug32: .build/projects/vs2015 ## Build - VS2015 x86 Debug
-	devenv .build/projects/vs2015/bgfx.sln /Build "Debug|Win32"
-vs2015-release32: .build/projects/vs2015 ## Build - VS2015 x86 Release
-	devenv .build/projects/vs2015/bgfx.sln /Build "Release|Win32"
-vs2015-debug64: .build/projects/vs2015 ## Build - VS2015 x64 Debug
-	devenv .build/projects/vs2015/bgfx.sln /Build "Debug|x64"
-vs2015-release64: .build/projects/vs2015 ## Build - VS2015 x64 Release
-	devenv .build/projects/vs2015/bgfx.sln /Build "Release|x64"
-vs2015: vs2015-debug32 vs2015-release32 vs2015-debug64 vs2015-release64 ## Build - VS2015 x86/x64 Debug and Release
 
 .build/projects/vs2017:
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib vs2017

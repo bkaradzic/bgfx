@@ -78,9 +78,9 @@ namespace bgfx
 			const IndexT* tri = &_indices[ii];
 			IndexT i0 = tri[0], i1 = tri[1], i2 = tri[2];
 
-			if (i0 > i1) { bx::xchg(i0, i1); }
-			if (i1 > i2) { bx::xchg(i1, i2); }
-			if (i0 > i1) { bx::xchg(i0, i1); }
+			if (i0 > i1) { bx::swap(i0, i1); }
+			if (i1 > i2) { bx::swap(i1, i2); }
+			if (i0 > i1) { bx::swap(i0, i1); }
 			BX_CHECK(i0 < i1 && i1 < i2, "");
 
 			dst[1] = i0; dst[0] = i1;
