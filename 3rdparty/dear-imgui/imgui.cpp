@@ -2301,7 +2301,7 @@ void ImGui::RenderNavHighlight(const ImRect& bb, ImGuiID id, ImGuiNavHighlightFl
         return;
     if (g.NavDisableHighlight && !(flags & ImGuiNavHighlightFlags_AlwaysDraw))
         return;
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    ImGuiWindow* window = g.CurrentWindow;
     if (window->DC.NavHideHighlightOneFrame)
         return;
 
@@ -2970,7 +2970,7 @@ static void ImGui::UpdateMouseInputs()
 
     // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
     if (IsMousePosValid(&g.IO.MousePos))
-        g.IO.MousePos = ImFloor(g.IO.MousePos);
+        g.IO.MousePos = g.LastValidMousePos = ImFloor(g.IO.MousePos);
 
     // If mouse just appeared or disappeared (usually denoted by -FLT_MAX components) we cancel out movement in MouseDelta
     if (IsMousePosValid(&g.IO.MousePos) && IsMousePosValid(&g.IO.MousePosPrev))
@@ -3636,7 +3636,7 @@ void ImGui::Render()
     IM_ASSERT(g.Initialized);
 
     if (g.FrameCountEnded != g.FrameCount)
-        ImGui::EndFrame();
+        EndFrame();
     g.FrameCountRendered = g.FrameCount;
 
     // Gather ImDrawList to render (for each active window)
@@ -4224,11 +4224,16 @@ static void SetWindowConditionAllowFlags(ImGuiWindow* window, ImGuiCond flags, b
     window->SetWindowCollapsedAllowFlags = enabled ? (window->SetWindowCollapsedAllowFlags | flags) : (window->SetWindowCollapsedAllowFlags & ~flags);
 }
 
-ImGuiWindow* ImGui::FindWindowByName(const char* name)
+ImGuiWindow* ImGui::FindWindowByID(ImGuiID id)
 {
     ImGuiContext& g = *GImGui;
-    ImGuiID id = ImHash(name, 0);
     return (ImGuiWindow*)g.WindowsById.GetVoidPtr(id);
+}
+
+ImGuiWindow* ImGui::FindWindowByName(const char* name)
+{
+    ImGuiID id = ImHash(name, 0);
+    return FindWindowByID(id);
 }
 
 static ImGuiWindow* CreateNewWindow(const char* name, ImVec2 size, ImGuiWindowFlags flags)
@@ -5099,7 +5104,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         /*
         if (g.ActiveId == move_id)
             if (g.IO.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
-                ImGui::LogToClipboard();
+                LogToClipboard();
         */
 
         // Inner rectangle
@@ -5167,13 +5172,13 @@ bool ImGui::Begin(const char* name, bool* p_open, const ImVec2& size_first_use, 
 {
     // Old API feature: we could pass the initial window size as a parameter. This was misleading because it only had an effect if the window didn't have data in the .ini file.
     if (size_first_use.x != 0.0f || size_first_use.y != 0.0f)
-        ImGui::SetNextWindowSize(size_first_use, ImGuiCond_FirstUseEver);
+        SetNextWindowSize(size_first_use, ImGuiCond_FirstUseEver);
 
     // Old API feature: override the window background alpha with a parameter.
     if (bg_alpha_override >= 0.0f)
-        ImGui::SetNextWindowBgAlpha(bg_alpha_override);
+        SetNextWindowBgAlpha(bg_alpha_override);
 
-    return ImGui::Begin(name, p_open, flags);
+    return Begin(name, p_open, flags);
 }
 #endif // IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
@@ -6419,8 +6424,8 @@ void ImGui::OpenPopupEx(ImGuiID id)
     popup_ref.ParentWindow = parent_window;
     popup_ref.OpenFrameCount = g.FrameCount;
     popup_ref.OpenParentId = parent_window->IDStack.back();
-    popup_ref.OpenMousePos = g.IO.MousePos;
     popup_ref.OpenPopupPos = NavCalcPreferredRefPos();
+    popup_ref.OpenMousePos = IsMousePosValid(&g.IO.MousePos) ? g.IO.MousePos : popup_ref.OpenPopupPos;
 
     //printf("[%05d] OpenPopupEx(0x%08X)\n", g.FrameCount, id);
     if (g.OpenPopupStack.Size < current_stack_size + 1)
@@ -7097,13 +7102,20 @@ static ImVec2 ImGui::NavCalcPreferredRefPos()
 {
     ImGuiContext& g = *GImGui;
     if (g.NavDisableHighlight || !g.NavDisableMouseHover || !g.NavWindow)
-        return ImFloor(g.IO.MousePos);
-
-    // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item
-    const ImRect& rect_rel = g.NavWindow->NavRectRel[g.NavLayer];
-    ImVec2 pos = g.NavWindow->Pos + ImVec2(rect_rel.Min.x + ImMin(g.Style.FramePadding.x*4, rect_rel.GetWidth()), rect_rel.Max.y - ImMin(g.Style.FramePadding.y, rect_rel.GetHeight()));
-    ImRect visible_rect = GetViewportRect();
-    return ImFloor(ImClamp(pos, visible_rect.Min, visible_rect.Max));   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+    {
+        // Mouse (we need a fallback in case the mouse becomes invalid after being used)
+        if (IsMousePosValid(&g.IO.MousePos))
+            return g.IO.MousePos;
+        return g.LastValidMousePos;
+    }
+    else
+    {
+        // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
+        const ImRect& rect_rel = g.NavWindow->NavRectRel[g.NavLayer];
+        ImVec2 pos = g.NavWindow->Pos + ImVec2(rect_rel.Min.x + ImMin(g.Style.FramePadding.x * 4, rect_rel.GetWidth()), rect_rel.Max.y - ImMin(g.Style.FramePadding.y, rect_rel.GetHeight()));
+        ImRect visible_rect = GetViewportRect();
+        return ImFloor(ImClamp(pos, visible_rect.Min, visible_rect.Max));   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+    }
 }
 
 float ImGui::GetNavInputAmount(ImGuiNavInput n, ImGuiInputReadMode mode)
