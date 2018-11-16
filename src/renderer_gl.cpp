@@ -2338,12 +2338,12 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							);
 				}
 
-	//			if (s_extension[Extension::ARB_clip_control].m_supported)
-	//			{
-	//				GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
-	//				g_caps.originBottomLeft = true;
-	//			}
-	//			else
+//				if (s_extension[Extension::ARB_clip_control].m_supported)
+//				{
+//					GL_CHECK(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE) );
+//					g_caps.originBottomLeft = true;
+//				}
+//				else
 				{
 					g_caps.homogeneousDepth = true;
 					g_caps.originBottomLeft = true;
@@ -5928,11 +5928,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						}
 						else
 #endif
+						{
 							GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER
 								, attachment
 								, GL_RENDERBUFFER
 								, texture.m_rbo
 								) );
+						}
 					}
 					else
 					{
@@ -5944,7 +5946,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								, texture.m_id
 								, m_attachment[ii].mip
 								, m_attachment[ii].layer
-							) );
+								) );
 						}
 						else
 						{
@@ -5958,7 +5960,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								, target
 								, texture.m_id
 								, m_attachment[ii].mip
-							) );
+								) );
 						}
 					}
 
