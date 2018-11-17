@@ -309,6 +309,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.sampleId.frag",
         "spv.samplePosition.frag",
         "spv.sampleMaskOverrideCoverage.frag",
+        "spv.scalarlayout.frag",
+        "spv.scalarlayoutfloat16.frag",
         "spv.shaderBallot.comp",
         "spv.shaderDrawParams.vert",
         "spv.shaderGroupVote.comp",

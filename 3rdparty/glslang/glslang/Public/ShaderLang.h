@@ -70,7 +70,7 @@
 // This should always increase, as some paths to do not consume
 // a more major number.
 // It should increment by one when new functionality is added.
-#define GLSLANG_MINOR_VERSION 10
+#define GLSLANG_MINOR_VERSION 11
 
 //
 // Call before doing any other compiler/linker operations.

@@ -50,7 +50,7 @@ macro(glslang_pch SRCS PCHCPP)
     if (CMAKE_GENERATOR MATCHES "^Visual Studio")
       set(PCH_NAME "$(IntDir)\\pch.pch")
     else()
-      set(PCH_NAME "pch.pch")
+      set(PCH_NAME "${CMAKE_CURRENT_BINARY_DIR}/pch.pch")
     endif()
     # make source files use/depend on PCH_NAME
     set_source_files_properties(${${SRCS}} PROPERTIES COMPILE_FLAGS "/Yupch.h /FIpch.h /Fp${PCH_NAME} /Zm300" OBJECT_DEPENDS "${PCH_NAME}")

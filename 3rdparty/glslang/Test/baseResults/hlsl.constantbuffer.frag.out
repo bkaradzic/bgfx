@@ -132,7 +132,9 @@ gl_FragCoord origin is upper left
 0:?     '@entryPointOutput' (layout( location=0) out 4-component vector of float)
 
 error: SPIRV-Tools Validation Errors
-error: Only a single level of array is allowed for descriptor set variables
+error: Uniform OpVariable <id> '18[cb3] 'has illegal type.
+From Vulkan spec, section 14.5.2:
+Variables identified with the Uniform storage class are used to access transparent buffer backed resources. Such variables must be typed as OpTypeStruct, or an array of this type
   %cb3_0 = OpVariable %_ptr_Uniform__arr__arr_cb3_uint_4_uint_2 Uniform
 
 // Module Version 10000

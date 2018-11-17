@@ -277,6 +277,7 @@ enum TLayoutPacking {
     ElpStd140,
     ElpStd430,
     ElpPacked,
+    ElpScalar,
     ElpCount        // If expanding, see bitfield width below
 };
 
@@ -774,40 +775,40 @@ public:
     int layoutOffset;
     int layoutAlign;
 
-                 unsigned int layoutLocation            :12;
-    static const unsigned int layoutLocationEnd    =  0xFFF;
+                 unsigned int layoutLocation             : 12;
+    static const unsigned int layoutLocationEnd      =  0xFFF;
 
-                 unsigned int layoutComponent           : 3;
-    static const unsigned int layoutComponentEnd    =     4;
+                 unsigned int layoutComponent            :  3;
+    static const unsigned int layoutComponentEnd      =     4;
 
-                 unsigned int layoutSet                 : 7;
-    static const unsigned int layoutSetEnd         =   0x3F;
+                 unsigned int layoutSet                  :  7;
+    static const unsigned int layoutSetEnd           =   0x3F;
 
-                 unsigned int layoutBinding            : 16;
-    static const unsigned int layoutBindingEnd    =  0xFFFF;
+                 unsigned int layoutBinding              : 16;
+    static const unsigned int layoutBindingEnd      =  0xFFFF;
 
-                 unsigned int layoutIndex              :  8;
-    static const unsigned int layoutIndexEnd    =      0xFF;
+                 unsigned int layoutIndex                :  8;
+    static const unsigned int layoutIndexEnd      =      0xFF;
 
-                 unsigned int layoutStream              : 8;
-    static const unsigned int layoutStreamEnd    =     0xFF;
+                 unsigned int layoutStream               :  8;
+    static const unsigned int layoutStreamEnd      =     0xFF;
 
-                 unsigned int layoutXfbBuffer           : 4;
-    static const unsigned int layoutXfbBufferEnd    =   0xF;
+                 unsigned int layoutXfbBuffer            :  4;
+    static const unsigned int layoutXfbBufferEnd      =   0xF;
 
-                 unsigned int layoutXfbStride          : 10;
-    static const unsigned int layoutXfbStrideEnd    = 0x3FF;
+                 unsigned int layoutXfbStride            : 14;
+    static const unsigned int layoutXfbStrideEnd     = 0x3FFF;
 
-                 unsigned int layoutXfbOffset          : 10;
-    static const unsigned int layoutXfbOffsetEnd    = 0x3FF;
+                 unsigned int layoutXfbOffset            : 13;
+    static const unsigned int layoutXfbOffsetEnd     = 0x1FFF;
 
-                 unsigned int layoutAttachment          : 8;  // for input_attachment_index
-    static const unsigned int layoutAttachmentEnd    = 0XFF;
+                 unsigned int layoutAttachment           :  8;  // for input_attachment_index
+    static const unsigned int layoutAttachmentEnd      = 0XFF;
 
                  unsigned int layoutSpecConstantId       : 11;
     static const unsigned int layoutSpecConstantIdEnd = 0x7FF;
 
-    TLayoutFormat layoutFormat                         :  8;
+    TLayoutFormat layoutFormat                           :  8;
 
     bool layoutPushConstant;
 
@@ -951,6 +952,7 @@ public:
         case ElpShared:   return "shared";
         case ElpStd140:   return "std140";
         case ElpStd430:   return "std430";
+        case ElpScalar:   return "scalar";
         default:          return "none";
         }
     }
