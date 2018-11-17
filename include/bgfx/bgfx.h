@@ -866,6 +866,9 @@ namespace bgfx
 	///
 	struct Attachment
 	{
+		void init(TextureHandle _handle, Access::Enum _access = Access::Write, uint16_t _layer = 0, uint16_t _mip = 0, uint8_t _resolve = BGFX_RESOLVE_AUTO_GEN_MIPS);
+
+		Access::Enum  access; //!<
 		TextureHandle handle; //!< Texture handle.
 		uint16_t mip;         //!< Mip level.
 		uint16_t layer;       //!< Cubemap side or depth layer/slice.

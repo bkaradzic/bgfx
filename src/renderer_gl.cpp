@@ -5875,15 +5875,16 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			uint32_t colorIdx = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_attachment[ii].handle;
-				if (isValid(handle) )
+				const Attachment& at = m_attachment[ii];
+
+				if (isValid(at.handle) )
 				{
-					const TextureGL& texture = s_renderGL->m_textures[handle.idx];
+					const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
 					if (0 == colorIdx)
 					{
-						m_width  = bx::uint32_max(texture.m_width  >> m_attachment[ii].mip, 1);
-						m_height = bx::uint32_max(texture.m_height >> m_attachment[ii].mip, 1);
+						m_width  = bx::uint32_max(texture.m_width  >> at.mip, 1);
+						m_height = bx::uint32_max(texture.m_height >> at.mip, 1);
 					}
 
 					GLenum attachment = GL_COLOR_ATTACHMENT0 + colorIdx;
@@ -5936,7 +5937,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								) );
 						}
 					}
-					else
+					else if (Access::Write == at.access)
 					{
 						if (1 < texture.m_depth
 						&&  !texture.isCubeMap())
@@ -5944,14 +5945,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER
 								, attachment
 								, texture.m_id
-								, m_attachment[ii].mip
-								, m_attachment[ii].layer
+								, at.mip
+								, at.layer
 								) );
 						}
 						else
 						{
 							GLenum target = texture.isCubeMap()
-								? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_attachment[ii].layer
+								? GL_TEXTURE_CUBE_MAP_POSITIVE_X + at.layer
 								: texture.m_target
 								;
 
@@ -5959,9 +5960,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								, attachment
 								, target
 								, texture.m_id
-								, m_attachment[ii].mip
+								, at.mip
 								) );
 						}
+					}
+					else
+					{
+						BX_CHECK(false, "");
 					}
 
 					needResolve |= (0 != texture.m_rbo) && (0 != texture.m_id);
@@ -6000,10 +6005,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				colorIdx = 0;
 				for (uint32_t ii = 0; ii < m_numTh; ++ii)
 				{
-					TextureHandle handle = m_attachment[ii].handle;
-					if (isValid(handle) )
+					const Attachment& at = m_attachment[ii];
+
+					if (isValid(at.handle) )
 					{
-						const TextureGL& texture = s_renderGL->m_textures[handle.idx];
+						const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
 						if (0 != texture.m_id)
 						{
@@ -6013,7 +6019,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								++colorIdx;
 
 								GLenum target = texture.isCubeMap()
-									? GL_TEXTURE_CUBE_MAP_POSITIVE_X + m_attachment[ii].layer
+									? GL_TEXTURE_CUBE_MAP_POSITIVE_X + at.layer
 									: texture.m_target
 									;
 
@@ -6021,7 +6027,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 									, attachment
 									, target
 									, texture.m_id
-									, m_attachment[ii].mip
+									, at.mip
 									) );
 							}
 						}
@@ -6076,10 +6082,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			uint32_t colorIdx = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_attachment[ii].handle;
-				if (isValid(handle) )
+				const Attachment& at = m_attachment[ii];
+
+				if (isValid(at.handle) )
 				{
-					const TextureGL& texture = s_renderGL->m_textures[handle.idx];
+					const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
 					bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(texture.m_textureFormat);
 					if (!bimg::isDepth(format) )
@@ -6112,6 +6119,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		for (uint32_t ii = 0; ii < m_numTh; ++ii)
 		{
 			const Attachment& at = m_attachment[ii];
+
 			if (isValid(at.handle) )
 			{
 				const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];

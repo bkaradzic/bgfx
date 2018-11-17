@@ -5070,10 +5070,11 @@ namespace bgfx { namespace d3d12
 			m_num = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_attachment[ii].handle;
-				if (isValid(handle) )
+				const Attachment& at = m_attachment[ii];
+
+				if (isValid(at.handle) )
 				{
-					const TextureD3D12& texture = s_renderD3D12->m_textures[handle.idx];
+					const TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];
 
 					if (0 == m_width)
 					{
@@ -5085,7 +5086,7 @@ namespace bgfx { namespace d3d12
 					if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 					{
 						BX_CHECK(!isValid(m_depth), "");
-						m_depth = handle;
+						m_depth = at.handle;
 						D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = getCPUHandleHeapStart(s_renderD3D12->m_dsvDescriptorHeap);
 						uint32_t dsvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 						dsvDescriptor.ptr += (1 + fbhIdx) * dsvDescriptorSize;
@@ -5116,9 +5117,9 @@ namespace bgfx { namespace d3d12
 							, NULL
 							);
 					}
-					else
+					else if (Access::Write == at.access)
 					{
-						m_texture[m_num] = handle;
+						m_texture[m_num] = at.handle;
 						D3D12_CPU_DESCRIPTOR_HANDLE rtv = { rtvDescriptor.ptr + m_num * rtvDescriptorSize };
 
 						D3D12_RENDER_TARGET_VIEW_DESC desc;
@@ -5135,7 +5136,7 @@ namespace bgfx { namespace d3d12
 //							else
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-								desc.Texture2D.MipSlice   = m_attachment[ii].mip;
+								desc.Texture2D.MipSlice   = at.mip;
 								desc.Texture2D.PlaneSlice = 0;
 							}
 							break;
@@ -5145,23 +5146,23 @@ namespace bgfx { namespace d3d12
 //							{
 //								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
 //								desc.Texture2DMSArray.ArraySize       = 1;
-//								desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
+//								desc.Texture2DMSArray.FirstArraySlice = at.layer;
 //							}
 //							else
 							{
 								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 								desc.Texture2DArray.ArraySize       = 1;
-								desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
-								desc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
+								desc.Texture2DArray.FirstArraySlice = at.layer;
+								desc.Texture2DArray.MipSlice        = at.mip;
 								desc.Texture2DArray.PlaneSlice      = 0;
 							}
 							break;
 
 						case TextureD3D12::Texture3D:
 							desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-							desc.Texture3D.MipSlice = m_attachment[ii].mip;
+							desc.Texture3D.MipSlice = at.mip;
 							desc.Texture3D.WSize = 1;
-							desc.Texture3D.FirstWSlice = m_attachment[ii].layer;
+							desc.Texture3D.FirstWSlice = at.layer;
 							break;
 						}
 
@@ -5180,6 +5181,10 @@ namespace bgfx { namespace d3d12
 
 						m_num++;
 					}
+					else
+					{
+						BX_CHECK(false, "");
+					}
 				}
 			}
 		}
@@ -5192,6 +5197,7 @@ namespace bgfx { namespace d3d12
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
 				const Attachment& at = m_attachment[ii];
+
 				if (isValid(at.handle) )
 				{
 					const TextureD3D12& texture = s_renderD3D12->m_textures[at.handle.idx];

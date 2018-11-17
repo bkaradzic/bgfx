@@ -3197,10 +3197,11 @@ namespace bgfx { namespace d3d9
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			TextureHandle handle = m_attachment[ii].handle;
-			if (isValid(handle) )
+			const Attachment& at = m_attachment[ii];
+
+			if (isValid(at.handle) )
 			{
-				const TextureD3D9& texture = s_renderD3D9->m_textures[handle.idx];
+				const TextureD3D9& texture = s_renderD3D9->m_textures[at.handle.idx];
 
 				if (NULL != texture.m_surface)
 				{
@@ -3209,7 +3210,7 @@ namespace bgfx { namespace d3d9
 				}
 				else
 				{
-					m_surface[ii] = texture.getSurface(uint8_t(m_attachment[ii].layer), uint8_t(m_attachment[ii].mip) );
+					m_surface[ii] = texture.getSurface(uint8_t(at.layer), uint8_t(at.mip) );
 				}
 
 				if (0 == m_num)
@@ -3386,19 +3387,24 @@ namespace bgfx { namespace d3d9
 		{
 			for (uint32_t ii = 0, num = m_numTh; ii < num; ++ii)
 			{
-				TextureHandle th = m_attachment[ii].handle;
+				const Attachment& at = m_attachment[ii];
 
-				if (isValid(th) )
+				if (isValid(at.handle) )
 				{
-					TextureD3D9& texture = s_renderD3D9->m_textures[th.idx];
+					TextureD3D9& texture = s_renderD3D9->m_textures[at.handle.idx];
+
 					if (NULL != texture.m_surface)
 					{
 						m_surface[ii] = texture.m_surface;
 						m_surface[ii]->AddRef();
 					}
+					else if (Access::Write == at.access)
+					{
+						m_surface[ii] = texture.getSurface(uint8_t(at.layer), uint8_t(at.mip) );
+					}
 					else
 					{
-						m_surface[ii] = texture.getSurface(uint8_t(m_attachment[ii].layer), uint8_t(m_attachment[ii].mip) );
+						BX_CHECK(false, "");
 					}
 				}
 			}

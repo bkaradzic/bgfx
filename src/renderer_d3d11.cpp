@@ -4673,10 +4673,11 @@ namespace bgfx { namespace d3d11
 			m_num = 0;
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
-				TextureHandle handle = m_attachment[ii].handle;
-				if (isValid(handle) )
+				const Attachment& at = m_attachment[ii];
+
+				if (isValid(at.handle) )
 				{
-					const TextureD3D11& texture = s_renderD3D11->m_textures[handle.idx];
+					const TextureD3D11& texture = s_renderD3D11->m_textures[at.handle.idx];
 
 					if (0 == m_width)
 					{
@@ -4722,7 +4723,7 @@ namespace bgfx { namespace d3d11
 									: D3D11_DSV_DIMENSION_TEXTURE2D
 									;
 								dsvDesc.Flags = 0;
-								dsvDesc.Texture2D.MipSlice = m_attachment[ii].mip;
+								dsvDesc.Texture2D.MipSlice = at.mip;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(
 									  NULL == texture.m_rt ? texture.m_ptr : texture.m_rt
 									, &dsvDesc
@@ -4739,14 +4740,14 @@ namespace bgfx { namespace d3d11
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
 									dsvDesc.Texture2DMSArray.ArraySize       = 1;
-									dsvDesc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
+									dsvDesc.Texture2DMSArray.FirstArraySlice = at.layer;
 								}
 								else
 								{
 									dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 									dsvDesc.Texture2DArray.ArraySize       = 1;
-									dsvDesc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
-									dsvDesc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
+									dsvDesc.Texture2DArray.FirstArraySlice = at.layer;
+									dsvDesc.Texture2DArray.MipSlice        = at.mip;
 								}
 								dsvDesc.Flags = 0;
 								DX_CHECK(s_renderD3D11->m_device->CreateDepthStencilView(texture.m_ptr, &dsvDesc, &m_dsv) );
@@ -4754,7 +4755,7 @@ namespace bgfx { namespace d3d11
 							break;
 						}
 					}
-					else
+					else if (Access::Write == at.access)
 					{
 						D3D11_RENDER_TARGET_VIEW_DESC desc;
 						desc.Format = texture.getSrvFormat();
@@ -4767,7 +4768,7 @@ namespace bgfx { namespace d3d11
 								if (1 < texture.m_depth)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
-									desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
+									desc.Texture2DMSArray.FirstArraySlice = at.layer;
 									desc.Texture2DMSArray.ArraySize = 1;
 								}
 								else
@@ -4780,14 +4781,14 @@ namespace bgfx { namespace d3d11
 								if (1 < texture.m_depth)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
-									desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
+									desc.Texture2DArray.FirstArraySlice = at.layer;
 									desc.Texture2DArray.ArraySize = 1;
-									desc.Texture2DArray.MipSlice = m_attachment[ii].mip;
+									desc.Texture2DArray.MipSlice = at.mip;
 								}
 								else
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-									desc.Texture2D.MipSlice = m_attachment[ii].mip;
+									desc.Texture2D.MipSlice = at.mip;
 								}
 							}
 
@@ -4803,29 +4804,33 @@ namespace bgfx { namespace d3d11
 							{
 								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
 								desc.Texture2DMSArray.ArraySize       = 1;
-								desc.Texture2DMSArray.FirstArraySlice = m_attachment[ii].layer;
+								desc.Texture2DMSArray.FirstArraySlice = at.layer;
 							}
 							else
 							{
 								desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 								desc.Texture2DArray.ArraySize       = 1;
-								desc.Texture2DArray.FirstArraySlice = m_attachment[ii].layer;
-								desc.Texture2DArray.MipSlice        = m_attachment[ii].mip;
+								desc.Texture2DArray.FirstArraySlice = at.layer;
+								desc.Texture2DArray.MipSlice        = at.mip;
 							}
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							break;
 
 						case TextureD3D11::Texture3D:
 							desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
-							desc.Texture3D.MipSlice    = m_attachment[ii].mip;
+							desc.Texture3D.MipSlice    = at.mip;
 							desc.Texture3D.WSize       = 1;
-							desc.Texture3D.FirstWSlice = m_attachment[ii].layer;
+							desc.Texture3D.FirstWSlice = at.layer;
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							break;
 						}
 
 						DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(texture.m_ptr, NULL, &m_srv[m_num]) );
 						m_num++;
+					}
+					else
+					{
+						BX_CHECK(false, "");
 					}
 				}
 			}
@@ -4839,6 +4844,7 @@ namespace bgfx { namespace d3d11
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
 				const Attachment& at = m_attachment[ii];
+
 				if (isValid(at.handle) )
 				{
 					const TextureD3D11& texture = s_renderD3D11->m_textures[at.handle.idx];

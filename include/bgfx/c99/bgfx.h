@@ -483,6 +483,7 @@ typedef struct bgfx_uniform_info_s
 /**/
 typedef struct bgfx_attachment_s
 {
+    bgfx_access_t access;
     bgfx_texture_handle_t handle;
     uint16_t mip;
     uint16_t layer;
