@@ -240,7 +240,7 @@ struct Camera
 
 	void getViewMtx(float* _viewMtx)
 	{
-		bx::mtxLookAt(_viewMtx, &m_eye.x, &m_at.x, &m_up.x);
+		bx::mtxLookAt(_viewMtx, bx::load(&m_eye.x), bx::load(&m_at.x), bx::load(&m_up.x) );
 	}
 
 	void setPosition(const float* _pos)

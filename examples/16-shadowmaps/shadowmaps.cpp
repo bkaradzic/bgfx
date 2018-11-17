@@ -2335,7 +2335,7 @@ public:
 
 				float at[3];
 				bx::vec3Add(at, m_pointLight.m_position.m_v, m_pointLight.m_spotDirectionInner.m_v);
-				bx::mtxLookAt(lightView[TetrahedronFaces::Green], m_pointLight.m_position.m_v, at);
+				bx::mtxLookAt(lightView[TetrahedronFaces::Green], bx::load(m_pointLight.m_position.m_v), bx::load(at) );
 			}
 			else if (LightType::PointLight == m_settings.m_lightType)
 			{
@@ -2421,13 +2421,13 @@ public:
 			else // LightType::DirectionalLight == settings.m_lightType
 			{
 				// Setup light view mtx.
-				float eye[3] =
+				const bx::Vec3 at = { 0.0f, 0.0f, 0.0f };
+				const bx::Vec3 eye =
 				{
-					-m_directionalLight.m_position.m_x
-					, -m_directionalLight.m_position.m_y
-					, -m_directionalLight.m_position.m_z
+					-m_directionalLight.m_position.m_x,
+					-m_directionalLight.m_position.m_y,
+					-m_directionalLight.m_position.m_z,
 				};
-				float at[3] = { 0.0f, 0.0f, 0.0f };
 				bx::mtxLookAt(lightView[0], eye, at);
 
 				// Compute camera inverse view mtx.

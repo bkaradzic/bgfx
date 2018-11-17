@@ -579,8 +579,8 @@ public:
 			const double toMs = 1000.0/freq;
 			float time = (float)( (now - m_timeOffset)/double(bx::getHPFrequency() ) );
 
-			float at[3]  = { 0.0f, 0.0f,   0.0f };
-			float eye[3] = { 0.0f, 0.0f, -50.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -50.0f };
 
 			// Set view and projection matrix for view 0.
 			{

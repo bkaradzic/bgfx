@@ -238,13 +238,14 @@ public:
 				const float camSpeed = 0.25;
 				float cameraSpin = (float)m_cameraSpin;
 				float eyeDist = 2.5f;
-				float eye[3] =
+
+				const bx::Vec3 at = { 0.0f, 0.0f, 0.0f };
+				const bx::Vec3 eye =
 				{
 					-eyeDist * bx::sin(time*cameraSpin*camSpeed),
 					0.0f,
 					-eyeDist * bx::cos(time*cameraSpin*camSpeed),
 				};
-				float at[3] = { 0.0f, 0.0f, 0.0f };
 
 				float view[16];
 				bx::mtxLookAt(view, eye, at);
@@ -277,7 +278,7 @@ public:
 
 				// Look at our unprojected point
 				float pickView[16];
-				bx::mtxLookAt(pickView, pickEye, pickAt);
+				bx::mtxLookAt(pickView, bx::load(pickEye), bx::load(pickAt) );
 
 				// Tight FOV is best for picking
 				float pickProj[16];

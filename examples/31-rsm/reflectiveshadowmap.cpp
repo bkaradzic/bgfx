@@ -476,7 +476,7 @@ public:
 			lightAt[1] = 0.0f;
 			lightAt[2] = 0.0f;
 
-			bx::mtxLookAt(smView, lightEye, lightAt);
+			bx::mtxLookAt(smView, bx::load(lightEye), bx::load(lightAt) );
 			const float area = 10.0f;
 			const bgfx::Caps* caps = bgfx::getCaps();
 			bx::mtxOrtho(smProj, -area, area, -area, area, -100.0f, 100.0f, 0.0f, caps->homogeneousDepth);

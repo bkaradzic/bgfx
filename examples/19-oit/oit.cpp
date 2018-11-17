@@ -351,8 +351,8 @@ public:
 				// http://jcgt.org/published/0002/02/09/
 				// http://casual-effects.blogspot.com/2014/03/weighted-blended-order-independent.html
 
-				float at[3] = { 0.0f, 0.0f, 0.0f };
-				float eye[3] = { 0.0f, 0.0f, -7.0f };
+				const bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
+				const bx::Vec3 eye = { 0.0f, 0.0f, -7.0f };
 
 				float view[16];
 				float proj[16];

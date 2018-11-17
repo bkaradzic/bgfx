@@ -213,8 +213,8 @@ public:
 
 		// Set view and projection matrices.
 
-		float eye[3] = { 0.0f, 30.0f, -60.0f };
-		float at[3]  = { 0.0f,  5.0f,   0.0f };
+		const bx::Vec3 at  = { 0.0f,  5.0f,   0.0f };
+		const bx::Vec3 eye = { 0.0f, 30.0f, -60.0f };
 		bx::mtxLookAt(m_view, eye, at);
 
 		const float aspect = float(int32_t(m_width) ) / float(int32_t(m_height) );
@@ -319,9 +319,8 @@ public:
 			float lightView[16];
 			float lightProj[16];
 
-			float eye[3] = { -lightPos[0], -lightPos[1], -lightPos[2] };
-			float at[3]  = { 0.0f,  0.0f,   0.0f };
-
+			const bx::Vec3 at  = { 0.0f,  0.0f,   0.0f };
+			const bx::Vec3 eye = { -lightPos[0], -lightPos[1], -lightPos[2] };
 			bx::mtxLookAt(lightView, eye, at);
 
 			const bgfx::Caps* caps = bgfx::getCaps();

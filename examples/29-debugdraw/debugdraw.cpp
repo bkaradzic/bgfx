@@ -627,9 +627,9 @@ public:
 			float mtxInvVp[16];
 			bx::mtxInverse(mtxInvVp, mtxVp);
 
-			float zero[3] = {};
-			float eye[] = { 5.0f, 10.0f, 5.0f };
-			bx::mtxLookAt(view, eye, zero);
+			const bx::Vec3 at  = { 0.0f,  0.0f, 0.0f };
+			const bx::Vec3 eye = { 5.0f, 10.0f, 5.0f };
+			bx::mtxLookAt(view, eye, at);
 			bx::mtxProj(proj, 45.0f, float(m_width)/float(m_height), 1.0f, 15.0f, bgfx::getCaps()->homogeneousDepth);
 			bx::mtxMul(mtxVp, view, proj);
 

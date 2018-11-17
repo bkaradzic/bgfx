@@ -119,8 +119,8 @@ public:
 				m_vd.resize(uint16_t(m_width), uint16_t(m_height) );
 			}
 
-			const float at[3]  = { 0.0f, 0.0f,   0.0f };
-			const float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
 			float proj[16];

@@ -176,8 +176,8 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			float at[3]  = { 0.0f, 1.0f,      0.0f };
-			float eye[3] = { 0.0f, 2.0f, -distance };
+			const bx::Vec3 at  = { 0.0f, 1.0f,      0.0f };
+			const bx::Vec3 eye = { 0.0f, 2.0f, -distance };
 
 			// Set view and projection matrix for view 0.
 			{
@@ -245,12 +245,12 @@ public:
 			}
 
 			int lod = 0;
-			if (eye[2] < -2.5f)
+			if (eye.z < -2.5f)
 			{
 				lod = 1;
 			}
 
-			if (eye[2] < -5.0f)
+			if (eye.z < -5.0f)
 			{
 				lod = 2;
 			}

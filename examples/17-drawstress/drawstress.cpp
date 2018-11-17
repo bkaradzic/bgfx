@@ -375,8 +375,8 @@ public:
 
 			imguiEndFrame();
 
-			float at[3] = { 0.0f, 0.0f, 0.0f };
-			float eye[3] = { 0.0f, 0.0f, -35.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,   0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -35.0f };
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);

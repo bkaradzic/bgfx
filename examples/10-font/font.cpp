@@ -258,8 +258,8 @@ public:
 			m_textBufferManager->appendText(m_transientText, m_visitor10, "text buffer\n");
 			m_textBufferManager->appendText(m_transientText, m_visitor10, fpsText);
 
-			float at[3]  = { 0, 0,  0.0f };
-			float eye[3] = { 0, 0, -1.0f };
+			const bx::Vec3 at  = { 0.0f, 0.0f,  0.0f };
+			const bx::Vec3 eye = { 0.0f, 0.0f, -1.0f };
 
 			float view[16];
 			bx::mtxLookAt(view, eye, at);
