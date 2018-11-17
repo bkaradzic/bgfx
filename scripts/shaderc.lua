@@ -199,7 +199,7 @@ project "glslang"
 	configuration { "mingw* or linux or osx" }
 		buildoptions {
 			"-Wno-ignored-qualifiers",
-			"-Wno-implicit-fallthrough"
+			"-Wno-implicit-fallthrough",
 			"-Wno-missing-field-initializers",
 			"-Wno-reorder",
 			"-Wno-return-type",
