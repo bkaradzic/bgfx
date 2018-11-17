@@ -98,8 +98,8 @@ namespace ps
 {
 	struct Particle
 	{
-		float start[3];
-		float end[2][3];
+		bx::Vec3 start;
+		bx::Vec3 end[2];
 		float blendStart;
 		float blendEnd;
 		float scaleStart;
@@ -237,6 +237,8 @@ namespace ps
 			const uint32_t numParticles = uint32_t(m_dt / timePerParticle);
 			m_dt -= numParticles * timePerParticle;
 
+			constexpr bx::Vec3 up = { 0.0f, 1.0f, 0.0f };
+
 			float time = 0.0f;
 			for (uint32_t ii = 0
 				; ii < numParticles && m_num < m_max
@@ -246,70 +248,67 @@ namespace ps
 				Particle& particle = m_particles[m_num];
 				m_num++;
 
-				const float up[3] = { 0.0f, 1.0f, 0.0f };
-
-				float pos[3];
+				bx::Vec3 pos;
 				switch (m_shape)
 				{
 					default:
 					case EmitterShape::Sphere:
-						bx::randUnitSphere(pos, &m_rng);
+						pos = bx::randUnitSphere(&m_rng);
 						break;
 
 					case EmitterShape::Hemisphere:
-						bx::randUnitHemisphere(pos, &m_rng, up);
+						pos = bx::randUnitHemisphere(&m_rng, up);
 						break;
 
 					case EmitterShape::Circle:
-						bx::randUnitCircle(pos, &m_rng);
+						pos = bx::randUnitCircle(&m_rng);
 						break;
 
 					case EmitterShape::Disc:
 						{
-							float tmp[3];
-							bx::randUnitCircle(tmp, &m_rng);
-							bx::vec3Mul(pos, tmp, bx::frnd(&m_rng) );
+							const bx::Vec3 tmp = bx::randUnitCircle(&m_rng);
+							pos = bx::mul(tmp, bx::frnd(&m_rng) );
 						}
 						break;
 
 					case EmitterShape::Rect:
-						pos[0] = bx::frndh(&m_rng);
-						pos[1] = 0.0f;
-						pos[2] = bx::frndh(&m_rng);
+						pos =
+						{
+							bx::frndh(&m_rng),
+							0.0f,
+							bx::frndh(&m_rng),
+						};
 						break;
 				}
 
-				float dir[3];
+				bx::Vec3 dir;
 				switch (m_direction)
 				{
 					default:
 					case EmitterDirection::Up:
-						bx::vec3Move(dir, up);
+						dir = up;
 						break;
 
 					case EmitterDirection::Outward:
-						bx::vec3Norm(dir, pos);
+						dir = bx::normalize(pos);
 						break;
 				}
 
-				float start[3];
-				float end[3];
 				const float startOffset = bx::lerp(m_uniforms.m_offsetStart[0], m_uniforms.m_offsetStart[1], bx::frnd(&m_rng) );
-				bx::vec3Mul(start, pos, startOffset);
+				const bx::Vec3 start = bx::mul(pos, startOffset);
 
 				const float endOffset = bx::lerp(m_uniforms.m_offsetEnd[0], m_uniforms.m_offsetEnd[1], bx::frnd(&m_rng) );
-				float tmp1[3];
-				bx::vec3Mul(tmp1, dir, endOffset);
-				bx::vec3Add(end, tmp1, start);
+				const bx::Vec3 tmp1 = bx::mul(dir, endOffset);
+				const bx::Vec3 end  = bx::add(tmp1, start);
 
 				particle.life = time;
 				particle.lifeSpan = bx::lerp(m_uniforms.m_lifeSpan[0], m_uniforms.m_lifeSpan[1], bx::frnd(&m_rng) );
 
-				float gravity[3] = { 0.0f, -9.81f * m_uniforms.m_gravityScale * bx::square(particle.lifeSpan), 0.0f };
+				const bx::Vec3 gravity = { 0.0f, -9.81f * m_uniforms.m_gravityScale * bx::square(particle.lifeSpan), 0.0f };
 
-				bx::vec3MulMtx(particle.start,  start, mtx);
-				bx::vec3MulMtx(particle.end[0], end,   mtx);
-				bx::vec3Add(particle.end[1], particle.end[0], gravity);
+				particle.start  = bx::mul(start, mtx);
+				particle.end[0] = bx::mul(end,   mtx);
+				particle.end[1] = bx::add(particle.end[0], gravity);
 
 				bx::memCopy(particle.rgba, m_uniforms.m_rgba, BX_COUNTOF(m_uniforms.m_rgba)*sizeof(uint32_t) );
 
@@ -323,7 +322,7 @@ namespace ps
 			}
 		}
 
-		uint32_t render(const float _uv[4], const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
+		uint32_t render(const float _uv[4], const float* _mtxView, const bx::Vec3& _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
 		{
 			bx::EaseFn easeRgba  = bx::getEaseFunc(m_uniforms.m_easeRgba);
 			bx::EaseFn easePos   = bx::getEaseFunc(m_uniforms.m_easePos);
@@ -348,19 +347,13 @@ namespace ps
 				const float ttBlend = bx::clamp(easeBlend(particle.life), 0.0f, 1.0f);
 				const float ttRgba  = bx::clamp(easeRgba(particle.life),  0.0f, 1.0f);
 
-				float p0[3];
-				bx::vec3Lerp(p0, particle.start, particle.end[0], ttPos);
-
-				float p1[3];
-				bx::vec3Lerp(p1, particle.end[0], particle.end[1], ttPos);
-
-				float pos[3];
-				bx::vec3Lerp(pos, p0, p1, ttPos);
+				const bx::Vec3 p0  = bx::lerp(particle.start,  particle.end[0], ttPos);
+				const bx::Vec3 p1  = bx::lerp(particle.end[0], particle.end[1], ttPos);
+				const bx::Vec3 pos = bx::lerp(p0, p1, ttPos);
 
 				ParticleSort& sort = _outSort[current];
-				float tmp[3];
-				bx::vec3Sub(tmp, _eye, pos);
-				sort.dist = bx::sqrt(bx::vec3Dot(tmp, tmp) );
+				const bx::Vec3 tmp0 = bx::sub(_eye, pos);
+				sort.dist = bx::length(tmp0);
 				sort.idx  = current;
 
 				uint32_t idx = uint32_t(ttRgba*4);
@@ -378,12 +371,11 @@ namespace ps
 
 				uint32_t abgr = toAbgr(rr, gg, bb, aa);
 
-				float udir[3] = { _mtxView[0]*scale, _mtxView[4]*scale, _mtxView[8]*scale };
-				float vdir[3] = { _mtxView[1]*scale, _mtxView[5]*scale, _mtxView[9]*scale };
+				const bx::Vec3 udir = { _mtxView[0]*scale, _mtxView[4]*scale, _mtxView[8]*scale };
+				const bx::Vec3 vdir = { _mtxView[1]*scale, _mtxView[5]*scale, _mtxView[9]*scale };
 
 				PosColorTexCoord0Vertex* vertex = &_outVertices[current*4];
-				bx::vec3Sub(tmp, pos, udir);
-				bx::vec3Sub(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::sub(bx::sub(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[0];
@@ -391,8 +383,7 @@ namespace ps
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::vec3Add(tmp, pos, udir);
-				bx::vec3Sub(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::sub(bx::add(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[2];
@@ -400,8 +391,7 @@ namespace ps
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::vec3Add(tmp, pos, udir);
-				bx::vec3Add(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::add(bx::add(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[2];
@@ -409,8 +399,7 @@ namespace ps
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::vec3Sub(tmp, pos, udir);
-				bx::vec3Add(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::add(bx::sub(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[0];
@@ -534,7 +523,7 @@ namespace ps
 			m_num = numParticles;
 		}
 
-		void render(uint8_t _view, const float* _mtxView, const float* _eye)
+		void render(uint8_t _view, const float* _mtxView, const bx::Vec3& _eye)
 		{
 			if (0 != m_num)
 			{
@@ -751,7 +740,7 @@ void psUpdate(float _dt)
 	s_ctx.update(_dt);
 }
 
-void psRender(uint8_t _view, const float* _mtxView, const float* _eye)
+void psRender(uint8_t _view, const float* _mtxView, const bx::Vec3& _eye)
 {
 	s_ctx.render(_view, _mtxView, _eye);
 }

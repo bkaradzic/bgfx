@@ -101,6 +101,6 @@ void psDestroyEmitter(EmitterHandle _handle);
 void psUpdate(float _dt);
 
 ///
-void psRender(uint8_t _view, const float* _mtxView, const float* _eye);
+void psRender(uint8_t _view, const float* _mtxView, const bx::Vec3& _eye);
 
 #endif // PARTICLE_SYSTEM_H_HEADER_GUARD
