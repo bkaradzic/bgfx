@@ -3127,9 +3127,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					m_frameBuffers[ii].postReset();
 				}
 
-				m_currentFbo = 0;
+				//m_currentFbo = 0;
 
-				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
+				//GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
 			}
 		}
 
@@ -3171,7 +3171,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			{
 				m_needPresent |= true;
 
-				m_currentFbo = m_msaaBackBufferFbo;
+				//m_currentFbo = m_msaaBackBufferFbo;
+				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
 				if (m_srgbWriteControlSupport)
 				{
@@ -3193,16 +3194,16 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					m_glctx.makeCurrent(frameBuffer.m_swapChain);
 					frameBuffer.m_needPresent = true;
-					m_currentFbo = 0;
+					//m_currentFbo = 0;
 				}
 				else
 				{
 					m_glctx.makeCurrent(NULL);
-					m_currentFbo = frameBuffer.m_fbo[0];
+					//m_currentFbo = frameBuffer.m_fbo[0];
+					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
 				}
 			}
 
-			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
 
 			m_fbh       = _fbh;
 			m_fbDiscard = _discard;
@@ -3882,7 +3883,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		Workaround m_workaround;
 
-		GLuint m_currentFbo;
+		//GLuint m_currentFbo;
 	};
 
 	RendererContextGL* s_renderGL;
