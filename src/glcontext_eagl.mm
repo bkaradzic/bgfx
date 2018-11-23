@@ -368,18 +368,6 @@ namespace bgfx { namespace gl
 #	include "glimports.h"
 	}
 
-	GLuint GlContext::getFbo()
-	{
-		if(NULL == m_current)
-		{
-			return m_fbo;
-		}
-		else
-		{
-			return m_current->m_fbo;
-		}
-	}
-
 } /* namespace gl */ } // namespace bgfx
 
 #endif // BX_PLATFORM_IOS && (BGFX_CONFIG_RENDERER_OPENGLES|BGFX_CONFIG_RENDERER_OPENGL)

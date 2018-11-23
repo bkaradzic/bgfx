@@ -35,7 +35,10 @@ namespace bgfx { namespace gl
 
 		void import();
 
-		GLuint getFbo();
+		GLuint getFbo()
+		{
+			return m_fbo;
+		}
 
 		bool isValid() const
 		{
