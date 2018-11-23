@@ -3193,7 +3193,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					m_glctx.makeCurrent(frameBuffer.m_swapChain);
 					frameBuffer.m_needPresent = true;
-					m_currentFbo = 0;
+					m_currentFbo = m_glctx.getFbo();
 				}
 				else
 				{
