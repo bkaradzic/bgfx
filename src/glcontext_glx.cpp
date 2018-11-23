@@ -61,8 +61,8 @@ namespace bgfx { namespace gl
 	{
 		BX_UNUSED(_width, _height);
 
-		m_context = static_cast<GLXContext>(g_platformData.context);
-		m_display = static_cast<::Display*>(g_platformData.ndt);
+		m_context = (GLXContext)g_platformData.context;
+		m_display = (::Display*)g_platformData.ndt;
 
 		// It's possible the user has provided the window handle, but not
 		// the display handle. If this is the case, try opening the default
