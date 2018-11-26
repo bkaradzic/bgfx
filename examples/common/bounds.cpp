@@ -48,8 +48,9 @@ void toAabb(Aabb& _aabb, const Sphere& _sphere)
 
 void toAabb(Aabb& _aabb, const Disk& _disk)
 {
-	// Reference:
-	// https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	// Reference(s):
+	// - https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	//
 	const bx::Vec3 nsq = bx::mul(_disk.m_normal, _disk.m_normal);
 	const bx::Vec3 one = { 1.0f, 1.0f, 1.0f };
 	const bx::Vec3 tmp = bx::sub(one, nsq);
@@ -68,8 +69,9 @@ void toAabb(Aabb& _aabb, const Disk& _disk)
 
 void toAabb(Aabb& _aabb, const Cylinder& _cylinder)
 {
-	// Reference:
-	// https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	// Reference(s):
+	// - https://web.archive.org/web/20181113055756/http://iquilezles.org/www/articles/diskbbox/diskbbox.htm
+	//
 	const bx::Vec3 axis = bx::sub(_cylinder.m_end, _cylinder.m_pos);
 	const bx::Vec3 asq  = bx::mul(axis, axis);
 	const bx::Vec3 nsq  = bx::mul(asq, 1.0f/bx::dot(axis, axis) );
