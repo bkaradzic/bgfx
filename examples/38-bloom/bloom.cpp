@@ -4,10 +4,9 @@
  */
 
 /*
- * References:
- *
- * Next Generation Post Processing in Call of Duty: Advanced Warfare
- * https://web.archive.org/web/20180920045230/http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare
+ * Reference(s):
+ * - Next Generation Post Processing in Call of Duty: Advanced Warfare
+ *   https://web.archive.org/web/20180920045230/http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare
  */
 
 #include "common.h"

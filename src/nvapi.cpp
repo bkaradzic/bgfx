@@ -11,9 +11,9 @@ namespace bgfx
 	/*
 	 * NVAPI
 	 *
-	 * Reference:
-	 * http://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/index.html
-	 * https://github.com/jNizM/AHK_NVIDIA_NvAPI/blob/master/info/NvAPI_IDs.txt
+	 * Reference(s):
+	 * - https://web.archive.org/web/20181126035649/https://docs.nvidia.com/gameworks/content/gameworkslibrary/coresdk/nvapi/index.html
+	 * - https://web.archive.org/web/20181126035710/https://github.com/jNizM/AHK_NVIDIA_NvAPI/blob/master/info/NvAPI_IDs.txt
 	 */
 
 	struct NvPhysicalGpuHandle;
@@ -72,8 +72,8 @@ namespace bgfx
 	/*
 	 * NVIDIA Aftermath
 	 *
-	 * Reference:
-	 * https://developer.nvidia.com/nvidia-aftermath
+	 * Reference(s):
+	 * - https://web.archive.org/web/20181126035743/https://developer.nvidia.com/nvidia-aftermath
 	 */
 
 	typedef int32_t (*PFN_NVAFTERMATH_DX11_INITIALIZE)(int32_t _version, int32_t _flags, const ID3D11Device* _device);

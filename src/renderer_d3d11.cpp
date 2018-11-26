@@ -560,8 +560,8 @@ namespace bgfx { namespace d3d11
 	/*
 	 * AMD GPU Services (AGS) library
 	 *
-	 * Reference:
-	 * https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK
+	 * Reference(s):
+	 * - https://web.archive.org/web/20181126035805/https://github.com/GPUOpen-LibrariesAndSDKs/AGS_SDK
 	 */
 	enum AGS_RETURN_CODE
 	{

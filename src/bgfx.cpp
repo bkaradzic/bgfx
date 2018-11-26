@@ -4758,13 +4758,13 @@ extern "C"
 	// When laptop setup has integrated and discrete GPU, following driver workarounds will
 	// select discrete GPU:
 
-	// Reference:
-	//  - https://web.archive.org/web/20180722051003/https://docs.nvidia.com/gameworks/content/technologies/desktop/optimus.htm
+	// Reference(s):
+	// - https://web.archive.org/web/20180722051003/https://docs.nvidia.com/gameworks/content/technologies/desktop/optimus.htm
 	//
 	__declspec(dllexport) uint32_t NvOptimusEnablement = UINT32_C(1);
 
-	// Reference:
-	//  - https://web.archive.org/web/20180722051032/https://gpuopen.com/amdpowerxpressrequesthighperformance/
+	// Reference(s):
+	// - https://web.archive.org/web/20180722051032/https://gpuopen.com/amdpowerxpressrequesthighperformance/
 	//
 	__declspec(dllexport) uint32_t AmdPowerXpressRequestHighPerformance = UINT32_C(1);
 }

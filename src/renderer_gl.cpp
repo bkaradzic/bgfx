@@ -2089,10 +2089,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					// EXT_texture_format_BGRA8888 wants both format and internal
 					// format to be BGRA.
 					//
-					// Reference:
-					// https://www.khronos.org/registry/gles/extensions/EXT/EXT_texture_format_BGRA8888.txt
-					// https://www.opengl.org/registry/specs/EXT/bgra.txt
-					// https://www.khronos.org/registry/gles/extensions/APPLE/APPLE_texture_format_BGRA8888.txt
+					// Reference(s):
+					// - https://web.archive.org/web/20181126035829/https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_format_BGRA8888.txt
+					// - https://web.archive.org/web/20181126035841/https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_bgra.txt
+					// - https://web.archive.org/web/20181126035851/https://www.khronos.org/registry/OpenGL/extensions/APPLE/APPLE_texture_format_BGRA8888.txt
+					//
 					if (!s_extension[Extension::EXT_bgra                     ].m_supported
 					&&  !s_extension[Extension::APPLE_texture_format_BGRA8888].m_supported)
 					{
