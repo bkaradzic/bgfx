@@ -388,6 +388,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.subgroupArithmetic.comp",
         "spv.subgroupBasic.comp",
         "spv.subgroupBallot.comp",
+        "spv.subgroupBallotNeg.comp",
         "spv.subgroupClustered.comp",
         "spv.subgroupClusteredNeg.comp",
         "spv.subgroupPartitioned.comp",
