@@ -10,7 +10,6 @@
 #include <bx/string.h>
 #include <bx/uint32_t.h>
 
-#include "config.h"
 #include "vertexdecl.h"
 
 namespace bgfx
