@@ -20,9 +20,6 @@ namespace bgfx
 	///
 	const char* getAttribNameShort(Attrib::Enum _attr);
 
-	/// Dump vertex declaration into debug output.
-	void dump(const VertexDecl& _decl);
-
 	///
 	Attrib::Enum idToAttrib(uint16_t id);
 

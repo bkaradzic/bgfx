@@ -528,6 +528,7 @@ namespace bgfx
 		return 1;
 	}
 
+	/// Dump vertex declaration into debug output.
 	void dump(const VertexDecl& _decl);
 
 	struct TextVideoMem
