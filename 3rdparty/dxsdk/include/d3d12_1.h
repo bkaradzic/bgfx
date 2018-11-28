@@ -144,7 +144,7 @@ extern "C"{
 /* [local] */ 
 
 #include <winapifamily.h>
-#pragma region App Family
+// BK - pragma region App Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 #define D3D12_FEATURE_VIDEO_DECODE_BITSTREAM_ENCRYPTION_SCHEMES       static_cast<D3D12_FEATURE_VIDEO>(4)
 #define D3D12_FEATURE_VIDEO_DECODE_BITSTREAM_ENCRYPTION_SCHEME_COUNT  static_cast<D3D12_FEATURE_VIDEO>(12)
@@ -2508,7 +2508,7 @@ EXTERN_C const IID IID_ID3D12CommandListMetaCommand;
 /* [local] */ 
 
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
-#pragma endregion
+// BK - pragma endregion
 DEFINE_GUID(IID_ID3D12CryptoSession,0xFC7C6C9D,0xC27D,0x4904,0x83,0x5D,0xA5,0xF2,0x09,0x6E,0xC6,0x5F);
 DEFINE_GUID(IID_ID3D12CryptoSessionPolicy,0x69FE3108,0x01A4,0x4AC3,0xAB,0x91,0xF5,0x1E,0x37,0x7A,0x62,0xAC);
 DEFINE_GUID(IID_ID3D12ContentProtectionDevice,0x59975f53,0xbf5f,0x42f2,0xb8,0x4f,0x5e,0x34,0x7c,0x1e,0x3d,0x43);

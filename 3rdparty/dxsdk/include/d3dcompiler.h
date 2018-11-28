@@ -41,7 +41,7 @@ extern "C" {
 #endif //__cplusplus
 
 
-#pragma region Application Family
+// BK - pragma region Application Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 
 //----------------------------------------------------------------------------
@@ -557,10 +557,10 @@ D3DDecompressShaders(_In_reads_bytes_(SrcDataSize) LPCVOID pSrcData,
                      _Out_opt_ UINT* pTotalShaders);
 
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
-#pragma endregion
+// BK - pragma endregion
 
 
-#pragma region Desktop Family
+// BK - pragma region Desktop Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 //----------------------------------------------------------------------------
@@ -576,7 +576,7 @@ D3DDisassemble10Effect(_In_ interface ID3D10Effect *pEffect,
                        _Out_ ID3DBlob** ppDisassembly);
 
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
-#pragma endregion
+// BK - pragma endregion
 
 
 #ifdef __cplusplus

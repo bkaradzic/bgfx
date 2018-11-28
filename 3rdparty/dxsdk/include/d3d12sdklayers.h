@@ -148,7 +148,7 @@ extern "C"{
 /* [local] */ 
 
 #include <winapifamily.h>
-#pragma region App Family
+// BK - pragma region App Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 
 
@@ -3169,7 +3169,7 @@ EXTERN_C const IID IID_ID3D12InfoQueue;
 /* [local] */ 
 
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) */
-#pragma endregion
+// BK - pragma endregion
 DEFINE_GUID(IID_ID3D12Debug,0x344488b7,0x6846,0x474b,0xb9,0x89,0xf0,0x27,0x44,0x82,0x45,0xe0);
 DEFINE_GUID(IID_ID3D12Debug1,0xaffaa4ca,0x63fe,0x4d8e,0xb8,0xad,0x15,0x90,0x00,0xaf,0x43,0x04);
 DEFINE_GUID(IID_ID3D12Debug2,0x93a665c4,0xa3b2,0x4e5d,0xb6,0x92,0xa2,0x6a,0xe1,0x4e,0x33,0x74);
