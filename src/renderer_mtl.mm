@@ -1534,11 +1534,11 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
-					renderPassDescriptor.colorAttachments[ii].texture = texture.m_ptrMSAA
-						? texture.m_ptrMSAA
+					renderPassDescriptor.colorAttachments[ii].texture = texture.m_ptrMsaa
+						? texture.m_ptrMsaa
 						: texture.m_ptr
 						;
-					renderPassDescriptor.colorAttachments[ii].resolveTexture = texture.m_ptrMSAA
+					renderPassDescriptor.colorAttachments[ii].resolveTexture = texture.m_ptrMsaa
 						? texture.m_ptr.m_obj
 						: NULL
 						;
@@ -1547,8 +1547,8 @@ namespace bgfx { namespace mtl
 				if (isValid(frameBuffer.m_depthHandle) )
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
-					renderPassDescriptor.depthAttachment.texture = texture.m_ptrMSAA
-						? texture.m_ptrMSAA
+					renderPassDescriptor.depthAttachment.texture = texture.m_ptrMsaa
+						? texture.m_ptrMsaa
 						: texture.m_ptr
 						;
 					renderPassDescriptor.stencilAttachment.texture = texture.m_ptrStencil;
@@ -1562,8 +1562,8 @@ namespace bgfx { namespace mtl
 						}
 						else
 						{
-							renderPassDescriptor.stencilAttachment.texture = texture.m_ptrMSAA
-								? texture.m_ptrMSAA
+							renderPassDescriptor.stencilAttachment.texture = texture.m_ptrMsaa
+								? texture.m_ptrMsaa
 								: texture.m_ptrStencil
 								;
 						}
@@ -1723,8 +1723,8 @@ namespace bgfx { namespace mtl
 					for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 					{
 						const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
-						pd.sampleCount = NULL != texture.m_ptrMSAA
-							? texture.m_ptrMSAA.sampleCount()
+						pd.sampleCount = NULL != texture.m_ptrMsaa
+							? texture.m_ptrMsaa.sampleCount()
 							: 1
 							;
 						pd.colorAttachments[ii].pixelFormat = texture.m_ptr.m_obj.pixelFormat;
@@ -2562,12 +2562,14 @@ namespace bgfx { namespace mtl
 			{
 				desc.textureType = MTLTextureType2DMultisample;
 				desc.sampleCount = sampleCount;
+
 				if (s_renderMtl->m_iOS9Runtime
 				||  s_renderMtl->m_macOS11Runtime)
 				{
 					desc.storageMode = (MTLStorageMode)(2 /* MTLStorageModePrivate */);
 				}
-				m_ptrMSAA = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+
+				m_ptrMsaa = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			}
 
 			if (m_requestedFormat == TextureFormat::D24S8

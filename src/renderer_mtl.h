@@ -838,7 +838,7 @@ namespace bgfx { namespace mtl
 
 		TextureMtl()
 			: m_ptr(NULL)
-			, m_ptrMSAA(NULL)
+			, m_ptrMsaa(NULL)
 			, m_ptrStencil(NULL)
 			, m_sampler(NULL)
 			, m_flags(0)
@@ -875,7 +875,7 @@ namespace bgfx { namespace mtl
 			);
 
 		Texture m_ptr;
-		Texture m_ptrMSAA;
+		Texture m_ptrMsaa;
 		Texture m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
 		SamplerState m_sampler;
 		uint64_t m_flags;
@@ -895,7 +895,7 @@ namespace bgfx { namespace mtl
 		SwapChainMtl()
 			: m_metalLayer(nil)
 			, m_drawable(nil)
-			, m_backBufferColorMSAA()
+			, m_backBufferColorMsaa()
 			, m_backBufferDepth()
 			, m_backBufferStencil()
 			, m_maxAnisotropy(0)
@@ -911,7 +911,7 @@ namespace bgfx { namespace mtl
 
 		CAMetalLayer* m_metalLayer;
 		id <CAMetalDrawable> m_drawable;
-		Texture m_backBufferColorMSAA;
+		Texture m_backBufferColorMsaa;
 		Texture m_backBufferDepth;
 		Texture m_backBufferStencil;
 		uint32_t m_maxAnisotropy;
