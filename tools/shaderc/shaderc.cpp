@@ -414,8 +414,18 @@ namespace bgfx
 	class File
 	{
 	public:
-		File(const bx::FilePath& _filePath)
+		File()
 			: m_data(NULL)
+			, m_size(0)
+		{
+		}
+
+		~File()
+		{
+			delete [] m_data;
+		}
+
+		void load(const bx::FilePath& _filePath)
 		{
 			bx::FileReader reader;
 			if (bx::open(&reader, _filePath) )
@@ -435,11 +445,6 @@ namespace bgfx
 
 				m_data[m_size] = '\0';
 			}
-		}
-
-		~File()
-		{
-			delete [] m_data;
 		}
 
 		const char* getData() const
@@ -2403,12 +2408,13 @@ namespace bgfx
 		else
 		{
 			const char* varying = NULL;
+			File attribdef;
 
 			if ('c' != options.shaderType)
 			{
 				std::string defaultVarying = dir + "varying.def.sc";
 				const char* varyingdef = cmdLine.findOption("varyingdef", defaultVarying.c_str() );
-				File attribdef(varyingdef);
+				attribdef.load(varyingdef);
 				varying = attribdef.getData();
 				if (NULL     != varying
 				&&  *varying != '\0')
