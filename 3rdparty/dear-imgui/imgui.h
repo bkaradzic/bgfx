@@ -205,7 +205,8 @@ namespace ImGui
 
     // Demo, Debug, Information
     IMGUI_API void          ShowDemoWindow(bool* p_open = NULL);        // create demo/test window (previously called ShowTestWindow). demonstrate most ImGui features. call this to learn about the library! try to make it always available in your application!
-    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // create metrics window. display ImGui internals: draw commands (with individual draw calls and vertices), window list, basic internal state, etc.
+    IMGUI_API void          ShowAboutWindow(bool* p_open = NULL);       // create about window. display Dear ImGui version, credits and build/system information.
+    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // create metrics window. display Dear ImGui internals: draw commands (with individual draw calls and vertices), window list, basic internal state, etc.
     IMGUI_API void          ShowStyleEditor(ImGuiStyle* ref = NULL);    // add style editor block (not a window). you can pass in a reference ImGuiStyle structure to compare to, revert to and save to (else it uses the default style)
     IMGUI_API bool          ShowStyleSelector(const char* label);       // add style selector block (not a window), essentially a combo listing the default styles.
     IMGUI_API void          ShowFontSelector(const char* label);        // add font selector block (not a window), essentially a combo listing the loaded fonts.
@@ -1172,6 +1173,10 @@ struct ImGuiIO
     // (the imgui_impl_xxxx back-end files are setting those up for you)
     //------------------------------------------------------------------
 
+    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window)
+    const char* BackendPlatformName;
+    const char* BackendRendererName;
+
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
     const char* (*GetClipboardTextFn)(void* user_data);
@@ -1181,7 +1186,7 @@ struct ImGuiIO
     // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME on Windows)
     // (default to use native imm32 api on Windows)
     void        (*ImeSetInputScreenPosFn)(int x, int y);
-    void*       ImeWindowHandle;            // (Windows) Set this to your HWND to get automatic IME cursor positioning.
+    void*       ImeWindowHandle;                // (Windows) Set this to your HWND to get automatic IME cursor positioning.
 
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     // [OBSOLETE since 1.60+] Rendering function, will be automatically called in Render(). Please call your rendering function yourself now!
