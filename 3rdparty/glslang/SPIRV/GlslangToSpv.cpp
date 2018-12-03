@@ -833,6 +833,16 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
         builder.addCapability(spv::CapabilityMultiView);
         return spv::BuiltInViewIndex;
 
+    case glslang::EbvFragSizeEXT:
+        builder.addExtension(spv::E_SPV_EXT_fragment_invocation_density);
+        builder.addCapability(spv::CapabilityFragmentDensityEXT);
+        return spv::BuiltInFragSizeEXT;
+
+    case glslang::EbvFragInvocationCountEXT:
+        builder.addExtension(spv::E_SPV_EXT_fragment_invocation_density);
+        builder.addCapability(spv::CapabilityFragmentDensityEXT);
+        return spv::BuiltInFragInvocationCountEXT;
+
 #ifdef NV_EXTENSIONS
     case glslang::EbvViewportMaskNV:
         if (!memberDeclaration) {
@@ -1814,6 +1824,12 @@ bool TGlslangToSpvTraverser::visitUnary(glslang::TVisit /* visit */, glslang::TI
         block->traverse(this);
         unsigned int member = node->getOperand()->getAsBinaryNode()->getRight()->getAsConstantUnion()->getConstArray()[0].getUConst();
         spv::Id length = builder.createArrayLength(builder.accessChainGetLValue(), member);
+
+        // GLSL semantics say the result of .length() is an int, while SPIR-V says
+        // signedness must be 0. So, convert from SPIR-V unsigned back to GLSL's
+        // AST expectation of a signed result.
+        if (glslangIntermediate->getSource() == glslang::EShSourceGlsl)
+            length = builder.createUnaryOp(spv::OpBitcast, builder.makeIntType(32), length);
 
         builder.clearAccessChain();
         builder.setAccessChainRValue(length);
@@ -7153,8 +7169,6 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
         builder.addDecoration(id, spv::DecorationInputAttachmentIndex, symbol->getQualifier().layoutAttachment);
     if (glslangIntermediate->getXfbMode()) {
         builder.addCapability(spv::CapabilityTransformFeedback);
-        if (symbol->getQualifier().hasXfbStride())
-            builder.addDecoration(id, spv::DecorationXfbStride, symbol->getQualifier().layoutXfbStride);
         if (symbol->getQualifier().hasXfbBuffer()) {
             builder.addDecoration(id, spv::DecorationXfbBuffer, symbol->getQualifier().layoutXfbBuffer);
             unsigned stride = glslangIntermediate->getXfbStride(symbol->getQualifier().layoutXfbBuffer);

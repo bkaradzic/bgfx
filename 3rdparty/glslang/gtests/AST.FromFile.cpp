@@ -231,6 +231,7 @@ INSTANTIATE_TEST_CASE_P(
         "precise_struct_block.vert",
         "maxClipDistances.vert",
         "findFunction.frag",
+        "constantUnaryConversion.comp"
     })),
     FileNameAsCustomTestSuffix
 );

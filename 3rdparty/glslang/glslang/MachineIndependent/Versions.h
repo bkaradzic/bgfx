@@ -167,6 +167,7 @@ const char* const E_GL_EXT_control_flow_attributes          = "GL_EXT_control_fl
 const char* const E_GL_EXT_nonuniform_qualifier             = "GL_EXT_nonuniform_qualifier";
 const char* const E_GL_EXT_samplerless_texture_functions    = "GL_EXT_samplerless_texture_functions";
 const char* const E_GL_EXT_scalar_block_layout              = "GL_EXT_scalar_block_layout";
+const char* const E_GL_EXT_fragment_invocation_density      = "GL_EXT_fragment_invocation_density";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

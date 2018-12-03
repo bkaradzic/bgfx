@@ -181,7 +181,7 @@ void SpirvToolsLegalize(const glslang::TIntermediate&, std::vector<unsigned int>
     optimizer.RegisterPass(spvtools::CreateAggressiveDCEPass());
     optimizer.RegisterPass(spvtools::CreateCFGCleanupPass());
 
-    optimizer.Run(spirv.data(), spirv.size(), &spirv, spvtools::ValidatorOptions(), true);
+    optimizer.Run(spirv.data(), spirv.size(), &spirv);
 }
 
 }; // end namespace glslang

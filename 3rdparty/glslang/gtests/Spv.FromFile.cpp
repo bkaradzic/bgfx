@@ -271,6 +271,10 @@ INSTANTIATE_TEST_CASE_P(
         "spv.flowControl.frag",
         "spv.forLoop.frag",
         "spv.forwardFun.frag",
+        "spv.fragmentDensity.frag",
+        "spv.fragmentDensity.vert",
+        "spv.fragmentDensity-es.frag",
+        "spv.fragmentDensity-neg.frag",
         "spv.fullyCovered.frag",
         "spv.functionCall.frag",
         "spv.functionNestedOpaque.vert",
@@ -443,7 +447,10 @@ INSTANTIATE_TEST_CASE_P(
         "spv.rankShift.comp",
         "spv.specConst.vert",
         "spv.OVR_multiview.vert",
+        "spv.xfbOffsetOnBlockMembersAssignment.vert",
         "spv.xfbOffsetOnStructMembersAssignment.vert",
+        "spv.xfbOverlapOffsetCheckWithBlockAndMember.vert",
+        "spv.xfbStrideJustOnce.vert",
     })),
     FileNameAsCustomTestSuffix
 );

@@ -489,7 +489,7 @@ bool TIntermediate::isConversionAllowed(TOperator op, TIntermTyped* node) const
 // This is 'mechanism' here, it does any conversion told.
 // It is about basic type, not about shape.
 // The policy comes from the shader or the calling code.
-TIntermUnary* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped* node) const
+TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped* node) const
 {
     //
     // Add a new newNode for the conversion.
@@ -712,7 +712,11 @@ TIntermUnary* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     TType newType(convertTo, EvqTemporary, node->getVectorSize(), node->getMatrixCols(), node->getMatrixRows());
     newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
 
-    // TODO: it seems that some unary folding operations should occur here, but are not
+    if (node->getAsConstantUnion()) {
+        TIntermTyped* folded = node->getAsConstantUnion()->fold(newOp, newType);
+        if (folded)
+            return folded;
+    }
 
     // Propagate specialization-constant-ness, if allowed
     if (node->getType().getQualifier().isSpecConstant() && isSpecializationOperation(*newNode))
@@ -1021,7 +1025,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     //
     // Add a new newNode for the conversion.
     //
-    TIntermUnary* newNode = createConversion(promoteTo, node);
+    TIntermTyped* newNode = createConversion(promoteTo, node);
 
     return newNode;
 }

@@ -5939,6 +5939,12 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "bool gl_HelperInvocation;"     // needs qualifier fixed later
                 );
 
+        if (version >= 450)
+            stageBuiltins[EShLangFragment].append( // GL_EXT_fragment_invocation_density
+                "flat in ivec2 gl_FragSizeEXT;"
+                "flat in int   gl_FragInvocationCountEXT;"
+                );
+
 #ifdef AMD_EXTENSIONS
         if (version >= 450)
             stageBuiltins[EShLangFragment].append(
@@ -5959,9 +5965,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 );
         if (version >= 450)
             stageBuiltins[EShLangFragment].append(
-                "flat in ivec2 gl_FragmentSizeNV;"
+                "flat in ivec2 gl_FragmentSizeNV;"          // GL_NV_shading_rate_image
                 "flat in int   gl_InvocationsPerPixelNV;"
-                "in vec3 gl_BaryCoordNV;"
+                "in vec3 gl_BaryCoordNV;"                   // GL_NV_fragment_shader_barycentric
                 "in vec3 gl_BaryCoordNoPerspNV;"
                 );
 
@@ -6006,13 +6012,19 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         stageBuiltins[EShLangFragment].append(
             "highp float gl_FragDepthEXT;"       // GL_EXT_frag_depth
             );
+
+        if (version >= 310)
+            stageBuiltins[EShLangFragment].append( // GL_EXT_fragment_invocation_density
+                "flat in ivec2 gl_FragSizeEXT;"
+                "flat in int   gl_FragInvocationCountEXT;"
+            );
 #ifdef NV_EXTENSIONS
         if (version >= 320)
-            stageBuiltins[EShLangFragment].append(
+            stageBuiltins[EShLangFragment].append( // GL_NV_shading_rate_image
                 "flat in ivec2 gl_FragmentSizeNV;"
                 "flat in int   gl_InvocationsPerPixelNV;"
             );
-       if (version >= 320)
+        if (version >= 320)
             stageBuiltins[EShLangFragment].append(
                 "in vec3 gl_BaryCoordNV;"
                 "in vec3 gl_BaryCoordNoPerspNV;"
@@ -8341,6 +8353,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("fwidthCoarse",           1, &E_GL_NV_compute_shader_derivatives);
         }
 #endif
+
+        if ((profile != EEsProfile && version >= 450) ||
+            (profile == EEsProfile && version >= 310)) {
+            symbolTable.setVariableExtensions("gl_FragSizeEXT",            1, &E_GL_EXT_fragment_invocation_density);
+            symbolTable.setVariableExtensions("gl_FragInvocationCountEXT", 1, &E_GL_EXT_fragment_invocation_density);
+            BuiltInVariable("gl_FragSizeEXT",            EbvFragSizeEXT, symbolTable);
+            BuiltInVariable("gl_FragInvocationCountEXT", EbvFragInvocationCountEXT, symbolTable);
+        }
 
         symbolTable.setVariableExtensions("gl_FragDepthEXT", 1, &E_GL_EXT_frag_depth);
 

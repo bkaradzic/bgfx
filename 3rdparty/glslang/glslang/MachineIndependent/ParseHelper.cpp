@@ -6873,6 +6873,16 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
 
     layoutMemberLocationArrayCheck(loc, memberWithLocation, arraySizes);
 
+    // Ensure that the block has an XfbBuffer assigned. This is needed
+    // because if the block has a XfbOffset assigned, then it is
+    // assumed that it has implicitly assigned the current global
+    // XfbBuffer, and because it's members need to be assigned a
+    // XfbOffset if they lack it.
+    if (currentBlockQualifier.storage == EvqVaryingOut && globalOutputDefaults.hasXfbBuffer()) {
+       if (!currentBlockQualifier.hasXfbBuffer() && currentBlockQualifier.hasXfbOffset())
+          currentBlockQualifier.layoutXfbBuffer = globalOutputDefaults.layoutXfbBuffer;
+    }
+
     // Process the members
     fixBlockLocations(loc, currentBlockQualifier, typeList, memberWithLocation, memberWithoutLocation);
     fixXfbOffsets(currentBlockQualifier, typeList);
