@@ -48,6 +48,24 @@ newoption {
 	description = "Enable building examples.",
 }
 
+newoption {
+   trigger     = "with-gl-version",
+   value       = "#",
+   description = "Choose a particular version for OpenGL",
+   allowed = {
+      { "21", "OpenGL 2.1"},
+      { "31", "OpenGL 3.1"},
+      { "32", "OpenGL 3.2"},
+      { "33", "OpenGL 3.3"},
+      { "40", "OpenGL 4.0"},
+      { "41", "OpenGL 4.1"},
+      { "42", "OpenGL 4.2"},
+      { "43", "OpenGL 4.3"},
+      { "44", "OpenGL 4.4"},
+      { "45", "OpenGL 4.5"}
+   }
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
@@ -119,6 +137,12 @@ if _OPTIONS["with-profiler"] then
 	defines {
 		"ENTRY_CONFIG_PROFILER=1",
 		"BGFX_CONFIG_PROFILER=1",
+	}
+end
+
+if _OPTIONS["with-gl-version"] then
+	defines {
+		"BGFX_CONFIG_RENDERER_OPENGL=" .. _OPTIONS["with-gl-version"]
 	}
 end
 
