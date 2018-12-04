@@ -672,8 +672,8 @@ CODE
      you to animate labels. For example you may want to include varying information in a window title bar,
      but windows are uniquely identified by their ID. Use "###" to pass a label that isn't part of ID:
 
-       Button("Hello###ID";   // Label = "Hello",  ID = hash of (..., "ID")
-       Button("World###ID";   // Label = "World",  ID = hash of (..., "ID")     // Same as above, even though the label looks different
+       Button("Hello###ID");  // Label = "Hello",  ID = hash of (..., "ID")
+       Button("World###ID");  // Label = "World",  ID = hash of (..., "ID")     // Same as above, even though the label looks different
 
        sprintf(buf, "My game (%f FPS)###MyGame", fps);
        Begin(buf);            // Variable title,   ID = hash of "MyGame"
@@ -3303,8 +3303,9 @@ void ImGui::NewFrame()
     g.CurrentPopupStack.resize(0);
     ClosePopupsOverWindow(g.NavWindow);
 
-    // Create implicit window - we will only render it if the user has added something to it.
+    // Create implicit/fallback window - which we will only render it if the user has added something to it.
     // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+    // This fallback is particularly important as it avoid ImGui:: calls from crashing.
     SetNextWindowSize(ImVec2(400,400), ImGuiCond_FirstUseEver);
     Begin("Debug##Default");
 
@@ -4459,7 +4460,7 @@ static void ImGui::UpdateManualResize(ImGuiWindow* window, const ImVec2& size_au
     ImGuiWindowFlags flags = window->Flags;
     if ((flags & ImGuiWindowFlags_NoResize) || (flags & ImGuiWindowFlags_AlwaysAutoResize) || window->AutoFitFramesX > 0 || window->AutoFitFramesY > 0)
         return;
-    if (window->WasActive == false) // Early out to avoid running this code for e.g. an hidden implicit Debug window.
+    if (window->WasActive == false) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
         return;
 
     const int resize_border_count = g.IO.ConfigResizeWindowsFromEdges ? 4 : 0;
