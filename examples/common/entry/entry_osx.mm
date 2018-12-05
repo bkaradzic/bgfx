@@ -258,7 +258,6 @@ namespace entry
 			{
 				NSEventType eventType = [event type];
 
-				// TODO: Get correct window
 				NSWindow *window = [NSApp keyWindow];
 				WindowHandle handle = handleFromWindow(window);
 
