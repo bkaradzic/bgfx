@@ -60,39 +60,23 @@ namespace
 {
 	// Represents color. Color-space depends on context.
 	// In the code below, used to represent color in XYZ, and RGB color-space
-	union Color
-	{
-		struct {
-			float X;
-			float Y;
-			float Z;
-		};
-		struct {
-			float r;
-			float g;
-			float b;
-		};
-
-		float data[3];
-	};
-
+	typedef bx::Vec3 Color;
 
 	// HDTV rec. 709 matrix.
 	static float M_XYZ2RGB[] =
 	{
-		3.240479f, -0.969256f, 0.055648f,
-		-1.53715f, 1.875991f, -0.204043f,
-		-0.49853f, 0.041556f, 1.057311f
+		 3.240479f, -0.969256f,  0.055648f,
+		-1.53715f,   1.875991f, -0.204043f,
+		-0.49853f,   0.041556f,  1.057311f,
 	};
 
-
 	// Converts color repesentation from CIE XYZ to RGB color-space.
-	Color XYZToRGB(const Color& xyz)
+	Color xyzToRgb(const Color& xyz)
 	{
 		Color rgb;
-		rgb.r = M_XYZ2RGB[0] * xyz.X + M_XYZ2RGB[3] * xyz.Y + M_XYZ2RGB[6] * xyz.Z;
-		rgb.g = M_XYZ2RGB[1] * xyz.X + M_XYZ2RGB[4] * xyz.Y + M_XYZ2RGB[7] * xyz.Z;
-		rgb.b = M_XYZ2RGB[2] * xyz.X + M_XYZ2RGB[5] * xyz.Y + M_XYZ2RGB[8] * xyz.Z;
+		rgb.x = M_XYZ2RGB[0] * xyz.x + M_XYZ2RGB[3] * xyz.y + M_XYZ2RGB[6] * xyz.z;
+		rgb.y = M_XYZ2RGB[1] * xyz.x + M_XYZ2RGB[4] * xyz.y + M_XYZ2RGB[7] * xyz.z;
+		rgb.z = M_XYZ2RGB[2] * xyz.x + M_XYZ2RGB[5] * xyz.y + M_XYZ2RGB[8] * xyz.z;
 		return rgb;
 	};
 
@@ -101,20 +85,20 @@ namespace
 	// Computed using code from Game Engine Gems, Volume One, chapter 15. Implementation based on Dr. Richard Bird model.
 	// This table is used for piecewise linear interpolation. Transitions from and to 0.0 at sunset and sunrise are highly inaccurate
 	static std::map<float, Color> sunLuminanceXYZTable = {
-		{ 5.0f, {{ 0.000000f, 0.000000f, 0.000000f }} },
-		{ 7.0f, {{ 12.703322f, 12.989393f, 9.100411f }} },
-		{ 8.0f, {{ 13.202644f, 13.597814f, 11.524929f }} },
-		{ 9.0f, {{ 13.192974f, 13.597458f, 12.264488f }} },
-		{ 10.0f, {{ 13.132943f, 13.535914f, 12.560032f }} },
-		{ 11.0f, {{ 13.088722f, 13.489535f, 12.692996f }} },
-		{ 12.0f, {{ 13.067827f, 13.467483f, 12.745179f }} },
-		{ 13.0f, {{ 13.069653f, 13.469413f, 12.740822f }} },
-		{ 14.0f, {{ 13.094319f, 13.495428f, 12.678066f }} },
-		{ 15.0f, {{ 13.142133f, 13.545483f, 12.526785f }} },
-		{ 16.0f, {{ 13.201734f, 13.606017f, 12.188001f }} },
-		{ 17.0f, {{ 13.182774f, 13.572725f, 11.311157f }} },
-		{ 18.0f, {{ 12.448635f, 12.672520f, 8.267771f }} },
-		{ 20.0f, {{ 0.000000f, 0.000000f, 0.000000f }} }
+		{  5.0f, {  0.000000f,  0.000000f,  0.000000f } },
+		{  7.0f, { 12.703322f, 12.989393f,  9.100411f } },
+		{  8.0f, { 13.202644f, 13.597814f, 11.524929f } },
+		{  9.0f, { 13.192974f, 13.597458f, 12.264488f } },
+		{ 10.0f, { 13.132943f, 13.535914f, 12.560032f } },
+		{ 11.0f, { 13.088722f, 13.489535f, 12.692996f } },
+		{ 12.0f, { 13.067827f, 13.467483f, 12.745179f } },
+		{ 13.0f, { 13.069653f, 13.469413f, 12.740822f } },
+		{ 14.0f, { 13.094319f, 13.495428f, 12.678066f } },
+		{ 15.0f, { 13.142133f, 13.545483f, 12.526785f } },
+		{ 16.0f, { 13.201734f, 13.606017f, 12.188001f } },
+		{ 17.0f, { 13.182774f, 13.572725f, 11.311157f } },
+		{ 18.0f, { 12.448635f, 12.672520f,  8.267771f } },
+		{ 20.0f, {  0.000000f,  0.000000f,  0.000000f } },
 	};
 
 
@@ -124,28 +108,28 @@ namespace
 	// The scale of luminance change in Day/night transitions is not preserved.
 	// Luminance at night was increased to eliminate need the of HDR render.
 	static std::map<float, Color> skyLuminanceXYZTable = {
-		{ 0.0f, {{ 0.308f, 0.308f, 0.411f }} },
-		{ 1.0f, {{ 0.308f, 0.308f, 0.410f }} },
-		{ 2.0f, {{ 0.301f, 0.301f, 0.402f }} },
-		{ 3.0f, {{ 0.287f, 0.287f, 0.382f }} },
-		{ 4.0f, {{ 0.258f, 0.258f, 0.344f }} },
-		{ 5.0f, {{ 0.258f, 0.258f, 0.344f }} },
-		{ 7.0f, {{ 0.962851f, 1.000000f, 1.747835f }} },
-		{ 8.0f, {{ 0.967787f, 1.000000f, 1.776762f }} },
-		{ 9.0f, {{ 0.970173f, 1.000000f, 1.788413f }} },
-		{ 10.0f, {{ 0.971431f, 1.000000f, 1.794102f }} },
-		{ 11.0f, {{ 0.972099f, 1.000000f, 1.797096f }} },
-		{ 12.0f, {{ 0.972385f, 1.000000f, 1.798389f }} },
-		{ 13.0f, {{ 0.972361f, 1.000000f, 1.798278f }} },
-		{ 14.0f, {{ 0.972020f, 1.000000f, 1.796740f }} },
-		{ 15.0f, {{ 0.971275f, 1.000000f, 1.793407f }} },
-		{ 16.0f, {{ 0.969885f, 1.000000f, 1.787078f }} },
-		{ 17.0f, {{ 0.967216f, 1.000000f, 1.773758f }} },
-		{ 18.0f, {{ 0.961668f, 1.000000f, 1.739891f }} },
-		{ 20.0f, {{ 0.264f, 0.264f, 0.352f }} },
-		{ 21.0f, {{ 0.264f, 0.264f, 0.352f }} },
-		{ 22.0f, {{ 0.290f, 0.290f, 0.386f }} },
-		{ 23.0f, {{ 0.303f, 0.303f, 0.404f }} }
+		{  0.0f, { 0.308f,    0.308f,    0.411f    } },
+		{  1.0f, { 0.308f,    0.308f,    0.410f    } },
+		{  2.0f, { 0.301f,    0.301f,    0.402f    } },
+		{  3.0f, { 0.287f,    0.287f,    0.382f    } },
+		{  4.0f, { 0.258f,    0.258f,    0.344f    } },
+		{  5.0f, { 0.258f,    0.258f,    0.344f    } },
+		{  7.0f, { 0.962851f, 1.000000f, 1.747835f } },
+		{  8.0f, { 0.967787f, 1.000000f, 1.776762f } },
+		{  9.0f, { 0.970173f, 1.000000f, 1.788413f } },
+		{ 10.0f, { 0.971431f, 1.000000f, 1.794102f } },
+		{ 11.0f, { 0.972099f, 1.000000f, 1.797096f } },
+		{ 12.0f, { 0.972385f, 1.000000f, 1.798389f } },
+		{ 13.0f, { 0.972361f, 1.000000f, 1.798278f } },
+		{ 14.0f, { 0.972020f, 1.000000f, 1.796740f } },
+		{ 15.0f, { 0.971275f, 1.000000f, 1.793407f } },
+		{ 16.0f, { 0.969885f, 1.000000f, 1.787078f } },
+		{ 17.0f, { 0.967216f, 1.000000f, 1.773758f } },
+		{ 18.0f, { 0.961668f, 1.000000f, 1.739891f } },
+		{ 20.0f, { 0.264f,    0.264f,    0.352f    } },
+		{ 21.0f, { 0.264f,    0.264f,    0.352f    } },
+		{ 22.0f, { 0.290f,    0.290f,    0.386f    } },
+		{ 23.0f, { 0.303f,    0.303f,    0.404f    } },
 	};
 
 
@@ -154,19 +138,19 @@ namespace
 	// Coefficients correspond to xyY colorspace.
 	static Color ABCDE[] =
 	{
-		{{ -0.2592f, -0.2608f, -1.4630f }},
-		{{  0.0008f,  0.0092f,  0.4275f }},
-		{{  0.2125f,  0.2102f,  5.3251f }},
-		{{ -0.8989f, -1.6537f, -2.5771f }},
-		{{  0.0452f,  0.0529f,  0.3703f }}
+		{ -0.2592f, -0.2608f, -1.4630f },
+		{  0.0008f,  0.0092f,  0.4275f },
+		{  0.2125f,  0.2102f,  5.3251f },
+		{ -0.8989f, -1.6537f, -2.5771f },
+		{  0.0452f,  0.0529f,  0.3703f },
 	};
 	static Color ABCDE_t[] =
 	{
-		{{ -0.0193f, -0.0167f,  0.1787f }},
-		{{ -0.0665f, -0.0950f, -0.3554f }},
-		{{ -0.0004f, -0.0079f, -0.0227f }},
-		{{ -0.0641f, -0.0441f,  0.1206f }},
-		{{ -0.0033f, -0.0109f, -0.0670f }}
+		{ -0.0193f, -0.0167f,  0.1787f },
+		{ -0.0665f, -0.0950f, -0.3554f },
+		{ -0.0004f, -0.0079f, -0.0227f },
+		{ -0.0641f, -0.0441f,  0.1206f },
+		{ -0.0033f, -0.0109f, -0.0670f },
 	};
 
 
@@ -175,9 +159,15 @@ namespace
 	{
 		typedef Color ValueType;
 		typedef std::map<float, ValueType> KeyMap;
+
 	public:
-		DynamicValueController() {};
-		~DynamicValueController() {};
+		DynamicValueController()
+		{
+		}
+
+		~DynamicValueController()
+		{
+		}
 
 		void SetMap(const KeyMap& keymap)
 		{
@@ -189,22 +179,27 @@ namespace
 			typename KeyMap::const_iterator itUpper = m_keyMap.upper_bound(time + 1e-6f);
 			typename KeyMap::const_iterator itLower = itUpper;
 			--itLower;
+
 			if (itLower == m_keyMap.end())
 			{
 				return itUpper->second;
 			}
+
 			if (itUpper == m_keyMap.end())
 			{
 				return itLower->second;
 			}
+
 			float lowerTime = itLower->first;
 			const ValueType& lowerVal = itLower->second;
 			float upperTime = itUpper->first;
 			const ValueType& upperVal = itUpper->second;
+
 			if (lowerTime == upperTime)
 			{
 				return lowerVal;
 			}
+
 			return interpolate(lowerTime, lowerVal, upperTime, upperVal, time);
 		};
 
@@ -214,17 +209,15 @@ namespace
 		};
 
 	private:
-		const ValueType interpolate(float lowerTime, const ValueType& lowerVal, float upperTime, const ValueType& upperVal, float time) const
+		ValueType interpolate(float lowerTime, const ValueType& lowerVal, float upperTime, const ValueType& upperVal, float time) const
 		{
-			float x = (time - lowerTime) / (upperTime - lowerTime);
-			ValueType result;
-			bx::vec3Lerp(result.data, lowerVal.data, upperVal.data, x);
+			const float tt = (time - lowerTime) / (upperTime - lowerTime);
+			const ValueType result = bx::lerp(lowerVal, upperVal, tt);
 			return result;
 		};
 
 		KeyMap	m_keyMap;
 	};
-
 
 	// Controls sun position according to time, month, and observer's latitude.
 	// Sun position computation based on Earth's orbital elements: https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
@@ -247,11 +240,11 @@ namespace
 			December
 		};
 
-		SunController():
-			m_latitude(50.0f),
-			m_month(June),
-			m_eclipticObliquity(bx::toRad(23.4f)),
-			m_delta(0.0f)
+		SunController()
+			: m_latitude(50.0f)
+			, m_month(June)
+			, m_eclipticObliquity(bx::toRad(23.4f) )
+			, m_delta(0.0f)
 		{
 			m_northDirection[0] = 1.0;
 			m_northDirection[1] = 0.0;
@@ -261,10 +254,10 @@ namespace
 			m_upvector[2] = 0.0f;
 		}
 
-		void Update(float time)
+		void Update(float _time)
 		{
 			CalculateSunOrbit();
-			UpdateSunPosition(time - 12.0f);
+			UpdateSunPosition(_time - 12.0f);
 		}
 
 		float m_northDirection[3];
@@ -278,26 +271,29 @@ namespace
 		{
 			float day = 30.0f * m_month + 15.0f;
 			float lambda = 280.46f + 0.9856474f * day;
-			lambda = bx::toRad(lambda);
-			m_delta = bx::asin(bx::sin(m_eclipticObliquity) * bx::sin(lambda));
+			lambda  = bx::toRad(lambda);
+			m_delta = bx::asin(bx::sin(m_eclipticObliquity) * bx::sin(lambda) );
 		}
 
-		void UpdateSunPosition(float hour)
+		void UpdateSunPosition(float _hour)
 		{
 			float latitude = bx::toRad(m_latitude);
-			float h = hour * bx::kPi / 12.0f;
+			float hh = _hour * bx::kPi / 12.0f;
 			float azimuth = bx::atan2(
-				bx::sin(h),
-				bx::cos(h) * bx::sin(latitude) - bx::tan(m_delta) * bx::cos(latitude)
-			);
+				  bx::sin(hh)
+				, bx::cos(hh) * bx::sin(latitude) - bx::tan(m_delta) * bx::cos(latitude)
+				);
 
 			float altitude = bx::asin(
-				bx::sin(latitude) * bx::sin(m_delta) + bx::cos(latitude) * bx::cos(m_delta) * bx::cos(h)
+				bx::sin(latitude) * bx::sin(m_delta) + bx::cos(latitude) * bx::cos(m_delta) * bx::cos(hh)
 				);
+
 			float rotation[4];
 			bx::quatRotateAxis(rotation, m_upvector, -azimuth);
+
 			float direction[3];
 			bx::vec3MulQuat(direction, m_northDirection, rotation);
+
 			float v[3];
 			bx::vec3Cross(v, m_upvector, direction);
 			bx::quatRotateAxis(rotation, v, altitude);
@@ -591,14 +587,14 @@ namespace
 				bgfx::setViewTransform(0, view, proj);
 
 				Color sunLuminanceXYZ = m_sunLuminanceXYZ.GetValue(m_time);
-				Color sunLuminanceRGB = XYZToRGB(sunLuminanceXYZ);
+				Color sunLuminanceRGB = xyzToRgb(sunLuminanceXYZ);
 
 				Color skyLuminanceXYZ = m_skyLuminanceXYZ.GetValue(m_time);
-				Color skyLuminanceRGB = XYZToRGB(skyLuminanceXYZ);
+				Color skyLuminanceRGB = xyzToRgb(skyLuminanceXYZ);
 
-				bgfx::setUniform(u_sunLuminance,    sunLuminanceRGB.data);
-				bgfx::setUniform(u_skyLuminanceXYZ, skyLuminanceXYZ.data);
-				bgfx::setUniform(u_skyLuminance,    skyLuminanceRGB.data);
+				bgfx::setUniform(u_sunLuminance,    &sunLuminanceRGB.x);
+				bgfx::setUniform(u_skyLuminanceXYZ, &skyLuminanceXYZ.x);
+				bgfx::setUniform(u_skyLuminance,    &skyLuminanceRGB.x);
 
 				bgfx::setUniform(u_sunDirection, m_sun.m_sunDirection);
 
@@ -622,14 +618,15 @@ namespace
 			return false;
 		}
 
-		void computePerezCoeff(float turbidity, float* perezCoeff)
+		void computePerezCoeff(float _turbidity, float* _outPerezCoeff)
 		{
-			for (int i = 0; i < 5; ++i)
+			const bx::Vec3 turbidity = { _turbidity, _turbidity, _turbidity };
+			for (uint32_t ii = 0; ii < 5; ++ii)
 			{
-				Color tmp;
-				bx::vec3Mul(tmp.data, ABCDE_t[i].data, turbidity);
-				bx::vec3Add(perezCoeff + 4 * i, tmp.data, ABCDE[i].data);
-				perezCoeff[4 * i + 3] = 0.0f;
+				const bx::Vec3 tmp = bx::mad(ABCDE_t[ii], turbidity, ABCDE[ii]);
+				float* out = _outPerezCoeff + 4 * ii;
+				bx::store(out, tmp);
+				out[3] = 0.0f;
 			}
 		}
 
