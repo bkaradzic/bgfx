@@ -246,12 +246,8 @@ namespace
 			, m_eclipticObliquity(bx::toRad(23.4f) )
 			, m_delta(0.0f)
 		{
-			m_northDirection[0] = 1.0;
-			m_northDirection[1] = 0.0;
-			m_northDirection[2] = 0.0;
-			m_upvector[0] = 0.0f;
-			m_upvector[1] = 1.0f;
-			m_upvector[2] = 0.0f;
+			m_northDir = { 1.0f, 0.0f, 0.0f };
+			m_upDir    = { 0.0f, 1.0f, 0.0f };
 		}
 
 		void Update(float _time)
@@ -260,9 +256,9 @@ namespace
 			UpdateSunPosition(_time - 12.0f);
 		}
 
-		float m_northDirection[3];
-		float m_sunDirection[4];
-		float m_upvector[3];
+		bx::Vec3 m_northDir;
+		bx::Vec3 m_sunDir;
+		bx::Vec3 m_upDir;
 		float m_latitude;
 		Month m_month;
 
@@ -277,27 +273,23 @@ namespace
 
 		void UpdateSunPosition(float _hour)
 		{
-			float latitude = bx::toRad(m_latitude);
-			float hh = _hour * bx::kPi / 12.0f;
-			float azimuth = bx::atan2(
+			const float latitude = bx::toRad(m_latitude);
+			const float hh = _hour * bx::kPi / 12.0f;
+			const float azimuth = bx::atan2(
 				  bx::sin(hh)
 				, bx::cos(hh) * bx::sin(latitude) - bx::tan(m_delta) * bx::cos(latitude)
 				);
 
-			float altitude = bx::asin(
+			const float altitude = bx::asin(
 				bx::sin(latitude) * bx::sin(m_delta) + bx::cos(latitude) * bx::cos(m_delta) * bx::cos(hh)
 				);
 
-			float rotation[4];
-			bx::quatRotateAxis(rotation, m_upvector, -azimuth);
+			const bx::Quaternion rot0 = bx::rotateAxis(m_upDir, -azimuth);
+			const bx::Vec3 direction = bx::mul(m_northDir, rot0);
+			const bx::Vec3 v = bx::cross(m_upDir, direction);
 
-			float direction[3];
-			bx::vec3MulQuat(direction, m_northDirection, rotation);
-
-			float v[3];
-			bx::vec3Cross(v, m_upvector, direction);
-			bx::quatRotateAxis(rotation, v, altitude);
-			bx::vec3MulQuat(m_sunDirection, direction, rotation);
+			const bx::Quaternion rot1 = rotateAxis(v, altitude);
+			m_sunDir = bx::mul(direction, rot1);
 		}
 
 		float m_eclipticObliquity;
@@ -407,8 +399,10 @@ namespace
 	class ExampleProceduralSky : public entry::AppI
 	{
 	public:
-		ExampleProceduralSky(const char* _name, const char* _description): entry::AppI(_name, _description)
-		{}
+		ExampleProceduralSky(const char* _name, const char* _description)
+			: entry::AppI(_name, _description)
+		{
+		}
 
 		void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 		{
@@ -436,7 +430,7 @@ namespace
 				, 0x000000ff
 				, 1.0f
 				, 0
-			);
+				);
 
 			m_sunLuminanceXYZ.SetMap(sunLuminanceXYZTable);
 			m_skyLuminanceXYZ.SetMap(skyLuminanceXYZTable);
@@ -515,7 +509,8 @@ namespace
 			ImGui::SliderFloat("Turbidity", &m_turbidity, 1.9f, 10.0f);
 			ImGui::Checkbox("Prevent color banding", &m_sky.m_preventBanding);
 
-			const char* items[] = {
+			const char* items[] =
+			{
 				"January",
 				"February",
 				"March",
@@ -529,6 +524,7 @@ namespace
 				"November",
 				"December"
 			};
+
 			ImGui::Combo("Month", (int*)&m_sun.m_month, items, 12);
 
 			ImGui::End();
@@ -596,7 +592,7 @@ namespace
 				bgfx::setUniform(u_skyLuminanceXYZ, &skyLuminanceXYZ.x);
 				bgfx::setUniform(u_skyLuminance,    &skyLuminanceRGB.x);
 
-				bgfx::setUniform(u_sunDirection, m_sun.m_sunDirection);
+				bgfx::setUniform(u_sunDirection, &m_sun.m_sunDir.x);
 
 				float exposition[4] = { 0.02f, 3.0f, 0.1f, m_time };
 				bgfx::setUniform(u_parameters, exposition);
