@@ -459,10 +459,7 @@ namespace entry
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
 			{
-				@autoreleasepool
-				{
-					bgfx::renderFrame();
-				}
+				bgfx::renderFrame();
 
 				while (dispatchEvent(peekEvent() ) )
 				{

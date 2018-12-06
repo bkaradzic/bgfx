@@ -612,11 +612,16 @@ namespace bgfx { namespace mtl
 			m_gpuTimer.init();
 
 			g_internalData.context = m_device;
+
+			m_pool = [[NSAutoreleasePool alloc] init];
+
 			return true;
 		}
 
 		void shutdown()
 		{
+			[m_pool release];
+
 			m_occlusionQuery.postReset();
 			m_gpuTimer.shutdown();
 
@@ -1107,8 +1112,8 @@ namespace bgfx { namespace mtl
 			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
 			{
 				FrameBufferMtl& frameBuffer = ii == 0 ? m_mainFrameBuffer : m_frameBuffers[m_windows[ii].idx];
-				if (NULL != frameBuffer.m_swapChain &&
-					frameBuffer.m_swapChain->m_drawable)
+				if (NULL != frameBuffer.m_swapChain
+				&&  frameBuffer.m_swapChain->m_drawable)
 				{
 					m_commandBuffer.presentDrawable(frameBuffer.m_swapChain->m_drawable);
 					MTL_RELEASE(frameBuffer.m_swapChain->m_drawable);
@@ -1117,6 +1122,9 @@ namespace bgfx { namespace mtl
 
 			m_cmd.kick(true);
 			m_commandBuffer = 0;
+
+			[m_pool release];
+			m_pool = [[NSAutoreleasePool alloc] init];
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -2179,6 +2187,8 @@ namespace bgfx { namespace mtl
 		BlitCommandEncoder   m_blitCommandEncoder;
 		RenderCommandEncoder m_renderCommandEncoder;
 		FrameBufferHandle    m_renderCommandEncoderFrameBufferHandle;
+
+		NSAutoreleasePool*   m_pool;
 	};
 
 	RendererContextI* rendererCreate(const Init& _init)
