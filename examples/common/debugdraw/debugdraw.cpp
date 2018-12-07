@@ -198,22 +198,22 @@ uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 
 				static const float ss = 1.0f/len * scale;
 				static const float ll = ss*golden;
 
-				static const float vv[12][4] =
+				static const bx::Vec3 vv[] =
 				{
-					{ -ll, 0.0f, -ss, 0.0f },
-					{  ll, 0.0f, -ss, 0.0f },
-					{  ll, 0.0f,  ss, 0.0f },
-					{ -ll, 0.0f,  ss, 0.0f },
+					{ -ll, 0.0f, -ss },
+					{  ll, 0.0f, -ss },
+					{  ll, 0.0f,  ss },
+					{ -ll, 0.0f,  ss },
 
-					{ -ss,  ll, 0.0f, 0.0f },
-					{  ss,  ll, 0.0f, 0.0f },
-					{  ss, -ll, 0.0f, 0.0f },
-					{ -ss, -ll, 0.0f, 0.0f },
+					{ -ss,  ll, 0.0f },
+					{  ss,  ll, 0.0f },
+					{  ss, -ll, 0.0f },
+					{ -ss, -ll, 0.0f },
 
-					{ 0.0f, -ss,  ll, 0.0f },
-					{ 0.0f,  ss,  ll, 0.0f },
-					{ 0.0f,  ss, -ll, 0.0f },
-					{ 0.0f, -ss, -ll, 0.0f },
+					{ 0.0f, -ss,  ll },
+					{ 0.0f,  ss,  ll },
+					{ 0.0f,  ss, -ll },
+					{ 0.0f, -ss, -ll },
 				};
 
 				m_numVertices = 0;
@@ -242,25 +242,23 @@ uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 
 				triangle(vv[ 3], vv[ 9], vv[ 8], scale, _subdiv);
 			}
 
-			void addVert(const float* _v)
+			void addVert(const bx::Vec3& _v)
 			{
-				float* verts = (float*)m_pos;
-				verts[0] = _v[0];
-				verts[1] = _v[1];
-				verts[2] = _v[2];
+				bx::store(m_pos, _v);
 				m_pos += m_posStride;
 
 				if (NULL != m_normals)
 				{
-					float* normals = (float*)m_normals;
-					bx::vec3Norm(normals, _v);
+					const bx::Vec3 normal = bx::normalize(_v);
+					bx::store(m_normals, normal);
+
 					m_normals += m_normalStride;
 				}
 
 				m_numVertices++;
 			}
 
-			void triangle(const float* _v0, const float* _v1, const float* _v2, float _scale, uint8_t _subdiv)
+			void triangle(const bx::Vec3& _v0, const bx::Vec3& _v1, const bx::Vec3& _v2, float _scale, uint8_t _subdiv)
 			{
 				if (0 == _subdiv)
 				{
@@ -270,23 +268,9 @@ uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 
 				}
 				else
 				{
-					float tmp0[4];
-					float tmp1[4];
-
-					float v01[4];
-					bx::vec3Add(tmp0, _v0, _v1);
-					bx::vec3Norm(tmp1, tmp0);
-					bx::vec3Mul(v01, tmp1, _scale);
-
-					float v12[4];
-					bx::vec3Add(tmp0, _v1, _v2);
-					bx::vec3Norm(tmp1, tmp0);
-					bx::vec3Mul(v12, tmp1, _scale);
-
-					float v20[4];
-					bx::vec3Add(tmp0, _v2, _v0);
-					bx::vec3Norm(tmp1, tmp0);
-					bx::vec3Mul(v20, tmp1, _scale);
+					const bx::Vec3 v01 = bx::mul(bx::normalize(bx::add(_v0, _v1) ), _scale);
+					const bx::Vec3 v12 = bx::mul(bx::normalize(bx::add(_v1, _v2) ), _scale);
+					const bx::Vec3 v20 = bx::mul(bx::normalize(bx::add(_v2, _v0) ), _scale);
 
 					--_subdiv;
 					triangle(_v0, v01, v20, _scale, _subdiv);
@@ -309,28 +293,32 @@ uint32_t genSphere(uint8_t _subdiv0, void* _pos0 = NULL, uint16_t _posStride0 = 
 	return numVertices;
 }
 
-void getPoint(float* _result, Axis::Enum _axis, float _x, float _y)
+bx::Vec3 getPoint(Axis::Enum _axis, float _x, float _y)
 {
+	bx::Vec3 result;
+
 	switch (_axis)
 	{
 		case Axis::X:
-			_result[0] = 0.0f;
-			_result[1] = _x;
-			_result[2] = _y;
+			result.x = 0.0f;
+			result.y = _x;
+			result.z = _y;
 			break;
 
 		case Axis::Y:
-			_result[0] = _y;
-			_result[1] = 0.0f;
-			_result[2] = _x;
+			result.x = _y;
+			result.y = 0.0f;
+			result.z = _x;
 			break;
 
 		default:
-			_result[0] = _x;
-			_result[1] = _y;
-			_result[2] = 0.0f;
+			result.x = _x;
+			result.y = _y;
+			result.z = 0.0f;
 			break;
 	}
+
+	return result;
 }
 
 #include "vs_debugdraw_lines.bin.h"
@@ -1335,11 +1323,15 @@ struct DebugDrawEncoderImpl
 		moveTo(pos[0], pos[1], pos[2]);
 	}
 
+	void moveTo(const bx::Vec3& _pos)
+	{
+		BX_CHECK(State::Count != m_state);
+		moveTo(_pos.x, _pos.y, _pos.z);
+	}
+
 	void moveTo(Axis::Enum _axis, float _x, float _y)
 	{
-		float pos[3];
-		getPoint(pos, _axis, _x, _y);
-		moveTo(pos);
+		moveTo(getPoint(_axis, _x, _y) );
 	}
 
 	void lineTo(float _x, float _y, float _z = 0.0f)
@@ -1388,9 +1380,7 @@ struct DebugDrawEncoderImpl
 		vertex.m_abgr = attrib.m_abgr;
 		vertex.m_len  = attrib.m_offset;
 
-		float tmp[3];
-		bx::vec3Sub(tmp, &vertex.m_x, &m_cache[prev].m_x);
-		float len = bx::vec3Length(tmp) * attrib.m_scale;
+		float len = bx::length(bx::sub(bx::load(&vertex.m_x), bx::load(&m_cache[prev].m_x) ) ) * attrib.m_scale;
 		vertex.m_len = m_cache[prev].m_len + len;
 
 		m_indices[m_indexPos++] = prev;
@@ -1405,11 +1395,15 @@ struct DebugDrawEncoderImpl
 		lineTo(pos[0], pos[1], pos[2]);
 	}
 
+	void lineTo(const bx::Vec3& _pos)
+	{
+		BX_CHECK(State::Count != m_state);
+		lineTo(_pos.x, _pos.y, _pos.z);
+	}
+
 	void lineTo(Axis::Enum _axis, float _x, float _y)
 	{
-		float pos[3];
-		getPoint(pos, _axis, _x, _y);
-		lineTo(pos);
+		lineTo(getPoint(_axis, _x, _y) );
 	}
 
 	void close()
@@ -1562,7 +1556,7 @@ struct DebugDrawEncoderImpl
 			},
 		};
 
-		bx::vec3Norm(params[0], params[0]);
+		bx::store(params[0], bx::normalize(bx::load(params[0]) ) );
 		m_encoder->setUniform(s_dds.u_params, params, 4);
 
 		m_encoder->setState(0
@@ -1711,37 +1705,40 @@ struct DebugDrawEncoderImpl
 
 		_degrees = bx::wrap(_degrees, 360.0f);
 
-		float pos[3];
-		getPoint(pos, _axis
+		bx::Vec3 pos = getPoint(
+			  _axis
 			, bx::sin(step * 0)*_radius
 			, bx::cos(step * 0)*_radius
 			);
 
-		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
+		moveTo({pos.x + _x, pos.y + _y, pos.z + _z});
 
 		uint32_t n = uint32_t(num*_degrees/360.0f);
 
 		for (uint32_t ii = 1; ii < n+1; ++ii)
 		{
-			getPoint(pos, _axis
+			pos = getPoint(
+				  _axis
 				, bx::sin(step * ii)*_radius
 				, bx::cos(step * ii)*_radius
 				);
-			lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
+			lineTo({pos.x + _x, pos.y + _y, pos.z + _z});
 		}
 
 		moveTo(_x, _y, _z);
-		getPoint(pos, _axis
+		pos = getPoint(
+			  _axis
 			, bx::sin(step * 0)*_radius
 			, bx::cos(step * 0)*_radius
 			);
-		lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
+		lineTo({pos.x + _x, pos.y + _y, pos.z + _z});
 
-		getPoint(pos, _axis
+		pos = getPoint(
+			  _axis
 			, bx::sin(step * n)*_radius
 			, bx::cos(step * n)*_radius
 			);
-		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
+		moveTo({pos.x + _x, pos.y + _y, pos.z + _z});
 		lineTo(_x, _y, _z);
 	}
 
@@ -1752,24 +1749,22 @@ struct DebugDrawEncoderImpl
 		const float step = bx::kPi * 2.0f / num;
 		_weight = bx::clamp(_weight, 0.0f, 2.0f);
 
-		float udir[3];
-		float vdir[3];
-		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
-
-		float pos[3];
-		float tmp0[3];
-		float tmp1[3];
+		bx::Vec3 udir;
+		bx::Vec3 vdir;
+		bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
 
 		float xy0[2];
 		float xy1[2];
 		circle(xy0, 0.0f);
 		squircle(xy1, 0.0f);
 
-		bx::vec3Mul(pos,  udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
-		bx::vec3Mul(tmp0, vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
-		bx::vec3Add(tmp1, pos,  tmp0);
-		bx::vec3Add(pos,  tmp1, _center);
-		moveTo(pos);
+		const bx::Vec3 center = bx::load(_center);
+
+		bx::Vec3 pos  = bx::mul(udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
+		bx::Vec3 tmp0 = bx::mul(vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
+		bx::Vec3 tmp1 = bx::add(pos,  tmp0);
+		bx::Vec3 tmp2 = bx::add(tmp1, center);
+		moveTo(tmp2);
 
 		for (uint32_t ii = 1; ii < num; ++ii)
 		{
@@ -1777,11 +1772,11 @@ struct DebugDrawEncoderImpl
 			circle(xy0, angle);
 			squircle(xy1, angle);
 
-			bx::vec3Mul(pos,  udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
-			bx::vec3Mul(tmp0, vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
-			bx::vec3Add(tmp1, pos,  tmp0);
-			bx::vec3Add(pos,  tmp1, _center);
-			lineTo(pos);
+			pos  = bx::mul(udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
+			tmp0 = bx::mul(vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
+			tmp1 = bx::add(pos,  tmp0);
+			tmp2 = bx::add(tmp1, center);
+			lineTo(tmp2);
 		}
 
 		close();
@@ -1804,24 +1799,26 @@ struct DebugDrawEncoderImpl
 		circle(xy0, 0.0f);
 		squircle(xy1, 0.0f);
 
-		float pos[3];
-		getPoint(pos, _axis
+		bx::Vec3 pos = getPoint(
+			  _axis
 			, bx::lerp(xy0[0], xy1[0], _weight)*_radius
 			, bx::lerp(xy0[1], xy1[1], _weight)*_radius
 			);
 
-		moveTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
+		moveTo({pos.x + _x, pos.y + _y, pos.z + _z});
+
 		for (uint32_t ii = 1; ii < num; ++ii)
 		{
 			float angle = step * ii;
 			circle(xy0, angle);
 			squircle(xy1, angle);
 
-			getPoint(pos, _axis
+			pos = getPoint(
+				  _axis
 				, bx::lerp(xy0[0], xy1[0], _weight)*_radius
 				, bx::lerp(xy0[1], xy1[1], _weight)*_radius
 				);
-			lineTo(pos[0] + _x, pos[1] + _y, pos[2] + _z);
+			lineTo({pos.x + _x, pos.y + _y, pos.z + _z});
 		}
 		close();
 	}
@@ -1831,42 +1828,21 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
 		{
-			float udir[3];
-			float vdir[3];
-
-			bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
+			bx::Vec3 udir, vdir;
+			bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
 
 			const float halfExtent = _size*0.5f;
 
-			float umin[3];
-			bx::vec3Mul(umin, udir, -halfExtent);
+			const bx::Vec3 umin   = bx::mul(udir, -halfExtent);
+			const bx::Vec3 umax   = bx::mul(udir,  halfExtent);
+			const bx::Vec3 vmin   = bx::mul(vdir, -halfExtent);
+			const bx::Vec3 vmax   = bx::mul(vdir,  halfExtent);
+			const bx::Vec3 center = bx::load(_center);
 
-			float umax[3];
-			bx::vec3Mul(umax, udir,  halfExtent);
-
-			float vmin[3];
-			bx::vec3Mul(vmin, vdir, -halfExtent);
-
-			float vmax[3];
-			bx::vec3Mul(vmax, vdir,  halfExtent);
-
-			float pt[3];
-			float tmp[3];
-			bx::vec3Add(tmp, umin, vmin);
-			bx::vec3Add(pt, _center, tmp);
-			moveTo(pt);
-
-			bx::vec3Add(tmp, umax, vmin);
-			bx::vec3Add(pt, _center, tmp);
-			lineTo(pt);
-
-			bx::vec3Add(tmp, umax, vmax);
-			bx::vec3Add(pt, _center, tmp);
-			lineTo(pt);
-
-			bx::vec3Add(tmp, umin, vmax);
-			bx::vec3Add(pt, _center, tmp);
-			lineTo(pt);
+			moveTo(bx::add(center, bx::add(umin, vmin) ) );
+			lineTo(bx::add(center, bx::add(umax, vmin) ) );
+			lineTo(bx::add(center, bx::add(umax, vmax) ) );
+			lineTo(bx::add(center, bx::add(umin, vmax) ) );
 
 			close();
 		}
@@ -1893,10 +1869,8 @@ struct DebugDrawEncoderImpl
 
 		const Attrib& attrib = m_attrib[m_stack];
 
-		float udir[3];
-		float vdir[3];
-
-		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
+		bx::Vec3 udir, vdir;
+		bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
 
 		const Pack2D& pack = s_dds.m_sprite.get(_handle);
 		const float invTextureSize = 1.0f/SPRITE_TEXTURE_SIZE;
@@ -1909,58 +1883,34 @@ struct DebugDrawEncoderImpl
 		const float halfExtentU =      aspectRatio*_size*0.5f;
 		const float halfExtentV = 1.0f/aspectRatio*_size*0.5f;
 
-		float umin[3];
-		bx::vec3Mul(umin, udir, -halfExtentU);
-
-		float umax[3];
-		bx::vec3Mul(umax, udir,  halfExtentU);
-
-		float vmin[3];
-		bx::vec3Mul(vmin, vdir, -halfExtentV);
-
-		float vmax[3];
-		bx::vec3Mul(vmax, vdir,  halfExtentV);
+		const bx::Vec3 umin   = bx::mul(udir, -halfExtentU);
+		const bx::Vec3 umax   = bx::mul(udir,  halfExtentU);
+		const bx::Vec3 vmin   = bx::mul(vdir, -halfExtentV);
+		const bx::Vec3 vmax   = bx::mul(vdir,  halfExtentV);
+		const bx::Vec3 center = bx::load(_center);
 
 		DebugUvVertex* vertex = &m_cacheQuad[m_posQuad];
 		m_posQuad += 4;
 
-		float pt[3];
-		float tmp[3];
-		bx::vec3Add(tmp, umin, vmin);
-		bx::vec3Add(pt, _center, tmp);
-		vertex->m_x = pt[0];
-		vertex->m_y = pt[1];
-		vertex->m_z = pt[2];
+		bx::store(&vertex->m_x, bx::add(center, bx::add(umin, vmin) ) );
 		vertex->m_u = us;
 		vertex->m_v = vs;
 		vertex->m_abgr = attrib.m_abgr;
 		++vertex;
 
-		bx::vec3Add(tmp, umax, vmin);
-		bx::vec3Add(pt, _center, tmp);
-		vertex->m_x = pt[0];
-		vertex->m_y = pt[1];
-		vertex->m_z = pt[2];
+		bx::store(&vertex->m_x, bx::add(center, bx::add(umax, vmin) ) );
 		vertex->m_u = ue;
 		vertex->m_v = vs;
 		vertex->m_abgr = attrib.m_abgr;
 		++vertex;
 
-		bx::vec3Add(tmp, umin, vmax);
-		bx::vec3Add(pt, _center, tmp);
-		vertex->m_x = pt[0];
-		vertex->m_y = pt[1];
-		vertex->m_z = pt[2];
+		bx::store(&vertex->m_x, bx::add(center, bx::add(umin, vmax) ) );
 		vertex->m_u = us;
 		vertex->m_v = ve;
 		vertex->m_abgr = attrib.m_abgr;
 		++vertex;
 
-		bx::vec3Add(tmp, umax, vmax);
-		bx::vec3Add(pt, _center, tmp);
-		vertex->m_x = pt[0];
-		vertex->m_y = pt[1];
-		vertex->m_z = pt[2];
+		bx::store(&vertex->m_x, bx::add(center, bx::add(umax, vmax) ) );
 		vertex->m_u = ue;
 		vertex->m_v = ve;
 		vertex->m_abgr = attrib.m_abgr;
@@ -1976,11 +1926,8 @@ struct DebugDrawEncoderImpl
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 
-		float tmp0[3];
-		bx::vec3Sub(tmp0, _from, _to);
-
 		float normal[3];
-		bx::vec3Norm(normal, tmp0);
+		bx::store(normal, bx::normalize(bx::sub(bx::load(_from), bx::load(_to) ) ) );
 
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
@@ -1991,9 +1938,9 @@ struct DebugDrawEncoderImpl
 		mtx[1][14] = _to[2];
 
 		uint8_t lod = attrib.m_lod > Mesh::ConeMaxLod
-					? uint8_t(Mesh::ConeMaxLod)
-					: attrib.m_lod
-					;
+			? uint8_t(Mesh::ConeMaxLod)
+			: attrib.m_lod
+			;
 		draw(Mesh::Enum(Mesh::Cone0 + lod), mtx[0], 2, attrib.m_wireframe);
 	}
 
@@ -2006,11 +1953,8 @@ struct DebugDrawEncoderImpl
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 
-		float tmp0[3];
-		bx::vec3Sub(tmp0, _from, _to);
-
 		float normal[3];
-		bx::vec3Norm(normal, tmp0);
+		bx::store(normal, bx::normalize(bx::sub(bx::load(_from), bx::load(_to) ) ) );
 
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
@@ -2117,59 +2061,38 @@ struct DebugDrawEncoderImpl
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 
-		float udir[3];
-		float vdir[3];
-		bx::vec3TangentFrame(_normal, udir, vdir, attrib.m_spin);
+		bx::Vec3 udir;
+		bx::Vec3 vdir;
+		bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
 
-		bx::vec3Mul(udir, udir, _step);
-		bx::vec3Mul(vdir, vdir, _step);
+		udir = bx::mul(udir, _step);
+		vdir = bx::mul(vdir, _step);
 
 		const uint32_t num = (_size/2)*2+1;
 		const float halfExtent = float(_size/2);
 
-		float umin[3];
-		bx::vec3Mul(umin, udir, -halfExtent);
+		const bx::Vec3 umin   = bx::mul(udir, -halfExtent);
+		const bx::Vec3 umax   = bx::mul(udir,  halfExtent);
+		const bx::Vec3 vmin   = bx::mul(vdir, -halfExtent);
+		const bx::Vec3 vmax   = bx::mul(vdir,  halfExtent);
+		const bx::Vec3 center = bx::load(_center);
 
-		float umax[3];
-		bx::vec3Mul(umax, udir,  halfExtent);
-
-		float vmin[3];
-		bx::vec3Mul(vmin, vdir, -halfExtent);
-
-		float vmax[3];
-		bx::vec3Mul(vmax, vdir,  halfExtent);
-
-		float tmp[3];
-
-		float xs[3];
-		float xe[3];
-
-		bx::vec3Add(tmp, umin, vmin);
-		bx::vec3Add(xs, _center, tmp);
-
-		bx::vec3Add(tmp, umax, vmin);
-		bx::vec3Add(xe, _center, tmp);
-
-		float ys[3];
-		float ye[3];
-
-		bx::vec3Add(tmp, umin, vmin);
-		bx::vec3Add(ys, _center, tmp);
-
-		bx::vec3Add(tmp, umin, vmax);
-		bx::vec3Add(ye, _center, tmp);
+		bx::Vec3 xs = bx::add(center, bx::add(umin, vmin) );
+		bx::Vec3 xe = bx::add(center, bx::add(umax, vmin) );
+		bx::Vec3 ys = bx::add(center, bx::add(umin, vmin) );
+		bx::Vec3 ye = bx::add(center, bx::add(umin, vmax) );
 
 		for (uint32_t ii = 0; ii < num; ++ii)
 		{
 			moveTo(xs);
 			lineTo(xe);
-			bx::vec3Add(xs, xs, vdir);
-			bx::vec3Add(xe, xe, vdir);
+			xs = bx::add(xs, vdir);
+			xe = bx::add(xe, vdir);
 
 			moveTo(ys);
 			lineTo(ye);
-			bx::vec3Add(ys, ys, udir);
-			bx::vec3Add(ye, ye, udir);
+			ys = bx::add(ys, udir);
+			ye = bx::add(ye, udir);
 		}
 	}
 
