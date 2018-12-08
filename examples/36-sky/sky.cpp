@@ -246,8 +246,9 @@ namespace
 			, m_eclipticObliquity(bx::toRad(23.4f) )
 			, m_delta(0.0f)
 		{
-			m_northDir = { 1.0f, 0.0f, 0.0f };
-			m_upDir    = { 0.0f, 1.0f, 0.0f };
+			m_northDir = { 1.0f,  0.0f, 0.0f };
+			m_sunDir   = { 0.0f, -1.0f, 0.0f };
+			m_upDir    = { 0.0f,  1.0f, 0.0f };
 		}
 
 		void Update(float _time)
@@ -285,11 +286,11 @@ namespace
 				);
 
 			const bx::Quaternion rot0 = bx::rotateAxis(m_upDir, -azimuth);
-			const bx::Vec3 direction = bx::mul(m_northDir, rot0);
-			const bx::Vec3 v = bx::cross(m_upDir, direction);
+			const bx::Vec3 dir = bx::mul(m_northDir, rot0);
+			const bx::Vec3 uxd = bx::cross(m_upDir, dir);
 
-			const bx::Quaternion rot1 = rotateAxis(v, altitude);
-			m_sunDir = bx::mul(direction, rot1);
+			const bx::Quaternion rot1 = bx::rotateAxis(uxd, altitude);
+			m_sunDir = bx::mul(dir, rot1);
 		}
 
 		float m_eclipticObliquity;
