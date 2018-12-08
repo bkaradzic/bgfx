@@ -185,19 +185,11 @@ struct Camera
 
 	void reset()
 	{
-		m_target.curr[0] = 0.0f;
-		m_target.curr[1] = 0.0f;
-		m_target.curr[2] = 0.0f;
-		m_target.dest[0] = 0.0f;
-		m_target.dest[1] = 0.0f;
-		m_target.dest[2] = 0.0f;
+		m_target.curr = { 0.0f, 0.0f, 0.0f };
+		m_target.dest = { 0.0f, 0.0f, 0.0f };
 
-		m_pos.curr[0] =  0.0f;
-		m_pos.curr[1] =  0.0f;
-		m_pos.curr[2] = -3.0f;
-		m_pos.dest[0] =  0.0f;
-		m_pos.dest[1] =  0.0f;
-		m_pos.dest[2] = -3.0f;
+		m_pos.curr = { 0.0f, 0.0f, -3.0f };
+		m_pos.dest = { 0.0f, 0.0f, -3.0f };
 
 		m_orbit[0] = 0.0f;
 		m_orbit[1] = 0.0f;
@@ -205,7 +197,7 @@ struct Camera
 
 	void mtxLookAt(float* _outViewMtx)
 	{
-		bx::mtxLookAt(_outViewMtx, bx::load(m_pos.curr), bx::load(m_target.curr) );
+		bx::mtxLookAt(_outViewMtx, m_pos.curr, m_target.curr);
 	}
 
 	void orbit(float _dx, float _dy)
@@ -217,133 +209,79 @@ struct Camera
 	void dolly(float _dz)
 	{
 		const float cnear = 1.0f;
-		const float cfar  = 10.0f;
+		const float cfar  = 100.0f;
 
-		const float toTarget[3] =
-		{
-			m_target.dest[0] - m_pos.dest[0],
-			m_target.dest[1] - m_pos.dest[1],
-			m_target.dest[2] - m_pos.dest[2],
-		};
-		const float toTargetLen = bx::vec3Length(toTarget);
-		const float invToTargetLen = 1.0f/(toTargetLen+FLT_MIN);
-		const float toTargetNorm[3] =
-		{
-			toTarget[0]*invToTargetLen,
-			toTarget[1]*invToTargetLen,
-			toTarget[2]*invToTargetLen,
-		};
+		const bx::Vec3 toTarget     = bx::sub(m_target.dest, m_pos.dest);
+		const float toTargetLen     = bx::length(toTarget);
+		const float invToTargetLen  = 1.0f / (toTargetLen + bx::kFloatMin);
+		const bx::Vec3 toTargetNorm = bx::mul(toTarget, invToTargetLen);
 
-		float delta = toTargetLen*_dz;
+		float delta  = toTargetLen * _dz;
 		float newLen = toTargetLen + delta;
-		if ( (cnear < newLen || _dz < 0.0f)
-		&&   (newLen < cfar  || _dz > 0.0f) )
+		if ( (cnear  < newLen || _dz < 0.0f)
+		&&   (newLen < cfar   || _dz > 0.0f) )
 		{
-			m_pos.dest[0] += toTargetNorm[0]*delta;
-			m_pos.dest[1] += toTargetNorm[1]*delta;
-			m_pos.dest[2] += toTargetNorm[2]*delta;
+			m_pos.dest = bx::mad(toTargetNorm, delta, m_pos.dest);
 		}
 	}
 
 	void consumeOrbit(float _amount)
 	{
 		float consume[2];
-		consume[0] = m_orbit[0]*_amount;
-		consume[1] = m_orbit[1]*_amount;
+		consume[0] = m_orbit[0] * _amount;
+		consume[1] = m_orbit[1] * _amount;
 		m_orbit[0] -= consume[0];
 		m_orbit[1] -= consume[1];
 
-		const float toPos[3] =
-		{
-			m_pos.curr[0] - m_target.curr[0],
-			m_pos.curr[1] - m_target.curr[1],
-			m_pos.curr[2] - m_target.curr[2],
-		};
-		const float toPosLen = bx::vec3Length(toPos);
-		const float invToPosLen = 1.0f/(toPosLen+FLT_MIN);
-		const float toPosNorm[3] =
-		{
-			toPos[0]*invToPosLen,
-			toPos[1]*invToPosLen,
-			toPos[2]*invToPosLen,
-		};
+		const bx::Vec3 toPos     = bx::sub(m_pos.curr, m_target.curr);
+		const float toPosLen     = bx::length(toPos);
+		const float invToPosLen  = 1.0f / (toPosLen + bx::kFloatMin);
+		const bx::Vec3 toPosNorm = bx::mul(toPos, invToPosLen);
 
 		float ll[2];
-		latLongFromVec(ll[0], ll[1], toPosNorm);
+		bx::toLatLong(&ll[0], &ll[1], toPosNorm);
 		ll[0] += consume[0];
 		ll[1] -= consume[1];
-		ll[1] = bx::clamp(ll[1], 0.02f, 0.98f);
+		ll[1]  = bx::clamp(ll[1], 0.02f, 0.98f);
 
-		float tmp[3];
-		vecFromLatLong(tmp, ll[0], ll[1]);
+		const bx::Vec3 tmp  = bx::fromLatLong(ll[0], ll[1]);
+		const bx::Vec3 diff = bx::mul(bx::sub(tmp, toPosNorm), toPosLen);
 
-		float diff[3];
-		diff[0] = (tmp[0]-toPosNorm[0])*toPosLen;
-		diff[1] = (tmp[1]-toPosNorm[1])*toPosLen;
-		diff[2] = (tmp[2]-toPosNorm[2])*toPosLen;
-
-		m_pos.curr[0] += diff[0];
-		m_pos.curr[1] += diff[1];
-		m_pos.curr[2] += diff[2];
-		m_pos.dest[0] += diff[0];
-		m_pos.dest[1] += diff[1];
-		m_pos.dest[2] += diff[2];
+		m_pos.curr = bx::add(m_pos.curr, diff);
+		m_pos.dest = bx::add(m_pos.dest, diff);
 	}
 
 	void update(float _dt)
 	{
-		const float amount = bx::min(_dt/0.12f, 1.0f);
+		const float amount = bx::min(_dt / 0.12f, 1.0f);
 
 		consumeOrbit(amount);
 
-		m_target.curr[0] = bx::lerp(m_target.curr[0], m_target.dest[0], amount);
-		m_target.curr[1] = bx::lerp(m_target.curr[1], m_target.dest[1], amount);
-		m_target.curr[2] = bx::lerp(m_target.curr[2], m_target.dest[2], amount);
-		m_pos.curr[0] = bx::lerp(m_pos.curr[0], m_pos.dest[0], amount);
-		m_pos.curr[1] = bx::lerp(m_pos.curr[1], m_pos.dest[1], amount);
-		m_pos.curr[2] = bx::lerp(m_pos.curr[2], m_pos.dest[2], amount);
+		m_target.curr = bx::lerp(m_target.curr, m_target.dest, amount);
+		m_pos.curr    = bx::lerp(m_pos.curr,    m_pos.dest,    amount);
 	}
 
 	void envViewMtx(float* _mtx)
 	{
-		const float toTarget[3] =
-		{
-			m_target.curr[0] - m_pos.curr[0],
-			m_target.curr[1] - m_pos.curr[1],
-			m_target.curr[2] - m_pos.curr[2],
-		};
+		const bx::Vec3 toTarget     = bx::sub(m_target.curr, m_pos.curr);
+		const float toTargetLen     = bx::length(toTarget);
+		const float invToTargetLen  = 1.0f / (toTargetLen + bx::kFloatMin);
+		const bx::Vec3 toTargetNorm = bx::mul(toTarget, invToTargetLen);
 
-		const float toTargetLen = bx::vec3Length(toTarget);
-		const float invToTargetLen = 1.0f/(toTargetLen+FLT_MIN);
-		const float toTargetNorm[3] =
-		{
-			toTarget[0]*invToTargetLen,
-			toTarget[1]*invToTargetLen,
-			toTarget[2]*invToTargetLen,
-		};
+		const bx::Vec3 right = bx::normalize(bx::cross({ 0.0f, 1.0f, 0.0f }, toTargetNorm) );
+		const bx::Vec3 up    = bx::normalize(bx::cross(toTargetNorm, right) );
 
-		float tmp[3];
-		const float fakeUp[3] = { 0.0f, 1.0f, 0.0f };
-
-		float right[3];
-		bx::vec3Cross(tmp, fakeUp, toTargetNorm);
-		bx::vec3Norm(right, tmp);
-
-		float up[3];
-		bx::vec3Cross(tmp, toTargetNorm, right);
-		bx::vec3Norm(up, tmp);
-
-		_mtx[ 0] = right[0];
-		_mtx[ 1] = right[1];
-		_mtx[ 2] = right[2];
+		_mtx[ 0] = right.x;
+		_mtx[ 1] = right.y;
+		_mtx[ 2] = right.z;
 		_mtx[ 3] = 0.0f;
-		_mtx[ 4] = up[0];
-		_mtx[ 5] = up[1];
-		_mtx[ 6] = up[2];
+		_mtx[ 4] = up.x;
+		_mtx[ 5] = up.y;
+		_mtx[ 6] = up.z;
 		_mtx[ 7] = 0.0f;
-		_mtx[ 8] = toTargetNorm[0];
-		_mtx[ 9] = toTargetNorm[1];
-		_mtx[10] = toTargetNorm[2];
+		_mtx[ 8] = toTargetNorm.x;
+		_mtx[ 9] = toTargetNorm.y;
+		_mtx[10] = toTargetNorm.z;
 		_mtx[11] = 0.0f;
 		_mtx[12] = 0.0f;
 		_mtx[13] = 0.0f;
@@ -351,34 +289,10 @@ struct Camera
 		_mtx[15] = 1.0f;
 	}
 
-	static inline void vecFromLatLong(float _vec[3], float _u, float _v)
-	{
-		const float phi   = _u * 2.0f*bx::kPi;
-		const float theta = _v * bx::kPi;
-
-		const float st = bx::sin(theta);
-		const float sp = bx::sin(phi);
-		const float ct = bx::cos(theta);
-		const float cp = bx::cos(phi);
-
-		_vec[0] = -st*sp;
-		_vec[1] = ct;
-		_vec[2] = -st*cp;
-	}
-
-	static inline void latLongFromVec(float& _u, float& _v, const float _vec[3])
-	{
-		const float phi   = bx::atan2(_vec[0], _vec[2]);
-		const float theta = bx::acos(_vec[1]);
-
-		_u = (bx::kPi + phi)*bx::kInvPi*0.5f;
-		_v = theta*bx::kInvPi;
-	}
-
 	struct Interp3f
 	{
-		float curr[3];
-		float dest[3];
+		bx::Vec3 curr;
+		bx::Vec3 dest;
 	};
 
 	Interp3f m_target;
@@ -812,7 +726,7 @@ public:
 				}
 			}
 			m_camera.update(deltaTimeSec);
-			bx::memCopy(m_uniforms.m_cameraPos, m_camera.m_pos.curr, 3*sizeof(float) );
+			bx::memCopy(m_uniforms.m_cameraPos, &m_camera.m_pos.curr.x, 3*sizeof(float) );
 
 			// View Transform 0.
 			float view[16];
