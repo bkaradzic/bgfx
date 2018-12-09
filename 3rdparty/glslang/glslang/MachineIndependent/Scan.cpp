@@ -471,7 +471,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["u64vec3"] =                 U64VEC3;
     (*KeywordMap)["u64vec4"] =                 U64VEC4;
 
-    // GL_KHX_shader_explicit_arithmetic_types
+    // GL_EXT_shader_explicit_arithmetic_types
     (*KeywordMap)["int8_t"] =                  INT8_T;
     (*KeywordMap)["i8vec2"] =                  I8VEC2;
     (*KeywordMap)["i8vec3"] =                  I8VEC3;
@@ -1133,8 +1133,8 @@ int TScanContext::tokenizeIdentifier()
         if (parseContext.symbolTable.atBuiltInLevel() ||
             (parseContext.profile != EEsProfile && parseContext.version >= 450 &&
              (parseContext.extensionTurnedOn(E_GL_ARB_gpu_shader_int64) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int64))))
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int64))))
             return keyword;
         return identifierOrType();
 
@@ -1148,9 +1148,9 @@ int TScanContext::tokenizeIdentifier()
     case U8VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
+            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
               parseContext.extensionTurnedOn(E_GL_EXT_shader_8bit_storage) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int8)) &&
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8)) &&
               parseContext.profile != EEsProfile && parseContext.version >= 450))
             return keyword;
         return identifierOrType();
@@ -1171,8 +1171,8 @@ int TScanContext::tokenizeIdentifier()
               parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_int16) ||
 #endif
               parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int16))))
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16))))
             return keyword;
         return identifierOrType();
     case INT32_T:
@@ -1185,8 +1185,8 @@ int TScanContext::tokenizeIdentifier()
     case U32VEC4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-           ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-             parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int32)) &&
+           ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+             parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int32)) &&
              parseContext.profile != EEsProfile && parseContext.version >= 450))
             return keyword;
         return identifierOrType();
@@ -1208,8 +1208,8 @@ int TScanContext::tokenizeIdentifier()
     case F32MAT4X4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float32)) &&
+            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float32)) &&
               parseContext.profile != EEsProfile && parseContext.version >= 450))
             return keyword;
         return identifierOrType();
@@ -1232,8 +1232,8 @@ int TScanContext::tokenizeIdentifier()
     case F64MAT4X4:
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
-            ((parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float64)) &&
+            ((parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float64)) &&
               parseContext.profile != EEsProfile && parseContext.version >= 450))
             return keyword;
         return identifierOrType();
@@ -1250,8 +1250,8 @@ int TScanContext::tokenizeIdentifier()
               parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
 #endif
               parseContext.extensionTurnedOn(E_GL_EXT_shader_16bit_storage) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float16))))
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))))
             return keyword;
 
         return identifierOrType();
@@ -1275,8 +1275,8 @@ int TScanContext::tokenizeIdentifier()
 #ifdef AMD_EXTENSIONS
               parseContext.extensionTurnedOn(E_GL_AMD_gpu_shader_half_float) ||
 #endif
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-              parseContext.extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float16))))
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+              parseContext.extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16))))
             return keyword;
 
         return identifierOrType();

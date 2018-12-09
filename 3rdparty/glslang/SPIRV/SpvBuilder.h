@@ -77,9 +77,11 @@ public:
     void setSourceFile(const std::string& file)
     {
         Instruction* fileString = new Instruction(getUniqueId(), NoType, OpString);
-        fileString->addStringOperand(file.c_str());
+        const char* file_c_str = file.c_str();
+        fileString->addStringOperand(file_c_str);
         sourceFileStringId = fileString->getResultId();
         strings.push_back(std::unique_ptr<Instruction>(fileString));
+        stringIds[file_c_str] = sourceFileStringId;
     }
     void setSourceText(const std::string& text) { sourceText = text; }
     void addSourceExtension(const char* ext) { sourceExtensions.push_back(ext); }
@@ -106,9 +108,16 @@ public:
         return id;
     }
 
-    // Log the current line, and if different than the last one,
-    // issue a new OpLine, using the current file name.
+    // Generate OpLine for non-filename-based #line directives (ie no filename
+    // seen yet): Log the current line, and if different than the last one,
+    // issue a new OpLine using the new line and current source file name.
     void setLine(int line);
+
+    // If filename null, generate OpLine for non-filename-based line directives,
+    // else do filename-based: Log the current line and file, and if different
+    // than the last one, issue a new OpLine using the new line and file
+    // name.
+    void setLine(int line, const char* filename);
     // Low-level OpLine. See setLine() for a layered helper.
     void addLine(Id fileName, int line, int column);
 
@@ -658,6 +667,7 @@ public:
     spv::Id sourceFileStringId;
     std::string sourceText;
     int currentLine;
+    const char* currentFile;
     bool emitOpLines;
     std::set<std::string> extensions;
     std::vector<const char*> sourceExtensions;
@@ -694,6 +704,9 @@ public:
 
     // Our loop stack.
     std::stack<LoopBlocks> loops;
+
+    // map from strings to their string ids
+    std::unordered_map<std::string, spv::Id> stringIds;
 
     // The stream for outputting warnings and errors.
     SpvBuildLogger* logger;

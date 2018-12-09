@@ -1,6 +1,6 @@
 constantUnaryConversion.comp
 Shader version: 450
-Requested GL_KHX_shader_explicit_arithmetic_types
+Requested GL_EXT_shader_explicit_arithmetic_types
 local_size = (1, 1, 1)
 0:? Sequence
 0:48  Function Definition: main( ( global void)
@@ -324,7 +324,7 @@ Linked compute stage:
 
 
 Shader version: 450
-Requested GL_KHX_shader_explicit_arithmetic_types
+Requested GL_EXT_shader_explicit_arithmetic_types
 local_size = (1, 1, 1)
 0:? Sequence
 0:48  Function Definition: main( ( global void)

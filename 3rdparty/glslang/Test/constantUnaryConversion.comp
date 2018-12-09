@@ -1,6 +1,6 @@
 #version 450
 
-#extension GL_KHX_shader_explicit_arithmetic_types : require
+#extension GL_EXT_shader_explicit_arithmetic_types : require
 
 const bool bool_init = true;
 const int8_t int8_t_init = int8_t(-1);

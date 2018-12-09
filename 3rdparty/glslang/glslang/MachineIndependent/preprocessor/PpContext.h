@@ -533,7 +533,7 @@ protected:
               prologue_(prologue),
               epilogue_(epilogue),
               includedFile_(includedFile),
-              scanner(3, strings, lengths, names, 0, 0, true),
+              scanner(3, strings, lengths, nullptr, 0, 0, true),
               prevScanner(nullptr),
               stringInput(pp, scanner)
         {
@@ -548,9 +548,9 @@ protected:
               scanner.setLine(startLoc.line);
               scanner.setString(startLoc.string);
 
-              scanner.setFile(startLoc.name, 0);
-              scanner.setFile(startLoc.name, 1);
-              scanner.setFile(startLoc.name, 2);
+              scanner.setFile(startLoc.name->c_str(), 0);
+              scanner.setFile(startLoc.name->c_str(), 1);
+              scanner.setFile(startLoc.name->c_str(), 2);
         }
 
         // tInput methods:
@@ -590,8 +590,6 @@ protected:
         const char* strings[3];
         // Length of str_, passed to scanner constructor.
         size_t lengths[3];
-        // String names
-        const char* names[3];
         // Scans over str_.
         TInputScanner scanner;
         // The previous effective scanner before the scanner in this instance

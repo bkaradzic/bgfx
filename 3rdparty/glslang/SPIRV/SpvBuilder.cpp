@@ -60,6 +60,7 @@ Builder::Builder(unsigned int spvVersion, unsigned int magicNumber, SpvBuildLogg
     sourceVersion(0),
     sourceFileStringId(NoResult),
     currentLine(0),
+    currentFile(nullptr),
     emitOpLines(false),
     addressModel(AddressingModelLogical),
     memoryModel(MemoryModelGLSL450),
@@ -87,14 +88,47 @@ Id Builder::import(const char* name)
     return import->getResultId();
 }
 
-// Emit an OpLine if we've been asked to emit OpLines and the line number
-// has changed since the last time, and is a valid line number.
+// Emit instruction for non-filename-based #line directives (ie. no filename
+// seen yet): emit an OpLine if we've been asked to emit OpLines and the line
+// number has changed since the last time, and is a valid line number.
 void Builder::setLine(int lineNum)
 {
     if (lineNum != 0 && lineNum != currentLine) {
         currentLine = lineNum;
         if (emitOpLines)
             addLine(sourceFileStringId, currentLine, 0);
+    }
+}
+
+// If no filename, do non-filename-based #line emit. Else do filename-based emit.
+// Emit OpLine if we've been asked to emit OpLines and the line number or filename
+// has changed since the last time, and line number is valid.
+void Builder::setLine(int lineNum, const char* filename)
+{
+    if (filename == nullptr) {
+        setLine(lineNum);
+        return;
+    }
+    if ((lineNum != 0 && lineNum != currentLine) || currentFile == nullptr ||
+            strncmp(filename, currentFile, strlen(currentFile) + 1) != 0) {
+        currentLine = lineNum;
+        currentFile = filename;
+        if (emitOpLines) {
+            // If filename previously seen, use its id, else create a string
+            // and put it in the map.
+            auto sItr = stringIds.find(filename);
+            if (sItr != stringIds.end()) {
+                addLine(sItr->second, currentLine, 0);
+            } else {
+                Instruction* fileString =
+                      new Instruction(getUniqueId(), NoType, OpString);
+                fileString->addStringOperand(filename);
+                spv::Id stringId = fileString->getResultId();
+                strings.push_back(std::unique_ptr<Instruction>(fileString));
+                addLine(stringId, currentLine, 0);
+                stringIds[filename] = stringId;
+            }
+        }
     }
 }
 

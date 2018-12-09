@@ -63,6 +63,7 @@ std::string FileNameAsCustomTestSuffixIoMap(
 }
 
 using CompileVulkanToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
+using CompileVulkanToDebugSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkan1_1ToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileOpenGLToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using VulkanSemantics = GlslangTest<::testing::TestWithParam<std::string>>;
@@ -85,6 +86,17 @@ TEST_P(CompileVulkanToSpirvTest, FromFile)
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,
                             Target::Spv);
+}
+
+// Compiling GLSL to SPIR-V with debug info under Vulkan semantics. Expected
+// to successfully generate SPIR-V.
+TEST_P(CompileVulkanToDebugSpirvTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
+                            Source::GLSL, Semantics::Vulkan,
+                            glslang::EShTargetVulkan_1_0,
+                            Target::Spv, true, "",
+                            "/baseResults/", false, true);
 }
 
 TEST_P(CompileVulkan1_1ToSpirvTest, FromFile)
@@ -365,6 +377,15 @@ INSTANTIATE_TEST_CASE_P(
         "spv.xfb2.vert",
         "spv.xfb3.vert",
         "spv.samplerlessTextureFunctions.frag",
+    })),
+    FileNameAsCustomTestSuffix
+);
+
+// clang-format off
+INSTANTIATE_TEST_CASE_P(
+    Glsl, CompileVulkanToDebugSpirvTest,
+    ::testing::ValuesIn(std::vector<std::string>({
+        "spv.pp.line.frag",
     })),
     FileNameAsCustomTestSuffix
 );

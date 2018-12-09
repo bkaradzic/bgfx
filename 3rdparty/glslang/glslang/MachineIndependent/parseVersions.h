@@ -130,6 +130,7 @@ public:
     bool suppressWarnings() const { return (messages & EShMsgSuppressWarnings) != 0; }
     bool isReadingHLSL()    const { return (messages & EShMsgReadHlsl) == EShMsgReadHlsl; }
     bool hlslEnable16BitTypes() const { return (messages & EShMsgHlslEnable16BitTypes) != 0; }
+    bool hlslDX9Compatible() const { return (messages & EShMsgHlslDX9Compatible) != 0; }
 
     TInfoSink& infoSink;
 

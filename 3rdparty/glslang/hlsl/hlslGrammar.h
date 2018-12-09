@@ -84,6 +84,7 @@ namespace glslang {
         bool acceptStreamOutTemplateType(TType&, TLayoutGeometry&);
         bool acceptOutputPrimitiveGeometry(TLayoutGeometry&);
         bool acceptAnnotations(TQualifier&);
+        bool acceptSamplerTypeDX9(TType &);
         bool acceptSamplerType(TType&);
         bool acceptTextureType(TType&);
         bool acceptSubpassInputType(TType&);

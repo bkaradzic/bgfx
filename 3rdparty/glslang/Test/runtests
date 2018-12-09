@@ -152,6 +152,8 @@ $EXE -l -i include.vert > $TARGETDIR/include.vert.out
 diff -b $BASEDIR/include.vert.out $TARGETDIR/include.vert.out || HASERROR=1
 $EXE -D -Od -e main -H -Od -Iinc1/path1 -Iinc1/path2 hlsl.dashI.vert > $TARGETDIR/hlsl.dashI.vert.out
 diff -b $BASEDIR/hlsl.dashI.vert.out $TARGETDIR/hlsl.dashI.vert.out || HASERROR=1
+$EXE -D -Od -e MainPs -H -Od -g hlsl.pp.line3.frag > $TARGETDIR/hlsl.pp.line3.frag.out
+diff -b $BASEDIR/hlsl.pp.line3.frag.out $TARGETDIR/hlsl.pp.line3.frag.out || HASERROR=1
 
 #
 # Testing -D and -U

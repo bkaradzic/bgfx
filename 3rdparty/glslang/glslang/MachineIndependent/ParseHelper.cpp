@@ -5750,14 +5750,14 @@ const TFunction* TParseContext::findFunction(const TSourceLoc& loc, const TFunct
         return nullptr;
     }
 
-    bool explicitTypesEnabled = extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int8) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int16) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int32) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_int64) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float16) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float32) ||
-                                extensionTurnedOn(E_GL_KHX_shader_explicit_arithmetic_types_float64);
+    bool explicitTypesEnabled = extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int8) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int16) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int32) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_int64) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float16) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float32) ||
+                                extensionTurnedOn(E_GL_EXT_shader_explicit_arithmetic_types_float64);
 
     if (profile == EEsProfile || version < 120)
         function = findFunctionExact(loc, call, builtIn);

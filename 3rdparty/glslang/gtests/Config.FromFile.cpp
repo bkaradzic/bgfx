@@ -51,6 +51,7 @@ TEST_P(ConfigTest, FromFile)
 {
     TestCaseSpec testCase = GetParam();
     GlslangResult result;
+    result.validationResult = true;
 
     // Get the contents for input shader and limit configurations.
     std::string shaderContents, configContents;

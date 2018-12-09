@@ -446,16 +446,16 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
 
     static const char* const Int64_Extensions[] = {
         E_GL_ARB_gpu_shader_int64,
-        E_GL_KHX_shader_explicit_arithmetic_types,
-        E_GL_KHX_shader_explicit_arithmetic_types_int64 };
+        E_GL_EXT_shader_explicit_arithmetic_types,
+        E_GL_EXT_shader_explicit_arithmetic_types_int64 };
     static const int Num_Int64_Extensions = sizeof(Int64_Extensions) / sizeof(Int64_Extensions[0]);
 
     static const char* const Int16_Extensions[] = {
 #ifdef AMD_EXTENSIONS
         E_GL_AMD_gpu_shader_int16,
 #endif
-        E_GL_KHX_shader_explicit_arithmetic_types,
-        E_GL_KHX_shader_explicit_arithmetic_types_int16 };
+        E_GL_EXT_shader_explicit_arithmetic_types,
+        E_GL_EXT_shader_explicit_arithmetic_types_int16 };
     static const int Num_Int16_Extensions = sizeof(Int16_Extensions) / sizeof(Int16_Extensions[0]);
 
     ppToken->ival = 0;

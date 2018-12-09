@@ -133,7 +133,7 @@ bool HlslParseContext::parseShaderStrings(TPpContext& ppContext, TInputScanner& 
         // Print a message formated such that if you click on the message it will take you right to
         // the line through most UIs.
         const glslang::TSourceLoc& sourceLoc = input.getSourceLoc();
-        infoSink.info << sourceLoc.name << "(" << sourceLoc.line << "): error at column " << sourceLoc.column
+        infoSink.info << sourceLoc.name->c_str() << "(" << sourceLoc.line << "): error at column " << sourceLoc.column
                       << ", HLSL parsing failed.\n";
         ++numErrors;
         return false;
@@ -3767,6 +3767,43 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             // Texture with ddx & ddy is really gradient form in HLSL
             if (argAggregate->getSequence().size() == 4)
                 node->getAsAggregate()->setOperator(EOpTextureGrad);
+
+            break;
+        }
+    case EOpTextureLod: //is almost EOpTextureBias (only args & operations are different)
+        {
+            TIntermTyped *argSamp = argAggregate->getSequence()[0]->getAsTyped();   // sampler
+            TIntermTyped *argCoord = argAggregate->getSequence()[1]->getAsTyped();  // coord
+
+            assert(argCoord->getVectorSize() == 4);
+            TIntermTyped *w = intermediate.addConstantUnion(3, loc, true);
+            TIntermTyped *argLod = intermediate.addIndex(EOpIndexDirect, argCoord, w, loc);
+
+            TOperator constructOp = EOpNull;
+            const TSampler &sampler = argSamp->getType().getSampler();
+            int coordSize = 0;
+
+            switch (sampler.dim)
+            {
+            case Esd1D:   constructOp = EOpConstructFloat; coordSize = 1; break; // 1D
+            case Esd2D:   constructOp = EOpConstructVec2;  coordSize = 2; break; // 2D
+            case Esd3D:   constructOp = EOpConstructVec3;  coordSize = 3; break; // 3D
+            case EsdCube: constructOp = EOpConstructVec3;  coordSize = 3; break; // also 3D
+            default:
+                break;
+            }
+
+            TIntermAggregate *constructCoord = new TIntermAggregate(constructOp);
+            constructCoord->getSequence().push_back(argCoord);
+            constructCoord->setLoc(loc);
+            constructCoord->setType(TType(argCoord->getBasicType(), EvqTemporary, coordSize));
+
+            TIntermAggregate *tex = new TIntermAggregate(EOpTextureLod);
+            tex->getSequence().push_back(argSamp);        // sampler
+            tex->getSequence().push_back(constructCoord); // coordinate
+            tex->getSequence().push_back(argLod);         // lod
+
+            node = convertReturn(tex, sampler);
 
             break;
         }
