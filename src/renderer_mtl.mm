@@ -388,6 +388,12 @@ namespace bgfx { namespace mtl
 
 			retain(m_device);
 			createFrameBuffer(m_fbh, g_platformData.nwh, 0, 0, TextureFormat::Unknown, TextureFormat::UnknownDepth);
+			
+			if ( NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer )
+			{
+				release(m_device);
+				return false;
+			}
 
 			m_cmd.init(m_device);
 			BGFX_FATAL(NULL != m_cmd.m_commandQueue, Fatal::UnableToInitialize, "Unable to create Metal device.");
@@ -613,15 +619,17 @@ namespace bgfx { namespace mtl
 
 			g_internalData.context = m_device;
 
+#if BX_PLATFORM_OSX
 			m_pool = [[NSAutoreleasePool alloc] init];
-
+#endif
 			return true;
 		}
 
 		void shutdown()
 		{
+#if BX_PLATFORM_OSX
 			[m_pool release];
-
+#endif
 			m_occlusionQuery.postReset();
 			m_gpuTimer.shutdown();
 
@@ -1123,8 +1131,10 @@ namespace bgfx { namespace mtl
 			m_cmd.kick(true);
 			m_commandBuffer = 0;
 
+#if BX_PLATFORM_OSX
 			[m_pool release];
 			m_pool = [[NSAutoreleasePool alloc] init];
+#endif
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -2103,17 +2113,6 @@ namespace bgfx { namespace mtl
 			return m_blitCommandEncoder;
 		}
 
-		id<CAMetalDrawable> currentDrawable()
-		{
-			if (m_drawable == nil)
-			{
-				m_drawable = m_metalLayer.nextDrawable;
-				retain(m_drawable); // keep alive to be useable at 'flip'
-			}
-
-			return m_drawable;
-		}
-
 		Device            m_device;
 		OcclusionQueryMTL m_occlusionQuery;
 		TimerQueryMtl     m_gpuTimer;
@@ -2188,7 +2187,9 @@ namespace bgfx { namespace mtl
 		RenderCommandEncoder m_renderCommandEncoder;
 		FrameBufferHandle    m_renderCommandEncoderFrameBufferHandle;
 
+#if BX_PLATFORM_OSX
 		NSAutoreleasePool*   m_pool;
+#endif
 	};
 
 	RendererContextI* rendererCreate(const Init& _init)
@@ -2803,7 +2804,7 @@ namespace bgfx { namespace mtl
 				if (NULL == metalLayer
 				|| ![metalLayer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
 				{
-					BX_WARN(NULL != metalLayer, "Unable to create Metal device. Please set platform data window to a CAMetalLayer");
+					BX_WARN(false, "Unable to create Metal device. Please set platform data window to a CAMetalLayer");
 					return;
 				}
 
