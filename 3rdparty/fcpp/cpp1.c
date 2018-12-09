@@ -22,11 +22,12 @@ SOFTWARE.
 
 #include <stdio.h>
 #include <ctype.h>
+
 #include "cppdef.h"
 #include "cpp.h"
 
 #if defined(AMIGA)
-#include        <dos.h>
+#include <dos.h>
 #if defined(SHARED)
 int _OSERR=0;
 char *_ProgramName="junk";

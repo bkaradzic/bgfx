@@ -19,10 +19,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
-#include	<stdio.h>
-#include	<ctype.h>
-#include	"cppdef.h"
-#include	"cpp.h"
+#include <stdio.h>
+#include <ctype.h>
+
+#include "cppdef.h"
+#include "cpp.h"
 
 INLINE FILE_LOCAL ReturnCode fpp_checkparm(struct Global *, int, DEFBUF *, int);
 INLINE FILE_LOCAL ReturnCode fpp_stparmscan(struct Global *, int);

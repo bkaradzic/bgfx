@@ -33,8 +33,10 @@
  * In general, definitions in this file should not be changed.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifndef fpp_toupper
 #define fpp_toupper(c) ((c) + ('A' - 'a'))
 #endif /* no fpp_toupper */

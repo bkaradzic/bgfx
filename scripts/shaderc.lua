@@ -362,6 +362,7 @@ project "fcpp"
 	configuration { "not vs*" }
 		buildoptions {
 			"-Wno-implicit-fallthrough",
+			"-Wno-incompatible-pointer-types",
 			"-Wno-parentheses-equality",
 		}
 

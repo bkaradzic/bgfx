@@ -276,7 +276,7 @@ char GetPrefs(struct fppTag **tagptr, char **string)
   unsigned  Length_U;
   char     *PrefsBuffer_PC;
   char ret= 0;
-  char *environ;
+  char *env;
 
   *string = NULL;
 
@@ -301,8 +301,8 @@ char GetPrefs(struct fppTag **tagptr, char **string)
     }
   }
 
-  if(environ = getenv("CPP_PREFS")) {
-    ret= !DoString(tagptr, environ);
+  if((env = getenv("CPP_PREFS"))) {
+    ret= !DoString(tagptr, env);
     if(ret && *string)
       free( *string );
   }
@@ -559,7 +559,7 @@ int SetOptions(int argc, char **argv, struct fppTag **tagptr)
 	  fprintf(stderr,
 		  "Usage: cpp [options] [infile [outfile] ]\n\n"
 		  "The following options are valid:\n"
-		  "  -B\tNo mahcine specific built-in symbols\n"
+		  "  -B\tNo machine specific built-in symbols\n"
 		  "  -b\tOutput any parentheses, brace or bracket unbalance\n"
 		  "  -C\tWrite source file comments to output\n"
 		  "  -D\tDefine a symbol with the given (optional) value \"symbol[=value]\"\n"
