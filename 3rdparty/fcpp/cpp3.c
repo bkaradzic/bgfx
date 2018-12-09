@@ -344,7 +344,7 @@ ReturnCode fpp_initdefines(struct Global *global)
      * Define __DATE__ as today's date.
      */
     dp = fpp_defendel(global, "__DATE__", FPP_FALSE);
-    tp = malloc(14);
+    tp = malloc(32);
     if(!tp || !dp)
       return(FPP_OUT_OF_MEMORY);
     dp->repl = tp;
