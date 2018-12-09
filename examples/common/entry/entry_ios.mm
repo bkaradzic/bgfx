@@ -14,7 +14,7 @@
 #if __IPHONE_8_0 && !TARGET_IPHONE_SIMULATOR  // check if sdk/target supports metal
 #   import <Metal/Metal.h>
 #   import <QuartzCore/CAMetalLayer.h>
-//#   define HAS_METAL_SDK
+#   define HAS_METAL_SDK
 #endif
 
 #include <bgfx/platform.h>
