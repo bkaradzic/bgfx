@@ -275,7 +275,7 @@ int fpp_dooptions(struct Global *global, struct fppTag *tags)
       global->allowincludelocal=(tags->data?1:0);
       break;
     case FPPTAG_FILEOPENFUNC:
-      global->openfile = (FILE* (*)(char *,char *))tags->data;
+      global->openfile = (FILE* (*)(char *,char *,void *))tags->data;
       break;
     default:
       fpp_cwarn(global, WARN_INTERNAL_ERROR, NULL);
