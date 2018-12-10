@@ -665,14 +665,14 @@ public:
 						uint32_t xoffset = offset + xx;
 
 						Grid* grid = m_grid;
-						float normal[3] =
+						const bx::Vec3 normal =
 						{
 							grid[xoffset-1     ].m_val - grid[xoffset+1     ].m_val,
 							grid[xoffset-ypitch].m_val - grid[xoffset+ypitch].m_val,
 							grid[xoffset-zpitch].m_val - grid[xoffset+zpitch].m_val,
 						};
 
-						bx::vec3Norm(grid[xoffset].m_normal, normal);
+						bx::store(grid[xoffset].m_normal, bx::normalize(normal) );
 					}
 				}
 			}
