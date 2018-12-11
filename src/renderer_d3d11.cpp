@@ -5543,6 +5543,11 @@ namespace bgfx { namespace d3d11
 								break;
 							}
 						}
+						else
+						{
+							m_textureStage.m_srv[stage]     = NULL;
+							m_textureStage.m_sampler[stage] = NULL;
+						}
 					}
 
 					if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
