@@ -157,6 +157,7 @@ public:
 			}
 		}
 
+		inputRemoveBindings("22-windows");
 		BX_FREE(entry::getAllocator(), m_bindings);
 
 		// Cleanup.
