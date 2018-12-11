@@ -358,7 +358,7 @@ public:
 		bx::vec4MulMtx(ray_world, ray_eye, invViewMtx);
 
 		float ray_dir[3];
-		bx::vec3Norm(ray_dir, ray_world);
+		bx::store(ray_dir, bx::normalize(bx::load(ray_world) ) );
 		ray_dir[0] *= -1.0;
 		ray_dir[1] *= -1.0;
 		ray_dir[2] *= -1.0;

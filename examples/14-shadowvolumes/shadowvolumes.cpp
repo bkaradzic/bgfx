@@ -155,26 +155,21 @@ void mtxBillboard(float* __restrict _result
 }
 
 void planeNormal(float* __restrict _result
-				 , const float* __restrict _v0
-				 , const float* __restrict _v1
-				 , const float* __restrict _v2
-				 )
+	, const float* __restrict _v0
+	, const float* __restrict _v1
+	, const float* __restrict _v2
+	)
 {
-	float vec0[3], vec1[3];
-	float cross[3];
+	const bx::Vec3 v0    = bx::load(_v0);
+	const bx::Vec3 v1    = bx::load(_v1);
+	const bx::Vec3 v2    = bx::load(_v2);
+	const bx::Vec3 vec0  = bx::sub(v1, v0);
+	const bx::Vec3 vec1  = bx::sub(v2, v1);
+	const bx::Vec3 cross = bx::cross(vec0, vec1);
 
-	vec0[0] = _v1[0] - _v0[0];
-	vec0[1] = _v1[1] - _v0[1];
-	vec0[2] = _v1[2] - _v0[2];
+	bx::store(_result, bx::normalize(cross) );
 
-	vec1[0] = _v2[0] - _v1[0];
-	vec1[1] = _v2[1] - _v1[1];
-	vec1[2] = _v2[2] - _v1[2];
-
-	bx::vec3Cross(cross, vec0, vec1);
-	bx::vec3Norm(_result, cross);
-
-	_result[3] = -bx::vec3Dot(_result, _v0);
+	_result[3] = -bx::dot(bx::load(_result), bx::load(_v0) );
 }
 
 struct Uniforms

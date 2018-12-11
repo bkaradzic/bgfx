@@ -224,11 +224,9 @@ public:
 
 			float mtxInv[16];
 			bx::mtxInverse(mtxInv, mtx);
-			float lightDirModel[4] = { -0.4f, -0.5f, -1.0f, 0.0f };
-			float lightDirModelN[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-			bx::vec3Norm(lightDirModelN, lightDirModel);
 			float lightDirTime[4];
-			bx::vec4MulMtx(lightDirTime, lightDirModelN, mtxInv);
+			const bx::Vec3 lightDirModelN = bx::normalize(bx::Vec3{-0.4f, -0.5f, -1.0f});
+			bx::store(lightDirTime, bx::mul(lightDirModelN, mtxInv) );
 			lightDirTime[3] = time;
 			bgfx::setUniform(u_lightDirTime, lightDirTime);
 

@@ -236,25 +236,21 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 
 	for (uint32_t ii = 0; ii < _numVertices; ++ii)
 	{
-		const float* tanu = &tangents[ii*6];
-		const float* tanv = &tangents[ii*6 + 3];
+		const bx::Vec3 tanu = bx::load(&tangents[ii*6]);
+		const bx::Vec3 tanv = bx::load(&tangents[ii*6 + 3]);
 
-		float normal[4];
-		bgfx::vertexUnpack(normal, bgfx::Attrib::Normal, _decl, _vertices, ii);
-		float ndt = bx::vec3Dot(normal, tanu);
+		float nxyzw[4];
+		bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _decl, _vertices, ii);
 
-		float nxt[3];
-		bx::vec3Cross(nxt, normal, tanu);
-
-		float tmp[3];
-		tmp[0] = tanu[0] - normal[0] * ndt;
-		tmp[1] = tanu[1] - normal[1] * ndt;
-		tmp[2] = tanu[2] - normal[2] * ndt;
+		const bx::Vec3 normal  = bx::load(nxyzw);
+		const float    ndt     = bx::dot(normal, tanu);
+		const bx::Vec3 nxt     = bx::cross(normal, tanu);
+		const bx::Vec3 tmp     = bx::sub(tanu, bx::mul(normal, ndt) );
 
 		float tangent[4];
-		bx::vec3Norm(tangent, tmp);
+		bx::store(tangent, bx::normalize(tmp) );
+		tangent[3] = bx::dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 
-		tangent[3] = bx::vec3Dot(nxt, tanv) < 0.0f ? -1.0f : 1.0f;
 		bgfx::vertexPack(tangent, true, bgfx::Attrib::Tangent, _decl, _vertices, ii);
 	}
 
@@ -1002,7 +998,7 @@ int main(int _argc, const char* _argv[])
 					if (hasNormal)
 					{
 						float normal[4];
-						bx::vec3Norm(normal, (float*)&normals[index.m_normal]);
+						bx::store(normal, bx::normalize(bx::load(&normals[index.m_normal]) ) );
 						bgfx::vertexPack(normal, true, bgfx::Attrib::Normal, decl, vertices);
 					}
 
