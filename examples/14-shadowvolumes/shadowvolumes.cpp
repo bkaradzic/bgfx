@@ -1706,7 +1706,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	//  1.0f - in front of near plane
 	//  0.0f - on the near plane
 	// -1.0f - behind near plane
-	float lightSide = float( (d > delta) - (d < -delta) );
+	const float lightSide = float( (d > delta) - (d < -delta) );
 
 	float t = bx::tan(bx::toRad(_fovy)*0.5f) * _near;
 	float b = -t;
@@ -1730,29 +1730,19 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	float planeNormals[4][3];
 	for (uint8_t ii = 0; ii < 4; ++ii)
 	{
-		float* normal = planeNormals[ii];
-		float* plane  = volumePlanes[ii];
+		float* outNormal = planeNormals[ii];
+		float* outPlane  = volumePlanes[ii];
 
-		float planeVec[3];
-		bx::vec3Sub(planeVec, corners[ii], corners[(ii-1)&3]);
+		const bx::Vec3 c0       = bx::load(corners[ii]);
+		const bx::Vec3 planeVec = bx::sub(c0, bx::load(corners[(ii-1)&3]) );
+		const bx::Vec3 light    = bx::sub(bx::load(_lightPos), bx::mul(c0, _lightPos[3]) );
+		const bx::Vec3 normal   = bx::mul(bx::cross(planeVec, light), lightSide);
 
-		float light[3];
-		float tmp[3];
-		bx::vec3Mul(tmp, corners[ii], _lightPos[3]);
-		bx::vec3Sub(light, _lightPos, tmp);
+		const float invLen = 1.0f / bx::sqrt(bx::dot(normal, normal) );
 
-		bx::vec3Cross(normal, planeVec, light);
-
-		normal[0] *= lightSide;
-		normal[1] *= lightSide;
-		normal[2] *= lightSide;
-
-		float lenInv = 1.0f / bx::sqrt(bx::vec3Dot(normal, normal) );
-
-		plane[0] = normal[0] * lenInv;
-		plane[1] = normal[1] * lenInv;
-		plane[2] = normal[2] * lenInv;
-		plane[3] = -bx::vec3Dot(normal, corners[ii]) * lenInv;
+		bx::store(outNormal, normal);
+		bx::store(outPlane, bx::mul(normal, invLen) );
+		outPlane[3] = -bx::dot(normal, c0) * invLen;
 	}
 
 	float nearPlaneV[4] =
