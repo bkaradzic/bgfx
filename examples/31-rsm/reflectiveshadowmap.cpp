@@ -351,8 +351,8 @@ public:
 				, false
 				, 1
 				, bgfx::TextureFormat::D16
-				, BGFX_TEXTURE_RT /* | BGFX_TEXTURE_COMPARE_LEQUAL*/
-				);  // Note I'm not setting BGFX_TEXTURE_COMPARE_LEQUAL.  Why?
+				, BGFX_TEXTURE_RT /* | BGFX_SAMPLER_COMPARE_LEQUAL*/
+				);  // Note I'm not setting BGFX_SAMPLER_COMPARE_LEQUAL.  Why?
 					// Normally a PCF shadow map such as this requires a compare.  However, this sample also
 					// reads from this texture in the lighting pass, and only uses the PCF capabilites in the
 					// combine pass, so the flag is disabled by default.

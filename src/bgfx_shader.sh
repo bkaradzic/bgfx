@@ -128,6 +128,12 @@ struct BgfxSampler2DShadow
 	Texture2D m_texture;
 };
 
+struct BgfxSampler2DArrayShadow
+{
+	SamplerComparisonState m_sampler;
+	Texture2DArray m_texture;
+};
+
 struct BgfxSampler3D
 {
 	SamplerState m_sampler;
@@ -147,6 +153,12 @@ struct BgfxUSampler3D
 struct BgfxSamplerCube
 {
 	SamplerState m_sampler;
+	TextureCube m_texture;
+};
+
+struct BgfxSamplerCubeShadow
+{
+	SamplerComparisonState m_sampler;
 	TextureCube m_texture;
 };
 
@@ -203,6 +215,11 @@ float bgfxShadow2DProj(BgfxSampler2DShadow _sampler, vec4 _coord)
 	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, coord.xy, coord.z);
 }
 
+vec4 bgfxShadow2DArray(BgfxSampler2DArrayShadow _sampler, vec4 _coord)
+{
+	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xyz, _coord.w);
+}
+
 vec4 bgfxTexture3D(BgfxSampler3D _sampler, vec3 _coord)
 {
 	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
@@ -235,6 +252,11 @@ vec4 bgfxTextureCube(BgfxSamplerCube _sampler, vec3 _coord)
 vec4 bgfxTextureCubeLod(BgfxSamplerCube _sampler, vec3 _coord, float _level)
 {
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
+}
+
+float bgfxShadowCube(BgfxSamplerCubeShadow _sampler, vec4 _coord)
+{
+	return _sampler.m_texture.SampleCmpLevelZero(_sampler.m_sampler, _coord.xyz, _coord.w);
 }
 
 vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
@@ -313,6 +335,13 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord)
 #		define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord)
 
+#		define SAMPLER2DARRAYSHADOW(_name, _reg) \
+			SamplerComparisonState _name ## SamplerComparison : REGISTER(s, _reg); \
+			Texture2DArray _name ## Texture : REGISTER(t, _reg); \
+			BgfxSampler2DArrayShadow _name = { _name ## SamplerComparison, _name ## Texture }
+#		define sampler2DArrayShadow BgfxSampler2DArrayShadow
+#		define shadow2DArray(_sampler, _coord) bgfxShadow2DArray(_sampler, _coord)
+
 #		define SAMPLER3D(_name, _reg) \
 			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
 			uniform Texture3D _name ## Texture : REGISTER(t, _reg); \
@@ -334,6 +363,13 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define samplerCube BgfxSamplerCube
 #		define textureCube(_sampler, _coord) bgfxTextureCube(_sampler, _coord)
 #		define textureCubeLod(_sampler, _coord, _level) bgfxTextureCubeLod(_sampler, _coord, _level)
+
+#		define SAMPLERCUBESHADOW(_name, _reg) \
+			uniform SamplerComparisonState _name ## SamplerComparison : REGISTER(s, _reg); \
+			uniform TextureCube _name ## Texture : REGISTER(t, _reg); \
+			static BgfxSamplerCubeShadow _name = { _name ## SamplerComparison, _name ## Texture }
+#		define samplerCubeShadow BgfxSamplerCubeShadow
+#		define shadowCube(_sampler, _coord) bgfxShadowCube(_sampler, _coord)
 
 #		define texelFetch(_sampler, _coord, _lod) bgfxTexelFetch(_sampler, _coord, _lod)
 #		define textureSize(_sampler, _lod) bgfxTextureSize(_sampler, _lod)
