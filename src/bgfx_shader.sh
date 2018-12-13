@@ -177,6 +177,11 @@ vec4 bgfxTexture2DLod(BgfxSampler2D _sampler, vec2 _coord, float _level)
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
 }
 
+vec4 bgfxTexture2DLodOffset(BgfxSampler2D _sampler, vec2 _coord, float _level, ivec2 _offset)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level, _offset);
+}
+
 vec4 bgfxTexture2DProj(BgfxSampler2D _sampler, vec3 _coord)
 {
 	vec2 coord = _coord.xy * rcp(_coord.z);
@@ -202,6 +207,11 @@ vec4 bgfxTexture2DArray(BgfxSampler2DArray _sampler, vec3 _coord)
 vec4 bgfxTexture2DArrayLod(BgfxSampler2DArray _sampler, vec3 _coord, float _lod)
 {
 	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _lod);
+}
+
+vec4 bgfxTexture2DArrayLodOffset(BgfxSampler2DArray _sampler, vec3 _coord, float _level, ivec2 _offset)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level, _offset);
 }
 
 float bgfxShadow2D(BgfxSampler2DShadow _sampler, vec3 _coord)
@@ -264,11 +274,29 @@ vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
 	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
 }
 
+vec4 bgfxTexelFetchOffset(BgfxSampler2D _sampler, ivec2 _coord, int _lod, ivec2 _offset)
+{
+	return _sampler.m_texture.Load(ivec3(_coord, _lod), _offset );
+}
+
 vec2 bgfxTextureSize(BgfxSampler2D _sampler, int _lod)
 {
 	vec2 result;
 	_sampler.m_texture.GetDimensions(result.x, result.y);
 	return result;
+}
+
+vec4 bgfxTextureGather(BgfxSampler2D _sampler, vec2 _coord)
+{
+	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord );
+}
+vec4 bgfxTextureGatherOffset(BgfxSampler2D _sampler, vec2 _coord, ivec2 _offset)
+{
+	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord, _offset );
+}
+vec4 bgfxTextureGather(BgfxSampler2DArray _sampler, vec3 _coord)
+{
+	return _sampler.m_texture.GatherRed(_sampler.m_sampler, _coord );
 }
 
 ivec4 bgfxTexelFetch(BgfxISampler2D _sampler, ivec2 _coord, int _lod)
@@ -284,6 +312,11 @@ uvec4 bgfxTexelFetch(BgfxUSampler2D _sampler, ivec2 _coord, int _lod)
 vec4 bgfxTexelFetch(BgfxSampler2DMS _sampler, ivec2 _coord, int _sampleIdx)
 {
 	return _sampler.m_texture.Load(_coord, _sampleIdx);
+}
+
+vec4 bgfxTexelFetch(BgfxSampler2DArray _sampler, ivec3 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
 }
 
 vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
@@ -311,6 +344,7 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define sampler2D BgfxSampler2D
 #		define texture2D(_sampler, _coord) bgfxTexture2D(_sampler, _coord)
 #		define texture2DLod(_sampler, _coord, _level) bgfxTexture2DLod(_sampler, _coord, _level)
+#		define texture2DLodOffset(_sampler, _coord, _level, _offset) bgfxTexture2DLodOffset(_sampler, _coord, _level, _offset)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 #		define texture2DGrad(_sampler, _coord, _dPdx, _dPdy) bgfxTexture2DGrad(_sampler, _coord, _dPdx, _dPdy)
 
@@ -321,6 +355,7 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define sampler2DArray BgfxSampler2DArray
 #		define texture2DArray(_sampler, _coord) bgfxTexture2DArray(_sampler, _coord)
 #		define texture2DArrayLod(_sampler, _coord, _lod) bgfxTexture2DArrayLod(_sampler, _coord, _lod)
+#		define texture2DArrayLodOffset(_sampler, _coord, _level, _offset) bgfxTexture2DArrayLodOffset(_sampler, _coord, _level, _offset)
 
 #		define SAMPLER2DMS(_name, _reg) \
 			uniform Texture2DMS<vec4> _name ## Texture : REGISTER(t, _reg); \
@@ -372,7 +407,10 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define shadowCube(_sampler, _coord) bgfxShadowCube(_sampler, _coord)
 
 #		define texelFetch(_sampler, _coord, _lod) bgfxTexelFetch(_sampler, _coord, _lod)
+#		define texelFetchOffset(_sampler, _coord, _lod, _offset) bgfxTexelFetchOffset(_sampler, _coord, _lod, _offset)
 #		define textureSize(_sampler, _lod) bgfxTextureSize(_sampler, _lod)
+#		define textureGather(_sampler, _coord) bgfxTextureGather(_sampler, _coord)
+#		define textureGatherOffset(_sampler, _coord, _offset) bgfxTextureGatherOffset(_sampler, _coord, _offset)
 #	else
 
 #		define sampler2DShadow sampler2D

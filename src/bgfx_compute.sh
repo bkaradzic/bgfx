@@ -68,12 +68,17 @@
 #define rg32ui   uint2
 #define rgba32ui uint4
 #define r32f     float
+#define r16f     float
 #define rg16f    float2
 #define rgba16f  float4
 #if BGFX_SHADER_LANGUAGE_HLSL
 #	define rgba8 unorm float4
+#	define rg8   unorm float2
+#	define r8    unorm float
 #else
 #	define rgba8       float4
+#	define rg8         float2
+#	define r8          float
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 #define rgba32f  float4
 
@@ -247,18 +252,32 @@
 		_image.m_texture[_uvw] = _value._storeComponents;                            \
 	}
 
+#define __IMAGE_IMPL_ATOMIC(_format, _storeComponents, _type, _loadComponents)            \
+	\
+	void imageAtomicAdd(BgfxRWImage2D_ ## _format _image, ivec2 _uv,  _type _value)  \
+	{				                                                                 \
+		InterlockedAdd(_image.m_texture[_uv], _value._storeComponents);	             \
+	}                                                                                \
+
+
 __IMAGE_IMPL_A(rgba8,       xyzw, vec4,  xyzw)
+__IMAGE_IMPL_A(rg8,         xy,   vec4,  xyyy)
+__IMAGE_IMPL_A(r8,          x,    vec4,  xxxx)
 __IMAGE_IMPL_A(rg16f,       xy,   vec4,  xyyy)
 #if BGFX_SHADER_LANGUAGE_HLSL
 __IMAGE_IMPL_S(rgba16f,     xyzw, vec4,  xyzw)
+__IMAGE_IMPL_S(r16f,        x,    vec4,  xxxx)
 #else
 __IMAGE_IMPL_A(rgba16f,     xyzw, vec4,  xyzw)
+__IMAGE_IMPL_A(r16f,        x,    vec4,  xxxx)
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 __IMAGE_IMPL_A(r32f,        x,    vec4,  xxxx)
 __IMAGE_IMPL_A(rgba32f,     xyzw, vec4,  xyzw)
 __IMAGE_IMPL_A(r32ui,       x,    uvec4, xxxx)
 __IMAGE_IMPL_A(rg32ui,      xy,   uvec4, xyyy)
 __IMAGE_IMPL_A(rgba32ui,    xyzw, uvec4, xyzw)
+
+__IMAGE_IMPL_ATOMIC(r32ui,       x,    uvec4, xxxx)
 
 #define atomicAdd(_mem, _data)                                       InterlockedAdd(_mem, _data)
 #define atomicAnd(_mem, _data)                                       InterlockedAnd(_mem, _data)
