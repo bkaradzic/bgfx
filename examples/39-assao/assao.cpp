@@ -3,6 +3,13 @@
 * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
 */
 
+/*
+ * Reference(s):
+ * - ASSAO is a SSAO implementation tuned for scalability and flexibility.
+ *   https://web.archive.org/web/20181214222937/https://software.intel.com/en-us/articles/adaptive-screen-space-ambient-occlusion
+ *   https://github.com/GameTechDev/ASSAO
+ */
+
 #include <common.h>
 #include <camera.h>
 #include <bgfx_utils.h>
@@ -10,26 +17,21 @@
 #include <bx/rng.h>
 #include <bx/os.h>
 
+#define USE_ASSAO 0
+
 namespace
 {
 
-	/*
-	* ASSAO is a SSAO implementation tuned for scalability and flexibility.
+// Render passes
+#define RENDER_PASS_GBUFFER 0  // GBuffer for normals and albedo
+#define RENDER_PASS_COMBINE 1  // Directional light and final result
 
-	* https://software.intel.com/en-us/articles/adaptive-screen-space-ambient-occlusion
-	* https://github.com/GameTechDev/ASSAO
-	*/
-
-	// Render passes
-#define RENDER_PASS_GBUFFER      0  // GBuffer for normals and albedo
-#define RENDER_PASS_COMBINE      1  // Directional light and final result
-
-	// Gbuffer has multiple render targets
+// Gbuffer has multiple render targets
 #define GBUFFER_RT_NORMAL 0
 #define GBUFFER_RT_COLOR  1
 #define GBUFFER_RT_DEPTH  2
 
-	// Random meshes we draw
+// Random meshes we draw
 #define MODEL_COUNT 120  // In this demo, a model is a mesh plus a transform
 
 #define SAMPLER_POINT_CLAMP (BGFX_SAMPLER_MIN_POINT|BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIP_POINT|BGFX_SAMPLER_U_CLAMP| BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_W_CLAMP)
@@ -229,9 +231,9 @@ namespace
 		ExampleASSAO(const char* _name, const char* _description)
 			: entry::AppI(_name, _description)
 			, m_currFrame(UINT32_MAX)
-			, m_texelHalf(0.0f)
 			, m_enableSSAO(true)
 			, m_enableTexturing(true)
+			, m_texelHalf(0.0f)
 			, m_framebufferGutter(true)
 		{
 		}
@@ -530,7 +532,7 @@ namespace
 						m_uniforms.submit();
 						float rect[4] = { 0.0f, 0.0f, (float)mipWidth, (float)mipHeight };
 						bgfx::setUniform(u_rect, rect);
-						
+
 						bgfx::dispatch(view, m_prepareDepthMipProgram, (mipWidth + 7) / 8, (mipHeight + 7) / 8);
 					}
 				}
@@ -570,7 +572,7 @@ namespace
 						else
 							if (m_settings.m_qualityLevel <= 0)
 							{
-								// just one blur pass allowed for minimum quality 
+								// just one blur pass allowed for minimum quality
 								blurPasses = bx::min(1, m_settings.m_blurPassCount);
 							}
 
@@ -862,11 +864,11 @@ namespace
 			m_quarterSize[0] = (m_halfSize[0] + 1) / 2;
 			m_quarterSize[1] = (m_halfSize[1] + 1) / 2;
 
-			vec4iSet(m_fullResOutScissorRect, m_border, m_border, m_width + m_border, m_height + m_border); 
+			vec4iSet(m_fullResOutScissorRect, m_border, m_border, m_width + m_border, m_height + m_border);
 			vec4iSet(m_halfResOutScissorRect, m_fullResOutScissorRect[0] / 2, m_fullResOutScissorRect[1] / 2, (m_fullResOutScissorRect[2] + 1) / 2, (m_fullResOutScissorRect[3] + 1) / 2);
 
 			int blurEnlarge = cMaxBlurPassCount + bx::max(0, cMaxBlurPassCount - 2);  // +1 for max normal blurs, +2 for wide blurs
-			vec4iSet(m_halfResOutScissorRect, bx::max(0, m_halfResOutScissorRect[0] - blurEnlarge), bx::max(0, m_halfResOutScissorRect[1] - blurEnlarge), 
+			vec4iSet(m_halfResOutScissorRect, bx::max(0, m_halfResOutScissorRect[0] - blurEnlarge), bx::max(0, m_halfResOutScissorRect[1] - blurEnlarge),
 						bx::min(m_halfSize[0], m_halfResOutScissorRect[2] + blurEnlarge), bx::min(m_halfSize[1], m_halfResOutScissorRect[3] + blurEnlarge));
 
 			// Make gbuffer and related textures
@@ -1101,7 +1103,7 @@ namespace
 		// Only needed for quality level 3 (adaptive quality)
 		bgfx::TextureHandle m_importanceMap;
 		bgfx::TextureHandle m_importanceMapPong;
-		bgfx::TextureHandle m_loadCounter; 
+		bgfx::TextureHandle m_loadCounter;
 
 		struct Model
 		{
