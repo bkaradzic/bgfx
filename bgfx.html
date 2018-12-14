@@ -242,6 +242,12 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx4Init12platformDataE">
+<span id="bgfx::Init::platformData__PlatformData"></span><span class="target" id="structbgfx_1_1_init_1a45c9bd57be8ff9a4ecd1fc180d8526c9"></span><a class="reference internal" href="#_CPPv2N4bgfx12PlatformDataE" title="bgfx::PlatformData">PlatformData</a> <code class="descname">platformData</code><a class="headerlink" href="#_CPPv2N4bgfx4Init12platformDataE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Platform data. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx4Init10resolutionE">
 <span id="bgfx::Init::resolution__Resolution"></span><span class="target" id="structbgfx_1_1_init_1a12f9e2f7f7a8514e1bd58a8aee137b1a"></span><a class="reference internal" href="#_CPPv2N4bgfx10ResolutionE" title="bgfx::Resolution">Resolution</a> <code class="descname">resolution</code><a class="headerlink" href="#_CPPv2N4bgfx4Init10resolutionE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Backbuffer resolution and reset parameters. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_resolution"><span><span class="pre">bgfx::Resolution</span></span></a></code>. </p>
@@ -1564,6 +1570,12 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N4bgfx5Stats7numBlitE">
+<span id="bgfx::Stats::numBlit__uint32_t"></span><span class="target" id="structbgfx_1_1_stats_1a1bc357a640fe58924ad4df927642a451"></span>uint32_t <code class="descname">numBlit</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats7numBlitE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of blit calls submitted. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N4bgfx5Stats13maxGpuLatencyE">
 <span id="bgfx::Stats::maxGpuLatency__uint32_t"></span><span class="target" id="structbgfx_1_1_stats_1a009e15fb4e8339ed5259d6451d180de5"></span>uint32_t <code class="descname">maxGpuLatency</code><a class="headerlink" href="#_CPPv2N4bgfx5Stats13maxGpuLatencyE" title="Permalink to this definition">¶</a></dt>
 <dd><p>GPU driver latency. </p>
@@ -1881,12 +1893,6 @@ creating windows.</p>
 <dt id="_CPPv2N4bgfx12PlatformData12backBufferDSE">
 <span id="bgfx::PlatformData::backBufferDS__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1ae1dce3718ab484415ac7b8377aec5dab"></span>void *<code class="descname">backBufferDS</code><a class="headerlink" href="#_CPPv2N4bgfx12PlatformData12backBufferDSE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Backbuffer depth/stencil. </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N4bgfx12PlatformData7sessionE">
-<span id="bgfx::PlatformData::session__voidP"></span><span class="target" id="structbgfx_1_1_platform_data_1ac20194808c87a77350d67f75484d6e97"></span>void *<code class="descname">session</code><a class="headerlink" href="#_CPPv2N4bgfx12PlatformData7sessionE" title="Permalink to this definition">¶</a></dt>
-<dd><p>ovrSession, for Oculus SDK </p>
 </dd></dl>
 
 </div>
@@ -2568,7 +2574,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set view sorting mode. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a2cd7129b200218e2a4240b947e193eb5"><span><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
+<dd>View mode must be set prior calling <code class="docutils literal"><span class="pre">bgfx::submit</span></code> for the view.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_mode</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -3239,8 +3245,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle7int32_tb">
-<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.int32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1a47e059ac9b9ae395ced112058953502b"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_tb">
+<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.uint32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1aebca0fd0e7043ee1448098c6ffb8c005"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle8uint32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3258,8 +3264,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb">
-<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1abb4985101e103d4b9ebbfd67b1d39f19"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb">
+<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.OcclusionQueryHandle.uint32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1a3a34ee67df21dc3e319ee10d380cf658"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3278,8 +3284,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
-<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1a1ff33c6db5b8dda86d970a4c61fe9ce1"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb">
+<span id="bgfx::Encoder::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint32_t.b"></span><span class="target" id="structbgfx_1_1_encoder_1a623269186c6f60577e7f5ea48040a9ef"></span>void <code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4382,67 +4388,39 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <p>Within view all draw commands are executed after blit and compute commands.</p>
-<dl class="function">
-<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle7int32_tb">
-<span id="bgfx::submit__ViewId.ProgramHandle.int32_t.b"></span><span class="target" id="namespacebgfx_1a2cd7129b200218e2a4240b947e193eb5"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Submit primitive for rendering. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
-<li><code class="docutils literal"><span class="pre">_program</span></code>: Program. </li>
-<li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth for sorting. </li>
-<li><code class="docutils literal"><span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (ViewId, ProgramHandle, int32_t, bool) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb">
-<span id="bgfx::submit__ViewId.ProgramHandle.OcclusionQueryHandle.int32_t.b"></span><span class="target" id="namespacebgfx_1aaadd2819fbc4d86a45614482823244d1"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle7int32_tb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Submit primitive with occlusion query for rendering. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_occlusion_query</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
-<li><code class="docutils literal"><span class="pre">_program</span></code>: Program. </li>
-<li><code class="docutils literal"><span class="pre">_occlusionQuery</span></code>: Occlusion query. </li>
-<li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth for sorting. </li>
-<li><code class="docutils literal"><span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</li>
-</ul>
-</dd>
-</dl>
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::submit(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, bool)
+- void bgfx::submit(ViewId, ProgramHandle, OcclusionQueryHandle, uint32_t, bool)
+- void bgfx::submit(ViewId, ProgramHandle, uint32_t, bool)
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (ViewId, ProgramHandle, OcclusionQueryHandle, int32_t, bool) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb">
-<span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.int32_t.b"></span><span class="target" id="namespacebgfx_1ae5178548ffbf561fca06078176c10f3c"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, int32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7int32_tb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_indirect</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
-<li><code class="docutils literal"><span class="pre">_program</span></code>: Program. </li>
-<li><code class="docutils literal"><span class="pre">_indirectHandle</span></code>: Indirect buffer. </li>
-<li><code class="docutils literal"><span class="pre">_start</span></code>: First element in indirect buffer. </li>
-<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of dispatches. </li>
-<li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth for sorting. </li>
-<li><code class="docutils literal"><span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</li>
-</ul>
-</dd>
-</dl>
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::submit(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, bool)
+- void bgfx::submit(ViewId, ProgramHandle, OcclusionQueryHandle, uint32_t, bool)
+- void bgfx::submit(ViewId, ProgramHandle, uint32_t, bool)
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, int32_t, bool) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::submit(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, bool)
+- void bgfx::submit(ViewId, ProgramHandle, OcclusionQueryHandle, uint32_t, bool)
+- void bgfx::submit(ViewId, ProgramHandle, uint32_t, bool)
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 <div class="section" id="compute">
