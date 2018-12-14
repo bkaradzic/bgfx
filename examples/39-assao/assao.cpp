@@ -80,6 +80,7 @@ namespace
 
 		static bgfx::VertexDecl ms_decl;
 	};
+
 	bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
 
 	// Utility function to draw a screen space quad for deferred rendering
@@ -140,21 +141,21 @@ namespace
 
 	struct Settings
 	{
-		float       m_radius;                             // [0.0,  ~ ] World (view) space size of the occlusion sphere.
-		float       m_shadowMultiplier;                   // [0.0, 5.0] Effect strength linear multiplier
-		float       m_shadowPower;                        // [0.5, 5.0] Effect strength pow modifier
-		float       m_shadowClamp;                        // [0.0, 1.0] Effect max limit (applied after multiplier but before blur)
-		float       m_horizonAngleThreshold;              // [0.0, 0.2] Limits self-shadowing (makes the sampling area less of a hemisphere, more of a spherical cone, to avoid self-shadowing and various artifacts due to low tessellation and depth buffer imprecision, etc.)
-		float       m_fadeOutFrom;                        // [0.0,  ~ ] Distance to start start fading out the effect.
-		float       m_fadeOutTo;                          // [0.0,  ~ ] Distance at which the effect is faded out.
-		int         m_qualityLevel;                       // [ -1,  3 ] Effect quality; -1 - lowest (low, half res checkerboard), 0 - low, 1 - medium, 2 - high, 3 - very high / adaptive; each quality level is roughly 2x more costly than the previous, except the q3 which is variable but, in general, above q2.
-		float       m_adaptiveQualityLimit;               // [0.0, 1.0] (only for Quality Level 3)
-		int         m_blurPassCount;                      // [  0,   6] Number of edge-sensitive smart blur passes to apply. Quality 0 is an exception with only one 'dumb' blur pass used.
-		float       m_sharpness;                          // [0.0, 1.0] (How much to bleed over edges; 1: not at all, 0.5: half-half; 0.0: completely ignore edges)
-		float       m_temporalSupersamplingAngleOffset;   // [0.0,  PI] Used to rotate sampling kernel; If using temporal AA / supersampling, suggested to rotate by ( (frame%3)/3.0*PI ) or similar. Kernel is already symmetrical, which is why we use PI and not 2*PI.
-		float       m_temporalSupersamplingRadiusOffset;  // [0.0, 2.0] Used to scale sampling kernel; If using temporal AA / supersampling, suggested to scale by ( 1.0f + (((frame%3)-1.0)/3.0)*0.1 ) or similar.
-		float       m_detailShadowStrength;               // [0.0, 5.0] Used for high-res detail AO using neighboring depth pixels: adds a lot of detail but also reduces temporal stability (adds aliasing).
-		bool		m_generateNormals;					  // [true/false] If true normals will be generated from depth.
+		float   m_radius;                            // [0.0,  ~ ] World (view) space size of the occlusion sphere.
+		float   m_shadowMultiplier;                  // [0.0, 5.0] Effect strength linear multiplier
+		float   m_shadowPower;                       // [0.5, 5.0] Effect strength pow modifier
+		float   m_shadowClamp;                       // [0.0, 1.0] Effect max limit (applied after multiplier but before blur)
+		float   m_horizonAngleThreshold;             // [0.0, 0.2] Limits self-shadowing (makes the sampling area less of a hemisphere, more of a spherical cone, to avoid self-shadowing and various artifacts due to low tessellation and depth buffer imprecision, etc.)
+		float   m_fadeOutFrom;                       // [0.0,  ~ ] Distance to start start fading out the effect.
+		float   m_fadeOutTo;                         // [0.0,  ~ ] Distance at which the effect is faded out.
+		int32_t m_qualityLevel;                      // [ -1,  3 ] Effect quality; -1 - lowest (low, half res checkerboard), 0 - low, 1 - medium, 2 - high, 3 - very high / adaptive; each quality level is roughly 2x more costly than the previous, except the q3 which is variable but, in general, above q2.
+		float   m_adaptiveQualityLimit;              // [0.0, 1.0] (only for Quality Level 3)
+		int32_t m_blurPassCount;                     // [  0,   6] Number of edge-sensitive smart blur passes to apply. Quality 0 is an exception with only one 'dumb' blur pass used.
+		float   m_sharpness;                         // [0.0, 1.0] (How much to bleed over edges; 1: not at all, 0.5: half-half; 0.0: completely ignore edges)
+		float   m_temporalSupersamplingAngleOffset;  // [0.0,  PI] Used to rotate sampling kernel; If using temporal AA / supersampling, suggested to rotate by ( (frame%3)/3.0*PI ) or similar. Kernel is already symmetrical, which is why we use PI and not 2*PI.
+		float   m_temporalSupersamplingRadiusOffset; // [0.0, 2.0] Used to scale sampling kernel; If using temporal AA / supersampling, suggested to scale by ( 1.0f + (((frame%3)-1.0)/3.0)*0.1 ) or similar.
+		float   m_detailShadowStrength;              // [0.0, 5.0] Used for high-res detail AO using neighboring depth pixels: adds a lot of detail but also reduces temporal stability (adds aliasing).
+		bool    m_generateNormals;                   // [true/false] If true normals will be generated from depth.
 
 		Settings()
 		{
@@ -199,18 +200,18 @@ namespace
 		{
 			struct
 			{
-				/* 0*/ struct { float m_viewportPixelSize[2]; float m_halfViewportPixelSize[2]; };
-				/* 1*/ struct { float m_depthUnpackConsts[2]; float m_unused0[2]; };
-				/* 2*/ struct { float m_ndcToViewMul[2]; float m_ndcToViewAdd[2]; };
-				/* 3*/ struct { float m_perPassFullResCoordOffset[2]; float m_perPassFullResUVOffset[2]; };
-				/* 4*/ struct { float m_viewport2xPixelSize[2]; float m_viewport2xPixelSize_x_025[2]; };
-				/* 5*/ struct { float m_effectRadius; float m_effectShadowStrength; float m_effectShadowPow; float m_effectShadowClamp; };
-				/* 6*/ struct { float m_effectFadeOutMul; float m_effectFadeOutAdd; float m_effectHorizonAngleThreshold; float m_effectSamplingRadiusNearLimitRec; };
-				/* 7*/ struct { float m_depthPrecisionOffsetMod; float m_negRecEffectRadius; float m_loadCounterAvgDiv; float m_adaptiveSampleCountLimit; };
-				/* 8*/ struct { float m_invSharpness; float m_passIndex; float m_quarterResPixelSize[2]; };
-				/* 9-13*/ struct { float m_patternRotScaleMatrices[5][4]; };
-				/*14*/ struct { float m_normalsUnpackMul; float m_normalsUnpackAdd; float m_detailAOStrength; float m_layer; };
-				/*15-18*/ struct { float m_normalsWorldToViewspaceMatrix[16]; };
+				/*  0    */ struct { float m_viewportPixelSize[2]; float m_halfViewportPixelSize[2]; };
+				/*  1    */ struct { float m_depthUnpackConsts[2]; float m_unused0[2]; };
+				/*  2    */ struct { float m_ndcToViewMul[2]; float m_ndcToViewAdd[2]; };
+				/*  3    */ struct { float m_perPassFullResCoordOffset[2]; float m_perPassFullResUVOffset[2]; };
+				/*  4    */ struct { float m_viewport2xPixelSize[2]; float m_viewport2xPixelSize_x_025[2]; };
+				/*  5    */ struct { float m_effectRadius; float m_effectShadowStrength; float m_effectShadowPow; float m_effectShadowClamp; };
+				/*  6    */ struct { float m_effectFadeOutMul; float m_effectFadeOutAdd; float m_effectHorizonAngleThreshold; float m_effectSamplingRadiusNearLimitRec; };
+				/*  7    */ struct { float m_depthPrecisionOffsetMod; float m_negRecEffectRadius; float m_loadCounterAvgDiv; float m_adaptiveSampleCountLimit; };
+				/*  8    */ struct { float m_invSharpness; float m_passIndex; float m_quarterResPixelSize[2]; };
+				/*  9-13 */ struct { float m_patternRotScaleMatrices[5][4]; };
+				/* 14    */ struct { float m_normalsUnpackMul; float m_normalsUnpackAdd; float m_detailAOStrength; float m_layer; };
+				/* 15-18 */ struct { float m_normalsWorldToViewspaceMatrix[16]; };
 			};
 
 			float m_params[NumVec4 * 4];
@@ -219,11 +220,29 @@ namespace
 		bgfx::UniformHandle u_params;
 	};
 
-	void vec2Set(float *_v, float _x, float _y) { _v[0] = _x; _v[1] = _y; }
-	void vec4Set(float *_v, float _x, float _y, float _z, float _w) { _v[0] = _x; _v[1] = _y; _v[2] = _z; _v[3] = _w; }
-	void vec4iSet(int *_v, int _x, int _y, int _z, int _w) { _v[0] = _x; _v[1] = _y; _v[2] = _z; _v[3] = _w; }
+	void vec2Set(float* _v, float _x, float _y)
+	{
+		_v[0] = _x;
+		_v[1] = _y;
+	}
 
-	static const int cMaxBlurPassCount = 6;
+	void vec4Set(float* _v, float _x, float _y, float _z, float _w)
+	{
+		_v[0] = _x;
+		_v[1] = _y;
+		_v[2] = _z;
+		_v[3] = _w;
+	}
+
+	void vec4iSet(int32_t* _v, int32_t _x, int32_t _y, int32_t _z, int32_t _w)
+	{
+		_v[0] = _x;
+		_v[1] = _y;
+		_v[2] = _z;
+		_v[3] = _w;
+	}
+
+	static const int32_t cMaxBlurPassCount = 6;
 
 	class ExampleASSAO : public entry::AppI
 	{
@@ -278,43 +297,42 @@ namespace
 
 			// Create texture sampler uniforms (used when we bind textures)
 			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Int1);  // Normal gbuffer
-			s_depth = bgfx::createUniform("s_depth", bgfx::UniformType::Int1);  // Normal gbuffer
-			s_color = bgfx::createUniform("s_color", bgfx::UniformType::Int1);  // Color (albedo) gbuffer
-
+			s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);  // Normal gbuffer
+			s_color  = bgfx::createUniform("s_color",  bgfx::UniformType::Int1);  // Color (albedo) gbuffer
 			s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
 
-			s_ao = bgfx::createUniform("s_ao", bgfx::UniformType::Int1);
-			s_blurInput = bgfx::createUniform("s_blurInput", bgfx::UniformType::Int1);
-			s_finalSSAO = bgfx::createUniform("s_finalSSAO", bgfx::UniformType::Int1);
-			s_depthSource = bgfx::createUniform("s_depthSource", bgfx::UniformType::Int1);
-			s_viewspaceDepthSource = bgfx::createUniform("s_viewspaceDepthSource", bgfx::UniformType::Int1);
+			s_ao                         = bgfx::createUniform("s_ao", bgfx::UniformType::Int1);
+			s_blurInput                  = bgfx::createUniform("s_blurInput", bgfx::UniformType::Int1);
+			s_finalSSAO                  = bgfx::createUniform("s_finalSSAO", bgfx::UniformType::Int1);
+			s_depthSource                = bgfx::createUniform("s_depthSource", bgfx::UniformType::Int1);
+			s_viewspaceDepthSource       = bgfx::createUniform("s_viewspaceDepthSource", bgfx::UniformType::Int1);
 			s_viewspaceDepthSourceMirror = bgfx::createUniform("s_viewspaceDepthSourceMirror", bgfx::UniformType::Int1);
-			s_importanceMap = bgfx::createUniform("s_importanceMap", bgfx::UniformType::Int1);
+			s_importanceMap              = bgfx::createUniform("s_importanceMap", bgfx::UniformType::Int1);
 
 			// Create program from shaders.
 			m_gbufferProgram = loadProgram("vs_assao_gbuffer", "fs_assao_gbuffer");  // Gbuffer
 			m_combineProgram = loadProgram("vs_assao", "fs_assao_deferred_combine");
 
-			m_prepareDepthsProgram = loadProgram("cs_assao_prepare_depths", NULL);
-			m_prepareDepthsAndNormalsProgram = loadProgram("cs_assao_prepare_depths_and_normals", NULL);
-			m_prepareDepthsHalfProgram = loadProgram("cs_assao_prepare_depths_half", NULL);
+			m_prepareDepthsProgram               = loadProgram("cs_assao_prepare_depths", NULL);
+			m_prepareDepthsAndNormalsProgram     = loadProgram("cs_assao_prepare_depths_and_normals", NULL);
+			m_prepareDepthsHalfProgram           = loadProgram("cs_assao_prepare_depths_half", NULL);
 			m_prepareDepthsAndNormalsHalfProgram = loadProgram("cs_assao_prepare_depths_and_normals_half", NULL);
-			m_prepareDepthMipProgram = loadProgram("cs_assao_prepare_depth_mip", NULL);
-			m_generateQ0Program = loadProgram("cs_assao_generate_q0", NULL);
-			m_generateQ1Program = loadProgram("cs_assao_generate_q1", NULL);
-			m_generateQ2Program = loadProgram("cs_assao_generate_q2", NULL);
-			m_generateQ3Program = loadProgram("cs_assao_generate_q3", NULL);
-			m_generateQ3BaseProgram = loadProgram("cs_assao_generate_q3base", NULL);
-			m_smartBlurProgram = loadProgram("cs_assao_smart_blur", NULL);
-			m_smartBlurWideProgram = loadProgram("cs_assao_smart_blur_wide", NULL);
-			m_nonSmartBlurProgram = loadProgram("cs_assao_non_smart_blur", NULL);
-			m_applyProgram = loadProgram("cs_assao_apply", NULL);
-			m_nonSmartApplyProgram = loadProgram("cs_assao_non_smart_apply", NULL);
-			m_nonSmartHalfApplyProgram = loadProgram("cs_assao_non_smart_half_apply", NULL);
-			m_generateImportanceMapProgram = loadProgram("cs_assao_generate_importance_map", NULL);
-			m_postprocessImportanceMapAProgram = loadProgram("cs_assao_postprocess_importance_map_a", NULL);
-			m_postprocessImportanceMapBProgram = loadProgram("cs_assao_postprocess_importance_map_b", NULL);
-			m_loadCounterClearProgram = loadProgram("cs_assao_load_counter_clear", NULL);
+			m_prepareDepthMipProgram             = loadProgram("cs_assao_prepare_depth_mip", NULL);
+			m_generateQ0Program                  = loadProgram("cs_assao_generate_q0", NULL);
+			m_generateQ1Program                  = loadProgram("cs_assao_generate_q1", NULL);
+			m_generateQ2Program                  = loadProgram("cs_assao_generate_q2", NULL);
+			m_generateQ3Program                  = loadProgram("cs_assao_generate_q3", NULL);
+			m_generateQ3BaseProgram              = loadProgram("cs_assao_generate_q3base", NULL);
+			m_smartBlurProgram                   = loadProgram("cs_assao_smart_blur", NULL);
+			m_smartBlurWideProgram               = loadProgram("cs_assao_smart_blur_wide", NULL);
+			m_nonSmartBlurProgram                = loadProgram("cs_assao_non_smart_blur", NULL);
+			m_applyProgram                       = loadProgram("cs_assao_apply", NULL);
+			m_nonSmartApplyProgram               = loadProgram("cs_assao_non_smart_apply", NULL);
+			m_nonSmartHalfApplyProgram           = loadProgram("cs_assao_non_smart_half_apply", NULL);
+			m_generateImportanceMapProgram       = loadProgram("cs_assao_generate_importance_map", NULL);
+			m_postprocessImportanceMapAProgram   = loadProgram("cs_assao_postprocess_importance_map_a", NULL);
+			m_postprocessImportanceMapBProgram   = loadProgram("cs_assao_postprocess_importance_map_b", NULL);
+			m_loadCounterClearProgram            = loadProgram("cs_assao_load_counter_clear", NULL);
 
 			 // Load some meshes
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
@@ -364,7 +382,7 @@ namespace
 			imguiCreate();
 		}
 
-		int shutdown() override
+		int32_t shutdown() override
 		{
 			for (uint32_t ii = 0; ii < BX_COUNTOF(s_meshPaths); ++ii)
 			{
@@ -444,7 +462,9 @@ namespace
 				const float deltaTime = float(frameTime / freq);
 				const bgfx::Caps* caps = bgfx::getCaps();
 
-				if (m_size[0] != (int)m_width+2*m_border || m_size[1] != (int)m_height + 2 * m_border || m_recreateFrameBuffers)
+				if (m_size[0] != (int32_t)m_width  + 2*m_border
+				||  m_size[1] != (int32_t)m_height + 2*m_border
+				||  m_recreateFrameBuffers)
 				{
 					destroyFramebuffers();
 					createFramebuffers();
@@ -499,14 +519,20 @@ namespace
 
 					if (m_settings.m_qualityLevel < 0)
 					{
-						for (int j = 0; j<2; ++j)
+						for (int32_t j = 0; j < 2; ++j)
+						{
 							bgfx::setImage((uint8_t)(j + 1), m_halfDepths[j == 0 ? 0 : 3], 0, bgfx::Access::Write, bgfx::TextureFormat::R16F);
+						}
+
 						bgfx::dispatch(view, m_settings.m_generateNormals ? m_prepareDepthsAndNormalsHalfProgram : m_prepareDepthsHalfProgram, (m_halfSize[0] + 7) / 8, (m_halfSize[1] + 7) / 8);
 					}
 					else
 					{
-						for(int j=0;j<4;++j)
+						for(int32_t j = 0; j < 4; ++j)
+						{
 							bgfx::setImage((uint8_t)(j+1), m_halfDepths[j], 0, bgfx::Access::Write, bgfx::TextureFormat::R16F);
+						}
+
 						bgfx::dispatch(view, m_settings.m_generateNormals ? m_prepareDepthsAndNormalsProgram : m_prepareDepthsProgram, (m_halfSize[0] + 7) / 8, (m_halfSize[1] + 7) / 8);
 
 					}
@@ -538,43 +564,52 @@ namespace
 				}
 
 				// for adaptive quality, importance map pass
-				for (int ssaoPass = 0; ssaoPass < 2; ++ssaoPass)
+				for (int32_t ssaoPass = 0; ssaoPass < 2; ++ssaoPass)
 				{
-					if (ssaoPass == 0 && m_settings.m_qualityLevel < 3)
+					if (ssaoPass == 0
+					&&  m_settings.m_qualityLevel < 3)
+					{
 						continue;
+					}
 
 					bool adaptiveBasePass = (ssaoPass == 0);
 
 					BX_UNUSED(adaptiveBasePass);
 
-					int passCount = 4;
+					int32_t passCount = 4;
 
-					int halfResNumX = (m_halfResOutScissorRect[2] - m_halfResOutScissorRect[0] + 7) / 8;
-					int halfResNumY = (m_halfResOutScissorRect[3] - m_halfResOutScissorRect[1] + 7) / 8;
+					int32_t halfResNumX = (m_halfResOutScissorRect[2] - m_halfResOutScissorRect[0] + 7) / 8;
+					int32_t halfResNumY = (m_halfResOutScissorRect[3] - m_halfResOutScissorRect[1] + 7) / 8;
 					float halfResRect[4] = { (float)m_halfResOutScissorRect[0], (float)m_halfResOutScissorRect[1], (float)m_halfResOutScissorRect[2], (float)m_halfResOutScissorRect[3] };
 
-					for (int pass = 0; pass < passCount; pass++)
+					for (int32_t pass = 0; pass < passCount; pass++)
 					{
-						if ((m_settings.m_qualityLevel < 0) && ((pass == 1) || (pass == 2)))
+						if (m_settings.m_qualityLevel < 0
+						&& (pass == 1 || pass == 2) )
+						{
 							continue;
+						}
 
-						int blurPasses = m_settings.m_blurPassCount;
+						int32_t blurPasses = m_settings.m_blurPassCount;
 						blurPasses = bx::min(blurPasses, cMaxBlurPassCount);
 
 						if (m_settings.m_qualityLevel == 3)
 						{
 							// if adaptive, at least one blur pass needed as the first pass needs to read the final texture results - kind of awkward
 							if (adaptiveBasePass)
-								blurPasses = 0;
-							else
-								blurPasses = bx::max(1, blurPasses);
-						}
-						else
-							if (m_settings.m_qualityLevel <= 0)
 							{
-								// just one blur pass allowed for minimum quality
-								blurPasses = bx::min(1, m_settings.m_blurPassCount);
+								blurPasses = 0;
 							}
+							else
+							{
+								blurPasses = bx::max(1, blurPasses);
+							}
+						}
+						else if (m_settings.m_qualityLevel <= 0)
+						{
+							// just one blur pass allowed for minimum quality
+							blurPasses = bx::min(1, m_settings.m_blurPassCount);
+						}
 
 						updateUniforms(pass);
 
@@ -602,7 +637,7 @@ namespace
 							}
 
 							bgfx::ProgramHandle programs[5] = { m_generateQ0Program, m_generateQ1Program , m_generateQ2Program , m_generateQ3Program , m_generateQ3BaseProgram };
-							int programIndex = bx::max(0, (!adaptiveBasePass) ? (m_settings.m_qualityLevel) : (4));
+							int32_t programIndex = bx::max(0, (!adaptiveBasePass) ? (m_settings.m_qualityLevel) : (4));
 
 							m_uniforms.m_layer = blurPasses == 0 ? (float)pass : 0.0f;
 							m_uniforms.submit();
@@ -612,9 +647,9 @@ namespace
 						// Blur
 						if (blurPasses > 0)
 						{
-							int wideBlursRemaining = bx::max(0, blurPasses - 2);
+							int32_t wideBlursRemaining = bx::max(0, blurPasses - 2);
 
-							for (int i = 0; i < blurPasses; i++)
+							for (int32_t i = 0; i < blurPasses; i++)
 							{
 								bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 								bgfx::touch(view);
@@ -734,34 +769,42 @@ namespace
 					, m_mouseState.m_mz
 					, uint16_t(m_width)
 					, uint16_t(m_height)
-				);
+					);
 
 				showExampleDialog(this);
 
 				ImGui::SetNextWindowPos(
 					ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
 					, ImGuiCond_FirstUseEver
-				);
+					);
 				ImGui::SetNextWindowSize(
 					ImVec2(m_width / 4.0f, m_height / 2.0f)
 					, ImGuiCond_FirstUseEver
-				);
+					);
 				ImGui::Begin("Settings"
 					, NULL
 					, 0
-				);
+					);
 
 				ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
 				ImGui::Checkbox("Enable SSAO", &m_enableSSAO);
 				ImGui::Checkbox("Enable Texturing & Lighting", &m_enableTexturing);
 				ImGui::Separator();
 
-				int quality = m_settings.m_qualityLevel + 1;
+				int32_t quality = m_settings.m_qualityLevel + 1;
+
 				if (ImGui::Combo("Quality Level", &quality, "lowest(half res)\0low\0medium\0high\0very high / adaptive\0\0"))
+				{
 					m_settings.m_qualityLevel = quality - 1;
+				}
+
 				ImGui::Checkbox("Generate Normals", &m_settings.m_generateNormals);
+
 				if (ImGui::Checkbox("Framebuffer Gutter", &m_framebufferGutter))
+				{
 					m_recreateFrameBuffers = true;
+				}
+
 				ImGui::SliderFloat("Effect Radius", &m_settings.m_radius, 0.0f, 4.0f);
 				ImGui::SliderFloat("Effect Strength", &m_settings.m_shadowMultiplier, 0.0f, 5.0f);
 				ImGui::SliderFloat("Effect Power", &m_settings.m_shadowPower, 0.5f, 4.0f);
@@ -769,8 +812,12 @@ namespace
 				ImGui::SliderFloat("Horizon Angle Threshold", &m_settings.m_horizonAngleThreshold, 0.0f, 0.2f);
 				ImGui::SliderFloat("Fade Out From", &m_settings.m_fadeOutFrom, 0.0f, 100.0f);
 				ImGui::SliderFloat("Fade Out To", &m_settings.m_fadeOutTo, 0.0f, 300.0f);
+
 				if ( m_settings.m_qualityLevel == 3)
+				{
 					ImGui::SliderFloat("Adaptive Quality Limit", &m_settings.m_adaptiveQualityLimit, 0.0f, 1.0f);
+				}
+
 				ImGui::SliderInt("Blur Pass Count", &m_settings.m_blurPassCount, 0, 6);
 				ImGui::SliderFloat("Sharpness", &m_settings.m_sharpness, 0.0f, 1.0f);
 				ImGui::SliderFloat("Temporal Supersampling Angle Offset", &m_settings.m_temporalSupersamplingAngleOffset, 0.0f, bx::kPi);
@@ -840,7 +887,7 @@ namespace
 		void createFramebuffers()
 		{
 			// update resolution and camera FOV if there's border expansion
-			const int drawResolutionBorderExpansionFactor = 12; // will be expanded by Height / expansionFactor
+			const int32_t drawResolutionBorderExpansionFactor = 12; // will be expanded by Height / expansionFactor
 			const float fovY = 60.0f;
 
 			m_border = 0;
@@ -848,14 +895,16 @@ namespace
 			if (m_framebufferGutter)
 			{
 				m_border = (bx::min(m_width, m_height) / drawResolutionBorderExpansionFactor) / 2 * 2;
-				int expandedSceneResolutionY = m_height + m_border * 2;
+				int32_t expandedSceneResolutionY = m_height + m_border * 2;
 				float yScaleDueToBorder = (expandedSceneResolutionY * 0.5f) / (float)(m_height * 0.5f);
 
 				float nonExpandedTan = bx::tan(bx::toRad(fovY / 2.0f));
 				m_fovY = bx::toDeg(bx::atan(nonExpandedTan * yScaleDueToBorder) * 2.0f);
 			}
 			else
+			{
 				m_fovY = fovY;
+			}
 
 			m_size[0] = m_width + 2 * m_border;
 			m_size[1] = m_height + 2 * m_border;
@@ -867,7 +916,7 @@ namespace
 			vec4iSet(m_fullResOutScissorRect, m_border, m_border, m_width + m_border, m_height + m_border);
 			vec4iSet(m_halfResOutScissorRect, m_fullResOutScissorRect[0] / 2, m_fullResOutScissorRect[1] / 2, (m_fullResOutScissorRect[2] + 1) / 2, (m_fullResOutScissorRect[3] + 1) / 2);
 
-			int blurEnlarge = cMaxBlurPassCount + bx::max(0, cMaxBlurPassCount - 2);  // +1 for max normal blurs, +2 for wide blurs
+			int32_t blurEnlarge = cMaxBlurPassCount + bx::max(0, cMaxBlurPassCount - 2);  // +1 for max normal blurs, +2 for wide blurs
 			vec4iSet(m_halfResOutScissorRect, bx::max(0, m_halfResOutScissorRect[0] - blurEnlarge), bx::max(0, m_halfResOutScissorRect[1] - blurEnlarge),
 						bx::min(m_halfSize[0], m_halfResOutScissorRect[2] + blurEnlarge), bx::min(m_halfSize[1], m_halfResOutScissorRect[3] + blurEnlarge));
 
@@ -887,7 +936,7 @@ namespace
 			gbufferTex[GBUFFER_RT_DEPTH] = bgfx::createTexture2D(uint16_t(m_size[0]), uint16_t(m_size[1]), false, 1, bgfx::TextureFormat::D24, tsFlags);
 			m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferTex), gbufferTex, true);
 
-			for (int i = 0; i < 4; i++)
+			for (int32_t i = 0; i < 4; i++)
 			{
 				m_halfDepths[i] = bgfx::createTexture2D(uint16_t(m_halfSize[0]), uint16_t(m_halfSize[1]), true, 1, bgfx::TextureFormat::R16F, BGFX_TEXTURE_COMPUTE_WRITE | SAMPLER_POINT_CLAMP);
 			}
@@ -910,7 +959,10 @@ namespace
 			bgfx::destroy(m_gbuffer);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_halfDepths); ++ii)
+			{
 				bgfx::destroy(m_halfDepths[ii]);
+			}
+
 			bgfx::destroy(m_pingPongHalfResultA);
 			bgfx::destroy(m_pingPongHalfResultB);
 			bgfx::destroy(m_finalResults);
@@ -921,7 +973,7 @@ namespace
 			bgfx::destroy(m_importanceMapPong);
 		}
 
-		void updateUniforms(int _pass)
+		void updateUniforms(int32_t _pass)
 		{
 			vec2Set(m_uniforms.m_viewportPixelSize, 1.0f / (float)m_size[0], 1.0f / (float)m_size[1]);
 			vec2Set(m_uniforms.m_halfViewportPixelSize, 1.0f / (float)m_halfSize[0], 1.0f / (float)m_halfSize[1]);
@@ -929,11 +981,15 @@ namespace
 			vec2Set(m_uniforms.m_viewport2xPixelSize, m_uniforms.m_viewportPixelSize[0] * 2.0f, m_uniforms.m_viewportPixelSize[1] * 2.0f);
 			vec2Set(m_uniforms.m_viewport2xPixelSize_x_025, m_uniforms.m_viewport2xPixelSize[0] * 0.25f, m_uniforms.m_viewport2xPixelSize[1] * 0.25f);
 
-			float depthLinearizeMul = -m_proj2[3*4+2];           // float depthLinearizeMul = ( clipFar * clipNear ) / ( clipFar - clipNear );
-			float depthLinearizeAdd = m_proj2[2*4+2];           // float depthLinearizeAdd = clipFar / ( clipFar - clipNear );
-																												   // correct the handedness issue. need to make sure this below is correct, but I think it is.
+			float depthLinearizeMul = -m_proj2[3*4+2]; // float depthLinearizeMul = ( clipFar * clipNear ) / ( clipFar - clipNear );
+			float depthLinearizeAdd =  m_proj2[2*4+2]; // float depthLinearizeAdd = clipFar / ( clipFar - clipNear );
+			                                           // correct the handedness issue. need to make sure this below is correct, but I think it is.
+
 			if (depthLinearizeMul * depthLinearizeAdd < 0)
+			{
 				depthLinearizeAdd = -depthLinearizeAdd;
+			}
+
 			vec2Set(m_uniforms.m_depthUnpackConsts, depthLinearizeMul, depthLinearizeAdd);
 
 			float tanHalfFOVY = 1.0f / m_proj2[1*4+1];    // = tanf( drawContext.Camera.GetYFOV( ) * 0.5f );
@@ -974,8 +1030,11 @@ namespace
 				effectSamplingRadiusNearLimit *= 1.50f;
 
 				if (m_settings.m_qualityLevel < 0)
+				{
 					m_uniforms.m_effectRadius *= 0.8f;
+				}
 			}
+
 			effectSamplingRadiusNearLimit /= tanHalfFOVY; // to keep the effect same regardless of FOV
 
 			m_uniforms.m_effectSamplingRadiusNearLimitRec = 1.0f / effectSamplingRadiusNearLimit;
@@ -1001,13 +1060,13 @@ namespace
 
 			float additionalAngleOffset = m_settings.m_temporalSupersamplingAngleOffset;  // if using temporal supersampling approach (like "Progressive Rendering Using Multi-frame Sampling" from GPU Pro 7, etc.)
 			float additionalRadiusScale = m_settings.m_temporalSupersamplingRadiusOffset; // if using temporal supersampling approach (like "Progressive Rendering Using Multi-frame Sampling" from GPU Pro 7, etc.)
-			const int subPassCount = 5;
-			for (int subPass = 0; subPass < subPassCount; subPass++)
+			const int32_t subPassCount = 5;
+			for (int32_t subPass = 0; subPass < subPassCount; subPass++)
 			{
-				int a = _pass;
-				int b = subPass;
+				int32_t a = _pass;
+				int32_t b = subPass;
 
-				int spmap[5]{ 0, 1, 4, 3, 2 };
+				int32_t spmap[5]{ 0, 1, 4, 3, 2 };
 				b = spmap[subPass];
 
 				float ca, sa;
@@ -1122,8 +1181,8 @@ namespace
 
 		// UI
 		Settings m_settings;
-		bool	m_enableSSAO;
-		bool	m_enableTexturing;
+		bool m_enableSSAO;
+		bool m_enableTexturing;
 
 		float m_texelHalf;
 		float m_fovY;
@@ -1131,15 +1190,15 @@ namespace
 		bool m_framebufferGutter;
 		bool m_recreateFrameBuffers;
 
-		float m_view[16];
-		float m_proj[16];
-		float m_proj2[16];
-		int   m_size[2];
-		int   m_halfSize[2];
-		int   m_quarterSize[2];
-		int   m_fullResOutScissorRect[4];
-		int   m_halfResOutScissorRect[4];
-		int   m_border;
+		float   m_view[16];
+		float   m_proj[16];
+		float   m_proj2[16];
+		int32_t m_size[2];
+		int32_t m_halfSize[2];
+		int32_t m_quarterSize[2];
+		int32_t m_fullResOutScissorRect[4];
+		int32_t m_halfResOutScissorRect[4];
+		int32_t m_border;
 	};
 
 } // namespace
