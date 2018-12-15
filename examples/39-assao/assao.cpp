@@ -778,7 +778,7 @@ namespace
 					, ImGuiCond_FirstUseEver
 					);
 				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 4.0f, m_height / 2.0f)
+					ImVec2(m_width / 4.0f, m_height / 1.3f)
 					, ImGuiCond_FirstUseEver
 					);
 				ImGui::Begin("Settings"
@@ -793,7 +793,7 @@ namespace
 
 				int32_t quality = m_settings.m_qualityLevel + 1;
 
-				if (ImGui::Combo("Quality Level", &quality, "lowest(half res)\0low\0medium\0high\0very high / adaptive\0\0"))
+				if (ImGui::Combo("Quality Level", &quality, "Lowest (Half Resolution)\0Low\0Medium\0High\0Adaptive\0\0"))
 				{
 					m_settings.m_qualityLevel = quality - 1;
 				}
@@ -813,7 +813,7 @@ namespace
 				ImGui::SliderFloat("Fade Out From", &m_settings.m_fadeOutFrom, 0.0f, 100.0f);
 				ImGui::SliderFloat("Fade Out To", &m_settings.m_fadeOutTo, 0.0f, 300.0f);
 
-				if ( m_settings.m_qualityLevel == 3)
+				if (m_settings.m_qualityLevel == 3)
 				{
 					ImGui::SliderFloat("Adaptive Quality Limit", &m_settings.m_adaptiveQualityLimit, 0.0f, 1.0f);
 				}
@@ -857,7 +857,7 @@ namespace
 					, model.position[0]
 					, model.position[1]
 					, model.position[2]
-				);
+					);
 
 				// Submit mesh to gbuffer
 				bgfx::setTexture(0, s_albedo, m_modelTexture);
@@ -866,18 +866,16 @@ namespace
 
 			// Draw ground
 			float mtxScale[16];
-			float scale = 10.0;
-			bx::mtxScale(mtxScale
-				, scale
-				, scale
-				, scale
-			);
+			const float scale = 10.0f;
+			bx::mtxScale(mtxScale, scale, scale, scale);
+
 			float mtxTrans[16];
 			bx::mtxTranslate(mtxTrans
 				, 0.0f
 				, -10.0f
 				, 0.0f
-			);
+				);
+
 			float mtx[16];
 			bx::mtxMul(mtx, mtxScale, mtxTrans);
 			bgfx::setTexture(0, s_albedo, m_groundTexture);
