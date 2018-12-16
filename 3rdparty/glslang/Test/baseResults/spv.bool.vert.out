@@ -29,6 +29,7 @@ spv.bool.vert
                               MemberDecorate 27(ubname) 0 Offset 0
                               Decorate 27(ubname) Block
                               Decorate 29(ubinst) DescriptorSet 0
+                              Decorate 29(ubinst) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeBool

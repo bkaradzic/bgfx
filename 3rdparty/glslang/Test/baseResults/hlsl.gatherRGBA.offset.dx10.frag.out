@@ -1334,6 +1334,7 @@ Validation failed
                               Name 395  "g_tTexcdi4"
                               Name 398  "g_tTexcdu4"
                               Decorate 16(g_tTex2df4) DescriptorSet 0
+                              Decorate 16(g_tTex2df4) Binding 0
                               Decorate 20(g_sSamp) DescriptorSet 0
                               Decorate 20(g_sSamp) Binding 0
                               MemberDecorate 30($Global) 0 Offset 0
@@ -1346,23 +1347,35 @@ Validation failed
                               MemberDecorate 30($Global) 7 Offset 80
                               Decorate 30($Global) Block
                               Decorate 32 DescriptorSet 0
+                              Decorate 32 Binding 0
                               Decorate 47(g_tTex2di4) DescriptorSet 0
+                              Decorate 47(g_tTex2di4) Binding 0
                               Decorate 63(g_tTex2du4) DescriptorSet 0
+                              Decorate 63(g_tTex2du4) Binding 0
                               Decorate 363(@entryPointOutput.Color) Location 0
                               Decorate 367(@entryPointOutput.Depth) BuiltIn FragDepth
                               Decorate 370(g_sSamp2d) DescriptorSet 0
+                              Decorate 370(g_sSamp2d) Binding 0
                               Decorate 373(g_tTex1df4a) DescriptorSet 0
                               Decorate 373(g_tTex1df4a) Binding 1
                               Decorate 374(g_tTex1df4) DescriptorSet 0
                               Decorate 374(g_tTex1df4) Binding 0
                               Decorate 377(g_tTex1di4) DescriptorSet 0
+                              Decorate 377(g_tTex1di4) Binding 0
                               Decorate 380(g_tTex1du4) DescriptorSet 0
+                              Decorate 380(g_tTex1du4) Binding 0
                               Decorate 383(g_tTex3df4) DescriptorSet 0
+                              Decorate 383(g_tTex3df4) Binding 0
                               Decorate 386(g_tTex3di4) DescriptorSet 0
+                              Decorate 386(g_tTex3di4) Binding 0
                               Decorate 389(g_tTex3du4) DescriptorSet 0
+                              Decorate 389(g_tTex3du4) Binding 0
                               Decorate 392(g_tTexcdf4) DescriptorSet 0
+                              Decorate 392(g_tTexcdf4) Binding 0
                               Decorate 395(g_tTexcdi4) DescriptorSet 0
+                              Decorate 395(g_tTexcdi4) Binding 0
                               Decorate 398(g_tTexcdu4) DescriptorSet 0
+                              Decorate 398(g_tTexcdu4) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

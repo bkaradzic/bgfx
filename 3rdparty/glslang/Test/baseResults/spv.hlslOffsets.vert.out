@@ -60,6 +60,7 @@ Shader version: 450
                               MemberDecorate 11(block) 13 Offset 112
                               Decorate 11(block) BufferBlock
                               Decorate 13 DescriptorSet 0
+                              Decorate 13 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

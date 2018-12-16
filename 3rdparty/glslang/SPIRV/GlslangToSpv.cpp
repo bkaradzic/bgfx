@@ -1,6 +1,6 @@
 //
 // Copyright (C) 2014-2016 LunarG, Inc.
-// Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
@@ -1088,6 +1088,13 @@ spv::StorageClass TGlslangToSpvTraverser::TranslateStorageClass(const glslang::T
             return spv::StorageClassUniformConstant;
     }
 
+#ifdef NV_EXTENSIONS
+    if (type.getQualifier().isUniformOrBuffer() &&
+        type.getQualifier().layoutShaderRecordNV) {
+        return spv::StorageClassShaderRecordBufferNV;
+    }
+#endif
+
     if (glslangIntermediate->usingStorageBuffer() && type.getQualifier().storage == glslang::EvqBuffer) {
         addPre13Extension(spv::E_SPV_KHR_storage_buffer_storage_class);
         return spv::StorageClassStorageBuffer;
@@ -1096,10 +1103,6 @@ spv::StorageClass TGlslangToSpvTraverser::TranslateStorageClass(const glslang::T
     if (type.getQualifier().isUniformOrBuffer()) {
         if (type.getQualifier().layoutPushConstant)
             return spv::StorageClassPushConstant;
-#ifdef NV_EXTENSIONS
-        if (type.getQualifier().layoutShaderRecordNV)
-            return spv::StorageClassShaderRecordBufferNV;
-#endif
         if (type.getBasicType() == glslang::EbtBlock)
             return spv::StorageClassUniform;
         return spv::StorageClassUniformConstant;
@@ -3279,10 +3282,6 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
     // Decorate the structure
     builder.addDecoration(spvType, TranslateLayoutDecoration(type, qualifier.layoutMatrix));
     builder.addDecoration(spvType, TranslateBlockDecoration(type, glslangIntermediate->usingStorageBuffer()));
-    if (type.getQualifier().hasStream() && glslangIntermediate->isMultiStream()) {
-        builder.addCapability(spv::CapabilityGeometryStreams);
-        builder.addDecoration(spvType, spv::DecorationStream, type.getQualifier().layoutStream);
-    }
 }
 
 // Turn the expression forming the array size into an id.
@@ -7165,6 +7164,10 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
     }
     if (symbol->getQualifier().hasBinding())
         builder.addDecoration(id, spv::DecorationBinding, symbol->getQualifier().layoutBinding);
+    else if (IsDescriptorResource(symbol->getType())) {
+        // default to 0
+        builder.addDecoration(id, spv::DecorationBinding, 0);
+    }
     if (symbol->getQualifier().hasAttachment())
         builder.addDecoration(id, spv::DecorationInputAttachmentIndex, symbol->getQualifier().layoutAttachment);
     if (glslangIntermediate->getXfbMode()) {

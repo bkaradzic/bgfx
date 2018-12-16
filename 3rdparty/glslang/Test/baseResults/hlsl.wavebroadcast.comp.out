@@ -2333,6 +2333,7 @@ local_size = (32, 16, 1)
                               MemberDecorate 22(data) 0 Offset 0
                               Decorate 22(data) BufferBlock
                               Decorate 24(data) DescriptorSet 0
+                              Decorate 24(data) Binding 0
                               Decorate 354(dti) BuiltIn GlobalInvocationId
                2:             TypeVoid
                3:             TypeFunction 2

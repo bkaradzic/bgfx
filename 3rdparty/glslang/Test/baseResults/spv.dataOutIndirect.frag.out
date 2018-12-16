@@ -18,6 +18,7 @@ spv.dataOutIndirect.frag
                               MemberDecorate 14(b) 0 Offset 0
                               Decorate 14(b) Block
                               Decorate 16(bName) DescriptorSet 0
+                              Decorate 16(bName) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

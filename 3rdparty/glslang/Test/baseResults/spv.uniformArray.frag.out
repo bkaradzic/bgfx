@@ -18,6 +18,7 @@ spv.uniformArray.frag
                               Name 52  "texSampler2D"
                               Decorate 47(gl_FragColor) Location 0
                               Decorate 52(texSampler2D) DescriptorSet 0
+                              Decorate 52(texSampler2D) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

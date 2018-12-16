@@ -49,6 +49,7 @@ Validation failed
                               MemberDecorate 15(B1) 6 Offset 56
                               Decorate 15(B1) Block
                               Decorate 17 DescriptorSet 0
+                              Decorate 17 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 16

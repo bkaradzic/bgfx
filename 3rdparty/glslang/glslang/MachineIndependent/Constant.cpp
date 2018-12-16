@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2018 Google, Inc.
 //
 // All rights reserved.
 //
@@ -800,32 +801,32 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             newConstArray[i].setDConst(unionArray[i].getU16Const()); break;
 
         case EOpConvIntToInt8:
-            newConstArray[i].setI8Const(unionArray[i].getIConst()); break;
+            newConstArray[i].setI8Const((signed char)unionArray[i].getIConst()); break;
         case EOpConvIntToInt16:
-            newConstArray[i].setI16Const(unionArray[i].getIConst()); break;
+            newConstArray[i].setI16Const((signed short)unionArray[i].getIConst()); break;
         case EOpConvIntToInt64:
             newConstArray[i].setI64Const(unionArray[i].getIConst()); break;
         case EOpConvIntToUint8:
-            newConstArray[i].setU8Const(unionArray[i].getIConst()); break;
+            newConstArray[i].setU8Const((unsigned char)unionArray[i].getIConst()); break;
         case EOpConvIntToUint16:
-            newConstArray[i].setU16Const(unionArray[i].getIConst()); break;
+            newConstArray[i].setU16Const((unsigned char)unionArray[i].getIConst()); break;
         case EOpConvIntToUint:
             newConstArray[i].setUConst(unionArray[i].getIConst()); break;
         case EOpConvIntToUint64:
             newConstArray[i].setU64Const(unionArray[i].getIConst()); break;
 
         case EOpConvUintToInt8:
-            newConstArray[i].setI8Const(unionArray[i].getUConst()); break;
+            newConstArray[i].setI8Const((signed char)unionArray[i].getUConst()); break;
         case EOpConvUintToInt16:
-            newConstArray[i].setI16Const(unionArray[i].getUConst()); break;
+            newConstArray[i].setI16Const((signed short)unionArray[i].getUConst()); break;
         case EOpConvUintToInt:
             newConstArray[i].setIConst(unionArray[i].getUConst()); break;
         case EOpConvUintToInt64:
             newConstArray[i].setI64Const(unionArray[i].getUConst()); break;
         case EOpConvUintToUint8:
-            newConstArray[i].setU8Const(unionArray[i].getUConst()); break;
+            newConstArray[i].setU8Const((unsigned char)unionArray[i].getUConst()); break;
         case EOpConvUintToUint16:
-            newConstArray[i].setU16Const(unionArray[i].getUConst()); break;
+            newConstArray[i].setU16Const((unsigned short)unionArray[i].getUConst()); break;
         case EOpConvUintToUint64:
             newConstArray[i].setU64Const(unionArray[i].getUConst()); break;
         case EOpConvIntToFloat16:

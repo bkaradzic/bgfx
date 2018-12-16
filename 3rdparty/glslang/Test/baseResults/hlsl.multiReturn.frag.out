@@ -79,6 +79,7 @@ gl_FragCoord origin is upper left
                               MemberDecorate 16(bufName) 0 Offset 0
                               Decorate 16(bufName) Block
                               Decorate 18 DescriptorSet 0
+                              Decorate 18 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2015-2018 Google, Inc.
 //
 // All rights reserved.
 //

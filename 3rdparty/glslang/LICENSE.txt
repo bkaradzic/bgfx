@@ -1,7 +1,32 @@
+Here, glslang proper means core GLSL parsing, HLSL parsing, and SPIR-V code
+generation. Glslang proper requires use of two licenses, one that covers
+non-preprocessing and an additional one that covers preprocessing.
+
+Bison was removed long ago. You can build glslang from the source grammar,
+using tools of your choice, without using bison or any bison files.
+
+Other parts, outside of glslang proper, include:
+
+- gl_types.h, only needed for OpenGL-like reflection, and can be left out of
+  a parse and codegen project.  See it for its license.
+
+- update_glslang_sources.py, which is not part of the project proper and does
+  not need to be used.
+
+- the SPIR-V "remapper", which is optional, but has the same license as
+  glslang proper
+
+- Google tests and SPIR-V tools, and anything in the external subdirectory
+  are external and optional; see them for their respective licenses.
+
+--------------------------------------------------------------------------------
+
+The core of glslang-proper, minus the preprocessor is licenced as follows:
+
 //
-// Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
-// Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) <various other dates and companies>
+//
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +58,11 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+
+--------------------------------------------------------------------------------
+
+The preprocessor has the core license stated above, plus an additional licence:
+
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -76,44 +106,3 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-
-#include <cstdlib>
-#include <locale>
-
-#include "PpContext.h"
-
-namespace glslang {
-
-TPpContext::TPpContext(TParseContextBase& pc, const std::string& rootFileName, TShader::Includer& inclr) :
-    preamble(0), strings(0), previous_token('\n'), parseContext(pc), includer(inclr), inComment(false),
-    rootFileName(rootFileName),
-    currentSourceFile(rootFileName)
-{
-    ifdepth = 0;
-    for (elsetracker = 0; elsetracker < maxIfNesting; elsetracker++)
-        elseSeen[elsetracker] = false;
-    elsetracker = 0;
-
-    strtodStream.imbue(std::locale::classic());
-}
-
-TPpContext::~TPpContext()
-{
-    delete [] preamble;
-
-    // free up the inputStack
-    while (! inputStack.empty())
-        popInput();
-}
-
-void TPpContext::setInput(TInputScanner& input, bool versionWillBeError)
-{
-    assert(inputStack.size() == 0);
-
-    pushInput(new tStringInput(this, input));
-
-    errorOnVersion = versionWillBeError;
-    versionSeen = false;
-}
-
-} // end namespace glslang

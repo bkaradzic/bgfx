@@ -32,9 +32,13 @@ Validation failed
                               Name 176  "lod"
                               Name 296  "fragColor"
                               Decorate 16(s2D) DescriptorSet 0
+                              Decorate 16(s2D) Binding 0
                               Decorate 33(s2DArray) DescriptorSet 0
+                              Decorate 33(s2DArray) Binding 0
                               Decorate 47(sCube) DescriptorSet 0
+                              Decorate 47(sCube) Binding 0
                               Decorate 58(sCubeArray) DescriptorSet 0
+                              Decorate 58(sCubeArray) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

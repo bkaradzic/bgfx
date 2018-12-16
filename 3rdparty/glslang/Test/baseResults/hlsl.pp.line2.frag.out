@@ -86,7 +86,9 @@ PS_OUTPUT MainPs ( PS_INPUT i )
                               MemberDecorate 19(PerViewConstantBuffer_t) 2 Offset 8
                               Decorate 19(PerViewConstantBuffer_t) Block
                               Decorate 49(g_tColor) DescriptorSet 0
+                              Decorate 49(g_tColor) Binding 0
                               Decorate 56(g_sAniso) DescriptorSet 0
+                              Decorate 56(g_sAniso) Binding 0
                               Decorate 71(i.vTextureCoords) Location 0
                               Decorate 75(@entryPointOutput.vColor) Location 0
                3:             TypeVoid

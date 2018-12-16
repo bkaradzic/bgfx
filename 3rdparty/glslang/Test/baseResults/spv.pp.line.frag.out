@@ -58,7 +58,9 @@ void main()
                               Name 56  "u"
                               Name 59  "blend"
                               Decorate 22(texSampler1D) DescriptorSet 0
+                              Decorate 22(texSampler1D) Binding 0
                               Decorate 37(texSampler2D) DescriptorSet 0
+                              Decorate 37(texSampler2D) Binding 0
                               Decorate 53(gl_FragColor) Location 0
                3:             TypeVoid
                4:             TypeFunction 3

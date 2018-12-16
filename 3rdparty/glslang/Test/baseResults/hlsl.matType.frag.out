@@ -72,6 +72,7 @@ Validation failed
                               MemberDecorate 27($Global) 5 MatrixStride 16
                               Decorate 27($Global) Block
                               Decorate 29 DescriptorSet 0
+                              Decorate 29 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

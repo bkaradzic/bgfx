@@ -474,27 +474,47 @@ Validation failed
                               Decorate 20(g_sSamp) DescriptorSet 0
                               Decorate 20(g_sSamp) Binding 0
                               Decorate 35(g_tTex1di4) DescriptorSet 0
+                              Decorate 35(g_tTex1di4) Binding 0
                               Decorate 47(g_tTex1du4) DescriptorSet 0
+                              Decorate 47(g_tTex1du4) Binding 0
                               Decorate 58(g_tTex2df4) DescriptorSet 0
+                              Decorate 58(g_tTex2df4) Binding 0
                               Decorate 74(g_tTex2di4) DescriptorSet 0
+                              Decorate 74(g_tTex2di4) Binding 0
                               Decorate 87(g_tTex2du4) DescriptorSet 0
+                              Decorate 87(g_tTex2du4) Binding 0
                               Decorate 100(g_tTexcdf4) DescriptorSet 0
+                              Decorate 100(g_tTexcdf4) Binding 0
                               Decorate 116(g_tTexcdi4) DescriptorSet 0
+                              Decorate 116(g_tTexcdi4) Binding 0
                               Decorate 130(g_tTexcdu4) DescriptorSet 0
+                              Decorate 130(g_tTexcdu4) Binding 0
                               Decorate 156(@entryPointOutput.Color) Location 0
                               Decorate 160(@entryPointOutput.Depth) BuiltIn FragDepth
                               Decorate 165(g_tTex3df4) DescriptorSet 0
+                              Decorate 165(g_tTex3df4) Binding 0
                               Decorate 168(g_tTex3di4) DescriptorSet 0
+                              Decorate 168(g_tTex3di4) Binding 0
                               Decorate 171(g_tTex3du4) DescriptorSet 0
+                              Decorate 171(g_tTex3du4) Binding 0
                               Decorate 174(g_tTex1df4a) DescriptorSet 0
+                              Decorate 174(g_tTex1df4a) Binding 0
                               Decorate 177(g_tTex1di4a) DescriptorSet 0
+                              Decorate 177(g_tTex1di4a) Binding 0
                               Decorate 180(g_tTex1du4a) DescriptorSet 0
+                              Decorate 180(g_tTex1du4a) Binding 0
                               Decorate 183(g_tTex2df4a) DescriptorSet 0
+                              Decorate 183(g_tTex2df4a) Binding 0
                               Decorate 186(g_tTex2di4a) DescriptorSet 0
+                              Decorate 186(g_tTex2di4a) Binding 0
                               Decorate 189(g_tTex2du4a) DescriptorSet 0
+                              Decorate 189(g_tTex2du4a) Binding 0
                               Decorate 192(g_tTexcdf4a) DescriptorSet 0
+                              Decorate 192(g_tTexcdf4a) Binding 0
                               Decorate 195(g_tTexcdi4a) DescriptorSet 0
+                              Decorate 195(g_tTexcdi4a) Binding 0
                               Decorate 198(g_tTexcdu4a) DescriptorSet 0
+                              Decorate 198(g_tTexcdu4a) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

@@ -405,6 +405,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.float32.frag",
         "spv.float64.frag",
         "spv.multiView.frag",
+        "spv.RayGenShader11.rgen",
         "spv.subgroup.frag",
         "spv.subgroup.geom",
         "spv.subgroup.tesc",

@@ -296,6 +296,7 @@ Validation failed
                               MemberDecorate 99($Global) 2 Offset 1636
                               Decorate 99($Global) Block
                               Decorate 101 DescriptorSet 0
+                              Decorate 101 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

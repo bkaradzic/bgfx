@@ -43,6 +43,7 @@ spv.meshShaderTaskMem.mesh
                               MemberDecorate 36(bufferBlock) 1 Offset 16
                               Decorate 36(bufferBlock) BufferBlock
                               Decorate 38(mybuf) DescriptorSet 0
+                              Decorate 38(mybuf) Binding 0
                               Decorate 57 BuiltIn WorkgroupSize
                2:             TypeVoid
                3:             TypeFunction 2

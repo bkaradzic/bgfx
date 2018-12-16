@@ -63,6 +63,7 @@ Shader version: 500
                               MemberDecorate 15(b) 10 Offset 96
                               Decorate 15(b) Block
                               Decorate 17 DescriptorSet 0
+                              Decorate 17 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                9:             TypeFloat 32

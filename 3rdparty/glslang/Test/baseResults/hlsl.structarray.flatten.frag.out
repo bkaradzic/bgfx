@@ -199,22 +199,38 @@ Validation failed
                               Name 78  "g_texdata_array2[2].tex"
                               Name 79  "g_texdata_array2[2].nonopaque_thing"
                               Decorate 18(g_texdata.tex) DescriptorSet 0
+                              Decorate 18(g_texdata.tex) Binding 0
                               Decorate 22(g_texdata.samp) DescriptorSet 0
+                              Decorate 22(g_texdata.samp) Binding 0
                               Decorate 28(g_texdata_array[1].tex) DescriptorSet 0
+                              Decorate 28(g_texdata_array[1].tex) Binding 0
                               Decorate 30(g_texdata_array[1].samp) DescriptorSet 0
+                              Decorate 30(g_texdata_array[1].samp) Binding 0
                               Decorate 40(g_texdata_array2[1].tex) DescriptorSet 0
+                              Decorate 40(g_texdata_array2[1].tex) Binding 0
                               Decorate 45(g_texdata_array2[1].samp) DescriptorSet 0
+                              Decorate 45(g_texdata_array2[1].samp) Binding 0
                               Decorate 59(ps_output.color) Location 0
                               Decorate 62(g_samp) DescriptorSet 0
+                              Decorate 62(g_samp) Binding 0
                               Decorate 63(g_tex) DescriptorSet 0
+                              Decorate 63(g_tex) Binding 0
                               Decorate 66(g_texdata_array[0].samp) DescriptorSet 0
+                              Decorate 66(g_texdata_array[0].samp) Binding 0
                               Decorate 67(g_texdata_array[0].tex) DescriptorSet 0
+                              Decorate 67(g_texdata_array[0].tex) Binding 0
                               Decorate 70(g_texdata_array[2].samp) DescriptorSet 0
+                              Decorate 70(g_texdata_array[2].samp) Binding 0
                               Decorate 71(g_texdata_array[2].tex) DescriptorSet 0
+                              Decorate 71(g_texdata_array[2].tex) Binding 0
                               Decorate 73(g_texdata_array2[0].samp) DescriptorSet 0
+                              Decorate 73(g_texdata_array2[0].samp) Binding 0
                               Decorate 74(g_texdata_array2[0].tex) DescriptorSet 0
+                              Decorate 74(g_texdata_array2[0].tex) Binding 0
                               Decorate 77(g_texdata_array2[2].samp) DescriptorSet 0
+                              Decorate 77(g_texdata_array2[2].samp) Binding 0
                               Decorate 78(g_texdata_array2[2].tex) DescriptorSet 0
+                              Decorate 78(g_texdata_array2[2].tex) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

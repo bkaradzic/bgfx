@@ -81,6 +81,7 @@ local_size = (32, 16, 1)
                               MemberDecorate 10(data) 0 Offset 0
                               Decorate 10(data) BufferBlock
                               Decorate 12(data) DescriptorSet 0
+                              Decorate 12(data) Binding 0
                               Decorate 16(@gl_SubgroupInvocationID) BuiltIn SubgroupLocalInvocationId
                               Decorate 21(@gl_SubgroupSize) BuiltIn SubgroupSize
                2:             TypeVoid

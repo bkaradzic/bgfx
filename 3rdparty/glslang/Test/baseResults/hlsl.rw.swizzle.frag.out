@@ -224,8 +224,10 @@ gl_FragCoord origin is upper left
                               Name 58  "@entryPointOutput"
                               Name 62  "buf"
                               Decorate 35(rwtx) DescriptorSet 0
+                              Decorate 35(rwtx) Binding 0
                               Decorate 58(@entryPointOutput) Location 0
                               Decorate 62(buf) DescriptorSet 0
+                              Decorate 62(buf) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

@@ -228,10 +228,12 @@ gl_FragCoord origin is upper left
                               MemberDecorate 62(bnameRuntime) 0 Offset 0
                               Decorate 62(bnameRuntime) BufferBlock
                               Decorate 64 DescriptorSet 0
+                              Decorate 64 Binding 0
                               Decorate 66 ArrayStride 4
                               MemberDecorate 67(bnameImplicit) 0 Offset 0
                               Decorate 67(bnameImplicit) BufferBlock
                               Decorate 69 DescriptorSet 0
+                              Decorate 69 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

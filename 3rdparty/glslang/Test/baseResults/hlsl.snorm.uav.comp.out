@@ -141,6 +141,7 @@ local_size = (16, 16, 1)
                               MemberDecorate 25($Global) 0 Offset 0
                               Decorate 25($Global) Block
                               Decorate 27 DescriptorSet 0
+                              Decorate 27 Binding 0
                               Decorate 34(ResultOutS) DescriptorSet 0
                               Decorate 34(ResultOutS) Binding 1
                               Decorate 39(ResultInU) DescriptorSet 0

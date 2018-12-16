@@ -44,6 +44,7 @@ Shader version: 500
                               MemberDecorate 10($Global) 1 Offset 4
                               Decorate 10($Global) Block
                               Decorate 12 DescriptorSet 0
+                              Decorate 12 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                9:             TypeInt 32 1

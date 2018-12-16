@@ -38,8 +38,11 @@ Validation failed
                               Decorate 14(gl_FrontFacing) BuiltIn FrontFacing
                               Decorate 28(gl_ClipDistance) BuiltIn ClipDistance
                               Decorate 50(sampR) DescriptorSet 0
+                              Decorate 50(sampR) Binding 0
                               Decorate 58(sampB) DescriptorSet 0
+                              Decorate 58(sampB) Binding 0
                               Decorate 82(samp2Da) DescriptorSet 0
+                              Decorate 82(samp2Da) Binding 0
                               Decorate 85 ArrayStride 64
                               Decorate 86 ArrayStride 64
                               MemberDecorate 87(bn) 0 RowMajor
@@ -59,10 +62,12 @@ Validation failed
                               MemberDecorate 87(bn) 4 MatrixStride 16
                               Decorate 87(bn) Block
                               Decorate 89 DescriptorSet 0
+                              Decorate 89 Binding 0
                               Decorate 91 ArrayStride 16
                               MemberDecorate 92(bi) 0 Offset 0
                               Decorate 92(bi) Block
                               Decorate 95(bname) DescriptorSet 0
+                              Decorate 95(bname) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

@@ -34,6 +34,7 @@ spv.150.vert
                               MemberDecorate 11(gl_PerVertex) 2 BuiltIn ClipDistance
                               Decorate 11(gl_PerVertex) Block
                               Decorate 47(s2D) DescriptorSet 0
+                              Decorate 47(s2D) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

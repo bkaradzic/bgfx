@@ -125,6 +125,7 @@ Validation failed
                               MemberDecorate 512(B1) 7 Offset 352
                               Decorate 512(B1) Block
                               Decorate 514 DescriptorSet 0
+                              Decorate 514 Binding 0
                               Decorate 515(sf16) SpecId 100
                               Decorate 517(sf) SpecId 101
                               Decorate 518(sd) SpecId 102

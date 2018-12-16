@@ -15,7 +15,9 @@ hlsl.flattenSubset.frag
                               Name 47  "vpos"
                               Name 50  "@entryPointOutput"
                               Decorate 21(samp) DescriptorSet 0
+                              Decorate 21(samp) Binding 0
                               Decorate 33(tex) DescriptorSet 0
+                              Decorate 33(tex) Binding 0
                               Decorate 47(vpos) Location 0
                               Decorate 50(@entryPointOutput) Location 0
                2:             TypeVoid

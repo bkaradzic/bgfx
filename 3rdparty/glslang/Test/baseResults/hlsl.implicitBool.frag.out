@@ -360,6 +360,7 @@ gl_FragCoord origin is upper left
                               MemberDecorate 16($Global) 3 Offset 12
                               Decorate 16($Global) Block
                               Decorate 18 DescriptorSet 0
+                              Decorate 18 Binding 0
                               Decorate 137(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2

@@ -135,6 +135,7 @@ Validation failed
                               MemberDecorate 516(B1) 7 Offset 160
                               Decorate 516(B1) Block
                               Decorate 518 DescriptorSet 0
+                              Decorate 518 Binding 0
                               Decorate 519 ArrayStride 2
                               Decorate 520 ArrayStride 12
                               MemberDecorate 521(S) 0 Offset 0
@@ -155,6 +156,7 @@ Validation failed
                               MemberDecorate 523(B2) 7 Offset 72
                               Decorate 523(B2) BufferBlock
                               Decorate 525 DescriptorSet 0
+                              Decorate 525 Binding 0
                               Decorate 526(sf16) SpecId 100
                               Decorate 527(sf) SpecId 101
                               Decorate 528(sd) SpecId 102

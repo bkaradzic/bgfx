@@ -28,6 +28,7 @@ spv.deepRvalue.frag
                               Name 133  "t"
                               Name 146  "gl_FragColor"
                               Decorate 111(samp2D) DescriptorSet 0
+                              Decorate 111(samp2D) Binding 0
                               Decorate 146(gl_FragColor) Location 0
                2:             TypeVoid
                3:             TypeFunction 2

@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1121,7 +1122,8 @@ int TPpContext::tZeroInput::scan(TPpToken* ppToken)
     if (done)
         return EndOfInput;
 
-    strcpy(ppToken->name, "0");
+    ppToken->name[0] = '0';
+    ppToken->name[1] = 0;
     ppToken->ival = 0;
     ppToken->space = false;
     done = true;

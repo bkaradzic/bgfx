@@ -38,15 +38,18 @@ spv.310.comp
                               MemberDecorate 12(outb) 3 Offset 16
                               Decorate 12(outb) BufferBlock
                               Decorate 14(outbname) DescriptorSet 0
+                              Decorate 14(outbname) Binding 0
                               MemberDecorate 23(outbna) 0 Offset 0
                               MemberDecorate 23(outbna) 1 Offset 16
                               Decorate 23(outbna) BufferBlock
                               Decorate 25(outbnamena) DescriptorSet 0
+                              Decorate 25(outbnamena) Binding 0
                               Decorate 47 ArrayStride 16
                               MemberDecorate 48(outs) 0 Offset 0
                               MemberDecorate 48(outs) 1 Offset 16
                               Decorate 48(outs) BufferBlock
                               Decorate 50(outnames) DescriptorSet 0
+                              Decorate 50(outnames) Binding 0
                               Decorate 53(gl_LocalInvocationID) BuiltIn LocalInvocationId
                               Decorate 65(gl_DeviceIndex) BuiltIn DeviceIndex
                               Decorate 71 BuiltIn WorkgroupSize

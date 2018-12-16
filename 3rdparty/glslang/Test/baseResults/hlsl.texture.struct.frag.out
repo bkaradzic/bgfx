@@ -905,12 +905,19 @@ Validation failed
                               Name 230  "param"
                               Name 238  "@entryPointOutput"
                               Decorate 30(g_sSamp) DescriptorSet 0
+                              Decorate 30(g_sSamp) Binding 0
                               Decorate 90(g_tTex2s1) DescriptorSet 0
+                              Decorate 90(g_tTex2s1) Binding 0
                               Decorate 114(g_tTex2s2) DescriptorSet 0
+                              Decorate 114(g_tTex2s2) Binding 0
                               Decorate 140(g_tTex2s3) DescriptorSet 0
+                              Decorate 140(g_tTex2s3) Binding 0
                               Decorate 168(g_tTex2s4) DescriptorSet 0
+                              Decorate 168(g_tTex2s4) Binding 0
                               Decorate 202(g_tTex2s5) DescriptorSet 0
+                              Decorate 202(g_tTex2s5) Binding 0
                               Decorate 229(g_tTex2s1a) DescriptorSet 0
+                              Decorate 229(g_tTex2s1a) Binding 0
                               Decorate 238(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2

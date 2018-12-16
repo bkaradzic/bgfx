@@ -160,14 +160,17 @@ Validation failed
                               MemberDecorate 12(cb3) 1 Offset 4
                               Decorate 12(cb3) Block
                               Decorate 18(cb3) DescriptorSet 0
+                              Decorate 18(cb3) Binding 0
                               MemberDecorate 31(cb1) 0 Offset 0
                               Decorate 31(cb1) Block
                               Decorate 33(cb1) DescriptorSet 0
                               Decorate 33(cb1) Binding 12
                               Decorate 40(cb2) DescriptorSet 0
+                              Decorate 40(cb2) Binding 0
                               MemberDecorate 46(cbuff) 0 Offset 0
                               Decorate 46(cbuff) Block
                               Decorate 48 DescriptorSet 0
+                              Decorate 48 Binding 0
                               Decorate 64(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2

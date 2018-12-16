@@ -119,6 +119,7 @@ local_size = (64, 1, 1)
                               MemberDecorate 28(buffer) 0 Offset 0
                               Decorate 28(buffer) BufferBlock
                               Decorate 30(buffer) DescriptorSet 0
+                              Decorate 30(buffer) Binding 0
                               Decorate 37(dispatchThreadID) BuiltIn GlobalInvocationId
                2:             TypeVoid
                3:             TypeFunction 2

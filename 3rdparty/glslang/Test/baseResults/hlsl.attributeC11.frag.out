@@ -123,6 +123,7 @@ Validation failed
                               MemberName 48(pcBuf) 0  "a"
                               Name 50  ""
                               Decorate 16(attach) DescriptorSet 0
+                              Decorate 16(attach) Binding 0
                               Decorate 16(attach) InputAttachmentIndex 4
                               Decorate 33(input) Location 8
                               Decorate 36(@entryPointOutput) Location 7

@@ -127,6 +127,9 @@ cmake $SOURCE_DIR -DCMAKE_INSTALL_PREFIX="$(pwd)/install"
 
 The CMake GUI also works for Windows (version 3.4.1 tested).
 
+Also, consider using `git config --global core.fileMode false` (or with `--local`) on Windows
+to prevent the addition of execution permission on files.
+
 #### 4) Build and Install
 
 ```bash

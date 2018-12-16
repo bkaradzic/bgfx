@@ -67,6 +67,7 @@ Validation failed
                               MemberDecorate 50(Buffer) 5 Offset 56
                               Decorate 50(Buffer) BufferBlock
                               Decorate 52 DescriptorSet 0
+                              Decorate 52 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

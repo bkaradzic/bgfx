@@ -143,7 +143,9 @@ gl_FragCoord origin is upper left
                               Name 25  "g_tTex2df4a"
                               Name 59  "@entryPointOutput"
                               Decorate 13(g_tTex2df4) DescriptorSet 0
+                              Decorate 13(g_tTex2df4) Binding 0
                               Decorate 25(g_tTex2df4a) DescriptorSet 0
+                              Decorate 25(g_tTex2df4a) Binding 0
                               Decorate 59(@entryPointOutput) Location 0
                2:             TypeVoid
                3:             TypeFunction 2

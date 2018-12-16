@@ -220,9 +220,11 @@ using depth_greater
                               MemberDecorate 59($Global) 0 Offset 0
                               Decorate 59($Global) Block
                               Decorate 61 DescriptorSet 0
+                              Decorate 61 Binding 0
                               MemberDecorate 62(buff) 0 Offset 96
                               Decorate 62(buff) Block
                               Decorate 64 DescriptorSet 0
+                              Decorate 64 Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

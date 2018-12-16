@@ -91,6 +91,7 @@ Shader version: 500
                               Name 37  "@entryPointOutput"
                               Name 38  "param"
                               Decorate 19(Position) DescriptorSet 0
+                              Decorate 19(Position) Binding 0
                               Decorate 34(Index) BuiltIn VertexIndex
                               Decorate 37(@entryPointOutput) BuiltIn Position
                2:             TypeVoid

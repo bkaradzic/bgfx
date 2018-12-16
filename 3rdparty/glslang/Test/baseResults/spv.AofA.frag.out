@@ -38,6 +38,7 @@ Validation failed
                               MemberDecorate 94(uAofA) 0 Offset 0
                               Decorate 94(uAofA) Block
                               Decorate 98(nameAofA) DescriptorSet 0
+                              Decorate 98(nameAofA) Binding 0
                2:             TypeVoid
                3:             TypeFunction 2
                6:             TypeFloat 32

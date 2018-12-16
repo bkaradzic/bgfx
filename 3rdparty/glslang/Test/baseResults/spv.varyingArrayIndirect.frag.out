@@ -20,6 +20,7 @@ spv.varyingArrayIndirect.frag
                               Name 50  "alpha"
                               Name 56  "gl_FragColor"
                               Decorate 13(texSampler2D) DescriptorSet 0
+                              Decorate 13(texSampler2D) Binding 0
                               Decorate 22(b) Flat
                               Decorate 31(a) Flat
                               Decorate 56(gl_FragColor) Location 0
