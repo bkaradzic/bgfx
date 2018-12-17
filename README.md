@@ -329,6 +329,15 @@ create immersive content.
 
 ![project-aero](https://www.adobe.com/content/dam/acom/en/products/aero/pod2.jpg/_jcr_content/renditions/cq5dam.mobile_640.640.462.jpg)
 
+## My Talking Tom 2
+
+https://outfit7.com/apps/my-talking-tom-2/ - Many mini games for mobile devices.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=I0U7EQKKDjw" 
+target="_blank"><img src="http://img.youtube.com/vi/I0U7EQKKDjw/0.jpg" 
+alt="My Talking Tom 2"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
