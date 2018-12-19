@@ -388,7 +388,7 @@ namespace bgfx { namespace mtl
 
 			retain(m_device);
 			createFrameBuffer(m_fbh, g_platformData.nwh, 0, 0, TextureFormat::Unknown, TextureFormat::UnknownDepth);
-			
+
 			if ( NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer )
 			{
 				release(m_device);
@@ -3432,7 +3432,6 @@ namespace bgfx { namespace mtl
 		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 
-		ProgramMtl* currentProgram = NULL;
 		RenderCommandEncoder rce;
 
 		bool wasCompute = false;
@@ -3690,7 +3689,6 @@ namespace bgfx { namespace mtl
 					wasCompute = false;
 
 					programIdx = kInvalidHandle;
-					currentProgram = NULL;
 
 					//invalidateCompute();
 				}
@@ -3900,14 +3898,10 @@ namespace bgfx { namespace mtl
 
 					if (kInvalidHandle == programIdx)
 					{
-						currentProgram = NULL;
 						continue;
 					}
 					else
 					{
-						ProgramMtl& program = m_program[programIdx];
-						currentProgram = &program;
-
 						RenderPipelineState pso = NULL;
 
 						if (0 < numStreams)
@@ -3925,7 +3919,6 @@ namespace bgfx { namespace mtl
 
 						if (NULL == pso)
 						{
-							currentProgram = NULL;
 							programIdx = kInvalidHandle;
 							continue;
 						}
