@@ -6354,8 +6354,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		static ViewState viewState;
 		viewState.reset(_render, hmdEnabled);
 
-		uint16_t programIdx = kInvalidHandle;
-		uint16_t boundProgramIdx = kInvalidHandle;
+		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
+		ProgramHandle boundProgram   = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -6448,7 +6448,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					}
 
 					view = key.m_view;
-					programIdx = kInvalidHandle;
+					currentProgram = BGFX_INVALID_HANDLE;
 
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
@@ -6552,7 +6552,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					{
 						const RenderCompute& compute = renderItem.compute;
 
-						ProgramGL& program = m_program[key.m_program];
+						ProgramGL& program = m_program[key.m_program.idx];
 						GL_CHECK(glUseProgram(program.m_id) );
 
 						GLbitfield barrier = 0;
@@ -7036,13 +7036,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				bool bindAttribs = false;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
-				if (key.m_program != programIdx)
+				if (key.m_program.idx != currentProgram.idx)
 				{
-					programIdx = key.m_program;
-					GLuint id = kInvalidHandle == programIdx ? 0 : m_program[programIdx].m_id;
+					currentProgram = key.m_program;
+					GLuint id = isValid(currentProgram) ? m_program[currentProgram.idx].m_id : 0;
 
 					// Skip rendering if program index is valid, but program is invalid.
-					programIdx = 0 == id ? kInvalidHandle : programIdx;
+					currentProgram = 0 == id ? ProgramHandle{kInvalidHandle} : currentProgram;
 
 					GL_CHECK(glUseProgram(id) );
 					programChanged =
@@ -7050,9 +7050,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						bindAttribs = true;
 				}
 
-				if (kInvalidHandle != programIdx)
+				if (isValid(currentProgram) )
 				{
-					ProgramGL& program = m_program[programIdx];
+					ProgramGL& program = m_program[currentProgram.idx];
 
 					if (constantsChanged
 					&&  NULL != program.m_constantBuffer)
@@ -7183,13 +7183,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 							if (bindAttribs || diffStartVertex)
 							{
-								if(kInvalidHandle != boundProgramIdx)
+								if (isValid(boundProgram) )
 								{
-									ProgramGL& boundProgram = m_program[boundProgramIdx];
-									boundProgram.unbindAttributes();
+									m_program[boundProgram.idx].unbindAttributes();
+									boundProgram = BGFX_INVALID_HANDLE;
 								}
 
-								boundProgramIdx = programIdx;
+								boundProgram = currentProgram;
 
 								program.bindAttributesBegin();
 
@@ -7379,10 +7379,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				}
 			}
 
-			if(kInvalidHandle != boundProgramIdx)
+			if (isValid(boundProgram) )
 			{
-				ProgramGL& boundProgram = m_program[boundProgramIdx];
-				boundProgram.unbindAttributes();
+				m_program[boundProgram.idx].unbindAttributes();
+				boundProgram = BGFX_INVALID_HANDLE;
 			}
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);

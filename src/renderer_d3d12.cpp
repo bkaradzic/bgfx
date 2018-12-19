@@ -1928,7 +1928,7 @@ namespace bgfx { namespace d3d12
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
 				, decls
-				, _blitter.m_program.idx
+				, _blitter.m_program
 				, 0
 				);
 			m_commandList->SetPipelineState(pso);
@@ -1942,7 +1942,7 @@ namespace bgfx { namespace d3d12
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 			D3D12_GPU_VIRTUAL_ADDRESS gpuAddress;
-			commitShaderConstants(_blitter.m_program.idx, gpuAddress);
+			commitShaderConstants(_blitter.m_program, gpuAddress);
 
 			ScratchBufferD3D12& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 			ID3D12DescriptorHeap* heaps[] =
@@ -2292,9 +2292,9 @@ namespace bgfx { namespace d3d12
 			setShaderUniform(_flags, _regIndex, _val, _numRegs);
 		}
 
-		void commitShaderConstants(uint16_t _programIdx, D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress)
+		void commitShaderConstants(ProgramHandle _program, D3D12_GPU_VIRTUAL_ADDRESS& _gpuAddress)
 		{
-			const ProgramD3D12& program = m_program[_programIdx];
+			const ProgramD3D12& program = m_program[_program.idx];
 			uint32_t total = bx::strideAlign(0
 				+ program.m_vsh->m_size
 				+ (NULL != program.m_fsh ? program.m_fsh->m_size : 0)
@@ -2677,9 +2677,9 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		ID3D12PipelineState* getPipelineState(uint16_t _programIdx)
+		ID3D12PipelineState* getPipelineState(ProgramHandle _program)
 		{
-			ProgramD3D12& program = m_program[_programIdx];
+			ProgramD3D12& program = m_program[_program.idx];
 
 			const uint32_t hash = program.m_vsh->m_hash;
 
@@ -2712,11 +2712,11 @@ namespace bgfx { namespace d3d12
 			, uint64_t _stencil
 			, uint8_t _numStreams
 			, const VertexDecl** _vertexDecls
-			, uint16_t _programIdx
+			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			)
 		{
-			ProgramD3D12& program = m_program[_programIdx];
+			ProgramD3D12& program = m_program[_program.idx];
 
 			_state &= 0
 				| BGFX_STATE_WRITE_RGB
@@ -5661,7 +5661,7 @@ namespace bgfx { namespace d3d12
 // 		setDebugWireframe(wireframe);
 
 		uint16_t currentSamplerStateIdx = kInvalidHandle;
-		uint16_t currentProgramIdx      = kInvalidHandle;
+		ProgramHandle currentProgram    = BGFX_INVALID_HANDLE;
 		uint32_t currentBindHash        = 0;
 		bool     hasPredefined          = false;
 		bool     commandListChanged     = false;
@@ -5784,7 +5784,7 @@ namespace bgfx { namespace d3d12
 					view = key.m_view;
 					currentPso = NULL;
 					currentSamplerStateIdx = kInvalidHandle;
-					currentProgramIdx      = kInvalidHandle;
+					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 
 					fbh = _render->m_view[view].m_fbh;
@@ -5980,12 +5980,12 @@ namespace bgfx { namespace d3d12
 
 					bool constantsChanged = false;
 					if (compute.m_uniformBegin < compute.m_uniformEnd
-					||  currentProgramIdx != key.m_program)
+					||  currentProgram.idx != key.m_program.idx)
 					{
 						rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 
-						currentProgramIdx = key.m_program;
-						ProgramD3D12& program = m_program[currentProgramIdx];
+						currentProgram = key.m_program;
+						ProgramD3D12& program = m_program[currentProgram.idx];
 
 						UniformBuffer* vcb = program.m_vsh->m_constantBuffer;
 						if (NULL != vcb)
@@ -6000,7 +6000,7 @@ namespace bgfx { namespace d3d12
 					if (constantsChanged
 					||  hasPredefined)
 					{
-						ProgramD3D12& program = m_program[currentProgramIdx];
+						ProgramD3D12& program = m_program[currentProgram.idx];
 						viewState.setPredefined<4>(this, view, 0, program, _render, compute);
 						commitShaderConstants(key.m_program, gpuAddress);
 						m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
@@ -6113,7 +6113,7 @@ namespace bgfx { namespace d3d12
 					currentPso             = NULL;
 					currentBindHash        = 0;
 					currentSamplerStateIdx = kInvalidHandle;
-					currentProgramIdx      = kInvalidHandle;
+					currentProgram         = BGFX_INVALID_HANDLE;
 					currentState.clear();
 					currentState.m_scissor = !draw.m_scissor;
 					changedFlags = BGFX_STATE_MASK;
@@ -6366,11 +6366,11 @@ namespace bgfx { namespace d3d12
 					}
 
 					if (constantsChanged
-					||  currentProgramIdx != key.m_program
+					||  currentProgram.idx != key.m_program.idx
 					||  BGFX_STATE_ALPHA_REF_MASK & changedFlags)
 					{
-						currentProgramIdx = key.m_program;
-						ProgramD3D12& program = m_program[currentProgramIdx];
+						currentProgram = key.m_program;
+						ProgramD3D12& program = m_program[currentProgram.idx];
 
 						UniformBuffer* vcb = program.m_vsh->m_constantBuffer;
 						if (NULL != vcb)
@@ -6394,7 +6394,7 @@ namespace bgfx { namespace d3d12
 					if (constantsChanged
 					||  hasPredefined)
 					{
-						ProgramD3D12& program = m_program[currentProgramIdx];
+						ProgramD3D12& program = m_program[currentProgram.idx];
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref/255.0f;
 						viewState.setPredefined<4>(this, view, 0, program, _render, draw);

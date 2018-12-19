@@ -1058,7 +1058,7 @@ namespace bgfx { namespace mtl
 				, 0
 				, fbh
 				, _blitter.m_vb->decl
-				, _blitter.m_program.idx
+				, _blitter.m_program
 				, 0
 				);
 			rce.setRenderPipelineState(pso);
@@ -1425,7 +1425,7 @@ namespace bgfx { namespace mtl
 				, 0
 				, fbh
 				, _clearQuad.m_vb->decl
-				, _clearQuad.m_program[numMrt-1].idx
+				, _clearQuad.m_program[numMrt-1]
 				, 0
 				);
 			m_renderCommandEncoder.setRenderPipelineState(pso);
@@ -1666,7 +1666,7 @@ namespace bgfx { namespace mtl
 			, FrameBufferHandle _fbh
 			, uint8_t _numStreams
 			, const VertexDecl** _vertexDecls
-			, uint16_t _programIdx
+			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			)
 		{
@@ -1681,7 +1681,7 @@ namespace bgfx { namespace mtl
 				);
 
 			const bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
-			ProgramMtl& program = m_program[_programIdx];
+			ProgramMtl& program = m_program[_program.idx];
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -2040,7 +2040,7 @@ namespace bgfx { namespace mtl
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
 			, VertexDeclHandle _declHandle
-			, uint16_t _programIdx
+			, ProgramHandle _program
 			, uint16_t _numInstanceData
 			)
 		{
@@ -2051,7 +2051,7 @@ namespace bgfx { namespace mtl
 				, _fbh
 				, 1
 				, &decl
-				, _programIdx
+				, _program
 				, _numInstanceData
 				);
 		}
@@ -3421,7 +3421,7 @@ namespace bgfx { namespace mtl
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 
-		uint16_t programIdx = kInvalidHandle;
+		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -3484,7 +3484,7 @@ namespace bgfx { namespace mtl
 					}
 
 					view = key.m_view;
-					programIdx = kInvalidHandle;
+					currentProgram = BGFX_INVALID_HANDLE;
 
 					viewRestart  = BGFX_VIEW_STEREO == (_render->m_view[view].m_flags & BGFX_VIEW_STEREO);
 					viewRestart &= hmdEnabled;
@@ -3687,10 +3687,7 @@ namespace bgfx { namespace mtl
 				if (wasCompute)
 				{
 					wasCompute = false;
-
-					programIdx = kInvalidHandle;
-
-					//invalidateCompute();
+					currentProgram = BGFX_INVALID_HANDLE;
 				}
 
 				const RenderDraw& draw = renderItem.draw;
@@ -3736,7 +3733,7 @@ namespace bgfx { namespace mtl
 
 					currentBind.clear();
 
-					programIdx = kInvalidHandle;
+					currentProgram = BGFX_INVALID_HANDLE;
 					setDepthStencilState(newFlags, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT) );
 
 					const uint64_t pt = newFlags&BGFX_STATE_PT_MASK;
@@ -3840,7 +3837,7 @@ namespace bgfx { namespace mtl
 
 				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
 
-				if (key.m_program != programIdx
+				if (key.m_program.idx != currentProgram.idx
 				||  vertexStreamChanged
 				|| (0
 				   | BGFX_STATE_BLEND_MASK
@@ -3853,7 +3850,7 @@ namespace bgfx { namespace mtl
 				   ) & changedFlags
 				|| ( (blendFactor != draw.m_rgba) && !!(newFlags & BGFX_STATE_BLEND_INDEPENDENT) ) )
 				{
-					programIdx = key.m_program;
+					currentProgram = key.m_program;
 
 					currentState.m_streamMask             = draw.m_streamMask;
 					currentState.m_instanceDataBuffer.idx = draw.m_instanceDataBuffer.idx;
@@ -3896,7 +3893,7 @@ namespace bgfx { namespace mtl
 
 					currentState.m_numVertices = numVertices;
 
-					if (kInvalidHandle == programIdx)
+					if (!isValid(currentProgram) )
 					{
 						continue;
 					}
@@ -3912,14 +3909,14 @@ namespace bgfx { namespace mtl
 								, fbh
 								, numStreams
 								, decls
-								, programIdx
+								, currentProgram
 								, draw.m_instanceDataStride/16
 								);
 						}
 
 						if (NULL == pso)
 						{
-							programIdx = kInvalidHandle;
+							currentProgram = BGFX_INVALID_HANDLE;
 							continue;
 						}
 
@@ -3936,9 +3933,9 @@ namespace bgfx { namespace mtl
 						constantsChanged = true;
 				}
 
-				if (kInvalidHandle != programIdx)
+				if (isValid(currentProgram) )
 				{
-					ProgramMtl& program = m_program[programIdx];
+					ProgramMtl& program = m_program[currentProgram.idx];
 
 					uint32_t vertexUniformBufferSize   = program.m_vshConstantBufferSize;
 					uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
@@ -3977,9 +3974,9 @@ namespace bgfx { namespace mtl
 					m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;
 				}
 
-				if (kInvalidHandle != programIdx)
+				if (isValid(currentProgram) )
 				{
-					ProgramMtl& program = m_program[programIdx];
+					ProgramMtl& program = m_program[currentProgram.idx];
 
 					for (uint32_t sampler = 0; sampler < program.m_samplerCount; ++sampler)
 					{

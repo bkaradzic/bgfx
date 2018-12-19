@@ -3748,7 +3748,7 @@ namespace bgfx { namespace d3d9
 		ViewState viewState(_render, false);
 
 		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, _render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
-		uint16_t programIdx = kInvalidHandle;
+		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -3838,7 +3838,7 @@ namespace bgfx { namespace d3d9
 					currentState.m_stencil    = newStencil;
 
 					view = key.m_view;
-					programIdx = kInvalidHandle;
+					currentProgram = BGFX_INVALID_HANDLE;
 
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
@@ -4114,18 +4114,18 @@ namespace bgfx { namespace d3d9
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
-				if (key.m_program != programIdx)
+				if (key.m_program.idx != currentProgram.idx)
 				{
-					programIdx = key.m_program;
+					currentProgram = key.m_program;
 
-					if (kInvalidHandle == programIdx)
+					if (!isValid(currentProgram) )
 					{
 						device->SetVertexShader(NULL);
 						device->SetPixelShader(NULL);
 					}
 					else
 					{
-						ProgramD3D9& program = m_program[programIdx];
+						ProgramD3D9& program = m_program[currentProgram.idx];
 						device->SetVertexShader(program.m_vsh->m_vertexShader);
 						device->SetPixelShader(NULL == program.m_fsh
 							? NULL
@@ -4137,9 +4137,9 @@ namespace bgfx { namespace d3d9
 						constantsChanged = true;
 				}
 
-				if (kInvalidHandle != programIdx)
+				if (isValid(currentProgram) )
 				{
-					ProgramD3D9& program = m_program[programIdx];
+					ProgramD3D9& program = m_program[currentProgram.idx];
 
 					if (constantsChanged)
 					{

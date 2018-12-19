@@ -5257,7 +5257,7 @@ namespace bgfx { namespace d3d11
 		bool scissorEnabled = false;
 		setDebugWireframe(wireframe);
 
-		uint16_t programIdx = kInvalidHandle;
+		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		SortKey key;
 		uint16_t view = UINT16_MAX;
 		FrameBufferHandle fbh = { BGFX_CONFIG_MAX_FRAME_BUFFERS };
@@ -5333,7 +5333,7 @@ namespace bgfx { namespace d3d11
 					}
 
 					view = key.m_view;
-					programIdx = kInvalidHandle;
+					currentProgram = BGFX_INVALID_HANDLE;
 
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
@@ -5454,11 +5454,11 @@ namespace bgfx { namespace d3d11
 					bool constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
 					rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 
-					if (key.m_program != programIdx)
+					if (key.m_program.idx != currentProgram.idx)
 					{
-						programIdx = key.m_program;
+						currentProgram = key.m_program;
 
-						ProgramD3D11& program = m_program[key.m_program];
+						ProgramD3D11& program = m_program[currentProgram.idx];
 						m_currentProgram = &program;
 
 						deviceCtx->CSSetShader(program.m_vsh->m_computeShader, NULL, 0);
@@ -5468,9 +5468,9 @@ namespace bgfx { namespace d3d11
 							constantsChanged = true;
 					}
 
-					if (kInvalidHandle != programIdx)
+					if (isValid(currentProgram) )
 					{
-						ProgramD3D11& program = m_program[programIdx];
+						ProgramD3D11& program = m_program[currentProgram.idx];
 
 						if (constantsChanged)
 						{
@@ -5597,7 +5597,7 @@ namespace bgfx { namespace d3d11
 						PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
 					}
 
-					programIdx = kInvalidHandle;
+					currentProgram   = BGFX_INVALID_HANDLE;
 					m_currentProgram = NULL;
 
 					invalidateCompute();
@@ -5748,11 +5748,11 @@ namespace bgfx { namespace d3d11
 				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
-				if (key.m_program != programIdx)
+				if (key.m_program.idx != currentProgram.idx)
 				{
-					programIdx = key.m_program;
+					currentProgram = key.m_program;
 
-					if (kInvalidHandle == programIdx)
+					if (!isValid(currentProgram) )
 					{
 						m_currentProgram = NULL;
 
@@ -5761,7 +5761,7 @@ namespace bgfx { namespace d3d11
 					}
 					else
 					{
-						ProgramD3D11& program = m_program[programIdx];
+						ProgramD3D11& program = m_program[currentProgram.idx];
 						m_currentProgram = &program;
 
 						const ShaderD3D11* vsh = program.m_vsh;
@@ -5785,9 +5785,9 @@ namespace bgfx { namespace d3d11
 						constantsChanged = true;
 				}
 
-				if (kInvalidHandle != programIdx)
+				if (isValid(currentProgram) )
 				{
-					ProgramD3D11& program = m_program[programIdx];
+					ProgramD3D11& program = m_program[currentProgram.idx];
 
 					if (constantsChanged)
 					{
@@ -5931,12 +5931,12 @@ namespace bgfx { namespace d3d11
 							const VertexBufferD3D11& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
 							const uint32_t instStride = draw.m_instanceDataStride;
 							deviceCtx->IASetVertexBuffers(numStreams, 1, &inst.m_ptr, &instStride, &draw.m_instanceDataOffset);
-							setInputLayout(numStreams, decls, m_program[programIdx], uint16_t(instStride/16) );
+							setInputLayout(numStreams, decls, m_program[currentProgram.idx], uint16_t(instStride/16) );
 						}
 						else
 						{
 							deviceCtx->IASetVertexBuffers(numStreams, 1, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
-							setInputLayout(numStreams, decls, m_program[programIdx], 0);
+							setInputLayout(numStreams, decls, m_program[currentProgram.idx], 0);
 						}
 					}
 					else
@@ -5948,7 +5948,7 @@ namespace bgfx { namespace d3d11
 							const VertexBufferD3D11& inst = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
 							const uint32_t instStride = draw.m_instanceDataStride;
 							deviceCtx->IASetVertexBuffers(0, 1, &inst.m_ptr, &instStride, &draw.m_instanceDataOffset);
-							setInputLayout(0, NULL, m_program[programIdx], uint16_t(instStride/16) );
+							setInputLayout(0, NULL, m_program[currentProgram.idx], uint16_t(instStride/16) );
 						}
 						else
 						{

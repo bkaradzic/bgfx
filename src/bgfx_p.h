@@ -1034,46 +1034,58 @@ namespace bgfx
 
 		uint64_t encodeDraw(Enum _type)
 		{
-			if (SortDepth == _type)
+			switch (_type)
 			{
-				const uint64_t depth   = (uint64_t(m_depth  ) << SORT_KEY_DRAW_1_DEPTH_SHIFT  ) & SORT_KEY_DRAW_1_DEPTH_MASK;
-				const uint64_t program = (uint64_t(m_program) << SORT_KEY_DRAW_1_PROGRAM_SHIFT) & SORT_KEY_DRAW_1_PROGRAM_MASK;
-				const uint64_t trans   = (uint64_t(m_trans  ) << SORT_KEY_DRAW_1_TRANS_SHIFT  ) & SORT_KEY_DRAW_1_TRANS_MASK;
-				const uint64_t view    = (uint64_t(m_view   ) << SORT_KEY_VIEW_SHIFT          ) & SORT_KEY_VIEW_MASK;
-				const uint64_t key     = view|SORT_KEY_DRAW_BIT|SORT_KEY_DRAW_TYPE_DEPTH|depth|trans|program;
+			case SortProgram:
+				{
+					const uint64_t depth   = (uint64_t(m_depth      ) << SORT_KEY_DRAW_0_DEPTH_SHIFT  ) & SORT_KEY_DRAW_0_DEPTH_MASK;
+					const uint64_t program = (uint64_t(m_program.idx) << SORT_KEY_DRAW_0_PROGRAM_SHIFT) & SORT_KEY_DRAW_0_PROGRAM_MASK;
+					const uint64_t trans   = (uint64_t(m_trans      ) << SORT_KEY_DRAW_0_TRANS_SHIFT  ) & SORT_KEY_DRAW_0_TRANS_MASK;
+					const uint64_t view    = (uint64_t(m_view       ) << SORT_KEY_VIEW_SHIFT          ) & SORT_KEY_VIEW_MASK;
+					const uint64_t key     = view|SORT_KEY_DRAW_BIT|SORT_KEY_DRAW_TYPE_PROGRAM|trans|program|depth;
 
-				return key;
+					return key;
+				}
+				break;
+
+			case SortDepth:
+				{
+					const uint64_t depth   = (uint64_t(m_depth      ) << SORT_KEY_DRAW_1_DEPTH_SHIFT  ) & SORT_KEY_DRAW_1_DEPTH_MASK;
+					const uint64_t program = (uint64_t(m_program.idx) << SORT_KEY_DRAW_1_PROGRAM_SHIFT) & SORT_KEY_DRAW_1_PROGRAM_MASK;
+					const uint64_t trans   = (uint64_t(m_trans      ) << SORT_KEY_DRAW_1_TRANS_SHIFT  ) & SORT_KEY_DRAW_1_TRANS_MASK;
+					const uint64_t view    = (uint64_t(m_view       ) << SORT_KEY_VIEW_SHIFT          ) & SORT_KEY_VIEW_MASK;
+					const uint64_t key     = view|SORT_KEY_DRAW_BIT|SORT_KEY_DRAW_TYPE_DEPTH|depth|trans|program;
+					return key;
+				}
+				break;
+
+			case SortSequence:
+				{
+					const uint64_t seq     = (uint64_t(m_seq        ) << SORT_KEY_DRAW_2_SEQ_SHIFT    ) & SORT_KEY_DRAW_2_SEQ_MASK;
+					const uint64_t program = (uint64_t(m_program.idx) << SORT_KEY_DRAW_2_PROGRAM_SHIFT) & SORT_KEY_DRAW_2_PROGRAM_MASK;
+					const uint64_t trans   = (uint64_t(m_trans      ) << SORT_KEY_DRAW_2_TRANS_SHIFT  ) & SORT_KEY_DRAW_2_TRANS_MASK;
+					const uint64_t view    = (uint64_t(m_view       ) << SORT_KEY_VIEW_SHIFT          ) & SORT_KEY_VIEW_MASK;
+					const uint64_t key     = view|SORT_KEY_DRAW_BIT|SORT_KEY_DRAW_TYPE_SEQUENCE|seq|trans|program;
+
+					BX_CHECK(seq == (uint64_t(m_seq) << SORT_KEY_DRAW_2_SEQ_SHIFT)
+						, "SortKey error, sequence is truncated (m_seq: %d)."
+						, m_seq
+						);
+
+					return key;
+				}
+				break;
 			}
-			else if (SortSequence == _type)
-			{
-				const uint64_t seq     = (uint64_t(m_seq    ) << SORT_KEY_DRAW_2_SEQ_SHIFT    ) & SORT_KEY_DRAW_2_SEQ_MASK;
-				const uint64_t program = (uint64_t(m_program) << SORT_KEY_DRAW_2_PROGRAM_SHIFT) & SORT_KEY_DRAW_2_PROGRAM_MASK;
-				const uint64_t trans   = (uint64_t(m_trans  ) << SORT_KEY_DRAW_2_TRANS_SHIFT  ) & SORT_KEY_DRAW_2_TRANS_MASK;
-				const uint64_t view    = (uint64_t(m_view   ) << SORT_KEY_VIEW_SHIFT          ) & SORT_KEY_VIEW_MASK;
-				const uint64_t key     = view|SORT_KEY_DRAW_BIT|SORT_KEY_DRAW_TYPE_SEQUENCE|seq|trans|program;
 
-				BX_CHECK(seq == (uint64_t(m_seq) << SORT_KEY_DRAW_2_SEQ_SHIFT)
-					, "SortKey error, sequence is truncated (m_seq: %d)."
-					, m_seq
-					);
-
-				return key;
-			}
-
-			const uint64_t depth   = (uint64_t(m_depth  ) << SORT_KEY_DRAW_0_DEPTH_SHIFT  ) & SORT_KEY_DRAW_0_DEPTH_MASK;
-			const uint64_t program = (uint64_t(m_program) << SORT_KEY_DRAW_0_PROGRAM_SHIFT) & SORT_KEY_DRAW_0_PROGRAM_MASK;
-			const uint64_t trans   = (uint64_t(m_trans  ) << SORT_KEY_DRAW_0_TRANS_SHIFT  ) & SORT_KEY_DRAW_0_TRANS_MASK;
-			const uint64_t view    = (uint64_t(m_view   ) << SORT_KEY_VIEW_SHIFT          ) & SORT_KEY_VIEW_MASK;
-			const uint64_t key     = view|SORT_KEY_DRAW_BIT|SORT_KEY_DRAW_TYPE_PROGRAM|trans|program|depth;
-
-			return key;
+			BX_CHECK(false, "You should not be here.");
+			return 0;
 		}
 
 		uint64_t encodeCompute()
 		{
-			const uint64_t program = (uint64_t(m_program) << SORT_KEY_COMPUTE_PROGRAM_SHIFT) & SORT_KEY_COMPUTE_PROGRAM_MASK;
-			const uint64_t seq     = (uint64_t(m_seq    ) << SORT_KEY_COMPUTE_SEQ_SHIFT    ) & SORT_KEY_COMPUTE_SEQ_MASK;
-			const uint64_t view    = (uint64_t(m_view   ) << SORT_KEY_VIEW_SHIFT           ) & SORT_KEY_VIEW_MASK;
+			const uint64_t program = (uint64_t(m_program.idx) << SORT_KEY_COMPUTE_PROGRAM_SHIFT) & SORT_KEY_COMPUTE_PROGRAM_MASK;
+			const uint64_t seq     = (uint64_t(m_seq        ) << SORT_KEY_COMPUTE_SEQ_SHIFT    ) & SORT_KEY_COMPUTE_SEQ_MASK;
+			const uint64_t view    = (uint64_t(m_view       ) << SORT_KEY_VIEW_SHIFT           ) & SORT_KEY_VIEW_MASK;
 			const uint64_t key     = program|seq|view;
 
 			BX_CHECK(seq == (uint64_t(m_seq) << SORT_KEY_COMPUTE_SEQ_SHIFT)
@@ -1093,20 +1105,20 @@ namespace bgfx
 				uint64_t type = _key & SORT_KEY_DRAW_TYPE_MASK;
 				if (type == SORT_KEY_DRAW_TYPE_DEPTH)
 				{
-					m_program = uint16_t( (_key & SORT_KEY_DRAW_1_PROGRAM_MASK) >> SORT_KEY_DRAW_1_PROGRAM_SHIFT);
+					m_program.idx = uint16_t( (_key & SORT_KEY_DRAW_1_PROGRAM_MASK) >> SORT_KEY_DRAW_1_PROGRAM_SHIFT);
 					return false;
 				}
 				else if (type == SORT_KEY_DRAW_TYPE_SEQUENCE)
 				{
-					m_program = uint16_t( (_key & SORT_KEY_DRAW_2_PROGRAM_MASK) >> SORT_KEY_DRAW_2_PROGRAM_SHIFT);
+					m_program.idx = uint16_t( (_key & SORT_KEY_DRAW_2_PROGRAM_MASK) >> SORT_KEY_DRAW_2_PROGRAM_SHIFT);
 					return false;
 				}
 
-				m_program = uint16_t( (_key & SORT_KEY_DRAW_0_PROGRAM_MASK) >> SORT_KEY_DRAW_0_PROGRAM_SHIFT);
+				m_program.idx = uint16_t( (_key & SORT_KEY_DRAW_0_PROGRAM_MASK) >> SORT_KEY_DRAW_0_PROGRAM_SHIFT);
 				return false; // draw
 			}
 
-			m_program = uint16_t( (_key & SORT_KEY_COMPUTE_PROGRAM_MASK) >> SORT_KEY_COMPUTE_PROGRAM_SHIFT);
+			m_program.idx = uint16_t( (_key & SORT_KEY_COMPUTE_PROGRAM_MASK) >> SORT_KEY_COMPUTE_PROGRAM_SHIFT);
 			return true; // compute
 		}
 
@@ -1127,16 +1139,16 @@ namespace bgfx
 		{
 			m_depth   = 0;
 			m_seq     = 0;
-			m_program = 0;
+			m_program = {0};
 			m_view    = 0;
 			m_trans   = 0;
 		}
 
-		uint32_t m_depth;
-		uint32_t m_seq;
-		uint16_t m_program;
-		ViewId   m_view;
-		uint8_t  m_trans;
+		uint32_t      m_depth;
+		uint32_t      m_seq;
+		ProgramHandle m_program;
+		ViewId        m_view;
+		uint8_t       m_trans;
 	};
 #undef SORT_KEY_RENDER_DRAW
 
@@ -1796,7 +1808,7 @@ namespace bgfx
 		{
 			SortKey term;
 			term.reset();
-			term.m_program = kInvalidHandle;
+			term.m_program = BGFX_INVALID_HANDLE;
 			m_sortKeys[BGFX_CONFIG_MAX_DRAW_CALLS]   = term.encodeDraw(SortKey::SortProgram);
 			m_sortValues[BGFX_CONFIG_MAX_DRAW_CALLS] = BGFX_CONFIG_MAX_DRAW_CALLS;
 			bx::memSet(m_occlusion, 0xff, sizeof(m_occlusion) );

@@ -1162,9 +1162,9 @@ namespace bgfx
 		UniformBuffer* uniformBuffer = m_frame->m_uniformBuffer[m_uniformIdx];
 		m_uniformEnd = uniformBuffer->getPos();
 
-		m_key.m_program = kInvalidHandle == _program.idx
-			? 0
-			: _program.idx
+		m_key.m_program = isValid(_program)
+			? _program
+			: ProgramHandle{0}
 			;
 
 		m_key.m_view = _id;
@@ -1257,7 +1257,7 @@ namespace bgfx
 		m_compute.m_numZ   = bx::max(_numZ, 1u);
 		m_compute.m_submitFlags = _flags;
 
-		m_key.m_program = _handle.idx;
+		m_key.m_program = _handle;
 		m_key.m_depth   = 0;
 		m_key.m_view    = _id;
 		m_key.m_seq     = s_ctx->getSeqIncr(_id);
