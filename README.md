@@ -65,6 +65,9 @@ Languages:
  - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
  - TravisCI https://travis-ci.org/bkaradzic/bgfx
 
+[Getting involved](https://bkaradzic.github.io/bgfx/overview.html#getting-involved)
+-----------------------------------------------------------------------------------
+
 [Examples](https://bkaradzic.github.io/bgfx/examples.html)
 ----------------------------------------------------------
 
