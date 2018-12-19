@@ -2286,9 +2286,11 @@ creating windows.</p>
 <dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
 <p>These empty draw calls will sort before ordinary draw calls.</p>
 <p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_touch</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id.</li>
 </ul>
 </dd>
 </dl>
@@ -2707,7 +2709,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Sets a debug marker. This allows you to group graphics calls together for easy browsing in graphics debugging tools. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_marker</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_marker</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -2724,7 +2726,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </ol>
 </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_state</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_state</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_state</span></code>: State flags. Default state for primitive type is triangles. See: <code class="docutils literal"><span class="pre">BGFX_STATE_DEFAULT</span></code>.<ul>
@@ -2750,7 +2752,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set condition for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_condition</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_condition</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Occlusion query handle. </li>
@@ -2767,7 +2769,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set stencil test state. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_stencil</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_stencil</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_fstencil</span></code>: Front stencil state. </li>
@@ -2786,7 +2788,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Return</strong></dt>
 <dd>Scissor cache index.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_scissor</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_scissor</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_x</span></code>: Position x from the left side of the window. </li>
@@ -2805,7 +2807,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set scissor from cache for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_scissor_cached</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_scissor_cached</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_cache</span></code>: Index in scissor cache. Pass UINT16_MAX to have primitive use view scissor instead.</li>
@@ -2823,7 +2825,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Return</strong></dt>
 <dd>Index into matrix cache in case the same model matrix has to be used for other draw primitive call.</dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transform</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_transform</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_mtx</span></code>: Pointer to first matrix in array. </li>
@@ -2844,7 +2846,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Attention</strong></dt>
 <dd>Pointer returned can be modifed until <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code> is called. </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_alloc_transform</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_alloc_transform</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_transform</span></code>: Pointer to <code class="docutils literal"><span class="pre">Transform</span></code> structure. </li>
@@ -2861,7 +2863,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set model matrix from matrix cache for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transform_cached</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_transform_cached</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_cache</span></code>: Index in matrix cache. </li>
@@ -2878,7 +2880,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set shader uniform parameter for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_uniform</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_uniform</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Uniform. </li>
@@ -2896,7 +2898,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Index buffer.</li>
@@ -2912,7 +2914,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Index buffer. </li>
@@ -2930,7 +2932,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_dynamic_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Dynamic index buffer.</li>
@@ -2946,7 +2948,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_dynamic_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Dynamic index buffer. </li>
@@ -2964,7 +2966,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_tib</span></code>: Transient index buffer.</li>
@@ -2980,7 +2982,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set index buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_transient_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_tib</span></code>: Transient index buffer. </li>
@@ -2998,7 +3000,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
@@ -3015,7 +3017,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
@@ -3034,7 +3036,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_dynamic_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
@@ -3051,7 +3053,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_dynamic_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
@@ -3070,7 +3072,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
@@ -3087,7 +3089,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_transient_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
@@ -3108,7 +3110,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_count</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_vertex_count</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices.</li>
@@ -3124,7 +3126,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_instance_data_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_idb</span></code>: Transient instance data buffer.</li>
@@ -3140,7 +3142,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_instance_data_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_idb</span></code>: Transient instance data buffer. </li>
@@ -3158,7 +3160,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_from_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_instance_data_from_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Vertex buffer. </li>
@@ -3176,7 +3178,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set instance data buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_data_from_dynamic_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Vertex buffer. </li>
@@ -3196,7 +3198,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_VERTEX_ID</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_instance_count</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_instance_count</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_numInstances</span></code>: Number of instances.</li>
@@ -3212,7 +3214,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set texture stage for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_texture</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_texture</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Texture unit. </li>
@@ -3235,9 +3237,11 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Submit an empty primitive for rendering. Uniforms and draw state will be applied but no geometry will be submitted. </p>
 <p>These empty draw calls will sort before ordinary draw calls.</p>
 <p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_touch</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id.</li>
 </ul>
 </dd>
 </dl>
@@ -3250,7 +3254,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Submit primitive for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_submit</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
@@ -3269,7 +3273,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Submit primitive with occlusion query for rendering. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_occlusion_query</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_submit_occlusion_query</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
@@ -3289,7 +3293,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_indirect</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_submit_indirect</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
@@ -3311,7 +3315,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set compute index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_compute_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Compute stage. </li>
@@ -3329,7 +3333,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set compute vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_compute_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Compute stage. </li>
@@ -3347,7 +3351,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set compute dynamic index buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_dynamic_index_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_compute_dynamic_index_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Compute stage. </li>
@@ -3365,7 +3369,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set compute dynamic vertex buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_dynamic_vertex_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_compute_dynamic_vertex_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Compute stage. </li>
@@ -3383,7 +3387,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set compute indirect buffer. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_compute_indirect_buffer</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_compute_indirect_buffer</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Compute stage. </li>
@@ -3401,7 +3405,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set compute image from texture. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_image</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_set_image</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_stage</span></code>: Texture unit. </li>
@@ -3421,7 +3425,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Dispatch compute. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_dispatch</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
@@ -3446,7 +3450,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Dispatch compute indirect. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch_indirect</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_dispatch_indirect</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
@@ -3471,7 +3475,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Discard all previously set state for draw or compute call. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_discard</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_discard</span></code>. </dd>
 </dl>
 </p>
 </dd></dl>
@@ -3486,7 +3490,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_blit</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
@@ -3514,7 +3518,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dt><strong>Attention</strong></dt>
 <dd>Availability depends on: <code class="docutils literal"><span class="pre">BGFX_CAPS_TEXTURE_BLIT</span></code>. </dd>
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_blit</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_encoder_blit</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
