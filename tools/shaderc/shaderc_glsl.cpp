@@ -216,8 +216,9 @@ namespace bgfx { namespace glsl
 					const char* typen = parse.getPtr();
 
 					char uniformType[256];
-					parse = bx::strWord(parse).getPtr();
-					bx::strCopy(uniformType, int32_t(parse.getPtr()-typen+1), typen);
+					parse = bx::strWord(parse);
+					bx::strCopy(uniformType, parse.getLength()+1, typen);
+					parse.set(parse.getPtr()+parse.getLength(),optShader.getTerm());
 					const char* name = bx::strLTrimSpace(parse).getPtr();
 					parse.set(name, optShader.getTerm() );
 
