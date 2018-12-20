@@ -2693,16 +2693,66 @@ namespace bgfx { namespace d3d12
 			D3D12_COMPUTE_PIPELINE_STATE_DESC desc;
 			bx::memSet(&desc, 0, sizeof(desc) );
 
-			desc.pRootSignature = m_rootSignature;
-
+			desc.pRootSignature     = m_rootSignature;
 			desc.CS.pShaderBytecode = program.m_vsh->m_code->data;
 			desc.CS.BytecodeLength  = program.m_vsh->m_code->size;
+			desc.NodeMask           = 1;
+			desc.Flags              = D3D12_PIPELINE_STATE_FLAG_NONE;
 
-			DX_CHECK(m_device->CreateComputePipelineState(&desc
-				, IID_ID3D12PipelineState
-				, (void**)&pso
-				) );
+			uint32_t length = g_callback->cacheReadSize(hash);
+			const bool cached = length > 0;
+
+			void* cachedData = NULL;
+
+			if (cached)
+			{
+				cachedData = BX_ALLOC(g_allocator, length);
+				if (g_callback->cacheRead(hash, cachedData, length) )
+				{
+					BX_TRACE("Loading cached compute PSO (size %d).", length);
+					bx::MemoryReader reader(cachedData, length);
+
+					desc.CachedPSO.pCachedBlob           = reader.getDataPtr();
+					desc.CachedPSO.CachedBlobSizeInBytes = (size_t)reader.remaining();
+
+					HRESULT hr = m_device->CreateComputePipelineState(&desc
+						, IID_ID3D12PipelineState
+						, (void**)&pso
+						);
+					if (FAILED(hr) )
+					{
+						BX_TRACE("Failed to load cached compute PSO (HRESULT 0x%08x).", hr);
+						bx::memSet(&desc.CachedPSO, 0, sizeof(desc.CachedPSO) );
+					}
+				}
+			}
+
+			if (NULL == pso)
+			{
+				DX_CHECK(m_device->CreateComputePipelineState(&desc
+					, IID_ID3D12PipelineState
+					, (void**)&pso
+					) );
+			}
+
 			m_pipelineStateCache.add(hash, pso);
+
+			ID3DBlob* blob;
+			HRESULT hr = pso->GetCachedBlob(&blob);
+			if (SUCCEEDED(hr) )
+			{
+				void* data = blob->GetBufferPointer();
+				length = (uint32_t)blob->GetBufferSize();
+
+				g_callback->cacheWrite(hash, data, length);
+
+				DX_RELEASE(blob, 0);
+			}
+
+			if (NULL != cachedData)
+			{
+				BX_FREE(g_allocator, cachedData);
+			}
 
 			return pso;
 		}
@@ -2930,7 +2980,7 @@ namespace bgfx { namespace d3d12
 			desc.SampleDesc = m_scd.sampleDesc;
 
 			uint32_t length = g_callback->cacheReadSize(hash);
-			bool cached = length > 0;
+			const bool cached = length > 0;
 
 			void* cachedData = NULL;
 
@@ -2939,7 +2989,7 @@ namespace bgfx { namespace d3d12
 				cachedData = BX_ALLOC(g_allocator, length);
 				if (g_callback->cacheRead(hash, cachedData, length) )
 				{
-					BX_TRACE("Loading cached PSO (size %d).", length);
+					BX_TRACE("Loading cached graphics PSO (size %d).", length);
 					bx::MemoryReader reader(cachedData, length);
 
 					desc.CachedPSO.pCachedBlob           = reader.getDataPtr();
@@ -2951,7 +3001,7 @@ namespace bgfx { namespace d3d12
 									);
 					if (FAILED(hr) )
 					{
-						BX_TRACE("Failed to load cached PSO (HRESULT 0x%08x).", hr);
+						BX_TRACE("Failed to load cached graphics PSO (HRESULT 0x%08x).", hr);
 						bx::memSet(&desc.CachedPSO, 0, sizeof(desc.CachedPSO) );
 					}
 				}
