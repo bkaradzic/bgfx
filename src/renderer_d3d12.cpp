@@ -4778,8 +4778,10 @@ namespace bgfx { namespace d3d12
 				if (1 < numLayers)
 				{
 					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-					m_uavd.Texture2DArray.MipSlice   = 0;
-					m_uavd.Texture2DArray.PlaneSlice = 0;
+					m_uavd.Texture2DArray.MipSlice        = 0;
+					m_uavd.Texture2DArray.FirstArraySlice = 0;
+					m_uavd.Texture2DArray.PlaneSlice      = 0;
+					m_uavd.Texture2DArray.ArraySize       = numLayers;
 				}
 				else
 				{
