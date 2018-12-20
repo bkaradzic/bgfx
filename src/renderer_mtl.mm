@@ -4066,7 +4066,7 @@ namespace bgfx { namespace mtl
 							numInstances      = draw.m_numInstances;
 							numPrimsRendered  = numPrimsSubmitted*draw.m_numInstances;
 
-							rce.drawPrimitives(prim.m_type, 0, draw.m_numVertices, draw.m_numInstances);
+							rce.drawPrimitives(prim.m_type, 0, numVertices, draw.m_numInstances);
 						}
 					}
 
