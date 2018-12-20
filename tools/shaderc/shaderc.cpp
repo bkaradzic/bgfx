@@ -775,6 +775,10 @@ namespace bgfx
 			do
 			{
 				delim = bx::strFind(str, ',');
+				if (delim.isEmpty() )
+				{
+					delim = bx::strFind(str, ' ');
+				}
 
 				const bx::StringView token(bx::strRTrim(bx::StringView(str.getPtr(), delim.getPtr() ), " ") );
 
@@ -1272,7 +1276,7 @@ namespace bgfx
 		if (invalidShaderAttribute)
 		{
 		}
-		else  if (raw)
+		else if (raw)
 		{
 			if ('f' == _options.shaderType)
 			{
