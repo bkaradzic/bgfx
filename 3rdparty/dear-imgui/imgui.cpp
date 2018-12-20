@@ -1115,6 +1115,7 @@ ImGuiIO::ImGuiIO()
 
     // Platform Functions
     BackendPlatformName = BackendRendererName = NULL;
+    BackendPlatformUserData = BackendRendererUserData = BackendLanguageUserData = NULL;
     GetClipboardTextFn = GetClipboardTextFn_DefaultImpl;   // Platform dependent default implementations
     SetClipboardTextFn = SetClipboardTextFn_DefaultImpl;
     ClipboardUserData = NULL;
