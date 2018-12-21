@@ -778,6 +778,13 @@ namespace bgfx { namespace mtl
 		uint32_t m_hash;
 	};
 
+	struct SamplerInfo
+	{
+		uint32_t      m_index;
+		UniformHandle m_uniform;
+		bool          m_fragment;
+	};
+
 	struct ProgramMtl
 	{
 		ProgramMtl()
@@ -811,13 +818,6 @@ namespace bgfx { namespace mtl
 		uint32_t m_vshConstantBufferAlignmentMask;
 		uint32_t m_fshConstantBufferSize;
 		uint32_t m_fshConstantBufferAlignmentMask;
-
-		struct SamplerInfo
-		{
-			uint32_t			m_index;
-			bgfx::UniformHandle m_uniform;
-			bool				m_fragment;
-		};
 
 		SamplerInfo m_samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t	m_samplerCount;

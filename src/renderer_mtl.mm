@@ -634,6 +634,7 @@ namespace bgfx { namespace mtl
 			m_gpuTimer.shutdown();
 
 			m_pipelineStateCache.invalidate();
+			m_pipelineProgram.clear();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
 			{
@@ -763,6 +764,19 @@ namespace bgfx { namespace mtl
 
 		void destroyProgram(ProgramHandle _handle) override
 		{
+			for (PipelineProgramArray::iterator it = m_pipelineProgram.begin(); it != m_pipelineProgram.end();)
+			{
+				if (it->program.idx == _handle.idx)
+				{
+					m_pipelineStateCache.invalidate(it->key);
+					it = m_pipelineProgram.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+
 			m_program[_handle.idx].destroy();
 		}
 
@@ -2041,6 +2055,7 @@ namespace bgfx { namespace mtl
 				}
 
 				m_pipelineStateCache.add(hash, pso);
+				m_pipelineProgram.push_back({hash, _program});
 			}
 
 			return pso;
@@ -2161,6 +2176,15 @@ namespace bgfx { namespace mtl
 		UniformRegistry m_uniformReg;
 		void*           m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
+		struct PipelineProgram
+		{
+			uint64_t      key;
+			ProgramHandle program;
+		};
+
+		typedef stl::vector<PipelineProgram> PipelineProgramArray;
+
+		PipelineProgramArray             m_pipelineProgram;
 		StateCacheT<RenderPipelineState> m_pipelineStateCache;
 		StateCacheT<DepthStencilState>   m_depthStencilStateCache;
 		StateCacheT<SamplerState>        m_samplerStateCache;
@@ -3991,7 +4015,7 @@ namespace bgfx { namespace mtl
 
 					for (uint32_t sampler = 0; sampler < program.m_samplerCount; ++sampler)
 					{
-						ProgramMtl::SamplerInfo& samplerInfo = program.m_samplers[sampler];
+						SamplerInfo& samplerInfo = program.m_samplers[sampler];
 
 						UniformHandle handle = samplerInfo.m_uniform;
 						int stage = *((int*)m_uniforms[handle.idx]);
