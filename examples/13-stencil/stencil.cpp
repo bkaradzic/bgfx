@@ -162,40 +162,39 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 	}
 }
 
-void mtxReflected(float*__restrict _result
-				  , const float* __restrict _p  /* plane */
-				  , const float* __restrict _n  /* normal */
-				  )
+void mtxReflected(float* _result, const bx::Vec3& _pos, const bx::Vec3& _normal)
 {
-	float dot = bx::vec3Dot(_p, _n);
+	const float nx = _normal.x;
+	const float ny = _normal.y;
+	const float nz = _normal.z;
 
-	_result[ 0] =  1.0f -  2.0f * _n[0] * _n[0]; //1-2Nx^2
-	_result[ 1] = -2.0f * _n[0] * _n[1];         //-2*Nx*Ny
-	_result[ 2] = -2.0f * _n[0] * _n[2];         //-2*NxNz
-	_result[ 3] =  0.0f;                         //0
+	_result[ 0] =  1.0f - 2.0f * nx * nx;
+	_result[ 1] =       - 2.0f * nx * ny;
+	_result[ 2] =       - 2.0f * nx * nz;
+	_result[ 3] =  0.0f;
 
-	_result[ 4] = -2.0f * _n[0] * _n[1];         //-2*NxNy
-	_result[ 5] =  1.0f -  2.0f * _n[1] * _n[1]; //1-2*Ny^2
-	_result[ 6] = -2.0f * _n[1] * _n[2];         //-2*NyNz
-	_result[ 7] =  0.0f;                         //0
+	_result[ 4] =       - 2.0f * nx * ny;
+	_result[ 5] =  1.0f - 2.0f * ny * ny;
+	_result[ 6] =       - 2.0f * ny * nz;
+	_result[ 7] =  0.0f;
 
-	_result[ 8] = -2.0f * _n[0] * _n[2];         //-2*NxNz
-	_result[ 9] = -2.0f * _n[1] * _n[2];         //-2NyNz
-	_result[10] =  1.0f -  2.0f * _n[2] * _n[2]; //1-2*Nz^2
-	_result[11] =  0.0f;                         //0
+	_result[ 8] =       - 2.0f * nx * nz;
+	_result[ 9] =       - 2.0f * ny * nz;
+	_result[10] =  1.0f - 2.0f * nz * nz;
+	_result[11] =  0.0f;
 
-	_result[12] =  2.0f * dot * _n[0];           //2*dot*Nx
-	_result[13] =  2.0f * dot * _n[1];           //2*dot*Ny
-	_result[14] =  2.0f * dot * _n[2];           //2*dot*Nz
-	_result[15] =  1.0f;                         //1
+	const float dot = bx::dot(_pos, _normal);
+
+	_result[12] =  2.0f * dot * nx;
+	_result[13] =  2.0f * dot * ny;
+	_result[14] =  2.0f * dot * nz;
+	_result[15] =  1.0f;
 }
 
-void mtxShadow(float* __restrict _result
-			   , const float* __restrict _ground
-			   , const float* __restrict _light
-			   )
+void mtxShadow(float* _result, const float* _ground, const float* _light)
 {
-	float dot = _ground[0] * _light[0]
+	const float dot =
+		  _ground[0] * _light[0]
 		+ _ground[1] * _light[1]
 		+ _ground[2] * _light[2]
 		+ _ground[3] * _light[3]
@@ -222,10 +221,7 @@ void mtxShadow(float* __restrict _result
 	_result[15] =  dot - _light[3] * _ground[3];
 }
 
-void mtxBillboard(float* __restrict _result
-				  , const float* __restrict _view
-				  , const float* __restrict _pos
-				  , const float* __restrict _scale)
+void mtxBillboard(float* _result, const float* _view, const float* _pos, const float* _scale)
 {
 	_result[ 0] = _view[0]  * _scale[0];
 	_result[ 1] = _view[4]  * _scale[0];
@@ -1125,9 +1121,7 @@ public:
 
 					// Compute reflected matrix.
 					float reflectMtx[16];
-					float plane_pos[3] = { 0.0f, 0.01f, 0.0f };
-					float normal[3] = { 0.0f, 1.0f, 0.0f };
-					mtxReflected(reflectMtx, plane_pos, normal);
+					mtxReflected(reflectMtx, { 0.0f, 0.01f, 0.0f }, { 0.0f, 1.0f, 0.0f });
 
 					// Reflect lights.
 					float reflectedLights[MAX_NUM_LIGHTS][4];
@@ -1226,11 +1220,7 @@ public:
 					}
 
 					// Ground plane.
-					float ground[4];
-					float plane_pos[3] = { 0.0f, 0.0f, 0.0f };
-					float normal[3] = { 0.0f, 1.0f, 0.0f };
-					bx::memCopy(ground, normal, sizeof(float) * 3);
-					ground[3] = -bx::vec3Dot(plane_pos, normal) - 0.01f; // - 0.01 against z-fighting
+					float ground[4] = { 0.0f, 1.0f, 0.0f, -bx::dot(bx::Vec3{ 0.0f, 0.0f, 0.0f }, bx::Vec3{ 0.0f, 1.0f, 0.0f }) - 0.01f };
 
 					for (uint8_t ii = 0, viewId = RENDER_VIEWID_RANGE5_PASS_6; ii < numLights; ++ii, ++viewId)
 					{

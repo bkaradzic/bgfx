@@ -2333,9 +2333,8 @@ public:
 					lightProj[ProjType::Horizontal][14] /= currentSmSettings->m_far;
 				}
 
-				float at[3];
-				bx::vec3Add(at, m_pointLight.m_position.m_v, m_pointLight.m_spotDirectionInner.m_v);
-				bx::mtxLookAt(lightView[TetrahedronFaces::Green], bx::load(m_pointLight.m_position.m_v), bx::load(at) );
+				const bx::Vec3 at = bx::add(bx::load(m_pointLight.m_position.m_v), bx::load(m_pointLight.m_spotDirectionInner.m_v) );
+				bx::mtxLookAt(lightView[TetrahedronFaces::Green], bx::load(m_pointLight.m_position.m_v), at);
 			}
 			else if (LightType::PointLight == m_settings.m_lightType)
 			{
@@ -2404,9 +2403,9 @@ public:
 
 					float tmp[3] =
 					{
-						-bx::vec3Dot(m_pointLight.m_position.m_v, &mtxTmp[0]),
-						-bx::vec3Dot(m_pointLight.m_position.m_v, &mtxTmp[4]),
-						-bx::vec3Dot(m_pointLight.m_position.m_v, &mtxTmp[8]),
+						-bx::dot(bx::load(m_pointLight.m_position.m_v), bx::load(&mtxTmp[0]) ),
+						-bx::dot(bx::load(m_pointLight.m_position.m_v), bx::load(&mtxTmp[4]) ),
+						-bx::dot(bx::load(m_pointLight.m_position.m_v), bx::load(&mtxTmp[8]) ),
 					};
 
 					bx::mtxTranspose(mtxYpr[ii], mtxTmp);
