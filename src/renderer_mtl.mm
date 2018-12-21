@@ -1713,6 +1713,7 @@ namespace bgfx { namespace mtl
 			uint32_t hash = murmur.end();
 
 			RenderPipelineState pso = m_pipelineStateCache.find(hash);
+
 			if (NULL == pso)
 			{
 				RenderPipelineDescriptor pd = m_renderPipelineDescriptor;
@@ -1722,13 +1723,17 @@ namespace bgfx { namespace mtl
 
 				uint32_t frameBufferAttachment = 1;
 
-				if (!isValid(_fbh) || s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain)
+				if (!isValid(_fbh)
+				||  s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain)
 				{
-					SwapChainMtl* swapChain =
-						!isValid(_fbh) ?
-						s_renderMtl->m_mainFrameBuffer.m_swapChain :
-					s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain;
-					pd.sampleCount = NULL != swapChain->m_backBufferColorMsaa ? swapChain->m_backBufferColorMsaa.sampleCount() : 1;
+					SwapChainMtl* swapChain = !isValid(_fbh)
+						? s_renderMtl->m_mainFrameBuffer.m_swapChain
+						: s_renderMtl->m_frameBuffers[_fbh.idx].m_swapChain
+						;
+					pd.sampleCount = NULL != swapChain->m_backBufferColorMsaa
+						? swapChain->m_backBufferColorMsaa.sampleCount()
+						: 1
+						;
 					pd.colorAttachments[0].pixelFormat = swapChain->currentDrawable().texture.pixelFormat;
 					pd.depthAttachmentPixelFormat      = swapChain->m_backBufferDepth.m_obj.pixelFormat;
 					pd.stencilAttachmentPixelFormat    = swapChain->m_backBufferStencil.m_obj.pixelFormat;
@@ -1965,9 +1970,11 @@ namespace bgfx { namespace mtl
 												PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 												if (PredefinedUniform::Count != predefined)
 												{
-													program.m_predefined[program.m_numPredefined].m_loc   = uint32_t(uniform.offset);
-													program.m_predefined[program.m_numPredefined].m_count = uint16_t(num);
-													program.m_predefined[program.m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
+													PredefinedUniform& pu = program.m_predefined[program.m_numPredefined];
+
+													pu.m_loc   = uint32_t(uniform.offset);
+													pu.m_count = uint16_t(num);
+													pu.m_type  = uint8_t(predefined|fragmentBit);
 													++program.m_numPredefined;
 												}
 												else
@@ -2004,10 +2011,14 @@ namespace bgfx { namespace mtl
 											}
 											else
 											{
-												program.m_samplers[program.m_samplerCount].m_index = uint32_t(arg.index);
-												program.m_samplers[program.m_samplerCount].m_uniform = info->m_handle;
-												program.m_samplers[program.m_samplerCount].m_fragment = fragmentBit ? 1 : 0;
+												SamplerInfo& si = program.m_samplers[program.m_samplerCount];
+
+												si.m_index    = uint32_t(arg.index);
+												si.m_uniform  = info->m_handle;
+												si.m_fragment = fragmentBit ? 1 : 0;
+
 												++program.m_samplerCount;
+
 												BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
 											}
 										}

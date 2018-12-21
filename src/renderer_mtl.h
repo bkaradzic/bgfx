@@ -824,7 +824,7 @@ namespace bgfx { namespace mtl
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
-		bool m_processedUniforms;
+		bool    m_processedUniforms;
 	};
 
 	struct TextureMtl
