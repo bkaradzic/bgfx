@@ -2609,23 +2609,17 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv7uint8_tPKv">
-<span id="bgfx::setViewTransform__ViewId.voidCP.voidCP.uint8_t.voidCP"></span><span class="target" id="namespacebgfx_1a707f5822ab3d885f14c4d0e575ab3b3f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewTransform</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <em class="property">const</em> void *<em>_view</em>, <em class="property">const</em> void *<em>_projL</em>, uint8_t <em>_flags</em> = BGFX_VIEW_STEREO, <em class="property">const</em> void *<em>_projR</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv7uint8_tPKv" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv">
+<span id="bgfx::setViewTransform__ViewId.voidCP.voidCP"></span><span class="target" id="namespacebgfx_1acf30c922e9a1abd12f3af7277a873b3f"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewTransform</code><span class="sig-paren">(</span>ViewId <em>_id</em>, <em class="property">const</em> void *<em>_view</em>, <em class="property">const</em> void *<em>_proj</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16setViewTransformE6ViewIdPKvPKv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set view view and projection matrices, all draw primitives in this view will use these matrices. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
-<dd>C99 equivalent are <code class="docutils literal"><span class="pre">bgfx_set_view_transform</span></code>, <code class="docutils literal"><span class="pre">bgfx_set_view_transform_stereo</span></code>. </dd>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_transform</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
 <li><code class="docutils literal"><span class="pre">_view</span></code>: View matrix. </li>
-<li><code class="docutils literal"><span class="pre">_projL</span></code>: Projection matrix. When using stereo rendering this projection matrix represent projection matrix for left eye. </li>
-<li><code class="docutils literal"><span class="pre">_flags</span></code>: View flags. Use<ul>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect. </li>
-</ul>
-</li>
-<li><code class="docutils literal"><span class="pre">_projR</span></code>: Projection matrix for right eye in stereo mode.</li>
+<li><code class="docutils literal"><span class="pre">_projProjection</span></code>: matrix.</li>
 </ul>
 </dd>
 </dl>
@@ -3420,8 +3414,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
-<span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1a5c2b6688ce666527081766957e88c56e"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t">
+<span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1ab1427bd12ce035ce0be59bde6a886bc7"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3445,8 +3439,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
-<span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="structbgfx_1_1_encoder_1ada478ec003a6eb7d1461f8585ae4daa9"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t">
+<span id="bgfx::Encoder::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t"></span><span class="target" id="structbgfx_1_1_encoder_1a26353fd863002e69370cec965543a07f"></span>void <code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch compute indirect. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -4586,56 +4580,26 @@ Potential matches:
 </dd></dl>
 
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
-<dl class="function">
-<dt id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t">
-<span id="bgfx::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t.uint8_t"></span><span class="target" id="namespacebgfx_1ae5125007d2b5389dc086f5969c50a163"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t7uint8_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dispatch compute. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Compute program. </li>
-<li><code class="docutils literal"><span class="pre">_numX</span></code>: Number of groups X. </li>
-<li><code class="docutils literal"><span class="pre">_numY</span></code>: Number of groups Y. </li>
-<li><code class="docutils literal"><span class="pre">_numZ</span></code>: Number of groups Z. </li>
-<li><code class="docutils literal"><span class="pre">_flags</span></code>: View flags. Use<ul>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
-</ul>
-</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::dispatch&#8221; with arguments (ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t, uint8_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
-<dl class="function">
-<dt id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t">
-<span id="bgfx::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint8_t"></span><span class="target" id="namespacebgfx_1a1dd2575ec96a6ede6139137841ee7b85"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint8_t <em>_flags</em> = BGFX_SUBMIT_EYE_FIRST<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dispatch compute indirect. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch_indirect</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Compute program. </li>
-<li><code class="docutils literal"><span class="pre">_indirectHandle</span></code>: Indirect buffer. </li>
-<li><code class="docutils literal"><span class="pre">_start</span></code>: First element in indirect buffer. </li>
-<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of dispatches. </li>
-<li><code class="docutils literal"><span class="pre">_flags</span></code>: View flags. Use<ul>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
-</ul>
-</li>
-</ul>
-</dd>
-</dl>
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::dispatch(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t)
+- void bgfx::dispatch(ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t)
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::dispatch&#8221; with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint8_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::dispatch(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t)
+- void bgfx::dispatch(ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t)
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="blit">
 <h3>Blit<a class="headerlink" href="#blit" title="Permalink to this headline">¶</a></h3>
