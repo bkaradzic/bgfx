@@ -463,8 +463,7 @@ namespace
 
 			cameraCreate();
 
-			const float initialPos[3] = { 5.0f, 3.0, 0.0f };
-			cameraSetPosition(initialPos);
+			cameraSetPosition({ 5.0f, 3.0, 0.0f });
 			cameraSetVerticalAngle(bx::kPi / 8.0f);
 			cameraSetHorizontalAngle(-bx::kPi / 3.0f);
 

@@ -2022,8 +2022,7 @@ public:
 
 		// Set view matrix
 		cameraCreate();
-		float initialPos[3] = { 3.0f, 20.0f, -58.0f };
-		cameraSetPosition(initialPos);
+		cameraSetPosition({ 3.0f, 20.0f, -58.0f });
 		cameraSetVerticalAngle(-0.25f);
 		cameraGetViewMtx(m_viewState.m_view);
 	}

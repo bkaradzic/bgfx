@@ -137,8 +137,7 @@ public:
 
 		cameraCreate();
 
-		const float initialPos[3] = { 15.5f, 0.0f, -15.5f };
-		cameraSetPosition(initialPos);
+		cameraSetPosition({ 15.5f, 0.0f, -15.5f });
 		cameraSetHorizontalAngle(bx::toRad(-45.0f) );
 
 		m_timeOffset = bx::getHPCounter();

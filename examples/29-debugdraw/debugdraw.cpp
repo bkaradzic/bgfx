@@ -517,8 +517,7 @@ public:
 
 		cameraCreate();
 
-		const float initialPos[3] = { 0.0f, 2.0f, -12.0f };
-		cameraSetPosition(initialPos);
+		cameraSetPosition({ 0.0f, 2.0f, -12.0f });
 		cameraSetVerticalAngle(0.0f);
 
 		ddInit();

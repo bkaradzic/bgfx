@@ -1901,9 +1901,8 @@ public:
 		s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 
 		// Setup camera.
-		float initialPos[3] = { 0.0f, 60.0f, -105.0f };
 		cameraCreate();
-		cameraSetPosition(initialPos);
+		cameraSetPosition({ 0.0f, 60.0f, -105.0f });
 		cameraSetVerticalAngle(-0.45f);
 
 		m_timeAccumulatorLight = 0.0f;

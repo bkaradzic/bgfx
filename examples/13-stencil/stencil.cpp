@@ -862,9 +862,8 @@ public:
 		const bgfx::Caps* caps = bgfx::getCaps();
 		bx::mtxProj(m_viewState.m_proj, 60.0f, aspect, 0.1f, 100.0f, caps->homogeneousDepth);
 
-		float initialPos[3] = { 0.0f, 18.0f, -40.0f };
 		cameraCreate();
-		cameraSetPosition(initialPos);
+		cameraSetPosition({ 0.0f, 18.0f, -40.0f });
 		cameraSetVerticalAngle(-0.35f);
 		cameraGetViewMtx(m_viewState.m_view);
 
