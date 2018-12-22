@@ -3679,9 +3679,8 @@ VK_DESTROY
 		currentState.m_stateFlags = BGFX_STATE_NONE;
 		currentState.m_stencil    = packStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
 
-		const bool hmdEnabled = false;
-		ViewState viewState(_render, hmdEnabled);
-		viewState.reset(_render, hmdEnabled);
+		static ViewState viewState;
+		viewState.reset(_render);
 
 // 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 // 		setDebugWireframe(wireframe);
@@ -3771,12 +3770,10 @@ VK_DESTROY
 		{
 //			m_batch.begin();
 
-// 			uint8_t eye = 0;
-// 			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_view[0].m_rect;
 
 			int32_t numItems = _render->m_numRenderItems;
-			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
+			for (int32_t item = 0; item < numItems;)
 			{
 				const uint64_t encodedKey = _render->m_sortKeys[item];
 				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
@@ -3997,7 +3994,7 @@ BX_UNUSED(currentSamplerStateIdx);
 					||  hasPredefined)
 					{
 						ProgramVK& program = m_program[currentProgram.idx];
-						viewState.setPredefined<4>(this, view, 0, program, _render, compute);
+						viewState.setPredefined<4>(this, view, program, _render, compute);
 //						commitShaderConstants(key.m_program, gpuAddress);
 //						m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 					}
@@ -4300,7 +4297,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						ProgramVK& program = m_program[currentProgram.idx];
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref/255.0f;
-						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
+						viewState.setPredefined<4>(this, view, program, _render, draw);
 						commitShaderUniforms(m_commandBuffer, key.m_program); //, gpuAddress);
 					}
 

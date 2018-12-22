@@ -1547,7 +1547,6 @@ namespace bgfx
 			, uint32_t _numX = 1
 			, uint32_t _numY = 1
 			, uint32_t _numZ = 1
-			, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST
 			);
 
 		/// Dispatch compute indirect.
@@ -1570,7 +1569,6 @@ namespace bgfx
 			, IndirectBufferHandle _indirectHandle
 			, uint16_t _start = 0
 			, uint16_t _num = 1
-			, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST
 			);
 
 		/// Discard all previously set state for draw or compute call.
@@ -3283,22 +3281,14 @@ namespace bgfx
 	///
 	/// @param[in] _id View id.
 	/// @param[in] _view View matrix.
-	/// @param[in] _projL Projection matrix. When using stereo rendering this projection matrix
-	///   represent projection matrix for left eye.
-	/// @param[in] _flags View flags. Use
-	///   - `BGFX_VIEW_NONE` - View will be rendered only once if stereo mode is enabled.
-	///   - `BGFX_VIEW_STEREO` - View will be rendered for both eyes if stereo mode is enabled. When
-	///     stereo mode is disabled this flag doesn't have effect.
-	/// @param[in] _projR Projection matrix for right eye in stereo mode.
+	/// @param[in] _projProjection matrix.
 	///
-	/// @attention C99 equivalent are `bgfx_set_view_transform`, `bgfx_set_view_transform_stereo`.
+	/// @attention C99 equivalent is `bgfx_set_view_transform`.
 	///
 	void setViewTransform(
 		  ViewId _id
 		, const void* _view
-		, const void* _projL
-		, uint8_t _flags = BGFX_VIEW_STEREO
-		, const void* _projR = NULL
+		, const void* _proj
 		);
 
 	/// Post submit view reordering.
@@ -3891,7 +3881,6 @@ namespace bgfx
 		, uint32_t _numX = 1
 		, uint32_t _numY = 1
 		, uint32_t _numZ = 1
-		, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST
 		);
 
 	/// Dispatch compute indirect.
@@ -3914,7 +3903,6 @@ namespace bgfx
 		, IndirectBufferHandle _indirectHandle
 		, uint16_t _start = 0
 		, uint16_t _num = 1
-		, uint8_t _flags = BGFX_SUBMIT_EYE_FIRST
 		);
 
 	/// Discard all previously set state for draw or compute call.

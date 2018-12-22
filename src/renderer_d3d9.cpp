@@ -3745,7 +3745,8 @@ namespace bgfx { namespace d3d9
 		RenderBind currentBind;
 		currentBind.clear();
 
-		ViewState viewState(_render, false);
+		static ViewState viewState;
+		viewState.reset(_render);
 
 		DX_CHECK(device->SetRenderState(D3DRS_FILLMODE, _render->m_debug&BGFX_DEBUG_WIREFRAME ? D3DFILL_WIREFRAME : D3DFILL_SOLID) );
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
@@ -4159,7 +4160,7 @@ namespace bgfx { namespace d3d9
 						}
 					}
 
-					viewState.setPredefined<4>(this, view, 0, program, _render, draw);
+					viewState.setPredefined<4>(this, view, program, _render, draw);
 				}
 
 				{

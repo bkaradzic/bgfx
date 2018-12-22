@@ -213,6 +213,7 @@ namespace stl = std;
 #define BGFX_STATE_INTERNAL_SCISSOR         UINT64_C(0x2000000000000000)
 #define BGFX_STATE_INTERNAL_OCCLUSION_QUERY UINT64_C(0x4000000000000000)
 
+#define BGFX_SUBMIT_RESERVED_MASK              UINT8_C(0xff)
 #define BGFX_SUBMIT_INTERNAL_OCCLUSION_VISIBLE UINT8_C(0x80)
 
 #define BGFX_RENDERER_DIRECT3D9_NAME  "Direct3D 9"
@@ -1549,7 +1550,7 @@ namespace bgfx
 			m_startIndirect = 0;
 			m_numIndirect   = UINT16_MAX;
 			m_numMatrices   = 1;
-			m_submitFlags   = BGFX_SUBMIT_EYE_FIRST;
+			m_submitFlags   = 0;
 			m_scissor       = UINT16_MAX;
 			m_streamMask    = 0;
 			m_stream[0].clear();
@@ -1607,7 +1608,7 @@ namespace bgfx
 			m_numY         = 0;
 			m_numZ         = 0;
 			m_numMatrices  = 0;
-			m_submitFlags  = BGFX_SUBMIT_EYE_FIRST;
+			m_submitFlags  = 0;
 			m_uniformIdx   = UINT8_MAX;
 
 			m_indirectBuffer.idx = kInvalidHandle;
@@ -1694,7 +1695,7 @@ namespace bgfx
 			setClear(BGFX_CLEAR_NONE, 0, 0.0f, 0);
 			setMode(ViewMode::Default);
 			setFrameBuffer(BGFX_INVALID_HANDLE);
-			setTransform(NULL, NULL, BGFX_VIEW_NONE, NULL);
+			setTransform(NULL, NULL);
 		}
 
 		void setRect(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
@@ -1733,10 +1734,8 @@ namespace bgfx
 			m_fbh = _handle;
 		}
 
-		void setTransform(const void* _view, const void* _proj, uint8_t _flags, const void* _proj1)
+		void setTransform(const void* _view, const void* _proj)
 		{
-			m_flags = _flags;
-
 			if (NULL != _view)
 			{
 				bx::memCopy(m_view.un.val, _view, sizeof(Matrix4) );
@@ -1748,20 +1747,11 @@ namespace bgfx
 
 			if (NULL != _proj)
 			{
-				bx::memCopy(m_proj[0].un.val, _proj, sizeof(Matrix4) );
+				bx::memCopy(m_proj.un.val, _proj, sizeof(Matrix4) );
 			}
 			else
 			{
-				m_proj[0].setIdentity();
-			}
-
-			if (NULL != _proj1)
-			{
-				bx::memCopy(m_proj[1].un.val, _proj1, sizeof(Matrix4) );
-			}
-			else
-			{
-				bx::memCopy(m_proj[1].un.val, m_proj[0].un.val, sizeof(Matrix4) );
+				m_proj.setIdentity();
 			}
 		}
 
@@ -1769,10 +1759,9 @@ namespace bgfx
 		Rect    m_rect;
 		Rect    m_scissor;
 		Matrix4 m_view;
-		Matrix4 m_proj[2];
+		Matrix4 m_proj;
 		FrameBufferHandle m_fbh;
 		uint8_t m_mode;
-		uint8_t m_flags;
 	};
 
 	struct FrameCache
@@ -2393,14 +2382,14 @@ namespace bgfx
 			submit(_id, _program, handle, _depth, _preserveState);
 		}
 
-		void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz, uint8_t _flags);
+		void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _ngx, uint32_t _ngy, uint32_t _ngz);
 
-		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+		void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num)
 		{
 			m_compute.m_indirectBuffer = _indirectHandle;
 			m_compute.m_startIndirect  = _start;
 			m_compute.m_numIndirect    = _num;
-			dispatch(_id, _handle, 0, 0, 0, _flags);
+			dispatch(_id, _handle, 0, 0, 0);
 		}
 
 		void blit(ViewId _id, TextureHandle _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, TextureHandle _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
@@ -4533,9 +4522,9 @@ namespace bgfx
 			m_view[_id].setFrameBuffer(_handle);
 		}
 
-		BGFX_API_FUNC(void setViewTransform(ViewId _id, const void* _view, const void* _proj, uint8_t _flags, const void* _proj1) )
+		BGFX_API_FUNC(void setViewTransform(ViewId _id, const void* _view, const void* _proj) )
 		{
-			m_view[_id].setTransform(_view, _proj, _flags, _proj1);
+			m_view[_id].setTransform(_view, _proj);
 		}
 
 		BGFX_API_FUNC(void resetView(ViewId _id) )

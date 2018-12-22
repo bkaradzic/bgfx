@@ -5705,9 +5705,8 @@ namespace bgfx { namespace d3d12
 		RenderBind currentBind;
 		currentBind.clear();
 
-		const bool hmdEnabled = false;
 		static ViewState viewState;
-		viewState.reset(_render, hmdEnabled);
+		viewState.reset(_render);
 
 // 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 // 		setDebugWireframe(wireframe);
@@ -5806,9 +5805,9 @@ namespace bgfx { namespace d3d12
 			m_batch.begin();
 
 			viewState.m_rect = _render->m_view[0].m_rect;
-
 			int32_t numItems = _render->m_numRenderItems;
-			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
+
+			for (int32_t item = 0; item < numItems;)
 			{
 				const uint64_t encodedKey = _render->m_sortKeys[item];
 				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
@@ -6061,7 +6060,7 @@ namespace bgfx { namespace d3d12
 					||  hasPredefined)
 					{
 						ProgramD3D12& program = m_program[currentProgram.idx];
-						viewState.setPredefined<4>(this, view, 0, program, _render, compute);
+						viewState.setPredefined<4>(this, view, program, _render, compute);
 						commitShaderConstants(key.m_program, gpuAddress);
 						m_commandList->SetComputeRootConstantBufferView(Rdt::CBV, gpuAddress);
 					}
@@ -6457,7 +6456,7 @@ namespace bgfx { namespace d3d12
 						ProgramD3D12& program = m_program[currentProgram.idx];
 						uint32_t ref = (newFlags&BGFX_STATE_ALPHA_REF_MASK)>>BGFX_STATE_ALPHA_REF_SHIFT;
 						viewState.m_alphaRef = ref/255.0f;
-						viewState.setPredefined<4>(this, view, 0, program, _render, draw);
+						viewState.setPredefined<4>(this, view, program, _render, draw);
 						commitShaderConstants(key.m_program, gpuAddress);
 					}
 

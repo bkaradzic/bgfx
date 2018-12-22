@@ -5249,9 +5249,8 @@ namespace bgfx { namespace d3d11
 		RenderBind currentBind;
 		currentBind.clear();
 
-		const bool hmdEnabled = false;
 		static ViewState viewState;
-		viewState.reset(_render, hmdEnabled);
+		viewState.reset(_render);
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
 		bool scissorEnabled = false;
@@ -5299,13 +5298,10 @@ namespace bgfx { namespace d3d11
 			// if we don't do this we'll only see one frame of output and then nothing
 			setFrameBuffer(BGFX_INVALID_HANDLE, true, false);
 
-			bool viewRestart = false;
-			uint8_t eye = 0;
-			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_view[0].m_rect;
-
 			int32_t numItems = _render->m_numRenderItems;
-			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
+
+			for (int32_t item = 0; item < numItems;)
 			{
 				const uint64_t encodedKey = _render->m_sortKeys[item];
 				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
@@ -5323,15 +5319,6 @@ namespace bgfx { namespace d3d11
 
 				if (viewChanged)
 				{
-					if (1 == restartState)
-					{
-						restartState = 2;
-						item = restartItem;
-						restartItem = numItems;
-						view = UINT16_MAX;
-						continue;
-					}
-
 					view = key.m_view;
 					currentProgram = BGFX_INVALID_HANDLE;
 
@@ -5339,24 +5326,6 @@ namespace bgfx { namespace d3d11
 					{
 						fbh = _render->m_view[view].m_fbh;
 						setFrameBuffer(fbh);
-					}
-
-					viewRestart = ( (BGFX_VIEW_STEREO == (_render->m_view[view].m_flags & BGFX_VIEW_STEREO) ) );
-					viewRestart &= hmdEnabled;
-					if (viewRestart)
-					{
-						if (0 == restartState)
-						{
-							restartState = 1;
-							restartItem  = item - 1;
-						}
-
-						eye = (restartState - 1) & 1;
-						restartState &= 1;
-					}
-					else
-					{
-						eye = 0;
 					}
 
 					PIX_ENDEVENT();
@@ -5367,32 +5336,12 @@ namespace bgfx { namespace d3d11
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
-					if (viewRestart)
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 					{
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							wchar_t* viewNameW = s_viewNameW[view];
-							viewNameW[3] = L' ';
-							viewNameW[4] = eye ? L'R' : L'L';
-							PIX_BEGINEVENT(0 == ( (view*2+eye)&1)
-								? D3DCOLOR_VIEW_L
-								: D3DCOLOR_VIEW_R
-								, viewNameW
-								);
-						}
-
-						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
-						viewState.m_rect.m_width /= 2;
-					}
-					else
-					{
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							wchar_t* viewNameW = s_viewNameW[view];
-							viewNameW[3] = L' ';
-							viewNameW[4] = L' ';
-							PIX_BEGINEVENT(D3DCOLOR_VIEW, viewNameW);
-						}
+						wchar_t* viewNameW = s_viewNameW[view];
+						viewNameW[3] = L' ';
+						viewNameW[4] = L' ';
+						PIX_BEGINEVENT(D3DCOLOR_VIEW, viewNameW);
 					}
 
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
@@ -5444,12 +5393,6 @@ namespace bgfx { namespace d3d11
 
 					const RenderCompute& compute = renderItem.compute;
 
-					if (0 != eye
-					&&  BGFX_SUBMIT_EYE_LEFT == (compute.m_submitFlags&BGFX_SUBMIT_EYE_MASK) )
-					{
-						continue;
-					}
-
 					bool programChanged = false;
 					bool constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
 					rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
@@ -5481,7 +5424,7 @@ namespace bgfx { namespace d3d11
 							}
 						}
 
-						viewState.setPredefined<4>(this, view, eye, program, _render, compute);
+						viewState.setPredefined<4>(this, view, program, _render, compute);
 
 						if (constantsChanged
 						||  program.m_numPredefined > 0)
@@ -5807,7 +5750,7 @@ namespace bgfx { namespace d3d11
 						}
 					}
 
-					viewState.setPredefined<4>(this, view, eye, program, _render, draw);
+					viewState.setPredefined<4>(this, view, program, _render, draw);
 
 					if (constantsChanged
 					||  program.m_numPredefined > 0)

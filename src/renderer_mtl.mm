@@ -3449,9 +3449,8 @@ namespace bgfx { namespace mtl
 		RenderBind currentBind;
 		currentBind.clear();
 
-		const bool hmdEnabled = false;
 		static ViewState viewState;
-		viewState.reset(_render, hmdEnabled);
+		viewState.reset(_render);
 		uint32_t blendFactor = 0;
 
 		bool wireframe = !!(_render->m_debug&BGFX_DEBUG_WIREFRAME);
@@ -3485,13 +3484,10 @@ namespace bgfx { namespace mtl
 
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
-			bool viewRestart = false;
-			uint8_t eye = 0;
-			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_view[0].m_rect;
-
 			int32_t numItems = _render->m_numRenderItems;
-			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
+
+			for (int32_t item = 0; item < numItems;)
 			{
 				const uint64_t encodedKey = _render->m_sortKeys[item];
 				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
@@ -3509,44 +3505,10 @@ namespace bgfx { namespace mtl
 
 				if (viewChanged)
 				{
-					if (1 == restartState)
-					{
-						restartState = 2;
-						item = restartItem;
-						restartItem = numItems;
-						view = UINT16_MAX;
-						continue;
-					}
-
 					view = key.m_view;
 					currentProgram = BGFX_INVALID_HANDLE;
 
-					viewRestart  = BGFX_VIEW_STEREO == (_render->m_view[view].m_flags & BGFX_VIEW_STEREO);
-					viewRestart &= hmdEnabled;
-
-					if (viewRestart)
-					{
-						if (0 == restartState)
-						{
-							restartState = 1;
-							restartItem  = item - 1;
-						}
-
-						eye = (restartState - 1) & 1;
-						restartState &= 1;
-					}
-					else
-					{
-						eye = 0;
-					}
-
 					viewState.m_rect = _render->m_view[view].m_rect;
-
-					if (viewRestart)
-					{
-						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
-						viewState.m_rect.m_width /= 2;
-					}
 
 					submitBlit(bs, view);
 
@@ -4003,7 +3965,7 @@ namespace bgfx { namespace mtl
 						}
 					}
 
-					viewState.setPredefined<4>(this, view, eye, program, _render, draw);
+					viewState.setPredefined<4>(this, view, program, _render, draw);
 
 					m_uniformBufferFragmentOffset += fragmentUniformBufferSize;
 					m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;

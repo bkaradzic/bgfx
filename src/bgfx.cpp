@@ -1224,7 +1224,7 @@ namespace bgfx
 		}
 	}
 
-	void EncoderImpl::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	void EncoderImpl::dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG_UNIFORM) )
 		{
@@ -1255,7 +1255,6 @@ namespace bgfx
 		m_compute.m_numX   = bx::max(_numX, 1u);
 		m_compute.m_numY   = bx::max(_numY, 1u);
 		m_compute.m_numZ   = bx::max(_numZ, 1u);
-		m_compute.m_submitFlags = _flags;
 
 		m_key.m_program = _handle;
 		m_key.m_depth   = 0;
@@ -3590,20 +3589,20 @@ namespace bgfx
 		BGFX_ENCODER(setImage(_stage, _handle, _mip, _access, _format) );
 	}
 
-	void Encoder::dispatch(ViewId _id, ProgramHandle _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	void Encoder::dispatch(ViewId _id, ProgramHandle _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
 		BGFX_CHECK_HANDLE_INVALID_OK("dispatch", s_ctx->m_programHandle, _program);
-		BGFX_ENCODER(dispatch(_id, _program, _numX, _numY, _numZ, _flags) );
+		BGFX_ENCODER(dispatch(_id, _program, _numX, _numY, _numZ) );
 	}
 
-	void Encoder::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	void Encoder::dispatch(ViewId _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num)
 	{
 		BGFX_CHECK_CAPS(BGFX_CAPS_DRAW_INDIRECT, "Dispatch indirect is not supported!");
 		BGFX_CHECK_CAPS(BGFX_CAPS_COMPUTE, "Compute is not supported!");
 		BGFX_CHECK_HANDLE_INVALID_OK("dispatch", s_ctx->m_programHandle, _program);
 		BGFX_CHECK_HANDLE("dispatch", s_ctx->m_vertexBufferHandle, _indirectHandle);
-		BGFX_ENCODER(dispatch(_id, _program, _indirectHandle, _start, _num, _flags) );
+		BGFX_ENCODER(dispatch(_id, _program, _indirectHandle, _start, _num) );
 	}
 
 	void Encoder::discard()
@@ -4504,10 +4503,10 @@ namespace bgfx
 		s_ctx->setViewFrameBuffer(_id, _handle);
 	}
 
-	void setViewTransform(ViewId _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
+	void setViewTransform(ViewId _id, const void* _view, const void* _proj)
 	{
 		BX_CHECK(checkView(_id), "Invalid view id: %d", _id);
-		s_ctx->setViewTransform(_id, _view, _projL, _flags, _projR);
+		s_ctx->setViewTransform(_id, _view, _proj);
 	}
 
 	void setViewOrder(ViewId _id, uint16_t _num, const ViewId* _order)
@@ -4750,16 +4749,16 @@ namespace bgfx
 		s_ctx->m_encoder0->setImage(_stage, _handle, _mip, _access, _format);
 	}
 
-	void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+	void dispatch(ViewId _id, ProgramHandle _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ)
 	{
 		BGFX_CHECK_API_THREAD();
-		s_ctx->m_encoder0->dispatch(_id, _handle, _numX, _numY, _numZ, _flags);
+		s_ctx->m_encoder0->dispatch(_id, _handle, _numX, _numY, _numZ);
 	}
 
-	void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+	void dispatch(ViewId _id, ProgramHandle _handle, IndirectBufferHandle _indirectHandle, uint16_t _start, uint16_t _num)
 	{
 		BGFX_CHECK_API_THREAD();
-		s_ctx->m_encoder0->dispatch(_id, _handle, _indirectHandle, _start, _num, _flags);
+		s_ctx->m_encoder0->dispatch(_id, _handle, _indirectHandle, _start, _num);
 	}
 
 	void discard()
@@ -5744,11 +5743,6 @@ BGFX_C_API void bgfx_set_view_transform(bgfx_view_id_t _id, const void* _view, c
 	bgfx::setViewTransform(_id, _view, _proj);
 }
 
-BGFX_C_API void bgfx_set_view_transform_stereo(bgfx_view_id_t _id, const void* _view, const void* _projL, uint8_t _flags, const void* _projR)
-{
-	bgfx::setViewTransform(_id, _view, _projL, _flags, _projR);
-}
-
 BGFX_C_API void bgfx_set_view_order(bgfx_view_id_t _id, uint16_t _num, const bgfx_view_id_t* _order)
 {
 	bgfx::setViewOrder(_id, _num, _order);
@@ -5940,17 +5934,17 @@ BGFX_C_API void bgfx_set_compute_indirect_buffer(uint8_t _stage, bgfx_indirect_b
 	bgfx::setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) );
 }
 
-BGFX_C_API void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+BGFX_C_API void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
-	bgfx::dispatch(_id, handle.cpp, _numX, _numY, _numZ, _flags);
+	bgfx::dispatch(_id, handle.cpp, _numX, _numY, _numZ);
 }
 
-BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
-	bgfx::dispatch(_id, handle.cpp, indirectHandle.cpp, _start, _num, _flags);
+	bgfx::dispatch(_id, handle.cpp, indirectHandle.cpp, _start, _num);
 }
 
 BGFX_C_API void bgfx_discard(void)
@@ -6148,17 +6142,17 @@ BGFX_C_API void bgfx_encoder_set_compute_indirect_buffer(bgfx_encoder_s* _encode
 	BGFX_ENCODER(setBuffer(_stage, handle.cpp, bgfx::Access::Enum(_access) ) );
 }
 
-BGFX_C_API void bgfx_encoder_dispatch(bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ, uint8_t _flags)
+BGFX_C_API void bgfx_encoder_dispatch(bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, uint32_t _numX, uint32_t _numY, uint32_t _numZ)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
-	BGFX_ENCODER(dispatch(_id, handle.cpp, _numX, _numY, _numZ, _flags) );
+	BGFX_ENCODER(dispatch(_id, handle.cpp, _numX, _numY, _numZ) );
 }
 
-BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint8_t _flags)
+BGFX_C_API void bgfx_encoder_dispatch_indirect(bgfx_encoder_s* _encoder, bgfx_view_id_t _id, bgfx_program_handle_t _handle, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num)
 {
 	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } handle = { _handle };
 	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
-	BGFX_ENCODER(dispatch(_id, handle.cpp, indirectHandle.cpp, _start, _num, _flags) );
+	BGFX_ENCODER(dispatch(_id, handle.cpp, indirectHandle.cpp, _start, _num) );
 }
 
 BGFX_C_API void bgfx_encoder_discard(bgfx_encoder_s* _encoder)
@@ -6312,7 +6306,6 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 	BGFX_IMPORT_FUNC(set_view_mode)                                        \
 	BGFX_IMPORT_FUNC(set_view_frame_buffer)                                \
 	BGFX_IMPORT_FUNC(set_view_transform)                                   \
-	BGFX_IMPORT_FUNC(set_view_transform_stereo)                            \
 	BGFX_IMPORT_FUNC(set_view_order)                                       \
 	BGFX_IMPORT_FUNC(encoder_set_marker)                                   \
 	BGFX_IMPORT_FUNC(encoder_set_state)                                    \

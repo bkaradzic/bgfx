@@ -47,74 +47,36 @@ namespace bgfx
 		{
 		}
 
-		ViewState(Frame* _frame, bool _stereo)
+		ViewState(Frame* _frame)
 		{
-			reset(_frame, _stereo);
+			reset(_frame);
 		}
 
-		void reset(Frame* _frame, bool _stereo)
+		void reset(Frame* _frame)
 		{
 			m_alphaRef = 0.0f;
 			m_invViewCached = UINT16_MAX;
 			m_invProjCached = UINT16_MAX;
 			m_invViewProjCached = UINT16_MAX;
 
-			m_view[0] = m_viewTmp[0];
-			m_view[1] = m_viewTmp[1];
+			m_view = m_viewTmp;
 
-			if (_stereo)
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
-				m_view[0] = m_viewTmp[0];
-				Matrix4 viewAdjust;
-				bx::mtxIdentity(viewAdjust.un.val);
-
-				for (uint32_t eye = 0; eye < 2; ++eye)
-				{
-/*
-					const HMD::Eye& hmdEye = hmd.eye[eye];
-					viewAdjust.un.val[12] = hmdEye.viewOffset[0];
-					viewAdjust.un.val[13] = hmdEye.viewOffset[1];
-					viewAdjust.un.val[14] = hmdEye.viewOffset[2];
-
-					for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-					{
-						if (BGFX_VIEW_STEREO == (_frame->m_view[ii].m_flags & BGFX_VIEW_STEREO) )
-						{
-							bx::float4x4_mul(&m_view[eye][ii].un.f4x4
-								, &_frame->m_view[ii].m_view.un.f4x4
-								, &viewAdjust.un.f4x4
-								);
-						}
-						else
-						{
-							bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
-						}
-					}
-*/
-				}
-			}
-			else
-			{
-				for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
-				{
-					bx::memCopy(&m_view[0][ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
-				}
+				bx::memCopy(&m_view[ii].un.f4x4, &_frame->m_view[ii].m_view.un.f4x4, sizeof(Matrix4) );
 			}
 
 			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
 			{
-				for (uint32_t eye = 0; eye < uint32_t(_stereo)+1; ++eye)
-				{
-					bx::float4x4_mul(&m_viewProj[eye][ii].un.f4x4
-						, &m_view[eye][ii].un.f4x4
-						, &_frame->m_view[ii].m_proj[eye].un.f4x4
-						);
-				}
+				bx::float4x4_mul(&m_viewProj[ii].un.f4x4
+					, &m_view[ii].un.f4x4
+					, &_frame->m_view[ii].m_proj.un.f4x4
+					);
 			}
 		}
 
 		template<uint16_t mtxRegs, typename RendererContext, typename Program, typename Draw>
-		void setPredefined(RendererContext* _renderer, uint16_t _view, uint8_t _eye, const Program& _program, const Frame* _frame, const Draw& _draw)
+		void setPredefined(RendererContext* _renderer, uint16_t _view, const Program& _program, const Frame* _frame, const Draw& _draw)
 		{
 			const FrameCache& frameCache = _frame->m_frameCache;
 
@@ -158,7 +120,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, m_view[_eye][_view].un.val
+							, m_view[_view].un.val
 							, bx::uint32_min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -166,12 +128,11 @@ namespace bgfx
 
 				case PredefinedUniform::InvView:
 					{
-						uint16_t viewEye = (_view << 1) | _eye;
-						if (viewEye != m_invViewCached)
+						if (_view != m_invViewCached)
 						{
-							m_invViewCached = viewEye;
+							m_invViewCached = _view;
 							bx::float4x4_inverse(&m_invView.un.f4x4
-								, &m_view[_eye][_view].un.f4x4
+								, &m_view[_view].un.f4x4
 								);
 						}
 
@@ -187,7 +148,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, _frame->m_view[_view].m_proj[_eye].un.val
+							, _frame->m_view[_view].m_proj.un.val
 							, bx::uint32_min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -195,12 +156,11 @@ namespace bgfx
 
 				case PredefinedUniform::InvProj:
 					{
-						uint16_t viewEye = (_view << 1) | _eye;
-						if (viewEye != m_invProjCached)
+						if (_view != m_invProjCached)
 						{
-							m_invProjCached = viewEye;
+							m_invProjCached = _view;
 							bx::float4x4_inverse(&m_invProj.un.f4x4
-								, &_frame->m_view[_view].m_proj[_eye].un.f4x4
+								, &_frame->m_view[_view].m_proj.un.f4x4
 								);
 						}
 
@@ -216,7 +176,7 @@ namespace bgfx
 					{
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
-							, m_viewProj[_eye][_view].un.val
+							, m_viewProj[_view].un.val
 							, bx::uint32_min(mtxRegs, predefined.m_count)
 							);
 					}
@@ -224,12 +184,11 @@ namespace bgfx
 
 				case PredefinedUniform::InvViewProj:
 					{
-						uint16_t viewEye = (_view << 1) | _eye;
-						if (viewEye != m_invViewProjCached)
+						if (_view != m_invViewProjCached)
 						{
-							m_invViewProjCached = viewEye;
+							m_invViewProjCached = _view;
 							bx::float4x4_inverse(&m_invViewProj.un.f4x4
-								, &m_viewProj[_eye][_view].un.f4x4
+								, &m_viewProj[_view].un.f4x4
 								);
 						}
 
@@ -258,7 +217,7 @@ namespace bgfx
 						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
 						bx::float4x4_mul(&modelView.un.f4x4
 							, &model.un.f4x4
-							, &m_view[_eye][_view].un.f4x4
+							, &m_view[_view].un.f4x4
 							);
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
@@ -274,7 +233,7 @@ namespace bgfx
 						const Matrix4& model = frameCache.m_matrixCache.m_cache[_draw.m_startMatrix];
 						bx::float4x4_mul(&modelViewProj.un.f4x4
 							, &model.un.f4x4
-							, &m_viewProj[_eye][_view].un.f4x4
+							, &m_viewProj[_view].un.f4x4
 							);
 						_renderer->setShaderUniform4x4f(flags
 							, predefined.m_loc
@@ -301,9 +260,9 @@ namespace bgfx
 			}
 		}
 
-		Matrix4  m_viewTmp[2][BGFX_CONFIG_MAX_VIEWS];
-		Matrix4  m_viewProj[2][BGFX_CONFIG_MAX_VIEWS];
-		Matrix4* m_view[2];
+		Matrix4  m_viewTmp[BGFX_CONFIG_MAX_VIEWS];
+		Matrix4  m_viewProj[BGFX_CONFIG_MAX_VIEWS];
+		Matrix4* m_view;
 		Rect     m_rect;
 		Matrix4  m_invView;
 		Matrix4  m_invProj;

@@ -6,7 +6,7 @@
 #ifndef BGFX_DEFINES_H_HEADER_GUARD
 #define BGFX_DEFINES_H_HEADER_GUARD
 
-#define BGFX_API_VERSION UINT32_C(90)
+#define BGFX_API_VERSION UINT32_C(91)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define BGFX_STATE_WRITE_R                 UINT64_C(0x0000000000000001) //!< Enable R write.
@@ -520,19 +520,6 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA UINT16_C(0x1000) //!< Texture format can be used as MSAA frame buffer.
 #define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT16_C(0x2000) //!< Texture can be sampled as MSAA.
 #define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT16_C(0x4000) //!< Texture format supports auto-generated mips.
-
-///
-#define BGFX_VIEW_NONE   UINT8_C(0x00) //!<
-#define BGFX_VIEW_STEREO UINT8_C(0x01) //!< View will be rendered in stereo mode.
-
-///
-#define BGFX_SUBMIT_EYE_LEFT       UINT8_C(0x01) //!< Submit to left eye.
-#define BGFX_SUBMIT_EYE_RIGHT      UINT8_C(0x02) //!< Submit to right eye.
-#define BGFX_SUBMIT_EYE_MASK       UINT8_C(0x03) //!<
-#define BGFX_SUBMIT_EYE_FIRST      BGFX_SUBMIT_EYE_LEFT
-
-#define BGFX_SUBMIT_RESERVED_SHIFT 7             //!< Internal bits shift.
-#define BGFX_SUBMIT_RESERVED_MASK  UINT8_C(0x80) //!< Internal bits mask.
 
 ///
 #define BGFX_RESOLVE_NONE          UINT8_C(0x00) //!< No resolve flags.

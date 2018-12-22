@@ -6350,9 +6350,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		RenderBind currentBind;
 		currentBind.clear();
 
-		const bool hmdEnabled = false;
 		static ViewState viewState;
-		viewState.reset(_render, hmdEnabled);
+		viewState.reset(_render);
 
 		ProgramHandle currentProgram = BGFX_INVALID_HANDLE;
 		ProgramHandle boundProgram   = BGFX_INVALID_HANDLE;
@@ -6409,18 +6408,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			m_occlusionQuery.resolve(_render);
 		}
 
-		uint8_t eye = 0;
-
 		if (0 == (_render->m_debug&BGFX_DEBUG_IFH) )
 		{
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_msaaBackBufferFbo) );
 
-			bool viewRestart = false;
-			uint8_t restartState = 0;
 			viewState.m_rect = _render->m_view[0].m_rect;
-
 			int32_t numItems = _render->m_numRenderItems;
-			for (int32_t item = 0, restartItem = numItems; item < numItems || restartItem < numItems;)
+
+			for (int32_t item = 0; item < numItems;)
 			{
 				const uint64_t encodedKey = _render->m_sortKeys[item];
 				const bool isCompute = key.decode(encodedKey, _render->m_viewRemap);
@@ -6438,15 +6433,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				if (viewChanged)
 				{
-					if (1 == restartState)
-					{
-						restartState = 2;
-						item = restartItem;
-						restartItem = numItems;
-						view = UINT16_MAX;
-						continue;
-					}
-
 					view = key.m_view;
 					currentProgram = BGFX_INVALID_HANDLE;
 
@@ -6457,24 +6443,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
 					}
 
-					viewRestart = ( (BGFX_VIEW_STEREO == (_render->m_view[view].m_flags & BGFX_VIEW_STEREO) ) );
-					viewRestart &= hmdEnabled;
-					if (viewRestart)
-					{
-						if (0 == restartState)
-						{
-							restartState = 1;
-							restartItem  = item - 1;
-						}
-
-						eye = (restartState - 1) & 1;
-						restartState &= 1;
-					}
-					else
-					{
-						eye = 0;
-					}
-
 					if (item > 1)
 					{
 						profiler.end();
@@ -6483,28 +6451,12 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
-					if (viewRestart)
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 					{
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							char* viewName = s_viewName[view];
-							viewName[3] = ' ';
-							viewName[4] = eye ? 'R' : 'L';
-							GL_CHECK(glInsertEventMarker(0, viewName) );
-						}
-
-						viewState.m_rect.m_x = eye * (viewState.m_rect.m_width+1)/2;
-						viewState.m_rect.m_width /= 2;
-					}
-					else
-					{
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							char* viewName = s_viewName[view];
-							viewName[3] = ' ';
-							viewName[4] = ' ';
-							GL_CHECK(glInsertEventMarker(0, viewName) );
-						}
+						char* viewName = s_viewName[view];
+						viewName[3] = ' ';
+						viewName[4] = ' ';
+						GL_CHECK(glInsertEventMarker(0, viewName) );
 					}
 
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
@@ -6615,7 +6567,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								commit(*program.m_constantBuffer);
 							}
 
-							viewState.setPredefined<1>(this, view, eye, program, _render, compute);
+							viewState.setPredefined<1>(this, view, program, _render, compute);
 
 							if (isValid(compute.m_indirectBuffer) )
 							{
@@ -7060,7 +7012,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						commit(*program.m_constantBuffer);
 					}
 
-					viewState.setPredefined<1>(this, view, eye, program, _render, draw);
+					viewState.setPredefined<1>(this, view, program, _render, draw);
 
 					{
 						for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
