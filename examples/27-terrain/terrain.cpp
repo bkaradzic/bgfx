@@ -357,7 +357,7 @@ public:
 		float ray_world[4];
 		bx::vec4MulMtx(ray_world, ray_eye, invViewMtx);
 
-		const bx::Vec3 rayDir = bx::mul(bx::normalize(bx::load(ray_world) ), -1.0f);
+		const bx::Vec3 rayDir = bx::mul(bx::normalize(bx::load<bx::Vec3>(ray_world) ), -1.0f);
 
 		bx::Vec3 pos;
 		cameraGetPosition(&pos.x);

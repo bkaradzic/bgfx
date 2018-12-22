@@ -1380,7 +1380,7 @@ struct DebugDrawEncoderImpl
 		vertex.m_abgr = attrib.m_abgr;
 		vertex.m_len  = attrib.m_offset;
 
-		float len = bx::length(bx::sub(bx::load(&vertex.m_x), bx::load(&m_cache[prev].m_x) ) ) * attrib.m_scale;
+		float len = bx::length(bx::sub(bx::load<bx::Vec3>(&vertex.m_x), bx::load<bx::Vec3>(&m_cache[prev].m_x) ) ) * attrib.m_scale;
 		vertex.m_len = m_cache[prev].m_len + len;
 
 		m_indices[m_indexPos++] = prev;
@@ -1556,7 +1556,7 @@ struct DebugDrawEncoderImpl
 			},
 		};
 
-		bx::store(params[0], bx::normalize(bx::load(params[0]) ) );
+		bx::store(params[0], bx::normalize(bx::load<bx::Vec3>(params[0]) ) );
 		m_encoder->setUniform(s_dds.u_params, params, 4);
 
 		m_encoder->setState(0
@@ -1751,14 +1751,14 @@ struct DebugDrawEncoderImpl
 
 		bx::Vec3 udir;
 		bx::Vec3 vdir;
-		bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
+		bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
 
 		float xy0[2];
 		float xy1[2];
 		circle(xy0, 0.0f);
 		squircle(xy1, 0.0f);
 
-		const bx::Vec3 center = bx::load(_center);
+		const bx::Vec3 center = bx::load<bx::Vec3>(_center);
 
 		bx::Vec3 pos  = bx::mul(udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
 		bx::Vec3 tmp0 = bx::mul(vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
@@ -1829,7 +1829,7 @@ struct DebugDrawEncoderImpl
 		if (attrib.m_wireframe)
 		{
 			bx::Vec3 udir, vdir;
-			bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
+			bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
 
 			const float halfExtent = _size*0.5f;
 
@@ -1837,7 +1837,7 @@ struct DebugDrawEncoderImpl
 			const bx::Vec3 umax   = bx::mul(udir,  halfExtent);
 			const bx::Vec3 vmin   = bx::mul(vdir, -halfExtent);
 			const bx::Vec3 vmax   = bx::mul(vdir,  halfExtent);
-			const bx::Vec3 center = bx::load(_center);
+			const bx::Vec3 center = bx::load<bx::Vec3>(_center);
 
 			moveTo(bx::add(center, bx::add(umin, vmin) ) );
 			lineTo(bx::add(center, bx::add(umax, vmin) ) );
@@ -1870,7 +1870,7 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 
 		bx::Vec3 udir, vdir;
-		bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
+		bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
 
 		const Pack2D& pack = s_dds.m_sprite.get(_handle);
 		const float invTextureSize = 1.0f/SPRITE_TEXTURE_SIZE;
@@ -1887,7 +1887,7 @@ struct DebugDrawEncoderImpl
 		const bx::Vec3 umax   = bx::mul(udir,  halfExtentU);
 		const bx::Vec3 vmin   = bx::mul(vdir, -halfExtentV);
 		const bx::Vec3 vmax   = bx::mul(vdir,  halfExtentV);
-		const bx::Vec3 center = bx::load(_center);
+		const bx::Vec3 center = bx::load<bx::Vec3>(_center);
 
 		DebugUvVertex* vertex = &m_cacheQuad[m_posQuad];
 		m_posQuad += 4;
@@ -1927,7 +1927,7 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 
 		float normal[3];
-		bx::store(normal, bx::normalize(bx::sub(bx::load(_from), bx::load(_to) ) ) );
+		bx::store(normal, bx::normalize(bx::sub(bx::load<bx::Vec3>(_from), bx::load<bx::Vec3>(_to) ) ) );
 
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
@@ -1954,7 +1954,7 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 
 		float normal[3];
-		bx::store(normal, bx::normalize(bx::sub(bx::load(_from), bx::load(_to) ) ) );
+		bx::store(normal, bx::normalize(bx::sub(bx::load<bx::Vec3>(_from), bx::load<bx::Vec3>(_to) ) ) );
 
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
@@ -2063,7 +2063,7 @@ struct DebugDrawEncoderImpl
 
 		bx::Vec3 udir;
 		bx::Vec3 vdir;
-		bx::calcTangentFrame(udir, vdir, bx::load(_normal), attrib.m_spin);
+		bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
 
 		udir = bx::mul(udir, _step);
 		vdir = bx::mul(vdir, _step);
@@ -2075,7 +2075,7 @@ struct DebugDrawEncoderImpl
 		const bx::Vec3 umax   = bx::mul(udir,  halfExtent);
 		const bx::Vec3 vmin   = bx::mul(vdir, -halfExtent);
 		const bx::Vec3 vmax   = bx::mul(vdir,  halfExtent);
-		const bx::Vec3 center = bx::load(_center);
+		const bx::Vec3 center = bx::load<bx::Vec3>(_center);
 
 		bx::Vec3 xs = bx::add(center, bx::add(umin, vmin) );
 		bx::Vec3 xe = bx::add(center, bx::add(umax, vmin) );

@@ -333,13 +333,13 @@ void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl
 
 	for (uint32_t ii = 0; ii < _numVertices; ++ii)
 	{
-		const bx::Vec3 tanu = bx::load(&tangents[ii*6]);
-		const bx::Vec3 tanv = bx::load(&tangents[ii*6 + 3]);
+		const bx::Vec3 tanu = bx::load<bx::Vec3>(&tangents[ii*6]);
+		const bx::Vec3 tanv = bx::load<bx::Vec3>(&tangents[ii*6 + 3]);
 
 		float nxyzw[4];
 		bgfx::vertexUnpack(nxyzw, bgfx::Attrib::Normal, _decl, _vertices, ii);
 
-		const bx::Vec3 normal  = bx::load(nxyzw);
+		const bx::Vec3 normal  = bx::load<bx::Vec3>(nxyzw);
 		const float    ndt     = bx::dot(normal, tanu);
 		const bx::Vec3 nxt     = bx::cross(normal, tanu);
 		const bx::Vec3 tmp     = bx::sub(tanu, bx::mul(normal, ndt) );

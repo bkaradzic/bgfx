@@ -278,7 +278,7 @@ public:
 
 				// Look at our unprojected point
 				float pickView[16];
-				bx::mtxLookAt(pickView, bx::load(pickEye), bx::load(pickAt) );
+				bx::mtxLookAt(pickView, bx::load<bx::Vec3>(pickEye), bx::load<bx::Vec3>(pickAt) );
 
 				// Tight FOV is best for picking
 				float pickProj[16];

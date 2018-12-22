@@ -160,16 +160,16 @@ void planeNormal(float* __restrict _result
 	, const float* __restrict _v2
 	)
 {
-	const bx::Vec3 v0    = bx::load(_v0);
-	const bx::Vec3 v1    = bx::load(_v1);
-	const bx::Vec3 v2    = bx::load(_v2);
+	const bx::Vec3 v0    = bx::load<bx::Vec3>(_v0);
+	const bx::Vec3 v1    = bx::load<bx::Vec3>(_v1);
+	const bx::Vec3 v2    = bx::load<bx::Vec3>(_v2);
 	const bx::Vec3 vec0  = bx::sub(v1, v0);
 	const bx::Vec3 vec1  = bx::sub(v2, v1);
 	const bx::Vec3 cross = bx::cross(vec0, vec1);
 
 	bx::store(_result, bx::normalize(cross) );
 
-	_result[3] = -bx::dot(bx::load(_result), bx::load(_v0) );
+	_result[3] = -bx::dot(bx::load<bx::Vec3>(_result), bx::load<bx::Vec3>(_v0) );
 }
 
 struct Uniforms
@@ -1381,7 +1381,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			const Face& face = *iter;
 
 			bool frontFacing = false;
-			const float f = bx::dot(bx::load(face.m_plane), bx::load(_light) ) + face.m_plane[3];
+			const float f = bx::dot(bx::load<bx::Vec3>(face.m_plane), bx::load<bx::Vec3>(_light) ) + face.m_plane[3];
 			if (f > 0.0f)
 			{
 				frontFacing = true;
@@ -1569,8 +1569,8 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 				const Edge& edge = edges[ii];
 				const Plane* edgePlane = &edgePlanes[ii*2];
 
-				int16_t s0 = ( (bx::dot(bx::load(edgePlane[0].m_plane), bx::load(_light) ) + edgePlane[0].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
-				int16_t s1 = ( (bx::dot(bx::load(edgePlane[1].m_plane), bx::load(_light) ) + edgePlane[1].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
+				int16_t s0 = ( (bx::dot(bx::load<bx::Vec3>(edgePlane[0].m_plane), bx::load<bx::Vec3>(_light) ) + edgePlane[0].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[0];
+				int16_t s1 = ( (bx::dot(bx::load<bx::Vec3>(edgePlane[1].m_plane), bx::load<bx::Vec3>(_light) ) + edgePlane[1].m_plane[3]) > 0.0f) ^ edge.m_faceReverseOrder[1];
 				int16_t kk = ( (s0 + s1) << 1) - 2;
 
 				if (kk != 0)
@@ -1607,7 +1607,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 			{
 				const Face& face = *iter;
 
-				const float f = bx::dot(bx::load(face.m_plane), bx::load(_light) ) + face.m_plane[3];
+				const float f = bx::dot(bx::load<bx::Vec3>(face.m_plane), bx::load<bx::Vec3>(_light) ) + face.m_plane[3];
 				bool frontFacing = (f > 0.0f);
 
 				for (uint8_t ii = 0, num = 1 + uint8_t(!_textureAsStencil); ii < num; ++ii)
@@ -1700,7 +1700,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	const float delta = 0.1f;
 
 	const float nearNormal[4] = { 0.0f, 0.0f, 1.0f, _near };
-	const float d = bx::dot(bx::load(lightPosV), bx::load(nearNormal) ) + lightPosV[3] * nearNormal[3];
+	const float d = bx::dot(bx::load<bx::Vec3>(lightPosV), bx::load<bx::Vec3>(nearNormal) ) + lightPosV[3] * nearNormal[3];
 
 	// Light is:
 	//  1.0f - in front of near plane
@@ -1733,9 +1733,9 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		float* outNormal = planeNormals[ii];
 		float* outPlane  = volumePlanes[ii];
 
-		const bx::Vec3 c0       = bx::load(corners[ii]);
-		const bx::Vec3 planeVec = bx::sub(c0, bx::load(corners[(ii-1)&3]) );
-		const bx::Vec3 light    = bx::sub(bx::load(_lightPos), bx::mul(c0, _lightPos[3]) );
+		const bx::Vec3 c0       = bx::load<bx::Vec3>(corners[ii]);
+		const bx::Vec3 planeVec = bx::sub(c0, bx::load<bx::Vec3>(corners[(ii-1)&3]) );
+		const bx::Vec3 light    = bx::sub(bx::load<bx::Vec3>(_lightPos), bx::mul(c0, _lightPos[3]) );
 		const bx::Vec3 normal   = bx::mul(bx::cross(planeVec, light), lightSide);
 
 		const float invLen = 1.0f / bx::sqrt(bx::dot(normal, normal) );
@@ -1755,14 +1755,14 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	bx::vec4MulMtx(volumePlanes[4], nearPlaneV, mtxViewTrans);
 
 	float* lightPlane = volumePlanes[5];
-	const bx::Vec3 lightPlaneNormal = bx::sub(bx::mul({ 0.0f, 0.0f, -_near * lightSide }, mtxViewInv), bx::load(_lightPos) );
+	const bx::Vec3 lightPlaneNormal = bx::sub(bx::mul({ 0.0f, 0.0f, -_near * lightSide }, mtxViewInv), bx::load<bx::Vec3>(_lightPos) );
 
 	float lenInv = 1.0f / bx::sqrt(bx::dot(lightPlaneNormal, lightPlaneNormal) );
 
 	lightPlane[0] = lightPlaneNormal.x * lenInv;
 	lightPlane[1] = lightPlaneNormal.y * lenInv;
 	lightPlane[2] = lightPlaneNormal.z * lenInv;
-	lightPlane[3] = -bx::dot(lightPlaneNormal, bx::load(_lightPos) ) * lenInv;
+	lightPlane[3] = -bx::dot(lightPlaneNormal, bx::load<bx::Vec3>(_lightPos) ) * lenInv;
 }
 
 bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const float* _scale, const float* _translate)
@@ -1786,7 +1786,7 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 		{
 			const float* plane = volumePlanes[ii];
 
-			float positiveSide = bx::dot(bx::load(plane), bx::load(sphere.m_center) ) + plane[3] + sphere.m_radius;
+			float positiveSide = bx::dot(bx::load<bx::Vec3>(plane), bx::load<bx::Vec3>(sphere.m_center) ) + plane[3] + sphere.m_radius;
 
 			if (positiveSide < 0.0f)
 			{

@@ -416,7 +416,7 @@ public:
 			m_emitter[currentEmitter].update();
 
 			psUpdate(deltaTime * timeScale);
-			psRender(0, view, bx::load(eye) );
+			psRender(0, view, bx::load<bx::Vec3>(eye) );
 
 			if (showBounds)
 			{
