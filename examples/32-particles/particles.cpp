@@ -407,8 +407,7 @@ public:
 			DebugDrawEncoder dde;
 			dde.begin(0);
 
-			float center[3] = { 0.0f, 0.0f, 0.0f };
-			dde.drawGrid(Axis::Y, center);
+			dde.drawGrid(Axis::Y, { 0.0f, 0.0f, 0.0f });
 
 			float eye[3];
 			cameraGetPosition(eye);

@@ -569,7 +569,7 @@ public:
 			const bx::Vec3 tmp = bx::mul(hit.m_normal, 0.7f);
 			const bx::Vec3 end = bx::add(hit.m_pos, tmp);
 
-			_dde->drawCone(&hit.m_pos.x, &end.x, 0.1f);
+			_dde->drawCone(hit.m_pos, end, 0.1f);
 
 			_dde->pop();
 
@@ -695,8 +695,8 @@ public:
 			dde.pop();
 
 			{
-				const float normal[] = { 0.0f,  1.0f, 0.0f };
-				const float pos[]    = { 0.0f, -2.0f, 0.0f };
+				const bx::Vec3 normal = { 0.0f,  1.0f, 0.0f };
+				const bx::Vec3 pos    = { 0.0f, -2.0f, 0.0f };
 
 				Plane plane;
 				bx::calcPlane(&plane.m_normal.x, normal, pos);
@@ -740,8 +740,8 @@ public:
 
 			dde.push();
 			{
-				float normal[3] = {  0.0f, 0.0f, 1.0f };
-				float center[3] = { -8.0f, 0.0f, 0.0f };
+				const bx::Vec3 normal = {  0.0f, 0.0f, 1.0f };
+				const bx::Vec3 center = { -8.0f, 0.0f, 0.0f };
 				dde.push();
 					dde.setStipple(true, 1.0f, time*0.1f);
 					dde.setColor(0xff0000ff);

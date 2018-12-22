@@ -1213,9 +1213,9 @@ struct DebugDrawEncoderImpl
 		pushTransform(mtx, 1);
 	}
 
-	void pushTranslate(const float* _pos)
+	void pushTranslate(const bx::Vec3& _pos)
 	{
-		pushTranslate(_pos[0], _pos[1], _pos[2]);
+		pushTranslate(_pos.x, _pos.y, _pos.z);
 	}
 
 	void setState(bool _depthTest, bool _depthWrite, bool _clockwise)
@@ -1454,12 +1454,12 @@ struct DebugDrawEncoderImpl
 
 	void draw(const Cylinder& _cylinder, bool _capsule)
 	{
-		drawCylinder(&_cylinder.m_pos.x, &_cylinder.m_end.x, _cylinder.m_radius, _capsule);
+		drawCylinder(_cylinder.m_pos, _cylinder.m_end, _cylinder.m_radius, _capsule);
 	}
 
 	void draw(const Disk& _disk)
 	{
-		drawCircle(&_disk.m_normal.x, &_disk.m_center.x, _disk.m_radius, 0.0f);
+		drawCircle(_disk.m_normal, _disk.m_center, _disk.m_radius, 0.0f);
 	}
 
 	void draw(const Obb& _obb)
@@ -1742,7 +1742,7 @@ struct DebugDrawEncoderImpl
 		lineTo(_x, _y, _z);
 	}
 
-	void drawCircle(const float* _normal, const float* _center, float _radius, float _weight)
+	void drawCircle(const bx::Vec3& _normal, const bx::Vec3& _center, float _radius, float _weight)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		const uint32_t num = getCircleLod(attrib.m_lod);
@@ -1751,19 +1751,17 @@ struct DebugDrawEncoderImpl
 
 		bx::Vec3 udir;
 		bx::Vec3 vdir;
-		bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
+		bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 		float xy0[2];
 		float xy1[2];
 		circle(xy0, 0.0f);
 		squircle(xy1, 0.0f);
 
-		const bx::Vec3 center = bx::load<bx::Vec3>(_center);
-
 		bx::Vec3 pos  = bx::mul(udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
 		bx::Vec3 tmp0 = bx::mul(vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
 		bx::Vec3 tmp1 = bx::add(pos,  tmp0);
-		bx::Vec3 tmp2 = bx::add(tmp1, center);
+		bx::Vec3 tmp2 = bx::add(tmp1, _center);
 		moveTo(tmp2);
 
 		for (uint32_t ii = 1; ii < num; ++ii)
@@ -1775,16 +1773,11 @@ struct DebugDrawEncoderImpl
 			pos  = bx::mul(udir, bx::lerp(xy0[0], xy1[0], _weight)*_radius);
 			tmp0 = bx::mul(vdir, bx::lerp(xy0[1], xy1[1], _weight)*_radius);
 			tmp1 = bx::add(pos,  tmp0);
-			tmp2 = bx::add(tmp1, center);
+			tmp2 = bx::add(tmp1, _center);
 			lineTo(tmp2);
 		}
 
 		close();
-	}
-
-	void drawCircle(const void* _normal, const void* _center, float _radius, float _weight)
-	{
-		drawCircle( (const float*)_normal, (const float*)_center, _radius, _weight);
 	}
 
 	void drawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight)
@@ -1823,13 +1816,13 @@ struct DebugDrawEncoderImpl
 		close();
 	}
 
-	void drawQuad(const float* _normal, const float* _center, float _size)
+	void drawQuad(const bx::Vec3& _normal, const bx::Vec3& _center, float _size)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 		if (attrib.m_wireframe)
 		{
 			bx::Vec3 udir, vdir;
-			bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
+			bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 			const float halfExtent = _size*0.5f;
 
@@ -1837,7 +1830,7 @@ struct DebugDrawEncoderImpl
 			const bx::Vec3 umax   = bx::mul(udir,  halfExtent);
 			const bx::Vec3 vmin   = bx::mul(vdir, -halfExtent);
 			const bx::Vec3 vmax   = bx::mul(vdir,  halfExtent);
-			const bx::Vec3 center = bx::load<bx::Vec3>(_center);
+			const bx::Vec3 center = _center;
 
 			moveTo(bx::add(center, bx::add(umin, vmin) ) );
 			lineTo(bx::add(center, bx::add(umax, vmin) ) );
@@ -1854,7 +1847,7 @@ struct DebugDrawEncoderImpl
 		}
 	}
 
-	void drawQuad(SpriteHandle _handle, const float* _normal, const float* _center, float _size)
+	void drawQuad(SpriteHandle _handle, const bx::Vec3& _normal, const bx::Vec3& _center, float _size)
 	{
 		if (!isValid(_handle) )
 		{
@@ -1870,7 +1863,7 @@ struct DebugDrawEncoderImpl
 		const Attrib& attrib = m_attrib[m_stack];
 
 		bx::Vec3 udir, vdir;
-		bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
+		bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 		const Pack2D& pack = s_dds.m_sprite.get(_handle);
 		const float invTextureSize = 1.0f/SPRITE_TEXTURE_SIZE;
@@ -1887,7 +1880,7 @@ struct DebugDrawEncoderImpl
 		const bx::Vec3 umax   = bx::mul(udir,  halfExtentU);
 		const bx::Vec3 vmin   = bx::mul(vdir, -halfExtentV);
 		const bx::Vec3 vmax   = bx::mul(vdir,  halfExtentV);
-		const bx::Vec3 center = bx::load<bx::Vec3>(_center);
+		const bx::Vec3 center = _center;
 
 		DebugUvVertex* vertex = &m_cacheQuad[m_posQuad];
 		m_posQuad += 4;
@@ -1917,25 +1910,24 @@ struct DebugDrawEncoderImpl
 		++vertex;
 	}
 
-	void drawQuad(bgfx::TextureHandle _handle, const float* _normal, const float* _center, float _size)
+	void drawQuad(bgfx::TextureHandle _handle, const bx::Vec3& _normal, const bx::Vec3& _center, float _size)
 	{
 		BX_UNUSED(_handle, _normal, _center, _size);
 	}
 
-	void drawCone(const float* _from, const float* _to, float _radius)
+	void drawCone(const bx::Vec3& _from, const bx::Vec3& _to, float _radius)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 
-		float normal[3];
-		bx::store(normal, bx::normalize(bx::sub(bx::load<bx::Vec3>(_from), bx::load<bx::Vec3>(_to) ) ) );
+		const bx::Vec3 normal = bx::normalize(bx::sub(_from, _to) );
 
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
 
 		bx::memCopy(mtx[1], mtx[0], 64);
-		mtx[1][12] = _to[0];
-		mtx[1][13] = _to[1];
-		mtx[1][14] = _to[2];
+		mtx[1][12] = _to.x;
+		mtx[1][13] = _to.y;
+		mtx[1][14] = _to.z;
 
 		uint8_t lod = attrib.m_lod > Mesh::ConeMaxLod
 			? uint8_t(Mesh::ConeMaxLod)
@@ -1944,25 +1936,18 @@ struct DebugDrawEncoderImpl
 		draw(Mesh::Enum(Mesh::Cone0 + lod), mtx[0], 2, attrib.m_wireframe);
 	}
 
-	void drawCone(const void* _from, const void* _to, float _radius)
+	void drawCylinder(const bx::Vec3& _from, const bx::Vec3& _to, float _radius, bool _capsule)
 	{
-		drawCone( (const float*)_from, (const float*)_to, _radius);
-	}
-
-	void drawCylinder(const float* _from, const float* _to, float _radius, bool _capsule)
-	{
-		const Attrib& attrib = m_attrib[m_stack];
-
-		float normal[3];
-		bx::store(normal, bx::normalize(bx::sub(bx::load<bx::Vec3>(_from), bx::load<bx::Vec3>(_to) ) ) );
+		const Attrib&  attrib = m_attrib[m_stack];
+		const bx::Vec3 normal = bx::normalize(bx::sub(_from, _to) );
 
 		float mtx[2][16];
 		bx::mtxFromNormal(mtx[0], normal, _radius, _from, attrib.m_spin);
 
 		bx::memCopy(mtx[1], mtx[0], 64);
-		mtx[1][12] = _to[0];
-		mtx[1][13] = _to[1];
-		mtx[1][14] = _to[2];
+		mtx[1][12] = _to.x;
+		mtx[1][13] = _to.y;
+		mtx[1][14] = _to.z;
 
 		if (_capsule)
 		{
@@ -1973,15 +1958,11 @@ struct DebugDrawEncoderImpl
 			draw(Mesh::Enum(Mesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
 
 			Sphere sphere;
-			sphere.m_center.x = _from[0];
-			sphere.m_center.y = _from[1];
-			sphere.m_center.z = _from[2];
-			sphere.m_radius   = _radius;
+			sphere.m_center = _from;
+			sphere.m_radius = _radius;
 			draw(sphere);
 
-			sphere.m_center.x = _to[0];
-			sphere.m_center.y = _to[1];
-			sphere.m_center.z = _to[2];
+			sphere.m_center = _to;
 			draw(sphere);
 		}
 		else
@@ -1994,48 +1975,31 @@ struct DebugDrawEncoderImpl
 		}
 	}
 
-	void drawCylinder(const void* _from, const void* _to, float _radius, bool _capsule)
-	{
-		drawCylinder( (const float*)_from, (const float*)_to, _radius, _capsule);
-	}
-
 	void drawAxis(float _x, float _y, float _z, float _len, Axis::Enum _highlight, float _thickness)
 	{
 		push();
 
 		if (_thickness > 0.0f)
 		{
-			float from[3] = { _x, _y, _z };
-			float mid[3];
-			float to[3];
+			const bx::Vec3 from = { _x, _y, _z };
+			bx::Vec3 mid;
+			bx::Vec3 to;
 
 			setColor(Axis::X == _highlight ? 0xff00ffff : 0xff0000ff);
-			mid[0] = _x + _len - _thickness;
-			mid[1] = _y;
-			mid[2] = _z;
-			to[0]  = _x + _len;
-			to[1]  = _y;
-			to[2]  = _z;
+			mid = { _x + _len - _thickness, _y, _z };
+			to  = { _x + _len,              _y, _z };
 			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 
 			setColor(Axis::Y == _highlight ? 0xff00ffff : 0xff00ff00);
-			mid[0] = _x;
-			mid[1] = _y + _len - _thickness;
-			mid[2] = _z;
-			to[0]  = _x;
-			to[1]  = _y + _len;
-			to[2]  = _z;
+			mid = { _x, _y + _len - _thickness, _z };
+			to  = { _x, _y + _len,              _z };
 			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 
 			setColor(Axis::Z == _highlight ? 0xff00ffff : 0xffff0000);
-			mid[0] = _x;
-			mid[1] = _y;
-			mid[2] = _z + _len - _thickness;
-			to[0]  = _x;
-			to[1]  = _y;
-			to[2]  = _z + _len;
+			mid = { _x, _y, _z + _len - _thickness };
+			to  = { _x, _y, _z + _len              };
 			drawCylinder(from, mid, _thickness, false);
 			drawCone(mid, to, _thickness);
 		}
@@ -2057,13 +2021,13 @@ struct DebugDrawEncoderImpl
 		pop();
 	}
 
-	void drawGrid(const float* _normal, const float* _center, uint32_t _size, float _step)
+	void drawGrid(const bx::Vec3& _normal, const bx::Vec3& _center, uint32_t _size, float _step)
 	{
 		const Attrib& attrib = m_attrib[m_stack];
 
 		bx::Vec3 udir;
 		bx::Vec3 vdir;
-		bx::calcTangentFrame(udir, vdir, bx::load<bx::Vec3>(_normal), attrib.m_spin);
+		bx::calcTangentFrame(udir, vdir, _normal, attrib.m_spin);
 
 		udir = bx::mul(udir, _step);
 		vdir = bx::mul(vdir, _step);
@@ -2075,12 +2039,11 @@ struct DebugDrawEncoderImpl
 		const bx::Vec3 umax   = bx::mul(udir,  halfExtent);
 		const bx::Vec3 vmin   = bx::mul(vdir, -halfExtent);
 		const bx::Vec3 vmax   = bx::mul(vdir,  halfExtent);
-		const bx::Vec3 center = bx::load<bx::Vec3>(_center);
 
-		bx::Vec3 xs = bx::add(center, bx::add(umin, vmin) );
-		bx::Vec3 xe = bx::add(center, bx::add(umax, vmin) );
-		bx::Vec3 ys = bx::add(center, bx::add(umin, vmin) );
-		bx::Vec3 ye = bx::add(center, bx::add(umin, vmax) );
+		bx::Vec3 xs = bx::add(_center, bx::add(umin, vmin) );
+		bx::Vec3 xe = bx::add(_center, bx::add(umax, vmin) );
+		bx::Vec3 ys = bx::add(_center, bx::add(umin, vmin) );
+		bx::Vec3 ye = bx::add(_center, bx::add(umin, vmax) );
 
 		for (uint32_t ii = 0; ii < num; ++ii)
 		{
@@ -2096,12 +2059,7 @@ struct DebugDrawEncoderImpl
 		}
 	}
 
-	void drawGrid(const void* _normal, const void* _center, uint32_t _size, float _step)
-	{
-		drawGrid( (const float*)_normal, (const float*)_center, _size, _step);
-	}
-
-	void drawGrid(Axis::Enum _axis, const float* _center, uint32_t _size, float _step)
+	void drawGrid(Axis::Enum _axis, const bx::Vec3& _center, uint32_t _size, float _step)
 	{
 		push();
 		pushTranslate(_center);
@@ -2137,11 +2095,6 @@ struct DebugDrawEncoderImpl
 
 		popTransform();
 		pop();
-	}
-
-	void drawGrid(Axis::Enum _axis, const void* _center, uint32_t _size, float _step)
-	{
-		drawGrid(_axis, (const float*)_center, _size, _step);
 	}
 
 	void drawOrb(float _x, float _y, float _z, float _radius, Axis::Enum _hightlight)
@@ -2506,7 +2459,7 @@ void DebugDrawEncoder::draw(const Sphere& _sphere)
 
 void DebugDrawEncoder::draw(const Cone& _cone)
 {
-	DEBUG_DRAW_ENCODER(drawCone(&_cone.m_pos.x, &_cone.m_end.x, _cone.m_radius) );
+	DEBUG_DRAW_ENCODER(drawCone(_cone.m_pos, _cone.m_end, _cone.m_radius) );
 }
 
 void DebugDrawEncoder::draw(GeometryHandle _handle)
@@ -2534,7 +2487,7 @@ void DebugDrawEncoder::drawArc(Axis::Enum _axis, float _x, float _y, float _z, f
 	DEBUG_DRAW_ENCODER(drawArc(_axis, _x, _y, _z, _radius, _degrees) );
 }
 
-void DebugDrawEncoder::drawCircle(const void* _normal, const void* _center, float _radius, float _weight)
+void DebugDrawEncoder::drawCircle(const bx::Vec3& _normal, const bx::Vec3& _center, float _radius, float _weight)
 {
 	DEBUG_DRAW_ENCODER(drawCircle(_normal, _center, _radius, _weight) );
 }
@@ -2544,32 +2497,32 @@ void DebugDrawEncoder::drawCircle(Axis::Enum _axis, float _x, float _y, float _z
 	DEBUG_DRAW_ENCODER(drawCircle(_axis, _x, _y, _z, _radius, _weight) );
 }
 
-void DebugDrawEncoder::drawQuad(const float* _normal, const float* _center, float _size)
+void DebugDrawEncoder::drawQuad(const bx::Vec3& _normal, const bx::Vec3& _center, float _size)
 {
 	DEBUG_DRAW_ENCODER(drawQuad(_normal, _center, _size) );
 }
 
-void DebugDrawEncoder::drawQuad(SpriteHandle _handle, const float* _normal, const float* _center, float _size)
+void DebugDrawEncoder::drawQuad(SpriteHandle _handle, const bx::Vec3& _normal, const bx::Vec3& _center, float _size)
 {
 	DEBUG_DRAW_ENCODER(drawQuad(_handle, _normal, _center, _size) );
 }
 
-void DebugDrawEncoder::drawQuad(bgfx::TextureHandle _handle, const float* _normal, const float* _center, float _size)
+void DebugDrawEncoder::drawQuad(bgfx::TextureHandle _handle, const bx::Vec3& _normal, const bx::Vec3& _center, float _size)
 {
 	DEBUG_DRAW_ENCODER(drawQuad(_handle, _normal, _center, _size) );
 }
 
-void DebugDrawEncoder::drawCone(const void* _from, const void* _to, float _radius)
+void DebugDrawEncoder::drawCone(const bx::Vec3& _from, const bx::Vec3& _to, float _radius)
 {
 	DEBUG_DRAW_ENCODER(drawCone(_from, _to, _radius) );
 }
 
-void DebugDrawEncoder::drawCylinder(const void* _from, const void* _to, float _radius)
+void DebugDrawEncoder::drawCylinder(const bx::Vec3& _from, const bx::Vec3& _to, float _radius)
 {
 	DEBUG_DRAW_ENCODER(drawCylinder(_from, _to, _radius, false) );
 }
 
-void DebugDrawEncoder::drawCapsule(const void* _from, const void* _to, float _radius)
+void DebugDrawEncoder::drawCapsule(const bx::Vec3& _from, const bx::Vec3& _to, float _radius)
 {
 	DEBUG_DRAW_ENCODER(drawCylinder(_from, _to, _radius, true) );
 }
@@ -2579,12 +2532,12 @@ void DebugDrawEncoder::drawAxis(float _x, float _y, float _z, float _len, Axis::
 	DEBUG_DRAW_ENCODER(drawAxis(_x, _y, _z, _len, _highlight, _thickness) );
 }
 
-void DebugDrawEncoder::drawGrid(const void* _normal, const void* _center, uint32_t _size, float _step)
+void DebugDrawEncoder::drawGrid(const bx::Vec3& _normal, const bx::Vec3& _center, uint32_t _size, float _step)
 {
 	DEBUG_DRAW_ENCODER(drawGrid(_normal, _center, _size, _step) );
 }
 
-void DebugDrawEncoder::drawGrid(Axis::Enum _axis, const void* _center, uint32_t _size, float _step)
+void DebugDrawEncoder::drawGrid(Axis::Enum _axis, const bx::Vec3& _center, uint32_t _size, float _step)
 {
 	DEBUG_DRAW_ENCODER(drawGrid(_axis, _center, _size, _step) );
 }

@@ -156,37 +156,37 @@ struct DebugDrawEncoder
 	void drawArc(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _degrees);
 
 	///
-	void drawCircle(const void* _normal, const void* _center, float _radius, float _weight = 0.0f);
+	void drawCircle(const bx::Vec3& _normal, const bx::Vec3& _center, float _radius, float _weight = 0.0f);
 
 	///
 	void drawCircle(Axis::Enum _axis, float _x, float _y, float _z, float _radius, float _weight = 0.0f);
 
 	///
-	void drawQuad(const float* _normal, const float* _center, float _size);
+	void drawQuad(const bx::Vec3& _normal, const bx::Vec3& _center, float _size);
 
 	///
-	void drawQuad(SpriteHandle _handle, const float* _normal, const float* _center, float _size);
+	void drawQuad(SpriteHandle _handle, const bx::Vec3& _normal, const bx::Vec3& _center, float _size);
 
 	///
-	void drawQuad(bgfx::TextureHandle _handle, const float* _normal, const float* _center, float _size);
+	void drawQuad(bgfx::TextureHandle _handle, const bx::Vec3& _normal, const bx::Vec3& _center, float _size);
 
 	///
-	void drawCone(const void* _from, const void* _to, float _radius);
+	void drawCone(const bx::Vec3& _from, const bx::Vec3& _to, float _radius);
 
 	///
-	void drawCylinder(const void* _from, const void* _to, float _radius);
+	void drawCylinder(const bx::Vec3& _from, const bx::Vec3& _to, float _radius);
 
 	///
-	void drawCapsule(const void* _from, const void* _to, float _radius);
+	void drawCapsule(const bx::Vec3& _from, const bx::Vec3& _to, float _radius);
 
 	///
 	void drawAxis(float _x, float _y, float _z, float _len = 1.0f, Axis::Enum _highlight = Axis::Count, float _thickness = 0.0f);
 
 	///
-	void drawGrid(const void* _normal, const void* _center, uint32_t _size = 20, float _step = 1.0f);
+	void drawGrid(const bx::Vec3& _normal, const bx::Vec3& _center, uint32_t _size = 20, float _step = 1.0f);
 
 	///
-	void drawGrid(Axis::Enum _axis, const void* _center, uint32_t _size = 20, float _step = 1.0f);
+	void drawGrid(Axis::Enum _axis, const bx::Vec3& _center, uint32_t _size = 20, float _step = 1.0f);
 
 	///
 	void drawOrb(float _x, float _y, float _z, float _radius, Axis::Enum _highlight = Axis::Count);
