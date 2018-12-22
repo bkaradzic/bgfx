@@ -243,9 +243,9 @@ struct Camera
 		bx::mtxLookAt(_viewMtx, bx::load<bx::Vec3>(&m_eye.x), bx::load<bx::Vec3>(&m_at.x), bx::load<bx::Vec3>(&m_up.x) );
 	}
 
-	void setPosition(const float* _pos)
+	void setPosition(const bx::Vec3& _pos)
 	{
-		bx::memCopy(&m_eye.x, _pos, sizeof(float)*3);
+		m_eye = _pos;
 	}
 
 	void setVerticalAngle(float _verticalAngle)
@@ -288,7 +288,7 @@ void cameraDestroy()
 	s_camera = NULL;
 }
 
-void cameraSetPosition(const float* _pos)
+void cameraSetPosition(const bx::Vec3& _pos)
 {
 	s_camera->setPosition(_pos);
 }
@@ -313,14 +313,14 @@ void cameraGetViewMtx(float* _viewMtx)
 	s_camera->getViewMtx(_viewMtx);
 }
 
-void cameraGetPosition(float* _pos)
+bx::Vec3 cameraGetPosition()
 {
-	bx::memCopy(_pos, &s_camera->m_eye.x, 3*sizeof(float) );
+	return s_camera->m_eye;
 }
 
-void cameraGetAt(float* _at)
+bx::Vec3 cameraGetAt()
 {
-	bx::memCopy(_at, &s_camera->m_at.x, 3*sizeof(float) );
+	return s_camera->m_at;
 }
 
 void cameraUpdate(float _deltaTime, const entry::MouseState& _mouseState)

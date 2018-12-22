@@ -135,9 +135,8 @@ public:
 
 		cameraCreate();
 
-		const float initialPos[3] = { s_terrainSize/2.0f, 100.0f, 0.0f };
-		cameraSetPosition(initialPos);
-		cameraSetVerticalAngle(-bx::kPi/4.0f);
+		cameraSetPosition({ s_terrainSize/2.0f, 100.0f, 0.0f });
+		cameraSetVerticalAngle(-bx::kPiQuarter);
 	}
 
 	virtual int shutdown() override
@@ -359,8 +358,7 @@ public:
 
 		const bx::Vec3 rayDir = bx::mul(bx::normalize(bx::load<bx::Vec3>(ray_world) ), -1.0f);
 
-		bx::Vec3 pos;
-		cameraGetPosition(&pos.x);
+		bx::Vec3 pos = cameraGetPosition();
 		for (int i = 0; i < 1000; ++i)
 		{
 			pos = bx::add(pos, rayDir);

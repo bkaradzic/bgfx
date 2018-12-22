@@ -207,9 +207,8 @@ public:
 			bgfx::setBuffer(1, m_currPositionBuffer0, bgfx::Access::Write);
 			bgfx::dispatch(0, m_initInstancesProgram, kMaxParticleCount / kThreadGroupUpdateSize, 1, 1);
 
-			float initialPos[3] = { 0.0f, 0.0f, -45.0f };
 			cameraCreate();
-			cameraSetPosition(initialPos);
+			cameraSetPosition({ 0.0f, 0.0f, -45.0f });
 			cameraSetVerticalAngle(0.0f);
 
 			m_useIndirect = false;

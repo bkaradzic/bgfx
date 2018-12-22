@@ -364,8 +364,7 @@ public:
 
 		// Init camera
 		cameraCreate();
-		float camPos[] = {0.0f, 1.5f, 0.0f};
-		cameraSetPosition(camPos);
+		cameraSetPosition({0.0f, 1.5f, 0.0f});
 		cameraSetVerticalAngle(-0.3f);
 
 		// Init directional light
