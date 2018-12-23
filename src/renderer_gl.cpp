@@ -4554,7 +4554,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 	void VertexBufferGL::destroy()
 	{
-		GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0) );
+		GL_CHECK(glBindBuffer(m_target, 0) );
 		GL_CHECK(glDeleteBuffers(1, &m_id) );
 	}
 
