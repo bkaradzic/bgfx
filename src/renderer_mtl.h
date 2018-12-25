@@ -683,7 +683,7 @@ namespace bgfx { namespace mtl
 			typename HashMap::iterator it = m_hashMap.find(_id);
 			if (it != m_hashMap.end() )
 			{
-				MTL_RELEASE(it->second);
+				release(it->second);
 				m_hashMap.erase(it);
 			}
 		}
@@ -790,15 +790,6 @@ namespace bgfx { namespace mtl
 		ProgramMtl()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
-			, m_vshConstantBuffer(NULL)
-			, m_fshConstantBuffer(NULL)
-			, m_vshConstantBufferSize(0)
-			, m_vshConstantBufferAlignmentMask(0)
-			, m_fshConstantBufferSize(0)
-			, m_fshConstantBufferAlignmentMask(0)
-			, m_samplerCount(0)
-			, m_numPredefined(0)
-			, m_processedUniforms(false)
 		{
 		}
 
@@ -811,6 +802,37 @@ namespace bgfx { namespace mtl
 
 		const ShaderMtl* m_vsh;
 		const ShaderMtl* m_fsh;
+	};
+
+	struct PipelineStateMtl
+	{
+		PipelineStateMtl()
+			: m_vshConstantBuffer(NULL)
+			, m_fshConstantBuffer(NULL)
+			, m_vshConstantBufferSize(0)
+			, m_vshConstantBufferAlignmentMask(0)
+			, m_fshConstantBufferSize(0)
+			, m_fshConstantBufferAlignmentMask(0)
+			, m_samplerCount(0)
+			, m_numPredefined(0)
+			{
+			}
+
+		~PipelineStateMtl()
+		{
+			if (NULL != m_vshConstantBuffer)
+			{
+				UniformBuffer::destroy(m_vshConstantBuffer);
+				m_vshConstantBuffer = NULL;
+			}
+
+			if (NULL != m_fshConstantBuffer)
+			{
+				UniformBuffer::destroy(m_fshConstantBuffer);
+				m_fshConstantBuffer = NULL;
+			}
+		}
+
 		UniformBuffer* m_vshConstantBuffer;
 		UniformBuffer* m_fshConstantBuffer;
 
@@ -824,8 +846,14 @@ namespace bgfx { namespace mtl
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
-		bool    m_processedUniforms;
+
+		RenderPipelineState m_rps;
 	};
+
+	void release(PipelineStateMtl* _ptr)
+	{
+		BX_DELETE(g_allocator, _ptr);
+	}
 
 	struct TextureMtl
 	{

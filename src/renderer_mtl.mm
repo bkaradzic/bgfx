@@ -1067,7 +1067,7 @@ namespace bgfx { namespace mtl
 
 			setDepthStencilState(state);
 
-			RenderPipelineState pso = getPipelineState(
+			PipelineStateMtl* pso = getPipelineState(
 				  state
 				, 0
 				, fbh
@@ -1075,29 +1075,28 @@ namespace bgfx { namespace mtl
 				, _blitter.m_program
 				, 0
 				);
-			rce.setRenderPipelineState(pso);
+			rce.setRenderPipelineState(pso->m_rps);
 
-			ProgramMtl& program = m_program[_blitter.m_program.idx];
-			uint32_t vertexUniformBufferSize   = program.m_vshConstantBufferSize;
-			uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
+			const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
+			const uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
 
-			if (vertexUniformBufferSize )
+			if (vertexUniformBufferSize)
 			{
-				m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, program.m_vshConstantBufferAlignmentMask);
+				m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, pso->m_vshConstantBufferAlignmentMask);
 				rce.setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
 			}
 
 			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
-			if (fragmentUniformBufferSize )
+			if (fragmentUniformBufferSize)
 			{
-				m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, program.m_fshConstantBufferAlignmentMask);
+				m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, pso->m_fshConstantBufferAlignmentMask);
 				rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 			}
 
 			float proj[16];
 			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
 
-			PredefinedUniform& predefined = program.m_predefined[0];
+			PredefinedUniform& predefined = pso->m_predefined[0];
 			uint8_t flags = predefined.m_type;
 			setShaderUniform(flags, predefined.m_loc, proj, 4);
 
@@ -1433,8 +1432,7 @@ namespace bgfx { namespace mtl
 				numMrt = bx::uint32_max(1, fb.m_num);
 			}
 
-			const ProgramMtl& program = m_program[_clearQuad.m_program[numMrt-1].idx];
-			RenderPipelineState pso = getPipelineState(
+			const PipelineStateMtl* pso = getPipelineState(
 				  state
 				, 0
 				, fbh
@@ -1442,14 +1440,14 @@ namespace bgfx { namespace mtl
 				, _clearQuad.m_program[numMrt-1]
 				, 0
 				);
-			m_renderCommandEncoder.setRenderPipelineState(pso);
+			m_renderCommandEncoder.setRenderPipelineState(pso->m_rps);
 
-			uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
+			uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
 
 			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset;
 			if (fragmentUniformBufferSize)
 			{
-				m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, program.m_fshConstantBufferAlignmentMask);
+				m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, pso->m_fshConstantBufferAlignmentMask);
 				m_renderCommandEncoder.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 			}
 
@@ -1674,7 +1672,7 @@ namespace bgfx { namespace mtl
 			m_renderCommandEncoder.setStencilReferenceValue(ref);
 		}
 
-		RenderPipelineState getPipelineState(
+		PipelineStateMtl* getPipelineState(
 			  uint64_t _state
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
@@ -1695,7 +1693,7 @@ namespace bgfx { namespace mtl
 				);
 
 			const bool independentBlendEnable = !!(BGFX_STATE_BLEND_INDEPENDENT & _state);
-			ProgramMtl& program = m_program[_program.idx];
+			const ProgramMtl& program = m_program[_program.idx];
 
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -1726,10 +1724,12 @@ namespace bgfx { namespace mtl
 
 			uint32_t hash = murmur.end();
 
-			RenderPipelineState pso = m_pipelineStateCache.find(hash);
+			PipelineStateMtl* pso = m_pipelineStateCache.find(hash);
 
 			if (NULL == pso)
 			{
+				pso = BX_NEW(g_allocator, PipelineStateMtl);
+
 				RenderPipelineDescriptor pd = m_renderPipelineDescriptor;
 				reset(pd);
 
@@ -1912,23 +1912,17 @@ namespace bgfx { namespace mtl
 
 				pd.vertexDescriptor = vertexDesc;
 
-				if (program.m_processedUniforms)
 				{
-					pso = m_device.newRenderPipelineStateWithDescriptor(pd);
-				}
-				else
-				{
-					program.m_numPredefined = 0;
 					RenderPipelineReflection reflection = NULL;
-					pso = m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
+					pso->m_rps = m_device.newRenderPipelineStateWithDescriptor(pd, MTLPipelineOptionBufferTypeInfo, &reflection);
 
 					if (NULL != reflection)
 					{
 						for (uint32_t shaderType = 0; shaderType < 2; ++shaderType)
 						{
 							UniformBuffer*& constantBuffer = shaderType == 0
-								? program.m_vshConstantBuffer
-								: program.m_fshConstantBuffer
+								? pso->m_vshConstantBuffer
+								: pso->m_fshConstantBuffer
 								;
 							uint8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
 
@@ -1947,13 +1941,13 @@ namespace bgfx { namespace mtl
 										{
 											if (shaderType == 0)
 											{
-												program.m_vshConstantBufferSize = (uint32_t)arg.bufferDataSize;
-												program.m_vshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
+												pso->m_vshConstantBufferSize = (uint32_t)arg.bufferDataSize;
+												pso->m_vshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
 											}
 											else
 											{
-												program.m_fshConstantBufferSize = (uint32_t)arg.bufferDataSize;
-												program.m_fshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
+												pso->m_fshConstantBufferSize = (uint32_t)arg.bufferDataSize;
+												pso->m_fshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
 											}
 
 											for (MTLStructMember* uniform in arg.bufferStructType.members )
@@ -1984,12 +1978,12 @@ namespace bgfx { namespace mtl
 												PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
 												if (PredefinedUniform::Count != predefined)
 												{
-													PredefinedUniform& pu = program.m_predefined[program.m_numPredefined];
+													PredefinedUniform& pu = pso->m_predefined[pso->m_numPredefined];
 
 													pu.m_loc   = uint32_t(uniform.offset);
 													pu.m_count = uint16_t(num);
 													pu.m_type  = uint8_t(predefined|fragmentBit);
-													++program.m_numPredefined;
+													++pso->m_numPredefined;
 												}
 												else
 												{
@@ -2019,19 +2013,19 @@ namespace bgfx { namespace mtl
 
 										if (NULL != info)
 										{
-											if (program.m_samplerCount >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+											if (pso->m_samplerCount >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 											{
 												BX_WARN(NULL != info, "Too many samplers in shader(only %d is supported). User defined uniform '%s' won't be set.", BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, name);
 											}
 											else
 											{
-												SamplerInfo& si = program.m_samplers[program.m_samplerCount];
+												SamplerInfo& si = pso->m_samplers[pso->m_samplerCount];
 
 												si.m_index    = uint32_t(arg.index);
 												si.m_uniform  = info->m_handle;
 												si.m_fragment = fragmentBit ? 1 : 0;
 
-												++program.m_samplerCount;
+												++pso->m_samplerCount;
 
 												BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
 											}
@@ -2050,8 +2044,6 @@ namespace bgfx { namespace mtl
 							}
 						}
 					}
-
-					program.m_processedUniforms = true;
 				}
 
 				m_pipelineStateCache.add(hash, pso);
@@ -2061,7 +2053,7 @@ namespace bgfx { namespace mtl
 			return pso;
 		}
 
-		RenderPipelineState getPipelineState(
+		PipelineStateMtl* getPipelineState(
 			  uint64_t _state
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
@@ -2185,9 +2177,10 @@ namespace bgfx { namespace mtl
 		typedef stl::vector<PipelineProgram> PipelineProgramArray;
 
 		PipelineProgramArray             m_pipelineProgram;
-		StateCacheT<RenderPipelineState> m_pipelineStateCache;
-		StateCacheT<DepthStencilState>   m_depthStencilStateCache;
-		StateCacheT<SamplerState>        m_samplerStateCache;
+
+		StateCacheT<PipelineStateMtl*> m_pipelineStateCache;
+		StateCacheT<DepthStencilState> m_depthStencilStateCache;
+		StateCacheT<SamplerState>      m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
 
@@ -2381,27 +2374,6 @@ namespace bgfx { namespace mtl
 	{
 		m_vsh = NULL;
 		m_fsh = NULL;
-
-		if (NULL != m_vshConstantBuffer)
-		{
-			UniformBuffer::destroy(m_vshConstantBuffer);
-			m_vshConstantBuffer = NULL;
-		}
-
-		if (NULL != m_fshConstantBuffer)
-		{
-			UniformBuffer::destroy(m_fshConstantBuffer);
-			m_fshConstantBuffer = NULL;
-		}
-
-		m_vshConstantBufferSize          = 0;
-		m_vshConstantBufferAlignmentMask = 0;
-		m_fshConstantBufferSize          = 0;
-		m_fshConstantBufferAlignmentMask = 0;
-
-		m_samplerCount      = 0;
-		m_processedUniforms = false;
-		m_numPredefined     = 0;
 	}
 
 	void BufferMtl::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
@@ -3467,6 +3439,7 @@ namespace bgfx { namespace mtl
 		PrimInfo prim = s_primInfo[primIndex];
 
 		RenderCommandEncoder rce;
+		PipelineStateMtl* currentPso = NULL;
 
 		bool wasCompute = false;
 		bool viewHasScissor = false;
@@ -3896,11 +3869,11 @@ namespace bgfx { namespace mtl
 					}
 					else
 					{
-						RenderPipelineState pso = NULL;
+						currentPso = NULL;
 
 						if (0 < numStreams)
 						{
-							pso = getPipelineState(
+							currentPso = getPipelineState(
 								  newFlags
 								, draw.m_rgba
 								, fbh
@@ -3911,13 +3884,13 @@ namespace bgfx { namespace mtl
 								);
 						}
 
-						if (NULL == pso)
+						if (NULL == currentPso)
 						{
 							currentProgram = BGFX_INVALID_HANDLE;
 							continue;
 						}
 
-						rce.setRenderPipelineState(pso);
+						rce.setRenderPipelineState(currentPso->m_rps);
 					}
 
 					if (isValid(draw.m_instanceDataBuffer) )
@@ -3932,55 +3905,51 @@ namespace bgfx { namespace mtl
 
 				if (isValid(currentProgram) )
 				{
-					ProgramMtl& program = m_program[currentProgram.idx];
-
-					uint32_t vertexUniformBufferSize   = program.m_vshConstantBufferSize;
-					uint32_t fragmentUniformBufferSize = program.m_fshConstantBufferSize;
+					const uint32_t vertexUniformBufferSize   = currentPso->m_vshConstantBufferSize;
+					const uint32_t fragmentUniformBufferSize = currentPso->m_fshConstantBufferSize;
 
 					if (0 != vertexUniformBufferSize)
 					{
-						m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, program.m_vshConstantBufferAlignmentMask);
+						m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, currentPso->m_vshConstantBufferAlignmentMask);
 						rce.setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
 					}
 
 					m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
 					if (0 != fragmentUniformBufferSize)
 					{
-						m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, program.m_fshConstantBufferAlignmentMask);
+						m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, currentPso->m_fshConstantBufferAlignmentMask);
 						rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 					}
 
 					if (constantsChanged)
 					{
-						UniformBuffer* vcb = program.m_vshConstantBuffer;
+						UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
 						if (NULL != vcb)
 						{
 							commit(*vcb);
 						}
 
-						UniformBuffer* fcb = program.m_fshConstantBuffer;
+						UniformBuffer* fcb = currentPso->m_fshConstantBuffer;
 						if (NULL != fcb)
 						{
 							commit(*fcb);
 						}
 					}
 
-					viewState.setPredefined<4>(this, view, program, _render, draw);
+					viewState.setPredefined<4>(this, view, *currentPso, _render, draw);
 
 					m_uniformBufferFragmentOffset += fragmentUniformBufferSize;
-					m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;
+					m_uniformBufferVertexOffset    = m_uniformBufferFragmentOffset;
 				}
 
 				if (isValid(currentProgram) )
 				{
-					ProgramMtl& program = m_program[currentProgram.idx];
-
-					for (uint32_t sampler = 0; sampler < program.m_samplerCount; ++sampler)
+					for (uint32_t sampler = 0, numSamplers = currentPso->m_samplerCount; sampler < numSamplers; ++sampler)
 					{
-						SamplerInfo& samplerInfo = program.m_samplers[sampler];
+						const SamplerInfo& samplerInfo = currentPso->m_samplers[sampler];
 
 						UniformHandle handle = samplerInfo.m_uniform;
-						int stage = *((int*)m_uniforms[handle.idx]);
+						int stage = *( (int*)m_uniforms[handle.idx]);
 
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
