@@ -304,7 +304,7 @@ namespace bgfx { namespace mtl
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat) );
 
-	int s_msaa[] =
+	int32_t s_msaa[] =
 	{
 		 1,
 		 2,
@@ -600,11 +600,18 @@ namespace bgfx { namespace mtl
 				}
 			}
 
-			for (uint32_t ii = 1; ii < 5; ++ii)
+			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
-				if (!m_device.supportsTextureSampleCount(s_msaa[ii]) )
+				const int32_t sampleCount = 1<<(ii-1);
+
+				if (!m_device.supportsTextureSampleCount(sampleCount) )
 				{
-					s_msaa[ii] = s_msaa[ii-1];
+					s_msaa[ii] = sampleCount;
+					last = ii;
+				}
+				else
+				{
+					s_msaa[ii] = s_msaa[last];
 				}
 			}
 
