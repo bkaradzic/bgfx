@@ -878,16 +878,18 @@ namespace bgfx { namespace mtl
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
-			uint16_t denseIdx = m_numWindows++;
+			uint16_t denseIdx   = m_numWindows++;
 			m_windows[denseIdx] = _handle;
-			if (!isValid(_handle))
+
+			if (!isValid(_handle) )
 			{
 				m_mainFrameBuffer.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
 			}
 			else
 			{
-				m_frameBuffers[_handle.idx].create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-				m_frameBuffers[_handle.idx].m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);//_resolution.reset);
+				FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
+				fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
+				fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
 			}
 		}
 
@@ -897,10 +899,12 @@ namespace bgfx { namespace mtl
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
+
 				if (m_numWindows > 1)
 				{
 					FrameBufferHandle handle = m_windows[m_numWindows];
 					m_windows[m_numWindows]  = {kInvalidHandle};
+
 					if (m_numWindows != denseIdx)
 					{
 						m_windows[denseIdx] = handle;
@@ -1093,7 +1097,8 @@ namespace bgfx { namespace mtl
 			}
 
 			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
-			if (fragmentUniformBufferSize)
+
+			if (0 != fragmentUniformBufferSize)
 			{
 				m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, pso->m_fshConstantBufferAlignmentMask);
 				rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
@@ -1114,13 +1119,30 @@ namespace bgfx { namespace mtl
 			const uint32_t numVertices = _numIndices*4/6;
 			if (0 < numVertices)
 			{
-				m_indexBuffers [_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data, true);
-				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
+				m_indexBuffers [_blitter.m_ib->handle.idx].update(
+					  0
+					, _numIndices*2
+					, _blitter.m_ib->data
+					, true
+					);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(
+					  0
+					, numVertices*_blitter.m_decl.m_stride
+					, _blitter.m_vb->data
+					, true
+					);
 
 				VertexBufferMtl& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
 				m_renderCommandEncoder.setVertexBuffer(vb.getBuffer(), 0, 1);
 
-				m_renderCommandEncoder.drawIndexedPrimitives(MTLPrimitiveTypeTriangle, _numIndices, MTLIndexTypeUInt16, m_indexBuffers[_blitter.m_ib->handle.idx].getBuffer(), 0, 1);
+				m_renderCommandEncoder.drawIndexedPrimitives(
+					  MTLPrimitiveTypeTriangle
+					, _numIndices
+					, MTLIndexTypeUInt16
+					, m_indexBuffers[_blitter.m_ib->handle.idx].getBuffer()
+					, 0
+					, 1
+					);
 			}
 		}
 
@@ -1194,6 +1216,7 @@ namespace bgfx { namespace mtl
 				{
 					MTL_RELEASE(m_screenshotBlitRenderPipelineState)
 					reset(m_renderPipelineDescriptor);
+
 					m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = m_mainFrameBuffer.m_swapChain->m_metalLayer.pixelFormat;
 					m_renderPipelineDescriptor.vertexFunction   = m_screenshotBlitProgram.m_vsh->m_function;
 					m_renderPipelineDescriptor.fragmentFunction = m_screenshotBlitProgram.m_fsh->m_function;
@@ -1288,7 +1311,7 @@ namespace bgfx { namespace mtl
 			{
 				g_callback->captureEnd();
 				BX_FREE(g_allocator, m_capture);
-				m_capture = NULL;
+				m_capture     = NULL;
 				m_captureSize = 0;
 			}
 		}
@@ -3448,15 +3471,15 @@ namespace bgfx { namespace mtl
 		RenderCommandEncoder rce;
 		PipelineStateMtl* currentPso = NULL;
 
-		bool wasCompute = false;
+		bool wasCompute     = false;
 		bool viewHasScissor = false;
 		Rect viewScissorRect;
 		viewScissorRect.clear();
 
 		uint32_t statsNumPrimsSubmitted[BX_COUNTOF(s_primInfo)] = {};
-		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)] = {};
-		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)] = {};
-		uint32_t statsNumDrawIndirect[BX_COUNTOF(s_primInfo)] = {};
+		uint32_t statsNumPrimsRendered[BX_COUNTOF(s_primInfo)]  = {};
+		uint32_t statsNumInstances[BX_COUNTOF(s_primInfo)]      = {};
+		uint32_t statsNumDrawIndirect[BX_COUNTOF(s_primInfo)]   = {};
 		uint32_t statsNumIndices = 0;
 		uint32_t statsKeyType[2] = {};
 
@@ -3567,11 +3590,13 @@ namespace bgfx { namespace mtl
 									{
 										desc.loadAction = MTLLoadActionLoad;
 									}
+
 									desc.storeAction = desc.texture.sampleCount > 1 ? MTLStoreActionMultisampleResolve : MTLStoreActionStore;
 								}
 							}
 
 							RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
+
 							if (NULL != depthAttachment.texture)
 							{
 								depthAttachment.clearDepth = clr.m_depth;
@@ -3586,6 +3611,7 @@ namespace bgfx { namespace mtl
 							}
 
 							RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
+
 							if (NULL != stencilAttachment.texture)
 							{
 								stencilAttachment.clearStencil = clr.m_stencil;
@@ -3611,6 +3637,7 @@ namespace bgfx { namespace mtl
 							}
 
 							RenderPassDepthAttachmentDescriptor depthAttachment = renderPassDescriptor.depthAttachment;
+
 							if (NULL != depthAttachment.texture)
 							{
 								depthAttachment.loadAction  = MTLLoadActionLoad;
@@ -3618,6 +3645,7 @@ namespace bgfx { namespace mtl
 							}
 
 							RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
+
 							if (NULL != stencilAttachment.texture)
 							{
 								stencilAttachment.loadAction  = MTLLoadActionLoad;
