@@ -389,7 +389,7 @@ namespace bgfx { namespace mtl
 			retain(m_device);
 			createFrameBuffer(m_fbh, g_platformData.nwh, 0, 0, TextureFormat::Unknown, TextureFormat::UnknownDepth);
 
-			if ( NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer )
+			if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
 			{
 				release(m_device);
 				return false;
@@ -636,6 +636,7 @@ namespace bgfx { namespace mtl
 #if BX_PLATFORM_OSX
 			[m_pool release];
 #endif
+
 			m_occlusionQuery.postReset();
 			m_gpuTimer.shutdown();
 
@@ -667,11 +668,7 @@ namespace bgfx { namespace mtl
 			MTL_RELEASE(m_textureDescriptor);
 			MTL_RELEASE(m_samplerDescriptor);
 
-			MTL_RELEASE(m_mainFrameBuffer.m_swapChain->m_backBufferDepth);
-			if (BX_ENABLED(BX_PLATFORM_IOS) )
-			{
-				MTL_RELEASE(m_mainFrameBuffer.m_swapChain->m_backBufferStencil);
-			}
+			m_mainFrameBuffer.destroy();
 
 			for (uint8_t i=0; i < MTL_MAX_FRAMES_IN_FLIGHT; ++i)
 			{
