@@ -1538,15 +1538,17 @@ namespace bgfx { namespace mtl
 
 		void setFrameBuffer(RenderPassDescriptor renderPassDescriptor, FrameBufferHandle _fbh, bool _msaa = true)
 		{
-			if (!isValid(_fbh) || m_frameBuffers[_fbh.idx].m_swapChain)
+			if (!isValid(_fbh)
+			||  m_frameBuffers[_fbh.idx].m_swapChain)
 			{
-				SwapChainMtl* swapChain =
-					!isValid(_fbh) ?
-					m_mainFrameBuffer.m_swapChain :
-					m_frameBuffers[_fbh.idx].m_swapChain;
+				SwapChainMtl* swapChain = !isValid(_fbh)
+					? m_mainFrameBuffer.m_swapChain
+					: m_frameBuffers[_fbh.idx].m_swapChain
+					;
+
 				if (NULL != m_backBufferColorMsaa)
 				{
-					renderPassDescriptor.colorAttachments[0].texture = swapChain->m_backBufferColorMsaa;
+					renderPassDescriptor.colorAttachments[0].texture        = swapChain->m_backBufferColorMsaa;
 					renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
 						? m_screenshotTarget.m_obj
 						: swapChain->currentDrawable().texture
@@ -1653,10 +1655,10 @@ namespace bgfx { namespace mtl
 					frontFaceDesc.readMask  = readMask;
 					frontFaceDesc.writeMask = writeMask;
 
-					backfaceDesc.stencilFailureOperation   = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
-					backfaceDesc.depthFailureOperation     = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
-					backfaceDesc.depthStencilPassOperation = s_stencilOp[(bstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
-					backfaceDesc.stencilCompareFunction    = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
+					backfaceDesc.stencilFailureOperation    = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_S_MASK)>>BGFX_STENCIL_OP_FAIL_S_SHIFT];
+					backfaceDesc.depthFailureOperation      = s_stencilOp[(bstencil&BGFX_STENCIL_OP_FAIL_Z_MASK)>>BGFX_STENCIL_OP_FAIL_Z_SHIFT];
+					backfaceDesc.depthStencilPassOperation  = s_stencilOp[(bstencil&BGFX_STENCIL_OP_PASS_Z_MASK)>>BGFX_STENCIL_OP_PASS_Z_SHIFT];
+					backfaceDesc.stencilCompareFunction     = s_cmpFunc[(bstencil&BGFX_STENCIL_TEST_MASK)>>BGFX_STENCIL_TEST_SHIFT];
 					backfaceDesc.readMask  = readMask;
 					backfaceDesc.writeMask = writeMask;
 
@@ -1940,19 +1942,19 @@ namespace bgfx { namespace mtl
 									if (arg.type == MTLArgumentTypeBuffer
 									&&  0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
 									{
-										BX_CHECK( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
-										BX_CHECK( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
+										BX_CHECK(arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
+										BX_CHECK(MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct", SHADER_UNIFORM_NAME);
 
 										if (MTLDataTypeStruct == arg.bufferDataType)
 										{
 											if (shaderType == 0)
 											{
-												pso->m_vshConstantBufferSize = (uint32_t)arg.bufferDataSize;
+												pso->m_vshConstantBufferSize          = (uint32_t)arg.bufferDataSize;
 												pso->m_vshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
 											}
 											else
 											{
-												pso->m_fshConstantBufferSize = (uint32_t)arg.bufferDataSize;
+												pso->m_fshConstantBufferSize          = (uint32_t)arg.bufferDataSize;
 												pso->m_fshConstantBufferAlignmentMask = (uint32_t)arg.bufferAlignment - 1;
 											}
 
@@ -2087,20 +2089,19 @@ namespace bgfx { namespace mtl
 
 			if (NULL == sampler)
 			{
-
 				m_samplerDescriptor.sAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
 				m_samplerDescriptor.tAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
 				m_samplerDescriptor.rAddressMode = s_textureAddress[(_flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
-				m_samplerDescriptor.minFilter = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
-				m_samplerDescriptor.magFilter = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
-				m_samplerDescriptor.mipFilter = s_textureFilterMip[(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
-				m_samplerDescriptor.lodMinClamp = 0;
-				m_samplerDescriptor.lodMaxClamp = FLT_MAX;
+				m_samplerDescriptor.minFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MIN_MASK)>>BGFX_SAMPLER_MIN_SHIFT];
+				m_samplerDescriptor.magFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
+				m_samplerDescriptor.mipFilter    = s_textureFilterMip[(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
+				m_samplerDescriptor.lodMinClamp  = 0;
+				m_samplerDescriptor.lodMaxClamp  = FLT_MAX;
 				m_samplerDescriptor.normalizedCoordinates = TRUE;
 				m_samplerDescriptor.maxAnisotropy =  (0 != (_flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) ) ) ? m_mainFrameBuffer.m_swapChain->m_maxAnisotropy : 1;
 
 				if (m_macOS11Runtime
-				||  [m_device supportsFeatureSet:(MTLFeatureSet)4 /*MTLFeatureSet_iOS_GPUFamily3_v1*/])
+				|| [m_device supportsFeatureSet:(MTLFeatureSet)4 /*MTLFeatureSet_iOS_GPUFamily3_v1*/])
 				{
 					const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 					m_samplerDescriptor.compareFunction = 0 == cmpFunc
@@ -2124,9 +2125,9 @@ namespace bgfx { namespace mtl
 
 		BlitCommandEncoder getBlitCommandEncoder()
 		{
-			if (m_blitCommandEncoder == NULL)
+			if (NULL == m_blitCommandEncoder)
 			{
-				if (m_commandBuffer == NULL)
+				if (NULL == m_commandBuffer)
 				{
 					m_commandBuffer = m_cmd.alloc();
 				}
@@ -2522,10 +2523,10 @@ namespace bgfx { namespace mtl
 				, textureWidth
 				, textureHeight
 				, imageContainer.m_cubeMap ? "x6" : ""
-				, renderTarget ? 'x' : '.'
-				, writeOnly ? 'x' : '.'
-				, computeWrite ? 'x' : '.'
-				, srgb ? 'x' : '.'
+				, renderTarget ? 'x' : ' '
+				, writeOnly    ? 'x' : ' '
+				, computeWrite ? 'x' : ' '
+				, srgb         ? 'x' : ' '
 				);
 
 			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
@@ -2692,8 +2693,8 @@ namespace bgfx { namespace mtl
 		const uint32_t bpp       = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
 		const uint32_t rectpitch = _rect.m_width*bpp/8;
 		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
-		const uint32_t slice = ( (m_type == Texture3D) ? 0 : _side + _z * (m_type == TextureCube ? 6 : 1) );
-		const uint16_t z = (m_type == Texture3D) ? _z : 0 ;
+		const uint32_t slice     = ( (m_type == Texture3D) ? 0 : _side + _z * (m_type == TextureCube ? 6 : 1) );
+		const uint16_t zz        = (m_type == Texture3D) ? _z : 0 ;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -2721,7 +2722,7 @@ namespace bgfx { namespace mtl
 
 			MTLRegion region =
 			{
-				{ _rect.m_x,     _rect.m_y,      z      },
+				{ _rect.m_x,     _rect.m_y,      zz     },
 				{ _rect.m_width, _rect.m_height, _depth },
 			};
 
@@ -2752,7 +2753,7 @@ namespace bgfx { namespace mtl
 				, m_ptr
 				, slice
 				, _mip
-				, MTLOriginMake(_rect.m_x, _rect.m_y, z)
+				, MTLOriginMake(_rect.m_x, _rect.m_y, zz)
 				);
 			release(tempBuffer);
 		}
