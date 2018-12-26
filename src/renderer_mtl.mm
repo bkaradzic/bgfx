@@ -602,9 +602,8 @@ namespace bgfx { namespace mtl
 
 			for (uint32_t ii = 1, last = 0; ii < BX_COUNTOF(s_msaa); ++ii)
 			{
-				const int32_t sampleCount = 1<<(ii-1);
-
-				if (!m_device.supportsTextureSampleCount(sampleCount) )
+				const int32_t sampleCount = 1; //1<<ii;
+				if (m_device.supportsTextureSampleCount(sampleCount) )
 				{
 					s_msaa[ii] = sampleCount;
 					last = ii;
@@ -2530,7 +2529,7 @@ namespace bgfx { namespace mtl
 				);
 
 			const uint32_t msaaQuality = bx::uint32_satsub( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT, 1);
-			int sampleCount = s_msaa[msaaQuality];
+			const int32_t  sampleCount = s_msaa[msaaQuality];
 
 			MTLPixelFormat format = MTLPixelFormatInvalid;
 			if (srgb)
@@ -2856,7 +2855,7 @@ namespace bgfx { namespace mtl
 
 	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
-		int sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
+		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
 
 #if BX_PLATFORM_OSX > 101300
 		m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
@@ -2919,7 +2918,7 @@ namespace bgfx { namespace mtl
 			m_backBufferStencil = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 		}
 
-		if ( sampleCount > 1 )
+		if (sampleCount > 1)
 		{
 			if (NULL != m_backBufferColorMsaa)
 			{
@@ -2933,10 +2932,10 @@ namespace bgfx { namespace mtl
 		bx::HashMurmur2A murmur;
 		murmur.begin();
 		murmur.add(1);
-		murmur.add((uint32_t)m_metalLayer.pixelFormat);
-		murmur.add((uint32_t)m_backBufferDepth.pixelFormat());
-		murmur.add((uint32_t)m_backBufferStencil.pixelFormat());
-		murmur.add((uint32_t)sampleCount);
+		murmur.add( (uint32_t)m_metalLayer.pixelFormat);
+		murmur.add( (uint32_t)m_backBufferDepth.pixelFormat());
+		murmur.add( (uint32_t)m_backBufferStencil.pixelFormat());
+		murmur.add( (uint32_t)sampleCount);
 		_frameBuffer.m_pixelFormatHash = murmur.end();
 	}
 
