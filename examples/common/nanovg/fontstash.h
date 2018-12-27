@@ -89,7 +89,7 @@ typedef struct FONStextIter FONStextIter;
 
 typedef struct FONScontext FONScontext;
 
-// Contructor and destructor.
+// Constructor and destructor.
 FONScontext* fonsCreateInternal(FONSparams* params);
 void fonsDeleteInternal(FONScontext* s);
 
@@ -98,7 +98,7 @@ void fonsSetErrorCallback(FONScontext* s, void (*callback)(void* uptr, int error
 void fonsGetAtlasSize(FONScontext* s, int* width, int* height);
 // Expands the atlas size.
 int fonsExpandAtlas(FONScontext* s, int width, int height);
-// Reseta the whole stash.
+// Resets the whole stash.
 int fonsResetAtlas(FONScontext* stash, int width, int height);
 
 // Add fonts
@@ -162,8 +162,16 @@ static FT_Library ftLibrary;
 int fons__tt_init(FONScontext *context)
 {
 	FT_Error ftError;
-        FONS_NOTUSED(context);
+	FONS_NOTUSED(context);
 	ftError = FT_Init_FreeType(&ftLibrary);
+	return ftError == 0;
+}
+
+int fons__tt_done(FONScontext *context)
+{
+	FT_Error ftError;
+	FONS_NOTUSED(context);
+	ftError = FT_Done_FreeType(ftLibrary);
 	return ftError == 0;
 }
 
@@ -204,7 +212,7 @@ int fons__tt_buildGlyphBitmap(FONSttFontImpl *font, int glyph, float size, float
 
 	ftError = FT_Set_Pixel_Sizes(font->font, 0, (FT_UInt)(size * (float)font->font->units_per_EM / (float)(font->font->ascender - font->font->descender)));
 	if (ftError) return 0;
-	ftError = FT_Load_Glyph(font->font, glyph, FT_LOAD_RENDER);
+	ftError = FT_Load_Glyph(font->font, glyph, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT);
 	if (ftError) return 0;
 	ftError = FT_Get_Advance(font->font, glyph, FT_LOAD_NO_SCALE, &advFixed);
 	if (ftError) return 0;
@@ -271,6 +279,12 @@ int fons__tt_init(FONScontext *context)
 	return 1;
 }
 
+int fons__tt_done(FONScontext *context)
+{
+	FONS_NOTUSED(context);
+	return 1;
+}
+
 int fons__tt_loadFont(FONScontext *context, FONSttFontImpl *font, unsigned char *data, int dataSize)
 {
 	int stbError;
@@ -319,7 +333,7 @@ int fons__tt_getGlyphKernAdvance(FONSttFontImpl *font, int glyph1, int glyph2)
 #endif
 
 #ifndef FONS_SCRATCH_BUF_SIZE
-#	define FONS_SCRATCH_BUF_SIZE 64000
+#	define FONS_SCRATCH_BUF_SIZE 96000
 #endif
 #ifndef FONS_HASH_LUT_SIZE
 #	define FONS_HASH_LUT_SIZE 256
@@ -406,7 +420,7 @@ struct FONSstate
 typedef struct FONSstate FONSstate;
 
 struct FONSatlasNode {
-    short x, y, width;
+	short x, y, width;
 };
 typedef struct FONSatlasNode FONSatlasNode;
 
@@ -497,11 +511,11 @@ static unsigned int fons__decutf8(unsigned int* state, unsigned int* codep, unsi
 		12,12,12,12,12,12,12,24,12,12,12,12, 12,24,12,12,12,12,12,12,12,24,12,12,
 		12,12,12,12,12,12,12,36,12,36,12,12, 12,36,12,12,12,12,12,36,12,36,12,12,
 		12,36,12,12,12,12,12,12,12,12,12,12,
-    };
+	};
 
 	unsigned int type = utf8d[byte];
 
-    *codep = (*state != FONS_UTF8_ACCEPT) ?
+	*codep = (*state != FONS_UTF8_ACCEPT) ?
 		(byte & 0x3fu) | (*codep << 6) :
 		(0xff >> type) & (byte);
 
@@ -886,7 +900,7 @@ error:
 int fonsAddFont(FONScontext* stash, const char* name, const char* path)
 {
 	FILE* fp = 0;
-	size_t dataSize = 0;
+	int dataSize = 0;
 	size_t readed;
 	unsigned char* data = NULL;
 
@@ -894,16 +908,16 @@ int fonsAddFont(FONScontext* stash, const char* name, const char* path)
 	fp = fopen(path, "rb");
 	if (fp == NULL) goto error;
 	fseek(fp,0,SEEK_END);
-	dataSize = ftell(fp);
+	dataSize = (int)ftell(fp);
 	fseek(fp,0,SEEK_SET);
 	data = (unsigned char*)malloc(dataSize);
 	if (data == NULL) goto error;
 	readed = fread(data, 1, dataSize, fp);
 	fclose(fp);
 	fp = 0;
-	if (readed != dataSize) goto error;
+	if ((int)readed != dataSize) goto error;
 
-	return fonsAddFontMem(stash, name, data, int(dataSize), 1);
+	return fonsAddFontMem(stash, name, data, dataSize, 1);
 
 error:
 	if (data) free(data);
@@ -1637,6 +1651,7 @@ void fonsDeleteInternal(FONScontext* stash)
 	if (stash->texData) free(stash->texData);
 	if (stash->scratch) free(stash->scratch);
 	free(stash);
+	fons__tt_done(stash);
 }
 
 void fonsSetErrorCallback(FONScontext* stash, void (*callback)(void* uptr, int error, int val), void* uptr)
