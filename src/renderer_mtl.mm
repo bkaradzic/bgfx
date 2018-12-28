@@ -3045,6 +3045,7 @@ namespace bgfx { namespace mtl
 	{
 		BX_UNUSED(_format, _depthFormat);
 		m_swapChain = BX_NEW(g_allocator, SwapChainMtl);
+		m_num = 0;
 		m_width     = _width;
 		m_height    = _height;
 		m_nwh       = _nwh;
