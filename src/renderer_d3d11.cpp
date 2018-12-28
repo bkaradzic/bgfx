@@ -4581,6 +4581,7 @@ namespace bgfx { namespace d3d11
 		scd.height = _height;
 		scd.nwh    = _nwh;
 		scd.ndt    = NULL;
+		scd.sampleDesc.Count = 1;
 
 		ID3D11Device* device = s_renderD3D11->m_device;
 
