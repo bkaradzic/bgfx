@@ -1465,7 +1465,7 @@ namespace bgfx { namespace mtl
 
 			uint32_t numMrt = 1;
 			FrameBufferHandle fbh = m_fbh;
-			if (isValid(fbh) )
+			if (isValid(fbh) && m_frameBuffers[fbh.idx].m_swapChain == NULL)
 			{
 				const FrameBufferMtl& fb = m_frameBuffers[fbh.idx];
 				numMrt = bx::uint32_max(1, fb.m_num);
@@ -2176,9 +2176,6 @@ namespace bgfx { namespace mtl
 		TimerQueryMtl     m_gpuTimer;
 		CommandQueueMtl   m_cmd;
 
-		CAMetalLayer* m_metalLayer;
-		uint32_t      m_maxAnisotropy;
-
 		bool m_iOS9Runtime;
 		bool m_macOS11Runtime;
 		bool m_hasPixelFormatDepth32Float_Stencil8;
@@ -2820,11 +2817,18 @@ namespace bgfx { namespace mtl
 
 	SwapChainMtl::~SwapChainMtl()
 	{
-		MTL_RELEASE(m_backBufferDepth);
-		if (BX_ENABLED(BX_PLATFORM_IOS) )
-		{
-			MTL_RELEASE(m_backBufferStencil);
+		if(m_drawable != nil) {
+			release(m_drawable);
+			m_drawable = nil;
 		}
+
+		MTL_RELEASE(m_backBufferDepth);
+		MTL_RELEASE(m_backBufferStencil);
+		if (NULL != m_backBufferColorMsaa)
+		{
+			MTL_RELEASE(m_backBufferColorMsaa);
+		}
+
 	}
 
 	void SwapChainMtl::init(void* _nwh)
@@ -2864,9 +2868,17 @@ namespace bgfx { namespace mtl
 				else
 				{
 					NSWindow* nsWindow = (NSWindow*)_nwh;
-					[nsWindow.contentView setWantsLayer:YES];
-					m_metalLayer = [CAMetalLayer layer];
-					[nsWindow.contentView setLayer:m_metalLayer];
+					CALayer* layer = nsWindow.contentView.layer;
+					if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+					{
+						m_metalLayer = (CAMetalLayer*)layer;
+					}
+					else
+					{
+						[nsWindow.contentView setWantsLayer:YES];
+						m_metalLayer = [CAMetalLayer layer];
+						[nsWindow.contentView setLayer:m_metalLayer];
+					}
 				}
 			}
 #endif // BX_PLATFORM_*
@@ -3048,6 +3060,7 @@ namespace bgfx { namespace mtl
 	{
 		BX_UNUSED(_format, _depthFormat);
 		m_swapChain = BX_NEW(g_allocator, SwapChainMtl);
+		m_num = 0;
 		m_width     = _width;
 		m_height    = _height;
 		m_nwh       = _nwh;
