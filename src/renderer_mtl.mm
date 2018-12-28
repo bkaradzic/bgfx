@@ -2868,9 +2868,17 @@ namespace bgfx { namespace mtl
 				else
 				{
 					NSWindow* nsWindow = (NSWindow*)_nwh;
-					[nsWindow.contentView setWantsLayer:YES];
-					m_metalLayer = [CAMetalLayer layer];
-					[nsWindow.contentView setLayer:m_metalLayer];
+					CALayer* layer = nsWindow.contentView.layer;
+					if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
+					{
+						m_metalLayer = (CAMetalLayer*)layer;
+					}
+					else
+					{
+						[nsWindow.contentView setWantsLayer:YES];
+						m_metalLayer = [CAMetalLayer layer];
+						[nsWindow.contentView setLayer:m_metalLayer];
+					}
 				}
 			}
 #endif // BX_PLATFORM_*
