@@ -3203,6 +3203,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
+			GL_CHECK(glFrontFace(GL_CW) );
 
 			m_fbh       = _fbh;
 			m_fbDiscard = _discard;
