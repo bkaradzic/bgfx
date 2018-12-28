@@ -948,7 +948,9 @@ namespace bgfx { namespace mtl
 	struct FrameBufferMtl
 	{
 		FrameBufferMtl()
-			: m_denseIdx(UINT16_MAX)
+			: m_swapChain(NULL)
+			, m_nwh(NULL)
+			, m_denseIdx(UINT16_MAX)
 			, m_pixelFormatHash(0)
 			, m_num(0)
 		{
@@ -968,6 +970,7 @@ namespace bgfx { namespace mtl
 		uint16_t destroy();
 
 		SwapChainMtl* m_swapChain;
+		void* m_nwh;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint16_t m_denseIdx;

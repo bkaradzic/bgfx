@@ -387,7 +387,16 @@ namespace bgfx { namespace mtl
 			}
 
 			retain(m_device);
-			createFrameBuffer(m_fbh, g_platformData.nwh, 0, 0, TextureFormat::Unknown, TextureFormat::UnknownDepth);
+
+			m_mainFrameBuffer.create(
+				  0
+				, g_platformData.nwh
+				, _init.resolution.width
+				, _init.resolution.height
+				, TextureFormat::Unknown
+				, TextureFormat::UnknownDepth
+				);
+			m_numWindows = 1;
 
 			if (NULL == m_mainFrameBuffer.m_swapChain->m_metalLayer)
 			{
@@ -875,24 +884,28 @@ namespace bgfx { namespace mtl
 
 		void createFrameBuffer(FrameBufferHandle _handle, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat) override
 		{
+			for (uint32_t ii = 0, num = m_numWindows; ii < num; ++ii)
+			{
+				FrameBufferHandle handle = m_windows[ii];
+				if (isValid(handle)
+				&&  m_frameBuffers[handle.idx].m_nwh == _nwh)
+				{
+					destroyFrameBuffer(handle);
+				}
+			}
+
 			uint16_t denseIdx   = m_numWindows++;
 			m_windows[denseIdx] = _handle;
 
-			if (!isValid(_handle) )
-			{
-				m_mainFrameBuffer.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-			}
-			else
-			{
-				FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
-				fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
-				fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
-			}
+			FrameBufferMtl& fb = m_frameBuffers[_handle.idx];
+			fb.create(denseIdx, _nwh, _width, _height, _format, _depthFormat);
+			fb.m_swapChain->resize(m_frameBuffers[_handle.idx], _width, _height, 0);
 		}
 
 		void destroyFrameBuffer(FrameBufferHandle _handle) override
 		{
 			uint16_t denseIdx = m_frameBuffers[_handle.idx].destroy();
+
 			if (UINT16_MAX != denseIdx)
 			{
 				--m_numWindows;
@@ -2970,10 +2983,10 @@ namespace bgfx { namespace mtl
 	void FrameBufferMtl::create(uint8_t _num, const Attachment* _attachment)
 	{
 		m_swapChain = NULL;
-		m_denseIdx = UINT16_MAX;
-		m_num    = 0;
-		m_width  = 0;
-		m_height = 0;
+		m_denseIdx  = UINT16_MAX;
+		m_num       = 0;
+		m_width     = 0;
+		m_height    = 0;
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -3037,6 +3050,7 @@ namespace bgfx { namespace mtl
 		m_swapChain = BX_NEW(g_allocator, SwapChainMtl);
 		m_width     = _width;
 		m_height    = _height;
+		m_nwh       = _nwh;
 		m_denseIdx  = _denseIdx;
 
 		m_swapChain->init(_nwh);
@@ -3055,6 +3069,7 @@ namespace bgfx { namespace mtl
 		}
 
 		m_num = 0;
+		m_nwh = NULL;
 		m_depthHandle.idx = kInvalidHandle;
 
 		uint16_t denseIdx = m_denseIdx;
