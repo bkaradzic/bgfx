@@ -2176,9 +2176,6 @@ namespace bgfx { namespace mtl
 		TimerQueryMtl     m_gpuTimer;
 		CommandQueueMtl   m_cmd;
 
-		CAMetalLayer* m_metalLayer;
-		uint32_t      m_maxAnisotropy;
-
 		bool m_iOS9Runtime;
 		bool m_macOS11Runtime;
 		bool m_hasPixelFormatDepth32Float_Stencil8;
