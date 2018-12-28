@@ -1566,7 +1566,7 @@ namespace bgfx { namespace mtl
 					: m_frameBuffers[_fbh.idx].m_swapChain
 					;
 
-				if (NULL != m_backBufferColorMsaa)
+				if (NULL != swapChain->m_backBufferColorMsaa)
 				{
 					renderPassDescriptor.colorAttachments[0].texture        = swapChain->m_backBufferColorMsaa;
 					renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
@@ -1731,7 +1731,7 @@ namespace bgfx { namespace mtl
 
 			if (!isValid(_fbh) )
 			{
-				murmur.add(m_backBufferPixelFormatHash);
+				murmur.add(m_mainFrameBuffer.m_pixelFormatHash);
 			}
 			else
 			{
@@ -2164,10 +2164,6 @@ namespace bgfx { namespace mtl
 		CommandQueueMtl   m_cmd;
 
 		CAMetalLayer* m_metalLayer;
-		Texture       m_backBufferColorMsaa;
-		Texture       m_backBufferDepth;
-		Texture       m_backBufferStencil;
-		uint32_t      m_backBufferPixelFormatHash;
 		uint32_t      m_maxAnisotropy;
 
 		bool m_iOS9Runtime;
