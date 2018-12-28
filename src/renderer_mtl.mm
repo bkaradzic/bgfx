@@ -2817,11 +2817,18 @@ namespace bgfx { namespace mtl
 
 	SwapChainMtl::~SwapChainMtl()
 	{
-		MTL_RELEASE(m_backBufferDepth);
-		if (BX_ENABLED(BX_PLATFORM_IOS) )
-		{
-			MTL_RELEASE(m_backBufferStencil);
+		if(m_drawable != nil) {
+			release(m_drawable);
+			m_drawable = nil;
 		}
+
+		MTL_RELEASE(m_backBufferDepth);
+		MTL_RELEASE(m_backBufferStencil);
+		if (NULL != m_backBufferColorMsaa)
+		{
+			MTL_RELEASE(m_backBufferColorMsaa);
+		}
+
 	}
 
 	void SwapChainMtl::init(void* _nwh)
