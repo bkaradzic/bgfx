@@ -25,19 +25,16 @@ void main()
 	vec4 tangent = a_tangent * 2.0 - 1.0;
 	vec3 wtangent = instMul(model, vec4(tangent.xyz, 0.0) ).xyz;
 
-	vec3 viewNormal = normalize(mul(u_view, vec4(wnormal, 0.0) ).xyz);
-	vec3 viewTangent = normalize(mul(u_view, vec4(wtangent, 0.0) ).xyz);
-	vec3 viewBitangent = cross(viewNormal, viewTangent) * tangent.w;
-	mat3 tbn = mat3(viewTangent, viewBitangent, viewNormal);
+	v_normal = wnormal;
+	v_tangent = wtangent;
+	v_bitangent = cross(v_normal, v_tangent) * tangent.w;
+
+	mat3 tbn = mat3(v_tangent, v_bitangent, v_normal);
 
 	v_wpos = wpos;
 
-	vec3 view = mul(u_view, vec4(wpos, 0.0) ).xyz;
-	v_view = instMul(view, tbn);
-
-	v_normal = viewNormal;
-	v_tangent = viewTangent;
-	v_bitangent = viewBitangent;
+	vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;		
+	v_view = instMul(weyepos - wpos, tbn);
 
 	v_texcoord0 = a_texcoord0;
 }
