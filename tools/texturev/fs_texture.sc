@@ -12,5 +12,8 @@ SAMPLER2D(s_texColor, 0);
 void main()
 {
 	vec4 color = texture2DLod(s_texColor, v_texcoord0.xy, u_textureLod);
-	gl_FragColor = toEv(color * v_color0);
+	color.xyz = applyExposure(color.xyz);
+	color *= v_color0;
+
+	gl_FragColor = toOutput(color, u_outputFormat, u_sdrWhiteNits);
 }

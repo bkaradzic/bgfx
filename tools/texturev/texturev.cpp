@@ -114,6 +114,18 @@ struct Geometry
 	};
 };
 
+struct Output
+{
+	enum Enum
+	{
+		sRGB,
+		scRGB,
+		HDR10,
+
+		Count
+	};
+};
+
 static const InputBinding s_bindingApp[] =
 {
 	{ entry::Key::KeyQ, entry::Modifier::None,  1, NULL, "exit"                },
@@ -217,6 +229,7 @@ struct View
 {
 	View()
 		: m_cubeMapGeo(Geometry::Quad)
+		, m_outputFormat(Output::sRGB)
 		, m_fileIndex(0)
 		, m_scaleFn(0)
 		, m_mip(0)
@@ -586,6 +599,46 @@ struct View
 					m_cubeMapGeo = Geometry::Enum( (m_cubeMapGeo + 1) % Geometry::Count);
 				}
 			}
+			else if (0 == bx::strCmp(_argv[1], "output") )
+			{
+				Output::Enum outputPrev = m_outputFormat;
+				if (_argc >= 3)
+				{
+					if (0 == bx::strCmp(_argv[2], "srgb") )
+					{
+						m_outputFormat = Output::sRGB;
+					}
+					else if (0 == bx::strCmp(_argv[2], "scrgb") )
+					{
+						m_outputFormat = Output::scRGB;
+					}
+					else if (0 == bx::strCmp(_argv[2], "hdr10") )
+					{
+						m_outputFormat = Output::HDR10;
+					}
+				}
+				else
+				{
+					m_outputFormat = Output::Enum( (m_outputFormat + 1) % Output::Count);
+				}
+
+				if (outputPrev != m_outputFormat)
+				{
+				    bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
+					uint32_t formatFlag = 0;
+					if (Output::scRGB == m_outputFormat)
+					{
+						format = bgfx::TextureFormat::RGBA16F;
+					}
+					else if (Output::HDR10 == m_outputFormat)
+					{
+						format = bgfx::TextureFormat::RGB10A2;
+						formatFlag = BGFX_RESET_HDR10;
+					}
+
+					bgfx::reset(m_width, m_height, BGFX_RESET_VSYNC | formatFlag, format);
+				}
+			}
 			else if (0 == bx::strCmp(_argv[1], "help") )
 			{
 				m_help ^= true;
@@ -748,6 +801,7 @@ struct View
 
 	bgfx::TextureInfo m_textureInfo;
 	Geometry::Enum m_cubeMapGeo;
+	Output::Enum m_outputFormat;
 	uint32_t m_fileIndex;
 	uint32_t m_scaleFn;
 	uint32_t m_mip;
@@ -1217,7 +1271,8 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::UniformHandle s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
 	bgfx::UniformHandle u_mtx      = bgfx::createUniform("u_mtx",      bgfx::UniformType::Mat4);
-	bgfx::UniformHandle u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_params0  = bgfx::createUniform("u_params0",  bgfx::UniformType::Vec4);
+	bgfx::UniformHandle u_params1  = bgfx::createUniform("u_params1",  bgfx::UniformType::Vec4);
 
 	bgfx::ShaderHandle vsTexture      = bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_texture");
 	bgfx::ShaderHandle fsTexture      = bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_texture");
@@ -1435,6 +1490,31 @@ int _main_(int _argc, char** _argv)
 						if (ImGui::MenuItem("Hexagon", NULL, Geometry::Hexagon == view.m_cubeMapGeo) )
 						{
 							cmdExec("view geo hexagon");
+						}
+
+						ImGui::EndMenu();
+					}
+
+					if (ImGui::BeginMenu("Output") )
+					{
+						const bool hdrCap = (bgfx::getCaps()->supported & BGFX_CAPS_HDR10);
+
+						if (ImGui::MenuItem("sRGB", NULL, Output::sRGB == view.m_outputFormat) )
+						{
+							cmdExec("view output srgb");
+						}
+
+						if (hdrCap)
+						{
+							if (ImGui::MenuItem("scRGB", NULL, Output::scRGB == view.m_outputFormat) )
+							{
+								cmdExec("view output scrgb");
+							}
+
+							if (ImGui::MenuItem("HDR10", NULL, Output::HDR10 == view.m_outputFormat) )
+							{
+								cmdExec("view output hdr10");
+							}
 						}
 
 						ImGui::EndMenu();
@@ -2023,7 +2103,10 @@ int _main_(int _argc, char** _argv)
 				params[1] = layer.getValue()/float(bx::max(1, view.m_textureInfo.depth >> view.m_mip) );
 			}
 
-			bgfx::setUniform(u_params, params);
+			bgfx::setUniform(u_params0, params);
+
+			float params1[4] = { float(view.m_outputFormat), 80.0f, 0.0, 0.0f };
+			bgfx::setUniform(u_params1, params1);
 
 			const uint32_t textureFlags = 0
 				| BGFX_SAMPLER_U_CLAMP
@@ -2103,7 +2186,8 @@ int _main_(int _argc, char** _argv)
 	bgfx::destroy(checkerBoard);
 	bgfx::destroy(s_texColor);
 	bgfx::destroy(u_mtx);
-	bgfx::destroy(u_params);
+	bgfx::destroy(u_params0);
+	bgfx::destroy(u_params1);
 	bgfx::destroy(textureProgram);
 	bgfx::destroy(textureArrayProgram);
 	bgfx::destroy(textureCubeProgram);

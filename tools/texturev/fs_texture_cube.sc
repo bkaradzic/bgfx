@@ -16,5 +16,8 @@ void main()
 	dir = normalize(mul(u_mtx, vec4(dir, 0.0) ).xyz);
 
 	vec4 color = textureCubeLod(s_texColor, dir, u_textureLod);
-	gl_FragColor = toEv(color * v_color0);
+	color.xyz = applyExposure(color.xyz);
+	color *= v_color0;
+
+	gl_FragColor = toOutput(color, u_outputFormat, u_sdrWhiteNits);
 }
