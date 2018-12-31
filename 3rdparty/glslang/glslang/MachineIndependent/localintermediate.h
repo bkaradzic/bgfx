@@ -668,6 +668,8 @@ public:
     const std::string& getSourceFile() const { return sourceFile; }
     void addSourceText(const char* text) { sourceText = sourceText + text; }
     const std::string& getSourceText() const { return sourceText; }
+    const std::map<std::string, std::string>& getIncludeText() const { return includeText; }
+    void addIncludeText(const char* name, const char* text, size_t len) { includeText[name].assign(text,len); }
     void addProcesses(const std::vector<std::string>& p)
     {
         for (int i = 0; i < (int)p.size(); ++i)
@@ -814,6 +816,9 @@ protected:
     // source code of shader, useful as part of debug information
     std::string sourceFile;
     std::string sourceText;
+
+    // Included text. First string is a name, second is the included text
+    std::map<std::string, std::string> includeText;
 
     // for OpModuleProcessed, or equivalent
     TProcesses processes;
