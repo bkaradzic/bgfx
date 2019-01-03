@@ -653,6 +653,7 @@ int TPpContext::CPPinclude(TPpToken* ppToken)
             epilogue << (res->headerData[res->headerLength - 1] == '\n'? "" : "\n") <<
                 "#line " << directiveLoc.line + forNextLine << " " << directiveLoc.getStringNameOrNum() << "\n";
             pushInput(new TokenizableIncludeFile(directiveLoc, prologue.str(), res, epilogue.str(), this));
+            parseContext.intermediate.addIncludeText(res->headerName.c_str(), res->headerData, res->headerLength);
             // There's no "current" location anymore.
             parseContext.setCurrentColumn(0);
         } else {
