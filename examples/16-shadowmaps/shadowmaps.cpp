@@ -1076,7 +1076,7 @@ void worldSpaceFrustumCorners(float* _corners24f
 	const float fh = _far  * _projHeight;
 
 	const uint8_t numCorners = 8;
-	const float corners[numCorners][3] =
+	const bx::Vec3 corners[numCorners] =
 	{
 		{ -nw,  nh, _near },
 		{  nw,  nh, _near },
@@ -1092,7 +1092,7 @@ void worldSpaceFrustumCorners(float* _corners24f
 	float (*out)[3] = (float(*)[3])_corners24f;
 	for (uint8_t ii = 0; ii < numCorners; ++ii)
 	{
-		bx::vec3MulMtx( (float*)&out[ii], (float*)&corners[ii], _invViewMtx);
+		bx::store(&out[ii], bx::mul(corners[ii], _invViewMtx) );
 	}
 }
 

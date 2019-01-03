@@ -1275,12 +1275,13 @@ struct ShadowVolume
 	bool m_cap;
 };
 
-void shadowVolumeLightTransform(float* __restrict _outLightPos
-							  , const float* __restrict _scale
-							  , const float* __restrict _rotate
-							  , const float* __restrict _translate
-							  , const float* __restrict _lightPos // world pos
-							  )
+void shadowVolumeLightTransform(
+	  float* __restrict _outLightPos
+	, const float* __restrict _scale
+	, const float* __restrict _rotate
+	, const float* __restrict _translate
+	, const float* __restrict _lightPos // world pos
+	)
 {
 	/**
 	 * Instead of transforming all the vertices, transform light instead:
@@ -1315,19 +1316,19 @@ void shadowVolumeLightTransform(float* __restrict _outLightPos
 	float mtx[16];
 	bx::mtxMul(mtx, tmp0, invScale);
 
-	float origin[3] = { 0.0f, 0.0f, 0.0f };
-	bx::vec3MulMtx(_outLightPos, origin, mtx);
+	bx::store(_outLightPos, bx::mul({ 0.0f, 0.0f, 0.0f }, mtx) );
 }
 
-void shadowVolumeCreate(ShadowVolume& _shadowVolume
-					  , Group& _group
-					  , uint16_t _stride
-					  , const float* _mtx
-					  , const float* _light // in model space
-					  , ShadowVolumeImpl::Enum _impl = ShadowVolumeImpl::DepthPass
-					  , ShadowVolumeAlgorithm::Enum _algo = ShadowVolumeAlgorithm::FaceBased
-					  , bool _textureAsStencil = false
-					  )
+void shadowVolumeCreate(
+	  ShadowVolume& _shadowVolume
+	, Group& _group
+	, uint16_t _stride
+	, const float* _mtx
+	, const float* _light // in model space
+	, ShadowVolumeImpl::Enum _impl = ShadowVolumeImpl::DepthPass
+	, ShadowVolumeAlgorithm::Enum _algo = ShadowVolumeAlgorithm::FaceBased
+	, bool _textureAsStencil = false
+	)
 {
 	const uint8_t*    vertices   = _group.m_vertices;
 	const FaceArray&  faces      = _group.m_faces;
@@ -1708,24 +1709,18 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	// -1.0f - behind near plane
 	const float lightSide = float( (d > delta) - (d < -delta) );
 
-	float t = bx::tan(bx::toRad(_fovy)*0.5f) * _near;
-	float b = -t;
-	float r = t * _aspect;
-	float l = -r;
+	const float t = bx::tan(bx::toRad(_fovy)*0.5f) * _near;
+	const float b = -t;
+	const float r = t * _aspect;
+	const float l = -r;
 
-	float cornersV[4][3] =
+	const bx::Vec3 corners[4] =
 	{
-		{ r, t, _near },
-		{ l, t, _near },
-		{ l, b, _near },
-		{ r, b, _near },
+		bx::mul({ r, t, _near }, mtxViewInv),
+		bx::mul({ l, t, _near }, mtxViewInv),
+		bx::mul({ l, b, _near }, mtxViewInv),
+		bx::mul({ r, b, _near }, mtxViewInv),
 	};
-
-	float corners[4][3];
-	bx::vec3MulMtx(corners[0], cornersV[0], mtxViewInv);
-	bx::vec3MulMtx(corners[1], cornersV[1], mtxViewInv);
-	bx::vec3MulMtx(corners[2], cornersV[2], mtxViewInv);
-	bx::vec3MulMtx(corners[3], cornersV[3], mtxViewInv);
 
 	float planeNormals[4][3];
 	for (uint8_t ii = 0; ii < 4; ++ii)
@@ -1733,8 +1728,8 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		float* outNormal = planeNormals[ii];
 		float* outPlane  = volumePlanes[ii];
 
-		const bx::Vec3 c0       = bx::load<bx::Vec3>(corners[ii]);
-		const bx::Vec3 planeVec = bx::sub(c0, bx::load<bx::Vec3>(corners[(ii-1)&3]) );
+		const bx::Vec3 c0       = corners[ii];
+		const bx::Vec3 planeVec = bx::sub(c0, corners[(ii-1)&3]);
 		const bx::Vec3 light    = bx::sub(bx::load<bx::Vec3>(_lightPos), bx::mul(c0, _lightPos[3]) );
 		const bx::Vec3 normal   = bx::mul(bx::cross(planeVec, light), lightSide);
 
