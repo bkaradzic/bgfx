@@ -2973,7 +2973,7 @@ void ImGui::StartMouseMovingWindow(ImGuiWindow* window)
 
 // Handle mouse moving window
 // Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing()
-void ImGui::UpdateMouseMovingWindow()
+void ImGui::UpdateMouseMovingWindowNewFrame()
 {
     ImGuiContext& g = *GImGui;
     if (g.MovingWindow != NULL)
@@ -3008,6 +3008,56 @@ void ImGui::UpdateMouseMovingWindow()
             if (!g.IO.MouseDown[0])
                 ClearActiveID();
         }
+    }
+}
+
+// Initiate moving window, handle left-click and right-click focus
+void ImGui::UpdateMouseMovingWindowEndFrame()
+{
+    // Initiate moving window
+    ImGuiContext& g = *GImGui;
+    if (g.ActiveId != 0 || g.HoveredId != 0)
+        return;
+
+    // Unless we just made a window/popup appear
+    if (g.NavWindow && g.NavWindow->Appearing)
+        return;
+
+    // Click to focus window and start moving (after we're done with all our widgets)
+    if (g.IO.MouseClicked[0])
+    {
+        if (g.HoveredRootWindow != NULL)
+        {
+            StartMouseMovingWindow(g.HoveredWindow);
+            if (g.IO.ConfigWindowsMoveFromTitleBarOnly && !(g.HoveredRootWindow->Flags & ImGuiWindowFlags_NoTitleBar))
+                if (!g.HoveredRootWindow->TitleBarRect().Contains(g.IO.MouseClickedPos[0]))
+                    g.MovingWindow = NULL;
+        }
+        else if (g.NavWindow != NULL && GetFrontMostPopupModal() == NULL)
+        {
+            FocusWindow(NULL);  // Clicking on void disable focus
+        }
+    }
+
+    // With right mouse button we close popups without changing focus
+    // (The left mouse button path calls FocusWindow which will lead NewFrame->ClosePopupsOverWindow to trigger)
+    if (g.IO.MouseClicked[1])
+    {
+        // Find the top-most window between HoveredWindow and the front most Modal Window.
+        // This is where we can trim the popup stack.
+        ImGuiWindow* modal = GetFrontMostPopupModal();
+        bool hovered_window_above_modal = false;
+        if (modal == NULL)
+            hovered_window_above_modal = true;
+        for (int i = g.Windows.Size - 1; i >= 0 && hovered_window_above_modal == false; i--)
+        {
+            ImGuiWindow* window = g.Windows[i];
+            if (window == modal)
+                break;
+            if (window == g.HoveredWindow)
+                hovered_window_above_modal = true;
+        }
+        ClosePopupsOverWindow(hovered_window_above_modal ? g.HoveredWindow : modal);
     }
 }
 
@@ -3302,7 +3352,7 @@ void ImGui::NewFrame()
     g.IO.Framerate = (g.FramerateSecPerFrameAccum > 0.0f) ? (1.0f / (g.FramerateSecPerFrameAccum / (float)IM_ARRAYSIZE(g.FramerateSecPerFrame))) : FLT_MAX;
 
     // Handle user moving window with mouse (at the beginning of the frame to avoid input lag or sheering)
-    UpdateMouseMovingWindow();
+    UpdateMouseMovingWindowNewFrame();
     UpdateHoveredWindowAndCaptureFlags();
 
     // Background darkening/whitening
@@ -3353,6 +3403,7 @@ void ImGui::NewFrame()
     // This fallback is particularly important as it avoid ImGui:: calls from crashing.
     SetNextWindowSize(ImVec2(400,400), ImGuiCond_FirstUseEver);
     Begin("Debug##Default");
+    g.FrameScopePushedImplicitWindow = true;
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
     ImGuiTestEngineHook_PostNewFrame();
@@ -3584,9 +3635,6 @@ void ImGui::EndFrame()
         return;
     IM_ASSERT(g.FrameScopeActive && "Forgot to call ImGui::NewFrame()?");
 
-    g.FrameScopeActive = false;
-    g.FrameCountEnded = g.FrameCount;
-
     // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
     if (g.IO.ImeSetInputScreenPosFn && ImLengthSqr(g.PlatformImeLastPos - g.PlatformImePos) > 0.0001f)
     {
@@ -3611,11 +3659,12 @@ void ImGui::EndFrame()
     }
 
     // Hide implicit/fallback "Debug" window if it hasn't been used
+    g.FrameScopePushedImplicitWindow = false;
     if (g.CurrentWindow && !g.CurrentWindow->WriteAccessed)
         g.CurrentWindow->Active = false;
     End();
 
-    // Show CTRL+TAB list
+    // Show CTRL+TAB list window
     if (g.NavWindowingTarget)
         NavUpdateWindowingList();
 
@@ -3636,49 +3685,12 @@ void ImGui::EndFrame()
         g.DragDropWithinSourceOrTarget = false;
     }
 
-    // Initiate moving window
-    if (g.ActiveId == 0 && g.HoveredId == 0)
-    {
-        if (!g.NavWindow || !g.NavWindow->Appearing) // Unless we just made a window/popup appear
-        {
-            // Click to focus window and start moving (after we're done with all our widgets)
-            if (g.IO.MouseClicked[0])
-            {
-                if (g.HoveredRootWindow != NULL)
-                {
-                    StartMouseMovingWindow(g.HoveredWindow);
-                    if (g.IO.ConfigWindowsMoveFromTitleBarOnly && !(g.HoveredRootWindow->Flags & ImGuiWindowFlags_NoTitleBar))
-                        if (!g.HoveredRootWindow->TitleBarRect().Contains(g.IO.MouseClickedPos[0]))
-                            g.MovingWindow = NULL;
-                }
-                else if (g.NavWindow != NULL && GetFrontMostPopupModal() == NULL)
-                {
-                    FocusWindow(NULL);  // Clicking on void disable focus
-                }
-            }
+    // End frame
+    g.FrameScopeActive = false;
+    g.FrameCountEnded = g.FrameCount;
 
-            // With right mouse button we close popups without changing focus
-            // (The left mouse button path calls FocusWindow which will lead NewFrame->ClosePopupsOverWindow to trigger)
-            if (g.IO.MouseClicked[1])
-            {
-                // Find the top-most window between HoveredWindow and the front most Modal Window.
-                // This is where we can trim the popup stack.
-                ImGuiWindow* modal = GetFrontMostPopupModal();
-                bool hovered_window_above_modal = false;
-                if (modal == NULL)
-                    hovered_window_above_modal = true;
-                for (int i = g.Windows.Size - 1; i >= 0 && hovered_window_above_modal == false; i--)
-                {
-                    ImGuiWindow* window = g.Windows[i];
-                    if (window == modal)
-                        break;
-                    if (window == g.HoveredWindow)
-                        hovered_window_above_modal = true;
-                }
-                ClosePopupsOverWindow(hovered_window_above_modal ? g.HoveredWindow : modal);
-            }
-        }
-    }
+    // Initiate moving window + handle left-click and right-click focus
+    UpdateMouseMovingWindowEndFrame();
 
     // Sort the window list so that all child windows are after their parent
     // We cannot do that on FocusWindow() because childs may not exist yet
@@ -5287,11 +5299,12 @@ void ImGui::End()
 {
     ImGuiContext& g = *GImGui;
 
-    if (g.CurrentWindowStack.Size <= 1 && g.FrameScopeActive)
+    if (g.CurrentWindowStack.Size <= 1 && g.FrameScopePushedImplicitWindow)
     {
         IM_ASSERT(g.CurrentWindowStack.Size > 1 && "Calling End() too many times!");
         return; // FIXME-ERRORHANDLING
     }
+    IM_ASSERT(g.CurrentWindowStack.Size > 0);
 
     ImGuiWindow* window = g.CurrentWindow;
 
