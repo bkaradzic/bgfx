@@ -137,25 +137,15 @@ void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _num
 {
 	bx::Vec3 min, max;
 	uint8_t* vertex = (uint8_t*)_vertices;
+	min = max = bx::mul(bx::load<bx::Vec3>(vertex), _mtx);
 
-	float position[3];
-	bx::vec3MulMtx(position, (float*)vertex, _mtx);
-	min.x = max.x = position[0];
-	min.y = max.y = position[1];
-	min.z = max.z = position[2];
 	vertex += _stride;
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
 	{
-		bx::vec3MulMtx(position, (float*)vertex, _mtx);
+		bx::Vec3 pos = bx::mul(bx::load<bx::Vec3>(vertex), _mtx);
 		vertex += _stride;
 
-		bx::Vec3 pos =
-		{
-			position[0],
-			position[1],
-			position[2],
-		};
 		min = bx::min(pos, min);
 		max = bx::max(pos, max);
 	}
