@@ -72,7 +72,11 @@ int VirtualTextureInfo::GetPageTableSize() const
 }
 
 // StagingPool
-StagingPool::StagingPool(int _width, int _height, int _count, bool _readBack) : m_stagingTextureIndex(0), m_width(_width), m_height(_height), m_flags(0)
+StagingPool::StagingPool(int _width, int _height, int _count, bool _readBack)
+	: m_stagingTextureIndex(0)
+	, m_width(_width)
+	, m_height(_height)
+	, m_flags(0)
 {
 	m_flags = BGFX_TEXTURE_BLIT_DST | BGFX_SAMPLER_UVW_CLAMP;
 	if (_readBack)
