@@ -818,8 +818,7 @@ public:
 					1.0f
 				};
 
-				float up[3] = { 0.0f, 4.0f, 0.0f };
-				bx::vec3MulMtx(&cylinder.m_end.x, up, mtx);
+				cylinder.m_end = bx::mul({ 0.0f, 4.0f, 0.0f }, mtx);
 				dde.setColor(intersect(&dde, ray, cylinder) ? selected : 0xffffffff);
 				dde.draw(cylinder);
 

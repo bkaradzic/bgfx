@@ -2054,14 +2054,11 @@ int _main_(int _argc, char** _argv)
 
 			if (view.m_fit)
 			{
-				float wh[3] = { float(view.m_textureInfo.width), float(view.m_textureInfo.height), 0.0f };
-				float result[3];
-				bx::vec3MulMtx(result, wh, orientation);
-				result[0] = bx::round(bx::abs(result[0]) );
-				result[1] = bx::round(bx::abs(result[1]) );
+				const bx::Vec3 wh = { float(view.m_textureInfo.width), float(view.m_textureInfo.height), 0.0f };
+				const bx::Vec3 result = bx::round(bx::abs(bx::mul(wh, orientation) ) );
 
-				scale.set(bx::min(float(view.m_width)  / result[0]
-					,             float(view.m_height) / result[1])
+				scale.set(bx::min(float(view.m_width)  / result.x
+					,             float(view.m_height) / result.y)
 					, 0.1f*view.m_transitionTime
 					);
 			}
