@@ -7,8 +7,9 @@
 #include "common.h"
 #include "bgfx_utils.h"
 #include "bimg/decode.h"
-#include <vector>
-#include <set>
+#include <tinystl/allocator.h>
+#include <tinystl/unordered_set.h>
+#include <tinystl/vector.h>
 #include <functional>
 
 namespace vt
@@ -65,9 +66,7 @@ struct Color
 // Page
 struct Page
 {
-	uint64_t hash() const;
-	bool   operator==(const Page& page) const;
-	bool   operator<(const Page& page) const;
+	operator size_t() const;
 
 	int m_x;
 	int m_y;
@@ -80,11 +79,9 @@ struct PageCount
 	Page m_page;
 	int  m_count;
 
-	PageCount(Page _page = Page(), int _count = 0);
+	PageCount(Page _page, int _count);
 
 	int  compareTo(const PageCount& other) const;
-	bool operator==(const PageCount& other) const;
-	bool operator<(const PageCount& other) const;
 };
 
 // VirtualTextureInfo
@@ -112,7 +109,7 @@ public:
 	void				next();
 
 private:
-	std::vector<bgfx::TextureHandle>  m_stagingTextures;
+	tinystl::vector<bgfx::TextureHandle>  m_stagingTextures;
 
 	int			m_stagingTextureIndex;
 	int			m_width;
@@ -136,17 +133,18 @@ public:
 private:
 	VirtualTextureInfo* m_info;
 	int                 m_mipcount;
-	std::vector<int>    m_offsets; // This stores the offsets to the first page of the start of a mipmap level
-	std::vector<int>    m_sizes; // This stores the sizes of various mip levels
-	std::vector<Page>   m_reverse;
 	int					m_count;
+
+	tinystl::vector<int>    m_offsets; // This stores the offsets to the first page of the start of a mipmap level
+	tinystl::vector<int>    m_sizes; // This stores the sizes of various mip levels
+	tinystl::vector<Page>   m_reverse;
 };
 
 // SimpleImage
 struct SimpleImage
 {
 	SimpleImage(int _width, int _height, int _channelCount, uint8_t _clearValue = 0);
-	SimpleImage(int _width, int _height, int _channelCount, std::vector<uint8_t>& _data);
+	SimpleImage(int _width, int _height, int _channelCount, tinystl::vector<uint8_t>& _data);
 
 	void copy(Point dest_offset, SimpleImage& src, Rect src_rect);
 	void clear(uint8_t clearValue = 0);
@@ -154,10 +152,11 @@ struct SimpleImage
 
 	static void mipmap(uint8_t* source, int size, int channels, uint8_t* dest);
 
-	int					 m_width = 0;
-	int					 m_height = 0;
-	int					 m_channelCount = 0;
-	std::vector<uint8_t> m_data;
+	int	m_width = 0;
+	int	m_height = 0;
+	int	m_channelCount = 0;
+
+	tinystl::vector<uint8_t> m_data;
 };
 
 // Quadtree
@@ -197,8 +196,8 @@ private:
 	Quadtree*			m_quadtree;
 	bool				m_quadtreeDirty;
 
-	std::vector<SimpleImage*>			m_images;
-	std::vector<bgfx::TextureHandle>    m_stagingTextures;
+	tinystl::vector<SimpleImage*>			m_images;
+	tinystl::vector<bgfx::TextureHandle>	m_stagingTextures;
 };
 
 // PageLoader
@@ -207,8 +206,8 @@ class PageLoader
 public:
 	struct ReadState
 	{
-		Page					m_page;
-		std::vector<uint8_t>	m_data;
+		Page						m_page;
+		tinystl::vector<uint8_t>	m_data;
 	};
 
 	PageLoader(TileDataFile* _tileDataFile, PageIndexer* _indexer, VirtualTextureInfo* _info);
@@ -264,9 +263,9 @@ private:
 
 	int m_current; // This is used for generating the texture atlas indices before the lru is full
 
-	std::set<Page>       m_lru_used;
-	std::vector<LruPage> m_lru;
-	std::set<Page>       m_loading;
+	tinystl::unordered_set<Page>    m_lru_used;
+	tinystl::vector<LruPage>		m_lru;
+	tinystl::unordered_set<Page>	m_loading;
 
 	bgfx::ViewId m_blitViewId;
 };
@@ -305,7 +304,7 @@ public:
 	// We do this so that we can fall back to them if we run out of memory
 	void addRequestAndParents(Page request);
 
-	const std::vector<int>& getRequests() const;
+	const tinystl::vector<int>& getRequests() const;
 	bgfx::FrameBufferHandle getFrameBuffer();
 
 	int getWidth() const;
@@ -323,8 +322,8 @@ private:
 	bgfx::FrameBufferHandle m_feedbackFrameBuffer;
 
 	// This stores the pages by index.  The int value is number of requests.
-	std::vector<int>		m_requests;
-	std::vector<uint8_t>	m_downloadBuffer;
+	tinystl::vector<int>		m_requests;
+	tinystl::vector<uint8_t>	m_downloadBuffer;
 };
 
 // VirtualTexture
@@ -350,7 +349,7 @@ public:
 	bgfx::TextureHandle getPageTableTexture();
 
 	void clear();
-	void update(const std::vector<int>& requests, bgfx::ViewId blitViewId);
+	void update(const tinystl::vector<int>& requests, bgfx::ViewId blitViewId);
 
 	void setUniforms();
 
@@ -366,7 +365,7 @@ private:
 	int m_atlasCount;
 	int m_uploadsPerFrame;
 
-	std::vector<PageCount> m_pagesToLoad;
+	tinystl::vector<PageCount> m_pagesToLoad;
 
 	int m_mipBias;
 
