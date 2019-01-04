@@ -323,14 +323,6 @@ https://beardsvibe.com/ - Multiplayer PVP rhythm game.
 
 ![coal-burnout](https://beardsvibe.com/scr/0l.png)
 
-## Project Aero
-
-https://www.adobe.com/products/projectaero.html - Project Aero, a powerful new
-augmented reality (AR) authoring tool that makes it easier for designers to
-create immersive content.
-
-![project-aero](https://www.adobe.com/content/dam/acom/en/products/aero/pod2.jpg/_jcr_content/renditions/cq5dam.mobile_640.640.462.jpg)
-
 ## My Talking Tom 2
 
 https://outfit7.com/apps/my-talking-tom-2/ - Many mini games for mobile devices.
