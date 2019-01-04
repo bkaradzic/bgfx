@@ -1654,7 +1654,7 @@ struct DebugDrawEncoderImpl
 
 	void drawFrustum(const float* _viewProj)
 	{
-		Plane planes[6];
+		bx::Plane planes[6];
 		buildFrustumPlanes(planes, _viewProj);
 
 		bx::Vec3 points[8];

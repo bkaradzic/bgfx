@@ -47,12 +47,6 @@ struct Obb
 	float m_mtx[16];
 };
 
-struct Plane
-{
-	bx::Vec3 m_normal;
-	float m_dist;
-};
-
 struct Ray
 {
 	bx::Vec3 m_pos;
@@ -123,10 +117,10 @@ void calcMaxBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _numVertices, uint32_t _stride, float _step = 0.01f);
 
 /// Returns 6 (near, far, left, right, top, bottom) planes representing frustum planes.
-void buildFrustumPlanes(Plane* _planes, const float* _viewProj);
+void buildFrustumPlanes(bx::Plane* _planes, const float* _viewProj);
 
 /// Returns point from 3 intersecting planes.
-bx::Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc);
+bx::Vec3 intersectPlanes(const bx::Plane& _pa, const bx::Plane& _pb, const bx::Plane& _pc);
 
 /// Make screen space ray from x, y coordinate and inverse view-projection matrix.
 Ray makeRay(float _x, float _y, const float* _invVp);
@@ -150,7 +144,7 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit = NULL);
 bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit = NULL);
 
 /// Intersect ray / plane.
-bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit = NULL);
+bool intersect(const Ray& _ray, const bx::Plane& _plane, Hit* _hit = NULL);
 
 /// Intersect ray / sphere.
 bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit = NULL);

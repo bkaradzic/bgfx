@@ -697,8 +697,8 @@ public:
 				const bx::Vec3 normal = { 0.0f,  1.0f, 0.0f };
 				const bx::Vec3 pos    = { 0.0f, -2.0f, 0.0f };
 
-				Plane plane;
-				bx::calcPlane(&plane.m_normal.x, normal, pos);
+				bx::Plane plane;
+				bx::calcPlane(plane, normal, pos);
 
 				dde.setColor(false
 					|| intersect(&dde, ray, plane)
