@@ -11,6 +11,8 @@
 #	include <Cocoa/Cocoa.h>
 #	include <bx/os.h>
 
+BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG("-Wdeprecated-declarations")
+
 namespace bgfx { namespace gl
 {
 
