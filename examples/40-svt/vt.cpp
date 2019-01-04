@@ -1,4 +1,9 @@
-﻿#include "vt.h"
+﻿/*
+ * Copyright 2018 Aleš Mlakar. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ */
+
+#include "vt.h"
 #include <bx/file.h>
 #include <algorithm>
 
@@ -88,7 +93,7 @@ StagingPool::StagingPool(int _width, int _height, int _count, bool _readBack)
 
 StagingPool::~StagingPool()
 {
-	for (int i = 0; i < m_stagingTextures.size(); ++i)
+	for (int i = 0; i < (int)m_stagingTextures.size(); ++i)
 	{
 		bgfx::destroy(m_stagingTextures[i]);
 	}
@@ -96,7 +101,7 @@ StagingPool::~StagingPool()
 
 void StagingPool::grow(int count)
 {
-	while (m_stagingTextures.size() < count)
+	while ((int)m_stagingTextures.size() < count)
 	{
 		auto stagingTexture = bgfx::createTexture2D((uint16_t)m_width, (uint16_t)m_height, false, 1, bgfx::TextureFormat::BGRA8, m_flags);
 		m_stagingTextures.push_back(stagingTexture);
@@ -110,14 +115,14 @@ bgfx::TextureHandle StagingPool::getTexture()
 
 void StagingPool::next()
 {
-	m_stagingTextureIndex = (m_stagingTextureIndex + 1) % m_stagingTextures.size();
+	m_stagingTextureIndex = (m_stagingTextureIndex + 1) % (int)m_stagingTextures.size();
 }
 
 // PageIndexer
 PageIndexer::PageIndexer(VirtualTextureInfo* _info)
 	: m_info(_info)
 {
-	m_mipcount = (int)(log2(m_info->GetPageTableSize()) + 1);
+	m_mipcount = int(bx::log2((float)m_info->GetPageTableSize()) + 1);
 
 	m_sizes.resize(m_mipcount);
 	for (int i = 0; i < m_mipcount; ++i)
@@ -198,6 +203,10 @@ bool PageIndexer::isValid(Page page)
 int PageIndexer::getCount() const
 {
 	return m_count;
+}
+
+int PageIndexer::getMipCount() const {
+	return m_mipcount;
 }
 
 // SimpleImage
@@ -441,14 +450,14 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 	, m_quadtree(nullptr)
 	, m_quadtreeDirty(true) // Force quadtree dirty on startup
 {
-	int size = m_info->GetPageTableSize();
-	m_quadtree = new Quadtree({ 0, 0, size, size }, (int)log2(size));
+	auto size = m_info->GetPageTableSize();
+	m_quadtree = new Quadtree({ 0, 0, size, size }, (int)bx::log2((float)size));
 	m_texture = bgfx::createTexture2D((uint16_t)size, (uint16_t)size, true, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT);
 
 	_cache->added = [=](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->add(page, pt); };
-	_cache->removed = [=](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->remove(page); pt; };
+	_cache->removed = [=](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->remove(page); BX_UNUSED(pt); };
 
-	int PageTableSizeLog2 = (int)log2(m_info->GetPageTableSize());
+	auto PageTableSizeLog2 = m_indexer->getMipCount();
 
 	for (int i = 0; i < PageTableSizeLog2 + 1; ++i)
 	{
@@ -464,11 +473,11 @@ PageTable::~PageTable()
 {
 	delete m_quadtree;
 	bgfx::destroy(m_texture);
-	for (int i = 0; i < m_images.size(); ++i)
+	for (int i = 0; i < (int)m_images.size(); ++i)
 	{
 		delete m_images[i];
 	}
-	for (int i = 0; i < m_stagingTextures.size(); ++i)
+	for (int i = 0; i < (int)m_stagingTextures.size(); ++i)
 	{
 		bgfx::destroy(m_stagingTextures[i]);
 	}
@@ -481,7 +490,7 @@ void PageTable::update(bgfx::ViewId blitViewId)
 		return;
 	}
 	m_quadtreeDirty = false;
-	int PageTableSizeLog2 = (int)log2(m_info->GetPageTableSize());
+	auto PageTableSizeLog2 = m_indexer->getMipCount();
 	for (int i = 0; i < PageTableSizeLog2 + 1; ++i)
 	{
 		m_quadtree->write(*m_images[i], i);
@@ -499,11 +508,11 @@ bgfx::TextureHandle PageTable::getTexture()
 
 // PageLoader
 PageLoader::PageLoader(TileDataFile* _tileDataFile, PageIndexer* _indexer, VirtualTextureInfo* _info)
-	: m_tileDataFile(_tileDataFile)
+	: m_colorMipLevels(false)
+	, m_showBorders(false)
+	, m_tileDataFile(_tileDataFile)
 	, m_indexer(_indexer)
 	, m_info(_info)
-	, m_colorMipLevels(false)
-	, m_showBorders(false)
 {
 }
 
@@ -807,8 +816,8 @@ void FeedbackBuffer::download()
 // We do this so that we can fall back to them if we run out of memory
 void FeedbackBuffer::addRequestAndParents(Page request)
 {
-	int PageTableSizeLog2 = (int)log2(m_info->GetPageTableSize());
-	int count = PageTableSizeLog2 - request.m_mip + 1;
+	auto PageTableSizeLog2 = m_indexer->getMipCount();
+	auto count = PageTableSizeLog2 - request.m_mip + 1;
 
 	for (int i = 0; i < count; ++i)
 	{
@@ -817,6 +826,7 @@ void FeedbackBuffer::addRequestAndParents(Page request)
 
 		Page page = { xpos, ypos, request.m_mip + i };
 
+		// If it's not a valid page (position or mip out of range) just skip it
 		if (!m_indexer->isValid(page))
 		{
 			return;
@@ -1001,7 +1011,7 @@ void VirtualTexture::update(const std::vector<int>& requests, bgfx::ViewId blitV
 	// If it is, update it's position in the LRU collection
 	// Otherwise add it to the list of pages to load
 	int touched = 0;
-	for (int i = 0; i < requests.size(); ++i)
+	for (int i = 0; i < (int)requests.size(); ++i)
 	{
 		if (requests[i] > 0)
 		{
@@ -1039,10 +1049,10 @@ void VirtualTexture::update(const std::vector<int>& requests, bgfx::ViewId blitV
 	m_pageTable->update(blitViewId);
 }
 
-TileDataFile::TileDataFile(const std::string& filename, VirtualTextureInfo* _info, bool _readWrite) : m_info(_info)
+TileDataFile::TileDataFile(const bx::FilePath& filename, VirtualTextureInfo* _info, bool _readWrite) : m_info(_info)
 {
 	const char* access = _readWrite ? "w+b" : "rb";
-	m_file = fopen(filename.c_str(), access);
+	m_file = fopen(filename.get(), access);
 	m_size = m_info->GetPageSize() * m_info->GetPageSize() * ChannelCount;
 }
 
@@ -1108,28 +1118,32 @@ TileGenerator::~TileGenerator()
 	delete m_tileImage;
 }
 
-bool TileGenerator::generate(const std::string& filename)
+bool TileGenerator::generate(const bx::FilePath& filename)
 {
-	std::string cacheFilename = filename + ".cache";
+	// Generate cache filename
+	char tempFilename[256];
+	bx::snprintf(tempFilename, sizeof(tempFilename), "temp/%s.vt", filename.getBaseName().getPtr());
+	bx::FilePath cacheFilename = tempFilename;
 	// Check if tile file already exist
 	{
 		bx::Error error;
 		bx::FileReader fileReader;
-		fileReader.open(bx::FilePath(cacheFilename.c_str()), &error);
+		fileReader.open(cacheFilename, &error);
 		if (error.isOk())
 		{
-			bx::debugPrintf("Tile data file '%s' already exists. Skipping generation.\n", cacheFilename.c_str());
+			bx::debugPrintf("Tile data file '%s' already exists. Skipping generation.\n", cacheFilename.get());
 			return true;
 		}
 	}
 	// Read image
 	{
-		bx::debugPrintf("Reading image '%s'.\n", filename.c_str());
+		bx::debugPrintf("Reading image '%s'.\n", filename.get());
 		bx::Error error;
 		bx::FileReader fileReader;
-		fileReader.open(bx::FilePath(filename.c_str()), &error);
+		fileReader.open(bx::FilePath(filename.get()), &error);
 		if (!error.isOk())
 		{
+			bx::debugPrintf("Image open failed'%s'.\n", filename.get());
 			return false;
 		}
 		auto size = fileReader.seek(0, bx::Whence::End);
@@ -1139,12 +1153,14 @@ bool TileGenerator::generate(const std::string& filename)
 		fileReader.close();
 		if (!error.isOk())
 		{
+			bx::debugPrintf("Image read failed'%s'.\n", filename.get());
 			return false;
 		}
 		m_sourceImage = bimg::imageParse(&m_allocator, rawImage, uint32_t(size), bimg::TextureFormat::BGRA8, &error);
 		BX_FREE(&m_allocator, rawImage);
 		if (!error.isOk())
 		{
+			bx::debugPrintf("Image parse failed'%s'.\n", filename.get());
 			return false;
 		}
 	}
@@ -1164,8 +1180,8 @@ bool TileGenerator::generate(const std::string& filename)
 
 	// Generate tiles
 	bx::debugPrintf("Generating tiles\n");
-	int mipcount = (int)log2(m_info->GetPageTableSize());
-	for (int i = 0; i < mipcount + 1; ++i)
+	auto mipcount = m_indexer->getMipCount();
+	for (int i = 0; i < mipcount; ++i)
 	{
 		int count = (m_info->m_virtualTextureSize / m_tilesize) >> i;
 		bx::debugPrintf("Generating Mip:%d Count:%dx%d\n", i, count, count);
@@ -1228,10 +1244,8 @@ void TileGenerator::CopyTile(SimpleImage& image, Page request)
 				Page page = { xpos + x - 1, ypos + y - 1, mip };
 
 				// Wrap so we get the border sections of other pages
-				#define Modulus(_a_, _b_) (int)(_a_ - _b_ * floorf( (float)_a_ / (float)_b_))
-				page.m_x = Modulus(page.m_x, size);
-				page.m_y = Modulus(page.m_y, size);
-				#undef Modulus
+				page.m_x = (int)bx::mod((float)page.m_x, (float)size);
+				page.m_y = (int)bx::mod((float)page.m_y, (float)size);
 
 				m_tileDataFile->readPage(m_indexer->getIndexFromPage(page), &m_page2Image->m_data[0]);
 

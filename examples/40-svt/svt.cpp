@@ -6,11 +6,11 @@
  /*
   * Reference(s):
   * - Sparse Virtual Textures by Sean Barrett
-  *   http://silverspaceship.com/src/svt/
+  *   http://web.archive.org/web/20190103162611/http://silverspaceship.com/src/svt/
   * - Virtual Texture Demo by Brad Blanchard
-  *	  http://linedef.com/virtual-texture-demo.html
+  *	  http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
   * - Mars texture
-  *   http://www.celestiamotherlode.net/catalog/mars.php
+  *   http://web.archive.org/web/20190103162730/http://www.celestiamotherlode.net/catalog/mars.php
   */
 
 #include "common.h"

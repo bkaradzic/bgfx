@@ -1,3 +1,8 @@
+/*
+ * Copyright 2018 Aleš Mlakar. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
+ */
+
 #pragma once
 #include "common.h"
 #include "bgfx_utils.h"
@@ -126,6 +131,7 @@ public:
 
 	bool isValid(Page page);
 	int  getCount() const;
+	int  getMipCount() const;
 
 private:
 	VirtualTextureInfo* m_info;
@@ -168,8 +174,8 @@ struct Quadtree
 	void		     write(Quadtree* node, SimpleImage& image, int miplevel);
 	static Quadtree* findPage(Quadtree* node, Page request, int* index);
 
-	int		  m_level;
 	Rect      m_rectangle;
+	int		  m_level;
 	Point     m_mapping;
 	Quadtree* m_children[4];
 };
@@ -374,7 +380,7 @@ private:
 class TileDataFile
 {
 public:
-	TileDataFile(const std::string& filename, VirtualTextureInfo* _info, bool _readWrite = false);
+	TileDataFile(const bx::FilePath& filename, VirtualTextureInfo* _info, bool _readWrite = false);
 	~TileDataFile();
 
 	void readInfo();
@@ -396,7 +402,7 @@ public:
 	TileGenerator(VirtualTextureInfo* _info);
 	~TileGenerator();
 
-	bool generate(const std::string& filename);
+	bool generate(const bx::FilePath& filename);
 
 private:
 	void CopyTile(SimpleImage& image, Page request);
