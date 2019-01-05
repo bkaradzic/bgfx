@@ -3,6 +3,16 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+ /*
+  * Reference(s):
+  * - Sparse Virtual Textures by Sean Barrett
+  *   http://web.archive.org/web/20190103162611/http://silverspaceship.com/src/svt/
+  * - Based on Virtual Texture Demo by Brad Blanchard
+  *	  http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
+  * - Mars texture
+  *   http://web.archive.org/web/20190103162730/http://www.celestiamotherlode.net/catalog/mars.php
+  */
+
 #pragma once
 #include "common.h"
 #include "bgfx_utils.h"
@@ -353,6 +363,9 @@ public:
 
 	void setUniforms();
 
+	static void setAllocator(bx::AllocatorI* allocator);
+	static bx::AllocatorI* getAllocator();
+
 private:
 	TileDataFile*		m_tileDataFile;
 	VirtualTextureInfo* m_info;
@@ -373,6 +386,8 @@ private:
 	bgfx::UniformHandle u_vt_settings_2;
 	bgfx::UniformHandle s_vt_page_table;
 	bgfx::UniformHandle s_vt_texture_atlas;
+
+	static bx::AllocatorI* s_allocator;
 };
 
 // TileDataFile
@@ -414,7 +429,6 @@ private:
 	int	m_tilesize;
 	int	m_pagesize;
 
-	bx::DefaultAllocator	m_allocator;
 	bimg::ImageContainer*	m_sourceImage;
 
 	SimpleImage* m_page1Image;

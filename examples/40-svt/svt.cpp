@@ -7,7 +7,7 @@
   * Reference(s):
   * - Sparse Virtual Textures by Sean Barrett
   *   http://web.archive.org/web/20190103162611/http://silverspaceship.com/src/svt/
-  * - Virtual Texture Demo by Brad Blanchard
+  * - Based on Virtual Texture Demo by Brad Blanchard
   *	  http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
   * - Mars texture
   *   http://web.archive.org/web/20190103162730/http://www.celestiamotherlode.net/catalog/mars.php
@@ -133,6 +133,9 @@ public:
 
 		cameraSetPosition({ 0.0f, 5.0f, 0.0f });
 		cameraSetVerticalAngle(0.0f);
+
+		// Set VirtualTexture system allocator
+		vt::VirtualTexture::setAllocator(&m_vtAllocator);
 
 		// Create Virtual texture info
 		m_vti = new vt::VirtualTextureInfo();
@@ -361,6 +364,7 @@ public:
 	const bgfx::Caps* m_caps;
 	int64_t m_timeOffset;
 
+	bx::DefaultAllocator m_vtAllocator;
 	vt::VirtualTextureInfo* m_vti;
 	vt::VirtualTexture* m_vt;
 	vt::FeedbackBuffer* m_feedbackBuffer;

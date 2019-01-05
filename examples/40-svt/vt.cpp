@@ -3,6 +3,16 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+ /*
+  * Reference(s):
+  * - Sparse Virtual Textures by Sean Barrett
+  *   http://web.archive.org/web/20190103162611/http://silverspaceship.com/src/svt/
+  * - Based on Virtual Texture Demo by Brad Blanchard
+  *	  http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
+  * - Mars texture
+  *   http://web.archive.org/web/20190103162730/http://www.celestiamotherlode.net/catalog/mars.php
+  */
+
 #include "vt.h"
 #include <bx/file.h>
 #include <bx/sort.h>
@@ -283,7 +293,7 @@ Quadtree::~Quadtree()
 	{
 		if (m_children[i] != nullptr)
 		{
-			delete m_children[i];
+			BX_DELETE(VirtualTexture::getAllocator(), m_children[i]);
 		}
 	}
 }
@@ -306,7 +316,7 @@ void Quadtree::add(Page request, Point mapping)
 				// Create a new one if needed
 				if (node->m_children[i] == nullptr)
 				{
-					node->m_children[i] = new Quadtree(rect, node->m_level - 1);
+					node->m_children[i] = BX_NEW(VirtualTexture::getAllocator(), Quadtree)(rect, node->m_level - 1);
 					node = node->m_children[i];
 					break;
 				}
@@ -331,7 +341,7 @@ void Quadtree::remove(Page request)
 
 	if (node != nullptr)
 	{
-		delete node->m_children[index];
+		BX_DELETE(VirtualTexture::getAllocator(), node->m_children[index]);
 		node->m_children[index] = nullptr;
 	}
 }
@@ -429,7 +439,7 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 	, m_quadtreeDirty(true) // Force quadtree dirty on startup
 {
 	auto size = m_info->GetPageTableSize();
-	m_quadtree = new Quadtree({ 0, 0, size, size }, (int)bx::log2((float)size));
+	m_quadtree = BX_NEW(VirtualTexture::getAllocator(), Quadtree)({ 0, 0, size, size }, (int)bx::log2((float)size));
 	m_texture = bgfx::createTexture2D((uint16_t)size, (uint16_t)size, true, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT);
 
 	_cache->added = [=](Page page, Point pt) { m_quadtreeDirty = true; m_quadtree->add(page, pt); };
@@ -440,7 +450,7 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 	for (int i = 0; i < PageTableSizeLog2; ++i)
 	{
 		int  mipSize = m_info->GetPageTableSize() >> i;
-		auto simpleImage = new SimpleImage(mipSize, mipSize, s_channelCount);
+		auto simpleImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(mipSize, mipSize, s_channelCount);
 		auto stagingTexture = bgfx::createTexture2D((uint16_t)mipSize, (uint16_t)mipSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_SAMPLER_UVW_CLAMP | BGFX_SAMPLER_POINT);
 		m_images.push_back(simpleImage);
 		m_stagingTextures.push_back(stagingTexture);
@@ -449,11 +459,11 @@ PageTable::PageTable(PageCache* _cache, VirtualTextureInfo* _info, PageIndexer* 
 
 PageTable::~PageTable()
 {
-	delete m_quadtree;
+	BX_DELETE(VirtualTexture::getAllocator(), m_quadtree);
 	bgfx::destroy(m_texture);
 	for (int i = 0; i < (int)m_images.size(); ++i)
 	{
-		delete m_images[i];
+		BX_DELETE(VirtualTexture::getAllocator(), m_images[i]);
 	}
 	for (int i = 0; i < (int)m_stagingTextures.size(); ++i)
 	{
@@ -597,8 +607,10 @@ bool PageCache::touch(Page page)
 		if (m_lru_used.find(page) != m_lru_used.end())
 		{
 			// Find the page (slow!!) and add it to the back of the list
-			for (auto it = m_lru.begin(); it != m_lru.end(); ++it) {
-				if (it->m_page == page) {
+			for (auto it = m_lru.begin(); it != m_lru.end(); ++it)
+			{
+				if (it->m_page == page)
+				{
 					auto lruPage = *it;
 					m_lru.erase(it);
 					m_lru.push_back(lruPage);
@@ -731,7 +743,7 @@ FeedbackBuffer::FeedbackBuffer(VirtualTextureInfo* _info, int _width, int _heigh
 	, m_stagingPool(_width, _height, 1, true)
 {
 	// Setup classes
-	m_indexer = new PageIndexer(m_info);
+	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
 	m_requests.resize(m_indexer->getCount());
 	// Initialize and clear buffers
 	m_downloadBuffer.resize(m_width * m_height * s_channelCount);
@@ -749,7 +761,7 @@ FeedbackBuffer::FeedbackBuffer(VirtualTextureInfo* _info, int _width, int _heigh
 
 FeedbackBuffer::~FeedbackBuffer()
 {
-	delete m_indexer;
+	BX_DELETE(VirtualTexture::getAllocator(), m_indexer);
 	bgfx::destroy(m_feedbackFrameBuffer);
 }
 
@@ -849,14 +861,14 @@ VirtualTexture::VirtualTexture(TileDataFile* _tileDataFile, VirtualTextureInfo* 
 	m_atlasCount = _atlassize / m_info->GetPageSize();
 
 	// Setup indexer
-	m_indexer = new PageIndexer(m_info);
+	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
 	m_pagesToLoad.reserve(m_indexer->getCount());
 
 	// Setup classes
-	m_atlas = new TextureAtlas(m_info, m_atlasCount, m_uploadsPerFrame);
-	m_loader = new PageLoader(m_tileDataFile, m_indexer, m_info);
-	m_cache = new PageCache(m_info, m_atlas, m_loader, m_indexer, m_atlasCount);
-	m_pageTable = new PageTable(m_cache, m_info, m_indexer);
+	m_atlas = BX_NEW(VirtualTexture::getAllocator(), TextureAtlas)(m_info, m_atlasCount, m_uploadsPerFrame);
+	m_loader = BX_NEW(VirtualTexture::getAllocator(), PageLoader)(m_tileDataFile, m_indexer, m_info);
+	m_cache = BX_NEW(VirtualTexture::getAllocator(), PageCache)(m_info, m_atlas, m_loader, m_indexer, m_atlasCount);
+	m_pageTable = BX_NEW(VirtualTexture::getAllocator(), PageTable)(m_cache, m_info, m_indexer);
 
 	// Create uniforms
 	u_vt_settings_1 = bgfx::createUniform("u_vt_settings_1", bgfx::UniformType::Vec4);
@@ -868,11 +880,11 @@ VirtualTexture::VirtualTexture(TileDataFile* _tileDataFile, VirtualTextureInfo* 
 VirtualTexture::~VirtualTexture()
 {
 	// Destroy
-	delete m_indexer;
-	delete m_atlas;
-	delete m_loader;
-	delete m_cache;
-	delete m_pageTable;
+	BX_DELETE(VirtualTexture::getAllocator(), m_indexer);
+	BX_DELETE(VirtualTexture::getAllocator(), m_atlas);
+	BX_DELETE(VirtualTexture::getAllocator(), m_loader);
+	BX_DELETE(VirtualTexture::getAllocator(), m_cache);
+	BX_DELETE(VirtualTexture::getAllocator(), m_pageTable);
 	// Destroy all uniforms and textures
 	bgfx::destroy(u_vt_settings_1);
 	bgfx::destroy(u_vt_settings_2);
@@ -1038,6 +1050,18 @@ void VirtualTexture::update(const tinystl::vector<int>& requests, bgfx::ViewId b
 	m_pageTable->update(blitViewId);
 }
 
+bx::AllocatorI* VirtualTexture::s_allocator = nullptr;
+
+void VirtualTexture::setAllocator(bx::AllocatorI* allocator)
+{
+	s_allocator = allocator;
+}
+
+bx::AllocatorI* VirtualTexture::getAllocator()
+{
+	return s_allocator;
+}
+
 TileDataFile::TileDataFile(const bx::FilePath& filename, VirtualTextureInfo* _info, bool _readWrite) : m_info(_info)
 {
 	const char* access = _readWrite ? "w+b" : "rb";
@@ -1053,26 +1077,30 @@ TileDataFile::~TileDataFile()
 void TileDataFile::readInfo()
 {
 	fseek(m_file, 0, SEEK_SET);
-	fread(m_info, sizeof(*m_info), 1, m_file);
+	auto ret = fread(m_info, sizeof(*m_info), 1, m_file);
+	BX_UNUSED(ret);
 	m_size = m_info->GetPageSize() * m_info->GetPageSize() * s_channelCount;
 }
 
 void TileDataFile::writeInfo()
 {
 	fseek(m_file, 0, SEEK_SET);
-	fwrite(m_info, sizeof(*m_info), 1, m_file);
+	auto ret = fwrite(m_info, sizeof(*m_info), 1, m_file);
+	BX_UNUSED(ret);
 }
 
 void TileDataFile::readPage(int index, uint8_t* data)
 {
 	fseek(m_file, m_size * index + s_tileFileDataOffset, SEEK_SET);
-	fread(data, m_size, 1, m_file);
+	auto ret = fread(data, m_size, 1, m_file);
+	BX_UNUSED(ret);
 }
 
 void TileDataFile::writePage(int index, uint8_t* data)
 {
 	fseek(m_file, m_size * index + s_tileFileDataOffset, SEEK_SET);
-	fwrite(data, m_size, 1, m_file);
+	auto ret = fwrite(data, m_size, 1, m_file);
+	BX_UNUSED(ret);
 }
 
 // TileGenerator
@@ -1098,13 +1126,13 @@ TileGenerator::~TileGenerator()
 		bimg::imageFree(m_sourceImage);
 	}
 
-	delete m_indexer;
+	BX_DELETE(VirtualTexture::getAllocator(), m_indexer);
 
-	delete m_page1Image;
-	delete m_page2Image;
-	delete m_2xtileImage;
-	delete m_4xtileImage;
-	delete m_tileImage;
+	BX_DELETE(VirtualTexture::getAllocator(), m_page1Image);
+	BX_DELETE(VirtualTexture::getAllocator(), m_page2Image);
+	BX_DELETE(VirtualTexture::getAllocator(), m_2xtileImage);
+	BX_DELETE(VirtualTexture::getAllocator(), m_4xtileImage);
+	BX_DELETE(VirtualTexture::getAllocator(), m_tileImage);
 }
 
 bool TileGenerator::generate(const bx::FilePath& filename)
@@ -1137,7 +1165,7 @@ bool TileGenerator::generate(const bx::FilePath& filename)
 		}
 		auto size = fileReader.seek(0, bx::Whence::End);
 		fileReader.seek(0, bx::Whence::Begin);
-		auto rawImage = (uint8_t*)BX_ALLOC(&m_allocator, size);
+		auto rawImage = (uint8_t*)BX_ALLOC(VirtualTexture::getAllocator(), size);
 		fileReader.read(rawImage, int32_t(size), &error);
 		fileReader.close();
 		if (!error.isOk())
@@ -1145,8 +1173,8 @@ bool TileGenerator::generate(const bx::FilePath& filename)
 			bx::debugPrintf("Image read failed'%s'.\n", filename.get());
 			return false;
 		}
-		m_sourceImage = bimg::imageParse(&m_allocator, rawImage, uint32_t(size), bimg::TextureFormat::BGRA8, &error);
-		BX_FREE(&m_allocator, rawImage);
+		m_sourceImage = bimg::imageParse(VirtualTexture::getAllocator(), rawImage, uint32_t(size), bimg::TextureFormat::BGRA8, &error);
+		BX_FREE(VirtualTexture::getAllocator(), rawImage);
 		if (!error.isOk())
 		{
 			bx::debugPrintf("Image parse failed'%s'.\n", filename.get());
@@ -1156,16 +1184,16 @@ bool TileGenerator::generate(const bx::FilePath& filename)
 
 	// Setup
 	m_info->m_virtualTextureSize = int(m_sourceImage->m_width);
-	m_indexer = new PageIndexer(m_info);
+	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
 
 	// Open tile data file
-	m_tileDataFile = new TileDataFile(cacheFilename, m_info, true);
+	m_tileDataFile = BX_NEW(VirtualTexture::getAllocator(), TileDataFile)(cacheFilename, m_info, true);
 
-	m_page1Image = new SimpleImage(m_pagesize, m_pagesize, s_channelCount, 0xff);
-	m_page2Image = new SimpleImage(m_pagesize, m_pagesize, s_channelCount, 0xff);
-	m_tileImage = new SimpleImage(m_tilesize, m_tilesize, s_channelCount, 0xff);
-	m_2xtileImage = new SimpleImage(m_tilesize * 2, m_tilesize * 2, s_channelCount, 0xff);
-	m_4xtileImage = new SimpleImage(m_tilesize * 4, m_tilesize * 4, s_channelCount, 0xff);
+	m_page1Image = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
+	m_page2Image = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
+	m_tileImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize, m_tilesize, s_channelCount, 0xff);
+	m_2xtileImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize * 2, m_tilesize * 2, s_channelCount, 0xff);
+	m_4xtileImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize * 4, m_tilesize * 4, s_channelCount, 0xff);
 
 	// Generate tiles
 	bx::debugPrintf("Generating tiles\n");
@@ -1189,7 +1217,7 @@ bool TileGenerator::generate(const bx::FilePath& filename)
 	// Write header
 	m_tileDataFile->writeInfo();
 	// Close tile file
-	delete m_tileDataFile;
+	BX_DELETE(VirtualTexture::getAllocator(), m_tileDataFile);
 	m_tileDataFile = nullptr;
 	bx::debugPrintf("Done!\n");
 	return true;
