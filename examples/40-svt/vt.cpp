@@ -588,9 +588,8 @@ void PageLoader::copyColor(uint8_t* image, Page request)
 	}
 }
 
-PageCache::PageCache(VirtualTextureInfo* _info, TextureAtlas* _atlas, PageLoader* _loader, PageIndexer* _indexer, int _count)
-	: m_info(_info)
-	, m_atlas(_atlas)
+PageCache::PageCache(TextureAtlas* _atlas, PageLoader* _loader, PageIndexer* _indexer, int _count)
+	: m_atlas(_atlas)
 	, m_loader(_loader)
 	, m_indexer(_indexer)
 	, m_count(_count)
@@ -867,7 +866,7 @@ VirtualTexture::VirtualTexture(TileDataFile* _tileDataFile, VirtualTextureInfo* 
 	// Setup classes
 	m_atlas = BX_NEW(VirtualTexture::getAllocator(), TextureAtlas)(m_info, m_atlasCount, m_uploadsPerFrame);
 	m_loader = BX_NEW(VirtualTexture::getAllocator(), PageLoader)(m_tileDataFile, m_indexer, m_info);
-	m_cache = BX_NEW(VirtualTexture::getAllocator(), PageCache)(m_info, m_atlas, m_loader, m_indexer, m_atlasCount);
+	m_cache = BX_NEW(VirtualTexture::getAllocator(), PageCache)(m_atlas, m_loader, m_indexer, m_atlasCount);
 	m_pageTable = BX_NEW(VirtualTexture::getAllocator(), PageTable)(m_cache, m_info, m_indexer);
 
 	// Create uniforms

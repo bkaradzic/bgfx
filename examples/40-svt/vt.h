@@ -242,7 +242,7 @@ private:
 class PageCache
 {
 public:
-	PageCache(VirtualTextureInfo* _info, TextureAtlas* _atlas, PageLoader* _loader, PageIndexer* _indexer, int _count);
+	PageCache(TextureAtlas* _atlas, PageLoader* _loader, PageIndexer* _indexer, int _count);
 	bool touch(Page page);
 	bool request(Page request, bgfx::ViewId blitViewId);
 	void clear();
@@ -253,7 +253,6 @@ public:
 	std::function<void(Page, Point)> added;
 
 private:
-	VirtualTextureInfo* m_info;
 	TextureAtlas*		m_atlas;
 	PageLoader*			m_loader;
 	PageIndexer*		m_indexer;
