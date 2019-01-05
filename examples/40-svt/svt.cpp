@@ -8,7 +8,7 @@
   * - Sparse Virtual Textures by Sean Barrett
   *   http://web.archive.org/web/20190103162611/http://silverspaceship.com/src/svt/
   * - Based on Virtual Texture Demo by Brad Blanchard
-  *	  http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
+  *   http://web.archive.org/web/20190103162638/http://linedef.com/virtual-texture-demo.html
   * - Mars texture
   *   http://web.archive.org/web/20190103162730/http://www.celestiamotherlode.net/catalog/mars.php
   */
