@@ -29,6 +29,7 @@ add_spvtools_unittest(TARGET val_abcde
        val_capability_test.cpp
        val_cfg_test.cpp
        val_composites_test.cpp
+       val_constants_test.cpp
        val_conversion_test.cpp
        val_data_test.cpp
        val_decoration_test.cpp
@@ -38,6 +39,7 @@ add_spvtools_unittest(TARGET val_abcde
        val_ext_inst_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
+  PCH_FILE pch_test_val
 )
 
 add_spvtools_unittest(TARGET val_limits
@@ -54,10 +56,13 @@ add_spvtools_unittest(TARGET val_ijklmnop
        val_layout_test.cpp
        val_literals_test.cpp
        val_logicals_test.cpp
+       val_memory_test.cpp
+       val_modes_test.cpp
        val_non_uniform_test.cpp
        val_primitives_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
+  PCH_FILE pch_test_val
 )
 
 add_spvtools_unittest(TARGET val_stuvw
@@ -71,4 +76,5 @@ add_spvtools_unittest(TARGET val_stuvw
        val_webgpu_test.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}
+  PCH_FILE pch_test_val
 )

@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <map>
-#include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -91,28 +90,6 @@ class Pass {
   // Returns a pointer to the CFG for current module.
   CFG* cfg() const { return context()->cfg(); }
 
-  // Add to |todo| all ids of functions called in |func|.
-  void AddCalls(Function* func, std::queue<uint32_t>* todo);
-
-  // Applies |pfn| to every function in the call trees that are rooted at the
-  // entry points.  Returns true if any call |pfn| returns true.  By convention
-  // |pfn| should return true if it modified the module.
-  bool ProcessEntryPointCallTree(ProcessFunction& pfn, Module* module);
-
-  // Applies |pfn| to every function in the call trees rooted at the entry
-  // points and exported functions.  Returns true if any call |pfn| returns
-  // true.  By convention |pfn| should return true if it modified the module.
-  bool ProcessReachableCallTree(ProcessFunction& pfn, IRContext* irContext);
-
-  // Applies |pfn| to every function in the call trees rooted at the elements of
-  // |roots|.  Returns true if any call to |pfn| returns true.  By convention
-  // |pfn| should return true if it modified the module.  After returning
-  // |roots| will be empty.
-  bool ProcessCallTreeFromRoots(
-      ProcessFunction& pfn,
-      const std::unordered_map<uint32_t, Function*>& id2function,
-      std::queue<uint32_t>* roots);
-
   // Run the pass on the given |module|. Returns Status::Failure if errors occur
   // when processing. Returns the corresponding Status::Success if processing is
   // successful to indicate whether changes are made to the module.  If there
@@ -145,6 +122,7 @@ class Pass {
   virtual Status Process() = 0;
 
   // Return the next available SSA id and increment it.
+  // TODO(1841): Handle id overflow.
   uint32_t TakeNextId() { return context_->TakeNextId(); }
 
  private:
@@ -158,6 +136,10 @@ class Pass {
   // is used to check that we do not run the same instance twice.
   bool already_run_;
 };
+
+inline Pass::Status CombineStatus(Pass::Status a, Pass::Status b) {
+  return std::min(a, b);
+}
 
 }  // namespace opt
 }  // namespace spvtools

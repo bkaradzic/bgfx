@@ -510,6 +510,150 @@ INSTANTIATE_TEST_CASE_P(
                                  {SpvCapabilityVariablePointersStorageBuffer})},
             })), );
 
+// SPV_KHR_vulkan_memory_model
+
+INSTANTIATE_TEST_CASE_P(
+    SPV_KHR_vulkan_memory_model, ExtensionRoundTripTest,
+    // We'll get coverage over operand tables by trying the universal
+    // environments, and at least one specific environment.
+    //
+    // Note: SPV_KHR_vulkan_memory_model adds scope enum value QueueFamilyKHR.
+    // Scope enums are used in ID definitions elsewhere, that don't know they
+    // are using particular enums.  So the assembler doesn't support assembling
+    // those enums names into the corresponding values.  So there is no asm/dis
+    // tests for those enums.
+    Combine(
+        Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
+               SPV_ENV_UNIVERSAL_1_3, SPV_ENV_VULKAN_1_0, SPV_ENV_VULKAN_1_1),
+        ValuesIn(std::vector<AssemblyCase>{
+            {"OpCapability VulkanMemoryModelKHR\n",
+             MakeInstruction(SpvOpCapability,
+                             {SpvCapabilityVulkanMemoryModelKHR})},
+            {"OpCapability VulkanMemoryModelDeviceScopeKHR\n",
+             MakeInstruction(SpvOpCapability,
+                             {SpvCapabilityVulkanMemoryModelDeviceScopeKHR})},
+            {"OpMemoryModel Logical VulkanKHR\n",
+             MakeInstruction(SpvOpMemoryModel, {SpvAddressingModelLogical,
+                                                SpvMemoryModelVulkanKHR})},
+            {"OpStore %1 %2 MakePointerAvailableKHR %3\n",
+             MakeInstruction(SpvOpStore,
+                             {1, 2, SpvMemoryAccessMakePointerAvailableKHRMask,
+                              3})},
+            {"OpStore %1 %2 Volatile|MakePointerAvailableKHR %3\n",
+             MakeInstruction(SpvOpStore,
+                             {1, 2,
+                              int(SpvMemoryAccessMakePointerAvailableKHRMask) |
+                                  int(SpvMemoryAccessVolatileMask),
+                              3})},
+            {"OpStore %1 %2 Aligned|MakePointerAvailableKHR 4 %3\n",
+             MakeInstruction(SpvOpStore,
+                             {1, 2,
+                              int(SpvMemoryAccessMakePointerAvailableKHRMask) |
+                                  int(SpvMemoryAccessAlignedMask),
+                              4, 3})},
+            {"OpStore %1 %2 MakePointerAvailableKHR|NonPrivatePointerKHR %3\n",
+             MakeInstruction(SpvOpStore,
+                             {1, 2,
+                              int(SpvMemoryAccessMakePointerAvailableKHRMask) |
+                                  int(SpvMemoryAccessNonPrivatePointerKHRMask),
+                              3})},
+            {"%2 = OpLoad %1 %3 MakePointerVisibleKHR %4\n",
+             MakeInstruction(SpvOpLoad,
+                             {1, 2, 3, SpvMemoryAccessMakePointerVisibleKHRMask,
+                              4})},
+            {"%2 = OpLoad %1 %3 Volatile|MakePointerVisibleKHR %4\n",
+             MakeInstruction(SpvOpLoad,
+                             {1, 2, 3,
+                              int(SpvMemoryAccessMakePointerVisibleKHRMask) |
+                                  int(SpvMemoryAccessVolatileMask),
+                              4})},
+            {"%2 = OpLoad %1 %3 Aligned|MakePointerVisibleKHR 8 %4\n",
+             MakeInstruction(SpvOpLoad,
+                             {1, 2, 3,
+                              int(SpvMemoryAccessMakePointerVisibleKHRMask) |
+                                  int(SpvMemoryAccessAlignedMask),
+                              8, 4})},
+            {"%2 = OpLoad %1 %3 MakePointerVisibleKHR|NonPrivatePointerKHR "
+             "%4\n",
+             MakeInstruction(SpvOpLoad,
+                             {1, 2, 3,
+                              int(SpvMemoryAccessMakePointerVisibleKHRMask) |
+                                  int(SpvMemoryAccessNonPrivatePointerKHRMask),
+                              4})},
+            {"OpCopyMemory %1 %2 "
+             "MakePointerAvailableKHR|"
+             "MakePointerVisibleKHR|"
+             "NonPrivatePointerKHR "
+             "%3 %4\n",
+             MakeInstruction(SpvOpCopyMemory,
+                             {1, 2,
+                              (int(SpvMemoryAccessMakePointerVisibleKHRMask) |
+                               int(SpvMemoryAccessMakePointerAvailableKHRMask) |
+                               int(SpvMemoryAccessNonPrivatePointerKHRMask)),
+                              3, 4})},
+            {"OpCopyMemorySized %1 %2 %3 "
+             "MakePointerAvailableKHR|"
+             "MakePointerVisibleKHR|"
+             "NonPrivatePointerKHR "
+             "%4 %5\n",
+             MakeInstruction(SpvOpCopyMemorySized,
+                             {1, 2, 3,
+                              (int(SpvMemoryAccessMakePointerVisibleKHRMask) |
+                               int(SpvMemoryAccessMakePointerAvailableKHRMask) |
+                               int(SpvMemoryAccessNonPrivatePointerKHRMask)),
+                              4, 5})},
+            // Image operands
+            {"OpImageWrite %1 %2 %3 MakeTexelAvailableKHR "
+             "%4\n",
+             MakeInstruction(
+                 SpvOpImageWrite,
+                 {1, 2, 3, int(SpvImageOperandsMakeTexelAvailableKHRMask), 4})},
+            {"OpImageWrite %1 %2 %3 MakeTexelAvailableKHR|NonPrivateTexelKHR "
+             "%4\n",
+             MakeInstruction(SpvOpImageWrite,
+                             {1, 2, 3,
+                              int(SpvImageOperandsMakeTexelAvailableKHRMask) |
+                                  int(SpvImageOperandsNonPrivateTexelKHRMask),
+                              4})},
+            {"OpImageWrite %1 %2 %3 "
+             "MakeTexelAvailableKHR|NonPrivateTexelKHR|VolatileTexelKHR "
+             "%4\n",
+             MakeInstruction(SpvOpImageWrite,
+                             {1, 2, 3,
+                              int(SpvImageOperandsMakeTexelAvailableKHRMask) |
+                                  int(SpvImageOperandsNonPrivateTexelKHRMask) |
+                                  int(SpvImageOperandsVolatileTexelKHRMask),
+                              4})},
+            {"%2 = OpImageRead %1 %3 %4 MakeTexelVisibleKHR "
+             "%5\n",
+             MakeInstruction(SpvOpImageRead,
+                             {1, 2, 3, 4,
+                              int(SpvImageOperandsMakeTexelVisibleKHRMask),
+                              5})},
+            {"%2 = OpImageRead %1 %3 %4 "
+             "MakeTexelVisibleKHR|NonPrivateTexelKHR "
+             "%5\n",
+             MakeInstruction(SpvOpImageRead,
+                             {1, 2, 3, 4,
+                              int(SpvImageOperandsMakeTexelVisibleKHRMask) |
+                                  int(SpvImageOperandsNonPrivateTexelKHRMask),
+                              5})},
+            {"%2 = OpImageRead %1 %3 %4 "
+             "MakeTexelVisibleKHR|NonPrivateTexelKHR|VolatileTexelKHR "
+             "%5\n",
+             MakeInstruction(SpvOpImageRead,
+                             {1, 2, 3, 4,
+                              int(SpvImageOperandsMakeTexelVisibleKHRMask) |
+                                  int(SpvImageOperandsNonPrivateTexelKHRMask) |
+                                  int(SpvImageOperandsVolatileTexelKHRMask),
+                              5})},
+
+            // Memory semantics ID values are numbers put into a SPIR-V
+            // constant integer referenced by Id. There is no token for
+            // them, and so no assembler or disassembler support required.
+            // Similar for Scope ID.
+        })), );
+
 // SPV_GOOGLE_decorate_string
 
 INSTANTIATE_TEST_CASE_P(

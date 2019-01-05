@@ -58,14 +58,13 @@ spv_result_t UpdateIdUse(ValidationState_t& _, const Instruction* inst) {
 ///
 /// NOTE: This function does NOT check module scoped functions which are
 /// checked during the initial binary parse in the IdPass below
-spv_result_t CheckIdDefinitionDominateUse(const ValidationState_t& _) {
+spv_result_t CheckIdDefinitionDominateUse(ValidationState_t& _) {
   std::vector<const Instruction*> phi_instructions;
   std::unordered_set<uint32_t> phi_ids;
   for (const auto& inst : _.ordered_instructions()) {
     if (inst.id() == 0) continue;
     if (const Function* func = inst.function()) {
       if (const BasicBlock* block = inst.block()) {
-        if (!block->reachable()) continue;
         // If the Id is defined within a block then make sure all references to
         // that Id appear in a blocks that are dominated by the defining block
         for (auto& use_index_pair : inst.uses()) {
@@ -164,8 +163,27 @@ spv_result_t IdPass(ValidationState_t& _, Instruction* inst) {
       case SPV_OPERAND_TYPE_ID:
       case SPV_OPERAND_TYPE_MEMORY_SEMANTICS_ID:
       case SPV_OPERAND_TYPE_SCOPE_ID:
-        if (_.IsDefinedId(operand_word)) {
-          ret = SPV_SUCCESS;
+        if (const auto def = _.FindDef(operand_word)) {
+          const auto opcode = inst->opcode();
+          if (spvOpcodeGeneratesType(def->opcode()) &&
+              !spvOpcodeGeneratesType(opcode) && !spvOpcodeIsDebug(opcode) &&
+              !spvOpcodeIsDecoration(opcode) && opcode != SpvOpFunction) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Operand " << _.getIdName(operand_word)
+                   << " cannot be a type";
+          } else if (def->type_id() == 0 && !spvOpcodeGeneratesType(opcode) &&
+                     !spvOpcodeIsDebug(opcode) &&
+                     !spvOpcodeIsDecoration(opcode) &&
+                     !spvOpcodeIsBranch(opcode) && opcode != SpvOpPhi &&
+                     opcode != SpvOpExtInst && opcode != SpvOpExtInstImport &&
+                     opcode != SpvOpSelectionMerge &&
+                     opcode != SpvOpLoopMerge && opcode != SpvOpFunction) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "Operand " << _.getIdName(operand_word)
+                   << " requires a type";
+          } else {
+            ret = SPV_SUCCESS;
+          }
         } else if (can_have_forward_declared_ids(i)) {
           ret = _.ForwardDeclareId(operand_word);
         } else {

@@ -29,7 +29,7 @@ Pass::Status EliminateDeadFunctionsPass::Process() {
     live_function_set.insert(fp);
     return false;
   };
-  ProcessReachableCallTree(mark_live, context());
+  context()->ProcessReachableCallTree(mark_live);
 
   bool modified = false;
   for (auto funcIter = get_module()->begin();

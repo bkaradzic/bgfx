@@ -35,9 +35,18 @@ const uint32_t kSelectionMergeMergeBlockIdInIdx = 0;
 BasicBlock* BasicBlock::Clone(IRContext* context) const {
   BasicBlock* clone = new BasicBlock(
       std::unique_ptr<Instruction>(GetLabelInst()->Clone(context)));
-  for (const auto& inst : insts_)
+  for (const auto& inst : insts_) {
     // Use the incoming context
     clone->AddInstruction(std::unique_ptr<Instruction>(inst.Clone(context)));
+  }
+
+  if (context->AreAnalysesValid(
+          IRContext::Analysis::kAnalysisInstrToBlockMapping)) {
+    for (auto& inst : *clone) {
+      context->set_instr_block(&inst, clone);
+    }
+  }
+
   return clone;
 }
 
@@ -193,6 +202,10 @@ std::ostream& operator<<(std::ostream& str, const BasicBlock& block) {
   return str;
 }
 
+void BasicBlock::Dump() const {
+  std::cerr << "Basic block #" << id() << "\n" << *this << "\n ";
+}
+
 std::string BasicBlock::PrettyPrint(uint32_t options) const {
   std::ostringstream str;
   ForEachInst([&str, options](const Instruction* inst) {
@@ -208,8 +221,11 @@ BasicBlock* BasicBlock::SplitBasicBlock(IRContext* context, uint32_t label_id,
                                         iterator iter) {
   assert(!insts_.empty());
 
-  BasicBlock* new_block = new BasicBlock(MakeUnique<Instruction>(
-      context, SpvOpLabel, 0, label_id, std::initializer_list<Operand>{}));
+  std::unique_ptr<BasicBlock> new_block_temp =
+      MakeUnique<BasicBlock>(MakeUnique<Instruction>(
+          context, SpvOpLabel, 0, label_id, std::initializer_list<Operand>{}));
+  BasicBlock* new_block = new_block_temp.get();
+  function_->InsertBasicBlockAfter(std::move(new_block_temp), this);
 
   new_block->insts_.Splice(new_block->end(), &insts_, iter, end());
   new_block->SetParent(GetParent());

@@ -42,6 +42,12 @@
 #include "source/val/validation_state.h"
 #include "spirv-tools/libspirv.h"
 
+namespace {
+// TODO(issue 1950): The validator only returns a single message anyway, so no
+// point in generating more than 1 warning.
+static uint32_t kDefaultMaxNumOfWarnings = 1;
+}  // namespace
+
 namespace spvtools {
 namespace val {
 namespace {
@@ -110,18 +116,18 @@ void printDot(const ValidationState_t& _, const BasicBlock& other) {
     block_string += "end ";
   } else {
     for (auto block : *other.successors()) {
-      block_string += _.getIdOrName(block->id()) + " ";
+      block_string += _.getIdName(block->id()) + " ";
     }
   }
-  printf("%10s -> {%s\b}\n", _.getIdOrName(other.id()).c_str(),
+  printf("%10s -> {%s\b}\n", _.getIdName(other.id()).c_str(),
          block_string.c_str());
 }
 
 void PrintBlocks(ValidationState_t& _, Function func) {
   assert(func.first_block());
 
-  printf("%10s -> %s\n", _.getIdOrName(func.id()).c_str(),
-         _.getIdOrName(func.first_block()->id()).c_str());
+  printf("%10s -> %s\n", _.getIdName(func.id()).c_str(),
+         _.getIdName(func.first_block()->id()).c_str());
   for (const auto& block : func.ordered_blocks()) {
     printDot(_, *block);
   }
@@ -139,7 +145,7 @@ void PrintBlocks(ValidationState_t& _, Function func) {
 
 UNUSED(void PrintDotGraph(ValidationState_t& _, Function func)) {
   if (func.first_block()) {
-    std::string func_name(_.getIdOrName(func.id()));
+    std::string func_name(_.getIdName(func.id()));
     printf("digraph %s {\n", func_name.c_str());
     PrintBlocks(_, func);
     printf("}\n");
@@ -169,20 +175,36 @@ spv_result_t ValidateForwardDecls(ValidationState_t& _) {
 //   capability is being used.
 // * No function can be targeted by both an OpEntryPoint instruction and an
 //   OpFunctionCall instruction.
+//
+// Additionally enforces that entry points for Vulkan and WebGPU should not have
+// recursion.
 spv_result_t ValidateEntryPoints(ValidationState_t& _) {
   _.ComputeFunctionToEntryPointMapping();
+  _.ComputeRecursiveEntryPoints();
 
   if (_.entry_points().empty() && !_.HasCapability(SpvCapabilityLinkage)) {
     return _.diag(SPV_ERROR_INVALID_BINARY, nullptr)
            << "No OpEntryPoint instruction was found. This is only allowed if "
               "the Linkage capability is being used.";
   }
+
   for (const auto& entry_point : _.entry_points()) {
     if (_.IsFunctionCallTarget(entry_point)) {
       return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(entry_point))
              << "A function (" << entry_point
              << ") may not be targeted by both an OpEntryPoint instruction and "
                 "an OpFunctionCall instruction.";
+    }
+
+    // For Vulkan and WebGPU, the static function-call graph for an entry point
+    // must not contain cycles.
+    if (spvIsWebGPUEnv(_.context()->target_env) ||
+        spvIsVulkanEnv(_.context()->target_env)) {
+      if (_.recursive_entry_points().find(entry_point) !=
+          _.recursive_entry_points().end()) {
+        return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(entry_point))
+               << "Entry points may not have a call graph with cycles.";
+      }
     }
   }
 
@@ -220,8 +242,21 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
            << spvTargetEnvDescription(context.target_env) << ".";
   }
 
+  if (header.bound > vstate->options()->universal_limits_.max_id_bound) {
+    return DiagnosticStream(position, context.consumer, "",
+                            SPV_ERROR_INVALID_BINARY)
+           << "Invalid SPIR-V.  The id bound is larger than the max id bound "
+           << vstate->options()->universal_limits_.max_id_bound << ".";
+  }
+
   // Look for OpExtension instructions and register extensions.
-  spvBinaryParse(&context, vstate, words, num_words,
+  // This parse should not produce any error messages. Hijack the context and
+  // replace the message consumer so that we do not pollute any state in input
+  // consumer.
+  spv_context_t hijacked_context = context;
+  hijacked_context.consumer = [](spv_message_level_t, const char*,
+                                 const spv_position_t&, const char*) {};
+  spvBinaryParse(&hijacked_context, vstate, words, num_words,
                  /* parsed_header = */ nullptr, ProcessExtensions,
                  /* diagnostic = */ nullptr);
 
@@ -260,7 +295,15 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
                  << "A FunctionCall must happen within a function body.";
         }
 
-        vstate->AddFunctionCallTarget(inst->GetOperandAs<uint32_t>(2));
+        const auto called_id = inst->GetOperandAs<uint32_t>(2);
+        if (spvIsWebGPUEnv(context.target_env) &&
+            !vstate->IsFunctionCallDefined(called_id)) {
+          return vstate->diag(SPV_ERROR_INVALID_LAYOUT, &instruction)
+                 << "For WebGPU, functions need to be defined before being "
+                    "called.";
+        }
+
+        vstate->AddFunctionCallTarget(called_id);
       }
 
       if (vstate->in_function_body()) {
@@ -309,12 +352,11 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     // Miscellaneous
     if (auto error = DebugPass(*vstate, &instruction)) return error;
     if (auto error = AnnotationPass(*vstate, &instruction)) return error;
-    if (auto error = ExtInstPass(*vstate, &instruction)) return error;
+    if (auto error = ExtensionPass(*vstate, &instruction)) return error;
     if (auto error = ModeSettingPass(*vstate, &instruction)) return error;
     if (auto error = TypePass(*vstate, &instruction)) return error;
     if (auto error = ConstantPass(*vstate, &instruction)) return error;
-    if (auto error = ValidateMemoryInstructions(*vstate, &instruction))
-      return error;
+    if (auto error = MemoryPass(*vstate, &instruction)) return error;
     if (auto error = FunctionPass(*vstate, &instruction)) return error;
     if (auto error = ImagePass(*vstate, &instruction)) return error;
     if (auto error = ConversionPass(*vstate, &instruction)) return error;
@@ -333,10 +375,11 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     if (auto error = NonUniformPass(*vstate, &instruction)) return error;
 
     if (auto error = LiteralsPass(*vstate, &instruction)) return error;
-    // Validate the preconditions involving adjacent instructions. e.g. SpvOpPhi
-    // must only be preceeded by SpvOpLabel, SpvOpPhi, or SpvOpLine.
-    if (auto error = ValidateAdjacency(*vstate, i)) return error;
   }
+
+  // Validate the preconditions involving adjacent instructions. e.g. SpvOpPhi
+  // must only be preceeded by SpvOpLabel, SpvOpPhi, or SpvOpLine.
+  if (auto error = ValidateAdjacency(*vstate)) return error;
 
   if (auto error = ValidateEntryPoints(*vstate)) return error;
   // CFG checks are performed after the binary has been parsed
@@ -369,8 +412,8 @@ spv_result_t ValidateBinaryAndKeepValidationState(
     UseDiagnosticAsMessageConsumer(&hijack_context, pDiagnostic);
   }
 
-  vstate->reset(
-      new ValidationState_t(&hijack_context, options, words, num_words));
+  vstate->reset(new ValidationState_t(&hijack_context, options, words,
+                                      num_words, kDefaultMaxNumOfWarnings));
 
   return ValidateBinaryUsingContextAndValidationState(
       hijack_context, words, num_words, pDiagnostic, vstate->get());
@@ -400,7 +443,8 @@ spv_result_t spvValidateBinary(const spv_const_context context,
 
   // Create the ValidationState using the context and default options.
   spvtools::val::ValidationState_t vstate(&hijack_context, default_options,
-                                          words, num_words);
+                                          words, num_words,
+                                          kDefaultMaxNumOfWarnings);
 
   spv_result_t result =
       spvtools::val::ValidateBinaryUsingContextAndValidationState(
@@ -422,7 +466,8 @@ spv_result_t spvValidateWithOptions(const spv_const_context context,
 
   // Create the ValidationState using the context.
   spvtools::val::ValidationState_t vstate(&hijack_context, options,
-                                          binary->code, binary->wordCount);
+                                          binary->code, binary->wordCount,
+                                          kDefaultMaxNumOfWarnings);
 
   return spvtools::val::ValidateBinaryUsingContextAndValidationState(
       hijack_context, binary->code, binary->wordCount, pDiagnostic, &vstate);

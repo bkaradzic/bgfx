@@ -54,12 +54,36 @@ spv_result_t DerivativesPass(ValidationState_t& _, const Instruction* inst) {
                << spvOpcodeString(opcode);
       }
 
-      _.function(inst->function()->id())
-          ->RegisterExecutionModelLimitation(
-              SpvExecutionModelFragment,
-              std::string("Derivative instructions require Fragment execution "
+      const spvtools::Extension compute_shader_derivatives_extension =
+          kSPV_NV_compute_shader_derivatives;
+      ExtensionSet exts(1, &compute_shader_derivatives_extension);
+
+      if (_.HasAnyOfExtensions(exts)) {
+        _.function(inst->function()->id())
+            ->RegisterExecutionModelLimitation([opcode](SpvExecutionModel model,
+                                                        std::string* message) {
+              if (model != SpvExecutionModelFragment &&
+                  model != SpvExecutionModelGLCompute) {
+                if (message) {
+                  *message =
+                      std::string(
+                          "Derivative instructions require Fragment execution "
                           "model: ") +
-                  spvOpcodeString(opcode));
+                      spvOpcodeString(opcode);
+                }
+                return false;
+              }
+              return true;
+            });
+      } else {
+        _.function(inst->function()->id())
+            ->RegisterExecutionModelLimitation(
+                SpvExecutionModelFragment,
+                std::string(
+                    "Derivative instructions require Fragment execution "
+                    "model: ") +
+                    spvOpcodeString(opcode));
+      }
       break;
     }
 

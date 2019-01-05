@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: SPIRV-Tools
+Description: Tools for SPIR-V
+Version: 2018.6.0
+URL: https://github.com/KhronosGroup/SPIRV-Tools
+
+Libs: -L${libdir} -lSPIRV-Tools-shared
+Cflags: -I${includedir}

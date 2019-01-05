@@ -44,7 +44,9 @@ class DeadBranchElimPass : public MemPass {
   Status Process() override;
 
   IRContext::Analysis GetPreservedAnalyses() override {
-    return IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping;
+    return IRContext::kAnalysisDefUse |
+           IRContext::kAnalysisInstrToBlockMapping |
+           IRContext::kAnalysisConstants | IRContext::kAnalysisTypes;
   }
 
  private:
@@ -132,15 +134,20 @@ class DeadBranchElimPass : public MemPass {
   void FixBlockOrder();
 
   // Return the first branch instruction that is a conditional branch to
-  // |merge_block_id|. Returns |nullptr| if not such branch exists. If there are
+  // |merge_block_id|. Returns |nullptr| if no such branch exists. If there are
   // multiple such branches, the first one is the one that would be executed
   // first when running the code.  That is, the one that dominates all of the
   // others.
   //
   // |start_block_id| must be a block whose innermost containing merge construct
   // has |merge_block_id| as the merge block.
+  //
+  // |loop_merge_id| and |loop_continue_id| are the merge and continue block ids
+  // of the innermost loop containing |start_block_id|.
   Instruction* FindFirstExitFromSelectionMerge(uint32_t start_block_id,
-                                               uint32_t merge_block_id);
+                                               uint32_t merge_block_id,
+                                               uint32_t loop_merge_id,
+                                               uint32_t loop_continue_id);
 };
 
 }  // namespace opt

@@ -57,4 +57,12 @@ add_custom_target(install-headers
     COMMAND cmake -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv
         $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/include/spirv)
 
-add_subdirectory(example)
+option(SPIRV_HEADERS_SKIP_EXAMPLES "Skip building examples"
+      ${SPIRV_HEADERS_SKIP_EXAMPLES})
+if(NOT ${SPIRV_HEADERS_SKIP_EXAMPLES})
+  set(SPIRV_HEADERS_ENABLE_EXAMPLES ON)
+endif()
+if (SPIRV_HEADERS_ENABLE_EXAMPLES)
+  message(STATUS "Building SPIRV-Header examples")
+  add_subdirectory(example)
+endif()

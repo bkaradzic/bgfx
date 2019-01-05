@@ -101,6 +101,11 @@ class Optimizer {
   // from time to time.
   Optimizer& RegisterSizePasses();
 
+  // Registers passes that have been prescribed for WebGPU environments.
+  // This sequence of passes is subject to constant review and will change
+  // from time to time.
+  Optimizer& RegisterWebGPUPasses();
+
   // Registers passes that attempt to legalize the generated code.
   //
   // Note: this recipe is specially designed for legalizing SPIR-V. It should be
@@ -148,6 +153,10 @@ class Optimizer {
   // returns false.
   bool FlagHasValidForm(const std::string& flag) const;
 
+  // Allows changing, after creation time, the target environment to be
+  // optimized for.  Should be called before calling Run().
+  void SetTargetEnv(const spv_target_env env);
+
   // Optimizes the given SPIR-V module |original_binary| and writes the
   // optimized binary into |optimized_binary|.
   // Returns true on successful optimization, whether or not the module is
@@ -160,13 +169,20 @@ class Optimizer {
   bool Run(const uint32_t* original_binary, size_t original_binary_size,
            std::vector<uint32_t>* optimized_binary) const;
 
-  // Same as above, except passes |options| to the validator when trying to
-  // validate the binary.  If |skip_validation| is true, then the caller is
-  // guaranteeing that |original_binary| is valid, and the validator will not
-  // be run.
+  // DEPRECATED: Same as above, except passes |options| to the validator when
+  // trying to validate the binary.  If |skip_validation| is true, then the
+  // caller is guaranteeing that |original_binary| is valid, and the validator
+  // will not be run.  The |max_id_bound| is the limit on the max id in the
+  // module.
   bool Run(const uint32_t* original_binary, const size_t original_binary_size,
            std::vector<uint32_t>* optimized_binary,
-           const ValidatorOptions& options, bool skip_validation = false) const;
+           const ValidatorOptions& options, bool skip_validation) const;
+
+  // Same as above, except it takes an options object.  See the documentation
+  // for |OptimizerOptions| to see which options can be set.
+  bool Run(const uint32_t* original_binary, const size_t original_binary_size,
+           std::vector<uint32_t>* optimized_binary,
+           const spv_optimizer_options opt_options) const;
 
   // Returns a vector of strings with all the pass names added to this
   // optimizer's pass manager. These strings are valid until the associated
@@ -492,6 +508,30 @@ Optimizer::PassToken CreateCommonUniformElimPass();
 // eliminated with standard dead code elimination.
 Optimizer::PassToken CreateAggressiveDCEPass();
 
+// Create line propagation pass
+// This pass propagates line information based on the rules for OpLine and
+// OpNoline and clones an appropriate line instruction into every instruction
+// which does not already have debug line instructions.
+//
+// This pass is intended to maximize preservation of source line information
+// through passes which delete, move and clone instructions. Ideally it should
+// be run before any such pass. It is a bookend pass with EliminateDeadLines
+// which can be used to remove redundant line instructions at the end of a
+// run of such passes and reduce final output file size.
+Optimizer::PassToken CreatePropagateLineInfoPass();
+
+// Create dead line elimination pass
+// This pass eliminates redundant line instructions based on the rules for
+// OpLine and OpNoline. Its main purpose is to reduce the size of the file
+// need to store the SPIR-V without losing line information.
+//
+// This is a bookend pass with PropagateLines which attaches line instructions
+// to every instruction to preserve line information during passes which
+// delete, move and clone instructions. DeadLineElim should be run after
+// PropagateLines and all such subsequent passes. Normally it would be one
+// of the last passes to be run.
+Optimizer::PassToken CreateRedundantLineInfoElimPass();
+
 // Creates a compact ids pass.
 // The pass remaps result ids to a compact and gapless range starting from %1.
 Optimizer::PassToken CreateCompactIdsPass();
@@ -649,6 +689,38 @@ Optimizer::PassToken CreateReduceLoadSizePass();
 // This pass looks for access chains fed by other access chains and combines
 // them into a single instruction where possible.
 Optimizer::PassToken CreateCombineAccessChainsPass();
+
+// Create a pass to instrument bindless descriptor checking
+// This pass instruments all bindless references to check that descriptor
+// array indices are inbounds. If the reference is invalid, a record is
+// written to the debug output buffer (if space allows) and a null value is
+// returned. This pass is designed to support bindless validation in the Vulkan
+// validation layers.
+//
+// Dead code elimination should be run after this pass as the original,
+// potentially invalid code is not removed and could cause undefined behavior,
+// including crashes. It may also be beneficial to run Simplification
+// (ie Constant Propagation), DeadBranchElim and BlockMerge after this pass to
+// optimize instrument code involving the testing of compile-time constants.
+// It is also generally recommended that this pass (and all
+// instrumentation passes) be run after any legalization and optimization
+// passes. This will give better analysis for the instrumentation and avoid
+// potentially de-optimizing the instrument code, for example, inlining
+// the debug record output function throughout the module.
+//
+// The instrumentation will read and write buffers in debug
+// descriptor set |desc_set|. It will write |shader_id| in each output record
+// to identify the shader module which generated the record.
+//
+// TODO(greg-lunarg): Add support for vk_ext_descriptor_indexing.
+Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
+                                                 uint32_t shader_id);
+
+// Create a pass to upgrade to the VulkanKHR memory model.
+// This pass upgrades the Logical GLSL450 memory model to Logical VulkanKHR.
+// Additionally, it modifies memory, image, atomic and barrier operations to
+// conform to that model's requirements.
+Optimizer::PassToken CreateUpgradeMemoryModelPass();
 
 }  // namespace spvtools
 

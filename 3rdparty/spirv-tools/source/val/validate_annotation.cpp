@@ -15,6 +15,7 @@
 #include "source/val/validate.h"
 
 #include "source/opcode.h"
+#include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validation_state.h"
 
@@ -50,7 +51,7 @@ spv_result_t ValidateMemberDecorate(ValidationState_t& _,
   const auto member = inst->GetOperandAs<uint32_t>(1);
   const auto member_count =
       static_cast<uint32_t>(struct_type->words().size() - 2);
-  if (member_count < member) {
+  if (member_count <= member) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Index " << member
            << " provided in OpMemberDecorate for struct <id> "
@@ -63,6 +64,12 @@ spv_result_t ValidateMemberDecorate(ValidationState_t& _,
 
 spv_result_t ValidateDecorationGroup(ValidationState_t& _,
                                      const Instruction* inst) {
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "OpDecorationGroup is not allowed in the WebGPU execution "
+           << "environment.";
+  }
+
   const auto decoration_group_id = inst->GetOperandAs<uint32_t>(0);
   const auto decoration_group = _.FindDef(decoration_group_id);
   for (auto pair : decoration_group->uses()) {
@@ -81,6 +88,12 @@ spv_result_t ValidateDecorationGroup(ValidationState_t& _,
 
 spv_result_t ValidateGroupDecorate(ValidationState_t& _,
                                    const Instruction* inst) {
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "OpGroupDecorate is not allowed in the WebGPU execution "
+           << "environment.";
+  }
+
   const auto decoration_group_id = inst->GetOperandAs<uint32_t>(0);
   auto decoration_group = _.FindDef(decoration_group_id);
   if (!decoration_group || SpvOpDecorationGroup != decoration_group->opcode()) {
@@ -89,11 +102,26 @@ spv_result_t ValidateGroupDecorate(ValidationState_t& _,
            << _.getIdName(decoration_group_id)
            << "' is not a decoration group.";
   }
+  for (unsigned i = 1; i < inst->operands().size(); ++i) {
+    auto target_id = inst->GetOperandAs<uint32_t>(i);
+    auto target = _.FindDef(target_id);
+    if (!target || target->opcode() == SpvOpDecorationGroup) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "OpGroupDecorate may not target OpDecorationGroup <id> '"
+             << _.getIdName(target_id) << "'";
+    }
+  }
   return SPV_SUCCESS;
 }
 
 spv_result_t ValidateGroupMemberDecorate(ValidationState_t& _,
                                          const Instruction* inst) {
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "OpGroupMemberDecorate is not allowed in the WebGPU execution "
+           << "environment.";
+  }
+
   const auto decoration_group_id = inst->GetOperandAs<uint32_t>(0);
   const auto decoration_group = _.FindDef(decoration_group_id);
   if (!decoration_group || SpvOpDecorationGroup != decoration_group->opcode()) {
@@ -128,6 +156,79 @@ spv_result_t ValidateGroupMemberDecorate(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+// Registers necessary decoration(s) for the appropriate IDs based on the
+// instruction.
+spv_result_t RegisterDecorations(ValidationState_t& _,
+                                 const Instruction* inst) {
+  switch (inst->opcode()) {
+    case SpvOpDecorate: {
+      const uint32_t target_id = inst->word(1);
+      const SpvDecoration dec_type = static_cast<SpvDecoration>(inst->word(2));
+      std::vector<uint32_t> dec_params;
+      if (inst->words().size() > 3) {
+        dec_params.insert(dec_params.end(), inst->words().begin() + 3,
+                          inst->words().end());
+      }
+      _.RegisterDecorationForId(target_id, Decoration(dec_type, dec_params));
+      break;
+    }
+    case SpvOpMemberDecorate: {
+      const uint32_t struct_id = inst->word(1);
+      const uint32_t index = inst->word(2);
+      const SpvDecoration dec_type = static_cast<SpvDecoration>(inst->word(3));
+      std::vector<uint32_t> dec_params;
+      if (inst->words().size() > 4) {
+        dec_params.insert(dec_params.end(), inst->words().begin() + 4,
+                          inst->words().end());
+      }
+      _.RegisterDecorationForId(struct_id,
+                                Decoration(dec_type, dec_params, index));
+      break;
+    }
+    case SpvOpDecorationGroup: {
+      // We don't need to do anything right now. Assigning decorations to groups
+      // will be taken care of via OpGroupDecorate.
+      break;
+    }
+    case SpvOpGroupDecorate: {
+      // Word 1 is the group <id>. All subsequent words are target <id>s that
+      // are going to be decorated with the decorations.
+      const uint32_t decoration_group_id = inst->word(1);
+      std::vector<Decoration>& group_decorations =
+          _.id_decorations(decoration_group_id);
+      for (size_t i = 2; i < inst->words().size(); ++i) {
+        const uint32_t target_id = inst->word(i);
+        _.RegisterDecorationsForId(target_id, group_decorations.begin(),
+                                   group_decorations.end());
+      }
+      break;
+    }
+    case SpvOpGroupMemberDecorate: {
+      // Word 1 is the Decoration Group <id> followed by (struct<id>,literal)
+      // pairs. All decorations of the group should be applied to all the struct
+      // members that are specified in the instructions.
+      const uint32_t decoration_group_id = inst->word(1);
+      std::vector<Decoration>& group_decorations =
+          _.id_decorations(decoration_group_id);
+      // Grammar checks ensures that the number of arguments to this instruction
+      // is an odd number: 1 decoration group + (id,literal) pairs.
+      for (size_t i = 2; i + 1 < inst->words().size(); i = i + 2) {
+        const uint32_t struct_id = inst->word(i);
+        const uint32_t index = inst->word(i + 1);
+        // ID validation phase ensures this is in fact a struct instruction and
+        // that the index is not out of bound.
+        _.RegisterDecorationsForStructMember(struct_id, index,
+                                             group_decorations.begin(),
+                                             group_decorations.end());
+      }
+      break;
+    }
+    default:
+      break;
+  }
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t AnnotationPass(ValidationState_t& _, const Instruction* inst) {
@@ -150,6 +251,10 @@ spv_result_t AnnotationPass(ValidationState_t& _, const Instruction* inst) {
     default:
       break;
   }
+
+  // In order to validate decoration rules, we need to know all the decorations
+  // that are applied to any given <id>.
+  RegisterDecorations(_, inst);
 
   return SPV_SUCCESS;
 }

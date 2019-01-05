@@ -2025,7 +2025,7 @@ FoldingRule StoringUndef() {
 
     // If this is a volatile store, the store cannot be removed.
     if (inst->NumInOperands() == 3) {
-      if (inst->GetSingleWordInOperand(3) & SpvMemoryAccessVolatileMask) {
+      if (inst->GetSingleWordInOperand(2) & SpvMemoryAccessVolatileMask) {
         return false;
       }
     }

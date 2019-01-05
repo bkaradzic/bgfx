@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Google Inc.
+// Copyright (c) 2018 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Validates correctness of ExtInst SPIR-V instructions.
+// Validates correctness of extension SPIR-V instructions.
 
 #include "source/val/validate.h"
 
@@ -21,9 +21,12 @@
 #include <vector>
 
 #include "source/diagnostic.h"
+#include "source/enum_string_mapping.h"
+#include "source/extensions.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_opencl_std_header.h"
 #include "source/opcode.h"
+#include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validation_state.h"
 
@@ -41,13 +44,40 @@ uint32_t GetSizeTBitWidth(const ValidationState_t& _) {
 
 }  // anonymous namespace
 
-// Validates correctness of ExtInst instructions.
-spv_result_t ExtInstPass(ValidationState_t& _, const Instruction* inst) {
-  const SpvOp opcode = inst->opcode();
+spv_result_t ValidateExtension(ValidationState_t& _, const Instruction* inst) {
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    std::string extension = GetExtensionString(&(inst->c_inst()));
+
+    if (extension != ExtensionToString(kSPV_KHR_vulkan_memory_model)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "For WebGPU, the only valid parameter to OpExtension is "
+             << "\"" << ExtensionToString(kSPV_KHR_vulkan_memory_model)
+             << "\".";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateExtInstImport(ValidationState_t& _,
+                                   const Instruction* inst) {
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    const auto name_id = 1;
+    const std::string name(reinterpret_cast<const char*>(
+        inst->words().data() + inst->operands()[name_id].offset));
+    if (name != "GLSL.std.450") {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "For WebGPU, the only valid parameter to OpExtInstImport is "
+                "\"GLSL.std.450\".";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
   const uint32_t result_type = inst->type_id();
   const uint32_t num_operands = static_cast<uint32_t>(inst->operands().size());
-
-  if (opcode != SpvOpExtInst) return SPV_SUCCESS;
 
   const uint32_t ext_inst_set = inst->word(3);
   const uint32_t ext_inst_index = inst->word(4);
@@ -1982,6 +2012,15 @@ spv_result_t ExtInstPass(ValidationState_t& _, const Instruction* inst) {
       }
     }
   }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ExtensionPass(ValidationState_t& _, const Instruction* inst) {
+  const SpvOp opcode = inst->opcode();
+  if (opcode == SpvOpExtension) return ValidateExtension(_, inst);
+  if (opcode == SpvOpExtInstImport) return ValidateExtInstImport(_, inst);
+  if (opcode == SpvOpExtInst) return ValidateExtInst(_, inst);
 
   return SPV_SUCCESS;
 }

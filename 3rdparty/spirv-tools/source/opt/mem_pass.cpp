@@ -119,7 +119,7 @@ Instruction* MemPass::GetPtr(uint32_t ptrId, uint32_t* varId) {
 
 Instruction* MemPass::GetPtr(Instruction* ip, uint32_t* varId) {
   assert(ip->opcode() == SpvOpStore || ip->opcode() == SpvOpLoad ||
-         ip->opcode() == SpvOpImageTexelPointer);
+         ip->opcode() == SpvOpImageTexelPointer || ip->IsAtomicWithLoad());
 
   // All of these opcode place the pointer in position 0.
   const uint32_t ptrId = ip->GetSingleWordInOperand(0);

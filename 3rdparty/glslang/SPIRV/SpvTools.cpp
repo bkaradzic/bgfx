@@ -157,7 +157,7 @@ void SpirvToolsLegalize(const glslang::TIntermediate&, std::vector<unsigned int>
     // information when instructions are deleted or moved. Later, remove
     // redundant information to minimize final SPRIR-V size.
     if (options->generateDebugInfo) {
-// BK -        optimizer.RegisterPass(spvtools::CreatePropagateLineInfoPass());
+        optimizer.RegisterPass(spvtools::CreatePropagateLineInfoPass());
     }
     optimizer.RegisterPass(spvtools::CreateDeadBranchElimPass());
     optimizer.RegisterPass(spvtools::CreateMergeReturnPass());
@@ -188,7 +188,7 @@ void SpirvToolsLegalize(const glslang::TIntermediate&, std::vector<unsigned int>
     optimizer.RegisterPass(spvtools::CreateAggressiveDCEPass());
     optimizer.RegisterPass(spvtools::CreateCFGCleanupPass());
     if (options->generateDebugInfo) {
-// BK -        optimizer.RegisterPass(spvtools::CreateRedundantLineInfoElimPass());
+        optimizer.RegisterPass(spvtools::CreateRedundantLineInfoElimPass());
     }
 
     optimizer.Run(spirv.data(), spirv.size(), &spirv);

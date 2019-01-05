@@ -31,6 +31,7 @@ std::string PreambleAssembly() {
       R"(OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main" %hue %saturation %value
+OpExecutionMode %main OriginUpperLeft
 OpName %main "main"
 OpName %void_fn "void_fn"
 OpName %hue "hue"

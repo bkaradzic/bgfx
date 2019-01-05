@@ -31,6 +31,7 @@ TEST_F(ValidateInterfacesTest, EntryPointMissingInput) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %1 "func"
+OpExecutionMode %1 OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeInt 32 0
 %4 = OpTypePointer Input %3
@@ -56,6 +57,7 @@ TEST_F(ValidateInterfacesTest, EntryPointMissingOutput) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %1 "func"
+OpExecutionMode %1 OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeInt 32 0
 %4 = OpTypePointer Output %3
@@ -81,6 +83,7 @@ TEST_F(ValidateInterfacesTest, InterfaceMissingUseInSubfunction) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %1 "func"
+OpExecutionMode %1 OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeInt 32 0
 %4 = OpTypePointer Input %3
@@ -112,6 +115,7 @@ OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %1 "func" %2
 OpEntryPoint Fragment %1 "func2"
+OpExecutionMode %1 OriginUpperLeft
 %3 = OpTypeVoid
 %4 = OpTypeInt 32 0
 %5 = OpTypePointer Input %4
@@ -138,6 +142,7 @@ OpCapability Shader
 OpCapability VariablePointers
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %1 "func"
+OpExecutionMode %1 OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeInt 32 0
 %4 = OpTypePointer Input %3

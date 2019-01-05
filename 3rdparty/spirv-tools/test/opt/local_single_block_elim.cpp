@@ -865,7 +865,9 @@ OpReturn
 OpFunctionEnd
 )";
 
+  // Relax logical pointers to allow pointer allocations.
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  ValidatorOptions()->relax_logical_pointer = true;
   SinglePassRunAndCheck<LocalSingleBlockLoadStoreElimPass>(before, after, true,
                                                            true);
 }

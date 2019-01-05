@@ -167,6 +167,13 @@ BasicBlock* CFG::SplitLoopHeader(BasicBlock* bb) {
   Function* fn = bb->GetParent();
   IRContext* context = module_->context();
 
+  // Get the new header id up front.  If we are out of ids, then we cannot split
+  // the loop.
+  uint32_t new_header_id = context->TakeNextId();
+  if (new_header_id == 0) {
+    return nullptr;
+  }
+
   // Find the insertion point for the new bb.
   Function::iterator header_it = std::find_if(
       fn->begin(), fn->end(),
@@ -197,15 +204,7 @@ BasicBlock* CFG::SplitLoopHeader(BasicBlock* bb) {
     ++iter;
   }
 
-  std::unique_ptr<BasicBlock> newBlock(
-      bb->SplitBasicBlock(context, context->TakeNextId(), iter));
-
-  // Insert the new bb in the correct position
-  auto insert_pos = header_it;
-  ++insert_pos;
-  BasicBlock* new_header = &*insert_pos.InsertBefore(std::move(newBlock));
-  new_header->SetParent(fn);
-  uint32_t new_header_id = new_header->id();
+  BasicBlock* new_header = bb->SplitBasicBlock(context, new_header_id, iter);
   context->AnalyzeDefUse(new_header->GetLabelInst());
 
   // Update cfg

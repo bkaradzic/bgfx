@@ -163,7 +163,10 @@ Contributions via merge request are welcome. Changes should:
   other contribution to GitHub.
 * Include tests to cover updated functionality.
 * C++ code should follow the [Google C++ Style Guide][cpp-style-guide].
-* Code should be formatted with `clang-format`.  Settings are defined by
+* Code should be formatted with `clang-format`.
+  [kokoro/check-format/build.sh](kokoro/check-format/build.sh)
+  shows how to download it. Note that we currently use
+  `clang-format version 5.0.0` for SPIRV-Tools. Settings are defined by
   the included [.clang-format](.clang-format) file.
 
 We intend to maintain a linear history on the GitHub `master` branch.
@@ -175,7 +178,7 @@ We intend to maintain a linear history on the GitHub `master` branch.
   [googletest][googletest] sources, not provided
 * `external/effcee`: Location of [Effcee][effcee] sources, if the `effcee` library
   is not already configured by an enclosing project.
-* `external/re2`: Location of [RE2][re2] sources, if the `effcee` library is not already
+* `external/re2`: Location of [RE2][re2] sources, if the `re2` library is not already
   configured by an enclosing project.
   (The Effcee project already requires RE2.)
 * `include/`: API clients should add this directory to the include search path
@@ -212,7 +215,7 @@ tests:
 The fix is included on the googletest master branch any time after 2015-11-10.
 In particular, googletest must be newer than version 1.7.0.
 
-### Optional dependency on Effcee
+### Dependency on Effcee
 
 Some tests depend on the [Effcee][effcee] library for stateful matching.
 Effcee itself depends on [RE2][re2].
@@ -222,7 +225,6 @@ Effcee itself depends on [RE2][re2].
 * Otherwise, SPIRV-Tools expects Effcee sources to appear in `external/effcee`
   and RE2 sources to appear in `external/re2`.
 
-Currently Effcee is an optional dependency, but soon it will be required.
 
 ## Build
 
@@ -239,6 +241,8 @@ out code:
 ```sh
 cd <spirv-dir>
 git clone https://github.com/KhronosGroup/SPIRV-Headers.git external/spirv-headers
+git clone https://github.com/google/effcee.git external/effcee
+git clone https://github.com/google/re2.git external/re2
 git clone https://github.com/google/googletest.git external/googletest # optional
 
 mkdir build && cd build
@@ -269,7 +273,7 @@ The following CMake options are supported:
   See [`CMakeLists.txt`](CMakeLists.txt) for details.
 * `SPIRV_WERROR={ON|OFF}`, default `ON` - Forces a compilation error on any
   warnings encountered by enabling the compiler-specific compiler front-end
-  option.
+  option.  No compiler front-end options are enabled when this option is OFF.
 
 Additionally, you can pass additional C preprocessor definitions to SPIRV-Tools
 via setting `SPIRV_TOOLS_EXTRA_DEFINITIONS`. For example, by setting it to

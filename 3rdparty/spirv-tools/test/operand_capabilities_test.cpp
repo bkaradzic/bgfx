@@ -161,9 +161,10 @@ INSTANTIATE_TEST_CASE_P(
                   Geometry),
             CASE1(EXECUTION_MODE, ExecutionModeQuads, Tessellation),
             CASE1(EXECUTION_MODE, ExecutionModeIsolines, Tessellation),
-            CASE2(EXECUTION_MODE, ExecutionModeOutputVertices, Geometry,
-                  Tessellation),
-            CASE1(EXECUTION_MODE, ExecutionModeOutputPoints, Geometry),
+            CASE3(EXECUTION_MODE, ExecutionModeOutputVertices, Geometry,
+                  Tessellation, MeshShadingNV),
+            CASE2(EXECUTION_MODE, ExecutionModeOutputPoints, Geometry,
+                  MeshShadingNV),
             CASE1(EXECUTION_MODE, ExecutionModeOutputLineStrip, Geometry),
             CASE1(EXECUTION_MODE, ExecutionModeOutputTriangleStrip, Geometry),
             CASE1(EXECUTION_MODE, ExecutionModeVecTypeHint, Kernel),
@@ -205,12 +206,12 @@ INSTANTIATE_TEST_CASE_P(
     Dim, EnumCapabilityTest,
     Combine(Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1),
             ValuesIn(std::vector<EnumCapabilityCase>{
-                CASE1(DIMENSIONALITY, Dim1D, Sampled1D),
-                CASE0(DIMENSIONALITY, Dim2D),
+                CASE2(DIMENSIONALITY, Dim1D, Sampled1D, Image1D),
+                CASE3(DIMENSIONALITY, Dim2D, Kernel, Shader, ImageMSArray),
                 CASE0(DIMENSIONALITY, Dim3D),
-                CASE1(DIMENSIONALITY, DimCube, Shader),
-                CASE1(DIMENSIONALITY, DimRect, SampledRect),
-                CASE1(DIMENSIONALITY, DimBuffer, SampledBuffer),
+                CASE2(DIMENSIONALITY, DimCube, Shader, ImageCubeArray),
+                CASE2(DIMENSIONALITY, DimRect, SampledRect, ImageRect),
+                CASE2(DIMENSIONALITY, DimBuffer, SampledBuffer, ImageBuffer),
                 CASE1(DIMENSIONALITY, DimSubpassData, InputAttachment),
             })), );
 
@@ -490,7 +491,8 @@ INSTANTIATE_TEST_CASE_P(
             CASE1(BUILT_IN, BuiltInCullDistance, CullDistance),  // Bug 1407, 15234
             CASE1(BUILT_IN, BuiltInVertexId, Shader),
             CASE1(BUILT_IN, BuiltInInstanceId, Shader),
-            CASE2(BUILT_IN, BuiltInPrimitiveId, Geometry, Tessellation),
+            CASE3(BUILT_IN, BuiltInPrimitiveId, Geometry, Tessellation,
+                  RayTracingNV),
             CASE2(BUILT_IN, BuiltInInvocationId, Geometry, Tessellation),
             CASE1(BUILT_IN, BuiltInLayer, Geometry),
             CASE1(BUILT_IN, BuiltInViewportIndex, MultiViewport),  // Bug 15234
@@ -604,16 +606,18 @@ INSTANTIATE_TEST_CASE_P(
             })), );
 
 // See SPIR-V Section 3.27 Scope <id>
-INSTANTIATE_TEST_CASE_P(Scope, EnumCapabilityTest,
-                        Combine(Values(SPV_ENV_UNIVERSAL_1_0,
-                                       SPV_ENV_UNIVERSAL_1_1),
-                                ValuesIn(std::vector<EnumCapabilityCase>{
-                                    CASE0(SCOPE_ID, ScopeCrossDevice),
-                                    CASE0(SCOPE_ID, ScopeDevice),
-                                    CASE0(SCOPE_ID, ScopeWorkgroup),
-                                    CASE0(SCOPE_ID, ScopeSubgroup),
-                                    CASE0(SCOPE_ID, ScopeInvocation),
-                                })), );
+INSTANTIATE_TEST_CASE_P(
+    Scope, EnumCapabilityTest,
+    Combine(Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
+                   SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3),
+            ValuesIn(std::vector<EnumCapabilityCase>{
+                CASE0(SCOPE_ID, ScopeCrossDevice),
+                CASE0(SCOPE_ID, ScopeDevice),
+                CASE0(SCOPE_ID, ScopeWorkgroup),
+                CASE0(SCOPE_ID, ScopeSubgroup),
+                CASE0(SCOPE_ID, ScopeInvocation),
+                CASE1(SCOPE_ID, ScopeQueueFamilyKHR, VulkanMemoryModelKHR),
+            })), );
 
 // See SPIR-V Section 3.28 Group Operation
 INSTANTIATE_TEST_CASE_P(

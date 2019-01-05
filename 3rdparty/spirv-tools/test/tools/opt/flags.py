@@ -135,6 +135,7 @@ class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_3,
 
   flags = ['-O']
   expected_passes = [
+      'eliminate-dead-branches',
       'merge-return',
       'inline-entry-points-exhaustive',
       'eliminate-dead-code-aggressive',
@@ -181,6 +182,7 @@ class TestSizeOptimizationPasses(expect.ValidObjectFile1_3,
 
   flags = ['-Os']
   expected_passes = [
+      'eliminate-dead-branches',
       'merge-return',
       'inline-entry-points-exhaustive',
       'eliminate-dead-code-aggressive',
@@ -235,6 +237,7 @@ class TestLegalizationPasses(expect.ValidObjectFile1_3,
       'eliminate-local-multi-store',
       'eliminate-dead-code-aggressive',
       'ccp',
+      'loop-unroll',
       'eliminate-dead-branches',
       'simplify-instructions',
       'eliminate-dead-code-aggressive',
@@ -255,7 +258,7 @@ class TestScalarReplacementArgsNegative(expect.ErrorMessageSubstr):
   """Tests invalid arguments to --scalar-replacement."""
 
   spirv_args = ['--scalar-replacement=-10']
-  expected_error_substr = 'must have no arguments or a positive integer argument'
+  expected_error_substr = 'must have no arguments or a non-negative integer argument'
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
@@ -263,7 +266,7 @@ class TestScalarReplacementArgsInvalidNumber(expect.ErrorMessageSubstr):
   """Tests invalid arguments to --scalar-replacement."""
 
   spirv_args = ['--scalar-replacement=a10f']
-  expected_error_substr = 'must have no arguments or a positive integer argument'
+  expected_error_substr = 'must have no arguments or a non-negative integer argument'
 
 
 @inside_spirv_testsuite('SpirvOptFlags')

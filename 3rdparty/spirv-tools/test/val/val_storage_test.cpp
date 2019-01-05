@@ -73,29 +73,38 @@ TEST_F(ValidateStorage, FunctionStorageOutsideFunction) {
 
 TEST_F(ValidateStorage, OtherStorageOutsideFunction) {
   char str[] = R"(
-          OpCapability Shader
-          OpCapability Kernel
-          OpCapability AtomicStorage
-          OpCapability Linkage
-          OpMemoryModel Logical GLSL450
-%intt   = OpTypeInt 32 0
-%voidt  = OpTypeVoid
-%vfunct = OpTypeFunction %voidt
-%ptrt   = OpTypePointer Function %intt
-%unicon = OpVariable %ptrt UniformConstant
-%input  = OpVariable %ptrt Input
-%unif   = OpVariable %ptrt Uniform
-%output = OpVariable %ptrt Output
-%wgroup = OpVariable %ptrt Workgroup
-%xwgrp  = OpVariable %ptrt CrossWorkgroup
-%priv   = OpVariable %ptrt Private
-%pushco = OpVariable %ptrt PushConstant
-%atomct = OpVariable %ptrt AtomicCounter
-%image  = OpVariable %ptrt Image
-%func   = OpFunction %voidt None %vfunct
-%funcl  = OpLabel
-          OpReturn
-          OpFunctionEnd
+              OpCapability Shader
+              OpCapability Kernel
+              OpCapability AtomicStorage
+              OpCapability Linkage
+              OpMemoryModel Logical GLSL450
+%intt       = OpTypeInt 32 0
+%voidt      = OpTypeVoid
+%vfunct     = OpTypeFunction %voidt
+%uniconptrt = OpTypePointer UniformConstant %intt
+%unicon     = OpVariable %uniconptrt UniformConstant
+%inputptrt  = OpTypePointer Input %intt
+%input      = OpVariable %inputptrt Input
+%unifptrt   = OpTypePointer Uniform %intt
+%unif       = OpVariable %unifptrt Uniform
+%outputptrt = OpTypePointer Output %intt
+%output     = OpVariable %outputptrt Output
+%wgroupptrt = OpTypePointer Workgroup %intt
+%wgroup     = OpVariable %wgroupptrt Workgroup
+%xwgrpptrt  = OpTypePointer CrossWorkgroup %intt
+%xwgrp      = OpVariable %xwgrpptrt CrossWorkgroup
+%privptrt   = OpTypePointer Private %intt
+%priv       = OpVariable %privptrt Private
+%pushcoptrt = OpTypePointer PushConstant %intt
+%pushco     = OpVariable %pushcoptrt PushConstant
+%atomcptrt  = OpTypePointer AtomicCounter %intt
+%atomct     = OpVariable %atomcptrt AtomicCounter
+%imageptrt  = OpTypePointer Image %intt
+%image      = OpVariable %imageptrt Image
+%func       = OpFunction %voidt None %vfunct
+%funcl      = OpLabel
+              OpReturn
+              OpFunctionEnd
 )";
 
   CompileSuccessfully(str);

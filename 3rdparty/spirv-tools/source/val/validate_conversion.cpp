@@ -49,6 +49,11 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                << "Expected input to have the same dimension as Result Type: "
                << spvOpcodeString(opcode);
 
+      if (!_.features().use_int8_type && (8 == _.GetBitWidth(result_type)))
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Invalid cast to 8-bit integer from a floating-point: "
+               << spvOpcodeString(opcode);
+
       break;
     }
 
@@ -68,6 +73,11 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
       if (_.GetDimension(result_type) != _.GetDimension(input_type))
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected input to have the same dimension as Result Type: "
+               << spvOpcodeString(opcode);
+
+      if (!_.features().use_int8_type && (8 == _.GetBitWidth(result_type)))
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Invalid cast to 8-bit integer from a floating-point: "
                << spvOpcodeString(opcode);
 
       break;
@@ -91,6 +101,11 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
       if (_.GetDimension(result_type) != _.GetDimension(input_type))
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected input to have the same dimension as Result Type: "
+               << spvOpcodeString(opcode);
+
+      if (!_.features().use_int8_type && (8 == _.GetBitWidth(input_type)))
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Invalid cast to floating-point from an 8-bit integer: "
                << spvOpcodeString(opcode);
 
       break;
@@ -233,7 +248,7 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                << spvOpcodeString(opcode);
 
       const uint32_t input_type = _.GetOperandTypeId(inst, 2);
-      if (!_.IsIntScalarType(input_type))
+      if (!input_type || !_.IsIntScalarType(input_type))
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected int scalar as input: " << spvOpcodeString(opcode);
       break;

@@ -2144,19 +2144,12 @@ OpFunctionEnd
 OpBranch %19
 %19 = OpLabel
 %20 = OpCopyObject %int %int_2
+%25 = OpCopyObject %int %int_0
 OpLoopMerge %23 %26 None
-OpBranch %25
-%25 = OpLabel
-OpLoopMerge %26 %27 None
-OpBranch %28
-%28 = OpLabel
-%29 = OpCopyObject %int %int_0
-OpBranch %26
-%30 = OpLabel
-%31 = OpCopyObject %int %int_1
 OpBranch %26
 %27 = OpLabel
-OpBranchConditional %false %25 %26
+%28 = OpCopyObject %int %int_1
+OpBranch %26
 %26 = OpLabel
 %22 = OpCopyObject %int %int_3
 OpBranchConditional %true %19 %23
@@ -2226,23 +2219,16 @@ OpFunctionEnd
       R"(%1 = OpFunction %void None %9
 %20 = OpLabel
 %21 = OpCopyObject %int %int_3
-OpBranch %24
-%24 = OpLabel
-OpLoopMerge %25 %26 None
-OpBranch %27
-%27 = OpLabel
-%28 = OpCopyObject %int %int_0
-OpBranch %29
-%29 = OpLabel
-%30 = OpPhi %int %28 %27
-%31 = OpCopyObject %int %int_1
+%24 = OpCopyObject %int %int_0
 OpBranch %25
-%32 = OpLabel
-%33 = OpCopyObject %int %int_2
-OpBranch %25
-%26 = OpLabel
-OpBranchConditional %false %24 %25
 %25 = OpLabel
+%26 = OpPhi %int %24 %20
+%27 = OpCopyObject %int %int_1
+OpBranch %28
+%29 = OpLabel
+%30 = OpCopyObject %int %int_2
+OpBranch %28
+%28 = OpLabel
 %23 = OpCopyObject %int %int_4
 OpReturn
 OpFunctionEnd
@@ -2251,6 +2237,222 @@ OpFunctionEnd
   SinglePassRunAndCheck<InlineExhaustivePass>(predefs + nonEntryFuncs + before,
                                               predefs + nonEntryFuncs + after,
                                               false, true);
+}
+
+TEST_F(InlineTest, NonInlinableCalleeWithSingleReturn) {
+  // The case from https://github.com/KhronosGroup/SPIRV-Tools/issues/2018
+  //
+  // The callee has a single return, but cannot be inlined because the
+  // return is inside a loop.
+
+  const std::string predefs =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %_GLF_color
+OpExecutionMode %main OriginUpperLeft
+OpSource ESSL 310
+OpName %main "main"
+OpName %f_ "f("
+OpName %i "i"
+OpName %_GLF_color "_GLF_color"
+OpDecorate %_GLF_color Location 0
+%void = OpTypeVoid
+%7 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%9 = OpTypeFunction %float
+%float_1 = OpConstant %float 1
+%bool = OpTypeBool
+%false = OpConstantFalse %bool
+%int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%v4float = OpTypeVector %float 4
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%_GLF_color = OpVariable %_ptr_Output_v4float Output
+%float_0 = OpConstant %float 0
+%20 = OpConstantComposite %v4float %float_0 %float_0 %float_0 %float_0
+%21 = OpConstantComposite %v4float %float_0 %float_1 %float_0 %float_1
+)";
+
+  const std::string caller =
+      R"(%main = OpFunction %void None %7
+%22 = OpLabel
+%i = OpVariable %_ptr_Function_int Function
+OpStore %i %int_0
+OpBranch %23
+%23 = OpLabel
+OpLoopMerge %24 %25 None
+OpBranch %26
+%26 = OpLabel
+%27 = OpLoad %int %i
+%28 = OpSLessThan %bool %27 %int_1
+OpBranchConditional %28 %29 %24
+%29 = OpLabel
+OpStore %_GLF_color %20
+%30 = OpFunctionCall %float %f_
+OpBranch %25
+%25 = OpLabel
+%31 = OpLoad %int %i
+%32 = OpIAdd %int %31 %int_1
+OpStore %i %32
+OpBranch %23
+%24 = OpLabel
+OpStore %_GLF_color %21
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string callee =
+      R"(%f_ = OpFunction %float None %9
+%33 = OpLabel
+OpBranch %34
+%34 = OpLabel
+OpLoopMerge %35 %36 None
+OpBranch %37
+%37 = OpLabel
+OpReturnValue %float_1
+%36 = OpLabel
+OpBranch %34
+%35 = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<InlineExhaustivePass>(
+      predefs + caller + callee, predefs + caller + callee, false, true);
+}
+
+TEST_F(InlineTest, CalleeWithSingleReturnNeedsSingleTripLoopWrapper) {
+  // The case from https://github.com/KhronosGroup/SPIRV-Tools/issues/2018
+  //
+  // The callee has a single return, but needs single-trip loop wrapper
+  // to be inlined because the return is in a selection structure.
+
+  const std::string predefs =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %_GLF_color
+OpExecutionMode %main OriginUpperLeft
+OpSource ESSL 310
+OpName %main "main"
+OpName %f_ "f("
+OpName %i "i"
+OpName %_GLF_color "_GLF_color"
+OpDecorate %_GLF_color Location 0
+%void = OpTypeVoid
+%7 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%9 = OpTypeFunction %float
+%float_1 = OpConstant %float 1
+%bool = OpTypeBool
+%false = OpConstantFalse %bool
+%true = OpConstantTrue %bool
+%int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%v4float = OpTypeVector %float 4
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%_GLF_color = OpVariable %_ptr_Output_v4float Output
+%float_0 = OpConstant %float 0
+%21 = OpConstantComposite %v4float %float_0 %float_0 %float_0 %float_0
+%22 = OpConstantComposite %v4float %float_0 %float_1 %float_0 %float_1
+)";
+
+  const std::string new_predefs =
+      R"(%_ptr_Function_float = OpTypePointer Function %float
+)";
+
+  const std::string main_before =
+      R"(%main = OpFunction %void None %7
+%23 = OpLabel
+%i = OpVariable %_ptr_Function_int Function
+OpStore %i %int_0
+OpBranch %24
+%24 = OpLabel
+OpLoopMerge %25 %26 None
+OpBranch %27
+%27 = OpLabel
+%28 = OpLoad %int %i
+%29 = OpSLessThan %bool %28 %int_1
+OpBranchConditional %29 %30 %25
+%30 = OpLabel
+OpStore %_GLF_color %21
+%31 = OpFunctionCall %float %f_
+OpBranch %26
+%26 = OpLabel
+%32 = OpLoad %int %i
+%33 = OpIAdd %int %32 %int_1
+OpStore %i %33
+OpBranch %24
+%25 = OpLabel
+OpStore %_GLF_color %22
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string main_after =
+      R"(%main = OpFunction %void None %7
+%23 = OpLabel
+%38 = OpVariable %_ptr_Function_float Function
+%i = OpVariable %_ptr_Function_int Function
+OpStore %i %int_0
+OpBranch %24
+%24 = OpLabel
+OpLoopMerge %25 %26 None
+OpBranch %27
+%27 = OpLabel
+%28 = OpLoad %int %i
+%29 = OpSLessThan %bool %28 %int_1
+OpBranchConditional %29 %30 %25
+%30 = OpLabel
+OpStore %_GLF_color %21
+OpBranch %39
+%39 = OpLabel
+OpLoopMerge %40 %41 None
+OpBranch %42
+%42 = OpLabel
+OpSelectionMerge %43 None
+OpBranchConditional %true %44 %43
+%44 = OpLabel
+OpStore %38 %float_1
+OpBranch %40
+%43 = OpLabel
+OpUnreachable
+%41 = OpLabel
+OpBranchConditional %false %39 %40
+%40 = OpLabel
+%31 = OpLoad %float %38
+OpBranch %26
+%26 = OpLabel
+%32 = OpLoad %int %i
+%33 = OpIAdd %int %32 %int_1
+OpStore %i %33
+OpBranch %24
+%25 = OpLabel
+OpStore %_GLF_color %22
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string callee =
+      R"(%f_ = OpFunction %float None %9
+%34 = OpLabel
+OpSelectionMerge %35 None
+OpBranchConditional %true %36 %35
+%36 = OpLabel
+OpReturnValue %float_1
+%35 = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<InlineExhaustivePass>(
+      predefs + main_before + callee,
+      predefs + new_predefs + main_after + callee, false, true);
 }
 
 TEST_F(InlineTest, Decorated1) {
@@ -2589,7 +2791,6 @@ TEST_F(InlineTest, SetParent) {
   }
 }
 
-#ifdef SPIRV_EFFCEE
 TEST_F(InlineTest, OpKill) {
   const std::string text = R"(
 ; CHECK: OpFunction
@@ -2601,6 +2802,7 @@ TEST_F(InlineTest, OpKill) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %void = OpTypeVoid
 %voidfuncty = OpTypeFunction %void
 %main = OpFunction %void None %voidfuncty
@@ -2630,6 +2832,7 @@ TEST_F(InlineTest, OpKillWithTrailingInstructions) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -2679,6 +2882,7 @@ TEST_F(InlineTest, OpKillInIf) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -2731,6 +2935,7 @@ TEST_F(InlineTest, OpKillInLoop) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -2840,14 +3045,73 @@ TEST_F(InlineTest, OpVariableWithInit) {
 
   SinglePassRunAndMatch<InlineExhaustivePass>(text, true);
 }
-#endif
+
+TEST_F(InlineTest, DontInlineDirectlyRecursiveFunc) {
+  // Test that the name of the result id of the call is deleted.
+  const std::string test =
+      R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %1 "main"
+OpExecutionMode %1 OriginUpperLeft
+OpDecorate %2 DescriptorSet 439418829
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%_struct_6 = OpTypeStruct %float %float
+%7 = OpTypeFunction %_struct_6
+%1 = OpFunction %void Pure|Const %4
+%8 = OpLabel
+%2 = OpFunctionCall %_struct_6 %9
+OpKill
+OpFunctionEnd
+%9 = OpFunction %_struct_6 None %7
+%10 = OpLabel
+%11 = OpFunctionCall %_struct_6 %9
+OpUnreachable
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<InlineExhaustivePass>(test, test, false, true);
+}
+
+TEST_F(InlineTest, DontInlineInDirectlyRecursiveFunc) {
+  // Test that the name of the result id of the call is deleted.
+  const std::string test =
+      R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %1 "main"
+OpExecutionMode %1 OriginUpperLeft
+OpDecorate %2 DescriptorSet 439418829
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%_struct_6 = OpTypeStruct %float %float
+%7 = OpTypeFunction %_struct_6
+%1 = OpFunction %void Pure|Const %4
+%8 = OpLabel
+%2 = OpFunctionCall %_struct_6 %9
+OpKill
+OpFunctionEnd
+%9 = OpFunction %_struct_6 None %7
+%10 = OpLabel
+%11 = OpFunctionCall %_struct_6 %12
+OpUnreachable
+OpFunctionEnd
+%12 = OpFunction %_struct_6 None %7
+%13 = OpLabel
+%14 = OpFunctionCall %_struct_6 %9
+OpUnreachable
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<InlineExhaustivePass>(test, test, false, true);
+}
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Empty modules
 //    Modules without function definitions
 //    Modules in which all functions do not call other functions
-//    Recursive functions (calling self & calling each other)
 //    Caller and callee both accessing the same global variable
 //    Functions with OpLine & OpNoLine
 //    Others?

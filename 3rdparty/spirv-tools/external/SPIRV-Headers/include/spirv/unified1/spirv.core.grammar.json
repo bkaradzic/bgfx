@@ -3814,6 +3814,83 @@
       "version" : "None"
     },
     {
+      "opname" : "OpWritePackedPrimitiveIndices4x8NV",
+      "opcode" : 5299,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Index Offset'" },
+        { "kind" : "IdRef", "name" : "'Packed Indices'" }
+      ],
+      "capabilities" : [ "MeshShadingNV" ],
+      "extensions" : [ "SPV_NV_mesh_shader" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpReportIntersectionNV",
+      "opcode" : 5334,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Hit'" },
+        { "kind" : "IdRef", "name" : "'HitKind'" }
+      ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ]
+    },
+    {
+      "opname" : "OpIgnoreIntersectionNV",
+      "opcode" : 5335,
+
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ]
+    },
+    {
+      "opname" : "OpTerminateRayNV",
+      "opcode" : 5336,
+
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ]
+    },
+    {
+      "opname" : "OpTraceNV",
+      "opcode" : 5337,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'Accel'" },
+        { "kind" : "IdRef", "name" : "'Ray Flags'" },
+        { "kind" : "IdRef", "name" : "'Cull Mask'" },
+        { "kind" : "IdRef", "name" : "'SBT Offset'" },
+        { "kind" : "IdRef", "name" : "'SBT Stride'" },
+        { "kind" : "IdRef", "name" : "'Miss Index'" },
+        { "kind" : "IdRef", "name" : "'Ray Origin'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmin'" },
+        { "kind" : "IdRef", "name" : "'Ray Direction'" },
+        { "kind" : "IdRef", "name" : "'Ray Tmax'" },
+        { "kind" : "IdRef", "name" : "'PayloadId'" }
+      ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ]
+    },
+    {
+      "opname" : "OpTypeAccelerationStructureNV",
+      "opcode" : 5341,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ]
+    },
+    {
+      "opname" : "OpExecuteCallableNV",
+      "opcode" : 5344,
+      "operands" : [
+
+        { "kind" : "IdRef", "name" : "'SBT Index'" },
+        { "kind" : "IdRef", "name" : "'Callable DataId'" }
+      ],
+      "capabilities" : [ "RayTracingNV" ],
+      "extensions" : [ "SPV_NV_ray_tracing" ]
+    },
+    {
       "opname" : "OpSubgroupShuffleINTEL",
       "opcode" : 5571,
       "operands" : [
@@ -3939,6 +4016,22 @@
       "capabilities" : [ "GroupNonUniformPartitionedNV" ],
       "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
       "version" : "None"
+    },
+	{
+      "opname" : "OpImageSampleFootprintNV",
+      "opcode" : 5283,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Sampled Image'" },
+        { "kind" : "IdRef", "name" : "'Coordinate'" },
+        { "kind" : "IdRef", "name" : "'Granularity'" },
+        { "kind" : "IdRef", "name" : "'Coarse'" },
+        { "kind" : "ImageOperands", "quantifier" : "?" }
+      ],
+      "capabilities" : [ "ImageFootprintNV" ],
+      "extensions" : [ "SPV_NV_shader_image_footprint" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -4010,6 +4103,32 @@
           "parameters" : [
             { "kind" : "IdRef" }
           ]
+        },
+        {
+          "enumerant" : "MakeTexelAvailableKHR",
+          "value" : "0x0100",
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ]
+        },
+        {
+          "enumerant" : "MakeTexelVisibleKHR",
+          "value" : "0x0200",
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ]
+        },
+        {
+          "enumerant" : "NonPrivateTexelKHR",
+          "value" : "0x0400",
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
+        },
+        {
+          "enumerant" : "VolatileTexelKHR",
+          "value" : "0x0800",
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
         }
       ]
     },
@@ -4176,6 +4295,21 @@
         {
           "enumerant" : "ImageMemory",
           "value" : "0x0800"
+        },
+        {
+          "enumerant" : "OutputMemoryKHR",
+          "value" : "0x1000",
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
+        },
+        {
+          "enumerant" : "MakeAvailableKHR",
+          "value" : "0x2000",
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
+        },
+        {
+          "enumerant" : "MakeVisibleKHR",
+          "value" : "0x4000",
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
         }
       ]
     },
@@ -4201,6 +4335,27 @@
         {
           "enumerant" : "Nontemporal",
           "value" : "0x0004"
+        },
+        {
+          "enumerant" : "MakePointerAvailableKHR",
+          "value" : "0x0008",
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ],
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
+        },
+        {
+          "enumerant" : "MakePointerVisibleKHR",
+          "value" : "0x0010",
+          "parameters" : [
+            { "kind" : "IdScope" }
+          ],
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
+        },
+        {
+          "enumerant" : "NonPrivatePointerKHR",
+          "value" : "0x0020",
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
         }
       ]
     },
@@ -4287,6 +4442,46 @@
           "enumerant" : "Kernel",
           "value" : 6,
           "capabilities" : [ "Kernel" ]
+        },
+        {
+          "enumerant" : "TaskNV",
+          "value" : 5267,
+          "capabilities" : [ "MeshShadingNV" ]
+        },
+        {
+          "enumerant" : "MeshNV",
+          "value" : 5268,
+          "capabilities" : [ "MeshShadingNV" ]
+        },
+        {
+          "enumerant" : "RayGenerationNV",
+          "value" : 5313,
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "IntersectionNV",
+          "value" : 5314,
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "AnyHitNV",
+          "value" : 5315,
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "ClosestHitNV",
+          "value" : 5316,
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "MissNV",
+          "value" : 5317,
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "CallableNV",
+          "value" : 5318,
+          "capabilities" : [ "RayTracingNV" ]
         }
       ]
     },
@@ -4328,6 +4523,11 @@
           "enumerant" : "OpenCL",
           "value" : 2,
           "capabilities" : [ "Kernel" ]
+        },
+        {
+          "enumerant" : "VulkanKHR",
+          "value" : 3,
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
         }
       ]
     },
@@ -4475,7 +4675,7 @@
         {
           "enumerant" : "OutputVertices",
           "value" : 26,
-          "capabilities" : [ "Geometry", "Tessellation" ],
+          "capabilities" : [ "Geometry", "Tessellation", "MeshShadingNV" ],
           "parameters" : [
             { "kind" : "LiteralInteger", "name" : "'Vertex count'" }
           ]
@@ -4483,7 +4683,7 @@
         {
           "enumerant" : "OutputPoints",
           "value" : 27,
-          "capabilities" : [ "Geometry" ]
+          "capabilities" : [ "Geometry", "MeshShadingNV" ]
         },
         {
           "enumerant" : "OutputLineStrip",
@@ -4573,11 +4773,99 @@
           "extensions" : [ "SPV_KHR_post_depth_coverage" ],
           "version" : "None"
         },
+{
+          "enumerant" : "DenormPreserve",
+          "value" : 4459,
+          "capabilities" : [ "DenormPreserve"],
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DenormFlushToZero",
+          "value" : 4460,
+          "capabilities" : [ "DenormFlushToZero"],
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SignedZeroInfNanPreserve",
+          "value" : 4461,
+          "capabilities" : [ "SignedZeroInfNanPreserve"],
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTE",
+          "value" : 4462,
+          "capabilities" : [ "RoundingModeRTE"],
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTZ",
+          "value" : 4463,
+          "capabilities" : [ "RoundingModeRTZ"],
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Target Width'" }
+          ],
+          "version" : "None"
+        },
         {
           "enumerant" : "StencilRefReplacingEXT",
           "value" : 5027,
           "capabilities" : [ "StencilExportEXT" ],
           "extensions" : [ "SPV_EXT_shader_stencil_export" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "OutputLinesNV",
+          "value" : 5269,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "OutputPrimitivesNV",
+          "value" : 5270,
+          "capabilities" : [ "MeshShadingNV" ],
+          "parameters" : [
+            { "kind" : "LiteralInteger", "name" : "'Primitive count'" }
+          ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DerivativeGroupQuadsNV",
+          "value" : 5289,
+          "capabilities" : [ "ComputeDerivativeGroupQuadsNV" ],
+          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DerivativeGroupLinearNV",
+          "value" : 5290,
+          "capabilities" : [ "ComputeDerivativeGroupLinearNV" ],
+          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "OutputTrianglesNV",
+          "value" : 5298,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
           "version" : "None"
         }
       ]
@@ -4649,6 +4937,42 @@
           ],
           "capabilities" : [ "Shader" ],
           "version" : "1.3"
+        },
+        {
+          "enumerant" : "CallableDataNV",
+          "value" : 5328,
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "IncomingCallableDataNV",
+          "value" : 5329,
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "RayPayloadNV",
+          "value" : 5338,
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "HitAttributeNV",
+          "value" : 5339,
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "IncomingRayPayloadNV",
+          "value" : 5342,
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ]
+        },
+        {
+          "enumerant" : "ShaderRecordBufferNV",
+          "value" : 5343,
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "capabilities" : [ "RayTracingNV" ]
         }
       ]
     },
@@ -4659,11 +4983,12 @@
         {
           "enumerant" : "1D",
           "value" : 0,
-          "capabilities" : [ "Sampled1D" ]
+          "capabilities" : [ "Sampled1D", "Image1D" ]
         },
         {
           "enumerant" : "2D",
-          "value" : 1
+          "value" : 1,
+          "capabilities" : [ "Shader", "Kernel", "ImageMSArray" ]
         },
         {
           "enumerant" : "3D",
@@ -4672,17 +4997,17 @@
         {
           "enumerant" : "Cube",
           "value" : 3,
-          "capabilities" : [ "Shader" ]
+          "capabilities" : [ "Shader", "ImageCubeArray" ]
         },
         {
           "enumerant" : "Rect",
           "value" : 4,
-          "capabilities" : [ "SampledRect" ]
+          "capabilities" : [ "SampledRect", "ImageRect" ]
         },
         {
           "enumerant" : "Buffer",
           "value" : 5,
-          "capabilities" : [ "SampledBuffer" ]
+          "capabilities" : [ "SampledBuffer", "ImageBuffer" ]
         },
         {
           "enumerant" : "SubpassData",
@@ -5542,6 +5867,18 @@
           "version" : "1.2"
         },
         {
+          "enumerant" : "NoSignedWrap",
+          "value" : 4469,
+          "extensions" : [ "SPV_KHR_no_integer_wrap_decoration" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "NoUnsignedWrap",
+          "value" : 4470,
+          "extensions" : [ "SPV_KHR_no_integer_wrap_decoration" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "ExplicitInterpAMD",
           "value" : 4999,
           "extensions" : [ "SPV_AMD_shader_explicit_vertex_parameter" ],
@@ -5576,6 +5913,34 @@
           "parameters" : [
             { "kind" : "LiteralInteger", "name" : "'Offset'" }
           ]
+        },
+        {
+          "enumerant" : "PerPrimitiveNV",
+          "value" : 5271,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PerViewNV",
+          "value" : 5272,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PerTaskNV",
+          "value" : 5273,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+		{
+          "enumerant" : "PerVertexNV",
+          "value" : 5285,
+          "capabilities" : [ "FragmentBarycentricNV" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "version" : "None"
         },
         {
           "enumerant" : "NonUniformEXT",
@@ -5639,7 +6004,7 @@
         {
           "enumerant" : "PrimitiveId",
           "value" : 7,
-          "capabilities" : [ "Geometry", "Tessellation" ]
+          "capabilities" : [ "Geometry", "Tessellation", "RayTracingNV" ]
         },
         {
           "enumerant" : "InvocationId",
@@ -5887,8 +6252,8 @@
         {
           "enumerant" : "DrawIndex",
           "value" : 4426,
-          "capabilities" : [ "DrawParameters" ],
-          "extensions" : [ "SPV_KHR_shader_draw_parameters" ],
+          "capabilities" : [ "DrawParameters", "MeshShadingNV" ],
+          "extensions" : [ "SPV_KHR_shader_draw_parameters", "SPV_NV_mesh_shader" ],
           "version" : "1.3"
         },
         {
@@ -5957,7 +6322,8 @@
         {
           "enumerant" : "ViewportMaskNV",
           "value" : 5253,
-          "capabilities" : [ "ShaderViewportMaskNV" ],
+          "capabilities" : [ "ShaderViewportMaskNV", "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_viewport_array2", "SPV_NV_mesh_shader" ],
           "version" : "None"
         },
         {
@@ -5977,13 +6343,15 @@
         {
           "enumerant" : "PositionPerViewNV",
           "value" : 5261,
-          "capabilities" : [ "PerViewAttributesNV" ],
+          "capabilities" : [ "PerViewAttributesNV", "MeshShadingNV" ],
+          "extensions" : [ "SPV_NVX_multiview_per_view_attributes", "SPV_NV_mesh_shader" ],
           "version" : "None"
         },
         {
           "enumerant" : "ViewportMaskPerViewNV",
           "value" : 5262,
-          "capabilities" : [ "PerViewAttributesNV" ],
+          "capabilities" : [ "PerViewAttributesNV", "MeshShadingNV" ],
+          "extensions" : [ "SPV_NVX_multiview_per_view_attributes", "SPV_NV_mesh_shader" ],
           "version" : "None"
         },
         {
@@ -5992,6 +6360,188 @@
           "capabilities" : [ "FragmentFullyCoveredEXT" ],
           "extensions" : [ "SPV_EXT_fragment_fully_covered" ],
           "version" : "None"
+        },
+        {
+          "enumerant" : "TaskCountNV",
+          "value" : 5274,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PrimitiveCountNV",
+          "value" : 5275,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PrimitiveIndicesNV",
+          "value" : 5276,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ClipDistancePerViewNV",
+          "value" : 5277,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CullDistancePerViewNV",
+          "value" : 5278,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LayerPerViewNV",
+          "value" : 5279,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MeshViewCountNV",
+          "value" : 5280,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "MeshViewIndicesNV",
+          "value" : 5281,
+          "capabilities" : [ "MeshShadingNV" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BaryCoordNV",
+          "value" : 5286,
+          "capabilities" : [ "FragmentBarycentricNV" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "BaryCoordNoPerspNV",
+          "value" : 5287,
+          "capabilities" : [ "FragmentBarycentricNV" ],
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragSizeEXT",
+          "value" : 5292 ,
+          "capabilities" : [ "FragmentDensityEXT", "ShadingRateNV" ],
+          "extensions" : [ "SPV_EXT_fragment_invocation_density", "SPV_NV_shading_rate" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentSizeNV",
+          "value" : 5292 ,
+          "capabilities" : [ "ShadingRateNV", "FragmentDensityEXT" ],
+          "extensions" : [ "SPV_NV_shading_rate", "SPV_EXT_fragment_invocation_density" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragInvocationCountEXT",
+          "value" : 5293,
+          "capabilities" : [ "FragmentDensityEXT", "ShadingRateNV" ],
+          "extensions" : [ "SPV_EXT_fragment_invocation_density", "SPV_NV_shading_rate" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "InvocationsPerPixelNV",
+          "value" : 5293,
+          "capabilities" : [ "ShadingRateNV", "FragmentDensityEXT" ],
+          "extensions" : [ "SPV_NV_shading_rate", "SPV_EXT_fragment_invocation_density" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "LaunchIdNV",
+          "value" : 5319,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "LaunchSizeNV",
+          "value" : 5320,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "WorldRayOriginNV",
+          "value" : 5321,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "WorldRayDirectionNV",
+          "value" : 5322,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "ObjectRayOriginNV",
+          "value" : 5323,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "ObjectRayDirectionNV",
+          "value" : 5324,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "RayTminNV",
+          "value" : 5325,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "RayTmaxNV",
+          "value" : 5326,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "InstanceCustomIndexNV",
+          "value" : 5327,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "ObjectToWorldNV",
+          "value" : 5330,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "WorldToObjectNV",
+          "value" : 5331,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "HitTNV",
+          "value" : 5332,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "HitKindNV",
+          "value" : 5333,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "IncomingRayFlagsNV",
+          "value" : 5351,
+          "capabilities" : [ "RayTracingNV" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ]
         }
       ]
     },
@@ -6018,6 +6568,11 @@
         {
           "enumerant" : "Invocation",
           "value" : 4
+        },
+        {
+          "enumerant" : "QueueFamilyKHR",
+          "value" : 5,
+          "capabilities" : [ "VulkanMemoryModelKHR" ]
         }
       ]
     },
@@ -6549,6 +7104,36 @@
           "version" : "None"
         },
         {
+          "enumerant" : "DenormPreserve",
+          "value" : 4464,
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DenormFlushToZero",
+          "value" : 4465,
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SignedZeroInfNanPreserve",
+          "value" : 4466,
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTE",
+          "value" : 4467,
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "RoundingModeRTZ",
+          "value" : 4468,
+          "extensions" : [ "SPV_KHR_float_controls" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "Float16ImageAMD",
           "value" : 5008,
           "capabilities" : [ "Shader" ],
@@ -6640,6 +7225,13 @@
           "version" : "None"
         },
         {
+          "enumerant" : "MeshShadingNV",
+          "value" : 5266,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "ShaderNonUniformEXT",
           "value" : 5301,
           "capabilities" : [ "Shader" ],
@@ -6724,6 +7316,13 @@
           "version" : "None"
         },
         {
+          "enumerant" : "RayTracingNV",
+          "value" : 5340,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupShuffleINTEL",
           "value" : 5568,
           "extensions" : [ "SPV_INTEL_subgroups" ],
@@ -6745,6 +7344,56 @@
           "enumerant" : "GroupNonUniformPartitionedNV",
           "value" : 5297,
           "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VulkanMemoryModelKHR",
+          "value" : 5345,
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VulkanMemoryModelDeviceScopeKHR",
+          "value" : 5346,
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ImageFootprintNV",
+          "value" : 5282,
+          "extensions" : [ "SPV_NV_shader_image_footprint" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentBarycentricNV",
+          "value" : 5284,
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ComputeDerivativeGroupQuadsNV",
+          "value" : 5288,
+          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ComputeDerivativeGroupLinearNV",
+          "value" : 5350,
+          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentDensityEXT",
+          "value" : 5291,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_invocation_density", "SPV_NV_shading_rate" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShadingRateNV",
+          "value" : 5291,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_shading_rate", "SPV_EXT_fragment_invocation_density" ],
           "version" : "None"
         }
       ]

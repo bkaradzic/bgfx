@@ -147,13 +147,13 @@ class StatsAggregator {
 
 }  // namespace
 
-spv_result_t AggregateStats(const spv_context_t& context, const uint32_t* words,
+spv_result_t AggregateStats(const spv_context context, const uint32_t* words,
                             const size_t num_words, spv_diagnostic* pDiagnostic,
                             SpirvStats* stats) {
   std::unique_ptr<val::ValidationState_t> vstate;
   spv_validator_options_t options;
   spv_result_t result = ValidateBinaryAndKeepValidationState(
-      &context, &options, words, num_words, pDiagnostic, &vstate);
+      context, &options, words, num_words, pDiagnostic, &vstate);
   if (result != SPV_SUCCESS) return result;
 
   StatsAggregator stats_aggregator(stats, vstate.get());

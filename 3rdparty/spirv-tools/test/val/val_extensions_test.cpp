@@ -88,6 +88,29 @@ TEST_P(ValidateUnknownExtensions, FailSilently) {
   EXPECT_THAT(getDiagnosticString(), HasSubstr(GetErrorString(extension)));
 }
 
+TEST_F(ValidateUnknownExtensions, HitMaxNumOfWarnings) {
+  const std::string str =
+      std::string("OpCapability Shader\n") + "OpCapability Linkage\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpExtension \"bad_ext\"\n" + "OpExtension \"bad_ext\"\n" +
+      "OpMemoryModel Logical GLSL450";
+  CompileSuccessfully(str.c_str());
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Other warnings have been suppressed."));
+}
+
 TEST_F(ValidateExtensionCapabilities, DeclCapabilitySuccess) {
   const std::string str =
       "OpCapability Shader\nOpCapability Linkage\nOpCapability DeviceGroup\n"

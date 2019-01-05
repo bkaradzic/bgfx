@@ -25,8 +25,6 @@ namespace {
 
 using ScalarReplacementTest = PassTest<::testing::Test>;
 
-// TODO(dneto): Add Effcee as required dependency, and make this unconditional.
-#ifdef SPIRV_EFFCEE
 TEST_F(ScalarReplacementTest, SimpleStruct) {
   const std::string text = R"(
 ;
@@ -1151,7 +1149,6 @@ TEST_F(ScalarReplacementTest, NoPartialAccesses2) {
 ; CHECK: OpVariable [[float_ptr]] Function
 ; CHECK: OpVariable [[float_ptr]] Function
 ; CHECK: OpVariable [[float_ptr]] Function
-; CHECK: OpVariable [[float_ptr]] Function
 ; CHECK-NOT: OpVariable
 ;
 OpCapability Shader
@@ -1404,6 +1401,42 @@ OpFunctionEnd
   SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
 }
 
+TEST_F(ScalarReplacementTest, SpecConstantArray) {
+  const std::string text = R"(
+; CHECK: [[int:%\w+]] = OpTypeInt
+; CHECK: [[spec_const:%\w+]] = OpSpecConstant [[int]] 4
+; CHECK: [[spec_op:%\w+]] = OpSpecConstantOp [[int]] IAdd [[spec_const]] [[spec_const]]
+; CHECK: [[array1:%\w+]] = OpTypeArray [[int]] [[spec_const]]
+; CHECK: [[array2:%\w+]] = OpTypeArray [[int]] [[spec_op]]
+; CHECK: [[ptr_array1:%\w+]] = OpTypePointer Function [[array1]]
+; CHECK: [[ptr_array2:%\w+]] = OpTypePointer Function [[array2]]
+; CHECK: OpLabel
+; CHECK-NEXT: OpVariable [[ptr_array1]] Function
+; CHECK-NEXT: OpVariable [[ptr_array2]] Function
+; CHECK-NOT: OpVariable
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%int = OpTypeInt 32 0
+%spec_const = OpSpecConstant %int 4
+%spec_op = OpSpecConstantOp %int IAdd %spec_const %spec_const
+%array_1 = OpTypeArray %int %spec_const
+%array_2 = OpTypeArray %int %spec_op
+%ptr_array_1_Function = OpTypePointer Function %array_1
+%ptr_array_2_Function = OpTypePointer Function %array_2
+%func = OpFunction %void None %void_fn
+%1 = OpLabel
+%var_1 = OpVariable %ptr_array_1_Function Function
+%var_2 = OpVariable %ptr_array_2_Function Function
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
+}
+
 TEST_F(ScalarReplacementTest, CreateAmbiguousNullConstant2) {
   const std::string text = R"(
 ;
@@ -1448,7 +1481,6 @@ OpFunctionEnd
 
   SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
 }
-#endif  // SPIRV_EFFCEE
 
 // Test that a struct of size 4 is not replaced when there is a limit of 2.
 TEST_F(ScalarReplacementTest, TestLimit) {
@@ -1520,6 +1552,45 @@ OpFunctionEnd
   auto result =
       SinglePassRunAndDisassemble<ScalarReplacementPass>(text, true, false, 0);
   EXPECT_EQ(Pass::Status::SuccessWithChange, std::get<1>(result));
+}
+
+TEST_F(ScalarReplacementTest, AmbigousPointer) {
+  const std::string text = R"(
+; CHECK: [[s1:%\w+]] = OpTypeStruct %uint
+; CHECK: [[s2:%\w+]] = OpTypeStruct %uint
+; CHECK: [[s3:%\w+]] = OpTypeStruct [[s2]]
+; CHECK: [[s3_const:%\w+]] = OpConstantComposite [[s3]]
+; CHECK: [[s2_ptr:%\w+]] = OpTypePointer Function [[s2]]
+; CHECK: OpCompositeExtract [[s2]] [[s3_const]]
+
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %5 = OpTypeFunction %void
+       %uint = OpTypeInt 32 0
+  %_struct_7 = OpTypeStruct %uint
+  %_struct_8 = OpTypeStruct %uint
+  %_struct_9 = OpTypeStruct %_struct_8
+     %uint_1 = OpConstant %uint 1
+         %11 = OpConstantComposite %_struct_8 %uint_1
+         %12 = OpConstantComposite %_struct_9 %11
+%_ptr_Function__struct_9 = OpTypePointer Function %_struct_9
+%_ptr_Function__struct_7 = OpTypePointer Function %_struct_7
+          %2 = OpFunction %void None %5
+         %15 = OpLabel
+        %var = OpVariable %_ptr_Function__struct_9 Function
+               OpStore %var %12
+         %ld = OpLoad %_struct_9 %var
+         %ex = OpCompositeExtract %_struct_8 %ld 0
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
 }
 
 }  // namespace

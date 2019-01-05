@@ -52,7 +52,8 @@ class ScalarReplacementPass : public Pass {
     return IRContext::kAnalysisDefUse |
            IRContext::kAnalysisInstrToBlockMapping |
            IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
-           IRContext::kAnalysisCFG | IRContext::kAnalysisNameMap;
+           IRContext::kAnalysisCFG | IRContext::kAnalysisNameMap |
+           IRContext::kAnalysisConstants | IRContext::kAnalysisTypes;
   }
 
  private:
@@ -168,6 +169,11 @@ class ScalarReplacementPass : public Pass {
   //
   // |type| must be a vector or matrix type.
   size_t GetNumElements(const Instruction* type) const;
+
+  // Returns true if |id| is a specialization constant.
+  //
+  // |id| must be registered definition.
+  bool IsSpecConstant(uint32_t id) const;
 
   // Returns an id for a pointer to |id|.
   uint32_t GetOrCreatePointerType(uint32_t id);
