@@ -242,7 +242,7 @@ private:
 class PageCache
 {
 public:
-	PageCache(TextureAtlas* _atlas, PageLoader* _loader, PageIndexer* _indexer, int _count);
+	PageCache(TextureAtlas* _atlas, PageLoader* _loader, int _count);
 	bool touch(Page page);
 	bool request(Page request, bgfx::ViewId blitViewId);
 	void clear();
@@ -255,7 +255,6 @@ public:
 private:
 	TextureAtlas*		m_atlas;
 	PageLoader*			m_loader;
-	PageIndexer*		m_indexer;
 
 	int m_count;
 
