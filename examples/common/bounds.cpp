@@ -137,25 +137,15 @@ void toAabb(Aabb& _aabb, const float* _mtx, const void* _vertices, uint32_t _num
 {
 	bx::Vec3 min, max;
 	uint8_t* vertex = (uint8_t*)_vertices;
+	min = max = bx::mul(bx::load<bx::Vec3>(vertex), _mtx);
 
-	float position[3];
-	bx::vec3MulMtx(position, (float*)vertex, _mtx);
-	min.x = max.x = position[0];
-	min.y = max.y = position[1];
-	min.z = max.z = position[2];
 	vertex += _stride;
 
 	for (uint32_t ii = 1; ii < _numVertices; ++ii)
 	{
-		bx::vec3MulMtx(position, (float*)vertex, _mtx);
+		bx::Vec3 pos = bx::mul(bx::load<bx::Vec3>(vertex), _mtx);
 		vertex += _stride;
 
-		bx::Vec3 pos =
-		{
-			position[0],
-			position[1],
-			position[2],
-		};
 		min = bx::min(pos, min);
 		max = bx::max(pos, max);
 	}
@@ -347,12 +337,7 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 	_sphere.m_radius = bx::sqrt(maxDistSq);
 }
 
-void calcPlaneUv(const Plane& _plane, bx::Vec3& _udir, bx::Vec3& _vdir)
-{
-	bx::calcTangentFrame(_udir, _vdir, _plane.m_normal);
-}
-
-void buildFrustumPlanes(Plane* _result, const float* _viewProj)
+void buildFrustumPlanes(bx::Plane* _result, const float* _viewProj)
 {
 	const float xw = _viewProj[ 3];
 	const float yw = _viewProj[ 7];
@@ -364,76 +349,76 @@ void buildFrustumPlanes(Plane* _result, const float* _viewProj)
 	const float zz = _viewProj[10];
 	const float wz = _viewProj[14];
 
-	Plane& near   = _result[0];
-	Plane& far    = _result[1];
-	Plane& left   = _result[2];
-	Plane& right  = _result[3];
-	Plane& top    = _result[4];
-	Plane& bottom = _result[5];
+	bx::Plane& near   = _result[0];
+	bx::Plane& far    = _result[1];
+	bx::Plane& left   = _result[2];
+	bx::Plane& right  = _result[3];
+	bx::Plane& top    = _result[4];
+	bx::Plane& bottom = _result[5];
 
-	near.m_normal.x = xw - xz;
-	near.m_normal.y = yw - yz;
-	near.m_normal.z = zw - zz;
-	near.m_dist     = ww - wz;
+	near.normal.x = xw - xz;
+	near.normal.y = yw - yz;
+	near.normal.z = zw - zz;
+	near.dist     = ww - wz;
 
-	far.m_normal.x = xw + xz;
-	far.m_normal.y = yw + yz;
-	far.m_normal.z = zw + zz;
-	far.m_dist     = ww + wz;
+	far.normal.x = xw + xz;
+	far.normal.y = yw + yz;
+	far.normal.z = zw + zz;
+	far.dist     = ww + wz;
 
 	const float xx = _viewProj[ 0];
 	const float yx = _viewProj[ 4];
 	const float zx = _viewProj[ 8];
 	const float wx = _viewProj[12];
 
-	left.m_normal.x = xw - xx;
-	left.m_normal.y = yw - yx;
-	left.m_normal.z = zw - zx;
-	left.m_dist     = ww - wx;
+	left.normal.x = xw - xx;
+	left.normal.y = yw - yx;
+	left.normal.z = zw - zx;
+	left.dist     = ww - wx;
 
-	right.m_normal.x = xw + xx;
-	right.m_normal.y = yw + yx;
-	right.m_normal.z = zw + zx;
-	right.m_dist     = ww + wx;
+	right.normal.x = xw + xx;
+	right.normal.y = yw + yx;
+	right.normal.z = zw + zx;
+	right.dist     = ww + wx;
 
 	const float xy = _viewProj[ 1];
 	const float yy = _viewProj[ 5];
 	const float zy = _viewProj[ 9];
 	const float wy = _viewProj[13];
 
-	top.m_normal.x = xw + xy;
-	top.m_normal.y = yw + yy;
-	top.m_normal.z = zw + zy;
-	top.m_dist     = ww + wy;
+	top.normal.x = xw + xy;
+	top.normal.y = yw + yy;
+	top.normal.z = zw + zy;
+	top.dist     = ww + wy;
 
-	bottom.m_normal.x = xw - xy;
-	bottom.m_normal.y = yw - yy;
-	bottom.m_normal.z = zw - zy;
-	bottom.m_dist      = ww - wy;
+	bottom.normal.x = xw - xy;
+	bottom.normal.y = yw - yy;
+	bottom.normal.z = zw - zy;
+	bottom.dist     = ww - wy;
 
-	Plane* plane = _result;
+	bx::Plane* plane = _result;
 	for (uint32_t ii = 0; ii < 6; ++ii)
 	{
-		const float len = bx::length(plane->m_normal);
-		plane->m_normal = bx::normalize(plane->m_normal);
+		const float len = bx::length(plane->normal);
+		plane->normal = bx::normalize(plane->normal);
 		float invLen = 1.0f / len;
-		plane->m_dist *= invLen;
+		plane->dist *= invLen;
 		++plane;
 	}
 }
 
-bx::Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc)
+bx::Vec3 intersectPlanes(const bx::Plane& _pa, const bx::Plane& _pb, const bx::Plane& _pc)
 {
-	const bx::Vec3 axb  = bx::cross(_pa.m_normal, _pb.m_normal);
-	const bx::Vec3 bxc  = bx::cross(_pb.m_normal, _pc.m_normal);
-	const bx::Vec3 cxa  = bx::cross(_pc.m_normal, _pa.m_normal);
-	const bx::Vec3 tmp0 = bx::mul(bxc, _pa.m_dist);
-	const bx::Vec3 tmp1 = bx::mul(cxa, _pb.m_dist);
-	const bx::Vec3 tmp2 = bx::mul(axb, _pc.m_dist);
+	const bx::Vec3 axb  = bx::cross(_pa.normal, _pb.normal);
+	const bx::Vec3 bxc  = bx::cross(_pb.normal, _pc.normal);
+	const bx::Vec3 cxa  = bx::cross(_pc.normal, _pa.normal);
+	const bx::Vec3 tmp0 = bx::mul(bxc, _pa.dist);
+	const bx::Vec3 tmp1 = bx::mul(cxa, _pb.dist);
+	const bx::Vec3 tmp2 = bx::mul(axb, _pc.dist);
 	const bx::Vec3 tmp3 = bx::add(tmp0, tmp1);
 	const bx::Vec3 tmp4 = bx::add(tmp3, tmp2);
 
-	const float denom = bx::dot(_pa.m_normal, bxc);
+	const float denom = bx::dot(_pa.normal, bxc);
 	const bx::Vec3 result = bx::mul(tmp4, -1.0f/denom);
 
 	return result;
@@ -534,9 +519,9 @@ bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit)
 
 bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit)
 {
-	Plane plane;
-	plane.m_normal = _disk.m_normal;
-	plane.m_dist = -bx::dot(_disk.m_center, _disk.m_normal);
+	bx::Plane plane;
+	plane.normal = _disk.m_normal;
+	plane.dist   = -bx::dot(_disk.m_center, _disk.m_normal);
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
@@ -631,21 +616,21 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 		return intersect(_ray, sphere, _hit);
 	}
 
-	Plane plane;
+	bx::Plane plane;
 	bx::Vec3 pos;
 
 	if (0.0f >= height)
 	{
-		plane.m_normal = bx::neg(axis);
+		plane.normal = bx::neg(axis);
 		pos = _cylinder.m_pos;
 	}
 	else
 	{
-		plane.m_normal = axis;
+		plane.normal = axis;
 		pos = _cylinder.m_end;
 	}
 
-	plane.m_dist = -bx::dot(pos, plane.m_normal);
+	plane.dist = -bx::dot(pos, plane.normal);
 
 	Hit tmpHit;
 	_hit = NULL != _hit ? _hit : &tmpHit;
@@ -751,15 +736,15 @@ bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit)
 	return true;
 }
 
-bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
+bool intersect(const Ray& _ray, const bx::Plane& _plane, Hit* _hit)
 {
-	float equation = bx::dot(_ray.m_pos, _plane.m_normal) + _plane.m_dist;
+	float equation = bx::dot(_ray.m_pos, _plane.normal) + _plane.dist;
 	if (0.0f > equation)
 	{
 		return false;
 	}
 
-	float ndotd = bx::dot(_ray.m_dir, _plane.m_normal);
+	float ndotd = bx::dot(_ray.m_dir, _plane.normal);
 	if (0.0f < ndotd)
 	{
 		return false;
@@ -767,7 +752,7 @@ bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 
 	if (NULL != _hit)
 	{
-		_hit->m_normal = _plane.m_normal;
+		_hit->m_normal = _plane.normal;
 
 		float tt = -equation/ndotd;
 		_hit->m_dist = tt;

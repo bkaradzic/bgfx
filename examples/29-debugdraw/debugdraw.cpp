@@ -697,8 +697,8 @@ public:
 				const bx::Vec3 normal = { 0.0f,  1.0f, 0.0f };
 				const bx::Vec3 pos    = { 0.0f, -2.0f, 0.0f };
 
-				Plane plane;
-				bx::calcPlane(&plane.m_normal.x, normal, pos);
+				bx::Plane plane;
+				bx::calcPlane(plane, normal, pos);
 
 				dde.setColor(false
 					|| intersect(&dde, ray, plane)
@@ -818,8 +818,7 @@ public:
 					1.0f
 				};
 
-				float up[3] = { 0.0f, 4.0f, 0.0f };
-				bx::vec3MulMtx(&cylinder.m_end.x, up, mtx);
+				cylinder.m_end = bx::mul({ 0.0f, 4.0f, 0.0f }, mtx);
 				dde.setColor(intersect(&dde, ray, cylinder) ? selected : 0xffffffff);
 				dde.draw(cylinder);
 

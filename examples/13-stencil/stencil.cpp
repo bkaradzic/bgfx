@@ -1123,13 +1123,12 @@ public:
 					mtxReflected(reflectMtx, { 0.0f, 0.01f, 0.0f }, { 0.0f, 1.0f, 0.0f });
 
 					// Reflect lights.
-					float reflectedLights[MAX_NUM_LIGHTS][4];
 					for (uint8_t ii = 0; ii < numLights; ++ii)
 					{
-						bx::vec3MulMtx(reflectedLights[ii], lightPosRadius[ii], reflectMtx);
-						reflectedLights[ii][3] = lightPosRadius[ii][3];
+						bx::Vec3 reflected = bx::mul(bx::load<bx::Vec3>(lightPosRadius[ii]), reflectMtx);
+						bx::store(&s_uniforms.m_lightPosRadius[ii], reflected);
+						s_uniforms.m_lightPosRadius[ii][3] = lightPosRadius[ii][3];
 					}
-					bx::memCopy(s_uniforms.m_lightPosRadius, reflectedLights, numLights * 4*sizeof(float) );
 
 					// Reflect and submit bunny.
 					float mtxReflectedBunny[16];

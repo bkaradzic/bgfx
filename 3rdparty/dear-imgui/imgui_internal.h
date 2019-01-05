@@ -101,6 +101,7 @@ extern IMGUI_API ImGuiContext* GImGui;  // Current implicit ImGui context pointe
 #else
 #define IM_NEWLINE      "\n"
 #endif
+#define IMGUI_DEBUG_LOG(_FMT,...)       printf("[%05d] " _FMT, GImGui->FrameCount, __VA_ARGS__)
 #define IM_STATIC_ASSERT(_COND)         typedef char static_assertion_##__line__[(_COND)?1:-1]
 #define IM_F32_TO_INT8_UNBOUND(_VAL)    ((int)((_VAL) * 255.0f + ((_VAL)>=0 ? 0.5f : -0.5f)))   // Unsaturated, for display purpose
 #define IM_F32_TO_INT8_SAT(_VAL)        ((int)(ImSaturate(_VAL) * 255.0f + 0.5f))               // Saturated, always output 0..255
@@ -694,7 +695,8 @@ struct ImGuiTabBarSortItem
 struct ImGuiContext
 {
     bool                    Initialized;
-    bool                    FrameScopeActive;                   // Set by NewFrame(), cleared by EndFrame()/Render()
+    bool                    FrameScopeActive;                   // Set by NewFrame(), cleared by EndFrame()
+    bool                    FrameScopePushedImplicitWindow;     // Set by NewFrame(), cleared by EndFrame()
     bool                    FontAtlasOwnedByContext;            // Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.
     ImGuiIO                 IO;
     ImGuiStyle              Style;
@@ -859,7 +861,7 @@ struct ImGuiContext
     ImGuiContext(ImFontAtlas* shared_font_atlas) : OverlayDrawList(NULL)
     {
         Initialized = false;
-        FrameScopeActive = false;
+        FrameScopeActive = FrameScopePushedImplicitWindow = false;
         Font = NULL;
         FontSize = FontBaseSize = 0.0f;
         FontAtlasOwnedByContext = shared_font_atlas ? false : true;
@@ -1260,7 +1262,8 @@ namespace ImGui
     // NewFrame
     IMGUI_API void          UpdateHoveredWindowAndCaptureFlags();
     IMGUI_API void          StartMouseMovingWindow(ImGuiWindow* window);
-    IMGUI_API void          UpdateMouseMovingWindow();
+    IMGUI_API void          UpdateMouseMovingWindowNewFrame();
+    IMGUI_API void          UpdateMouseMovingWindowEndFrame();
 
     // Settings
     IMGUI_API void                  MarkIniSettingsDirty();
