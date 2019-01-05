@@ -223,9 +223,30 @@ namespace bgfx { namespace mtl
 			[m_obj setSamplerState:_sampler atIndex:_index];
 		}
 
+		void dispatchThreadgroups(MTLSize _threadgroupsPerGrid, MTLSize _threadsPerThreadgroup)
+		{
+			[m_obj dispatchThreadgroups:_threadgroupsPerGrid threadsPerThreadgroup:_threadsPerThreadgroup];
+		}
+	
+		void dispatchThreadgroupsWithIndirectBuffer(id <MTLBuffer> _indirectBuffer,
+												NSUInteger _indirectBufferOffset, MTLSize _threadsPerThreadgroup)
+		{
+			[m_obj dispatchThreadgroupsWithIndirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset threadsPerThreadgroup:_threadsPerThreadgroup];
+		}
+
 		void endEncoding()
 		{
 			[m_obj endEncoding];
+		}
+
+		void pushDebugGroup(const char* _string)
+		{
+			[m_obj pushDebugGroup:@(_string)];
+		}
+
+		void popDebugGroup()
+		{
+			[m_obj popDebugGroup];
 		}
 	MTL_CLASS_END
 
@@ -322,18 +343,22 @@ namespace bgfx { namespace mtl
 		}
 
 		// Creating Command Objects Needed to Perform Computational Tasks
-		id <MTLComputePipelineState> newComputePipelineStateWithFunction(id <MTLFunction> _computeFunction)
+		id <MTLComputePipelineState> newComputePipelineStateWithFunction(
+			  id <MTLFunction> _computeFunction
+			, MTLPipelineOption _options
+			, MTLComputePipelineReflection** _reflection
+			)
 		{
 			NSError* error;
-			id <MTLComputePipelineState> state = [m_obj newComputePipelineStateWithFunction:_computeFunction error:&error];
-
+			id <MTLComputePipelineState> state = [m_obj newComputePipelineStateWithFunction:_computeFunction options:_options reflection:_reflection error:&error];
+		
 			BX_WARN(NULL == error
 				, "newComputePipelineStateWithFunction failed: %s"
 				, [error.localizedDescription cStringUsingEncoding:NSASCIIStringEncoding]
 				);
 			return state;
 		}
-
+	
 		bool supportsTextureSampleCount(int sampleCount)
 		{
 			if (BX_ENABLED(BX_PLATFORM_IOS) && !iOSVersionEqualOrGreater("9.0.0") )
@@ -486,6 +511,25 @@ namespace bgfx { namespace mtl
 		{
 			[m_obj drawPrimitives:_primitiveType vertexStart:_vertexStart vertexCount:_vertexCount instanceCount:_instanceCount];
 		}
+	
+		void drawPrimitives(
+			  MTLPrimitiveType _primitiveType
+			, id <MTLBuffer> _indirectBuffer
+			, NSUInteger _indirectBufferOffset)
+		{
+			[m_obj drawPrimitives:_primitiveType indirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset];
+		}
+	
+		void drawIndexedPrimitives(
+			  MTLPrimitiveType _primitiveType
+			, MTLIndexType _indexType
+			, id <MTLBuffer> _indexBuffer
+			, NSUInteger _indexBufferOffset
+			, id <MTLBuffer> _indirectBuffer
+			, NSUInteger _indirectBufferOffset)
+		{
+			[m_obj drawIndexedPrimitives:_primitiveType indexType:_indexType indexBuffer:_indexBuffer indexBufferOffset:_indexBufferOffset indirectBuffer:_indirectBuffer indirectBufferOffset:_indirectBufferOffset];
+		}
 
 		void insertDebugSignpost(const char* _string)
 		{
@@ -526,6 +570,11 @@ namespace bgfx { namespace mtl
 		{
 			return [m_obj newTextureViewWithPixelFormat:_pixelFormat];
 		}
+	
+		id<MTLTexture> newTextureViewWithPixelFormat(MTLPixelFormat _pixelFormat, MTLTextureType _textureType, NSRange _levelRange, NSRange _sliceRange)
+		{
+			return [m_obj newTextureViewWithPixelFormat:_pixelFormat textureType:_textureType levels:_levelRange slices:_sliceRange];
+		}
 
 		//properties
 		uint32_t width() const
@@ -537,7 +586,12 @@ namespace bgfx { namespace mtl
 		{
 			return (uint32_t)m_obj.height;
 		}
-
+	
+		uint32_t arrayLength() const
+		{
+			return (uint32_t)m_obj.arrayLength;
+		}
+	
 		MTLPixelFormat pixelFormat() const
 		{
 			return m_obj.pixelFormat;
@@ -567,6 +621,7 @@ namespace bgfx { namespace mtl
 	//descriptors
 	//NOTE: [class new] is same as [[class alloc] init]
 	typedef MTLRenderPipelineDescriptor* RenderPipelineDescriptor;
+	typedef MTLComputePipelineReflection* ComputePipelineReflection;
 
 	inline RenderPipelineDescriptor newRenderPipelineDescriptor()
 	{
@@ -785,11 +840,14 @@ namespace bgfx { namespace mtl
 		bool          m_fragment;
 	};
 
+	struct PipelineStateMtl;
+	
 	struct ProgramMtl
 	{
 		ProgramMtl()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
+			, m_computePS(NULL)
 		{
 		}
 
@@ -802,6 +860,8 @@ namespace bgfx { namespace mtl
 
 		const ShaderMtl* m_vsh;
 		const ShaderMtl* m_fsh;
+		
+		PipelineStateMtl* m_computePS;
 	};
 
 	struct PipelineStateMtl
@@ -815,7 +875,12 @@ namespace bgfx { namespace mtl
 			, m_fshConstantBufferAlignmentMask(0)
 			, m_samplerCount(0)
 			, m_numPredefined(0)
+			, m_rps(NULL)
+			, m_cps(NULL)
 			{
+				m_numThreads[0] = 1;
+				m_numThreads[1] = 1;
+				m_numThreads[2] = 1;
 			}
 
 		~PipelineStateMtl()
@@ -831,6 +896,9 @@ namespace bgfx { namespace mtl
 				UniformBuffer::destroy(m_fshConstantBuffer);
 				m_fshConstantBuffer = NULL;
 			}
+			
+			release(m_rps);
+			release(m_cps);
 		}
 
 		UniformBuffer* m_vshConstantBuffer;
@@ -843,11 +911,14 @@ namespace bgfx { namespace mtl
 
 		SamplerInfo m_samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t	m_samplerCount;
+		
+		uint32_t 	m_numThreads[3];
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
 
 		RenderPipelineState m_rps;
+		ComputePipelineState m_cps;
 	};
 
 	void release(PipelineStateMtl* _ptr)
@@ -875,6 +946,8 @@ namespace bgfx { namespace mtl
 			, m_depth(0)
 			, m_numMips(0)
 		{
+			for(int i=0;i<BX_COUNTOF(m_ptrMips);++i)
+				m_ptrMips[i] = NULL;
 		}
 
 		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
@@ -883,6 +956,8 @@ namespace bgfx { namespace mtl
 		{
 			MTL_RELEASE(m_ptr);
 			MTL_RELEASE(m_ptrStencil);
+			for(int i=0;i<m_numMips;++i)
+				MTL_RELEASE(m_ptrMips[i]);
 		}
 
 		void update(
@@ -902,9 +977,12 @@ namespace bgfx { namespace mtl
 			, uint32_t _flags = BGFX_SAMPLER_INTERNAL_DEFAULT
 			);
 
+		Texture getTextureMipLevel(int _mip);
+		
 		Texture m_ptr;
 		Texture m_ptrMsaa;
 		Texture m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
+		Texture m_ptrMips[14];
 		SamplerState m_sampler;
 		uint64_t m_flags;
 		uint32_t m_width;
