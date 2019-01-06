@@ -150,7 +150,7 @@ public:
 		}
 
 		// Load tile data file
-		auto tileDataFile = new vt::TileDataFile("temp/8k_mars.jpg.vt", m_vti);
+		auto tileDataFile = new vt::TileDataFile("temp/8k_mars.vt", m_vti);
 		tileDataFile->readInfo();
 
 		// Create virtual texture and feedback buffer

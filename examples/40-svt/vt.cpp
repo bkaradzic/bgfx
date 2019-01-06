@@ -1133,49 +1133,68 @@ TileGenerator::~TileGenerator()
 	BX_DELETE(VirtualTexture::getAllocator(), m_tileImage);
 }
 
-bool TileGenerator::generate(const bx::FilePath& filename)
+bool TileGenerator::generate(const bx::FilePath& _filename)
 {
 	// Generate cache filename
-	char tempFilename[256];
-	bx::snprintf(tempFilename, sizeof(tempFilename), "temp/%s.vt", filename.getBaseName().getPtr());
-	bx::FilePath cacheFilename = tempFilename;
+	char tmp[256];
+	bx::snprintf(tmp, sizeof(tmp), "%.*s.vt", _filename.getBaseName().getLength(), _filename.getBaseName().getPtr() );
+
+	bx::FilePath cacheFilename("temp");
+	cacheFilename.join(tmp);
+
 	// Check if tile file already exist
 	{
-		bx::Error error;
+		bx::Error err;
 		bx::FileReader fileReader;
-		fileReader.open(cacheFilename, &error);
-		if (error.isOk())
+
+		if (bx::open(&fileReader, cacheFilename, &err) )
 		{
-			bx::debugPrintf("Tile data file '%s' already exists. Skipping generation.\n", cacheFilename.get());
+			bx::close(&fileReader);
+
+			bx::debugPrintf("Tile data file '%s' already exists. Skipping generation.\n", cacheFilename.get() );
 			return true;
 		}
 	}
+
 	// Read image
 	{
-		bx::debugPrintf("Reading image '%s'.\n", filename.get());
-		bx::Error error;
+		bx::debugPrintf("Reading image '%s'.\n", _filename.get() );
+
+		bx::Error err;
 		bx::FileReader fileReader;
-		fileReader.open(bx::FilePath(filename.get()), &error);
-		if (!error.isOk())
+
+		if (!bx::open(&fileReader, bx::FilePath(_filename.get() ), &err) )
 		{
-			bx::debugPrintf("Image open failed'%s'.\n", filename.get());
+			bx::debugPrintf("Image open failed'%s'.\n", _filename.get() );
 			return false;
 		}
-		auto size = fileReader.seek(0, bx::Whence::End);
-		fileReader.seek(0, bx::Whence::Begin);
-		auto rawImage = (uint8_t*)BX_ALLOC(VirtualTexture::getAllocator(), size);
-		fileReader.read(rawImage, int32_t(size), &error);
-		fileReader.close();
-		if (!error.isOk())
+
+		int64_t size = bx::getSize(&fileReader);
+
+		if (0 == size)
 		{
-			bx::debugPrintf("Image read failed'%s'.\n", filename.get());
+			bx::debugPrintf("Image '%s' size is 0.\n", _filename.get() );
 			return false;
 		}
-		m_sourceImage = bimg::imageParse(VirtualTexture::getAllocator(), rawImage, uint32_t(size), bimg::TextureFormat::BGRA8, &error);
+
+		uint8_t* rawImage = (uint8_t*)BX_ALLOC(VirtualTexture::getAllocator(), size);
+
+		bx::read(&fileReader, rawImage, int32_t(size), &err);
+		bx::close(&fileReader);
+
+		if (!err.isOk() )
+		{
+			bx::debugPrintf("Image read failed'%s'.\n", _filename.get() );
+			BX_FREE(VirtualTexture::getAllocator(), rawImage);
+			return false;
+		}
+
+		m_sourceImage = bimg::imageParse(VirtualTexture::getAllocator(), rawImage, uint32_t(size), bimg::TextureFormat::BGRA8, &err);
 		BX_FREE(VirtualTexture::getAllocator(), rawImage);
-		if (!error.isOk())
+
+		if (!err.isOk() )
 		{
-			bx::debugPrintf("Image parse failed'%s'.\n", filename.get());
+			bx::debugPrintf("Image parse failed'%s'.\n", _filename.get() );
 			return false;
 		}
 	}
@@ -1186,12 +1205,11 @@ bool TileGenerator::generate(const bx::FilePath& filename)
 
 	// Open tile data file
 	m_tileDataFile = BX_NEW(VirtualTexture::getAllocator(), TileDataFile)(cacheFilename, m_info, true);
-
-	m_page1Image = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
-	m_page2Image = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
-	m_tileImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize, m_tilesize, s_channelCount, 0xff);
-	m_2xtileImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize * 2, m_tilesize * 2, s_channelCount, 0xff);
-	m_4xtileImage = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize * 4, m_tilesize * 4, s_channelCount, 0xff);
+	m_page1Image   = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
+	m_page2Image   = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
+	m_tileImage    = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize, m_tilesize, s_channelCount, 0xff);
+	m_2xtileImage  = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize * 2, m_tilesize * 2, s_channelCount, 0xff);
+	m_4xtileImage  = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize * 4, m_tilesize * 4, s_channelCount, 0xff);
 
 	// Generate tiles
 	bx::debugPrintf("Generating tiles\n");
