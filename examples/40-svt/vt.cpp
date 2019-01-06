@@ -1177,7 +1177,7 @@ bool TileGenerator::generate(const bx::FilePath& _filename)
 			return false;
 		}
 
-		uint8_t* rawImage = (uint8_t*)BX_ALLOC(VirtualTexture::getAllocator(), size);
+		uint8_t* rawImage = (uint8_t*)BX_ALLOC(VirtualTexture::getAllocator(), size_t(size) );
 
 		bx::read(&fileReader, rawImage, int32_t(size), &err);
 		bx::close(&fileReader);
