@@ -1534,10 +1534,6 @@ namespace bgfx
 		/// @param[in] _numX Number of groups X.
 		/// @param[in] _numY Number of groups Y.
 		/// @param[in] _numZ Number of groups Z.
-		/// @param[in] _flags View flags. Use
-		///   - `BGFX_VIEW_NONE` - View will be rendered only once if stereo mode is enabled.
-		///   - `BGFX_VIEW_STEREO` - View will be rendered for both eyes if stereo mode is enabled. When
-		///     stereo mode is disabled this flag doesn't have effect.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_dispatch`.
 		///
@@ -1556,10 +1552,6 @@ namespace bgfx
 		/// @param[in] _indirectHandle Indirect buffer.
 		/// @param[in] _start First element in indirect buffer.
 		/// @param[in] _num Number of dispatches.
-		/// @param[in] _flags View flags. Use
-		///   - `BGFX_VIEW_NONE` - View will be rendered only once if stereo mode is enabled.
-		///   - `BGFX_VIEW_STEREO` - View will be rendered for both eyes if stereo mode is enabled. When
-		///     stereo mode is disabled this flag doesn't have effect.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_dispatch_indirect`.
 		///
@@ -3281,7 +3273,7 @@ namespace bgfx
 	///
 	/// @param[in] _id View id.
 	/// @param[in] _view View matrix.
-	/// @param[in] _projProjection matrix.
+	/// @param[in] _proj Projection matrix.
 	///
 	/// @attention C99 equivalent is `bgfx_set_view_transform`.
 	///
@@ -3868,10 +3860,6 @@ namespace bgfx
 	/// @param[in] _numX Number of groups X.
 	/// @param[in] _numY Number of groups Y.
 	/// @param[in] _numZ Number of groups Z.
-	/// @param[in] _flags View flags. Use
-	///   - `BGFX_VIEW_NONE` - View will be rendered only once if stereo mode is enabled.
-	///   - `BGFX_VIEW_STEREO` - View will be rendered for both eyes if stereo mode is enabled. When
-	///     stereo mode is disabled this flag doesn't have effect.
 	///
 	/// @attention C99 equivalent is `bgfx_dispatch`.
 	///
@@ -3890,10 +3878,6 @@ namespace bgfx
 	/// @param[in] _indirectHandle Indirect buffer.
 	/// @param[in] _start First element in indirect buffer.
 	/// @param[in] _num Number of dispatches.
-	/// @param[in] _flags View flags. Use
-	///   - `BGFX_VIEW_NONE` - View will be rendered only once if stereo mode is enabled.
-	///   - `BGFX_VIEW_STEREO` - View will be rendered for both eyes if stereo mode is enabled. When
-	///     stereo mode is disabled this flag doesn't have effect.
 	///
 	/// @attention C99 equivalent is `bgfx_dispatch_indirect`.
 	///
