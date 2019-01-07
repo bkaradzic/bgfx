@@ -2619,7 +2619,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
 <li><code class="docutils literal"><span class="pre">_view</span></code>: View matrix. </li>
-<li><code class="docutils literal"><span class="pre">_projProjection</span></code>: matrix.</li>
+<li><code class="docutils literal"><span class="pre">_proj</span></code>: Projection matrix.</li>
 </ul>
 </dd>
 </dl>
@@ -3426,12 +3426,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Compute program. </li>
 <li><code class="docutils literal"><span class="pre">_numX</span></code>: Number of groups X. </li>
 <li><code class="docutils literal"><span class="pre">_numY</span></code>: Number of groups Y. </li>
-<li><code class="docutils literal"><span class="pre">_numZ</span></code>: Number of groups Z. </li>
-<li><code class="docutils literal"><span class="pre">_flags</span></code>: View flags. Use<ul>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
-</ul>
-</li>
+<li><code class="docutils literal"><span class="pre">_numZ</span></code>: Number of groups Z.</li>
 </ul>
 </dd>
 </dl>
@@ -3451,12 +3446,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Compute program. </li>
 <li><code class="docutils literal"><span class="pre">_indirectHandle</span></code>: Indirect buffer. </li>
 <li><code class="docutils literal"><span class="pre">_start</span></code>: First element in indirect buffer. </li>
-<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of dispatches. </li>
-<li><code class="docutils literal"><span class="pre">_flags</span></code>: View flags. Use<ul>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_NONE</span></code> - View will be rendered only once if stereo mode is enabled.</li>
-<li><code class="docutils literal"><span class="pre">BGFX_VIEW_STEREO</span></code> - View will be rendered for both eyes if stereo mode is enabled. When stereo mode is disabled this flag doesn&#8217;t have effect.</li>
-</ul>
-</li>
+<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of dispatches.</li>
 </ul>
 </dd>
 </dl>
