@@ -9,53 +9,63 @@
 #include <bx/string.h>
 #include <bx/timer.h>
 #include <bx/math.h>
-#include <string>
-
-#define SAMPLE_COUNT 100
 
 struct SampleData
 {
+	static constexpr uint32_t kNumSamples = 100;
+
+	SampleData()
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		m_offset = 0;
+		bx::memSet(m_values, 0, sizeof(m_values) );
+	}
+
 	void pushSample(float value)
 	{
-		values[offset] = value;
-		offset = (offset+1) % SAMPLE_COUNT;
+		m_values[m_offset] = value;
+		m_offset = (m_offset+1) % kNumSamples;
 
+		float min =  bx::kFloatMax;
+		float max = -bx::kFloatMax;
+		float avg =  0.0f;
+
+		for (uint32_t ii = 0; ii < kNumSamples; ++ii)
+		{
+			const float val = m_values[ii];
+			min = bx::min(min, val);
+			max = bx::max(max, val);
+			avg += val;
+		}
+
+		m_avg = avg / kNumSamples;
 	}
 
 	float getMin() const
 	{
-		float minValue = FLT_MAX;
-		for(size_t i = 0; i < SAMPLE_COUNT; ++i)
-		{
-			minValue = bx::min(minValue, values[i]);
-		}
-		return minValue;
+		return m_min;
 	}
 
 	float getMax() const
 	{
-		float maxValue = -FLT_MAX;
-		for(size_t i = 0; i < SAMPLE_COUNT; ++i)
-		{
-			maxValue = bx::max(maxValue, values[i]);
-		}
-		return maxValue;
+		return m_max;
 	}
 
 	float getAvg() const
 	{
-		float avgValue = 0;
-		for(size_t i = 0; i < SAMPLE_COUNT; ++i)
-		{
-			avgValue += values[i];
-		}
-		return avgValue / SAMPLE_COUNT;
+		return m_avg;
 	}
 
+	int32_t m_offset;
+	float m_values[kNumSamples];
 
-	int offset = 0;
-	float values[SAMPLE_COUNT] = {0};
-
+	float m_min = bx::kFloatMax;
+	float m_max = bx::kFloatMax;
+	float m_avg = bx::kFloatMax;
 };
 
 static SampleData s_frameTime;
@@ -130,7 +140,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, ImGuiCond_FirstUseEver
 		);
 	ImGui::SetNextWindowSize(
-		  ImVec2(300.0f, 220.0f)
+		  ImVec2(300.0f, 210.0f)
 		, ImGuiCond_FirstUseEver
 		);
 
@@ -280,23 +290,30 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	const double toMsGpu = 1000.0/stats->gpuTimerFreq;
 	const double frameMs = double(stats->cpuTimeFrame)*toMsCpu;
 
-	s_frameTime.pushSample(float(frameMs));
+	s_frameTime.pushSample(float(frameMs) );
 
 	const float frameMsAvg = s_frameTime.getAvg();
 
-	std::string frameTextOverlay;
-	bx::stringPrintf(frameTextOverlay, "%s%.3fms, %s%.3fms\nAvg: %.3fms, %.1f FPS"
-					 , ICON_FA_ARROW_UP, s_frameTime.getMax()
-					 , ICON_FA_ARROW_DOWN, s_frameTime.getMin()
-					 , frameMsAvg, 1000.0/frameMsAvg
-					 );
+	char frameTextOverlay[256];
+	bx::snprintf(frameTextOverlay, BX_COUNTOF(frameTextOverlay), "%s%.3fms, %s%.3fms\nAvg: %.3fms, %.1f FPS"
+		, ICON_FA_ARROW_UP
+		, s_frameTime.getMax()
+		, ICON_FA_ARROW_DOWN
+		, s_frameTime.getMin()
+		, frameMsAvg
+		, 1000.0/frameMsAvg
+		);
 
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImColor(0.0f,0.5f,0.15f,1.0f).Value);
-	ImGui::PlotHistogram("Frame", s_frameTime.values
-					 , SAMPLE_COUNT, s_frameTime.offset
-					 , frameTextOverlay.c_str()
-					 , 0.0f, 60.0f, ImVec2(0, 45)
-					 );
+	ImGui::PlotHistogram("Frame"
+		, s_frameTime.m_values
+		, SampleData::kNumSamples
+		, s_frameTime.m_offset
+		, frameTextOverlay
+		, 0.0f
+		, 60.0f
+		, ImVec2(0, 45)
+		);
 	ImGui::PopStyleColor();
 
 	ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)"
