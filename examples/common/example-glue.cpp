@@ -23,6 +23,10 @@ struct SampleData
 	{
 		m_offset = 0;
 		bx::memSet(m_values, 0, sizeof(m_values) );
+
+		m_min = 0.0f;
+		m_max = 0.0f;
+		m_avg = 0.0f;
 	}
 
 	void pushSample(float value)
@@ -37,35 +41,22 @@ struct SampleData
 		for (uint32_t ii = 0; ii < kNumSamples; ++ii)
 		{
 			const float val = m_values[ii];
-			min = bx::min(min, val);
-			max = bx::max(max, val);
+			min  = bx::min(min, val);
+			max  = bx::max(max, val);
 			avg += val;
 		}
 
+		m_min = min;
+		m_max = max;
 		m_avg = avg / kNumSamples;
-	}
-
-	float getMin() const
-	{
-		return m_min;
-	}
-
-	float getMax() const
-	{
-		return m_max;
-	}
-
-	float getAvg() const
-	{
-		return m_avg;
 	}
 
 	int32_t m_offset;
 	float m_values[kNumSamples];
 
-	float m_min = bx::kFloatMax;
-	float m_max = bx::kFloatMax;
-	float m_avg = bx::kFloatMax;
+	float m_min;
+	float m_max;
+	float m_avg;
 };
 
 static SampleData s_frameTime;
@@ -292,19 +283,17 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 
 	s_frameTime.pushSample(float(frameMs) );
 
-	const float frameMsAvg = s_frameTime.getAvg();
-
 	char frameTextOverlay[256];
 	bx::snprintf(frameTextOverlay, BX_COUNTOF(frameTextOverlay), "%s%.3fms, %s%.3fms\nAvg: %.3fms, %.1f FPS"
-		, ICON_FA_ARROW_UP
-		, s_frameTime.getMax()
 		, ICON_FA_ARROW_DOWN
-		, s_frameTime.getMin()
-		, frameMsAvg
-		, 1000.0/frameMsAvg
+		, s_frameTime.m_min
+		, ICON_FA_ARROW_UP
+		, s_frameTime.m_max
+		, s_frameTime.m_avg
+		, 1000.0f/s_frameTime.m_avg
 		);
 
-	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImColor(0.0f,0.5f,0.15f,1.0f).Value);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImColor(0.0f, 0.5f, 0.15f, 1.0f).Value);
 	ImGui::PlotHistogram("Frame"
 		, s_frameTime.m_values
 		, SampleData::kNumSamples
@@ -312,7 +301,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, frameTextOverlay
 		, 0.0f
 		, 60.0f
-		, ImVec2(0, 45)
+		, ImVec2(0.0f, 45.0f)
 		);
 	ImGui::PopStyleColor();
 
