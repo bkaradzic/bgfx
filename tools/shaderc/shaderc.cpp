@@ -888,7 +888,7 @@ namespace bgfx
 			  "           asm.js\n"
 			  "           ios\n"
 			  "           linux\n"
-			  "           nacl\n"
+			  "           orbis\n"
 			  "           osx\n"
 			  "           windows\n"
 			  "      --preprocess              Preprocess only.\n"
