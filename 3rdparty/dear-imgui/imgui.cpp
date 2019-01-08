@@ -363,6 +363,8 @@ CODE
  When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all imgui files.
  You can read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2019/01/06 (1.67) - renamed io.InputCharacters[], marked internal as was always intended. Please don't access directly, and use AddInputCharacter() instead!
+ - 2019/01/06 (1.67) - renamed ImFontAtlas::GlyphRangesBuilder to ImFontGlyphRangesBuilder. Keep redirection typedef (will obsolete).
  - 2018/12/10 (1.67) - renamed io.ConfigResizeWindowsFromEdges to io.ConfigWindowsResizeFromEdges as we are doing a large pass on configuration flags.
  - 2018/10/12 (1.66) - renamed misc/stl/imgui_stl.* to misc/cpp/imgui_stdlib.* in prevision for other C++ helper files.
  - 2018/09/28 (1.66) - renamed SetScrollHere() to SetScrollHereY(). Kept redirection function (will obsolete).
@@ -430,6 +432,7 @@ CODE
                        removed the IsItemRectHovered()/IsWindowRectHovered() names introduced in 1.51 since they were merely more consistent names for the two functions we are now obsoleting.
  - 2017/10/17 (1.52) - marked the old 5-parameters version of Begin() as obsolete (still available). Use SetNextWindowSize()+Begin() instead!
  - 2017/10/11 (1.52) - renamed AlignFirstTextHeightToWidgets() to AlignTextToFramePadding(). Kept inline redirection function (will obsolete).
+ - 2017/09/26 (1.52) - renamed ImFont::Glyph to ImFontGlyph. Keep redirection typedef (will obsolete).
  - 2017/09/25 (1.52) - removed SetNextWindowPosCenter() because SetNextWindowPos() now has the optional pivot information to do the same and more. Kept redirection function (will obsolete).
  - 2017/08/25 (1.52) - io.MousePos needs to be set to ImVec2(-FLT_MAX,-FLT_MAX) when mouse is unavailable/missing. Previously ImVec2(-1,-1) was enough but we now accept negative mouse coordinates. In your binding if you need to support unavailable mouse, make sure to replace "io.MousePos = ImVec2(-1,-1)" with "io.MousePos = ImVec2(-FLT_MAX,-FLT_MAX)".
  - 2017/08/22 (1.51) - renamed IsItemHoveredRect() to IsItemRectHovered(). Kept inline redirection function (will obsolete). -> (1.52) use IsItemHovered(ImGuiHoveredFlags_RectOnly)!
@@ -821,7 +824,7 @@ CODE
 
       // Or create your own custom ranges (e.g. for a game you can feed your entire game script and only build the characters the game need)
       ImVector<ImWchar> ranges;
-      ImFontAtlas::GlyphRangesBuilder builder;
+      ImFontGlyphRangesBuilder builder;
       builder.AddText("Hello world");                        // Add a string (here "Hello world" contains 7 unique characters)
       builder.AddChar(0x7262);                               // Add a specific character
       builder.AddRanges(io.Fonts->GetGlyphRangesJapanese()); // Add one of the default ranges
@@ -1168,22 +1171,23 @@ ImGuiIO::ImGuiIO()
 // - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message
 void ImGuiIO::AddInputCharacter(ImWchar c)
 {
-    const int n = ImStrlenW(InputCharacters);
-    if (n + 1 < IM_ARRAYSIZE(InputCharacters))
-    {
-        InputCharacters[n] = c;
-        InputCharacters[n+1] = '\0';
-    }
+    InputQueueCharacters.push_back(c);
 }
 
 void ImGuiIO::AddInputCharactersUTF8(const char* utf8_chars)
 {
-    // We can't pass more wchars than ImGuiIO::InputCharacters[] can hold so don't convert more
-    const int wchars_buf_len = sizeof(ImGuiIO::InputCharacters) / sizeof(ImWchar);
-    ImWchar wchars[wchars_buf_len];
-    ImTextStrFromUtf8(wchars, wchars_buf_len, utf8_chars, NULL);
-    for (int i = 0; i < wchars_buf_len && wchars[i] != 0; i++)
-        AddInputCharacter(wchars[i]);
+    while (*utf8_chars != 0)
+    {
+        unsigned int c = 0;
+        utf8_chars += ImTextCharFromUtf8(&c, utf8_chars, NULL);
+        if (c > 0 && c <= 0xFFFF)
+            InputQueueCharacters.push_back((ImWchar)c);
+    }
+}
+
+void ImGuiIO::ClearInputCharacters()
+{
+    InputQueueCharacters.resize(0);
 }
 
 //-----------------------------------------------------------------------------
@@ -1259,11 +1263,25 @@ void ImStrncpy(char* dst, const char* src, size_t count)
     dst[count-1] = 0;
 }
 
-char* ImStrdup(const char *str)
+char* ImStrdup(const char* str)
 {
-    size_t len = strlen(str) + 1;
-    void* buf = ImGui::MemAlloc(len);
-    return (char*)memcpy(buf, (const void*)str, len);
+    size_t len = strlen(str);
+    void* buf = ImGui::MemAlloc(len + 1);
+    return (char*)memcpy(buf, (const void*)str, len + 1);
+}
+
+char* ImStrdupcpy(char* dst, size_t* p_dst_size, const char* src)
+{
+    size_t dst_buf_size = p_dst_size ? *p_dst_size : strlen(dst) + 1;
+    size_t src_size = strlen(src) + 1;
+    if (dst_buf_size < src_size)
+    {
+        ImGui::MemFree(dst);
+        dst = (char*)ImGui::MemAlloc(src_size);
+        if (p_dst_size)
+            *p_dst_size = src_size;
+    }
+    return (char*)memcpy(dst, (const void*)src, src_size);
 }
 
 const char* ImStrchrRange(const char* str, const char* str_end, char c)
@@ -1337,6 +1355,11 @@ void ImStrTrimBlanks(char* buf)
 // B) When buf==NULL vsnprintf() will return the output size.
 #ifndef IMGUI_DISABLE_FORMAT_STRING_FUNCTIONS
 
+#ifdef IMGUI_USE_STB_SPRINTF
+#define STB_SPRINTF_IMPLEMENTATION
+#include "imstb_sprintf.h"
+#endif
+
 #if defined(_MSC_VER) && !defined(vsnprintf)
 #define vsnprintf _vsnprintf
 #endif
@@ -1345,7 +1368,11 @@ int ImFormatString(char* buf, size_t buf_size, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
+#ifdef IMGUI_USE_STB_SPRINTF
+    int w = stbsp_vsnprintf(buf, (int)buf_size, fmt, args);
+#else
     int w = vsnprintf(buf, buf_size, fmt, args);
+#endif
     va_end(args);
     if (buf == NULL)
         return w;
@@ -1357,7 +1384,11 @@ int ImFormatString(char* buf, size_t buf_size, const char* fmt, ...)
 
 int ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args)
 {
+#ifdef IMGUI_USE_STB_SPRINTF
+    int w = stbsp_vsnprintf(buf, (int)buf_size, fmt, args);
+#else
     int w = vsnprintf(buf, buf_size, fmt, args);
+#endif
     if (buf == NULL)
         return w;
     if (w == -1 || w >= (int)buf_size)
@@ -1367,7 +1398,9 @@ int ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args)
 }
 #endif // #ifdef IMGUI_DISABLE_FORMAT_STRING_FUNCTIONS
 
-// Pass data_size==0 for zero-terminated strings
+// Pass data_size == 0 for zero-terminated strings, data_size > 0 for non-string data.
+// Pay attention that data_size==0 will yield different results than passing strlen(data) because the zero-terminated codepath handles ###.
+// This should technically be split into two distinct functions (ImHashData/ImHashStr), perhaps once we remove the silly static variable.
 // FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements.
 ImU32 ImHash(const void* data, int data_size, ImU32 seed)
 {
@@ -1766,15 +1799,15 @@ ImU32 ImGui::GetColorU32(ImU32 col)
 //-----------------------------------------------------------------------------
 
 // std::lower_bound but without the bullshit
-static ImVector<ImGuiStorage::Pair>::iterator LowerBound(ImVector<ImGuiStorage::Pair>& data, ImGuiID key)
+static ImGuiStorage::Pair* LowerBound(ImVector<ImGuiStorage::Pair>& data, ImGuiID key)
 {
-    ImVector<ImGuiStorage::Pair>::iterator first = data.begin();
-    ImVector<ImGuiStorage::Pair>::iterator last = data.end();
+    ImGuiStorage::Pair* first = data.Data;
+    ImGuiStorage::Pair* last = data.Data + data.Size;
     size_t count = (size_t)(last - first);
     while (count > 0)
     {
         size_t count2 = count >> 1;
-        ImVector<ImGuiStorage::Pair>::iterator mid = first + count2;
+        ImGuiStorage::Pair* mid = first + count2;
         if (mid->key < key)
         {
             first = ++mid;
@@ -1807,7 +1840,7 @@ void ImGuiStorage::BuildSortByKey()
 
 int ImGuiStorage::GetInt(ImGuiID key, int default_val) const
 {
-    ImVector<Pair>::iterator it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    ImGuiStorage::Pair* it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
     if (it == Data.end() || it->key != key)
         return default_val;
     return it->val_i;
@@ -1820,7 +1853,7 @@ bool ImGuiStorage::GetBool(ImGuiID key, bool default_val) const
 
 float ImGuiStorage::GetFloat(ImGuiID key, float default_val) const
 {
-    ImVector<Pair>::iterator it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    ImGuiStorage::Pair* it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
     if (it == Data.end() || it->key != key)
         return default_val;
     return it->val_f;
@@ -1828,7 +1861,7 @@ float ImGuiStorage::GetFloat(ImGuiID key, float default_val) const
 
 void* ImGuiStorage::GetVoidPtr(ImGuiID key) const
 {
-    ImVector<Pair>::iterator it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    ImGuiStorage::Pair* it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
     if (it == Data.end() || it->key != key)
         return NULL;
     return it->val_p;
@@ -1837,7 +1870,7 @@ void* ImGuiStorage::GetVoidPtr(ImGuiID key) const
 // References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
 int* ImGuiStorage::GetIntRef(ImGuiID key, int default_val)
 {
-    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    ImGuiStorage::Pair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
         it = Data.insert(it, Pair(key, default_val));
     return &it->val_i;
@@ -1850,7 +1883,7 @@ bool* ImGuiStorage::GetBoolRef(ImGuiID key, bool default_val)
 
 float* ImGuiStorage::GetFloatRef(ImGuiID key, float default_val)
 {
-    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    ImGuiStorage::Pair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
         it = Data.insert(it, Pair(key, default_val));
     return &it->val_f;
@@ -1858,7 +1891,7 @@ float* ImGuiStorage::GetFloatRef(ImGuiID key, float default_val)
 
 void** ImGuiStorage::GetVoidPtrRef(ImGuiID key, void* default_val)
 {
-    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    ImGuiStorage::Pair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
         it = Data.insert(it, Pair(key, default_val));
     return &it->val_p;
@@ -1867,7 +1900,7 @@ void** ImGuiStorage::GetVoidPtrRef(ImGuiID key, void* default_val)
 // FIXME-OPT: Need a way to reuse the result of lower_bound when doing GetInt()/SetInt() - not too bad because it only happens on explicit interaction (maximum one a frame)
 void ImGuiStorage::SetInt(ImGuiID key, int val)
 {
-    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    ImGuiStorage::Pair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
     {
         Data.insert(it, Pair(key, val));
@@ -1883,7 +1916,7 @@ void ImGuiStorage::SetBool(ImGuiID key, bool val)
 
 void ImGuiStorage::SetFloat(ImGuiID key, float val)
 {
-    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    ImGuiStorage::Pair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
     {
         Data.insert(it, Pair(key, val));
@@ -1894,7 +1927,7 @@ void ImGuiStorage::SetFloat(ImGuiID key, float val)
 
 void ImGuiStorage::SetVoidPtr(ImGuiID key, void* val)
 {
-    ImVector<Pair>::iterator it = LowerBound(Data, key);
+    ImGuiStorage::Pair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
     {
         Data.insert(it, Pair(key, val));
@@ -2391,6 +2424,7 @@ ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name)
     WindowPadding = ImVec2(0.0f, 0.0f);
     WindowRounding = 0.0f;
     WindowBorderSize = 0.0f;
+    NameBufLen = (int)strlen(name) + 1;
     MoveId = GetID("#MOVE");
     ChildId = 0;
     Scroll = ImVec2(0.0f, 0.0f);
@@ -2680,7 +2714,8 @@ bool ImGui::ItemAdd(const ImRect& bb, ImGuiID id, const ImRect* nav_bb_arg)
     window->DC.LastItemStatusFlags = ImGuiItemStatusFlags_None;
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
-    ImGuiTestEngineHook_ItemAdd(bb, id);
+    if (id != 0)
+        ImGuiTestEngineHook_ItemAdd(&g, bb, id);
 #endif
 
     // Clipping test
@@ -3234,7 +3269,7 @@ void ImGui::NewFrame()
     ImGuiContext& g = *GImGui;
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
-    ImGuiTestEngineHook_PreNewFrame();
+    ImGuiTestEngineHook_PreNewFrame(&g);
 #endif
 
     // Check user data
@@ -3410,7 +3445,7 @@ void ImGui::NewFrame()
     g.FrameScopePushedImplicitWindow = true;
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
-    ImGuiTestEngineHook_PostNewFrame();
+    ImGuiTestEngineHook_PostNewFrame(&g);
 #endif
 }
 
@@ -3717,7 +3752,7 @@ void ImGui::EndFrame()
 
     // Clear Input data for next frame
     g.IO.MouseWheel = g.IO.MouseWheelH = 0.0f;
-    memset(g.IO.InputCharacters, 0, sizeof(g.IO.InputCharacters));
+    g.IO.InputQueueCharacters.resize(0);
     memset(g.IO.NavInputs, 0, sizeof(g.IO.NavInputs));
 }
 
@@ -4801,6 +4836,18 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->ClipRect = ImVec4(-FLT_MAX,-FLT_MAX,+FLT_MAX,+FLT_MAX);
         window->LastFrameActive = current_frame;
         window->IDStack.resize(1);
+
+        // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
+        // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
+        bool window_title_visible_elsewhere = false;
+        if (g.NavWindowingList != NULL && (window->Flags & ImGuiWindowFlags_NoNavFocus) == 0)   // Window titles visible when using CTRL+TAB
+            window_title_visible_elsewhere = true;
+        if (window_title_visible_elsewhere && !window_just_created && strcmp(name, window->Name) != 0)
+        {
+            size_t buf_len = (size_t)window->NameBufLen;
+            window->Name = ImStrdupcpy(window->Name, &buf_len, name);
+            window->NameBufLen = (int)buf_len;
+        }
 
         // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 

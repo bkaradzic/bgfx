@@ -174,8 +174,7 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
       bool is_const;
       uint32_t value;
       std::tie(is_int32, is_const, value) = _.EvalInt32IfConst(length->id());
-      if (is_int32 && is_const && !spvOpcodeIsSpecConstant(length->opcode()) &&
-          value != constituent_count) {
+      if (is_int32 && is_const && value != constituent_count) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << opcode_name
                << " Constituent count does not match "
@@ -315,6 +314,57 @@ spv_result_t ValidateConstantNull(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
+                                    const Instruction* inst) {
+  const auto op = inst->GetOperandAs<SpvOp>(2);
+
+  // The binary parser already ensures that the op is valid for *some*
+  // environment.  Here we check restrictions.
+  switch(op) {
+    case SpvOpQuantizeToF16:
+      if (!_.HasCapability(SpvCapabilityShader)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Specialization constant operation " << spvOpcodeString(op)
+               << " requires Shader capability";
+      }
+      break;
+
+    case SpvOpConvertFToS:
+    case SpvOpConvertSToF:
+    case SpvOpConvertFToU:
+    case SpvOpConvertUToF:
+    case SpvOpUConvert:
+    case SpvOpConvertPtrToU:
+    case SpvOpConvertUToPtr:
+    case SpvOpGenericCastToPtr:
+    case SpvOpPtrCastToGeneric:
+    case SpvOpBitcast:
+    case SpvOpFNegate:
+    case SpvOpFAdd:
+    case SpvOpFSub:
+    case SpvOpFMul:
+    case SpvOpFDiv:
+    case SpvOpFRem:
+    case SpvOpFMod:
+    case SpvOpAccessChain:
+    case SpvOpInBoundsAccessChain:
+    case SpvOpPtrAccessChain:
+    case SpvOpInBoundsPtrAccessChain:
+      if (!_.HasCapability(SpvCapabilityKernel)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Specialization constant operation " << spvOpcodeString(op)
+               << " requires Kernel capability";
+      }
+      break;
+
+  default:
+      break;
+  }
+
+  // TODO(dneto): Validate result type and arguments to the various operations.
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
@@ -334,6 +384,9 @@ spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case SpvOpConstantNull:
       if (auto error = ValidateConstantNull(_, inst)) return error;
+      break;
+    case SpvOpSpecConstantOp:
+      if (auto error = ValidateSpecConstantOp(_, inst)) return error;
       break;
     default:
       break;

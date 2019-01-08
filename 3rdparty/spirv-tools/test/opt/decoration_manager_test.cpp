@@ -422,6 +422,7 @@ OpGroupDecorate %2 %1 %3
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
 OpDecorate %1 Constant
+%2 = OpDecorationGroup
 %4 = OpTypeInt 32 0
 %1 = OpVariable %4 Uniform
 %3 = OpVariable %4 Uniform

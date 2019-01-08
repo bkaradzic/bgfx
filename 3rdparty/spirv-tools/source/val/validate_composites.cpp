@@ -18,6 +18,7 @@
 
 #include "source/diagnostic.h"
 #include "source/opcode.h"
+#include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validation_state.h"
 
@@ -148,8 +149,8 @@ spv_result_t ValidateVectorExtractDynamic(ValidationState_t& _,
            << "Expected Vector component type to be equal to Result Type";
   }
 
-  const uint32_t index_type = _.GetOperandTypeId(inst, 3);
-  if (!_.IsIntScalarType(index_type)) {
+  const auto index = _.FindDef(inst->GetOperandAs<uint32_t>(3));
+  if (!index || index->type_id() == 0 || !_.IsIntScalarType(index->type_id())) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Index to be int scalar";
   }
@@ -464,16 +465,24 @@ spv_result_t ValidateVectorShuffle(ValidationState_t& _,
   }
 
   // All Component literals must either be FFFFFFFF or in [0, N - 1].
+  // For WebGPU specifically, Component literals cannot be FFFFFFFF.
   auto vector1ComponentCount = vector1Type->GetOperandAs<uint32_t>(2);
   auto vector2ComponentCount = vector2Type->GetOperandAs<uint32_t>(2);
   auto N = vector1ComponentCount + vector2ComponentCount;
   auto firstLiteralIndex = 4;
+  const auto is_webgpu_env = spvIsWebGPUEnv(_.context()->target_env);
   for (size_t i = firstLiteralIndex; i < inst->operands().size(); ++i) {
     auto literal = inst->GetOperandAs<uint32_t>(i);
     if (literal != 0xFFFFFFFF && literal >= N) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "Component index " << literal << " is out of bounds for "
              << "combined (Vector1 + Vector2) size of " << N << ".";
+    }
+
+    if (is_webgpu_env && literal == 0xFFFFFFFF) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Component literal at operand " << i - firstLiteralIndex
+             << " cannot be 0xFFFFFFFF in WebGPU execution environment.";
     }
   }
 

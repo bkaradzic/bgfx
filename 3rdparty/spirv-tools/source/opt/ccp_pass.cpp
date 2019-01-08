@@ -319,7 +319,7 @@ Pass::Status CCPPass::Process() {
 
   // Process all entry point functions.
   ProcessFunction pfn = [this](Function* fp) { return PropagateConstants(fp); };
-  bool modified = ProcessReachableCallTree(pfn, context());
+  bool modified = context()->ProcessReachableCallTree(pfn);
   return modified ? Pass::Status::SuccessWithChange
                   : Pass::Status::SuccessWithoutChange;
 }

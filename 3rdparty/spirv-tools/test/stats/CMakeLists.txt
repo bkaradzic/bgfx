@@ -17,15 +17,10 @@ set(VAL_TEST_COMMON_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/../unit_spirv.h
 )
 
-add_spvtools_unittest(TARGET stats_aggregate
+add_spvtools_unittest(TARGET stats
 	SRCS stats_aggregate_test.cpp
+       stats_analyzer_test.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stats/spirv_stats.cpp
-       ${VAL_TEST_COMMON_SRCS}
-  LIBS ${SPIRV_TOOLS}
-)
-
-add_spvtools_unittest(TARGET stats_analyzer
-	SRCS stats_analyzer_test.cpp
 	     ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stats/stats_analyzer.cpp
        ${VAL_TEST_COMMON_SRCS}
   LIBS ${SPIRV_TOOLS}

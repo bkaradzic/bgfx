@@ -914,6 +914,7 @@ bool LoopDescriptor::CreatePreHeaderBlocksIfMissing() {
   for (auto& loop : *this) {
     if (!loop.GetPreHeaderBlock()) {
       modified = true;
+      // TODO(1841): Handle failure to create pre-header.
       loop.GetOrCreatePreHeaderBlock();
     }
   }

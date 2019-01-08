@@ -29,7 +29,9 @@ namespace analysis {
 void DecorationManager::RemoveDecorationsFrom(
     uint32_t id, std::function<bool(const Instruction&)> pred) {
   const auto ids_iter = id_to_decoration_insts_.find(id);
-  if (ids_iter == id_to_decoration_insts_.end()) return;
+  if (ids_iter == id_to_decoration_insts_.end()) {
+    return;
+  }
 
   TargetData& decorations_info = ids_iter->second;
   auto context = module_->context();
@@ -59,8 +61,14 @@ void DecorationManager::RemoveDecorationsFrom(
       if (!pred(*decoration)) group_decorations_to_keep.push_back(decoration);
     }
 
-    // If all decorations should be kept, move to the next group
-    if (group_decorations_to_keep.size() == group_decorations.size()) continue;
+    // If all decorations should be kept, then we can keep |id| part of the
+    // group.  However, if the group itself has no decorations, we should remove
+    // the id from the group.  This is needed to make |KillNameAndDecorate| work
+    // correctly when a decoration group has no decorations.
+    if (group_decorations_to_keep.size() == group_decorations.size() &&
+        group_decorations.size() != 0) {
+      continue;
+    }
 
     // Otherwise, remove |id| from the targets of |group_id|
     const uint32_t stride = inst->opcode() == SpvOpGroupDecorate ? 1u : 2u;
@@ -136,9 +144,6 @@ void DecorationManager::RemoveDecorationsFrom(
       decorations_info.indirect_decorations.empty() &&
       decorations_info.decorate_insts.empty()) {
     id_to_decoration_insts_.erase(ids_iter);
-
-    // Remove the OpDecorationGroup defining this group.
-    if (is_group) context->KillInst(context->get_def_use_mgr()->GetDef(id));
   }
 }
 
@@ -256,6 +261,7 @@ void DecorationManager::AnalyzeDecorations() {
     AddDecoration(&inst);
   }
 }
+
 void DecorationManager::AddDecoration(Instruction* inst) {
   switch (inst->opcode()) {
     case SpvOpDecorate:
@@ -282,6 +288,43 @@ void DecorationManager::AddDecoration(Instruction* inst) {
     default:
       break;
   }
+}
+
+void DecorationManager::AddDecoration(SpvOp opcode,
+                                      std::vector<Operand> opnds) {
+  IRContext* ctx = module_->context();
+  std::unique_ptr<Instruction> newDecoOp(
+      new Instruction(ctx, opcode, 0, 0, opnds));
+  ctx->AddAnnotationInst(std::move(newDecoOp));
+}
+
+void DecorationManager::AddDecoration(uint32_t inst_id, uint32_t decoration) {
+  AddDecoration(
+      SpvOpDecorate,
+      {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {inst_id}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {decoration}}});
+}
+
+void DecorationManager::AddDecorationVal(uint32_t inst_id, uint32_t decoration,
+                                         uint32_t decoration_value) {
+  AddDecoration(
+      SpvOpDecorate,
+      {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {inst_id}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {decoration}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
+        {decoration_value}}});
+}
+
+void DecorationManager::AddMemberDecoration(uint32_t inst_id, uint32_t member,
+                                            uint32_t decoration,
+                                            uint32_t decoration_value) {
+  AddDecoration(
+      SpvOpMemberDecorate,
+      {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {inst_id}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {member}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {decoration}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
+        {decoration_value}}});
 }
 
 template <typename T>
@@ -474,6 +517,11 @@ void DecorationManager::RemoveDecoration(Instruction* inst) {
       break;
   }
 }
+
+bool operator==(const DecorationManager& lhs, const DecorationManager& rhs) {
+  return lhs.id_to_decoration_insts_ == rhs.id_to_decoration_insts_;
+}
+
 }  // namespace analysis
 }  // namespace opt
 }  // namespace spvtools

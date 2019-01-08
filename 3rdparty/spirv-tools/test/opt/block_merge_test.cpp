@@ -273,7 +273,6 @@ OpFunctionEnd
                                         true);
 }
 
-#ifdef SPIRV_EFFCEE
 TEST_F(BlockMergeTest, PhiInSuccessorOfMergedBlock) {
   const std::string text = R"(
 ; CHECK: OpSelectionMerge [[merge:%\w+]] None
@@ -287,6 +286,7 @@ TEST_F(BlockMergeTest, PhiInSuccessorOfMergedBlock) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -324,6 +324,7 @@ TEST_F(BlockMergeTest, UpdateMergeInstruction) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -358,6 +359,7 @@ TEST_F(BlockMergeTest, TwoMergeBlocksCannotBeMerged) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -398,6 +400,7 @@ TEST_F(BlockMergeTest, MergeContinue) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -431,6 +434,7 @@ TEST_F(BlockMergeTest, TwoHeadersCannotBeMerged) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %true = OpConstantTrue %bool
@@ -532,6 +536,7 @@ TEST_F(BlockMergeTest, DontMergeKill) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %functy = OpTypeFunction %void
@@ -564,6 +569,7 @@ TEST_F(BlockMergeTest, DontMergeUnreachable) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %functy = OpTypeFunction %void
@@ -596,6 +602,7 @@ TEST_F(BlockMergeTest, DontMergeReturn) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %functy = OpTypeFunction %void
@@ -628,6 +635,7 @@ TEST_F(BlockMergeTest, DontMergeSwitch) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %int = OpTypeInt 32 1
@@ -664,6 +672,7 @@ TEST_F(BlockMergeTest, DontMergeReturnValue) {
 OpCapability Shader
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
 %void = OpTypeVoid
 %bool = OpTypeBool
 %functy = OpTypeFunction %void
@@ -691,7 +700,46 @@ OpFunctionEnd
 
   SinglePassRunAndMatch<BlockMergePass>(text, true);
 }
-#endif  // SPIRV_EFFCEE
+
+TEST_F(BlockMergeTest, MergeHeaders) {
+  // Merge two headers when the second is the merge block of the first.
+  const std::string text = R"(
+; CHECK: OpFunction
+; CHECK-NEXT: OpLabel
+; CHECK-NEXT: OpBranch [[header:%\w+]]
+; CHECK-NEXT: [[header]] = OpLabel
+; CHECK-NEXT: OpSelectionMerge [[merge:%\w+]]
+; CHECK: [[merge]] = OpLabel
+; CHEKC: OpReturn
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+%void = OpTypeVoid
+%bool = OpTypeBool
+%functy = OpTypeFunction %void
+%otherfuncty = OpTypeFunction %bool
+%true = OpConstantTrue %bool
+%func = OpFunction %void None %functy
+%1 = OpLabel
+OpBranch %5
+%5 = OpLabel
+OpLoopMerge %8 %7 None
+OpBranch %8
+%7 = OpLabel
+OpBranch %5
+%8 = OpLabel
+OpSelectionMerge %m None
+OpBranchConditional %true %a %m
+%a = OpLabel
+OpBranch %m
+%m = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<BlockMergePass>(text, true);
+}
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //

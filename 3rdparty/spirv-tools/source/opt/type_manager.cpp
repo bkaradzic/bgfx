@@ -59,7 +59,9 @@ std::pair<Type*, std::unique_ptr<Pointer>> TypeManager::GetTypeAndPointerType(
 
 uint32_t TypeManager::GetId(const Type* type) const {
   auto iter = type_to_id_.find(type);
-  if (iter != type_to_id_.end()) return (*iter).second;
+  if (iter != type_to_id_.end()) {
+    return (*iter).second;
+  }
   return 0;
 }
 
@@ -203,6 +205,7 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
   if (id != 0) return id;
 
   std::unique_ptr<Instruction> typeInst;
+  // TODO(1841): Handle id overflow.
   id = context()->TakeNextId();
   RegisterType(id, *type);
   switch (type->kind()) {
@@ -220,6 +223,7 @@ uint32_t TypeManager::GetTypeInstruction(const Type* type) {
     DefineParameterlessCase(Queue);
     DefineParameterlessCase(PipeStorage);
     DefineParameterlessCase(NamedBarrier);
+    DefineParameterlessCase(AccelerationStructureNV);
 #undef DefineParameterlessCase
     case Type::kInteger:
       typeInst = MakeUnique<Instruction>(
@@ -395,6 +399,7 @@ uint32_t TypeManager::FindPointerToType(uint32_t type_id,
   }
 
   // Must create the pointer type.
+  // TODO(1841): Handle id overflow.
   uint32_t resultId = context()->TakeNextId();
   std::unique_ptr<Instruction> type_inst(
       new Instruction(context(), SpvOpTypePointer, 0, resultId,
@@ -465,6 +470,7 @@ Type* TypeManager::RebuildType(const Type& type) {
     DefineNoSubtypeCase(Pipe);
     DefineNoSubtypeCase(PipeStorage);
     DefineNoSubtypeCase(NamedBarrier);
+    DefineNoSubtypeCase(AccelerationStructureNV);
 #undef DefineNoSubtypeCase
     case Type::kVector: {
       const Vector* vec_ty = type.AsVector();
@@ -737,6 +743,9 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
       break;
     case SpvOpTypeNamedBarrier:
       type = new NamedBarrier();
+      break;
+    case SpvOpTypeAccelerationStructureNV:
+      type = new AccelerationStructureNV();
       break;
     default:
       SPIRV_UNIMPLEMENTED(consumer_, "unhandled type");

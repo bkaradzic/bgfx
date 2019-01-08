@@ -349,6 +349,10 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // uniform buffer.
   bool IsVulkanUniformBuffer() const;
 
+  // Returns true if the instruction is an atom operation that uses original
+  // value.
+  inline bool IsAtomicWithLoad() const;
+
   // Returns true if the instruction is an atom operation.
   inline bool IsAtomicOp() const;
 
@@ -426,6 +430,10 @@ class Instruction : public utils::IntrusiveNodeBase<Instruction> {
   // logical addressing rules when using logical addressing.  Normal validation
   // rules for physical addressing.
   bool IsValidBasePointer() const;
+
+  // Dump this instruction on stderr.  Useful when running interactive
+  // debuggers.
+  void Dump() const;
 
  private:
   // Returns the total count of result type id and result id.
@@ -610,15 +618,8 @@ inline void Instruction::ForEachId(
 inline bool Instruction::WhileEachInId(
     const std::function<bool(uint32_t*)>& f) {
   for (auto& opnd : operands_) {
-    switch (opnd.type) {
-      case SPV_OPERAND_TYPE_RESULT_ID:
-      case SPV_OPERAND_TYPE_TYPE_ID:
-        break;
-      default:
-        if (spvIsIdType(opnd.type)) {
-          if (!f(&opnd.words[0])) return false;
-        }
-        break;
+    if (spvIsInIdType(opnd.type)) {
+      if (!f(&opnd.words[0])) return false;
     }
   }
   return true;
@@ -627,15 +628,8 @@ inline bool Instruction::WhileEachInId(
 inline bool Instruction::WhileEachInId(
     const std::function<bool(const uint32_t*)>& f) const {
   for (const auto& opnd : operands_) {
-    switch (opnd.type) {
-      case SPV_OPERAND_TYPE_RESULT_ID:
-      case SPV_OPERAND_TYPE_TYPE_ID:
-        break;
-      default:
-        if (spvIsIdType(opnd.type)) {
-          if (!f(&opnd.words[0])) return false;
-        }
-        break;
+    if (spvIsInIdType(opnd.type)) {
+      if (!f(&opnd.words[0])) return false;
     }
   }
   return true;
@@ -723,6 +717,10 @@ bool Instruction::IsDecoration() const {
 }
 
 bool Instruction::IsLoad() const { return spvOpcodeIsLoad(opcode()); }
+
+bool Instruction::IsAtomicWithLoad() const {
+  return spvOpcodeIsAtomicWithLoad(opcode());
+}
 
 bool Instruction::IsAtomicOp() const { return spvOpcodeIsAtomicOp(opcode()); }
 

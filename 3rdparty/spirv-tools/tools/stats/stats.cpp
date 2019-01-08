@@ -19,19 +19,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "source/table.h"
 #include "spirv-tools/libspirv.h"
 #include "tools/io.h"
 #include "tools/stats/spirv_stats.h"
 #include "tools/stats/stats_analyzer.h"
 
 namespace {
-
-struct ScopedContext {
-  ScopedContext(spv_target_env env) : context(spvContextCreate(env)) {}
-  ~ScopedContext() { spvContextDestroy(context); }
-  spv_context context;
-};
 
 void PrintUsage(char* argv0) {
   printf(
@@ -120,8 +113,8 @@ int main(int argc, char** argv) {
 
   std::cerr << "Processing " << paths.size() << " files..." << std::endl;
 
-  ScopedContext ctx(SPV_ENV_UNIVERSAL_1_1);
-  spvtools::SetContextMessageConsumer(ctx.context, DiagnosticsMessageHandler);
+  spvtools::Context ctx(SPV_ENV_UNIVERSAL_1_1);
+  ctx.SetMessageConsumer(DiagnosticsMessageHandler);
 
   spvtools::stats::SpirvStats stats;
   stats.opcode_markov_hist.resize(1);
@@ -138,7 +131,7 @@ int main(int argc, char** argv) {
     if (!ReadFile<uint32_t>(path, "rb", &contents)) return 1;
 
     if (SPV_SUCCESS !=
-        spvtools::stats::AggregateStats(*ctx.context, contents.data(),
+        spvtools::stats::AggregateStats(ctx.CContext(), contents.data(),
                                         contents.size(), nullptr, &stats)) {
       std::cerr << "error: Failed to aggregate stats for " << path << std::endl;
       return 1;

@@ -363,7 +363,7 @@ uint32_t ScalarReplacementPass::GetOrCreatePointerType(uint32_t id) {
       context()->get_type_mgr()->GetTypeAndPointerType(id,
                                                        SpvStorageClassFunction);
   uint32_t ptrId = 0;
-  if (id == context()->get_type_mgr()->GetId(pointeeTy)) {
+  if (pointeeTy->IsUniqueType()) {
     // Non-ambiguous type, just ask the type manager for an id.
     ptrId = context()->get_type_mgr()->GetTypeInstruction(pointerTy.get());
     pointee_to_pointer_[id] = ptrId;
@@ -500,6 +500,12 @@ size_t ScalarReplacementPass::GetNumElements(const Instruction* type) const {
   return len;
 }
 
+bool ScalarReplacementPass::IsSpecConstant(uint32_t id) const {
+  const Instruction* inst = get_def_use_mgr()->GetDef(id);
+  assert(inst);
+  return spvOpcodeIsSpecConstant(inst->opcode());
+}
+
 Instruction* ScalarReplacementPass::GetStorageType(
     const Instruction* inst) const {
   assert(inst->opcode() == SpvOpVariable);
@@ -536,7 +542,12 @@ bool ScalarReplacementPass::CheckType(const Instruction* typeInst) const {
         return false;
       return true;
     case SpvOpTypeArray:
-      if (IsLargerThanSizeLimit(GetArrayLength(typeInst))) return false;
+      if (IsSpecConstant(typeInst->GetSingleWordInOperand(1u))) {
+        return false;
+      }
+      if (IsLargerThanSizeLimit(GetArrayLength(typeInst))) {
+        return false;
+      }
       return true;
       // TODO(alanbaker): Develop some heuristics for when this should be
       // re-enabled.
@@ -740,8 +751,10 @@ ScalarReplacementPass::GetUsedComponents(Instruction* inst) {
           return false;
         }
       }
+      case SpvOpName:
+      case SpvOpMemberName:
       case SpvOpStore:
-        // No components are used.  Things are just stored to.
+        // No components are used.
         return true;
       case SpvOpAccessChain:
       case SpvOpInBoundsAccessChain: {

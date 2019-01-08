@@ -156,6 +156,7 @@ bool Instruction::IsReadOnlyLoad() const {
 
 Instruction* Instruction::GetBaseAddress() const {
   assert((IsLoad() || opcode() == SpvOpStore || opcode() == SpvOpAccessChain ||
+          opcode() == SpvOpPtrAccessChain ||
           opcode() == SpvOpInBoundsAccessChain || opcode() == SpvOpCopyObject ||
           opcode() == SpvOpImageTexelPointer) &&
          "GetBaseAddress should only be called on instructions that take a "
@@ -187,6 +188,8 @@ Instruction* Instruction::GetBaseAddress() const {
     case SpvOpStore:
     case SpvOpAccessChain:
     case SpvOpInBoundsAccessChain:
+    case SpvOpPtrAccessChain:
+    case SpvOpImageTexelPointer:
     case SpvOpCopyObject:
       // A load or store through a pointer.
       assert(base_inst->IsValidBasePointer() &&
@@ -510,7 +513,7 @@ bool Instruction::IsFloatingPointFoldingAllowed() const {
 
   bool is_nocontract = false;
   context_->get_decoration_mgr()->WhileEachDecoration(
-      opcode_, SpvDecorationNoContraction,
+      result_id(), SpvDecorationNoContraction,
       [&is_nocontract](const Instruction&) {
         is_nocontract = true;
         return false;
@@ -538,6 +541,10 @@ std::string Instruction::PrettyPrint(uint32_t options) const {
 std::ostream& operator<<(std::ostream& str, const Instruction& inst) {
   str << inst.PrettyPrint();
   return str;
+}
+
+void Instruction::Dump() const {
+  std::cerr << "Instruction #" << unique_id() << "\n" << *this << "\n";
 }
 
 bool Instruction::IsOpcodeCodeMotionSafe() const {

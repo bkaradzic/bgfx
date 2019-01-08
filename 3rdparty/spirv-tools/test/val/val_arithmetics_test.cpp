@@ -39,6 +39,7 @@ OpCapability Matrix
 %ext_inst = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %void = OpTypeVoid
 %func = OpTypeFunction %void
 %bool = OpTypeBool
@@ -604,10 +605,9 @@ TEST_F(ValidateArithmetics, DotNotVectorTypeOperand1) {
 )";
 
   CompileSuccessfully(GenerateCode(body).c_str());
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("Expected float vector as operand: Dot operand index 2"));
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), HasSubstr("Operand 6[%float] cannot be a "
+                                               "type"));
 }
 
 TEST_F(ValidateArithmetics, DotNotVectorTypeOperand2) {

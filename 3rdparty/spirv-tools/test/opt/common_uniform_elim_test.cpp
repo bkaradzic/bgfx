@@ -1219,7 +1219,6 @@ OpFunctionEnd
                                                predefs + after, true, true);
 }
 
-#ifdef SPIRV_EFFCEE
 TEST_F(CommonUniformElimTest, MixedConstantAndNonConstantIndexes) {
   const std::string text = R"(
 ; CHECK: [[var:%\w+]] = OpVariable {{%\w+}} Uniform
@@ -1329,7 +1328,61 @@ TEST_F(CommonUniformElimTest, MixedConstantAndNonConstantIndexes) {
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndMatch<CommonUniformElimPass>(text, true);
 }
-#endif  //  SPIRV_EFFCEE
+
+TEST_F(CommonUniformElimTest, LoadPlacedAfterPhi) {
+  const std::string text = R"(
+; CHECK: [[var:%\w+]] = OpVariable {{%\w+}} Uniform
+; CHECK: OpSelectionMerge [[merge:%\w+]]
+; CHECK: [[merge]] = OpLabel
+; CHECK-NEXT: OpPhi
+; CHECK-NEXT: OpLoad {{%\w+}} [[var]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+               OpMemberDecorate %_struct_3 0 Offset 0
+               OpDecorate %_struct_3 Block
+               OpDecorate %4 DescriptorSet 0
+               OpDecorate %4 Binding 0
+       %void = OpTypeVoid
+          %6 = OpTypeFunction %void
+       %bool = OpTypeBool
+      %false = OpConstantFalse %bool
+       %uint = OpTypeInt 32 0
+     %v2uint = OpTypeVector %uint 2
+  %_struct_3 = OpTypeStruct %v2uint
+%_ptr_Uniform__struct_3 = OpTypePointer Uniform %_struct_3
+          %4 = OpVariable %_ptr_Uniform__struct_3 Uniform
+     %uint_0 = OpConstant %uint 0
+%_ptr_Uniform_uint = OpTypePointer Uniform %uint
+     %uint_2 = OpConstant %uint 2
+          %2 = OpFunction %void None %6
+         %15 = OpLabel
+               OpSelectionMerge %16 None
+               OpBranchConditional %false %17 %16
+         %17 = OpLabel
+               OpBranch %16
+         %16 = OpLabel
+         %18 = OpPhi %bool %false %15 %false %17
+               OpSelectionMerge %19 None
+               OpBranchConditional %false %20 %21
+         %20 = OpLabel
+         %22 = OpAccessChain %_ptr_Uniform_uint %4 %uint_0 %uint_0
+         %23 = OpLoad %uint %22
+               OpBranch %19
+         %21 = OpLabel
+               OpBranch %19
+         %19 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndMatch<CommonUniformElimPass>(text, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Disqualifying cases: extensions, decorations, non-logical addressing,

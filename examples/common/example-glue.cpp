@@ -10,6 +10,57 @@
 #include <bx/timer.h>
 #include <bx/math.h>
 
+struct SampleData
+{
+	static constexpr uint32_t kNumSamples = 100;
+
+	SampleData()
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		m_offset = 0;
+		bx::memSet(m_values, 0, sizeof(m_values) );
+
+		m_min = 0.0f;
+		m_max = 0.0f;
+		m_avg = 0.0f;
+	}
+
+	void pushSample(float value)
+	{
+		m_values[m_offset] = value;
+		m_offset = (m_offset+1) % kNumSamples;
+
+		float min =  bx::kFloatMax;
+		float max = -bx::kFloatMax;
+		float avg =  0.0f;
+
+		for (uint32_t ii = 0; ii < kNumSamples; ++ii)
+		{
+			const float val = m_values[ii];
+			min  = bx::min(min, val);
+			max  = bx::max(max, val);
+			avg += val;
+		}
+
+		m_min = min;
+		m_max = max;
+		m_avg = avg / kNumSamples;
+	}
+
+	int32_t m_offset;
+	float m_values[kNumSamples];
+
+	float m_min;
+	float m_max;
+	float m_avg;
+};
+
+static SampleData s_frameTime;
+
 static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _color)
 {
 	const ImGuiStyle& style = ImGui::GetStyle();
@@ -80,7 +131,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 		, ImGuiCond_FirstUseEver
 		);
 	ImGui::SetNextWindowSize(
-		  ImVec2(300.0f, 200.0f)
+		  ImVec2(300.0f, 210.0f)
 		, ImGuiCond_FirstUseEver
 		);
 
@@ -229,10 +280,30 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	const double toMsCpu = 1000.0/stats->cpuTimerFreq;
 	const double toMsGpu = 1000.0/stats->gpuTimerFreq;
 	const double frameMs = double(stats->cpuTimeFrame)*toMsCpu;
-	ImGui::Text("Frame %0.3f [ms], %0.3f FPS"
-		, frameMs
-		, 1000.0/frameMs
+
+	s_frameTime.pushSample(float(frameMs) );
+
+	char frameTextOverlay[256];
+	bx::snprintf(frameTextOverlay, BX_COUNTOF(frameTextOverlay), "%s%.3fms, %s%.3fms\nAvg: %.3fms, %.1f FPS"
+		, ICON_FA_ARROW_DOWN
+		, s_frameTime.m_min
+		, ICON_FA_ARROW_UP
+		, s_frameTime.m_max
+		, s_frameTime.m_avg
+		, 1000.0f/s_frameTime.m_avg
 		);
+
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImColor(0.0f, 0.5f, 0.15f, 1.0f).Value);
+	ImGui::PlotHistogram("Frame"
+		, s_frameTime.m_values
+		, SampleData::kNumSamples
+		, s_frameTime.m_offset
+		, frameTextOverlay
+		, 0.0f
+		, 60.0f
+		, ImVec2(0.0f, 45.0f)
+		);
+	ImGui::PopStyleColor();
 
 	ImGui::Text("Submit CPU %0.3f, GPU %0.3f (L: %d)"
 		, double(stats->cpuTimeEnd - stats->cpuTimeBegin)*toMsCpu

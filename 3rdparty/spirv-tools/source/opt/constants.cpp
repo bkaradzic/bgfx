@@ -165,6 +165,7 @@ std::vector<const Constant*> ConstantManager::GetConstantsFromIds(
 
 Instruction* ConstantManager::BuildInstructionAndAddToModule(
     const Constant* new_const, Module::inst_iterator* pos, uint32_t type_id) {
+  // TODO(1841): Handle id overflow.
   uint32_t new_id = context()->TakeNextId();
   auto new_inst = CreateInstruction(new_id, new_const, type_id);
   if (!new_inst) {

@@ -90,6 +90,7 @@ std::string SSARewriter::PhiCandidate::PrettyPrint(const CFG* cfg) const {
 
 SSARewriter::PhiCandidate& SSARewriter::CreatePhiCandidate(uint32_t var_id,
                                                            BasicBlock* bb) {
+  // TODO(1841): Handle id overflow.
   uint32_t phi_result_id = pass_->context()->TakeNextId();
   auto result = phi_candidates_.emplace(
       phi_result_id, PhiCandidate(var_id, phi_result_id, bb));
@@ -434,12 +435,22 @@ bool SSARewriter::ApplyReplacements() {
         pass_->get_def_use_mgr()->GetDef(phi_candidate->var_id()));
     std::vector<Operand> phi_operands;
     uint32_t arg_ix = 0;
+    std::unordered_map<uint32_t, uint32_t> already_seen;
     for (uint32_t pred_label : pass_->cfg()->preds(phi_candidate->bb()->id())) {
       uint32_t op_val_id = GetPhiArgument(phi_candidate, arg_ix++);
-      phi_operands.push_back(
-          {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {op_val_id}});
-      phi_operands.push_back(
-          {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {pred_label}});
+      if (already_seen.count(pred_label) == 0) {
+        phi_operands.push_back(
+            {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {op_val_id}});
+        phi_operands.push_back(
+            {spv_operand_type_t::SPV_OPERAND_TYPE_ID, {pred_label}});
+        already_seen[pred_label] = op_val_id;
+      } else {
+        // It is possible that there are two edges from the same parent block.
+        // Since the OpPhi can have only one entry for each parent, we have to
+        // make sure the two edges are consistent with each other.
+        assert(already_seen[pred_label] == op_val_id &&
+               "Inconsistent value for duplicate edges.");
+      }
     }
 
     // Generate a new OpPhi instruction and insert it in its basic
@@ -452,7 +463,6 @@ bool SSARewriter::ApplyReplacements() {
     pass_->context()->set_instr_block(&*phi_inst, phi_candidate->bb());
     auto insert_it = phi_candidate->bb()->begin();
     insert_it.InsertBefore(std::move(phi_inst));
-
     pass_->context()->get_decoration_mgr()->CloneDecorations(
         phi_candidate->var_id(), phi_candidate->result_id(),
         {SpvDecorationRelaxedPrecision});

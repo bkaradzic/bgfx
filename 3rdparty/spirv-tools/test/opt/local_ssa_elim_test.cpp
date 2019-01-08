@@ -1528,7 +1528,9 @@ OpReturn
 OpFunctionEnd
 )";
 
+  // Relax logical pointers to allow pointer allocations.
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  ValidatorOptions()->relax_logical_pointer = true;
   SinglePassRunAndCheck<LocalMultiStoreElimPass>(before, after, true, true);
 }
 
@@ -1624,8 +1626,6 @@ OpFunctionEnd
   EXPECT_TRUE(status == Pass::Status::SuccessWithChange);
 }
 
-// TODO(dneto): Add Effcee as required dependency, and make this unconditional.
-#ifdef SPIRV_EFFCEE
 TEST_F(LocalSSAElimTest, CompositeExtractProblem) {
   const std::string spv_asm = R"(
                OpCapability Tessellation
@@ -1664,6 +1664,7 @@ TEST_F(LocalSSAElimTest, CompositeExtractProblem) {
 %_ptr_Function__struct_11 = OpTypePointer Function %_struct_11
           %2 = OpFunction %void None %4
          %33 = OpLabel
+         %66 = OpVariable %_ptr_Function__arr__struct_11_uint_3 Function
          %34 = OpLoad %_arr_v4float_uint_3 %16
          %35 = OpLoad %_arr_v4float_uint_3 %17
          %36 = OpLoad %_arr_v4float_uint_3 %18
@@ -1696,7 +1697,6 @@ TEST_F(LocalSSAElimTest, CompositeExtractProblem) {
          %63 = OpCompositeExtract %v2float %40 2
          %64 = OpCompositeConstruct %_struct_11 %57 %58 %59 %60 %61 %62 %63
          %65 = OpCompositeConstruct %_arr__struct_11_uint_3 %48 %56 %64
-         %66 = OpVariable %_ptr_Function__arr__struct_11_uint_3 Function
          %67 = OpLoad %uint %20
 
 ; CHECK OpStore {{%\d+}} [[store_source:%\d+]]
@@ -1758,7 +1758,67 @@ TEST_F(LocalSSAElimTest, DecoratedVariable) {
 
   SinglePassRunAndMatch<SSARewritePass>(spv_asm, true);
 }
-#endif
+
+// Test that the RelaxedPrecision decoration on the variable to added to the
+// result of the OpPhi instruction.
+TEST_F(LocalSSAElimTest, MultipleEdges) {
+  const std::string spv_asm = R"(
+  ; CHECK: OpSelectionMerge
+  ; CHECK: [[header_bb:%\w+]] = OpLabel
+  ; CHECK-NOT: OpLabel
+  ; CHECK: OpSwitch {{%\w+}} {{%\w+}} 76 [[bb1:%\w+]] 17 [[bb2:%\w+]]
+  ; CHECK-SAME: 4 [[bb2]]
+  ; CHECK: [[bb2]] = OpLabel
+  ; CHECK-NEXT: OpPhi [[type:%\w+]] [[val:%\w+]] [[header_bb]] %int_0 [[bb1]]
+          OpCapability Shader
+     %1 = OpExtInstImport "GLSL.std.450"
+          OpMemoryModel Logical GLSL450
+          OpEntryPoint Fragment %4 "main"
+          OpExecutionMode %4 OriginUpperLeft
+          OpSource ESSL 310
+  %void = OpTypeVoid
+     %3 = OpTypeFunction %void
+   %int = OpTypeInt 32 1
+  %_ptr_Function_int = OpTypePointer Function %int
+  %int_0 = OpConstant %int 0
+  %bool = OpTypeBool
+  %true = OpConstantTrue %bool
+  %false = OpConstantFalse %bool
+  %int_1 = OpConstant %int 1
+     %4 = OpFunction %void None %3
+     %5 = OpLabel
+     %8 = OpVariable %_ptr_Function_int Function
+          OpBranch %10
+    %10 = OpLabel
+          OpLoopMerge %12 %13 None
+          OpBranch %14
+    %14 = OpLabel
+          OpBranchConditional %true %11 %12
+    %11 = OpLabel
+          OpSelectionMerge %19 None
+          OpBranchConditional %false %18 %19
+    %18 = OpLabel
+          OpSelectionMerge %22 None
+          OpSwitch %int_0 %22 76 %20 17 %21 4 %21
+    %20 = OpLabel
+    %23 = OpLoad %int %8
+          OpStore %8 %int_0
+          OpBranch %21
+    %21 = OpLabel
+          OpBranch %22
+    %22 = OpLabel
+          OpBranch %19
+    %19 = OpLabel
+          OpBranch %13
+    %13 = OpLabel
+          OpBranch %10
+    %12 = OpLabel
+          OpReturn
+          OpFunctionEnd
+  )";
+
+  SinglePassRunAndMatch<SSARewritePass>(spv_asm, true);
+}
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //

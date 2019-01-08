@@ -48,6 +48,20 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
               "basic blocks.";
   }
 
+  const Instruction* type_inst = _.FindDef(inst->type_id());
+  assert(type_inst);
+
+  const SpvOp type_opcode = type_inst->opcode();
+  if (type_opcode == SpvOpTypePointer &&
+      _.addressing_model() == SpvAddressingModelLogical) {
+    if (!_.features().variable_pointers &&
+        !_.features().variable_pointers_storage_buffer) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Using pointers with OpPhi requires capability "
+             << "VariablePointers or VariablePointersStorageBuffer";
+    }
+  }
+
   // Create a uniqued vector of predecessor ids for comparison against
   // incoming values. OpBranchConditional %cond %label %label produces two
   // predecessors in the CFG.
@@ -111,7 +125,8 @@ spv_result_t ValidateBranchConditional(ValidationState_t& _,
   // grab the condition operand and check that it is a bool
   const auto cond_id = inst->GetOperandAs<uint32_t>(0);
   const auto cond_op = _.FindDef(cond_id);
-  if (!cond_op || !_.IsBoolScalarType(cond_op->type_id())) {
+  if (!cond_op || !cond_op->type_id() ||
+      !_.IsBoolScalarType(cond_op->type_id())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst) << "Condition operand for "
                                                  "OpBranchConditional must be "
                                                  "of boolean type";
@@ -296,9 +311,9 @@ std::string ConstructErrorString(const Construct& construct,
 // |case_fall_through|. Returns SPV_ERROR_INVALID_CFG if the case construct
 // headed by |target_block| branches to multiple case constructs.
 spv_result_t FindCaseFallThrough(
-    const ValidationState_t& _, BasicBlock* target_block,
-    uint32_t* case_fall_through, const BasicBlock* merge,
-    const std::unordered_set<uint32_t>& case_targets, Function* function) {
+    ValidationState_t& _, BasicBlock* target_block, uint32_t* case_fall_through,
+    const BasicBlock* merge, const std::unordered_set<uint32_t>& case_targets,
+    Function* function) {
   std::vector<BasicBlock*> stack;
   stack.push_back(target_block);
   std::unordered_set<const BasicBlock*> visited;
@@ -336,7 +351,9 @@ spv_result_t FindCaseFallThrough(
       }
 
       if (*case_fall_through == 0u) {
-        *case_fall_through = block->id();
+        if (target_block != block) {
+          *case_fall_through = block->id();
+        }
       } else if (*case_fall_through != block->id()) {
         // Case construct has at most one branch to another case construct.
         return _.diag(SPV_ERROR_INVALID_CFG, target_block->label())
@@ -352,8 +369,7 @@ spv_result_t FindCaseFallThrough(
   return SPV_SUCCESS;
 }
 
-spv_result_t StructuredSwitchChecks(const ValidationState_t& _,
-                                    Function* function,
+spv_result_t StructuredSwitchChecks(ValidationState_t& _, Function* function,
                                     const Instruction* switch_inst,
                                     const BasicBlock* header,
                                     const BasicBlock* merge) {
@@ -452,7 +468,7 @@ spv_result_t StructuredSwitchChecks(const ValidationState_t& _,
 }
 
 spv_result_t StructuredControlFlowChecks(
-    const ValidationState_t& _, Function* function,
+    ValidationState_t& _, Function* function,
     const std::vector<std::pair<uint32_t, uint32_t>>& back_edges) {
   /// Check all backedges target only loop headers and have exactly one
   /// back-edge branching to it

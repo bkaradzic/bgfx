@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include "effcee/effcee.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source/opt/build_module.h"
@@ -24,16 +25,10 @@
 #include "source/opt/type_manager.h"
 #include "spirv-tools/libspirv.hpp"
 
-#ifdef SPIRV_EFFCEE
-#include "effcee/effcee.h"
-#endif
-
 namespace spvtools {
 namespace opt {
 namespace analysis {
 namespace {
-
-#ifdef SPIRV_EFFCEE
 
 bool Validate(const std::vector<uint32_t>& bin) {
   spv_target_env target_env = SPV_ENV_UNIVERSAL_1_2;
@@ -65,8 +60,6 @@ void Match(const std::string& original, IRContext* context,
       << match_result.message() << "\nChecking result:\n"
       << assembly;
 }
-
-#endif
 
 std::vector<std::unique_ptr<Type>> GenerateAllTypes() {
   // Types in this test case are only equal to themselves, nothing else.
@@ -163,7 +156,7 @@ std::vector<std::unique_ptr<Type>> GenerateAllTypes() {
   types.emplace_back(new ReserveId());
   types.emplace_back(new Queue());
 
-  // Pipe, Forward Pointer, PipeStorage, NamedBarrier
+  // Pipe, Forward Pointer, PipeStorage, NamedBarrier, AccelerationStructureNV
   types.emplace_back(new Pipe(SpvAccessQualifierReadWrite));
   types.emplace_back(new Pipe(SpvAccessQualifierReadOnly));
   types.emplace_back(new ForwardPointer(1, SpvStorageClassInput));
@@ -171,6 +164,7 @@ std::vector<std::unique_ptr<Type>> GenerateAllTypes() {
   types.emplace_back(new ForwardPointer(2, SpvStorageClassUniform));
   types.emplace_back(new PipeStorage());
   types.emplace_back(new NamedBarrier());
+  types.emplace_back(new AccelerationStructureNV());
 
   return types;
 }
@@ -206,6 +200,7 @@ TEST(TypeManager, TypeStrings) {
     %pipe    = OpTypePipe ReadOnly
     %ps      = OpTypePipeStorage
     %nb      = OpTypeNamedBarrier
+    %rtacc   = OpTypeAccelerationStructureNV
   )";
 
   std::vector<std::pair<uint32_t, std::string>> type_id_strs = {
@@ -237,6 +232,7 @@ TEST(TypeManager, TypeStrings) {
       {26, "pipe(0)"},
       {27, "pipe_storage"},
       {28, "named_barrier"},
+      {29, "accelerationStructureNV"},
   };
 
   std::unique_ptr<IRContext> context =
@@ -939,7 +935,6 @@ OpMemoryModel Logical GLSL450
   EXPECT_EQ(nullptr, context->get_type_mgr()->GetType(id));
 }
 
-#ifdef SPIRV_EFFCEE
 TEST(TypeManager, GetTypeInstructionInt) {
   const std::string text = R"(
 ; CHECK: OpTypeInt 32 0
@@ -1043,6 +1038,7 @@ TEST(TypeManager, GetTypeInstructionAllTypes) {
 ; CHECK: OpTypeForwardPointer [[uniform_ptr]] Uniform
 ; CHECK: OpTypePipeStorage
 ; CHECK: OpTypeNamedBarrier
+; CHECK: OpTypeAccelerationStructureNV
 OpCapability Shader
 OpCapability Int64
 OpCapability Linkage
@@ -1145,7 +1141,6 @@ OpMemoryModel Logical GLSL450
   context->get_type_mgr()->FindPointerToType(2, SpvStorageClassFunction);
   Match(text, context.get());
 }
-#endif  // SPIRV_EFFCEE
 
 }  // namespace
 }  // namespace analysis

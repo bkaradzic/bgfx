@@ -24,8 +24,6 @@ namespace {
 
 using LocalAccessChainConvertTest = PassTest<::testing::Test>;
 
-#ifdef SPIRV_EFFCEE
-
 TEST_F(LocalAccessChainConvertTest, StructOfVecsOfFloatConverted) {
   //  #version 140
   //
@@ -625,7 +623,6 @@ OpFunctionEnd
   SinglePassRunAndMatch<LocalAccessChainConvertPass>(predefs_before + before,
                                                      true);
 }
-#endif  // SPIRV_EFFCEE
 
 TEST_F(LocalAccessChainConvertTest, DynamicallyIndexedVarNotConverted) {
   //  #version 140

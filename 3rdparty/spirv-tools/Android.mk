@@ -1,6 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 SPVTOOLS_OUT_PATH=$(if $(call host-path-is-absolute,$(TARGET_OUT)),$(TARGET_OUT),$(abspath $(TARGET_OUT)))
-SPVHEADERS_LOCAL_PATH := $(LOCAL_PATH)/external/spirv-headers
+
+ifeq ($(SPVHEADERS_LOCAL_PATH),)
+	SPVHEADERS_LOCAL_PATH := $(LOCAL_PATH)/external/spirv-headers
+endif
 
 SPVTOOLS_SRC_FILES := \
 		source/assembly_grammar.cpp \
@@ -19,6 +22,7 @@ SPVTOOLS_SRC_FILES := \
 		source/print.cpp \
 		source/software_version.cpp \
 		source/spirv_endian.cpp \
+		source/spirv_optimizer_options.cpp \
 		source/spirv_target_env.cpp \
 		source/spirv_validator_options.cpp \
 		source/table.cpp \
@@ -50,7 +54,7 @@ SPVTOOLS_SRC_FILES := \
 		source/val/validate_debug.cpp \
 		source/val/validate_decorations.cpp \
 		source/val/validate_derivatives.cpp \
-		source/val/validate_ext_inst.cpp \
+		source/val/validate_extensions.cpp \
 		source/val/validate_execution_limitations.cpp \
 		source/val/validate_function.cpp \
 		source/val/validate_id.cpp \
@@ -58,12 +62,14 @@ SPVTOOLS_SRC_FILES := \
 		source/val/validate_interfaces.cpp \
 		source/val/validate_instruction.cpp \
 		source/val/validate_memory.cpp \
+		source/val/validate_memory_semantics.cpp \
 		source/val/validate_mode_setting.cpp \
 		source/val/validate_layout.cpp \
 		source/val/validate_literals.cpp \
 		source/val/validate_logicals.cpp \
 		source/val/validate_non_uniform.cpp \
 		source/val/validate_primitives.cpp \
+		source/val/validate_scopes.cpp \
 		source/val/validate_type.cpp
 
 SPVTOOLS_OPT_SRC_FILES := \
@@ -101,8 +107,10 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/inline_pass.cpp \
 		source/opt/inline_exhaustive_pass.cpp \
 		source/opt/inline_opaque_pass.cpp \
+		source/opt/inst_bindless_check_pass.cpp \
 		source/opt/instruction.cpp \
 		source/opt/instruction_list.cpp \
+		source/opt/instrument_pass.cpp \
 		source/opt/ir_context.cpp \
 		source/opt/ir_loader.cpp \
 		source/opt/licm_pass.cpp \
@@ -128,6 +136,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/pass.cpp \
 		source/opt/pass_manager.cpp \
 		source/opt/private_to_local_pass.cpp \
+		source/opt/process_lines_pass.cpp \
 		source/opt/propagator.cpp \
 		source/opt/reduce_load_size.cpp \
 		source/opt/redundancy_elimination.cpp \
@@ -143,9 +152,11 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/strength_reduction_pass.cpp \
 		source/opt/strip_debug_info_pass.cpp \
 		source/opt/strip_reflect_info_pass.cpp \
+		source/opt/struct_cfg_analysis.cpp \
 		source/opt/type_manager.cpp \
 		source/opt/types.cpp \
 		source/opt/unify_const_pass.cpp \
+		source/opt/upgrade_memory_model.cpp \
 		source/opt/value_number_table.cpp \
 		source/opt/vector_dce.cpp \
 		source/opt/workaround1209.cpp
@@ -310,7 +321,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := SPIRV-Tools
 LOCAL_C_INCLUDES := \
 		$(LOCAL_PATH)/include \
-		$(LOCAL_PATH)/external/spirv-headers/include \
+		$(SPVHEADERS_LOCAL_PATH)/include \
 		$(SPVTOOLS_OUT_PATH)
 LOCAL_EXPORT_C_INCLUDES := \
 		$(LOCAL_PATH)/include
@@ -323,7 +334,7 @@ LOCAL_MODULE := SPIRV-Tools-opt
 LOCAL_C_INCLUDES := \
 		$(LOCAL_PATH)/include \
 		$(LOCAL_PATH)/source \
-		$(LOCAL_PATH)/external/spirv-headers/include \
+		$(SPVHEADERS_LOCAL_PATH)/include \
 		$(SPVTOOLS_OUT_PATH)
 LOCAL_CXXFLAGS:=-std=c++11 -fno-exceptions -fno-rtti -Werror
 LOCAL_STATIC_LIBRARIES:=SPIRV-Tools

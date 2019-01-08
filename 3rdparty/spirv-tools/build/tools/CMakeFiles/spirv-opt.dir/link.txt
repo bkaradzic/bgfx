@@ -1,0 +1,1 @@
+/usr/bin/c++   -g   CMakeFiles/spirv-opt.dir/opt/opt.cpp.o CMakeFiles/spirv-opt.dir/util/cli_consumer.cpp.o  -o spirv-opt -rdynamic ../source/opt/libSPIRV-Tools-opt.a ../source/libSPIRV-Tools.a 

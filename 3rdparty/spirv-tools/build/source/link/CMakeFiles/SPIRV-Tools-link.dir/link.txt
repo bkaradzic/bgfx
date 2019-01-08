@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSPIRV-Tools-link.a  CMakeFiles/SPIRV-Tools-link.dir/linker.cpp.o
+/usr/bin/ranlib libSPIRV-Tools-link.a

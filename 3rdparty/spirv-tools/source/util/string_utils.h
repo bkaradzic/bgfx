@@ -37,6 +37,11 @@ std::string ToString(T val) {
 // Converts cardinal number to ordinal number string.
 std::string CardinalToOrdinal(size_t cardinal);
 
+// Splits the string |flag|, of the form '--pass_name[=pass_args]' into two
+// strings "pass_name" and "pass_args".  If |flag| has no arguments, the second
+// string will be empty.
+std::pair<std::string, std::string> SplitFlagArgs(const std::string& flag);
+
 }  // namespace utils
 }  // namespace spvtools
 

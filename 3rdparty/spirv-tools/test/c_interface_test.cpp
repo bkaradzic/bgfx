@@ -150,7 +150,7 @@ TEST(CInterface, SpecifyConsumerNullDiagnosticForDisassembling) {
         EXPECT_STREQ("input", source);
         EXPECT_EQ(0u, position.line);
         EXPECT_EQ(0u, position.column);
-        EXPECT_EQ(5u, position.index);
+        EXPECT_EQ(1u, position.index);
         EXPECT_STREQ("Invalid opcode: 65535", message);
       });
 

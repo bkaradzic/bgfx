@@ -132,7 +132,7 @@ class Loop {
   void SetPreHeaderBlock(BasicBlock* preheader);
 
   // Returns the loop pre-header, if there is no suitable preheader it will be
-  // created.
+  // created.  Returns |nullptr| if it fails to create the preheader.
   BasicBlock* GetOrCreatePreHeaderBlock();
 
   // Returns true if this loop contains any nested loops.

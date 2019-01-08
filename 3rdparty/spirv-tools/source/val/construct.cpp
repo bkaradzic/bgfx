@@ -116,7 +116,10 @@ Construct::ConstructBlockSet Construct::blocks(Function* function) const {
 
     if (merge != block) {
       for (auto succ : *block->successors()) {
-        stack.push_back(succ);
+        // All blocks in the construct must be dominated by the header.
+        if (header->dominates(*succ)) {
+          stack.push_back(succ);
+        }
       }
     }
   }

@@ -112,6 +112,8 @@ using ValidateCapabilityVulkan10 = spvtest::ValidateBase<CapTestParameter>;
 using ValidateCapabilityOpenGL40 = spvtest::ValidateBase<CapTestParameter>;
 // Always assembles using Vulkan 1.1.
 using ValidateCapabilityVulkan11 = spvtest::ValidateBase<CapTestParameter>;
+// Always assembles using WebGPU.
+using ValidateCapabilityWebGPU = spvtest::ValidateBase<CapTestParameter>;
 
 TEST_F(ValidateCapability, Default) {
   const char str[] = R"(
@@ -289,8 +291,10 @@ const std::vector<std::string>& AllVulkan10Capabilities() {
     "DerivativeControl",
     "Geometry",
     "Tessellation",
+    "Float16",
     "Float64",
     "Int64",
+    "Int64Atomics",
     "Int16",
     "TessellationPointSize",
     "GeometryPointSize",
@@ -304,6 +308,7 @@ const std::vector<std::string>& AllVulkan10Capabilities() {
     "CullDistance",
     "ImageCubeArray",
     "SampleRateShading",
+    "Int8",
     "SparseResidency",
     "MinLod",
     "SampledCubeArray",
@@ -312,7 +317,9 @@ const std::vector<std::string>& AllVulkan10Capabilities() {
     "InterpolationFunction",
     "StorageImageReadWithoutFormat",
     "StorageImageWriteWithoutFormat",
-    "MultiViewport"};
+    "MultiViewport",
+    "TransformFeedback",
+    "GeometryStreams"};
   return *r;
 }
 
@@ -330,8 +337,10 @@ const std::vector<std::string>& AllVulkan11Capabilities() {
     "DerivativeControl",
     "Geometry",
     "Tessellation",
+    "Float16",
     "Float64",
     "Int64",
+    "Int64Atomics",
     "Int16",
     "TessellationPointSize",
     "GeometryPointSize",
@@ -345,6 +354,7 @@ const std::vector<std::string>& AllVulkan11Capabilities() {
     "CullDistance",
     "ImageCubeArray",
     "SampleRateShading",
+    "Int8",
     "SparseResidency",
     "MinLod",
     "SampledCubeArray",
@@ -372,8 +382,22 @@ const std::vector<std::string>& AllVulkan11Capabilities() {
     "DeviceGroup",
     "MultiView",
     "VariablePointersStorageBuffer",
-    "VariablePointers"};
+    "VariablePointers",
+    "TransformFeedback",
+    "GeometryStreams"};
   return *r;
+}
+
+const std::vector<std::string>& AllWebGPUCapabilities() {
+  static const auto r = new std::vector<std::string>{
+    "",
+    "Shader",
+    "Matrix",
+    "Sampled1D",
+    "Image1D",
+    "ImageQuery",
+    "DerivativeControl"};
+    return *r;
 }
 
 const std::vector<std::string>& MatrixDependencies() {
@@ -566,6 +590,12 @@ const char kGLSL450MemoryModel[] = \
   " OpCapability Shader"
   " OpMemoryModel Logical GLSL450 ";
 
+const char kVulkanMemoryModel[] = \
+  " OpCapability Shader"
+  " OpCapability VulkanMemoryModelKHR"
+  " OpExtension \"SPV_KHR_vulkan_memory_model\""
+  " OpMemoryModel Logical VulkanKHR ";
+
 const char kVoidFVoid[] = \
   " %void   = OpTypeVoid"
   " %void_f = OpTypeFunction %void"
@@ -596,9 +626,12 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
           std::string(kVoidFVoid), TessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           " OpEntryPoint Geometry %func \"shader\"" +
+          " OpExecutionMode %func InputPoints" +
+          " OpExecutionMode %func OutputPoints" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           " OpEntryPoint Fragment %func \"shader\"" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           " OpEntryPoint GLCompute %func \"shader\"" +
@@ -657,6 +690,8 @@ INSTANTIATE_TEST_CASE_P(ExecutionMode, ValidateCapability,
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func Invocations 42" +
+          " OpExecutionMode %func InputPoints" +
+          " OpExecutionMode %func OutputPoints" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint TessellationControl %func \"shader\" "
@@ -679,20 +714,22 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpExecutionMode %func VertexOrderCcw" +
           std::string(kVoidFVoid), TessellationDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func PixelCenterInteger" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func OriginLowerLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func EarlyFragmentTests" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint TessellationControl %func \"shader\" "
@@ -703,20 +740,24 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpExecutionMode %func Xfb" +
           std::string(kVoidFVoid), std::vector<std::string>{"TransformFeedback"}),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func DepthReplacing" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func DepthGreater" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func DepthLess" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
-          "OpEntryPoint Vertex %func \"shader\" "
+          "OpEntryPoint Fragment %func \"shader\" "
           "OpExecutionMode %func DepthUnchanged" +
+          " OpExecutionMode %func OriginUpperLeft" +
           std::string(kVoidFVoid), ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"shader\" "
@@ -729,18 +770,22 @@ std::make_pair(std::string(kGLSL450MemoryModel) +
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func InputPoints" +
+          " OpExecutionMode %func OutputPoints" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func InputLines" +
+          " OpExecutionMode %func OutputLineStrip" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func InputLinesAdjacency" +
+          " OpExecutionMode %func OutputLineStrip" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func Triangles" +
+          " OpExecutionMode %func OutputTriangleStrip" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint TessellationControl %func \"shader\" "
@@ -749,6 +794,7 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func InputTrianglesAdjacency" +
+          " OpExecutionMode %func OutputTriangleStrip" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint TessellationControl %func \"shader\" "
@@ -761,6 +807,8 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func OutputVertices 42" +
+          " OpExecutionMode %func OutputPoints" +
+          " OpExecutionMode %func InputPoints" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint TessellationControl %func \"shader\" "
@@ -769,14 +817,17 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func OutputPoints" +
+          " OpExecutionMode %func InputPoints" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func OutputLineStrip" +
+          " OpExecutionMode %func InputLines" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Geometry %func \"shader\" "
           "OpExecutionMode %func OutputTriangleStrip" +
+          " OpExecutionMode %func Triangles" +
           std::string(kVoidFVoid), GeometryDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Kernel %func \"shader\" "
@@ -1088,9 +1139,12 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
           "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
           AllCapabilities()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
+          // Uniform must target a non-void value.
           "OpEntryPoint Kernel %func \"compute\" \n"
-          "OpDecorate %intt Uniform\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %int0 Uniform\n"
+          "%intt = OpTypeInt 32 0\n" +
+          "%int0 = OpConstantNull %intt"
+          + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kGLSL450MemoryModel) +
           "OpEntryPoint Vertex %func \"shader\" \n"
@@ -1502,6 +1556,16 @@ std::make_pair(std::string(kGLSL450MemoryModel) +
           AllSpirV10Capabilities())
 )),);
 
+INSTANTIATE_TEST_CASE_P(Capabilities, ValidateCapabilityWebGPU,
+                        Combine(
+                            // All capabilities to try.
+                            ValuesIn(AllCapabilities()),
+                            Values(
+std::make_pair(std::string(kVulkanMemoryModel) +
+          "OpEntryPoint Vertex %func \"shader\" \n" + std::string(kVoidFVoid),
+          AllWebGPUCapabilities())
+)),);
+
 INSTANTIATE_TEST_CASE_P(Capabilities, ValidateCapabilityVulkan11,
                         Combine(
                             // All capabilities to try.
@@ -1689,6 +1753,17 @@ TEST_P(ValidateCapabilityOpenGL40, Capability) {
     CompileSuccessfully(test_code, SPV_ENV_OPENGL_4_0);
     ASSERT_EQ(ExpectedResult(GetParam()),
               ValidateInstructions(SPV_ENV_OPENGL_4_0))
+        << test_code;
+  }
+}
+
+TEST_P(ValidateCapabilityWebGPU, Capability) {
+  const std::string capability = Capability(GetParam());
+  if (Exists(capability, SPV_ENV_WEBGPU_0)) {
+    const std::string test_code = MakeAssembly(GetParam());
+    CompileSuccessfully(test_code, SPV_ENV_WEBGPU_0);
+    ASSERT_EQ(ExpectedResult(GetParam()),
+              ValidateInstructions(SPV_ENV_WEBGPU_0))
         << test_code;
   }
 }
@@ -2294,6 +2369,37 @@ OpFunctionEnd
   CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_0);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_0))
       << getDiagnosticString();
+}
+
+TEST_F(ValidateCapability, VulkanMemoryModelWithVulkanKHR) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpCapability Linkage
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3))
+      << getDiagnosticString();
+}
+
+TEST_F(ValidateCapability, VulkanMemoryModelWithGLSL450) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpCapability Linkage
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical GLSL450
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("VulkanMemoryModelKHR capability must only be "
+                        "specified if the VulkanKHR memory model is used"));
 }
 
 }  // namespace

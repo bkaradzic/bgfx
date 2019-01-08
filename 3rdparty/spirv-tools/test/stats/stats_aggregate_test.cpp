@@ -51,13 +51,13 @@ void DiagnosticsMessageHandler(spv_message_level_t level, const char*,
 // Calls AggregateStats for binary compiled from |code|.
 void CompileAndAggregateStats(const std::string& code, SpirvStats* stats,
                               spv_target_env env = SPV_ENV_UNIVERSAL_1_1) {
-  ScopedContext ctx(env);
-  SetContextMessageConsumer(ctx.context, DiagnosticsMessageHandler);
+  spvtools::Context ctx(env);
+  ctx.SetMessageConsumer(DiagnosticsMessageHandler);
   spv_binary binary;
-  ASSERT_EQ(SPV_SUCCESS, spvTextToBinary(ctx.context, code.c_str(), code.size(),
-                                         &binary, nullptr));
+  ASSERT_EQ(SPV_SUCCESS, spvTextToBinary(ctx.CContext(), code.c_str(),
+                                         code.size(), &binary, nullptr));
 
-  ASSERT_EQ(SPV_SUCCESS, AggregateStats(*ctx.context, binary->code,
+  ASSERT_EQ(SPV_SUCCESS, AggregateStats(ctx.CContext(), binary->code,
                                         binary->wordCount, nullptr, stats));
   spvBinaryDestroy(binary);
 }

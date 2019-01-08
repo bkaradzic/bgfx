@@ -32,10 +32,13 @@ include(GNUInstallDirs)
 include(cmake/setup_build.cmake)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 11)
+
+option(SPIRV_ALLOW_TIMERS "Allow timers via clock_gettime on supported platforms" ON)
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   add_definitions(-DSPIRV_LINUX)
-  set(SPIRV_TIMER_ENABLED ON)
+  set(SPIRV_TIMER_ENABLED ${SPIRV_ALLOW_TIMERS})
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   add_definitions(-DSPIRV_WINDOWS)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "CYGWIN")
@@ -44,7 +47,7 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
   add_definitions(-DSPIRV_MAC)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
   add_definitions(-DSPIRV_ANDROID)
-  set(SPIRV_TIMER_ENABLED ON)
+  set(SPIRV_TIMER_ENABLED ${SPIRV_ALLOW_TIMERS})
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
   add_definitions(-DSPIRV_FREEBSD)
 else()
@@ -138,6 +141,8 @@ function(spvtools_default_compile_options TARGET)
         target_compile_options(${TARGET} PRIVATE
           -fsanitize=${SPIRV_USE_SANITIZER})
       endif()
+      target_compile_options(${TARGET} PRIVATE
+         -ftemplate-depth=1024)
     else()
       target_compile_options(${TARGET} PRIVATE
          -Wno-missing-field-initializers)
@@ -209,11 +214,19 @@ if (${SPIRV_CHECK_CONTEXT})
   add_definitions(-DSPIRV_CHECK_CONTEXT)
 endif()
 
-add_subdirectory(external)
+# Precompiled header macro. Parameters are source file list and filename for pch cpp file.
+macro(spvtools_pch SRCS PCHPREFIX)
+  if(MSVC AND CMAKE_GENERATOR MATCHES "^Visual Studio")
+    set(PCH_NAME "$(IntDir)\\${PCHPREFIX}.pch")
+    # make source files use/depend on PCH_NAME
+    set_source_files_properties(${${SRCS}} PROPERTIES COMPILE_FLAGS "/Yu${PCHPREFIX}.h /FI${PCHPREFIX}.h /Fp${PCH_NAME} /Zm300" OBJECT_DEPENDS "${PCH_NAME}")
+    # make PCHPREFIX.cpp file compile and generate PCH_NAME
+    set_source_files_properties("${PCHPREFIX}.cpp" PROPERTIES COMPILE_FLAGS "/Yc${PCHPREFIX}.h /Fp${PCH_NAME} /Zm300" OBJECT_OUTPUTS "${PCH_NAME}")
+    list(APPEND ${SRCS} "${PCHPREFIX}.cpp")
+  endif()
+endmacro(spvtools_pch)
 
-if (TARGET effcee)
-  add_definitions(-DSPIRV_EFFCEE)
-endif()
+add_subdirectory(external)
 
 add_subdirectory(source)
 add_subdirectory(tools)
@@ -228,6 +241,7 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
       ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/libspirv.hpp
       ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/optimizer.hpp
       ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/linker.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv-tools/instrument.hpp
     DESTINATION
       ${CMAKE_INSTALL_INCLUDEDIR}/spirv-tools/)
 endif(ENABLE_SPIRV_TOOLS_INSTALL)
