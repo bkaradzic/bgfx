@@ -4843,7 +4843,7 @@ namespace bgfx { namespace d3d12
 				if (TextureCube == m_type)
 				{
 					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-					m_uavd.Texture2DArray.MipSlice   = 0;
+					m_uavd.Texture2DArray.MipSlice  = 0;
 					m_uavd.Texture2DArray.ArraySize = 6;
 				}
 
@@ -4860,7 +4860,7 @@ namespace bgfx { namespace d3d12
 				m_uavd.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
 				m_uavd.Texture3D.MipSlice    = 0;
 				m_uavd.Texture3D.FirstWSlice = 0;
-				m_uavd.Texture3D.WSize       = 0;
+				m_uavd.Texture3D.WSize       = m_depth;
 				break;
 			}
 
