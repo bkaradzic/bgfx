@@ -1714,26 +1714,30 @@ namespace bgfx { namespace mtl
 			m_renderCommandEncoder.setStencilReferenceValue(ref);
 		}
 
-		void processArguments(PipelineStateMtl* ps,
-							  NSArray <MTLArgument *>* _vertexArgs,
-							  NSArray <MTLArgument *>* _fragmentArgs)
+		void processArguments(
+			  PipelineStateMtl* ps
+			, NSArray <MTLArgument *>* _vertexArgs
+			, NSArray <MTLArgument *>* _fragmentArgs
+			)
 		{
-			ps->m_numPredefined     = 0;
+			ps->m_numPredefined = 0;
+
 			for (uint32_t shaderType = 0; shaderType < 2; ++shaderType)
 			{
 				UniformBuffer*& constantBuffer = shaderType == 0
-				? ps->m_vshConstantBuffer
-				: ps->m_fshConstantBuffer
-				;
-				uint8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
+					? ps->m_vshConstantBuffer
+					: ps->m_fshConstantBuffer
+					;
+				const int8_t fragmentBit = (1 == shaderType ? BGFX_UNIFORM_FRAGMENTBIT : 0);
 
 				for (MTLArgument* arg in (shaderType == 0 ? _vertexArgs : _fragmentArgs) )
 				{
 					BX_TRACE("arg: %s type:%d", utf8String(arg.name), arg.type);
+
 					if (arg.active)
 					{
 						if (arg.type == MTLArgumentTypeBuffer
-							&&  0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
+						&&  0 == bx::strCmp(utf8String(arg.name), SHADER_UNIFORM_NAME) )
 						{
 							BX_CHECK( arg.index == 0, "Uniform buffer must be in the buffer slot 0.");
 							BX_CHECK( MTLDataTypeStruct == arg.bufferDataType, "%s's type must be a struct",SHADER_UNIFORM_NAME );
@@ -1759,11 +1763,13 @@ namespace bgfx { namespace mtl
 									MTLDataType dataType = uniform.dataType;
 									uint32_t num = 1;
 
-									if ( dataType == MTLDataTypeInt && bx::strLen(name) > 14
-										&& 0 == bx::strCmp(name, "NUM_THREADS_", 12) )
+									if (dataType == MTLDataTypeInt && bx::strLen(name) > 14
+									&&  0 == bx::strCmp(name, "NUM_THREADS_", 12) )
 									{
-										int dim = name[12] - 'X';
-										if ( dim >= 0 && dim <= 2)
+										const int32_t dim = name[12] - 'X';
+
+										if (dim >= 0
+										&&  dim <= 2)
 										{
 											bx::fromString(&ps->m_numThreads[dim], bx::StringView(name, 14, INT_MAX));
 										}
@@ -1786,7 +1792,8 @@ namespace bgfx { namespace mtl
 											break;
 									}
 
-									PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+									const PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
+
 									if (PredefinedUniform::Count != predefined)
 									{
 										ps->m_predefined[ps->m_numPredefined].m_loc   = uint32_t(uniform.offset);
@@ -1849,7 +1856,6 @@ namespace bgfx { namespace mtl
 				}
 			}
 		}
-
 
 		PipelineStateMtl* getPipelineState(
 			  uint64_t _state
