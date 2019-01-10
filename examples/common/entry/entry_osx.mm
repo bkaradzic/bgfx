@@ -461,8 +461,11 @@ namespace entry
 			{
 				bgfx::renderFrame();
 
-				while (dispatchEvent(peekEvent() ) )
+				@autoreleasepool
 				{
+					while (dispatchEvent(peekEvent() ) )
+					{
+					}
 				}
 			}
 

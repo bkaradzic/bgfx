@@ -639,18 +639,11 @@ namespace bgfx { namespace mtl
 
 			g_internalData.context = m_device;
 
-#if BX_PLATFORM_OSX
-			m_pool = [[NSAutoreleasePool alloc] init];
-#endif
 			return true;
 		}
 
 		void shutdown()
 		{
-#if BX_PLATFORM_OSX
-			[m_pool release];
-#endif
-
 			m_occlusionQuery.postReset();
 			m_gpuTimer.shutdown();
 
@@ -1186,11 +1179,6 @@ namespace bgfx { namespace mtl
 
 			m_cmd.kick(true);
 			m_commandBuffer = 0;
-
-#if BX_PLATFORM_OSX
-			[m_pool release];
-			m_pool = [[NSAutoreleasePool alloc] init];
-#endif
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -2308,10 +2296,6 @@ namespace bgfx { namespace mtl
 		RenderCommandEncoder m_renderCommandEncoder;
 		ComputeCommandEncoder m_computeCommandEncoder;
 		FrameBufferHandle    m_renderCommandEncoderFrameBufferHandle;
-
-#if BX_PLATFORM_OSX
-		NSAutoreleasePool*   m_pool;
-#endif
 	};
 
 	RendererContextI* rendererCreate(const Init& _init)
