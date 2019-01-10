@@ -12,6 +12,10 @@
 
 #include "topology.h"
 
+#if BX_PLATFORM_OSX
+#include <objc/message.h>
+#endif
+
 BX_ERROR_RESULT(BGFX_ERROR_TEXTURE_VALIDATION,  BX_MAKEFOURCC('b', 'g', 0, 1) );
 
 namespace bgfx
@@ -2182,10 +2186,30 @@ namespace bgfx
 			}
 		}
 	}
-
+	
+#if BX_PLATFORM_OSX
+	struct NSAutoreleasePoolScope
+	{
+		NSAutoreleasePoolScope()
+		{
+			id obj = class_createInstance(objc_getClass("NSAutoreleasePool"),0);
+			pool = objc_msgSend(obj, sel_getUid("init"));
+		}
+		~NSAutoreleasePoolScope()
+		{
+			objc_msgSend(pool, sel_getUid("release"));
+		}
+		id pool;
+	};
+#endif
+	
 	RenderFrame::Enum Context::renderFrame(int32_t _msecs)
 	{
 		BGFX_PROFILER_SCOPE("bgfx::renderFrame", 0xff2040ff);
+
+#if BX_PLATFORM_OSX
+		NSAutoreleasePoolScope pool;
+#endif
 
 		if (!m_flipAfterRender)
 		{
