@@ -192,6 +192,7 @@ project "spirv-cross"
 			"/wd4018", -- warning C4018: '<': signed/unsigned mismatch
 			"/wd4245", -- warning C4245: 'return': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
 			"/wd4706", -- warning C4706: assignment within conditional expression
+			"/wd4715", -- warning C4715: '': not all control paths return a value
 		}
 
 	configuration {}
