@@ -605,7 +605,7 @@ TextBufferManager::TextBufferManager(FontManager* _fontManager)
 		.add(bgfx::Attrib::Color0,    4, bgfx::AttribType::Uint8, true)
 		.end();
 
-	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 }
 
 TextBufferManager::~TextBufferManager()

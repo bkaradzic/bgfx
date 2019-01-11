@@ -636,8 +636,8 @@ struct DebugDrawShared
 			, true
 			);
 
-		u_params   = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 4);
-		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+		u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4, 4);
+		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 		m_texture  = bgfx::createTexture2D(SPRITE_TEXTURE_SIZE, SPRITE_TEXTURE_SIZE, false, 1, bgfx::TextureFormat::BGRA8);
 
 		void* vertices[Mesh::Count] = {};

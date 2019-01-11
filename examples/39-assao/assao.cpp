@@ -296,18 +296,18 @@ namespace
 			m_uniforms.init();
 
 			// Create texture sampler uniforms (used when we bind textures)
-			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Int1);  // Normal gbuffer
-			s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);  // Normal gbuffer
-			s_color  = bgfx::createUniform("s_color",  bgfx::UniformType::Int1);  // Color (albedo) gbuffer
-			s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
+			s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);  // Normal gbuffer
+			s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Sampler);  // Normal gbuffer
+			s_color  = bgfx::createUniform("s_color",  bgfx::UniformType::Sampler);  // Color (albedo) gbuffer
+			s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
 
-			s_ao                         = bgfx::createUniform("s_ao", bgfx::UniformType::Int1);
-			s_blurInput                  = bgfx::createUniform("s_blurInput", bgfx::UniformType::Int1);
-			s_finalSSAO                  = bgfx::createUniform("s_finalSSAO", bgfx::UniformType::Int1);
-			s_depthSource                = bgfx::createUniform("s_depthSource", bgfx::UniformType::Int1);
-			s_viewspaceDepthSource       = bgfx::createUniform("s_viewspaceDepthSource", bgfx::UniformType::Int1);
-			s_viewspaceDepthSourceMirror = bgfx::createUniform("s_viewspaceDepthSourceMirror", bgfx::UniformType::Int1);
-			s_importanceMap              = bgfx::createUniform("s_importanceMap", bgfx::UniformType::Int1);
+			s_ao                         = bgfx::createUniform("s_ao", bgfx::UniformType::Sampler);
+			s_blurInput                  = bgfx::createUniform("s_blurInput", bgfx::UniformType::Sampler);
+			s_finalSSAO                  = bgfx::createUniform("s_finalSSAO", bgfx::UniformType::Sampler);
+			s_depthSource                = bgfx::createUniform("s_depthSource", bgfx::UniformType::Sampler);
+			s_viewspaceDepthSource       = bgfx::createUniform("s_viewspaceDepthSource", bgfx::UniformType::Sampler);
+			s_viewspaceDepthSourceMirror = bgfx::createUniform("s_viewspaceDepthSourceMirror", bgfx::UniformType::Sampler);
+			s_importanceMap              = bgfx::createUniform("s_importanceMap", bgfx::UniformType::Sampler);
 
 			// Create program from shaders.
 			m_gbufferProgram = loadProgram("vs_assao_gbuffer", "fs_assao_gbuffer");  // Gbuffer

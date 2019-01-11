@@ -243,10 +243,10 @@ public:
 
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
-		s_albedo    = bgfx::createUniform("s_albedo",    bgfx::UniformType::Int1);
-		s_tex       = bgfx::createUniform("s_tex",       bgfx::UniformType::Int1);
-		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Int1);
-		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Int1);
+		s_albedo    = bgfx::createUniform("s_albedo",    bgfx::UniformType::Sampler);
+		s_tex       = bgfx::createUniform("s_tex",       bgfx::UniformType::Sampler);
+		s_depth     = bgfx::createUniform("s_depth",     bgfx::UniformType::Sampler);
+		s_light     = bgfx::createUniform("s_light",     bgfx::UniformType::Sampler);
 		u_pixelSize = bgfx::createUniform("u_pixelSize", bgfx::UniformType::Vec4);
 		u_intensity = bgfx::createUniform("u_intensity", bgfx::UniformType::Vec4);
 		u_color     = bgfx::createUniform("u_color",     bgfx::UniformType::Vec4);

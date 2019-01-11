@@ -2328,7 +2328,7 @@ namespace bgfx
 			if (isValid(_sampler) )
 			{
 				uint32_t stage = _stage;
-				setUniform(UniformType::Int1, _sampler, &stage, 1);
+				setUniform(UniformType::Sampler, _sampler, &stage, 1);
 			}
 		}
 

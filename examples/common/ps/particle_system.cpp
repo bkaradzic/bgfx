@@ -453,7 +453,7 @@ namespace ps
 
 			m_num = 0;
 
-			s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+			s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 			m_texture  = bgfx::createTexture2D(
 				  SPRITE_TEXTURE_SIZE
 				, SPRITE_TEXTURE_SIZE

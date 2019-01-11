@@ -212,7 +212,7 @@ typedef enum bgfx_texture_format
 
 typedef enum bgfx_uniform_type
 {
-    BGFX_UNIFORM_TYPE_INT1,
+    BGFX_UNIFORM_TYPE_SAMPLER,
     BGFX_UNIFORM_TYPE_END,
 
     BGFX_UNIFORM_TYPE_VEC4,

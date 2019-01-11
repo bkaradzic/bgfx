@@ -819,7 +819,7 @@ public:
 
 		s_uniforms.init();
 
-		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 
 		m_programTextureLighting = loadProgram("vs_stencil_texture_lighting", "fs_stencil_texture_lighting");
 		m_programColorLighting   = loadProgram("vs_stencil_color_lighting",   "fs_stencil_color_lighting"  );

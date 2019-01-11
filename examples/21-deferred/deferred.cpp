@@ -262,13 +262,13 @@ public:
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
-		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Int1);
+		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
 
-		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Int1);
-		s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Int1);
-		s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Int1);
-		s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Int1);
+		s_albedo = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
+		s_normal = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
+		s_depth  = bgfx::createUniform("s_depth",  bgfx::UniformType::Sampler);
+		s_light  = bgfx::createUniform("s_light",  bgfx::UniformType::Sampler);
 
 		u_mtx            = bgfx::createUniform("u_mtx",            bgfx::UniformType::Mat4);
 		u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Vec4);

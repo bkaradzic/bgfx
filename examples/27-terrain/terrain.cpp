@@ -112,7 +112,7 @@ public:
 		m_dvbh.idx = bgfx::kInvalidHandle;
 		m_dibh.idx = bgfx::kInvalidHandle;
 		m_heightTexture.idx = bgfx::kInvalidHandle;
-		s_heightTexture = bgfx::createUniform("s_heightTexture", bgfx::UniformType::Int1);
+		s_heightTexture = bgfx::createUniform("s_heightTexture", bgfx::UniformType::Sampler);
 
 		m_oldWidth  = 0;
 		m_oldHeight = 0;

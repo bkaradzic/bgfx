@@ -742,7 +742,7 @@ namespace bgfx { namespace spirv
 						switch (program->getUniformType(ii))
 						{
 						case 0x1404: // GL_INT:
-							un.type = UniformType::Int1;
+							un.type = UniformType::Sampler;
 							break;
 						case 0x8B52: // GL_FLOAT_VEC4:
 							un.type = UniformType::Vec4;

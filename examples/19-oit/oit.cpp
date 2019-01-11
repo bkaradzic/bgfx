@@ -210,8 +210,8 @@ public:
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor0 = bgfx::createUniform("s_texColor0", bgfx::UniformType::Int1);
-		s_texColor1 = bgfx::createUniform("s_texColor1", bgfx::UniformType::Int1);
+		s_texColor0 = bgfx::createUniform("s_texColor0", bgfx::UniformType::Sampler);
+		s_texColor1 = bgfx::createUniform("s_texColor1", bgfx::UniformType::Sampler);
 		u_color     = bgfx::createUniform("u_color",     bgfx::UniformType::Vec4);
 
 		m_blend          = loadProgram("vs_oit",      "fs_oit"                  );

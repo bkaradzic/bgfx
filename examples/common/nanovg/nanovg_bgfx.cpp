@@ -271,7 +271,7 @@ namespace
 		gl->u_scissorExtScale = bgfx::createUniform("u_scissorExtScale", bgfx::UniformType::Vec4);
 		gl->u_extentRadius    = bgfx::createUniform("u_extentRadius",    bgfx::UniformType::Vec4);
 		gl->u_params          = bgfx::createUniform("u_params",          bgfx::UniformType::Vec4);
-		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Int1);
+		gl->s_tex             = bgfx::createUniform("s_tex",             bgfx::UniformType::Sampler);
 
 		if (bgfx::getRendererType() == bgfx::RendererType::Direct3D9)
 		{

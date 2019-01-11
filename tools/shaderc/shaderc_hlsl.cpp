@@ -213,14 +213,14 @@ namespace bgfx { namespace hlsl
 
 	static const UniformRemap s_uniformRemap[] =
 	{
-		{ UniformType::Int1, D3D_SVC_SCALAR,         D3D_SVT_INT,         0, 0 },
+		{ UniformType::Sampler, D3D_SVC_SCALAR,         D3D_SVT_INT,         0, 0 },
 		{ UniformType::Vec4, D3D_SVC_VECTOR,         D3D_SVT_FLOAT,       0, 0 },
 		{ UniformType::Mat3, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       3, 3 },
 		{ UniformType::Mat4, D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT,       4, 4 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER,     0, 0 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER2D,   0, 0 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER3D,   0, 0 },
-		{ UniformType::Int1, D3D_SVC_OBJECT,         D3D_SVT_SAMPLERCUBE, 0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER,     0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER2D,   0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLER3D,   0, 0 },
+		{ UniformType::Sampler, D3D_SVC_OBJECT,         D3D_SVT_SAMPLERCUBE, 0, 0 },
 	};
 
 	UniformType::Enum findUniformType(const D3D11_SHADER_TYPE_DESC& constDesc)
@@ -527,7 +527,7 @@ namespace bgfx { namespace hlsl
 					{
 						Uniform un;
 						un.name.assign(bindDesc.Name, (end.getPtr() - bindDesc.Name) );
-						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Int1);
+						un.type = UniformType::Enum(BGFX_UNIFORM_SAMPLERBIT | UniformType::Sampler);
 						un.num = 1;
 						un.regIndex = uint16_t(bindDesc.BindPoint);
 						un.regCount = uint16_t(bindDesc.BindCount);

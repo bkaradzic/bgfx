@@ -62,8 +62,8 @@ public:
 			, 0
 			);
 
-		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
-		s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Int1);
+		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Sampler);
+		s_texStipple = bgfx::createUniform("s_texStipple", bgfx::UniformType::Sampler);
 		u_stipple    = bgfx::createUniform("u_stipple",    bgfx::UniformType::Vec4);
 
 		m_program = loadProgram("vs_tree", "fs_tree");

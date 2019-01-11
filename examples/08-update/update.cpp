@@ -250,8 +250,8 @@ public:
 		}
 
 		// Create texture sampler uniforms.
-		s_texCube  = bgfx::createUniform("s_texCube",  bgfx::UniformType::Int1);
-		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+		s_texCube  = bgfx::createUniform("s_texCube",  bgfx::UniformType::Sampler);
+		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 
 		// Create time uniform.
 		u_time = bgfx::createUniform("u_time", bgfx::UniformType::Vec4);

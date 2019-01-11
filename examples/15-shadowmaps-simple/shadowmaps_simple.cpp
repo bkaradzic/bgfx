@@ -87,7 +87,7 @@ public:
 		bgfx::setDebug(m_debug);
 
 		// Uniforms.
-		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Int1);
+		s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);
 		u_lightPos  = bgfx::createUniform("u_lightPos",  bgfx::UniformType::Vec4);
 		u_lightMtx  = bgfx::createUniform("u_lightMtx",  bgfx::UniformType::Mat4);
 

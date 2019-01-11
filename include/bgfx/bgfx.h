@@ -259,12 +259,12 @@ namespace bgfx
 		/// Uniform types:
 		enum Enum
 		{
-			Int1, //!< Int, used for samplers only.
-			End,  //!< Reserved, do not use.
+			Sampler, //!< Sampler.
+			End,     //!< Reserved, do not use.
 
-			Vec4, //!< 4 floats vector.
-			Mat3, //!< 3x3 matrix.
-			Mat4, //!< 4x4 matrix.
+			Vec4,    //!< 4 floats vector.
+			Mat3,    //!< 3x3 matrix.
+			Mat4,    //!< 4x4 matrix.
 
 			Count
 		};

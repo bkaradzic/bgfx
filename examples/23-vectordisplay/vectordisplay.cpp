@@ -94,7 +94,7 @@ void VectorDisplay::setup(uint16_t _width, uint16_t _height, uint8_t _view)
 	m_blitShader         = loadProgram("vs_vectordisplay_fb", "fs_vectordisplay_blit");
 
 	u_params   = bgfx::createUniform("u_params",   bgfx::UniformType::Vec4);
-	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+	s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 
 	genLinetex();
 

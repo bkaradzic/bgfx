@@ -3616,16 +3616,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				switch (type)
 				{
-//				case ConstantType::Int1:
-//					{
-//						int* value = (int*)data;
-//						BX_TRACE("Int1 sampler %d, loc %d (num %d, copy %d)", *value, loc, num, copy);
-//						GL_CHECK(glUniform1iv(loc, num, value) );
-//					}
-//					break;
-
-				CASE_IMPLEMENT_UNIFORM(Int1, 1iv, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4, 4fv, F, float);
+				CASE_IMPLEMENT_UNIFORM(Sampler, 1iv, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4,    4fv, F, float);
 				CASE_IMPLEMENT_UNIFORM_T(Mat3, Matrix3fv, F, float);
 				CASE_IMPLEMENT_UNIFORM_T(Mat4, Matrix4fv, F, float);
 
@@ -4020,7 +4012,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		{
 		case GL_INT:
 		case GL_UNSIGNED_INT:
-			return UniformType::Int1;
+			return UniformType::Sampler;
 
 		case GL_FLOAT:
 		case GL_FLOAT_VEC2:
@@ -4076,7 +4068,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		case GL_IMAGE_CUBE:
 		case GL_INT_IMAGE_CUBE:
 		case GL_UNSIGNED_INT_IMAGE_CUBE:
-			return UniformType::Int1;
+			return UniformType::Sampler;
 		};
 
 		BX_CHECK(false, "Unrecognized GL type 0x%04x.", _type);

@@ -451,8 +451,8 @@ public:
 		u_params     = bgfx::createUniform("u_params",     bgfx::UniformType::Vec4);
 		u_flags      = bgfx::createUniform("u_flags",      bgfx::UniformType::Vec4);
 		u_camPos     = bgfx::createUniform("u_camPos",     bgfx::UniformType::Vec4);
-		s_texCube    = bgfx::createUniform("s_texCube",    bgfx::UniformType::Int1);
-		s_texCubeIrr = bgfx::createUniform("s_texCubeIrr", bgfx::UniformType::Int1);
+		s_texCube    = bgfx::createUniform("s_texCube",    bgfx::UniformType::Sampler);
+		s_texCubeIrr = bgfx::createUniform("s_texCubeIrr", bgfx::UniformType::Sampler);
 
 		m_programMesh  = loadProgram("vs_ibl_mesh",   "fs_ibl_mesh");
 		m_programSky   = loadProgram("vs_ibl_skybox", "fs_ibl_skybox");

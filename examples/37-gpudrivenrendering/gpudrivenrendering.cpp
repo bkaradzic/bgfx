@@ -340,7 +340,7 @@ public:
 		u_inputRTSize       = bgfx::createUniform("u_inputRTSize",       bgfx::UniformType::Vec4);
 		u_cullingConfig     = bgfx::createUniform("u_cullingConfig",     bgfx::UniformType::Vec4);
 		u_color             = bgfx::createUniform("u_color",             bgfx::UniformType::Vec4, 32);
-		s_texOcclusionDepth = bgfx::createUniform("s_texOcclusionDepth", bgfx::UniformType::Int1);
+		s_texOcclusionDepth = bgfx::createUniform("s_texOcclusionDepth", bgfx::UniformType::Sampler);
 
 		//create props
 		{

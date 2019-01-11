@@ -1896,8 +1896,8 @@ public:
 
 		s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
-		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Int1);
-		s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Int1);
+		s_texColor   = bgfx::createUniform("s_texColor",   bgfx::UniformType::Sampler);
+		s_texStencil = bgfx::createUniform("s_texStencil", bgfx::UniformType::Sampler);
 
 		m_programTextureLighting = loadProgram("vs_shadowvolume_texture_lighting", "fs_shadowvolume_texture_lighting");
 		m_programColorLighting   = loadProgram("vs_shadowvolume_color_lighting",   "fs_shadowvolume_color_lighting"  );

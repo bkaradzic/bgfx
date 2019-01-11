@@ -142,8 +142,8 @@ public:
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
 
 		// Create texture sampler uniforms.
-		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
-		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Int1);
+		s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+		s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
 
 		m_numLights = 4;
 		u_lightPosRadius = bgfx::createUniform("u_lightPosRadius", bgfx::UniformType::Vec4, m_numLights);

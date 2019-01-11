@@ -447,7 +447,7 @@ namespace
 			m_time = 0.0f;
 			m_timeScale = 1.0f;
 
-			s_texLightmap     = bgfx::createUniform("s_texLightmap",     bgfx::UniformType::Int1);
+			s_texLightmap     = bgfx::createUniform("s_texLightmap",     bgfx::UniformType::Sampler);
 			u_sunLuminance    = bgfx::createUniform("u_sunLuminance",    bgfx::UniformType::Vec4);
 			u_skyLuminanceXYZ = bgfx::createUniform("u_skyLuminanceXYZ", bgfx::UniformType::Vec4);
 			u_skyLuminance    = bgfx::createUniform("u_skyLuminance",    bgfx::UniformType::Vec4);

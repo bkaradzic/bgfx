@@ -1921,9 +1921,9 @@ namespace bgfx { namespace d3d9
 					}
 					break;
 
-				CASE_IMPLEMENT_UNIFORM(Int1, I, int);
-				CASE_IMPLEMENT_UNIFORM(Vec4, F, float);
-				CASE_IMPLEMENT_UNIFORM(Mat4, F, float);
+				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
+				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
+				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
 
 				case UniformType::End:
 					break;

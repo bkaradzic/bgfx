@@ -1334,11 +1334,11 @@ public:
 
 		// Uniforms.
 		s_uniforms.init();
-		s_texColor = bgfx::createUniform("s_texColor",  bgfx::UniformType::Int1);
-		s_shadowMap[0] = bgfx::createUniform("s_shadowMap0", bgfx::UniformType::Int1);
-		s_shadowMap[1] = bgfx::createUniform("s_shadowMap1", bgfx::UniformType::Int1);
-		s_shadowMap[2] = bgfx::createUniform("s_shadowMap2", bgfx::UniformType::Int1);
-		s_shadowMap[3] = bgfx::createUniform("s_shadowMap3", bgfx::UniformType::Int1);
+		s_texColor = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+		s_shadowMap[0] = bgfx::createUniform("s_shadowMap0", bgfx::UniformType::Sampler);
+		s_shadowMap[1] = bgfx::createUniform("s_shadowMap1", bgfx::UniformType::Sampler);
+		s_shadowMap[2] = bgfx::createUniform("s_shadowMap2", bgfx::UniformType::Sampler);
+		s_shadowMap[3] = bgfx::createUniform("s_shadowMap3", bgfx::UniformType::Sampler);
 
 		// Programs.
 		s_programs.init();

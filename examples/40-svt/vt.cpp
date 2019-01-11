@@ -871,8 +871,8 @@ VirtualTexture::VirtualTexture(TileDataFile* _tileDataFile, VirtualTextureInfo* 
 	// Create uniforms
 	u_vt_settings_1 = bgfx::createUniform("u_vt_settings_1", bgfx::UniformType::Vec4);
 	u_vt_settings_2 = bgfx::createUniform("u_vt_settings_2", bgfx::UniformType::Vec4);
-	s_vt_page_table = bgfx::createUniform("s_vt_page_table", bgfx::UniformType::Int1);
-	s_vt_texture_atlas = bgfx::createUniform("s_vt_texture_atlas", bgfx::UniformType::Int1);
+	s_vt_page_table = bgfx::createUniform("s_vt_page_table", bgfx::UniformType::Sampler);
+	s_vt_texture_atlas = bgfx::createUniform("s_vt_texture_atlas", bgfx::UniformType::Sampler);
 }
 
 VirtualTexture::~VirtualTexture()
