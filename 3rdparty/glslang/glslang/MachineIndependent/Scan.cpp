@@ -776,7 +776,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         loc = ppToken.loc;
         parserToken->sType.lex.loc = loc;
         switch (token) {
-        case ';':  afterType = false;   return SEMICOLON;
+        case ';':  afterType = false; afterBuffer = false; return SEMICOLON;
         case ',':  afterType = false;   return COMMA;
         case ':':                       return COLON;
         case '=':  afterType = false;   return EQUAL;
@@ -798,7 +798,7 @@ int TScanContext::tokenize(TPpContext* pp, TParserToken& token)
         case '?':                       return QUESTION;
         case '[':                       return LEFT_BRACKET;
         case ']':                       return RIGHT_BRACKET;
-        case '{':  afterStruct = false; return LEFT_BRACE;
+        case '{':  afterStruct = false; afterBuffer = false; return LEFT_BRACE;
         case '}':                       return RIGHT_BRACE;
         case '\\':
             parseContext.error(loc, "illegal use of escape character", "\\", "");
@@ -945,6 +945,7 @@ int TScanContext::tokenizeIdentifier()
         return keyword;
 
     case BUFFER:
+        afterBuffer = true;
         if ((parseContext.profile == EEsProfile && parseContext.version < 310) ||
             (parseContext.profile != EEsProfile && parseContext.version < 430))
             return identifierOrType();
@@ -1617,7 +1618,9 @@ int TScanContext::identifierOrType()
     parserToken->sType.lex.symbol = parseContext.symbolTable.find(*parserToken->sType.lex.string);
     if ((afterType == false && afterStruct == false) && parserToken->sType.lex.symbol != nullptr) {
         if (const TVariable* variable = parserToken->sType.lex.symbol->getAsVariable()) {
-            if (variable->isUserType()) {
+            if (variable->isUserType() &&
+                // treat redeclaration of forward-declared buffer/uniform reference as an identifier
+                !(variable->getType().getBasicType() == EbtReference && afterBuffer)) {
                 afterType = true;
 
                 return TYPE_NAME;

@@ -269,6 +269,10 @@ enum TOperator {
     EOpConvDoubleToFloat16,
     EOpConvDoubleToFloat,
 
+    // uint64_t <-> pointer
+    EOpConvUint64ToPtr,
+    EOpConvPtrToUint64,
+
     //
     // binary operations
     //
@@ -732,6 +736,7 @@ enum TOperator {
     EOpConstructStruct,
     EOpConstructTextureSampler,
     EOpConstructNonuniform,     // expected to be transformed away, not present in final AST
+    EOpConstructReference,
     EOpConstructGuardEnd,
 
     //

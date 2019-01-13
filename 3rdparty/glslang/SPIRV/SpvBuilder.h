@@ -138,7 +138,9 @@ public:
     // For creating new types (will return old type if the requested one was already made).
     Id makeVoidType();
     Id makeBoolType();
-    Id makePointer(StorageClass, Id type);
+    Id makePointer(StorageClass, Id pointee);
+    Id makeForwardPointer(StorageClass);
+    Id makePointerFromForwardPointer(StorageClass, Id forwardPointerType, Id pointee);
     Id makeIntegerType(int width, bool hasSign);   // generic
     Id makeIntType(int width) { return makeIntegerType(width, true); }
     Id makeUintType(int width) { return makeIntegerType(width, false); }
@@ -194,6 +196,7 @@ public:
     bool isSamplerType(Id typeId)      const { return getTypeClass(typeId) == OpTypeSampler; }
     bool isSampledImageType(Id typeId) const { return getTypeClass(typeId) == OpTypeSampledImage; }
     bool containsType(Id typeId, Op typeOp, unsigned int width) const;
+    bool containsPhysicalStorageBufferOrArray(Id typeId) const;
 
     bool isConstantOpCode(Op opcode) const;
     bool isSpecConstantOpCode(Op opcode) const;
@@ -300,10 +303,10 @@ public:
     Id createUndefined(Id type);
 
     // Store into an Id and return the l-value
-    void createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    void createStore(Id rValue, Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // Load from an Id and return it
-    Id createLoad(Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    Id createLoad(Id lValue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // Create an OpAccessChain instruction
     Id createAccessChain(StorageClass, Id base, const std::vector<Id>& offsets);
@@ -535,6 +538,7 @@ public:
         Id component;                  // a dynamic component index, can coexist with a swizzle, done after the swizzle, NoResult if not present
         Id preSwizzleBaseType;         // dereferenced type, before swizzle or component is applied; NoType unless a swizzle or component is present
         bool isRValue;                 // true if 'base' is an r-value, otherwise, base is an l-value
+        unsigned int alignment;        // bitwise OR of alignment values passed in. Accumulates worst alignment. Only tracks base and (optional) component selection alignment.
 
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
@@ -601,31 +605,34 @@ public:
     }
 
     // push offset onto the end of the chain
-    void accessChainPush(Id offset, AccessChain::CoherentFlags coherentFlags)
+    void accessChainPush(Id offset, AccessChain::CoherentFlags coherentFlags, unsigned int alignment)
     {
         accessChain.indexChain.push_back(offset);
         accessChain.coherentFlags |= coherentFlags;
+        accessChain.alignment |= alignment;
     }
 
     // push new swizzle onto the end of any existing swizzle, merging into a single swizzle
-    void accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType);
+    void accessChainPushSwizzle(std::vector<unsigned>& swizzle, Id preSwizzleBaseType, AccessChain::CoherentFlags coherentFlags, unsigned int alignment);
 
     // push a dynamic component selection onto the access chain, only applicable with a
     // non-trivial swizzle or no swizzle
-    void accessChainPushComponent(Id component, Id preSwizzleBaseType)
+    void accessChainPushComponent(Id component, Id preSwizzleBaseType, AccessChain::CoherentFlags coherentFlags, unsigned int alignment)
     {
         if (accessChain.swizzle.size() != 1) {
             accessChain.component = component;
             if (accessChain.preSwizzleBaseType == NoType)
                 accessChain.preSwizzleBaseType = preSwizzleBaseType;
         }
+        accessChain.coherentFlags |= coherentFlags;
+        accessChain.alignment |= alignment;
     }
 
     // use accessChain and swizzle to store value
-    void accessChainStore(Id rvalue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    void accessChainStore(Id rvalue, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // use accessChain and swizzle to load an r-value
-    Id accessChainLoad(Decoration precision, Decoration nonUniform, Id ResultType, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax);
+    Id accessChainLoad(Decoration precision, Decoration nonUniform, Id ResultType, spv::MemoryAccessMask memoryAccess = spv::MemoryAccessMaskNone, spv::Scope scope = spv::ScopeMax, unsigned int alignment = 0);
 
     // get the direct pointer for an l-value
     Id accessChainGetLValue();
@@ -639,7 +646,7 @@ public:
     void postProcess();
 
     // Hook to visit each instruction in a block in a function
-    void postProcess(const Instruction&);
+    void postProcess(Instruction&);
     // Hook to visit each instruction in a reachable block in a function.
     void postProcessReachable(const Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
@@ -675,6 +682,7 @@ public:
     void dumpSourceInstructions(const spv::Id fileId, const std::string& text, std::vector<unsigned int>&) const;
     void dumpInstructions(std::vector<unsigned int>&, const std::vector<std::unique_ptr<Instruction> >&) const;
     void dumpModuleProcesses(std::vector<unsigned int>&) const;
+    spv::MemoryAccessMask sanitizeMemoryAccessForStorageClass(spv::MemoryAccessMask memoryAccess, StorageClass sc) const;
 
     unsigned int spvVersion;     // the version of SPIR-V to emit in the header
     SourceLanguage source;

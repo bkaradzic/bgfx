@@ -721,6 +721,7 @@ public:
         clearUniformLayout();
 
         layoutPushConstant = false;
+        layoutBufferReference = false;
 #ifdef NV_EXTENSIONS
         layoutPassthrough = false;
         layoutViewportRelative = false;
@@ -728,6 +729,8 @@ public:
         layoutSecondaryViewportRelativeOffset = -2048;
         layoutShaderRecordNV = false;
 #endif
+
+        layoutBufferReferenceAlign = layoutBufferReferenceAlignEnd;
 
         clearInterstageLayout();
 
@@ -763,7 +766,8 @@ public:
 #ifdef NV_EXTENSIONS
                layoutShaderRecordNV ||
 #endif
-               layoutPushConstant;
+               layoutPushConstant ||
+               layoutBufferReference;
     }
     bool hasLayout() const
     {
@@ -808,9 +812,14 @@ public:
                  unsigned int layoutSpecConstantId       : 11;
     static const unsigned int layoutSpecConstantIdEnd = 0x7FF;
 
+    // stored as log2 of the actual alignment value
+                 unsigned int layoutBufferReferenceAlign :  6;
+    static const unsigned int layoutBufferReferenceAlignEnd = 0x3F;
+
     TLayoutFormat layoutFormat                           :  8;
 
     bool layoutPushConstant;
+    bool layoutBufferReference;
 
 #ifdef NV_EXTENSIONS
     bool layoutPassthrough;
@@ -917,6 +926,10 @@ public:
         // Not the same thing as being a specialization constant, this
         // is just whether or not it was declared with an ID.
         return layoutSpecConstantId != layoutSpecConstantIdEnd;
+    }
+    bool hasBufferReferenceAlign() const
+    {
+        return layoutBufferReferenceAlign != layoutBufferReferenceAlignEnd;
     }
     bool isSpecConstant() const
     {
@@ -1308,7 +1321,12 @@ public:
                                     sampler.clear();
                                 qualifier = p.qualifier;
                                 if (p.userDef) {
-                                    structure = p.userDef->getWritableStruct();  // public type is short-lived; there are no sharing issues
+                                    if (p.userDef->basicType == EbtReference) {
+                                        basicType = EbtReference;
+                                        referentType = p.userDef->referentType;
+                                    } else {
+                                        structure = p.userDef->getWritableStruct();  // public type is short-lived; there are no sharing issues
+                                    }
                                     typeName = NewPoolTString(p.userDef->getTypeName().c_str());
                                 }
                             }
@@ -1377,6 +1395,17 @@ public:
                                 sampler.clear();
                                 typeName = NewPoolTString(n.c_str());
                             }
+    // for block reference (first parameter must be EbtReference)
+    explicit TType(TBasicType t, const TType &p, const TString& n) :
+                            basicType(t), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
+                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+                            {
+                                assert(t == EbtReference);
+                                typeName = NewPoolTString(n.c_str());
+                                qualifier.clear();
+                                qualifier.storage = p.qualifier.storage;
+                                referentType = p.clone();
+                            }
     virtual ~TType() {}
 
     // Not for use across pool pops; it will cause multiple instances of TType to point to the same information.
@@ -1392,9 +1421,13 @@ public:
         matrixRows = copyOf.matrixRows;
         vector1 = copyOf.vector1;
         arraySizes = copyOf.arraySizes;  // copying the pointer only, not the contents
-        structure = copyOf.structure;
         fieldName = copyOf.fieldName;
         typeName = copyOf.typeName;
+        if (isStruct()) {
+            structure = copyOf.structure;
+        } else {
+            referentType = copyOf.referentType;
+        }
     }
 
     // Make complete copy of the whole type graph rooted at 'copyOf'.
@@ -1457,6 +1490,7 @@ public:
     virtual int getImplicitArraySize() const { return arraySizes->getImplicitSize(); }
     virtual const TArraySizes* getArraySizes() const { return arraySizes; }
     virtual       TArraySizes* getArraySizes()       { return arraySizes; }
+    virtual TType* getReferentType() const { return referentType; }
 
     virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray(); }
     virtual bool isScalarOrVec1() const { return isScalar() || vector1; }
@@ -1468,7 +1502,7 @@ public:
     virtual bool isArrayVariablyIndexed() const { assert(isArray()); return arraySizes->isVariablyIndexed(); }
     virtual void setArrayVariablyIndexed() { assert(isArray()); arraySizes->setVariablyIndexed(); }
     virtual void updateImplicitArraySize(int size) { assert(isArray()); arraySizes->updateImplicitSize(size); }
-    virtual bool isStruct() const { return structure != nullptr; }
+    virtual bool isStruct() const { return basicType == EbtStruct || basicType == EbtBlock; }
     virtual bool isFloatingDomain() const { return basicType == EbtFloat || basicType == EbtDouble || basicType == EbtFloat16; }
     virtual bool isIntegerDomain() const
     {
@@ -1509,7 +1543,7 @@ public:
 
         const auto hasa = [predicate](const TTypeLoc& tl) { return tl.type->contains(predicate); };
 
-        return structure && std::any_of(structure->begin(), structure->end(), hasa);
+        return isStruct() && std::any_of(structure->begin(), structure->end(), hasa);
     }
 
     // Recursively checks if the type contains the given basic type
@@ -1688,6 +1722,7 @@ public:
 #ifdef NV_EXTENSIONS
         case EbtAccStructNV:       return "accelerationStructureNV";
 #endif
+        case EbtReference:         return "reference";
         default:                   return "unknown type";
         }
     }
@@ -1773,6 +1808,12 @@ public:
                 }
                 if (qualifier.layoutPushConstant)
                     appendStr(" push_constant");
+                if (qualifier.layoutBufferReference)
+                    appendStr(" buffer_reference");
+                if (qualifier.hasBufferReferenceAlign()) {
+                    appendStr(" buffer_reference_align=");
+                    appendUint(1u << qualifier.layoutBufferReferenceAlign);
+                }
 
 #ifdef NV_EXTENSIONS
                 if (qualifier.layoutPassthrough)
@@ -1892,7 +1933,7 @@ public:
         }
 
         // Add struct/block members
-        if (structure) {
+        if (isStruct()) {
             appendStr("{");
             for (size_t i = 0; i < structure->size(); ++i) {
                 if (! (*structure)[i].type->hiddenMember()) {
@@ -1920,9 +1961,9 @@ public:
     const char* getStorageQualifierString() const { return GetStorageQualifierString(qualifier.storage); }
     const char* getBuiltInVariableString() const { return GetBuiltInVariableString(qualifier.builtIn); }
     const char* getPrecisionQualifierString() const { return GetPrecisionQualifierString(qualifier.precision); }
-    const TTypeList* getStruct() const { return structure; }
-    void setStruct(TTypeList* s) { structure = s; }
-    TTypeList* getWritableStruct() const { return structure; }  // This should only be used when known to not be sharing with other threads
+    const TTypeList* getStruct() const { assert(isStruct()); return structure; }
+    void setStruct(TTypeList* s) { assert(isStruct()); structure = s; }
+    TTypeList* getWritableStruct() const { assert(isStruct()); return structure; }  // This should only be used when known to not be sharing with other threads
 
     int computeNumComponents() const
     {
@@ -1961,11 +2002,12 @@ public:
     bool sameStructType(const TType& right) const
     {
         // Most commonly, they are both nullptr, or the same pointer to the same actual structure
-        if (structure == right.structure)
+        if ((!isStruct() && !right.isStruct()) ||
+            (isStruct() && right.isStruct() && structure == right.structure))
             return true;
 
         // Both being nullptr was caught above, now they both have to be structures of the same number of elements
-        if (structure == nullptr || right.structure == nullptr ||
+        if (!isStruct() || !right.isStruct() ||
             structure->size() != right.structure->size())
             return false;
 
@@ -1983,6 +2025,23 @@ public:
         }
 
         return true;
+    }
+
+    bool sameReferenceType(const TType& right) const
+    {
+        if ((basicType == EbtReference) != (right.basicType == EbtReference))
+            return false;
+
+        if ((basicType != EbtReference) && (right.basicType != EbtReference))
+            return true;
+
+        assert(referentType != nullptr);
+        assert(right.referentType != nullptr);
+
+        if (referentType == right.referentType)
+            return true;
+
+        return *referentType == *right.referentType;
     }
 
     // See if two types match, in all aspects except arrayness
@@ -2013,7 +2072,8 @@ public:
                matrixCols == right.matrixCols &&
                matrixRows == right.matrixRows &&
                   vector1 == right.vector1    &&
-               sameStructType(right);
+               sameStructType(right)          &&
+               sameReferenceType(right);
     }
 
     // See if two types match in all ways (just the actual type, not qualification)
@@ -2044,7 +2104,7 @@ protected:
             *arraySizes = *copyOf.arraySizes;
         }
 
-        if (copyOf.structure) {
+        if (copyOf.isStruct() && copyOf.structure) {
             auto prevCopy = copiedMap.find(copyOf.structure);
             if (prevCopy != copiedMap.end())
                 structure = prevCopy->second;
@@ -2082,7 +2142,12 @@ protected:
     TQualifier qualifier;
 
     TArraySizes* arraySizes;    // nullptr unless an array; can be shared across types
-    TTypeList* structure;       // nullptr unless this is a struct; can be shared across types
+    // A type can't be both a structure (EbtStruct/EbtBlock) and a reference (EbtReference), so
+    // conserve space by making these a union
+    union {
+        TTypeList* structure;       // invalid unless this is a struct; can be shared across types
+        TType *referentType;        // invalid unless this is an EbtReference
+    };
     TString *fieldName;         // for structure field names
     TString *typeName;          // for structure type name
     TSampler sampler;

@@ -172,8 +172,12 @@ bool TOutputTraverser::visitBinary(TVisit /* visit */, TIntermBinary* node)
     case EOpIndexDirect:   out.debug << "direct index";   break;
     case EOpIndexIndirect: out.debug << "indirect index"; break;
     case EOpIndexDirectStruct:
-        out.debug << (*node->getLeft()->getType().getStruct())[node->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst()].type->getFieldName();
-        out.debug << ": direct index for structure";      break;
+        {
+            bool reference = node->getLeft()->getType().getBasicType() == EbtReference;
+            const TTypeList *members = reference ? node->getLeft()->getType().getReferentType()->getStruct() : node->getLeft()->getType().getStruct();
+            out.debug << (*members)[node->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst()].type->getFieldName();
+            out.debug << ": direct index for structure";      break;
+        }
     case EOpVectorSwizzle: out.debug << "vector swizzle"; break;
     case EOpMatrixSwizzle: out.debug << "matrix swizzle"; break;
 
@@ -419,6 +423,8 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpConvDoubleToUint:   out.debug << "Convert double to uint"; break;
     case EOpConvDoubleToUint64: out.debug << "Convert double to uint64"; break;
 
+    case EOpConvUint64ToPtr:  out.debug << "Convert uint64_t to pointer";   break;
+    case EOpConvPtrToUint64:  out.debug << "Convert pointer to uint64_t";   break;
 
     case EOpRadians:        out.debug << "radians";              break;
     case EOpDegrees:        out.debug << "degrees";              break;
@@ -674,6 +680,8 @@ bool TOutputTraverser::visitUnary(TVisit /* visit */, TIntermUnary* node)
     case EOpSubpassLoad:   out.debug << "subpassLoad";   break;
     case EOpSubpassLoadMS: out.debug << "subpassLoadMS"; break;
 
+    case EOpConstructReference: out.debug << "Construct reference type"; break;
+
     default: out.debug.message(EPrefixError, "Bad unary op");
     }
 
@@ -808,6 +816,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpConstructF16Mat4x4: out.debug << "Construct f16mat4";   break;
     case EOpConstructStruct:  out.debug << "Construct structure";  break;
     case EOpConstructTextureSampler: out.debug << "Construct combined texture-sampler"; break;
+    case EOpConstructReference:  out.debug << "Construct reference";  break;
 
     case EOpLessThan:         out.debug << "Compare Less Than";             break;
     case EOpGreaterThan:      out.debug << "Compare Greater Than";          break;

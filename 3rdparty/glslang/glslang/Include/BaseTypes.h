@@ -66,6 +66,8 @@ enum TBasicType {
     EbtAccStructNV,
 #endif
 
+    EbtReference,
+
     // HLSL types that live only temporarily.
     EbtString,
 

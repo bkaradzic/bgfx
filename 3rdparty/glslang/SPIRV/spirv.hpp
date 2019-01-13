@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 The Khronos Group Inc.
+// Copyright (c) 2014-2019 The Khronos Group Inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and/or associated documentation files (the "Materials"),
@@ -26,14 +26,16 @@
 // the Binary Section of the SPIR-V specification.
 
 // Enumeration tokens for SPIR-V, in various styles:
-//   C, C++, C++11, JSON, Lua, Python, C#
+//   C, C++, C++11, JSON, Lua, Python, C#, D
 // 
 // - C will have tokens with a "Spv" prefix, e.g.: SpvSourceLanguageGLSL
 // - C++ will have tokens in the "spv" name space, e.g.: spv::SourceLanguageGLSL
 // - C++11 will use enum classes in the spv namespace, e.g.: spv::SourceLanguage::GLSL
 // - Lua will use tables, e.g.: spv.SourceLanguage.GLSL
 // - Python will use dictionaries, e.g.: spv['SourceLanguage']['GLSL']
-// - C# will use enum classes in the Specification class located in the "Spv" namespace, e.g.: Spv.Specification.SourceLanguage.GLSL
+// - C# will use enum classes in the Specification class located in the "Spv" namespace,
+//     e.g.: Spv.Specification.SourceLanguage.GLSL
+// - D will have tokens under the "spv" module, e.g: spv.SourceLanguage.GLSL
 // 
 // Some tokens act like mask values, which can be OR'd together,
 // while others are mutually exclusive.  The mask-like ones have
@@ -48,11 +50,11 @@ namespace spv {
 typedef unsigned int Id;
 
 #define SPV_VERSION 0x10300
-#define SPV_REVISION 1
+#define SPV_REVISION 6
 
 static const unsigned int MagicNumber = 0x07230203;
 static const unsigned int Version = 0x00010300;
-static const unsigned int Revision = 1;
+static const unsigned int Revision = 6;
 static const unsigned int OpCodeMask = 0xffff;
 static const unsigned int WordCountShift = 16;
 
@@ -89,6 +91,7 @@ enum AddressingModel {
     AddressingModelLogical = 0,
     AddressingModelPhysical32 = 1,
     AddressingModelPhysical64 = 2,
+    AddressingModelPhysicalStorageBuffer64EXT = 5348,
     AddressingModelMax = 0x7fffffff,
 };
 
@@ -140,6 +143,11 @@ enum ExecutionMode {
     ExecutionModeLocalSizeId = 38,
     ExecutionModeLocalSizeHintId = 39,
     ExecutionModePostDepthCoverage = 4446,
+    ExecutionModeDenormPreserve = 4459,
+    ExecutionModeDenormFlushToZero = 4460,
+    ExecutionModeSignedZeroInfNanPreserve = 4461,
+    ExecutionModeRoundingModeRTE = 4462,
+    ExecutionModeRoundingModeRTZ = 4463,
     ExecutionModeStencilRefReplacingEXT = 5027,
     ExecutionModeOutputLinesNV = 5269,
     ExecutionModeOutputPrimitivesNV = 5270,
@@ -169,6 +177,7 @@ enum StorageClass {
     StorageClassHitAttributeNV = 5339,
     StorageClassIncomingRayPayloadNV = 5342,
     StorageClassShaderRecordBufferNV = 5343,
+    StorageClassPhysicalStorageBufferEXT = 5349,
     StorageClassMax = 0x7fffffff,
 };
 
@@ -417,6 +426,8 @@ enum Decoration {
     DecorationMaxByteOffset = 45,
     DecorationAlignmentId = 46,
     DecorationMaxByteOffsetId = 47,
+    DecorationNoSignedWrap = 4469,
+    DecorationNoUnsignedWrap = 4470,
     DecorationExplicitInterpAMD = 4999,
     DecorationOverrideCoverageNV = 5248,
     DecorationPassthroughNV = 5250,
@@ -427,6 +438,8 @@ enum Decoration {
     DecorationPerTaskNV = 5273,
     DecorationPerVertexNV = 5285,
     DecorationNonUniformEXT = 5300,
+    DecorationRestrictPointerEXT = 5355,
+    DecorationAliasedPointerEXT = 5356,
     DecorationHlslCounterBufferGOOGLE = 5634,
     DecorationHlslSemanticGOOGLE = 5635,
     DecorationMax = 0x7fffffff,
@@ -756,6 +769,11 @@ enum Capability {
     CapabilityStorageBuffer8BitAccess = 4448,
     CapabilityUniformAndStorageBuffer8BitAccess = 4449,
     CapabilityStoragePushConstant8 = 4450,
+    CapabilityDenormPreserve = 4464,
+    CapabilityDenormFlushToZero = 4465,
+    CapabilitySignedZeroInfNanPreserve = 4466,
+    CapabilityRoundingModeRTE = 4467,
+    CapabilityRoundingModeRTZ = 4468,
     CapabilityFloat16ImageAMD = 5008,
     CapabilityImageGatherBiasLodAMD = 5009,
     CapabilityFragmentMaskAMD = 5010,
@@ -791,6 +809,7 @@ enum Capability {
     CapabilityRayTracingNV = 5340,
     CapabilityVulkanMemoryModelKHR = 5345,
     CapabilityVulkanMemoryModelDeviceScopeKHR = 5346,
+    CapabilityPhysicalStorageBufferAddressesEXT = 5347,
     CapabilityComputeDerivativeGroupLinearNV = 5350,
     CapabilitySubgroupShuffleINTEL = 5568,
     CapabilitySubgroupBufferBlockIOINTEL = 5569,

@@ -87,6 +87,7 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
             StorageClass storageClass = getStorageClass(inst.getIdOperand(0));
             if (width == 8) {
                 switch (storageClass) {
+                case StorageClassPhysicalStorageBufferEXT:
                 case StorageClassUniform:
                 case StorageClassStorageBuffer:
                 case StorageClassPushConstant:
@@ -97,6 +98,7 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
                 }
             } else if (width == 16) {
                 switch (storageClass) {
+                case StorageClassPhysicalStorageBufferEXT:
                 case StorageClassUniform:
                 case StorageClassStorageBuffer:
                 case StorageClassPushConstant:
@@ -151,7 +153,7 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
 }
 
 // Called for each instruction that resides in a block.
-void Builder::postProcess(const Instruction& inst)
+void Builder::postProcess(Instruction& inst)
 {
     // Add capabilities based simply on the opcode.
     switch (inst.getOpCode()) {
@@ -189,6 +191,88 @@ void Builder::postProcess(const Instruction& inst)
         addCapability(CapabilityGroupNonUniformPartitionedNV);
         break;
 #endif
+
+    case OpLoad:
+    case OpStore:
+        {
+            // For any load/store to a PhysicalStorageBufferEXT, walk the accesschain
+            // index list to compute the misalignment. The pre-existing alignment value
+            // (set via Builder::AccessChain::alignment) only accounts for the base of
+            // the reference type and any scalar component selection in the accesschain,
+            // and this function computes the rest from the SPIR-V Offset decorations.
+            Instruction *accessChain = module.getInstruction(inst.getIdOperand(0));
+            if (accessChain->getOpCode() == OpAccessChain) {
+                Instruction *base = module.getInstruction(accessChain->getIdOperand(0));
+                // Get the type of the base of the access chain. It must be a pointer type.
+                Id typeId = base->getTypeId();
+                Instruction *type = module.getInstruction(typeId);
+                assert(type->getOpCode() == OpTypePointer);
+                if (type->getImmediateOperand(0) != StorageClassPhysicalStorageBufferEXT) {
+                    break;
+                }
+                // Get the pointee type.
+                typeId = type->getIdOperand(1);
+                type = module.getInstruction(typeId);
+                // Walk the index list for the access chain. For each index, find any
+                // misalignment that can apply when accessing the member/element via
+                // Offset/ArrayStride/MatrixStride decorations, and bitwise OR them all
+                // together.
+                int alignment = 0;
+                for (int i = 1; i < accessChain->getNumOperands(); ++i) {
+                    Instruction *idx = module.getInstruction(accessChain->getIdOperand(i));
+                    if (type->getOpCode() == OpTypeStruct) {
+                        assert(idx->getOpCode() == OpConstant);
+                        int c = idx->getImmediateOperand(0);
+
+                        const auto function = [&](const std::unique_ptr<Instruction>& decoration) {
+                            if (decoration.get()->getOpCode() == OpMemberDecorate &&
+                                decoration.get()->getIdOperand(0) == typeId &&
+                                decoration.get()->getImmediateOperand(1) == c &&
+                                (decoration.get()->getImmediateOperand(2) == DecorationOffset ||
+                                 decoration.get()->getImmediateOperand(2) == DecorationMatrixStride)) {
+                                alignment |= decoration.get()->getImmediateOperand(3);
+                            }
+                        };
+                        std::for_each(decorations.begin(), decorations.end(), function);
+                        // get the next member type
+                        typeId = type->getIdOperand(c);
+                        type = module.getInstruction(typeId);
+                    } else if (type->getOpCode() == OpTypeArray ||
+                               type->getOpCode() == OpTypeRuntimeArray) {
+                        const auto function = [&](const std::unique_ptr<Instruction>& decoration) {
+                            if (decoration.get()->getOpCode() == OpDecorate &&
+                                decoration.get()->getIdOperand(0) == typeId &&
+                                decoration.get()->getImmediateOperand(1) == DecorationArrayStride) {
+                                alignment |= decoration.get()->getImmediateOperand(2);
+                            }
+                        };
+                        std::for_each(decorations.begin(), decorations.end(), function);
+                        // Get the element type
+                        typeId = type->getIdOperand(0);
+                        type = module.getInstruction(typeId);
+                    } else {
+                        // Once we get to any non-aggregate type, we're done.
+                        break;
+                    }
+                }
+                assert(inst.getNumOperands() >= 3);
+                unsigned int memoryAccess = inst.getImmediateOperand((inst.getOpCode() == OpStore) ? 2 : 1);
+                assert(memoryAccess & MemoryAccessAlignedMask);
+                // Compute the index of the alignment operand.
+                int alignmentIdx = 2;
+                if (memoryAccess & MemoryAccessVolatileMask)
+                    alignmentIdx++;
+                if (inst.getOpCode() == OpStore)
+                    alignmentIdx++;
+                // Merge new and old (mis)alignment
+                alignment |= inst.getImmediateOperand(alignmentIdx);
+                // Pick the LSB
+                alignment = alignment & ~(alignment & (alignment-1));
+                // update the Aligned operand
+                inst.setImmediateOperand(alignmentIdx, alignment);
+            }
+            break;
+        }
 
     default:
         break;
@@ -258,6 +342,47 @@ void Builder::postProcess()
             Block* b = *bi;
             for (auto ii = b->getInstructions().cbegin(); ii != b->getInstructions().cend(); ii++)
                 postProcess(*ii->get());
+
+            // For all local variables that contain pointers to PhysicalStorageBufferEXT, check whether
+            // there is an existing restrict/aliased decoration. If we don't find one, add Aliased as the
+            // default.
+            for (auto vi = b->getLocalVariables().cbegin(); vi != b->getLocalVariables().cend(); vi++) {
+                const Instruction& inst = *vi->get();
+                Id resultId = inst.getResultId();
+                if (containsPhysicalStorageBufferOrArray(getDerefTypeId(resultId))) {
+                    bool foundDecoration = false;
+                    const auto function = [&](const std::unique_ptr<Instruction>& decoration) {
+                        if (decoration.get()->getIdOperand(0) == resultId &&
+                            decoration.get()->getOpCode() == OpDecorate &&
+                            (decoration.get()->getImmediateOperand(1) == spv::DecorationAliasedPointerEXT ||
+                             decoration.get()->getImmediateOperand(1) == spv::DecorationRestrictPointerEXT)) {
+                            foundDecoration = true;
+                        }
+                    };
+                    std::for_each(decorations.begin(), decorations.end(), function);
+                    if (!foundDecoration) {
+                        addDecoration(resultId, spv::DecorationAliasedPointerEXT);
+                    }
+                }
+            }
+        }
+    }
+
+    // Look for any 8/16 bit type in physical storage buffer class, and set the
+    // appropriate capability. This happens in createSpvVariable for other storage
+    // classes, but there isn't always a variable for physical storage buffer.
+    for (int t = 0; t < (int)groupedTypes[OpTypePointer].size(); ++t) {
+        Instruction* type = groupedTypes[OpTypePointer][t];
+        if (type->getImmediateOperand(0) == (unsigned)StorageClassPhysicalStorageBufferEXT) {
+            if (containsType(type->getIdOperand(1), OpTypeInt, 8)) {
+                addExtension(spv::E_SPV_KHR_8bit_storage);
+                addCapability(spv::CapabilityStorageBuffer8BitAccess);
+            }
+            if (containsType(type->getIdOperand(1), OpTypeInt, 16) ||
+                containsType(type->getIdOperand(1), OpTypeFloat, 16)) {
+                addExtension(spv::E_SPV_KHR_16bit_storage);
+                addCapability(spv::CapabilityStorageBuffer16BitAccess);
+            }
         }
     }
 }

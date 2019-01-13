@@ -984,6 +984,14 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpSequence:
     case EOpConstructStruct:
 
+        if (type.getBasicType() == EbtReference || node->getType().getBasicType() == EbtReference) {
+            // types must match to assign a reference
+            if (type == node->getType())
+                return node;
+            else
+                return nullptr;
+        }
+
         if (type.getBasicType() == node->getType().getBasicType())
             return node;
 
@@ -2130,6 +2138,9 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
             default: break; // some compilers want this
             }
         }
+        break;
+    case EbtReference:
+        op = EOpConstructReference;
         break;
     default:
         break;

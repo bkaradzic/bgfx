@@ -124,6 +124,8 @@ const char* AddressingString(int addr)
     case 1:  return "Physical32";
     case 2:  return "Physical64";
 
+    case AddressingModelPhysicalStorageBuffer64EXT: return "PhysicalStorageBuffer64EXT";
+
     default: return "Bad";
     }
 }
@@ -220,6 +222,8 @@ const char* StorageClassString(int StorageClass)
     case StorageClassIncomingCallableDataNV:  return "IncomingCallableDataNV";
 #endif
 
+    case StorageClassPhysicalStorageBufferEXT: return "PhysicalStorageBufferEXT";
+
     default: return "Bad";
     }
 }
@@ -295,6 +299,8 @@ const char* DecorationString(int decoration)
     case DecorationNonUniformEXT:           return "DecorationNonUniformEXT";
     case DecorationHlslCounterBufferGOOGLE: return "DecorationHlslCounterBufferGOOGLE";
     case DecorationHlslSemanticGOOGLE:      return "DecorationHlslSemanticGOOGLE";
+    case DecorationRestrictPointerEXT:      return "DecorationRestrictPointerEXT";
+    case DecorationAliasedPointerEXT:       return "DecorationAliasedPointerEXT";
     }
 }
 
@@ -921,6 +927,8 @@ const char* CapabilityString(int info)
 
     case CapabilityVulkanMemoryModelKHR:                return "CapabilityVulkanMemoryModelKHR";
     case CapabilityVulkanMemoryModelDeviceScopeKHR:     return "CapabilityVulkanMemoryModelDeviceScopeKHR";
+
+    case CapabilityPhysicalStorageBufferAddressesEXT:   return "CapabilityPhysicalStorageBufferAddressesEXT";
 
     default: return "Bad";
     }
