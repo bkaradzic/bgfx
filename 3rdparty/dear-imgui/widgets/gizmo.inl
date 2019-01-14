@@ -764,13 +764,6 @@ namespace ImGuizmo
       }
    }
 
-   static float GetUniform(const vec_t& position, const matrix_t& mat)
-   {
-      vec_t trf = makeVect(position.x, position.y, position.z, 1.f);
-      trf.Transform(mat);
-      return trf.w;
-   }
-
    static void ComputeContext(const float *view, const float *projection, float *matrix, MODE mode)
    {
       gContext.mMode = mode;
