@@ -831,6 +831,7 @@ namespace bgfx { namespace mtl
 
 		Function m_function;
 		uint32_t m_hash;
+		uint16_t m_numThreads[3];
 	};
 
 	struct SamplerInfo
@@ -912,7 +913,7 @@ namespace bgfx { namespace mtl
 		SamplerInfo m_samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t	m_samplerCount;
 
-		uint32_t 	m_numThreads[3];
+		uint16_t 	m_numThreads[3];
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
