@@ -1046,7 +1046,14 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "osx") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_OSX=1");
-			preprocessor.setDefine(glslDefine);
+			if (_options.shaderType == 'c')
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+			}
+			else
+			{
+				preprocessor.setDefine(glslDefine);
+			}
 			char temp[256];
 			bx::snprintf(temp, sizeof(temp), "BGFX_SHADER_LANGUAGE_METAL=%d", metal);
 			preprocessor.setDefine(temp);
@@ -1327,8 +1334,7 @@ namespace bgfx
 			else
 			{
 				if (0 != glsl
-				||  0 != essl
-				||  0 != metal)
+				||  0 != essl)
 				{
 				}
 				else
@@ -1456,9 +1462,9 @@ namespace bgfx
 							code += _comment;
 							code += preprocessor.m_preprocessed;
 
-							if (0 != spirv)
+							if (0 != spirv || 0 != metal)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : 0, code, _writer);
 							}
 							else if (0 != pssl)
 							{

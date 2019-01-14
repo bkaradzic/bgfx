@@ -1763,18 +1763,6 @@ namespace bgfx { namespace mtl
 									MTLDataType dataType = uniform.dataType;
 									uint32_t num = 1;
 
-									if (dataType == MTLDataTypeInt && bx::strLen(name) > 14
-									&&  0 == bx::strCmp(name, "NUM_THREADS_", 12) )
-									{
-										const int32_t dim = name[12] - 'X';
-
-										if (dim >= 0
-										&&  dim <= 2)
-										{
-											bx::fromString(&ps->m_numThreads[dim], bx::StringView(name, 14, INT_MAX));
-										}
-									}
-
 									if (dataType == MTLDataTypeArray)
 									{
 										dataType = uniform.arrayType.elementType;
@@ -2147,6 +2135,11 @@ namespace bgfx { namespace mtl
 				ComputePipelineReflection reflection = NULL;
 				pso->m_cps = m_device.newComputePipelineStateWithFunction(program.m_vsh->m_function, MTLPipelineOptionBufferTypeInfo, &reflection);
 				processArguments(pso, reflection.arguments, NULL);
+				
+				for (uint32_t ii = 0; ii < 3; ++ii)
+				{
+					pso->m_numThreads[ii] = program.m_vsh->m_numThreads[ii];
+				}
 			}
 
 			return program.m_computePS;
@@ -2378,6 +2371,14 @@ namespace bgfx { namespace mtl
 			bx::read(&reader, regCount);
 		}
 
+		if (isShaderType(magic, 'C'))
+		{
+			for (uint32_t ii = 0; ii < 3; ++ii)
+			{
+				bx::read(&reader, m_numThreads[ii]);
+			}
+		}
+		
 		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
