@@ -567,25 +567,16 @@ public:
 			ImGui::Text("Background:");
 			ImGui::Indent();
 			{
-				int32_t selection;
-				if (0.0f == m_settings.m_bgType)
-				{
-					selection = UINT8_C(0);
-				}
-				else if (7.0f == m_settings.m_bgType)
-				{
-					selection = UINT8_C(2);
-				}
-				else
-				{
-					selection = UINT8_C(1);
-				}
-
 				if (ImGui::BeginTabBar("CubemapSelection", ImGuiTabBarFlags_None) )
 				{
+					if (ImGui::BeginTabItem("Irradiance") )
+					{
+						m_settings.m_bgType = m_settings.m_radianceSlider;
+						ImGui::EndTabItem();
+					}
+
 					if (ImGui::BeginTabItem("Radiance") )
 					{
-						selection = 1;
 						m_settings.m_bgType = 7.0f;
 
 						ImGui::SliderFloat("Mip level", &m_settings.m_radianceSlider, 1.0f, 6.0f);
@@ -593,16 +584,8 @@ public:
 						ImGui::EndTabItem();
 					}
 
-					if (ImGui::BeginTabItem("Irradiance") )
-					{
-						selection = 2;
-						m_settings.m_bgType = m_settings.m_radianceSlider;
-						ImGui::EndTabItem();
-					}
-
 					if (ImGui::BeginTabItem("Skybox") )
 					{
-						selection = 0;
 						m_settings.m_bgType = 0.0f;
 						ImGui::EndTabItem();
 					}
