@@ -606,6 +606,8 @@ project "shaderc"
 		path.join(GLSL_OPTIMIZER, "src/glsl"),
 
 		SPIRV_CROSS,
+
+		path.join(SPIRV_TOOLS, "include"),
 	}
 
 	links {
