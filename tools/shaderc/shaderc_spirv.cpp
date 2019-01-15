@@ -16,6 +16,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <SPIRV/GlslangToSpv.h>
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #include <spirv_msl.hpp>
+#include <spirv-tools/optimizer.hpp>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
@@ -795,83 +796,99 @@ namespace bgfx { namespace spirv
 				options.disableOptimizer = false;
 
 				glslang::GlslangToSpv(*intermediate, spirv, &options);
-
-				bx::Error err;
-				bx::WriterI* writer = bx::getDebugOut();
-				bx::MemoryReader reader(spirv.data(), uint32_t(spirv.size()*4) );
-				disassemble(writer, &reader, &err);
-
-				if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0))
+				
+				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
+				
+				auto print_msg_to_stderr = [](spv_message_level_t, const char*,
+											  const spv_position_t&, const char* m) {
+					fprintf(stderr, "error:%s\n", m);
+				};
+				opt.SetMessageConsumer(print_msg_to_stderr);
+				
+				opt.RegisterLegalizationPasses();
+				if (!opt.Run(spirv.data(), spirv.size(), &spirv))
 				{
-					if (g_verbose)
-					{
-						glslang::SpirvToolsDisassemble(std::cout, spirv);
-					}
-
-					spirv_cross::CompilerMSL msl(std::move(spirv));
-
-					spirv_cross::ShaderResources resources = msl.get_shader_resources();
-
-					int numThreads[3];
-					for (int i = 0; i < 3; ++i)
-						numThreads[i] = msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
-
-					msl.rename_entry_point("main", "xlatMtlMain", spv::ExecutionModel::ExecutionModelGLCompute);
-
-					for (auto &resource : resources.uniform_buffers)
-					{
-						msl.set_name(resource.id, "_mtl_u");
-					}
-
-					for (auto &resource : resources.storage_buffers)
-					{
-						unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-						msl.set_decoration(resource.id, spv::DecorationBinding, binding + 1);
-
-						// workaround spirv -> msl codegen problem: same name was used as struct type and function parameter name
-						msl.set_name(resource.id, "_" + msl.get_name(resource.id));
-					}
-
-					std::string source = msl.compile();
-
-					for (int i = 0; i < 3; ++i)
-					{
-						uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
-						bx::write(_writer, dim);
-					}
-
-					uint32_t shaderSize = (uint32_t)source.size();
-					bx::write(_writer, shaderSize);
-					bx::write(_writer, source.c_str(), shaderSize);
-					uint8_t nul = 0;
-					bx::write(_writer, nul);
+					compiled = false;
 				}
 				else
 				{
-					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
-					bx::write(_writer, shaderSize);
-					bx::write(_writer, spirv.data(), shaderSize);
-					uint8_t nul = 0;
-					bx::write(_writer, nul);
-				}
-				//
-				const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
-				bx::write(_writer, numAttr);
-
-				for (uint8_t ii = 0; ii < numAttr; ++ii)
-				{
-					bgfx::Attrib::Enum attr = toAttribEnum(program->getAttributeName(ii) );
-					if (bgfx::Attrib::Count != attr)
+					bx::Error err;
+					bx::WriterI* writer = bx::getDebugOut();
+					bx::MemoryReader reader(spirv.data(), uint32_t(spirv.size()*4) );
+					disassemble(writer, &reader, &err);
+					
+					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0))
 					{
-						bx::write(_writer, bgfx::attribToId(attr) );
+						if (g_verbose)
+						{
+							glslang::SpirvToolsDisassemble(std::cout, spirv);
+						}
+						
+						spirv_cross::CompilerMSL msl(std::move(spirv));
+						
+						spirv_cross::ShaderResources resources = msl.get_shader_resources();
+						
+						int numThreads[3];
+						for (int i = 0; i < 3; ++i)
+							numThreads[i] = msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
+						
+						msl.rename_entry_point("main", "xlatMtlMain", spv::ExecutionModel::ExecutionModelGLCompute);
+						
+						for (auto &resource : resources.uniform_buffers)
+						{
+							msl.set_name(resource.id, "_mtl_u");
+						}
+						
+						for (auto &resource : resources.storage_buffers)
+						{
+							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
+							msl.set_decoration(resource.id, spv::DecorationBinding, binding + 1);
+							
+							// workaround spirv -> msl codegen problem: same name was used as struct type and function parameter name
+							msl.set_name(resource.id, "_" + msl.get_name(resource.id));
+						}
+						
+						std::string source = msl.compile();
+						
+						for (int i = 0; i < 3; ++i)
+						{
+							uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
+							bx::write(_writer, dim);
+						}
+						
+						uint32_t shaderSize = (uint32_t)source.size();
+						bx::write(_writer, shaderSize);
+						bx::write(_writer, source.c_str(), shaderSize);
+						uint8_t nul = 0;
+						bx::write(_writer, nul);
 					}
 					else
 					{
-						bx::write(_writer, uint16_t(UINT16_MAX) );
+						uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
+						bx::write(_writer, shaderSize);
+						bx::write(_writer, spirv.data(), shaderSize);
+						uint8_t nul = 0;
+						bx::write(_writer, nul);
 					}
+					//
+					const uint8_t numAttr = (uint8_t)program->getNumLiveAttributes();
+					bx::write(_writer, numAttr);
+					
+					for (uint8_t ii = 0; ii < numAttr; ++ii)
+					{
+						bgfx::Attrib::Enum attr = toAttribEnum(program->getAttributeName(ii) );
+						if (bgfx::Attrib::Count != attr)
+						{
+							bx::write(_writer, bgfx::attribToId(attr) );
+						}
+						else
+						{
+							bx::write(_writer, uint16_t(UINT16_MAX) );
+						}
+					}
+					
+					bx::write(_writer, size);
 				}
-
-				bx::write(_writer, size);
 			}
 		}
 
