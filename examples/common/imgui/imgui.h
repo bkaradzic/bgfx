@@ -108,27 +108,6 @@ namespace ImGui
 		SetCursorPosY(GetCursorPosY() + GetTextLineHeightWithSpacing() );
 	}
 
-	inline bool TabButton(const char* _text, float _width, bool _active)
-	{
-		int32_t count = 1;
-
-		if (_active)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.75f, 0.0f, 0.78f) );
-			ImGui::PushStyleColor(ImGuiCol_Text,   ImVec4(0.0f, 0.0f,  0.0f, 1.0f ) );
-			count = 2;
-		}
-		else
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.7f) );
-		}
-
-		bool retval = ImGui::Button(_text, ImVec2(_width, 20.0f) );
-		ImGui::PopStyleColor(count);
-
-		return retval;
-	}
-
 	inline bool MouseOverArea()
 	{
 		return false
