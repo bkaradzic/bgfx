@@ -180,6 +180,7 @@ namespace bgfx
 		"i_data2",
 		"i_data3",
 		"i_data4",
+		NULL
 	};
 
 	Options::Options()
