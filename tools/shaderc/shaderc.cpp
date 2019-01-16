@@ -1131,9 +1131,13 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "noperspective", 13)
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
-					interpolation = typen;
+					if ('f' == _options.shaderType)
+					{
+						interpolation = typen;
+						usesInterpolationQualifiers = true;
+					}
+
 					typen = nextWord(parse);
-					usesInterpolationQualifiers = true;
 				}
 
 				bx::StringView name   = nextWord(parse);
@@ -1956,15 +1960,15 @@ namespace bgfx
 
 								if (0 == essl)
 								{
-									const bool need130 = 120 == glsl && (false
+									const bool need130 = 0 != metal || (120 == glsl && (false
 										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
-										);
+										) );
 
 									if (0 != metal)
 									{
-										bx::stringPrintf(code, "#version 120\n");
+										bx::stringPrintf(code, "#version 130\n");
 									}
 									else
 									{
@@ -2081,7 +2085,7 @@ namespace bgfx
 									{
 										bx::stringPrintf(code
 											, "#define bgfxShadow2D     shadow2D\n"
-												"#define bgfxShadow2DProj shadow2DProj\n"
+											  "#define bgfxShadow2DProj shadow2DProj\n"
 											);
 									}
 								}

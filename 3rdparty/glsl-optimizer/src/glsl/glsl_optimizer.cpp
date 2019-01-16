@@ -61,6 +61,7 @@ initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
 	case kGlslTargetMetal:
+		ctx->Const.GLSLVersion = 150;
 		ctx->Extensions.ARB_ES3_compatibility = true;
 		ctx->Extensions.EXT_shader_framebuffer_fetch = true;
 		break;
