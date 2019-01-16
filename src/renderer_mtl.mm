@@ -2878,7 +2878,7 @@ namespace bgfx { namespace mtl
 		{
 			if ( NULL == m_ptrMips[_mip] )
 			{
-				m_ptrMips[_mip] = m_ptr.newTextureViewWithPixelFormat(m_ptr.pixelFormat(), m_ptr.textureType(), NSMakeRange(_mip,1), NSMakeRange(0,m_ptr.arrayLength()));
+				m_ptrMips[_mip] = m_ptr.newTextureViewWithPixelFormat(m_ptr.pixelFormat(), m_ptr.textureType(), NSMakeRange(_mip,1), NSMakeRange(0,m_ptr.arrayLength() * (m_type == TextureCube ? 6 : 1)));
 			}
 
 			return m_ptrMips[_mip];
