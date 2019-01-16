@@ -39,6 +39,8 @@ rebuild:
 	@make -s --no-print-directory rebuild -C 36-sky
 #	@make -s --no-print-directory rebuild -C 37-gpudrivenrendering
 	@make -s --no-print-directory rebuild -C 38-bloom
+#	@make -s --no-print-directory rebuild -C 39-assao
+	@make -s --no-print-directory rebuild -C 40-svt
 	@make -s --no-print-directory rebuild -C common/debugdraw
 	@make -s --no-print-directory rebuild -C common/font
 	@make -s --no-print-directory rebuild -C common/imgui
