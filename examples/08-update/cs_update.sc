@@ -25,6 +25,6 @@ void main()
 	{
 		vec3 color = colors[face]*0.75 + sin(u_time.x*4.0)*0.25;
 		ivec3 dest = ivec3(gl_GlobalInvocationID.xy, face);
-		imageStore(s_texColor, dest, vec4(color,1) );
+		imageStore(s_texColor, dest, vec4(color, 1.0) );
 	}
 }
