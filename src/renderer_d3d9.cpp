@@ -3252,9 +3252,11 @@ namespace bgfx { namespace d3d9
 
 		D3DPRESENT_PARAMETERS params;
 		bx::memCopy(&params, &s_renderD3D9->m_params, sizeof(D3DPRESENT_PARAMETERS) );
-		params.BackBufferFormat = TextureFormat::Count == _format ? params.BackBufferFormat : s_textureFormat[_format].m_fmt;
-		params.BackBufferWidth  = m_width;
-		params.BackBufferHeight = m_height;
+		params.BackBufferFormat   = TextureFormat::Count == _format ? params.BackBufferFormat : s_textureFormat[_format].m_fmt;
+		params.BackBufferWidth    = m_width;
+		params.BackBufferHeight   = m_height;
+		params.MultiSampleType    = s_msaa[0].m_type;
+		params.MultiSampleQuality = s_msaa[0].m_quality;
 
 		DX_CHECK(s_renderD3D9->m_device->CreateAdditionalSwapChain(&params, &m_swapChain) );
 		DX_CHECK(m_swapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &m_surface[0]) );
