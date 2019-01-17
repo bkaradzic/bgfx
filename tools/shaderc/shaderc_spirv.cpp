@@ -699,17 +699,25 @@ namespace bgfx { namespace spirv
 							{
 								bool found = false;
 
-								for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
+								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty())
 								{
-									// matching lines like:  uniform u_name;
-									// we want to replace "uniform" with "static" so that it's no longer
-									// included in the uniform blob that the application must upload
-									// we can't just remove them, because unused functions might still reference
-									// them and cause a compile error when they're gone
-									if (!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii) ).isEmpty() )
+									found = true;
+								} 
+								else
+								{
+
+									for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
 									{
-										found = true;
-										break;
+										// matching lines like:  uniform u_name;
+										// we want to replace "uniform" with "static" so that it's no longer
+										// included in the uniform blob that the application must upload
+										// we can't just remove them, because unused functions might still reference
+										// them and cause a compile error when they're gone
+										if (!bx::findIdentifierMatch(strLine.c_str(), program->getUniformName(ii)).isEmpty())
+										{
+											found = true;
+											break;
+										}
 									}
 								}
 
