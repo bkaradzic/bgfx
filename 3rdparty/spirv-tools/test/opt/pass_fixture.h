@@ -49,7 +49,7 @@ class PassTest : public TestT {
             [](spv_message_level_t, const char*, const spv_position_t&,
                const char* message) { std::cerr << message << std::endl; }),
         context_(nullptr),
-        tools_(SPV_ENV_UNIVERSAL_1_1),
+        tools_(SPV_ENV_UNIVERSAL_1_3),
         manager_(new PassManager()),
         assemble_options_(SpirvTools::kDefaultAssembleOption),
         disassemble_options_(SpirvTools::kDefaultDisassembleOption) {}
@@ -59,7 +59,7 @@ class PassTest : public TestT {
   // from pass Process() function.
   std::tuple<std::vector<uint32_t>, Pass::Status> OptimizeToBinary(
       Pass* pass, const std::string& original, bool skip_nop) {
-    context_ = std::move(BuildModule(SPV_ENV_UNIVERSAL_1_1, consumer_, original,
+    context_ = std::move(BuildModule(SPV_ENV_UNIVERSAL_1_3, consumer_, original,
                                      assemble_options_));
     EXPECT_NE(nullptr, context()) << "Assembling failed for shader:\n"
                                   << original << std::endl;
@@ -97,7 +97,7 @@ class PassTest : public TestT {
     std::tie(optimized_bin, status) = SinglePassRunToBinary<PassT>(
         assembly, skip_nop, std::forward<Args>(args)...);
     if (do_validation) {
-      spv_target_env target_env = SPV_ENV_UNIVERSAL_1_1;
+      spv_target_env target_env = SPV_ENV_UNIVERSAL_1_3;
       spv_context spvContext = spvContextCreate(target_env);
       spv_diagnostic diagnostic = nullptr;
       spv_const_binary_t binary = {optimized_bin.data(), optimized_bin.size()};
@@ -134,7 +134,7 @@ class PassTest : public TestT {
     EXPECT_EQ(original == expected,
               status == Pass::Status::SuccessWithoutChange);
     if (do_validation) {
-      spv_target_env target_env = SPV_ENV_UNIVERSAL_1_1;
+      spv_target_env target_env = SPV_ENV_UNIVERSAL_1_3;
       spv_context spvContext = spvContextCreate(target_env);
       spv_diagnostic diagnostic = nullptr;
       spv_const_binary_t binary = {optimized_bin.data(), optimized_bin.size()};
@@ -202,7 +202,7 @@ class PassTest : public TestT {
   void RunAndCheck(const std::string& original, const std::string& expected) {
     assert(manager_->NumPasses());
 
-    context_ = std::move(BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, original,
+    context_ = std::move(BuildModule(SPV_ENV_UNIVERSAL_1_3, nullptr, original,
                                      assemble_options_));
     ASSERT_NE(nullptr, context());
 

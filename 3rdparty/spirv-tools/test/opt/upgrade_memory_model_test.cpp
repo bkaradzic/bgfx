@@ -23,7 +23,6 @@ using namespace spvtools;
 
 using UpgradeMemoryModelTest = opt::PassTest<::testing::Test>;
 
-#ifdef SPIRV_EFFCEE
 TEST_F(UpgradeMemoryModelTest, InvalidMemoryModelOpenCL) {
   const std::string text = R"(
 ; CHECK: OpMemoryModel Logical OpenCL
@@ -80,8 +79,8 @@ OpDecorate %var Coherent
 TEST_F(UpgradeMemoryModelTest, WorkgroupVariable) {
   const std::string text = R"(
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 2
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -104,8 +103,8 @@ OpFunctionEnd
 TEST_F(UpgradeMemoryModelTest, WorkgroupFunctionParameter) {
   const std::string text = R"(
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 2
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -129,8 +128,8 @@ TEST_F(UpgradeMemoryModelTest, SimpleUniformVariable) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -156,8 +155,8 @@ TEST_F(UpgradeMemoryModelTest, SimpleUniformFunctionParameter) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -209,8 +208,8 @@ TEST_F(UpgradeMemoryModelTest, SimpleUniformVariableCopied) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -237,8 +236,8 @@ TEST_F(UpgradeMemoryModelTest, SimpleUniformFunctionParameterCopied) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -266,8 +265,8 @@ TEST_F(UpgradeMemoryModelTest, SimpleUniformVariableAccessChain) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -298,8 +297,8 @@ TEST_F(UpgradeMemoryModelTest, SimpleUniformFunctionParameterAccessChain) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpMemoryModel Logical GLSL450
@@ -331,8 +330,8 @@ TEST_F(UpgradeMemoryModelTest, VariablePointerSelect) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability VariablePointers
@@ -364,8 +363,8 @@ TEST_F(UpgradeMemoryModelTest, VariablePointerSelectConservative) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} Volatile|MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} Volatile|MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability VariablePointers
@@ -397,8 +396,8 @@ TEST_F(UpgradeMemoryModelTest, VariablePointerIncrement) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate {{%\w+}} Coherent
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability VariablePointers
@@ -440,8 +439,8 @@ TEST_F(UpgradeMemoryModelTest, CoherentStructElement) {
   const std::string text = R"(
 ; CHECK-NOT: OpMemberDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -471,8 +470,8 @@ TEST_F(UpgradeMemoryModelTest, CoherentElementFullStructAccess) {
   const std::string text = R"(
 ; CHECK-NOT: OpMemberDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -530,8 +529,8 @@ TEST_F(UpgradeMemoryModelTest, MultiIndexAccessCoherent) {
   const std::string text = R"(
 ; CHECK-NOT: OpMemberDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -600,8 +599,8 @@ TEST_F(UpgradeMemoryModelTest, ConsecutiveAccessChainCoherent) {
   const std::string text = R"(
 ; CHECK-NOT: OpMemberDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -682,8 +681,8 @@ TEST_F(UpgradeMemoryModelTest, CoherentStructElementAccess) {
   const std::string text = R"(
 ; CHECK-NOT: OpMemberDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -723,8 +722,8 @@ TEST_F(UpgradeMemoryModelTest, NonCoherentLoadCoherentStore) {
   const std::string text = R"(
 ; CHECK-NOT: OpMemberDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK-NOT: MakePointerAvailableKHR
-; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK-NOT: MakePointerVisibleKHR
+; CHECK: OpStore {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -823,7 +822,7 @@ TEST_F(UpgradeMemoryModelTest, CopyMemoryTwoScopes) {
 ; CHECK-NOT: OpDecorate
 ; CHECK-DAG: [[queuefamily:%\w+]] = OpConstant {{%\w+}} 5
 ; CHECK-DAG: [[workgroup:%\w+]] = OpConstant {{%\w+}} 2
-; CHECK: OpCopyMemory {{%\w+}} {{%\w+}} MakePointerAvailableKHR|MakePointerVisibleKHR|NonPrivatePointerKHR [[queuefamily]] [[workgroup]]
+; CHECK: OpCopyMemory {{%\w+}} {{%\w+}} MakePointerAvailableKHR|MakePointerVisibleKHR|NonPrivatePointerKHR [[workgroup]] [[queuefamily]]
 OpCapability Shader
 OpCapability Linkage
 OpExtension "SPV_KHR_storage_buffer_storage_class"
@@ -883,8 +882,8 @@ TEST_F(UpgradeMemoryModelTest, CoherentImageRead) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpImageRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelAvailableKHR|NonPrivateTexelKHR [[scope]] 
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpImageRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelVisibleKHR|NonPrivateTexelKHR [[scope]] 
 OpCapability Shader
 OpCapability Linkage
 OpCapability StorageImageReadWithoutFormat
@@ -917,9 +916,9 @@ TEST_F(UpgradeMemoryModelTest, CoherentImageReadExtractedFromSampledImage) {
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[image:%\w+]] = OpTypeImage
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad [[image]] {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad [[image]] {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
 ; CHECK-NOT: NonPrivatePointerKHR
-; CHECK: OpImageRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelAvailableKHR|NonPrivateTexelKHR [[scope]]
+; CHECK: OpImageRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelVisibleKHR|NonPrivateTexelKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability StorageImageReadWithoutFormat
@@ -990,8 +989,8 @@ TEST_F(UpgradeMemoryModelTest, CoherentImageWrite) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR
-; CHECK: OpImageWrite {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelVisibleKHR|NonPrivateTexelKHR [[scope]]
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR
+; CHECK: OpImageWrite {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelAvailableKHR|NonPrivateTexelKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability StorageImageWriteWithoutFormat
@@ -1023,9 +1022,9 @@ TEST_F(UpgradeMemoryModelTest, CoherentImageWriteExtractFromSampledImage) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR
 ; CHECK-NOT: NonPrivatePointerKHR
-; CHECK: OpImageWrite {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelVisibleKHR|NonPrivateTexelKHR [[scope]]
+; CHECK: OpImageWrite {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelAvailableKHR|NonPrivateTexelKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability StorageImageWriteWithoutFormat
@@ -1098,8 +1097,8 @@ TEST_F(UpgradeMemoryModelTest, CoherentImageSparseRead) {
   const std::string text = R"(
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
-; CHECK: OpImageSparseRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelAvailableKHR|NonPrivateTexelKHR [[scope]] 
+; CHECK: OpLoad {{%\w+}} {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpImageSparseRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelVisibleKHR|NonPrivateTexelKHR [[scope]] 
 OpCapability Shader
 OpCapability Linkage
 OpCapability StorageImageReadWithoutFormat
@@ -1135,9 +1134,9 @@ TEST_F(UpgradeMemoryModelTest,
 ; CHECK-NOT: OpDecorate
 ; CHECK: [[image:%\w+]] = OpTypeImage
 ; CHECK: [[scope:%\w+]] = OpConstant {{%\w+}} 5
-; CHECK: OpLoad [[image]] {{%\w+}} MakePointerAvailableKHR|NonPrivatePointerKHR [[scope]]
+; CHECK: OpLoad [[image]] {{%\w+}} MakePointerVisibleKHR|NonPrivatePointerKHR [[scope]]
 ; CHECK-NOT: NonPrivatePointerKHR
-; CHECK: OpImageSparseRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelAvailableKHR|NonPrivateTexelKHR [[scope]]
+; CHECK: OpImageSparseRead {{%\w+}} {{%\w+}} {{%\w+}} MakeTexelVisibleKHR|NonPrivateTexelKHR [[scope]]
 OpCapability Shader
 OpCapability Linkage
 OpCapability StorageImageReadWithoutFormat
@@ -1430,6 +1429,288 @@ OpFunctionEnd
   SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
 }
 
-#endif
+TEST_F(UpgradeMemoryModelTest, UpgradeModfNoFlags) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer StorageBuffer [[float]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] StorageBuffer
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[float]]
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} ModfStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]]
+; CHECK-NOT: NonPrivatePointerKHR
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%ptr_ssbo_float = OpTypePointer StorageBuffer %float
+%ssbo_var = OpVariable %ptr_ssbo_float StorageBuffer
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Modf %float_0 %ssbo_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeModfWorkgroupCoherent) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer Workgroup [[float]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] Workgroup
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[float]]
+; CHECK: [[wg_scope:%\w+]] = OpConstant {{%\w+}} 2
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} ModfStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]] MakePointerAvailableKHR|NonPrivatePointerKHR [[wg_scope]]
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+OpDecorate %wg_var Coherent
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%ptr_wg_float = OpTypePointer Workgroup %float
+%wg_var = OpVariable %ptr_wg_float Workgroup
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Modf %float_0 %wg_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeModfSSBOCoherent) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer StorageBuffer [[float]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] StorageBuffer
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[float]]
+; CHECK: [[qf_scope:%\w+]] = OpConstant {{%\w+}} 5
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} ModfStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]] MakePointerAvailableKHR|NonPrivatePointerKHR [[qf_scope]]
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+OpDecorate %ssbo_var Coherent
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%ptr_ssbo_float = OpTypePointer StorageBuffer %float
+%ssbo_var = OpVariable %ptr_ssbo_float StorageBuffer
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Modf %float_0 %ssbo_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeModfSSBOVolatile) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer StorageBuffer [[float]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] StorageBuffer
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[float]]
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} ModfStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]] Volatile
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+OpDecorate %wg_var Volatile
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%ptr_ssbo_float = OpTypePointer StorageBuffer %float
+%wg_var = OpVariable %ptr_ssbo_float StorageBuffer
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Modf %float_0 %wg_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeFrexpNoFlags) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[int:%\w+]] = OpTypeInt 32 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer StorageBuffer [[int]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] StorageBuffer
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[int]]
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} FrexpStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[int]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]]
+; CHECK-NOT: NonPrivatePointerKHR
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%int = OpTypeInt 32 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Frexp %float_0 %ssbo_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeFrexpWorkgroupCoherent) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[int:%\w+]] = OpTypeInt 32 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer Workgroup [[int]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] Workgroup
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[int]]
+; CHECK: [[wg_scope:%\w+]] = OpConstant {{%\w+}} 2
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} FrexpStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[int]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]] MakePointerAvailableKHR|NonPrivatePointerKHR [[wg_scope]]
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+OpDecorate %wg_var Coherent
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%int = OpTypeInt 32 0
+%ptr_wg_int = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Frexp %float_0 %wg_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeFrexpSSBOCoherent) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[int:%\w+]] = OpTypeInt 32 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer StorageBuffer [[int]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] StorageBuffer
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[int]]
+; CHECK: [[qf_scope:%\w+]] = OpConstant {{%\w+}} 5
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} FrexpStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[int]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]] MakePointerAvailableKHR|NonPrivatePointerKHR [[qf_scope]]
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+OpDecorate %ssbo_var Coherent
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%int = OpTypeInt 32 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Frexp %float_0 %ssbo_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, UpgradeFrexpSSBOVolatile) {
+  const std::string text = R"(
+; CHECK: [[float:%\w+]] = OpTypeFloat 32
+; CHECK: [[float_0:%\w+]] = OpConstant [[float]] 0
+; CHECK: [[int:%\w+]] = OpTypeInt 32 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer StorageBuffer [[int]]
+; CHECK: [[var:%\w+]] = OpVariable [[ptr]] StorageBuffer
+; CHECK: [[struct:%\w+]] = OpTypeStruct [[float]] [[int]]
+; CHECK: [[modfstruct:%\w+]] = OpExtInst [[struct]] {{%\w+}} FrexpStruct [[float_0]]
+; CHECK: [[ex0:%\w+]] = OpCompositeExtract [[float]] [[modfstruct]] 0
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract [[int]] [[modfstruct]] 1
+; CHECK: OpStore [[var]] [[ex1]] Volatile
+; CHECK: OpFAdd [[float]] [[float_0]] [[ex0]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+%import = OpExtInstImport "GLSL.std.450"
+OpEntryPoint GLCompute %func "func"
+OpDecorate %wg_var Volatile
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%int = OpTypeInt 32 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%wg_var = OpVariable %ptr_ssbo_int StorageBuffer
+%func_ty = OpTypeFunction %void
+%func = OpFunction %void None %func_ty
+%1 = OpLabel
+%2 = OpExtInst %float %import Frexp %float_0 %wg_var
+%3 = OpFAdd %float %float_0 %2
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
 
 }  // namespace

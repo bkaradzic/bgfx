@@ -127,6 +127,7 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
         case SpvStorageClassAtomicCounter:
         case SpvStorageClassImage:
         case SpvStorageClassStorageBuffer:
+        case SpvStorageClassPhysicalStorageBufferEXT:
           break;
         default:
           if (spvIsOpenCLEnv(_.context()->target_env)) {

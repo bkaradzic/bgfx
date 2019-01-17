@@ -61,7 +61,7 @@ OpFunctionEnd
 ; Generator: Khronos SPIR-V Tools Assembler; 0
 ; Bound: 9
 ; Schema: 0)";
-  spv_binary binary;
+  spv_binary binary = nullptr;
   spv_diagnostic diagnostic;
   spv_result_t error = spvTextToBinary(context, spirv.c_str(), spirv.size(),
                                        &binary, &diagnostic);
@@ -102,6 +102,7 @@ OpFunctionEnd
   }
   EXPECT_EQ(spirv_header + spirv, output_text->str);
   spvTextDestroy(output_text);
+  spvBinaryDestroy(binary);
   spvContextDestroy(context);
 }
 

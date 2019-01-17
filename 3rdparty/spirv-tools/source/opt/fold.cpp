@@ -115,8 +115,10 @@ uint32_t InstructionFolder::BinaryOperate(SpvOp opcode, uint32_t a,
 
     // Shifting
     case SpvOp::SpvOpShiftRightLogical:
-      if (b > 32) {
-        // This is undefined behaviour.  Choose 0 for consistency.
+      if (b >= 32) {
+        // This is undefined behaviour when |b| > 32.  Choose 0 for consistency.
+        // When |b| == 32, doing the shift in C++ in undefined, but the result
+        // will be 0, so just return that value.
         return 0;
       }
       return a >> b;
@@ -125,10 +127,21 @@ uint32_t InstructionFolder::BinaryOperate(SpvOp opcode, uint32_t a,
         // This is undefined behaviour.  Choose 0 for consistency.
         return 0;
       }
+      if (b == 32) {
+        // Doing the shift in C++ is undefined, but the result is defined in the
+        // spir-v spec.  Find that value another way.
+        if (static_cast<int32_t>(a) >= 0) {
+          return 0;
+        } else {
+          return static_cast<uint32_t>(-1);
+        }
+      }
       return (static_cast<int32_t>(a)) >> b;
     case SpvOp::SpvOpShiftLeftLogical:
-      if (b > 32) {
-        // This is undefined behaviour.  Choose 0 for consistency.
+      if (b >= 32) {
+        // This is undefined behaviour when |b| > 32.  Choose 0 for consistency.
+        // When |b| == 32, doing the shift in C++ in undefined, but the result
+        // will be 0, so just return that value.
         return 0;
       }
       return a << b;
@@ -307,7 +320,8 @@ bool InstructionFolder::FoldBinaryIntegerOpToConstant(
       if (constants[1] != nullptr) {
         // When shifting by a value larger than the size of the result, the
         // result is undefined.  We are setting the undefined behaviour to a
-        // result of 0.
+        // result of 0.  If the shift amount is the same as the size of the
+        // result, then the result is defined, and it 0.
         uint32_t shift_amount = constants[1]->GetU32BitValue();
         if (shift_amount >= 32) {
           *result = 0;

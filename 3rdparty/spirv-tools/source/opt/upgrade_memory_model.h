@@ -118,6 +118,11 @@ class UpgradeMemoryModel : public Pass {
   // Returns true if |scope_id| is SpvScopeDevice.
   bool IsDeviceScope(uint32_t scope_id);
 
+  // Upgrades GLSL.std.450 modf and frexp. Both instructions are replaced with
+  // their struct versions. New extracts and a store are added in order to
+  // facilitate adding memory model flags.
+  void UpgradeExtInst(Instruction* modf);
+
   // Caches the result of TraceInstruction. For a given result id and set of
   // indices, stores whether that combination is coherent and/or volatile.
   std::unordered_map<std::pair<uint32_t, std::vector<uint32_t>>,

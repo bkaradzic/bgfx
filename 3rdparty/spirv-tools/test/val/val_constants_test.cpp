@@ -280,6 +280,20 @@ INSTANTIATE_TEST_CASE_P(
                       "InBoundsPtrAccessChain"),
     }));
 
+INSTANTIATE_TEST_CASE_P(
+    UConvertInAMD_gpu_shader_int16, ValidateConstantOp,
+    ValuesIn(std::vector<ConstantOpCase>{
+        // SPV_AMD_gpu_shader_int16 should enable UConvert for OpSpecConstantOp
+        // https://github.com/KhronosGroup/glslang/issues/848
+        {SPV_ENV_UNIVERSAL_1_0,
+         "OpCapability Shader "
+         "OpCapability Linkage ; So we don't need to define a function\n"
+         "OpExtension \"SPV_AMD_gpu_shader_int16\" "
+         "OpMemoryModel Logical Simple " kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+    }));
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

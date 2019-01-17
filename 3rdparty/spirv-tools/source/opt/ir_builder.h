@@ -455,6 +455,16 @@ class InstructionBuilder {
     return AddInstruction(std::move(new_inst));
   }
 
+  Instruction* AddStore(uint32_t ptr_id, uint32_t obj_id) {
+    std::vector<Operand> operands;
+    operands.push_back({SPV_OPERAND_TYPE_ID, {ptr_id}});
+    operands.push_back({SPV_OPERAND_TYPE_ID, {obj_id}});
+
+    std::unique_ptr<Instruction> new_inst(
+        new Instruction(GetContext(), SpvOpStore, 0, 0, operands));
+    return AddInstruction(std::move(new_inst));
+  }
+
   // Inserts the new instruction before the insertion point.
   Instruction* AddInstruction(std::unique_ptr<Instruction>&& insn) {
     Instruction* insn_ptr = &*insert_before_.InsertBefore(std::move(insn));

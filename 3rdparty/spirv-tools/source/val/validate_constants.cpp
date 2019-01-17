@@ -329,11 +329,19 @@ spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
       }
       break;
 
+    case SpvOpUConvert:
+      if (!_.features().uconvert_spec_constant_op &&
+          !_.HasCapability(SpvCapabilityKernel)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "UConvert requires Kernel capability or extension "
+                  "SPV_AMD_gpu_shader_int16";
+      }
+      break;
+
     case SpvOpConvertFToS:
     case SpvOpConvertSToF:
     case SpvOpConvertFToU:
     case SpvOpConvertUToF:
-    case SpvOpUConvert:
     case SpvOpConvertPtrToU:
     case SpvOpConvertUToPtr:
     case SpvOpGenericCastToPtr:

@@ -81,16 +81,11 @@ add_spvtools_unittest(TARGET opt
        type_manager_test.cpp
        types_test.cpp
        unify_const_test.cpp
+       upgrade_memory_model_test.cpp
        utils_test.cpp pass_utils.cpp
        value_table_test.cpp
        vector_dce_test.cpp
        workaround1209_test.cpp
-  LIBS SPIRV-Tools-opt
-  PCH_FILE pch_test_opt
-)
-
-add_spvtools_unittest(TARGET upgrade_memory_model
-  SRCS upgrade_memory_model_test.cpp pass_utils.cpp
   LIBS SPIRV-Tools-opt
   PCH_FILE pch_test_opt
 )

@@ -669,8 +669,8 @@ uint32_t IRContext::GetBuiltinVarId(uint32_t builtin) {
         reg_type = type_mgr->GetRegisteredType(&v4float_ty);
         break;
       }
-      case SpvBuiltInVertexId:
-      case SpvBuiltInInstanceId:
+      case SpvBuiltInVertexIndex:
+      case SpvBuiltInInstanceIndex:
       case SpvBuiltInPrimitiveId:
       case SpvBuiltInInvocationId:
       case SpvBuiltInGlobalInvocationId: {

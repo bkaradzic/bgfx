@@ -306,6 +306,54 @@ TEST_F(ValidationStateTest, CheckWebGPUIndirectlyRecursiveBodyBad) {
                         "called.\n  %9 = OpFunctionCall %_struct_5 %10\n"));
 }
 
+TEST_F(ValidationStateTest,
+       CheckWebGPUDuplicateEntryNamesDifferentFunctionsBad) {
+  std::string spirv = std::string(kVulkanMemoryHeader) + R"(
+OpEntryPoint Fragment %func_1 "main"
+OpEntryPoint Vertex %func_2 "main"
+OpExecutionMode %func_1 OriginUpperLeft
+%void    = OpTypeVoid
+%void_f  = OpTypeFunction %void
+%func_1  = OpFunction %void None %void_f
+%label_1 = OpLabel
+           OpReturn
+           OpFunctionEnd
+%func_2  = OpFunction %void None %void_f
+%label_2 = OpLabel
+           OpReturn
+           OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_BINARY,
+            ValidateAndRetrieveValidationState(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Entry point name \"main\" is not unique, which is not allow "
+                "in WebGPU env.\n  %1 = OpFunction %void None %4\n"));
+}
+
+TEST_F(ValidationStateTest, CheckWebGPUDuplicateEntryNamesSameFunctionBad) {
+  std::string spirv = std::string(kVulkanMemoryHeader) + R"(
+OpEntryPoint GLCompute %func_1 "main"
+OpEntryPoint Vertex %func_1 "main"
+%void    = OpTypeVoid
+%void_f  = OpTypeFunction %void
+%func_1  = OpFunction %void None %void_f
+%label_1 = OpLabel
+           OpReturn
+           OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_BINARY,
+            ValidateAndRetrieveValidationState(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Entry point name \"main\" is not unique, which is not allow "
+                "in WebGPU env.\n  %1 = OpFunction %void None %3\n"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

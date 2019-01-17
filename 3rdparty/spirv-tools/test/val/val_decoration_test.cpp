@@ -4345,11 +4345,11 @@ OpFunctionEnd
 
   CompileSuccessfully(spirv);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("FPRoundingMode decoration can be applied only to the "
-                "Object operand of an OpStore in the StorageBuffer, Uniform, "
-                "PushConstant, Input, or Output Storage Classes."));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("FPRoundingMode decoration can be applied only to the "
+                        "Object operand of an OpStore in the StorageBuffer, "
+                        "PhysicalStorageBufferEXT, Uniform, "
+                        "PushConstant, Input, or Output Storage Classes."));
 }
 
 TEST_F(ValidateDecorations, FPRoundingModeMultipleOpStoreGood) {
@@ -4808,6 +4808,498 @@ TEST_F(ValidateDecorations, BlockAndBufferBlockDecorationsOnSameID) {
       getDiagnosticString(),
       HasSubstr(
           "ID '2' decorated with both BufferBlock and Block is not allowed."));
+}
+
+std::string MakeIntegerShader(
+    const std::string& decoration, const std::string& inst,
+    const std::string& extension =
+        "OpExtension \"SPV_KHR_no_integer_wrap_decoration\"") {
+  return R"(
+OpCapability Shader
+OpCapability Linkage
+)" + extension +
+         R"(
+%glsl = OpExtInstImport "GLSL.std.450"
+%opencl = OpExtInstImport "OpenCL.std"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpName %entry "entry"
+)" + decoration +
+         R"(
+    %void = OpTypeVoid
+  %voidfn = OpTypeFunction %void
+     %int = OpTypeInt 32 1
+    %zero = OpConstantNull %int
+   %float = OpTypeFloat 32
+  %float0 = OpConstantNull %float
+    %main = OpFunction %void None %voidfn
+   %entry = OpLabel
+)" + inst +
+         R"(
+OpReturn
+OpFunctionEnd)";
+}
+
+// NoSignedWrap
+
+TEST_F(ValidateDecorations, NoSignedWrapOnTypeBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %void NoSignedWrap", "");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("NoSignedWrap decoration may not be applied to TypeVoid"));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapOnLabelBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %entry NoSignedWrap", "");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("NoSignedWrap decoration may not be applied to Label"));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapRequiresExtensionBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpIAdd %int %zero %zero", "");
+
+  CompileSuccessfully(spirv);
+  EXPECT_NE(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("requires one of these extensions: "
+                        "SPV_KHR_no_integer_wrap_decoration"));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapIAddGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpIAdd %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapISubGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpISub %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapIMulGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpIMul %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapShiftLeftLogicalGood) {
+  std::string spirv =
+      MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                        "%val = OpShiftLeftLogical %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapSNegateGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpSNegate %int %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapSRemBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpSRem %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("NoSignedWrap decoration may not be applied to SRem"));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapFAddBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                                        "%val = OpFAdd %float %float0 %float0");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("NoSignedWrap decoration may not be applied to FAdd"));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapExtInstOpenCLGood) {
+  std::string spirv =
+      MakeIntegerShader("OpDecorate %val NoSignedWrap",
+                        "%val = OpExtInst %int %opencl s_abs %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoSignedWrapExtInstGLSLGood) {
+  std::string spirv = MakeIntegerShader(
+      "OpDecorate %val NoSignedWrap", "%val = OpExtInst %int %glsl SAbs %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+// TODO(dneto): For NoSignedWrap and NoUnsignedWrap, permit
+// "OpExtInst for instruction numbers specified in the extended
+// instruction-set specifications as accepting this decoration."
+
+// NoUnignedWrap
+
+TEST_F(ValidateDecorations, NoUnsignedWrapOnTypeBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %void NoUnsignedWrap", "");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("NoUnsignedWrap decoration may not be applied to TypeVoid"));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapOnLabelBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %entry NoUnsignedWrap", "");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("NoUnsignedWrap decoration may not be applied to Label"));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapRequiresExtensionBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpIAdd %int %zero %zero", "");
+
+  CompileSuccessfully(spirv);
+  EXPECT_NE(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("requires one of these extensions: "
+                        "SPV_KHR_no_integer_wrap_decoration"));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapIAddGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpIAdd %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapISubGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpISub %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapIMulGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpIMul %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapShiftLeftLogicalGood) {
+  std::string spirv =
+      MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                        "%val = OpShiftLeftLogical %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapSNegateGood) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpSNegate %int %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapSRemBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpSRem %int %zero %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("NoUnsignedWrap decoration may not be applied to SRem"));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapFAddBad) {
+  std::string spirv = MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                                        "%val = OpFAdd %float %float0 %float0");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("NoUnsignedWrap decoration may not be applied to FAdd"));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapExtInstOpenCLGood) {
+  std::string spirv =
+      MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                        "%val = OpExtInst %int %opencl s_abs %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NoUnsignedWrapExtInstGLSLGood) {
+  std::string spirv =
+      MakeIntegerShader("OpDecorate %val NoUnsignedWrap",
+                        "%val = OpExtInst %int %glsl SAbs %zero");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+// TODO(dneto): For NoUnsignedWrap and NoUnsignedWrap, permit
+// "OpExtInst for instruction numbers specified in the extended
+// instruction-set specifications as accepting this decoration."
+
+TEST_F(ValidateDecorations, PSBAliasedRestrictPointerSuccess) {
+  const std::string body = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Int64
+OpCapability Shader
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpDecorate %val1 RestrictPointerEXT
+%uint64 = OpTypeInt 64 0
+%ptr = OpTypePointer PhysicalStorageBufferEXT %uint64
+%pptr_f = OpTypePointer Function %ptr
+%void = OpTypeVoid
+%voidfn = OpTypeFunction %void
+%main = OpFunction %void None %voidfn
+%entry = OpLabel
+%val1 = OpVariable %pptr_f Function
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(body.c_str());
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateDecorations, PSBAliasedRestrictPointerMissing) {
+  const std::string body = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Int64
+OpCapability Shader
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+%uint64 = OpTypeInt 64 0
+%ptr = OpTypePointer PhysicalStorageBufferEXT %uint64
+%pptr_f = OpTypePointer Function %ptr
+%void = OpTypeVoid
+%voidfn = OpTypeFunction %void
+%main = OpFunction %void None %voidfn
+%entry = OpLabel
+%val1 = OpVariable %pptr_f Function
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(body.c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("expected AliasedPointerEXT or RestrictPointerEXT for "
+                        "PhysicalStorageBufferEXT pointer"));
+}
+
+TEST_F(ValidateDecorations, PSBAliasedRestrictPointerBoth) {
+  const std::string body = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Int64
+OpCapability Shader
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpDecorate %val1 RestrictPointerEXT
+OpDecorate %val1 AliasedPointerEXT
+%uint64 = OpTypeInt 64 0
+%ptr = OpTypePointer PhysicalStorageBufferEXT %uint64
+%pptr_f = OpTypePointer Function %ptr
+%void = OpTypeVoid
+%voidfn = OpTypeFunction %void
+%main = OpFunction %void None %voidfn
+%entry = OpLabel
+%val1 = OpVariable %pptr_f Function
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(body.c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("can't specify both AliasedPointerEXT and RestrictPointerEXT "
+                "for PhysicalStorageBufferEXT pointer"));
+}
+
+TEST_F(ValidateDecorations, PSBAliasedRestrictFunctionParamSuccess) {
+  const std::string body = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Int64
+OpCapability Shader
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpDecorate %fparam Restrict
+%uint64 = OpTypeInt 64 0
+%ptr = OpTypePointer PhysicalStorageBufferEXT %uint64
+%void = OpTypeVoid
+%voidfn = OpTypeFunction %void
+%fnptr = OpTypeFunction %void %ptr
+%main = OpFunction %void None %voidfn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+%fn = OpFunction %void None %fnptr
+%fparam = OpFunctionParameter %ptr
+%lab = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(body.c_str());
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateDecorations, PSBAliasedRestrictFunctionParamMissing) {
+  const std::string body = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Int64
+OpCapability Shader
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+%uint64 = OpTypeInt 64 0
+%ptr = OpTypePointer PhysicalStorageBufferEXT %uint64
+%void = OpTypeVoid
+%voidfn = OpTypeFunction %void
+%fnptr = OpTypeFunction %void %ptr
+%main = OpFunction %void None %voidfn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+%fn = OpFunction %void None %fnptr
+%fparam = OpFunctionParameter %ptr
+%lab = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(body.c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("expected Aliased or Restrict for "
+                        "PhysicalStorageBufferEXT pointer"));
+}
+
+TEST_F(ValidateDecorations, PSBAliasedRestrictFunctionParamBoth) {
+  const std::string body = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Int64
+OpCapability Shader
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpDecorate %fparam Restrict
+OpDecorate %fparam Aliased
+%uint64 = OpTypeInt 64 0
+%ptr = OpTypePointer PhysicalStorageBufferEXT %uint64
+%void = OpTypeVoid
+%voidfn = OpTypeFunction %void
+%fnptr = OpTypeFunction %void %ptr
+%main = OpFunction %void None %voidfn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+%fn = OpFunction %void None %fnptr
+%fparam = OpFunctionParameter %ptr
+%lab = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(body.c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("can't specify both Aliased and Restrict for "
+                        "PhysicalStorageBufferEXT pointer"));
+}
+
+TEST_F(ValidateDecorations, PSBFPRoundingModeSuccess) {
+  std::string spirv = R"(
+OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability Shader
+OpCapability Linkage
+OpCapability StorageBuffer16BitAccess
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+OpExtension "SPV_KHR_variable_pointers"
+OpExtension "SPV_KHR_16bit_storage"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint GLCompute %main "main"
+OpDecorate %_ FPRoundingMode RTE
+OpDecorate %half_ptr_var AliasedPointerEXT
+%half = OpTypeFloat 16
+%float = OpTypeFloat 32
+%float_1_25 = OpConstant %float 1.25
+%half_ptr = OpTypePointer PhysicalStorageBufferEXT %half
+%half_pptr_f = OpTypePointer Function %half_ptr
+%void = OpTypeVoid
+%func = OpTypeFunction %void
+%main = OpFunction %void None %func
+%main_entry = OpLabel
+%half_ptr_var = OpVariable %half_pptr_f Function
+%val1 = OpLoad %half_ptr %half_ptr_var
+%_ = OpFConvert %half %float_1_25
+OpStore %val1 %_ Aligned 2
+OpReturn
+OpFunctionEnd
+  )";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState());
 }
 
 }  // namespace

@@ -15,6 +15,7 @@
 #ifndef SOURCE_VAL_VALIDATION_STATE_H_
 #define SOURCE_VAL_VALIDATION_STATE_H_
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -104,6 +105,10 @@ class ValidationState_t {
     // - ArrayStride and MatrixStride are multiples of scalar alignment
     // Members need not be listed in offset order
     bool scalar_block_layout = false;
+
+    // Permit UConvert as an OpSpecConstantOp operation.
+    // The Kernel capability already enables it, separately from this flag.
+    bool uconvert_spec_constant_op = false;
   };
 
   ValidationState_t(const spv_const_context context,
@@ -339,6 +344,11 @@ class ValidationState_t {
   /// Returns the addressing model of this module, or Logical if uninitialized.
   SpvAddressingModel addressing_model() const;
 
+  /// Returns the addressing model of this module, or Logical if uninitialized.
+  uint32_t pointer_size_and_alignment() const {
+    return pointer_size_and_alignment_;
+  }
+
   /// Sets the memory model of this module.
   void set_memory_model(SpvMemoryModel mm);
 
@@ -387,15 +397,21 @@ class ValidationState_t {
   std::vector<Decoration>& id_decorations(uint32_t id) {
     return id_decorations_[id];
   }
-  const std::vector<Decoration>& id_decorations(uint32_t id) const {
-    // TODO: This would throw or generate SIGABRT if id has no
-    // decorations. Remove/refactor this function.
-    return id_decorations_.at(id);
-  }
 
   // Returns const pointer to the internal decoration container.
   const std::map<uint32_t, std::vector<Decoration>>& id_decorations() const {
     return id_decorations_;
+  }
+
+  /// Returns true if the given id <id> has the given decoration <dec>,
+  /// otherwise returns false.
+  bool HasDecoration(uint32_t id, SpvDecoration dec) {
+    const auto& decorations = id_decorations_.find(id);
+    if (decorations == id_decorations_.end()) return false;
+
+    return std::any_of(
+        decorations->second.begin(), decorations->second.end(),
+        [dec](const Decoration& d) { return dec == d.dec_type(); });
   }
 
   /// Finds id's def, if it exists.  If found, returns the definition otherwise
@@ -656,6 +672,9 @@ class ValidationState_t {
 
   SpvAddressingModel addressing_model_;
   SpvMemoryModel memory_model_;
+  // pointer size derived from addressing model. Assumes all storage classes
+  // have the same pointer size (for physical pointer types).
+  uint32_t pointer_size_and_alignment_;
 
   /// NOTE: See correspoding getter functions
   bool in_function_;

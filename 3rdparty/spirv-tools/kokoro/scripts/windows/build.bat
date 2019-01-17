@@ -58,33 +58,38 @@ if "%KOKORO_GITHUB_COMMIT%." == "." (
   set BUILD_SHA=%KOKORO_GITHUB_COMMIT%
 )
 
+set CMAKE_FLAGS=-GNinja -DSPIRV_BUILD_COMPRESSION=ON -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_INSTALL_PREFIX=install -DRE2_BUILD_TESTING=OFF -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
+
 :: Skip building tests for VS2013
 if %VS_VERSION% == 2013 (
-  cmake -GNinja -DSPIRV_SKIP_TESTS=ON -DSPIRV_BUILD_COMPRESSION=ON -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_INSTALL_PREFIX=install -DRE2_BUILD_TESTING=OFF -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe ..
-) else (
-  cmake -GNinja -DSPIRV_BUILD_COMPRESSION=ON -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_INSTALL_PREFIX=install -DRE2_BUILD_TESTING=OFF -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe ..
+  set CMAKE_FLAGS=%CMAKE_FLAGS% -DSPIRV_SKIP_TESTS=ON
 )
 
-if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
+cmake %CMAKE_FLAGS% ..
+
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
 echo "Build everything... %DATE% %TIME%"
 ninja
-if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 echo "Build Completed %DATE% %TIME%"
+
+:: This lets us use !ERRORLEVEL! inside an IF ... () and get the actual error at that point.
+setlocal ENABLEDELAYEDEXPANSION
 
 :: ################################################
 :: Run the tests (We no longer run tests on VS2013)
 :: ################################################
-if NOT %VS_VERSION% == 2013 (
-  echo "Running Tests... %DATE% %TIME%"
+echo "Running Tests... %DATE% %TIME%"
+if %VS_VERSION% NEQ 2013 (
   ctest -C %BUILD_TYPE% --output-on-failure --timeout 300
-  if %ERRORLEVEL% GEQ 1 exit /b %ERRORLEVEL%
-  echo "Tests Completed %DATE% %TIME%"
+  if !ERRORLEVEL! NEQ 0 exit /b !ERRORLEVEL!
 )
+echo "Tests Completed %DATE% %TIME%"
 
 :: Clean up some directories.
 rm -rf %SRC%\build
 rm -rf %SRC%\external
 
-exit /b %ERRORLEVEL%
+exit /b 0
 

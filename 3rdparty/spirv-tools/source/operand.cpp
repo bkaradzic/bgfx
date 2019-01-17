@@ -481,6 +481,9 @@ std::function<bool(unsigned)> spvOperandCanBeForwardDeclaredFunction(
     case SpvOpTypeForwardPointer:
       out = [](unsigned index) { return index == 0; };
       break;
+    case SpvOpTypeArray:
+      out = [](unsigned index) { return index == 1; };
+      break;
     default:
       out = [](unsigned) { return false; };
       break;

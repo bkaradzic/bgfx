@@ -34,8 +34,12 @@ using ::testing::HasSubstr;
 
 class BinaryToText : public ::testing::Test {
  public:
-  BinaryToText() : context(spvContextCreate(SPV_ENV_UNIVERSAL_1_0)) {}
-  ~BinaryToText() { spvContextDestroy(context); }
+  BinaryToText()
+      : context(spvContextCreate(SPV_ENV_UNIVERSAL_1_0)), binary(nullptr) {}
+  ~BinaryToText() {
+    spvBinaryDestroy(binary);
+    spvContextDestroy(context);
+  }
 
   virtual void SetUp() {
     const char* textStr = R"(
@@ -63,17 +67,20 @@ class BinaryToText : public ::testing::Test {
     spv_diagnostic diagnostic = nullptr;
     spv_result_t error =
         spvTextToBinary(context, text.str, text.length, &binary, &diagnostic);
-    if (error) {
-      spvDiagnosticPrint(diagnostic);
-      spvDiagnosticDestroy(diagnostic);
-      ASSERT_EQ(SPV_SUCCESS, error);
-    }
+    spvDiagnosticPrint(diagnostic);
+    spvDiagnosticDestroy(diagnostic);
+    ASSERT_EQ(SPV_SUCCESS, error);
   }
 
-  virtual void TearDown() { spvBinaryDestroy(binary); }
+  virtual void TearDown() {
+    spvBinaryDestroy(binary);
+    binary = nullptr;
+  }
 
   // Compiles the given assembly text, and saves it into 'binary'.
   void CompileSuccessfully(std::string text) {
+    spvBinaryDestroy(binary);
+    binary = nullptr;
     spv_diagnostic diagnostic = nullptr;
     EXPECT_EQ(SPV_SUCCESS, spvTextToBinary(context, text.c_str(), text.size(),
                                            &binary, &diagnostic));

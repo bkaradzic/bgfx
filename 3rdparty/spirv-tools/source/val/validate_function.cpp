@@ -111,6 +111,79 @@ spv_result_t ValidateFunctionParameter(ValidationState_t& _,
            << "' does not match the OpTypeFunction parameter "
               "type of the same index.";
   }
+
+  // Validate that PhysicalStorageBufferEXT have one of Restrict, Aliased,
+  // RestrictPointerEXT, or AliasedPointerEXT.
+  auto param_nonarray_type_id = param_type->id();
+  while (_.GetIdOpcode(param_nonarray_type_id) == SpvOpTypeArray) {
+    param_nonarray_type_id =
+        _.FindDef(param_nonarray_type_id)->GetOperandAs<uint32_t>(1u);
+  }
+  if (_.GetIdOpcode(param_nonarray_type_id) == SpvOpTypePointer) {
+    auto param_nonarray_type = _.FindDef(param_nonarray_type_id);
+    if (param_nonarray_type->GetOperandAs<uint32_t>(1u) ==
+        SpvStorageClassPhysicalStorageBufferEXT) {
+      // check for Aliased or Restrict
+      const auto& decorations = _.id_decorations(inst->id());
+
+      bool foundAliased = std::any_of(
+          decorations.begin(), decorations.end(), [](const Decoration& d) {
+            return SpvDecorationAliased == d.dec_type();
+          });
+
+      bool foundRestrict = std::any_of(
+          decorations.begin(), decorations.end(), [](const Decoration& d) {
+            return SpvDecorationRestrict == d.dec_type();
+          });
+
+      if (!foundAliased && !foundRestrict) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpFunctionParameter " << inst->id()
+               << ": expected Aliased or Restrict for PhysicalStorageBufferEXT "
+                  "pointer.";
+      }
+      if (foundAliased && foundRestrict) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpFunctionParameter " << inst->id()
+               << ": can't specify both Aliased and Restrict for "
+                  "PhysicalStorageBufferEXT pointer.";
+      }
+    } else {
+      const auto pointee_type_id =
+          param_nonarray_type->GetOperandAs<uint32_t>(2);
+      const auto pointee_type = _.FindDef(pointee_type_id);
+      if (SpvOpTypePointer == pointee_type->opcode() &&
+          pointee_type->GetOperandAs<uint32_t>(1u) ==
+              SpvStorageClassPhysicalStorageBufferEXT) {
+        // check for AliasedPointerEXT/RestrictPointerEXT
+        const auto& decorations = _.id_decorations(inst->id());
+
+        bool foundAliased = std::any_of(
+            decorations.begin(), decorations.end(), [](const Decoration& d) {
+              return SpvDecorationAliasedPointerEXT == d.dec_type();
+            });
+
+        bool foundRestrict = std::any_of(
+            decorations.begin(), decorations.end(), [](const Decoration& d) {
+              return SpvDecorationRestrictPointerEXT == d.dec_type();
+            });
+
+        if (!foundAliased && !foundRestrict) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "OpFunctionParameter " << inst->id()
+                 << ": expected AliasedPointerEXT or RestrictPointerEXT for "
+                    "PhysicalStorageBufferEXT pointer.";
+        }
+        if (foundAliased && foundRestrict) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "OpFunctionParameter " << inst->id()
+                 << ": can't specify both AliasedPointerEXT and "
+                    "RestrictPointerEXT for PhysicalStorageBufferEXT pointer.";
+        }
+      }
+    }
+  }
+
   return SPV_SUCCESS;
 }
 

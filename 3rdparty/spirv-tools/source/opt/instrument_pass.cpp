@@ -168,10 +168,10 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
   switch (stage_idx) {
     case SpvExecutionModelVertex: {
       // Load and store VertexId and InstanceId
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInVertexId),
-                           kInstVertOutVertexId, base_offset_id, builder);
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInstanceId),
-                           kInstVertOutInstanceId, base_offset_id, builder);
+      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInVertexIndex),
+                           kInstVertOutVertexIndex, base_offset_id, builder);
+      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInstanceIndex),
+                           kInstVertOutInstanceIndex, base_offset_id, builder);
     } break;
     case SpvExecutionModelGLCompute: {
       // Load and store GlobalInvocationId. Second word is unused; store zero.
@@ -309,6 +309,8 @@ uint32_t InstrumentPass::GetOutputBufferId() {
     analysis::RuntimeArray uint_rarr_ty(reg_uint_ty);
     analysis::Type* reg_uint_rarr_ty =
         type_mgr->GetRegisteredType(&uint_rarr_ty);
+    uint32_t uint_arr_ty_id = type_mgr->GetTypeInstruction(reg_uint_rarr_ty);
+    deco_mgr->AddDecorationVal(uint_arr_ty_id, SpvDecorationArrayStride, 4u);
     analysis::Struct obuf_ty({reg_uint_ty, reg_uint_rarr_ty});
     analysis::Type* reg_obuf_ty = type_mgr->GetRegisteredType(&obuf_ty);
     uint32_t obufTyId = type_mgr->GetTypeInstruction(reg_obuf_ty);

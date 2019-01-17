@@ -277,7 +277,20 @@ uint32_t GetMakeVisibleScope(const Instruction* inst, uint32_t mask) {
 }
 
 spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
-                               uint32_t mask) {
+                               uint32_t index) {
+  SpvStorageClass dst_sc, src_sc;
+  std::tie(dst_sc, src_sc) = GetStorageClass(_, inst);
+  if (inst->operands().size() <= index) {
+    if (src_sc == SpvStorageClassPhysicalStorageBufferEXT ||
+        dst_sc == SpvStorageClassPhysicalStorageBufferEXT) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst) << "Memory accesses with "
+                                                   "PhysicalStorageBufferEXT "
+                                                   "must use Aligned.";
+    }
+    return SPV_SUCCESS;
+  }
+
+  uint32_t mask = inst->GetOperandAs<uint32_t>(index);
   if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) {
     if (inst->opcode() == SpvOpLoad) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
@@ -314,13 +327,12 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
   }
 
   if (mask & SpvMemoryAccessNonPrivatePointerKHRMask) {
-    SpvStorageClass dst_sc, src_sc;
-    std::tie(dst_sc, src_sc) = GetStorageClass(_, inst);
     if (dst_sc != SpvStorageClassUniform &&
         dst_sc != SpvStorageClassWorkgroup &&
         dst_sc != SpvStorageClassCrossWorkgroup &&
         dst_sc != SpvStorageClassGeneric && dst_sc != SpvStorageClassImage &&
-        dst_sc != SpvStorageClassStorageBuffer) {
+        dst_sc != SpvStorageClassStorageBuffer &&
+        dst_sc != SpvStorageClassPhysicalStorageBufferEXT) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "NonPrivatePointerKHR requires a pointer in Uniform, "
                 "Workgroup, CrossWorkgroup, Generic, Image or StorageBuffer "
@@ -330,11 +342,21 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
         src_sc != SpvStorageClassWorkgroup &&
         src_sc != SpvStorageClassCrossWorkgroup &&
         src_sc != SpvStorageClassGeneric && src_sc != SpvStorageClassImage &&
-        src_sc != SpvStorageClassStorageBuffer) {
+        src_sc != SpvStorageClassStorageBuffer &&
+        src_sc != SpvStorageClassPhysicalStorageBufferEXT) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "NonPrivatePointerKHR requires a pointer in Uniform, "
                 "Workgroup, CrossWorkgroup, Generic, Image or StorageBuffer "
                 "storage classes.";
+    }
+  }
+
+  if (!(mask & SpvMemoryAccessAlignedMask)) {
+    if (src_sc == SpvStorageClassPhysicalStorageBufferEXT ||
+        dst_sc == SpvStorageClassPhysicalStorageBufferEXT) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst) << "Memory accesses with "
+                                                   "PhysicalStorageBufferEXT "
+                                                   "must use Aligned.";
     }
   }
 
@@ -414,7 +436,7 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
   }
 
   // Variable pointer related restrictions.
-  auto pointee = _.FindDef(result_type->word(3));
+  const auto pointee = _.FindDef(result_type->word(3));
   if (_.addressing_model() == SpvAddressingModelLogical &&
       !_.options()->relax_logical_pointer) {
     // VariablePointersStorageBuffer is implied by VariablePointers.
@@ -507,6 +529,125 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
+  // WebGPU: All variables with storage class Output, Private, or Function MUST
+  // have an initializer.
+  if (spvIsWebGPUEnv(_.context()->target_env) && inst->operands().size() <= 3 &&
+      (storage_class == SpvStorageClassOutput ||
+       storage_class == SpvStorageClassPrivate ||
+       storage_class == SpvStorageClassFunction)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpVariable, <id> '" << _.getIdName(inst->id())
+           << "', must have an initializer.\n"
+           << "From WebGPU execution environment spec:\n"
+           << "All variables in the following storage classes must have an "
+           << "initializer: Output, Private, or Function";
+  }
+
+  if (storage_class == SpvStorageClassPhysicalStorageBufferEXT) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "PhysicalStorageBufferEXT must not be used with OpVariable.";
+  }
+
+  auto pointee_base = pointee;
+  while (pointee_base->opcode() == SpvOpTypeArray) {
+    pointee_base = _.FindDef(pointee_base->GetOperandAs<uint32_t>(1u));
+  }
+  if (pointee_base->opcode() == SpvOpTypePointer) {
+    if (pointee_base->GetOperandAs<uint32_t>(1u) ==
+        SpvStorageClassPhysicalStorageBufferEXT) {
+      // check for AliasedPointerEXT/RestrictPointerEXT
+      bool foundAliased =
+          _.HasDecoration(inst->id(), SpvDecorationAliasedPointerEXT);
+      bool foundRestrict =
+          _.HasDecoration(inst->id(), SpvDecorationRestrictPointerEXT);
+      if (!foundAliased && !foundRestrict) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpVariable " << inst->id()
+               << ": expected AliasedPointerEXT or RestrictPointerEXT for "
+                  "PhysicalStorageBufferEXT pointer.";
+      }
+      if (foundAliased && foundRestrict) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpVariable " << inst->id()
+               << ": can't specify both AliasedPointerEXT and "
+                  "RestrictPointerEXT for PhysicalStorageBufferEXT pointer.";
+      }
+    }
+  }
+
+  // Vulkan specific validation rules for OpTypeRuntimeArray
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const auto type_index = 2;
+    const auto value_id = result_type->GetOperandAs<uint32_t>(type_index);
+    auto value_type = _.FindDef(value_id);
+    // OpTypeRuntimeArray should only ever be in a container like OpTypeStruct,
+    // so should never appear as a bare variable.
+    // Unless the module has the RuntimeDescriptorArrayEXT capability.
+    if (value_type && value_type->opcode() == SpvOpTypeRuntimeArray) {
+      if (!_.HasCapability(SpvCapabilityRuntimeDescriptorArrayEXT)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpVariable, <id> '" << _.getIdName(inst->id())
+               << "', is attempting to create memory for an illegal type, "
+                  "OpTypeRuntimeArray.\nFor Vulkan OpTypeRuntimeArray can only "
+                  "appear as the final member of an OpTypeStruct, thus cannot "
+                  "be instantiated via OpVariable";
+      } else {
+        // A bare variable OpTypeRuntimeArray is allowed in this context, but
+        // still need to check the storage class.
+        if (storage_class != SpvStorageClassStorageBuffer &&
+            storage_class != SpvStorageClassUniform &&
+            storage_class != SpvStorageClassUniformConstant) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "For Vulkan with RuntimeDescriptorArrayEXT, a variable "
+                    "containing OpTypeRuntimeArray must have storage class of "
+                    "StorageBuffer, Uniform, or UniformConstant.";
+        }
+      }
+    }
+
+    // If an OpStruct has an OpTypeRuntimeArray somewhere within it, then it
+    // must either have the storage class StorageBuffer and be decorated
+    // with Block, or it must be in the Uniform storage class and be decorated
+    // as BufferBlock.
+    if (value_type && value_type->opcode() == SpvOpTypeStruct) {
+      bool contains_RTA = false;
+      for (size_t member_type_index = 1;
+           member_type_index < value_type->operands().size();
+           ++member_type_index) {
+        const auto member_type_id =
+            value_type->GetOperandAs<uint32_t>(member_type_index);
+        const auto member_type = _.FindDef(member_type_id);
+        if (member_type->opcode() == SpvOpTypeRuntimeArray) {
+          contains_RTA = true;
+          break;
+        }
+      }
+
+      if (contains_RTA) {
+        if (storage_class == SpvStorageClassStorageBuffer) {
+          if (!_.HasDecoration(value_id, SpvDecorationBlock)) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "For Vulkan, an OpTypeStruct variable containing an "
+                      "OpTypeRuntimeArray must be decorated with Block if it "
+                      "has storage class StorageBuffer.";
+          }
+        } else if (storage_class == SpvStorageClassUniform) {
+          if (!_.HasDecoration(value_id, SpvDecorationBufferBlock)) {
+            return _.diag(SPV_ERROR_INVALID_ID, inst)
+                   << "For Vulkan, an OpTypeStruct variable containing an "
+                      "OpTypeRuntimeArray must be decorated with BufferBlock "
+                      "if it has storage class Uniform.";
+          }
+        } else {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "For Vulkan, OpTypeStruct variables containing "
+                    "OpTypeRuntimeArray must have storage class of "
+                    "StorageBuffer or Uniform.";
+        }
+      }
+    }
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -550,11 +691,7 @@ spv_result_t ValidateLoad(ValidationState_t& _, const Instruction* inst) {
            << "'s type.";
   }
 
-  if (inst->operands().size() > 3) {
-    if (auto error =
-            CheckMemoryAccess(_, inst, inst->GetOperandAs<uint32_t>(3)))
-      return error;
-  }
+  if (auto error = CheckMemoryAccess(_, inst, 3)) return error;
 
   return SPV_SUCCESS;
 }
@@ -642,11 +779,7 @@ spv_result_t ValidateStore(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
-  if (inst->operands().size() > 2) {
-    if (auto error =
-            CheckMemoryAccess(_, inst, inst->GetOperandAs<uint32_t>(2)))
-      return error;
-  }
+  if (auto error = CheckMemoryAccess(_, inst, 2)) return error;
 
   return SPV_SUCCESS;
 }
@@ -710,11 +843,7 @@ spv_result_t ValidateCopyMemory(ValidationState_t& _, const Instruction* inst) {
              << _.getIdName(source_type->id()) << "'s type.";
     }
 
-    if (inst->operands().size() > 2) {
-      if (auto error =
-              CheckMemoryAccess(_, inst, inst->GetOperandAs<uint32_t>(2)))
-        return error;
-    }
+    if (auto error = CheckMemoryAccess(_, inst, 2)) return error;
   } else {
     const auto size_id = inst->GetOperandAs<uint32_t>(2);
     const auto size = _.FindDef(size_id);
@@ -758,11 +887,7 @@ spv_result_t ValidateCopyMemory(ValidationState_t& _, const Instruction* inst) {
         break;
     }
 
-    if (inst->operands().size() > 3) {
-      if (auto error =
-              CheckMemoryAccess(_, inst, inst->GetOperandAs<uint32_t>(3)))
-        return error;
-    }
+    if (auto error = CheckMemoryAccess(_, inst, 3)) return error;
   }
   return SPV_SUCCESS;
 }

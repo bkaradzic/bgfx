@@ -169,6 +169,57 @@ spv_result_t ValidateForwardDecls(ValidationState_t& _) {
          << id_str.substr(0, id_str.size() - 1);
 }
 
+std::vector<std::string> CalculateNamesForEntryPoint(ValidationState_t& _,
+                                                     const uint32_t id) {
+  auto id_descriptions = _.entry_point_descriptions(id);
+  auto id_names = std::vector<std::string>();
+  id_names.reserve((id_descriptions.size()));
+
+  for (auto description : id_descriptions) id_names.push_back(description.name);
+
+  return id_names;
+}
+
+spv_result_t ValidateEntryPointNameUnique(ValidationState_t& _,
+                                          const uint32_t id) {
+  auto id_names = CalculateNamesForEntryPoint(_, id);
+  const auto names =
+      std::unordered_set<std::string>(id_names.begin(), id_names.end());
+
+  if (id_names.size() != names.size()) {
+    std::sort(id_names.begin(), id_names.end());
+    for (size_t i = 0; i < id_names.size() - 1; i++) {
+      if (id_names[i] == id_names[i + 1]) {
+        return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(id))
+               << "Entry point name \"" << id_names[i]
+               << "\" is not unique, which is not allow in WebGPU env.";
+      }
+    }
+  }
+
+  for (const auto other_id : _.entry_points()) {
+    if (other_id == id) continue;
+    const auto other_id_names = CalculateNamesForEntryPoint(_, other_id);
+    for (const auto other_id_name : other_id_names) {
+      if (names.find(other_id_name) != names.end()) {
+        return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(id))
+               << "Entry point name \"" << other_id_name
+               << "\" is not unique, which is not allow in WebGPU env.";
+      }
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateEntryPointNamesUnique(ValidationState_t& _) {
+  for (const auto id : _.entry_points()) {
+    auto result = ValidateEntryPointNameUnique(_, id);
+    if (result != SPV_SUCCESS) return result;
+  }
+  return SPV_SUCCESS;
+}
+
 // Entry point validation. Based on 2.16.1 (Universal Validation Rules) of the
 // SPIRV spec:
 // * There is at least one OpEntryPoint instruction, unless the Linkage
@@ -177,7 +228,7 @@ spv_result_t ValidateForwardDecls(ValidationState_t& _) {
 //   OpFunctionCall instruction.
 //
 // Additionally enforces that entry points for Vulkan and WebGPU should not have
-// recursion.
+// recursion. And that entry names should be unique for WebGPU.
 spv_result_t ValidateEntryPoints(ValidationState_t& _) {
   _.ComputeFunctionToEntryPointMapping();
   _.ComputeRecursiveEntryPoints();
@@ -205,6 +256,12 @@ spv_result_t ValidateEntryPoints(ValidationState_t& _) {
         return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(entry_point))
                << "Entry points may not have a call graph with cycles.";
       }
+    }
+
+    // For WebGPU all entry point names must be unique.
+    if (spvIsWebGPUEnv(_.context()->target_env)) {
+      const auto result = ValidateEntryPointNamesUnique(_);
+      if (result != SPV_SUCCESS) return result;
     }
   }
 

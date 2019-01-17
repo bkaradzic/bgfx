@@ -56,6 +56,18 @@ class ValidateBase : public ::testing::Test,
   spv_result_t ValidateAndRetrieveValidationState(
       spv_target_env env = SPV_ENV_UNIVERSAL_1_0);
 
+  // Destroys the stored binary.
+  void DestroyBinary() {
+    spvBinaryDestroy(binary_);
+    binary_ = nullptr;
+  }
+
+  // Destroys the stored diagnostic.
+  void DestroyDiagnostic() {
+    spvDiagnosticDestroy(diagnostic_);
+    diagnostic_ = nullptr;
+  }
+
   std::string getDiagnosticString();
   spv_position_t getErrorPosition();
   spv_validator_options getValidatorOptions();
@@ -67,7 +79,7 @@ class ValidateBase : public ::testing::Test,
 };
 
 template <typename T>
-ValidateBase<T>::ValidateBase() : binary_(), diagnostic_() {
+ValidateBase<T>::ValidateBase() : binary_(nullptr), diagnostic_(nullptr) {
   // Initialize to default command line options. Different tests can then
   // specialize specific options as necessary.
   options_ = spvValidatorOptionsCreate();
@@ -83,14 +95,15 @@ void ValidateBase<T>::TearDown() {
   if (diagnostic_) {
     spvDiagnosticPrint(diagnostic_);
   }
-  spvDiagnosticDestroy(diagnostic_);
-  spvBinaryDestroy(binary_);
+  DestroyBinary();
+  DestroyDiagnostic();
   spvValidatorOptionsDestroy(options_);
 }
 
 template <typename T>
 void ValidateBase<T>::CompileSuccessfully(std::string code,
                                           spv_target_env env) {
+  DestroyBinary();
   spv_diagnostic diagnostic = nullptr;
   ASSERT_EQ(SPV_SUCCESS,
             spvTextToBinary(ScopedContext(env).context, code.c_str(),
@@ -98,6 +111,7 @@ void ValidateBase<T>::CompileSuccessfully(std::string code,
       << "ERROR: " << diagnostic->error
       << "\nSPIR-V could not be compiled into binary:\n"
       << code;
+  spvDiagnosticDestroy(diagnostic);
 }
 
 template <typename T>
@@ -110,6 +124,7 @@ void ValidateBase<T>::OverwriteAssembledBinary(uint32_t index, uint32_t word) {
 
 template <typename T>
 spv_result_t ValidateBase<T>::ValidateInstructions(spv_target_env env) {
+  DestroyDiagnostic();
   return spvValidateWithOptions(ScopedContext(env).context, options_,
                                 get_const_binary(), &diagnostic_);
 }
@@ -117,6 +132,7 @@ spv_result_t ValidateBase<T>::ValidateInstructions(spv_target_env env) {
 template <typename T>
 spv_result_t ValidateBase<T>::ValidateAndRetrieveValidationState(
     spv_target_env env) {
+  DestroyDiagnostic();
   return spvtools::val::ValidateBinaryAndKeepValidationState(
       ScopedContext(env).context, options_, get_const_binary()->code,
       get_const_binary()->wordCount, &diagnostic_, &vstate_);

@@ -17,6 +17,7 @@
 #include "source/val/validate.h"
 
 #include "source/opcode.h"
+#include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
 #include "source/val/validation_state.h"
 
@@ -106,6 +107,13 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
            << "' is a void type.";
   }
 
+  if (spvIsVulkanEnv(_.context()->target_env) &&
+      element_type->opcode() == SpvOpTypeRuntimeArray) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeArray Element Type <id> '" << _.getIdName(element_type_id)
+           << "' is not valid in Vulkan environment.";
+  }
+
   const auto length_index = 2;
   const auto length_id = inst->GetOperandAs<uint32_t>(length_index);
   const auto length = _.FindDef(length_id);
@@ -161,6 +169,14 @@ spv_result_t ValidateTypeRuntimeArray(ValidationState_t& _,
            << _.getIdName(element_id) << "' is a void type.";
   }
 
+  if (spvIsVulkanEnv(_.context()->target_env) &&
+      element_type->opcode() == SpvOpTypeRuntimeArray) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "OpTypeRuntimeArray Element Type <id> '"
+           << _.getIdName(element_id)
+           << "' is not valid in Vulkan environment.";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -206,7 +222,19 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
                << ".";
       }
     }
+
+    if (spvIsVulkanEnv(_.context()->target_env) &&
+        member_type->opcode() == SpvOpTypeRuntimeArray) {
+      const bool is_last_member =
+          member_type_index == inst->operands().size() - 1;
+      if (!is_last_member) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "In Vulkan, OpTypeRuntimeArray must only be used for the "
+                  "last member of an OpTypeStruct";
+      }
+    }
   }
+
   std::unordered_set<uint32_t> built_in_members;
   for (auto decoration : _.id_decorations(struct_id)) {
     if (decoration.dec_type() == SpvDecorationBuiltIn &&

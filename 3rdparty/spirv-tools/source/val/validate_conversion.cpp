@@ -217,6 +217,23 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
       if (!_.IsPointerType(input_type))
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected input to be a pointer: " << spvOpcodeString(opcode);
+
+      if (_.addressing_model() == SpvAddressingModelLogical)
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Logical addressing not supported: "
+               << spvOpcodeString(opcode);
+
+      if (_.addressing_model() ==
+          SpvAddressingModelPhysicalStorageBuffer64EXT) {
+        uint32_t input_storage_class = 0;
+        uint32_t input_data_type = 0;
+        _.GetPointerTypeInfo(input_type, &input_data_type,
+                             &input_storage_class);
+        if (input_storage_class != SpvStorageClassPhysicalStorageBufferEXT)
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Pointer storage class must be PhysicalStorageBufferEXT: "
+                 << spvOpcodeString(opcode);
+      }
       break;
     }
 
@@ -251,6 +268,23 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
       if (!input_type || !_.IsIntScalarType(input_type))
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Expected int scalar as input: " << spvOpcodeString(opcode);
+
+      if (_.addressing_model() == SpvAddressingModelLogical)
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Logical addressing not supported: "
+               << spvOpcodeString(opcode);
+
+      if (_.addressing_model() ==
+          SpvAddressingModelPhysicalStorageBuffer64EXT) {
+        uint32_t result_storage_class = 0;
+        uint32_t result_data_type = 0;
+        _.GetPointerTypeInfo(result_type, &result_data_type,
+                             &result_storage_class);
+        if (result_storage_class != SpvStorageClassPhysicalStorageBufferEXT)
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Pointer storage class must be PhysicalStorageBufferEXT: "
+                 << spvOpcodeString(opcode);
+      }
       break;
     }
 

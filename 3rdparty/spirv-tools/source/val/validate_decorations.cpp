@@ -218,6 +218,9 @@ uint32_t getBaseAlignment(uint32_t member_id, bool roundUp,
       if (roundUp) baseAlignment = align(baseAlignment, 16u);
       break;
     }
+    case SpvOpTypePointer:
+      baseAlignment = vstate.pointer_size_and_alignment();
+      break;
     default:
       assert(0);
       break;
@@ -254,6 +257,8 @@ uint32_t getScalarAlignment(uint32_t type_id, ValidationState_t& vstate) {
       }
       return max_member_alignment;
     } break;
+    case SpvOpTypePointer:
+      return vstate.pointer_size_and_alignment();
     default:
       assert(0);
       break;
@@ -331,6 +336,8 @@ uint32_t getSize(uint32_t member_id, const LayoutConstraints& inherited,
       const auto& constraint = constraints[std::make_pair(lastMember, lastIdx)];
       return offset + getSize(lastMember, constraint, constraints, vstate);
     }
+    case SpvOpTypePointer:
+      return vstate.pointer_size_and_alignment();
     default:
       assert(0);
       return 0;
@@ -847,7 +854,9 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
         }
       }
 
-      if (uniform || push_constant || storage_buffer) {
+      const bool phys_storage_buffer =
+          storageClass == SpvStorageClassPhysicalStorageBufferEXT;
+      if (uniform || push_constant || storage_buffer || phys_storage_buffer) {
         const auto ptrInst = vstate.FindDef(words[1]);
         assert(SpvOpTypePointer == ptrInst->opcode());
         const auto id = ptrInst->words()[3];
@@ -899,9 +908,9 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
           const bool blockDeco = SpvDecorationBlock == dec.dec_type();
           const bool bufferDeco = SpvDecorationBufferBlock == dec.dec_type();
           const bool blockRules = uniform && blockDeco;
-          const bool bufferRules = (uniform && bufferDeco) ||
-                                   (push_constant && blockDeco) ||
-                                   (storage_buffer && blockDeco);
+          const bool bufferRules =
+              (uniform && bufferDeco) || (push_constant && blockDeco) ||
+              ((storage_buffer || phys_storage_buffer) && blockDeco);
           if (blockRules || bufferRules) {
             const char* deco_str = blockDeco ? "Block" : "BufferBlock";
             spv_result_t recursive_status = SPV_SUCCESS;
@@ -1127,12 +1136,13 @@ spv_result_t CheckFPRoundingModeForShaders(ValidationState_t& vstate,
     if (storage != SpvStorageClassStorageBuffer &&
         storage != SpvStorageClassUniform &&
         storage != SpvStorageClassPushConstant &&
-        storage != SpvStorageClassInput && storage != SpvStorageClassOutput) {
+        storage != SpvStorageClassInput && storage != SpvStorageClassOutput &&
+        storage != SpvStorageClassPhysicalStorageBufferEXT) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "FPRoundingMode decoration can be applied only to the "
                 "Object operand of an OpStore in the StorageBuffer, "
-                "Uniform, PushConstant, Input, or Output Storage "
-                "Classes.";
+                "PhysicalStorageBufferEXT, Uniform, PushConstant, Input, or "
+                "Output Storage Classes.";
     }
   }
   return SPV_SUCCESS;
@@ -1170,6 +1180,36 @@ spv_result_t CheckUniformDecoration(ValidationState_t& vstate,
   return SPV_SUCCESS;
 }
 
+// Returns SPV_SUCCESS if validation rules are satisfied for NoSignedWrap or
+// NoUnsignedWrap decorations. Otherwise emits a diagnostic and returns
+// something other than SPV_SUCCESS. Assumes each decoration on a group has been
+// propagated down to the group members.
+spv_result_t CheckIntegerWrapDecoration(ValidationState_t& vstate,
+                                        const Instruction& inst,
+                                        const Decoration& decoration) {
+  switch (inst.opcode()) {
+    case SpvOpIAdd:
+    case SpvOpISub:
+    case SpvOpIMul:
+    case SpvOpShiftLeftLogical:
+    case SpvOpSNegate:
+      return SPV_SUCCESS;
+    case SpvOpExtInst:
+      // TODO(dneto): Only certain extended instructions allow these
+      // decorations.  For now allow anything.
+      return SPV_SUCCESS;
+    default:
+      break;
+  }
+
+  return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
+         << (decoration.dec_type() == SpvDecorationNoSignedWrap
+                 ? "NoSignedWrap"
+                 : "NoUnsignedWrap")
+         << " decoration may not be applied to "
+         << spvOpcodeString(inst.opcode());
+}
+
 #define PASS_OR_BAIL_AT_LINE(X, LINE)           \
   {                                             \
     spv_result_t e##LINE = (X);                 \
@@ -1205,6 +1245,10 @@ spv_result_t CheckDecorationsFromDecoration(ValidationState_t& vstate) {
           break;
         case SpvDecorationUniform:
           PASS_OR_BAIL(CheckUniformDecoration(vstate, *inst, decoration));
+          break;
+        case SpvDecorationNoSignedWrap:
+        case SpvDecorationNoUnsignedWrap:
+          PASS_OR_BAIL(CheckIntegerWrapDecoration(vstate, *inst, decoration));
           break;
         default:
           break;

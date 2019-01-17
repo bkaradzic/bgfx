@@ -75,8 +75,8 @@ static const int kInstCommonOutCnt = 4;
 // error.
 //
 // Vertex Shader Output Record Offsets
-static const int kInstVertOutVertexId = kInstCommonOutCnt;
-static const int kInstVertOutInstanceId = kInstCommonOutCnt + 1;
+static const int kInstVertOutVertexIndex = kInstCommonOutCnt;
+static const int kInstVertOutInstanceIndex = kInstCommonOutCnt + 1;
 
 // Frag Shader Output Record Offsets
 static const int kInstFragOutFragCoordX = kInstCommonOutCnt;

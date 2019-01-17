@@ -16,6 +16,7 @@
 
 #include <utility>
 
+#include "source/opt/ir_builder.h"
 #include "source/opt/ir_context.h"
 #include "source/util/make_unique.h"
 
@@ -68,6 +69,22 @@ void UpgradeMemoryModel::UpgradeInstructions() {
   // instructions. Additionally, Workgroup storage class variables and function
   // parameters are implicitly coherent in GLSL450.
 
+  // Upgrade modf and frexp first since they generate new stores.
+  for (auto& func : *get_module()) {
+    func.ForEachInst([this](Instruction* inst) {
+      if (inst->opcode() == SpvOpExtInst) {
+        auto ext_inst = inst->GetSingleWordInOperand(1u);
+        if (ext_inst == GLSLstd450Modf || ext_inst == GLSLstd450Frexp) {
+          auto import =
+              get_def_use_mgr()->GetDef(inst->GetSingleWordInOperand(0u));
+          if (reinterpret_cast<char*>(import->GetInOperand(0u).words.data()) ==
+              std::string("GLSL.std.450")) {
+            UpgradeExtInst(inst);
+          }
+        }
+      }
+    });
+  }
   for (auto& func : *get_module()) {
     func.ForEachInst([this](Instruction* inst) {
       bool is_coherent = false;
@@ -104,11 +121,11 @@ void UpgradeMemoryModel::UpgradeInstructions() {
 
       switch (inst->opcode()) {
         case SpvOpLoad:
-          UpgradeFlags(inst, 1u, is_coherent, is_volatile, kAvailability,
+          UpgradeFlags(inst, 1u, is_coherent, is_volatile, kVisibility,
                        kMemory);
           break;
         case SpvOpStore:
-          UpgradeFlags(inst, 2u, is_coherent, is_volatile, kVisibility,
+          UpgradeFlags(inst, 2u, is_coherent, is_volatile, kAvailability,
                        kMemory);
           break;
         case SpvOpCopyMemory:
@@ -125,11 +142,11 @@ void UpgradeMemoryModel::UpgradeInstructions() {
           break;
         case SpvOpImageRead:
         case SpvOpImageSparseRead:
-          UpgradeFlags(inst, 2u, is_coherent, is_volatile, kAvailability,
-                       kImage);
+          UpgradeFlags(inst, 2u, is_coherent, is_volatile, kVisibility, kImage);
           break;
         case SpvOpImageWrite:
-          UpgradeFlags(inst, 3u, is_coherent, is_volatile, kVisibility, kImage);
+          UpgradeFlags(inst, 3u, is_coherent, is_volatile, kAvailability,
+                       kImage);
           break;
         default:
           break;
@@ -143,14 +160,14 @@ void UpgradeMemoryModel::UpgradeInstructions() {
       }
       // According to SPV_KHR_vulkan_memory_model, if both available and
       // visible flags are used the first scope operand is for availability
-      // (reads) and the second is for visibiity (writes).
-      if (src_coherent) {
-        inst->AddOperand(
-            {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(src_scope)}});
-      }
+      // (writes) and the second is for visibility (reads).
       if (dst_coherent) {
         inst->AddOperand(
             {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(dst_scope)}});
+      }
+      if (src_coherent) {
+        inst->AddOperand(
+            {SPV_OPERAND_TYPE_SCOPE_ID, {GetScopeConstant(src_scope)}});
       }
     });
   }
@@ -579,6 +596,44 @@ bool UpgradeMemoryModel::IsDeviceScope(uint32_t scope_id) {
 
   assert(false);
   return false;
+}
+
+void UpgradeMemoryModel::UpgradeExtInst(Instruction* ext_inst) {
+  const bool is_modf = ext_inst->GetSingleWordInOperand(1u) == GLSLstd450Modf;
+  auto ptr_id = ext_inst->GetSingleWordInOperand(3u);
+  auto ptr_type_id = get_def_use_mgr()->GetDef(ptr_id)->type_id();
+  auto pointee_type_id =
+      get_def_use_mgr()->GetDef(ptr_type_id)->GetSingleWordInOperand(1u);
+  auto element_type_id = ext_inst->type_id();
+  std::vector<const analysis::Type*> element_types(2);
+  element_types[0] = context()->get_type_mgr()->GetType(element_type_id);
+  element_types[1] = context()->get_type_mgr()->GetType(pointee_type_id);
+  analysis::Struct struct_type(element_types);
+  uint32_t struct_id =
+      context()->get_type_mgr()->GetTypeInstruction(&struct_type);
+  // Change the operation
+  GLSLstd450 new_op = is_modf ? GLSLstd450ModfStruct : GLSLstd450FrexpStruct;
+  ext_inst->SetOperand(3u, {static_cast<uint32_t>(new_op)});
+  // Remove the pointer argument
+  ext_inst->RemoveOperand(5u);
+  // Set the type id to the new struct.
+  ext_inst->SetResultType(struct_id);
+
+  // The result is now a struct of the original result. The zero'th element is
+  // old result and should replace the old result. The one'th element needs to
+  // be stored via a new instruction.
+  auto where = ext_inst->NextNode();
+  InstructionBuilder builder(
+      context(), where,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  auto extract_0 =
+      builder.AddCompositeExtract(element_type_id, ext_inst->result_id(), {0});
+  context()->ReplaceAllUsesWith(ext_inst->result_id(), extract_0->result_id());
+  // The extract's input was just changed to itself, so fix that.
+  extract_0->SetInOperand(0u, {ext_inst->result_id()});
+  auto extract_1 =
+      builder.AddCompositeExtract(pointee_type_id, ext_inst->result_id(), {1});
+  builder.AddStore(ptr_id, extract_1->result_id());
 }
 
 }  // namespace opt
