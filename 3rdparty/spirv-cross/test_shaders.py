@@ -129,7 +129,7 @@ def validate_shader_msl(shader, opt):
             raise
     except subprocess.CalledProcessError:
         print('Error compiling Metal shader: ' + msl_path)
-        sys.exit(1)
+        raise RuntimeError('Failed to compile Metal shader')
 
 def cross_compile_msl(shader, spirv, opt):
     spirv_path = create_temporary()
@@ -152,6 +152,8 @@ def cross_compile_msl(shader, spirv, opt):
         msl_args.append('--msl-swizzle-texture-samples')
     if '.ios.' in shader:
         msl_args.append('--msl-ios')
+    if '.pad-fragment.' in shader:
+        msl_args.append('--msl-pad-fragment-output')
 
     subprocess.check_call(msl_args)
 
@@ -201,12 +203,15 @@ def validate_shader_hlsl(shader, force_no_external_validation):
             subprocess.check_call(['fxc', '-nologo', shader_model_hlsl(shader), win_path])
         except OSError as oe:
             if (oe.errno != errno.ENOENT): # Ignore not found errors
+                print('Failed to run FXC.')
+                ignore_fxc = True
                 raise
             else:
+                print('Could not find FXC.')
                 ignore_fxc = True
         except subprocess.CalledProcessError:
             print('Failed compiling HLSL shader:', shader, 'with FXC.')
-            sys.exit(1)
+            raise RuntimeError('Failed compiling HLSL shader')
 
 def shader_to_sm(shader):
     if '.sm60.' in shader:
@@ -382,7 +387,8 @@ def regression_check_reflect(shader, json_file, update, keep, opt):
                 # Otherwise, fail the test. Keep the shader file around so we can inspect.
                 if not keep:
                     remove_file(json_file)
-                sys.exit(1)
+
+                raise RuntimeError('Does not match reference')
         else:
             remove_file(json_file)
     else:
@@ -417,7 +423,7 @@ def regression_check(shader, glsl, update, keep, opt):
                 # Otherwise, fail the test. Keep the shader file around so we can inspect.
                 if not keep:
                     remove_file(glsl)
-                sys.exit(1)
+                raise RuntimeError('Does not match reference')
         else:
             remove_file(glsl)
     else:
@@ -533,14 +539,18 @@ def test_shader_reflect(stats, shader, update, keep, opt):
     remove_file(spirv)
 
 def test_shader_file(relpath, stats, shader_dir, update, keep, opt, force_no_external_validation, backend):
-    if backend == 'msl':
-        test_shader_msl(stats, (shader_dir, relpath), update, keep, opt, force_no_external_validation)
-    elif backend == 'hlsl':
-        test_shader_hlsl(stats, (shader_dir, relpath), update, keep, opt, force_no_external_validation)
-    elif backend == 'reflect':
-        test_shader_reflect(stats, (shader_dir, relpath), update, keep, opt)
-    else:
-        test_shader(stats, (shader_dir, relpath), update, keep, opt)
+    try:
+        if backend == 'msl':
+            test_shader_msl(stats, (shader_dir, relpath), update, keep, opt, force_no_external_validation)
+        elif backend == 'hlsl':
+            test_shader_hlsl(stats, (shader_dir, relpath), update, keep, opt, force_no_external_validation)
+        elif backend == 'reflect':
+            test_shader_reflect(stats, (shader_dir, relpath), update, keep, opt)
+        else:
+            test_shader(stats, (shader_dir, relpath), update, keep, opt)
+        return None
+    except Exception as e:
+        return e
 
 def test_shaders_helper(stats, backend, args):
     all_files = []
@@ -555,17 +565,27 @@ def test_shaders_helper(stats, backend, args):
     # at this point we need to switch to explicit arguments
     if args.parallel:
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        pool.map(partial(test_shader_file,
-            stats = stats,
-            shader_dir = args.folder,
-            update = args.update,
-            keep = args.keep,
-            opt = args.opt,
-            force_no_external_validation = args.force_no_external_validation,
-            backend = backend), all_files)
+
+        results = []
+        for f in all_files:
+            results.append(pool.apply_async(test_shader_file,
+                args = (f, stats,
+                args.folder, args.update, args.keep, args.opt, args.force_no_external_validation,
+                backend)))
+
+        for res in results:
+            error = res.get()
+            if error is not None:
+                pool.close()
+                pool.join()
+                print('Error:', error)
+                sys.exit(1)
     else:
         for i in all_files:
-            test_shader_file(i, stats, args.folder, args.update, args.keep, args.opt, args.force_no_external_validation, backend)
+            e = test_shader_file(i, stats, args.folder, args.update, args.keep, args.opt, args.force_no_external_validation, backend)
+            if e is not None:
+                print('Error:', e)
+                sys.exit(1)
 
 def test_shaders(backend, args):
     if args.malisc:

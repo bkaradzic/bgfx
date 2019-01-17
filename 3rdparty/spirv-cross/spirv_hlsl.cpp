@@ -805,7 +805,14 @@ void CompilerHLSL::emit_interface_block_in_struct(const SPIRVariable &var, unord
 	bool legacy = hlsl_options.shader_model <= 30;
 	if (execution.model == ExecutionModelFragment && var.storage == StorageClassOutput)
 	{
-		binding = join(legacy ? "COLOR" : "SV_Target", get_decoration(var.self, DecorationLocation));
+		// Dual-source blending is achieved in HLSL by emitting to SV_Target0 and 1.
+		uint32_t index = get_decoration(var.self, DecorationIndex);
+		uint32_t location = get_decoration(var.self, DecorationLocation);
+
+		if (index != 0 && location != 0)
+			SPIRV_CROSS_THROW("Dual-source blending is only supported on MRT #0 in HLSL.");
+
+		binding = join(legacy ? "COLOR" : "SV_Target", location + index);
 		use_location_number = false;
 		if (legacy) // COLOR must be a four-component vector on legacy shader model targets (HLSL ERR_COLOR_4COMP)
 			type.vecsize = 4;
@@ -902,6 +909,8 @@ void CompilerHLSL::emit_builtin_variables()
 	Bitset builtins = active_input_builtins;
 	builtins.merge_or(active_output_builtins);
 
+	bool need_base_vertex_info = false;
+
 	// Emit global variables for the interface variables which are statically used by the shader.
 	builtins.for_each_bit([&](uint32_t i) {
 		const char *type = nullptr;
@@ -921,8 +930,13 @@ void CompilerHLSL::emit_builtin_variables()
 
 		case BuiltInVertexId:
 		case BuiltInVertexIndex:
-		case BuiltInInstanceId:
 		case BuiltInInstanceIndex:
+			type = "int";
+			if (hlsl_options.support_nonzero_base_vertex_base_instance)
+				need_base_vertex_info = true;
+			break;
+
+		case BuiltInInstanceId:
 		case BuiltInSampleId:
 			type = "int";
 			break;
@@ -998,6 +1012,16 @@ void CompilerHLSL::emit_builtin_variables()
 				statement("static ", type, " ", builtin_to_glsl(builtin, storage), ";");
 		}
 	});
+
+	if (need_base_vertex_info)
+	{
+		statement("cbuffer SPIRV_Cross_VertexInfo");
+		begin_scope();
+		statement("int SPIRV_Cross_BaseVertex;");
+		statement("int SPIRV_Cross_BaseInstance;");
+		end_scope_decl();
+		statement("");
+	}
 }
 
 void CompilerHLSL::emit_composite_constants()
@@ -1006,36 +1030,33 @@ void CompilerHLSL::emit_composite_constants()
 	// global constants directly.
 	bool emitted = false;
 
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeConstant)
-		{
-			auto &c = id.get<SPIRConstant>();
-			if (c.specialization)
-				continue;
+	ir.for_each_typed_id<SPIRConstant>([&](uint32_t, SPIRConstant &c) {
+		if (c.specialization)
+			return;
 
-			auto &type = get<SPIRType>(c.constant_type);
-			if (type.basetype == SPIRType::Struct || !type.array.empty())
-			{
-				auto name = to_name(c.self);
-				statement("static const ", variable_decl(type, name), " = ", constant_expression(c), ";");
-				emitted = true;
-			}
+		auto &type = this->get<SPIRType>(c.constant_type);
+		if (type.basetype == SPIRType::Struct || !type.array.empty())
+		{
+			auto name = to_name(c.self);
+			statement("static const ", variable_decl(type, name), " = ", constant_expression(c), ";");
+			emitted = true;
 		}
-	}
+	});
 
 	if (emitted)
 		statement("");
 }
 
-void CompilerHLSL::emit_specialization_constants()
+void CompilerHLSL::emit_specialization_constants_and_structs()
 {
 	bool emitted = false;
 	SpecializationConstant wg_x, wg_y, wg_z;
 	uint32_t workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
 
-	for (auto &id : ir.ids)
+	for (auto &id_ : ir.ids_for_constant_or_type)
 	{
+		auto &id = ir.ids[id_];
+
 		if (id.get_type() == TypeConstant)
 		{
 			auto &c = id.get<SPIRConstant>();
@@ -1070,6 +1091,20 @@ void CompilerHLSL::emit_specialization_constants()
 			statement("static const ", variable_decl(type, name), " = ", constant_op_expression(c), ";");
 			emitted = true;
 		}
+		else if (id.get_type() == TypeType)
+		{
+			auto &type = id.get<SPIRType>();
+			if (type.basetype == SPIRType::Struct && type.array.empty() && !type.pointer &&
+			    (!ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock) &&
+			     !ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock)))
+			{
+				if (emitted)
+					statement("");
+				emitted = false;
+
+				emit_struct(type);
+			}
+		}
 	}
 
 	if (emitted)
@@ -1083,19 +1118,14 @@ void CompilerHLSL::replace_illegal_names()
 		"line", "linear", "matrix", "point", "row_major", "sampler",
 	};
 
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		if (!is_hidden_variable(var))
 		{
-			auto &var = id.get<SPIRVariable>();
-			if (!is_hidden_variable(var))
-			{
-				auto &m = ir.meta[var.self].decoration;
-				if (keywords.find(m.alias) != end(keywords))
-					m.alias = join("_", m.alias);
-			}
+			auto &m = ir.meta[var.self].decoration;
+			if (keywords.find(m.alias) != end(keywords))
+				m.alias = join("_", m.alias);
 		}
-	}
+	});
 
 	CompilerGLSL::replace_illegal_names();
 }
@@ -1106,64 +1136,37 @@ void CompilerHLSL::emit_resources()
 
 	replace_illegal_names();
 
-	emit_specialization_constants();
-
-	// Output all basic struct types which are not Block or BufferBlock as these are declared inplace
-	// when such variables are instantiated.
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeType)
-		{
-			auto &type = id.get<SPIRType>();
-			if (type.basetype == SPIRType::Struct && type.array.empty() && !type.pointer &&
-			    (!ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock) &&
-			     !ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock)))
-			{
-				emit_struct(type);
-			}
-		}
-	}
-
+	emit_specialization_constants_and_structs();
 	emit_composite_constants();
 
 	bool emitted = false;
 
 	// Output UBOs and SSBOs
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+
+		bool is_block_storage = type.storage == StorageClassStorageBuffer || type.storage == StorageClassUniform;
+		bool has_block_flags = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock) ||
+		                       ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
+
+		if (var.storage != StorageClassFunction && type.pointer && is_block_storage && !is_hidden_variable(var) &&
+		    has_block_flags)
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-
-			bool is_block_storage = type.storage == StorageClassStorageBuffer || type.storage == StorageClassUniform;
-			bool has_block_flags = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock) ||
-			                       ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
-
-			if (var.storage != StorageClassFunction && type.pointer && is_block_storage && !is_hidden_variable(var) &&
-			    has_block_flags)
-			{
-				emit_buffer_block(var);
-				emitted = true;
-			}
+			emit_buffer_block(var);
+			emitted = true;
 		}
-	}
+	});
 
 	// Output push constant blocks
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		if (var.storage != StorageClassFunction && type.pointer && type.storage == StorageClassPushConstant &&
+		    !is_hidden_variable(var))
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-			if (var.storage != StorageClassFunction && type.pointer && type.storage == StorageClassPushConstant &&
-			    !is_hidden_variable(var))
-			{
-				emit_push_constant_block(var);
-				emitted = true;
-			}
+			emit_push_constant_block(var);
+			emitted = true;
 		}
-	}
+	});
 
 	if (execution.model == ExecutionModelVertex && hlsl_options.shader_model <= 30)
 	{
@@ -1174,33 +1177,27 @@ void CompilerHLSL::emit_resources()
 	bool skip_separate_image_sampler = !combined_image_samplers.empty() || hlsl_options.shader_model <= 30;
 
 	// Output Uniform Constants (values, samplers, images, etc).
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+
+		// If we're remapping separate samplers and images, only emit the combined samplers.
+		if (skip_separate_image_sampler)
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-
-			// If we're remapping separate samplers and images, only emit the combined samplers.
-			if (skip_separate_image_sampler)
-			{
-				// Sampler buffers are always used without a sampler, and they will also work in regular D3D.
-				bool sampler_buffer = type.basetype == SPIRType::Image && type.image.dim == DimBuffer;
-				bool separate_image = type.basetype == SPIRType::Image && type.image.sampled == 1;
-				bool separate_sampler = type.basetype == SPIRType::Sampler;
-				if (!sampler_buffer && (separate_image || separate_sampler))
-					continue;
-			}
-
-			if (var.storage != StorageClassFunction && !is_builtin_variable(var) && !var.remapped_variable &&
-			    type.pointer &&
-			    (type.storage == StorageClassUniformConstant || type.storage == StorageClassAtomicCounter))
-			{
-				emit_uniform(var);
-				emitted = true;
-			}
+			// Sampler buffers are always used without a sampler, and they will also work in regular D3D.
+			bool sampler_buffer = type.basetype == SPIRType::Image && type.image.dim == DimBuffer;
+			bool separate_image = type.basetype == SPIRType::Image && type.image.sampled == 1;
+			bool separate_sampler = type.basetype == SPIRType::Sampler;
+			if (!sampler_buffer && (separate_image || separate_sampler))
+				return;
 		}
-	}
+
+		if (var.storage != StorageClassFunction && !is_builtin_variable(var) && !var.remapped_variable &&
+		    type.pointer && (type.storage == StorageClassUniformConstant || type.storage == StorageClassAtomicCounter))
+		{
+			emit_uniform(var);
+			emitted = true;
+		}
+	});
 
 	if (emitted)
 		statement("");
@@ -1209,27 +1206,22 @@ void CompilerHLSL::emit_resources()
 	// Emit builtin input and output variables here.
 	emit_builtin_variables();
 
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
-		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-			bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
 
-			// Do not emit I/O blocks here.
-			// I/O blocks can be arrayed, so we must deal with them separately to support geometry shaders
-			// and tessellation down the line.
-			if (!block && var.storage != StorageClassFunction && !var.remapped_variable && type.pointer &&
-			    (var.storage == StorageClassInput || var.storage == StorageClassOutput) && !is_builtin_variable(var) &&
-			    interface_variable_exists_in_entry_point(var.self))
-			{
-				// Only emit non-builtins which are not blocks here. Builtin variables are handled separately.
-				emit_interface_block_globally(var);
-				emitted = true;
-			}
+		// Do not emit I/O blocks here.
+		// I/O blocks can be arrayed, so we must deal with them separately to support geometry shaders
+		// and tessellation down the line.
+		if (!block && var.storage != StorageClassFunction && !var.remapped_variable && type.pointer &&
+		    (var.storage == StorageClassInput || var.storage == StorageClassOutput) && !is_builtin_variable(var) &&
+		    interface_variable_exists_in_entry_point(var.self))
+		{
+			// Only emit non-builtins which are not blocks here. Builtin variables are handled separately.
+			emit_interface_block_globally(var);
+			emitted = true;
 		}
-	}
+	});
 
 	if (emitted)
 		statement("");
@@ -1241,47 +1233,42 @@ void CompilerHLSL::emit_resources()
 	unordered_set<uint32_t> active_outputs;
 	vector<SPIRVariable *> input_variables;
 	vector<SPIRVariable *> output_variables;
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+
+		if (var.storage != StorageClassInput && var.storage != StorageClassOutput)
+			return;
+
+		// Do not emit I/O blocks here.
+		// I/O blocks can be arrayed, so we must deal with them separately to support geometry shaders
+		// and tessellation down the line.
+		if (!block && !var.remapped_variable && type.pointer && !is_builtin_variable(var) &&
+		    interface_variable_exists_in_entry_point(var.self))
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-			bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
-
-			if (var.storage != StorageClassInput && var.storage != StorageClassOutput)
-				continue;
-
-			// Do not emit I/O blocks here.
-			// I/O blocks can be arrayed, so we must deal with them separately to support geometry shaders
-			// and tessellation down the line.
-			if (!block && !var.remapped_variable && type.pointer && !is_builtin_variable(var) &&
-			    interface_variable_exists_in_entry_point(var.self))
-			{
-				if (var.storage == StorageClassInput)
-					input_variables.push_back(&var);
-				else
-					output_variables.push_back(&var);
-			}
-
-			// Reserve input and output locations for block variables as necessary.
-			if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
-			{
-				auto &active = var.storage == StorageClassInput ? active_inputs : active_outputs;
-				for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
-				{
-					if (has_member_decoration(type.self, i, DecorationLocation))
-					{
-						uint32_t location = get_member_decoration(type.self, i, DecorationLocation);
-						active.insert(location);
-					}
-				}
-
-				// Emit the block struct and a global variable here.
-				emit_io_block(var);
-			}
+			if (var.storage == StorageClassInput)
+				input_variables.push_back(&var);
+			else
+				output_variables.push_back(&var);
 		}
-	}
+
+		// Reserve input and output locations for block variables as necessary.
+		if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
+		{
+			auto &active = var.storage == StorageClassInput ? active_inputs : active_outputs;
+			for (uint32_t i = 0; i < uint32_t(type.member_types.size()); i++)
+			{
+				if (has_member_decoration(type.self, i, DecorationLocation))
+				{
+					uint32_t location = get_member_decoration(type.self, i, DecorationLocation);
+					active.insert(location);
+				}
+			}
+
+			// Emit the block struct and a global variable here.
+			emit_io_block(var);
+		}
+	});
 
 	const auto variable_compare = [&](const SPIRVariable *a, const SPIRVariable *b) -> bool {
 		// Sort input and output variables based on, from more robust to less robust:
@@ -2169,30 +2156,25 @@ void CompilerHLSL::emit_hlsl_entry_point()
 		arguments.push_back("SPIRV_Cross_Input stage_input");
 
 	// Add I/O blocks as separate arguments with appropriate storage qualifier.
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+
+		if (var.storage != StorageClassInput && var.storage != StorageClassOutput)
+			return;
+
+		if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-			bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
-
-			if (var.storage != StorageClassInput && var.storage != StorageClassOutput)
-				continue;
-
-			if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
+			if (var.storage == StorageClassInput)
 			{
-				if (var.storage == StorageClassInput)
-				{
-					arguments.push_back(join("in ", variable_decl(type, join("stage_input", to_name(var.self)))));
-				}
-				else if (var.storage == StorageClassOutput)
-				{
-					arguments.push_back(join("out ", variable_decl(type, join("stage_output", to_name(var.self)))));
-				}
+				arguments.push_back(join("in ", variable_decl(type, join("stage_input", to_name(var.self)))));
+			}
+			else if (var.storage == StorageClassOutput)
+			{
+				arguments.push_back(join("out ", variable_decl(type, join("stage_output", to_name(var.self)))));
 			}
 		}
-	}
+	});
 
 	auto &execution = get_entry_point();
 
@@ -2243,8 +2225,20 @@ void CompilerHLSL::emit_hlsl_entry_point()
 
 		case BuiltInVertexId:
 		case BuiltInVertexIndex:
-		case BuiltInInstanceId:
 		case BuiltInInstanceIndex:
+			// D3D semantics are uint, but shader wants int.
+			if (hlsl_options.support_nonzero_base_vertex_base_instance)
+			{
+				if (static_cast<BuiltIn>(i) == BuiltInInstanceIndex)
+					statement(builtin, " = int(stage_input.", builtin, ") + SPIRV_Cross_BaseInstance;");
+				else
+					statement(builtin, " = int(stage_input.", builtin, ") + SPIRV_Cross_BaseVertex;");
+			}
+			else
+				statement(builtin, " = int(stage_input.", builtin, ");");
+			break;
+
+		case BuiltInInstanceId:
 			// D3D semantics are uint, but shader wants int.
 			statement(builtin, " = int(stage_input.", builtin, ");");
 			break;
@@ -2336,44 +2330,39 @@ void CompilerHLSL::emit_hlsl_entry_point()
 	});
 
 	// Copy from stage input struct to globals.
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+
+		if (var.storage != StorageClassInput)
+			return;
+
+		bool need_matrix_unroll = var.storage == StorageClassInput && execution.model == ExecutionModelVertex;
+
+		if (!block && !var.remapped_variable && type.pointer && !is_builtin_variable(var) &&
+		    interface_variable_exists_in_entry_point(var.self))
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-			bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
-
-			if (var.storage != StorageClassInput)
-				continue;
-
-			bool need_matrix_unroll = var.storage == StorageClassInput && execution.model == ExecutionModelVertex;
-
-			if (!block && !var.remapped_variable && type.pointer && !is_builtin_variable(var) &&
-			    interface_variable_exists_in_entry_point(var.self))
+			auto name = to_name(var.self);
+			auto &mtype = this->get<SPIRType>(var.basetype);
+			if (need_matrix_unroll && mtype.columns > 1)
 			{
-				auto name = to_name(var.self);
-				auto &mtype = get<SPIRType>(var.basetype);
-				if (need_matrix_unroll && mtype.columns > 1)
-				{
-					// Unroll matrices.
-					for (uint32_t col = 0; col < mtype.columns; col++)
-						statement(name, "[", col, "] = stage_input.", name, "_", col, ";");
-				}
-				else
-				{
-					statement(name, " = stage_input.", name, ";");
-				}
+				// Unroll matrices.
+				for (uint32_t col = 0; col < mtype.columns; col++)
+					statement(name, "[", col, "] = stage_input.", name, "_", col, ";");
 			}
-
-			// I/O blocks don't use the common stage input/output struct, but separate outputs.
-			if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
+			else
 			{
-				auto name = to_name(var.self);
-				statement(name, " = stage_input", name, ";");
+				statement(name, " = stage_input.", name, ";");
 			}
 		}
-	}
+
+		// I/O blocks don't use the common stage input/output struct, but separate outputs.
+		if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
+		{
+			auto name = to_name(var.self);
+			statement(name, " = stage_input", name, ";");
+		}
+	});
 
 	// Run the shader.
 	if (execution.model == ExecutionModelVertex)
@@ -2386,25 +2375,20 @@ void CompilerHLSL::emit_hlsl_entry_point()
 		SPIRV_CROSS_THROW("Unsupported shader stage.");
 
 	// Copy block outputs.
-	for (auto &id : ir.ids)
-	{
-		if (id.get_type() == TypeVariable)
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+
+		if (var.storage != StorageClassOutput)
+			return;
+
+		// I/O blocks don't use the common stage input/output struct, but separate outputs.
+		if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
 		{
-			auto &var = id.get<SPIRVariable>();
-			auto &type = get<SPIRType>(var.basetype);
-			bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
-
-			if (var.storage != StorageClassOutput)
-				continue;
-
-			// I/O blocks don't use the common stage input/output struct, but separate outputs.
-			if (block && !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
-			{
-				auto name = to_name(var.self);
-				statement("stage_output", name, " = ", name, ";");
-			}
+			auto name = to_name(var.self);
+			statement("stage_output", name, " = ", name, ";");
 		}
-	}
+	});
 
 	// Copy stage outputs.
 	if (require_output)
@@ -2440,37 +2424,32 @@ void CompilerHLSL::emit_hlsl_entry_point()
 			}
 		});
 
-		for (auto &id : ir.ids)
-		{
-			if (id.get_type() == TypeVariable)
+		ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+			auto &type = this->get<SPIRType>(var.basetype);
+			bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+
+			if (var.storage != StorageClassOutput)
+				return;
+
+			if (!block && var.storage != StorageClassFunction && !var.remapped_variable && type.pointer &&
+			    !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
 			{
-				auto &var = id.get<SPIRVariable>();
-				auto &type = get<SPIRType>(var.basetype);
-				bool block = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock);
+				auto name = to_name(var.self);
 
-				if (var.storage != StorageClassOutput)
-					continue;
-
-				if (!block && var.storage != StorageClassFunction && !var.remapped_variable && type.pointer &&
-				    !is_builtin_variable(var) && interface_variable_exists_in_entry_point(var.self))
+				if (legacy && execution.model == ExecutionModelFragment)
 				{
-					auto name = to_name(var.self);
+					string output_filler;
+					for (uint32_t size = type.vecsize; size < 4; ++size)
+						output_filler += ", 0.0";
 
-					if (legacy && execution.model == ExecutionModelFragment)
-					{
-						string output_filler;
-						for (uint32_t size = type.vecsize; size < 4; ++size)
-							output_filler += ", 0.0";
-
-						statement("stage_output.", name, " = float4(", name, output_filler, ");");
-					}
-					else
-					{
-						statement("stage_output.", name, " = ", name, ";");
-					}
+					statement("stage_output.", name, " = float4(", name, output_filler, ");");
+				}
+				else
+				{
+					statement("stage_output.", name, " = ", name, ";");
 				}
 			}
-		}
+		});
 
 		statement("return stage_output;");
 	}

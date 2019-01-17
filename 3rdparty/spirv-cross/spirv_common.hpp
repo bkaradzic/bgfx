@@ -322,14 +322,14 @@ enum Types
 	TypeConstant,
 	TypeFunction,
 	TypeFunctionPrototype,
-	TypePointer,
 	TypeBlock,
 	TypeExtension,
 	TypeExpression,
 	TypeConstantOp,
 	TypeCombinedImageSampler,
 	TypeAccessChain,
-	TypeUndef
+	TypeUndef,
+	TypeCount
 };
 
 struct SPIRUndef : IVariant
@@ -812,6 +812,11 @@ struct SPIRFunction : IVariant
 	// Need to defer this, because they might rely on things which change during compilation.
 	std::vector<std::function<void()>> fixup_hooks_in;
 
+	// On function entry, make sure to copy a constant array into thread addr space to work around
+	// the case where we are passing a constant array by value to a function on backends which do not
+	// consider arrays value types.
+	std::vector<uint32_t> constant_arrays_needed_on_stack;
+
 	bool active = false;
 	bool flush_undeclared = true;
 	bool do_combined_parameters = true;
@@ -1250,7 +1255,7 @@ public:
 		return *this;
 	}
 
-	void set(std::unique_ptr<IVariant> val, uint32_t new_type)
+	void set(std::unique_ptr<IVariant> val, Types new_type)
 	{
 		holder = std::move(val);
 		if (!allow_type_rewrite && type != TypeNone && type != new_type)
@@ -1264,7 +1269,7 @@ public:
 	{
 		if (!holder)
 			SPIRV_CROSS_THROW("nullptr");
-		if (T::type != type)
+		if (static_cast<Types>(T::type) != type)
 			SPIRV_CROSS_THROW("Bad cast");
 		return *static_cast<T *>(holder.get());
 	}
@@ -1274,12 +1279,12 @@ public:
 	{
 		if (!holder)
 			SPIRV_CROSS_THROW("nullptr");
-		if (T::type != type)
+		if (static_cast<Types>(T::type) != type)
 			SPIRV_CROSS_THROW("Bad cast");
 		return *static_cast<const T *>(holder.get());
 	}
 
-	uint32_t get_type() const
+	Types get_type() const
 	{
 		return type;
 	}
@@ -1307,7 +1312,7 @@ public:
 
 private:
 	std::unique_ptr<IVariant> holder;
-	uint32_t type = TypeNone;
+	Types type = TypeNone;
 	bool allow_type_rewrite = false;
 };
 
@@ -1328,7 +1333,7 @@ T &variant_set(Variant &var, P &&... args)
 {
 	auto uptr = std::unique_ptr<T>(new T(std::forward<P>(args)...));
 	auto ptr = uptr.get();
-	var.set(std::move(uptr), T::type);
+	var.set(std::move(uptr), static_cast<Types>(T::type));
 	return *ptr;
 }
 

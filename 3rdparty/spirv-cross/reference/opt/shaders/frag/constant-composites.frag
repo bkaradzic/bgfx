@@ -10,13 +10,14 @@ struct Foo
     float b;
 };
 
+const Foo _28[2] = Foo[](Foo(10.0, 20.0), Foo(30.0, 40.0));
+
 layout(location = 0) out vec4 FragColor;
 layout(location = 0) flat in mediump int line;
 
 void main()
 {
-    Foo foos[2] = Foo[](Foo(10.0, 20.0), Foo(30.0, 40.0));
     FragColor = vec4(_16[line]);
-    FragColor += vec4(foos[line].a * foos[1 - line].a);
+    FragColor += vec4(_28[line].a * _28[1 - line].a);
 }
 

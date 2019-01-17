@@ -9,6 +9,12 @@ using namespace metal;
 constant int b = SPIRV_CROSS_CONSTANT_ID_1;
 constant int a_tmp [[function_constant(0)]];
 constant int a = is_function_constant_defined(a_tmp) ? a_tmp : 1;
+
+struct SSBO
+{
+    int v[1];
+};
+
 constant uint _21 = (uint(a) + 0u);
 constant uint _22_tmp [[function_constant(10)]];
 constant uint _22 = is_function_constant_defined(_22_tmp) ? _22_tmp : 1u;
@@ -18,11 +24,6 @@ constant uint _28 = (_21 + _27);
 constant uint _29 = gl_WorkGroupSize.y;
 constant uint _30 = (_28 + _29);
 constant int _32 = (1 - a);
-
-struct SSBO
-{
-    int v[1];
-};
 
 kernel void main0(device SSBO& _17 [[buffer(0)]])
 {

@@ -4,19 +4,19 @@
 #define SPIRV_CROSS_CONSTANT_ID_201 -10
 #endif
 const int _7 = SPIRV_CROSS_CONSTANT_ID_201;
+const int _20 = (_7 + 2);
 #ifndef SPIRV_CROSS_CONSTANT_ID_202
 #define SPIRV_CROSS_CONSTANT_ID_202 100u
 #endif
 const uint _8 = SPIRV_CROSS_CONSTANT_ID_202;
-#ifndef SPIRV_CROSS_CONSTANT_ID_200
-#define SPIRV_CROSS_CONSTANT_ID_200 3.141590118408203125
-#endif
-const float _9 = SPIRV_CROSS_CONSTANT_ID_200;
-const int _20 = (_7 + 2);
 const uint _25 = (_8 % 5u);
 const ivec4 _30 = ivec4(20, 30, _20, _20);
 const ivec2 _32 = ivec2(_30.y, _30.x);
 const int _33 = _30.y;
+#ifndef SPIRV_CROSS_CONSTANT_ID_200
+#define SPIRV_CROSS_CONSTANT_ID_200 3.141590118408203125
+#endif
+const float _9 = SPIRV_CROSS_CONSTANT_ID_200;
 
 layout(location = 0) flat out int _4;
 

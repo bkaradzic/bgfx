@@ -561,7 +561,8 @@ protected:
 	template <typename T, typename... P>
 	T &set(uint32_t id, P &&... args)
 	{
-		auto &var = variant_set<T>(ir.ids.at(id), std::forward<P>(args)...);
+		ir.add_typed_id(static_cast<Types>(T::type), id);
+		auto &var = variant_set<T>(ir.ids[id], std::forward<P>(args)...);
 		var.self = id;
 		return var;
 	}
@@ -569,13 +570,13 @@ protected:
 	template <typename T>
 	T &get(uint32_t id)
 	{
-		return variant_get<T>(ir.ids.at(id));
+		return variant_get<T>(ir.ids[id]);
 	}
 
 	template <typename T>
 	T *maybe_get(uint32_t id)
 	{
-		if (ir.ids.at(id).get_type() == T::type)
+		if (ir.ids[id].get_type() == static_cast<Types>(T::type))
 			return &get<T>(id);
 		else
 			return nullptr;
@@ -584,13 +585,13 @@ protected:
 	template <typename T>
 	const T &get(uint32_t id) const
 	{
-		return variant_get<T>(ir.ids.at(id));
+		return variant_get<T>(ir.ids[id]);
 	}
 
 	template <typename T>
 	const T *maybe_get(uint32_t id) const
 	{
-		if (ir.ids.at(id).get_type() == T::type)
+		if (ir.ids[id].get_type() == static_cast<Types>(T::type))
 			return &get<T>(id);
 		else
 			return nullptr;

@@ -24,9 +24,8 @@ struct SPIRV_Cross_Output
 
 void frag_main()
 {
-    Foo foos[2] = _28;
     FragColor = _16[_line].xxxx;
-    FragColor += (foos[_line].a * foos[1 - _line].a).xxxx;
+    FragColor += (_28[_line].a * _28[1 - _line].a).xxxx;
 }
 
 SPIRV_Cross_Output main(SPIRV_Cross_Input stage_input)

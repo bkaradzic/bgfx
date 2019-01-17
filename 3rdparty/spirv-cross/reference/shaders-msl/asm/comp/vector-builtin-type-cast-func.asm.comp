@@ -5,12 +5,12 @@
 
 using namespace metal;
 
-constant uint3 gl_WorkGroupSize = uint3(16u, 16u, 1u);
-
 struct cb1_struct
 {
     float4 _m0[1];
 };
+
+constant uint3 gl_WorkGroupSize = uint3(16u, 16u, 1u);
 
 int2 get_texcoord(thread const int2& base, thread const int2& index, thread uint3& gl_LocalInvocationID)
 {

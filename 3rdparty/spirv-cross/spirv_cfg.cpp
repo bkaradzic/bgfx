@@ -27,11 +27,6 @@ CFG::CFG(Compiler &compiler_, const SPIRFunction &func_)
     : compiler(compiler_)
     , func(func_)
 {
-	preceding_edges.resize(compiler.get_current_id_bound());
-	succeeding_edges.resize(compiler.get_current_id_bound());
-	visit_order.resize(compiler.get_current_id_bound());
-	immediate_dominators.resize(compiler.get_current_id_bound());
-
 	build_post_order_visit_order();
 	build_immediate_dominators();
 }
@@ -40,10 +35,10 @@ uint32_t CFG::find_common_dominator(uint32_t a, uint32_t b) const
 {
 	while (a != b)
 	{
-		if (visit_order[a] < visit_order[b])
-			a = immediate_dominators[a];
+		if (get_visit_order(a) < get_visit_order(b))
+			a = get_immediate_dominator(a);
 		else
-			b = immediate_dominators[b];
+			b = get_immediate_dominator(b);
 	}
 	return a;
 }
@@ -51,7 +46,7 @@ uint32_t CFG::find_common_dominator(uint32_t a, uint32_t b) const
 void CFG::build_immediate_dominators()
 {
 	// Traverse the post-order in reverse and build up the immediate dominator tree.
-	fill(begin(immediate_dominators), end(immediate_dominators), 0);
+	immediate_dominators.clear();
 	immediate_dominators[func.entry_block] = func.entry_block;
 
 	for (auto i = post_order.size(); i; i--)
@@ -78,7 +73,9 @@ bool CFG::is_back_edge(uint32_t to) const
 {
 	// We have a back edge if the visit order is set with the temporary magic value 0.
 	// Crossing edges will have already been recorded with a visit order.
-	return visit_order[to] == 0;
+	auto itr = visit_order.find(to);
+	assert(itr != end(visit_order));
+	return itr->second.get() == 0;
 }
 
 bool CFG::post_order_visit(uint32_t block_id)
@@ -86,11 +83,11 @@ bool CFG::post_order_visit(uint32_t block_id)
 	// If we have already branched to this block (back edge), stop recursion.
 	// If our branches are back-edges, we do not record them.
 	// We have to record crossing edges however.
-	if (visit_order[block_id] >= 0)
+	if (visit_order[block_id].get() >= 0)
 		return !is_back_edge(block_id);
 
 	// Block back-edges from recursively revisiting ourselves.
-	visit_order[block_id] = 0;
+	visit_order[block_id].get() = 0;
 
 	// First visit our branch targets.
 	auto &block = compiler.get<SPIRBlock>(block_id);
@@ -130,7 +127,7 @@ bool CFG::post_order_visit(uint32_t block_id)
 		add_branch(block_id, block.merge_block);
 
 	// Then visit ourselves. Start counting at one, to let 0 be a magic value for testing back vs. crossing edges.
-	visit_order[block_id] = ++visit_count;
+	visit_order[block_id].get() = ++visit_count;
 	post_order.push_back(block_id);
 	return true;
 }
@@ -139,7 +136,7 @@ void CFG::build_post_order_visit_order()
 {
 	uint32_t block = func.entry_block;
 	visit_count = 0;
-	fill(begin(visit_order), end(visit_order), -1);
+	visit_order.clear();
 	post_order.clear();
 	post_order_visit(block);
 }

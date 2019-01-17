@@ -3,12 +3,12 @@
 
 using namespace metal;
 
-constant uint3 gl_WorkGroupSize = uint3(16u, 16u, 1u);
-
 struct cb1_struct
 {
     float4 _m0[1];
 };
+
+constant uint3 gl_WorkGroupSize = uint3(16u, 16u, 1u);
 
 kernel void main0(constant cb1_struct& cb0_1 [[buffer(0)]], texture2d<float, access::write> u0 [[texture(1)]], uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {

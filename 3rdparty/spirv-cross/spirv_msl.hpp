@@ -168,6 +168,10 @@ public:
 		bool disable_rasterization = false;
 		bool swizzle_texture_samples = false;
 
+		// Fragment output in MSL must have at least as many components as the render pass.
+		// Add support to explicit pad out components.
+		bool pad_fragment_output_components = false;
+
 		bool is_ios()
 		{
 			return platform == iOS;
@@ -312,6 +316,10 @@ public:
 	// The remapped sampler must not be an array of samplers.
 	void remap_constexpr_sampler(uint32_t id, const MSLConstexprSampler &sampler);
 
+	// If using CompilerMSL::Options::pad_fragment_output_components, override the number of components we expect
+	// to use for a particular location. The default is 4 if number of components is not overridden.
+	void set_fragment_output_components(uint32_t location, uint32_t components);
+
 protected:
 	void emit_binary_unord_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
 	void emit_instruction(const Instruction &instr) override;
@@ -380,7 +388,7 @@ protected:
 
 	void emit_custom_functions();
 	void emit_resources();
-	void emit_specialization_constants();
+	void emit_specialization_constants_and_structs();
 	void emit_interface_block(uint32_t ib_var_id);
 	bool maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs);
 	void add_convert_row_major_matrix_function(uint32_t cols, uint32_t rows);
@@ -390,6 +398,7 @@ protected:
 	std::string to_qualified_member_name(const SPIRType &type, uint32_t index);
 	std::string ensure_valid_name(std::string name, std::string pfx);
 	std::string to_sampler_expression(uint32_t id);
+	std::string to_swizzle_expression(uint32_t id);
 	std::string builtin_qualifier(spv::BuiltIn builtin);
 	std::string builtin_type_decl(spv::BuiltIn builtin);
 	std::string built_in_func_arg(spv::BuiltIn builtin, bool prefix_comma);
@@ -427,6 +436,7 @@ protected:
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
 	std::unordered_map<uint32_t, MSLVertexAttr *> vtx_attrs_by_location;
+	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
 	std::unordered_map<MSLStructMemberKey, uint32_t> struct_member_padding;
 	std::set<std::string> pragma_lines;
 	std::set<std::string> typedef_lines;
@@ -444,10 +454,14 @@ protected:
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
 	std::string sampler_name_suffix = "Smplr";
+	std::string swizzle_name_suffix = "Swzl";
 	spv::Op previous_instruction_opcode = spv::OpNop;
 
 	std::unordered_map<uint32_t, MSLConstexprSampler> constexpr_samplers;
 	std::vector<uint32_t> buffer_arrays;
+
+	uint32_t get_target_components_for_fragment_location(uint32_t location) const;
+	uint32_t build_extended_vector_type(uint32_t type_id, uint32_t components);
 
 	// OpcodeHandler that handles several MSL preprocessing operations.
 	struct OpCodePreprocessor : OpcodeHandler

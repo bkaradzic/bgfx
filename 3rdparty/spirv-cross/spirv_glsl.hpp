@@ -105,6 +105,7 @@ public:
 			// Inverts gl_Position.y or equivalent.
 			bool flip_vert_y = false;
 
+			// GLSL only, for HLSL version of this option, see CompilerHLSL.
 			// If true, the backend will assume that InstanceIndex will need to apply
 			// a base instance offset. Set to false if you know you will never use base instance
 			// functionality as it might remove some internal uniforms.

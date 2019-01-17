@@ -4,11 +4,11 @@
 #define SPIRV_CROSS_CONSTANT_ID_201 -10
 #endif
 const int _7 = SPIRV_CROSS_CONSTANT_ID_201;
+const int _20 = (_7 + 2);
 #ifndef SPIRV_CROSS_CONSTANT_ID_202
 #define SPIRV_CROSS_CONSTANT_ID_202 100u
 #endif
 const uint _8 = SPIRV_CROSS_CONSTANT_ID_202;
-const int _20 = (_7 + 2);
 const uint _25 = (_8 % 5u);
 const ivec4 _30 = ivec4(20, 30, _20, _20);
 const ivec2 _32 = ivec2(_30.y, _30.x);

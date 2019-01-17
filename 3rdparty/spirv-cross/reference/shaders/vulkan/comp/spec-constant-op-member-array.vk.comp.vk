@@ -3,9 +3,6 @@ layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(constant_id = 0) const int a = 100;
 layout(constant_id = 1) const int b = 200;
-layout(constant_id = 2) const int c = 300;
-const int _18 = (c + 50);
-layout(constant_id = 3) const int e = 400;
 
 struct A
 {
@@ -18,6 +15,10 @@ struct B
     int member0[b];
     int member1[a];
 };
+
+layout(constant_id = 2) const int c = 300;
+const int _18 = (c + 50);
+layout(constant_id = 3) const int e = 400;
 
 layout(set = 1, binding = 0, std430) buffer SSBO
 {

@@ -1063,8 +1063,11 @@ bool Parser::types_are_logically_equivalent(const SPIRType &a, const SPIRType &b
 bool Parser::variable_storage_is_aliased(const SPIRVariable &v) const
 {
 	auto &type = get<SPIRType>(v.basetype);
+
+	auto *type_meta = ir.find_meta(type.self);
+
 	bool ssbo = v.storage == StorageClassStorageBuffer ||
-	            ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
+	            (type_meta && type_meta->decoration.decoration_flags.get(DecorationBufferBlock));
 	bool image = type.basetype == SPIRType::Image;
 	bool counter = type.basetype == SPIRType::AtomicCounter;
 

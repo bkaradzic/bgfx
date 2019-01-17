@@ -45,12 +45,18 @@ public:
 
 	uint32_t get_immediate_dominator(uint32_t block) const
 	{
-		return immediate_dominators[block];
+		auto itr = immediate_dominators.find(block);
+		if (itr != std::end(immediate_dominators))
+			return itr->second;
+		else
+			return 0;
 	}
 
 	uint32_t get_visit_order(uint32_t block) const
 	{
-		int v = visit_order[block];
+		auto itr = visit_order.find(block);
+		assert(itr != std::end(visit_order));
+		int v = itr->second.get();
 		assert(v > 0);
 		return uint32_t(v);
 	}
@@ -59,12 +65,20 @@ public:
 
 	const std::vector<uint32_t> &get_preceding_edges(uint32_t block) const
 	{
-		return preceding_edges[block];
+		auto itr = preceding_edges.find(block);
+		if (itr != std::end(preceding_edges))
+			return itr->second;
+		else
+			return empty_vector;
 	}
 
 	const std::vector<uint32_t> &get_succeeding_edges(uint32_t block) const
 	{
-		return succeeding_edges[block];
+		auto itr = succeeding_edges.find(block);
+		if (itr != std::end(succeeding_edges))
+			return itr->second;
+		else
+			return empty_vector;
 	}
 
 	template <typename Op>
@@ -75,18 +89,34 @@ public:
 		seen_blocks.insert(block);
 
 		op(block);
-		for (auto b : succeeding_edges[block])
+		for (auto b : get_succeeding_edges(block))
 			walk_from(seen_blocks, b, op);
 	}
 
 private:
+	struct VisitOrder
+	{
+		int &get()
+		{
+			return v;
+		}
+
+		const int &get() const
+		{
+			return v;
+		}
+
+		int v = -1;
+	};
+
 	Compiler &compiler;
 	const SPIRFunction &func;
-	std::vector<std::vector<uint32_t>> preceding_edges;
-	std::vector<std::vector<uint32_t>> succeeding_edges;
-	std::vector<uint32_t> immediate_dominators;
-	std::vector<int> visit_order;
+	std::unordered_map<uint32_t, std::vector<uint32_t>> preceding_edges;
+	std::unordered_map<uint32_t, std::vector<uint32_t>> succeeding_edges;
+	std::unordered_map<uint32_t, uint32_t> immediate_dominators;
+	std::unordered_map<uint32_t, VisitOrder> visit_order;
 	std::vector<uint32_t> post_order;
+	std::vector<uint32_t> empty_vector;
 
 	void add_branch(uint32_t from, uint32_t to);
 	void build_post_order_visit_order();
