@@ -18,6 +18,6 @@ uint2 spvTexelBufferCoord(uint tc)
 
 kernel void main0(constant cb& _6 [[buffer(7)]], texture2d<float, access::write> _buffer [[texture(0)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]])
 {
-    _buffer.write(_6.value, spvTexelBufferCoord(((32u * gl_WorkGroupID.x) + gl_LocalInvocationIndex)));
+    _buffer.write(float4(_6.value), spvTexelBufferCoord(((32u * gl_WorkGroupID.x) + gl_LocalInvocationIndex)));
 }
 

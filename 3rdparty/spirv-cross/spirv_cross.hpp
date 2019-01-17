@@ -114,6 +114,12 @@ struct EntryPoint
 	spv::ExecutionModel execution_model;
 };
 
+enum ExtendedDecorations
+{
+	SPIRVCrossDecorationPacked,
+	SPIRVCrossDecorationPackedType
+};
+
 class Compiler
 {
 public:
@@ -945,6 +951,17 @@ protected:
 	static bool is_desktop_only_format(spv::ImageFormat format);
 
 	bool image_is_comparison(const SPIRType &type, uint32_t id) const;
+
+	void set_extended_decoration(uint32_t id, ExtendedDecorations decoration, uint32_t value = 0);
+	uint32_t get_extended_decoration(uint32_t id, ExtendedDecorations decoration) const;
+	bool has_extended_decoration(uint32_t id, ExtendedDecorations decoration) const;
+	void unset_extended_decoration(uint32_t id, ExtendedDecorations decoration);
+
+	void set_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration,
+	                                    uint32_t value = 0);
+	uint32_t get_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const;
+	bool has_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const;
+	void unset_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration);
 
 private:
 	// Used only to implement the old deprecated get_entry_point() interface.

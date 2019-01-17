@@ -51,6 +51,15 @@ struct PlsRemap
 	PlsFormat format;
 };
 
+enum AccessChainFlagBits
+{
+	ACCESS_CHAIN_INDEX_IS_LITERAL_BIT = 1 << 0,
+	ACCESS_CHAIN_CHAIN_ONLY_BIT = 1 << 1,
+	ACCESS_CHAIN_PTR_CHAIN_BIT = 1 << 2,
+	ACCESS_CHAIN_SKIP_REGISTER_EXPRESSION_READ_BIT = 1 << 3
+};
+typedef uint32_t AccessChainFlags;
+
 class CompilerGLSL : public Compiler
 {
 public:
@@ -261,7 +270,7 @@ protected:
 	virtual void emit_buffer_block(const SPIRVariable &type);
 	virtual void emit_push_constant_block(const SPIRVariable &var);
 	virtual void emit_uniform(const SPIRVariable &var);
-	virtual std::string unpack_expression_type(std::string expr_str, const SPIRType &type);
+	virtual std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t packed_type_id);
 
 	std::unique_ptr<std::ostringstream> buffer;
 
@@ -447,9 +456,10 @@ protected:
 	bool expression_is_forwarded(uint32_t id);
 	SPIRExpression &emit_op(uint32_t result_type, uint32_t result_id, const std::string &rhs, bool forward_rhs,
 	                        bool suppress_usage_tracking = false);
-	std::string access_chain_internal(uint32_t base, const uint32_t *indices, uint32_t count, bool index_is_literal,
-	                                  bool chain_only = false, bool ptr_chain = false, AccessChainMeta *meta = nullptr,
-	                                  bool register_expression_read = true);
+
+	std::string access_chain_internal(uint32_t base, const uint32_t *indices, uint32_t count, AccessChainFlags flags,
+	                                  AccessChainMeta *meta);
+
 	std::string access_chain(uint32_t base, const uint32_t *indices, uint32_t count, const SPIRType &target_type,
 	                         AccessChainMeta *meta = nullptr, bool ptr_chain = false);
 
@@ -476,11 +486,11 @@ protected:
 	void append_global_func_args(const SPIRFunction &func, uint32_t index, std::vector<std::string> &arglist);
 	std::string to_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_enclosed_expression(uint32_t id, bool register_expression_read = true);
-	std::string to_unpacked_expression(uint32_t id);
-	std::string to_enclosed_unpacked_expression(uint32_t id);
+	std::string to_unpacked_expression(uint32_t id, bool register_expression_read = true);
+	std::string to_enclosed_unpacked_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_dereferenced_expression(uint32_t id, bool register_expression_read = true);
-	std::string to_pointer_expression(uint32_t id);
-	std::string to_enclosed_pointer_expression(uint32_t id);
+	std::string to_pointer_expression(uint32_t id, bool register_expression_read = true);
+	std::string to_enclosed_pointer_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_extract_component_expression(uint32_t id, uint32_t index);
 	std::string enclose_expression(const std::string &expr);
 	std::string dereference_expression(const std::string &expr);
@@ -624,6 +634,7 @@ protected:
 	void disallow_forwarding_in_expression_chain(const SPIRExpression &expr);
 
 	bool expression_is_constant_null(uint32_t id) const;
+	virtual void emit_store_statement(uint32_t lhs_expression, uint32_t rhs_expression);
 
 private:
 	void init()

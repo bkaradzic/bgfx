@@ -1339,6 +1339,7 @@ T &variant_set(Variant &var, P &&... args)
 
 struct AccessChainMeta
 {
+	uint32_t storage_packed_type = 0;
 	bool need_transpose = false;
 	bool storage_is_packed = false;
 	bool storage_is_invariant = false;
@@ -1365,6 +1366,12 @@ struct Meta
 		uint32_t index = 0;
 		spv::FPRoundingMode fp_rounding_mode = spv::FPRoundingModeMax;
 		bool builtin = false;
+
+		struct
+		{
+			uint32_t packed_type = 0;
+			bool packed = false;
+		} extended;
 	};
 
 	Decoration decoration;

@@ -32,7 +32,7 @@ float4 _main(thread const float4& pos, constant buf& v_11)
 {
     int _46 = int(pos.x) % 16;
     Foo_1 foo;
-    foo.a = v_11.results[_46].a;
+    foo.a = float3(v_11.results[_46].a);
     foo.b = v_11.results[_46].b;
     return float4(dot(foo.a, v_11.bar.xyz), foo.b, 0.0, 0.0);
 }

@@ -169,7 +169,7 @@ string Compiler::to_name(uint32_t id, bool allow_alias) const
 		{
 			// If the alias master has been specially packed, we will have emitted a clean variant as well,
 			// so skip the name aliasing here.
-			if (!has_decoration(type.type_alias, DecorationCPacked))
+			if (!has_extended_decoration(type.type_alias, SPIRVCrossDecorationPacked))
 				return to_name(type.type_alias);
 		}
 	}
@@ -515,7 +515,7 @@ bool Compiler::is_member_builtin(const SPIRType &type, uint32_t index, BuiltIn *
 
 bool Compiler::is_scalar(const SPIRType &type) const
 {
-	return type.vecsize == 1 && type.columns == 1;
+	return type.basetype != SPIRType::Struct && type.vecsize == 1 && type.columns == 1;
 }
 
 bool Compiler::is_vector(const SPIRType &type) const
@@ -868,7 +868,7 @@ void Compiler::fixup_type_alias()
 	for (auto alias_itr = begin(type_ids); alias_itr != end(type_ids); ++alias_itr)
 	{
 		auto &type = get<SPIRType>(*alias_itr);
-		if (type.type_alias != 0 && !has_decoration(type.type_alias, DecorationCPacked))
+		if (type.type_alias != 0 && !has_extended_decoration(type.type_alias, SPIRVCrossDecorationPacked))
 		{
 			// We will skip declaring this type, so make sure the type_alias type comes before.
 			auto master_itr = find(begin(type_ids), end(type_ids), type.type_alias);
@@ -1163,6 +1163,153 @@ void Compiler::set_decoration_string(uint32_t id, spv::Decoration decoration, co
 void Compiler::set_decoration(uint32_t id, Decoration decoration, uint32_t argument)
 {
 	ir.set_decoration(id, decoration, argument);
+}
+
+void Compiler::set_extended_decoration(uint32_t id, ExtendedDecorations decoration, uint32_t value)
+{
+	auto &dec = ir.meta[id].decoration;
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		dec.extended.packed = true;
+		break;
+
+	case SPIRVCrossDecorationPackedType:
+		dec.extended.packed_type = value;
+		break;
+	}
+}
+
+void Compiler::set_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration,
+                                              uint32_t value)
+{
+	ir.meta[type].members.resize(max(ir.meta[type].members.size(), size_t(index) + 1));
+	auto &dec = ir.meta[type].members[index];
+
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		dec.extended.packed = true;
+		break;
+
+	case SPIRVCrossDecorationPackedType:
+		dec.extended.packed_type = value;
+		break;
+	}
+}
+
+uint32_t Compiler::get_extended_decoration(uint32_t id, ExtendedDecorations decoration) const
+{
+	auto *m = ir.find_meta(id);
+	if (!m)
+		return 0;
+
+	auto &dec = m->decoration;
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		return uint32_t(dec.extended.packed);
+
+	case SPIRVCrossDecorationPackedType:
+		return dec.extended.packed_type;
+	}
+
+	return 0;
+}
+
+uint32_t Compiler::get_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const
+{
+	auto *m = ir.find_meta(type);
+	if (!m)
+		return 0;
+
+	if (index >= m->members.size())
+		return 0;
+
+	auto &dec = m->members[index];
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		return uint32_t(dec.extended.packed);
+
+	case SPIRVCrossDecorationPackedType:
+		return dec.extended.packed_type;
+	}
+
+	return 0;
+}
+
+bool Compiler::has_extended_decoration(uint32_t id, ExtendedDecorations decoration) const
+{
+	auto *m = ir.find_meta(id);
+	if (!m)
+		return false;
+
+	auto &dec = m->decoration;
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		return dec.extended.packed;
+
+	case SPIRVCrossDecorationPackedType:
+		return dec.extended.packed_type != 0;
+	}
+
+	return false;
+}
+
+bool Compiler::has_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const
+{
+	auto *m = ir.find_meta(type);
+	if (!m)
+		return false;
+
+	if (index >= m->members.size())
+		return false;
+
+	auto &dec = m->members[index];
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		return dec.extended.packed;
+
+	case SPIRVCrossDecorationPackedType:
+		return dec.extended.packed_type != 0;
+	}
+
+	return false;
+}
+
+void Compiler::unset_extended_decoration(uint32_t id, ExtendedDecorations decoration)
+{
+	auto &dec = ir.meta[id].decoration;
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		dec.extended.packed = false;
+		break;
+
+	case SPIRVCrossDecorationPackedType:
+		dec.extended.packed_type = 0;
+		break;
+	}
+}
+
+void Compiler::unset_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration)
+{
+	ir.meta[type].members.resize(max(ir.meta[type].members.size(), size_t(index) + 1));
+	auto &dec = ir.meta[type].members[index];
+
+	switch (decoration)
+	{
+	case SPIRVCrossDecorationPacked:
+		dec.extended.packed = false;
+		break;
+
+	case SPIRVCrossDecorationPackedType:
+		dec.extended.packed_type = 0;
+		break;
+	}
 }
 
 StorageClass Compiler::get_storage_class(uint32_t id) const
