@@ -363,7 +363,7 @@ namespace
 			m_recreateFrameBuffers = false;
 			createFramebuffers();
 
-			m_loadCounter = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::R32U, BGFX_TEXTURE_COMPUTE_WRITE);
+			m_loadCounter = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 
 			// Vertex decl
 			PosTexCoord0Vertex::init();
@@ -630,7 +630,7 @@ namespace
 
 							if (!adaptiveBasePass && (m_settings.m_qualityLevel == 3))
 							{
-								bgfx::setImage(3, m_loadCounter, 0, bgfx::Access::Read, bgfx::TextureFormat::R32U);
+								bgfx::setBuffer(3, m_loadCounter, bgfx::Access::Read);
 								bgfx::setTexture(4, s_importanceMap, m_importanceMap, SAMPLER_LINEAR_CLAMP);
 								bgfx::setImage(5, m_finalResults, 0, bgfx::Access::Read, bgfx::TextureFormat::RG8);
 							}
@@ -697,13 +697,13 @@ namespace
 						bgfx::setTexture(1, s_importanceMap, m_importanceMap);
 						bgfx::dispatch(view, m_postprocessImportanceMapAProgram, (m_quarterSize[0] + 7) / 8, (m_quarterSize[1] + 7) / 8);
 
-						bgfx::setImage(0, m_loadCounter, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::R32U);
+						bgfx::setBuffer(0, m_loadCounter, bgfx::Access::ReadWrite);
 						bgfx::dispatch(view, m_loadCounterClearProgram, 1,1);
 
 						m_uniforms.submit();
 						bgfx::setImage(0, m_importanceMap, 0, bgfx::Access::Write, bgfx::TextureFormat::R8);
 						bgfx::setTexture(1, s_importanceMap, m_importanceMapPong);
-						bgfx::setImage(2, m_loadCounter, 0, bgfx::Access::ReadWrite, bgfx::TextureFormat::R32U);
+						bgfx::setBuffer(2, m_loadCounter, bgfx::Access::ReadWrite);
 						bgfx::dispatch(view, m_postprocessImportanceMapBProgram, (m_quarterSize[0]+7) / 8, (m_quarterSize[1]+7) / 8);
 						++view;
 					}
@@ -1159,7 +1159,7 @@ namespace
 		// Only needed for quality level 3 (adaptive quality)
 		bgfx::TextureHandle m_importanceMap;
 		bgfx::TextureHandle m_importanceMapPong;
-		bgfx::TextureHandle m_loadCounter;
+		bgfx::DynamicIndexBufferHandle m_loadCounter;
 
 		struct Model
 		{
