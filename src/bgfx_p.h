@@ -1660,11 +1660,13 @@ namespace bgfx
 
 	struct IndexBuffer
 	{
+		String   m_name;
 		uint32_t m_size;
 	};
 
 	struct VertexBuffer
 	{
+		String   m_name;
 		uint32_t m_size;
 		uint16_t m_stride;
 	};
@@ -2879,6 +2881,18 @@ namespace bgfx
 			return handle;
 		}
 
+		BGFX_API_FUNC(void setName(IndexBufferHandle _handle, const bx::StringView& _name) )
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			BGFX_CHECK_HANDLE("setName", m_indexBufferHandle, _handle);
+
+			IndexBuffer& ref = m_indexBuffers[_handle.idx];
+			ref.m_name.set(_name);
+
+//			setName(convert(_handle), _name);
+		}
+
 		BGFX_API_FUNC(void destroyIndexBuffer(IndexBufferHandle _handle) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
@@ -2886,6 +2900,9 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("destroyIndexBuffer", m_indexBufferHandle, _handle);
 			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
 			BX_CHECK(ok, "Index buffer handle %d is already destroyed!", _handle.idx);
+
+			IndexBuffer& ref = m_indexBuffers[_handle.idx];
+			ref.m_name.clear();
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyIndexBuffer);
 			cmdbuf.write(_handle);
@@ -2948,6 +2965,18 @@ namespace bgfx
 			return BGFX_INVALID_HANDLE;
 		}
 
+		BGFX_API_FUNC(void setName(VertexBufferHandle _handle, const bx::StringView& _name) )
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			BGFX_CHECK_HANDLE("setName", m_vertexBufferHandle, _handle);
+
+			VertexBuffer& ref = m_vertexBuffers[_handle.idx];
+			ref.m_name.set(_name);
+
+//			setName(convert(_handle), _name);
+		}
+
 		BGFX_API_FUNC(void destroyVertexBuffer(VertexBufferHandle _handle) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
@@ -2955,6 +2984,9 @@ namespace bgfx
 			BGFX_CHECK_HANDLE("destroyVertexBuffer", m_vertexBufferHandle, _handle);
 			bool ok = m_submit->free(_handle); BX_UNUSED(ok);
 			BX_CHECK(ok, "Vertex buffer handle %d is already destroyed!", _handle.idx);
+
+			VertexBuffer& ref = m_vertexBuffers[_handle.idx];
+			ref.m_name.clear();
 
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexBuffer);
 			cmdbuf.write(_handle);
@@ -4242,6 +4274,18 @@ namespace bgfx
 			return handle;
 		}
 
+		BGFX_API_FUNC(void setName(FrameBufferHandle _handle, const bx::StringView& _name) )
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			BGFX_CHECK_HANDLE("setName", m_frameBufferHandle, _handle);
+
+			FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+			ref.m_name.set(_name);
+
+//			setName(convert(_handle), _name);
+		}
+
 		BGFX_API_FUNC(TextureHandle getTexture(FrameBufferHandle _handle, uint8_t _attachment) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
@@ -4270,6 +4314,8 @@ namespace bgfx
 			cmdbuf.write(_handle);
 
 			FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+			ref.m_name.clear();
+
 			if (!ref.m_window)
 			{
 				for (uint32_t ii = 0; ii < BX_COUNTOF(ref.un.m_th); ++ii)
@@ -4789,6 +4835,8 @@ namespace bgfx
 
 		struct FrameBufferRef
 		{
+			String m_name;
+
 			union un
 			{
 				TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
@@ -4799,19 +4847,19 @@ namespace bgfx
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
-		UniformRef m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
+		UniformRef     m_uniformRef[BGFX_CONFIG_MAX_UNIFORMS];
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_SHADERS*2> ShaderHashMap;
 		ShaderHashMap m_shaderHashMap;
-		ShaderRef m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
+		ShaderRef     m_shaderRef[BGFX_CONFIG_MAX_SHADERS];
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_PROGRAMS*2> ProgramHashMap;
 		ProgramHashMap m_programHashMap;
-		ProgramRef m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
+		ProgramRef     m_programRef[BGFX_CONFIG_MAX_PROGRAMS];
 
-		TextureRef m_textureRef[BGFX_CONFIG_MAX_TEXTURES];
+		TextureRef     m_textureRef[BGFX_CONFIG_MAX_TEXTURES];
 		FrameBufferRef m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		VertexDeclRef m_declRef;
+		VertexDeclRef  m_declRef;
 
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		uint32_t m_seq[BGFX_CONFIG_MAX_VIEWS];

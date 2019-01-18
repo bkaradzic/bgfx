@@ -2122,6 +2122,21 @@ namespace bgfx
 		, uint16_t _flags = BGFX_BUFFER_NONE
 		);
 
+	/// Set static index buffer debug name.
+	///
+	/// @param[in] _handle Static index buffer handle.
+	/// @param[in] _name Static index buffer name.
+	/// @param[in] _len Static index buffer name length (if length is INT32_MAX, it's expected
+	///   that _name is zero terminated string.
+	///
+	/// @attention C99 equivalent is `bgfx_set_index_buffer_name`.
+	///
+	void setName(
+		  IndexBufferHandle _handle
+		, const char* _name
+		, int32_t _len = INT32_MAX
+		);
+
 	/// Destroy static index buffer.
 	///
 	/// @param[in] _handle Static index buffer handle.
@@ -2154,6 +2169,21 @@ namespace bgfx
 		  const Memory* _mem
 		, const VertexDecl& _decl
 		, uint16_t _flags = BGFX_BUFFER_NONE
+		);
+
+	/// Set static vertex buffer debug name.
+	///
+	/// @param[in] _handle Static vertex buffer handle.
+	/// @param[in] _name Static vertex buffer name.
+	/// @param[in] _len Static vertex buffer name length (if length is INT32_MAX, it's expected
+	///   that _name is zero terminated string.
+	///
+	/// @attention C99 equivalent is `bgfx_set_vertex_buffer_name`.
+	///
+	void setName(
+		  VertexBufferHandle _handle
+		, const char* _name
+		, int32_t _len = INT32_MAX
 		);
 
 	/// Destroy static vertex buffer.
@@ -2951,6 +2981,21 @@ namespace bgfx
 		, uint16_t _height
 		, TextureFormat::Enum _format      = TextureFormat::Count
 		, TextureFormat::Enum _depthFormat = TextureFormat::Count
+		);
+
+	/// Set frame buffer debug name.
+	///
+	/// @param[in] _handle frame buffer handle.
+	/// @param[in] _name frame buffer name.
+	/// @param[in] _len frame buffer name length (if length is INT32_MAX, it's expected
+	///   that _name is zero terminated string.
+	///
+	/// @attention C99 equivalent is `bgfx_set_frame_buffer_name`.
+	///
+	void setName(
+		  FrameBufferHandle _handle
+		, const char* _name
+		, int32_t _len = INT32_MAX
 		);
 
 	/// Obtain texture handle of frame buffer attachment.
