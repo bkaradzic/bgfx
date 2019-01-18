@@ -3430,7 +3430,7 @@ namespace bgfx
 	void Encoder::setUniform(UniformHandle _handle, const void* _value, uint16_t _num)
 	{
 		BGFX_CHECK_HANDLE("setUniform", s_ctx->m_uniformHandle, _handle);
-		const Context::UniformRef& uniform = s_ctx->m_uniformRef[_handle.idx];
+		const UniformRef& uniform = s_ctx->m_uniformRef[_handle.idx];
 		BX_CHECK(isValid(_handle) && 0 < uniform.m_refCount, "Setting invalid uniform (handle %3d)!", _handle.idx);
 		BX_CHECK(_num == UINT16_MAX || uniform.m_num >= _num, "Truncated uniform update. %d (max: %d)", _num, uniform.m_num);
 		BGFX_ENCODER(setUniform(uniform.m_type, _handle, _value, UINT16_MAX != _num ? _num : uniform.m_num) );
@@ -3670,8 +3670,8 @@ namespace bgfx
 		BGFX_CHECK_CAPS(BGFX_CAPS_TEXTURE_BLIT, "Texture blit is not supported!");
 		BGFX_CHECK_HANDLE("blit/src TextureHandle", s_ctx->m_textureHandle, _src);
 		BGFX_CHECK_HANDLE("blit/dst TextureHandle", s_ctx->m_textureHandle, _dst);
-		const Context::TextureRef& src = s_ctx->m_textureRef[_src.idx];
-		const Context::TextureRef& dst = s_ctx->m_textureRef[_dst.idx];
+		const TextureRef& src = s_ctx->m_textureRef[_src.idx];
+		const TextureRef& dst = s_ctx->m_textureRef[_dst.idx];
 		BX_CHECK(src.m_format == dst.m_format
 			, "Texture format must match (src %s, dst %s)."
 			, bimg::getName(bimg::TextureFormat::Enum(src.m_format) )

@@ -54,7 +54,7 @@
         </Expand>
     </Type>
 
-    <Type Name="bgfx::Context::ShaderRef">
+    <Type Name="bgfx::ShaderRef">
         <Expand>
             <Item Name="m_uniforms">m_uniforms,[m_num]</Item>
             <Item Name="m_name">m_name</Item>
@@ -82,7 +82,7 @@
         </Expand>
     </Type>
 
-    <Type Name="bgfx::Context::TextureRef">
+    <Type Name="bgfx::TextureRef">
         <Expand>
             <Item Name="m_name">m_name</Item>
             <Item Name="m_ptr">m_ptr</Item>

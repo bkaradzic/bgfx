@@ -1692,6 +1692,82 @@ namespace bgfx
 		uint16_t m_flags;
 	};
 
+	struct ShaderRef
+	{
+		UniformHandle* m_uniforms;
+		String   m_name;
+		uint32_t m_hashIn;
+		uint32_t m_hashOut;
+		uint16_t m_num;
+		int16_t  m_refCount;
+	};
+
+	struct ProgramRef
+	{
+		ShaderHandle m_vsh;
+		ShaderHandle m_fsh;
+		int16_t      m_refCount;
+	};
+
+	struct UniformRef
+	{
+		String            m_name;
+		UniformType::Enum m_type;
+		uint16_t          m_num;
+		int16_t           m_refCount;
+	};
+
+	struct TextureRef
+	{
+		void init(
+			  BackbufferRatio::Enum _ratio
+			, TextureFormat::Enum _format
+			, uint32_t _storageSize
+			, uint8_t _numMips
+			, uint16_t _numLayers
+			, bool _ptrPending
+			, bool _immutable
+			, bool _rt
+			)
+		{
+			m_ptr         = _ptrPending ? (void*)UINTPTR_MAX : NULL;
+			m_storageSize = _storageSize;
+			m_refCount    = 1;
+			m_bbRatio     = uint8_t(_ratio);
+			m_format      = uint8_t(_format);
+			m_numMips     = _numMips;
+			m_numLayers   = _numLayers;
+			m_owned       = false;
+			m_immutable   = _immutable;
+			m_rt          = _rt;
+		}
+
+		String   m_name;
+		void*    m_ptr;
+		uint32_t m_storageSize;
+		int16_t  m_refCount;
+		uint8_t  m_bbRatio;
+		uint8_t  m_format;
+		uint8_t  m_numMips;
+		uint16_t m_numLayers;
+		bool     m_owned;
+		bool     m_immutable;
+		bool     m_rt;
+	};
+
+	struct FrameBufferRef
+	{
+		String m_name;
+
+		union un
+		{
+			TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
+			void* m_nwh;
+		} un;
+
+		bool m_window;
+	};
+
 	BX_ALIGN_DECL_CACHE_LINE(struct) View
 	{
 		void reset()
@@ -4769,81 +4845,6 @@ namespace bgfx
 		bx::HandleAllocT<BGFX_CONFIG_MAX_FRAME_BUFFERS> m_frameBufferHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_UNIFORMS> m_uniformHandle;
 		bx::HandleAllocT<BGFX_CONFIG_MAX_OCCLUSION_QUERIES> m_occlusionQueryHandle;
-
-		struct ShaderRef
-		{
-			UniformHandle* m_uniforms;
-			String   m_name;
-			uint32_t m_hashIn;
-			uint32_t m_hashOut;
-			int16_t  m_refCount;
-			uint16_t m_num;
-		};
-
-		struct ProgramRef
-		{
-			ShaderHandle m_vsh;
-			ShaderHandle m_fsh;
-			int16_t      m_refCount;
-		};
-
-		struct UniformRef
-		{
-			String            m_name;
-			UniformType::Enum m_type;
-			uint16_t          m_num;
-			int16_t           m_refCount;
-		};
-
-		struct TextureRef
-		{
-			void init(
-				  BackbufferRatio::Enum _ratio
-				, TextureFormat::Enum _format
-				, uint32_t _storageSize
-				, uint8_t _numMips
-				, uint16_t _numLayers
-				, bool _ptrPending
-				, bool _immutable
-				, bool _rt
-				)
-			{
-				m_ptr         = _ptrPending ? (void*)UINTPTR_MAX : NULL;
-				m_storageSize = _storageSize;
-				m_refCount    = 1;
-				m_bbRatio     = uint8_t(_ratio);
-				m_format      = uint8_t(_format);
-				m_numMips     = _numMips;
-				m_numLayers   = _numLayers;
-				m_owned       = false;
-				m_immutable   = _immutable;
-				m_rt          = _rt;
-			}
-
-			String   m_name;
-			void*    m_ptr;
-			uint32_t m_storageSize;
-			int16_t  m_refCount;
-			uint8_t  m_bbRatio;
-			uint8_t  m_format;
-			uint8_t  m_numMips;
-			uint16_t m_numLayers;
-			bool     m_owned;
-			bool     m_immutable;
-			bool     m_rt;
-		};
-
-		struct FrameBufferRef
-		{
-			String m_name;
-
-			union un
-			{
-				TextureHandle m_th[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-				void* m_nwh;
-			} un;
-			bool m_window;
-		};
 
 		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_UNIFORMS*2> UniformHashMap;
 		UniformHashMap m_uniformHashMap;
