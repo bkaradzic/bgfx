@@ -8,7 +8,7 @@
 
 IMAGE2D_WR(s_target, r8, 0);
 SAMPLER2D(s_importanceMap, 1);
-UIMAGE2D_RW(s_loadCounterOutputUAV, r32ui, 2);
+BUFFER_RW(s_loadCounter, uint, 2);
 
 CONST(float cSmoothenImportance) = 1.0;
 
@@ -49,7 +49,7 @@ void main()
 #else
 		if( ((dtID.x % 3) + (dtID.y % 3)) == 0  )
 #endif
-			imageAtomicAdd(s_loadCounterOutputUAV, ivec2(0, 0), sum );
+			atomicAdd(s_loadCounter[0], sum );
 		imageStore(s_target, ivec2(dtID.xy), retVal.xxxx);
 	}
 }
