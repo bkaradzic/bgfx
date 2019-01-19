@@ -392,6 +392,7 @@ protected:
 	void emit_interface_block(uint32_t ib_var_id);
 	bool maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs);
 	void add_convert_row_major_matrix_function(uint32_t cols, uint32_t rows);
+	void fix_up_shader_inputs_outputs();
 
 	std::string func_type_decl(SPIRType &type);
 	std::string entry_point_args(bool append_comma);

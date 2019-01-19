@@ -447,6 +447,10 @@ string CompilerMSL::compile()
 	// Mark any non-stage-in structs to be tightly packed.
 	mark_packable_structs();
 
+	// Add fixup hooks required by shader inputs and outputs. This needs to happen before
+	// the loop, so the hooks aren't added multiple times.
+	fix_up_shader_inputs_outputs();
+
 	uint32_t pass_count = 0;
 	do
 	{
@@ -4420,6 +4424,7 @@ string CompilerMSL::entry_point_args(bool append_comma)
 		if (!ep_args.empty())
 			ep_args += ", ";
 
+		add_resource_name(var.self);
 		ep_args += type_to_glsl(type) + " " + to_name(var.self) + " [[stage_in]]";
 	}
 
@@ -4448,6 +4453,7 @@ string CompilerMSL::entry_point_args(bool append_comma)
 		{
 			if (type.basetype == SPIRType::SampledImage)
 			{
+				add_resource_name(var_id);
 				resources.push_back(
 				    { &id, to_name(var_id), SPIRType::Image, get_metal_resource_index(var, SPIRType::Image) });
 
@@ -4460,19 +4466,9 @@ string CompilerMSL::entry_point_args(bool append_comma)
 			else if (constexpr_samplers.count(var_id) == 0)
 			{
 				// constexpr samplers are not declared as resources.
+				add_resource_name(var_id);
 				resources.push_back(
 				    { &id, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype) });
-			}
-
-			if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(type))
-			{
-				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
-				entry_func.fixup_hooks_in.push_back([this, &var, var_id]() {
-					auto &aux_type = expression_type(aux_buffer_id);
-					statement("constant uint32_t& ", to_swizzle_expression(var_id), " = ", to_name(aux_buffer_id), ".",
-					          to_member_name(aux_type, k_aux_mbr_idx_swizzle_const), "[",
-					          convert_to_string(get_metal_resource_index(var, SPIRType::Image)), "];");
-				});
 			}
 		}
 	});
@@ -4554,27 +4550,7 @@ string CompilerMSL::entry_point_args(bool append_comma)
 		// point, we get that by calling get_sample_position() on the sample ID.
 		if (var.storage == StorageClassInput && is_builtin_variable(var))
 		{
-			if (bi_type == BuiltInSamplePosition)
-			{
-				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
-				entry_func.fixup_hooks_in.push_back([=]() {
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = get_sample_position(",
-					          to_expression(builtin_sample_id_id), ");");
-				});
-			}
-			else if (bi_type == BuiltInHelperInvocation)
-			{
-				if (msl_options.is_ios())
-					SPIRV_CROSS_THROW("simd_is_helper_thread() is only supported on macOS.");
-				else if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 1))
-					SPIRV_CROSS_THROW("simd_is_helper_thread() requires version 2.1 on macOS.");
-
-				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
-				entry_func.fixup_hooks_in.push_back([=]() {
-					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = simd_is_helper_thread();");
-				});
-			}
-			else
+			if (bi_type != BuiltInSamplePosition && bi_type != BuiltInHelperInvocation)
 			{
 				if (!ep_args.empty())
 					ep_args += ", ";
@@ -4596,6 +4572,64 @@ string CompilerMSL::entry_point_args(bool append_comma)
 		ep_args += ", ";
 
 	return ep_args;
+}
+
+void CompilerMSL::fix_up_shader_inputs_outputs()
+{
+	// Look for sampled images. Add hooks to set up the swizzle constants.
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		auto &type = get_variable_data_type(var);
+
+		uint32_t var_id = var.self;
+
+		if ((var.storage == StorageClassUniform || var.storage == StorageClassUniformConstant ||
+		     var.storage == StorageClassPushConstant || var.storage == StorageClassStorageBuffer) &&
+		    !is_hidden_variable(var))
+		{
+			if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(type))
+			{
+				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
+				entry_func.fixup_hooks_in.push_back([this, &var, var_id]() {
+					auto &aux_type = expression_type(aux_buffer_id);
+					statement("constant uint32_t& ", to_swizzle_expression(var_id), " = ", to_name(aux_buffer_id), ".",
+					          to_member_name(aux_type, k_aux_mbr_idx_swizzle_const), "[",
+					          convert_to_string(get_metal_resource_index(var, SPIRType::Image)), "];");
+				});
+			}
+		}
+	});
+
+	// Builtin variables
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+		uint32_t var_id = var.self;
+		BuiltIn bi_type = ir.meta[var_id].decoration.builtin_type;
+
+		if (var.storage == StorageClassInput && is_builtin_variable(var))
+		{
+			auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
+			switch (bi_type)
+			{
+			case BuiltInSamplePosition:
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = get_sample_position(",
+					          to_expression(builtin_sample_id_id), ");");
+				});
+				break;
+			case BuiltInHelperInvocation:
+				if (msl_options.is_ios())
+					SPIRV_CROSS_THROW("simd_is_helper_thread() is only supported on macOS.");
+				else if (msl_options.is_macos() && !msl_options.supports_msl_version(2, 1))
+					SPIRV_CROSS_THROW("simd_is_helper_thread() requires version 2.1 on macOS.");
+
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(builtin_type_decl(bi_type), " ", to_expression(var_id), " = simd_is_helper_thread();");
+				});
+				break;
+			default:
+				break;
+			}
+		}
+	});
 }
 
 // Returns the Metal index of the resource of the specified type as used by the specified variable.
