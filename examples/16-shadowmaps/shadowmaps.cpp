@@ -2311,6 +2311,45 @@ public:
 						 , 0.0f
 						 , caps->homogeneousDepth
 						 );
+			
+			// Update render target size.
+			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
+			if (bLtChanged || m_currentShadowMapSize != shadowMapSize)
+			{
+				m_currentShadowMapSize = shadowMapSize;
+				s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
+				
+				{
+					bgfx::destroy(s_rtShadowMap[0]);
+					
+					bgfx::TextureHandle fbtextures[] =
+					{
+						bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+						bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
+					};
+					s_rtShadowMap[0] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+				}
+				
+				if (LightType::DirectionalLight == m_settings.m_lightType)
+				{
+					for (uint8_t ii = 1; ii < ShadowMapRenderTargets::Count; ++ii)
+					{
+						{
+							bgfx::destroy(s_rtShadowMap[ii]);
+							
+							bgfx::TextureHandle fbtextures[] =
+							{
+								bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+								bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
+							};
+							s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+						}
+					}
+				}
+				
+				bgfx::destroy(s_rtBlur);
+				s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
+			}
 
 			if (LightType::SpotLight == m_settings.m_lightType)
 			{
@@ -2523,6 +2562,7 @@ public:
 			for (uint8_t ii = 0; ii < RENDERVIEW_DRAWDEPTH_3_ID+1; ++ii)
 			{
 				bgfx::setViewFrameBuffer(ii, invalidRt);
+				bgfx::setViewRect(ii, 0, 0, m_viewState.m_width, m_viewState.m_height);
 			}
 
 			// Determine on-screen rectangle size where depth buffer will be drawn.
@@ -3159,44 +3199,6 @@ public:
 				}
 			}
 
-			// Update render target size.
-			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
-			if (bLtChanged || m_currentShadowMapSize != shadowMapSize)
-			{
-				m_currentShadowMapSize = shadowMapSize;
-				s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
-
-				{
-					bgfx::destroy(s_rtShadowMap[0]);
-
-					bgfx::TextureHandle fbtextures[] =
-					{
-						bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-						bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
-					};
-					s_rtShadowMap[0] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
-				}
-
-				if (LightType::DirectionalLight == m_settings.m_lightType)
-				{
-					for (uint8_t ii = 1; ii < ShadowMapRenderTargets::Count; ++ii)
-					{
-						{
-							bgfx::destroy(s_rtShadowMap[ii]);
-
-							bgfx::TextureHandle fbtextures[] =
-							{
-								bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-								bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT),
-							};
-							s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
-						}
-					}
-				}
-
-				bgfx::destroy(s_rtBlur);
-				s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
-			}
 
 			// Advance to next frame. Rendering thread will be kicked to
 			// process submitted rendering primitives.
