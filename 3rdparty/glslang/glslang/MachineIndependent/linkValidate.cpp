@@ -222,8 +222,8 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
         else if (xfbBuffers[b].stride != unit.xfbBuffers[b].stride)
             error(infoSink, "Contradictory xfb_stride");
         xfbBuffers[b].implicitStride = std::max(xfbBuffers[b].implicitStride, unit.xfbBuffers[b].implicitStride);
-        if (unit.xfbBuffers[b].containsDouble)
-            xfbBuffers[b].containsDouble = true;
+        if (unit.xfbBuffers[b].contains64BitType)
+            xfbBuffers[b].contains64BitType = true;
         // TODO: 4.4 link: enhanced layouts: compare ranges
     }
 
@@ -634,7 +634,7 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
         error(infoSink, "Cannot use both gl_FragColor and gl_FragData");
 
     for (size_t b = 0; b < xfbBuffers.size(); ++b) {
-        if (xfbBuffers[b].containsDouble)
+        if (xfbBuffers[b].contains64BitType)
             RoundToPow2(xfbBuffers[b].implicitStride, 8);
 
         // "It is a compile-time or link-time error to have
@@ -650,10 +650,10 @@ void TIntermediate::finalCheck(TInfoSink& infoSink, bool keepUncalled)
             xfbBuffers[b].stride = xfbBuffers[b].implicitStride;
 
         // "If the buffer is capturing any
-        // outputs with double-precision components, the stride must be a multiple of 8, otherwise it must be a
+        // outputs with double-precision or 64-bit integer components, the stride must be a multiple of 8, otherwise it must be a
         // multiple of 4, or a compile-time or link-time error results."
-        if (xfbBuffers[b].containsDouble && ! IsMultipleOfPow2(xfbBuffers[b].stride, 8)) {
-            error(infoSink, "xfb_stride must be multiple of 8 for buffer holding a double:");
+        if (xfbBuffers[b].contains64BitType && ! IsMultipleOfPow2(xfbBuffers[b].stride, 8)) {
+            error(infoSink, "xfb_stride must be multiple of 8 for buffer holding a double or 64-bit integer:");
             infoSink.info.prefix(EPrefixError);
             infoSink.info << "    xfb_buffer " << (unsigned int)b << ", xfb_stride " << xfbBuffers[b].stride << "\n";
         } else if (! IsMultipleOfPow2(xfbBuffers[b].stride, 4)) {
@@ -1260,7 +1260,7 @@ int TIntermediate::addXfbBufferOffset(const TType& type)
     TXfbBuffer& buffer = xfbBuffers[qualifier.layoutXfbBuffer];
 
     // compute the range
-    unsigned int size = computeTypeXfbSize(type, buffer.containsDouble);
+    unsigned int size = computeTypeXfbSize(type, buffer.contains64BitType);
     buffer.implicitStride = std::max(buffer.implicitStride, qualifier.layoutXfbOffset + size);
     TRange range(qualifier.layoutXfbOffset, qualifier.layoutXfbOffset + size - 1);
 
@@ -1279,11 +1279,11 @@ int TIntermediate::addXfbBufferOffset(const TType& type)
 
 // Recursively figure out how many bytes of xfb buffer are used by the given type.
 // Return the size of type, in bytes.
-// Sets containsDouble to true if the type contains a double.
-// N.B. Caller must set containsDouble to false before calling.
-unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& containsDouble) const
+// Sets contains64BitType to true if the type contains a double.
+// N.B. Caller must set contains64BitType to false before calling.
+unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains64BitType) const
 {
-    // "...if applied to an aggregate containing a double, the offset must also be a multiple of 8,
+    // "...if applied to an aggregate containing a double or 64-bit integer, the offset must also be a multiple of 8,
     // and the space taken in the buffer will be a multiple of 8.
     // ...within the qualified entity, subsequent components are each
     // assigned, in order, to the next available offset aligned to a multiple of
@@ -1294,28 +1294,28 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
         // TODO: perf: this can be flattened by using getCumulativeArraySize(), and a deref that discards all arrayness
         assert(type.isSizedArray());
         TType elementType(type, 0);
-        return type.getOuterArraySize() * computeTypeXfbSize(elementType, containsDouble);
+        return type.getOuterArraySize() * computeTypeXfbSize(elementType, contains64BitType);
     }
 
     if (type.isStruct()) {
         unsigned int size = 0;
-        bool structContainsDouble = false;
+        bool structContains64BitType = false;
         for (int member = 0; member < (int)type.getStruct()->size(); ++member) {
             TType memberType(type, member);
             // "... if applied to
-            // an aggregate containing a double, the offset must also be a multiple of 8,
+            // an aggregate containing a double or 64-bit integer, the offset must also be a multiple of 8,
             // and the space taken in the buffer will be a multiple of 8."
-            bool memberContainsDouble = false;
-            int memberSize = computeTypeXfbSize(memberType, memberContainsDouble);
-            if (memberContainsDouble) {
-                structContainsDouble = true;
+            bool memberContains64BitType = false;
+            int memberSize = computeTypeXfbSize(memberType, memberContains64BitType);
+            if (memberContains64BitType) {
+                structContains64BitType = true;
                 RoundToPow2(size, 8);
             }
             size += memberSize;
         }
 
-        if (structContainsDouble) {
-            containsDouble = true;
+        if (structContains64BitType) {
+            contains64BitType = true;
             RoundToPow2(size, 8);
         }
         return size;
@@ -1333,8 +1333,8 @@ unsigned int TIntermediate::computeTypeXfbSize(const TType& type, bool& contains
         numComponents = 1;
     }
 
-    if (type.getBasicType() == EbtDouble) {
-        containsDouble = true;
+    if (type.getBasicType() == EbtDouble || type.getBasicType() == EbtInt64 || type.getBasicType() == EbtUint64) {
+        contains64BitType = true;
         return 8 * numComponents;
     } else
         return 4 * numComponents;

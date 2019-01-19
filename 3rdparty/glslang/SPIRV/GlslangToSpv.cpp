@@ -3232,7 +3232,7 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
     // Decorate it
     decorateStructType(type, glslangMembers, explicitLayout, qualifier, spvType);
 
-    for (int i = 0; i < deferredForwardPointers.size(); ++i) {
+    for (int i = 0; i < (int)deferredForwardPointers.size(); ++i) {
         auto it = deferredForwardPointers[i];
         convertGlslangToSpvType(*it.first, explicitLayout, it.second, false);
     }

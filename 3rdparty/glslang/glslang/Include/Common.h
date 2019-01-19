@@ -250,7 +250,8 @@ struct TSourceLoc {
             return nullptr;
         return name->c_str();
     }
-    TString* name; // descriptive name for this string
+    const char* getFilenameStr() const { return name == nullptr ? "" : name->c_str(); }
+    TString* name; // descriptive name for this string, when a textual name is available, otherwise nullptr
     int string;
     int line;
     int column;

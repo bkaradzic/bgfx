@@ -149,11 +149,11 @@ struct TOffsetRange {
 
 // Things that need to be tracked per xfb buffer.
 struct TXfbBuffer {
-    TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), containsDouble(false) { }
+    TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), contains64BitType(false) { }
     std::vector<TRange> ranges;  // byte offsets that have already been assigned
     unsigned int stride;
     unsigned int implicitStride;
-    bool containsDouble;
+    bool contains64BitType;
 };
 
 // Track a set of strings describing how the module was processed.
@@ -640,7 +640,7 @@ public:
     }
     unsigned getXfbStride(int buffer) const { return xfbBuffers[buffer].stride; }
     int addXfbBufferOffset(const TType&);
-    unsigned int computeTypeXfbSize(const TType&, bool& containsDouble) const;
+    unsigned int computeTypeXfbSize(const TType&, bool& contains64BitType) const;
     static int getBaseAlignmentScalar(const TType&, int& size);
     static int getBaseAlignment(const TType&, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor);
     static int getScalarAlignment(const TType&, int& size, int& stride, bool rowMajor);
