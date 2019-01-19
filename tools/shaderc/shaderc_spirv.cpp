@@ -844,9 +844,6 @@ namespace bgfx { namespace spirv
 						{
 							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
 							msl.set_decoration(resource.id, spv::DecorationBinding, binding + 1);
-
-							// workaround spirv -> msl codegen problem: same name was used as struct type and function parameter name
-							msl.set_name(resource.id, "_" + msl.get_name(resource.id));
 						}
 
 						std::string source = msl.compile();
