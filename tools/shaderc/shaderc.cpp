@@ -2540,7 +2540,7 @@ namespace bgfx
 			return bx::kExitSuccess;
 		}
 
-		remove(outFilePath);
+		bx::remove(outFilePath);
 
 		fprintf(stderr, "Failed to build shader.\n");
 		return bx::kExitFailure;

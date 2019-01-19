@@ -24,9 +24,6 @@
 #include "common.h"
 #include "bgfx_utils.h"
 
-#include <stdio.h>
-#include <math.h>
-
 #include <bx/string.h>
 #include <bx/timer.h>
 #include <bimg/decode.h>
@@ -1029,7 +1026,7 @@ int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 		data->images[i] = createImage(vg, file, 0);
 		if (data->images[i] == 0)
 		{
-			printf("Could not load %s.\n", file);
+			bx::debugPrintf("Could not load %s.\n", file);
 			return -1;
 		}
 	}
@@ -1037,30 +1034,31 @@ int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 	data->fontIcons = nvgCreateFont(vg, "icons", "font/entypo.ttf");
 	if (data->fontIcons == -1)
 	{
-		printf("Could not add font icons.\n");
+		bx::debugPrintf("Could not add font icons.\n");
 		return -1;
 	}
 
 	data->fontNormal = nvgCreateFont(vg, "sans", "font/roboto-regular.ttf");
 	if (data->fontNormal == -1)
 	{
-		printf("Could not add font italic.\n");
+		bx::debugPrintf("Could not add font italic.\n");
 		return -1;
 	}
 
 	data->fontBold = nvgCreateFont(vg, "sans-bold", "font/roboto-bold.ttf");
 	if (data->fontBold == -1)
 	{
-		printf("Could not add font bold.\n");
+		bx::debugPrintf("Could not add font bold.\n");
 		return -1;
 	}
 
 	data->fontEmoji = nvgCreateFont(vg, "emoji", "font/NotoEmoji-Regular.ttf");
 	if (data->fontEmoji == -1)
 	{
-		printf("Could not add font emoji.\n");
+		bx::debugPrintf("Could not add font emoji.\n");
 		return -1;
 	}
+
 	nvgAddFallbackFontId(vg, data->fontNormal, data->fontEmoji);
 	nvgAddFallbackFontId(vg, data->fontBold, data->fontEmoji);
 
