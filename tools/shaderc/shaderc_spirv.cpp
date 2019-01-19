@@ -680,8 +680,6 @@ namespace bgfx { namespace spirv
 
 				if (_firstPass)
 				{
-					const size_t strLength = bx::strLen("uniform");
-
 					// first time through, we just find unused uniforms and get rid of them
 					std::string output;
 					bx::Error err;
@@ -699,13 +697,12 @@ namespace bgfx { namespace spirv
 							{
 								bool found = false;
 
-								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty())
+								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty() )
 								{
 									found = true;
-								} 
+								}
 								else
 								{
-
 									for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
 									{
 										// matching lines like:  uniform u_name;
@@ -723,7 +720,7 @@ namespace bgfx { namespace spirv
 
 								if (!found)
 								{
-									strLine = strLine.replace(index, strLength, "static");
+									strLine = strLine.replace(index, 7 /* uniform */, "static");
 								}
 							}
 
