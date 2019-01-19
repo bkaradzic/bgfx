@@ -1593,6 +1593,33 @@ TEST_F(ScalarReplacementTest, AmbigousPointer) {
   SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
 }
 
+// Test that scalar replacement does not crash when there is an OpAccessChain
+// with no index.  If we choose to handle this case in the future, then the
+// result can change.
+TEST_F(ScalarReplacementTest, TestAccessChainWithNoIndexes) {
+  const std::string text = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %1 "main"
+               OpExecutionMode %1 OriginLowerLeft
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+  %_struct_5 = OpTypeStruct %float
+%_ptr_Function__struct_5 = OpTypePointer Function %_struct_5
+          %1 = OpFunction %void None %3
+          %7 = OpLabel
+          %8 = OpVariable %_ptr_Function__struct_5 Function
+          %9 = OpAccessChain %_ptr_Function__struct_5 %8
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  auto result =
+      SinglePassRunAndDisassemble<ScalarReplacementPass>(text, true, false);
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

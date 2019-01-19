@@ -21,6 +21,7 @@
 #include "source/opt/block_merge_pass.h"
 #include "source/opt/ccp_pass.h"
 #include "source/opt/cfg_cleanup_pass.h"
+#include "source/opt/code_sink.h"
 #include "source/opt/combine_access_chains.h"
 #include "source/opt/common_uniform_elim_pass.h"
 #include "source/opt/compact_ids_pass.h"

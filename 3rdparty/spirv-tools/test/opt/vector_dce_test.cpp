@@ -1190,6 +1190,42 @@ TEST_F(VectorDCETest, InsertWithNoIndices) {
   SinglePassRunAndMatch<VectorDCE>(text, true);
 }
 
+TEST_F(VectorDCETest, ExtractWithNoIndices) {
+  const std::string text = R"(
+; CHECK: OpLoad %float
+; CHECK: [[ld:%\w+]] = OpLoad %v4float
+; CHECK: [[ex1:%\w+]] = OpCompositeExtract %v4float [[ld]]
+; CHECK: [[ex2:%\w+]] = OpCompositeExtract %float [[ex1]] 1
+; CHECK: OpStore {{%\w+}} [[ex2]]
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %1 "PSMain" %2 %14 %3
+               OpExecutionMode %1 OriginUpperLeft
+       %void = OpTypeVoid
+          %5 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Input_float = OpTypePointer Input %float
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%_ptr_Output_float = OpTypePointer Output %float
+          %2 = OpVariable %_ptr_Input_v4float Input
+          %14 = OpVariable %_ptr_Input_float Input
+          %3 = OpVariable %_ptr_Output_float Output
+          %1 = OpFunction %void None %5
+         %10 = OpLabel
+         %13 = OpLoad %float %14
+         %11 = OpLoad %v4float %2
+         %12 = OpCompositeInsert %v4float %13 %11 0
+         %20 = OpCompositeExtract %v4float %12
+         %21 = OpCompositeExtract %float %20 1
+               OpStore %3 %21
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<VectorDCE>(text, true);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

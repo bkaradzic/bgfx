@@ -538,7 +538,15 @@ INSTANTIATE_TEST_CASE_P(TestCase, IntegerInstructionFoldingTest,
           "%2 = OpShiftLeftLogical %int %int_2 %uint_32\n" +
           "OpReturn\n" +
           "OpFunctionEnd",
-      2, 0)
+      2, 0),
+  // Test case 29: fold -INT_MIN
+  InstructionFoldingCase<uint32_t>(
+      Header() + "%main = OpFunction %void None %void_func\n" +
+          "%main_lab = OpLabel\n" +
+          "%2 = OpSNegate %int %int_min\n" +
+          "OpReturn\n" +
+          "OpFunctionEnd",
+      2, std::numeric_limits<int32_t>::min())
 ));
 // clang-format on
 

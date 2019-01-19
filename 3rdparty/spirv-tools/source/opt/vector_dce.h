@@ -129,6 +129,7 @@ class VectorDCE : public MemPass {
   // live. If anything becomes live they are added to |work_list| and
   // |live_components| is updated accordingly.
   void MarkExtractUseAsLive(const Instruction* current_inst,
+                            const utils::BitVector& live_elements,
                             LiveComponentMap* live_components,
                             std::vector<WorkListItem>* work_list);
 

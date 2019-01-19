@@ -45,8 +45,13 @@ namespace {
 uint32_t InstructionFolder::UnaryOperate(SpvOp opcode, uint32_t operand) const {
   switch (opcode) {
     // Arthimetics
-    case SpvOp::SpvOpSNegate:
-      return -static_cast<int32_t>(operand);
+    case SpvOp::SpvOpSNegate: {
+      int32_t s_operand = static_cast<int32_t>(operand);
+      if (s_operand == std::numeric_limits<int32_t>::min()) {
+        return s_operand;
+      }
+      return -s_operand;
+    }
     case SpvOp::SpvOpNot:
       return ~operand;
     case SpvOp::SpvOpLogicalNot:

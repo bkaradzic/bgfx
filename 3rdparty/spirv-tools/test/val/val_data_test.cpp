@@ -872,6 +872,68 @@ TEST_F(ValidateData, vulkan_RTA_not_at_end_of_struct) {
                         "OpTypeStruct %_runtimearr_uint %uint\n"));
 }
 
+TEST_F(ValidateData, webgpu_RTA_array_at_end_of_struct) {
+  std::string str = R"(
+              OpCapability Shader
+              OpCapability VulkanMemoryModelKHR
+              OpExtension "SPV_KHR_vulkan_memory_model"
+              OpMemoryModel Logical VulkanKHR
+              OpEntryPoint Fragment %func "func"
+              OpExecutionMode %func OriginUpperLeft
+              OpDecorate %array_t ArrayStride 4
+              OpMemberDecorate %struct_t 0 Offset 0
+              OpMemberDecorate %struct_t 1 Offset 4
+              OpDecorate %struct_t Block
+     %uint_t = OpTypeInt 32 0
+   %array_t = OpTypeRuntimeArray %uint_t
+  %struct_t = OpTypeStruct %uint_t %array_t
+%struct_ptr = OpTypePointer StorageBuffer %struct_t
+         %2 = OpVariable %struct_ptr StorageBuffer
+      %void = OpTypeVoid
+    %func_t = OpTypeFunction %void
+      %func = OpFunction %void None %func_t
+         %1 = OpLabel
+              OpReturn
+              OpFunctionEnd
+)";
+
+  CompileSuccessfully(str.c_str(), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+}
+
+TEST_F(ValidateData, webgpu_RTA_not_at_end_of_struct) {
+  std::string str = R"(
+              OpCapability Shader
+              OpCapability VulkanMemoryModelKHR
+              OpExtension "SPV_KHR_vulkan_memory_model"
+              OpMemoryModel Logical VulkanKHR
+              OpEntryPoint Fragment %func "func"
+              OpExecutionMode %func OriginUpperLeft
+              OpDecorate %array_t ArrayStride 4
+              OpMemberDecorate %struct_t 0 Offset 0
+              OpMemberDecorate %struct_t 1 Offset 4
+              OpDecorate %struct_t Block
+     %uint_t = OpTypeInt 32 0
+   %array_t = OpTypeRuntimeArray %uint_t
+  %struct_t = OpTypeStruct %array_t %uint_t
+%struct_ptr = OpTypePointer StorageBuffer %struct_t
+         %2 = OpVariable %struct_ptr StorageBuffer
+      %void = OpTypeVoid
+    %func_t = OpTypeFunction %void
+      %func = OpFunction %void None %func_t
+         %1 = OpLabel
+              OpReturn
+              OpFunctionEnd
+)";
+
+  CompileSuccessfully(str.c_str(), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("In WebGPU, OpTypeRuntimeArray must only be used for "
+                        "the last member of an OpTypeStruct\n  %_struct_3 = "
+                        "OpTypeStruct %_runtimearr_uint %uint\n"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

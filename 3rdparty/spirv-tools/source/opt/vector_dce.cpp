@@ -66,7 +66,8 @@ void VectorDCE::FindLiveComponents(Function* function,
 
     switch (current_inst->opcode()) {
       case SpvOpCompositeExtract:
-        MarkExtractUseAsLive(current_inst, live_components, &work_list);
+        MarkExtractUseAsLive(current_inst, current_item.components,
+                             live_components, &work_list);
         break;
       case SpvOpCompositeInsert:
         MarkInsertUsesAsLive(current_item, live_components, &work_list);
@@ -92,6 +93,7 @@ void VectorDCE::FindLiveComponents(Function* function,
 }
 
 void VectorDCE::MarkExtractUseAsLive(const Instruction* current_inst,
+                                     const utils::BitVector& live_elements,
                                      LiveComponentMap* live_components,
                                      std::vector<WorkListItem>* work_list) {
   analysis::DefUseManager* def_use_mgr = context()->get_def_use_mgr();
@@ -102,7 +104,11 @@ void VectorDCE::MarkExtractUseAsLive(const Instruction* current_inst,
   if (HasVectorOrScalarResult(operand_inst)) {
     WorkListItem new_item;
     new_item.instruction = operand_inst;
-    new_item.components.Set(current_inst->GetSingleWordInOperand(1));
+    if (current_inst->NumInOperands() < 2) {
+      new_item.components = live_elements;
+    } else {
+      new_item.components.Set(current_inst->GetSingleWordInOperand(1));
+    }
     AddItemToWorkListIfNeeded(new_item, live_components, work_list);
   }
 }

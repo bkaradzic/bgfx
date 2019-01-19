@@ -638,8 +638,8 @@ bool ScalarReplacementPass::CheckUses(const Instruction* inst,
           switch (user->opcode()) {
             case SpvOpAccessChain:
             case SpvOpInBoundsAccessChain:
-              if (index == 2u) {
-                uint32_t id = user->GetSingleWordOperand(3u);
+              if (index == 2u && user->NumInOperands() > 1) {
+                uint32_t id = user->GetSingleWordInOperand(1u);
                 const Instruction* opInst = get_def_use_mgr()->GetDef(id);
                 if (!IsCompileTimeConstantInst(opInst->opcode())) {
                   ok = false;
@@ -782,16 +782,6 @@ ScalarReplacementPass::GetUsedComponents(Instruction* inst) {
           result.reset(nullptr);
           return false;
         }
-      }
-      case SpvOpCopyObject: {
-        // Follow the copy to see which components are used.
-        auto t = GetUsedComponents(use);
-        if (!t) {
-          result.reset(nullptr);
-          return false;
-        }
-        result->insert(t->begin(), t->end());
-        return true;
       }
       default:
         // We do not know what is happening.  Have to assume the worst.

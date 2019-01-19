@@ -19,6 +19,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   ccp_pass.h
   cfg_cleanup_pass.h
   cfg.h
+  code_sink.h
   combine_access_chains.h
   common_uniform_elim_pass.h
   compact_ids_pass.h
@@ -111,6 +112,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   ccp_pass.cpp
   cfg_cleanup_pass.cpp
   cfg.cpp
+  code_sink.cpp
   combine_access_chains.cpp
   common_uniform_elim_pass.cpp
   compact_ids_pass.cpp

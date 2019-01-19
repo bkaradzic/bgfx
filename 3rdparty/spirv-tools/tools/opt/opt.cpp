@@ -478,8 +478,11 @@ OptStatus ParseOconfigFlag(const char* prog_name, const char* opt_flag,
     new_argv[i] = flags[i].c_str();
   }
 
-  return ParseFlags(static_cast<int>(flags.size()), new_argv, optimizer,
-                    in_file, out_file, validator_options, optimizer_options);
+  auto ret_val =
+      ParseFlags(static_cast<int>(flags.size()), new_argv, optimizer, in_file,
+                 out_file, validator_options, optimizer_options);
+  delete[] new_argv;
+  return ret_val;
 }
 
 // Canonicalize the flag in |argv[argi]| of the form '--pass arg' into
@@ -659,7 +662,6 @@ int main(int argc, const char** argv) {
   const char* out_file = nullptr;
 
   spv_target_env target_env = kDefaultEnvironment;
-
 
   spvtools::Optimizer optimizer(target_env);
   optimizer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);

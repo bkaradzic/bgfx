@@ -1806,6 +1806,38 @@ OpFunctionEnd
           "%_ptr_UniformConstant__runtimearr_2 UniformConstant\n"));
 }
 
+TEST_F(ValidateMemory, WebGPURTAOutsideOfStructBad) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+%sampler_t = OpTypeSampler
+%array_t = OpTypeRuntimeArray %sampler_t
+%array_ptr = OpTypePointer UniformConstant %array_t
+%2 = OpVariable %array_ptr UniformConstant
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "OpVariable, <id> '5[%5]', is attempting to create memory for an "
+          "illegal type, OpTypeRuntimeArray.\nFor WebGPU OpTypeRuntimeArray "
+          "can only appear as the final member of an OpTypeStruct, thus cannot "
+          "be instantiated via OpVariable\n  %5 = OpVariable "
+          "%_ptr_UniformConstant__runtimearr_2 UniformConstant\n"));
+}
+
 TEST_F(ValidateMemory, VulkanRTAOutsideOfStructWithRuntimeDescriptorArrayGood) {
   std::string spirv = R"(
 OpCapability Shader
@@ -1890,6 +1922,34 @@ OpFunctionEnd
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_1));
 }
 
+TEST_F(ValidateMemory, WebGPURTAInsideStorageBufferStructGood) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+OpDecorate %array_t ArrayStride 4
+OpMemberDecorate %struct_t 0 Offset 0
+OpDecorate %struct_t Block
+%uint_t = OpTypeInt 32 0
+%array_t = OpTypeRuntimeArray %uint_t
+%struct_t = OpTypeStruct %array_t
+%struct_ptr = OpTypePointer StorageBuffer %struct_t
+%2 = OpVariable %struct_ptr StorageBuffer
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+}
+
 TEST_F(ValidateMemory, VulkanRTAInsideWrongStorageClassStructBad) {
   std::string spirv = R"(
 OpCapability Shader
@@ -1917,6 +1977,36 @@ OpFunctionEnd
           "For Vulkan, OpTypeStruct variables containing OpTypeRuntimeArray "
           "must have storage class of StorageBuffer or Uniform.\n  %6 = "
           "OpVariable %_ptr_Workgroup__struct_4 Workgroup\n"));
+}
+
+TEST_F(ValidateMemory, WebGPURTAInsideWrongStorageClassStructBad) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+%uint_t = OpTypeInt 32 0
+%array_t = OpTypeRuntimeArray %uint_t
+%struct_t = OpTypeStruct %array_t
+%struct_ptr = OpTypePointer Workgroup %struct_t
+%2 = OpVariable %struct_ptr Workgroup
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("For WebGPU, OpTypeStruct variables containing "
+                "OpTypeRuntimeArray must have storage class of StorageBuffer\n "
+                " %6 = OpVariable %_ptr_Workgroup__struct_4 Workgroup\n"));
 }
 
 TEST_F(ValidateMemory, VulkanRTAInsideStorageBufferStructWithoutBlockBad) {
@@ -1947,6 +2037,36 @@ OpFunctionEnd
                         "%_ptr_StorageBuffer__struct_4 StorageBuffer\n"));
 }
 
+TEST_F(ValidateMemory, WebGPURTAInsideStorageBufferStructWithoutBlockBad) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+%uint_t = OpTypeInt 32 0
+%array_t = OpTypeRuntimeArray %uint_t
+%struct_t = OpTypeStruct %array_t
+%struct_ptr = OpTypePointer StorageBuffer %struct_t
+%2 = OpVariable %struct_ptr StorageBuffer
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("For WebGPU, an OpTypeStruct variable containing an "
+                        "OpTypeRuntimeArray must be decorated with Block if it "
+                        "has storage class StorageBuffer.\n  %6 = OpVariable "
+                        "%_ptr_StorageBuffer__struct_4 StorageBuffer\n"));
+}
+
 TEST_F(ValidateMemory, VulkanRTAInsideUniformStructGood) {
   std::string spirv = R"(
 OpCapability Shader
@@ -1971,6 +2091,39 @@ OpFunctionEnd
 
   CompileSuccessfully(spirv.c_str(), SPV_ENV_VULKAN_1_1);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+}
+
+TEST_F(ValidateMemory, WebGPURTAInsideUniformStructBad) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+OpDecorate %array_t ArrayStride 4
+OpMemberDecorate %struct_t 0 Offset 0
+OpDecorate %struct_t BufferBlock
+%uint_t = OpTypeInt 32 0
+%array_t = OpTypeRuntimeArray %uint_t
+%struct_t = OpTypeStruct %array_t
+%struct_ptr = OpTypePointer Uniform %struct_t
+%2 = OpVariable %struct_ptr Uniform
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("For WebGPU, OpTypeStruct variables containing "
+                "OpTypeRuntimeArray must have storage class of StorageBuffer\n "
+                " %6 = OpVariable %_ptr_Uniform__struct_3 Uniform\n"));
 }
 
 TEST_F(ValidateMemory, VulkanRTAInsideUniformStructWithoutBufferBlockBad) {
@@ -2027,6 +2180,37 @@ OpFunctionEnd
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '3[%_runtimearr_2]' is not "
           "valid in Vulkan environment.\n  %_runtimearr__runtimearr_2 = "
+          "OpTypeRuntimeArray %_runtimearr_2\n"));
+}
+
+TEST_F(ValidateMemory, WebGPURTAInsideRTABad) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+%sampler_t = OpTypeSampler
+%inner_array_t = OpTypeRuntimeArray %sampler_t
+%array_t = OpTypeRuntimeArray %inner_array_t
+%array_ptr = OpTypePointer UniformConstant %array_t
+%2 = OpVariable %array_ptr UniformConstant
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "OpTypeRuntimeArray Element Type <id> '3[%_runtimearr_2]' is not "
+          "valid in WebGPU environment.\n  %_runtimearr__runtimearr_2 = "
           "OpTypeRuntimeArray %_runtimearr_2\n"));
 }
 
@@ -2187,6 +2371,38 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr("OpTypeArray Element Type <id> '5[%_runtimearr_4]' is not "
                 "valid in Vulkan environment.\n  %_arr__runtimearr_4_uint_1 = "
+                "OpTypeArray %_runtimearr_4 %uint_1\n"));
+}
+
+TEST_F(ValidateMemory, WebGPURTAInsideArrayBad) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+OpEntryPoint Fragment %func "func"
+OpExecutionMode %func OriginUpperLeft
+%uint_t = OpTypeInt 32 0
+%dim = OpConstant %uint_t 1
+%sampler_t = OpTypeSampler
+%inner_array_t = OpTypeRuntimeArray %sampler_t
+%array_t = OpTypeArray %inner_array_t %dim
+%array_ptr = OpTypePointer UniformConstant %array_t
+%2 = OpVariable %array_ptr UniformConstant
+%void = OpTypeVoid
+%func_t = OpTypeFunction %void
+%func = OpFunction %void None %func_t
+%1 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("OpTypeArray Element Type <id> '5[%_runtimearr_4]' is not "
+                "valid in WebGPU environment.\n  %_arr__runtimearr_4_uint_1 = "
                 "OpTypeArray %_runtimearr_4 %uint_1\n"));
 }
 

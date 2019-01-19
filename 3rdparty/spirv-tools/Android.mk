@@ -80,6 +80,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/cfg.cpp \
 		source/opt/cfg_cleanup_pass.cpp \
 		source/opt/ccp_pass.cpp \
+		source/opt/code_sink.cpp \
 		source/opt/combine_access_chains.cpp \
 		source/opt/common_uniform_elim_pass.cpp \
 		source/opt/compact_ids_pass.cpp \

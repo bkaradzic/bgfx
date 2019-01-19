@@ -460,6 +460,8 @@ static_library("spvtools_opt") {
     "source/opt/cfg.h",
     "source/opt/cfg_cleanup_pass.cpp",
     "source/opt/cfg_cleanup_pass.h",
+    "source/opt/code_sink.cpp",
+    "source/opt/code_sink.h",
     "source/opt/combine_access_chains.cpp",
     "source/opt/combine_access_chains.h",
     "source/opt/common_uniform_elim_pass.cpp",

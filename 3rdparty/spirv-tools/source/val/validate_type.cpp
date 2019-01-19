@@ -107,11 +107,14 @@ spv_result_t ValidateTypeArray(ValidationState_t& _, const Instruction* inst) {
            << "' is a void type.";
   }
 
-  if (spvIsVulkanEnv(_.context()->target_env) &&
+  if ((spvIsVulkanEnv(_.context()->target_env) ||
+       spvIsWebGPUEnv(_.context()->target_env)) &&
       element_type->opcode() == SpvOpTypeRuntimeArray) {
+    const char* env_text =
+        spvIsVulkanEnv(_.context()->target_env) ? "Vulkan" : "WebGPU";
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpTypeArray Element Type <id> '" << _.getIdName(element_type_id)
-           << "' is not valid in Vulkan environment.";
+           << "' is not valid in " << env_text << " environment.";
   }
 
   const auto length_index = 2;
@@ -169,12 +172,15 @@ spv_result_t ValidateTypeRuntimeArray(ValidationState_t& _,
            << _.getIdName(element_id) << "' is a void type.";
   }
 
-  if (spvIsVulkanEnv(_.context()->target_env) &&
+  if ((spvIsVulkanEnv(_.context()->target_env) ||
+       spvIsWebGPUEnv(_.context()->target_env)) &&
       element_type->opcode() == SpvOpTypeRuntimeArray) {
+    const char* env_text =
+        spvIsVulkanEnv(_.context()->target_env) ? "Vulkan" : "WebGPU";
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpTypeRuntimeArray Element Type <id> '"
-           << _.getIdName(element_id)
-           << "' is not valid in Vulkan environment.";
+           << _.getIdName(element_id) << "' is not valid in " << env_text
+           << " environment.";
   }
 
   return SPV_SUCCESS;
@@ -200,11 +206,11 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "Structure <id> " << _.getIdName(member_type_id)
              << " contains members with BuiltIn decoration. Therefore this "
-                "structure may not be contained as a member of another "
-                "structure "
-                "type. Structure <id> "
-             << _.getIdName(struct_id) << " contains structure <id> "
-             << _.getIdName(member_type_id) << ".";
+             << "structure may not be contained as a member of another "
+             << "structure "
+             << "type. Structure <id> " << _.getIdName(struct_id)
+             << " contains structure <id> " << _.getIdName(member_type_id)
+             << ".";
     }
     if (_.IsForwardPointer(member_type_id)) {
       // If we're dealing with a forward pointer:
@@ -223,14 +229,17 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
       }
     }
 
-    if (spvIsVulkanEnv(_.context()->target_env) &&
+    if ((spvIsVulkanEnv(_.context()->target_env) ||
+         spvIsWebGPUEnv(_.context()->target_env)) &&
         member_type->opcode() == SpvOpTypeRuntimeArray) {
       const bool is_last_member =
           member_type_index == inst->operands().size() - 1;
       if (!is_last_member) {
+        const char* env_text =
+            spvIsVulkanEnv(_.context()->target_env) ? "Vulkan" : "WebGPU";
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "In Vulkan, OpTypeRuntimeArray must only be used for the "
-                  "last member of an OpTypeStruct";
+               << "In " << env_text << ", OpTypeRuntimeArray must only be used "
+               << "for the last member of an OpTypeStruct";
       }
     }
   }
@@ -247,9 +256,9 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
   if (num_builtin_members > 0 && num_builtin_members != num_struct_members) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "When BuiltIn decoration is applied to a structure-type member, "
-              "all members of that structure type must also be decorated with "
-              "BuiltIn (No allowed mixing of built-in variables and "
-              "non-built-in variables within a single structure). Structure id "
+           << "all members of that structure type must also be decorated with "
+           << "BuiltIn (No allowed mixing of built-in variables and "
+           << "non-built-in variables within a single structure). Structure id "
            << struct_id << " does not meet this requirement.";
   }
   if (num_builtin_members > 0) {
@@ -332,7 +341,7 @@ spv_result_t ValidateTypeForwardPointer(ValidationState_t& _,
       pointer_type_inst->GetOperandAs<uint32_t>(1)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Storage class in OpTypeForwardPointer does not match the "
-              "pointer definition.";
+           << "pointer definition.";
   }
 
   return SPV_SUCCESS;
