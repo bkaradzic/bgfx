@@ -697,7 +697,8 @@ namespace bgfx { namespace spirv
 							{
 								bool found = false;
 
-								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty() )
+								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty() ||
+									!bx::findIdentifierMatch(strLine.c_str(), "SamplerComparisonState").isEmpty())
 								{
 									found = true;
 								}
@@ -833,7 +834,9 @@ namespace bgfx { namespace spirv
 
 						spirv_cross::ShaderResources resources = msl.get_shader_resources();
 
-						msl.rename_entry_point("main", "xlatMtlMain", spv::ExecutionModel::ExecutionModelGLCompute);
+						std::vector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
+						if (!entryPoints.empty())
+							msl.rename_entry_point(entryPoints[0].name, "xlatMtlMain", entryPoints[0].execution_model);
 
 						for (auto &resource : resources.uniform_buffers)
 						{
@@ -848,10 +851,13 @@ namespace bgfx { namespace spirv
 
 						std::string source = msl.compile();
 
-						for (int i = 0; i < 3; ++i)
+						if ('c' == _options.shaderType)
 						{
-							uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
-							bx::write(_writer, dim);
+							for (int i = 0; i < 3; ++i)
+							{
+								uint16_t dim = (uint16_t)msl.get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, i);
+								bx::write(_writer, dim);
+							}
 						}
 
 						uint32_t shaderSize = (uint32_t)source.size();
