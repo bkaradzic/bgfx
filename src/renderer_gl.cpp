@@ -2927,6 +2927,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				width  = frameBuffer.m_width;
 				height = frameBuffer.m_height;
 			}
+
 			m_glctx.makeCurrent(swapChain);
 
 			uint32_t length = width*height*4;
@@ -3192,6 +3193,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				if (UINT16_MAX != frameBuffer.m_denseIdx)
 				{
 					m_glctx.makeCurrent(frameBuffer.m_swapChain);
+					GL_CHECK(glFrontFace(GL_CW) );
+
 					frameBuffer.m_needPresent = true;
 					m_currentFbo = 0;
 				}
