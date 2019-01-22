@@ -849,6 +849,12 @@ namespace bgfx { namespace spirv
 							msl.set_decoration(resource.id, spv::DecorationBinding, binding + 1);
 						}
 
+						for (auto &resource : resources.separate_images)
+						{
+							std::string name = msl.get_name(resource.id);
+							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
+								msl.set_name(resource.id, name.substr(0, name.length() - 7));
+						}
 						std::string source = msl.compile();
 
 						if ('c' == _options.shaderType)
