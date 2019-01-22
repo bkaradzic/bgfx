@@ -1820,7 +1820,9 @@ creating windows.</p>
 <dt><strong>Attention</strong></dt>
 <dd><code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1aa21b96113ad74bf31dd3d417ac5b3e52"><span><span class="pre">bgfx::renderFrame</span></span></a></code> is blocking call. It waits for <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code> to be called from API thread to process frame. If timeout value is passed call will timeout and return even if <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a7b228b3e83595148e428a248d73480e8"><span><span class="pre">bgfx::frame</span></span></a></code> is not called.</dd>
 <dt><strong>Warning</strong></dt>
-<dd>This call should be only used on platforms that don&#8217;t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#namespacebgfx_1adbfa8f1399b23ba0bedeaea92441642b"><span>bgfx::init</span></a>, render thread won&#8217;t be created by <a class="reference internal" href="#namespacebgfx_1adbfa8f1399b23ba0bedeaea92441642b"><span>bgfx::init</span></a> call. </dd>
+<dd>This call should be only used on platforms that don&#8217;t allow creating separate rendering thread. If it is called before to <a class="reference internal" href="#namespacebgfx_1adbfa8f1399b23ba0bedeaea92441642b"><span>bgfx::init</span></a>, render thread won&#8217;t be created by <a class="reference internal" href="#namespacebgfx_1adbfa8f1399b23ba0bedeaea92441642b"><span>bgfx::init</span></a> call.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_render_frame</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last simple">
 <li><code class="docutils literal"><span class="pre">_msecs</span></code>: Timeout in milliseconds.</li>
@@ -4940,9 +4942,9 @@ Potential matches:
 <dd><p>Uniform types: </p>
 <p><em>Values:</em></p>
 <dl class="enumerator">
-<dt id="_CPPv2N4bgfx11UniformType4Int1E">
-<span class="target" id="structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79a173664bed3eef9991e511cb9815f4522"></span><code class="descname">Int1</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType4Int1E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Int, used for samplers only. </p>
+<dt id="_CPPv2N4bgfx11UniformType7SamplerE">
+<span class="target" id="structbgfx_1_1_uniform_type_1a50bf3685e07ddb0cbcf34b4a2e134c79ace9711112b33ae973d0c3fa9c2e14c2e"></span><code class="descname">Sampler</code><a class="headerlink" href="#_CPPv2N4bgfx11UniformType7SamplerE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sampler. </p>
 </dd></dl>
 
 <dl class="enumerator">
