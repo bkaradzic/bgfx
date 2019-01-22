@@ -297,6 +297,21 @@ namespace bgfx
 	PlatformData g_platformData;
 	bool g_platformDataChangedSinceReset = false;
 
+	const char* getTypeName(Handle _handle)
+	{
+		switch (_handle.type)
+		{
+		case Handle::IndexBuffer:  return "IB";
+		case Handle::Shader:       return "S";
+		case Handle::Texture:      return "T";
+		case Handle::VertexBuffer: return "VB";
+		default:                   break;
+		}
+
+		BX_CHECK(false, "You should not be here.");
+		return "?";
+	}
+
 	void AllocatorStub::checkLeaks()
 	{
 #if BGFX_CONFIG_MEMORY_TRACKING

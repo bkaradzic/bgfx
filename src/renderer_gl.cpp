@@ -2985,12 +2985,20 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		{
 			switch (_handle.type)
 			{
+			case Handle::IndexBuffer:
+				GL_CHECK(glObjectLabel(GL_BUFFER, m_indexBuffers[_handle.idx].m_id, -1, _name) );
+				break;
+
 			case Handle::Shader:
 				GL_CHECK(glObjectLabel(GL_SHADER, m_shaders[_handle.idx].m_id, -1, _name) );
 				break;
 
 			case Handle::Texture:
 				GL_CHECK(glObjectLabel(GL_TEXTURE, m_textures[_handle.idx].m_id, -1, _name) );
+				break;
+
+			case Handle::VertexBuffer:
+				GL_CHECK(glObjectLabel(GL_BUFFER, m_vertexBuffers[_handle.idx].m_id, -1, _name) );
 				break;
 
 			default:

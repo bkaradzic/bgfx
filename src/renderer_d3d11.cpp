@@ -2001,12 +2001,20 @@ namespace bgfx { namespace d3d11
 		{
 			switch (_handle.type)
 			{
+			case Handle::IndexBuffer:
+				setDebugObjectName(m_indexBuffers[_handle.idx].m_ptr, "%s", _name);
+				break;
+
 			case Handle::Shader:
 				setDebugObjectName(m_shaders[_handle.idx].m_ptr, "%s", _name);
 				break;
 
 			case Handle::Texture:
 				setDebugObjectName(m_textures[_handle.idx].m_ptr, "%s", _name);
+				break;
+
+			case Handle::VertexBuffer:
+				setDebugObjectName(m_vertexBuffers[_handle.idx].m_ptr, "%s", _name);
 				break;
 
 			default:

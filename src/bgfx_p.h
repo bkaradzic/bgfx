@@ -282,8 +282,10 @@ namespace bgfx
 	{
 		enum Enum
 		{
+			IndexBuffer,
 			Shader,
 			Texture,
+			VertexBuffer,
 
 			Count
 		};
@@ -292,17 +294,21 @@ namespace bgfx
 		uint16_t idx;
 	};
 
-	inline Handle convert(ShaderHandle _handle)
-	{
-		Handle handle = { Handle::Shader, _handle.idx };
-		return handle;
+#define CONVERT_HANDLE(_name)                           \
+	inline Handle convert(_name##Handle _handle)        \
+	{                                                   \
+		Handle handle = { Handle::_name, _handle.idx }; \
+		return handle;                                  \
 	}
 
-	inline Handle convert(TextureHandle _handle)
-	{
-		Handle handle = { Handle::Texture, _handle.idx };
-		return handle;
-	}
+	CONVERT_HANDLE(IndexBuffer);
+	CONVERT_HANDLE(Shader);
+	CONVERT_HANDLE(Texture);
+	CONVERT_HANDLE(VertexBuffer);
+
+#undef CONVERT_HANDLE
+
+	const char* getTypeName(Handle _handle);
 
 	inline bool isValid(const VertexDecl& _decl)
 	{
@@ -2948,6 +2954,8 @@ namespace bgfx
 				cmdbuf.write(handle);
 				cmdbuf.write(_mem);
 				cmdbuf.write(_flags);
+
+				setDebugName(convert(handle) );
 			}
 			else
 			{
@@ -2966,7 +2974,7 @@ namespace bgfx
 			IndexBuffer& ref = m_indexBuffers[_handle.idx];
 			ref.m_name.set(_name);
 
-//			setName(convert(_handle), _name);
+			setName(convert(_handle), _name);
 		}
 
 		BGFX_API_FUNC(void destroyIndexBuffer(IndexBufferHandle _handle) )
@@ -3032,6 +3040,8 @@ namespace bgfx
 				cmdbuf.write(declHandle);
 				cmdbuf.write(_flags);
 
+				setDebugName(convert(handle) );
+
 				return handle;
 			}
 
@@ -3050,7 +3060,7 @@ namespace bgfx
 			VertexBuffer& ref = m_vertexBuffers[_handle.idx];
 			ref.m_name.set(_name);
 
-//			setName(convert(_handle), _name);
+			setName(convert(_handle), _name);
 		}
 
 		BGFX_API_FUNC(void destroyVertexBuffer(VertexBufferHandle _handle) )
@@ -3141,6 +3151,8 @@ namespace bgfx
 				cmdbuf.write(indexBufferHandle);
 				cmdbuf.write(size);
 				cmdbuf.write(_flags);
+
+				setDebugName(convert(indexBufferHandle), "Dynamic Index Buffer");
 
 				ptr = uint64_t(indexBufferHandle.idx) << 32;
 			}
@@ -3325,6 +3337,8 @@ namespace bgfx
 				cmdbuf.write(size);
 				cmdbuf.write(_flags);
 
+				setDebugName(convert(vertexBufferHandle), "Dynamic Vertex Buffer");
+
 				ptr = uint64_t(vertexBufferHandle.idx)<<32;
 			}
 			else
@@ -3485,6 +3499,8 @@ namespace bgfx
 				tib->data   = (uint8_t *)tib + BX_ALIGN_16(sizeof(TransientIndexBuffer) );
 				tib->size   = _size;
 				tib->handle = handle;
+
+				setDebugName(convert(handle), "Transient Index Buffer");
 			}
 
 			return tib;
@@ -3547,6 +3563,8 @@ namespace bgfx
 				tvb->stride = stride;
 				tvb->handle = handle;
 				tvb->decl   = declHandle;
+
+				setDebugName(convert(handle), "Transient Vertex Buffer");
 			}
 
 			return tvb;
@@ -3778,6 +3796,8 @@ namespace bgfx
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
 
+			setDebugName(convert(handle) );
+
 			return handle;
 		}
 
@@ -3802,12 +3822,21 @@ namespace bgfx
 
 		void setName(Handle _handle, const bx::StringView& _name)
 		{
+			char tmp[1024];
+			uint16_t len = 1+(uint16_t)bx::snprintf(tmp, BX_COUNTOF(tmp), "%sH %d: %.*s", getTypeName(_handle), _handle.idx, _name.getLength(), _name.getPtr() );
+
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SetName);
 			cmdbuf.write(_handle);
-			uint16_t len = uint16_t(_name.getLength()+1);
 			cmdbuf.write(len);
-			cmdbuf.write(_name.getPtr(), len-1);
-			cmdbuf.write('\0');
+			cmdbuf.write(tmp, len);
+		}
+
+		void setDebugName(Handle _handle, const bx::StringView& _name = "")
+		{
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+			{
+				setName(_handle, _name);
+			}
 		}
 
 		BGFX_API_FUNC(void setName(ShaderHandle _handle, const bx::StringView& _name) )
@@ -4087,6 +4116,8 @@ namespace bgfx
 			cmdbuf.write(_mem);
 			cmdbuf.write(_flags);
 			cmdbuf.write(_skip);
+
+			setDebugName(convert(handle) );
 
 			return handle;
 		}

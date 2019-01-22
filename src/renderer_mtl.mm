@@ -1019,12 +1019,20 @@ namespace bgfx { namespace mtl
 		{
 			switch (_handle.type)
 			{
+			case Handle::IndexBuffer:
+//				m_indexBuffers[_handle.idx].m_ptr.setLabel(_name);
+				break;
+
 			case Handle::Shader:
 				m_shaders[_handle.idx].m_function.setLabel(_name);
 				break;
 
 			case Handle::Texture:
 				m_textures[_handle.idx].m_ptr.setLabel(_name);
+				break;
+
+			case Handle::VertexBuffer:
+//				m_vertexBuffers[_handle.idx].m_ptr.setLabel(_name);
 				break;
 
 			default:
@@ -2135,7 +2143,7 @@ namespace bgfx { namespace mtl
 				ComputePipelineReflection reflection = NULL;
 				pso->m_cps = m_device.newComputePipelineStateWithFunction(program.m_vsh->m_function, MTLPipelineOptionBufferTypeInfo, &reflection);
 				processArguments(pso, reflection.arguments, NULL);
-				
+
 				for (uint32_t ii = 0; ii < 3; ++ii)
 				{
 					pso->m_numThreads[ii] = program.m_vsh->m_numThreads[ii];
@@ -2378,7 +2386,7 @@ namespace bgfx { namespace mtl
 				bx::read(&reader, m_numThreads[ii]);
 			}
 		}
-		
+
 		uint32_t shaderSize;
 		bx::read(&reader, shaderSize);
 
