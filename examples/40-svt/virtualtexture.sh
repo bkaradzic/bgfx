@@ -51,7 +51,7 @@ vec4 SampleAtlas( vec3 page, vec2 uv )
    uv *= BorderScale;
    uv += BorderOffset;
 
-   vec2 offset = floor( page.xy * 255 + 0.5 );
+   vec2 offset = floor( page.xy * 255.0 + 0.5 );
 
    return texture2D( s_vt_texture_atlas, ( offset + uv ) * AtlasScale );
 }
@@ -60,10 +60,10 @@ vec4 SampleAtlas( vec3 page, vec2 uv )
 vec4 VirtualTextureTrilinear( vec2 uv )
 {
    float miplevel = MipLevel( uv, VirtualTextureSize );
-   miplevel = clamp( miplevel, 0, log2( PageTableSize )-1 );
+   miplevel = clamp( miplevel, 0.0, log2( PageTableSize )-1.0 );
 
    float mip1     = floor( miplevel );
-   float mip2    = mip1 + 1;
+   float mip2    = mip1 + 1.0;
    float mipfrac  = miplevel - mip1;
 
    vec3 page1 = SampleTable( uv, mip1 );

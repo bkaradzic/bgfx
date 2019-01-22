@@ -1030,7 +1030,14 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "ios") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_IOS=1");
-			preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+			if (metal)
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_METAL=1");
+			}
+			else
+			{
+				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_GLSL=1");
+			}
 		}
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
@@ -1047,11 +1054,7 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "osx") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_OSX=1");
-			if (_options.shaderType == 'c')
-			{
-				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
-			}
-			else
+			if (!metal)
 			{
 				preprocessor.setDefine(glslDefine);
 			}
@@ -1510,8 +1513,7 @@ namespace bgfx
 			else
 			{
 				if (0 != glsl
-				||  0 != essl
-				||  0 != metal)
+				||  0 != essl)
 				{
 					if (0 == essl)
 					{
@@ -1937,8 +1939,7 @@ namespace bgfx
 						}
 
 						if (0 != glsl
-						||  0 != essl
-						||  0 != metal)
+						||  0 != essl)
 						{
 							if (!bx::strFind(preprocessor.m_preprocessed.c_str(), "layout(std430").isEmpty() )
 							{
@@ -1961,21 +1962,14 @@ namespace bgfx
 
 								if (0 == essl)
 								{
-									const bool need130 = 0 != metal || (120 == glsl && (false
+									const bool need130 = (120 == glsl && (false
 										|| !bx::findIdentifierMatch(input, s_130).isEmpty()
 										|| usesInterpolationQualifiers
 										|| usesTexelFetch
 										) );
 
-									if (0 != metal)
-									{
-										bx::stringPrintf(code, "#version 130\n");
-									}
-									else
-									{
-										bx::stringPrintf(code, "#version %s\n", need130 ? "130" : _options.profile.c_str());
-										glsl = 130;
-									}
+									bx::stringPrintf(code, "#version %s\n", need130 ? "130" : _options.profile.c_str());
+									glsl = 130;
 
 									if (need130)
 									{
@@ -2211,7 +2205,10 @@ namespace bgfx
 										, "#define ivec2 vec2\n"
 										  "#define ivec3 vec3\n"
 										  "#define ivec4 vec4\n"
-										);
+										  "#define uvec2 vec2\n"
+										  "#define uvec3 vec3\n"
+										  "#define uvec4 vec4\n"
+									);
 								}
 							}
 							else
@@ -2265,9 +2262,9 @@ namespace bgfx
 							code += _comment;
 							code += preprocessor.m_preprocessed;
 
-							if (0 != spirv)
+							if (0 != spirv || 0 != metal)
 							{
-								compiled = compileSPIRVShader(_options, 0, code, _writer);
+								compiled = compileSPIRVShader(_options, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : 0, code, _writer);
 							}
 							else if (0 != pssl)
 							{
