@@ -4095,18 +4095,19 @@ namespace bgfx { namespace d3d11
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 		{
 			uint8_t numMips = imageContainer.m_numMips;
-			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
+			const uint8_t startLod = bx::min<uint8_t>(_skip, numMips-1);
 			numMips -= startLod;
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(imageContainer.m_format) );
-			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
-			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
+			const uint32_t textureWidth  = bx::max<uint32_t>(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
+			const uint32_t textureHeight = bx::max<uint32_t>(blockInfo.blockHeight, imageContainer.m_height>>startLod);
+			const uint32_t textureDepth  = bx::max<uint32_t>(1,                     imageContainer.m_depth >>startLod);
 			const uint16_t numLayers     = imageContainer.m_numLayers;
 
 			m_flags  = _flags;
 			m_width  = textureWidth;
 			m_height = textureHeight;
 			m_depth  = 1 < imageContainer.m_depth
-				? imageContainer.m_depth
+				? textureDepth
 				: imageContainer.m_numLayers
 				;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
@@ -4345,8 +4346,8 @@ namespace bgfx { namespace d3d11
 					D3D11_TEXTURE3D_DESC desc = {};
 					desc.Width  = textureWidth;
 					desc.Height = textureHeight;
-					desc.Depth  = imageContainer.m_depth;
-					desc.MipLevels = imageContainer.m_numMips;
+					desc.Depth  = textureDepth;
+					desc.MipLevels = numMips;
 					desc.Format    = format;
 					desc.Usage     = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
