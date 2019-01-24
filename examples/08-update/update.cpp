@@ -98,7 +98,7 @@ static const uint16_t s_cubeIndices[] =
 	21, 22, 23,
 };
 BX_STATIC_ASSERT(BX_COUNTOF(s_cubeIndices) == 36);
-	
+
 bx::Vec3 s_faceColors[] =
 {
 	{ 0.75f, 0.0f,  0.0f  },
@@ -300,7 +300,7 @@ public:
 				, BGFX_TEXTURE_COMPUTE_WRITE
 				);
 		}
-		
+
 		{
 			m_textureCube[3] = bgfx::createTextureCube(
 													   kTextureSide
@@ -309,7 +309,7 @@ public:
 													   , bgfx::TextureFormat::RGBA8
 													   , BGFX_TEXTURE_RT
 													   );
-			
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
 			{
 				bgfx::Attachment at;
@@ -537,7 +537,7 @@ public:
 				bgfx::setImage(0, m_textureCube[2], 0, bgfx::Access::Write);
 				bgfx::dispatch(0, m_programCompute, kTextureSide/16, kTextureSide/16);
 			}
-			
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
 			{
 				bgfx::ViewId viewId = bgfx::ViewId(ii+2);
@@ -653,7 +653,7 @@ public:
 				bgfx::submit(1, m_program3d);
 			}
 
-			for (uint32_t ii = 0; ii < 4; ++ii)
+			for (uint32_t ii = 0; ii < 5; ++ii)
 			{
 				bx::mtxTranslate(mtx, sizeX - margin - 1.0f, -sizeY + margin + 1.0f + ii*2.1f, 0.0f);
 
