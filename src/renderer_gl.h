@@ -916,6 +916,10 @@ typedef uint64_t GLuint64;
 #	define GL_TEXTURE 0x1702
 #endif // GL_TEXTURE
 
+#ifndef GL_BUFFER
+#	define GL_BUFFER 0x82E0
+#endif // GL_BUFFER
+
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242
 #define GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH 0x8243
