@@ -313,7 +313,7 @@ public:
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
 			{
 				bgfx::Attachment at;
-				at.init(m_textureCube[3], bgfx::Access::Write, ii);
+				at.init(m_textureCube[3], bgfx::Access::Write, uint16_t(ii));
 				m_textureCubeFaceFb[ii] = bgfx::createFrameBuffer(1, &at);
 			}
 		}
@@ -540,7 +540,7 @@ public:
 			
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
 			{
-				bgfx::ViewId viewId = ii+2;
+				bgfx::ViewId viewId = bgfx::ViewId(ii+2);
 				bgfx::setViewFrameBuffer(viewId, m_textureCubeFaceFb[ii]);
 
 				bx::Vec3 color = bx::add(s_faceColors[ii], bx::sin(time*4.0f)*0.25f);
