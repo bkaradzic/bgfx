@@ -98,6 +98,16 @@ static const uint16_t s_cubeIndices[] =
 	21, 22, 23,
 };
 BX_STATIC_ASSERT(BX_COUNTOF(s_cubeIndices) == 36);
+	
+bx::Vec3 s_faceColors[] =
+{
+	{ 0.75f, 0.0f,  0.0f  },
+	{ 0.75f, 0.75f, 0.0f  },
+	{ 0.75f, 0.0f,  0.75f },
+	{ 0.0f,  0.75f, 0.0f  },
+	{ 0.0f,  0.75f, 0.75f },
+	{ 0.0f,  0.0f,  0.75f },
+};
 
 static void updateTextureCubeRectBgra8(
 	  bgfx::TextureHandle _handle
@@ -290,6 +300,23 @@ public:
 				, BGFX_TEXTURE_COMPUTE_WRITE
 				);
 		}
+		
+		{
+			m_textureCube[3] = bgfx::createTextureCube(
+													   kTextureSide
+													   , false
+													   , 1
+													   , bgfx::TextureFormat::RGBA8
+													   , BGFX_TEXTURE_RT
+													   );
+			
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
+			{
+				bgfx::Attachment at;
+				at.init(m_textureCube[3], bgfx::Access::Write, ii);
+				m_textureCubeFaceFb[ii] = bgfx::createFrameBuffer(1, &at);
+			}
+		}
 
 		m_texture2d = bgfx::createTexture2D(
 			  kTexture2dSize
@@ -344,6 +371,14 @@ public:
 			if (bgfx::isValid(m_textureCube[ii]))
 			{
 				bgfx::destroy(m_textureCube[ii]);
+			}
+		}
+
+		for (uint32_t ii = 0; ii<BX_COUNTOF(m_textureCubeFaceFb); ++ii)
+		{
+			if (bgfx::isValid(m_textureCubeFaceFb[ii]))
+			{
+				bgfx::destroy(m_textureCubeFaceFb[ii]);
 			}
 		}
 
@@ -502,13 +537,30 @@ public:
 				bgfx::setImage(0, m_textureCube[2], 0, bgfx::Access::Write);
 				bgfx::dispatch(0, m_programCompute, kTextureSide/16, kTextureSide/16);
 			}
+			
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
+			{
+				bgfx::ViewId viewId = ii+2;
+				bgfx::setViewFrameBuffer(viewId, m_textureCubeFaceFb[ii]);
+
+				bx::Vec3 color = bx::add(s_faceColors[ii], bx::sin(time*4.0f)*0.25f);
+				uint32_t colorRGB8 =
+						  uint32_t(bx::toUnorm(color.x, 255.0f) ) << 24
+						| uint32_t(bx::toUnorm(color.y, 255.0f) ) << 16
+						| uint32_t(bx::toUnorm(color.z, 255.0f) ) << 8;
+
+				bgfx::setViewClear(viewId, BGFX_CLEAR_COLOR, colorRGB8);
+				bgfx::setViewRect(viewId, 0,0,512,512);
+
+				bgfx::touch(viewId);
+			}
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCube); ++ii)
 			{
 				if (bgfx::isValid(m_textureCube[ii]))
 				{
 					float mtx[16];
-					bx::mtxSRT(mtx, 0.7f, 0.7f, 0.7f, time, time*0.37f, 0.0f, -2.0f +ii*2.0f, 0.0f, 0.0f);
+					bx::mtxSRT(mtx, 0.65f, 0.65f, 0.65f, time, time*0.37f, 0.0f, -2.5f +ii*1.8f, 0.0f, 0.0f);
 
 					// Set model matrix for rendering.
 					bgfx::setTransform(mtx);
@@ -661,7 +713,8 @@ public:
 	bgfx::TextureHandle m_textures[12];
 	bgfx::TextureHandle m_textures3d[3];
 	bgfx::TextureHandle m_texture2d;
-	bgfx::TextureHandle m_textureCube[3];
+	bgfx::TextureHandle m_textureCube[4];
+	bgfx::FrameBufferHandle m_textureCubeFaceFb[6];
 	bgfx::IndexBufferHandle m_ibh;
 	bgfx::VertexBufferHandle m_vbh;
 	bgfx::ProgramHandle m_program3d;

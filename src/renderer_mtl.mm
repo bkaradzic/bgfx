@@ -1577,8 +1577,26 @@ namespace bgfx { namespace mtl
 			m_renderCommandEncoder.setVertexBuffer(vb.getBuffer(), offset, 1);
 			m_renderCommandEncoder.drawPrimitives(MTLPrimitiveTypeTriangleStrip, 0, 4, 1);
 		}
+		
+		void setAttachment(MTLRenderPassAttachmentDescriptor* _attachmentDescriptor, const Attachment& _at, uint8_t _textureType, bool _resolve)
+		{
+			_attachmentDescriptor.level = _at.mip;
+			if ( _textureType == TextureMtl::Texture3D )
+				_attachmentDescriptor.depthPlane = _at.layer;
+			else
+				_attachmentDescriptor.slice = _at.layer;
+			
+			if ( _resolve )
+			{
+				_attachmentDescriptor.resolveLevel = _at.mip;
+				if ( _textureType == TextureMtl::Texture3D )
+					_attachmentDescriptor.resolveDepthPlane = _at.layer;
+				else
+					_attachmentDescriptor.resolveSlice = _at.layer;
+			}
+		}
 
-		void setFrameBuffer(RenderPassDescriptor renderPassDescriptor, FrameBufferHandle _fbh, bool _msaa = true)
+		void setFrameBuffer(RenderPassDescriptor _renderPassDescriptor, FrameBufferHandle _fbh, bool _msaa = true)
 		{
 			if (!isValid(_fbh)
 			||  m_frameBuffers[_fbh.idx].m_swapChain)
@@ -1590,22 +1608,22 @@ namespace bgfx { namespace mtl
 
 				if (NULL != swapChain->m_backBufferColorMsaa)
 				{
-					renderPassDescriptor.colorAttachments[0].texture        = swapChain->m_backBufferColorMsaa;
-					renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
+					_renderPassDescriptor.colorAttachments[0].texture        = swapChain->m_backBufferColorMsaa;
+					_renderPassDescriptor.colorAttachments[0].resolveTexture = NULL != m_screenshotTarget
 						? m_screenshotTarget.m_obj
 						: swapChain->currentDrawable().texture
 						;
 				}
 				else
 				{
-					renderPassDescriptor.colorAttachments[0].texture = NULL != m_screenshotTarget
+					_renderPassDescriptor.colorAttachments[0].texture = NULL != m_screenshotTarget
 						? m_screenshotTarget.m_obj
 						: swapChain->currentDrawable().texture
 						;
 				}
 
-				renderPassDescriptor.depthAttachment.texture   = swapChain->m_backBufferDepth;
-				renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
+				_renderPassDescriptor.depthAttachment.texture   = swapChain->m_backBufferDepth;
+				_renderPassDescriptor.stencilAttachment.texture = swapChain->m_backBufferStencil;
 			}
 			else
 			{
@@ -1614,35 +1632,40 @@ namespace bgfx { namespace mtl
 				for (uint32_t ii = 0; ii < frameBuffer.m_num; ++ii)
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_colorHandle[ii].idx];
-					renderPassDescriptor.colorAttachments[ii].texture = texture.m_ptrMsaa
+					_renderPassDescriptor.colorAttachments[ii].texture = texture.m_ptrMsaa
 						? texture.m_ptrMsaa
 						: texture.m_ptr
 						;
-					renderPassDescriptor.colorAttachments[ii].resolveTexture = texture.m_ptrMsaa
+					_renderPassDescriptor.colorAttachments[ii].resolveTexture = texture.m_ptrMsaa
 						? texture.m_ptr.m_obj
 						: NULL
 						;
+					
+					setAttachment(_renderPassDescriptor.colorAttachments[ii], frameBuffer.m_colorAttachment[ii], texture.m_type, texture.m_ptrMsaa != NULL);
 				}
 
 				if (isValid(frameBuffer.m_depthHandle) )
 				{
 					const TextureMtl& texture = m_textures[frameBuffer.m_depthHandle.idx];
-					renderPassDescriptor.depthAttachment.texture = texture.m_ptrMsaa
+					_renderPassDescriptor.depthAttachment.texture = texture.m_ptrMsaa
 						? texture.m_ptrMsaa
 						: texture.m_ptr
 						;
-					renderPassDescriptor.stencilAttachment.texture = texture.m_ptrStencil;
+					_renderPassDescriptor.stencilAttachment.texture = texture.m_ptrStencil;
 
+					setAttachment(_renderPassDescriptor.depthAttachment, frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
+					setAttachment(_renderPassDescriptor.stencilAttachment, frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
+					
 					if (texture.m_textureFormat == TextureFormat::D24S8)
 					{
 						if (texture.m_ptr.pixelFormat() == 255 /* Depth24Unorm_Stencil8 */
 						||  texture.m_ptr.pixelFormat() == 260 /* Depth32Float_Stencil8 */)
 						{
-							renderPassDescriptor.stencilAttachment.texture = renderPassDescriptor.depthAttachment.texture;
+							_renderPassDescriptor.stencilAttachment.texture = _renderPassDescriptor.depthAttachment.texture;
 						}
 						else
 						{
-							renderPassDescriptor.stencilAttachment.texture = texture.m_ptrMsaa
+							_renderPassDescriptor.stencilAttachment.texture = texture.m_ptrMsaa
 								? texture.m_ptrMsaa
 								: texture.m_ptrStencil
 								;
@@ -3089,8 +3112,9 @@ namespace bgfx { namespace mtl
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
-			TextureHandle handle = _attachment[ii].handle;
-
+			const Attachment& at = _attachment[ii];
+			TextureHandle handle = at.handle;
+			
 			if (isValid(handle) )
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[handle.idx];
@@ -3104,10 +3128,12 @@ namespace bgfx { namespace mtl
 				if (bimg::isDepth(bimg::TextureFormat::Enum(texture.m_textureFormat) ) )
 				{
 					m_depthHandle = handle;
+					m_depthAttachment = at;
 				}
 				else
 				{
 					m_colorHandle[m_num] = handle;
+					m_colorAttachment[m_num] = at;
 					m_num++;
 				}
 			}
