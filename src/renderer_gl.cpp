@@ -2150,6 +2150,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
+					const TextureFormat::Enum fmt = TextureFormat::Enum(ii);
+
 					uint16_t supported = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 					supported |= s_textureFormat[ii].m_supported
 						? BGFX_CAPS_FORMAT_TEXTURE_2D
@@ -2158,30 +2160,33 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
-					supported |= isTextureFormatValid(TextureFormat::Enum(ii), true)
+					supported |= isTextureFormatValid(fmt, true)
 						? BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 						| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
 						| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
-					supported |= isTextureFormatValid(TextureFormat::Enum(ii), false, true)
-						? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
-						: BGFX_CAPS_FORMAT_TEXTURE_NONE
-						;
+					if (!bimg::isCompressed(bimg::TextureFormat::Enum(fmt) ) )
+					{
+						supported |= isTextureFormatValid(fmt, false, true)
+							? BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN
+							: BGFX_CAPS_FORMAT_TEXTURE_NONE
+							;
+					}
 
 					supported |= computeSupport
-						&& isImageFormatValid(TextureFormat::Enum(ii) )
+						&& isImageFormatValid(fmt)
 						? BGFX_CAPS_FORMAT_TEXTURE_IMAGE
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
-					supported |= isFramebufferFormatValid(TextureFormat::Enum(ii) )
+					supported |= isFramebufferFormatValid(fmt)
 						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
-					supported |= isFramebufferFormatValid(TextureFormat::Enum(ii), false, true)
+					supported |= isFramebufferFormatValid(fmt, false, true)
 						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
@@ -3000,7 +3005,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				break;
 
 			case Handle::Texture:
-//				GL_CHECK(glObjectLabel(GL_TEXTURE, m_textures[_handle.idx].m_id, len, _name) );
+				{
+					GLint id = m_textures[_handle.idx].m_id;
+					if (0 != id /* write only texture */)
+					{
+						GL_CHECK(glObjectLabel(GL_TEXTURE, id, len, _name) );
+					}
+				}
 				break;
 
 			case Handle::VertexBuffer:
