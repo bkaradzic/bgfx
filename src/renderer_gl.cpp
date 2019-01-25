@@ -3007,9 +3007,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			case Handle::Texture:
 				{
 					GLint id = m_textures[_handle.idx].m_id;
-					if (0 != id /* write only texture */)
+					if (0 != id)
 					{
 						GL_CHECK(glObjectLabel(GL_TEXTURE, id, len, _name) );
+					}
+					else
+					{
+						GL_CHECK(glObjectLabel(GL_RENDERBUFFER, m_textures[_handle.idx].m_rbo, len, _name) );
 					}
 				}
 				break;
