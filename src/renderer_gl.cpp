@@ -1838,6 +1838,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				GL_GET(GL_MAX_RENDERBUFFER_SIZE, 1);
 				GL_GET(GL_MAX_COLOR_ATTACHMENTS, 1);
 				GL_GET(GL_MAX_DRAW_BUFFERS, 1);
+				GL_GET(GL_MAX_LABEL_LENGTH, 0);
+
 #undef GL_GET
 
 				BX_TRACE("      Vendor: %s", m_vendor);
@@ -2520,6 +2522,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					glInsertEventMarker = stubInsertEventMarker;
 				}
 
+				m_maxLabelLen = (uint32_t)glGet(GL_MAX_LABEL_LENGTH);
+
 				setGraphicsDebuggerPresent(s_extension[Extension::EXT_debug_tool].m_supported);
 
 				if (NULL == glObjectLabel)
@@ -2983,22 +2987,24 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		virtual void setName(Handle _handle, const char* _name) override
 		{
+			uint32_t len = bx::strLen(_name, m_maxLabelLen);
+
 			switch (_handle.type)
 			{
 			case Handle::IndexBuffer:
-				GL_CHECK(glObjectLabel(GL_BUFFER, m_indexBuffers[_handle.idx].m_id, -1, _name) );
+				GL_CHECK(glObjectLabel(GL_BUFFER, m_indexBuffers[_handle.idx].m_id, len, _name) );
 				break;
 
 			case Handle::Shader:
-				GL_CHECK(glObjectLabel(GL_SHADER, m_shaders[_handle.idx].m_id, -1, _name) );
+				GL_CHECK(glObjectLabel(GL_SHADER, m_shaders[_handle.idx].m_id, len, _name) );
 				break;
 
 			case Handle::Texture:
-				GL_CHECK(glObjectLabel(GL_TEXTURE, m_textures[_handle.idx].m_id, -1, _name) );
+//				GL_CHECK(glObjectLabel(GL_TEXTURE, m_textures[_handle.idx].m_id, len, _name) );
 				break;
 
 			case Handle::VertexBuffer:
-				GL_CHECK(glObjectLabel(GL_BUFFER, m_vertexBuffers[_handle.idx].m_id, -1, _name) );
+				GL_CHECK(glObjectLabel(GL_BUFFER, m_vertexBuffers[_handle.idx].m_id, len, _name) );
 				break;
 
 			default:
@@ -3852,6 +3858,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		float m_maxAnisotropy;
 		float m_maxAnisotropyDefault;
 		int32_t m_maxMsaa;
+		uint32_t m_maxLabelLen;
 		GLuint m_vao;
 		bool m_blitSupported;
 		bool m_readBackSupported;
