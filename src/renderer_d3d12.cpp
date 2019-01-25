@@ -2224,7 +2224,7 @@ namespace bgfx { namespace d3d12
 						BX_STATIC_ASSERT(BX_COUNTOF(m_backBufferColor) == BX_COUNTOF(presentQueue) );
 						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd, nodeMask, presentQueue) );
 #elif BX_PLATFORM_WINRT
-						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd);
+						DX_CHECK(m_dxgi.resizeBuffers(m_swapChain, m_scd));
 						m_backBufferColorIdx = m_scd.bufferCount-1;
 #endif // BX_PLATFORM_WINDOWS
 					}
