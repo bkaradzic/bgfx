@@ -1997,24 +1997,24 @@ namespace bgfx { namespace d3d11
 			m_occlusionQuery.invalidate(_handle);
 		}
 
-		virtual void setName(Handle _handle, const char* _name) override
+		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
 			switch (_handle.type)
 			{
 			case Handle::IndexBuffer:
-				setDebugObjectName(m_indexBuffers[_handle.idx].m_ptr, "%s", _name);
+				setDebugObjectName(m_indexBuffers[_handle.idx].m_ptr, "%.*s", _len, _name);
 				break;
 
 			case Handle::Shader:
-				setDebugObjectName(m_shaders[_handle.idx].m_ptr, "%s", _name);
+				setDebugObjectName(m_shaders[_handle.idx].m_ptr, "%.*s", _len, _name);
 				break;
 
 			case Handle::Texture:
-				setDebugObjectName(m_textures[_handle.idx].m_ptr, "%s", _name);
+				setDebugObjectName(m_textures[_handle.idx].m_ptr, "%.*s", _len, _name);
 				break;
 
 			case Handle::VertexBuffer:
-				setDebugObjectName(m_vertexBuffers[_handle.idx].m_ptr, "%s", _name);
+				setDebugObjectName(m_vertexBuffers[_handle.idx].m_ptr, "%.*s", _len, _name);
 				break;
 
 			default:

@@ -3110,7 +3110,7 @@ namespace bgfx
 
 					const char* name = (const char*)_cmdbuf.skip(len);
 
-					m_renderCtx->setName(handle, name);
+					m_renderCtx->setName(handle, name, len-1);
 				}
 				break;
 

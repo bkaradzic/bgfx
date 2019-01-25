@@ -1015,8 +1015,10 @@ namespace bgfx { namespace mtl
 			m_occlusionQuery.invalidate(_handle);
 		}
 
-		virtual void setName(Handle _handle, const char* _name) override
+		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
+			BX_UNUSED(_len);
+
 			switch (_handle.type)
 			{
 			case Handle::IndexBuffer:

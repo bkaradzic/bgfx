@@ -2157,9 +2157,9 @@ VK_IMPORT_DEVICE
 			BX_UNUSED(_handle);
 		}
 
-		virtual void setName(Handle _handle, const char* _name) override
+		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
-			BX_UNUSED(_handle, _name)
+			BX_UNUSED(_handle, _name, _len)
 		}
 
 		void submitBlit(BlitState& _bs, uint16_t _view);

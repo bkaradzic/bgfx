@@ -2527,7 +2527,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					glInsertEventMarker = stubInsertEventMarker;
 				}
 
-				m_maxLabelLen = (uint32_t)glGet(GL_MAX_LABEL_LENGTH);
+				m_maxLabelLen = uint16_t(glGet(GL_MAX_LABEL_LENGTH) );
 
 				setGraphicsDebuggerPresent(s_extension[Extension::EXT_debug_tool].m_supported);
 
@@ -2990,9 +2990,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			m_occlusionQuery.invalidate(_handle);
 		}
 
-		virtual void setName(Handle _handle, const char* _name) override
+		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
 		{
-			uint32_t len = bx::strLen(_name, m_maxLabelLen);
+			uint16_t len = bx::min(_len, m_maxLabelLen);
 
 			switch (_handle.type)
 			{
@@ -3873,8 +3873,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		float m_maxAnisotropy;
 		float m_maxAnisotropyDefault;
 		int32_t m_maxMsaa;
-		uint32_t m_maxLabelLen;
 		GLuint m_vao;
+		uint16_t m_maxLabelLen;
 		bool m_blitSupported;
 		bool m_readBackSupported;
 		bool m_vaoSupport;

@@ -234,7 +234,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		virtual void setName(Handle /*_handle*/, const char* /*_name*/) override
+		virtual void setName(Handle /*_handle*/, const char* /*_name*/, uint16_t /*_len*/) override
 		{
 		}
 
