@@ -1656,8 +1656,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		_minFilter = s_textureFilterMin[min][_hasMips ? mip+1 : 0];
 	}
 
-	void updateExtension(const char* _name)
+	void updateExtension(const bx::StringView& _name)
 	{
+		bx::StringView ext(_name);
+		if (0 == bx::strCmp(ext, "GL_", 3) ) // skip GL_
+		{
+			ext.set(ext.getPtr()+3, ext.getTerm() );
+		}
+
 		bool supported = false;
 		for (uint32_t ii = 0; ii < Extension::Count; ++ii)
 		{
@@ -1665,12 +1671,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			if (!extension.m_supported
 			&&  extension.m_initialize)
 			{
-				const char* ext = _name;
-				if (0 == bx::strCmp(ext, "GL_", 3) ) // skip GL_
-				{
-					ext += 3;
-				}
-
 				if (0 == bx::strCmp(ext, extension.m_name) )
 				{
 					extension.m_supported = true;
@@ -1680,7 +1680,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 		}
 
-		BX_TRACE("GL_EXTENSION %s: %s", supported ? " (supported)" : "", _name);
+		BX_TRACE("GL_EXTENSION %s: %.*s", supported ? " (supported)" : "", _name.getLength(), _name.getPtr() );
 		BX_UNUSED(supported);
 	}
 
@@ -1877,29 +1877,16 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				glGetError(); // ignore error if glGetString returns NULL.
 				if (NULL != extensions)
 				{
-					char name[1024];
-					const char* pos = extensions;
-					const char* end = extensions + bx::strLen(extensions);
+					bx::StringView ext(extensions);
 					uint32_t index = 0;
-					while (pos < end)
+					while (!ext.isEmpty() )
 					{
-						uint32_t len;
-						const bx::StringView space = bx::strFind(pos, ' ');
-						if (!space.isEmpty() )
-						{
-							len = bx::uint32_min(sizeof(name), (uint32_t)(space.getPtr() - pos) );
-						}
-						else
-						{
-							len = bx::uint32_min(sizeof(name), (uint32_t)bx::strLen(pos) );
-						}
+						const bx::StringView space = bx::strFind(ext, ' ');
+						const bx::StringView token = bx::StringView(ext.getPtr(), space.getPtr() );
+						updateExtension(token);
 
-						bx::strCopy(name, BX_COUNTOF(name), pos, len);
-						name[len] = '\0';
+						ext.set(token.getTerm() + 1, ext.getTerm() );
 
-						updateExtension(name);
-
-						pos += len+1;
 						++index;
 					}
 				}
