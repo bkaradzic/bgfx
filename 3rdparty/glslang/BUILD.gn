@@ -141,13 +141,44 @@ source_set("glslang_sources") {
 
   if (is_clang) {
     cflags_cc = [
-      "-Wno-implicit-fallthrough",
       "-Wno-ignored-qualifiers",
+      "-Wno-implicit-fallthrough",
+      "-Wno-inconsistent-missing-override",
+      "-Wno-sign-compare",
       "-Wno-unused-variable",
+    ]
+  }
+  if (is_win && !is_clang) {
+    cflags = [
+      "/wd4018", # signed/unsigned mismatch
     ]
   }
 
   deps = [
     "${spirv_tools_dir}:spvtools_opt",
+  ]
+}
+
+source_set("glslang_default_resource_limits_sources") {
+  sources = [
+    "StandAlone/ResourceLimits.cpp",
+    "StandAlone/ResourceLimits.h",
+  ]
+  deps = [ ":glslang_sources" ]
+  public_configs = [ ":glslang_public" ]
+}
+
+source_set("glslang_validator") {
+  sources = [
+    "StandAlone/DirStackFileIncluder.h",
+    "StandAlone/StandAlone.cpp",
+  ]
+  if (!is_win) {
+    cflags = [ "-Woverflow" ]
+  }
+  defines = [ "ENABLE_OPT=0" ]
+  deps = [
+    ":glslang_default_resource_limits_sources",
+    ":glslang_sources",
   ]
 }

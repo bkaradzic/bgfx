@@ -312,9 +312,6 @@ TIntermTyped* TParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symb
     if (anon) {
         // It was a member of an anonymous container.
 
-        // The "getNumExtensions()" mechanism above doesn't yet work for block members
-        blockMemberExtensionCheck(loc, nullptr, *string);
-
         // Create a subtree for its dereference.
         variable = anon->getAnonContainer().getAsVariable();
         TIntermTyped* container = intermediate.addSymbol(*variable, loc);
@@ -355,7 +352,7 @@ TIntermTyped* TParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symb
         intermediate.addIoAccessed(*string);
 
     if (variable->getType().getBasicType() == EbtReference &&
-        variable->getType().getQualifier().isMemory()) {
+        variable->getType().getQualifier().bufferReferenceNeedsVulkanMemoryModel()) {
         intermediate.setUseVulkanMemoryModel();
     }
 
@@ -834,7 +831,7 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
             if (base->getType().getQualifier().isFrontEndConstant())
                 result = intermediate.foldDereference(base, member, loc);
             else {
-                blockMemberExtensionCheck(loc, base, field);
+                blockMemberExtensionCheck(loc, base, member, field);
                 TIntermTyped* index = intermediate.addConstantUnion(member, loc);
                 result = intermediate.addIndex(EOpIndexDirectStruct, base, index, loc);
                 result->setType(*(*fields)[member].type);
@@ -857,14 +854,30 @@ TIntermTyped* TParseContext::handleDotDereference(const TSourceLoc& loc, TInterm
     return result;
 }
 
-void TParseContext::blockMemberExtensionCheck(const TSourceLoc& loc, const TIntermTyped* /*base*/, const TString& field)
+void TParseContext::blockMemberExtensionCheck(const TSourceLoc& loc, const TIntermTyped* base, int member, const TString& memberName)
 {
-    if (profile == EEsProfile && field == "gl_PointSize") {
-        if (language == EShLangGeometry)
-            requireExtensions(loc, Num_AEP_geometry_point_size, AEP_geometry_point_size, "gl_PointSize");
-        else if (language == EShLangTessControl || language == EShLangTessEvaluation)
-            requireExtensions(loc, Num_AEP_tessellation_point_size, AEP_tessellation_point_size, "gl_PointSize");
-    }
+    // a block that needs extension checking is either 'base', or if arrayed,
+    // one level removed to the left
+    const TIntermSymbol* baseSymbol = nullptr;
+    if (base->getAsBinaryNode() == nullptr)
+        baseSymbol = base->getAsSymbolNode();
+    else
+        baseSymbol = base->getAsBinaryNode()->getLeft()->getAsSymbolNode();
+    if (baseSymbol == nullptr)
+        return;
+    const TSymbol* symbol = symbolTable.find(baseSymbol->getName());
+    if (symbol == nullptr)
+        return;
+    const TVariable* variable = symbol->getAsVariable();
+    if (variable == nullptr)
+        return;
+    if (!variable->hasMemberExtensions())
+        return;
+
+    // We now have a variable that is the base of a dot reference
+    // with members that need extension checking.
+    if (variable->getNumMemberExtensions(member) > 0)
+        requireExtensions(loc, variable->getNumMemberExtensions(member), variable->getMemberExtensions(member), memberName.c_str());
 }
 
 //

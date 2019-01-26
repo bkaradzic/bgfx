@@ -654,10 +654,6 @@ TIntermTyped* HlslParseContext::handleVariable(const TSourceLoc& loc, const TStr
         return nullptr;
     }
 
-    // Error check for requiring specific extensions present.
-    if (symbol && symbol->getNumExtensions())
-        requireExtensions(loc, symbol->getNumExtensions(), symbol->getExtensions(), symbol->getName().c_str());
-
     const TVariable* variable = nullptr;
     const TAnonMember* anon = symbol ? symbol->getAsAnonMember() : nullptr;
     TIntermTyped* node = nullptr;
@@ -3256,7 +3252,8 @@ void HlslParseContext::decomposeStructBufferMethods(const TSourceLoc& loc, TInte
     if (argAggregate) {
         if (argAggregate->getSequence().empty())
             return;
-        bufferObj = argAggregate->getSequence()[0]->getAsTyped();
+		if (argAggregate->getSequence()[0])
+	        bufferObj = argAggregate->getSequence()[0]->getAsTyped();
     } else {
         bufferObj = arguments->getAsSymbolNode();
     }
@@ -3755,7 +3752,8 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             if (arguments->getAsTyped()->getBasicType() != EbtSampler)
                 return;
         } else {
-            if (argAggregate->getSequence().size() == 0 ||
+            if (argAggregate->getSequence().size() == 0 || 
+				argAggregate->getSequence()[0] == nullptr ||
                 argAggregate->getSequence()[0]->getAsTyped()->getBasicType() != EbtSampler)
                 return;
         }
@@ -5294,7 +5292,7 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
 
             TIntermTyped* arg0 = nullptr;
 
-            if (aggregate && aggregate->getSequence().size() > 0)
+            if (aggregate && aggregate->getSequence().size() > 0 && aggregate->getSequence()[0])
                 arg0 = aggregate->getSequence()[0]->getAsTyped();
             else if (arguments->getAsSymbolNode())
                 arg0 = arguments->getAsSymbolNode();
@@ -5321,11 +5319,6 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
             //  - a built-in operator,
             //  - a built-in function not mapped to an operator, or
             //  - a user function.
-
-            // Error check for a function requiring specific extensions present.
-            if (builtIn && fnCandidate->getNumExtensions())
-                requireExtensions(loc, fnCandidate->getNumExtensions(), fnCandidate->getExtensions(),
-                                  fnCandidate->getName().c_str());
 
             // turn an implicit member-function resolution into an explicit call
             TString callerName;
@@ -5768,7 +5761,7 @@ void HlslParseContext::addStructBuffArguments(const TSourceLoc& loc, TIntermAggr
         std::any_of(aggregate->getSequence().begin(),
                     aggregate->getSequence().end(),
                     [this](const TIntermNode* node) {
-                        return (node->getAsTyped() != nullptr) && hasStructBuffCounter(node->getAsTyped()->getType());
+                        return (node && node->getAsTyped() != nullptr) && hasStructBuffCounter(node->getAsTyped()->getType());
                     });
 
     // Nothing to do, if we didn't find one.

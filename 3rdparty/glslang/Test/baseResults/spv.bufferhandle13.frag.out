@@ -4,13 +4,11 @@ spv.bufferhandle13.frag
 // Id's are bound by 58
 
                               Capability Shader
-                              Capability CapabilityVulkanMemoryModelKHR
                               Capability CapabilityPhysicalStorageBufferAddressesEXT
                               Extension  "SPV_EXT_physical_storage_buffer"
                               Extension  "SPV_KHR_storage_buffer_storage_class"
-                              Extension  "SPV_KHR_vulkan_memory_model"
                1:             ExtInstImport  "GLSL.std.450"
-                              MemoryModel PhysicalStorageBuffer64EXT VulkanKHR
+                              MemoryModel PhysicalStorageBuffer64EXT GLSL450
                               EntryPoint Fragment 4  "main"
                               ExecutionMode 4 OriginUpperLeft
                               Source GLSL 450

@@ -537,6 +537,11 @@ public:
     {
         return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || volatil || restrict || readonly || writeonly;
     }
+    bool bufferReferenceNeedsVulkanMemoryModel() const
+    {
+        // include qualifiers that map to load/store availability/visibility/nonprivate memory access operands
+        return subgroupcoherent || workgroupcoherent || queuefamilycoherent || devicecoherent || coherent || nonprivate;
+    }
 
     bool isInterpolation() const
     {

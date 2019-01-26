@@ -73,7 +73,7 @@ if(ENABLE_HLSL)
 endif(ENABLE_HLSL)
 
 if(WIN32)
-    set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Adds a postfix for debug-built libraries.")
+    set(CMAKE_DEBUG_POSTFIX "d")
     if(MSVC)
         include(ChooseMSVCCRT.cmake)
     endif(MSVC)

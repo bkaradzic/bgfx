@@ -287,19 +287,25 @@ TVariable::TVariable(const TVariable& copyOf) : TSymbol(copyOf)
 {
     type.deepCopy(copyOf.type);
     userType = copyOf.userType;
-    numExtensions = 0;
-    extensions = 0;
-    if (copyOf.numExtensions != 0)
-        setExtensions(copyOf.numExtensions, copyOf.extensions);
+
+    // we don't support specialization-constant subtrees in cloned tables, only extensions
+    constSubtree = nullptr;
+    extensions = nullptr;
+    memberExtensions = nullptr;
+    if (copyOf.getNumExtensions() > 0)
+        setExtensions(copyOf.getNumExtensions(), copyOf.getExtensions());
+    if (copyOf.hasMemberExtensions()) {
+        for (int m = 0; m < copyOf.type.getStruct()->size(); ++m) {
+            if (copyOf.getNumMemberExtensions(m) > 0)
+                setMemberExtensions(m, copyOf.getNumMemberExtensions(m), copyOf.getMemberExtensions(m));
+        }
+    }
 
     if (! copyOf.constArray.empty()) {
         assert(! copyOf.type.isStruct());
         TConstUnionArray newArray(copyOf.constArray, 0, copyOf.constArray.size());
         constArray = newArray;
     }
-
-    // don't support specialization-constant subtrees in cloned tables
-    constSubtree = nullptr;
 }
 
 TVariable* TVariable::clone() const
@@ -317,10 +323,9 @@ TFunction::TFunction(const TFunction& copyOf) : TSymbol(copyOf)
         parameters.back().copyParam(copyOf.parameters[i]);
     }
 
-    numExtensions = 0;
-    extensions = 0;
-    if (copyOf.extensions != 0)
-        setExtensions(copyOf.numExtensions, copyOf.extensions);
+    extensions = nullptr;
+    if (copyOf.getNumExtensions() > 0)
+        setExtensions(copyOf.getNumExtensions(), copyOf.getExtensions());
     returnType.deepCopy(copyOf.returnType);
     mangledName = copyOf.mangledName;
     op = copyOf.op;
@@ -359,12 +364,12 @@ TSymbolTableLevel* TSymbolTableLevel::clone() const
         const TAnonMember* anon = iter->second->getAsAnonMember();
         if (anon) {
             // Insert all the anonymous members of this same container at once,
-            // avoid inserting the other members in the future, once this has been done,
+            // avoid inserting the remaining members in the future, once this has been done,
             // allowing them to all be part of the same new container.
             if (! containerCopied[anon->getAnonId()]) {
                 TVariable* container = anon->getAnonContainer().clone();
                 container->changeName(NewPoolTString(""));
-                // insert the whole container
+                // insert the container and all its members
                 symTableLevel->insert(*container, false);
                 containerCopied[anon->getAnonId()] = true;
             }
