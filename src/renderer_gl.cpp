@@ -2980,14 +2980,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
-		void setMarker(const char* _marker, uint32_t _size) override
-		{
-			GL_CHECK(glInsertEventMarker(_size, _marker) );
-		}
-
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
 			m_occlusionQuery.invalidate(_handle);
+		}
+
+		void setMarker(const char* _marker, uint16_t _len) override
+		{
+			GL_CHECK(glInsertEventMarker(_len, _marker) );
 		}
 
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override

@@ -1859,17 +1859,19 @@ namespace bgfx { namespace d3d12
 			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
-		void setMarker(const char* _marker, uint32_t /*_size*/) override
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
+			m_occlusionQuery.invalidate(_handle);
+		}
+
+		void setMarker(const char* _marker, uint16_t _len) override
+		{
+			BX_UNUSED(_len);
+
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
 				PIX3_SETMARKER(m_commandList, D3DCOLOR_MARKER, _marker);
 			}
-		}
-
-		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
-		{
-			m_occlusionQuery.invalidate(_handle);
 		}
 
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override

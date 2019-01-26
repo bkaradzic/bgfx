@@ -644,6 +644,11 @@ project "shaderc"
 			"psapi",
 		}
 
+	configuration { "osx or linux*" }
+		links {
+			"pthread",
+		}
+
 	configuration {}
 
 	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
@@ -659,13 +664,6 @@ project "shaderc"
 
 		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
 	end
-
-	configuration { "osx or linux*" }
-		links {
-			"pthread",
-		}
-
-	configuration {}
 
 	strip()
 

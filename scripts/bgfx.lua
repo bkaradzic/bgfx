@@ -35,181 +35,191 @@ function overridefiles(_srcPath, _dstPath, _files)
 	}
 end
 
-function bgfxProject(_name, _kind, _defines)
-	project ("bgfx" .. _name)
-		uuid (os.uuid("bgfx" .. _name))
-		bgfxProjectBase(_kind, _defines)
-		copyLib()
-end
-
 function bgfxProjectBase(_kind, _defines)
-		kind (_kind)
 
-		if _kind == "SharedLib" then
-			defines {
-				"BGFX_SHARED_LIB_BUILD=1",
-			}
+	kind (_kind)
 
-			links {
-				"bimg",
-				"bx",
-			}
-
-			configuration { "vs20* or mingw*" }
-				links {
-					"gdi32",
-					"psapi",
-				}
-
-			configuration { "mingw*" }
-				linkoptions {
-					"-shared",
-				}
-
-			configuration { "linux-*" }
-				buildoptions {
-					"-fPIC",
-				}
-
-			configuration {}
-		end
-
-		includedirs {
-			path.join(BGFX_DIR, "3rdparty"),
-			path.join(BX_DIR,   "include"),
-			path.join(BIMG_DIR, "include"),
-		}
-
+	if _kind == "SharedLib" then
 		defines {
-			_defines,
+			"BGFX_SHARED_LIB_BUILD=1",
 		}
 
 		links {
+			"bimg",
 			"bx",
 		}
 
-		if _OPTIONS["with-glfw"] then
-			defines {
-				"BGFX_CONFIG_MULTITHREADED=0",
-			}
-		end
-
-		configuration { "Debug" }
-			defines {
-				"BGFX_CONFIG_DEBUG=1",
-			}
-
-		configuration { "vs* or mingw*", "not durango" }
-			includedirs {
-				path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
-			}
-
-		configuration { "android*" }
+		configuration { "vs20* or mingw*" }
 			links {
-				"EGL",
-				"GLESv2",
+				"gdi32",
+				"psapi",
 			}
 
-		configuration { "winstore*" }
+		configuration { "mingw*" }
 			linkoptions {
-				"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
+				"-shared",
 			}
 
-		configuration { "*clang*" }
+		configuration { "linux-*" }
 			buildoptions {
-				"-Wno-microsoft-enum-value", -- enumerator value is not representable in the underlying type 'int'
-				"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
-			}
-
-		configuration { "osx" }
-			linkoptions {
-				"-framework Cocoa",
-				"-framework QuartzCore",
-				"-framework OpenGL",
-				"-weak_framework Metal",
-				"-weak_framework MetalKit",
-			}
-
-		configuration { "not linux-steamlink", "not NX32", "not NX64" }
-			includedirs {
-				-- steamlink has EGL headers modified...
-				-- NX has EGL headers modified...
-				path.join(BGFX_DIR, "3rdparty/khronos"),
-			}
-
-		configuration { "linux-steamlink" }
-			defines {
-				"EGL_API_FB",
+				"-fPIC",
 			}
 
 		configuration {}
+	end
 
+	includedirs {
+		path.join(BGFX_DIR, "3rdparty"),
+		path.join(BX_DIR,   "include"),
+		path.join(BIMG_DIR, "include"),
+	}
+
+	defines {
+		_defines,
+	}
+
+	links {
+		"bx",
+	}
+
+	if _OPTIONS["with-glfw"] then
+		defines {
+			"BGFX_CONFIG_MULTITHREADED=0",
+		}
+	end
+
+	configuration { "Debug" }
+		defines {
+			"BGFX_CONFIG_DEBUG=1",
+		}
+
+	configuration { "vs* or mingw*", "not durango" }
 		includedirs {
-			path.join(BGFX_DIR, "include"),
+			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
 		}
 
-		files {
-			path.join(BGFX_DIR, "include/**.h"),
-			path.join(BGFX_DIR, "src/**.cpp"),
-			path.join(BGFX_DIR, "src/**.h"),
-			path.join(BGFX_DIR, "scripts/**.natvis"),
+	configuration { "android*" }
+		links {
+			"EGL",
+			"GLESv2",
 		}
 
-		removefiles {
-			path.join(BGFX_DIR, "src/**.bin.h"),
+	configuration { "winstore*" }
+		linkoptions {
+			"/ignore:4264" -- LNK4264: archiving object file compiled with /ZW into a static library; note that when authoring Windows Runtime types it is not recommended to link with a static library that contains Windows Runtime metadata
 		}
 
-		overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
-			path.join(BGFX_DIR, "src/renderer_gnm.cpp"),
-			path.join(BGFX_DIR, "src/renderer_gnm.h"),
-		})
+	configuration { "*clang*" }
+		buildoptions {
+			"-Wno-microsoft-enum-value", -- enumerator value is not representable in the underlying type 'int'
+			"-Wno-microsoft-const-init", -- default initialization of an object of const type '' without a user-provided default constructor is a Microsoft extension
+		}
 
-		if _OPTIONS["with-amalgamated"] then
-			excludes {
-				path.join(BGFX_DIR, "src/bgfx.cpp"),
-				path.join(BGFX_DIR, "src/debug_**.cpp"),
-				path.join(BGFX_DIR, "src/dxgi.cpp"),
-				path.join(BGFX_DIR, "src/glcontext_**.cpp"),
-				path.join(BGFX_DIR, "src/hmd**.cpp"),
-				path.join(BGFX_DIR, "src/image.cpp"),
-				path.join(BGFX_DIR, "src/nvapi.cpp"),
-				path.join(BGFX_DIR, "src/renderer_**.cpp"),
-				path.join(BGFX_DIR, "src/shader**.cpp"),
-				path.join(BGFX_DIR, "src/topology.cpp"),
-				path.join(BGFX_DIR, "src/vertexdecl.cpp"),
+	configuration { "osx" }
+		linkoptions {
+			"-framework Cocoa",
+			"-framework QuartzCore",
+			"-framework OpenGL",
+			"-weak_framework Metal",
+			"-weak_framework MetalKit",
+		}
+
+	configuration { "not linux-steamlink", "not NX32", "not NX64" }
+		includedirs {
+			-- steamlink has EGL headers modified...
+			-- NX has EGL headers modified...
+			path.join(BGFX_DIR, "3rdparty/khronos"),
+		}
+
+	configuration { "linux-steamlink" }
+		defines {
+			"EGL_API_FB",
+		}
+
+	configuration {}
+
+	includedirs {
+		path.join(BGFX_DIR, "include"),
+	}
+
+	files {
+		path.join(BGFX_DIR, "include/**.h"),
+		path.join(BGFX_DIR, "src/**.cpp"),
+		path.join(BGFX_DIR, "src/**.h"),
+		path.join(BGFX_DIR, "scripts/**.natvis"),
+	}
+
+	removefiles {
+		path.join(BGFX_DIR, "src/**.bin.h"),
+	}
+
+	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+		path.join(BGFX_DIR, "src/renderer_gnm.cpp"),
+		path.join(BGFX_DIR, "src/renderer_gnm.h"),
+	})
+
+	if _OPTIONS["with-amalgamated"] then
+		excludes {
+			path.join(BGFX_DIR, "src/bgfx.cpp"),
+			path.join(BGFX_DIR, "src/debug_**.cpp"),
+			path.join(BGFX_DIR, "src/dxgi.cpp"),
+			path.join(BGFX_DIR, "src/glcontext_**.cpp"),
+			path.join(BGFX_DIR, "src/hmd**.cpp"),
+			path.join(BGFX_DIR, "src/image.cpp"),
+			path.join(BGFX_DIR, "src/nvapi.cpp"),
+			path.join(BGFX_DIR, "src/renderer_**.cpp"),
+			path.join(BGFX_DIR, "src/shader**.cpp"),
+			path.join(BGFX_DIR, "src/topology.cpp"),
+			path.join(BGFX_DIR, "src/vertexdecl.cpp"),
+		}
+
+		configuration { "xcode* or osx or ios*" }
+			files {
+				path.join(BGFX_DIR, "src/amalgamated.mm"),
 			}
 
-			configuration { "xcode* or osx or ios*" }
-				files {
-					path.join(BGFX_DIR, "src/amalgamated.mm"),
-				}
-
-				excludes {
-					path.join(BGFX_DIR, "src/glcontext_**.mm"),
-					path.join(BGFX_DIR, "src/renderer_**.mm"),
-					path.join(BGFX_DIR, "src/amalgamated.cpp"),
-				}
-
-			configuration { "not (xcode* or osx or ios*)" }
-				excludes {
-					path.join(BGFX_DIR, "src/**.mm"),
-				}
-
-			configuration {}
-
-		else
-			configuration { "xcode* or osx or ios*" }
-				files {
-					path.join(BGFX_DIR, "src/glcontext_**.mm"),
-					path.join(BGFX_DIR, "src/renderer_**.mm"),
-				}
-
-			configuration {}
-
 			excludes {
-				path.join(BGFX_DIR, "src/amalgamated.**"),
+				path.join(BGFX_DIR, "src/glcontext_**.mm"),
+				path.join(BGFX_DIR, "src/renderer_**.mm"),
+				path.join(BGFX_DIR, "src/amalgamated.cpp"),
 			}
-		end
+
+		configuration { "not (xcode* or osx or ios*)" }
+			excludes {
+				path.join(BGFX_DIR, "src/**.mm"),
+			}
 
 		configuration {}
+
+	else
+		configuration { "xcode* or osx or ios*" }
+			files {
+				path.join(BGFX_DIR, "src/glcontext_**.mm"),
+				path.join(BGFX_DIR, "src/renderer_**.mm"),
+			}
+
+		configuration {}
+
+		excludes {
+			path.join(BGFX_DIR, "src/amalgamated.**"),
+		}
+	end
+
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+		path.join(BGFX_DIR, "scripts/bgfx.lua"), }) then
+
+		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/bgfx.lua") )
+	end
+
+	configuration {}
+end
+
+function bgfxProject(_name, _kind, _defines)
+
+	project ("bgfx" .. _name)
+		uuid (os.uuid("bgfx" .. _name))
+
+		bgfxProjectBase(_kind, _defines)
+
+		copyLib()
 end

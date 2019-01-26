@@ -226,11 +226,11 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void setMarker(const char* /*_marker*/, uint32_t /*_size*/) override
+		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) override
 		{
 		}
 
-		void invalidateOcclusionQuery(OcclusionQueryHandle /*_handle*/) override
+		void setMarker(const char* /*_marker*/, uint16_t /*_len*/) override
 		{
 		}
 

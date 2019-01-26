@@ -2148,13 +2148,13 @@ VK_IMPORT_DEVICE
 			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
-		void setMarker(const char* /*_marker*/, uint32_t /*_size*/) override
-		{
-		}
-
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
 			BX_UNUSED(_handle);
+		}
+
+		void setMarker(const char* /*_marker*/, uint16_t /*_len*/) override
+		{
 		}
 
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override

@@ -1002,17 +1002,19 @@ namespace bgfx { namespace mtl
 			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
-		void setMarker(const char* _marker, uint32_t /*_size*/) override
+		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
+			m_occlusionQuery.invalidate(_handle);
+		}
+
+		void setMarker(const char* _marker, uint16_t _len) override
+		{
+			BX_UNUSED(_len);
+
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
 			{
 				m_renderCommandEncoder.insertDebugSignpost(_marker);
 			}
-		}
-
-		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
-		{
-			m_occlusionQuery.invalidate(_handle);
 		}
 
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override
@@ -1579,7 +1581,7 @@ namespace bgfx { namespace mtl
 			m_renderCommandEncoder.setVertexBuffer(vb.getBuffer(), offset, 1);
 			m_renderCommandEncoder.drawPrimitives(MTLPrimitiveTypeTriangleStrip, 0, 4, 1);
 		}
-		
+
 		void setAttachment(MTLRenderPassAttachmentDescriptor* _attachmentDescriptor, const Attachment& _at, uint8_t _textureType, bool _resolve)
 		{
 			_attachmentDescriptor.level = _at.mip;
@@ -1587,7 +1589,7 @@ namespace bgfx { namespace mtl
 				_attachmentDescriptor.depthPlane = _at.layer;
 			else
 				_attachmentDescriptor.slice = _at.layer;
-			
+
 			if ( _resolve )
 			{
 				_attachmentDescriptor.resolveLevel = _at.mip;
@@ -1642,7 +1644,7 @@ namespace bgfx { namespace mtl
 						? texture.m_ptr.m_obj
 						: NULL
 						;
-					
+
 					setAttachment(_renderPassDescriptor.colorAttachments[ii], frameBuffer.m_colorAttachment[ii], texture.m_type, texture.m_ptrMsaa != NULL);
 				}
 
@@ -1657,7 +1659,7 @@ namespace bgfx { namespace mtl
 
 					setAttachment(_renderPassDescriptor.depthAttachment, frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
 					setAttachment(_renderPassDescriptor.stencilAttachment, frameBuffer.m_depthAttachment, texture.m_type, NULL != texture.m_ptrMsaa);
-					
+
 					if (texture.m_textureFormat == TextureFormat::D24S8)
 					{
 						if (texture.m_ptr.pixelFormat() == 255 /* Depth24Unorm_Stencil8 */
@@ -3116,7 +3118,7 @@ namespace bgfx { namespace mtl
 		{
 			const Attachment& at = _attachment[ii];
 			TextureHandle handle = at.handle;
-			
+
 			if (isValid(handle) )
 			{
 				const TextureMtl& texture = s_renderMtl->m_textures[handle.idx];

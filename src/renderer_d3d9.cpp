@@ -1280,20 +1280,21 @@ namespace bgfx { namespace d3d9
 			bx::memCopy(m_uniforms[_loc], _data, _size);
 		}
 
-		void setMarker(const char* _marker, uint32_t _size) override
-		{
-#if BGFX_CONFIG_DEBUG_PIX
-			uint32_t size = _size*sizeof(wchar_t);
-			wchar_t* name = (wchar_t*)alloca(size);
-			mbstowcs(name, _marker, size-2);
-			PIX_SETMARKER(D3DCOLOR_MARKER, name);
-#endif // BGFX_CONFIG_DEBUG_PIX
-			BX_UNUSED(_marker, _size);
-		}
-
 		void invalidateOcclusionQuery(OcclusionQueryHandle _handle) override
 		{
 			m_occlusionQuery.invalidate(_handle);
+		}
+
+		void setMarker(const char* _marker, uint16_t _len) override
+		{
+#if BGFX_CONFIG_DEBUG_PIX
+			uint32_t size = _len*sizeof(wchar_t);
+			wchar_t* name = (wchar_t*)alloca(size+2);
+			mbstowcs(name, _marker, size);
+			name[_len] = L'\0';
+			PIX_SETMARKER(D3DCOLOR_MARKER, name);
+#endif // BGFX_CONFIG_DEBUG_PIX
+			BX_UNUSED(_marker, _len);
 		}
 
 		virtual void setName(Handle _handle, const char* _name, uint16_t _len) override

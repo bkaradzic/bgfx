@@ -2329,7 +2329,7 @@ namespace bgfx
 			}
 			else
 			{
-				_renderCtx->setMarker(data, size);
+				_renderCtx->setMarker(data, uint16_t(size)-1);
 			}
 		}
 	}
