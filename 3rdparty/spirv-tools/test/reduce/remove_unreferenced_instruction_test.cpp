@@ -16,7 +16,9 @@
 
 #include "source/opt/build_module.h"
 #include "source/reduce/reduction_opportunity.h"
-#include "source/reduce/remove_unreferenced_instruction_reduction_pass.h"
+#include "source/reduce/reduction_pass.h"
+#include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
+#include "source/util/make_unique.h"
 
 namespace spvtools {
 namespace reduce {
@@ -73,9 +75,8 @@ TEST(RemoveUnreferencedInstructionReductionPassTest, RemoveStores) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, original, kReduceAssembleOption);
-  const auto pass =
-      TestSubclass<RemoveUnreferencedInstructionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = RemoveUnreferencedInstructionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(4, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
   ops[0]->TryToApply();
@@ -132,7 +133,9 @@ TEST(RemoveUnreferencedInstructionReductionPassTest, ApplyReduction) {
   SpirvTools t(env);
   ASSERT_TRUE(t.Assemble(original, &binary, kReduceAssembleOption));
 
-  auto pass = TestSubclass<RemoveUnreferencedInstructionReductionPass>(env);
+  ReductionPass pass(
+      env, spvtools::MakeUnique<
+               RemoveUnreferencedInstructionReductionOpportunityFinder>());
 
   {
     // Attempt 1 should remove everything removable.

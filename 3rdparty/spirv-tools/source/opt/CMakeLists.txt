@@ -15,6 +15,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   aggressive_dead_code_elim_pass.h
   basic_block.h
   block_merge_pass.h
+  block_merge_util.h
   build_module.h
   ccp_pass.h
   cfg_cleanup_pass.h
@@ -108,6 +109,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   aggressive_dead_code_elim_pass.cpp
   basic_block.cpp
   block_merge_pass.cpp
+  block_merge_util.cpp
   build_module.cpp
   ccp_pass.cpp
   cfg_cleanup_pass.cpp

@@ -128,4 +128,6 @@ bool SpirvTools::Validate(const uint32_t* binary, const size_t binary_size,
   return valid;
 }
 
+bool SpirvTools::IsValid() const { return impl_->context != nullptr; }
+
 }  // namespace spvtools

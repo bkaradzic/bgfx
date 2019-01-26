@@ -16,7 +16,8 @@
 
 #include "source/opt/build_module.h"
 #include "source/reduce/reduction_opportunity.h"
-#include "source/reduce/remove_opname_instruction_reduction_pass.h"
+#include "source/reduce/reduction_pass.h"
+#include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
@@ -42,8 +43,8 @@ TEST(RemoveOpnameInstructionReductionPassTest, NothingToRemove) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, source, kReduceAssembleOption);
-  const auto pass = TestSubclass<RemoveOpNameInstructionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = RemoveOpNameInstructionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(0, ops.size());
 }
 
@@ -76,8 +77,8 @@ TEST(RemoveOpnameInstructionReductionPassTest, RemoveSingleOpName) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, original, kReduceAssembleOption);
-  const auto pass = TestSubclass<RemoveOpNameInstructionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = RemoveOpNameInstructionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
   ops[0]->TryToApply();
@@ -126,14 +127,14 @@ TEST(RemoveOpnameInstructionReductionPassTest, TryApplyRemovesAllOpName) {
   const std::string expected = prologue + epilogue;
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
-  auto pass = TestSubclass<RemoveOpNameInstructionReductionPass>(env);
 
   {
     // Check the right number of opportunities is detected
     const auto consumer = nullptr;
     const auto context =
         BuildModule(env, consumer, original, kReduceAssembleOption);
-    const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+    const auto ops = RemoveOpNameInstructionReductionOpportunityFinder()
+                         .GetAvailableOpportunities(context.get());
     ASSERT_EQ(5, ops.size());
   }
 
@@ -142,7 +143,11 @@ TEST(RemoveOpnameInstructionReductionPassTest, TryApplyRemovesAllOpName) {
     std::vector<uint32_t> binary;
     SpirvTools t(env);
     ASSERT_TRUE(t.Assemble(original, &binary, kReduceAssembleOption));
-    auto reduced_binary = pass.TryApplyReduction(binary);
+    auto reduced_binary =
+        ReductionPass(env,
+                      spvtools::MakeUnique<
+                          RemoveOpNameInstructionReductionOpportunityFinder>())
+            .TryApplyReduction(binary);
     CheckEqual(env, expected, reduced_binary);
   }
 }
@@ -190,14 +195,14 @@ TEST(RemoveOpnameInstructionReductionPassTest,
   const std::string expected = prologue + epilogue;
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
-  auto pass = TestSubclass<RemoveOpNameInstructionReductionPass>(env);
 
   {
     // Check the right number of opportunities is detected
     const auto consumer = nullptr;
     const auto context =
         BuildModule(env, consumer, original, kReduceAssembleOption);
-    const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+    const auto ops = RemoveOpNameInstructionReductionOpportunityFinder()
+                         .GetAvailableOpportunities(context.get());
     ASSERT_EQ(6, ops.size());
   }
 
@@ -206,7 +211,11 @@ TEST(RemoveOpnameInstructionReductionPassTest,
     std::vector<uint32_t> binary;
     SpirvTools t(env);
     ASSERT_TRUE(t.Assemble(original, &binary, kReduceAssembleOption));
-    auto reduced_binary = pass.TryApplyReduction(binary);
+    auto reduced_binary =
+        ReductionPass(env,
+                      spvtools::MakeUnique<
+                          RemoveOpNameInstructionReductionOpportunityFinder>())
+            .TryApplyReduction(binary);
     CheckEqual(env, expected, reduced_binary);
   }
 }

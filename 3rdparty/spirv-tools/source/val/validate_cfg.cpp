@@ -112,6 +112,19 @@ spv_result_t ValidatePhi(ValidationState_t& _, const Instruction* inst) {
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateBranch(ValidationState_t& _, const Instruction* inst) {
+  // target operands must be OpLabel
+  const auto id = inst->GetOperandAs<uint32_t>(0);
+  const auto target = _.FindDef(id);
+  if (!target || SpvOpLabel != target->opcode()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "'Target Label' operands for OpBranch must be the ID "
+              "of an OpLabel instruction";
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t ValidateBranchConditional(ValidationState_t& _,
                                        const Instruction* inst) {
   // num_operands is either 3 or 5 --- if 5, the last two need to be literal
@@ -150,6 +163,26 @@ spv_result_t ValidateBranchConditional(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "The 'False Label' operand for OpBranchConditional must be the "
               "ID of an OpLabel instruction";
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateSwitch(ValidationState_t& _, const Instruction* inst) {
+  const auto num_operands = inst->operands().size();
+  // At least two operands (selector, default), any more than that are
+  // literal/target.
+
+  // target operands must be OpLabel
+  for (size_t i = 2; i < num_operands; i += 2) {
+    // literal, id
+    const auto id = inst->GetOperandAs<uint32_t>(i + 1);
+    const auto target = _.FindDef(id);
+    if (!target || SpvOpLabel != target->opcode()) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "'Target Label' operands for OpSwitch must be IDs of an "
+                "OpLabel instruction";
+    }
   }
 
   return SPV_SUCCESS;
@@ -764,11 +797,17 @@ spv_result_t ControlFlowPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpPhi:
       if (auto error = ValidatePhi(_, inst)) return error;
       break;
+    case SpvOpBranch:
+      if (auto error = ValidateBranch(_, inst)) return error;
+      break;
     case SpvOpBranchConditional:
       if (auto error = ValidateBranchConditional(_, inst)) return error;
       break;
     case SpvOpReturnValue:
       if (auto error = ValidateReturnValue(_, inst)) return error;
+      break;
+    case SpvOpSwitch:
+      if (auto error = ValidateSwitch(_, inst)) return error;
       break;
     default:
       break;

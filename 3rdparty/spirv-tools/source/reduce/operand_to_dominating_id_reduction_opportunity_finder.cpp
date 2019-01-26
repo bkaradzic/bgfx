@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "operand_to_dominating_id_reduction_pass.h"
+#include "operand_to_dominating_id_reduction_opportunity_finder.h"
 #include "change_operand_reduction_opportunity.h"
 #include "source/opt/instruction.h"
 
@@ -22,7 +22,7 @@ namespace reduce {
 using namespace opt;
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
-OperandToDominatingIdReductionPass::GetAvailableOpportunities(
+OperandToDominatingIdReductionOpportunityFinder::GetAvailableOpportunities(
     opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
@@ -55,11 +55,12 @@ OperandToDominatingIdReductionPass::GetAvailableOpportunities(
   return result;
 }
 
-void OperandToDominatingIdReductionPass::GetOpportunitiesForDominatingInst(
-    std::vector<std::unique_ptr<ReductionOpportunity>>* opportunities,
-    opt::Instruction* candidate_dominator,
-    opt::Function::iterator candidate_dominator_block, opt::Function* function,
-    opt::IRContext* context) const {
+void OperandToDominatingIdReductionOpportunityFinder::
+    GetOpportunitiesForDominatingInst(
+        std::vector<std::unique_ptr<ReductionOpportunity>>* opportunities,
+        opt::Instruction* candidate_dominator,
+        opt::Function::iterator candidate_dominator_block,
+        opt::Function* function, opt::IRContext* context) const {
   assert(candidate_dominator->HasResultId());
   assert(candidate_dominator->type_id());
   auto dominator_analysis = context->GetDominatorAnalysis(function);
@@ -106,8 +107,8 @@ void OperandToDominatingIdReductionPass::GetOpportunitiesForDominatingInst(
   }
 }
 
-std::string OperandToDominatingIdReductionPass::GetName() const {
-  return "OperandToDominatingIdReductionPass";
+std::string OperandToDominatingIdReductionOpportunityFinder::GetName() const {
+  return "OperandToDominatingIdReductionOpportunityFinder";
 }
 
 }  // namespace reduce

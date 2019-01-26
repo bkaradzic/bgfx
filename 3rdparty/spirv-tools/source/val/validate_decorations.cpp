@@ -379,6 +379,7 @@ bool IsAlignedTo(uint32_t offset, uint32_t alignment) {
 // or row major-ness.
 spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
                          const char* decoration_str, bool blockRules,
+                         uint32_t incoming_offset,
                          MemberConstraints& constraints,
                          ValidationState_t& vstate) {
   if (vstate.options()->skip_block_layout) return SPV_SUCCESS;
@@ -429,7 +430,8 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
         }
       }
     }
-    member_offsets.push_back(MemberOffsetPair{memberIdx, offset});
+    member_offsets.push_back(
+        MemberOffsetPair{memberIdx, incoming_offset + offset});
   }
   std::stable_sort(
       member_offsets.begin(), member_offsets.end(),
@@ -493,9 +495,9 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
     // Check struct members recursively.
     spv_result_t recursive_status = SPV_SUCCESS;
     if (SpvOpTypeStruct == opcode &&
-        SPV_SUCCESS != (recursive_status =
-                            checkLayout(id, storage_class_str, decoration_str,
-                                        blockRules, constraints, vstate)))
+        SPV_SUCCESS != (recursive_status = checkLayout(
+                            id, storage_class_str, decoration_str, blockRules,
+                            offset, constraints, vstate)))
       return recursive_status;
     // Check matrix stride.
     if (SpvOpTypeMatrix == opcode) {
@@ -507,23 +509,53 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
                  << " not satisfying alignment to " << alignment;
       }
     }
-    // Check arrays and runtime arrays.
-    if (SpvOpTypeArray == opcode || SpvOpTypeRuntimeArray == opcode) {
-      const auto typeId = inst->word(2);
-      const auto arrayInst = vstate.FindDef(typeId);
-      if (SpvOpTypeStruct == arrayInst->opcode() &&
-          SPV_SUCCESS != (recursive_status = checkLayout(
-                              typeId, storage_class_str, decoration_str,
-                              blockRules, constraints, vstate)))
-        return recursive_status;
+
+    // Check arrays and runtime arrays recursively.
+    auto array_inst = inst;
+    auto array_alignment = alignment;
+    while (array_inst->opcode() == SpvOpTypeArray ||
+           array_inst->opcode() == SpvOpTypeRuntimeArray) {
+      const auto typeId = array_inst->word(2);
+      const auto element_inst = vstate.FindDef(typeId);
       // Check array stride.
-      for (auto& decoration : vstate.id_decorations(id)) {
-        if (SpvDecorationArrayStride == decoration.dec_type() &&
-            !IsAlignedTo(decoration.params()[0], alignment))
-          return fail(memberIdx)
-                 << "is an array with stride " << decoration.params()[0]
-                 << " not satisfying alignment to " << alignment;
+      auto array_stride = 0;
+      for (auto& decoration : vstate.id_decorations(array_inst->id())) {
+        if (SpvDecorationArrayStride == decoration.dec_type()) {
+          array_stride = decoration.params()[0];
+          if (!IsAlignedTo(array_stride, array_alignment))
+            return fail(memberIdx)
+                   << "contains an array with stride " << decoration.params()[0]
+                   << " not satisfying alignment to " << alignment;
+        }
       }
+
+      bool is_int32 = false;
+      bool is_const = false;
+      uint32_t num_elements = 0;
+      if (array_inst->opcode() == SpvOpTypeArray) {
+        std::tie(is_int32, is_const, num_elements) =
+            vstate.EvalInt32IfConst(array_inst->word(3));
+      }
+      num_elements = std::max(1u, num_elements);
+      // Check each element recursively if it is a struct. There is a
+      // limitation to this check if the array size is a spec constant or is a
+      // runtime array then we will only check a single element. This means
+      // some improper straddles might be missed.
+      for (uint32_t i = 0; i < num_elements; ++i) {
+        uint32_t next_offset = i * array_stride + offset;
+        if (SpvOpTypeStruct == element_inst->opcode() &&
+            SPV_SUCCESS != (recursive_status = checkLayout(
+                                typeId, storage_class_str, decoration_str,
+                                blockRules, next_offset, constraints, vstate)))
+          return recursive_status;
+      }
+
+      // Proceed to the element in case it is an array.
+      array_inst = element_inst;
+      array_alignment = scalar_block_layout
+                            ? getScalarAlignment(array_inst->id(), vstate)
+                            : getBaseAlignment(array_inst->id(), blockRules,
+                                               constraint, constraints, vstate);
     }
     nextValidOffset = offset + size;
     if (!scalar_block_layout && blockRules &&
@@ -859,8 +891,15 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
       if (uniform || push_constant || storage_buffer || phys_storage_buffer) {
         const auto ptrInst = vstate.FindDef(words[1]);
         assert(SpvOpTypePointer == ptrInst->opcode());
-        const auto id = ptrInst->words()[3];
-        if (SpvOpTypeStruct != vstate.FindDef(id)->opcode()) continue;
+        auto id = ptrInst->words()[3];
+        auto id_inst = vstate.FindDef(id);
+        // Jump through one level of arraying.
+        if (id_inst->opcode() == SpvOpTypeArray ||
+            id_inst->opcode() == SpvOpTypeRuntimeArray) {
+          id = id_inst->GetOperandAs<uint32_t>(1u);
+          id_inst = vstate.FindDef(id);
+        }
+        if (SpvOpTypeStruct != id_inst->opcode()) continue;
         MemberConstraints constraints;
         ComputeMemberConstraintsForStruct(&constraints, id, LayoutConstraints(),
                                           vstate);
@@ -942,12 +981,12 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
                         "decorations.";
             } else if (blockRules &&
                        (SPV_SUCCESS != (recursive_status = checkLayout(
-                                            id, sc_str, deco_str, true,
+                                            id, sc_str, deco_str, true, 0,
                                             constraints, vstate)))) {
               return recursive_status;
             } else if (bufferRules &&
                        (SPV_SUCCESS != (recursive_status = checkLayout(
-                                            id, sc_str, deco_str, false,
+                                            id, sc_str, deco_str, false, 0,
                                             constraints, vstate)))) {
               return recursive_status;
             }
@@ -959,42 +998,64 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
   return SPV_SUCCESS;
 }
 
+// Returns true if |decoration| cannot be applied to the same id more than once.
+bool AtMostOncePerId(SpvDecoration decoration) {
+  return decoration == SpvDecorationArrayStride;
+}
+
+// Returns true if |decoration| cannot be applied to the same member more than
+// once.
+bool AtMostOncePerMember(SpvDecoration decoration) {
+  switch (decoration) {
+    case SpvDecorationOffset:
+    case SpvDecorationMatrixStride:
+    case SpvDecorationRowMajor:
+    case SpvDecorationColMajor:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// Returns the string name for |decoration|.
+const char* GetDecorationName(SpvDecoration decoration) {
+  switch (decoration) {
+    case SpvDecorationArrayStride:
+      return "ArrayStride";
+    case SpvDecorationOffset:
+      return "Offset";
+    case SpvDecorationMatrixStride:
+      return "MatrixStride";
+    case SpvDecorationRowMajor:
+      return "RowMajor";
+    case SpvDecorationColMajor:
+      return "ColMajor";
+    case SpvDecorationBlock:
+      return "Block";
+    case SpvDecorationBufferBlock:
+      return "BufferBlock";
+    default:
+      return "";
+  }
+}
+
 spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
-  using AtMostOnceSet = std::unordered_set<SpvDecoration, SpvDecorationHash>;
-  using MutuallyExclusiveSets =
-      std::vector<std::unordered_set<SpvDecoration, SpvDecorationHash>>;
   using PerIDKey = std::tuple<SpvDecoration, uint32_t>;
   using PerMemberKey = std::tuple<SpvDecoration, uint32_t, uint32_t>;
-  using DecorationNameTable =
-      std::unordered_map<SpvDecoration, std::string, SpvDecorationHash>;
 
-  static const auto* const at_most_once_per_id = new AtMostOnceSet{
-      SpvDecorationArrayStride,
-  };
-  static const auto* const at_most_once_per_member = new AtMostOnceSet{
-      SpvDecorationOffset,
-      SpvDecorationMatrixStride,
-      SpvDecorationRowMajor,
-      SpvDecorationColMajor,
-  };
-  static const auto* const mutually_exclusive_per_id =
-      new MutuallyExclusiveSets{
-          {SpvDecorationBlock, SpvDecorationBufferBlock},
-      };
-  static const auto* const mutually_exclusive_per_member =
-      new MutuallyExclusiveSets{
-          {SpvDecorationRowMajor, SpvDecorationColMajor},
-      };
-  // For printing the decoration name.
-  static const auto* const decoration_name = new DecorationNameTable{
-      {SpvDecorationArrayStride, "ArrayStride"},
-      {SpvDecorationOffset, "Offset"},
-      {SpvDecorationMatrixStride, "MatrixStride"},
-      {SpvDecorationRowMajor, "RowMajor"},
-      {SpvDecorationColMajor, "ColMajor"},
-      {SpvDecorationBlock, "Block"},
-      {SpvDecorationBufferBlock, "BufferBlock"},
-  };
+  // An Array of pairs where the decorations in the pair cannot both be applied
+  // to the same id.
+  static const SpvDecoration mutually_exclusive_per_id[][2] = {
+      {SpvDecorationBlock, SpvDecorationBufferBlock}};
+  static const auto num_mutually_exclusive_per_id_pairs =
+      sizeof(mutually_exclusive_per_id) / (2 * sizeof(SpvDecoration));
+
+  // An Array of pairs where the decorations in the pair cannot both be applied
+  // to the same member.
+  static const SpvDecoration mutually_exclusive_per_member[][2] = {
+      {SpvDecorationRowMajor, SpvDecorationColMajor}};
+  static const auto num_mutually_exclusive_per_mem_pairs =
+      sizeof(mutually_exclusive_per_member) / (2 * sizeof(SpvDecoration));
 
   std::set<PerIDKey> seen_per_id;
   std::set<PerMemberKey> seen_per_member;
@@ -1006,26 +1067,31 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
       const auto dec_type = static_cast<SpvDecoration>(words[2]);
       const auto k = PerIDKey(dec_type, id);
       const auto already_used = !seen_per_id.insert(k).second;
-      if (already_used &&
-          at_most_once_per_id->find(dec_type) != at_most_once_per_id->end()) {
+      if (already_used && AtMostOncePerId(dec_type)) {
         return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                << "ID '" << id << "' decorated with "
-               << decoration_name->at(dec_type)
+               << GetDecorationName(dec_type)
                << " multiple times is not allowed.";
       }
       // Verify certain mutually exclusive decorations are not both applied on
       // an ID.
-      for (const auto& s : *mutually_exclusive_per_id) {
-        if (s.find(dec_type) == s.end()) continue;
-        for (auto excl_dec_type : s) {
-          if (excl_dec_type == dec_type) continue;
-          const auto excl_k = PerIDKey(excl_dec_type, id);
-          if (seen_per_id.find(excl_k) != seen_per_id.end()) {
-            return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
-                   << "ID '" << id << "' decorated with both "
-                   << decoration_name->at(dec_type) << " and "
-                   << decoration_name->at(excl_dec_type) << " is not allowed.";
-          }
+      for (uint32_t pair_idx = 0;
+           pair_idx < num_mutually_exclusive_per_id_pairs; ++pair_idx) {
+        SpvDecoration excl_dec_type = SpvDecorationMax;
+        if (mutually_exclusive_per_id[pair_idx][0] == dec_type) {
+          excl_dec_type = mutually_exclusive_per_id[pair_idx][1];
+        } else if (mutually_exclusive_per_id[pair_idx][1] == dec_type) {
+          excl_dec_type = mutually_exclusive_per_id[pair_idx][0];
+        } else {
+          continue;
+        }
+
+        const auto excl_k = PerIDKey(excl_dec_type, id);
+        if (seen_per_id.find(excl_k) != seen_per_id.end()) {
+          return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
+                 << "ID '" << id << "' decorated with both "
+                 << GetDecorationName(dec_type) << " and "
+                 << GetDecorationName(excl_dec_type) << " is not allowed.";
         }
       }
     } else if (SpvOpMemberDecorate == inst.opcode()) {
@@ -1034,27 +1100,32 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
       const auto dec_type = static_cast<SpvDecoration>(words[3]);
       const auto k = PerMemberKey(dec_type, id, member_id);
       const auto already_used = !seen_per_member.insert(k).second;
-      if (already_used && at_most_once_per_member->find(dec_type) !=
-                              at_most_once_per_member->end()) {
+      if (already_used && AtMostOncePerMember(dec_type)) {
         return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
                << "ID '" << id << "', member '" << member_id
-               << "' decorated with " << decoration_name->at(dec_type)
+               << "' decorated with " << GetDecorationName(dec_type)
                << " multiple times is not allowed.";
       }
       // Verify certain mutually exclusive decorations are not both applied on
       // a (ID, member) tuple.
-      for (const auto& s : *mutually_exclusive_per_member) {
-        if (s.find(dec_type) == s.end()) continue;
-        for (auto excl_dec_type : s) {
-          if (excl_dec_type == dec_type) continue;
-          const auto excl_k = PerMemberKey(excl_dec_type, id, member_id);
-          if (seen_per_member.find(excl_k) != seen_per_member.end()) {
-            return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
-                   << "ID '" << id << "', member '" << member_id
-                   << "' decorated with both " << decoration_name->at(dec_type)
-                   << " and " << decoration_name->at(excl_dec_type)
-                   << " is not allowed.";
-          }
+      for (uint32_t pair_idx = 0;
+           pair_idx < num_mutually_exclusive_per_mem_pairs; ++pair_idx) {
+        SpvDecoration excl_dec_type = SpvDecorationMax;
+        if (mutually_exclusive_per_member[pair_idx][0] == dec_type) {
+          excl_dec_type = mutually_exclusive_per_member[pair_idx][1];
+        } else if (mutually_exclusive_per_member[pair_idx][1] == dec_type) {
+          excl_dec_type = mutually_exclusive_per_member[pair_idx][0];
+        } else {
+          continue;
+        }
+
+        const auto excl_k = PerMemberKey(excl_dec_type, id, member_id);
+        if (seen_per_member.find(excl_k) != seen_per_member.end()) {
+          return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
+                 << "ID '" << id << "', member '" << member_id
+                 << "' decorated with both " << GetDecorationName(dec_type)
+                 << " and " << GetDecorationName(excl_dec_type)
+                 << " is not allowed.";
         }
       }
     }

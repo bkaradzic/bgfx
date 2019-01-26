@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "remove_unreferenced_instruction_reduction_pass.h"
+#include "remove_unreferenced_instruction_reduction_opportunity_finder.h"
 #include "remove_instruction_reduction_opportunity.h"
 #include "source/opcode.h"
 #include "source/opt/instruction.h"
@@ -23,8 +23,8 @@ namespace reduce {
 using namespace opt;
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
-RemoveUnreferencedInstructionReductionPass::GetAvailableOpportunities(
-    opt::IRContext* context) const {
+RemoveUnreferencedInstructionReductionOpportunityFinder::
+    GetAvailableOpportunities(opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
   for (auto& function : *context->module()) {
@@ -52,8 +52,9 @@ RemoveUnreferencedInstructionReductionPass::GetAvailableOpportunities(
   return result;
 }
 
-std::string RemoveUnreferencedInstructionReductionPass::GetName() const {
-  return "RemoveUnreferencedInstructionReductionPass";
+std::string RemoveUnreferencedInstructionReductionOpportunityFinder::GetName()
+    const {
+  return "RemoveUnreferencedInstructionReductionOpportunityFinder";
 }
 
 }  // namespace reduce

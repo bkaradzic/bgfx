@@ -34,7 +34,7 @@ std::vector<uint32_t> ReductionPass::TryApplyReduction(
   assert(context);
 
   std::vector<std::unique_ptr<ReductionOpportunity>> opportunities =
-      GetAvailableOpportunities(context.get());
+      finder_->GetAvailableOpportunities(context.get());
 
   if (!is_initialized_) {
     is_initialized_ = true;
@@ -81,6 +81,8 @@ bool ReductionPass::ReachedMinimumGranularity() const {
   assert(granularity_ != 0);
   return granularity_ == 1;
 }
+
+std::string ReductionPass::GetName() const { return finder_->GetName(); }
 
 }  // namespace reduce
 }  // namespace spvtools

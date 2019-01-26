@@ -449,12 +449,11 @@ OpFunctionEnd
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "OpVariable, <id> '5[%5]', has a disallowed initializer & storage "
-          "class combination.\nFrom WebGPU execution environment spec:\n"
-          "Variable declarations that include initializers must have one of "
-          "the following storage classes: Output, Private, or Function\n"
-          "  %5 = OpVariable %_ptr_Uniform_float Uniform %float_1\n"));
+      HasSubstr("OpVariable, <id> '5[%5]', has a disallowed initializer & "
+                "storage class combination.\nFrom WebGPU spec:\nVariable "
+                "declarations that include initializers must have one of the "
+                "following storage classes: Output, Private, or Function\n  %5 "
+                "= OpVariable %_ptr_Uniform_float Uniform %float_1\n"));
 }
 
 TEST_F(ValidateMemory, WebGPUOutputStorageClassWithoutInitializerBad) {
@@ -628,12 +627,11 @@ OpFunctionEnd
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "OpVariable, <id> '5[%5]', has a disallowed initializer & storage "
-          "class combination.\nFrom Vulkan spec, Appendix A:\n"
-          "Variable declarations that include initializers must have one of "
-          "the following storage classes: Output, Private, or Function\n  "
-          "%5 = OpVariable %_ptr_Input_float Input %float_1\n"));
+      HasSubstr("OpVariable, <id> '5[%5]', has a disallowed initializer & "
+                "storage class combination.\nFrom Vulkan spec:\nVariable "
+                "declarations that include initializers must have one of the "
+                "following storage classes: Output, Private, or Function\n  %5 "
+                "= OpVariable %_ptr_Input_float Input %float_1\n"));
 }
 
 TEST_F(ValidateMemory, ArrayLenCorrectResultType) {
@@ -2179,7 +2177,7 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '3[%_runtimearr_2]' is not "
-          "valid in Vulkan environment.\n  %_runtimearr__runtimearr_2 = "
+          "valid in Vulkan environments.\n  %_runtimearr__runtimearr_2 = "
           "OpTypeRuntimeArray %_runtimearr_2\n"));
 }
 
@@ -2210,7 +2208,7 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '3[%_runtimearr_2]' is not "
-          "valid in WebGPU environment.\n  %_runtimearr__runtimearr_2 = "
+          "valid in WebGPU environments.\n  %_runtimearr__runtimearr_2 = "
           "OpTypeRuntimeArray %_runtimearr_2\n"));
 }
 
@@ -2242,7 +2240,7 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '4[%_runtimearr_uint]' is not "
-          "valid in Vulkan environment.\n  %_runtimearr__runtimearr_uint = "
+          "valid in Vulkan environments.\n  %_runtimearr__runtimearr_uint = "
           "OpTypeRuntimeArray %_runtimearr_uint\n"));
 }
 
@@ -2304,7 +2302,7 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '5[%_runtimearr_uint]' is not "
-          "valid in Vulkan environment.\n  %_runtimearr__runtimearr_uint = "
+          "valid in Vulkan environments.\n  %_runtimearr__runtimearr_uint = "
           "OpTypeRuntimeArray %_runtimearr_uint\n"));
 }
 
@@ -2340,7 +2338,7 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '5[%_runtimearr_uint]' is not "
-          "valid in Vulkan environment.\n  %_runtimearr__runtimearr_uint = "
+          "valid in Vulkan environments.\n  %_runtimearr__runtimearr_uint = "
           "OpTypeRuntimeArray %_runtimearr_uint\n"));
 }
 
@@ -2370,7 +2368,7 @@ OpFunctionEnd
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("OpTypeArray Element Type <id> '5[%_runtimearr_4]' is not "
-                "valid in Vulkan environment.\n  %_arr__runtimearr_4_uint_1 = "
+                "valid in Vulkan environments.\n  %_arr__runtimearr_4_uint_1 = "
                 "OpTypeArray %_runtimearr_4 %uint_1\n"));
 }
 
@@ -2402,7 +2400,7 @@ OpFunctionEnd
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("OpTypeArray Element Type <id> '5[%_runtimearr_4]' is not "
-                "valid in WebGPU environment.\n  %_arr__runtimearr_4_uint_1 = "
+                "valid in WebGPU environments.\n  %_arr__runtimearr_4_uint_1 = "
                 "OpTypeArray %_runtimearr_4 %uint_1\n"));
 }
 
@@ -2436,7 +2434,7 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "OpTypeRuntimeArray Element Type <id> '6[%_runtimearr_uint]' is not "
-          "valid in Vulkan environment.\n  %_runtimearr__runtimearr_uint = "
+          "valid in Vulkan environments.\n  %_runtimearr__runtimearr_uint = "
           "OpTypeRuntimeArray %_runtimearr_uint\n"));
 }
 
@@ -2468,9 +2466,10 @@ OpFunctionEnd
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr("OpTypeArray Element Type <id> '6[%_runtimearr_uint]' is not "
-                "valid in Vulkan environment.\n  %_arr__runtimearr_uint_uint_1 "
-                "= OpTypeArray %_runtimearr_uint %uint_1\n"));
+      HasSubstr(
+          "OpTypeArray Element Type <id> '6[%_runtimearr_uint]' is not "
+          "valid in Vulkan environments.\n  %_arr__runtimearr_uint_uint_1 "
+          "= OpTypeArray %_runtimearr_uint %uint_1\n"));
 }
 
 TEST_F(ValidateMemory,
@@ -2504,9 +2503,10 @@ OpFunctionEnd
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr("OpTypeArray Element Type <id> '6[%_runtimearr_uint]' is not "
-                "valid in Vulkan environment.\n  %_arr__runtimearr_uint_uint_1 "
-                "= OpTypeArray %_runtimearr_uint %uint_1\n"));
+      HasSubstr(
+          "OpTypeArray Element Type <id> '6[%_runtimearr_uint]' is not "
+          "valid in Vulkan environments.\n  %_arr__runtimearr_uint_uint_1 "
+          "= OpTypeArray %_runtimearr_uint %uint_1\n"));
 }
 
 TEST_F(ValidateMemory, VulkanRTAStructInsideRTAWithRuntimeDescriptorArrayGood) {

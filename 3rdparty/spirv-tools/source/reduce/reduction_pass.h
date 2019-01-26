@@ -17,7 +17,7 @@
 
 #include "spirv-tools/libspirv.hpp"
 
-#include "reduction_opportunity.h"
+#include "reduction_opportunity_finder.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
@@ -32,12 +32,14 @@ namespace reduce {
 // again, until the minimum granularity is reached.
 class ReductionPass {
  public:
-  // Constructs a reduction pass with a given target environment, |target_env|.
-  // Initially the pass is uninitialized.
-  explicit ReductionPass(const spv_target_env target_env)
-      : target_env_(target_env), is_initialized_(false) {}
-
-  virtual ~ReductionPass() = default;
+  // Constructs a reduction pass with a given target environment, |target_env|,
+  // and a given finder of reduction opportunities, |finder|.  Initially the
+  // pass is uninitialized.
+  explicit ReductionPass(const spv_target_env target_env,
+                         std::unique_ptr<ReductionOpportunityFinder> finder)
+      : target_env_(target_env),
+        finder_(std::move(finder)),
+        is_initialized_(false) {}
 
   // Applies the reduction pass to the given binary.
   std::vector<uint32_t> TryApplyReduction(const std::vector<uint32_t>& binary);
@@ -49,18 +51,13 @@ class ReductionPass {
   // applied has reached a minimum.
   bool ReachedMinimumGranularity() const;
 
-  // Returns the name of the reduction pass (useful for monitoring reduction
-  // progress).
-  virtual std::string GetName() const = 0;
-
- protected:
-  // Finds and returns the reduction opportunities relevant to this pass that
-  // could be applied to the given SPIR-V module.
-  virtual std::vector<std::unique_ptr<ReductionOpportunity>>
-  GetAvailableOpportunities(opt::IRContext* context) const = 0;
+  // Returns the name associated with this reduction pass (based on its
+  // associated finder).
+  std::string GetName() const;
 
  private:
   const spv_target_env target_env_;
+  const std::unique_ptr<ReductionOpportunityFinder> finder_;
   MessageConsumer consumer_;
   bool is_initialized_;
   uint32_t index_;

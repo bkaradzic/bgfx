@@ -248,3 +248,43 @@ bool spvIsWebGPUEnv(spv_target_env env) {
   }
   return false;
 }
+
+bool spvIsVulkanOrWebGPUEnv(spv_target_env env) {
+  return spvIsVulkanEnv(env) || spvIsWebGPUEnv(env);
+}
+
+std::string spvLogStringForEnv(spv_target_env env) {
+  switch (env) {
+    case SPV_ENV_OPENCL_1_2:
+    case SPV_ENV_OPENCL_2_0:
+    case SPV_ENV_OPENCL_2_1:
+    case SPV_ENV_OPENCL_2_2:
+    case SPV_ENV_OPENCL_EMBEDDED_1_2:
+    case SPV_ENV_OPENCL_EMBEDDED_2_0:
+    case SPV_ENV_OPENCL_EMBEDDED_2_1:
+    case SPV_ENV_OPENCL_EMBEDDED_2_2: {
+      return "OpenCL";
+    }
+    case SPV_ENV_OPENGL_4_0:
+    case SPV_ENV_OPENGL_4_1:
+    case SPV_ENV_OPENGL_4_2:
+    case SPV_ENV_OPENGL_4_3:
+    case SPV_ENV_OPENGL_4_5: {
+      return "OpenGL";
+    }
+    case SPV_ENV_VULKAN_1_0:
+    case SPV_ENV_VULKAN_1_1: {
+      return "Vulkan";
+    }
+    case SPV_ENV_WEBGPU_0: {
+      return "WebGPU";
+    }
+    case SPV_ENV_UNIVERSAL_1_0:
+    case SPV_ENV_UNIVERSAL_1_1:
+    case SPV_ENV_UNIVERSAL_1_2:
+    case SPV_ENV_UNIVERSAL_1_3: {
+      return "Universal";
+    }
+  }
+  return "Unknown";
+}

@@ -528,6 +528,30 @@ TEST_F(CodeSinkTest, MoveWithAtomicWithoutSync) {
   EXPECT_EQ(Pass::Status::SuccessWithChange, std::get<1>(result));
 }
 
+TEST_F(CodeSinkTest, DecorationOnLoad) {
+  const std::string text = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %1 "main" %2
+               OpDecorate %3 RelaxedPrecision
+       %void = OpTypeVoid
+          %5 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+%_ptr_Input_float = OpTypePointer Input %float
+          %2 = OpVariable %_ptr_Input_float Input
+          %1 = OpFunction %void None %5
+          %8 = OpLabel
+          %3 = OpLoad %float %2
+               OpReturn
+               OpFunctionEnd
+)";
+
+  // We just want to make sure the code does not crash.
+  auto result = SinglePassRunAndDisassemble<CodeSinkingPass>(
+      text, /* skip_nop = */ true, /* do_validation = */ true);
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

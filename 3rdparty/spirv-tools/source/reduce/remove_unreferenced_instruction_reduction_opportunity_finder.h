@@ -12,32 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_REDUCE_REMOVE_UNREFERENCED_INSTRUCTION_REDUCTION_PASS_H_
-#define SOURCE_REDUCE_REMOVE_UNREFERENCED_INSTRUCTION_REDUCTION_PASS_H_
+#ifndef SOURCE_REDUCE_REMOVE_UNREFERENCED_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
+#define SOURCE_REDUCE_REMOVE_UNREFERENCED_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
 
-#include "reduction_pass.h"
+#include "reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
 
-// A reduction pass for removing non-control-flow instructions in blocks in
-// cases where the instruction's id is not referenced.  As well as making the
+// A finder for opportunities to remove non-control-flow instructions in blocks
+// in cases where the instruction's id is not referenced.  As well as making the
 // module smaller, removing an instruction that references particular ids may
 // create opportunities for subsequently removing the instructions that
 // generated those ids.
-class RemoveUnreferencedInstructionReductionPass : public ReductionPass {
+class RemoveUnreferencedInstructionReductionOpportunityFinder
+    : public ReductionOpportunityFinder {
  public:
-  // Creates the reduction pass in the context of the given target environment
-  // |target_env|
-  explicit RemoveUnreferencedInstructionReductionPass(
-      const spv_target_env target_env)
-      : ReductionPass(target_env) {}
+  RemoveUnreferencedInstructionReductionOpportunityFinder() = default;
 
-  ~RemoveUnreferencedInstructionReductionPass() override = default;
+  ~RemoveUnreferencedInstructionReductionOpportunityFinder() override = default;
 
   std::string GetName() const final;
 
- protected:
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
       opt::IRContext* context) const final;
 
@@ -47,4 +43,4 @@ class RemoveUnreferencedInstructionReductionPass : public ReductionPass {
 }  // namespace reduce
 }  // namespace spvtools
 
-#endif  // SOURCE_REDUCE_REMOVE_UNREFERENCED_INSTRUCTION_REDUCTION_PASS_H_
+#endif  // SOURCE_REDUCE_REMOVE_UNREFERENCED_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_

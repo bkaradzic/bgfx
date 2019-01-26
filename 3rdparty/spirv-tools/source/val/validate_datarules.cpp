@@ -214,6 +214,21 @@ spv_result_t ValidateStruct(ValidationState_t& _, const Instruction* inst) {
   return SPV_SUCCESS;
 }
 
+// Validates that any undefined type of the array is a forward pointer.
+// It is valid to declare a forward pointer, and use its <id> as the element
+// type of the array.
+spv_result_t ValidateArray(ValidationState_t& _, const Instruction* inst) {
+  auto element_type_id = inst->GetOperandAs<const uint32_t>(1);
+  auto element_type_instruction = _.FindDef(element_type_id);
+  if (element_type_instruction == nullptr &&
+      !_.IsForwardPointer(element_type_id)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Forward reference operands in an OpTypeArray must first be "
+              "declared using OpTypeForwardPointer.";
+  }
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 // Validates that Data Rules are followed according to the specifications.
@@ -254,6 +269,10 @@ spv_result_t DataRulesPass(ValidationState_t& _, const Instruction* inst) {
     }
     case SpvOpTypeStruct: {
       if (auto error = ValidateStruct(_, inst)) return error;
+      break;
+    }
+    case SpvOpTypeArray: {
+      if (auto error = ValidateArray(_, inst)) return error;
       break;
     }
     // TODO(ehsan): add more data rules validation here.

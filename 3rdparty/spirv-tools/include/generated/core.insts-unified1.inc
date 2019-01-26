@@ -1,5 +1,6 @@
 static const SpvCapability pygen_variable_caps_Addresses[] = {SpvCapabilityAddresses};
-static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBuffer[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer};
+static const SpvCapability pygen_variable_caps_AddressesPhysicalStorageBufferAddressesEXT[] = {SpvCapabilityAddresses, SpvCapabilityPhysicalStorageBufferAddressesEXT};
+static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBufferPhysicalStorageBufferAddressesEXT[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer, SpvCapabilityPhysicalStorageBufferAddressesEXT};
 static const SpvCapability pygen_variable_caps_DerivativeControl[] = {SpvCapabilityDerivativeControl};
 static const SpvCapability pygen_variable_caps_DeviceEnqueue[] = {SpvCapabilityDeviceEnqueue};
 static const SpvCapability pygen_variable_caps_FragmentMaskAMD[] = {SpvCapabilityFragmentMaskAMD};
@@ -82,7 +83,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"TypeReserveId", SpvOpTypeReserveId, 1, pygen_variable_caps_Pipes, 1, {SPV_OPERAND_TYPE_RESULT_ID}, 1, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"TypeQueue", SpvOpTypeQueue, 1, pygen_variable_caps_DeviceEnqueue, 1, {SPV_OPERAND_TYPE_RESULT_ID}, 1, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"TypePipe", SpvOpTypePipe, 1, pygen_variable_caps_Pipes, 2, {SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ACCESS_QUALIFIER}, 1, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
-  {"TypeForwardPointer", SpvOpTypeForwardPointer, 1, pygen_variable_caps_Addresses, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_STORAGE_CLASS}, 0, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
+  {"TypeForwardPointer", SpvOpTypeForwardPointer, 2, pygen_variable_caps_AddressesPhysicalStorageBufferAddressesEXT, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_STORAGE_CLASS}, 0, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"ConstantTrue", SpvOpConstantTrue, 0, nullptr, 2, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"ConstantFalse", SpvOpConstantFalse, 0, nullptr, 2, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"Constant", SpvOpConstant, 0, nullptr, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_TYPED_LITERAL_NUMBER}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
@@ -106,7 +107,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"CopyMemorySized", SpvOpCopyMemorySized, 1, pygen_variable_caps_Addresses, 4, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS}, 0, 0, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"AccessChain", SpvOpAccessChain, 0, nullptr, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"InBoundsAccessChain", SpvOpInBoundsAccessChain, 0, nullptr, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
-  {"PtrAccessChain", SpvOpPtrAccessChain, 3, pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBuffer, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
+  {"PtrAccessChain", SpvOpPtrAccessChain, 4, pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBufferPhysicalStorageBufferAddressesEXT, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"ArrayLength", SpvOpArrayLength, 1, pygen_variable_caps_Shader, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_LITERAL_INTEGER}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"GenericPtrMemSemantics", SpvOpGenericPtrMemSemantics, 1, pygen_variable_caps_Kernel, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"InBoundsPtrAccessChain", SpvOpInBoundsPtrAccessChain, 1, pygen_variable_caps_Addresses, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_VARIABLE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
@@ -153,10 +154,10 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"SConvert", SpvOpSConvert, 0, nullptr, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"FConvert", SpvOpFConvert, 0, nullptr, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"QuantizeToF16", SpvOpQuantizeToF16, 0, nullptr, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
-  {"ConvertPtrToU", SpvOpConvertPtrToU, 1, pygen_variable_caps_Addresses, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
+  {"ConvertPtrToU", SpvOpConvertPtrToU, 2, pygen_variable_caps_AddressesPhysicalStorageBufferAddressesEXT, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"SatConvertSToU", SpvOpSatConvertSToU, 1, pygen_variable_caps_Kernel, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"SatConvertUToS", SpvOpSatConvertUToS, 1, pygen_variable_caps_Kernel, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
-  {"ConvertUToPtr", SpvOpConvertUToPtr, 1, pygen_variable_caps_Addresses, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
+  {"ConvertUToPtr", SpvOpConvertUToPtr, 2, pygen_variable_caps_AddressesPhysicalStorageBufferAddressesEXT, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"PtrCastToGeneric", SpvOpPtrCastToGeneric, 1, pygen_variable_caps_Kernel, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"GenericCastToPtr", SpvOpGenericCastToPtr, 1, pygen_variable_caps_Kernel, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"GenericCastToPtrExplicit", SpvOpGenericCastToPtrExplicit, 1, pygen_variable_caps_Kernel, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_STORAGE_CLASS}, 1, 1, 0, nullptr, SPV_SPIRV_VERSION_WORD(1, 0)},

@@ -22,24 +22,21 @@ namespace spvtools {
 namespace reduce {
 namespace {
 
-// A dumb reduction pass that removes global values regardless of whether they
-// are referenced. This is very likely to make the resulting module invalid.  We
-// use this to test the reducer's behavior in the scenario where a bad reduction
-// pass leads to an invalid module.
-class BlindlyRemoveGlobalValuesPass : public ReductionPass {
+// A dumb reduction opportunity finder that finds opportunities to remove global
+// values regardless of whether they are referenced. This is very likely to make
+// the resulting module invalid.  We use this to test the reducer's behavior in
+// the scenario where a bad reduction pass leads to an invalid module.
+class BlindlyRemoveGlobalValuesReductionOpportunityFinder
+    : public ReductionOpportunityFinder {
  public:
-  // Creates the reduction pass in the context of the given target environment
-  // |target_env|
-  explicit BlindlyRemoveGlobalValuesPass(const spv_target_env target_env)
-      : ReductionPass(target_env) {}
+  BlindlyRemoveGlobalValuesReductionOpportunityFinder() = default;
 
-  ~BlindlyRemoveGlobalValuesPass() override = default;
+  ~BlindlyRemoveGlobalValuesReductionOpportunityFinder() override = default;
 
   // The name of this pass.
   std::string GetName() const final { return "BlindlyRemoveGlobalValuesPass"; };
 
- protected:
-  // Adds opportunities to remove all global values.  Assuming they are all
+  // Finds opportunities to remove all global values.  Assuming they are all
   // referenced (directly or indirectly) from elsewhere in the module, each such
   // opportunity will make the module invalid.
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
@@ -153,7 +150,8 @@ TEST(ValidationDuringReductionTest, CheckInvalidPassMakesNoProgress) {
   reducer.SetInterestingnessFunction(
       [](const std::vector<uint32_t>&, uint32_t) -> bool { return true; });
 
-  reducer.AddReductionPass(MakeUnique<BlindlyRemoveGlobalValuesPass>(env));
+  reducer.AddReductionPass(
+      MakeUnique<BlindlyRemoveGlobalValuesReductionOpportunityFinder>());
 
   std::vector<uint32_t> binary_in;
   SpirvTools t(env);
@@ -357,7 +355,8 @@ TEST(ValidationDuringReductionTest, CheckNotAlwaysInvalidCanMakeProgress) {
   reducer.SetInterestingnessFunction(
       [](const std::vector<uint32_t>&, uint32_t) -> bool { return true; });
 
-  reducer.AddReductionPass(MakeUnique<BlindlyRemoveGlobalValuesPass>(env));
+  reducer.AddReductionPass(
+      MakeUnique<BlindlyRemoveGlobalValuesReductionOpportunityFinder>());
 
   std::vector<uint32_t> binary_in;
   SpirvTools t(env);

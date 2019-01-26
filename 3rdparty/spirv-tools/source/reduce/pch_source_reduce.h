@@ -16,8 +16,8 @@
 #include <functional>
 #include <string>
 #include "source/reduce/change_operand_reduction_opportunity.h"
-#include "source/reduce/operand_to_const_reduction_pass.h"
+#include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
 #include "source/reduce/reduction_opportunity.h"
 #include "source/reduce/reduction_pass.h"
 #include "source/reduce/remove_instruction_reduction_opportunity.h"
-#include "source/reduce/remove_unreferenced_instruction_reduction_pass.h"
+#include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"

@@ -26,6 +26,8 @@ project "spirv-opt"
 	files {
 		path.join(SPIRV_TOOLS, "source/opt/**.cpp"),
 		path.join(SPIRV_TOOLS, "source/opt/**.h"),
+		path.join(SPIRV_TOOLS, "source/reduce/**.cpp"),
+		path.join(SPIRV_TOOLS, "source/reduce/**.h"),
 
 		-- libspirv
 		path.join(SPIRV_TOOLS, "source/assembly_grammar.cpp"),

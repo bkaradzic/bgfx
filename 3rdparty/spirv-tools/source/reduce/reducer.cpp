@@ -141,8 +141,9 @@ Reducer::ReductionResultStatus Reducer::Run(
 }
 
 void Reducer::AddReductionPass(
-    std::unique_ptr<ReductionPass>&& reduction_pass) {
-  impl_->passes.push_back(std::move(reduction_pass));
+    std::unique_ptr<ReductionOpportunityFinder>&& finder) {
+  impl_->passes.push_back(spvtools::MakeUnique<ReductionPass>(
+      impl_->target_env, std::move(finder)));
 }
 
 bool Reducer::Impl::ReachedStepLimit(uint32_t current_step,

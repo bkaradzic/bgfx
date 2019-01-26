@@ -493,13 +493,10 @@ TEST_P(ValidateCFG, BranchTargetFirstBlockBadSinceValue) {
   str += "OpFunctionEnd\n";
 
   CompileSuccessfully(str);
-  ASSERT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      MatchesRegex("Block\\(s\\) \\{11\\[%11\\]\\} are referenced but not "
-                   "defined in function .\\[%Main\\]\n  %Main = OpFunction "
-                   "%void None %10\n"))
-      << str;
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("'Target Label' operands for OpBranch must "
+                        "be the ID of an OpLabel instruction"));
 }
 
 TEST_P(ValidateCFG, BranchConditionalTrueTargetFirstBlockBad) {
@@ -2058,6 +2055,57 @@ TEST_F(ValidateCFG, KernelWithPhiPtr) {
 
   CompileSuccessfully(text);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateCFG, SwitchTargetMustBeLabel) {
+  const std::string text = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %1 "foo"
+       %uint = OpTypeInt 32 0
+     %uint_0 = OpConstant %uint 0
+       %void = OpTypeVoid
+          %5 = OpTypeFunction %void
+          %1 = OpFunction %void None %5
+          %6 = OpLabel
+          %7 = OpCopyObject %uint %uint_0
+               OpSelectionMerge %8 None
+               OpSwitch %uint_0 %8 0 %7
+          %8 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("'Target Label' operands for OpSwitch must "
+                        "be IDs of an OpLabel instruction"));
+}
+
+TEST_F(ValidateCFG, BranchTargetMustBeLabel) {
+  const std::string text = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %1 "foo"
+       %uint = OpTypeInt 32 0
+     %uint_0 = OpConstant %uint 0
+       %void = OpTypeVoid
+          %5 = OpTypeFunction %void
+          %1 = OpFunction %void None %5
+          %2 = OpLabel
+          %7 = OpCopyObject %uint %uint_0
+               OpBranch %7
+          %8 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("'Target Label' operands for OpBranch must "
+                        "be the ID of an OpLabel instruction"));
 }
 
 /// TODO(umar): Nested CFG constructs

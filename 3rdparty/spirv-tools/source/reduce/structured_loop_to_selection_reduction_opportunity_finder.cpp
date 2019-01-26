@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "structured_loop_to_selection_reduction_pass.h"
+#include "structured_loop_to_selection_reduction_opportunity_finder.h"
 #include "structured_loop_to_selection_reduction_opportunity.h"
 
 namespace spvtools {
@@ -26,7 +26,7 @@ const uint32_t kContinueNodeIndex = 1;
 }  // namespace
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
-StructuredLoopToSelectionReductionPass::GetAvailableOpportunities(
+StructuredLoopToSelectionReductionOpportunityFinder::GetAvailableOpportunities(
     opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
@@ -87,8 +87,9 @@ StructuredLoopToSelectionReductionPass::GetAvailableOpportunities(
   return result;
 }
 
-std::string StructuredLoopToSelectionReductionPass::GetName() const {
-  return "StructuredLoopToSelectionReductionPass";
+std::string StructuredLoopToSelectionReductionOpportunityFinder::GetName()
+    const {
+  return "StructuredLoopToSelectionReductionOpportunityFinder";
 }
 
 }  // namespace reduce

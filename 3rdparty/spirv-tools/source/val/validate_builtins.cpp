@@ -1617,6 +1617,46 @@ spv_result_t BuiltInsValidator::ValidatePositionAtReference(
     }
   }
 
+  if (spvIsWebGPUEnv(_.context()->target_env)) {
+    const SpvStorageClass storage_class = GetStorageClass(referenced_from_inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassOutput) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << "WebGPU spec allows BuiltIn Position to be only used for "
+                "variables with Output storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const SpvExecutionModel execution_model : execution_models_) {
+      switch (execution_model) {
+        case SpvExecutionModelVertex: {
+          if (spv_result_t error = ValidateF32Vec(
+                  decoration, built_in_inst, 4,
+                  [this, &referenced_from_inst](
+                      const std::string& message) -> spv_result_t {
+                    return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+                           << "According to the WebGPU spec BuiltIn Position "
+                              "variable needs to be a 4-component 32-bit float "
+                              "vector. "
+                           << message;
+                  })) {
+            return error;
+          }
+          break;
+        }
+        default: {
+          return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+                 << "WebGPU spec allows BuiltIn Position to be used only "
+                    "with the Vertex execution model. "
+                 << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                     referenced_from_inst, execution_model);
+        }
+      }
+    }
+  }
+
   if (function_id_ == 0) {
     // Propagate this rule to all dependant ids in the global scope.
     id_to_at_reference_checks_[referenced_from_inst.id()].push_back(std::bind(
@@ -2656,14 +2696,15 @@ spv_result_t BuiltInsValidator::Run() {
 
 // Validates correctness of built-in variables.
 spv_result_t ValidateBuiltIns(ValidationState_t& _) {
-  if (!spvIsVulkanEnv(_.context()->target_env)) {
-    // Early return. All currently implemented rules are based on Vulkan spec.
+  if (!spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
+    // Early return. All currently implemented rules are based on Vulkan or
+    // WebGPU spec.
     //
     // TODO: If you are adding validation rules for environments other than
-    // Vulkan (or general rules which are not environment independent), then you
-    // need to modify or remove this condition. Consider also adding early
-    // returns into BuiltIn-specific rules, so that the system doesn't spawn new
-    // rules which don't do anything.
+    // Vulkan or WebGPU (or general rules which are not environment
+    // independent), then you need to modify or remove this condition. Consider
+    // also adding early returns into BuiltIn-specific rules, so that the system
+    // doesn't spawn new rules which don't do anything.
     return SPV_SUCCESS;
   }
 

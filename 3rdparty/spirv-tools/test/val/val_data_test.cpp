@@ -934,6 +934,23 @@ TEST_F(ValidateData, webgpu_RTA_not_at_end_of_struct) {
                         "OpTypeStruct %_runtimearr_uint %uint\n"));
 }
 
+TEST_F(ValidateData, invalid_forward_reference_in_array) {
+  std::string str = R"(
+               OpCapability Shader
+               OpCapability Linkage
+               OpMemoryModel Logical GLSL450
+       %uint = OpTypeInt 32 0
+%uint_1 = OpConstant %uint 1
+%_arr_3_uint_1 = OpTypeArray %_arr_3_uint_1 %uint_1
+)";
+
+  CompileSuccessfully(str.c_str(), SPV_ENV_UNIVERSAL_1_3);
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Forward reference operands in an OpTypeArray must "
+                        "first be declared using OpTypeForwardPointer."));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

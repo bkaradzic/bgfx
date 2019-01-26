@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/reduce/operand_to_dominating_id_reduction_pass.h"
 #include "reduce_test_util.h"
 #include "source/opt/build_module.h"
+#include "source/reduce/operand_to_dominating_id_reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
@@ -53,8 +53,8 @@ TEST(OperandToDominatingIdReductionPassTest, BasicCheck) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, original, kReduceAssembleOption);
-  const auto pass = TestSubclass<OperandToDominatingIdReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = OperandToDominatingIdReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(10, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
   ops[0]->TryToApply();

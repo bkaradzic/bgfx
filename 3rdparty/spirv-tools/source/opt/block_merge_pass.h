@@ -54,14 +54,6 @@ class BlockMergePass : public Pass {
   // with no other predecessors. Merge these blocks into a single block.
   bool MergeBlocks(Function* func);
 
-  // Returns true if |block| (or |id|) contains a merge instruction.
-  bool IsHeader(BasicBlock* block);
-  bool IsHeader(uint32_t id);
-
-  // Returns true if |block| (or |id|) is the merge target of a merge
-  // instruction.
-  bool IsMerge(BasicBlock* block);
-  bool IsMerge(uint32_t id);
 };
 
 }  // namespace opt

@@ -75,9 +75,9 @@ class Reducer {
   void SetInterestingnessFunction(
       InterestingnessFunction interestingness_function);
 
-  // Adds a reduction pass to the sequence of passes that will be iterated
-  // over.
-  void AddReductionPass(std::unique_ptr<ReductionPass>&& reduction_pass);
+  // Adds a reduction pass based on the given finder to the sequence of passes
+  // that will be iterated over.
+  void AddReductionPass(std::unique_ptr<ReductionOpportunityFinder>&& finder);
 
   // Reduces the given SPIR-V module |binary_out|.
   // The reduced binary ends up in |binary_out|.

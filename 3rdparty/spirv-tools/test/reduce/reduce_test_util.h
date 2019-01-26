@@ -24,23 +24,6 @@
 namespace spvtools {
 namespace reduce {
 
-// A helper class that subclasses a given reduction pass class in order to
-// provide a wrapper for its protected methods.
-template <class ReductionPassT>
-class TestSubclass : public ReductionPassT {
- public:
-  // Creates an instance of the reduction pass subclass with respect to target
-  // environment |env|.
-  explicit TestSubclass(const spv_target_env env) : ReductionPassT(env) {}
-  ~TestSubclass() = default;
-
-  // A wrapper for GetAvailableOpportunities(...)
-  std::vector<std::unique_ptr<ReductionOpportunity>>
-  WrapGetAvailableOpportunities(opt::IRContext* context) const {
-    return ReductionPassT::GetAvailableOpportunities(context);
-  }
-};
-
 // Checks whether the given binaries are bit-wise equal.
 void CheckEqual(spv_target_env env,
                 const std::vector<uint32_t>& expected_binary,

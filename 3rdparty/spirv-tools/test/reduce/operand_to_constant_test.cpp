@@ -14,7 +14,7 @@
 
 #include "reduce_test_util.h"
 #include "source/opt/build_module.h"
-#include "source/reduce/operand_to_const_reduction_pass.h"
+#include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
@@ -97,8 +97,9 @@ TEST(OperandToConstantReductionPassTest, BasicCheck) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, original, kReduceAssembleOption);
-  const auto pass = TestSubclass<OperandToConstReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops =
+      OperandToConstReductionOpportunityFinder().GetAvailableOpportunities(
+          context.get());
   ASSERT_EQ(17, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
   ops[0]->TryToApply();
@@ -146,8 +147,9 @@ TEST(OperandToConstantReductionPassTest, WithCalledFunction) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<OperandToConstReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops =
+      OperandToConstReductionOpportunityFinder().GetAvailableOpportunities(
+          context.get());
   ASSERT_EQ(0, ops.size());
 }
 

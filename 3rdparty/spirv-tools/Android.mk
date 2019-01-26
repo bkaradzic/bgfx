@@ -76,6 +76,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/aggressive_dead_code_elim_pass.cpp \
 		source/opt/basic_block.cpp \
 		source/opt/block_merge_pass.cpp \
+		source/opt/block_merge_util.cpp \
 		source/opt/build_module.cpp \
 		source/opt/cfg.cpp \
 		source/opt/cfg_cleanup_pass.cpp \

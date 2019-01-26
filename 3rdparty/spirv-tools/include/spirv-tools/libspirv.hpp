@@ -235,6 +235,9 @@ class SpirvTools {
   bool Validate(const uint32_t* binary, size_t binary_size,
                 spv_validator_options options) const;
 
+  // Was this object successfully constructed.
+  bool IsValid() const;
+
  private:
   struct Impl;  // Opaque struct for holding the data fields used by this class.
   std::unique_ptr<Impl> impl_;  // Unique pointer to implementation data.

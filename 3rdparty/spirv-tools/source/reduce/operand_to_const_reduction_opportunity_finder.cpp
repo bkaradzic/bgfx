@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/reduce/operand_to_const_reduction_pass.h"
+#include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
 
 #include "source/opt/instruction.h"
 #include "source/reduce/change_operand_reduction_opportunity.h"
@@ -23,7 +23,7 @@ namespace reduce {
 using namespace opt;
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
-OperandToConstReductionPass::GetAvailableOpportunities(
+OperandToConstReductionOpportunityFinder::GetAvailableOpportunities(
     opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
   assert(result.empty());
@@ -75,8 +75,8 @@ OperandToConstReductionPass::GetAvailableOpportunities(
   return result;
 }
 
-std::string OperandToConstReductionPass::GetName() const {
-  return "OperandToConstReductionPass";
+std::string OperandToConstReductionOpportunityFinder::GetName() const {
+  return "OperandToConstReductionOpportunityFinder";
 }
 
 }  // namespace reduce

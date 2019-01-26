@@ -14,10 +14,10 @@
 
 #include "reduce_test_util.h"
 
-#include "source/reduce/operand_to_const_reduction_pass.h"
+#include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
 #include "source/reduce/reducer.h"
-#include "source/reduce/remove_opname_instruction_reduction_pass.h"
-#include "source/reduce/remove_unreferenced_instruction_reduction_pass.h"
+#include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
+#include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
@@ -217,9 +217,10 @@ TEST(ReducerTest, ExprToConstantAndRemoveUnreferenced) {
       [&](const std::vector<uint32_t>& binary, uint32_t) -> bool {
         return ping_pong_interesting.IsInteresting(binary);
       });
-  reducer.AddReductionPass(MakeUnique<OperandToConstReductionPass>(env));
   reducer.AddReductionPass(
-      MakeUnique<RemoveUnreferencedInstructionReductionPass>(env));
+      MakeUnique<OperandToConstReductionOpportunityFinder>());
+  reducer.AddReductionPass(
+      MakeUnique<RemoveUnreferencedInstructionReductionOpportunityFinder>());
 
   std::vector<uint32_t> binary_in;
   SpirvTools t(env);
@@ -288,9 +289,9 @@ TEST(ReducerTest, RemoveOpnameAndRemoveUnreferenced) {
         return ping_pong_interesting.IsInteresting(binary);
       });
   reducer.AddReductionPass(
-      MakeUnique<RemoveOpNameInstructionReductionPass>(env));
+      MakeUnique<RemoveOpNameInstructionReductionOpportunityFinder>());
   reducer.AddReductionPass(
-      MakeUnique<RemoveUnreferencedInstructionReductionPass>(env));
+      MakeUnique<RemoveUnreferencedInstructionReductionOpportunityFinder>());
 
   std::vector<uint32_t> binary_in;
   SpirvTools t(env);

@@ -249,8 +249,7 @@ spv_result_t ValidateEntryPoints(ValidationState_t& _) {
 
     // For Vulkan and WebGPU, the static function-call graph for an entry point
     // must not contain cycles.
-    if (spvIsWebGPUEnv(_.context()->target_env) ||
-        spvIsVulkanEnv(_.context()->target_env)) {
+    if (spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
       if (_.recursive_entry_points().find(entry_point) !=
           _.recursive_entry_points().end()) {
         return _.diag(SPV_ERROR_INVALID_BINARY, _.FindDef(entry_point))

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/reduce/structured_loop_to_selection_reduction_pass.h"
 #include "reduce_test_util.h"
 #include "source/opt/build_module.h"
+#include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
@@ -62,8 +62,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, LoopyShader1) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -208,8 +208,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, LoopyShader2) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(4, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -677,8 +677,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, LoopyShader3) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(0, ops.size());
 }
 
@@ -755,8 +755,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, LoopyShader4) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   // Initially there are two opportunities.
   ASSERT_EQ(2, ops.size());
@@ -878,8 +878,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, ConditionalBreak1) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -953,8 +953,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, ConditionalBreak2) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -1021,8 +1021,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, UnconditionalBreak) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -1221,8 +1221,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, Complex) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(2, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -1688,8 +1688,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, ComplexOptimized) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(2, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2005,8 +2005,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, DominanceIssue) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2153,8 +2153,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, AccessChainIssue) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2310,8 +2310,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, DominanceAndPhiIssue) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2418,8 +2418,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, OpLineBeforeOpPhi) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
   ASSERT_EQ(1, ops.size());
 
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2508,8 +2508,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   // There should be no opportunities.
   ASSERT_EQ(0, ops.size());
@@ -2552,8 +2552,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   // There should be no opportunities.
   ASSERT_EQ(0, ops.size());
@@ -2592,8 +2592,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, ContinueTargetIsSwitchTarget) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2667,8 +2667,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2730,8 +2730,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, LoopBranchesStraightToMerge) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2787,8 +2787,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2871,8 +2871,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, MultipleAccessChains) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -2967,8 +2967,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(2, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -3086,8 +3086,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(2, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());
@@ -3206,8 +3206,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                 .GetAvailableOpportunities(context.get());
 
   // We cannot transform the inner loop due to its header jumping straight to
   // the outer loop merge (the inner loop's merge does not post-dominate its
@@ -3251,7 +3251,8 @@ TEST(StructuredLoopToSelectionReductionPassTest,
   CheckEqual(env, after_op_0, context.get());
 
   // Now look again for more opportunities.
-  ops = pass.WrapGetAvailableOpportunities(context.get());
+  ops = StructuredLoopToSelectionReductionOpportunityFinder()
+            .GetAvailableOpportunities(context.get());
 
   // What was the inner loop should now be transformable, as the jump to the
   // outer loop's merge has been redirected.
@@ -3418,8 +3419,8 @@ TEST(StructuredLoopToSelectionReductionPassTest, LongAccessChains) {
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
   const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<StructuredLoopToSelectionReductionPass>(env);
-  auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                 .GetAvailableOpportunities(context.get());
 
   ASSERT_EQ(1, ops.size());
   ASSERT_TRUE(ops[0]->PreconditionHolds());

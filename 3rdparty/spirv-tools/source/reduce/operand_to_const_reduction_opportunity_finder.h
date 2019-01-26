@@ -12,30 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_REDUCE_OPERAND_TO_CONST_REDUCTION_PASS_H_
-#define SOURCE_REDUCE_OPERAND_TO_CONST_REDUCTION_PASS_H_
+#ifndef SOURCE_REDUCE_OPERAND_TO_CONST_REDUCTION_OPPORTUNITY_FINDER_H_
+#define SOURCE_REDUCE_OPERAND_TO_CONST_REDUCTION_OPPORTUNITY_FINDER_H_
 
-#include "source/reduce/reduction_pass.h"
+#include "source/reduce/reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
 
-// A reduction pass for replacing id operands of instructions with ids of
+// A finder for opportunities to replace id operands of instructions with ids of
 // constants.  This reduces the extent to which ids of non-constants are used,
-// paving the way for instructions that generate them to be eliminated by other
-// passes.
-class OperandToConstReductionPass : public ReductionPass {
+// paving the way for instructions that generate them to be eliminated.
+class OperandToConstReductionOpportunityFinder
+    : public ReductionOpportunityFinder {
  public:
-  // Creates the reduction pass in the context of the given target environment
-  // |target_env|
-  explicit OperandToConstReductionPass(const spv_target_env target_env)
-      : ReductionPass(target_env) {}
+  OperandToConstReductionOpportunityFinder() = default;
 
-  ~OperandToConstReductionPass() override = default;
+  ~OperandToConstReductionOpportunityFinder() override = default;
 
   std::string GetName() const final;
 
- protected:
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
       opt::IRContext* context) const final;
 
@@ -45,4 +41,4 @@ class OperandToConstReductionPass : public ReductionPass {
 }  // namespace reduce
 }  // namespace spvtools
 
-#endif  // SOURCE_REDUCE_OPERAND_TO_CONST_REDUCTION_PASS_H_
+#endif  // SOURCE_REDUCE_OPERAND_TO_CONST_REDUCTION_OPPORTUNITY_FINDER_H_

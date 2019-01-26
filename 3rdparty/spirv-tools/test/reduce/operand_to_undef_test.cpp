@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/reduce/operand_to_undef_reduction_pass.h"
 #include "source/opt/build_module.h"
+#include "source/reduce/operand_to_undef_reduction_opportunity_finder.h"
 #include "test/reduce/reduce_test_util.h"
 
 namespace spvtools {
@@ -163,8 +163,9 @@ TEST(OperandToUndefReductionPassTest, BasicCheck) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, original, kReduceAssembleOption);
-  const auto pass = TestSubclass<OperandToUndefReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops =
+      OperandToUndefReductionOpportunityFinder().GetAvailableOpportunities(
+          context.get());
 
   ASSERT_EQ(10, ops.size());
 
@@ -216,8 +217,9 @@ TEST(OperandToUndefReductionPassTest, WithCalledFunction) {
   const auto consumer = nullptr;
   const auto context =
       BuildModule(env, consumer, shader, kReduceAssembleOption);
-  const auto pass = TestSubclass<OperandToUndefReductionPass>(env);
-  const auto ops = pass.WrapGetAvailableOpportunities(context.get());
+  const auto ops =
+      OperandToUndefReductionOpportunityFinder().GetAvailableOpportunities(
+          context.get());
   ASSERT_EQ(0, ops.size());
 }
 

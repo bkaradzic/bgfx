@@ -89,6 +89,11 @@ void IRContext::InvalidateAnalysesExceptFor(
 }
 
 void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
+  // The ConstantManager contains Type pointers. If the TypeManager goes
+  // away, the ConstantManager has to go away.
+  if (analyses_to_invalidate & kAnalysisTypes) {
+    analyses_to_invalidate |= kAnalysisConstants;
+  }
   if (analyses_to_invalidate & kAnalysisDefUse) {
     def_use_mgr_.reset(nullptr);
   }
@@ -127,9 +132,6 @@ void IRContext::InvalidateAnalyses(IRContext::Analysis analyses_to_invalidate) {
     constant_mgr_.reset(nullptr);
   }
   if (analyses_to_invalidate & kAnalysisTypes) {
-    // The ConstantManager contains Type pointers. If the TypeManager goes
-    // away, the ConstantManager has to go away.
-    constant_mgr_.reset(nullptr);
     type_mgr_.reset(nullptr);
   }
 

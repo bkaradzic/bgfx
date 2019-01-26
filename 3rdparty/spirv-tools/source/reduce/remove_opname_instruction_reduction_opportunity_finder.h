@@ -12,30 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_PASS_H_
-#define SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_PASS_H_
+#ifndef SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
+#define SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
 
-#include "reduction_pass.h"
+#include "reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {
 
-// A reduction pass for removing OpName instructions.  As well as making the
-// module smaller, removing an OpName instruction may create opportunities
+// A finder for opportunities to remove OpName instructions.  As well as making
+// the module smaller, removing an OpName instruction may create opportunities
 // for subsequently removing the instructions that create the ids to which the
 // OpName applies.
-class RemoveOpNameInstructionReductionPass : public ReductionPass {
+class RemoveOpNameInstructionReductionOpportunityFinder
+    : public ReductionOpportunityFinder {
  public:
-  // Creates the reduction pass in the context of the given target environment
-  // |target_env|
-  explicit RemoveOpNameInstructionReductionPass(const spv_target_env target_env)
-      : ReductionPass(target_env) {}
+  RemoveOpNameInstructionReductionOpportunityFinder() = default;
 
-  ~RemoveOpNameInstructionReductionPass() override = default;
+  ~RemoveOpNameInstructionReductionOpportunityFinder() override = default;
 
   std::string GetName() const final;
 
- protected:
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
       opt::IRContext* context) const final;
 
@@ -45,4 +42,4 @@ class RemoveOpNameInstructionReductionPass : public ReductionPass {
 }  // namespace reduce
 }  // namespace spvtools
 
-#endif  // SOURCE_REDUCE_REMOVE_OpName_INSTRUCTION_REDUCTION_PASS_H_
+#endif  // SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
