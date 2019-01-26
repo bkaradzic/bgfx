@@ -16,10 +16,11 @@ project "spirv-opt"
 	kind "StaticLib"
 
 	includedirs {
+		SPIRV_TOOLS,
+
 		path.join(SPIRV_TOOLS, "include"),
 		path.join(SPIRV_TOOLS, "include/generated"),
 		path.join(SPIRV_TOOLS, "source"),
-		path.join(SPIRV_TOOLS),
 		path.join(SPIRV_HEADERS, "include"),
 	}
 
@@ -598,6 +599,7 @@ project "shaderc"
 		path.join(BGFX_DIR, "include"),
 
 		path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
+
 		FCPP_DIR,
 
 		path.join(BGFX_DIR, "3rdparty/glslang/glslang/Public"),
