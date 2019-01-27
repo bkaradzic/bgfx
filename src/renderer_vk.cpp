@@ -418,6 +418,21 @@ VK_IMPORT_DEVICE
 		return VK_SUCCESS;
 	}
 
+	void VKAPI_PTR stubCmdInsertDebugUtilsLabelEXT(VkCommandBuffer _commandBuffer, const VkDebugUtilsLabelEXT* _labelInfo)
+	{
+		BX_UNUSED(_commandBuffer, _labelInfo);
+	}
+
+	void VKAPI_PTR stubCmdBeginDebugUtilsLabelEXT(VkCommandBuffer _commandBuffer, const VkDebugUtilsLabelEXT* _labelInfo)
+	{
+		BX_UNUSED(_commandBuffer, _labelInfo);
+	}
+
+	void VKAPI_PTR stubCmdEndDebugUtilsLabelEXT(VkCommandBuffer _commandBuffer)
+	{
+		BX_UNUSED(_commandBuffer);
+	}
+
 	static const char* s_debugReportObjectType[] =
 	{
 		"Unknown",
@@ -1888,6 +1903,24 @@ VK_IMPORT_DEVICE
 				vkSetDebugUtilsObjectNameEXT = stubSetDebugUtilsObjectNameEXT;
 			}
 
+			if (NULL == vkCmdBeginDebugUtilsLabelEXT
+			||  NULL == vkCmdEndDebugUtilsLabelEXT)
+			{
+				vkCmdBeginDebugUtilsLabelEXT = stubCmdBeginDebugUtilsLabelEXT;
+				vkCmdEndDebugUtilsLabelEXT   = stubCmdEndDebugUtilsLabelEXT;
+			}
+
+			if (NULL == vkCmdInsertDebugUtilsLabelEXT)
+			{
+				vkCmdInsertDebugUtilsLabelEXT = stubCmdInsertDebugUtilsLabelEXT;
+			}
+
+			// Init reserved part of view name.
+			for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_VIEWS; ++ii)
+			{
+				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
+			}
+
 			return true;
 
 		error:
@@ -2264,7 +2297,17 @@ VK_IMPORT_DEVICE
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
-				BX_UNUSED(_marker, _len);
+				BX_UNUSED(_len);
+
+				VkDebugUtilsLabelEXT dul;
+				dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+				dul.pNext = NULL;
+				dul.pLabelName = _marker;
+				dul.color[0] = 1.0f;
+				dul.color[1] = 0.0f;
+				dul.color[2] = 0.0f;
+				dul.color[3] = 1.0f;
+				vkCmdInsertDebugUtilsLabelEXT(m_commandBuffer, &dul);
 			}
 		}
 
@@ -3955,6 +3998,11 @@ VK_DESTROY
 					{
 						vkCmdEndRenderPass(m_commandBuffer);
 						beginRenderPass = false;
+
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						{
+							vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);
+						}
 					}
 
 					VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
@@ -3985,6 +4033,20 @@ BX_UNUSED(currentSamplerStateIdx);
 					rpbi.renderArea.extent.width  = rect.m_width;
 					rpbi.renderArea.extent.height = rect.m_height;
 					VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
+
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					{
+						VkDebugUtilsLabelEXT dul;
+						dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+						dul.pNext = NULL;
+						dul.pLabelName = s_viewName[view];
+						dul.color[0] = 1.0f;
+						dul.color[1] = 1.0f;
+						dul.color[2] = 1.0f;
+						dul.color[3] = 1.0f;
+						vkCmdBeginDebugUtilsLabelEXT(m_commandBuffer, &dul);
+					}
+
 					vkCmdBeginRenderPass(m_commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
 					beginRenderPass = true;
 
@@ -4758,6 +4820,11 @@ BX_UNUSED(presentMin, presentMax);
 		{
 			vkCmdEndRenderPass(m_commandBuffer);
 			beginRenderPass = false;
+
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			{
+				vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);
+			}
 		}
 
 		setImageMemoryBarrier(m_commandBuffer
