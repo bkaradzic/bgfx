@@ -903,7 +903,7 @@ VK_IMPORT
 
 				uint32_t numEnabledExtensions = 2;
 
-				const char* enabledExtension[Extension::Count + numEnabledExtensions] =
+				const char* enabledExtension[Extension::Count + 2] =
 				{
 					VK_KHR_SURFACE_EXTENSION_NAME,
 					KHR_SURFACE_EXTENSION_NAME,
@@ -1079,7 +1079,7 @@ VK_IMPORT_INSTANCE
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
 
 				g_caps.limits.maxTextureSize     = m_deviceProperties.limits.maxImageDimension2D;
-				g_caps.limits.maxFBAttachments   = bx::min<uint8_t>(m_deviceProperties.limits.maxFragmentOutputAttachments, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS);
+				g_caps.limits.maxFBAttachments   = bx::min(uint8_t(m_deviceProperties.limits.maxFragmentOutputAttachments), uint8_t(BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
 				g_caps.limits.maxComputeBindings = BGFX_MAX_COMPUTE_BINDINGS;
 
 				{

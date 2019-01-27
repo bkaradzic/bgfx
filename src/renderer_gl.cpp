@@ -1885,7 +1885,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						const bx::StringView token = bx::StringView(ext.getPtr(), space.getPtr() );
 						updateExtension(token);
 
-						ext.set(token.getTerm() + 1, ext.getTerm() );
+						ext.set(space.getPtr() + (space.isEmpty() ? 0 : 1), ext.getTerm() );
 
 						++index;
 					}
