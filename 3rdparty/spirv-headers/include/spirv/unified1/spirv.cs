@@ -818,6 +818,7 @@ namespace Spv
             SubgroupShuffleINTEL = 5568,
             SubgroupBufferBlockIOINTEL = 5569,
             SubgroupImageBlockIOINTEL = 5570,
+            SubgroupImageMediaBlockIOINTEL = 5579,
         }
 
         public enum Op
@@ -1195,6 +1196,8 @@ namespace Spv
             OpSubgroupBlockWriteINTEL = 5576,
             OpSubgroupImageBlockReadINTEL = 5577,
             OpSubgroupImageBlockWriteINTEL = 5578,
+            OpSubgroupImageMediaBlockReadINTEL = 5580,
+            OpSubgroupImageMediaBlockWriteINTEL = 5581,
             OpDecorateStringGOOGLE = 5632,
             OpMemberDecorateStringGOOGLE = 5633,
         }

@@ -818,6 +818,7 @@ typedef enum SpvCapability_ {
     SpvCapabilitySubgroupShuffleINTEL = 5568,
     SpvCapabilitySubgroupBufferBlockIOINTEL = 5569,
     SpvCapabilitySubgroupImageBlockIOINTEL = 5570,
+    SpvCapabilitySubgroupImageMediaBlockIOINTEL = 5579,
     SpvCapabilityMax = 0x7fffffff,
 } SpvCapability;
 
@@ -1195,6 +1196,8 @@ typedef enum SpvOp_ {
     SpvOpSubgroupBlockWriteINTEL = 5576,
     SpvOpSubgroupImageBlockReadINTEL = 5577,
     SpvOpSubgroupImageBlockWriteINTEL = 5578,
+    SpvOpSubgroupImageMediaBlockReadINTEL = 5580,
+    SpvOpSubgroupImageMediaBlockWriteINTEL = 5581,
     SpvOpDecorateStringGOOGLE = 5632,
     SpvOpMemberDecorateStringGOOGLE = 5633,
     SpvOpMax = 0x7fffffff,

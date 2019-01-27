@@ -814,6 +814,7 @@ enum Capability {
     CapabilitySubgroupShuffleINTEL = 5568,
     CapabilitySubgroupBufferBlockIOINTEL = 5569,
     CapabilitySubgroupImageBlockIOINTEL = 5570,
+    CapabilitySubgroupImageMediaBlockIOINTEL = 5579,
     CapabilityMax = 0x7fffffff,
 };
 
@@ -1191,6 +1192,8 @@ enum Op {
     OpSubgroupBlockWriteINTEL = 5576,
     OpSubgroupImageBlockReadINTEL = 5577,
     OpSubgroupImageBlockWriteINTEL = 5578,
+    OpSubgroupImageMediaBlockReadINTEL = 5580,
+    OpSubgroupImageMediaBlockWriteINTEL = 5581,
     OpDecorateStringGOOGLE = 5632,
     OpMemberDecorateStringGOOGLE = 5633,
     OpMax = 0x7fffffff,

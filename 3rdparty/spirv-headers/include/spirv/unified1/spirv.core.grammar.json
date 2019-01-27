@@ -3995,6 +3995,33 @@
       "version" : "None"
     },
     {
+      "opname" : "OpSubgroupImageMediaBlockReadINTEL",
+      "opcode" : 5580,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Image'" },
+        { "kind" : "IdRef", "name" : "'Coordinate'" },
+        { "kind" : "IdRef", "name" : "'Width'" },
+        { "kind" : "IdRef", "name" : "'Height'" }
+      ],
+      "capabilities" : [ "SubgroupImageMediaBlockIOINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupImageMediaBlockWriteINTEL",
+      "opcode" : 5581,
+      "operands" : [
+        { "kind" : "IdRef", "name" : "'Image'" },
+        { "kind" : "IdRef", "name" : "'Coordinate'" },
+        { "kind" : "IdRef", "name" : "'Width'" },
+        { "kind" : "IdRef", "name" : "'Height'" },
+        { "kind" : "IdRef", "name" : "'Data'" }
+      ],
+      "capabilities" : [ "SubgroupImageMediaBlockIOINTEL" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpDecorateStringGOOGLE",
       "opcode" : 5632,
       "operands" : [
@@ -7374,6 +7401,12 @@
           "enumerant" : "SubgroupImageBlockIOINTEL",
           "value" : 5570,
           "extensions" : [ "SPV_INTEL_subgroups" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SubgroupImageMediaBlockIOINTEL",
+          "value" : 5579,
+          "extensions" : [ "SPV_INTEL_media_block_io" ],
           "version" : "None"
         },
         {
