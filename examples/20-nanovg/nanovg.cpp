@@ -977,7 +977,7 @@ struct DemoData
 	int images[12];
 };
 
-int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
+int32_t createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
 {
 	uint32_t size;
 	void* data = load(_filePath, &size);
@@ -999,7 +999,7 @@ int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
 		return 0;
 	}
 
-	int texId = nvgCreateImageRGBA(
+	int32_t texId = nvgCreateImageRGBA(
 		  _ctx
 		, imageContainer->m_width
 		, imageContainer->m_height
@@ -1010,6 +1010,18 @@ int createImage(struct NVGcontext* _ctx, const char* _filePath, int _imageFlags)
 	bimg::imageFree(imageContainer);
 
 	return texId;
+}
+
+int32_t createFont(NVGcontext* _ctx, const char* _name, const char* _filePath)
+{
+	uint32_t size;
+	void* data = load(_filePath, &size);
+	if (NULL == data)
+	{
+		return -1;
+	}
+
+	return nvgCreateFontMem(_ctx, _name, (uint8_t*)data, size, 0);
 }
 
 int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
@@ -1031,38 +1043,40 @@ int loadDemoData(struct NVGcontext* vg, struct DemoData* data)
 		}
 	}
 
-	data->fontIcons = nvgCreateFont(vg, "icons", "font/entypo.ttf");
+	int32_t result = 0;
+
+	data->fontIcons = createFont(vg, "icons", "font/entypo.ttf");
 	if (data->fontIcons == -1)
 	{
 		bx::debugPrintf("Could not add font icons.\n");
-		return -1;
+		result = -1;
 	}
 
-	data->fontNormal = nvgCreateFont(vg, "sans", "font/roboto-regular.ttf");
+	data->fontNormal = createFont(vg, "sans", "font/roboto-regular.ttf");
 	if (data->fontNormal == -1)
 	{
 		bx::debugPrintf("Could not add font italic.\n");
-		return -1;
+		result = -1;
 	}
 
-	data->fontBold = nvgCreateFont(vg, "sans-bold", "font/roboto-bold.ttf");
+	data->fontBold = createFont(vg, "sans-bold", "font/roboto-bold.ttf");
 	if (data->fontBold == -1)
 	{
 		bx::debugPrintf("Could not add font bold.\n");
-		return -1;
+		result = -1;
 	}
 
-	data->fontEmoji = nvgCreateFont(vg, "emoji", "font/NotoEmoji-Regular.ttf");
+	data->fontEmoji = createFont(vg, "emoji", "font/NotoEmoji-Regular.ttf");
 	if (data->fontEmoji == -1)
 	{
 		bx::debugPrintf("Could not add font emoji.\n");
-		return -1;
+		result = -1;
 	}
 
 	nvgAddFallbackFontId(vg, data->fontNormal, data->fontEmoji);
 	nvgAddFallbackFontId(vg, data->fontBold, data->fontEmoji);
 
-	return 0;
+	return result;
 }
 
 void freeDemoData(struct NVGcontext* vg, struct DemoData* data)
@@ -1408,7 +1422,7 @@ public:
 
 		loadDemoData(m_nvg, &m_data);
 
-		bndSetFont(nvgCreateFont(m_nvg, "droidsans", "font/droidsans.ttf") );
+		bndSetFont(createFont(m_nvg, "droidsans", "font/droidsans.ttf") );
 		bndSetIconImage(createImage(m_nvg, "images/blender_icons16.png", 0) );
 
 		m_timeOffset = bx::getHPCounter();
