@@ -1280,6 +1280,7 @@ ImVec2 ImTriangleClosestPoint(const ImVec2& a, const ImVec2& b, const ImVec2& c,
     return proj_ca;
 }
 
+// Consider using _stricmp/_strnicmp under Windows or strcasecmp/strncasecmp. We don't actually use either ImStricmp/ImStrnicmp in the codebase any more.
 int ImStricmp(const char* str1, const char* str2)
 {
     int d;
@@ -1296,9 +1297,11 @@ int ImStrnicmp(const char* str1, const char* str2, size_t count)
 
 void ImStrncpy(char* dst, const char* src, size_t count)
 {
-    if (count < 1) return;
-    strncpy(dst, src, count);
-    dst[count-1] = 0;
+    if (count < 1) 
+        return;
+    if (count > 1)
+        strncpy(dst, src, count - 1);
+    dst[count - 1] = 0;
 }
 
 char* ImStrdup(const char* str)
@@ -2643,6 +2646,7 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
     }
     g.ActiveId = id;
     g.ActiveIdAllowNavDirFlags = 0;
+    g.ActiveIdBlockNavInputFlags = 0;
     g.ActiveIdAllowOverlap = false;
     g.ActiveIdWindow = window;
     if (id)
@@ -2797,7 +2801,7 @@ bool ImGui::ItemAdd(const ImRect& bb, ImGuiID id, const ImRect* nav_bb_arg)
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
     if (id != 0)
-        ImGuiTestEngineHook_ItemAdd(&g, bb, id);
+        ImGuiTestEngineHook_ItemAdd(&g, nav_bb_arg ? *nav_bb_arg : bb, id);
 #endif
 
     // Clipping test
@@ -7629,7 +7633,8 @@ static void ImGui::NavUpdate()
     {
         if (g.ActiveId != 0)
         {
-            ClearActiveID();
+            if (!(g.ActiveIdBlockNavInputFlags & (1 << ImGuiNavInput_Cancel)))
+                ClearActiveID();
         }
         else if (g.NavWindow && (g.NavWindow->Flags & ImGuiWindowFlags_ChildWindow) && !(g.NavWindow->Flags & ImGuiWindowFlags_Popup) && g.NavWindow->ParentWindow)
         {
