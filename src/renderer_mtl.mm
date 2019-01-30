@@ -2592,19 +2592,10 @@ namespace bgfx { namespace mtl
 				, imageContainer.m_format
 				);
 
-			const uint8_t  numMips       = ti.numMips;
-			const uint32_t textureWidth  = ti.width;
-			const uint32_t textureHeight = ti.height;
-			const uint32_t textureDepth  = ti.depth;
-			const uint16_t numLayers     = ti.numLayers;
-
 			m_flags  = _flags;
-			m_width  = textureWidth;
-			m_height = textureHeight;
-			m_depth  = 1 < imageContainer.m_depth
-				? textureDepth
-				: imageContainer.m_numLayers
-				;
+			m_width  = ti.width;
+			m_height = ti.height;
+			m_depth  = ti.depth;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -2612,7 +2603,7 @@ namespace bgfx { namespace mtl
 
 			TextureDescriptor desc = s_renderMtl->m_textureDescriptor;
 
-			if (1 < numLayers)
+			if (1 < ti.numLayers)
 			{
 				if (imageContainer.m_cubeMap)
 				{
@@ -2630,7 +2621,7 @@ namespace bgfx { namespace mtl
 				desc.textureType = MTLTextureTypeCube;
 				m_type = TextureCube;
 			}
-			else if (imageContainer.m_depth > 1)
+			else if (1 < imageContainer.m_depth)
 			{
 				desc.textureType = MTLTextureType3D;
 				m_type = Texture3D;
@@ -2641,8 +2632,8 @@ namespace bgfx { namespace mtl
 				m_type = Texture2D;
 			}
 
-			m_numMips = numMips;
-			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+			m_numMips = ti.numMips;
+			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 			const bool compressed   = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat) );
 			const bool writeOnly    = 0 != (_flags&BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
@@ -2653,9 +2644,9 @@ namespace bgfx { namespace mtl
 				, this - s_renderMtl->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, numLayers
-				, textureWidth
-				, textureHeight
+				, ti.numLayers
+				, ti.width
+				, ti.height
 				, imageContainer.m_cubeMap ? "x6" : ""
 				, renderTarget ? 'x' : ' '
 				, writeOnly    ? 'x' : ' '
@@ -2683,14 +2674,15 @@ namespace bgfx { namespace mtl
 			}
 
 			desc.pixelFormat = format;
-			desc.width  = textureWidth;
-			desc.height = textureHeight;
+			desc.width  = ti.width;
+			desc.height = ti.height;
 			desc.depth  = bx::uint32_max(1,imageContainer.m_depth);
-			desc.mipmapLevelCount = numMips;
+			desc.mipmapLevelCount = ti.numMips;
 			desc.sampleCount      = 1;
-			desc.arrayLength = numLayers;
+			desc.arrayLength      = ti.numLayers;
 
-			if (s_renderMtl->m_iOS9Runtime || s_renderMtl->m_macOS11Runtime)
+			if (s_renderMtl->m_iOS9Runtime
+			||  s_renderMtl->m_macOS11Runtime)
 			{
 				desc.cpuCacheMode = MTLCPUCacheModeDefaultCache;
 
@@ -2741,20 +2733,20 @@ namespace bgfx { namespace mtl
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)BX_ALLOC(g_allocator, textureWidth*textureHeight*4);
+				temp = (uint8_t*)BX_ALLOC(g_allocator, ti.width*ti.height*4);
 			}
 
 			for (uint8_t side = 0; side < numSides; ++side)
 			{
-				uint32_t width  = textureWidth;
-				uint32_t height = textureHeight;
-				uint32_t depth  = imageContainer.m_depth;
+				uint32_t width  = ti.width;
+				uint32_t height = ti.height;
+				uint32_t depth  = ti.depth;
 
-				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 				{
-					width  = bx::uint32_max(1, width);
-					height = bx::uint32_max(1, height);
-					depth  = bx::uint32_max(1, depth);
+					width  = bx::max(1u, width);
+					height = bx::max(1u, height);
+					depth  = bx::max(1u, depth);
 
 					bimg::ImageMip mip;
 					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
@@ -2925,17 +2917,29 @@ namespace bgfx { namespace mtl
 
 	Texture TextureMtl::getTextureMipLevel(int _mip)
 	{
-		if ( _mip >= 0 && _mip < m_numMips && NULL != m_ptr)
+		if (_mip >= 0
+		&&  _mip <  m_numMips
+		&&  NULL != m_ptr)
 		{
-			if ( NULL == m_ptrMips[_mip] )
+			if (NULL == m_ptrMips[_mip])
 			{
 				if (TextureCube == m_type)
 				{
-					m_ptrMips[_mip] = m_ptr.newTextureViewWithPixelFormat(m_ptr.pixelFormat(), MTLTextureType2DArray, NSMakeRange(_mip,1), NSMakeRange(0,m_ptr.arrayLength() * 6));
+					m_ptrMips[_mip] = m_ptr.newTextureViewWithPixelFormat(
+						  m_ptr.pixelFormat()
+						, MTLTextureType2DArray
+						, NSMakeRange(_mip,1)
+						, NSMakeRange(0,m_ptr.arrayLength() * 6)
+						);
 				}
 				else
 				{
-					m_ptrMips[_mip] = m_ptr.newTextureViewWithPixelFormat(m_ptr.pixelFormat(), m_ptr.textureType(), NSMakeRange(_mip,1), NSMakeRange(0,m_ptr.arrayLength()));
+					m_ptrMips[_mip] = m_ptr.newTextureViewWithPixelFormat(
+						  m_ptr.pixelFormat()
+						, m_ptr.textureType()
+						, NSMakeRange(_mip,1)
+						, NSMakeRange(0,m_ptr.arrayLength())
+						);
 				}
 			}
 
@@ -2947,13 +2951,15 @@ namespace bgfx { namespace mtl
 
 	SwapChainMtl::~SwapChainMtl()
 	{
-		if(m_drawable != nil) {
+		if (NULL != m_drawable)
+		{
 			release(m_drawable);
-			m_drawable = nil;
+			m_drawable = NULL;
 		}
 
 		MTL_RELEASE(m_backBufferDepth);
 		MTL_RELEASE(m_backBufferStencil);
+
 		if (NULL != m_backBufferColorMsaa)
 		{
 			MTL_RELEASE(m_backBufferColorMsaa);
@@ -3113,7 +3119,7 @@ namespace bgfx { namespace mtl
 
 	id<CAMetalDrawable> SwapChainMtl::currentDrawable()
 	{
-		if (m_drawable == nil)
+		if (NULL == m_drawable)
 		{
 			m_drawable = m_metalLayer.nextDrawable;
 			retain(m_drawable); // keep alive to be useable at 'flip'
