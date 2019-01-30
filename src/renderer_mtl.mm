@@ -2577,18 +2577,34 @@ namespace bgfx { namespace mtl
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			uint8_t numMips = imageContainer.m_numMips;
-			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
-			numMips -= startLod;
 			const bimg::ImageBlockInfo& blockInfo = getBlockInfo(bimg::TextureFormat::Enum(imageContainer.m_format) );
-			const uint32_t textureWidth  = bx::uint32_max(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
-			const uint32_t textureHeight = bx::uint32_max(blockInfo.blockHeight, imageContainer.m_height>>startLod);
-			const uint16_t numLayers     = imageContainer.m_numLayers;
+			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
+
+			bimg::TextureInfo ti;
+			imageGetSize(
+				  &ti
+				, uint16_t(imageContainer.m_width >>startLod)
+				, uint16_t(imageContainer.m_height>>startLod)
+				, uint16_t(imageContainer.m_depth >>startLod)
+				, imageContainer.m_cubeMap
+				, 1 < imageContainer.m_numMips
+				, imageContainer.m_numLayers
+				, imageContainer.m_format
+				);
+
+			const uint8_t  numMips       = ti.numMips;
+			const uint32_t textureWidth  = ti.width;
+			const uint32_t textureHeight = ti.height;
+			const uint32_t textureDepth  = ti.depth;
+			const uint16_t numLayers     = ti.numLayers;
 
 			m_flags  = _flags;
 			m_width  = textureWidth;
 			m_height = textureHeight;
-			m_depth  = imageContainer.m_depth;
+			m_depth  = 1 < imageContainer.m_depth
+				? textureDepth
+				: imageContainer.m_numLayers
+				;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;

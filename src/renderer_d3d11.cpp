@@ -4095,14 +4095,26 @@ namespace bgfx { namespace d3d11
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			uint8_t numMips = imageContainer.m_numMips;
-			const uint8_t startLod = bx::min<uint8_t>(_skip, numMips-1);
-			numMips -= startLod;
 			const bimg::ImageBlockInfo& blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(imageContainer.m_format) );
-			const uint32_t textureWidth  = bx::max<uint32_t>(blockInfo.blockWidth,  imageContainer.m_width >>startLod);
-			const uint32_t textureHeight = bx::max<uint32_t>(blockInfo.blockHeight, imageContainer.m_height>>startLod);
-			const uint32_t textureDepth  = bx::max<uint32_t>(1,                     imageContainer.m_depth >>startLod);
-			const uint16_t numLayers     = imageContainer.m_numLayers;
+			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
+
+			bimg::TextureInfo ti;
+			imageGetSize(
+				  &ti
+				, uint16_t(imageContainer.m_width >>startLod)
+				, uint16_t(imageContainer.m_height>>startLod)
+				, uint16_t(imageContainer.m_depth >>startLod)
+				, imageContainer.m_cubeMap
+				, 1 < imageContainer.m_numMips
+				, imageContainer.m_numLayers
+				, imageContainer.m_format
+				);
+
+			const uint8_t  numMips       = ti.numMips;
+			const uint32_t textureWidth  = ti.width;
+			const uint32_t textureHeight = ti.height;
+			const uint32_t textureDepth  = ti.depth;
+			const uint16_t numLayers     = ti.numLayers;
 
 			m_flags  = _flags;
 			m_width  = textureWidth;

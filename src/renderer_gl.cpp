@@ -4721,22 +4721,25 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
 		{
-			uint8_t numMips = imageContainer.m_numMips;
-			const uint8_t startLod = uint8_t(bx::uint32_min(_skip, numMips-1) );
-			numMips -= startLod;
-			const uint16_t numLayers = imageContainer.m_numLayers;
-			uint32_t textureWidth;
-			uint32_t textureHeight;
-			uint32_t textureDepth;
-			{
-				const bimg::ImageBlockInfo& ibi = bimg::getBlockInfo(bimg::TextureFormat::Enum(imageContainer.m_format) );
-				textureWidth  = bx::uint32_max(ibi.blockWidth,  imageContainer.m_width >>startLod);
-				textureHeight = bx::uint32_max(ibi.blockHeight, imageContainer.m_height>>startLod);
-				textureDepth  = 1 < imageContainer.m_depth
-					? imageContainer.m_depth
-					: imageContainer.m_numLayers
-					;
-			}
+			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
+
+			bimg::TextureInfo ti;
+			imageGetSize(
+				  &ti
+				, uint16_t(imageContainer.m_width >>startLod)
+				, uint16_t(imageContainer.m_height>>startLod)
+				, uint16_t(imageContainer.m_depth >>startLod)
+				, imageContainer.m_cubeMap
+				, 1 < imageContainer.m_numMips
+				, imageContainer.m_numLayers
+				, imageContainer.m_format
+				);
+
+			const uint8_t  numMips       = ti.numMips;
+			const uint32_t textureWidth  = ti.width;
+			const uint32_t textureHeight = ti.height;
+			const uint32_t textureDepth  = ti.depth;
+			const uint16_t numLayers     = ti.numLayers;
 
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
