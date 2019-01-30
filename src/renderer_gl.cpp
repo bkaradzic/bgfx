@@ -4724,7 +4724,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
 
 			bimg::TextureInfo ti;
-			imageGetSize(
+			bimg::imageGetSize(
 				  &ti
 				, uint16_t(imageContainer.m_width >>startLod)
 				, uint16_t(imageContainer.m_height>>startLod)
@@ -4734,12 +4734,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				, imageContainer.m_numLayers
 				, imageContainer.m_format
 				);
-
-			const uint8_t  numMips       = ti.numMips;
-			const uint32_t textureWidth  = ti.width;
-			const uint32_t textureHeight = ti.height;
-			const uint32_t textureDepth  = ti.depth;
-			const uint16_t numLayers     = ti.numLayers;
 
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
@@ -4761,7 +4755,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				target = GL_TEXTURE_3D;
 			}
 
-			const bool textureArray = 1 < numLayers;
+			const bool textureArray = 1 < ti.numLayers;
 			if (textureArray)
 			{
 				switch (target)
@@ -4773,12 +4767,12 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 
 			if (!init(target
-					, textureWidth
-					, textureHeight
-					, textureDepth
-					, numMips
-					, _flags
-					) )
+				, ti.width
+				, ti.height
+				, ti.depth
+				, ti.numMips
+				, _flags
+				) )
 			{
 				return;
 			}
@@ -4810,9 +4804,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, srgb ? "+sRGB " : ""
 				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, numLayers
-				, textureWidth
-				, textureHeight
+				, ti.numLayers
+				, ti.width
+				, ti.height
 				, imageContainer.m_cubeMap ? 6 : (1 < imageContainer.m_depth ? imageContainer.m_depth : 0)
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 				);
@@ -4828,22 +4822,22 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			uint8_t* temp = NULL;
 			if (convert)
 			{
-				temp = (uint8_t*)BX_ALLOC(g_allocator, textureWidth*textureHeight*4);
+				temp = (uint8_t*)BX_ALLOC(g_allocator, ti.width*ti.height*4);
 			}
 
-			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 
 			for (uint16_t side = 0; side < numSides; ++side)
 			{
-				uint32_t width  = textureWidth;
-				uint32_t height = textureHeight;
-				uint32_t depth  = imageContainer.m_depth;
+				uint32_t width  = ti.width;
+				uint32_t height = ti.height;
+				uint32_t depth  = ti.depth;
 				GLenum imageTarget = imageContainer.m_cubeMap && !textureArray
 					? target+side
 					: target
 					;
 
-				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 				{
 					width  = bx::uint32_max(1, width);
 					height = bx::uint32_max(1, height);
@@ -4905,8 +4899,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					{
 						if (compressed)
 						{
-							uint32_t size = bx::uint32_max(1, (width  + 3)>>2)
-										  * bx::uint32_max(1, (height + 3)>>2)
+							uint32_t size = bx::max<uint32_t>(1, (width  + 3)>>2)
+										  * bx::max<uint32_t>(1, (height + 3)>>2)
 										  * 4*4* bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) )/8
 										  ;
 

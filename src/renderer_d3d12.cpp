@@ -4582,7 +4582,7 @@ namespace bgfx { namespace d3d12
 			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
 
 			bimg::TextureInfo ti;
-			imageGetSize(
+			bimg::imageGetSize(
 				  &ti
 				, uint16_t(imageContainer.m_width >>startLod)
 				, uint16_t(imageContainer.m_height>>startLod)
@@ -4593,19 +4593,10 @@ namespace bgfx { namespace d3d12
 				, imageContainer.m_format
 				);
 
-			const uint8_t  numMips       = ti.numMips;
-			const uint32_t textureWidth  = ti.width;
-			const uint32_t textureHeight = ti.height;
-			const uint32_t textureDepth  = ti.depth;
-			const uint16_t numLayers     = ti.numLayers;
-
 			m_flags  = _flags;
-			m_width  = textureWidth;
-			m_height = textureHeight;
-			m_depth  = 1 < imageContainer.m_depth
-				? textureDepth
-				: imageContainer.m_numLayers
-				;
+			m_width  = ti.width;
+			m_height = ti.height;
+			m_depth  = ti.depth;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -4624,9 +4615,9 @@ namespace bgfx { namespace d3d12
 				m_type = Texture2D;
 			}
 
-			m_numMips = numMips;
-			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
-			const uint32_t numSrd   = numSides * numMips;
+			m_numMips = ti.numMips;
+			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+			const uint32_t numSrd   = numSides * ti.numMips;
 			D3D12_SUBRESOURCE_DATA* srd = (D3D12_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D12_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
@@ -4643,8 +4634,8 @@ namespace bgfx { namespace d3d12
 				, this - s_renderD3D12->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, textureWidth
-				, textureHeight
+				, ti.width
+				, ti.height
 				, imageContainer.m_cubeMap ? "x6" : ""
 				, renderTarget ? 'x' : ' '
 				, writeOnly    ? 'x' : ' '
@@ -4654,7 +4645,7 @@ namespace bgfx { namespace d3d12
 
 			for (uint8_t side = 0; side < numSides; ++side)
 			{
-				for (uint8_t lod = 0; lod < numMips; ++lod)
+				for (uint8_t lod = 0; lod < ti.numMips; ++lod)
 				{
 					bimg::ImageMip mip;
 					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
@@ -4743,9 +4734,9 @@ namespace bgfx { namespace d3d12
 
 			D3D12_RESOURCE_DESC resourceDesc;
 			resourceDesc.Alignment  = 1 < msaa.Count ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : 0;
-			resourceDesc.Width      = textureWidth;
-			resourceDesc.Height     = textureHeight;
-			resourceDesc.MipLevels  = numMips;
+			resourceDesc.Width      = ti.width;
+			resourceDesc.Height     = ti.height;
+			resourceDesc.MipLevels  = ti.numMips;
 			resourceDesc.Format     = format;
 			resourceDesc.SampleDesc = msaa;
 			resourceDesc.Layout     = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -4810,34 +4801,34 @@ namespace bgfx { namespace d3d12
 				resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 				if (imageContainer.m_cubeMap)
 				{
-					if (1 < numLayers)
+					if (1 < ti.numLayers)
 					{
 						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
 						m_srvd.TextureCubeArray.MostDetailedMip     = 0;
-						m_srvd.TextureCubeArray.MipLevels           = numMips;
+						m_srvd.TextureCubeArray.MipLevels           = ti.numMips;
 						m_srvd.TextureCubeArray.ResourceMinLODClamp = 0.0f;
-						m_srvd.TextureCubeArray.NumCubes            = numLayers;
+						m_srvd.TextureCubeArray.NumCubes            = ti.numLayers;
 					}
 					else
 					{
 						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 						m_srvd.TextureCube.MostDetailedMip     = 0;
-						m_srvd.TextureCube.MipLevels           = numMips;
+						m_srvd.TextureCube.MipLevels           = ti.numMips;
 						m_srvd.TextureCube.ResourceMinLODClamp = 0.0f;
 					}
 				}
 				else
 				{
-					if (1 < numLayers)
+					if (1 < ti.numLayers)
 					{
 						m_srvd.ViewDimension = 1 < msaa.Count
 							? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY
 							: D3D12_SRV_DIMENSION_TEXTURE2DARRAY
 							;
 						m_srvd.Texture2DArray.MostDetailedMip     = 0;
-						m_srvd.Texture2DArray.MipLevels           = numMips;
+						m_srvd.Texture2DArray.MipLevels           = ti.numMips;
 						m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
-						m_srvd.Texture2DArray.ArraySize           = numLayers;
+						m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
 					}
 					else
 					{
@@ -4846,18 +4837,18 @@ namespace bgfx { namespace d3d12
 							: D3D12_SRV_DIMENSION_TEXTURE2D
 							;
 						m_srvd.Texture2D.MostDetailedMip     = 0;
-						m_srvd.Texture2D.MipLevels           = numMips;
+						m_srvd.Texture2D.MipLevels           = ti.numMips;
 						m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
 					}
 				}
 
-				if (1 < numLayers)
+				if (1 < ti.numLayers)
 				{
 					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 					m_uavd.Texture2DArray.MipSlice        = 0;
 					m_uavd.Texture2DArray.FirstArraySlice = 0;
 					m_uavd.Texture2DArray.PlaneSlice      = 0;
-					m_uavd.Texture2DArray.ArraySize       = numLayers;
+					m_uavd.Texture2DArray.ArraySize       = ti.numLayers;
 				}
 				else
 				{
@@ -4880,7 +4871,7 @@ namespace bgfx { namespace d3d12
 				resourceDesc.DepthOrArraySize = uint16_t(m_depth);
 				m_srvd.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
 				m_srvd.Texture3D.MostDetailedMip     = 0;
-				m_srvd.Texture3D.MipLevels           = numMips;
+				m_srvd.Texture3D.MipLevels           = ti.numMips;
 				m_srvd.Texture3D.ResourceMinLODClamp = 0.0f;
 
 				m_uavd.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
@@ -4931,7 +4922,7 @@ namespace bgfx { namespace d3d12
 				kk = 0;
 				for (uint8_t side = 0; side < numSides; ++side)
 				{
-					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
 						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pData) );
 						++kk;

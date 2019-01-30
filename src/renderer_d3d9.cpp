@@ -2910,7 +2910,7 @@ namespace bgfx { namespace d3d9
 			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
 
 			bimg::TextureInfo ti;
-			imageGetSize(
+			bimg::imageGetSize(
 				  &ti
 				, uint16_t(imageContainer.m_width >>startLod)
 				, uint16_t(imageContainer.m_height>>startLod)
@@ -2921,17 +2921,11 @@ namespace bgfx { namespace d3d9
 				, imageContainer.m_format
 				);
 
-			const uint8_t  numMips       = ti.numMips;
-			const uint32_t textureWidth  = ti.width;
-			const uint32_t textureHeight = ti.height;
-			const uint32_t textureDepth  = ti.depth;
-			const uint16_t numLayers     = ti.numLayers;
-
 			m_flags   = _flags;
-			m_width   = textureWidth;
-			m_height  = textureHeight;
-			m_depth   = textureDepth;
-			m_numMips = numMips;
+			m_width   = ti.width;
+			m_height  = ti.height;
+			m_depth   = ti.depth;
+			m_numMips = ti.numMips;
 			m_requestedFormat = uint8_t(imageContainer.m_format);
 			m_textureFormat   = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -2940,23 +2934,23 @@ namespace bgfx { namespace d3d9
 
 			if (imageContainer.m_cubeMap)
 			{
-				createCubeTexture(textureWidth, numMips);
+				createCubeTexture(ti.width, ti.numMips);
 			}
 			else if (imageContainer.m_depth > 1)
 			{
-				createVolumeTexture(textureWidth, textureHeight, imageContainer.m_depth, numMips);
+				createVolumeTexture(ti.width, ti.height, ti.depth, ti.numMips);
 			}
 			else
 			{
-				createTexture(textureWidth, textureHeight, numMips);
+				createTexture(ti.width, ti.height, ti.numMips);
 			}
 
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s%s."
 				, this - s_renderD3D9->m_textures
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, textureWidth
-				, textureHeight
+				, ti.width
+				, ti.height
 				, imageContainer.m_cubeMap ? "x6" : ""
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 				);
@@ -2970,25 +2964,25 @@ namespace bgfx { namespace d3d9
 			// bytes. If actual mip size is used it causes memory corruption.
 			// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
 			const bool useMipSize = true
-							&& imageContainer.m_format != bimg::TextureFormat::BC4
-							&& imageContainer.m_format != bimg::TextureFormat::BC5
-							;
+				&& imageContainer.m_format != bimg::TextureFormat::BC4
+				&& imageContainer.m_format != bimg::TextureFormat::BC5
+				;
 
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
-				uint32_t width     = textureWidth;
-				uint32_t height    = textureHeight;
-				uint32_t depth     = imageContainer.m_depth;
-				uint32_t mipWidth  = imageContainer.m_width;
-				uint32_t mipHeight = imageContainer.m_height;
+				uint32_t width     = ti.width;
+				uint32_t height    = ti.height;
+				uint32_t depth     = ti.depth;
+				uint32_t mipWidth  = ti.width;
+				uint32_t mipHeight = ti.height;
 
-				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 				{
-					width     = bx::uint32_max(1, width);
-					height    = bx::uint32_max(1, height);
-					depth     = bx::uint32_max(1, depth);
-					mipWidth  = bx::uint32_max(blockInfo.blockWidth,  mipWidth);
-					mipHeight = bx::uint32_max(blockInfo.blockHeight, mipHeight);
+					width     = bx::max<uint32_t>(1, width);
+					height    = bx::max<uint32_t>(1, height);
+					depth     = bx::max<uint32_t>(1, depth);
+					mipWidth  = bx::max<uint32_t>(blockInfo.blockWidth,  mipWidth);
+					mipHeight = bx::max<uint32_t>(blockInfo.blockHeight, mipHeight);
 					uint32_t mipSize = width*height*depth*bpp/8;
 
 					bimg::ImageMip mip;

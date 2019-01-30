@@ -4099,7 +4099,7 @@ namespace bgfx { namespace d3d11
 			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
 
 			bimg::TextureInfo ti;
-			imageGetSize(
+			bimg::imageGetSize(
 				  &ti
 				, uint16_t(imageContainer.m_width >>startLod)
 				, uint16_t(imageContainer.m_height>>startLod)
@@ -4110,19 +4110,11 @@ namespace bgfx { namespace d3d11
 				, imageContainer.m_format
 				);
 
-			const uint8_t  numMips       = ti.numMips;
-			const uint32_t textureWidth  = ti.width;
-			const uint32_t textureHeight = ti.height;
-			const uint32_t textureDepth  = ti.depth;
-			const uint16_t numLayers     = ti.numLayers;
-
 			m_flags  = _flags;
-			m_width  = textureWidth;
-			m_height = textureHeight;
-			m_depth  = 1 < imageContainer.m_depth
-				? textureDepth
-				: imageContainer.m_numLayers
-				;
+			m_width  = ti.width;
+			m_height = ti.height;
+			m_depth  = ti.depth;
+
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -4141,10 +4133,10 @@ namespace bgfx { namespace d3d11
 				m_type = Texture2D;
 			}
 
-			m_numMips = numMips;
+			m_numMips = ti.numMips;
 
-			const uint16_t numSides = numLayers * (imageContainer.m_cubeMap ? 6 : 1);
-			const uint32_t numSrd   = numSides * numMips;
+			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+			const uint32_t numSrd   = numSides * ti.numMips;
 			D3D11_SUBRESOURCE_DATA* srd = (D3D11_SUBRESOURCE_DATA*)alloca(numSrd*sizeof(D3D11_SUBRESOURCE_DATA) );
 
 			uint32_t kk = 0;
@@ -4156,9 +4148,9 @@ namespace bgfx { namespace d3d11
 				, getHandle()
 				, getName( (TextureFormat::Enum)m_textureFormat)
 				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, numLayers
-				, textureWidth
-				, textureHeight
+				, ti.numLayers
+				, ti.width
+				, ti.height
 				, imageContainer.m_cubeMap ? "x6" : ""
 				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
 				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
@@ -4166,7 +4158,7 @@ namespace bgfx { namespace d3d11
 
 			for (uint16_t side = 0; side < numSides; ++side)
 			{
-				for (uint8_t lod = 0, num = numMips; lod < num; ++lod)
+				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 				{
 					bimg::ImageMip mip;
 					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
@@ -4253,9 +4245,9 @@ namespace bgfx { namespace d3d11
 			case TextureCube:
 				{
 					D3D11_TEXTURE2D_DESC desc = {};
-					desc.Width  = textureWidth;
-					desc.Height = textureHeight;
-					desc.MipLevels  = numMips;
+					desc.Width      = ti.width;
+					desc.Height     = ti.height;
+					desc.MipLevels  = ti.numMips;
 					desc.ArraySize  = numSides;
 					desc.Format     = format;
 					desc.SampleDesc = msaa;
@@ -4274,7 +4266,7 @@ namespace bgfx { namespace d3d11
 						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 						desc.Usage = D3D11_USAGE_DEFAULT;
 						desc.MiscFlags |= 0
-							| (1 < numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
+							| (1 < ti.numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
 							;
 					}
 
@@ -4294,26 +4286,26 @@ namespace bgfx { namespace d3d11
 					if (imageContainer.m_cubeMap)
 					{
 						desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
-						if (1 < numLayers)
+						if (1 < ti.numLayers)
 						{
 							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
-							srvd.TextureCubeArray.MipLevels = numMips;
-							srvd.TextureCubeArray.NumCubes  = numLayers;
+							srvd.TextureCubeArray.MipLevels = ti.numMips;
+							srvd.TextureCubeArray.NumCubes  = ti.numLayers;
 						}
 						else
 						{
 							srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-							srvd.TextureCube.MipLevels = numMips;
+							srvd.TextureCube.MipLevels = ti.numMips;
 						}
 					}
 					else
 					{
 						if (msaaSample)
 						{
-							if (1 < numLayers)
+							if (1 < ti.numLayers)
 							{
 								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
-								srvd.Texture2DMSArray.ArraySize = numLayers;
+								srvd.Texture2DMSArray.ArraySize = ti.numLayers;
 							}
 							else
 							{
@@ -4322,16 +4314,16 @@ namespace bgfx { namespace d3d11
 						}
 						else
 						{
-							if (1 < numLayers)
+							if (1 < ti.numLayers)
 							{
 								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-								srvd.Texture2DArray.MipLevels = numMips;
-								srvd.Texture2DArray.ArraySize = numLayers;
+								srvd.Texture2DArray.MipLevels = ti.numMips;
+								srvd.Texture2DArray.ArraySize = ti.numLayers;
 							}
 							else
 							{
 								srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-								srvd.Texture2D.MipLevels = numMips;
+								srvd.Texture2D.MipLevels = ti.numMips;
 							}
 						}
 					}
@@ -4357,10 +4349,10 @@ namespace bgfx { namespace d3d11
 			case Texture3D:
 				{
 					D3D11_TEXTURE3D_DESC desc = {};
-					desc.Width  = textureWidth;
-					desc.Height = textureHeight;
-					desc.Depth  = textureDepth;
-					desc.MipLevels = numMips;
+					desc.Width     = ti.width;
+					desc.Height    = ti.height;
+					desc.Depth     = ti.depth;
+					desc.MipLevels = ti.numMips;
 					desc.Format    = format;
 					desc.Usage     = kk == 0 || blit ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -4372,7 +4364,7 @@ namespace bgfx { namespace d3d11
 						desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 						desc.Usage = D3D11_USAGE_DEFAULT;
 						desc.MiscFlags |= 0
-							| (1 < numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
+							| (1 < ti.numMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0)
 							;
 					}
 
@@ -4390,7 +4382,7 @@ namespace bgfx { namespace d3d11
 					}
 
 					srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-					srvd.Texture3D.MipLevels = numMips;
+					srvd.Texture3D.MipLevels = ti.numMips;
 
 					if (directAccess)
 					{
@@ -4420,7 +4412,7 @@ namespace bgfx { namespace d3d11
 				kk = 0;
 				for (uint16_t side = 0; side < numSides; ++side)
 				{
-					for (uint32_t lod = 0, num = numMips; lod < num; ++lod)
+					for (uint32_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
 						BX_FREE(g_allocator, const_cast<void*>(srd[kk].pSysMem) );
 						++kk;

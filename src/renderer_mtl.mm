@@ -2581,7 +2581,7 @@ namespace bgfx { namespace mtl
 			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
 
 			bimg::TextureInfo ti;
-			imageGetSize(
+			bimg::imageGetSize(
 				  &ti
 				, uint16_t(imageContainer.m_width >>startLod)
 				, uint16_t(imageContainer.m_height>>startLod)
