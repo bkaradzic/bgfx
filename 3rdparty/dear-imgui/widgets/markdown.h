@@ -138,7 +138,7 @@ namespace ImGui
 
         MarkdownLinkCallback* linkCallback = 0;
         const char* linkIcon = "";
-        HeadingFormat headingFormats[ NUMHEADINGS ] = { NULL, true, NULL, true, NULL, true };
+        HeadingFormat headingFormats[ NUMHEADINGS ] = { { NULL, true }, { NULL, true }, { NULL, true } };
     };
 
     // External interface
