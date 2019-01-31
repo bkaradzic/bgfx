@@ -2920,6 +2920,7 @@ namespace bgfx { namespace d3d9
 				, imageContainer.m_numLayers
 				, imageContainer.m_format
 				);
+			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips-startLod, ti.numMips);
 
 			m_flags   = _flags;
 			m_width   = ti.width;
