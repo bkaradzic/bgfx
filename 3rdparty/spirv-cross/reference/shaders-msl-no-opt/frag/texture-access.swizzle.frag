@@ -163,7 +163,7 @@ fragment void main0(constant spvAux& spvAuxBuffer [[buffer(0)]], texture1d<float
     c = spvTextureSwizzle(tex3d.sample(tex3dSmplr, float4(0.0, 0.0, 0.0, 1.0).xyz / float4(0.0, 0.0, 0.0, 1.0).w), tex3dSwzl);
     float4 _100 = float4(0.0, 0.0, 1.0, 1.0);
     _100.z = float4(0.0, 0.0, 1.0, 1.0).w;
-    c.x = spvTextureSwizzle(depth2d.sample_compare(depth2dSmplr, _100.xy / _100.z, float4(0.0, 0.0, 1.0, 1.0).z), depth2dSwzl);
+    c.x = spvTextureSwizzle(depth2d.sample_compare(depth2dSmplr, _100.xy / _100.z, float4(0.0, 0.0, 1.0, 1.0).z / _100.z), depth2dSwzl);
     c = spvTextureSwizzle(tex1d.sample(tex1dSmplr, 0.0), tex1dSwzl);
     c = spvTextureSwizzle(tex2d.sample(tex2dSmplr, float2(0.0), level(0.0)), tex2dSwzl);
     c = spvTextureSwizzle(tex3d.sample(tex3dSmplr, float3(0.0), level(0.0)), tex3dSwzl);
@@ -176,7 +176,7 @@ fragment void main0(constant spvAux& spvAuxBuffer [[buffer(0)]], texture1d<float
     c = spvTextureSwizzle(tex3d.sample(tex3dSmplr, float4(0.0, 0.0, 0.0, 1.0).xyz / float4(0.0, 0.0, 0.0, 1.0).w, level(0.0)), tex3dSwzl);
     float4 _128 = float4(0.0, 0.0, 1.0, 1.0);
     _128.z = float4(0.0, 0.0, 1.0, 1.0).w;
-    c.x = spvTextureSwizzle(depth2d.sample_compare(depth2dSmplr, _128.xy / _128.z, float4(0.0, 0.0, 1.0, 1.0).z, level(0.0)), depth2dSwzl);
+    c.x = spvTextureSwizzle(depth2d.sample_compare(depth2dSmplr, _128.xy / _128.z, float4(0.0, 0.0, 1.0, 1.0).z / _128.z, level(0.0)), depth2dSwzl);
     c = spvTextureSwizzle(tex1d.read(uint(0)), tex1dSwzl);
     c = spvTextureSwizzle(tex2d.read(uint2(int2(0)), 0), tex2dSwzl);
     c = spvTextureSwizzle(tex3d.read(uint3(int3(0)), 0), tex3dSwzl);

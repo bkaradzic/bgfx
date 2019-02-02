@@ -369,7 +369,7 @@ void CompilerMSL::emit_entry_point_declarations()
 		for (uint32_t i = 0; i < type.array[0]; ++i)
 			statement(name + "_" + convert_to_string(i) + ",");
 		end_scope_decl();
-		statement("");
+		statement_no_indent("");
 	}
 	// For some reason, without this, we end up emitting the arrays twice.
 	buffer_arrays.clear();
@@ -851,10 +851,10 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 
 	// Update the original variable reference to include the structure reference
 	string qual_var_name = ib_var_ref + "." + mbr_name;
+	auto &entry_func = get<SPIRFunction>(ir.default_entry_point);
 
 	if (padded_output)
 	{
-		auto &entry_func = get<SPIRFunction>(ir.default_entry_point);
 		entry_func.add_local_variable(var.self);
 		vars_needing_early_declaration.push_back(var.self);
 
@@ -865,6 +865,12 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 	}
 	else
 		ir.meta[var.self].decoration.qualified_alias = qual_var_name;
+
+	if (var.storage == StorageClassOutput && var.initializer != 0)
+	{
+		entry_func.fixup_hooks_in.push_back(
+		    [=, &var]() { statement(qual_var_name, " = ", to_expression(var.initializer), ";"); });
+	}
 
 	// Copy the variable location from the original variable to the member
 	if (get_decoration_bitset(var.self).get(DecorationLocation))
@@ -1565,11 +1571,11 @@ void CompilerMSL::align_struct(SPIRType &ib_type)
 
 		// Align current offset to the current member's default alignment.
 		size_t align_mask = get_declared_struct_member_alignment(ib_type, mbr_idx) - 1;
-		curr_offset = uint32_t((curr_offset + align_mask) & ~align_mask);
+		uint32_t aligned_curr_offset = uint32_t((curr_offset + align_mask) & ~align_mask);
 
 		// Fetch the member offset as declared in the SPIRV.
 		uint32_t mbr_offset = get_member_decoration(ib_type_id, mbr_idx, DecorationOffset);
-		if (mbr_offset > curr_offset)
+		if (mbr_offset > aligned_curr_offset)
 		{
 			// Since MSL and SPIR-V have slightly different struct member alignment and
 			// size rules, we'll pad to standard C-packing rules. If the member is farther
@@ -1608,6 +1614,18 @@ bool CompilerMSL::is_member_packable(SPIRType &ib_type, uint32_t index)
 	    type_struct_member_array_stride(ib_type, index) == 4 * component_size)
 	{
 		return true;
+	}
+
+	// Check for array of struct, where the SPIR-V declares an array stride which is larger than the struct itself.
+	// This can happen for struct A { float a }; A a[]; in std140 layout.
+	// TODO: Emit a padded struct which can be used for this purpose.
+	if (is_array(mbr_type) && mbr_type.basetype == SPIRType::Struct)
+	{
+		size_t declared_struct_size = get_declared_struct_size(mbr_type);
+		size_t alignment = get_declared_struct_member_alignment(ib_type, index);
+		declared_struct_size = (declared_struct_size + alignment - 1) & ~(alignment - 1);
+		if (type_struct_member_array_stride(ib_type, index) > declared_struct_size)
+			return true;
 	}
 
 	// TODO: Another sanity check for matrices. We currently do not support std140 matrices which need to be padded out per column.
@@ -2423,7 +2441,6 @@ void CompilerMSL::emit_binary_unord_op(uint32_t result_type, uint32_t result_id,
 // Override for MSL-specific syntax instructions
 void CompilerMSL::emit_instruction(const Instruction &instruction)
 {
-
 #define MSL_BOP(op) emit_binary_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define MSL_BOP_CAST(op, type) \
 	emit_binary_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, opcode_is_sign_invariant(opcode))
@@ -2439,42 +2456,77 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 	auto ops = stream(instruction);
 	auto opcode = static_cast<Op>(instruction.op);
 
+	// If we need to do implicit bitcasts, make sure we do it with the correct type.
+	uint32_t integer_width = get_integer_width_for_instruction(instruction);
+	auto int_type = to_signed_basetype(integer_width);
+	auto uint_type = to_unsigned_basetype(integer_width);
+
 	switch (opcode)
 	{
 
 	// Comparisons
 	case OpIEqual:
+		MSL_BOP_CAST(==, int_type);
+		break;
+
 	case OpLogicalEqual:
 	case OpFOrdEqual:
 		MSL_BOP(==);
 		break;
 
 	case OpINotEqual:
+		MSL_BOP_CAST(!=, int_type);
+		break;
+
 	case OpLogicalNotEqual:
 	case OpFOrdNotEqual:
 		MSL_BOP(!=);
 		break;
 
 	case OpUGreaterThan:
+		MSL_BOP_CAST(>, uint_type);
+		break;
+
 	case OpSGreaterThan:
+		MSL_BOP_CAST(>, int_type);
+		break;
+
 	case OpFOrdGreaterThan:
 		MSL_BOP(>);
 		break;
 
 	case OpUGreaterThanEqual:
+		MSL_BOP_CAST(>=, uint_type);
+		break;
+
 	case OpSGreaterThanEqual:
+		MSL_BOP_CAST(>=, int_type);
+		break;
+
 	case OpFOrdGreaterThanEqual:
 		MSL_BOP(>=);
 		break;
 
 	case OpULessThan:
+		MSL_BOP_CAST(<, uint_type);
+		break;
+
 	case OpSLessThan:
+		MSL_BOP_CAST(<, int_type);
+		break;
+
 	case OpFOrdLessThan:
 		MSL_BOP(<);
 		break;
 
 	case OpULessThanEqual:
+		MSL_BOP_CAST(<=, uint_type);
+		break;
+
 	case OpSLessThanEqual:
+		MSL_BOP_CAST(<=, int_type);
+		break;
+
 	case OpFOrdLessThanEqual:
 		MSL_BOP(<=);
 		break;
@@ -3371,10 +3423,13 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		for (auto var_id : vars_needing_early_declaration)
 		{
 			auto &ed_var = get<SPIRVariable>(var_id);
-			if (!ed_var.initializer)
-				ed_var.initializer = ir.increase_bound_by(1);
+			uint32_t &initializer = ed_var.initializer;
+			if (!initializer)
+				initializer = ir.increase_bound_by(1);
 
-			set<SPIRExpression>(ed_var.initializer, "{}", ed_var.basetype, true);
+			// Do not override proper initializers.
+			if (ir.ids[initializer].get_type() == TypeNone || ir.ids[initializer].get_type() == TypeExpression)
+				set<SPIRExpression>(ed_var.initializer, "{}", ed_var.basetype, true);
 		}
 	}
 
@@ -3503,32 +3558,30 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 	bool is_cube_fetch = false;
 
 	string tex_coords = coord_expr;
-	const char *alt_coord = "";
+	uint32_t alt_coord_component = 0;
 
 	switch (imgtype.image.dim)
 	{
 
 	case Dim1D:
 		if (coord_type.vecsize > 1)
-			tex_coords += ".x";
+			tex_coords = enclose_expression(tex_coords) + ".x";
 
 		if (is_fetch)
 			tex_coords = "uint(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 
-		alt_coord = ".y";
-
+		alt_coord_component = 1;
 		break;
 
 	case DimBuffer:
 		if (coord_type.vecsize > 1)
-			tex_coords += ".x";
+			tex_coords = enclose_expression(tex_coords) + ".x";
 
 		// Metal texel buffer textures are 2D, so convert 1D coord to 2D.
 		if (is_fetch)
 			tex_coords = "spvTexelBufferCoord(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 
-		alt_coord = ".y";
-
+		alt_coord_component = 1;
 		break;
 
 	case DimSubpassData:
@@ -3540,24 +3593,22 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 
 	case Dim2D:
 		if (coord_type.vecsize > 2)
-			tex_coords += ".xy";
+			tex_coords = enclose_expression(tex_coords) + ".xy";
 
 		if (is_fetch)
 			tex_coords = "uint2(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 
-		alt_coord = ".z";
-
+		alt_coord_component = 2;
 		break;
 
 	case Dim3D:
 		if (coord_type.vecsize > 3)
-			tex_coords += ".xyz";
+			tex_coords = enclose_expression(tex_coords) + ".xyz";
 
 		if (is_fetch)
 			tex_coords = "uint3(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
 
-		alt_coord = ".w";
-
+		alt_coord_component = 3;
 		break;
 
 	case DimCube:
@@ -3570,11 +3621,10 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 		else
 		{
 			if (coord_type.vecsize > 3)
-				tex_coords += ".xyz";
+				tex_coords = enclose_expression(tex_coords) + ".xyz";
 		}
 
-		alt_coord = ".w";
-
+		alt_coord_component = 3;
 		break;
 
 	default:
@@ -3604,7 +3654,7 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 
 	// If projection, use alt coord as divisor
 	if (is_proj)
-		tex_coords += " / " + coord_expr + alt_coord;
+		tex_coords += " / " + to_extract_component_expression(coord, alt_coord_component);
 
 	if (!farg_str.empty())
 		farg_str += ", ";
@@ -3615,9 +3665,9 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 	{
 		// Special case for cube arrays, face and layer are packed in one dimension.
 		if (imgtype.image.arrayed)
-			farg_str += ", uint(" + join(coord_expr, ".z) % 6u");
+			farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") % 6u";
 		else
-			farg_str += ", uint(" + round_fp_tex_coords(coord_expr + ".z", coord_is_fp) + ")";
+			farg_str += ", uint(" + round_fp_tex_coords(to_extract_component_expression(coord, 2), coord_is_fp) + ")";
 	}
 
 	// If array, use alt coord
@@ -3625,9 +3675,11 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 	{
 		// Special case for cube arrays, face and layer are packed in one dimension.
 		if (imgtype.image.dim == DimCube && is_fetch)
-			farg_str += ", uint(" + join(coord_expr, ".z) / 6u");
+			farg_str += ", uint(" + to_extract_component_expression(coord, 2) + ") / 6u";
 		else
-			farg_str += ", uint(" + round_fp_tex_coords(coord_expr + alt_coord, coord_is_fp) + ")";
+			farg_str += ", uint(" +
+			            round_fp_tex_coords(to_extract_component_expression(coord, alt_coord_component), coord_is_fp) +
+			            ")";
 	}
 
 	// Depth compare reference value
@@ -3635,7 +3687,12 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 	{
 		forward = forward && should_forward(dref);
 		farg_str += ", ";
-		farg_str += to_expression(dref);
+
+		if (is_proj)
+			farg_str +=
+			    to_enclosed_expression(dref) + " / " + to_extract_component_expression(coord, alt_coord_component);
+		else
+			farg_str += to_expression(dref);
 
 		if (msl_options.is_macos() && (grad_x || grad_y))
 		{
@@ -4028,7 +4085,7 @@ void CompilerMSL::emit_struct_member(const SPIRType &type, uint32_t member_type_
 	MSLStructMemberKey key = get_struct_member_key(type.self, index);
 	uint32_t pad_len = struct_member_padding[key];
 	if (pad_len > 0)
-		statement("char pad", to_string(index), "[", to_string(pad_len), "];");
+		statement("char _m", index, "_pad", "[", to_string(pad_len), "];");
 
 	// If this member is packed, mark it as so.
 	string pack_pfx = "";
@@ -4039,7 +4096,11 @@ void CompilerMSL::emit_struct_member(const SPIRType &type, uint32_t member_type_
 	if (member_is_packed_type(type, index))
 	{
 		// If we're packing a matrix, output an appropriate typedef
-		if (membertype.vecsize > 1 && membertype.columns > 1)
+		if (membertype.basetype == SPIRType::Struct)
+		{
+			pack_pfx = "/* FIXME: A padded struct is needed here. If you see this message, file a bug! */ ";
+		}
+		else if (membertype.vecsize > 1 && membertype.columns > 1)
 		{
 			pack_pfx = "packed_";
 			string base_type = membertype.width == 16 ? "half" : "float";
@@ -5406,37 +5467,25 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 
 string CompilerMSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &in_type)
 {
-	if ((out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::Short) ||
-	    (out_type.basetype == SPIRType::Short && in_type.basetype == SPIRType::UShort) ||
-	    (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Int) ||
-	    (out_type.basetype == SPIRType::Int && in_type.basetype == SPIRType::UInt) ||
-	    (out_type.basetype == SPIRType::UInt64 && in_type.basetype == SPIRType::Int64) ||
-	    (out_type.basetype == SPIRType::Int64 && in_type.basetype == SPIRType::UInt64))
+	if (out_type.basetype == in_type.basetype)
+		return "";
+
+	assert(out_type.basetype != SPIRType::Boolean);
+	assert(in_type.basetype != SPIRType::Boolean);
+
+	bool integral_cast = type_is_integral(out_type) && type_is_integral(in_type);
+	bool same_size_cast = out_type.width == in_type.width;
+
+	if (integral_cast && same_size_cast)
+	{
+		// Trivial bitcast case, casts between integers.
 		return type_to_glsl(out_type);
-
-	if ((out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Float) ||
-	    (out_type.basetype == SPIRType::Int && in_type.basetype == SPIRType::Float) ||
-	    (out_type.basetype == SPIRType::Float && in_type.basetype == SPIRType::UInt) ||
-	    (out_type.basetype == SPIRType::Float && in_type.basetype == SPIRType::Int) ||
-	    (out_type.basetype == SPIRType::Int64 && in_type.basetype == SPIRType::Double) ||
-	    (out_type.basetype == SPIRType::UInt64 && in_type.basetype == SPIRType::Double) ||
-	    (out_type.basetype == SPIRType::Double && in_type.basetype == SPIRType::Int64) ||
-	    (out_type.basetype == SPIRType::Double && in_type.basetype == SPIRType::UInt64) ||
-	    (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::UInt) ||
-	    (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Half) ||
-	    (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::Int) ||
-	    (out_type.basetype == SPIRType::Int && in_type.basetype == SPIRType::Half) ||
-	    (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::UShort) ||
-	    (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::Half) ||
-	    (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::Short) ||
-	    (out_type.basetype == SPIRType::Short && in_type.basetype == SPIRType::Half) ||
-	    (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::UShort && in_type.vecsize == 2) ||
-	    (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::UInt && in_type.vecsize == 1) ||
-	    (out_type.basetype == SPIRType::Int && in_type.basetype == SPIRType::Short && in_type.vecsize == 2) ||
-	    (out_type.basetype == SPIRType::Short && in_type.basetype == SPIRType::Int && in_type.vecsize == 1))
+	}
+	else
+	{
+		// Fall back to the catch-all bitcast in MSL.
 		return "as_type<" + type_to_glsl(out_type) + ">";
-
-	return "";
+	}
 }
 
 // Returns an MSL string identifying the name of a SPIR-V builtin.
@@ -5679,7 +5728,12 @@ size_t CompilerMSL::get_declared_struct_member_size(const SPIRType &struct_type,
 		}
 
 		if (type.basetype == SPIRType::Struct)
-			return get_declared_struct_size(type);
+		{
+			// The size of a struct in Metal is aligned up to its natural alignment.
+			auto size = get_declared_struct_size(type);
+			auto alignment = get_declared_struct_member_alignment(struct_type, index);
+			return (size + alignment - 1) & ~(alignment - 1);
+		}
 
 		uint32_t component_size = type.width / 8;
 		uint32_t vecsize = type.vecsize;
@@ -5710,7 +5764,13 @@ size_t CompilerMSL::get_declared_struct_member_alignment(const SPIRType &struct_
 		SPIRV_CROSS_THROW("Querying alignment of opaque object.");
 
 	case SPIRType::Struct:
-		return 16; // Per Vulkan spec section 14.5.4
+	{
+		// In MSL, a struct's alignment is equal to the maximum alignment of any of its members.
+		uint32_t alignment = 1;
+		for (uint32_t i = 0; i < type.member_types.size(); i++)
+			alignment = max(alignment, uint32_t(get_declared_struct_member_alignment(type, i)));
+		return alignment;
+	}
 
 	default:
 	{
@@ -5718,7 +5778,18 @@ size_t CompilerMSL::get_declared_struct_member_alignment(const SPIRType &struct_
 		// Alignment of unpacked type is the same as the vector size.
 		// Alignment of 3-elements vector is the same as 4-elements (including packed using column).
 		if (member_is_packed_type(struct_type, index))
-			return (type.width / 8) * (type.columns == 3 ? 4 : type.columns);
+		{
+			// This is getting pretty complicated.
+			// The special case of array of float/float2 needs to be handled here.
+			uint32_t packed_type_id =
+			    get_extended_member_decoration(struct_type.self, index, SPIRVCrossDecorationPackedType);
+			const SPIRType *packed_type = packed_type_id != 0 ? &get<SPIRType>(packed_type_id) : nullptr;
+			if (packed_type && is_array(*packed_type) && !is_matrix(*packed_type) &&
+			    packed_type->basetype != SPIRType::Struct)
+				return (packed_type->width / 8) * 4;
+			else
+				return (type.width / 8) * (type.columns == 3 ? 4 : type.columns);
+		}
 		else
 			return (type.width / 8) * (type.vecsize == 3 ? 4 : type.vecsize);
 	}

@@ -3,8 +3,6 @@
 #extension GL_AMD_gpu_shader_half_float : require
 #elif defined(GL_NV_gpu_shader5)
 #extension GL_NV_gpu_shader5 : require
-#elif defined(GL_EXT_shader_16bit_storage)
-#extension GL_EXT_shader_16bit_storage : require
 #else
 #error No extension available for FP16.
 #endif

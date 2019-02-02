@@ -22,6 +22,7 @@
                OpDecorate %_ DescriptorSet 0
                OpDecorate %_ Binding 7
                OpDecorate %buffer DescriptorSet 0
+               OpDecorate %buffer Binding 0
                OpDecorate %group_id BuiltIn WorkgroupId
                OpDecorate %group_index BuiltIn LocalInvocationIndex
        %void = OpTypeVoid

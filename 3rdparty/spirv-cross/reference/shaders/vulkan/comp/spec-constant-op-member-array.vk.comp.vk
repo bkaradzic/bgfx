@@ -17,7 +17,7 @@ struct B
 };
 
 layout(constant_id = 2) const int c = 300;
-const int _18 = (c + 50);
+const int d = (c + 50);
 layout(constant_id = 3) const int e = 400;
 
 layout(set = 1, binding = 0, std430) buffer SSBO
@@ -25,7 +25,7 @@ layout(set = 1, binding = 0, std430) buffer SSBO
     A member_a;
     B member_b;
     int v[a];
-    int w[_18];
+    int w[d];
 } _22;
 
 void main()

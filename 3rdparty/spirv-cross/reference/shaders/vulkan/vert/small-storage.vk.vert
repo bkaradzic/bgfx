@@ -1,18 +1,14 @@
 #version 450
 #if defined(GL_AMD_gpu_shader_int16)
 #extension GL_AMD_gpu_shader_int16 : require
-#elif defined(GL_EXT_shader_16bit_storage)
-#extension GL_EXT_shader_16bit_storage : require
 #else
 #error No extension available for Int16.
 #endif
-#extension GL_EXT_shader_8bit_storage : require
+#extension GL_EXT_shader_explicit_arithmetic_types_int8 : require
 #if defined(GL_AMD_gpu_shader_half_float)
 #extension GL_AMD_gpu_shader_half_float : require
 #elif defined(GL_NV_gpu_shader5)
 #extension GL_NV_gpu_shader5 : require
-#elif defined(GL_EXT_shader_16bit_storage)
-#extension GL_EXT_shader_16bit_storage : require
 #else
 #error No extension available for FP16.
 #endif

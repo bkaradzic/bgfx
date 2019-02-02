@@ -43,7 +43,6 @@ struct Content
     S1 m1;
     S2 m2;
     S3 m3;
-    char pad7[4];
     float m4;
     S4 m3s[8];
 };
@@ -53,7 +52,6 @@ struct SSBO1
     Content content;
     Content content1[2];
     Content content2;
-    char pad3[8];
     float2x2 m0;
     float2x2 m1;
     float2x3 m2[4];
@@ -61,9 +59,9 @@ struct SSBO1
     float2x2 m4;
     float2x2 m5[9];
     packed_float2x3 m6[4][2];
-    char pad10[8];
+    char _m10_pad[8];
     float3x2 m7;
-    char pad11[8];
+    char _m11_pad[8];
     float array[1];
 };
 
@@ -105,9 +103,9 @@ struct Content_1
     S1_1 m1;
     S2_1 m2;
     S3_1 m3;
-    char pad7[4];
     float m4;
-    S4_1 m3s[8];
+    char _m8_pad[12];
+    /* FIXME: A padded struct is needed here. If you see this message, file a bug! */ S4_1 m3s[8];
 };
 
 struct SSBO0

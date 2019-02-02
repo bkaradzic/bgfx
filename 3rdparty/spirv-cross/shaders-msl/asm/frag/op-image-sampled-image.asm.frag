@@ -6,6 +6,7 @@
                OpCapability Shader
                OpMemoryModel Logical GLSL450
                OpEntryPoint Fragment %main "main" %o0
+			   OpExecutionMode %main OriginUpperLeft
                OpName %main "main"
                OpName %t0 "t0"
                OpName %o0 "o0"

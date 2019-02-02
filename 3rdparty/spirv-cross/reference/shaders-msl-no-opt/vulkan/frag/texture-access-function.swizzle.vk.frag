@@ -158,7 +158,7 @@ float4 do_samples(thread const texture1d<float> t1, thread const sampler t1Smplr
     c = spvTextureSwizzle(t3.sample(t3Smplr, float4(0.0, 0.0, 0.0, 1.0).xyz / float4(0.0, 0.0, 0.0, 1.0).w), t3Swzl);
     float4 _119 = float4(0.0, 0.0, 1.0, 1.0);
     _119.z = float4(0.0, 0.0, 1.0, 1.0).w;
-    c.x = spvTextureSwizzle(d2.sample_compare(d2Smplr, _119.xy / _119.z, float4(0.0, 0.0, 1.0, 1.0).z), d2Swzl);
+    c.x = spvTextureSwizzle(d2.sample_compare(d2Smplr, _119.xy / _119.z, float4(0.0, 0.0, 1.0, 1.0).z / _119.z), d2Swzl);
     c = spvTextureSwizzle(t1.sample(t1Smplr, 0.0), t1Swzl);
     c = spvTextureSwizzle(t2.sample(defaultSampler, float2(0.0), level(0.0)), t2Swzl);
     c = spvTextureSwizzle(t3.sample(t3Smplr, float3(0.0), level(0.0)), t3Swzl);
@@ -171,7 +171,7 @@ float4 do_samples(thread const texture1d<float> t1, thread const sampler t1Smplr
     c = spvTextureSwizzle(t3.sample(t3Smplr, float4(0.0, 0.0, 0.0, 1.0).xyz / float4(0.0, 0.0, 0.0, 1.0).w, level(0.0)), t3Swzl);
     float4 _153 = float4(0.0, 0.0, 1.0, 1.0);
     _153.z = float4(0.0, 0.0, 1.0, 1.0).w;
-    c.x = spvTextureSwizzle(d2.sample_compare(d2Smplr, _153.xy / _153.z, float4(0.0, 0.0, 1.0, 1.0).z, level(0.0)), d2Swzl);
+    c.x = spvTextureSwizzle(d2.sample_compare(d2Smplr, _153.xy / _153.z, float4(0.0, 0.0, 1.0, 1.0).z / _153.z, level(0.0)), d2Swzl);
     c = spvTextureSwizzle(t1.read(uint(0)), t1Swzl);
     c = spvTextureSwizzle(t2.read(uint2(int2(0)), 0), t2Swzl);
     c = spvTextureSwizzle(t3.read(uint3(int3(0)), 0), t3Swzl);

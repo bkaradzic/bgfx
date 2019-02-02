@@ -1,4 +1,4 @@
-cbuffer UBO
+cbuffer UBO : register(b0)
 {
     row_major float4x4 _16_uMVP : packoffset(c0);
 };

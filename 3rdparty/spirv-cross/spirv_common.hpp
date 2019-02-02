@@ -1047,6 +1047,16 @@ struct SPIRConstant : IVariant
 		return uint16_t(m.c[col].r[row].u32 & 0xffffu);
 	}
 
+	inline int8_t scalar_i8(uint32_t col = 0, uint32_t row = 0) const
+	{
+		return int8_t(m.c[col].r[row].u32 & 0xffu);
+	}
+
+	inline uint8_t scalar_u8(uint32_t col = 0, uint32_t row = 0) const
+	{
+		return uint8_t(m.c[col].r[row].u32 & 0xffu);
+	}
+
 	inline float scalar_f16(uint32_t col = 0, uint32_t row = 0) const
 	{
 		return f16_to_f32(scalar_u16(col, row));
@@ -1434,6 +1444,61 @@ static inline bool type_is_integral(const SPIRType &type)
 	return type.basetype == SPIRType::SByte || type.basetype == SPIRType::UByte || type.basetype == SPIRType::Short ||
 	       type.basetype == SPIRType::UShort || type.basetype == SPIRType::Int || type.basetype == SPIRType::UInt ||
 	       type.basetype == SPIRType::Int64 || type.basetype == SPIRType::UInt64;
+}
+
+static inline SPIRType::BaseType to_signed_basetype(uint32_t width)
+{
+	switch (width)
+	{
+	case 8:
+		return SPIRType::SByte;
+	case 16:
+		return SPIRType::Short;
+	case 32:
+		return SPIRType::Int;
+	case 64:
+		return SPIRType::Int64;
+	default:
+		SPIRV_CROSS_THROW("Invalid bit width.");
+	}
+}
+
+static inline SPIRType::BaseType to_unsigned_basetype(uint32_t width)
+{
+	switch (width)
+	{
+	case 8:
+		return SPIRType::UByte;
+	case 16:
+		return SPIRType::UShort;
+	case 32:
+		return SPIRType::UInt;
+	case 64:
+		return SPIRType::UInt64;
+	default:
+		SPIRV_CROSS_THROW("Invalid bit width.");
+	}
+}
+
+// Returns true if an arithmetic operation does not change behavior depending on signedness.
+static inline bool opcode_is_sign_invariant(spv::Op opcode)
+{
+	switch (opcode)
+	{
+	case spv::OpIEqual:
+	case spv::OpINotEqual:
+	case spv::OpISub:
+	case spv::OpIAdd:
+	case spv::OpIMul:
+	case spv::OpShiftLeftLogical:
+	case spv::OpBitwiseOr:
+	case spv::OpBitwiseXor:
+	case spv::OpBitwiseAnd:
+		return true;
+
+	default:
+		return false;
+	}
 }
 } // namespace spirv_cross
 

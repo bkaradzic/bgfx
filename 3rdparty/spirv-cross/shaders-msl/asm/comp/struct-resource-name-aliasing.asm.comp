@@ -20,6 +20,8 @@
                OpDecorate %bufA BufferBlock
                OpDecorate %bufA_0 DescriptorSet 0
                OpDecorate %bufB DescriptorSet 0
+               OpDecorate %bufA_0 Binding 0
+               OpDecorate %bufB Binding 1
        %void = OpTypeVoid
           %3 = OpTypeFunction %void
        %uint = OpTypeInt 32 0

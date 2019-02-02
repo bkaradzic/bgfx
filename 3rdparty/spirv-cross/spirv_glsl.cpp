@@ -149,27 +149,6 @@ string CompilerGLSL::sanitize_underscores(const string &str)
 	return res;
 }
 
-// Returns true if an arithmetic operation does not change behavior depending on signedness.
-static bool glsl_opcode_is_sign_invariant(Op opcode)
-{
-	switch (opcode)
-	{
-	case OpIEqual:
-	case OpINotEqual:
-	case OpISub:
-	case OpIAdd:
-	case OpIMul:
-	case OpShiftLeftLogical:
-	case OpBitwiseOr:
-	case OpBitwiseXor:
-	case OpBitwiseAnd:
-		return true;
-
-	default:
-		return false;
-	}
-}
-
 static const char *to_pls_layout(PlsFormat format)
 {
 	switch (format)
@@ -342,23 +321,31 @@ void CompilerGLSL::find_static_extensions()
 			if (!options.es && options.version < 400)
 				require_extension_internal("GL_ARB_gpu_shader_fp64");
 		}
-
-		if (type.basetype == SPIRType::Int64 || type.basetype == SPIRType::UInt64)
+		else if (type.basetype == SPIRType::Int64 || type.basetype == SPIRType::UInt64)
 		{
 			if (options.es)
 				SPIRV_CROSS_THROW("64-bit integers not supported in ES profile.");
 			if (!options.es)
 				require_extension_internal("GL_ARB_gpu_shader_int64");
 		}
-
-		if (type.basetype == SPIRType::Half)
-			require_extension_internal("GL_AMD_gpu_shader_half_float");
-
-		if (type.basetype == SPIRType::SByte || type.basetype == SPIRType::UByte)
-			require_extension_internal("GL_EXT_shader_8bit_storage");
-
-		if (type.basetype == SPIRType::Short || type.basetype == SPIRType::UShort)
-			require_extension_internal("GL_AMD_gpu_shader_int16");
+		else if (type.basetype == SPIRType::Half)
+		{
+			require_extension_internal("GL_EXT_shader_explicit_arithmetic_types_float16");
+			if (options.vulkan_semantics)
+				require_extension_internal("GL_EXT_shader_16bit_storage");
+		}
+		else if (type.basetype == SPIRType::SByte || type.basetype == SPIRType::UByte)
+		{
+			require_extension_internal("GL_EXT_shader_explicit_arithmetic_types_int8");
+			if (options.vulkan_semantics)
+				require_extension_internal("GL_EXT_shader_8bit_storage");
+		}
+		else if (type.basetype == SPIRType::Short || type.basetype == SPIRType::UShort)
+		{
+			require_extension_internal("GL_EXT_shader_explicit_arithmetic_types_int16");
+			if (options.vulkan_semantics)
+				require_extension_internal("GL_EXT_shader_16bit_storage");
+		}
 	});
 
 	auto &execution = get_entry_point();
@@ -508,7 +495,7 @@ void CompilerGLSL::emit_header()
 
 	for (auto &ext : forced_extensions)
 	{
-		if (ext == "GL_AMD_gpu_shader_half_float")
+		if (ext == "GL_EXT_shader_explicit_arithmetic_types_float16")
 		{
 			// Special case, this extension has a potential fallback to another vendor extension in normal GLSL.
 			// GL_AMD_gpu_shader_half_float is a superset, so try that first.
@@ -519,22 +506,27 @@ void CompilerGLSL::emit_header()
 				statement("#elif defined(GL_NV_gpu_shader5)");
 				statement("#extension GL_NV_gpu_shader5 : require");
 			}
-			statement("#elif defined(GL_EXT_shader_16bit_storage)");
-			statement("#extension GL_EXT_shader_16bit_storage : require");
+			else
+			{
+				statement("#elif defined(GL_EXT_shader_explicit_arithmetic_types_float16)");
+				statement("#extension GL_EXT_shader_explicit_arithmetic_types_float16 : require");
+			}
 			statement("#else");
 			statement("#error No extension available for FP16.");
 			statement("#endif");
 		}
-		else if (ext == "GL_AMD_gpu_shader_int16")
+		else if (ext == "GL_EXT_shader_explicit_arithmetic_types_int16")
 		{
-			// GL_AMD_gpu_shader_int16 is a superset, so try that first.
-			statement("#if defined(GL_AMD_gpu_shader_int16)");
-			statement("#extension GL_AMD_gpu_shader_int16 : require");
-			statement("#elif defined(GL_EXT_shader_16bit_storage)");
-			statement("#extension GL_EXT_shader_16bit_storage : require");
-			statement("#else");
-			statement("#error No extension available for Int16.");
-			statement("#endif");
+			if (options.vulkan_semantics)
+				statement("#extension GL_EXT_shader_explicit_arithmetic_types_int16 : require");
+			else
+			{
+				statement("#if defined(GL_AMD_gpu_shader_int16)");
+				statement("#extension GL_AMD_gpu_shader_int16 : require");
+				statement("#else");
+				statement("#error No extension available for Int16.");
+				statement("#endif");
+			}
 		}
 		else
 			statement("#extension ", ext, " : require");
@@ -960,7 +952,7 @@ uint32_t CompilerGLSL::type_to_packed_alignment(const SPIRType &type, const Bits
 	if (type.basetype == SPIRType::Struct)
 	{
 		// Rule 9. Structs alignments are maximum alignment of its members.
-		uint32_t alignment = 0;
+		uint32_t alignment = 1;
 		for (uint32_t i = 0; i < type.member_types.size(); i++)
 		{
 			auto member_flags = ir.meta[type.self].members[i].decoration_flags;
@@ -1743,6 +1735,14 @@ void CompilerGLSL::emit_interface_block(const SPIRVariable &var)
 			add_resource_name(var.self);
 			statement(layout_for_variable(var), to_qualifiers_glsl(var.self),
 			          variable_decl(type, to_name(var.self), var.self), ";");
+
+			// If a StorageClassOutput variable has an initializer, we need to initialize it in main().
+			if (var.storage == StorageClassOutput && var.initializer)
+			{
+				auto &entry_func = this->get<SPIRFunction>(ir.default_entry_point);
+				entry_func.fixup_hooks_in.push_back(
+				    [&]() { statement(to_name(var.self), " = ", to_expression(var.initializer), ";"); });
+			}
 		}
 	}
 }
@@ -2791,14 +2791,38 @@ string CompilerGLSL::constant_op_expression(const SPIRConstantOp &cop)
 		SPIRV_CROSS_THROW("Unimplemented spec constant op.");
 	}
 
+	uint32_t bit_width = 0;
+	if (unary || binary)
+		bit_width = expression_type(cop.arguments[0]).width;
+
 	SPIRType::BaseType input_type;
-	bool skip_cast_if_equal_type = glsl_opcode_is_sign_invariant(cop.opcode);
+	bool skip_cast_if_equal_type = opcode_is_sign_invariant(cop.opcode);
 
 	switch (cop.opcode)
 	{
 	case OpIEqual:
 	case OpINotEqual:
-		input_type = SPIRType::Int;
+		input_type = to_signed_basetype(bit_width);
+		break;
+
+	case OpSLessThan:
+	case OpSLessThanEqual:
+	case OpSGreaterThan:
+	case OpSGreaterThanEqual:
+	case OpSMod:
+	case OpSDiv:
+	case OpShiftRightArithmetic:
+		input_type = to_signed_basetype(bit_width);
+		break;
+
+	case OpULessThan:
+	case OpULessThanEqual:
+	case OpUGreaterThan:
+	case OpUGreaterThanEqual:
+	case OpUMod:
+	case OpUDiv:
+	case OpShiftRightLogical:
+		input_type = to_unsigned_basetype(bit_width);
 		break;
 
 	default:
@@ -3113,6 +3137,9 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 	auto type = get<SPIRType>(c.constant_type);
 	type.columns = 1;
 
+	auto scalar_type = type;
+	scalar_type.vecsize = 1;
+
 	string res;
 	bool splat = backend.use_constructor_splatting && c.vector_size() > 1;
 	bool swizzle_splat = backend.can_swizzle_scalar && c.vector_size() > 1;
@@ -3415,6 +3442,56 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 					if (backend.int16_t_literal_suffix)
 						res += backend.int16_t_literal_suffix;
 				}
+				if (i + 1 < c.vector_size())
+					res += ", ";
+			}
+		}
+		break;
+
+	case SPIRType::UByte:
+		if (splat)
+		{
+			res += convert_to_string(c.scalar_u8(vector, 0));
+		}
+		else
+		{
+			for (uint32_t i = 0; i < c.vector_size(); i++)
+			{
+				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
+					res += to_name(c.specialization_constant_id(vector, i));
+				else
+				{
+					res += type_to_glsl(scalar_type);
+					res += "(";
+					res += convert_to_string(c.scalar_u8(vector, i));
+					res += ")";
+				}
+
+				if (i + 1 < c.vector_size())
+					res += ", ";
+			}
+		}
+		break;
+
+	case SPIRType::SByte:
+		if (splat)
+		{
+			res += convert_to_string(c.scalar_i8(vector, 0));
+		}
+		else
+		{
+			for (uint32_t i = 0; i < c.vector_size(); i++)
+			{
+				if (c.vector_size() > 1 && c.specialization_constant_id(vector, i) != 0)
+					res += to_name(c.specialization_constant_id(vector, i));
+				else
+				{
+					res += type_to_glsl(scalar_type);
+					res += "(";
+					res += convert_to_string(c.scalar_i8(vector, i));
+					res += ")";
+				}
+
 				if (i + 1 < c.vector_size())
 					res += ", ";
 			}
@@ -5177,20 +5254,31 @@ case OpGroupNonUniform##op: \
 
 string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &in_type)
 {
-	if (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::Short)
+	if (out_type.basetype == in_type.basetype)
+		return "";
+
+	assert(out_type.basetype != SPIRType::Boolean);
+	assert(in_type.basetype != SPIRType::Boolean);
+
+	bool integral_cast = type_is_integral(out_type) && type_is_integral(in_type);
+	bool same_size_cast = out_type.width == in_type.width;
+
+	// Trivial bitcast case, casts between integers.
+	if (integral_cast && same_size_cast)
 		return type_to_glsl(out_type);
-	else if (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Int)
-		return type_to_glsl(out_type);
-	else if (out_type.basetype == SPIRType::UInt64 && in_type.basetype == SPIRType::Int64)
-		return type_to_glsl(out_type);
-	else if (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Float)
+
+	// Catch-all 8-bit arithmetic casts (GL_EXT_shader_explicit_arithmetic_types).
+	if (out_type.width == 8 && in_type.width >= 16 && integral_cast && in_type.vecsize == 1)
+		return "unpack8";
+	else if (in_type.width == 8 && out_type.width == 16 && integral_cast && out_type.vecsize == 1)
+		return "pack16";
+	else if (in_type.width == 8 && out_type.width == 32 && integral_cast && out_type.vecsize == 1)
+		return "pack32";
+
+	// Floating <-> Integer special casts. Just have to enumerate all cases. :(
+	// 16-bit, 32-bit and 64-bit floats.
+	if (out_type.basetype == SPIRType::UInt && in_type.basetype == SPIRType::Float)
 		return "floatBitsToUint";
-	else if (out_type.basetype == SPIRType::Short && in_type.basetype == SPIRType::UShort)
-		return type_to_glsl(out_type);
-	else if (out_type.basetype == SPIRType::Int && in_type.basetype == SPIRType::UInt)
-		return type_to_glsl(out_type);
-	else if (out_type.basetype == SPIRType::Int64 && in_type.basetype == SPIRType::UInt64)
-		return type_to_glsl(out_type);
 	else if (out_type.basetype == SPIRType::Int && in_type.basetype == SPIRType::Float)
 		return "floatBitsToInt";
 	else if (out_type.basetype == SPIRType::Float && in_type.basetype == SPIRType::UInt)
@@ -5213,7 +5301,9 @@ string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 		return "int16BitsToFloat16";
 	else if (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::UShort)
 		return "uint16BitsToFloat16";
-	else if (out_type.basetype == SPIRType::UInt64 && in_type.basetype == SPIRType::UInt && in_type.vecsize == 2)
+
+	// And finally, some even more special purpose casts.
+	if (out_type.basetype == SPIRType::UInt64 && in_type.basetype == SPIRType::UInt && in_type.vecsize == 2)
 		return "packUint2x32";
 	else if (out_type.basetype == SPIRType::Half && in_type.basetype == SPIRType::UInt && in_type.vecsize == 1)
 		return "unpackFloat2x16";
@@ -5235,8 +5325,8 @@ string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 		return "packUint4x16";
 	else if (out_type.basetype == SPIRType::UShort && in_type.basetype == SPIRType::UInt64 && in_type.vecsize == 1)
 		return "unpackUint4x16";
-	else
-		return "";
+
+	return "";
 }
 
 string CompilerGLSL::bitcast_glsl(const SPIRType &result_type, uint32_t argument)
@@ -6654,6 +6744,35 @@ void CompilerGLSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_ex
 	}
 }
 
+uint32_t CompilerGLSL::get_integer_width_for_instruction(const Instruction &instr) const
+{
+	if (instr.length < 3)
+		return 32;
+
+	auto *ops = stream(instr);
+
+	switch (instr.op)
+	{
+	case OpIEqual:
+	case OpINotEqual:
+	case OpSLessThan:
+	case OpSLessThanEqual:
+	case OpSGreaterThan:
+	case OpSGreaterThanEqual:
+		return expression_type(ops[2]).width;
+
+	default:
+	{
+		// We can look at result type which is more robust.
+		auto *type = maybe_get<SPIRType>(ops[0]);
+		if (type && type_is_integral(*type))
+			return type->width;
+		else
+			return 32;
+	}
+	}
+}
+
 void CompilerGLSL::emit_instruction(const Instruction &instruction)
 {
 	auto ops = stream(instruction);
@@ -6662,15 +6781,20 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 
 #define GLSL_BOP(op) emit_binary_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define GLSL_BOP_CAST(op, type) \
-	emit_binary_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, glsl_opcode_is_sign_invariant(opcode))
+	emit_binary_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, opcode_is_sign_invariant(opcode))
 #define GLSL_UOP(op) emit_unary_op(ops[0], ops[1], ops[2], #op)
 #define GLSL_QFOP(op) emit_quaternary_func_op(ops[0], ops[1], ops[2], ops[3], ops[4], ops[5], #op)
 #define GLSL_TFOP(op) emit_trinary_func_op(ops[0], ops[1], ops[2], ops[3], ops[4], #op)
 #define GLSL_BFOP(op) emit_binary_func_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define GLSL_BFOP_CAST(op, type) \
-	emit_binary_func_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, glsl_opcode_is_sign_invariant(opcode))
+	emit_binary_func_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, opcode_is_sign_invariant(opcode))
 #define GLSL_BFOP(op) emit_binary_func_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define GLSL_UFOP(op) emit_unary_func_op(ops[0], ops[1], ops[2], #op)
+
+	// If we need to do implicit bitcasts, make sure we do it with the correct type.
+	uint32_t integer_width = get_integer_width_for_instruction(instruction);
+	auto int_type = to_signed_basetype(integer_width);
+	auto uint_type = to_unsigned_basetype(integer_width);
 
 	switch (opcode)
 	{
@@ -7349,11 +7473,11 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpSDiv:
-		GLSL_BOP_CAST(/, SPIRType::Int);
+		GLSL_BOP_CAST(/, int_type);
 		break;
 
 	case OpUDiv:
-		GLSL_BOP_CAST(/, SPIRType::UInt);
+		GLSL_BOP_CAST(/, uint_type);
 		break;
 
 	case OpIAddCarry:
@@ -7411,11 +7535,11 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		break;
 
 	case OpShiftRightLogical:
-		GLSL_BOP_CAST(>>, SPIRType::UInt);
+		GLSL_BOP_CAST(>>, uint_type);
 		break;
 
 	case OpShiftRightArithmetic:
-		GLSL_BOP_CAST(>>, SPIRType::Int);
+		GLSL_BOP_CAST(>>, int_type);
 		break;
 
 	case OpShiftLeftLogical:
@@ -7451,11 +7575,11 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		break;
 
 	case OpUMod:
-		GLSL_BOP_CAST(%, SPIRType::UInt);
+		GLSL_BOP_CAST(%, uint_type);
 		break;
 
 	case OpSMod:
-		GLSL_BOP_CAST(%, SPIRType::Int);
+		GLSL_BOP_CAST(%, int_type);
 		break;
 
 	case OpFMod:
@@ -7538,9 +7662,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpIEqual:
 	{
 		if (expression_type(ops[2]).vecsize > 1)
-			GLSL_BFOP_CAST(equal, SPIRType::Int);
+			GLSL_BFOP_CAST(equal, int_type);
 		else
-			GLSL_BOP_CAST(==, SPIRType::Int);
+			GLSL_BOP_CAST(==, int_type);
 		break;
 	}
 
@@ -7557,9 +7681,9 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	case OpINotEqual:
 	{
 		if (expression_type(ops[2]).vecsize > 1)
-			GLSL_BFOP_CAST(notEqual, SPIRType::Int);
+			GLSL_BFOP_CAST(notEqual, int_type);
 		else
-			GLSL_BOP_CAST(!=, SPIRType::Int);
+			GLSL_BOP_CAST(!=, int_type);
 		break;
 	}
 

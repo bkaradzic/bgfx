@@ -3,7 +3,7 @@
 #endif
 static const uint s = SPIRV_CROSS_CONSTANT_ID_0;
 static const bool _13 = (s > 20u);
-static const uint _16 = _13 ? 30u : 50u;
+static const uint f = _13 ? 30u : 50u;
 
 static float FragColor;
 
@@ -14,7 +14,7 @@ struct SPIRV_Cross_Output
 
 void frag_main()
 {
-    FragColor = float(_16);
+    FragColor = float(f);
 }
 
 SPIRV_Cross_Output main()

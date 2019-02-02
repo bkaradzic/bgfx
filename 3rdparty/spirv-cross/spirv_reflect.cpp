@@ -475,7 +475,8 @@ void CompilerReflection::emit_resources(const char *tag, const vector<Resource> 
 
 		{
 			bool is_sized_block = is_block && (get_storage_class(res.id) == StorageClassUniform ||
-			                                   get_storage_class(res.id) == StorageClassUniformConstant);
+			                                   get_storage_class(res.id) == StorageClassUniformConstant ||
+			                                   get_storage_class(res.id) == StorageClassStorageBuffer);
 			if (is_sized_block)
 			{
 				uint32_t block_size = uint32_t(get_declared_struct_size(get_type(res.base_type_id)));

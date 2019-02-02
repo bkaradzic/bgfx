@@ -40,6 +40,8 @@ kernel void main0(device SSBO& ssbo [[buffer(2)]])
     {
         _52 = 10;
     } while (!atomic_compare_exchange_weak_explicit((volatile device atomic_int*)&ssbo.i32, &_52, 2, memory_order_relaxed, memory_order_relaxed));
+    shared_u32 = 10u;
+    shared_i32 = 10;
     uint _57 = atomic_fetch_add_explicit((volatile threadgroup atomic_uint*)&shared_u32, 1u, memory_order_relaxed);
     uint _58 = atomic_fetch_or_explicit((volatile threadgroup atomic_uint*)&shared_u32, 1u, memory_order_relaxed);
     uint _59 = atomic_fetch_xor_explicit((volatile threadgroup atomic_uint*)&shared_u32, 1u, memory_order_relaxed);

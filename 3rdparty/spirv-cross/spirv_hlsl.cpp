@@ -203,27 +203,6 @@ static string image_format_to_type(ImageFormat fmt, SPIRType::BaseType basetype)
 	}
 }
 
-// Returns true if an arithmetic operation does not change behavior depending on signedness.
-static bool hlsl_opcode_is_sign_invariant(Op opcode)
-{
-	switch (opcode)
-	{
-	case OpIEqual:
-	case OpINotEqual:
-	case OpISub:
-	case OpIAdd:
-	case OpIMul:
-	case OpShiftLeftLogical:
-	case OpBitwiseOr:
-	case OpBitwiseXor:
-	case OpBitwiseAnd:
-		return true;
-
-	default:
-		return false;
-	}
-}
-
 string CompilerHLSL::image_type_hlsl_modern(const SPIRType &type, uint32_t)
 {
 	auto &imagetype = get<SPIRType>(type.image.type);
@@ -1390,50 +1369,6 @@ void CompilerHLSL::emit_resources()
 		}
 	}
 
-	if (requires_textureProj)
-	{
-		if (hlsl_options.shader_model >= 40)
-		{
-			statement("float SPIRV_Cross_projectTextureCoordinate(float2 coord)");
-			begin_scope();
-			statement("return coord.x / coord.y;");
-			end_scope();
-			statement("");
-
-			statement("float2 SPIRV_Cross_projectTextureCoordinate(float3 coord)");
-			begin_scope();
-			statement("return float2(coord.x, coord.y) / coord.z;");
-			end_scope();
-			statement("");
-
-			statement("float3 SPIRV_Cross_projectTextureCoordinate(float4 coord)");
-			begin_scope();
-			statement("return float3(coord.x, coord.y, coord.z) / coord.w;");
-			end_scope();
-			statement("");
-		}
-		else
-		{
-			statement("float4 SPIRV_Cross_projectTextureCoordinate(float2 coord)");
-			begin_scope();
-			statement("return float4(coord.x, 0.0, 0.0, coord.y);");
-			end_scope();
-			statement("");
-
-			statement("float4 SPIRV_Cross_projectTextureCoordinate(float3 coord)");
-			begin_scope();
-			statement("return float4(coord.x, coord.y, 0.0, coord.z);");
-			end_scope();
-			statement("");
-
-			statement("float4 SPIRV_Cross_projectTextureCoordinate(float4 coord)");
-			begin_scope();
-			statement("return coord;");
-			end_scope();
-			statement("");
-		}
-	}
-
 	if (required_textureSizeVariants != 0)
 	{
 		static const char *types[QueryTypeCount] = { "float4", "int4", "uint4" };
@@ -2575,8 +2510,6 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 	if (dref)
 		inherited_expressions.push_back(dref);
 
-	if (proj)
-		coord_components++;
 	if (imgtype.image.arrayed)
 		coord_components++;
 
@@ -2775,17 +2708,14 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 	bool forward = should_forward(coord);
 
 	// The IR can give us more components than we need, so chop them off as needed.
-	auto coord_expr = to_expression(coord) + swizzle(coord_components, expression_type(coord).vecsize);
+	string coord_expr;
+	if (coord_components != expression_type(coord).vecsize)
+		coord_expr = to_enclosed_expression(coord) + swizzle(coord_components, expression_type(coord).vecsize);
+	else
+		coord_expr = to_expression(coord);
 
-	if (proj)
-	{
-		if (!requires_textureProj)
-		{
-			requires_textureProj = true;
-			force_recompile = true;
-		}
-		coord_expr = "SPIRV_Cross_projectTextureCoordinate(" + coord_expr + ")";
-	}
+	if (proj && hlsl_options.shader_model >= 40) // Legacy HLSL has "proj" operations which do this for us.
+		coord_expr = coord_expr + " / " + to_extract_component_expression(coord, coord_components);
 
 	if (hlsl_options.shader_model < 40 && lod)
 	{
@@ -2822,9 +2752,16 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 
 	if (dref)
 	{
+		if (hlsl_options.shader_model < 40)
+			SPIRV_CROSS_THROW("Legacy HLSL does not support comparison sampling.");
+
 		forward = forward && should_forward(dref);
 		expr += ", ";
-		expr += to_expression(dref);
+
+		if (proj)
+			expr += to_enclosed_expression(dref) + " / " + to_extract_component_expression(coord, coord_components);
+		else
+			expr += to_expression(dref);
 	}
 
 	if (!dref && (grad_x || grad_y))
@@ -2951,7 +2888,12 @@ string CompilerHLSL::to_resource_binding(const SPIRVariable &var)
 		else if (storage == StorageClassPushConstant)
 			space = 'b'; // Constant buffers
 		else if (storage == StorageClassStorageBuffer)
-			space = 'u'; // UAV
+		{
+			// UAV or SRV depending on readonly flag.
+			Bitset flags = ir.get_buffer_block_flags(var);
+			bool is_readonly = flags.get(DecorationNonWritable);
+			space = is_readonly ? 't' : 'u';
+		}
 
 		break;
 	}
@@ -3580,20 +3522,19 @@ void CompilerHLSL::emit_access_chain(const Instruction &instruction)
 
 	bool need_byte_access_chain = false;
 	auto &type = expression_type(ops[2]);
-	const SPIRAccessChain *chain = nullptr;
-	if (type.storage == StorageClassStorageBuffer || has_decoration(type.self, DecorationBufferBlock))
+	const auto *chain = maybe_get<SPIRAccessChain>(ops[2]);
+
+	if (chain)
+	{
+		// Keep tacking on an existing access chain.
+		need_byte_access_chain = true;
+	}
+	else if (type.storage == StorageClassStorageBuffer || has_decoration(type.self, DecorationBufferBlock))
 	{
 		// If we are starting to poke into an SSBO, we are dealing with ByteAddressBuffers, and we need
 		// to emit SPIRAccessChain rather than a plain SPIRExpression.
 		uint32_t chain_arguments = length - 3;
 		if (chain_arguments > type.array.size())
-			need_byte_access_chain = true;
-	}
-	else
-	{
-		// Keep tacking on an existing access chain.
-		chain = maybe_get<SPIRAccessChain>(ops[2]);
-		if (chain)
 			need_byte_access_chain = true;
 	}
 
@@ -3934,15 +3875,19 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 
 #define HLSL_BOP(op) emit_binary_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define HLSL_BOP_CAST(op, type) \
-	emit_binary_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, hlsl_opcode_is_sign_invariant(opcode))
+	emit_binary_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, opcode_is_sign_invariant(opcode))
 #define HLSL_UOP(op) emit_unary_op(ops[0], ops[1], ops[2], #op)
 #define HLSL_QFOP(op) emit_quaternary_func_op(ops[0], ops[1], ops[2], ops[3], ops[4], ops[5], #op)
 #define HLSL_TFOP(op) emit_trinary_func_op(ops[0], ops[1], ops[2], ops[3], ops[4], #op)
 #define HLSL_BFOP(op) emit_binary_func_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define HLSL_BFOP_CAST(op, type) \
-	emit_binary_func_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, hlsl_opcode_is_sign_invariant(opcode))
+	emit_binary_func_op_cast(ops[0], ops[1], ops[2], ops[3], #op, type, opcode_is_sign_invariant(opcode))
 #define HLSL_BFOP(op) emit_binary_func_op(ops[0], ops[1], ops[2], ops[3], #op)
 #define HLSL_UFOP(op) emit_unary_func_op(ops[0], ops[1], ops[2], #op)
+
+	// If we need to do implicit bitcasts, make sure we do it with the correct type.
+	uint32_t integer_width = get_integer_width_for_instruction(instruction);
+	auto int_type = to_signed_basetype(integer_width);
 
 	switch (opcode)
 	{
@@ -4079,7 +4024,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		if (expression_type(ops[2]).vecsize > 1)
 			emit_unrolled_binary_op(result_type, id, ops[2], ops[3], "==");
 		else
-			HLSL_BOP_CAST(==, SPIRType::Int);
+			HLSL_BOP_CAST(==, int_type);
 		break;
 	}
 
@@ -4104,7 +4049,7 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		if (expression_type(ops[2]).vecsize > 1)
 			emit_unrolled_binary_op(result_type, id, ops[2], ops[3], "!=");
 		else
-			HLSL_BOP_CAST(!=, SPIRType::Int);
+			HLSL_BOP_CAST(!=, int_type);
 		break;
 	}
 

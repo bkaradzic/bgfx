@@ -636,6 +636,8 @@ protected:
 	bool expression_is_constant_null(uint32_t id) const;
 	virtual void emit_store_statement(uint32_t lhs_expression, uint32_t rhs_expression);
 
+	uint32_t get_integer_width_for_instruction(const Instruction &instr) const;
+
 private:
 	void init()
 	{

@@ -3,12 +3,13 @@
 layout(constant_id = 0) const int arraySize = 3;
 
 layout(binding = 0, rgba32i) uniform iimage2D images[arraySize];
-uniform constant_block
+layout(binding = 4) uniform constant_block
 {
 	vec4 foo;
 	int bar;
 } constants[4];
-buffer storage_block
+
+layout(binding = 8) buffer storage_block
 {
 	uvec4 baz;
 	ivec2 quux;

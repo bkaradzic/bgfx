@@ -34,6 +34,7 @@
                OpMemberDecorate %buf 1 Offset 256
                OpDecorate %buf Block
                OpDecorate %_ DescriptorSet 0
+               OpDecorate %_ Binding 0
                OpDecorate %pos_1 BuiltIn FragCoord
                OpDecorate %_entryPointOutput Location 0
        %void = OpTypeVoid

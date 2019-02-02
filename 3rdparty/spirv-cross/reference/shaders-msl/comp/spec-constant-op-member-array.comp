@@ -28,14 +28,14 @@ struct B
 #define SPIRV_CROSS_CONSTANT_ID_2 300
 #endif
 constant int c = SPIRV_CROSS_CONSTANT_ID_2;
-constant int _18 = (c + 50);
+constant int d = (c + 50);
 
 struct SSBO
 {
     A member_a;
     B member_b;
     int v[a];
-    int w[_18];
+    int w[d];
 };
 
 constant int e_tmp [[function_constant(3)]];

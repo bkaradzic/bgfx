@@ -14,17 +14,16 @@ int _240;
 
 void main()
 {
-    bool _246;
     uint _227;
-    int _237;
+    int _236;
     for (;;)
     {
         _227 = 0u;
-        bool _164;
+        bool _231;
+        int _237;
         for (;;)
         {
-            _164 = _227 < _11.shadowCascadesNum;
-            if (_164)
+            if (_227 < _11.shadowCascadesNum)
             {
                 mat4 _228;
                 for (;;)
@@ -44,6 +43,7 @@ void main()
                 if ((((_179 >= 0.0) && (_179 <= 1.0)) && (max(_186, _188) <= 1.0)) && (min(_186, _188) >= 0.0))
                 {
                     _237 = int(_227);
+                    _231 = true;
                     break;
                 }
                 else
@@ -57,16 +57,18 @@ void main()
             else
             {
                 _237 = _240;
+                _231 = false;
                 break;
             }
         }
-        _246 = _164 ? true : false;
-        if (_246)
+        if (_231)
         {
+            _236 = _237;
             break;
         }
+        _236 = -1;
         break;
     }
-    _entryPointOutput = _246 ? _237 : (-1);
+    _entryPointOutput = _236;
 }
 

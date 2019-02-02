@@ -701,6 +701,12 @@ unordered_set<uint32_t> Compiler::get_active_interface_variables() const
 	InterfaceVariableAccessHandler handler(*this, variables);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
 
+	// Make sure we preserve output variables which are only initialized, but never accessed by any code.
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
+		if (var.storage == StorageClassOutput && var.initializer != 0)
+			variables.insert(var.self);
+	});
+
 	// If we needed to create one, we'll need it.
 	if (dummy_sampler_id)
 		variables.insert(dummy_sampler_id);

@@ -461,23 +461,7 @@ void Parser::parse(const Instruction &instruction)
 		uint32_t width = ops[1];
 		bool signedness = ops[2] != 0;
 		auto &type = set<SPIRType>(id);
-		switch (width)
-		{
-		case 64:
-			type.basetype = signedness ? SPIRType::Int64 : SPIRType::UInt64;
-			break;
-		case 32:
-			type.basetype = signedness ? SPIRType::Int : SPIRType::UInt;
-			break;
-		case 16:
-			type.basetype = signedness ? SPIRType::Short : SPIRType::UShort;
-			break;
-		case 8:
-			type.basetype = signedness ? SPIRType::SByte : SPIRType::UByte;
-			break;
-		default:
-			SPIRV_CROSS_THROW("Unrecognized bit-width of integral type.");
-		}
+		type.basetype = signedness ? to_signed_basetype(width) : to_unsigned_basetype(width);
 		type.width = width;
 		break;
 	}

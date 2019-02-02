@@ -23,7 +23,7 @@ struct B
 #define SPIRV_CROSS_CONSTANT_ID_2 300
 #endif
 static const int c = SPIRV_CROSS_CONSTANT_ID_2;
-static const int _18 = (c + 50);
+static const int d = (c + 50);
 #ifndef SPIRV_CROSS_CONSTANT_ID_3
 #define SPIRV_CROSS_CONSTANT_ID_3 400
 #endif
