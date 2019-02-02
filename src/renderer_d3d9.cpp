@@ -373,6 +373,35 @@ namespace bgfx { namespace d3d9
 			;
 	}
 
+	static inline bool useD3D9Pitch(bimg::TextureFormat::Enum _format)
+	{
+		// For BC4 and B5 in DX9 LockRect returns wrong number of
+		// bytes. If actual mip size is used it causes memory corruption.
+		// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
+		return true
+			&& _format != bimg::TextureFormat::BC4
+			&& _format != bimg::TextureFormat::BC5
+			;
+	}
+
+	static inline uint32_t calcRowPitch(const bimg::ImageBlockInfo& _blockInfo, uint8_t _lod, uint32_t _width)
+	{
+		const uint8_t blockWidth   = _blockInfo.blockWidth;
+		const uint8_t blockHeight  = _blockInfo.blockHeight;
+		const uint8_t minBlockX    = _blockInfo.minBlockX;
+		const uint8_t minBlockY    = _blockInfo.minBlockY;
+		const uint8_t bitsPerPixel = _blockInfo.bitsPerPixel;
+
+		// Calculate the row pitch
+		const uint32_t minBlkWidth = minBlockX;
+		const uint32_t lodBlkWidth = (((_width >> _lod) + blockWidth - 1) / blockWidth);
+		const uint32_t rowBlkWidth = bx::max<uint32_t>(minBlkWidth, lodBlkWidth);
+		const uint32_t pixBlkWidth = rowBlkWidth * blockWidth * blockHeight;
+		const uint32_t rowPitch    = pixBlkWidth * bitsPerPixel / 8u;
+
+		return rowPitch;
+	}
+
 	struct RendererContextD3D9 : public RendererContextI
 	{
 		RendererContextD3D9()
@@ -2961,14 +2990,7 @@ namespace bgfx { namespace d3d9
 				return;
 			}
 
-			// For BC4 and B5 in DX9 LockRect returns wrong number of
-			// bytes. If actual mip size is used it causes memory corruption.
-			// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
-			const bool useMipSize = true
-				&& imageContainer.m_format != bimg::TextureFormat::BC4
-				&& imageContainer.m_format != bimg::TextureFormat::BC5
-				;
-
+			const bool useMipSize = useD3D9Pitch(imageContainer.m_format);
 			for (uint8_t side = 0, numSides = imageContainer.m_cubeMap ? 6 : 1; side < numSides; ++side)
 			{
 				uint32_t width     = ti.width;
@@ -3062,11 +3084,15 @@ namespace bgfx { namespace d3d9
 
 	void TextureD3D9::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch = _rect.m_width*bpp/8;
-		const uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
-		const uint32_t dstpitch  = s_renderD3D9->m_updateTexturePitch;
-		uint8_t* bits = s_renderD3D9->m_updateTextureBits + _rect.m_y*dstpitch + _rect.m_x*bpp/8;
+		const bimg::ImageBlockInfo & blockInfo = bimg::getBlockInfo(bimg::TextureFormat::Enum(m_textureFormat) );
+		const uint16_t blockWidth  = blockInfo.blockWidth;
+		const uint16_t blockHeight = blockInfo.blockHeight;
+		const uint16_t bpp         = blockInfo.bitsPerPixel;
+		const bool useLockedPitch  = useD3D9Pitch(bimg::TextureFormat::Enum(m_textureFormat) );
+		const uint32_t rectpitch   = calcRowPitch(blockInfo, 0, _rect.m_width);
+		const uint32_t srcpitch    = UINT16_MAX == _pitch ? rectpitch : _pitch;
+		const uint32_t dstpitch    = (useLockedPitch) ? s_renderD3D9->m_updateTexturePitch : calcRowPitch(blockInfo, _mip, m_width);
+		uint8_t* bits = s_renderD3D9->m_updateTextureBits + _rect.m_y*dstpitch/blockHeight + _rect.m_x*blockHeight*bpp/8;
 
 		const bool convert = m_textureFormat != m_requestedFormat;
 
@@ -3083,7 +3109,7 @@ namespace bgfx { namespace d3d9
 		{
 			uint8_t* src = data;
 			uint8_t* dst = bits;
-			for (uint32_t yy = 0, height = _rect.m_height; yy < height; ++yy)
+			for (uint32_t yy = 0, height = _rect.m_height; yy < height; yy += blockHeight)
 			{
 				switch (m_textureFormat)
 				{
