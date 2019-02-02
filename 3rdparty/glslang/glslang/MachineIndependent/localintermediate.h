@@ -420,11 +420,40 @@ public:
         if (spvVersion.openGl > 0)
             processes.addProcess("client opengl100");
 
+        // target SPV
+        switch (spvVersion.spv) {
+        case 0:
+            break;
+        case EShTargetSpv_1_0:
+            break;
+        case EShTargetSpv_1_1:
+            processes.addProcess("target-env spirv1.1");
+            break;
+        case EShTargetSpv_1_2:
+            processes.addProcess("target-env spirv1.2");
+            break;
+        case EShTargetSpv_1_3:
+            processes.addProcess("target-env spirv1.3");
+            break;
+        default:
+            processes.addProcess("target-env spirvUnknown");
+            break;
+        }
+
         // target-environment processes
-        if (spvVersion.vulkan > 0)
+        switch (spvVersion.vulkan) {
+        case 0:
+            break;
+        case EShTargetVulkan_1_0:
             processes.addProcess("target-env vulkan1.0");
-        else if (spvVersion.vulkan > 0)
+            break;
+        case EShTargetVulkan_1_1:
+            processes.addProcess("target-env vulkan1.1");
+            break;
+        default:
             processes.addProcess("target-env vulkanUnknown");
+            break;
+        }
         if (spvVersion.openGl > 0)
             processes.addProcess("target-env opengl");
     }

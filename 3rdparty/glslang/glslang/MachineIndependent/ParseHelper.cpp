@@ -3006,6 +3006,9 @@ void TParseContext::samplerCheck(const TSourceLoc& loc, const TType& type, const
             requireExtensions(loc, 1, &E_GL_OES_EGL_image_external_essl3, "samplerExternalOES");
         }
     }
+    if (type.getSampler().yuv) {
+        requireExtensions(loc, 1, &E_GL_EXT_YUV_target, "__samplerExternal2DY2YEXT");
+    }
 
     if (type.getQualifier().storage == EvqUniform)
         return;

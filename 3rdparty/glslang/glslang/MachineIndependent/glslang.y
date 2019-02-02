@@ -180,6 +180,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> SAMPLER2DMS ISAMPLER2DMS USAMPLER2DMS
 %token <lex> SAMPLER2DMSARRAY ISAMPLER2DMSARRAY USAMPLER2DMSARRAY
 %token <lex> SAMPLEREXTERNALOES
+%token <lex> SAMPLEREXTERNAL2DY2YEXT
 
 %token <lex> F16SAMPLER1D F16SAMPLER2D F16SAMPLER3D F16SAMPLER2DRECT F16SAMPLERCUBE
 %token <lex> F16SAMPLER1DARRAY F16SAMPLER2DARRAY F16SAMPLERCUBEARRAY
@@ -3110,6 +3111,12 @@ type_specifier_nonarray
         $$.basicType = EbtSampler;
         $$.sampler.set(EbtFloat, Esd2D);
         $$.sampler.external = true;
+    }
+    | SAMPLEREXTERNAL2DY2YEXT { // GL_EXT_YUV_target
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtSampler;
+        $$.sampler.set(EbtFloat, Esd2D);
+        $$.sampler.yuv = true;
     }
     | SUBPASSINPUT {
         parseContext.requireStage($1.loc, EShLangFragment, "subpass input");

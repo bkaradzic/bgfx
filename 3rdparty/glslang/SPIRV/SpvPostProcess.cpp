@@ -222,7 +222,7 @@ void Builder::postProcess(Instruction& inst)
                     Instruction *idx = module.getInstruction(accessChain->getIdOperand(i));
                     if (type->getOpCode() == OpTypeStruct) {
                         assert(idx->getOpCode() == OpConstant);
-                        int c = idx->getImmediateOperand(0);
+                        unsigned int c = idx->getImmediateOperand(0);
 
                         const auto function = [&](const std::unique_ptr<Instruction>& decoration) {
                             if (decoration.get()->getOpCode() == OpMemberDecorate &&

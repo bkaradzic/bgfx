@@ -185,6 +185,7 @@ INSTANTIATE_TEST_CASE_P(
         {"hlsl.depthLess.frag", "PixelShaderFunction"},
         {"hlsl.discard.frag", "PixelShaderFunction"},
         {"hlsl.doLoop.frag", "PixelShaderFunction"},
+        {"hlsl.earlydepthstencil.frag", "main"},
         {"hlsl.emptystructreturn.frag", "main"},
         {"hlsl.emptystructreturn.vert", "main"},
         {"hlsl.emptystruct.init.vert", "main"},

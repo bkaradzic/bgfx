@@ -100,7 +100,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::ValuesIn(std::vector<TestCaseSpec>({
         {"specExamples.vert", "baseResults/test.conf", "specExamplesConf.vert.out", (EShMessages)(EShMsgAST | EShMsgCascadingErrors)},
         {"100Limits.vert", "100.conf", "100LimitsConf.vert.out", EShMsgCascadingErrors},
-    })),
+    }))
 );
 // clang-format on
 

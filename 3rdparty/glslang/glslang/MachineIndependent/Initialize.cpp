@@ -1604,6 +1604,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                 "\n");
             }
             commonBuiltins.append(
+                "highp ivec2 textureSize(__samplerExternal2DY2YEXT, int lod);" // GL_EXT_YUV_target
+                "vec4 texture(__samplerExternal2DY2YEXT, vec2);"               // GL_EXT_YUV_target
+                "vec4 texture(__samplerExternal2DY2YEXT, vec2, float bias);"   // GL_EXT_YUV_target
+                "vec4 textureProj(__samplerExternal2DY2YEXT, vec3);"           // GL_EXT_YUV_target
+                "vec4 textureProj(__samplerExternal2DY2YEXT, vec3, float bias);" // GL_EXT_YUV_target
+                "vec4 textureProj(__samplerExternal2DY2YEXT, vec4);"           // GL_EXT_YUV_target
+                "vec4 textureProj(__samplerExternal2DY2YEXT, vec4, float bias);" // GL_EXT_YUV_target
+                "vec4 texelFetch(__samplerExternal2DY2YEXT sampler, ivec2, int lod);" // GL_EXT_YUV_target
+                "\n");
+            commonBuiltins.append(
                 "vec4 texture2DGradEXT(sampler2D, vec2, vec2, vec2);"      // GL_EXT_shader_texture_lod
                 "vec4 texture2DProjGradEXT(sampler2D, vec3, vec2, vec2);"  // GL_EXT_shader_texture_lod
                 "vec4 texture2DProjGradEXT(sampler2D, vec4, vec2, vec2);"  // GL_EXT_shader_texture_lod

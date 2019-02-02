@@ -113,6 +113,7 @@ INSTANTIATE_TEST_CASE_P(
         "300operations.frag",
         "300block.frag",
         "300samplerExternal.frag",
+        "300samplerExternalYUV.frag",
         "310.comp",
         "310.vert",
         "310.geom",

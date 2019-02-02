@@ -592,6 +592,8 @@ void TScanContext::fillInKeywordMap()
 
     (*KeywordMap)["samplerExternalOES"] =      SAMPLEREXTERNALOES; // GL_OES_EGL_image_external
 
+    (*KeywordMap)["__samplerExternal2DY2YEXT"] = SAMPLEREXTERNAL2DY2YEXT; // GL_EXT_YUV_target
+
     (*KeywordMap)["sampler"] =                 SAMPLER;
     (*KeywordMap)["samplerShadow"] =           SAMPLERSHADOW;
 
@@ -1407,6 +1409,13 @@ int TScanContext::tokenizeIdentifier()
         if (parseContext.symbolTable.atBuiltInLevel() ||
             parseContext.extensionTurnedOn(E_GL_OES_EGL_image_external) ||
             parseContext.extensionTurnedOn(E_GL_OES_EGL_image_external_essl3))
+            return keyword;
+        return identifierOrType();
+
+    case SAMPLEREXTERNAL2DY2YEXT:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_EXT_YUV_target))
             return keyword;
         return identifierOrType();
 

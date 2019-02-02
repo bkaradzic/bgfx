@@ -101,7 +101,7 @@ INSTANTIATE_TEST_CASE_P(
         {"max_vertices_0.geom"},
         {"es-link1.frag", "es-link2.frag"},
         {"missingBodies.vert"}
-    })),
+    }))
 );
 // clang-format on
 

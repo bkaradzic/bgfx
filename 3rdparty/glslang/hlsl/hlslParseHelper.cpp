@@ -1869,6 +1869,9 @@ void HlslParseContext::handleEntryPointAttributes(const TSourceLoc& loc, const T
             }
             break;
         }
+        case EatEarlyDepthStencil:
+            intermediate.setEarlyFragmentTests();
+            break;
         case EatBuiltIn:
         case EatLocation:
             // tolerate these because of dual use of entrypoint and type attributes

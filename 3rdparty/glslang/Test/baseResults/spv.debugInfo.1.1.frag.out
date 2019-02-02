@@ -83,6 +83,7 @@ void main()
                               ModuleProcessed  "resource-set-binding 3"
                               ModuleProcessed  "auto-map-locations"
                               ModuleProcessed  "client opengl100"
+                              ModuleProcessed  "target-env spirv1.3"
                               ModuleProcessed  "target-env opengl"
                               ModuleProcessed  "relaxed-errors"
                               ModuleProcessed  "suppress-warnings"

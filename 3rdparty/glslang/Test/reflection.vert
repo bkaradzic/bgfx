@@ -60,6 +60,14 @@ layout(std140) uniform nested {
     N3 foo;
 } nest;
 
+layout(std140) uniform nested2 {
+    vec4 padding; // offset 0, size 16
+    N3 a;       // offset 16, size 32
+    N1 b[4];    // offset 48, size 64
+    N1 c[2];    // offset 112, size 32
+    N1 d[4];    // offset 144, size 64
+} nest2;
+
 struct TS {
     int a;
     int dead;
@@ -203,4 +211,9 @@ void main()
     f += buf2i.runtimeArray[3].c;
     f += buf3i.runtimeArray[gl_InstanceID];
     f += buf4i.runtimeArray[gl_InstanceID].c;
+
+    N3 n = nest2.a;
+    N1 b[4] = nest2.b;
+    f += nest2.c[1].a;
+    f += nest2.d[gl_InstanceID].a;
 }

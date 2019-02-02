@@ -74,6 +74,16 @@ buf1.runtimeArray: offset 4, type 1406, size 4, index 12, binding -1, stages 1
 buf2.runtimeArray.c: offset 8, type 1406, size 1, index 13, binding -1, stages 1
 buf3.runtimeArray: offset 4, type 1406, size 0, index 14, binding -1, stages 1
 buf4.runtimeArray.c: offset 8, type 1406, size 1, index 15, binding -1, stages 1
+nested2.a.n1.a: offset 16, type 1406, size 1, index 16, binding -1, stages 1
+nested2.a.n2.b: offset 32, type 1406, size 1, index 16, binding -1, stages 1
+nested2.a.n2.c: offset 36, type 1406, size 1, index 16, binding -1, stages 1
+nested2.a.n2.d: offset 40, type 1406, size 1, index 16, binding -1, stages 1
+nested2.b[0].a: offset 48, type 1406, size 1, index 16, binding -1, stages 1
+nested2.b[1].a: offset 64, type 1406, size 1, index 16, binding -1, stages 1
+nested2.b[2].a: offset 80, type 1406, size 1, index 16, binding -1, stages 1
+nested2.b[3].a: offset 96, type 1406, size 1, index 16, binding -1, stages 1
+nested2.c.a: offset 112, type 1406, size 1, index 16, binding -1, stages 1
+nested2.d.a: offset 144, type 1406, size 1, index 16, binding -1, stages 1
 anonMember1: offset 0, type 8b51, size 1, index 0, binding -1, stages 1
 uf1: offset -1, type 1406, size 1, index -1, binding -1, stages 1
 uf2: offset -1, type 1406, size 1, index -1, binding -1, stages 1
@@ -96,6 +106,7 @@ buf1: offset -1, type ffffffff, size 4, index -1, binding -1, stages 0
 buf2: offset -1, type ffffffff, size 4, index -1, binding -1, stages 0
 buf3: offset -1, type ffffffff, size 4, index -1, binding -1, stages 0
 buf4: offset -1, type ffffffff, size 4, index -1, binding -1, stages 0
+nested2: offset -1, type ffffffff, size 208, index -1, binding -1, stages 0
 
 Vertex attribute reflection:
 attributeFloat: offset 0, type 1406, size 0, index 0, binding -1, stages 0

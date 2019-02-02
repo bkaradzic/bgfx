@@ -55,7 +55,7 @@ class TReflectionTraverser;
 // Data needed for just a single object at the granularity exchanged by the reflection API
 class TObjectReflection {
 public:
-    TObjectReflection(const TString& pName, const TType& pType, int pOffset, int pGLDefineType, int pSize, int pIndex) :
+    TObjectReflection(const std::string& pName, const TType& pType, int pOffset, int pGLDefineType, int pSize, int pIndex) :
         name(pName), offset(pOffset),
         glDefineType(pGLDefineType), size(pSize), index(pIndex), counterIndex(-1), stages(EShLanguageMask(0)), type(pType.clone()) { }
 
@@ -78,7 +78,7 @@ public:
     }
     static TObjectReflection badReflection() { return TObjectReflection(); }
 
-    TString name;
+    std::string name;
     int offset;
     int glDefineType;
     int size;         // data size in bytes for a block, array size for a (non-block) object that's an array
@@ -87,7 +87,8 @@ public:
     EShLanguageMask stages;
 
 protected:
-    TObjectReflection() : offset(-1), glDefineType(-1), size(-1), index(-1), type(nullptr) { }
+    TObjectReflection() :
+        offset(-1), glDefineType(-1), size(-1), index(-1), counterIndex(-1), stages(EShLanguageMask(0)), type(nullptr) { }
 
     const TType* type;
 };
@@ -162,7 +163,7 @@ protected:
     void buildAttributeReflection(EShLanguage, const TIntermediate&);
 
     // Need a TString hash: typedef std::unordered_map<TString, int> TNameToIndex;
-    typedef std::map<TString, int> TNameToIndex;
+    typedef std::map<std::string, int> TNameToIndex;
     typedef std::vector<TObjectReflection> TMapIndexToReflection;
 
     TObjectReflection badReflection; // return for queries of -1 or generally out of range; has expected descriptions with in it for this

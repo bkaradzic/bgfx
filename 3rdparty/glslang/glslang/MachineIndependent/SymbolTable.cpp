@@ -99,6 +99,8 @@ void TType::buildMangledName(TString& mangledName) const
             mangledName += "S";
         if (sampler.external)
             mangledName += "E";
+        if (sampler.yuv)
+            mangledName += "Y";
         switch (sampler.dim) {
         case Esd1D:       mangledName += "1";  break;
         case Esd2D:       mangledName += "2";  break;
@@ -295,7 +297,7 @@ TVariable::TVariable(const TVariable& copyOf) : TSymbol(copyOf)
     if (copyOf.getNumExtensions() > 0)
         setExtensions(copyOf.getNumExtensions(), copyOf.getExtensions());
     if (copyOf.hasMemberExtensions()) {
-        for (int m = 0; m < copyOf.type.getStruct()->size(); ++m) {
+        for (int m = 0; m < (int)copyOf.type.getStruct()->size(); ++m) {
             if (copyOf.getNumMemberExtensions(m) > 0)
                 setMemberExtensions(m, copyOf.getNumMemberExtensions(m), copyOf.getMemberExtensions(m));
         }

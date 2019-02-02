@@ -345,20 +345,20 @@ protected:
 class TAnonMember : public TSymbol {
 public:
     TAnonMember(const TString* n, unsigned int m, TVariable& a, int an) : TSymbol(n), anonContainer(a), memberNumber(m), anonId(an) { }
-    virtual TAnonMember* clone() const;
+    virtual TAnonMember* clone() const override;
     virtual ~TAnonMember() { }
 
-    virtual const TAnonMember* getAsAnonMember() const { return this; }
+    virtual const TAnonMember* getAsAnonMember() const override { return this; }
     virtual const TVariable& getAnonContainer() const { return anonContainer; }
     virtual unsigned int getMemberNumber() const { return memberNumber; }
 
-    virtual const TType& getType() const
+    virtual const TType& getType() const override
     {
         const TTypeList& types = *anonContainer.getType().getStruct();
         return *types[memberNumber].type;
     }
 
-    virtual TType& getWritableType()
+    virtual TType& getWritableType() override
     {
         assert(writable);
         const TTypeList& types = *anonContainer.getType().getStruct();
@@ -373,7 +373,7 @@ public:
     virtual const char** getExtensions() const override { return anonContainer.getMemberExtensions(memberNumber); }
 
     virtual int getAnonId() const { return anonId; }
-    virtual void dump(TInfoSink &infoSink) const;
+    virtual void dump(TInfoSink &infoSink) const override;
 
 protected:
     explicit TAnonMember(const TAnonMember&);
