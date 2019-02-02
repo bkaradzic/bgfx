@@ -164,6 +164,10 @@ namespace ImGui
                 text = endPrevLine;
                 if( *text == ' ' ) { ++text; }    // skip a space at start of line
                 endPrevLine = pFont->CalcWordWrapPositionA( scale, text, text_end, widthLeft );
+                if (text == endPrevLine)
+                {
+                    endPrevLine++;
+                }
                 ImGui::TextUnformatted( text, endPrevLine );
             }
         }
