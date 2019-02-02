@@ -269,6 +269,16 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
            << "OpTypePointer Type <id> '" << _.getIdName(type_id)
            << "' is not a type.";
   }
+  // See if this points to a storage image.
+  if (type->opcode() == SpvOpTypeImage) {
+    const auto storage_class = inst->GetOperandAs<uint32_t>(1);
+    if (storage_class == SpvStorageClassUniformConstant) {
+      const auto sampled = type->GetOperandAs<uint32_t>(6);
+      // 2 indicates this image is known to be be used without a sampler, i.e.
+      // a storage image.
+      if (sampled == 2) _.RegisterPointerToStorageImage(inst->id());
+    }
+  }
   return SPV_SUCCESS;
 }
 

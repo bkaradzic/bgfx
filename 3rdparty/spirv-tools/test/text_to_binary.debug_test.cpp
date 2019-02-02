@@ -73,8 +73,8 @@ TEST_P(OpSourceTest, AnyLanguage) {
                                                GetParam().version})));
 }
 
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpSourceTest,
-                        ::testing::ValuesIn(kLanguageCases), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpSourceTest,
+                         ::testing::ValuesIn(kLanguageCases));
 
 TEST_F(OpSourceTest, WrongLanguage) {
   EXPECT_THAT(CompileFailure("OpSource xxyyzz 12345"),
@@ -113,9 +113,9 @@ TEST_P(OpSourceContinuedTest, AnyExtension) {
 }
 
 // TODO(dneto): utf-8, quoting, escaping
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpSourceContinuedTest,
-                        ::testing::ValuesIn(std::vector<const char*>{
-                            "", "foo bar this and that"}), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpSourceContinuedTest,
+                         ::testing::ValuesIn(std::vector<const char*>{
+                             "", "foo bar this and that"}));
 
 // Test OpSourceExtension
 
@@ -132,9 +132,9 @@ TEST_P(OpSourceExtensionTest, AnyExtension) {
 }
 
 // TODO(dneto): utf-8, quoting, escaping
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpSourceExtensionTest,
-                        ::testing::ValuesIn(std::vector<const char*>{
-                            "", "foo bar this and that"}), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpSourceExtensionTest,
+                         ::testing::ValuesIn(std::vector<const char*>{
+                             "", "foo bar this and that"}));
 
 TEST_F(TextToBinaryTest, OpLine) {
   EXPECT_THAT(CompiledInstructions("OpLine %srcfile 42 99"),
@@ -158,9 +158,9 @@ TEST_P(OpStringTest, AnyString) {
 }
 
 // TODO(dneto): utf-8, quoting, escaping
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpStringTest,
-                        ::testing::ValuesIn(std::vector<const char*>{
-                            "", "foo bar this and that"}), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpStringTest,
+                         ::testing::ValuesIn(std::vector<const char*>{
+                             "", "foo bar this and that"}));
 
 using OpNameTest =
     spvtest::TextToBinaryTestBase<::testing::TestWithParam<const char*>>;
@@ -174,8 +174,8 @@ TEST_P(OpNameTest, AnyString) {
 
 // UTF-8, quoting, escaping, etc. are covered in the StringLiterals tests in
 // BinaryToText.Literal.cpp.
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpNameTest,
-                        ::testing::Values("", "foo bar this and that"), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpNameTest,
+                         ::testing::Values("", "foo bar this and that"));
 
 using OpMemberNameTest =
     spvtest::TextToBinaryTestBase<::testing::TestWithParam<const char*>>;
@@ -190,9 +190,9 @@ TEST_P(OpMemberNameTest, AnyString) {
 }
 
 // TODO(dneto): utf-8, quoting, escaping
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpMemberNameTest,
-                        ::testing::ValuesIn(std::vector<const char*>{
-                            "", "foo bar this and that"}), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpMemberNameTest,
+                         ::testing::ValuesIn(std::vector<const char*>{
+                             "", "foo bar this and that"}));
 
 // TODO(dneto): Parse failures?
 
@@ -207,8 +207,8 @@ TEST_P(OpModuleProcessedTest, AnyString) {
       Eq(MakeInstruction(SpvOpModuleProcessed, MakeVector(GetParam()))));
 }
 
-INSTANTIATE_TEST_CASE_P(TextToBinaryTestDebug, OpModuleProcessedTest,
-                        ::testing::Values("", "foo bar this and that"), );
+INSTANTIATE_TEST_SUITE_P(TextToBinaryTestDebug, OpModuleProcessedTest,
+                         ::testing::Values("", "foo bar this and that"));
 
 }  // namespace
 }  // namespace spvtools

@@ -84,7 +84,7 @@ TEST_P(MaskExpansionTest, Sample) {
 #define PREFIX1                                                         \
   SPV_OPERAND_TYPE_STORAGE_CLASS, SPV_OPERAND_TYPE_SAMPLER_FILTER_MODE, \
       SPV_OPERAND_TYPE_ID
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     OperandPattern, MaskExpansionTest,
     ::testing::ValuesIn(std::vector<MaskExpansionCase>{
         // No bits means no change.
@@ -111,7 +111,7 @@ INSTANTIATE_TEST_CASE_P(
          SpvMemoryAccessVolatileMask | SpvMemoryAccessAlignedMask,
          {PREFIX1},
          {PREFIX1, SPV_OPERAND_TYPE_LITERAL_INTEGER}},
-    }), );
+    }));
 #undef PREFIX0
 #undef PREFIX1
 
@@ -137,9 +137,9 @@ TEST_P(MatchableOperandExpansionTest, MatchableOperandsDontExpand) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(MatchableOperandExpansion,
-                        MatchableOperandExpansionTest,
-                        ::testing::ValuesIn(allOperandTypes()), );
+INSTANTIATE_TEST_SUITE_P(MatchableOperandExpansion,
+                         MatchableOperandExpansionTest,
+                         ::testing::ValuesIn(allOperandTypes()));
 
 using VariableOperandExpansionTest =
     ::testing::TestWithParam<spv_operand_type_t>;
@@ -157,9 +157,9 @@ TEST_P(VariableOperandExpansionTest, NonMatchableOperandsExpand) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(NonMatchableOperandExpansion,
-                        VariableOperandExpansionTest,
-                        ::testing::ValuesIn(allOperandTypes()), );
+INSTANTIATE_TEST_SUITE_P(NonMatchableOperandExpansion,
+                         VariableOperandExpansionTest,
+                         ::testing::ValuesIn(allOperandTypes()));
 
 TEST(AlternatePatternFollowingImmediate, Empty) {
   EXPECT_THAT(spvAlternatePatternFollowingImmediate({}),

@@ -49,6 +49,20 @@ bool IsMerge(IRContext* context, BasicBlock* block) {
   return IsMerge(context, block->id());
 }
 
+// Removes any OpPhi instructions in |block|, which should have exactly one
+// predecessor, replacing uses of OpPhi ids with the ids associated with the
+// predecessor.
+void EliminateOpPhiInstructions(IRContext* context, BasicBlock* block) {
+  block->ForEachPhiInst([context](Instruction* phi) {
+    assert(2 == phi->NumInOperands() &&
+           "A block can only have one predecessor for block merging to make "
+           "sense.");
+    context->ReplaceAllUsesWith(phi->result_id(),
+                                phi->GetSingleWordInOperand(0));
+    context->KillInst(phi);
+  });
+}
+
 }  // Anonymous namespace
 
 bool CanMergeWithSuccessor(IRContext* context, BasicBlock* block) {
@@ -123,6 +137,8 @@ void MergeWithSuccessor(IRContext* context, Function* func,
   for (auto& inst : *sbi) {
     context->set_instr_block(&inst, &*bi);
   }
+
+  EliminateOpPhiInstructions(context, &*sbi);
 
   // Now actually move the instructions.
   bi->AddInstructions(&*sbi);

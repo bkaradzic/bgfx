@@ -89,7 +89,7 @@ TEST_P(StripDebugInfoTest, Kind) {
 
 // Test each possible non-line debug instruction.
 // clang-format off
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SingleKindDebugInst, StripDebugInfoTest,
     ::testing::ValuesIn(std::vector<const char*>({
         "OpSourceContinued \"I'm a happy shader! Yay! ;)\"",

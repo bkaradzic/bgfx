@@ -265,7 +265,7 @@ const std::string& HeaderWithNaN() {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(TestCase, IntegerInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(TestCase, IntegerInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold 0*n
   InstructionFoldingCase<uint32_t>(
@@ -590,7 +590,7 @@ TEST_P(IntVectorInstructionFoldingTest, Case) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(TestCase, IntVectorInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(TestCase, IntVectorInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: fold 0*n
     InstructionFoldingCase<std::vector<uint32_t>>(
@@ -667,7 +667,7 @@ TEST_P(BooleanInstructionFoldingTest, Case) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(TestCase, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(TestCase, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold true || n
   InstructionFoldingCase<bool>(
@@ -871,7 +871,7 @@ INSTANTIATE_TEST_CASE_P(TestCase, BooleanInstructionFoldingTest,
       2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(FClampAndCmpLHS, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FClampAndCmpLHS, BooleanInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: fold 0.0 > clamp(n, 0.0, 1.0)
     InstructionFoldingCase<bool>(
@@ -1051,7 +1051,7 @@ INSTANTIATE_TEST_CASE_P(FClampAndCmpLHS, BooleanInstructionFoldingTest,
         2, false)
 ));
 
-INSTANTIATE_TEST_CASE_P(FClampAndCmpRHS, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FClampAndCmpRHS, BooleanInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: fold clamp(n, 0.0, 1.0) > 1.0
     InstructionFoldingCase<bool>(
@@ -1281,7 +1281,7 @@ TEST_P(FloatInstructionFoldingTest, Case) {
 // specification.
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(FloatConstantFoldingTest, FloatInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatConstantFoldingTest, FloatInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Fold 2.0 - 1.0
     InstructionFoldingCase<float>(
@@ -1424,7 +1424,7 @@ TEST_P(DoubleInstructionFoldingTest, Case) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(DoubleConstantFoldingTest, DoubleInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleConstantFoldingTest, DoubleInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Fold 2.0 - 1.0
     InstructionFoldingCase<double>(
@@ -1534,7 +1534,7 @@ INSTANTIATE_TEST_CASE_P(DoubleConstantFoldingTest, DoubleInstructionFoldingTest,
 // clang-format on
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(DoubleOrderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleOrderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold 1.0 == 2.0
   InstructionFoldingCase<bool>(
@@ -1666,7 +1666,7 @@ INSTANTIATE_TEST_CASE_P(DoubleOrderedCompareConstantFoldingTest, BooleanInstruct
       2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(DoubleUnorderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleUnorderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold 1.0 == 2.0
   InstructionFoldingCase<bool>(
@@ -1798,7 +1798,7 @@ INSTANTIATE_TEST_CASE_P(DoubleUnorderedCompareConstantFoldingTest, BooleanInstru
       2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatOrderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatOrderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold 1.0 == 2.0
   InstructionFoldingCase<bool>(
@@ -1930,7 +1930,7 @@ INSTANTIATE_TEST_CASE_P(FloatOrderedCompareConstantFoldingTest, BooleanInstructi
       2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatUnorderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatUnorderedCompareConstantFoldingTest, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold 1.0 == 2.0
   InstructionFoldingCase<bool>(
@@ -2062,7 +2062,7 @@ INSTANTIATE_TEST_CASE_P(FloatUnorderedCompareConstantFoldingTest, BooleanInstruc
       2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(DoubleNaNCompareConstantFoldingTest, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleNaNCompareConstantFoldingTest, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold NaN == 0 (ord)
   InstructionFoldingCase<bool>(
@@ -2098,7 +2098,7 @@ INSTANTIATE_TEST_CASE_P(DoubleNaNCompareConstantFoldingTest, BooleanInstructionF
       2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatNaNCompareConstantFoldingTest, BooleanInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatNaNCompareConstantFoldingTest, BooleanInstructionFoldingTest,
                         ::testing::Values(
   // Test case 0: fold NaN == 0 (ord)
   InstructionFoldingCase<bool>(
@@ -2180,7 +2180,7 @@ TEST_P(IntegerInstructionFoldingTestWithMap, Case) {
   }
 }
 // clang-format off
-INSTANTIATE_TEST_CASE_P(TestCase, IntegerInstructionFoldingTestWithMap,
+INSTANTIATE_TEST_SUITE_P(TestCase, IntegerInstructionFoldingTestWithMap,
   ::testing::Values(
       // Test case 0: fold %3 = 0; %3 * n
       InstructionFoldingCaseWithMap<uint32_t>(
@@ -2230,7 +2230,7 @@ TEST_P(BooleanInstructionFoldingTestWithMap, Case) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(TestCase, BooleanInstructionFoldingTestWithMap,
+INSTANTIATE_TEST_SUITE_P(TestCase, BooleanInstructionFoldingTestWithMap,
   ::testing::Values(
       // Test case 0: fold %3 = true; %3 || n
       InstructionFoldingCaseWithMap<bool>(
@@ -2280,7 +2280,7 @@ TEST_P(GeneralInstructionFoldingTest, Case) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(IntegerArithmeticTestCases, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(IntegerArithmeticTestCases, GeneralInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold n * m
     InstructionFoldingCase<uint32_t>(
@@ -2740,7 +2740,7 @@ INSTANTIATE_TEST_CASE_P(IntegerArithmeticTestCases, GeneralInstructionFoldingTes
         2, 3)
 ));
 
-INSTANTIATE_TEST_CASE_P(CompositeExtractFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(CompositeExtractFoldingTest, GeneralInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: fold Insert feeding extract
     InstructionFoldingCase<uint32_t>(
@@ -2888,7 +2888,7 @@ INSTANTIATE_TEST_CASE_P(CompositeExtractFoldingTest, GeneralInstructionFoldingTe
         4, INT_7_ID)
 ));
 
-INSTANTIATE_TEST_CASE_P(CompositeConstructFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(CompositeConstructFoldingTest, GeneralInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: fold Extracts feeding construct
     InstructionFoldingCase<uint32_t>(
@@ -2951,7 +2951,7 @@ INSTANTIATE_TEST_CASE_P(CompositeConstructFoldingTest, GeneralInstructionFolding
         2, VEC2_0_ID)
 ));
 
-INSTANTIATE_TEST_CASE_P(PhiFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(PhiFoldingTest, GeneralInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: Fold phi with the same values for all edges.
   InstructionFoldingCase<uint32_t>(
@@ -2993,7 +2993,7 @@ INSTANTIATE_TEST_CASE_P(PhiFoldingTest, GeneralInstructionFoldingTest,
       2, 0)
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatRedundantFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatRedundantFoldingTest, GeneralInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold n + 1.0
     InstructionFoldingCase<uint32_t>(
@@ -3211,7 +3211,7 @@ INSTANTIATE_TEST_CASE_P(FloatRedundantFoldingTest, GeneralInstructionFoldingTest
         2, 0)
 ));
 
-INSTANTIATE_TEST_CASE_P(DoubleRedundantFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleRedundantFoldingTest, GeneralInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold n + 1.0
     InstructionFoldingCase<uint32_t>(
@@ -3371,7 +3371,7 @@ INSTANTIATE_TEST_CASE_P(DoubleRedundantFoldingTest, GeneralInstructionFoldingTes
         2, 4)
 ));
 
-INSTANTIATE_TEST_CASE_P(FloatVectorRedundantFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatVectorRedundantFoldingTest, GeneralInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold a * vec4(0.0, 0.0, 0.0, 1.0)
     InstructionFoldingCase<uint32_t>(
@@ -3405,7 +3405,7 @@ INSTANTIATE_TEST_CASE_P(FloatVectorRedundantFoldingTest, GeneralInstructionFoldi
         2, 3)
 ));
 
-INSTANTIATE_TEST_CASE_P(DoubleVectorRedundantFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleVectorRedundantFoldingTest, GeneralInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold a * vec4(0.0, 0.0, 0.0, 1.0)
     InstructionFoldingCase<uint32_t>(
@@ -3439,7 +3439,7 @@ INSTANTIATE_TEST_CASE_P(DoubleVectorRedundantFoldingTest, GeneralInstructionFold
         2, 3)
 ));
 
-INSTANTIATE_TEST_CASE_P(IntegerRedundantFoldingTest, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(IntegerRedundantFoldingTest, GeneralInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold n + 1
     InstructionFoldingCase<uint32_t>(
@@ -3523,7 +3523,7 @@ INSTANTIATE_TEST_CASE_P(IntegerRedundantFoldingTest, GeneralInstructionFoldingTe
         2, 3)
 ));
 
-INSTANTIATE_TEST_CASE_P(ClampAndCmpLHS, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(ClampAndCmpLHS, GeneralInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Don't Fold 0.0 < clamp(-1, 1)
     InstructionFoldingCase<uint32_t>(
@@ -3659,7 +3659,7 @@ INSTANTIATE_TEST_CASE_P(ClampAndCmpLHS, GeneralInstructionFoldingTest,
         2, 0)
 ));
 
-INSTANTIATE_TEST_CASE_P(ClampAndCmpRHS, GeneralInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(ClampAndCmpRHS, GeneralInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Don't Fold clamp(-1, 1) < 0.0
     InstructionFoldingCase<uint32_t>(
@@ -3795,7 +3795,7 @@ INSTANTIATE_TEST_CASE_P(ClampAndCmpRHS, GeneralInstructionFoldingTest,
         2, 0)
 ));
 
-INSTANTIATE_TEST_CASE_P(FToIConstantFoldingTest, IntegerInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FToIConstantFoldingTest, IntegerInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Fold int(3.0)
     InstructionFoldingCase<uint32_t>(
@@ -3815,7 +3815,7 @@ INSTANTIATE_TEST_CASE_P(FToIConstantFoldingTest, IntegerInstructionFoldingTest,
         2, 3)
 ));
 
-INSTANTIATE_TEST_CASE_P(IToFConstantFoldingTest, FloatInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(IToFConstantFoldingTest, FloatInstructionFoldingTest,
                         ::testing::Values(
     // Test case 0: Fold float(3)
     InstructionFoldingCase<float>(
@@ -3870,7 +3870,7 @@ TEST_P(ToNegateFoldingTest, Case) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(FloatRedundantSubFoldingTest, ToNegateFoldingTest,
+INSTANTIATE_TEST_SUITE_P(FloatRedundantSubFoldingTest, ToNegateFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold 1.0 - n
     InstructionFoldingCase<uint32_t>(
@@ -3914,7 +3914,7 @@ INSTANTIATE_TEST_CASE_P(FloatRedundantSubFoldingTest, ToNegateFoldingTest,
         2, 3)
 ));
 
-INSTANTIATE_TEST_CASE_P(DoubleRedundantSubFoldingTest, ToNegateFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DoubleRedundantSubFoldingTest, ToNegateFoldingTest,
                         ::testing::Values(
     // Test case 0: Don't fold 1.0 - n
     InstructionFoldingCase<uint32_t>(
@@ -3981,7 +3981,7 @@ TEST_P(MatchingInstructionFoldingTest, Case) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(RedundantIntegerMatching, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(RedundantIntegerMatching, MatchingInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Fold 0 + n (change sign)
     InstructionFoldingCase<bool>(
@@ -4011,7 +4011,7 @@ INSTANTIATE_TEST_CASE_P(RedundantIntegerMatching, MatchingInstructionFoldingTest
         2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(MergeNegateTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(MergeNegateTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: fold consecutive fnegate
   // -(-x) = x
@@ -4348,7 +4348,7 @@ INSTANTIATE_TEST_CASE_P(MergeNegateTest, MatchingInstructionFoldingTest,
         2, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(ReciprocalFDivTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(ReciprocalFDivTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: scalar reicprocal
   // x / 0.5 = x * 2.0
@@ -4429,7 +4429,7 @@ INSTANTIATE_TEST_CASE_P(ReciprocalFDivTest, MatchingInstructionFoldingTest,
     3, false)
 ));
 
-INSTANTIATE_TEST_CASE_P(MergeMulTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(MergeMulTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: fold consecutive fmuls
   // (x * 3.0) * 2.0 = x * 6.0
@@ -4845,7 +4845,7 @@ INSTANTIATE_TEST_CASE_P(MergeMulTest, MatchingInstructionFoldingTest,
     5, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(MergeDivTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(MergeDivTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: merge consecutive fdiv
   // 4.0 / (2.0 / x) = 2.0 * x
@@ -5091,7 +5091,7 @@ INSTANTIATE_TEST_CASE_P(MergeDivTest, MatchingInstructionFoldingTest,
     5, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(MergeAddTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(MergeAddTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: merge add of negate
   // (-x) + 2 = 2 - x
@@ -5299,7 +5299,7 @@ INSTANTIATE_TEST_CASE_P(MergeAddTest, MatchingInstructionFoldingTest,
     4, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(MergeSubTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(MergeSubTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: merge sub of negate
   // (-x) - 2 = -2 - x
@@ -5524,7 +5524,7 @@ INSTANTIATE_TEST_CASE_P(MergeSubTest, MatchingInstructionFoldingTest,
     4, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(SelectFoldingTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(SelectFoldingTest, MatchingInstructionFoldingTest,
 ::testing::Values(
   // Test case 0: Fold select with the same values for both sides
   InstructionFoldingCase<bool>(
@@ -5632,7 +5632,7 @@ INSTANTIATE_TEST_CASE_P(SelectFoldingTest, MatchingInstructionFoldingTest,
       4, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(CompositeExtractMatchingTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(CompositeExtractMatchingTest, MatchingInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Extracting from result of consecutive shuffles of differing
     // size.
@@ -5775,7 +5775,7 @@ INSTANTIATE_TEST_CASE_P(CompositeExtractMatchingTest, MatchingInstructionFolding
         4, true)
 ));
 
-INSTANTIATE_TEST_CASE_P(DotProductMatchingTest, MatchingInstructionFoldingTest,
+INSTANTIATE_TEST_SUITE_P(DotProductMatchingTest, MatchingInstructionFoldingTest,
 ::testing::Values(
     // Test case 0: Using OpDot to extract last element.
     InstructionFoldingCase<bool>(
@@ -5891,7 +5891,7 @@ TEST_P(MatchingInstructionWithNoResultFoldingTest, Case) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(StoreMatchingTest, MatchingInstructionWithNoResultFoldingTest,
+INSTANTIATE_TEST_SUITE_P(StoreMatchingTest, MatchingInstructionWithNoResultFoldingTest,
 ::testing::Values(
     // Test case 0: Remove store of undef.
     InstructionFoldingCase<bool>(
@@ -5920,7 +5920,7 @@ INSTANTIATE_TEST_CASE_P(StoreMatchingTest, MatchingInstructionWithNoResultFoldin
         0 /* OpStore */, false)
 ));
 
-INSTANTIATE_TEST_CASE_P(VectorShuffleMatchingTest, MatchingInstructionWithNoResultFoldingTest,
+INSTANTIATE_TEST_SUITE_P(VectorShuffleMatchingTest, MatchingInstructionWithNoResultFoldingTest,
 ::testing::Values(
     // Test case 0: Basic test 1
     InstructionFoldingCase<bool>(

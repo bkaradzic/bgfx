@@ -108,7 +108,7 @@ TEST_P(ValidateVersion, version) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(Universal, ValidateVersion,
+INSTANTIATE_TEST_SUITE_P(Universal, ValidateVersion,
   ::testing::Values(
     //         Binary version,        Target environment
     std::make_tuple(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, true),
@@ -165,7 +165,7 @@ INSTANTIATE_TEST_CASE_P(Universal, ValidateVersion,
   )
 );
 
-INSTANTIATE_TEST_CASE_P(Vulkan, ValidateVersion,
+INSTANTIATE_TEST_SUITE_P(Vulkan, ValidateVersion,
   ::testing::Values(
     //         Binary version,        Target environment
     std::make_tuple(SPV_ENV_VULKAN_1_0, SPV_ENV_UNIVERSAL_1_0, vulkan_spirv, true),
@@ -194,7 +194,7 @@ INSTANTIATE_TEST_CASE_P(Vulkan, ValidateVersion,
   )
 );
 
-INSTANTIATE_TEST_CASE_P(OpenCL, ValidateVersion,
+INSTANTIATE_TEST_SUITE_P(OpenCL, ValidateVersion,
   ::testing::Values(
     //         Binary version,     Target environment
     std::make_tuple(SPV_ENV_OPENCL_2_0, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),
@@ -247,7 +247,7 @@ INSTANTIATE_TEST_CASE_P(OpenCL, ValidateVersion,
   )
 );
 
-INSTANTIATE_TEST_CASE_P(OpenCLEmbedded, ValidateVersion,
+INSTANTIATE_TEST_SUITE_P(OpenCLEmbedded, ValidateVersion,
   ::testing::Values(
     //         Binary version,              Target environment
     std::make_tuple(SPV_ENV_OPENCL_EMBEDDED_2_0, SPV_ENV_UNIVERSAL_1_0,       opencl_spirv, true),

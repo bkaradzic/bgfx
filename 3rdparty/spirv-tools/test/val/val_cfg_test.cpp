@@ -171,9 +171,9 @@ const char* types_consts() {
   return types;
 }
 
-INSTANTIATE_TEST_CASE_P(StructuredControlFlow, ValidateCFG,
-                        ::testing::Values(SpvCapabilityShader,
-                                          SpvCapabilityKernel));
+INSTANTIATE_TEST_SUITE_P(StructuredControlFlow, ValidateCFG,
+                         ::testing::Values(SpvCapabilityShader,
+                                           SpvCapabilityKernel));
 
 TEST_P(ValidateCFG, LoopReachableFromEntryButNeverLeadingToReturn) {
   // In this case, the loop is reachable from a node without a predecessor,

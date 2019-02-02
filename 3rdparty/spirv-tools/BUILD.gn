@@ -452,6 +452,8 @@ static_library("spvtools_opt") {
     "source/opt/basic_block.h",
     "source/opt/block_merge_pass.cpp",
     "source/opt/block_merge_pass.h",
+    "source/opt/block_merge_util.cpp",
+    "source/opt/block_merge_util.h",
     "source/opt/build_module.cpp",
     "source/opt/build_module.h",
     "source/opt/ccp_pass.cpp",

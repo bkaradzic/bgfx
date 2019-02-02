@@ -510,7 +510,7 @@ TEST_P(ValidateModeGeometry, ExecutionMode) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GeometryRequiredModes, ValidateModeGeometry,
     Combine(Combine(Values("InputPoints", ""), Values("InputLines", ""),
                     Values("InputLinesAdjacency", ""), Values("Triangles", ""),
@@ -584,7 +584,7 @@ TEST_P(ValidateModeExecution, ExecutionMode) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeGeometryOnlyGoodSpv10, ValidateModeExecution,
     Combine(Values(SPV_SUCCESS), Values(""), Values("Geometry"),
             Values("Invocations 3", "InputPoints", "InputLines",
@@ -592,7 +592,7 @@ INSTANTIATE_TEST_CASE_P(
                    "OutputPoints", "OutputLineStrip", "OutputTriangleStrip"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeGeometryOnlyBadSpv10, ValidateModeExecution,
     Combine(Values(SPV_ERROR_INVALID_DATA),
             Values("Execution mode can only be used with the Geometry "
@@ -604,7 +604,7 @@ INSTANTIATE_TEST_CASE_P(
                    "OutputPoints", "OutputLineStrip", "OutputTriangleStrip"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeTessellationOnlyGoodSpv10, ValidateModeExecution,
     Combine(Values(SPV_SUCCESS), Values(""),
             Values("TessellationControl", "TessellationEvaluation"),
@@ -613,7 +613,7 @@ INSTANTIATE_TEST_CASE_P(
                    "PointMode", "Quads", "Isolines"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeTessellationOnlyBadSpv10, ValidateModeExecution,
     Combine(Values(SPV_ERROR_INVALID_DATA),
             Values("Execution mode can only be used with a tessellation "
@@ -624,15 +624,15 @@ INSTANTIATE_TEST_CASE_P(
                    "PointMode", "Quads", "Isolines"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(ValidateModeGeometryAndTessellationGoodSpv10,
-                        ValidateModeExecution,
-                        Combine(Values(SPV_SUCCESS), Values(""),
-                                Values("TessellationControl",
-                                       "TessellationEvaluation", "Geometry"),
-                                Values("Triangles", "OutputVertices 3"),
-                                Values(SPV_ENV_UNIVERSAL_1_0)));
+INSTANTIATE_TEST_SUITE_P(ValidateModeGeometryAndTessellationGoodSpv10,
+                         ValidateModeExecution,
+                         Combine(Values(SPV_SUCCESS), Values(""),
+                                 Values("TessellationControl",
+                                        "TessellationEvaluation", "Geometry"),
+                                 Values("Triangles", "OutputVertices 3"),
+                                 Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeGeometryAndTessellationBadSpv10, ValidateModeExecution,
     Combine(Values(SPV_ERROR_INVALID_DATA),
             Values("Execution mode can only be used with a Geometry or "
@@ -641,7 +641,7 @@ INSTANTIATE_TEST_CASE_P(
             Values("Triangles", "OutputVertices 3"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeFragmentOnlyGoodSpv10, ValidateModeExecution,
     Combine(Values(SPV_SUCCESS), Values(""), Values("Fragment"),
             Values("PixelCenterInteger", "OriginUpperLeft", "OriginLowerLeft",
@@ -649,7 +649,7 @@ INSTANTIATE_TEST_CASE_P(
                    "DepthUnchanged"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeFragmentOnlyBadSpv10, ValidateModeExecution,
     Combine(Values(SPV_ERROR_INVALID_DATA),
             Values("Execution mode can only be used with the Fragment "
@@ -661,15 +661,15 @@ INSTANTIATE_TEST_CASE_P(
                    "DepthUnchanged"),
             Values(SPV_ENV_UNIVERSAL_1_0)));
 
-INSTANTIATE_TEST_CASE_P(ValidateModeKernelOnlyGoodSpv13, ValidateModeExecution,
-                        Combine(Values(SPV_SUCCESS), Values(""),
-                                Values("Kernel"),
-                                Values("LocalSizeHint 1 1 1", "VecTypeHint 4",
-                                       "ContractionOff",
-                                       "LocalSizeHintId %int1"),
-                                Values(SPV_ENV_UNIVERSAL_1_3)));
+INSTANTIATE_TEST_SUITE_P(ValidateModeKernelOnlyGoodSpv13, ValidateModeExecution,
+                         Combine(Values(SPV_SUCCESS), Values(""),
+                                 Values("Kernel"),
+                                 Values("LocalSizeHint 1 1 1", "VecTypeHint 4",
+                                        "ContractionOff",
+                                        "LocalSizeHintId %int1"),
+                                 Values(SPV_ENV_UNIVERSAL_1_3)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeKernelOnlyBadSpv13, ValidateModeExecution,
     Combine(
         Values(SPV_ERROR_INVALID_DATA),
@@ -681,13 +681,13 @@ INSTANTIATE_TEST_CASE_P(
                "LocalSizeHintId %int1"),
         Values(SPV_ENV_UNIVERSAL_1_3)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeGLComputeAndKernelGoodSpv13, ValidateModeExecution,
     Combine(Values(SPV_SUCCESS), Values(""), Values("Kernel", "GLCompute"),
             Values("LocalSize 1 1 1", "LocalSizeId %int1 %int1 %int1"),
             Values(SPV_ENV_UNIVERSAL_1_3)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeGLComputeAndKernelBadSpv13, ValidateModeExecution,
     Combine(Values(SPV_ERROR_INVALID_DATA),
             Values("Execution mode can only be used with a Kernel or GLCompute "
@@ -697,7 +697,7 @@ INSTANTIATE_TEST_CASE_P(
             Values("LocalSize 1 1 1", "LocalSizeId %int1 %int1 %int1"),
             Values(SPV_ENV_UNIVERSAL_1_3)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateModeAllGoodSpv13, ValidateModeExecution,
     Combine(Values(SPV_SUCCESS), Values(""),
             Values("Kernel", "GLCompute", "Geometry", "TessellationControl",

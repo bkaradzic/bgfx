@@ -817,12 +817,12 @@ OpFunctionEnd
 )");
 }
 
-INSTANTIATE_TEST_CASE_P(AllMarkvModels, MarkvTest,
-                        ::testing::ValuesIn(std::vector<MarkvModelType>{
-                            kMarkvModelShaderLite,
-                            kMarkvModelShaderMid,
-                            kMarkvModelShaderMax,
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllMarkvModels, MarkvTest,
+                         ::testing::ValuesIn(std::vector<MarkvModelType>{
+                             kMarkvModelShaderLite,
+                             kMarkvModelShaderMid,
+                             kMarkvModelShaderMax,
+                         }));
 
 }  // namespace
 }  // namespace comp

@@ -20,16 +20,29 @@
 #include "gmock/gmock.h"
 #include "source/val/decoration.h"
 #include "test/unit_spirv.h"
+#include "test/val/val_code_generator.h"
 #include "test/val/val_fixtures.h"
 
 namespace spvtools {
 namespace val {
 namespace {
 
+using ::testing::Combine;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using ::testing::Values;
+
+struct TestResult {
+  TestResult(spv_result_t in_validation_result = SPV_SUCCESS,
+             const std::string& in_error_str = "")
+      : validation_result(in_validation_result), error_str(in_error_str) {}
+  spv_result_t validation_result;
+  const std::string error_str;
+};
 
 using ValidateDecorations = spvtest::ValidateBase<bool>;
+using ValidateWebGPUCombineDecorationResult =
+    spvtest::ValidateBase<std::tuple<const char*, TestResult>>;
 
 TEST_F(ValidateDecorations, ValidateOpDecorateRegistration) {
   std::string spirv = R"(
@@ -115,7 +128,7 @@ TEST_F(ValidateDecorations, ValidateGroupDecorateRegistration) {
                OpCapability Linkage
                OpMemoryModel Logical GLSL450
                OpDecorate %1 DescriptorSet 0
-               OpDecorate %1 NonWritable
+               OpDecorate %1 RelaxedPrecision
                OpDecorate %1 Restrict
           %1 = OpDecorationGroup
                OpGroupDecorate %1 %2 %3
@@ -136,9 +149,10 @@ TEST_F(ValidateDecorations, ValidateGroupDecorateRegistration) {
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState());
 
   // Decoration group has 3 decorations.
-  auto expected_decorations = std::vector<Decoration>{
-      Decoration(SpvDecorationDescriptorSet, {0}),
-      Decoration(SpvDecorationNonWritable), Decoration(SpvDecorationRestrict)};
+  auto expected_decorations =
+      std::vector<Decoration>{Decoration(SpvDecorationDescriptorSet, {0}),
+                              Decoration(SpvDecorationRelaxedPrecision),
+                              Decoration(SpvDecorationRestrict)};
 
   // Decoration group is applied to id 1, 2, 3, and 4. Note that id 1 (which is
   // the decoration group id) also has all the decorations.
@@ -5490,6 +5504,316 @@ OpFunctionEnd
                         "storage buffer layout rules: member 1 is an "
                         "improperly straddling vector at offset 28"));
 }
+
+// NonWritable
+
+// Returns a SPIR-V shader module with variables in various storage classes,
+// parameterizable by which ID should be decorated as NonWritable.
+std::string ShaderWithNonWritableTarget(const std::string& target,
+                                        bool member_decorate = false) {
+  const std::string decoration_inst =
+      std::string(member_decorate ? "OpMemberDecorate " : "OpDecorate ") +
+      target + (member_decorate ? " 0" : "");
+
+  return std::string(R"(
+            OpCapability Shader
+            OpExtension "SPV_KHR_storage_buffer_storage_class"
+            OpMemoryModel Logical GLSL450
+            OpEntryPoint Vertex %main "main"
+            OpName %label "label"
+            OpName %param_f "param_f"
+            OpName %param_p "param_p"
+            OpName %_ptr_imstor "_ptr_imstor"
+            OpName %_ptr_imsam "_ptr_imsam"
+            OpName %var_wg "var_wg"
+            OpName %var_imsam "var_imsam"
+            OpName %var_priv "var_priv"
+            OpName %var_func "var_func"
+            OpName %struct_bad "struct_bad"
+
+            OpDecorate %struct_b Block
+            OpDecorate %struct_bb BufferBlock
+            OpDecorate %struct_b_rtarr Block
+            OpMemberDecorate %struct_b 0 Offset 0
+            OpMemberDecorate %struct_bb 0 Offset 0
+            OpMemberDecorate %struct_b_rtarr 0 Offset 0
+            OpDecorate %rtarr ArrayStride 4
+)") + decoration_inst +
+
+         R"( NonWritable
+
+      %void = OpTypeVoid
+   %void_fn = OpTypeFunction %void
+     %float = OpTypeFloat 32
+   %float_0 = OpConstant %float 0
+  %struct_b = OpTypeStruct %float
+ %struct_bb = OpTypeStruct %float
+ %rtarr = OpTypeRuntimeArray %float
+%struct_b_rtarr = OpTypeStruct %rtarr
+%struct_bad = OpTypeStruct %float
+ ; storage image
+ %imstor = OpTypeImage %float 2D 0 0 0 2 R32f
+ ; sampled image
+ %imsam = OpTypeImage %float 2D 0 0 0 1 R32f
+
+%_ptr_Uniform_stb        = OpTypePointer Uniform %struct_b
+%_ptr_Uniform_stbb       = OpTypePointer Uniform %struct_bb
+%_ptr_StorageBuffer_stb  = OpTypePointer StorageBuffer %struct_b
+%_ptr_StorageBuffer_stb_rtarr  = OpTypePointer StorageBuffer %struct_b_rtarr
+%_ptr_Workgroup          = OpTypePointer Workgroup %float
+%_ptr_Private            = OpTypePointer Private %float
+%_ptr_Function           = OpTypePointer Function %float
+%_ptr_imstor             = OpTypePointer UniformConstant %imstor
+%_ptr_imsam              = OpTypePointer UniformConstant %imsam
+
+%extra_fn = OpTypeFunction %void %float %_ptr_Private %_ptr_imstor
+
+%var_ubo = OpVariable %_ptr_Uniform_stb Uniform
+%var_ssbo_u = OpVariable %_ptr_Uniform_stbb Uniform
+%var_ssbo_sb = OpVariable %_ptr_StorageBuffer_stb StorageBuffer
+%var_ssbo_sb_rtarr = OpVariable %_ptr_StorageBuffer_stb_rtarr StorageBuffer
+%var_wg = OpVariable %_ptr_Workgroup Workgroup
+%var_priv = OpVariable %_ptr_Private Private
+%var_imstor = OpVariable %_ptr_imstor UniformConstant
+%var_imsam = OpVariable %_ptr_imsam UniformConstant
+
+  %helper = OpFunction %void None %extra_fn
+ %param_f = OpFunctionParameter %float
+ %param_p = OpFunctionParameter %_ptr_Private
+ %param_pimstor = OpFunctionParameter %_ptr_imstor
+%helper_label = OpLabel
+%helper_func_var = OpVariable %_ptr_Function Function
+            OpReturn
+            OpFunctionEnd
+
+    %main = OpFunction %void None %void_fn
+   %label = OpLabel
+%var_func = OpVariable %_ptr_Function Function
+            OpReturn
+            OpFunctionEnd
+)";
+}
+
+TEST_F(ValidateDecorations, NonWritableLabelTargetBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%label");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration must be a "
+                        "memory object declaration (a variable or a function "
+                        "parameter)\n  %label = OpLabel"));
+}
+
+TEST_F(ValidateDecorations, NonWritableTypeTargetBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%void");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration must be a "
+                        "memory object declaration (a variable or a function "
+                        "parameter)\n  %void = OpTypeVoid"));
+}
+
+TEST_F(ValidateDecorations, NonWritableValueTargetBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%float_0");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration must be a "
+                        "memory object declaration (a variable or a function "
+                        "parameter)\n  %float_0 = OpConstant %float 0"));
+}
+
+TEST_F(ValidateDecorations, NonWritableValueParamBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%param_f");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration is invalid: must "
+                        "point to a storage image, uniform block, or storage "
+                        "buffer\n  %param_f = OpFunctionParameter %float"));
+}
+
+TEST_F(ValidateDecorations, NonWritablePointerParamButWrongTypeBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%param_p");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Target of NonWritable decoration is invalid: must "
+          "point to a storage image, uniform block, or storage "
+          "buffer\n  %param_p = OpFunctionParameter %_ptr_Private_float"));
+}
+
+TEST_F(ValidateDecorations, NonWritablePointerParamStorageImageGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%param_pimstor");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarStorageImageGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_imstor");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarSampledImageBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_imsam");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration is invalid: must "
+                        "point to a storage image, uniform block, or storage "
+                        "buffer\n  %var_imsam"));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarUboGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_ubo");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarSsboInUniformGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_ssbo_u");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarSsboInStorageBufferGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_ssbo_sb");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NonWritableMemberOfSsboInStorageBufferGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%struct_b_rtarr", true);
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, NonWritableMemberOfNonBlockStructBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%struct_bad", true);
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Target of NonWritable member decoration is invalid: must be "
+                "the struct type of a uniform block or storage buffer"));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarWorkgroupBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_wg");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration is invalid: must "
+                        "point to a storage image, uniform block, or storage "
+                        "buffer\n  %var_wg"));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarPrivateBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_priv");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration is invalid: must "
+                        "point to a storage image, uniform block, or storage "
+                        "buffer\n  %var_priv"));
+}
+
+TEST_F(ValidateDecorations, NonWritableVarFunctionBad) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_func");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of NonWritable decoration is invalid: must "
+                        "point to a storage image, uniform block, or storage "
+                        "buffer\n  %var_func"));
+}
+
+TEST_P(ValidateWebGPUCombineDecorationResult, Decorate) {
+  const char* const decoration = std::get<0>(GetParam());
+  const TestResult& test_result = std::get<1>(GetParam());
+
+  CodeGenerator generator = CodeGenerator::GetWebGPUShaderCodeGenerator();
+  generator.before_types_ = "OpDecorate %u32 ";
+  generator.before_types_ += decoration;
+  generator.before_types_ += "\n";
+
+  EntryPoint entry_point;
+  entry_point.name = "main";
+  entry_point.execution_model = "Vertex";
+  generator.entry_points_.push_back(std::move(entry_point));
+
+  CompileSuccessfully(generator.Build(), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(test_result.validation_result,
+            ValidateInstructions(SPV_ENV_WEBGPU_0));
+  if (test_result.error_str != "") {
+    EXPECT_THAT(getDiagnosticString(), HasSubstr(test_result.error_str));
+  }
+}
+
+TEST_P(ValidateWebGPUCombineDecorationResult, DecorateMember) {
+  const char* const decoration = std::get<0>(GetParam());
+  const TestResult& test_result = std::get<1>(GetParam());
+
+  CodeGenerator generator = CodeGenerator::GetWebGPUShaderCodeGenerator();
+  generator.before_types_ = "OpMemberDecorate %struct_type 0 ";
+  generator.before_types_ += decoration;
+  generator.before_types_ += "\n";
+
+  generator.after_types_ = "%struct_type = OpTypeStruct %u32\n";
+
+  EntryPoint entry_point;
+  entry_point.name = "main";
+  entry_point.execution_model = "Vertex";
+  generator.entry_points_.push_back(std::move(entry_point));
+
+  CompileSuccessfully(generator.Build(), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(test_result.validation_result,
+            ValidateInstructions(SPV_ENV_WEBGPU_0));
+  if (!test_result.error_str.empty()) {
+    EXPECT_THAT(getDiagnosticString(), HasSubstr(test_result.error_str));
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    DecorationCapabilityFailure, ValidateWebGPUCombineDecorationResult,
+    Combine(Values("CPacked", "Patch", "Sample", "Constant",
+                   "SaturatedConversion", "NonUniformEXT"),
+            Values(TestResult(SPV_ERROR_INVALID_CAPABILITY,
+                              "requires one of these capabilities"))));
+
+INSTANTIATE_TEST_SUITE_P(
+    DecorationWhitelistFailure, ValidateWebGPUCombineDecorationResult,
+    Combine(Values("RelaxedPrecision", "BufferBlock", "GLSLShared",
+                   "GLSLPacked", "Invariant", "Volatile", "Coherent"),
+            Values(TestResult(
+                SPV_ERROR_INVALID_ID,
+                "is not valid for the WebGPU execution environment."))));
 
 }  // namespace
 }  // namespace val

@@ -120,7 +120,7 @@ const std::vector<std::string>& getInstructions() {
 static const int kRangeEnd = 1000;
 pred_type All = Range<0, kRangeEnd>();
 
-INSTANTIATE_TEST_CASE_P(InstructionsOrder,
+INSTANTIATE_TEST_SUITE_P(InstructionsOrder,
     ValidateLayout,
     ::testing::Combine(::testing::Range((int)0, (int)getInstructions().size()),
     // Note: Because of ID dependencies between instructions, some instructions
@@ -160,7 +160,7 @@ INSTANTIATE_TEST_CASE_P(InstructionsOrder,
                     , std::make_tuple(std::string("%fLabel   = OpLabel")       , Equals<39>             , All)
                     , std::make_tuple(std::string("OpNop")                     , Equals<40>             , Range<40,kRangeEnd>())
                     , std::make_tuple(std::string("OpReturn ; %func2 return")  , Equals<41>             , All)
-    )),);
+    )));
 // clang-format on
 
 // Creates a new vector which removes the string if the substr is found in the
@@ -181,7 +181,7 @@ std::vector<std::string> GenerateCode(std::string substr, int order) {
 }
 
 // This test will check the logical layout of a binary by removing each
-// instruction in the pair of the INSTANTIATE_TEST_CASE_P call and moving it in
+// instruction in the pair of the INSTANTIATE_TEST_SUITE_P call and moving it in
 // the SPIRV source formed by combining the vector "instructions".
 TEST_P(ValidateLayout, Layout) {
   int order;

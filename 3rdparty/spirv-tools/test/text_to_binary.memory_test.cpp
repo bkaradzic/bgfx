@@ -45,14 +45,14 @@ TEST_P(MemoryAccessTest, AnySingleMemoryAccessMask) {
                                  GetParam().operands())));
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TextToBinaryMemoryAccessTest, MemoryAccessTest,
     ::testing::ValuesIn(std::vector<EnumCase<SpvMemoryAccessMask>>{
         {SpvMemoryAccessMaskNone, "None", {}},
         {SpvMemoryAccessVolatileMask, "Volatile", {}},
         {SpvMemoryAccessAlignedMask, "Aligned", {16}},
         {SpvMemoryAccessNontemporalMask, "Nontemporal", {}},
-    }), );
+    }));
 
 TEST_F(TextToBinaryTest, CombinedMemoryAccessMask) {
   const std::string input = "OpStore %ptr %value Volatile|Aligned 16";
@@ -76,7 +76,7 @@ TEST_P(StorageClassTest, AnyStorageClass) {
 
 // clang-format off
 #define CASE(NAME) { SpvStorageClass##NAME, #NAME, {} }
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TextToBinaryStorageClassTest, StorageClassTest,
     ::testing::ValuesIn(std::vector<EnumCase<SpvStorageClass>>{
         CASE(UniformConstant),
@@ -91,7 +91,7 @@ INSTANTIATE_TEST_CASE_P(
         CASE(PushConstant),
         CASE(AtomicCounter),
         CASE(Image),
-    }),);
+    }));
 #undef CASE
 // clang-format on
 

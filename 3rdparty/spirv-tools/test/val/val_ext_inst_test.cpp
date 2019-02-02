@@ -493,20 +493,20 @@ TEST_P(ValidateGlslStd450SqrtLike, IntOperand) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllSqrtLike, ValidateGlslStd450SqrtLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "Round",
-                            "RoundEven",
-                            "FAbs",
-                            "Trunc",
-                            "FSign",
-                            "Floor",
-                            "Ceil",
-                            "Fract",
-                            "Sqrt",
-                            "InverseSqrt",
-                            "Normalize",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllSqrtLike, ValidateGlslStd450SqrtLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "Round",
+                             "RoundEven",
+                             "FAbs",
+                             "Trunc",
+                             "FSign",
+                             "Floor",
+                             "Ceil",
+                             "Fract",
+                             "Sqrt",
+                             "InverseSqrt",
+                             "Normalize",
+                         }));
 
 TEST_P(ValidateGlslStd450FMinLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -560,15 +560,15 @@ TEST_P(ValidateGlslStd450FMinLike, IntOperand2) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllFMinLike, ValidateGlslStd450FMinLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "FMin",
-                            "FMax",
-                            "Step",
-                            "Reflect",
-                            "NMin",
-                            "NMax",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllFMinLike, ValidateGlslStd450FMinLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "FMin",
+                             "FMax",
+                             "Step",
+                             "Reflect",
+                             "NMin",
+                             "NMax",
+                         }));
 
 TEST_P(ValidateGlslStd450FClampLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -635,15 +635,15 @@ TEST_P(ValidateGlslStd450FClampLike, IntOperand3) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllFClampLike, ValidateGlslStd450FClampLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "FClamp",
-                            "FMix",
-                            "SmoothStep",
-                            "Fma",
-                            "FaceForward",
-                            "NClamp",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllFClampLike, ValidateGlslStd450FClampLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "FClamp",
+                             "FMix",
+                             "SmoothStep",
+                             "Fma",
+                             "FaceForward",
+                             "NClamp",
+                         }));
 
 TEST_P(ValidateGlslStd450SAbsLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -716,14 +716,14 @@ TEST_P(ValidateGlslStd450SAbsLike, WrongBitWidthOperand) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllSAbsLike, ValidateGlslStd450SAbsLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "SAbs",
-                            "SSign",
-                            "FindILsb",
-                            "FindUMsb",
-                            "FindSMsb",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllSAbsLike, ValidateGlslStd450SAbsLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "SAbs",
+                             "SSign",
+                             "FindILsb",
+                             "FindUMsb",
+                             "FindSMsb",
+                         }));
 
 TEST_F(ValidateExtInst, FindUMsbNot32Bit) {
   const std::string body = R"(
@@ -865,13 +865,13 @@ TEST_P(ValidateGlslStd450UMinLike, WrongBitWidthOperand2) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUMinLike, ValidateGlslStd450UMinLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "UMin",
-                            "SMin",
-                            "UMax",
-                            "SMax",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUMinLike, ValidateGlslStd450UMinLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "UMin",
+                             "SMin",
+                             "UMax",
+                             "SMax",
+                         }));
 
 TEST_P(ValidateGlslStd450UClampLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -1028,11 +1028,11 @@ TEST_P(ValidateGlslStd450UClampLike, WrongBitWidthOperand3) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUClampLike, ValidateGlslStd450UClampLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "UClamp",
-                            "SClamp",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUClampLike, ValidateGlslStd450UClampLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "UClamp",
+                             "SClamp",
+                         }));
 
 TEST_P(ValidateGlslStd450SinLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -1083,27 +1083,27 @@ TEST_P(ValidateGlslStd450SinLike, IntOperand) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllSinLike, ValidateGlslStd450SinLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "Radians",
-                            "Degrees",
-                            "Sin",
-                            "Cos",
-                            "Tan",
-                            "Asin",
-                            "Acos",
-                            "Atan",
-                            "Sinh",
-                            "Cosh",
-                            "Tanh",
-                            "Asinh",
-                            "Acosh",
-                            "Atanh",
-                            "Exp",
-                            "Exp2",
-                            "Log",
-                            "Log2",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllSinLike, ValidateGlslStd450SinLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "Radians",
+                             "Degrees",
+                             "Sin",
+                             "Cos",
+                             "Tan",
+                             "Asin",
+                             "Acos",
+                             "Atan",
+                             "Sinh",
+                             "Cosh",
+                             "Tanh",
+                             "Asinh",
+                             "Acosh",
+                             "Atanh",
+                             "Exp",
+                             "Exp2",
+                             "Log",
+                             "Log2",
+                         }));
 
 TEST_P(ValidateGlslStd450PowLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -1168,11 +1168,11 @@ TEST_P(ValidateGlslStd450PowLike, IntOperand2) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllPowLike, ValidateGlslStd450PowLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "Atan2",
-                            "Pow",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllPowLike, ValidateGlslStd450PowLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "Atan2",
+                             "Pow",
+                         }));
 
 TEST_F(ValidateExtInst, GlslStd450DeterminantSuccess) {
   const std::string body = R"(
@@ -1795,14 +1795,14 @@ TEST_P(ValidateGlslStd450Pack, VWrongSizeVector) {
   EXPECT_THAT(getDiagnosticString(), HasSubstr(expected.str()));
 }
 
-INSTANTIATE_TEST_CASE_P(AllPack, ValidateGlslStd450Pack,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "PackSnorm4x8",
-                            "PackUnorm4x8",
-                            "PackSnorm2x16",
-                            "PackUnorm2x16",
-                            "PackHalf2x16",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllPack, ValidateGlslStd450Pack,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "PackSnorm4x8",
+                             "PackUnorm4x8",
+                             "PackSnorm2x16",
+                             "PackUnorm2x16",
+                             "PackHalf2x16",
+                         }));
 
 TEST_F(ValidateExtInst, PackDouble2x32Success) {
   const std::string body = R"(
@@ -2034,14 +2034,14 @@ TEST_P(ValidateGlslStd450Unpack, ResultPWrongBitWidth) {
   EXPECT_THAT(getDiagnosticString(), HasSubstr(expected.str()));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUnpack, ValidateGlslStd450Unpack,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "UnpackSnorm4x8",
-                            "UnpackUnorm4x8",
-                            "UnpackSnorm2x16",
-                            "UnpackUnorm2x16",
-                            "UnpackHalf2x16",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUnpack, ValidateGlslStd450Unpack,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "UnpackSnorm4x8",
+                             "UnpackUnorm4x8",
+                             "UnpackSnorm2x16",
+                             "UnpackUnorm2x16",
+                             "UnpackHalf2x16",
+                         }));
 
 TEST_F(ValidateExtInst, UnpackDouble2x32Success) {
   const std::string body = R"(
@@ -2831,7 +2831,7 @@ TEST_P(ValidateOpenCLStdSqrtLike, IntOperand) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AllSqrtLike, ValidateOpenCLStdSqrtLike,
     ::testing::ValuesIn(std::vector<std::string>{
         "acos",         "acosh",       "acospi",       "asin",
@@ -2851,7 +2851,7 @@ INSTANTIATE_TEST_CASE_P(
         "native_log",   "native_log2", "native_log10", "native_recip",
         "native_rsqrt", "native_sin",  "native_sqrt",  "native_tan",
         "degrees",      "radians",     "sign",
-    }), );
+    }));
 
 TEST_P(ValidateOpenCLStdFMinLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -2905,16 +2905,16 @@ TEST_P(ValidateOpenCLStdFMinLike, IntOperand2) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllFMinLike, ValidateOpenCLStdFMinLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "atan2",     "atan2pi",       "copysign",
-                            "fdim",      "fmax",          "fmin",
-                            "fmod",      "maxmag",        "minmag",
-                            "hypot",     "nextafter",     "pow",
-                            "powr",      "remainder",     "half_divide",
-                            "half_powr", "native_divide", "native_powr",
-                            "step",      "fmax_common",   "fmin_common",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllFMinLike, ValidateOpenCLStdFMinLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "atan2",     "atan2pi",       "copysign",
+                             "fdim",      "fmax",          "fmin",
+                             "fmod",      "maxmag",        "minmag",
+                             "hypot",     "nextafter",     "pow",
+                             "powr",      "remainder",     "half_divide",
+                             "half_powr", "native_divide", "native_powr",
+                             "step",      "fmax_common",   "fmin_common",
+                         }));
 
 TEST_P(ValidateOpenCLStdFClampLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -2981,14 +2981,14 @@ TEST_P(ValidateOpenCLStdFClampLike, IntOperand3) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllFClampLike, ValidateOpenCLStdFClampLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "fma",
-                            "mad",
-                            "fclamp",
-                            "mix",
-                            "smoothstep",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllFClampLike, ValidateOpenCLStdFClampLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "fma",
+                             "mad",
+                             "fclamp",
+                             "mix",
+                             "smoothstep",
+                         }));
 
 TEST_P(ValidateOpenCLStdSAbsLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -3048,14 +3048,14 @@ TEST_P(ValidateOpenCLStdSAbsLike, U64Operand) {
                 ": expected types of all operands to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllSAbsLike, ValidateOpenCLStdSAbsLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "s_abs",
-                            "clz",
-                            "ctz",
-                            "popcount",
-                            "u_abs",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllSAbsLike, ValidateOpenCLStdSAbsLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "s_abs",
+                             "clz",
+                             "ctz",
+                             "popcount",
+                             "u_abs",
+                         }));
 
 TEST_P(ValidateOpenCLStdUMinLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -3147,26 +3147,26 @@ TEST_P(ValidateOpenCLStdUMinLike, U64Operand2) {
                 ": expected types of all operands to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUMinLike, ValidateOpenCLStdUMinLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "s_max",
-                            "u_max",
-                            "s_min",
-                            "u_min",
-                            "s_abs_diff",
-                            "s_add_sat",
-                            "u_add_sat",
-                            "s_mul_hi",
-                            "rotate",
-                            "s_sub_sat",
-                            "u_sub_sat",
-                            "s_hadd",
-                            "u_hadd",
-                            "s_rhadd",
-                            "u_rhadd",
-                            "u_abs_diff",
-                            "u_mul_hi",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUMinLike, ValidateOpenCLStdUMinLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "s_max",
+                             "u_max",
+                             "s_min",
+                             "u_min",
+                             "s_abs_diff",
+                             "s_add_sat",
+                             "u_add_sat",
+                             "s_mul_hi",
+                             "rotate",
+                             "s_sub_sat",
+                             "u_sub_sat",
+                             "s_hadd",
+                             "u_hadd",
+                             "s_rhadd",
+                             "u_rhadd",
+                             "u_abs_diff",
+                             "u_mul_hi",
+                         }));
 
 TEST_P(ValidateOpenCLStdUClampLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -3284,15 +3284,15 @@ TEST_P(ValidateOpenCLStdUClampLike, U64Operand3) {
                 ": expected types of all operands to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUClampLike, ValidateOpenCLStdUClampLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "s_clamp",
-                            "u_clamp",
-                            "s_mad_hi",
-                            "u_mad_sat",
-                            "s_mad_sat",
-                            "u_mad_hi",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUClampLike, ValidateOpenCLStdUClampLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "s_clamp",
+                             "u_clamp",
+                             "s_mad_hi",
+                             "u_mad_sat",
+                             "s_mad_sat",
+                             "u_mad_hi",
+                         }));
 
 // -------------------------------------------------------------
 TEST_P(ValidateOpenCLStdUMul24Like, Success) {
@@ -3398,11 +3398,11 @@ TEST_P(ValidateOpenCLStdUMul24Like, U64Operand2) {
                 ": expected types of all operands to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUMul24Like, ValidateOpenCLStdUMul24Like,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "s_mul24",
-                            "u_mul24",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUMul24Like, ValidateOpenCLStdUMul24Like,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "s_mul24",
+                             "u_mul24",
+                         }));
 
 TEST_P(ValidateOpenCLStdUMad24Like, Success) {
   const std::string ext_inst_name = GetParam();
@@ -3533,11 +3533,11 @@ TEST_P(ValidateOpenCLStdUMad24Like, U64Operand3) {
                 ": expected types of all operands to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUMad24Like, ValidateOpenCLStdUMad24Like,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "s_mad24",
-                            "u_mad24",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUMad24Like, ValidateOpenCLStdUMad24Like,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "s_mad24",
+                             "u_mad24",
+                         }));
 
 TEST_F(ValidateExtInst, OpenCLStdCrossSuccess) {
   const std::string body = R"(
@@ -3662,11 +3662,11 @@ TEST_P(ValidateOpenCLStdLengthLike, DifferentType) {
                         "Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllLengthLike, ValidateOpenCLStdLengthLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "length",
-                            "fast_length",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllLengthLike, ValidateOpenCLStdLengthLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "length",
+                             "fast_length",
+                         }));
 
 TEST_P(ValidateOpenCLStdDistanceLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -3751,11 +3751,11 @@ TEST_P(ValidateOpenCLStdDistanceLike, DifferentOperands) {
                         "expected operands P0 and P1 to be of the same type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllDistanceLike, ValidateOpenCLStdDistanceLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "distance",
-                            "fast_distance",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllDistanceLike, ValidateOpenCLStdDistanceLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "distance",
+                             "fast_distance",
+                         }));
 
 TEST_P(ValidateOpenCLStdNormalizeLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -3811,11 +3811,11 @@ TEST_P(ValidateOpenCLStdNormalizeLike, DifferentType) {
                         "expected operand P type to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllNormalizeLike, ValidateOpenCLStdNormalizeLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "normalize",
-                            "fast_normalize",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllNormalizeLike, ValidateOpenCLStdNormalizeLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "normalize",
+                             "fast_normalize",
+                         }));
 
 TEST_F(ValidateExtInst, OpenCLStdBitselectSuccess) {
   const std::string body = R"(
@@ -4208,15 +4208,15 @@ TEST_P(ValidateOpenCLStdVStoreHalfLike, PDataTypeFloat32) {
                 ": expected operand P data type to be 16-bit float scalar"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllVStoreHalfLike, ValidateOpenCLStdVStoreHalfLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "vstore_half",
-                            "vstore_half_r",
-                            "vstore_halfn",
-                            "vstore_halfn_r",
-                            "vstorea_halfn",
-                            "vstorea_halfn_r",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllVStoreHalfLike, ValidateOpenCLStdVStoreHalfLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "vstore_half",
+                             "vstore_half_r",
+                             "vstore_halfn",
+                             "vstore_halfn_r",
+                             "vstorea_halfn",
+                             "vstorea_halfn_r",
+                         }));
 
 TEST_P(ValidateOpenCLStdVLoadHalfLike, SuccessPhysical32) {
   const std::string ext_inst_name = GetParam();
@@ -4375,11 +4375,11 @@ TEST_P(ValidateOpenCLStdVLoadHalfLike, WrongN) {
                         "components of Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllVLoadHalfLike, ValidateOpenCLStdVLoadHalfLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "vload_halfn",
-                            "vloada_halfn",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllVLoadHalfLike, ValidateOpenCLStdVLoadHalfLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "vload_halfn",
+                             "vloada_halfn",
+                         }));
 
 TEST_F(ValidateExtInst, VLoadNSuccessFloatPhysical32) {
   std::ostringstream ss;
@@ -5299,12 +5299,12 @@ TEST_P(ValidateOpenCLStdFractLike, PointerWrongDataType) {
           ": expected data type of the pointer to be equal to Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllFractLike, ValidateOpenCLStdFractLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "fract",
-                            "modf",
-                            "sincos",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllFractLike, ValidateOpenCLStdFractLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "fract",
+                             "modf",
+                             "sincos",
+                         }));
 
 TEST_F(ValidateExtInst, OpenCLStdRemquoSuccess) {
   const std::string body = R"(
@@ -5518,11 +5518,11 @@ TEST_P(ValidateOpenCLStdFrexpLike, PointerDataTypeDiffSize) {
                         "number of components as Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllFrexpLike, ValidateOpenCLStdFrexpLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "frexp",
-                            "lgamma_r",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllFrexpLike, ValidateOpenCLStdFrexpLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "frexp",
+                             "lgamma_r",
+                         }));
 
 TEST_F(ValidateExtInst, OpenCLStdIlogbSuccess) {
   const std::string body = R"(
@@ -5716,12 +5716,12 @@ TEST_P(ValidateOpenCLStdLdexpLike, ExponentWrongSize) {
                         "components as Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllLdexpLike, ValidateOpenCLStdLdexpLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "ldexp",
-                            "pown",
-                            "rootn",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllLdexpLike, ValidateOpenCLStdLdexpLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "ldexp",
+                             "pown",
+                             "rootn",
+                         }));
 
 TEST_P(ValidateOpenCLStdUpsampleLike, Success) {
   const std::string ext_inst_name = GetParam();
@@ -5808,11 +5808,11 @@ TEST_P(ValidateOpenCLStdUpsampleLike, HiLoWrongBitWidth) {
                 "be half of the bit width of components of Result Type"));
 }
 
-INSTANTIATE_TEST_CASE_P(AllUpsampleLike, ValidateOpenCLStdUpsampleLike,
-                        ::testing::ValuesIn(std::vector<std::string>{
-                            "u_upsample",
-                            "s_upsample",
-                        }), );
+INSTANTIATE_TEST_SUITE_P(AllUpsampleLike, ValidateOpenCLStdUpsampleLike,
+                         ::testing::ValuesIn(std::vector<std::string>{
+                             "u_upsample",
+                             "s_upsample",
+                         }));
 
 }  // namespace
 }  // namespace val

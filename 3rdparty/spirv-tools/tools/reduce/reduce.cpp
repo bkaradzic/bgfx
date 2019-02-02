@@ -20,6 +20,7 @@
 #include "source/opt/build_module.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/log.h"
+#include "source/reduce/merge_blocks_reduction_opportunity_finder.h"
 #include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
 #include "source/reduce/operand_to_dominating_id_reduction_opportunity_finder.h"
 #include "source/reduce/operand_to_undef_reduction_opportunity_finder.h"
@@ -240,6 +241,8 @@ int main(int argc, const char** argv) {
   reducer.AddReductionPass(
       spvtools::MakeUnique<
           StructuredLoopToSelectionReductionOpportunityFinder>());
+  reducer.AddReductionPass(
+      spvtools::MakeUnique<MergeBlocksReductionOpportunityFinder>());
 
   reducer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
 

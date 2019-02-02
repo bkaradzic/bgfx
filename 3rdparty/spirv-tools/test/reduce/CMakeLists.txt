@@ -13,7 +13,8 @@
 # limitations under the License.
 
 add_spvtools_unittest(TARGET reduce
-        SRCS operand_to_constant_test.cpp
+        SRCS merge_blocks_test.cpp
+        operand_to_constant_test.cpp
         operand_to_undef_test.cpp
         operand_to_dominating_id_test.cpp
         reduce_test_util.cpp

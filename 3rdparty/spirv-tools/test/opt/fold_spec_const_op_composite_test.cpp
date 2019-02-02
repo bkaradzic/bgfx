@@ -224,7 +224,7 @@ TEST_P(FoldSpecConstantOpAndCompositePassTest, ParamTestCase) {
 
 // Tests that OpSpecConstantComposite opcodes are replace with
 // OpConstantComposite correctly.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Composite, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({
@@ -330,7 +330,7 @@ INSTANTIATE_TEST_CASE_P(
     })));
 
 // Tests for operations that resulting in different types.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Cast, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(
         std::vector<FoldSpecConstantOpAndCompositePassTestCase>({
@@ -567,7 +567,7 @@ INSTANTIATE_TEST_CASE_P(
 
 // Tests about boolean scalar logical operations and comparison operations with
 // scalar int/uint type.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Logical, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({
@@ -636,7 +636,7 @@ INSTANTIATE_TEST_CASE_P(
     })));
 
 // Tests about arithmetic operations for scalar int and uint types.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ScalarArithmetic, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({
@@ -821,7 +821,7 @@ INSTANTIATE_TEST_CASE_P(
     })));
 
 // Tests about arithmetic operations for vector int and uint types.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     VectorArithmetic, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({
@@ -1043,7 +1043,7 @@ INSTANTIATE_TEST_CASE_P(
     })));
 
 // Tests for SpecConstantOp CompositeExtract instruction
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CompositeExtract, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({
@@ -1217,7 +1217,7 @@ INSTANTIATE_TEST_CASE_P(
     })));
 
 // Tests the swizzle operations for spec const vectors.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     VectorShuffle, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({
@@ -1310,7 +1310,7 @@ INSTANTIATE_TEST_CASE_P(
     })));
 
 // Test with long use-def chain.
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     LongDefUseChain, FoldSpecConstantOpAndCompositePassTest,
     ::testing::ValuesIn(std::vector<
                         FoldSpecConstantOpAndCompositePassTestCase>({

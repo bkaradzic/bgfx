@@ -823,7 +823,7 @@ std::pair<std::string, bool> cases[] = {
     {"OpGetKernelWorkGroupSize", kNoNDrange},
     {"OpGetKernelPreferredWorkGroupSizeMultiple", kNoNDrange}};
 
-INSTANTIATE_TEST_CASE_P(KernelArgs, ValidateSSA, ::testing::ValuesIn(cases), );
+INSTANTIATE_TEST_SUITE_P(KernelArgs, ValidateSSA, ::testing::ValuesIn(cases));
 
 static const std::string return_instructions = R"(
   OpReturn

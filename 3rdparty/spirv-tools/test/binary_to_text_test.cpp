@@ -171,7 +171,7 @@ TEST_P(BinaryToTextFail, EncodeSuccessfullyDecodeFailed) {
               Eq(GetParam().expected_error_message));
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     InvalidIds, BinaryToTextFail,
     ::testing::ValuesIn(std::vector<FailedDecodeCase>{
         {"", spvtest::MakeInstruction(SpvOpTypeVoid, {0}),
@@ -196,9 +196,9 @@ INSTANTIATE_TEST_CASE_P(
          "%2 = OpTypeVector %1 4",
          spvtest::MakeInstruction(SpvOpConstant, {2, 3, 999}),
          "Type Id 2 is not a scalar numeric type"},
-    }), );
+    }));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     InvalidIdsCheckedDuringLiteralCaseParsing, BinaryToTextFail,
     ::testing::ValuesIn(std::vector<FailedDecodeCase>{
         {"", spvtest::MakeInstruction(SpvOpSwitch, {1, 2, 3, 4}),
@@ -212,7 +212,7 @@ INSTANTIATE_TEST_CASE_P(
         {"%1 = OpTypeFloat 32\n%2 = OpConstant %1 1.5",
          spvtest::MakeInstruction(SpvOpSwitch, {2, 3, 4, 5}),
          "Invalid OpSwitch: selector id 2 is not a scalar integer"},
-    }), );
+    }));
 
 TEST_F(TextToBinaryTest, OneInstruction) {
   const std::string input = "OpSource OpenCL_C 12\n";
@@ -243,7 +243,7 @@ TEST_P(RoundTripInstructionsTest, Sample) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NumericLiterals, RoundTripInstructionsTest,
     // This test is independent of environment, so just test the one.
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
@@ -275,10 +275,10 @@ INSTANTIATE_TEST_CASE_P(
                 "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1.0002p+1024\n", // NaN
                 "%1 = OpTypeFloat 64\n%2 = OpConstant %1 0x1p+1024\n", // Inf
                 "%1 = OpTypeFloat 64\n%2 = OpConstant %1 -0x1p+1024\n", // -Inf
-            })), );
+            })));
 // clang-format on
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MemoryAccessMasks, RoundTripInstructionsTest,
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
                               SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3),
@@ -292,9 +292,9 @@ INSTANTIATE_TEST_CASE_P(
                 "OpStore %1 %2 Volatile|Aligned 16\n",
                 "OpStore %1 %2 Volatile|Nontemporal\n",
                 "OpStore %1 %2 Volatile|Aligned|Nontemporal 32\n",
-            })), );
+            })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     FPFastMathModeMasks, RoundTripInstructionsTest,
     Combine(
         ::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
@@ -310,9 +310,9 @@ INSTANTIATE_TEST_CASE_P(
             "OpDecorate %1 FPFastMathMode NotNaN|NotInf\n",
             "OpDecorate %1 FPFastMathMode NSZ|AllowRecip\n",
             "OpDecorate %1 FPFastMathMode NotNaN|NotInf|NSZ|AllowRecip|Fast\n",
-        })), );
+        })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     LoopControlMasks, RoundTripInstructionsTest,
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
                               SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_2),
@@ -321,18 +321,18 @@ INSTANTIATE_TEST_CASE_P(
                 "OpLoopMerge %1 %2 Unroll\n",
                 "OpLoopMerge %1 %2 DontUnroll\n",
                 "OpLoopMerge %1 %2 Unroll|DontUnroll\n",
-            })), );
+            })));
 
-INSTANTIATE_TEST_CASE_P(LoopControlMasksV11, RoundTripInstructionsTest,
-                        Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_1,
-                                                  SPV_ENV_UNIVERSAL_1_2,
-                                                  SPV_ENV_UNIVERSAL_1_3),
-                                ::testing::ValuesIn(std::vector<std::string>{
-                                    "OpLoopMerge %1 %2 DependencyInfinite\n",
-                                    "OpLoopMerge %1 %2 DependencyLength 8\n",
-                                })), );
+INSTANTIATE_TEST_SUITE_P(LoopControlMasksV11, RoundTripInstructionsTest,
+                         Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_1,
+                                                   SPV_ENV_UNIVERSAL_1_2,
+                                                   SPV_ENV_UNIVERSAL_1_3),
+                                 ::testing::ValuesIn(std::vector<std::string>{
+                                     "OpLoopMerge %1 %2 DependencyInfinite\n",
+                                     "OpLoopMerge %1 %2 DependencyLength 8\n",
+                                 })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SelectionControlMasks, RoundTripInstructionsTest,
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
                               SPV_ENV_UNIVERSAL_1_3, SPV_ENV_UNIVERSAL_1_2),
@@ -341,9 +341,9 @@ INSTANTIATE_TEST_CASE_P(
                 "OpSelectionMerge %1 Flatten\n",
                 "OpSelectionMerge %1 DontFlatten\n",
                 "OpSelectionMerge %1 Flatten|DontFlatten\n",
-            })), );
+            })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     FunctionControlMasks, RoundTripInstructionsTest,
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
                               SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3),
@@ -355,9 +355,9 @@ INSTANTIATE_TEST_CASE_P(
                 "%2 = OpFunction %1 Const %3\n",
                 "%2 = OpFunction %1 Inline|Pure|Const %3\n",
                 "%2 = OpFunction %1 DontInline|Const %3\n",
-            })), );
+            })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageMasks, RoundTripInstructionsTest,
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
                               SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3),
@@ -378,9 +378,9 @@ INSTANTIATE_TEST_CASE_P(
                 "%2 = OpImageFetch %1 %3 %4 Sample|MinLod %5 %6\n",
                 "%2 = OpImageFetch %1 %3 %4"
                 " Bias|Lod|Grad|ConstOffset|Offset|ConstOffsets|Sample|MinLod"
-                " %5 %6 %7 %8 %9 %10 %11 %12 %13\n"})), );
+                " %5 %6 %7 %8 %9 %10 %11 %12 %13\n"})));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NewInstructionsInSPIRV1_2, RoundTripInstructionsTest,
     Combine(::testing::Values(SPV_ENV_UNIVERSAL_1_2, SPV_ENV_UNIVERSAL_1_3),
             ::testing::ValuesIn(std::vector<std::string>{
@@ -389,7 +389,7 @@ INSTANTIATE_TEST_CASE_P(
                 "OpExecutionModeId %1 LocalSizeHintId %2\n",
                 "OpDecorateId %1 AlignmentId %2\n",
                 "OpDecorateId %1 MaxByteOffsetId %2\n",
-            })), );
+            })));
 
 using MaskSorting = TextToBinaryTest;
 
@@ -537,23 +537,23 @@ TEST_P(GeneratorStringTest, Sample) {
   spvTextDestroy(decoded_text);
 }
 
-INSTANTIATE_TEST_CASE_P(GeneratorStrings, GeneratorStringTest,
-                        ::testing::ValuesIn(std::vector<GeneratorStringCase>{
-                            {SPV_GENERATOR_KHRONOS, 12, "Khronos; 12"},
-                            {SPV_GENERATOR_LUNARG, 99, "LunarG; 99"},
-                            {SPV_GENERATOR_VALVE, 1, "Valve; 1"},
-                            {SPV_GENERATOR_CODEPLAY, 65535, "Codeplay; 65535"},
-                            {SPV_GENERATOR_NVIDIA, 19, "NVIDIA; 19"},
-                            {SPV_GENERATOR_ARM, 1000, "ARM; 1000"},
-                            {SPV_GENERATOR_KHRONOS_LLVM_TRANSLATOR, 38,
-                             "Khronos LLVM/SPIR-V Translator; 38"},
-                            {SPV_GENERATOR_KHRONOS_ASSEMBLER, 2,
-                             "Khronos SPIR-V Tools Assembler; 2"},
-                            {SPV_GENERATOR_KHRONOS_GLSLANG, 1,
-                             "Khronos Glslang Reference Front End; 1"},
-                            {1000, 18, "Unknown(1000); 18"},
-                            {65535, 32767, "Unknown(65535); 32767"},
-                        }), );
+INSTANTIATE_TEST_SUITE_P(GeneratorStrings, GeneratorStringTest,
+                         ::testing::ValuesIn(std::vector<GeneratorStringCase>{
+                             {SPV_GENERATOR_KHRONOS, 12, "Khronos; 12"},
+                             {SPV_GENERATOR_LUNARG, 99, "LunarG; 99"},
+                             {SPV_GENERATOR_VALVE, 1, "Valve; 1"},
+                             {SPV_GENERATOR_CODEPLAY, 65535, "Codeplay; 65535"},
+                             {SPV_GENERATOR_NVIDIA, 19, "NVIDIA; 19"},
+                             {SPV_GENERATOR_ARM, 1000, "ARM; 1000"},
+                             {SPV_GENERATOR_KHRONOS_LLVM_TRANSLATOR, 38,
+                              "Khronos LLVM/SPIR-V Translator; 38"},
+                             {SPV_GENERATOR_KHRONOS_ASSEMBLER, 2,
+                              "Khronos SPIR-V Tools Assembler; 2"},
+                             {SPV_GENERATOR_KHRONOS_GLSLANG, 1,
+                              "Khronos Glslang Reference Front End; 1"},
+                             {1000, 18, "Unknown(1000); 18"},
+                             {65535, 32767, "Unknown(65535); 32767"},
+                         }));
 
 // TODO(dneto): Test new instructions and enums in SPIR-V 1.3
 

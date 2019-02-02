@@ -4254,7 +4254,7 @@ TEST_P(AggressiveEliminateDeadConstantTest, Custom) {
   SinglePassRunAndMatch<AggressiveDCEPass>(assembly_with_dead_const, false);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ScalarTypeConstants, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off
@@ -4346,7 +4346,7 @@ INSTANTIATE_TEST_CASE_P(
         // clang-format on
     })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     VectorTypeConstants, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off
@@ -4473,7 +4473,7 @@ INSTANTIATE_TEST_CASE_P(
         // clang-format on
     })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     StructTypeConstants, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off
@@ -4644,7 +4644,7 @@ INSTANTIATE_TEST_CASE_P(
         // clang-format on
     })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ScalarTypeSpecConstants, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off
@@ -4697,7 +4697,7 @@ INSTANTIATE_TEST_CASE_P(
         // clang-format on
     })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     VectorTypeSpecConstants, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off
@@ -4819,7 +4819,7 @@ INSTANTIATE_TEST_CASE_P(
         // clang-format on
     })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SpecConstantOp, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off
@@ -5001,7 +5001,7 @@ INSTANTIATE_TEST_CASE_P(
         // clang-format on
     })));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     LongDefUseChain, AggressiveEliminateDeadConstantTest,
     ::testing::ValuesIn(std::vector<AggressiveEliminateDeadConstantTestCase>({
         // clang-format off

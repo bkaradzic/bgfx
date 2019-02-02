@@ -182,8 +182,7 @@ Optimizer& Optimizer::RegisterPerformancePasses() {
       .RegisterPass(CreateRedundancyEliminationPass())
       .RegisterPass(CreateDeadBranchElimPass())
       .RegisterPass(CreateBlockMergePass())
-      .RegisterPass(CreateSimplificationPass())
-      .RegisterPass(CreateCodeSinkingPass());
+      .RegisterPass(CreateSimplificationPass());
   // Currently exposing driver bugs resulting in crashes (#946)
   // .RegisterPass(CreateCommonUniformElimPass())
 }
