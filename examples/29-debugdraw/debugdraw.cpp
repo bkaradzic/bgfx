@@ -714,7 +714,7 @@ public:
 					: 0xffffffff
 					);
 
-				dde.drawGrid(Axis::Y, pos, 20, 1.0f);
+				dde.drawGrid(Axis::Y, pos, 128, 1.0f);
 			}
 
 			dde.drawFrustum(mtxVp);
