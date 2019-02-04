@@ -59,7 +59,7 @@ namespace stl = tinystl;
 
 #include "bounds.h"
 
-typedef std::vector<bx::Vec3> bx::Vec3Array;
+typedef std::vector<bx::Vec3> Vec3Array;
 
 struct Index3
 {
@@ -258,7 +258,7 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 	Sphere minSphere;
 	calcMinBoundingSphere(minSphere, _vertices, _numVertices, _stride);
 
-	if (minSphere.m_radius > maxSphere.m_radius)
+	if (minSphere.radius > maxSphere.radius)
 	{
 		bx::write(_writer, maxSphere);
 	}
@@ -479,9 +479,9 @@ int main(int _argc, const char* _argv[])
 
 	// https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
-	bx::Vec3Array positions;
-	bx::Vec3Array normals;
-	bx::Vec3Array texcoords;
+	Vec3Array positions;
+	Vec3Array normals;
+	Vec3Array texcoords;
 	Index3Map indexMap;
 	TriangleArray triangles;
 	GroupArray groups;
