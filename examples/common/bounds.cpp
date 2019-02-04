@@ -21,7 +21,7 @@ Vec3 getExtents(const Aabb& _aabb)
 
 Vec3 getCenter(const Triangle& _triangle)
 {
-	return bx::mul(bx::add(bx::add(_triangle.v0, _triangle.v1), _triangle.v2), 1.0f/3.0f);
+	return mul(add(add(_triangle.v0, _triangle.v1), _triangle.v2), 1.0f/3.0f);
 }
 
 void toAabb(Aabb& _outAabb, const Vec3& _center, const Vec3& _extent)
@@ -529,9 +529,9 @@ static bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule,
 	const Vec3 rc   = sub(_ray.pos, _cylinder.pos);
 	const Vec3 dxa  = cross(_ray.dir, axis);
 
-	const float len = length(dxa);
-	const Vec3 normal = normalize(dxa);
-	const float dist = bx::abs(dot(rc, normal) );
+	const float len    = length(dxa);
+	const Vec3  normal = normalize(dxa);
+	const float dist   = bx::abs(dot(rc, normal) );
 
 	if (dist > _cylinder.radius)
 	{
@@ -831,7 +831,7 @@ bool intersect(const Ray& _ray, const Triangle& _triangle, Hit* _hit)
 	return true;
 }
 
-void barycentric(float& _outU, float& _outV, float& _outW, const Triangle& _triangle, const Vec3& _pos)
+Vec3 barycentric(const Triangle& _triangle, const Vec3& _pos)
 {
 	const Vec3 v0 = sub(_triangle.v1, _triangle.v0);
 	const Vec3 v1 = sub(_triangle.v2, _triangle.v0);
@@ -844,20 +844,49 @@ void barycentric(float& _outU, float& _outV, float& _outW, const Triangle& _tria
 	const float dot12 = dot(v1, v2);
 
 	const float invDenom = 1.0f/(dot00*dot11 - square(dot01) );
-	_outU = (dot11*dot02 - dot01*dot12)*invDenom;
-	_outV = (dot00*dot12 - dot01*dot02)*invDenom;
-	_outW = 1.0f - _outU - _outV;
+
+	const float uu = (dot11*dot02 - dot01*dot12)*invDenom;
+	const float vv = (dot00*dot12 - dot01*dot02)*invDenom;
+	const float ww = 1.0f - uu - vv;
+
+	return { uu, vv, ww };
+
 }
 
-Vec3 closestPoint(const Plane& _plane, const Vec3 _pos)
+Vec3 cartesian(const Triangle& _triangle, const Vec3& _uvw)
+{
+	const Vec3 b0 = mul(_triangle.v0, _uvw.x);
+	const Vec3 b1 = mul(_triangle.v1, _uvw.y);
+	const Vec3 b2 = mul(_triangle.v2, _uvw.z);
+
+	return add(add(b0, b1), b2);
+}
+
+void calcPlane(Plane& _outPlane, const Triangle& _triangle)
+{
+	calcPlane(_outPlane, _triangle.v0, _triangle.v1, _triangle.v2);
+}
+
+Vec3 closestPoint(const Plane& _plane, const Vec3& _pos)
 {
 	const float dist = distance(_plane, _pos);
 	return sub(_pos, mul(_plane.normal, dist) );
 }
 
-Vec3 closestPoint(const Aabb& _aabb, const Vec3 _pos)
+Vec3 closestPoint(const Aabb& _aabb, const Vec3& _pos)
 {
 	return clamp(_pos, _aabb.min, _aabb.max);
+}
+
+Vec3 closestPoint(const Triangle& _triangle, const Vec3& _pos)
+{
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	const Vec3 pos = closestPoint(plane, _pos);
+	const Vec3 uvw = barycentric(_triangle, pos);
+
+	return cartesian(_triangle, clamp(uvw, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}) );
 }
 
 bool overlap(const Sphere& _sphere, const Vec3& _pos)
@@ -888,7 +917,7 @@ bool overlap(const Sphere& _sphere, const Plane& _plane)
 bool overlap(const Sphere& _sphere, const Triangle& _triangle)
 {
 	Plane plane;
-	calcPlane(plane, _triangle.v0, _triangle.v1, _triangle.v2);
+	calcPlane(plane, _triangle);
 
 	if (!overlap(_sphere, plane) )
 	{
@@ -896,15 +925,12 @@ bool overlap(const Sphere& _sphere, const Triangle& _triangle)
 	}
 
 	const Vec3 pos = closestPoint(plane, _sphere.center);
-
-	float uu, vv, ww;
-	barycentric(uu, vv, ww, _triangle, pos);
-
+	const Vec3 uvw = barycentric(_triangle, pos);
 	const float nr = -_sphere.radius;
 
-	return uu >= nr
-		&& vv >= nr
-		&& ww >= nr
+	return uvw.x >= nr
+		&& uvw.y >= nr
+		&& uvw.z >= nr
 		;
 }
 
@@ -933,8 +959,8 @@ bool overlap(const Sphere& _sphere, const Disk& _disk)
 		return false;
 	}
 
-	bx::Plane plane;
-	bx::calcPlane(plane, _disk.normal, _disk.center);
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_sphere, plane);
 }
@@ -1017,7 +1043,7 @@ bool overlap(const Aabb& _aabb, const Plane& _plane)
 bool overlap(const Aabb& _aabb, const Triangle& _triangle)
 {
 	Plane plane;
-	calcPlane(plane, _triangle.v0, _triangle.v1, _triangle.v2);
+	calcPlane(plane, _triangle);
 
 	if (!overlap(_aabb, plane) )
 	{
@@ -1053,8 +1079,8 @@ bool overlap(const Aabb& _aabb, const Disk& _disk)
 		return false;
 	}
 
-	bx::Plane plane;
-	bx::calcPlane(plane, _disk.normal, _disk.center);
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_aabb, plane);
 }
@@ -1065,14 +1091,13 @@ bool overlap(const Aabb& _aabb, const Obb& _obb)
 	return false;
 }
 
-bool overlap(const Triangle& _triangle, const bx::Vec3& _pos)
+bool overlap(const Triangle& _triangle, const Vec3& _pos)
 {
-	float uu, vv, ww;
-	barycentric(uu, vv, ww, _triangle, _pos);
+	const Vec3 uvw = barycentric(_triangle, _pos);
 
-	return uu >= 0.0f
-		&& vv >= 0.0f
-		&& ww >= 0.0f
+	return uvw.x >= 0.0f
+		&& uvw.y >= 0.0f
+		&& uvw.z >= 0.0f
 		;
 }
 
@@ -1086,7 +1111,7 @@ bool overlap(const Triangle& _triangle, const Aabb& _aabb)
 	return overlap(_aabb, _triangle);
 }
 
-bool overlap(const Triangle& _triangle, const bx::Plane& _plane)
+bool overlap(const Triangle& _triangle, const Plane& _plane)
 {
 	const float dist0 = distance(_plane, _triangle.v0);
 	const float dist1 = distance(_plane, _triangle.v1);
@@ -1131,8 +1156,8 @@ bool overlap(const Triangle& _triangle, const Disk& _disk)
 		return false;
 	}
 
-	bx::Plane plane;
-	bx::calcPlane(plane, _disk.normal, _disk.center);
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
 
 	return overlap(_triangle, plane);
 }
