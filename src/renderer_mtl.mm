@@ -1484,38 +1484,44 @@ namespace bgfx { namespace mtl
 				numMrt = bx::uint32_max(1, fb.m_num);
 			}
 
+			const VertexDecl* decl = &_clearQuad.m_decl;
 			const PipelineStateMtl* pso = getPipelineState(
 				  state
 				, 0
 				, fbh
-				, _clearQuad.m_vb->decl
+				, 1
+				, &decl
 				, _clearQuad.m_program[numMrt-1]
 				, 0
 				);
 			m_renderCommandEncoder.setRenderPipelineState(pso->m_rps);
 
-			uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
+			const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
+			const uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
 
-			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset;
+			if (0 != vertexUniformBufferSize)
+			{
+				m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, pso->m_vshConstantBufferAlignmentMask);
+				m_renderCommandEncoder.setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
+			}
+			
+			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
 			if (fragmentUniformBufferSize)
 			{
 				m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, pso->m_fshConstantBufferAlignmentMask);
 				m_renderCommandEncoder.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 			}
 
+			float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
+			float mrtClearDepth[4] = { _clear.m_depth };
+
 			if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 			{
-				float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 				for (uint32_t ii = 0; ii < numMrt; ++ii)
 				{
 					uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-					bx::memCopy(mrtClear[ii], _palette[index], 16);
+					bx::memCopy(mrtClearColor[ii], _palette[index], 16);
 				}
-
-				bx::memCopy( (uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset
-					, mrtClear
-					, bx::uint32_min(fragmentUniformBufferSize, sizeof(mrtClear) )
-					);
 			}
 			else
 			{
@@ -1527,58 +1533,33 @@ namespace bgfx { namespace mtl
 					_clear.m_index[3]*1.0f/255.0f,
 				};
 
-				bx::memCopy( (uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset
-					, rgba
-					, bx::uint32_min(fragmentUniformBufferSize, sizeof(rgba) )
-					);
+				for (uint32_t ii = 0; ii < numMrt; ++ii)
+				{
+					bx::memCopy( mrtClearColor[ii]
+								, rgba
+								, 16
+								);
+				}
 			}
+
+			bx::memCopy( (uint8_t*)m_uniformBuffer.contents() + m_uniformBufferVertexOffset
+						, mrtClearDepth
+						, bx::uint32_min(vertexUniformBufferSize, sizeof(mrtClearDepth) )
+						);
+
+			bx::memCopy( (uint8_t*)m_uniformBuffer.contents() + m_uniformBufferFragmentOffset
+						, mrtClearColor
+						, bx::uint32_min(fragmentUniformBufferSize, sizeof(mrtClearColor) )
+						);
+			
 
 			m_uniformBufferFragmentOffset += fragmentUniformBufferSize;
-			m_uniformBufferVertexOffset = m_uniformBufferFragmentOffset;
+			m_uniformBufferVertexOffset    = m_uniformBufferFragmentOffset;
 
-			const VertexBufferMtl& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-			const VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
-			const uint32_t stride = vertexDecl.m_stride;
-			const uint32_t offset = 0;
+			const VertexBufferMtl& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
 
-			{
-				struct Vertex
-				{
-					float m_x;
-					float m_y;
-					float m_z;
-				};
-
-				Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
-				BX_CHECK(stride == sizeof(Vertex)
-					, "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)"
-					, stride
-					, sizeof(Vertex)
-					);
-				BX_UNUSED(stride);
-
-				const float depth = _clear.m_depth;
-
-				vertex->m_x = -1.0f;
-				vertex->m_y = -1.0f;
-				vertex->m_z = depth;
-				vertex++;
-				vertex->m_x =  1.0f;
-				vertex->m_y = -1.0f;
-				vertex->m_z = depth;
-				vertex++;
-				vertex->m_x = -1.0f;
-				vertex->m_y =  1.0f;
-				vertex->m_z = depth;
-				vertex++;
-				vertex->m_x =  1.0f;
-				vertex->m_y =  1.0f;
-				vertex->m_z = depth;
-			}
-
-			m_vertexBuffers[_clearQuad.m_vb->handle.idx].update(0, 4*_clearQuad.m_decl.m_stride, _clearQuad.m_vb->data);
 			m_renderCommandEncoder.setCullMode(MTLCullModeNone);
-			m_renderCommandEncoder.setVertexBuffer(vb.getBuffer(), offset, 1);
+			m_renderCommandEncoder.setVertexBuffer(vb.getBuffer(), 0, 1);
 			m_renderCommandEncoder.drawPrimitives(MTLPrimitiveTypeTriangleStrip, 0, 4, 1);
 		}
 

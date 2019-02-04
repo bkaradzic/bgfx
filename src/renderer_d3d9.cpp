@@ -2080,54 +2080,25 @@ namespace bgfx { namespace d3d9
 					DX_CHECK(device->SetRenderState(D3DRS_STENCILENABLE, FALSE) );
 				}
 
-				VertexBufferD3D9& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-				VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
+				VertexBufferD3D9& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
+				VertexDecl& vertexDecl = _clearQuad.m_decl;
 				uint32_t stride = _clearQuad.m_decl.m_stride;
-
-				{
-					struct Vertex
-					{
-						float m_x;
-						float m_y;
-						float m_z;
-					};
-
-					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
-					BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
-
-					const float depth = _clear.m_depth;
-
-					vertex->m_x = -1.0f;
-					vertex->m_y = -1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y = -1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x = -1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-				}
-
-				vb.update(0, 4*stride, _clearQuad.m_vb->data);
 
 				ProgramD3D9& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				device->SetVertexShader(program.m_vsh->m_vertexShader);
 				device->SetPixelShader(program.m_fsh->m_pixelShader);
 
-				float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
+				float mrtClearDepth[4] = { _clear.m_depth };
+				DX_CHECK(device->SetVertexShaderConstantF(0, mrtClearDepth, 1));
+
+				float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 
 				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 				{
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
 						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE - 1, _clear.m_index[ii]);
-						bx::memCopy(mrtClear[ii], _palette[index], 16);
+						bx::memCopy(mrtClearColor[ii], _palette[index], 16);
 					}
 				}
 				else
@@ -2142,11 +2113,11 @@ namespace bgfx { namespace d3d9
 
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
-						bx::memCopy(mrtClear[ii], rgba, 16);
+						bx::memCopy(mrtClearColor[ii], rgba, 16);
 					}
 				}
 
-				DX_CHECK(device->SetPixelShaderConstantF(0, mrtClear[0], numMrt));
+				DX_CHECK(device->SetPixelShaderConstantF(0, mrtClearColor[0], numMrt));
 
 				DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, stride) );
 				DX_CHECK(device->SetStreamSourceFreq(0, 1) );

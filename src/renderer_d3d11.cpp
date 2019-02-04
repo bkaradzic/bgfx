@@ -3323,24 +3323,27 @@ namespace bgfx { namespace d3d11
 
 				ProgramD3D11& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				m_currentProgram = &program;
-				deviceCtx->VSSetShader(program.m_vsh->m_vertexShader, NULL, 0);
-				deviceCtx->VSSetConstantBuffers(0, 1, s_zero.m_buffer);
+
+				const ShaderD3D11* vsh = program.m_vsh;
+				deviceCtx->VSSetShader(vsh->m_vertexShader, NULL, 0);
+				deviceCtx->VSSetConstantBuffers(0, 1, &vsh->m_buffer);
+				float mrtClearDepth[4] = { _clear.m_depth };
+				deviceCtx->UpdateSubresource(vsh->m_buffer, 0, 0, mrtClearDepth, 0, 0);
+
 				if (NULL != m_currentColor)
 				{
 					const ShaderD3D11* fsh = program.m_fsh;
 					deviceCtx->PSSetShader(fsh->m_pixelShader, NULL, 0);
 					deviceCtx->PSSetConstantBuffers(0, 1, &fsh->m_buffer);
 
+					float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 					if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 					{
-						float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 						for (uint32_t ii = 0; ii < numMrt; ++ii)
 						{
 							uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-							bx::memCopy(mrtClear[ii], _palette[index], 16);
+							bx::memCopy(mrtClearColor[ii], _palette[index], 16);
 						}
-
-						deviceCtx->UpdateSubresource(fsh->m_buffer, 0, 0, mrtClear, 0, 0);
 					}
 					else
 					{
@@ -3351,51 +3354,25 @@ namespace bgfx { namespace d3d11
 							_clear.m_index[2]*1.0f/255.0f,
 							_clear.m_index[3]*1.0f/255.0f,
 						};
-
-						deviceCtx->UpdateSubresource(fsh->m_buffer, 0, 0, rgba, 0, 0);
+						for (uint32_t ii = 0; ii < numMrt; ++ii)
+						{
+							bx::memCopy(mrtClearColor[ii], rgba, 16);
+						}
 					}
+
+					deviceCtx->UpdateSubresource(fsh->m_buffer, 0, 0, mrtClearColor, 0, 0);
 				}
 				else
 				{
 					deviceCtx->PSSetShader(NULL, NULL, 0);
 				}
 
-				VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-				const VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
+				VertexBufferD3D11& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
+				const VertexDecl& vertexDecl = _clearQuad.m_decl;
+
 				const uint32_t stride = vertexDecl.m_stride;
 				const uint32_t offset = 0;
 
-				{
-					struct Vertex
-					{
-						float m_x;
-						float m_y;
-						float m_z;
-					};
-
-					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
-					BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex) );
-
-					const float depth = _clear.m_depth;
-
-					vertex->m_x = -1.0f;
-					vertex->m_y = -1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y = -1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x = -1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-				}
-
-				m_vertexBuffers[_clearQuad.m_vb->handle.idx].update(0, 4*_clearQuad.m_decl.m_stride, _clearQuad.m_vb->data);
 				deviceCtx->IASetVertexBuffers(0, 1, &vb.m_ptr, &stride, &offset);
 				setInputLayout(vertexDecl, program, 0);
 
