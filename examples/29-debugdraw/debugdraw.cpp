@@ -896,10 +896,7 @@ public:
 
 						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*0.0f});
 
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						olp = overlap(sphereA, planeB);
+						olp = overlap(sphereA, triangleB);
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(false);
@@ -907,7 +904,7 @@ public:
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
-						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
+						dde.draw(triangleB);
 					}
 
 					{
@@ -921,7 +918,10 @@ public:
 
 						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*0.0f});
 
-						olp = overlap(sphereA, triangleB);
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						olp = overlap(sphereA, planeB);
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(false);
@@ -929,7 +929,7 @@ public:
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
-						dde.draw(triangleB);
+						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
 					}
 
 					{
@@ -987,10 +987,7 @@ public:
 
 						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*1.0f});
 
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						olp = overlap(aabbA, planeB);
+						olp = overlap(aabbA, triangleB);
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(false);
@@ -998,7 +995,7 @@ public:
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
-						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
+						dde.draw(triangleB);
 					}
 
 					{
@@ -1013,7 +1010,10 @@ public:
 
 						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*1.0f});
 
-						olp = overlap(aabbA, triangleB);
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						olp = overlap(aabbA, planeB);
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(false);
@@ -1021,7 +1021,7 @@ public:
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
-						dde.draw(triangleB);
+						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
 					}
 
 					{
@@ -1072,10 +1072,7 @@ public:
 
 						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*2.0f});
 
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						olp = overlap(triangleA, planeB);
+						olp = overlap(triangleA, triangleB);
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(false);
@@ -1083,7 +1080,7 @@ public:
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
-						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
+						dde.draw(triangleB);
 					}
 
 					{
@@ -1105,7 +1102,10 @@ public:
 
 						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*2.0f});
 
-						olp = overlap(triangleA, triangleB);
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						olp = overlap(triangleA, planeB);
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(false);
@@ -1113,7 +1113,7 @@ public:
 
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
-						dde.draw(triangleB);
+						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
 					}
 
 					{
