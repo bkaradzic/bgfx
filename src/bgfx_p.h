@@ -723,7 +723,7 @@ namespace bgfx
 		void init();
 		void shutdown();
 
-		TransientVertexBuffer* m_vb;
+		VertexBufferHandle m_vb;
 		VertexDecl m_decl;
 		ProgramHandle m_program[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};

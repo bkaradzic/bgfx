@@ -7,7 +7,9 @@ $input a_position
 
 #include "bgfx_shader.sh"
 
+uniform vec4 bgfx_clear_depth;
+
 void main()
 {
-	gl_Position = vec4(a_position, 1.0);
+	gl_Position = vec4(a_position.xy, bgfx_clear_depth.x, 1.0);
 }

@@ -1738,6 +1738,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
 			, m_backBufferFbo(0)
 			, m_msaaBackBufferFbo(0)
+			, m_clearQuadColor(BGFX_INVALID_HANDLE)
+			, m_clearQuadDepth(BGFX_INVALID_HANDLE)
 		{
 			bx::memSet(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
@@ -3750,40 +3752,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					GL_CHECK(glDisable(GL_STENCIL_TEST) );
 				}
 
-				VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb->handle.idx];
-				VertexDecl& vertexDecl = m_vertexDecls[_clearQuad.m_vb->decl.idx];
-
-				{
-					struct Vertex
-					{
-						float m_x;
-						float m_y;
-						float m_z;
-					};
-
-					Vertex* vertex = (Vertex*)_clearQuad.m_vb->data;
-					BX_CHECK(vertexDecl.m_stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", vertexDecl.m_stride, sizeof(Vertex) );
-
-					const float depth = _clear.m_depth * 2.0f - 1.0f;
-
-					vertex->m_x = -1.0f;
-					vertex->m_y = -1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y = -1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x = -1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-					vertex++;
-					vertex->m_x =  1.0f;
-					vertex->m_y =  1.0f;
-					vertex->m_z = depth;
-				}
-
-				vb.update(0, 4*_clearQuad.m_decl.m_stride, _clearQuad.m_vb->data);
+				VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
+				VertexDecl& vertexDecl = _clearQuad.m_decl;
 
 				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
@@ -3793,14 +3763,31 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				program.bindAttributes(vertexDecl, 0);
 				program.bindAttributesEnd();
 
-				float mrtClear[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
+				if (m_clearQuadColor.idx == kInvalidHandle)
+				{
+					const UniformRegInfo* infoClearColor = m_uniformReg.find("bgfx_clear_color");
+					if (NULL != infoClearColor)
+						m_clearQuadColor = infoClearColor->m_handle;
+				}
+
+				if (m_clearQuadDepth.idx == kInvalidHandle)
+				{
+					const UniformRegInfo* infoClearDepth = m_uniformReg.find("bgfx_clear_depth");
+					if (NULL != infoClearDepth)
+						m_clearQuadDepth = infoClearDepth->m_handle;
+				}
+
+				float mrtClearDepth[4] = { _clear.m_depth * 2.0f - 1.0f };
+				updateUniform(m_clearQuadDepth.idx, mrtClearDepth, sizeof(float)*4);
+
+				float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];
 
 				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 				{
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
 						uint8_t index = (uint8_t)bx::uint32_min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
-						bx::memCopy(mrtClear[ii], _palette[index], 16);
+						bx::memCopy(mrtClearColor[ii], _palette[index], 16);
 					}
 				}
 				else
@@ -3815,11 +3802,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
 					{
-						bx::memCopy(mrtClear[ii], rgba, 16);
+						bx::memCopy(mrtClearColor[ii], rgba, 16);
 					}
 				}
 
-				GL_CHECK(glUniform4fv(0, numMrt, mrtClear[0]) );
+				updateUniform(m_clearQuadColor.idx, mrtClearColor[0], numMrt * sizeof(float) * 4);
+
+				commit(*program.m_constantBuffer);
 
 				GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP
 					, 0
@@ -3886,6 +3875,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		GLuint m_msaaBackBufferRbos[2];
 		GlContext m_glctx;
 		bool m_needPresent;
+
+		UniformHandle m_clearQuadColor;
+		UniformHandle m_clearQuadDepth;
 
 		const char* m_vendor;
 		const char* m_renderer;

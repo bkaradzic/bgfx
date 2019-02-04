@@ -812,7 +812,7 @@ namespace bgfx
 		{
 			m_decl
 				.begin()
-				.add(Attrib::Position, 3, AttribType::Float)
+				.add(Attrib::Position, 2, AttribType::Float)
 				.end();
 
 			ShaderHandle vsh = createEmbeddedShader(s_embeddedShaders, g_caps.rendererType, "vs_clear");
@@ -830,7 +830,30 @@ namespace bgfx
 
 			destroy(vsh);
 
-			m_vb = s_ctx->createTransientVertexBuffer(4*m_decl.m_stride, &m_decl);
+			struct Vertex
+			{
+				float m_x;
+				float m_y;
+			};
+
+			const uint16_t stride = m_decl.m_stride;
+			const bgfx::Memory* mem = bgfx::alloc(4 * stride);
+			Vertex* vertex = (Vertex*)mem->data;
+			BX_CHECK(stride == sizeof(Vertex), "Stride/Vertex mismatch (stride %d, sizeof(Vertex) %d)", stride, sizeof(Vertex));
+
+			vertex->m_x = -1.0f;
+			vertex->m_y = -1.0f;
+			vertex++;
+			vertex->m_x = 1.0f;
+			vertex->m_y = -1.0f;
+			vertex++;
+			vertex->m_x = -1.0f;
+			vertex->m_y = 1.0f;
+			vertex++;
+			vertex->m_x = 1.0f;
+			vertex->m_y = 1.0f;
+
+			m_vb = s_ctx->createVertexBuffer(mem, m_decl, 0);
 		}
 	}
 
@@ -849,7 +872,7 @@ namespace bgfx
 				}
 			}
 
-			s_ctx->destroyTransientVertexBuffer(m_vb);
+			s_ctx->destroyVertexBuffer(m_vb);
 		}
 	}
 
