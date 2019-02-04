@@ -138,6 +138,9 @@ struct DebugDrawEncoder
 	void draw(const Sphere& _sphere);
 
 	///
+	void draw(const Triangle& _triangle);
+
+	///
 	void draw(const Cone& _cone);
 
 	///

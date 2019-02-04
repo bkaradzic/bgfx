@@ -477,6 +477,13 @@ void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _
 	}
 }
 
+void translate(Triangle& _inout, bx::Vec3 _pos)
+{
+	_inout.v0 = bx::add(_inout.v0, _pos);
+	_inout.v1 = bx::add(_inout.v1, _pos);
+	_inout.v2 = bx::add(_inout.v2, _pos);
+}
+
 class ExampleDebugDraw : public entry::AppI
 {
 public:
@@ -565,10 +572,10 @@ public:
 
 			_dde->setColor(0xff0000ff);
 
-			const bx::Vec3 tmp = bx::mul(hit.m_normal, 0.7f);
-			const bx::Vec3 end = bx::add(hit.m_pos, tmp);
+			const bx::Vec3 tmp = bx::mul(hit.plane.normal, 0.7f);
+			const bx::Vec3 end = bx::add(hit.pos, tmp);
 
-			_dde->drawCone(hit.m_pos, end, 0.1f);
+			_dde->drawCone(hit.pos, end, 0.1f);
 
 			_dde->pop();
 
@@ -638,7 +645,8 @@ public:
 				, mtxInvVp
 				);
 
-			const uint32_t selected = 0xff80ffff;
+			constexpr uint32_t kSelected = 0xff80ffff;
+			constexpr uint32_t kOverlap  = 0xff0000ff;
 
 			DebugDrawEncoder dde;
 
@@ -652,19 +660,19 @@ public:
 					{ 10.0f, 5.0f, 5.0f },
 				};
 				dde.setWireframe(true);
-				dde.setColor(intersect(&dde, ray, aabb) ? selected : 0xff00ff00);
+				dde.setColor(intersect(&dde, ray, aabb) ? kSelected : 0xff00ff00);
 				dde.draw(aabb);
 			dde.pop();
 
 			float time = float(now/freq);
 
 			Obb obb;
-			bx::mtxRotateX(obb.m_mtx, time);
+			bx::mtxRotateX(obb.mtx, time);
 			dde.setWireframe(true);
-			dde.setColor(intersect(&dde, ray, obb) ? selected : 0xffffffff);
+			dde.setColor(intersect(&dde, ray, obb) ? kSelected : 0xffffffff);
 			dde.draw(obb);
 
-			bx::mtxSRT(obb.m_mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
+			bx::mtxSRT(obb.mtx, 1.0f, 1.0f, 1.0f, time*0.23f, time, 0.0f, 3.0f, 0.0f, 0.0f);
 
 			dde.push();
 				toAabb(aabb, obb);
@@ -674,7 +682,7 @@ public:
 			dde.pop();
 
 			dde.setWireframe(false);
-			dde.setColor(intersect(&dde, ray, obb) ? selected : 0xffffffff);
+			dde.setColor(intersect(&dde, ray, obb) ? kSelected : 0xffffffff);
 			dde.draw(obb);
 
 			dde.setColor(0xffffffff);
@@ -702,7 +710,7 @@ public:
 
 				dde.setColor(false
 					|| intersect(&dde, ray, plane)
-					? selected
+					? kSelected
 					: 0xffffffff
 					);
 
@@ -713,24 +721,24 @@ public:
 
 			dde.push();
 				Sphere sphere = { { 0.0f, 5.0f, 0.0f }, 1.0f };
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xfff0c0ff);
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xfff0c0ff);
 				dde.setWireframe(true);
 				dde.setLod(3);
 				dde.draw(sphere);
 				dde.setWireframe(false);
 
-				sphere.m_center.x = -2.0f;
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xc0ffc0ff);
+				sphere.center.x = -2.0f;
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xc0ffc0ff);
 				dde.setLod(2);
 				dde.draw(sphere);
 
-				sphere.m_center.x = -4.0f;
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xa0f0ffff);
+				sphere.center.x = -4.0f;
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xa0f0ffff);
 				dde.setLod(1);
 				dde.draw(sphere);
 
-				sphere.m_center.x = -6.0f;
-				dde.setColor(intersect(&dde, ray, sphere) ? selected : 0xffc0ff00);
+				sphere.center.x = -6.0f;
+				dde.setColor(intersect(&dde, ray, sphere) ? kSelected : 0xffc0ff00);
 				dde.setLod(0);
 				dde.draw(sphere);
 			dde.pop();
@@ -780,7 +788,7 @@ public:
 						dde.setColor(false
 							|| intersect(&dde, ray, cone)
 							|| intersect(&dde, ray, cylinder)
-							? selected
+							? kSelected
 							: 0xffffffff
 							);
 
@@ -797,7 +805,7 @@ public:
 						{ -6.0f, 7.0f, 0.0f },
 						0.5f
 					};
-					dde.setColor(intersect(&dde, ray, capsule) ? selected : 0xffffffff);
+					dde.setColor(intersect(&dde, ray, capsule) ? kSelected : 0xffffffff);
 					dde.draw(capsule);
 				}
 			dde.pop();
@@ -818,8 +826,8 @@ public:
 					1.0f
 				};
 
-				cylinder.m_end = bx::mul({ 0.0f, 4.0f, 0.0f }, mtx);
-				dde.setColor(intersect(&dde, ray, cylinder) ? selected : 0xffffffff);
+				cylinder.end = bx::mul({ 0.0f, 4.0f, 0.0f }, mtx);
+				dde.setColor(intersect(&dde, ray, cylinder) ? kSelected : 0xffffffff);
 				dde.draw(cylinder);
 
 				dde.push();
@@ -832,6 +840,228 @@ public:
 			dde.pop();
 
 			dde.drawOrb(-11.0f, 0.0f, 0.0f, 1.0f);
+
+			dde.push();
+				{
+					bool olp;
+
+					constexpr float kStepX = 3.0f;
+					constexpr float kStepZ = 3.0f;
+
+					const float px = 0.0f;
+					const float py = 1.0f;
+					const float pz = 10.0f;
+					const float xx = bx::sin(time*0.39f) * 1.03f + px;
+					const float yy = bx::cos(time*0.79f) * 1.03f + py;
+					const float zz = bx::cos(time)       * 1.03f + pz;
+
+					// Sphere ---
+					{
+						Sphere sphereA = { { px+kStepX*0.0f, py, pz+kStepZ*0.0f }, 0.5f };
+						Sphere sphereB = { { xx+kStepX*0.0f, yy, zz+kStepZ*0.0f }, 0.5f };
+						olp = overlap(sphereA, sphereB);;
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(sphereB);
+					}
+
+					{
+						Sphere sphereA = { { px+kStepX*1.0f, py, pz+kStepZ*0.0f }, 0.5f };
+						Aabb aabbB;
+						toAabb(aabbB, { xx+kStepX*1.0f, yy, zz+kStepZ*0.0f }, { 0.5f, 0.5f, 0.5f });
+						olp = overlap(sphereA, aabbB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(aabbB);
+					}
+
+					{
+						Sphere sphereA     = { { px+kStepX*2.0f, py, pz+kStepZ*0.0f }, 0.5f };
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*0.0f});
+
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						olp = overlap(sphereA, planeB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
+					}
+
+					{
+						Sphere sphereA     = { { px+kStepX*3.0f, py, pz+kStepZ*0.0f }, 0.5f };
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*0.0f});
+
+						olp = overlap(sphereA, triangleB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(triangleB);
+					}
+
+					// AABB ---
+					{
+						Aabb aabbA, aabbB;
+						toAabb(aabbA, { px+kStepX*1.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+						toAabb(aabbB, { xx+kStepX*1.0f, yy, zz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+						olp = overlap(aabbA, aabbB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(aabbA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(aabbB);
+					}
+
+					{
+						Aabb aabbA;
+						toAabb(aabbA, { px+kStepX*2.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*1.0f});
+
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						olp = overlap(aabbA, planeB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(aabbA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
+					}
+
+					{
+						Aabb aabbA;
+						toAabb(aabbA, { px+kStepX*3.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*1.0f});
+
+						olp = overlap(aabbA, triangleB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(aabbA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(triangleB);
+					}
+
+					// Triangle ---
+					{
+						Triangle triangleA =
+						{
+							{ px-0.4f, py+0.0f, pz-0.4f },
+							{ px+0.0f, py-0.3f, pz-0.5f },
+							{ px+0.0f, py+0.5f, pz+0.3f },
+						};
+
+						translate(triangleA, {kStepX*2.0f, 0.0f, kStepZ*2.0f});
+
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*2.0f});
+
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						olp = overlap(triangleA, planeB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(triangleA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
+					}
+
+					{
+						Triangle triangleA =
+						{
+							{ px-0.4f, py+0.0f, pz-0.4f },
+							{ px+0.0f, py-0.3f, pz-0.5f },
+							{ px+0.0f, py+0.5f, pz+0.3f },
+						};
+
+						translate(triangleA, {kStepX*3.0f, 0.0f, kStepZ*2.0f});
+
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*2.0f});
+
+						olp = overlap(triangleA, triangleB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(triangleA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(triangleB);
+					}
+				}
+			dde.pop();
 
 			dde.end();
 
