@@ -932,6 +932,33 @@ public:
 						dde.draw(triangleB);
 					}
 
+					{
+						Sphere sphereA     = { { px+kStepX*4.0f, py, pz+kStepZ*0.0f }, 0.5f };
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*4.0f, 0.0f, kStepZ*0.0f});
+
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						const Disk diskB = { getCenter(triangleB), planeB.normal, 0.5f };
+
+						olp = overlap(sphereA, diskB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(diskB);
+					}
+
 					// AABB ---
 					{
 						Aabb aabbA, aabbB;
@@ -997,6 +1024,34 @@ public:
 						dde.draw(triangleB);
 					}
 
+					{
+						Aabb aabbA;
+						toAabb(aabbA, { px+kStepX*4.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*4.0f, 0.0f, kStepZ*1.0f});
+
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						const Disk diskB = { getCenter(triangleB), planeB.normal, 0.5f };
+
+						olp = overlap(aabbA, diskB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(aabbA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(diskB);
+					}
+
 					// Triangle ---
 					{
 						Triangle triangleA =
@@ -1059,6 +1114,41 @@ public:
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(triangleB);
+					}
+
+					{
+						Triangle triangleA =
+						{
+							{ px-0.4f, py+0.0f, pz-0.4f },
+							{ px+0.0f, py-0.3f, pz-0.5f },
+							{ px+0.0f, py+0.5f, pz+0.3f },
+						};
+
+						translate(triangleA, {kStepX*4.0f, 0.0f, kStepZ*2.0f});
+
+						Triangle triangleB =
+						{
+							{ xx-0.4f, yy+0.0f, zz-0.4f },
+							{ xx-0.5f, yy-0.3f, zz+0.0f },
+							{ xx+0.3f, yy+0.5f, zz+0.0f },
+						};
+
+						translate(triangleB, {kStepX*4.0f, 0.0f, kStepZ*2.0f});
+
+						bx::Plane planeB;
+						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+
+						const Disk diskB = { getCenter(triangleB), planeB.normal, 0.5f };
+
+						olp = overlap(triangleA, diskB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(triangleA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(diskB);
 					}
 				}
 			dde.pop();

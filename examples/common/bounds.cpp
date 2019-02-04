@@ -9,14 +9,19 @@
 
 using namespace bx;
 
-Vec3 getCenter(const Aabb& _outAabb)
+Vec3 getCenter(const Aabb& _aabb)
 {
-	return mul(add(_outAabb.min, _outAabb.max), 0.5f);
+	return mul(add(_aabb.min, _aabb.max), 0.5f);
 }
 
-Vec3 getExtents(const Aabb& _outAabb)
+Vec3 getExtents(const Aabb& _aabb)
 {
-	return mul(sub(_outAabb.max, _outAabb.min), 0.5f);
+	return mul(sub(_aabb.max, _aabb.min), 0.5f);
+}
+
+Vec3 getCenter(const Triangle& _triangle)
+{
+	return bx::mul(bx::add(bx::add(_triangle.v0, _triangle.v1), _triangle.v2), 1.0f/3.0f);
 }
 
 void toAabb(Aabb& _outAabb, const Vec3& _center, const Vec3& _extent)
@@ -826,6 +831,24 @@ bool intersect(const Ray& _ray, const Triangle& _triangle, Hit* _hit)
 	return true;
 }
 
+void barycentric(float& _outU, float& _outV, float& _outW, const Triangle& _triangle, const Vec3& _pos)
+{
+	const Vec3 v0 = sub(_triangle.v1, _triangle.v0);
+	const Vec3 v1 = sub(_triangle.v2, _triangle.v0);
+	const Vec3 v2 = sub(_pos, _triangle.v0);
+
+	const float dot00 = dot(v0, v0);
+	const float dot01 = dot(v0, v1);
+	const float dot02 = dot(v0, v2);
+	const float dot11 = dot(v1, v1);
+	const float dot12 = dot(v1, v2);
+
+	const float invDenom = 1.0f/(dot00*dot11 - square(dot01) );
+	_outU = (dot11*dot02 - dot01*dot12)*invDenom;
+	_outV = (dot00*dot12 - dot01*dot02)*invDenom;
+	_outW = 1.0f - _outU - _outV;
+}
+
 Vec3 closestPoint(const Plane& _plane, const Vec3 _pos)
 {
 	const float dist = distance(_plane, _pos);
@@ -846,8 +869,8 @@ bool overlap(const Sphere& _sphere, const Vec3& _pos)
 
 bool overlap(const Sphere& _sphereA, const Sphere& _sphereB)
 {
-	const Vec3 ba = sub(_sphereA.center, _sphereB.center);
-	const float   rsq = square(_sphereA.radius + _sphereB.radius);
+	const Vec3   ba = sub(_sphereA.center, _sphereB.center);
+	const float rsq = square(_sphereA.radius + _sphereB.radius);
 	return dot(ba, ba) <= rsq;
 }
 
@@ -860,24 +883,6 @@ bool overlap(const Sphere& _sphere, const Aabb& _aabb)
 bool overlap(const Sphere& _sphere, const Plane& _plane)
 {
 	return bx::abs(distance(_plane, _sphere.center) ) <= _sphere.radius;
-}
-
-void barycentric(float& _outU, float& _outV, float& _outW, const Triangle& _triangle, const Vec3& _pos)
-{
-	const Vec3 v0 = sub(_triangle.v1, _triangle.v0);
-	const Vec3 v1 = sub(_triangle.v2, _triangle.v0);
-	const Vec3 v2 = sub(_pos, _triangle.v0);
-
-	const float dot00 = dot(v0, v0);
-	const float dot01 = dot(v0, v1);
-	const float dot02 = dot(v0, v2);
-	const float dot11 = dot(v1, v1);
-	const float dot12 = dot(v1, v2);
-
-	const float invDenom = 1.0f/(dot00*dot11 - square(dot01) );
-	_outU = (dot11*dot02 - dot01*dot12)*invDenom;
-	_outV = (dot00*dot12 - dot01*dot02)*invDenom;
-	_outW = 1.0f - _outU - _outV;
 }
 
 bool overlap(const Sphere& _sphere, const Triangle& _triangle)
@@ -923,8 +928,15 @@ bool overlap(const Sphere& _sphere, const Cone& _cone)
 
 bool overlap(const Sphere& _sphere, const Disk& _disk)
 {
-	BX_UNUSED(_sphere, _disk);
-	return false;
+	if (!overlap(_sphere, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	bx::Plane plane;
+	bx::calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_sphere, plane);
 }
 
 bool overlap(const Sphere& _sphere, const Obb& _obb)
@@ -943,6 +955,11 @@ bool overlap(const Aabb& _aabb, const Vec3& _pos)
 		&& abc.y <= ae.y
 		&& abc.z <= ae.z
 		;
+}
+
+bool overlap(const Aabb& _aabb, const Sphere& _sphere)
+{
+	return overlap(_sphere, _aabb);
 }
 
 uint32_t overlapTestMask(const Aabb& _aabbA, const Aabb& _aabbB)
@@ -1031,8 +1048,15 @@ bool overlap(const Aabb& _aabb, const Cone& _cone)
 
 bool overlap(const Aabb& _aabb, const Disk& _disk)
 {
-	BX_UNUSED(_aabb, _disk);
-	return false;
+	if (!overlap(_aabb, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	bx::Plane plane;
+	bx::calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_aabb, plane);
 }
 
 bool overlap(const Aabb& _aabb, const Obb& _obb)
@@ -1050,6 +1074,16 @@ bool overlap(const Triangle& _triangle, const bx::Vec3& _pos)
 		&& vv >= 0.0f
 		&& ww >= 0.0f
 		;
+}
+
+bool overlap(const Triangle& _triangle, const Sphere& _sphere)
+{
+	return overlap(_sphere, _triangle);
+}
+
+bool overlap(const Triangle& _triangle, const Aabb& _aabb)
+{
+	return overlap(_aabb, _triangle);
 }
 
 bool overlap(const Triangle& _triangle, const bx::Plane& _plane)
@@ -1092,8 +1126,15 @@ bool overlap(const Triangle& _triangle, const Cone& _cone)
 
 bool overlap(const Triangle& _triangle, const Disk& _disk)
 {
-	BX_UNUSED(_triangle, _disk);
-	return false;
+	if (!overlap(_triangle, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	bx::Plane plane;
+	bx::calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_triangle, plane);
 }
 
 bool overlap(const Triangle& _triangle, const Obb& _obb)

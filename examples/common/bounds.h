@@ -73,6 +73,15 @@ struct Hit
 };
 
 ///
+bx::Vec3 getCenter(const Aabb& _aabb);
+
+///
+bx::Vec3 getExtents(const Aabb& _aabb);
+
+///
+bx::Vec3 getCenter(const Triangle& _triangle);
+
+///
 void toAabb(Aabb& _outAabb, const bx::Vec3& _center, const bx::Vec3& _extent);
 
 /// Convert oriented bounding box to axis aligned bounding box.
@@ -184,6 +193,9 @@ bool overlap(const Sphere& _sphere, const Obb& _obb);
 bool overlap(const Aabb& _aabb, const bx::Vec3& _pos);
 
 ///
+bool overlap(const Aabb& _aabb, const Sphere& _sphere);
+
+///
 bool overlap(const Aabb& _aabbA, const Aabb& _aabbB);
 
 ///
@@ -209,6 +221,12 @@ bool overlap(const Aabb& _aabb, const Obb& _obb);
 
 ///
 bool overlap(const Triangle& _triangle, const bx::Vec3& _pos);
+
+///
+bool overlap(const Triangle& _triangle, const Sphere& _sphere);
+
+///
+bool overlap(const Triangle& _triangle, const Aabb& _aabb);
 
 ///
 bool overlap(const Triangle& _triangle, const bx::Plane& _plane);
