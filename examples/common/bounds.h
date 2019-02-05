@@ -82,7 +82,16 @@ bx::Vec3 getExtents(const Aabb& _aabb);
 bx::Vec3 getCenter(const Triangle& _triangle);
 
 ///
-void toAabb(Aabb& _outAabb, const bx::Vec3& _center, const bx::Vec3& _extent);
+void toAabb(Aabb& _outAabb, const bx::Vec3& _extents);
+
+///
+void toAabb(Aabb& _outAabb, const bx::Vec3& _center, const bx::Vec3& _extents);
+
+/// Convert cylinder to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Cylinder& _cylinder);
+
+/// Convert disk to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Disk& _disk);
 
 /// Convert oriented bounding box to axis aligned bounding box.
 void toAabb(Aabb& _outAabb, const Obb& _obb);
@@ -90,11 +99,8 @@ void toAabb(Aabb& _outAabb, const Obb& _obb);
 /// Convert sphere to axis aligned bounding box.
 void toAabb(Aabb& _outAabb, const Sphere& _sphere);
 
-/// Convert disk to axis aligned bounding box.
-void toAabb(Aabb& _outAabb, const Disk& _disk);
-
-/// Convert cylinder to axis aligned bounding box.
-void toAabb(Aabb& _outAabb, const Cylinder& _cylinder);
+/// Convert triangle to axis aligned bounding box.
+void toAabb(Aabb& _outAabb, const Triangle& _triangle);
 
 /// Calculate axis aligned bounding box.
 void toAabb(Aabb& _outAabb, const void* _vertices, uint32_t _numVertices, uint32_t _stride);

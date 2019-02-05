@@ -602,6 +602,27 @@ public:
 
 			showExampleDialog(this);
 
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 3.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+				);
+
+			static float amplitudeMul = 0.0f;
+			ImGui::SliderFloat("Amplitude", &amplitudeMul, 0.0f, 1.0f);
+
+			static float timeScale = 1.0f;
+			ImGui::SliderFloat("T scale", &timeScale, -1.0f, 1.0f);
+
+			ImGui::End();
+
 			imguiEndFrame();
 
 			int64_t now = bx::getHPCounter() - m_timeOffset;
@@ -664,7 +685,8 @@ public:
 				dde.draw(aabb);
 			dde.pop();
 
-			float time = float(now/freq);
+			static float time = 0.0f;
+			time += deltaTime*timeScale;
 
 			Obb obb;
 			bx::mtxRotateX(obb.mtx, time);
@@ -848,12 +870,12 @@ public:
 					constexpr float kStepX = 3.0f;
 					constexpr float kStepZ = 3.0f;
 
-					const float px = 0.0f;
-					const float py = 1.0f;
-					const float pz = 10.0f;
-					const float xx = bx::sin(time*0.39f) * 1.03f + px;
-					const float yy = bx::cos(time*0.79f) * 1.03f + py;
-					const float zz = bx::cos(time)       * 1.03f + pz;
+					const float px = -5.0f*kStepX;
+					const float py =  1.0f;
+					const float pz = 20.0f;
+					const float xx = amplitudeMul*bx::sin(time*0.39f) * 1.03f + px;
+					const float yy = amplitudeMul*bx::cos(time*0.79f) * 1.03f + py;
+					const float zz = amplitudeMul*bx::cos(time)       * 1.03f + pz;
 
 					// Sphere ---
 					{
@@ -957,6 +979,96 @@ public:
 						dde.setColor(olp ? kOverlap : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(diskB);
+					}
+
+					{
+						Sphere sphereA     = { { px+kStepX*5.0f, py, pz+kStepZ*0.0f }, 0.5f };
+
+						Obb obbB;
+						bx::mtxSRT(obbB.mtx
+							, 1.0f
+							, 0.25f
+							, 0.25f
+							, bx::toRad(10.0f)
+							, bx::toRad(30.0f)
+							, bx::toRad(70.0f)
+							, xx+kStepX*5.0f
+							, yy
+							, zz+kStepZ*0.0f
+							);
+
+						olp = overlap(sphereA, obbB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(obbB);
+					}
+
+					{
+						Sphere sphereA     = { { px+kStepX*6.0f, py, pz+kStepZ*0.0f }, 0.5f };
+
+						Capsule capsuleB =
+						{
+							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*0.0f+0.1f },
+							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*0.0f      },
+							0.2f,
+						};
+
+						olp = overlap(sphereA, capsuleB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(capsuleB);
+					}
+
+					{
+						Sphere sphereA = { { px+kStepX*7.0f, py, pz+kStepZ*0.0f }, 0.5f };
+
+						Cylinder cylinderB =
+						{
+							{ xx+kStepX*6.9f, yy-1.0f, zz+kStepZ*0.0f+0.1f },
+							{ xx+kStepX*7.0f, yy+1.0f, zz+kStepZ*0.0f      },
+							0.2f,
+						};
+
+						olp = overlap(sphereA, cylinderB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(cylinderB);
+					}
+
+					{
+						Sphere sphereA = { { px+kStepX*8.0f, py, pz+kStepZ*0.0f }, 0.5f };
+
+						Cone coneB =
+						{
+							{ xx+kStepX*7.9f, yy-1.0f, zz+kStepZ*0.0f+0.1f },
+							{ xx+kStepX*8.0f, yy+1.0f, zz+kStepZ*0.0f      },
+							0.25f,
+						};
+
+						olp = overlap(sphereA, coneB);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(sphereA);
+
+						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(coneB);
 					}
 
 					// AABB ---
