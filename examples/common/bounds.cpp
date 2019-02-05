@@ -1029,7 +1029,7 @@ Vec3 closestPoint(const LineSegment& _line, const Vec3& _point)
 	const Vec3  axis     = sub(_line.end, _line.pos);
 	const float lengthSq = dot(axis, axis);
 	const float tt       = clamp(projectToAxis(axis, sub(_point, _line.pos) ) / lengthSq, 0.0f, 1.0f);
-	return mad(axis, { tt, tt, tt }, _line.pos);
+	return mad(axis, tt, _line.pos);
 }
 
 Vec3 closestPoint(const Plane& _plane, const Vec3& _point)
@@ -1065,7 +1065,7 @@ Vec3 closestPoint(const Triangle& _triangle, const Vec3& _point)
 	const Vec3 pos = closestPoint(plane, _point);
 	const Vec3 uvw = barycentric(_triangle, pos);
 
-	return cartesian(_triangle, clamp(uvw, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}) );
+	return cartesian(_triangle, clamp<Vec3>(uvw, 0.0f, 1.0f) );
 }
 
 bool overlap(const Sphere& _sphere, const Vec3& _pos)
