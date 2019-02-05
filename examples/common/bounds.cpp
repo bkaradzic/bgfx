@@ -1024,12 +1024,19 @@ struct LineSegment
 	Vec3 end;
 };
 
-Vec3 closestPoint(const LineSegment& _line, const Vec3& _point)
+Vec3 closestPoint(const LineSegment& _line, const Vec3& _point, float& _outT)
 {
 	const Vec3  axis     = sub(_line.end, _line.pos);
 	const float lengthSq = dot(axis, axis);
 	const float tt       = clamp(projectToAxis(axis, sub(_point, _line.pos) ) / lengthSq, 0.0f, 1.0f);
+	_outT = tt;
 	return mad(axis, tt, _line.pos);
+}
+
+Vec3 closestPoint(const LineSegment& _line, const Vec3& _point)
+{
+	float ignore;
+	return closestPoint(_line, _point, ignore);
 }
 
 Vec3 closestPoint(const Plane& _plane, const Vec3& _point)
@@ -1127,8 +1134,9 @@ bool overlap(const Sphere& _sphere, const Capsule& _capsule)
 
 bool overlap(const Sphere& _sphere, const Cone& _cone)
 {
-	BX_UNUSED(_sphere, _cone);
-	return false;
+	float tt;
+	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, _sphere.center, tt);
+	return overlap(_sphere, Sphere{pos, lerp(_cone.radius, 0.0f, tt)});
 }
 
 bool overlap(const Sphere& _sphere, const Disk& _disk)
