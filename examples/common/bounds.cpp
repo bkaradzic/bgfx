@@ -1429,37 +1429,13 @@ bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB)
 	if (0.0f <= ta
 	&&  1.0f >= ta)
 	{
-		Sphere sphereB;
-		sphereB.radius = _capsuleB.radius;
-
-		if (0.0f >= tb)
-		{
-			sphereB.center = _capsuleB.pos;
-		}
-		else
-		{
-			sphereB.center = _capsuleB.end;
-		}
-
-		return overlap(_capsuleA, sphereB);
+		return overlap(_capsuleA, Sphere{0.0f >= tb ? _capsuleB.pos : _capsuleB.end, _capsuleB.radius});
 	}
 
 	if (0.0f <= tb
 	&&  1.0f >= tb)
 	{
-		Sphere sphereA;
-		sphereA.radius = _capsuleA.radius;
-
-		if (0.0f >= ta)
-		{
-			sphereA.center = _capsuleA.pos;
-		}
-		else
-		{
-			sphereA.center = _capsuleA.end;
-		}
-
-		return overlap(_capsuleB, sphereA);
+		return overlap(_capsuleB, Sphere{0.0f >= ta ? _capsuleA.pos : _capsuleA.end, _capsuleA.radius});
 	}
 
 	const Vec3 pa = 0.0f > ta ? _capsuleA.pos : _capsuleA.end;
