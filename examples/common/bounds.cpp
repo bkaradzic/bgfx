@@ -44,10 +44,9 @@ void toAabb(Aabb& _outAabb, const Cylinder& _cylinder)
 	const Vec3 axis = sub(_cylinder.end, _cylinder.pos);
 	const Vec3 asq  = mul(axis, axis);
 	const Vec3 nsq  = mul(asq, 1.0f/dot(axis, axis) );
-	const Vec3 one  = { 1.0f, 1.0f, 1.0f };
-	const Vec3 tmp  = sub(one, nsq);
+	const Vec3 tmp  = sub(1.0f, nsq);
 
-	const float inv = 1.0f / (tmp.x*tmp.y*tmp.z);
+	const float inv = 1.0f/(tmp.x*tmp.y*tmp.z);
 
 	const Vec3 extent =
 	{
