@@ -2578,3 +2578,14 @@ void DebugDrawEncoder::drawOrb(float _x, float _y, float _z, float _radius, Axis
 {
 	DEBUG_DRAW_ENCODER(drawOrb(_x, _y, _z, _radius, _highlight) );
 }
+
+DebugDrawEncoderScopePush::DebugDrawEncoderScopePush(DebugDrawEncoder& _dde)
+	: m_dde(_dde)
+{
+	m_dde.push();
+}
+
+DebugDrawEncoderScopePush::~DebugDrawEncoderScopePush()
+{
+	m_dde.pop();
+}

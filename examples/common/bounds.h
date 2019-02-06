@@ -226,6 +226,36 @@ bool overlap(const Aabb& _aabb, const Disk& _disk);
 bool overlap(const Aabb& _aabb, const Obb& _obb);
 
 ///
+bool overlap(const Capsule& _capsule, const bx::Vec3& _pos);
+
+///
+bool overlap(const Capsule& _capsule, const Sphere& _sphere);
+
+///
+bool overlap(const Capsule& _capsule, const Aabb& _aabb);
+
+///
+bool overlap(const Capsule& _capsule, const bx::Plane& _plane);
+
+///
+bool overlap(const Capsule& _capsule, const Triangle& _triangle);
+
+///
+bool overlap(const Capsule& _capsule, const Cylinder& _cylinder);
+
+///
+bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB);
+
+///
+bool overlap(const Capsule& _capsule, const Cone& _cone);
+
+///
+bool overlap(const Capsule& _capsule, const Disk& _disk);
+
+///
+bool overlap(const Capsule& _capsule, const Obb& _obb);
+
+///
 bool overlap(const Triangle& _triangle, const bx::Vec3& _pos);
 
 ///

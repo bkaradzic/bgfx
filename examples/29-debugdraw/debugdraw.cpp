@@ -667,7 +667,8 @@ public:
 				);
 
 			constexpr uint32_t kSelected = 0xff80ffff;
-			constexpr uint32_t kOverlap  = 0xff0000ff;
+			constexpr uint32_t kOverlapA = 0xff0000ff;
+			constexpr uint32_t kOverlapB = 0xff8080ff;
 
 			DebugDrawEncoder dde;
 
@@ -883,11 +884,11 @@ public:
 						Sphere sphereB = { { xx+kStepX*0.0f, yy, zz+kStepZ*0.0f }, 0.5f };
 						olp = overlap(sphereA, sphereB);;
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(sphereB);
 					}
@@ -898,11 +899,11 @@ public:
 						toAabb(aabbB, { xx+kStepX*1.0f, yy, zz+kStepZ*0.0f }, { 0.5f, 0.5f, 0.5f });
 						olp = overlap(sphereA, aabbB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(aabbB);
 					}
@@ -920,11 +921,11 @@ public:
 
 						olp = overlap(sphereA, triangleB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(triangleB);
 					}
@@ -945,11 +946,11 @@ public:
 
 						olp = overlap(sphereA, planeB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
 					}
@@ -972,11 +973,11 @@ public:
 
 						olp = overlap(sphereA, diskB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(diskB);
 					}
@@ -999,11 +1000,11 @@ public:
 
 						olp = overlap(sphereA, obbB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(obbB);
 					}
@@ -1020,11 +1021,11 @@ public:
 
 						olp = overlap(sphereA, capsuleB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(capsuleB);
 					}
@@ -1041,11 +1042,11 @@ public:
 
 						olp = overlap(sphereA, cylinderB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(cylinderB);
 					}
@@ -1062,11 +1063,11 @@ public:
 
 						olp = overlap(sphereA, coneB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(sphereA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(coneB);
 					}
@@ -1078,11 +1079,11 @@ public:
 						toAabb(aabbB, { xx+kStepX*1.0f, yy, zz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
 						olp = overlap(aabbA, aabbB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(aabbA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(aabbB);
 					}
@@ -1101,11 +1102,11 @@ public:
 
 						olp = overlap(aabbA, triangleB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(aabbA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(triangleB);
 					}
@@ -1127,11 +1128,11 @@ public:
 
 						olp = overlap(aabbA, planeB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(aabbA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
 					}
@@ -1155,11 +1156,11 @@ public:
 
 						olp = overlap(aabbA, diskB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(aabbA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(diskB);
 					}
@@ -1186,11 +1187,11 @@ public:
 
 						olp = overlap(triangleA, triangleB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(triangleA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(triangleB);
 					}
@@ -1219,11 +1220,11 @@ public:
 
 						olp = overlap(triangleA, planeB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(triangleA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
 					}
@@ -1254,13 +1255,40 @@ public:
 
 						olp = overlap(triangleA, diskB);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
 						dde.setWireframe(false);
 						dde.draw(triangleA);
 
-						dde.setColor(olp ? kOverlap : 0xffffffff);
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
 						dde.setWireframe(true);
 						dde.draw(diskB);
+					}
+
+					// Capsule ---
+					{
+						Capsule capsuleA =
+						{
+							{ px+kStepX*6.0f, py-1.0f, pz+kStepZ*3.0f },
+							{ px+kStepX*6.0f, py+1.0f, pz+kStepZ*3.0f },
+							0.5f,
+						};
+
+						Capsule capsuleB =
+						{
+							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*3.0f+0.1f },
+							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*3.0f      },
+							0.2f,
+						};
+
+						olp = overlap(capsuleA, capsuleB);
+
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(capsuleA);
+
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(capsuleB);
 					}
 				}
 			dde.pop();

@@ -3,7 +3,6 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bx/debug.h>
 #include <bx/rng.h>
 #include <bx/math.h>
 #include "bounds.h"
@@ -1024,6 +1023,58 @@ struct LineSegment
 	Vec3 end;
 };
 
+bool nearZero(float _v)
+{
+	return bx::abs(_v) < 0.0001f;
+}
+
+bool nearZero(const Vec3& _v)
+{
+	return nearZero(dot(_v, _v) );
+}
+
+bool intersect(float& _outTa, float& _outTb, const LineSegment& _a, const LineSegment _b)
+{
+	// Reference(s):
+	//
+	// - The shortest line between two lines in 3D
+	//   https://web.archive.org/web/20120309093234/http://paulbourke.net/geometry/lineline3d/
+
+	const Vec3 bd = sub(_b.end, _b.pos);
+	if (nearZero(bd) )
+	{
+		return false;
+	}
+
+	const Vec3 ad = sub(_a.end, _a.pos);
+	if (nearZero(ad) )
+	{
+		return false;
+	}
+
+	const Vec3  ab = sub(_a.pos, _b.pos);
+
+	const float d0 = projectToAxis(ab, bd);
+	const float d1 = projectToAxis(ad, bd);
+	const float d2 = projectToAxis(ab, ad);
+	const float d3 = projectToAxis(bd, bd);
+	const float d4 = projectToAxis(ad, ad);
+
+	const float denom = d4*d3 - square(d1);
+
+	float ta = 0.0f;
+
+	if (!nearZero(denom) )
+	{
+		ta = (d0*d1 - d2*d3)/denom;
+	}
+
+	_outTa = ta;
+	_outTb = (d0+d1*ta)/d3;
+
+	return true;
+}
+
 Vec3 closestPoint(const LineSegment& _line, const Vec3& _point, float& _outT)
 {
 	const Vec3  axis     = sub(_line.end, _line.pos);
@@ -1317,6 +1368,128 @@ bool overlap(const Aabb& _aabb, const Disk& _disk)
 bool overlap(const Aabb& _aabb, const Obb& _obb)
 {
 	BX_UNUSED(_aabb, _obb);
+	return false;
+}
+
+bool overlap(const Capsule& _capsule, const bx::Vec3& _pos)
+{
+	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _pos);
+	return overlap(Sphere{pos, _capsule.radius}, _pos);
+}
+
+bool overlap(const Capsule& _capsule, const Sphere& _sphere)
+{
+	return overlap(_sphere, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const Aabb& _aabb)
+{
+	return overlap(_aabb, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const bx::Plane& _plane)
+{
+	BX_UNUSED(_capsule, _plane);
+	return false;
+}
+
+bool overlap(const Capsule& _capsule, const Triangle& _triangle)
+{
+	return overlap(_triangle, _capsule);
+}
+
+bool overlap(const Capsule& _capsule, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_capsule, _cylinder);
+	return false;
+}
+
+bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB)
+{
+	float ta, tb;
+	if (!intersect(ta, tb, {_capsuleA.pos, _capsuleA.end}, {_capsuleB.pos, _capsuleB.end}) )
+	{
+		return false;
+	}
+
+	if (0.0f <= ta
+	&&  1.0f >= ta
+	&&  0.0f <= tb
+	&&  1.0f >= tb)
+	{
+		const Vec3 ad = sub(_capsuleA.end, _capsuleA.pos);
+		const Vec3 bd = sub(_capsuleB.end, _capsuleB.pos);
+
+		return overlap(
+			  Sphere{mad(ad, ta, _capsuleA.pos), _capsuleA.radius}
+			, Sphere{mad(bd, tb, _capsuleB.pos), _capsuleB.radius}
+			);
+	}
+
+	if (0.0f <= ta
+	&&  1.0f >= ta)
+	{
+		Sphere sphereB;
+		sphereB.radius = _capsuleB.radius;
+
+		if (0.0f >= tb)
+		{
+			sphereB.center = _capsuleB.pos;
+		}
+		else
+		{
+			sphereB.center = _capsuleB.end;
+		}
+
+		return overlap(_capsuleA, sphereB);
+	}
+
+	if (0.0f <= tb
+	&&  1.0f >= tb)
+	{
+		Sphere sphereA;
+		sphereA.radius = _capsuleA.radius;
+
+		if (0.0f >= ta)
+		{
+			sphereA.center = _capsuleA.pos;
+		}
+		else
+		{
+			sphereA.center = _capsuleA.end;
+		}
+
+		return overlap(_capsuleB, sphereA);
+	}
+
+	const Vec3 pa = 0.0f > ta ? _capsuleA.pos : _capsuleA.end;
+	const Vec3 pb = 0.0f > tb ? _capsuleB.pos : _capsuleB.end;
+	const Vec3 closestA = closestPoint(LineSegment{_capsuleA.pos, _capsuleA.end}, pb);
+	const Vec3 closestB = closestPoint(LineSegment{_capsuleB.pos, _capsuleB.end}, pa);
+
+	if (dot(closestA, pb) <= dot(closestB, pa) )
+	{
+		return overlap(_capsuleA, Sphere{closestB, _capsuleB.radius});
+	}
+
+	return overlap(_capsuleB, Sphere{closestA, _capsuleA.radius});
+}
+
+bool overlap(const Capsule& _capsule, const Cone& _cone)
+{
+	BX_UNUSED(_capsule, _cone);
+	return false;
+}
+
+bool overlap(const Capsule& _capsule, const Disk& _disk)
+{
+	BX_UNUSED(_capsule, _disk);
+	return false;
+}
+
+bool overlap(const Capsule& _capsule, const Obb& _obb)
+{
+	BX_UNUSED(_capsule, _obb);
 	return false;
 }
 
