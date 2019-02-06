@@ -1259,14 +1259,15 @@ bool overlap(const Aabb& _aabb, const Cylinder& _cylinder)
 
 bool overlap(const Aabb& _aabb, const Capsule& _capsule)
 {
-	BX_UNUSED(_aabb, _capsule);
-	return false;
+	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, getCenter(_aabb) );
+	return overlap(_aabb, Sphere{pos, _capsule.radius});
 }
 
 bool overlap(const Aabb& _aabb, const Cone& _cone)
 {
-	BX_UNUSED(_aabb, _cone);
-	return false;
+	float tt;
+	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, getCenter(_aabb), tt);
+	return overlap(_aabb, Sphere{pos, lerp(_cone.radius, 0.0f, tt)});
 }
 
 bool overlap(const Aabb& _aabb, const Disk& _disk)

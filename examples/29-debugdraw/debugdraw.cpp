@@ -1165,6 +1165,50 @@ public:
 						dde.draw(diskB);
 					}
 
+					{
+						Aabb aabbA;
+						toAabb(aabbA, { px+kStepX*6.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+
+						Capsule capsuleB =
+						{
+							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*1.0f+0.1f },
+							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*1.0f      },
+							0.2f,
+						};
+
+						olp = overlap(aabbA, capsuleB);
+
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(aabbA);
+
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(capsuleB);
+					}
+
+					{
+						Aabb aabbA;
+						toAabb(aabbA, { px+kStepX*8.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
+
+						Cone coneB =
+						{
+							{ xx+kStepX*7.9f, yy-1.0f, zz+kStepZ*1.0f+0.1f },
+							{ xx+kStepX*8.0f, yy+1.0f, zz+kStepZ*1.0f      },
+							0.25f,
+						};
+
+						olp = overlap(aabbA, coneB);
+
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(aabbA);
+
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(coneB);
+					}
+
 					// Triangle ---
 					{
 						Triangle triangleA =
