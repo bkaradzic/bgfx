@@ -1542,7 +1542,20 @@ bool overlap(const Triangle& _triangle, const Disk& _disk)
 
 bool overlap(const Triangle& _triangle, const Obb& _obb)
 {
-	BX_UNUSED(_triangle, _obb);
-	return false;
+	Srt srt = toSrt(_obb.mtx);
+
+	const Quaternion invRotation = invert(srt.rotation);
+
+	const Triangle triangle =
+	{
+		mul(sub(_triangle.v0, srt.translation), invRotation),
+		mul(sub(_triangle.v1, srt.translation), invRotation),
+		mul(sub(_triangle.v2, srt.translation), invRotation),
+	};
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	return overlap(triangle, aabb);
 }
 

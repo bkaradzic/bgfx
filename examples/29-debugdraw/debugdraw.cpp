@@ -1308,6 +1308,40 @@ public:
 						dde.draw(diskB);
 					}
 
+					{
+						Triangle triangleA =
+						{
+							{ px-0.4f, py+0.0f, pz-0.4f },
+							{ px+0.0f, py-0.3f, pz-0.5f },
+							{ px+0.0f, py+0.5f, pz+0.3f },
+						};
+
+						translate(triangleA, {kStepX*5.0f, 0.0f, kStepZ*2.0f});
+
+						Obb obbB;
+						bx::mtxSRT(obbB.mtx
+							, 1.0f
+							, 0.25f
+							, 0.25f
+							, bx::toRad(10.0f)
+							, bx::toRad(30.0f)
+							, bx::toRad(70.0f)
+							, xx+kStepX*5.0f
+							, yy
+							, zz+kStepZ*2.0f
+							);
+
+						olp = overlap(triangleA, obbB);
+
+						dde.setColor(olp ? kOverlapA : 0xffffffff);
+						dde.setWireframe(false);
+						dde.draw(triangleA);
+
+						dde.setColor(olp ? kOverlapB : 0xffffffff);
+						dde.setWireframe(true);
+						dde.draw(obbB);
+					}
+
 					// Capsule ---
 					{
 						Capsule capsuleA =
