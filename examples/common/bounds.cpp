@@ -1126,89 +1126,6 @@ Vec3 closestPoint(const Triangle& _triangle, const Vec3& _point)
 	return cartesian(_triangle, clamp<Vec3>(uvw, 0.0f, 1.0f) );
 }
 
-bool overlap(const Sphere& _sphere, const Vec3& _pos)
-{
-	const Vec3 ba = sub(_sphere.center, _pos);
-	const float   rsq = square(_sphere.radius);
-	return dot(ba, ba) <= rsq;
-}
-
-bool overlap(const Sphere& _sphereA, const Sphere& _sphereB)
-{
-	const Vec3   ba = sub(_sphereA.center, _sphereB.center);
-	const float rsq = square(_sphereA.radius + _sphereB.radius);
-	return dot(ba, ba) <= rsq;
-}
-
-bool overlap(const Sphere& _sphere, const Aabb& _aabb)
-{
-	const Vec3 pos = closestPoint(_aabb, _sphere.center);
-	return overlap(_sphere, pos);
-}
-
-bool overlap(const Sphere& _sphere, const Plane& _plane)
-{
-	return bx::abs(distance(_plane, _sphere.center) ) <= _sphere.radius;
-}
-
-bool overlap(const Sphere& _sphere, const Triangle& _triangle)
-{
-	Plane plane;
-	calcPlane(plane, _triangle);
-
-	if (!overlap(_sphere, plane) )
-	{
-		return false;
-	}
-
-	const Vec3 pos = closestPoint(plane, _sphere.center);
-	const Vec3 uvw = barycentric(_triangle, pos);
-	const float nr = -_sphere.radius;
-
-	return uvw.x >= nr
-		&& uvw.y >= nr
-		&& uvw.z >= nr
-		;
-}
-
-bool overlap(const Sphere& _sphere, const Cylinder& _cylinder)
-{
-	BX_UNUSED(_sphere, _cylinder);
-	return false;
-}
-
-bool overlap(const Sphere& _sphere, const Capsule& _capsule)
-{
-	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _sphere.center);
-	return overlap(_sphere, Sphere{pos, _capsule.radius});
-}
-
-bool overlap(const Sphere& _sphere, const Cone& _cone)
-{
-	float tt;
-	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, _sphere.center, tt);
-	return overlap(_sphere, Sphere{pos, lerp(_cone.radius, 0.0f, tt)});
-}
-
-bool overlap(const Sphere& _sphere, const Disk& _disk)
-{
-	if (!overlap(_sphere, Sphere{_disk.center, _disk.radius}) )
-	{
-		return false;
-	}
-
-	Plane plane;
-	calcPlane(plane, _disk.normal, _disk.center);
-
-	return overlap(_sphere, plane);
-}
-
-bool overlap(const Sphere& _sphere, const Obb& _obb)
-{
-	const Vec3 pos = closestPoint(_obb, _sphere.center);
-	return overlap(_sphere, pos);
-}
-
 bool overlap(const Aabb& _aabb, const Vec3& _pos)
 {
 	const Vec3 ac  = getCenter(_aabb);
@@ -1467,6 +1384,89 @@ bool overlap(const Capsule& _capsule, const Obb& _obb)
 {
 	BX_UNUSED(_capsule, _obb);
 	return false;
+}
+
+bool overlap(const Sphere& _sphere, const Vec3& _pos)
+{
+	const Vec3 ba = sub(_sphere.center, _pos);
+	const float   rsq = square(_sphere.radius);
+	return dot(ba, ba) <= rsq;
+}
+
+bool overlap(const Sphere& _sphereA, const Sphere& _sphereB)
+{
+	const Vec3   ba = sub(_sphereA.center, _sphereB.center);
+	const float rsq = square(_sphereA.radius + _sphereB.radius);
+	return dot(ba, ba) <= rsq;
+}
+
+bool overlap(const Sphere& _sphere, const Aabb& _aabb)
+{
+	const Vec3 pos = closestPoint(_aabb, _sphere.center);
+	return overlap(_sphere, pos);
+}
+
+bool overlap(const Sphere& _sphere, const Plane& _plane)
+{
+	return bx::abs(distance(_plane, _sphere.center) ) <= _sphere.radius;
+}
+
+bool overlap(const Sphere& _sphere, const Triangle& _triangle)
+{
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	if (!overlap(_sphere, plane) )
+	{
+		return false;
+	}
+
+	const Vec3 pos = closestPoint(plane, _sphere.center);
+	const Vec3 uvw = barycentric(_triangle, pos);
+	const float nr = -_sphere.radius;
+
+	return uvw.x >= nr
+		&& uvw.y >= nr
+		&& uvw.z >= nr
+		;
+}
+
+bool overlap(const Sphere& _sphere, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_sphere, _cylinder);
+	return false;
+}
+
+bool overlap(const Sphere& _sphere, const Capsule& _capsule)
+{
+	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _sphere.center);
+	return overlap(_sphere, Sphere{pos, _capsule.radius});
+}
+
+bool overlap(const Sphere& _sphere, const Cone& _cone)
+{
+	float tt;
+	const Vec3 pos = closestPoint(LineSegment{_cone.pos, _cone.end}, _sphere.center, tt);
+	return overlap(_sphere, Sphere{pos, lerp(_cone.radius, 0.0f, tt)});
+}
+
+bool overlap(const Sphere& _sphere, const Disk& _disk)
+{
+	if (!overlap(_sphere, Sphere{_disk.center, _disk.radius}) )
+	{
+		return false;
+	}
+
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	return overlap(_sphere, plane);
+}
+
+bool overlap(const Sphere& _sphere, const Obb& _obb)
+{
+	const Vec3 pos = closestPoint(_obb, _sphere.center);
+	return overlap(_sphere, pos);
 }
 
 bool overlap(const Triangle& _triangle, const Vec3& _pos)

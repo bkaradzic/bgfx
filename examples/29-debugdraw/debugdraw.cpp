@@ -1268,15 +1268,15 @@ public:
 					{
 						Capsule capsuleA =
 						{
-							{ px+kStepX*6.0f, py-1.0f, pz+kStepZ*3.0f },
-							{ px+kStepX*6.0f, py+1.0f, pz+kStepZ*3.0f },
+							{ px+kStepX*6.0f, py-1.0f, pz+kStepZ*6.0f },
+							{ px+kStepX*6.0f, py+1.0f, pz+kStepZ*6.0f },
 							0.5f,
 						};
 
 						Capsule capsuleB =
 						{
-							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*3.0f+0.1f },
-							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*3.0f      },
+							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*6.0f+0.1f },
+							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*6.0f      },
 							0.2f,
 						};
 

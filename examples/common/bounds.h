@@ -8,19 +8,14 @@
 
 #include <bx/math.h>
 
+///
 struct Aabb
 {
 	bx::Vec3 min;
 	bx::Vec3 max;
 };
 
-struct Cylinder
-{
-	bx::Vec3 pos;
-	bx::Vec3 end;
-	float    radius;
-};
-
+///
 struct Capsule
 {
 	bx::Vec3 pos;
@@ -28,6 +23,7 @@ struct Capsule
 	float    radius;
 };
 
+///
 struct Cone
 {
 	bx::Vec3 pos;
@@ -35,6 +31,15 @@ struct Cone
 	float    radius;
 };
 
+///
+struct Cylinder
+{
+	bx::Vec3 pos;
+	bx::Vec3 end;
+	float    radius;
+};
+
+///
 struct Disk
 {
 	bx::Vec3 center;
@@ -42,17 +47,20 @@ struct Disk
 	float    radius;
 };
 
+///
 struct Obb
 {
 	float mtx[16];
 };
 
+///
 struct Sphere
 {
 	bx::Vec3 center;
 	float    radius;
 };
 
+///
 struct Triangle
 {
 	bx::Vec3 v0;
@@ -60,12 +68,14 @@ struct Triangle
 	bx::Vec3 v2;
 };
 
+///
 struct Ray
 {
 	bx::Vec3 pos;
 	bx::Vec3 dir;
 };
 
+///
 struct Hit
 {
 	bx::Vec3  pos;
@@ -166,36 +176,6 @@ bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit = NULL);
 bool intersect(const Ray& _ray, const Triangle& _triangle, Hit* _hit = NULL);
 
 ///
-bool overlap(const Sphere& _sphere, const bx::Vec3& _pos);
-
-///
-bool overlap(const Sphere& _sphereA, const Sphere& _sphereB);
-
-///
-bool overlap(const Sphere& _sphere, const Aabb& _aabb);
-
-///
-bool overlap(const Sphere& _sphere, const bx::Plane& _plane);
-
-///
-bool overlap(const Sphere& _sphere, const Triangle& _triangle);
-
-///
-bool overlap(const Sphere& _sphere, const Cylinder& _cylinder);
-
-///
-bool overlap(const Sphere& _sphere, const Capsule& _capsule);
-
-///
-bool overlap(const Sphere& _sphere, const Cone& _cone);
-
-///
-bool overlap(const Sphere& _sphere, const Disk& _disk);
-
-///
-bool overlap(const Sphere& _sphere, const Obb& _obb);
-
-///
 bool overlap(const Aabb& _aabb, const bx::Vec3& _pos);
 
 ///
@@ -254,6 +234,36 @@ bool overlap(const Capsule& _capsule, const Disk& _disk);
 
 ///
 bool overlap(const Capsule& _capsule, const Obb& _obb);
+
+///
+bool overlap(const Sphere& _sphere, const bx::Vec3& _pos);
+
+///
+bool overlap(const Sphere& _sphereA, const Sphere& _sphereB);
+
+///
+bool overlap(const Sphere& _sphere, const Aabb& _aabb);
+
+///
+bool overlap(const Sphere& _sphere, const bx::Plane& _plane);
+
+///
+bool overlap(const Sphere& _sphere, const Triangle& _triangle);
+
+///
+bool overlap(const Sphere& _sphere, const Cylinder& _cylinder);
+
+///
+bool overlap(const Sphere& _sphere, const Capsule& _capsule);
+
+///
+bool overlap(const Sphere& _sphere, const Cone& _cone);
+
+///
+bool overlap(const Sphere& _sphere, const Disk& _disk);
+
+///
+bool overlap(const Sphere& _sphere, const Obb& _obb);
 
 ///
 bool overlap(const Triangle& _triangle, const bx::Vec3& _pos);
