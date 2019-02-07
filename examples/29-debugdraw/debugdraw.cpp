@@ -733,19 +733,15 @@ void draw(DebugDrawEncoder& _dde, const Shape& _shape, const bx::Vec3 _pos)
 {
 	switch (_shape.type)
 	{
-	case Shape::Type::Aabb:     _dde.draw(*reinterpret_cast<const Aabb     *>(_shape.data) ); break;
-	case Shape::Type::Capsule:  _dde.draw(*reinterpret_cast<const Capsule  *>(_shape.data) ); break;
-	case Shape::Type::Cone:     _dde.draw(*reinterpret_cast<const Cone     *>(_shape.data) ); break;
-	case Shape::Type::Cylinder: _dde.draw(*reinterpret_cast<const Cylinder *>(_shape.data) ); break;
-	case Shape::Type::Disk:     _dde.draw(*reinterpret_cast<const Disk     *>(_shape.data) ); break;
-	case Shape::Type::Obb:      _dde.draw(*reinterpret_cast<const Obb      *>(_shape.data) ); break;
-	case Shape::Type::Plane:
-		{
-			_dde.drawGrid(reinterpret_cast<const bx::Plane*>(_shape.data)->normal, _pos, 10, 0.3f);
-		}
-		break;
-	case Shape::Type::Sphere:   _dde.draw(*reinterpret_cast<const Sphere   *>(_shape.data) ); break;
-	case Shape::Type::Triangle: _dde.draw(*reinterpret_cast<const Triangle *>(_shape.data) ); break;
+	case Shape::Type::Aabb:     _dde.draw    (*reinterpret_cast<const Aabb     *>(_shape.data) ); break;
+	case Shape::Type::Capsule:  _dde.draw    (*reinterpret_cast<const Capsule  *>(_shape.data) ); break;
+	case Shape::Type::Cone:     _dde.draw    (*reinterpret_cast<const Cone     *>(_shape.data) ); break;
+	case Shape::Type::Cylinder: _dde.draw    (*reinterpret_cast<const Cylinder *>(_shape.data) ); break;
+	case Shape::Type::Disk:     _dde.draw    (*reinterpret_cast<const Disk     *>(_shape.data) ); break;
+	case Shape::Type::Obb:      _dde.draw    (*reinterpret_cast<const Obb      *>(_shape.data) ); break;
+	case Shape::Type::Plane:  { _dde.drawGrid( reinterpret_cast<const bx::Plane*>(_shape.data)->normal, _pos, 10, 0.3f); } break;
+	case Shape::Type::Sphere:   _dde.draw    (*reinterpret_cast<const Sphere   *>(_shape.data) ); break;
+	case Shape::Type::Triangle: _dde.draw    (*reinterpret_cast<const Triangle *>(_shape.data) ); break;
 	}
 }
 
