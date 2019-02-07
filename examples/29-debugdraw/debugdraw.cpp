@@ -470,15 +470,15 @@ struct Shape
 	{
 		enum Enum
 		{
+			Sphere,
 			Aabb,
+			Triangle,
 			Capsule,
-			Cone,
-			Cylinder,
+			Plane,
 			Disk,
 			Obb,
-			Plane,
-			Sphere,
-			Triangle,
+			Cone,
+			Cylinder,
 
 			Count
 		};
