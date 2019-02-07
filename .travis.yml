@@ -11,8 +11,8 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - gcc-5
-    - g++-5
+    - gcc-8
+    - g++-8
     - clang
 
 before_script:
