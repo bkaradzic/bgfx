@@ -236,6 +236,156 @@ bool overlap(const Capsule& _capsule, const Disk& _disk);
 bool overlap(const Capsule& _capsule, const Obb& _obb);
 
 ///
+bool overlap(const Cone& _cone, const bx::Vec3& _pos);
+
+///
+bool overlap(const Cone& _cone, const Sphere& _sphere);
+
+///
+bool overlap(const Cone& _cone, const Aabb& _aabb);
+
+///
+bool overlap(const Cone& _cone, const bx::Plane& _plane);
+
+///
+bool overlap(const Cone& _cone, const Triangle& _triangle);
+
+///
+bool overlap(const Cone& _cone, const Cylinder& _cylinder);
+
+///
+bool overlap(const Cone& _cone, const Capsule& _capsule);
+
+///
+bool overlap(const Cone& _coneA, const Cone& _coneB);
+
+///
+bool overlap(const Cone& _cone, const Disk& _disk);
+
+///
+bool overlap(const Cone& _cone, const Obb& _obb);
+
+///
+bool overlap(const Cylinder& _cylinder, const bx::Vec3& _pos);
+
+///
+bool overlap(const Cylinder& _cylinder, const Sphere& _sphere);
+
+///
+bool overlap(const Cylinder& _cylinder, const Aabb& _aabb);
+
+///
+bool overlap(const Cylinder& _cylinder, const bx::Plane& _plane);
+
+///
+bool overlap(const Cylinder& _cylinder, const Triangle& _triangle);
+
+///
+bool overlap(const Cylinder& _cylinderA, const Cylinder& _cylinderB);
+
+///
+bool overlap(const Cylinder& _cylinder, const Capsule& _capsule);
+
+///
+bool overlap(const Cylinder& _cylinder, const Cone& _cone);
+
+///
+bool overlap(const Cylinder& _cylinder, const Disk& _disk);
+
+///
+bool overlap(const Cylinder& _cylinder, const Obb& _obb);
+
+///
+bool overlap(const Disk& _disk, const bx::Vec3& _pos);
+
+///
+bool overlap(const Disk& _disk, const Sphere& _sphere);
+
+///
+bool overlap(const Disk& _disk, const Aabb& _aabb);
+
+///
+bool overlap(const Disk& _disk, const bx::Plane& _plane);
+
+///
+bool overlap(const Disk& _disk, const Triangle& _triangle);
+
+///
+bool overlap(const Disk& _disk, const Cylinder& _cylinder);
+
+///
+bool overlap(const Disk& _disk, const Capsule& _capsule);
+
+///
+bool overlap(const Disk& _disk, const Cone& _cone);
+
+///
+bool overlap(const Disk& _diskA, const Disk& _diskB);
+
+///
+bool overlap(const Disk& _disk, const Obb& _obb);
+
+///
+bool overlap(const Obb& _obb, const bx::Vec3& _pos);
+
+///
+bool overlap(const Obb& _obb, const Sphere& _sphere);
+
+///
+bool overlap(const Obb& _obb, const Aabb& _aabb);
+
+///
+bool overlap(const Obb& _obb, const bx::Plane& _plane);
+
+///
+bool overlap(const Obb& _obb, const Triangle& _triangle);
+
+///
+bool overlap(const Obb& _obb, const Cylinder& _cylinder);
+
+///
+bool overlap(const Obb& _obb, const Capsule& _capsule);
+
+///
+bool overlap(const Obb& _obb, const Cone& _cone);
+
+///
+bool overlap(const Obb& _obb, const Disk& _disk);
+
+///
+bool overlap(const Obb& _obbA, const Obb& _obbB);
+
+///
+bool overlap(const bx::Plane& _plane, const bx::Vec3& _pos);
+
+///
+bool overlap(const bx::Plane& _plane, const Sphere& _sphere);
+
+///
+bool overlap(const bx::Plane& _plane, const Aabb& _aabb);
+
+///
+bool overlap(const bx::Plane& _planeA, const bx::Plane& _planeB);
+
+///
+bool overlap(const bx::Plane& _plane, const Triangle& _triangle);
+
+///
+bool overlap(const bx::Plane& _plane, const Cylinder& _cylinder);
+
+///
+bool overlap(const bx::Plane& _plane, const Capsule& _capsule);
+
+///
+bool overlap(const bx::Plane& _plane, const Cone& _cone);
+
+///
+bool overlap(const bx::Plane& _plane, const Disk& _disk);
+
+///
+bool overlap(const bx::Plane& _plane, const Obb& _obb);
+
+///
 bool overlap(const Sphere& _sphere, const bx::Vec3& _pos);
 
 ///

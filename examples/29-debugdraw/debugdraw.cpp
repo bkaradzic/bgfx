@@ -464,6 +464,291 @@ static const uint16_t s_bunnyTriList[] =
 	146,  72, 147,
 };
 
+struct Shape
+{
+	struct Type
+	{
+		enum Enum
+		{
+			Aabb,
+			Capsule,
+			Cone,
+			Cylinder,
+			Disk,
+			Obb,
+			Plane,
+			Sphere,
+			Triangle,
+
+			Count
+		};
+	};
+
+	Shape() : type(uint8_t(Type::Count) ) {}
+	Shape(const Aabb     & _a) : type(uint8_t(Type::Aabb    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Capsule  & _a) : type(uint8_t(Type::Capsule ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Cone     & _a) : type(uint8_t(Type::Cone    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Cylinder & _a) : type(uint8_t(Type::Cylinder) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Disk     & _a) : type(uint8_t(Type::Disk    ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Obb      & _a) : type(uint8_t(Type::Obb     ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const bx::Plane& _a) : type(uint8_t(Type::Plane   ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Sphere   & _a) : type(uint8_t(Type::Sphere  ) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+	Shape(const Triangle & _a) : type(uint8_t(Type::Triangle) ) { bx::memCopy(data, &_a, sizeof(_a) ); }
+
+	uint8_t data[64];
+	uint8_t type;
+};
+
+#define OVERLAP(_shapeType)                                                                                      \
+	bool overlap(const _shapeType& _shapeA, const Shape& _shapeB)                                                \
+	{                                                                                                            \
+		switch (_shapeB.type)                                                                                    \
+		{                                                                                                        \
+		case Shape::Type::Aabb:     return ::overlap(_shapeA, *reinterpret_cast<const Aabb     *>(_shapeB.data) ); \
+		case Shape::Type::Capsule:  return ::overlap(_shapeA, *reinterpret_cast<const Capsule  *>(_shapeB.data) ); \
+		case Shape::Type::Cone:     return ::overlap(_shapeA, *reinterpret_cast<const Cone     *>(_shapeB.data) ); \
+		case Shape::Type::Cylinder: return ::overlap(_shapeA, *reinterpret_cast<const Cylinder *>(_shapeB.data) ); \
+		case Shape::Type::Disk:     return ::overlap(_shapeA, *reinterpret_cast<const Disk     *>(_shapeB.data) ); \
+		case Shape::Type::Obb:      return ::overlap(_shapeA, *reinterpret_cast<const Obb      *>(_shapeB.data) ); \
+		case Shape::Type::Plane:    return ::overlap(_shapeA, *reinterpret_cast<const bx::Plane*>(_shapeB.data) ); \
+		case Shape::Type::Sphere:   return ::overlap(_shapeA, *reinterpret_cast<const Sphere   *>(_shapeB.data) ); \
+		case Shape::Type::Triangle: return ::overlap(_shapeA, *reinterpret_cast<const Triangle *>(_shapeB.data) ); \
+		}                                                                                                        \
+		return false;                                                                                            \
+	}
+
+OVERLAP(Aabb);
+OVERLAP(Capsule);
+OVERLAP(Cone);
+OVERLAP(Cylinder);
+OVERLAP(Disk);
+OVERLAP(Obb);
+OVERLAP(bx::Plane);
+OVERLAP(Sphere);
+OVERLAP(Triangle);
+
+#undef OVERLAP
+
+void initA(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
+{
+	switch (_type)
+	{
+	case Shape::Type::Aabb:
+		{
+			Aabb aabb;
+			toAabb(aabb, _pos, { 0.5f, 0.5f, 0.5f });
+			_outShape = Shape(aabb);
+		}
+		break;
+
+	case Shape::Type::Capsule:
+		_outShape = Shape(Capsule
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Cone:
+		_outShape = Shape(Cone
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Cylinder:
+		_outShape = Shape(Cylinder
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.0f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Disk:
+		_outShape = Shape(Disk
+		{
+			_pos,
+			bx::normalize(bx::Vec3{0.0f, 1.0f, 1.0f}),
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Obb:
+		{
+			Obb obb;
+			bx::mtxSRT(obb.mtx
+				, 0.25f
+				, 1.0f
+				, 0.25f
+				, bx::toRad(50.0f)
+				, bx::toRad(15.0f)
+				, bx::toRad(45.0f)
+				, _pos.x
+				, _pos.y
+				, _pos.z
+				);
+			_outShape = Shape(obb);
+		}
+		break;
+
+	case Shape::Type::Sphere:
+		_outShape = Shape(Sphere{_pos, 0.5f});
+		break;
+
+	case Shape::Type::Plane:
+		{
+			bx::Plane plane;
+			bx::calcPlane(plane, bx::normalize(bx::Vec3{0.0f, 1.0f, 1.0f}), _pos);
+			_outShape = Shape(plane);
+		}
+		break;
+
+	case Shape::Type::Triangle:
+		_outShape = Shape(Triangle
+			{
+				{ bx::add(_pos, {-0.4f,  0.0f, -0.4f}) },
+				{ bx::add(_pos, { 0.0f, -0.3f,  0.5f}) },
+				{ bx::add(_pos, { 0.0f,  0.5f,  0.3f}) },
+			});
+		break;
+
+	default: break;
+	}
+}
+
+void initB(Shape& _outShape, Shape::Type::Enum _type, bx::Vec3 _pos)
+{
+	switch (_type)
+	{
+	case Shape::Type::Aabb:
+		{
+			Aabb aabb;
+			toAabb(aabb, _pos, { 0.5f, 0.5f, 0.5f });
+			_outShape = Shape(aabb);
+		}
+		break;
+
+	case Shape::Type::Capsule:
+		_outShape = Shape(Capsule
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.2f,
+		});
+		break;
+
+	case Shape::Type::Cone:
+		_outShape = Shape(Cone
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.2f,
+		});
+		break;
+
+	case Shape::Type::Cylinder:
+		_outShape = Shape(Cylinder
+		{
+			{ bx::add(_pos, {0.0f, -1.0f, 0.1f}) },
+			{ bx::add(_pos, {0.0f,  1.0f, 0.0f}) },
+			0.2f,
+		});
+		break;
+
+	case Shape::Type::Disk:
+		_outShape = Shape(Disk
+		{
+			_pos,
+			bx::normalize(bx::Vec3{1.0f, 1.0f, 0.0f}),
+			0.5f,
+		});
+		break;
+
+	case Shape::Type::Obb:
+		{
+			Obb obb;
+			bx::mtxSRT(obb.mtx
+				, 1.0f
+				, 0.25f
+				, 0.25f
+				, bx::toRad(10.0f)
+				, bx::toRad(30.0f)
+				, bx::toRad(70.0f)
+				, _pos.x
+				, _pos.y
+				, _pos.z
+				);
+			_outShape = Shape(obb);
+		}
+		break;
+
+	case Shape::Type::Plane:
+		{
+			bx::Plane plane;
+			bx::calcPlane(plane, bx::normalize(bx::Vec3{1.0f, 1.0f, 0.0f}), _pos);
+			_outShape = Shape(plane);
+		}
+		break;
+
+	case Shape::Type::Sphere:
+		_outShape = Shape(Sphere{_pos, 0.5f});
+		break;
+
+	case Shape::Type::Triangle:
+		_outShape = Shape(Triangle
+			{
+				{ bx::add(_pos, {-0.4f,  0.0f, -0.4f}) },
+				{ bx::add(_pos, {-0.5f, -0.3f,  0.0f}) },
+				{ bx::add(_pos, { 0.3f,  0.5f,  0.0f}) },
+			});
+		break;
+
+	default: break;
+	}
+}
+
+int32_t overlap(const Shape& _shapeA, const Shape& _shapeB)
+{
+	switch (_shapeA.type)
+	{
+	case Shape::Type::Aabb:     return overlap(*reinterpret_cast<const Aabb     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Capsule:  return overlap(*reinterpret_cast<const Capsule  *>(_shapeA.data), _shapeB);
+	case Shape::Type::Cone:     return overlap(*reinterpret_cast<const Cone     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Cylinder: return overlap(*reinterpret_cast<const Cylinder *>(_shapeA.data), _shapeB);
+	case Shape::Type::Disk:     return overlap(*reinterpret_cast<const Disk     *>(_shapeA.data), _shapeB);
+	case Shape::Type::Obb:      return overlap(*reinterpret_cast<const Obb      *>(_shapeA.data), _shapeB);
+	case Shape::Type::Plane:    return overlap(*reinterpret_cast<const bx::Plane*>(_shapeA.data), _shapeB);
+	case Shape::Type::Sphere:   return overlap(*reinterpret_cast<const Sphere   *>(_shapeA.data), _shapeB);
+	case Shape::Type::Triangle: return overlap(*reinterpret_cast<const Triangle *>(_shapeA.data), _shapeB);
+	}
+
+	return 2;
+}
+
+void draw(DebugDrawEncoder& _dde, const Shape& _shape, const bx::Vec3 _pos)
+{
+	switch (_shape.type)
+	{
+	case Shape::Type::Aabb:     _dde.draw(*reinterpret_cast<const Aabb     *>(_shape.data) ); break;
+	case Shape::Type::Capsule:  _dde.draw(*reinterpret_cast<const Capsule  *>(_shape.data) ); break;
+	case Shape::Type::Cone:     _dde.draw(*reinterpret_cast<const Cone     *>(_shape.data) ); break;
+	case Shape::Type::Cylinder: _dde.draw(*reinterpret_cast<const Cylinder *>(_shape.data) ); break;
+	case Shape::Type::Disk:     _dde.draw(*reinterpret_cast<const Disk     *>(_shape.data) ); break;
+	case Shape::Type::Obb:      _dde.draw(*reinterpret_cast<const Obb      *>(_shape.data) ); break;
+	case Shape::Type::Plane:
+		{
+			_dde.drawGrid(reinterpret_cast<const bx::Plane*>(_shape.data)->normal, _pos, 10, 0.3f);
+		}
+		break;
+	case Shape::Type::Sphere:   _dde.draw(*reinterpret_cast<const Sphere   *>(_shape.data) ); break;
+	case Shape::Type::Triangle: _dde.draw(*reinterpret_cast<const Triangle *>(_shape.data) ); break;
+	}
+}
+
 void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _step, uint32_t _0, uint32_t _1)
 {
 	uint32_t* dst = (uint32_t*)_dst;
@@ -475,13 +760,6 @@ void imageCheckerboard(void* _dst, uint32_t _width, uint32_t _height, uint32_t _
 			*dst++ = abgr;
 		}
 	}
-}
-
-void translate(Triangle& _inout, bx::Vec3 _pos)
-{
-	_inout.v0 = bx::add(_inout.v0, _pos);
-	_inout.v1 = bx::add(_inout.v1, _pos);
-	_inout.v2 = bx::add(_inout.v2, _pos);
 }
 
 class ExampleDebugDraw : public entry::AppI
@@ -866,509 +1144,62 @@ public:
 
 			dde.push();
 				{
-					bool olp;
-
-					constexpr float kStepX = 3.0f;
-					constexpr float kStepZ = 3.0f;
-
-					const float px = -5.0f*kStepX;
-					const float py =  1.0f;
-					const float pz = 20.0f;
-					const float xx = amplitudeMul*bx::sin(time*0.39f) * 1.03f + px;
-					const float yy = amplitudeMul*bx::cos(time*0.79f) * 1.03f + py;
-					const float zz = amplitudeMul*bx::cos(time)       * 1.03f + pz;
-
-					// Sphere ---
+					constexpr uint32_t colorA[] =
 					{
-						Sphere sphereA = { { px+kStepX*0.0f, py, pz+kStepZ*0.0f }, 0.5f };
-						Sphere sphereB = { { xx+kStepX*0.0f, yy, zz+kStepZ*0.0f }, 0.5f };
-						olp = overlap(sphereA, sphereB);;
+						0xffffffff,
+						kOverlapA,
+						0xff666666,
+					};
 
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(sphereB);
-					}
-
+					constexpr uint32_t colorB[] =
 					{
-						Sphere sphereA = { { px+kStepX*1.0f, py, pz+kStepZ*0.0f }, 0.5f };
-						Aabb aabbB;
-						toAabb(aabbB, { xx+kStepX*1.0f, yy, zz+kStepZ*0.0f }, { 0.5f, 0.5f, 0.5f });
-						olp = overlap(sphereA, aabbB);
+						0xffffffff,
+						kOverlapB,
+						0xff888888,
+					};
 
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
+					constexpr float kStep = 3.0f;
 
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(aabbB);
-					}
-
+					bx::Vec3 posA =
 					{
-						Sphere sphereA     = { { px+kStepX*2.0f, py, pz+kStepZ*0.0f }, 0.5f };
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
+						-4.5f*kStep,
+						 1.0f,
+						20.0f,
+					};
 
-						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*0.0f});
-
-						olp = overlap(sphereA, triangleB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(triangleB);
-					}
-
+					for (uint32_t ii = 0; ii < Shape::Type::Count; ++ii)
 					{
-						Sphere sphereA     = { { px+kStepX*3.0f, py, pz+kStepZ*0.0f }, 0.5f };
-						Triangle triangleB =
+						const bx::Vec3 posB = bx::add(posA,
 						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
+							amplitudeMul*bx::sin(time*0.39f) * 1.03f,
+							amplitudeMul*bx::cos(time*0.79f) * 1.03f,
+							amplitudeMul*bx::cos(time)       * 1.03f,
+						});
 
-						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*0.0f});
-
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						olp = overlap(sphereA, planeB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
-					}
-
-					{
-						Sphere sphereA     = { { px+kStepX*4.0f, py, pz+kStepZ*0.0f }, 0.5f };
-						Triangle triangleB =
+						for (uint32_t jj = 0; jj < Shape::Type::Count; ++jj)
 						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
+							const bx::Vec3 pa = bx::add(posA, {jj*kStep, 0.0f, 0.0f});
+							const bx::Vec3 pb = bx::add(posB, {jj*kStep, 0.0f, 0.0f});
 
-						translate(triangleB, {kStepX*4.0f, 0.0f, kStepZ*0.0f});
+							Shape shapeA, shapeB;
+							initA(shapeA, Shape::Type::Enum(ii), pa);
+							initB(shapeB, Shape::Type::Enum(jj), pb);
 
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
+							int32_t olp = overlap(shapeA, shapeB);
 
-						const Disk diskB = { getCenter(triangleB), planeB.normal, 0.5f };
+							dde.setColor(colorA[olp]);
+							dde.setWireframe(false);
+							draw(dde, shapeA, pa);
 
-						olp = overlap(sphereA, diskB);
+							dde.setColor(colorB[olp]);
+							dde.setWireframe(true);
+							draw(dde, shapeB, pb);
+						}
 
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(diskB);
-					}
-
-					{
-						Sphere sphereA     = { { px+kStepX*5.0f, py, pz+kStepZ*0.0f }, 0.5f };
-
-						Obb obbB;
-						bx::mtxSRT(obbB.mtx
-							, 1.0f
-							, 0.25f
-							, 0.25f
-							, bx::toRad(10.0f)
-							, bx::toRad(30.0f)
-							, bx::toRad(70.0f)
-							, xx+kStepX*5.0f
-							, yy
-							, zz+kStepZ*0.0f
-							);
-
-						olp = overlap(sphereA, obbB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(obbB);
-					}
-
-					{
-						Sphere sphereA     = { { px+kStepX*6.0f, py, pz+kStepZ*0.0f }, 0.5f };
-
-						Capsule capsuleB =
-						{
-							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*0.0f+0.1f },
-							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*0.0f      },
-							0.2f,
-						};
-
-						olp = overlap(sphereA, capsuleB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(capsuleB);
-					}
-
-					{
-						Sphere sphereA = { { px+kStepX*7.0f, py, pz+kStepZ*0.0f }, 0.5f };
-
-						Cylinder cylinderB =
-						{
-							{ xx+kStepX*6.9f, yy-1.0f, zz+kStepZ*0.0f+0.1f },
-							{ xx+kStepX*7.0f, yy+1.0f, zz+kStepZ*0.0f      },
-							0.2f,
-						};
-
-						olp = overlap(sphereA, cylinderB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(cylinderB);
-					}
-
-					{
-						Sphere sphereA = { { px+kStepX*8.0f, py, pz+kStepZ*0.0f }, 0.5f };
-
-						Cone coneB =
-						{
-							{ xx+kStepX*7.9f, yy-1.0f, zz+kStepZ*0.0f+0.1f },
-							{ xx+kStepX*8.0f, yy+1.0f, zz+kStepZ*0.0f      },
-							0.25f,
-						};
-
-						olp = overlap(sphereA, coneB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(sphereA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(coneB);
-					}
-
-					// AABB ---
-					{
-						Aabb aabbA, aabbB;
-						toAabb(aabbA, { px+kStepX*1.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-						toAabb(aabbB, { xx+kStepX*1.0f, yy, zz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-						olp = overlap(aabbA, aabbB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(aabbA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(aabbB);
-					}
-
-					{
-						Aabb aabbA;
-						toAabb(aabbA, { px+kStepX*2.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
-
-						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*1.0f});
-
-						olp = overlap(aabbA, triangleB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(aabbA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(triangleB);
-					}
-
-					{
-						Aabb aabbA;
-						toAabb(aabbA, { px+kStepX*3.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
-
-						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*1.0f});
-
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						olp = overlap(aabbA, planeB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(aabbA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
-					}
-
-					{
-						Aabb aabbA;
-						toAabb(aabbA, { px+kStepX*4.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
-
-						translate(triangleB, {kStepX*4.0f, 0.0f, kStepZ*1.0f});
-
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						const Disk diskB = { getCenter(triangleB), planeB.normal, 0.5f };
-
-						olp = overlap(aabbA, diskB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(aabbA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(diskB);
-					}
-
-					{
-						Aabb aabbA;
-						toAabb(aabbA, { px+kStepX*6.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-
-						Capsule capsuleB =
-						{
-							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*1.0f+0.1f },
-							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*1.0f      },
-							0.2f,
-						};
-
-						olp = overlap(aabbA, capsuleB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(aabbA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(capsuleB);
-					}
-
-					{
-						Aabb aabbA;
-						toAabb(aabbA, { px+kStepX*8.0f, py, pz+kStepZ*1.0f }, { 0.5f, 0.5f, 0.5f });
-
-						Cone coneB =
-						{
-							{ xx+kStepX*7.9f, yy-1.0f, zz+kStepZ*1.0f+0.1f },
-							{ xx+kStepX*8.0f, yy+1.0f, zz+kStepZ*1.0f      },
-							0.25f,
-						};
-
-						olp = overlap(aabbA, coneB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(aabbA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(coneB);
-					}
-
-					// Triangle ---
-					{
-						Triangle triangleA =
-						{
-							{ px-0.4f, py+0.0f, pz-0.4f },
-							{ px+0.0f, py-0.3f, pz-0.5f },
-							{ px+0.0f, py+0.5f, pz+0.3f },
-						};
-
-						translate(triangleA, {kStepX*2.0f, 0.0f, kStepZ*2.0f});
-
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
-
-						translate(triangleB, {kStepX*2.0f, 0.0f, kStepZ*2.0f});
-
-						olp = overlap(triangleA, triangleB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(triangleA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(triangleB);
-					}
-
-					{
-						Triangle triangleA =
-						{
-							{ px-0.4f, py+0.0f, pz-0.4f },
-							{ px+0.0f, py-0.3f, pz-0.5f },
-							{ px+0.0f, py+0.5f, pz+0.3f },
-						};
-
-						translate(triangleA, {kStepX*3.0f, 0.0f, kStepZ*2.0f});
-
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
-
-						translate(triangleB, {kStepX*3.0f, 0.0f, kStepZ*2.0f});
-
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						olp = overlap(triangleA, planeB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(triangleA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.drawGrid(planeB.normal, triangleB.v0, 10, 0.3f);
-					}
-
-					{
-						Triangle triangleA =
-						{
-							{ px-0.4f, py+0.0f, pz-0.4f },
-							{ px+0.0f, py-0.3f, pz-0.5f },
-							{ px+0.0f, py+0.5f, pz+0.3f },
-						};
-
-						translate(triangleA, {kStepX*4.0f, 0.0f, kStepZ*2.0f});
-
-						Triangle triangleB =
-						{
-							{ xx-0.4f, yy+0.0f, zz-0.4f },
-							{ xx-0.5f, yy-0.3f, zz+0.0f },
-							{ xx+0.3f, yy+0.5f, zz+0.0f },
-						};
-
-						translate(triangleB, {kStepX*4.0f, 0.0f, kStepZ*2.0f});
-
-						bx::Plane planeB;
-						bx::calcPlane(planeB, triangleB.v0, triangleB.v1, triangleB.v2);
-
-						const Disk diskB = { getCenter(triangleB), planeB.normal, 0.5f };
-
-						olp = overlap(triangleA, diskB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(triangleA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(diskB);
-					}
-
-					{
-						Triangle triangleA =
-						{
-							{ px-0.4f, py+0.0f, pz-0.4f },
-							{ px+0.0f, py-0.3f, pz-0.5f },
-							{ px+0.0f, py+0.5f, pz+0.3f },
-						};
-
-						translate(triangleA, {kStepX*5.0f, 0.0f, kStepZ*2.0f});
-
-						Obb obbB;
-						bx::mtxSRT(obbB.mtx
-							, 1.0f
-							, 0.25f
-							, 0.25f
-							, bx::toRad(10.0f)
-							, bx::toRad(30.0f)
-							, bx::toRad(70.0f)
-							, xx+kStepX*5.0f
-							, yy
-							, zz+kStepZ*2.0f
-							);
-
-						olp = overlap(triangleA, obbB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(triangleA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(obbB);
-					}
-
-					// Capsule ---
-					{
-						Capsule capsuleA =
-						{
-							{ px+kStepX*6.0f, py-1.0f, pz+kStepZ*6.0f },
-							{ px+kStepX*6.0f, py+1.0f, pz+kStepZ*6.0f },
-							0.5f,
-						};
-
-						Capsule capsuleB =
-						{
-							{ xx+kStepX*5.9f, yy-1.0f, zz+kStepZ*6.0f+0.1f },
-							{ xx+kStepX*6.0f, yy+1.0f, zz+kStepZ*6.0f      },
-							0.2f,
-						};
-
-						olp = overlap(capsuleA, capsuleB);
-
-						dde.setColor(olp ? kOverlapA : 0xffffffff);
-						dde.setWireframe(false);
-						dde.draw(capsuleA);
-
-						dde.setColor(olp ? kOverlapB : 0xffffffff);
-						dde.setWireframe(true);
-						dde.draw(capsuleB);
+						posA = bx::add(posA, {0.0f, 0.0f, kStep});
 					}
 				}
+
 			dde.pop();
 
 			dde.end();

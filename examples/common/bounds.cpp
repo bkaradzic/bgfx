@@ -24,7 +24,7 @@ Vec3 getCenter(const Triangle& _triangle)
 	return mul(add(add(_triangle.v0, _triangle.v1), _triangle.v2), 1.0f/3.0f);
 }
 
-void toAabb(Aabb& _outAabb, const bx::Vec3& _extents)
+void toAabb(Aabb& _outAabb, const Vec3& _extents)
 {
 	_outAabb.min = neg(_extents);
 	_outAabb.max =     _extents;
@@ -1288,7 +1288,7 @@ bool overlap(const Aabb& _aabb, const Obb& _obb)
 	return false;
 }
 
-bool overlap(const Capsule& _capsule, const bx::Vec3& _pos)
+bool overlap(const Capsule& _capsule, const Vec3& _pos)
 {
 	const Vec3 pos = closestPoint(LineSegment{_capsule.pos, _capsule.end}, _pos);
 	return overlap(Sphere{pos, _capsule.radius}, _pos);
@@ -1304,7 +1304,7 @@ bool overlap(const Capsule& _capsule, const Aabb& _aabb)
 	return overlap(_aabb, _capsule);
 }
 
-bool overlap(const Capsule& _capsule, const bx::Plane& _plane)
+bool overlap(const Capsule& _capsule, const Plane& _plane)
 {
 	BX_UNUSED(_capsule, _plane);
 	return false;
@@ -1383,6 +1383,292 @@ bool overlap(const Capsule& _capsule, const Disk& _disk)
 bool overlap(const Capsule& _capsule, const Obb& _obb)
 {
 	BX_UNUSED(_capsule, _obb);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Vec3& _pos)
+{
+	BX_UNUSED(_cone, _pos);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Sphere& _sphere)
+{
+	return overlap(_sphere, _cone);
+}
+
+bool overlap(const Cone& _cone, const Aabb& _aabb)
+{
+	return overlap(_aabb, _cone);
+}
+
+bool overlap(const Cone& _cone, const Plane& _plane)
+{
+	BX_UNUSED(_cone, _plane);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Triangle& _triangle)
+{
+	BX_UNUSED(_cone, _triangle);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_cone, _cylinder);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Capsule& _capsule)
+{
+	BX_UNUSED(_cone, _capsule);
+	return false;
+}
+
+bool overlap(const Cone& _coneA, const Cone& _coneB)
+{
+	BX_UNUSED(_coneA, _coneB);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Disk& _disk)
+{
+	BX_UNUSED(_cone, _disk);
+	return false;
+}
+
+bool overlap(const Cone& _cone, const Obb& _obb)
+{
+	BX_UNUSED(_cone, _obb);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Vec3& _pos)
+{
+	BX_UNUSED(_cylinder, _pos);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Sphere& _sphere)
+{
+	BX_UNUSED(_cylinder, _sphere);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Aabb& _aabb)
+{
+	BX_UNUSED(_cylinder, _aabb);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Plane& _plane)
+{
+	BX_UNUSED(_cylinder, _plane);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Triangle& _triangle)
+{
+	BX_UNUSED(_cylinder, _triangle);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinderA, const Cylinder& _cylinderB)
+{
+	BX_UNUSED(_cylinderA, _cylinderB);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Capsule& _capsule)
+{
+	BX_UNUSED(_cylinder, _capsule);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Cone& _cone)
+{
+	BX_UNUSED(_cylinder, _cone);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Disk& _disk)
+{
+	BX_UNUSED(_cylinder, _disk);
+	return false;
+}
+
+bool overlap(const Cylinder& _cylinder, const Obb& _obb)
+{
+	BX_UNUSED(_cylinder, _obb);
+	return false;
+}
+
+bool overlap(const Disk& _disk, const Vec3& _pos)
+{
+	BX_UNUSED(_disk, _pos);
+	return false;
+}
+
+bool overlap(const Disk& _disk, const Sphere& _sphere)
+{
+	return overlap(_sphere, _disk);
+}
+
+bool overlap(const Disk& _disk, const Aabb& _aabb)
+{
+	return overlap(_aabb, _disk);
+}
+
+bool overlap(const Disk& _disk, const Plane& _plane)
+{
+	BX_UNUSED(_disk, _plane);
+	return false;
+}
+
+bool overlap(const Disk& _disk, const Triangle& _triangle)
+{
+	return overlap(_triangle, _disk);
+}
+
+bool overlap(const Disk& _disk, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_disk, _cylinder);
+	return false;
+}
+
+bool overlap(const Disk& _disk, const Capsule& _capsule)
+{
+	return overlap(_capsule, _disk);
+}
+
+bool overlap(const Disk& _disk, const Cone& _cone)
+{
+	BX_UNUSED(_disk, _cone);
+	return false;
+}
+
+bool overlap(const Disk& _diskA, const Disk& _diskB)
+{
+	BX_UNUSED(_diskA, _diskB);
+	return false;
+}
+
+bool overlap(const Disk& _disk, const Obb& _obb)
+{
+	BX_UNUSED(_disk, _obb);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Vec3& _pos)
+{
+	BX_UNUSED(_obb, _pos);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Sphere& _sphere)
+{
+	return overlap(_sphere, _obb);
+}
+
+bool overlap(const Obb& _obb, const Aabb& _aabb)
+{
+	return overlap(_aabb, _obb);
+}
+
+bool overlap(const Obb& _obb, const Plane& _plane)
+{
+	BX_UNUSED(_obb, _plane);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Triangle& _triangle)
+{
+	return overlap(_triangle, _obb);
+}
+
+bool overlap(const Obb& _obb, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_obb, _cylinder);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Capsule& _capsule)
+{
+	return overlap(_capsule, _obb);
+}
+
+bool overlap(const Obb& _obb, const Cone& _cone)
+{
+	BX_UNUSED(_obb, _cone);
+	return false;
+}
+
+bool overlap(const Obb& _obb, const Disk& _disk)
+{
+	BX_UNUSED(_obb, _disk);
+	return false;
+}
+
+bool overlap(const Obb& _obbA, const Obb& _obbB)
+{
+	BX_UNUSED(_obbA, _obbB);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const Vec3& _pos)
+{
+	BX_UNUSED(_plane, _pos);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const Sphere& _sphere)
+{
+	return overlap(_sphere, _plane);
+}
+
+bool overlap(const Plane& _plane, const Aabb& _aabb)
+{
+	return overlap(_aabb, _plane);
+}
+
+bool overlap(const Plane& _planeA, const Plane& _planeB)
+{
+	BX_UNUSED(_planeA, _planeB);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const Triangle& _triangle)
+{
+	return overlap(_triangle, _plane);
+}
+
+bool overlap(const Plane& _plane, const Cylinder& _cylinder)
+{
+	BX_UNUSED(_plane, _cylinder);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const Capsule& _capsule)
+{
+	return overlap(_capsule, _plane);
+}
+
+bool overlap(const Plane& _plane, const Cone& _cone)
+{
+	BX_UNUSED(_plane, _cone);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const Disk& _disk)
+{
+	BX_UNUSED(_plane, _disk);
+	return false;
+}
+
+bool overlap(const Plane& _plane, const Obb& _obb)
+{
+	BX_UNUSED(_plane, _obb);
 	return false;
 }
 
