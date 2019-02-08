@@ -4770,6 +4770,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				return;
 			}
 
+			m_numLayers = ti.numLayers;
+
 			target = isCubeMap()
 				? GL_TEXTURE_CUBE_MAP_POSITIVE_X
 				: m_target
@@ -5945,7 +5947,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					}
 					else if (Access::Write == at.access)
 					{
-						if (1 < texture.m_depth
+						if (1 < texture.m_numLayers
 						&&  !texture.isCubeMap())
 						{
 							GL_CHECK(glFramebufferTextureLayer(GL_FRAMEBUFFER

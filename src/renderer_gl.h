@@ -635,7 +635,7 @@ typedef uint64_t GLuint64;
 #	define GL_RENDERBUFFER_FREE_MEMORY_ATI 0x87FD
 #endif // GL_RENDERBUFFER_FREE_MEMORY_ATI
 
-// http://developer.download.nvidia.com/opengl/specs/GL_NVX_gpu_memory_info.txt
+// https://web.archive.org/web/20190207230448/http://developer.download.nvidia.com/opengl/specs/GL_NVX_gpu_memory_info.txt
 #ifndef GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
 #	define GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX 0x9047
 #endif // GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX
@@ -1273,6 +1273,7 @@ namespace bgfx { namespace gl
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
+		uint32_t m_numLayers;
 		uint8_t m_numMips;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;

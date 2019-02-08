@@ -801,7 +801,7 @@ namespace bgfx { namespace d3d11
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
 			{
 				// D3D11_1.h has ID3DUserDefinedAnnotation
-				// http://msdn.microsoft.com/en-us/library/windows/desktop/hh446881%28v=vs.85%29.aspx
+				// https://web.archive.org/web/20190207230424/https://docs.microsoft.com/en-us/windows/desktop/api/d3d11_1/nn-d3d11_1-id3duserdefinedannotation
 				m_d3d9Dll = bx::dlopen("d3d9.dll");
 				if (NULL != m_d3d9Dll)
 				{
@@ -3045,16 +3045,16 @@ namespace bgfx { namespace d3d11
 				switch (texture.m_type)
 				{
 				case TextureD3D11::Texture2D:
-					if (1 < texture.m_depth)
+					if (1 < texture.m_numLayers)
 					{
 						desc.ViewDimension = msaaSample
 							? D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY
 							: D3D11_SRV_DIMENSION_TEXTURE2DARRAY
 							;
 						desc.Texture2DArray.MostDetailedMip = _mip;
-						desc.Texture2DArray.MipLevels = 1;
+						desc.Texture2DArray.MipLevels       = 1;
 						desc.Texture2DArray.FirstArraySlice = 0;
-						desc.Texture2DArray.ArraySize = texture.m_depth;
+						desc.Texture2DArray.ArraySize       = texture.m_numLayers;
 					}
 					else
 					{
@@ -3063,7 +3063,7 @@ namespace bgfx { namespace d3d11
 							: D3D11_SRV_DIMENSION_TEXTURE2D
 							;
 						desc.Texture2D.MostDetailedMip = _mip;
-						desc.Texture2D.MipLevels = 1;
+						desc.Texture2D.MipLevels       = 1;
 					}
 					break;
 
@@ -3354,6 +3354,7 @@ namespace bgfx { namespace d3d11
 							_clear.m_index[2]*1.0f/255.0f,
 							_clear.m_index[3]*1.0f/255.0f,
 						};
+
 						for (uint32_t ii = 0; ii < numMrt; ++ii)
 						{
 							bx::memCopy(mrtClearColor[ii], rgba, 16);
@@ -4088,10 +4089,11 @@ namespace bgfx { namespace d3d11
 				);
 			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips-startLod, ti.numMips);
 
-			m_flags  = _flags;
-			m_width  = ti.width;
-			m_height = ti.height;
-			m_depth  = ti.depth;
+			m_flags     = _flags;
+			m_width     = ti.width;
+			m_height    = ti.height;
+			m_depth     = ti.depth;
+			m_numLayers = ti.numLayers;
 
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
@@ -4758,11 +4760,11 @@ namespace bgfx { namespace d3d11
 						case TextureD3D11::Texture2D:
 							if (1 < msaa.Count)
 							{
-								if (1 < texture.m_depth)
+								if (1 < texture.m_numLayers)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY;
 									desc.Texture2DMSArray.FirstArraySlice = at.layer;
-									desc.Texture2DMSArray.ArraySize = 1;
+									desc.Texture2DMSArray.ArraySize       = 1;
 								}
 								else
 								{
@@ -4771,12 +4773,12 @@ namespace bgfx { namespace d3d11
 							}
 							else
 							{
-								if (1 < texture.m_depth)
+								if (1 < texture.m_numLayers)
 								{
 									desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 									desc.Texture2DArray.FirstArraySlice = at.layer;
-									desc.Texture2DArray.ArraySize = 1;
-									desc.Texture2DArray.MipSlice = at.mip;
+									desc.Texture2DArray.ArraySize       = 1;
+									desc.Texture2DArray.MipSlice        = at.mip;
 								}
 								else
 								{
@@ -4806,6 +4808,7 @@ namespace bgfx { namespace d3d11
 								desc.Texture2DArray.FirstArraySlice = at.layer;
 								desc.Texture2DArray.MipSlice        = at.mip;
 							}
+
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							break;
 
@@ -4814,6 +4817,7 @@ namespace bgfx { namespace d3d11
 							desc.Texture3D.MipSlice    = at.mip;
 							desc.Texture3D.WSize       = 1;
 							desc.Texture3D.FirstWSlice = at.layer;
+
 							DX_CHECK(s_renderD3D11->m_device->CreateRenderTargetView(texture.m_ptr, &desc, &m_rtv[m_num]) );
 							break;
 						}

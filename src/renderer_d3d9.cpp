@@ -373,11 +373,12 @@ namespace bgfx { namespace d3d9
 			;
 	}
 
-	static inline bool useD3D9Pitch(bimg::TextureFormat::Enum _format)
+	inline bool useD3D9Pitch(bimg::TextureFormat::Enum _format)
 	{
-		// For BC4 and B5 in DX9 LockRect returns wrong number of
-		// bytes. If actual mip size is used it causes memory corruption.
-		// http://www.aras-p.info/texts/D3D9GPUHacks.html#3dc
+		// Reference(s):
+		//  - For BC4 and B5 in DX9 LockRect returns wrong number of
+		//    bytes. If actual mip size is used it causes memory corruption.
+		//    https://web.archive.org/web/20190207230133/http://www.aras-p.info/texts/D3D9GPUHacks.html
 		return true
 			&& _format != bimg::TextureFormat::BC4
 			&& _format != bimg::TextureFormat::BC5
@@ -448,7 +449,8 @@ namespace bgfx { namespace d3d9
 
 			D3DFORMAT adapterFormat = D3DFMT_X8R8G8B8;
 
-			// http://msdn.microsoft.com/en-us/library/windows/desktop/bb172588%28v=vs.85%29.aspx
+			// Reference(s):
+			// - https://web.archive.org/web/20190207230309/https://docs.microsoft.com/en-us/windows/desktop/direct3d9/d3dpresent-parameters
 			bx::memSet(&m_params, 0, sizeof(m_params) );
 			m_params.BackBufferWidth  = _init.resolution.width;
 			m_params.BackBufferHeight = _init.resolution.height;

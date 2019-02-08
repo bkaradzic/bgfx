@@ -4594,10 +4594,11 @@ namespace bgfx { namespace d3d12
 				);
 			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips-startLod, ti.numMips);
 
-			m_flags  = _flags;
-			m_width  = ti.width;
-			m_height = ti.height;
-			m_depth  = ti.depth;
+			m_flags     = _flags;
+			m_width     = ti.width;
+			m_height    = ti.height;
+			m_depth     = ti.depth;
+			m_numLayers = ti.numLayers;
 			m_requestedFormat  = uint8_t(imageContainer.m_format);
 			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
 			const bool convert = m_textureFormat != m_requestedFormat;
@@ -4798,49 +4799,31 @@ namespace bgfx { namespace d3d12
 			switch (m_type)
 			{
 			case Texture2D:
-			case TextureCube:
 				resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-				if (imageContainer.m_cubeMap)
+
+				if (1 < ti.numLayers)
 				{
-					if (1 < ti.numLayers)
-					{
-						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-						m_srvd.TextureCubeArray.MostDetailedMip     = 0;
-						m_srvd.TextureCubeArray.MipLevels           = ti.numMips;
-						m_srvd.TextureCubeArray.ResourceMinLODClamp = 0.0f;
-						m_srvd.TextureCubeArray.NumCubes            = ti.numLayers;
-					}
-					else
-					{
-						m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-						m_srvd.TextureCube.MostDetailedMip     = 0;
-						m_srvd.TextureCube.MipLevels           = ti.numMips;
-						m_srvd.TextureCube.ResourceMinLODClamp = 0.0f;
-					}
+					m_srvd.ViewDimension = 1 < msaa.Count
+						? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY
+						: D3D12_SRV_DIMENSION_TEXTURE2DARRAY
+						;
+					m_srvd.Texture2DArray.MostDetailedMip     = 0;
+					m_srvd.Texture2DArray.MipLevels           = ti.numMips;
+					m_srvd.Texture2DArray.FirstArraySlice     = 0;
+					m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
+					m_srvd.Texture2DArray.PlaneSlice          = 0;
+					m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
 				}
 				else
 				{
-					if (1 < ti.numLayers)
-					{
-						m_srvd.ViewDimension = 1 < msaa.Count
-							? D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY
-							: D3D12_SRV_DIMENSION_TEXTURE2DARRAY
-							;
-						m_srvd.Texture2DArray.MostDetailedMip     = 0;
-						m_srvd.Texture2DArray.MipLevels           = ti.numMips;
-						m_srvd.Texture2DArray.ResourceMinLODClamp = 0.0f;
-						m_srvd.Texture2DArray.ArraySize           = ti.numLayers;
-					}
-					else
-					{
-						m_srvd.ViewDimension = 1 < msaa.Count
-							? D3D12_SRV_DIMENSION_TEXTURE2DMS
-							: D3D12_SRV_DIMENSION_TEXTURE2D
-							;
-						m_srvd.Texture2D.MostDetailedMip     = 0;
-						m_srvd.Texture2D.MipLevels           = ti.numMips;
-						m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
-					}
+					m_srvd.ViewDimension = 1 < msaa.Count
+						? D3D12_SRV_DIMENSION_TEXTURE2DMS
+						: D3D12_SRV_DIMENSION_TEXTURE2D
+						;
+					m_srvd.Texture2D.MostDetailedMip     = 0;
+					m_srvd.Texture2D.MipLevels           = ti.numMips;
+					m_srvd.Texture2D.PlaneSlice          = 0;
+					m_srvd.Texture2D.ResourceMinLODClamp = 0.0f;
 				}
 
 				if (1 < ti.numLayers)
@@ -4848,8 +4831,8 @@ namespace bgfx { namespace d3d12
 					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 					m_uavd.Texture2DArray.MipSlice        = 0;
 					m_uavd.Texture2DArray.FirstArraySlice = 0;
-					m_uavd.Texture2DArray.PlaneSlice      = 0;
 					m_uavd.Texture2DArray.ArraySize       = ti.numLayers;
+					m_uavd.Texture2DArray.PlaneSlice      = 0;
 				}
 				else
 				{
@@ -4857,14 +4840,6 @@ namespace bgfx { namespace d3d12
 					m_uavd.Texture2D.MipSlice   = 0;
 					m_uavd.Texture2D.PlaneSlice = 0;
 				}
-
-				if (TextureCube == m_type)
-				{
-					m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-					m_uavd.Texture2DArray.MipSlice  = 0;
-					m_uavd.Texture2DArray.ArraySize = 6;
-				}
-
 				break;
 
 			case Texture3D:
@@ -4880,7 +4855,36 @@ namespace bgfx { namespace d3d12
 				m_uavd.Texture3D.FirstWSlice = 0;
 				m_uavd.Texture3D.WSize       = m_depth;
 				break;
+
+			case TextureCube:
+				resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+				if (1 < ti.numLayers)
+				{
+					m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+					m_srvd.TextureCubeArray.MostDetailedMip     = 0;
+					m_srvd.TextureCubeArray.MipLevels           = ti.numMips;
+					m_srvd.TextureCubeArray.ResourceMinLODClamp = 0.0f;
+					m_srvd.TextureCubeArray.NumCubes            = ti.numLayers;
+				}
+				else
+				{
+					m_srvd.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+					m_srvd.TextureCube.MostDetailedMip     = 0;
+					m_srvd.TextureCube.MipLevels           = ti.numMips;
+					m_srvd.TextureCube.ResourceMinLODClamp = 0.0f;
+				}
+
+				m_uavd.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+				m_uavd.Texture2DArray.MipSlice        = 0;
+				m_uavd.Texture2DArray.FirstArraySlice = 0;
+				m_uavd.Texture2DArray.ArraySize       = 6;
+				m_uavd.Texture2DArray.PlaneSlice      = 0;
+				break;
 			}
+
+{HRESULT hr = device->GetDeviceRemovedReason();
+ BX_CHECK(SUCCEEDED(hr), "%x %x", hr, DXGI_ERROR_INVALID_CALL);}
 
 			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue, renderTarget);
 
@@ -4917,6 +4921,9 @@ namespace bgfx { namespace d3d12
 			{
 				setState(commandList, state);
 			}
+
+{HRESULT hr = device->GetDeviceRemovedReason();
+ BX_CHECK(SUCCEEDED(hr), "%x %x", hr, DXGI_ERROR_INVALID_CALL);}
 
 			if (0 != kk)
 			{
@@ -5206,9 +5213,19 @@ namespace bgfx { namespace d3d12
 //							}
 //							else
 							{
-								desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-								desc.Texture2D.MipSlice   = at.mip;
-								desc.Texture2D.PlaneSlice = 0;
+								if (1 < texture.m_numLayers)
+								{
+									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+									desc.Texture2DArray.FirstArraySlice = at.layer;
+									desc.Texture2DArray.ArraySize       = 1;
+									desc.Texture2DArray.MipSlice        = at.mip;
+								}
+								else
+								{
+									desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+									desc.Texture2D.MipSlice   = at.mip;
+									desc.Texture2D.PlaneSlice = 0;
+								}
 							}
 							break;
 
