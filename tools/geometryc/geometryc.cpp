@@ -477,7 +477,9 @@ int main(int _argc, const char* _argv[])
 	data[size] = '\0';
 	fclose(file);
 
-	// https://en.wikipedia.org/wiki/Wavefront_.obj_file
+	// Reference(s):
+	// - Wavefront .obj file
+	//   https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
 	Vec3Array positions;
 	Vec3Array normals;
@@ -551,7 +553,9 @@ int main(int _argc, const char* _argv[])
 
 							texcoord.set(texcoord.getPtr() + 1, normal.getPtr());
 
-							// https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
+							// Reference(s):
+							// - Wavefront .obj file / Vertex normal indices without texture coordinate indices
+							//   https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vertex_Normal_Indices_Without_Texture_Coordinate_Indices
 							if (!texcoord.isEmpty())
 							{
 								int32_t tex;

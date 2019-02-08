@@ -59,8 +59,9 @@ struct Grid
 	float m_normal[3];
 };
 
-// Triangulation tables taken from:
-// http://paulbourke.net/geometry/polygonise/
+// Reference(s):
+// - Polygonising a scalar field
+//   https://web.archive.org/web/20181127124338/http://paulbourke.net/geometry/polygonise/
 
 static const uint16_t s_edges[256] =
 {

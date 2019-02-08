@@ -717,8 +717,8 @@ namespace bgfx
 	}
 
 	// dxbc hash function is slightly modified version of MD5 hash.
-	// https://tools.ietf.org/html/rfc1321
-	// http://www.efgh.com/software/md5.txt
+	// https://web.archive.org/web/20190207230524/https://tools.ietf.org/html/rfc1321
+	// https://web.archive.org/web/20190207230538/http://www.efgh.com/software/md5.txt
 	//
 	// Assumption is that data pointer, size are both 4-byte aligned,
 	// and little endian.

@@ -1,14 +1,14 @@
 /*
  * Copyright 2014 Kai Jourdan. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
- *
- * Based on code from Brian Luczkiewicz
- * https://github.com/blucz/Vector
- *
- * Uses the SIMPLEX-Font which is a variant of the Hershey font (public domain)
- * http://paulbourke.net/dataformats/hershey/
  */
 
+// Reference(s):
+// - Based on code from Brian Luczkiewicz
+//   https://github.com/blucz/Vector
+// - Uses the SIMPLEX-Font which is a variant of the Hershey font (public domain)
+//   https://web.archive.org/web/20120313001837/http://paulbourke.net/dataformats/hershey/
+//
 #include <float.h>  // FLT_EPSILON
 #include <alloca.h> // alloca
 

@@ -1,12 +1,6 @@
 /*
  * Copyright 2014 Kai Jourdan. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
- *
- * Based on code from Brian Luczkiewicz
- * https://github.com/blucz/Vector
- *
- * Uses the SIMPLEX-Font which is a variant of the Hershey font (public domain)
- * http://paulbourke.net/dataformats/hershey/
  */
 
 #ifndef __VECTORDISPLAY_H__
@@ -41,7 +35,7 @@ public:
 	}
 
 	void init(bool _originBottomLeft, float _texelHalf);
-	
+
 	void setup(uint16_t _width, uint16_t _height, uint8_t _view = 2);
 	void resize(uint16_t _width, uint16_t _height);
 	void teardown();
