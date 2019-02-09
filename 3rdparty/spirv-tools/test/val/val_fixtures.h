@@ -125,6 +125,13 @@ void ValidateBase<T>::OverwriteAssembledBinary(uint32_t index, uint32_t word) {
 template <typename T>
 spv_result_t ValidateBase<T>::ValidateInstructions(spv_target_env env) {
   DestroyDiagnostic();
+  if (binary_ == nullptr) {
+    fprintf(stderr,
+            "ERROR: Attempting to validate a null binary, did you forget to "
+            "call CompileSuccessfully?");
+    fflush(stderr);
+  }
+  assert(binary_ != nullptr);
   return spvValidateWithOptions(ScopedContext(env).context, options_,
                                 get_const_binary(), &diagnostic_);
 }

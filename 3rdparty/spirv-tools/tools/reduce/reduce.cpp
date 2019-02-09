@@ -25,6 +25,7 @@
 #include "source/reduce/operand_to_dominating_id_reduction_opportunity_finder.h"
 #include "source/reduce/operand_to_undef_reduction_opportunity_finder.h"
 #include "source/reduce/reducer.h"
+#include "source/reduce/remove_function_reduction_opportunity_finder.h"
 #include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
 #include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
 #include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
@@ -243,6 +244,8 @@ int main(int argc, const char** argv) {
           StructuredLoopToSelectionReductionOpportunityFinder>());
   reducer.AddReductionPass(
       spvtools::MakeUnique<MergeBlocksReductionOpportunityFinder>());
+  reducer.AddReductionPass(
+      spvtools::MakeUnique<RemoveFunctionReductionOpportunityFinder>());
 
   reducer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
 

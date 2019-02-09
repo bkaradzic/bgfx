@@ -37,6 +37,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   dominator_tree.h
   eliminate_dead_constant_pass.h
   eliminate_dead_functions_pass.h
+  eliminate_dead_functions_util.h
   feature_manager.h
   flatten_decoration_pass.h
   fold.h
@@ -131,6 +132,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   dominator_tree.cpp
   eliminate_dead_constant_pass.cpp
   eliminate_dead_functions_pass.cpp
+  eliminate_dead_functions_util.cpp
   feature_manager.cpp
   flatten_decoration_pass.cpp
   fold.cpp

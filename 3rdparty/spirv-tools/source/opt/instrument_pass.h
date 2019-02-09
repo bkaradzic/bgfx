@@ -76,7 +76,7 @@ class InstrumentPass : public Pass {
            IRContext::kAnalysisInstrToBlockMapping |
            IRContext::kAnalysisDecorations | IRContext::kAnalysisCombinators |
            IRContext::kAnalysisNameMap | IRContext::kAnalysisBuiltinVarId |
-           IRContext::kAnalysisConstants | IRContext::kAnalysisTypes;
+           IRContext::kAnalysisConstants;
   }
 
  protected:
@@ -195,6 +195,13 @@ class InstrumentPass : public Pass {
                            const std::vector<uint32_t>& validation_ids,
                            InstructionBuilder* builder);
 
+  // Generate in |builder| instructions to read the unsigned integer from the
+  // input buffer at offset |idx_id|. Return the result id.
+  //
+  // The binding and the format of the input buffer is determined by each
+  // specific validation, which is specified at the creation of the pass.
+  uint32_t GenDebugDirectRead(uint32_t idx_id, InstructionBuilder* builder);
+
   // Generate code to cast |value_id| to unsigned, if needed. Return
   // an id to the unsigned equivalent.
   uint32_t GenUintCastCode(uint32_t value_id, InstructionBuilder* builder);
@@ -211,14 +218,27 @@ class InstrumentPass : public Pass {
   // Return id for void type
   uint32_t GetVoidId();
 
-  // Return id for output buffer uint type
-  uint32_t GetOutputBufferUintPtrId();
+  // Return pointer to type for runtime array of uint
+  analysis::Type* GetUintRuntimeArrayType(analysis::DecorationManager* deco_mgr,
+                                          analysis::TypeManager* type_mgr);
+
+  // Return id for buffer uint type
+  uint32_t GetBufferUintPtrId();
 
   // Return binding for output buffer for current validation.
   uint32_t GetOutputBufferBinding();
 
+  // Return binding for input buffer for current validation.
+  uint32_t GetInputBufferBinding();
+
+  // Add storage buffer extension if needed
+  void AddStorageBufferExt();
+
   // Return id for debug output buffer
   uint32_t GetOutputBufferId();
+
+  // Return id for debug input buffer
+  uint32_t GetInputBufferId();
 
   // Return id for v4float type
   uint32_t GetVec4FloatId();
@@ -321,13 +341,16 @@ class InstrumentPass : public Pass {
   uint32_t output_buffer_id_;
 
   // type id for output buffer element
-  uint32_t output_buffer_uint_ptr_id_;
+  uint32_t buffer_uint_ptr_id_;
 
   // id for debug output function
   uint32_t output_func_id_;
 
   // param count for output function
   uint32_t output_func_param_cnt_;
+
+  // id for input buffer variable
+  uint32_t input_buffer_id_;
 
   // id for v4float type
   uint32_t v4float_id_;
@@ -343,6 +366,12 @@ class InstrumentPass : public Pass {
 
   // id for void type
   uint32_t void_id_;
+
+  // boolean to remember storage buffer extension
+  bool storage_buffer_ext_defined_;
+
+  // runtime array of uint type
+  analysis::Type* uint_rarr_ty_;
 
   // Pre-instrumentation same-block insts
   std::unordered_map<uint32_t, Instruction*> same_block_pre_;

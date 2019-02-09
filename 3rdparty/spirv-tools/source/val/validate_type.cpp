@@ -262,17 +262,23 @@ spv_result_t ValidateTypeStruct(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t ValidateTypePointer(ValidationState_t& _,
                                  const Instruction* inst) {
-  const auto type_id = inst->GetOperandAs<uint32_t>(2);
-  const auto type = _.FindDef(type_id);
+  auto type_id = inst->GetOperandAs<uint32_t>(2);
+  auto type = _.FindDef(type_id);
   if (!type || !spvOpcodeGeneratesType(type->opcode())) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "OpTypePointer Type <id> '" << _.getIdName(type_id)
            << "' is not a type.";
   }
   // See if this points to a storage image.
-  if (type->opcode() == SpvOpTypeImage) {
-    const auto storage_class = inst->GetOperandAs<uint32_t>(1);
-    if (storage_class == SpvStorageClassUniformConstant) {
+  const auto storage_class = inst->GetOperandAs<SpvStorageClass>(1);
+  if (storage_class == SpvStorageClassUniformConstant) {
+    // Unpack an optional level of arraying.
+    if (type->opcode() == SpvOpTypeArray ||
+        type->opcode() == SpvOpTypeRuntimeArray) {
+      type_id = type->GetOperandAs<uint32_t>(1);
+      type = _.FindDef(type_id);
+    }
+    if (type->opcode() == SpvOpTypeImage) {
       const auto sampled = type->GetOperandAs<uint32_t>(6);
       // 2 indicates this image is known to be be used without a sampler, i.e.
       // a storage image.

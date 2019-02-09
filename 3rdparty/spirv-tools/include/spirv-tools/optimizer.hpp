@@ -711,10 +711,12 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // The instrumentation will read and write buffers in debug
 // descriptor set |desc_set|. It will write |shader_id| in each output record
 // to identify the shader module which generated the record.
+// |runtime_array_enable| controls instrumentation of runtime arrays which
+// require input buffer support.
 //
 // TODO(greg-lunarg): Add support for vk_ext_descriptor_indexing.
-Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
-                                                 uint32_t shader_id);
+Optimizer::PassToken CreateInstBindlessCheckPass(
+    uint32_t desc_set, uint32_t shader_id, bool runtime_array_enable = false);
 
 // Create a pass to upgrade to the VulkanKHR memory model.
 // This pass upgrades the Logical GLSL450 memory model to Logical VulkanKHR.

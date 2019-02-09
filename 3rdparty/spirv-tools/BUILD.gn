@@ -496,6 +496,8 @@ static_library("spvtools_opt") {
     "source/opt/eliminate_dead_constant_pass.h",
     "source/opt/eliminate_dead_functions_pass.cpp",
     "source/opt/eliminate_dead_functions_pass.h",
+    "source/opt/eliminate_dead_functions_util.cpp",
+    "source/opt/eliminate_dead_functions_util.h",
     "source/opt/feature_manager.cpp",
     "source/opt/feature_manager.h",
     "source/opt/flatten_decoration_pass.cpp",

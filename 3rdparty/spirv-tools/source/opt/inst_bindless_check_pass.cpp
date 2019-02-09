@@ -35,6 +35,18 @@ static const int kSpvConstantValueInIdx = 0;
 namespace spvtools {
 namespace opt {
 
+uint32_t InstBindlessCheckPass::GenDebugReadLength(
+    uint32_t image_id, InstructionBuilder* builder) {
+  uint32_t desc_set_idx =
+      var2desc_set_[image_id] + kDebugInputBindlessOffsetLengths;
+  uint32_t desc_set_idx_id = builder->GetUintConstantId(desc_set_idx);
+  uint32_t desc_set_offset_id = GenDebugDirectRead(desc_set_idx_id, builder);
+  Instruction* binding_idx_inst =
+      builder->AddBinaryOp(GetUintId(), SpvOpIAdd, desc_set_offset_id,
+                           builder->GetUintConstantId(var2binding_[image_id]));
+  return GenDebugDirectRead(binding_idx_inst->result_id(), builder);
+}
+
 void InstBindlessCheckPass::GenBindlessCheckCode(
     BasicBlock::iterator ref_inst_itr,
     UptrVectorIterator<BasicBlock> ref_block_itr, uint32_t instruction_idx,
@@ -119,20 +131,23 @@ void InstBindlessCheckPass::GenBindlessCheckCode(
   uint32_t ptr_type_id =
       var_type_inst->GetSingleWordInOperand(kSpvTypePointerTypeIdInIdx);
   Instruction* ptr_type_inst = get_def_use_mgr()->GetDef(ptr_type_id);
-  // TODO(greg-lunarg): Handle RuntimeArray. Will need to pull length
-  // out of debug input buffer.
-  if (ptr_type_inst->opcode() != SpvOpTypeArray) return;
   // If index and bound both compile-time constants and index < bound,
   // return without changing
-  uint32_t length_id =
-      ptr_type_inst->GetSingleWordInOperand(kSpvTypeArrayLengthIdInIdx);
-  Instruction* index_inst = get_def_use_mgr()->GetDef(index_id);
-  Instruction* length_inst = get_def_use_mgr()->GetDef(length_id);
-  if (index_inst->opcode() == SpvOpConstant &&
-      length_inst->opcode() == SpvOpConstant &&
-      index_inst->GetSingleWordInOperand(kSpvConstantValueInIdx) <
-          length_inst->GetSingleWordInOperand(kSpvConstantValueInIdx))
+  uint32_t length_id = 0;
+  if (ptr_type_inst->opcode() == SpvOpTypeArray) {
+    length_id =
+        ptr_type_inst->GetSingleWordInOperand(kSpvTypeArrayLengthIdInIdx);
+    Instruction* index_inst = get_def_use_mgr()->GetDef(index_id);
+    Instruction* length_inst = get_def_use_mgr()->GetDef(length_id);
+    if (index_inst->opcode() == SpvOpConstant &&
+        length_inst->opcode() == SpvOpConstant &&
+        index_inst->GetSingleWordInOperand(kSpvConstantValueInIdx) <
+            length_inst->GetSingleWordInOperand(kSpvConstantValueInIdx))
+      return;
+  } else if (!runtime_array_enabled_ ||
+             ptr_type_inst->opcode() != SpvOpTypeRuntimeArray) {
     return;
+  }
   // Generate full runtime bounds test code with true branch
   // being full reference and false branch being debug output and zero
   // for the referenced value.
@@ -141,6 +156,13 @@ void InstBindlessCheckPass::GenBindlessCheckCode(
       context(), &*new_blk_ptr,
       IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
   uint32_t error_id = builder.GetUintConstantId(kInstErrorBindlessBounds);
+  // If length id not yet set, descriptor array is runtime size so
+  // generate load of length from stage's debug input buffer.
+  if (length_id == 0) {
+    assert(ptr_type_inst->opcode() == SpvOpTypeRuntimeArray &&
+           "unexpected bindless type");
+    length_id = GenDebugReadLength(image_id, &builder);
+  }
   Instruction* ult_inst =
       builder.AddBinaryOp(GetBoolId(), SpvOpULessThan, index_id, length_id);
   uint32_t merge_blk_id = TakeNextId();
@@ -236,6 +258,18 @@ void InstBindlessCheckPass::InitializeInstBindlessCheck() {
       break;
     }
   }
+  // If descriptor indexing extension and runtime array support enabled,
+  // create variable to descriptor set mapping.
+  if (ext_descriptor_indexing_defined_ && runtime_array_enabled_)
+    for (auto& anno : get_module()->annotations())
+      if (anno.opcode() == SpvOpDecorate) {
+        if (anno.GetSingleWordInOperand(1u) == SpvDecorationDescriptorSet)
+          var2desc_set_[anno.GetSingleWordInOperand(0u)] =
+              anno.GetSingleWordInOperand(2u);
+        else if (anno.GetSingleWordInOperand(1u) == SpvDecorationBinding)
+          var2binding_[anno.GetSingleWordInOperand(0u)] =
+              anno.GetSingleWordInOperand(2u);
+      }
 }
 
 Pass::Status InstBindlessCheckPass::ProcessImpl() {

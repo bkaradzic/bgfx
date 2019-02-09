@@ -5517,6 +5517,8 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
 
   return std::string(R"(
             OpCapability Shader
+            OpCapability RuntimeDescriptorArrayEXT
+            OpExtension "SPV_EXT_descriptor_indexing"
             OpExtension "SPV_KHR_storage_buffer_storage_class"
             OpMemoryModel Logical GLSL450
             OpEntryPoint Vertex %main "main"
@@ -5546,6 +5548,8 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
    %void_fn = OpTypeFunction %void
      %float = OpTypeFloat 32
    %float_0 = OpConstant %float 0
+   %int     = OpTypeInt 32 0
+   %int_2   = OpConstant %int 2
   %struct_b = OpTypeStruct %float
  %struct_bb = OpTypeStruct %float
  %rtarr = OpTypeRuntimeArray %float
@@ -5555,6 +5559,8 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
  %imstor = OpTypeImage %float 2D 0 0 0 2 R32f
  ; sampled image
  %imsam = OpTypeImage %float 2D 0 0 0 1 R32f
+%array_imstor = OpTypeArray %imstor %int_2
+%rta_imstor = OpTypeRuntimeArray %imstor
 
 %_ptr_Uniform_stb        = OpTypePointer Uniform %struct_b
 %_ptr_Uniform_stbb       = OpTypePointer Uniform %struct_bb
@@ -5565,6 +5571,8 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
 %_ptr_Function           = OpTypePointer Function %float
 %_ptr_imstor             = OpTypePointer UniformConstant %imstor
 %_ptr_imsam              = OpTypePointer UniformConstant %imsam
+%_ptr_array_imstor       = OpTypePointer UniformConstant %array_imstor
+%_ptr_rta_imstor         = OpTypePointer UniformConstant %rta_imstor
 
 %extra_fn = OpTypeFunction %void %float %_ptr_Private %_ptr_imstor
 
@@ -5576,6 +5584,8 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
 %var_priv = OpVariable %_ptr_Private Private
 %var_imstor = OpVariable %_ptr_imstor UniformConstant
 %var_imsam = OpVariable %_ptr_imsam UniformConstant
+%var_array_imstor = OpVariable %_ptr_array_imstor UniformConstant
+%var_rta_imstor = OpVariable %_ptr_rta_imstor UniformConstant
 
   %helper = OpFunction %void None %extra_fn
  %param_f = OpFunctionParameter %float
@@ -5752,6 +5762,20 @@ TEST_F(ValidateDecorations, NonWritableVarFunctionBad) {
               HasSubstr("Target of NonWritable decoration is invalid: must "
                         "point to a storage image, uniform block, or storage "
                         "buffer\n  %var_func"));
+}
+
+TEST_F(ValidateDecorations, NonWritableArrayGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_array_imstor");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateDecorations, NonWritableRuntimeArrayGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%var_rta_imstor");
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_P(ValidateWebGPUCombineDecorationResult, Decorate) {

@@ -51,8 +51,9 @@ add_spvtools_unittest(TARGET val_limits
   PCH_FILE pch_test_val
 )
 
-add_spvtools_unittest(TARGET val_ijklmnop
+add_spvtools_unittest(TARGET val_fghijklmnop
   SRCS
+       val_function_test.cpp
        val_id_test.cpp
        val_image_test.cpp
        val_interfaces_test.cpp

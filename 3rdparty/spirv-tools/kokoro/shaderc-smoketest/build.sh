@@ -37,7 +37,7 @@ cd $SHADERC_DIR/third_party
 
 # Get shaderc dependencies. Link the appropriate SPIRV-Tools.
 git clone https://github.com/google/googletest.git
-git clone https://github.com/google/glslang.git
+git clone https://github.com/KhronosGroup/glslang.git
 ln -s $GITHUB_DIR/SPIRV-Tools spirv-tools
 git clone https://github.com/KhronosGroup/SPIRV-Headers.git spirv-headers
 git clone https://github.com/google/re2

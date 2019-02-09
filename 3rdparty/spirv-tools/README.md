@@ -432,6 +432,18 @@ The validator operates on the binary form.
 * `spirv-val` - the standalone validator
   * `<spirv-dir>/tools/val`
 
+### Reducer tool
+
+The reducer shrinks a SPIR-V binary module, guided by a user-supplied
+*interestingness test*.
+
+This is a work in progress, with initially only shrinks a module in a few ways.
+
+* `spirv-reduce` - the standalone reducer
+  * `<spirv-dir>/tools/reduce`
+
+Run `spirv-reduce --help` to see how to specify interestingness.
+
 ### Control flow dumper tool
 
 The control flow dumper prints the control flow graph for a SPIR-V module as a

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "source/opt/eliminate_dead_functions_pass.h"
+#include "source/opt/eliminate_dead_functions_util.h"
 
 #include <unordered_set>
 
@@ -36,8 +37,8 @@ Pass::Status EliminateDeadFunctionsPass::Process() {
        funcIter != get_module()->end();) {
     if (live_function_set.count(&*funcIter) == 0) {
       modified = true;
-      EliminateFunction(&*funcIter);
-      funcIter = funcIter.Erase();
+      funcIter =
+          eliminatedeadfunctionsutil::EliminateFunction(context(), &funcIter);
     } else {
       ++funcIter;
     }
@@ -47,10 +48,5 @@ Pass::Status EliminateDeadFunctionsPass::Process() {
                   : Pass::Status::SuccessWithoutChange;
 }
 
-void EliminateDeadFunctionsPass::EliminateFunction(Function* func) {
-  // Remove all of the instruction in the function body
-  func->ForEachInst([this](Instruction* inst) { context()->KillInst(inst); },
-                    true);
-}
 }  // namespace opt
 }  // namespace spvtools

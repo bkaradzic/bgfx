@@ -2274,6 +2274,7 @@ void createVariablePointerSpirvProgram(std::ostringstream* spirv,
     *spirv << "OpCapability VariablePointers ";
     *spirv << "OpExtension \"SPV_KHR_variable_pointers\" ";
   }
+  *spirv << "OpExtension \"SPV_KHR_storage_buffer_storage_class\" ";
   *spirv << R"(
     OpMemoryModel Logical GLSL450
     OpEntryPoint GLCompute %main "main"
@@ -2282,12 +2283,12 @@ void createVariablePointerSpirvProgram(std::ostringstream* spirv,
     %bool      = OpTypeBool
     %i32       = OpTypeInt 32 1
     %f32       = OpTypeFloat 32
-    %f32ptr    = OpTypePointer Uniform %f32
+    %f32ptr    = OpTypePointer StorageBuffer %f32
     %i         = OpConstant %i32 1
     %zero      = OpConstant %i32 0
     %float_1   = OpConstant %f32 1.0
-    %ptr1      = OpVariable %f32ptr Uniform
-    %ptr2      = OpVariable %f32ptr Uniform
+    %ptr1      = OpVariable %f32ptr StorageBuffer
+    %ptr2      = OpVariable %f32ptr StorageBuffer
   )";
   if (add_helper_function) {
     *spirv << R"(

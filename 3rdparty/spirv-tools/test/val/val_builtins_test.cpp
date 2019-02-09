@@ -1995,7 +1995,7 @@ INSTANTIATE_TEST_SUITE_P(
                               "needs to be a 4-component 32-bit float vector",
                               "is not a float vector"))));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     PositionArrayedF32Vec4Vertex, ValidateWebGPUCombineBuiltInArrayedVariable,
     Combine(Values("Position"), Values("Vertex"), Values("Output"),
             Values("%f32vec4"),
