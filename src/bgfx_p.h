@@ -3315,7 +3315,7 @@ namespace bgfx
 				return BGFX_INVALID_HANDLE;
 			}
 
-			uint32_t size = bx::strideAlign<16>(_num*_decl.m_stride, _decl.m_stride);
+			const uint32_t size = bx::strideAlign<16>(_num*_decl.m_stride, _decl.m_stride)+_decl.m_stride;
 
 			uint64_t ptr = 0;
 			if (0 != (_flags & BGFX_BUFFER_COMPUTE_READ_WRITE) )
@@ -3398,11 +3398,13 @@ namespace bgfx
 				m_dynVertexBufferAllocator.free(uint64_t(dvb.m_handle.idx)<<32 | dvb.m_offset);
 				m_dynVertexBufferAllocator.compact();
 
-				uint64_t ptr = allocDynamicVertexBuffer(_mem->size, dvb.m_flags);
+				const uint32_t size = bx::strideAlign<16>(_mem->size, dvb.m_stride)+dvb.m_stride;
+				const uint64_t ptr  = allocDynamicVertexBuffer(size, dvb.m_flags);
+
 				dvb.m_handle.idx  = uint16_t(ptr>>32);
 				dvb.m_offset      = uint32_t(ptr);
-				dvb.m_size        = _mem->size;
-				dvb.m_numVertices = dvb.m_size / dvb.m_stride;
+				dvb.m_size        = size;
+				dvb.m_numVertices = _mem->size / dvb.m_stride;
 				dvb.m_startVertex = bx::strideAlign(dvb.m_offset, dvb.m_stride)/dvb.m_stride;
 			}
 
