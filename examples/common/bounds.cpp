@@ -440,7 +440,7 @@ Ray makeRay(float _x, float _y, const float* _invVp)
 
 inline Vec3 getPointAt(const Ray& _ray, float _t)
 {
-	return add(mul(_ray.dir, _t), _ray.pos);
+	return mad(_ray.dir, _t, _ray.pos);
 }
 
 bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit)
@@ -754,7 +754,7 @@ bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit)
 
 		float tt = -dist/ndotd;
 		_hit->plane.dist = tt;
-		_hit->pos  = getPointAt(_ray, tt);
+		_hit->pos = getPointAt(_ray, tt);
 	}
 
 	return true;
@@ -855,12 +855,11 @@ Vec3 barycentric(const Triangle& _triangle, const Vec3& _pos)
 
 	const float invDenom = 1.0f/(dot00*dot11 - square(dot01) );
 
-	const float uu = (dot11*dot02 - dot01*dot12)*invDenom;
-	const float vv = (dot00*dot12 - dot01*dot02)*invDenom;
-	const float ww = 1.0f - uu - vv;
+	const float vv = (dot11*dot02 - dot01*dot12)*invDenom;
+	const float ww = (dot00*dot12 - dot01*dot02)*invDenom;
+	const float uu = 1.0f - vv - ww;
 
 	return { uu, vv, ww };
-
 }
 
 Vec3 cartesian(const Triangle& _triangle, const Vec3& _uvw)
@@ -1072,6 +1071,13 @@ bool intersect(float& _outTa, float& _outTb, const LineSegment& _a, const LineSe
 	_outTb = (d0+d1*ta)/d3;
 
 	return true;
+}
+
+float distance(const Plane& _plane, const LineSegment& _line)
+{
+	const float pd = distance(_plane, _line.pos);
+	const float ed = distance(_plane, _line.end);
+	return min(max(pd*ed, 0.0f), bx::abs(pd), bx::abs(ed) );
 }
 
 Vec3 closestPoint(const LineSegment& _line, const Vec3& _point, float& _outT)
@@ -1306,8 +1312,7 @@ bool overlap(const Capsule& _capsule, const Aabb& _aabb)
 
 bool overlap(const Capsule& _capsule, const Plane& _plane)
 {
-	BX_UNUSED(_capsule, _plane);
-	return false;
+	return distance(_plane, LineSegment{_capsule.pos, _capsule.end}) <= _capsule.radius;
 }
 
 bool overlap(const Capsule& _capsule, const Triangle& _triangle)
