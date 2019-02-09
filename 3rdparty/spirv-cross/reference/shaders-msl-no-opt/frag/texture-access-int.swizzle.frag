@@ -136,7 +136,7 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-fragment void main0(constant spvAux& spvAuxBuffer [[buffer(0)]], texture1d<int> tex1d [[texture(0)]], texture2d<int> tex2d [[texture(1)]], texture3d<int> tex3d [[texture(2)]], texturecube<int> texCube [[texture(3)]], texture2d_array<int> tex2dArray [[texture(4)]], texturecube_array<int> texCubeArray [[texture(5)]], texture2d<int> texBuffer [[texture(6)]], sampler tex1dSmplr [[sampler(0)]], sampler tex2dSmplr [[sampler(1)]], sampler tex3dSmplr [[sampler(2)]], sampler texCubeSmplr [[sampler(3)]], sampler tex2dArraySmplr [[sampler(4)]], sampler texCubeArraySmplr [[sampler(5)]])
+fragment void main0(constant spvAux& spvAuxBuffer [[buffer(30)]], texture1d<int> tex1d [[texture(0)]], texture2d<int> tex2d [[texture(1)]], texture3d<int> tex3d [[texture(2)]], texturecube<int> texCube [[texture(3)]], texture2d_array<int> tex2dArray [[texture(4)]], texturecube_array<int> texCubeArray [[texture(5)]], texture2d<int> texBuffer [[texture(6)]], sampler tex1dSmplr [[sampler(0)]], sampler tex2dSmplr [[sampler(1)]], sampler tex3dSmplr [[sampler(2)]], sampler texCubeSmplr [[sampler(3)]], sampler tex2dArraySmplr [[sampler(4)]], sampler texCubeArraySmplr [[sampler(5)]])
 {
     constant uint32_t& tex1dSwzl = spvAuxBuffer.swizzleConst[0];
     constant uint32_t& tex2dSwzl = spvAuxBuffer.swizzleConst[1];

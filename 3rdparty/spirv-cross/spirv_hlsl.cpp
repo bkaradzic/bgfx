@@ -1327,21 +1327,24 @@ void CompilerHLSL::emit_resources()
 		auto &var = get<SPIRVariable>(global);
 		if (var.storage != StorageClassOutput)
 		{
-			add_resource_name(var.self);
-
-			const char *storage = nullptr;
-			switch (var.storage)
+			if (!variable_is_lut(var))
 			{
-			case StorageClassWorkgroup:
-				storage = "groupshared";
-				break;
+				add_resource_name(var.self);
 
-			default:
-				storage = "static";
-				break;
+				const char *storage = nullptr;
+				switch (var.storage)
+				{
+				case StorageClassWorkgroup:
+					storage = "groupshared";
+					break;
+
+				default:
+					storage = "static";
+					break;
+				}
+				statement(storage, " ", variable_decl(var), ";");
+				emitted = true;
 			}
-			statement(storage, " ", variable_decl(var), ";");
-			emitted = true;
 		}
 	}
 

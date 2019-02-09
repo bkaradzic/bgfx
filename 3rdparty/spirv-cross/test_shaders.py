@@ -154,6 +154,8 @@ def cross_compile_msl(shader, spirv, opt):
         msl_args.append('--msl-ios')
     if '.pad-fragment.' in shader:
         msl_args.append('--msl-pad-fragment-output')
+    if '.capture.' in shader:
+        msl_args.append('--msl-capture-output')
 
     subprocess.check_call(msl_args)
 

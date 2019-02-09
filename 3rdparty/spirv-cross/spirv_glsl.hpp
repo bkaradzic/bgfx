@@ -638,6 +638,8 @@ protected:
 
 	uint32_t get_integer_width_for_instruction(const Instruction &instr) const;
 
+	bool variable_is_lut(const SPIRVariable &var) const;
+
 private:
 	void init()
 	{

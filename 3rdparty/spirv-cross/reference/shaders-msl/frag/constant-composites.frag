@@ -40,10 +40,8 @@ void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])
 fragment main0_out main0(main0_in in [[stage_in]])
 {
     main0_out out = {};
-    float lut[4] = { 1.0, 4.0, 3.0, 2.0 };
-    Foo foos[2] = { Foo{ 10.0, 20.0 }, Foo{ 30.0, 40.0 } };
-    out.FragColor = float4(lut[in.line]);
-    out.FragColor += float4(foos[in.line].a * foos[1 - in.line].a);
+    out.FragColor = float4(_16[in.line]);
+    out.FragColor += float4(_28[in.line].a * _28[1 - in.line].a);
     return out;
 }
 

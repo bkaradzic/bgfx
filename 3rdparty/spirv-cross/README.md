@@ -24,17 +24,29 @@ However, most missing features are expected to be "trivial" improvements at this
 
 ## Building
 
-SPIRV-Cross has been tested on Linux, OSX and Windows.
-
-The make and CMake build flavors offer the option to treat exceptions as assertions. To disable exceptions for make just append `SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS=1` to the command line. For CMake append `-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS=ON`. By default exceptions are enabled.
+SPIRV-Cross has been tested on Linux, iOS/OSX, Windows and Android. CMake is the main build system.
 
 ### Linux and macOS
 
-Just run `make` on the command line. A recent GCC (4.8+) or Clang (3.x+) compiler is required as SPIRV-Cross uses C++11 extensively.
+Building with CMake is recommended, as it is the only build system which is tested in continuous integration.
+It is also the only build system which has install commands and other useful build system features.
+
+However, you can just run `make` on the command line as a fallback if you only care about the CLI tool.
+
+A non-ancient GCC (4.8+) or Clang (3.x+) compiler is required as SPIRV-Cross uses C++11 extensively.
 
 ### Windows
 
-MinGW-w64 based compilation works with `make`, and an MSVC 2013 solution is also included.
+Building with CMake is recommended, which is the only way to target MSVC.
+MinGW-w64 based compilation works with `make` as a fallback.
+
+### Android
+
+SPIRV-Cross is only useful as a library here. Use the CMake build to link SPIRV-Cross to your project.
+
+### C++ exceptions
+
+The make and CMake build flavors offer the option to treat exceptions as assertions. To disable exceptions for make just append `SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS=1` to the command line. For CMake append `-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS=ON`. By default exceptions are enabled.
 
 ## Usage
 

@@ -490,6 +490,7 @@ struct CLIArguments
 	bool yflip = false;
 	bool sso = false;
 	bool support_nonzero_baseinstance = true;
+	bool msl_capture_output_to_buffer = false;
 	bool msl_swizzle_texture_samples = false;
 	bool msl_ios = false;
 	bool msl_pad_fragment_output = false;
@@ -545,6 +546,7 @@ static void print_help()
 	                "\t[--cpp-interface-name <name>]\n"
 	                "\t[--msl]\n"
 	                "\t[--msl-version <MMmmpp>]\n"
+	                "\t[--msl-capture-output]\n"
 	                "\t[--msl-swizzle-texture-samples]\n"
 	                "\t[--msl-ios]\n"
 	                "\t[--msl-pad-fragment-output]\n"
@@ -714,6 +716,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--vulkan-semantics", [&args](CLIParser &) { args.vulkan_semantics = true; });
 	cbs.add("--flatten-multidimensional-arrays", [&args](CLIParser &) { args.flatten_multidimensional_arrays = true; });
 	cbs.add("--no-420pack-extension", [&args](CLIParser &) { args.use_420pack_extension = false; });
+	cbs.add("--msl-capture-output", [&args](CLIParser &) { args.msl_capture_output_to_buffer = true; });
 	cbs.add("--msl-swizzle-texture-samples", [&args](CLIParser &) { args.msl_swizzle_texture_samples = true; });
 	cbs.add("--msl-ios", [&args](CLIParser &) { args.msl_ios = true; });
 	cbs.add("--msl-pad-fragment-output", [&args](CLIParser &) { args.msl_pad_fragment_output = true; });
@@ -843,6 +846,7 @@ static int main_inner(int argc, char *argv[])
 		auto msl_opts = msl_comp->get_msl_options();
 		if (args.set_msl_version)
 			msl_opts.msl_version = args.msl_version;
+		msl_opts.capture_output_to_buffer = args.msl_capture_output_to_buffer;
 		msl_opts.swizzle_texture_samples = args.msl_swizzle_texture_samples;
 		if (args.msl_ios)
 			msl_opts.platform = CompilerMSL::Options::iOS;

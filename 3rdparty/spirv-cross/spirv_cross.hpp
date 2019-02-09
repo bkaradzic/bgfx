@@ -938,7 +938,8 @@ protected:
 	};
 
 	void analyze_variable_scope(SPIRFunction &function, AnalyzeVariableScopeAccessHandler &handler);
-	void find_function_local_luts(SPIRFunction &function, const AnalyzeVariableScopeAccessHandler &handler);
+	void find_function_local_luts(SPIRFunction &function, const AnalyzeVariableScopeAccessHandler &handler,
+	                              bool single_function);
 
 	void make_constant_null(uint32_t id, uint32_t type);
 

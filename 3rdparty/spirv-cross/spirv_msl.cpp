@@ -90,24 +90,54 @@ void CompilerMSL::set_fragment_output_components(uint32_t location, uint32_t com
 void CompilerMSL::build_implicit_builtins()
 {
 	bool need_sample_pos = active_input_builtins.get(BuiltInSamplePosition);
-	if (need_subpass_input || need_sample_pos)
+	if (need_subpass_input || need_sample_pos || capture_output_to_buffer)
 	{
 		bool has_frag_coord = false;
 		bool has_sample_id = false;
+		bool has_vertex_idx = false;
+		bool has_base_vertex = false;
+		bool has_instance_idx = false;
+		bool has_base_instance = false;
 
 		ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
-			if (need_subpass_input && var.storage == StorageClassInput && ir.meta[var.self].decoration.builtin &&
-			    ir.meta[var.self].decoration.builtin_type == BuiltInFragCoord)
+			if (var.storage != StorageClassInput || !ir.meta[var.self].decoration.builtin)
+				return;
+
+			if (need_subpass_input && ir.meta[var.self].decoration.builtin_type == BuiltInFragCoord)
 			{
 				builtin_frag_coord_id = var.self;
 				has_frag_coord = true;
 			}
 
-			if (need_sample_pos && var.storage == StorageClassInput && ir.meta[var.self].decoration.builtin &&
-			    ir.meta[var.self].decoration.builtin_type == BuiltInSampleId)
+			if (need_sample_pos && ir.meta[var.self].decoration.builtin_type == BuiltInSampleId)
 			{
 				builtin_sample_id_id = var.self;
 				has_sample_id = true;
+			}
+
+			if (capture_output_to_buffer)
+			{
+				switch (ir.meta[var.self].decoration.builtin_type)
+				{
+				case BuiltInVertexIndex:
+					builtin_vertex_idx_id = var.self;
+					has_vertex_idx = true;
+					break;
+				case BuiltInBaseVertex:
+					builtin_base_vertex_id = var.self;
+					has_base_vertex = true;
+					break;
+				case BuiltInInstanceIndex:
+					builtin_instance_idx_id = var.self;
+					has_instance_idx = true;
+					break;
+				case BuiltInBaseInstance:
+					builtin_base_instance_id = var.self;
+					has_base_instance = true;
+					break;
+				default:
+					break;
+				}
 			}
 		});
 
@@ -163,9 +193,67 @@ void CompilerMSL::build_implicit_builtins()
 			set_decoration(var_id, DecorationBuiltIn, BuiltInSampleId);
 			builtin_sample_id_id = var_id;
 		}
+
+		if (capture_output_to_buffer &&
+		    (!has_vertex_idx || !has_base_vertex || !has_instance_idx || !has_base_instance))
+		{
+			uint32_t offset = ir.increase_bound_by(2);
+			uint32_t type_id = offset;
+			uint32_t type_ptr_id = offset + 1;
+
+			SPIRType uint_type;
+			uint_type.basetype = SPIRType::UInt;
+			uint_type.width = 32;
+			set<SPIRType>(type_id, uint_type);
+
+			SPIRType uint_type_ptr;
+			uint_type_ptr = uint_type;
+			uint_type_ptr.pointer = true;
+			uint_type_ptr.parent_type = type_id;
+			uint_type_ptr.storage = StorageClassInput;
+			auto &ptr_type = set<SPIRType>(type_ptr_id, uint_type_ptr);
+			ptr_type.self = type_id;
+
+			if (!has_vertex_idx)
+			{
+				uint32_t var_id = ir.increase_bound_by(1);
+
+				// Create gl_VertexIndex.
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInVertexIndex);
+				builtin_vertex_idx_id = var_id;
+			}
+			if (!has_base_vertex)
+			{
+				uint32_t var_id = ir.increase_bound_by(1);
+
+				// Create gl_BaseVertex.
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInBaseVertex);
+				builtin_base_vertex_id = var_id;
+			}
+			if (!has_instance_idx)
+			{
+				uint32_t var_id = ir.increase_bound_by(1);
+
+				// Create gl_InstanceIndex.
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInInstanceIndex);
+				builtin_instance_idx_id = var_id;
+			}
+			if (!has_base_instance)
+			{
+				uint32_t var_id = ir.increase_bound_by(1);
+
+				// Create gl_BaseInstance.
+				set<SPIRVariable>(var_id, type_ptr_id, StorageClassInput);
+				set_decoration(var_id, DecorationBuiltIn, BuiltInBaseInstance);
+				builtin_base_instance_id = var_id;
+			}
+		}
 	}
 
-	if (msl_options.swizzle_texture_samples && has_sampled_images)
+	if (needs_aux_buffer_def)
 	{
 		uint32_t offset = ir.increase_bound_by(5);
 		uint32_t type_id = offset;
@@ -174,7 +262,7 @@ void CompilerMSL::build_implicit_builtins()
 		uint32_t struct_ptr_id = offset + 3;
 		uint32_t var_id = offset + 4;
 
-		// Create a buffer to hold the swizzle constants.
+		// Create a buffer to hold extra data, including the swizzle constants.
 		SPIRType uint_type;
 		uint_type.basetype = SPIRType::UInt;
 		uint_type.width = 32;
@@ -194,8 +282,8 @@ void CompilerMSL::build_implicit_builtins()
 		type.self = struct_id;
 		set_decoration(struct_id, DecorationBlock);
 		set_name(struct_id, "spvAux");
-		set_member_name(struct_id, 0, "swizzleConst");
-		set_member_decoration(struct_id, 0, DecorationOffset, 0);
+		set_member_name(struct_id, k_aux_mbr_idx_swizzle_const, "swizzleConst");
+		set_member_decoration(struct_id, k_aux_mbr_idx_swizzle_const, DecorationOffset, 0);
 
 		SPIRType struct_type_ptr = struct_type;
 		struct_type_ptr.pointer = true;
@@ -230,6 +318,12 @@ static string create_sampler_address(const char *prefix, MSLSamplerAddress addr)
 	default:
 		SPIRV_CROSS_THROW("Invalid sampler addressing mode.");
 	}
+}
+
+SPIRType &CompilerMSL::get_stage_out_struct_type()
+{
+	auto &so_var = get<SPIRVariable>(stage_out_var_id);
+	return get_variable_data_type(so_var);
 }
 
 void CompilerMSL::emit_entry_point_declarations()
@@ -409,7 +503,8 @@ string CompilerMSL::compile()
 	backend.allow_truncated_access_chain = true;
 	backend.array_is_value_type = false;
 
-	is_rasterization_disabled = msl_options.disable_rasterization;
+	capture_output_to_buffer = msl_options.capture_output_to_buffer;
+	is_rasterization_disabled = msl_options.disable_rasterization || capture_output_to_buffer;
 
 	replace_illegal_names();
 
@@ -534,7 +629,8 @@ void CompilerMSL::localize_global_variables()
 		auto &var = get<SPIRVariable>(v_id);
 		if (var.storage == StorageClassPrivate || var.storage == StorageClassWorkgroup)
 		{
-			entry_func.add_local_variable(v_id);
+			if (!variable_is_lut(var))
+				entry_func.add_local_variable(v_id);
 			iter = global_variables.erase(iter);
 		}
 		else
@@ -613,13 +709,6 @@ void CompilerMSL::extract_global_variables_from_function(uint32_t func_id, std::
 					// Implicitly reads gl_FragCoord.
 					assert(builtin_frag_coord_id != 0);
 					added_arg_ids.insert(builtin_frag_coord_id);
-				}
-
-				if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(type))
-				{
-					// Implicitly reads spvAuxBuffer.
-					assert(aux_buffer_id != 0);
-					added_arg_ids.insert(aux_buffer_id);
 				}
 
 				break;
@@ -1398,14 +1487,35 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage)
 		bool ep_should_return_output = !get_is_rasterization_disabled();
 		uint32_t rtn_id = ep_should_return_output ? ib_var_id : 0;
 		auto &entry_func = get<SPIRFunction>(ir.default_entry_point);
-		entry_func.add_local_variable(ib_var_id);
-		for (auto &blk_id : entry_func.blocks)
+		if (!capture_output_to_buffer)
 		{
-			auto &blk = get<SPIRBlock>(blk_id);
-			if (blk.terminator == SPIRBlock::Return)
-				blk.return_value = rtn_id;
+			entry_func.add_local_variable(ib_var_id);
+			for (auto &blk_id : entry_func.blocks)
+			{
+				auto &blk = get<SPIRBlock>(blk_id);
+				if (blk.terminator == SPIRBlock::Return)
+					blk.return_value = rtn_id;
+			}
+			vars_needing_early_declaration.push_back(ib_var_id);
 		}
-		vars_needing_early_declaration.push_back(ib_var_id);
+		else
+		{
+			// Instead of declaring a struct variable to hold the output and then
+			// copying that to the output buffer, we'll declare the output variable
+			// as a reference to the final output element in the buffer. Then we can
+			// avoid the extra copy.
+			entry_func.fixup_hooks_in.push_back([=]() {
+				if (stage_out_var_id)
+				{
+					// The first member of the indirect buffer is always the number of vertices
+					// to draw.
+					statement("device ", to_name(ir.default_entry_point), "_", ib_var_ref, "& ", ib_var_ref, " = ",
+					          output_buffer_var_name, "[(", to_expression(builtin_instance_idx_id), " - ",
+					          to_expression(builtin_base_instance_id), ") * spvIndirectParams[0] + ",
+					          to_expression(builtin_vertex_idx_id), " - ", to_expression(builtin_base_vertex_id), "];");
+				}
+			});
+		}
 		break;
 	}
 
@@ -4075,9 +4185,9 @@ void CompilerMSL::emit_fixup()
 	}
 }
 
-// Emit a structure member, padding and packing to maintain the correct memeber alignments.
-void CompilerMSL::emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
-                                     const string &qualifier, uint32_t)
+// Return a string defining a structure member, with padding and packing.
+string CompilerMSL::to_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
+                                     const string &qualifier)
 {
 	auto &membertype = get<SPIRType>(member_type_id);
 
@@ -4122,8 +4232,15 @@ void CompilerMSL::emit_struct_member(const SPIRType &type, uint32_t member_type_
 			pack_pfx = "packed_";
 	}
 
-	statement(pack_pfx, type_to_glsl(*effective_membertype), " ", qualifier, to_member_name(type, index),
-	          member_attribute_qualifier(type, index), type_to_array_glsl(*effective_membertype), ";");
+	return join(pack_pfx, type_to_glsl(*effective_membertype), " ", qualifier, to_member_name(type, index),
+	            member_attribute_qualifier(type, index), type_to_array_glsl(membertype), ";");
+}
+
+// Emit a structure member, padding and packing to maintain the correct memeber alignments.
+void CompilerMSL::emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
+                                     const string &qualifier, uint32_t)
+{
+	statement(to_struct_member(type, member_type_id, index, qualifier));
 }
 
 // Return a MSL qualifier for the specified function attribute member
@@ -4360,11 +4477,7 @@ string CompilerMSL::func_type_decl(SPIRType &type)
 	// If an outgoing interface block has been defined, and it should be returned, override the entry point return type
 	bool ep_should_return_output = !get_is_rasterization_disabled();
 	if (stage_out_var_id && ep_should_return_output)
-	{
-		auto &so_var = get<SPIRVariable>(stage_out_var_id);
-		auto &so_type = get_variable_data_type(so_var);
-		return_type = type_to_glsl(so_type) + type_to_array_glsl(type);
-	}
+		return_type = type_to_glsl(get_stage_out_struct_type()) + type_to_array_glsl(type);
 
 	// Prepend a entry type, based on the execution model
 	string entry_type;
@@ -4427,6 +4540,11 @@ string CompilerMSL::get_argument_address_space(const SPIRVariable &argument)
 		// No address space for plain values.
 		return type.pointer ? "thread" : "";
 
+	case StorageClassOutput:
+		if (capture_output_to_buffer)
+			return "device";
+		break;
+
 	default:
 		break;
 	}
@@ -4463,6 +4581,11 @@ string CompilerMSL::get_type_address_space(const SPIRType &type)
 	case StorageClassGeneric:
 		// No address space for plain values.
 		return type.pointer ? "thread" : "";
+
+	case StorageClassOutput:
+		if (capture_output_to_buffer)
+			return "device";
+		break;
 
 	default:
 		break;
@@ -4628,6 +4751,21 @@ string CompilerMSL::entry_point_args(bool append_comma)
 
 	if (needs_instance_idx_arg)
 		ep_args += built_in_func_arg(BuiltInInstanceIndex, !ep_args.empty());
+
+	if (capture_output_to_buffer)
+	{
+		// Add parameters to hold the indirect draw parameters and the shader output. This has to be handled
+		// specially because it needs to be a pointer, not a reference.
+		if (stage_out_var_id)
+		{
+			if (!ep_args.empty())
+				ep_args += ", ";
+			ep_args += join("device ", type_to_glsl(get_stage_out_struct_type()), "* ", output_buffer_var_name,
+			                " [[buffer(", msl_options.shader_output_buffer_index, ")]], ");
+			ep_args +=
+			    join("device uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
+		}
+	}
 
 	if (!ep_args.empty() && append_comma)
 		ep_args += ", ";
@@ -5843,6 +5981,7 @@ bool CompilerMSL::SampledImageScanner::handle(spv::Op opcode, const uint32_t *ar
 	case OpImageDrefGather:
 		compiler.has_sampled_images =
 		    compiler.has_sampled_images || compiler.is_sampled_image_type(compiler.expression_type(args[2]));
+		compiler.needs_aux_buffer_def = compiler.needs_aux_buffer_def || compiler.has_sampled_images;
 		break;
 	default:
 		break;

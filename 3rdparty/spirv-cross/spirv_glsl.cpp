@@ -2137,6 +2137,20 @@ void CompilerGLSL::declare_undefined_values()
 		statement("");
 }
 
+bool CompilerGLSL::variable_is_lut(const SPIRVariable &var) const
+{
+	bool statically_assigned = var.statically_assigned && var.static_expression != 0 && var.remapped_variable;
+
+	if (statically_assigned)
+	{
+		auto *constant = maybe_get<SPIRConstant>(var.static_expression);
+		if (constant && constant->is_used_as_lut)
+			return true;
+	}
+
+	return false;
+}
+
 void CompilerGLSL::emit_resources()
 {
 	auto &execution = get_entry_point();
@@ -2347,9 +2361,12 @@ void CompilerGLSL::emit_resources()
 		auto &var = get<SPIRVariable>(global);
 		if (var.storage != StorageClassOutput)
 		{
-			add_resource_name(var.self);
-			statement(variable_decl(var), ";");
-			emitted = true;
+			if (!variable_is_lut(var))
+			{
+				add_resource_name(var.self);
+				statement(variable_decl(var), ";");
+				emitted = true;
+			}
 		}
 	}
 
