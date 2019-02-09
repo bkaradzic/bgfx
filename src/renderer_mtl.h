@@ -140,6 +140,11 @@ namespace bgfx { namespace mtl
 		{
 			return (uint32_t)m_obj.length;
 		}
+	
+		void setLabel(const char* _label)
+		{
+			[m_obj setLabel:@(_label)];
+		}
 	MTL_CLASS_END
 
 	MTL_CLASS(CommandBuffer)
@@ -767,13 +772,8 @@ namespace bgfx { namespace mtl
 	{
 		BufferMtl()
 			: m_flags(BGFX_BUFFER_NONE)
-			, m_dynamic(false)
-			, m_bufferIndex(0)
+			, m_dynamic(NULL)
 		{
-			for (uint32_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
-			{
-				m_buffers[ii] = NULL;
-			}
 		}
 
 		void create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride = 0, bool _vertex = false);
@@ -781,23 +781,21 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			for (uint32_t ii = 0; ii < MTL_MAX_FRAMES_IN_FLIGHT; ++ii)
+			MTL_RELEASE(m_ptr);
+
+			if (m_dynamic)
 			{
-				MTL_RELEASE(m_buffers[ii]);
+				BX_DELETE(g_allocator, m_dynamic);
+				m_dynamic = NULL;
 			}
-
-			m_dynamic = false;
 		}
-
-		Buffer getBuffer() const { return m_buffers[m_bufferIndex]; }
 
 		uint32_t m_size;
 		uint16_t m_flags;
+		bool     m_vertex;
 
-		bool m_dynamic;
-	private:
-		uint8_t  m_bufferIndex;
-		Buffer   m_buffers[MTL_MAX_FRAMES_IN_FLIGHT];
+		Buffer 		m_ptr;
+		uint8_t* 	m_dynamic;
 	};
 
 	typedef BufferMtl IndexBufferMtl;
