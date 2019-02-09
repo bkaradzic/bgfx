@@ -149,11 +149,20 @@ struct TOffsetRange {
 
 // Things that need to be tracked per xfb buffer.
 struct TXfbBuffer {
+#ifdef AMD_EXTENSIONS
+    TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), contains64BitType(false),
+                   contains32BitType(false), contains16BitType(false) { }
+#else
     TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), contains64BitType(false) { }
+#endif
     std::vector<TRange> ranges;  // byte offsets that have already been assigned
     unsigned int stride;
     unsigned int implicitStride;
     bool contains64BitType;
+#ifdef AMD_EXTENSIONS
+    bool contains32BitType;
+    bool contains16BitType;
+#endif
 };
 
 // Track a set of strings describing how the module was processed.
@@ -669,7 +678,11 @@ public:
     }
     unsigned getXfbStride(int buffer) const { return xfbBuffers[buffer].stride; }
     int addXfbBufferOffset(const TType&);
+#ifdef AMD_EXTENSIONS
+    unsigned int computeTypeXfbSize(const TType&, bool& contains64BitType, bool& contains32BitType, bool& contains16BitType) const;
+#else
     unsigned int computeTypeXfbSize(const TType&, bool& contains64BitType) const;
+#endif
     static int getBaseAlignmentScalar(const TType&, int& size);
     static int getBaseAlignment(const TType&, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor);
     static int getScalarAlignment(const TType&, int& size, int& stride, bool rowMajor);

@@ -5357,6 +5357,9 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp uvec3 gl_GlobalInvocationID;"
             "in highp uint gl_LocalInvocationIndex;"
 
+            "in uint gl_MeshViewCountNV;"
+            "in uint gl_MeshViewIndicesNV[4];"
+
             "\n");
     }
 
@@ -8843,6 +8846,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_LocalInvocationID",    1, &E_GL_NV_mesh_shader);
             symbolTable.setVariableExtensions("gl_GlobalInvocationID",   1, &E_GL_NV_mesh_shader);
             symbolTable.setVariableExtensions("gl_LocalInvocationIndex", 1, &E_GL_NV_mesh_shader);
+            symbolTable.setVariableExtensions("gl_MeshViewCountNV",      1, &E_GL_NV_mesh_shader);
+            symbolTable.setVariableExtensions("gl_MeshViewIndicesNV",    1, &E_GL_NV_mesh_shader);
 
             BuiltInVariable("gl_TaskCountNV",          EbvTaskCountNV,          symbolTable);
             BuiltInVariable("gl_WorkGroupSize",        EbvWorkGroupSize,        symbolTable);
@@ -8850,8 +8855,11 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_LocalInvocationID",    EbvLocalInvocationId,    symbolTable);
             BuiltInVariable("gl_GlobalInvocationID",   EbvGlobalInvocationId,   symbolTable);
             BuiltInVariable("gl_LocalInvocationIndex", EbvLocalInvocationIndex, symbolTable);
+            BuiltInVariable("gl_MeshViewCountNV",      EbvMeshViewCountNV,      symbolTable);
+            BuiltInVariable("gl_MeshViewIndicesNV",    EbvMeshViewIndicesNV,    symbolTable);
 
             symbolTable.setVariableExtensions("gl_MaxTaskWorkGroupSizeNV", 1, &E_GL_NV_mesh_shader);
+            symbolTable.setVariableExtensions("gl_MaxMeshViewCountNV",     1, &E_GL_NV_mesh_shader);
 
             symbolTable.setFunctionExtensions("barrier",                   1, &E_GL_NV_mesh_shader);
             symbolTable.setFunctionExtensions("memoryBarrierShared",       1, &E_GL_NV_mesh_shader);

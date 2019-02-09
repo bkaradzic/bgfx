@@ -5463,14 +5463,23 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
 
         // "The offset must be a multiple of the size of the first component of the first
         // qualified variable or block member, or a compile-time error results. Further, if applied to an aggregate
-        // containing a double, the offset must also be a multiple of 8..."
-        if (type.containsBasicType(EbtDouble) && ! IsMultipleOfPow2(qualifier.layoutXfbOffset, 8))
-            error(loc, "type contains double; xfb_offset must be a multiple of 8", "xfb_offset", "");
-        // ..., if applied to an aggregate containing a float16_t, the offset must also be a multiple of 2..."
-        else if (type.containsBasicType(EbtFloat16) && !IsMultipleOfPow2(qualifier.layoutXfbOffset, 2))
-            error(loc, "type contains half float; xfb_offset must be a multiple of 2", "xfb_offset", "");
+        // containing a double or 64-bit integer, the offset must also be a multiple of 8..."
+        if ((type.containsBasicType(EbtDouble) || type.containsBasicType(EbtInt64) || type.containsBasicType(EbtUint64)) &&
+            ! IsMultipleOfPow2(qualifier.layoutXfbOffset, 8))
+            error(loc, "type contains double or 64-bit integer; xfb_offset must be a multiple of 8", "xfb_offset", "");
+#ifdef AMD_EXTENSIONS
+        else if ((type.containsBasicType(EbtBool) || type.containsBasicType(EbtFloat) ||
+                  type.containsBasicType(EbtInt) || type.containsBasicType(EbtUint)) &&
+                 ! IsMultipleOfPow2(qualifier.layoutXfbOffset, 4))
+            error(loc, "must be a multiple of size of first component", "xfb_offset", "");
+        // ..., if applied to an aggregate containing a half float or 16-bit integer, the offset must also be a multiple of 2..."
+        else if ((type.containsBasicType(EbtFloat16) || type.containsBasicType(EbtInt16) || type.containsBasicType(EbtUint16)) &&
+                 !IsMultipleOfPow2(qualifier.layoutXfbOffset, 2))
+            error(loc, "type contains half float or 16-bit integer; xfb_offset must be a multiple of 2", "xfb_offset", "");
+#else
         else if (! IsMultipleOfPow2(qualifier.layoutXfbOffset, 4))
             error(loc, "must be a multiple of size of first component", "xfb_offset", "");
+#endif
     }
 
     if (qualifier.hasXfbStride() && qualifier.hasXfbBuffer()) {
@@ -6234,11 +6243,6 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
 
     // fix up
     fixOffset(loc, *symbol);
-
-    if (symbol->getType().getBasicType() == EbtStruct) {
-       fixXfbOffsets(symbol->getWritableType().getQualifier(),
-                     *(symbol->getWritableType().getWritableStruct()));
-    }
 
     return initNode;
 }
@@ -7287,12 +7291,24 @@ void TParseContext::fixXfbOffsets(TQualifier& qualifier, TTypeList& typeList)
     for (unsigned int member = 0; member < typeList.size(); ++member) {
         TQualifier& memberQualifier = typeList[member].type->getQualifier();
         bool contains64BitType = false;
+#ifdef AMD_EXTENSIONS
+        bool contains32BitType = false;
+        bool contains16BitType = false;
+        int memberSize = intermediate.computeTypeXfbSize(*typeList[member].type, contains64BitType, contains32BitType, contains16BitType);
+#else
         int memberSize = intermediate.computeTypeXfbSize(*typeList[member].type, contains64BitType);
+#endif
         // see if we need to auto-assign an offset to this member
         if (! memberQualifier.hasXfbOffset()) {
             // "if applied to an aggregate containing a double or 64-bit integer, the offset must also be a multiple of 8"
             if (contains64BitType)
                 RoundToPow2(nextOffset, 8);
+#ifdef AMD_EXTENSIONS
+            else if (contains32BitType)
+                RoundToPow2(nextOffset, 4);
+            else if (contains16BitType)
+                RoundToPow2(nextOffset, 2);
+#endif
             memberQualifier.layoutXfbOffset = nextOffset;
         } else
             nextOffset = memberQualifier.layoutXfbOffset;

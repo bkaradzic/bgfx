@@ -152,6 +152,7 @@ void ProcessConfigFile()
     }
 }
 
+int ReflectOptions = EShReflectionDefault;
 int Options = 0;
 const char* ExecutableName = nullptr;
 const char* binaryFileName = nullptr;
@@ -523,6 +524,16 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         Options |= EOptionNoStorageFormat;
                     } else if (lowerword == "relaxed-errors") {
                         Options |= EOptionRelaxedErrors;
+                    } else if (lowerword == "reflect-strict-array-suffix") {
+                        ReflectOptions |= EShReflectionStrictArraySuffix;
+                    } else if (lowerword == "reflect-basic-array-suffix") {
+                        ReflectOptions |= EShReflectionBasicArraySuffix;
+                    } else if (lowerword == "reflect-intermediate-io") {
+                        ReflectOptions |= EShReflectionIntermediateIO;
+                    } else if (lowerword == "reflect-separate-buffers") {
+                        ReflectOptions |= EShReflectionSeparateBuffers;
+                    } else if (lowerword == "reflect-all-block-variables") {
+                        ReflectOptions |= EShReflectionAllBlockVariables;
                     } else if (lowerword == "resource-set-bindings" ||  // synonyms
                                lowerword == "resource-set-binding"  ||
                                lowerword == "rsb") {
@@ -1051,7 +1062,7 @@ void CompileAndLinkShaderUnits(std::vector<ShaderCompUnit> compUnits)
 
     // Reflect
     if (Options & EOptionDumpReflection) {
-        program.buildReflection();
+        program.buildReflection(ReflectOptions);
         program.dumpReflection();
     }
 
@@ -1518,6 +1529,15 @@ void usage()
            "  --invert-y | --iy                 invert position.Y output in vertex shader\n"
            "  --keep-uncalled | --ku            don't eliminate uncalled functions\n"
            "  --no-storage-format | --nsf       use Unknown image format\n"
+           "  --reflect-strict-array-suffix     use strict array suffix rules when\n"
+           "                                    reflecting\n"
+           "  --reflect-basic-array-suffix      arrays of basic types will have trailing [0]\n"
+           "  --reflect-intermediate-io         reflection includes inputs/outputs of linked\n"
+           "                                    shaders rather than just vertex/fragment\n"
+           "  --reflect-separate-buffers        reflect buffer variables and blocks\n"
+           "                                    separately to uniforms\n"
+           "  --reflect-all-block-variables     reflect all variables in blocks, whether\n"
+           "                                    inactive or active\n"
            "  --resource-set-binding [stage] name set binding\n"
            "                                    set descriptor set and binding for\n"
            "                                    individual resources\n"

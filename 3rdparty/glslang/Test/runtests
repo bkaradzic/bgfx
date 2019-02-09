@@ -32,6 +32,16 @@ diff -b $BASEDIR/badMacroArgs.frag.out $TARGETDIR/badMacroArgs.frag.out || HASER
 echo Running reflection...
 $EXE -l -q -C reflection.vert > $TARGETDIR/reflection.vert.out
 diff -b $BASEDIR/reflection.vert.out $TARGETDIR/reflection.vert.out || HASERROR=1
+$EXE -l -q -C --reflect-strict-array-suffix --reflect-basic-array-suffix --reflect-intermediate-io --reflect-separate-buffers --reflect-all-block-variables reflection.options.vert > $TARGETDIR/reflection.options.vert.out
+diff -b $BASEDIR/reflection.options.vert.out $TARGETDIR/reflection.options.vert.out || HASERROR=1
+$EXE -l -q -C reflection.frag > $TARGETDIR/reflection.frag.out
+diff -b $BASEDIR/reflection.frag.out $TARGETDIR/reflection.frag.out || HASERROR=1
+$EXE -l -q -C --reflect-strict-array-suffix --reflect-basic-array-suffix --reflect-intermediate-io --reflect-separate-buffers --reflect-all-block-variables reflection.frag > $TARGETDIR/reflection.options.frag.out
+diff -b $BASEDIR/reflection.options.frag.out $TARGETDIR/reflection.options.frag.out || HASERROR=1
+$EXE -l -q -C reflection.linked.vert reflection.linked.frag > $TARGETDIR/reflection.linked.out
+diff -b $BASEDIR/reflection.linked.out $TARGETDIR/reflection.linked.out || HASERROR=1
+$EXE -l -q -C --reflect-strict-array-suffix --reflect-basic-array-suffix --reflect-intermediate-io --reflect-separate-buffers --reflect-all-block-variables reflection.linked.vert reflection.linked.frag > $TARGETDIR/reflection.linked.options.out
+diff -b $BASEDIR/reflection.linked.options.out $TARGETDIR/reflection.linked.options.out || HASERROR=1
 $EXE -D -Od -e flizv -l -q -C -V -Od hlsl.reflection.vert > $TARGETDIR/hlsl.reflection.vert.out
 diff -b $BASEDIR/hlsl.reflection.vert.out $TARGETDIR/hlsl.reflection.vert.out || HASERROR=1
 $EXE -D -Od -e main -l -q -C -V -Od hlsl.reflection.binding.frag > $TARGETDIR/hlsl.reflection.binding.frag.out
