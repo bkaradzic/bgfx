@@ -1115,11 +1115,11 @@ Vec3 closestPoint(const Obb& _obb, const Vec3& _point)
 {
 	Srt srt = toSrt(_obb.mtx);
 
-	const Vec3 obbSpacePos = mul(sub(_point, srt.translation), invert(srt.rotation) );
-
 	Aabb aabb;
 	toAabb(aabb, srt.scale);
 
+	const Quaternion invRotation = invert(srt.rotation);
+	const Vec3 obbSpacePos = mul(sub(_point, srt.translation), invRotation);
 	const Vec3 pos = closestPoint(aabb, obbSpacePos);
 
 	return add(mul(pos, srt.rotation), srt.translation);
@@ -1392,8 +1392,7 @@ bool overlap(const Capsule& _capsule, const Disk& _disk)
 
 bool overlap(const Capsule& _capsule, const Obb& _obb)
 {
-	BX_UNUSED(_capsule, _obb);
-	return false;
+	return overlap(_obb, _capsule);
 }
 
 bool overlap(const Cone& _cone, const Vec3& _pos)
@@ -1579,8 +1578,15 @@ bool overlap(const Disk& _disk, const Obb& _obb)
 
 bool overlap(const Obb& _obb, const Vec3& _pos)
 {
-	BX_UNUSED(_obb, _pos);
-	return false;
+	Srt srt = toSrt(_obb.mtx);
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	const Quaternion invRotation = invert(srt.rotation);
+	const Vec3 pos = mul(sub(_pos, srt.translation), invRotation);
+
+	return overlap(aabb, pos);
 }
 
 bool overlap(const Obb& _obb, const Sphere& _sphere)
@@ -1612,7 +1618,21 @@ bool overlap(const Obb& _obb, const Cylinder& _cylinder)
 
 bool overlap(const Obb& _obb, const Capsule& _capsule)
 {
-	return overlap(_capsule, _obb);
+	Srt srt = toSrt(_obb.mtx);
+
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
+	const Quaternion invRotation = invert(srt.rotation);
+
+	Capsule capsule =
+	{
+		mul(sub(_capsule.pos, srt.translation), invRotation),
+		mul(sub(_capsule.end, srt.translation), invRotation),
+		_capsule.radius,
+	};
+
+	return overlap(aabb, capsule);
 }
 
 bool overlap(const Obb& _obb, const Cone& _cone)
@@ -1685,8 +1705,7 @@ bool overlap(const Plane& _plane, const Disk& _disk)
 
 bool overlap(const Plane& _plane, const Obb& _obb)
 {
-	BX_UNUSED(_plane, _obb);
-	return false;
+	return overlap(_obb, _plane);
 }
 
 bool overlap(const Sphere& _sphere, const Vec3& _pos)
@@ -1950,6 +1969,9 @@ bool overlap(const Triangle& _triangle, const Obb& _obb)
 {
 	Srt srt = toSrt(_obb.mtx);
 
+	Aabb aabb;
+	toAabb(aabb, srt.scale);
+
 	const Quaternion invRotation = invert(srt.rotation);
 
 	const Triangle triangle =
@@ -1958,9 +1980,6 @@ bool overlap(const Triangle& _triangle, const Obb& _obb)
 		mul(sub(_triangle.v1, srt.translation), invRotation),
 		mul(sub(_triangle.v2, srt.translation), invRotation),
 	};
-
-	Aabb aabb;
-	toAabb(aabb, srt.scale);
 
 	return overlap(triangle, aabb);
 }
