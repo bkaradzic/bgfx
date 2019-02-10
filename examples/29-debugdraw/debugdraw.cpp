@@ -846,10 +846,7 @@ public:
 
 			_dde->setColor(0xff0000ff);
 
-			const bx::Vec3 tmp = bx::mul(hit.plane.normal, 0.7f);
-			const bx::Vec3 end = bx::add(hit.pos, tmp);
-
-			_dde->drawCone(hit.pos, end, 0.1f);
+			_dde->drawCone(hit.pos, bx::mad(hit.plane.normal, 0.7f, hit.pos), 0.1f);
 
 			_dde->pop();
 
@@ -1145,6 +1142,7 @@ public:
 						0xffffffff,
 						kOverlapA,
 						0xff666666,
+						0xff6666ff,
 					};
 
 					constexpr uint32_t colorB[] =
@@ -1152,6 +1150,7 @@ public:
 						0xffffffff,
 						kOverlapB,
 						0xff888888,
+						0xff8888ff,
 					};
 
 					constexpr float kStep = 3.0f;

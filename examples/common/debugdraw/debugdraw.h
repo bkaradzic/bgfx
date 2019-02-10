@@ -109,13 +109,13 @@ struct DebugDrawEncoder
 	void moveTo(float _x, float _y, float _z = 0.0f);
 
 	///
-	void moveTo(const void* _pos);
+	void moveTo(const bx::Vec3& _pos);
 
 	///
 	void lineTo(float _x, float _y, float _z = 0.0f);
 
 	///
-	void lineTo(const void* _pos);
+	void lineTo(const bx::Vec3& _pos);
 
 	///
 	void close();

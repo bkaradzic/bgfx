@@ -1315,14 +1315,6 @@ struct DebugDrawEncoderImpl
 		m_vertexPos = m_pos;
 	}
 
-	void moveTo(const void* _pos)
-	{
-		BX_CHECK(State::Count != m_state);
-
-		const float* pos = (const float*)_pos;
-		moveTo(pos[0], pos[1], pos[2]);
-	}
-
 	void moveTo(const bx::Vec3& _pos)
 	{
 		BX_CHECK(State::Count != m_state);
@@ -1385,14 +1377,6 @@ struct DebugDrawEncoderImpl
 
 		m_indices[m_indexPos++] = prev;
 		m_indices[m_indexPos++] = curr;
-	}
-
-	void lineTo(const void* _pos)
-	{
-		BX_CHECK(State::Count != m_state);
-
-		const float* pos = (const float*)_pos;
-		lineTo(pos[0], pos[1], pos[2]);
 	}
 
 	void lineTo(const bx::Vec3& _pos)
@@ -1650,7 +1634,6 @@ struct DebugDrawEncoderImpl
 						, false
 						);
 
-
 					bgfx::allocTransientIndexBuffer(&tib, numIndices);
 					bgfx::topologyConvert(
 						  bgfx::TopologyConvert::TriListToLineList
@@ -1684,39 +1667,41 @@ struct DebugDrawEncoderImpl
 		bx::Plane planes[6];
 		buildFrustumPlanes(planes, _viewProj);
 
-		bx::Vec3 points[8];
-		points[0] = intersectPlanes(planes[0], planes[2], planes[4]);
-		points[1] = intersectPlanes(planes[0], planes[3], planes[4]);
-		points[2] = intersectPlanes(planes[0], planes[3], planes[5]);
-		points[3] = intersectPlanes(planes[0], planes[2], planes[5]);
-		points[4] = intersectPlanes(planes[1], planes[2], planes[4]);
-		points[5] = intersectPlanes(planes[1], planes[3], planes[4]);
-		points[6] = intersectPlanes(planes[1], planes[3], planes[5]);
-		points[7] = intersectPlanes(planes[1], planes[2], planes[5]);
+		const bx::Vec3 points[8] =
+		{
+			intersectPlanes(planes[0], planes[2], planes[4]),
+			intersectPlanes(planes[0], planes[3], planes[4]),
+			intersectPlanes(planes[0], planes[3], planes[5]),
+			intersectPlanes(planes[0], planes[2], planes[5]),
+			intersectPlanes(planes[1], planes[2], planes[4]),
+			intersectPlanes(planes[1], planes[3], planes[4]),
+			intersectPlanes(planes[1], planes[3], planes[5]),
+			intersectPlanes(planes[1], planes[2], planes[5]),
+		};
 
-		moveTo(&points[0].x);
-		lineTo(&points[1].x);
-		lineTo(&points[2].x);
-		lineTo(&points[3].x);
+		moveTo(points[0]);
+		lineTo(points[1]);
+		lineTo(points[2]);
+		lineTo(points[3]);
 		close();
 
-		moveTo(&points[4].x);
-		lineTo(&points[5].x);
-		lineTo(&points[6].x);
-		lineTo(&points[7].x);
+		moveTo(points[4]);
+		lineTo(points[5]);
+		lineTo(points[6]);
+		lineTo(points[7]);
 		close();
 
-		moveTo(&points[0].x);
-		lineTo(&points[4].x);
+		moveTo(points[0]);
+		lineTo(points[4]);
 
-		moveTo(&points[1].x);
-		lineTo(&points[5].x);
+		moveTo(points[1]);
+		lineTo(points[5]);
 
-		moveTo(&points[2].x);
-		lineTo(&points[6].x);
+		moveTo(points[2]);
+		lineTo(points[6]);
 
-		moveTo(&points[3].x);
-		lineTo(&points[7].x);
+		moveTo(points[3]);
+		lineTo(points[7]);
 	}
 
 	void drawFrustum(const void* _viewProj)
@@ -2434,7 +2419,7 @@ void DebugDrawEncoder::moveTo(float _x, float _y, float _z)
 	DEBUG_DRAW_ENCODER(moveTo(_x, _y, _z) );
 }
 
-void DebugDrawEncoder::moveTo(const void* _pos)
+void DebugDrawEncoder::moveTo(const bx::Vec3& _pos)
 {
 	DEBUG_DRAW_ENCODER(moveTo(_pos) );
 }
@@ -2444,7 +2429,7 @@ void DebugDrawEncoder::lineTo(float _x, float _y, float _z)
 	DEBUG_DRAW_ENCODER(lineTo(_x, _y, _z) );
 }
 
-void DebugDrawEncoder::lineTo(const void* _pos)
+void DebugDrawEncoder::lineTo(const bx::Vec3& _pos)
 {
 	DEBUG_DRAW_ENCODER(lineTo(_pos) );
 }

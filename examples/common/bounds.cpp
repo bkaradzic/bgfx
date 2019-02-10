@@ -1021,6 +1021,11 @@ struct LineSegment
 	Vec3 end;
 };
 
+inline Vec3 getPointAt(const LineSegment& _line, float _t)
+{
+	return lerp(_line.pos, _line.end, _t);
+}
+
 bool nearZero(float _v)
 {
 	return bx::abs(_v) < 0.0001f;
@@ -1806,10 +1811,113 @@ bool overlap(const Triangle& _triangle, const Cylinder& _cylinder)
 	return false;
 }
 
+bool intersect(const LineSegment& _line, const Plane& _plane, Hit* _hit)
+{
+	const float dist  = distance(_plane, _line.pos);
+	const float flip  = sign(dist);
+	const Vec3  dir   = normalize(sub(_line.end, _line.pos) );
+	const float ndotd = dot(dir, _plane.normal);
+	const float tt    = -dist/ndotd;
+	const float len   = length(sub(_line.end, _line.pos) );
+
+	if (tt < 0.0f || tt > len)
+	{
+		return false;
+	}
+
+	if (NULL != _hit)
+	{
+		_hit->pos = mad(dir, tt, _line.pos);
+
+		_hit->plane.normal =  mul(_plane.normal, flip);
+		_hit->plane.dist   = -dot(_hit->plane.normal, _hit->pos);
+	}
+
+	return true;
+}
+
 bool overlap(const Triangle& _triangle, const Capsule& _capsule)
 {
-	BX_UNUSED(_triangle, _capsule);
-	return false;
+	Plane plane;
+	calcPlane(plane, _triangle);
+
+	plane.normal = neg(plane.normal);
+	plane.dist   = -plane.dist;
+
+	const LineSegment line =
+	{
+		_capsule.pos,
+		_capsule.end,
+	};
+
+	Hit hit;
+	if (!intersect(line, plane, &hit) )
+	{
+		return false;
+	}
+
+	const Vec3 pos = closestPoint(plane, hit.pos);
+	const Vec3 uvw = barycentric(_triangle, pos);
+
+	const float nr = -_capsule.radius;
+
+	if (uvw.x >= nr
+	&&  uvw.y >= nr
+	&&  uvw.z >= nr)
+	{
+		return true;
+	}
+
+	const LineSegment ab = LineSegment{_triangle.v0, _triangle.v1};
+	const LineSegment bc = LineSegment{_triangle.v1, _triangle.v2};
+	const LineSegment ca = LineSegment{_triangle.v2, _triangle.v0};
+
+	float ta0, tb0;
+	const bool i0 = intersect(ta0, tb0, ab, line);
+
+	float ta1, tb1;
+	const bool i1 = intersect(ta1, tb1, bc, line);
+
+	float ta2, tb2;
+	const bool i2 = intersect(ta2, tb2, ca, line);
+
+	if (!i0
+	||  !i1
+	||  !i2)
+	{
+		return false;
+	}
+
+	ta0 = clamp(ta0, 0.0f, 1.0f);
+	ta1 = clamp(ta1, 0.0f, 1.0f);
+	ta2 = clamp(ta2, 0.0f, 1.0f);
+	tb0 = clamp(tb0, 0.0f, 1.0f);
+	tb1 = clamp(tb1, 0.0f, 1.0f);
+	tb2 = clamp(tb2, 0.0f, 1.0f);
+
+	const Vec3 pa0 = getPointAt(ab, ta0);
+	const Vec3 pa1 = getPointAt(bc, ta1);
+	const Vec3 pa2 = getPointAt(ca, ta2);
+
+	const Vec3 pb0 = getPointAt(line, tb0);
+	const Vec3 pb1 = getPointAt(line, tb1);
+	const Vec3 pb2 = getPointAt(line, tb2);
+
+	const float d0 = distanceSq(pa0, pb0);
+	const float d1 = distanceSq(pa1, pb1);
+	const float d2 = distanceSq(pa2, pb2);
+
+	if (d0 <= d1
+	&&  d0 <= d2)
+	{
+		return overlap(_capsule, pa0);
+	}
+	else if (d1 <= d2)
+	{
+		return overlap(_capsule, pa1);
+	}
+
+	return overlap(_capsule, pa2);
 }
 
 bool overlap(const Triangle& _triangle, const Cone& _cone)
