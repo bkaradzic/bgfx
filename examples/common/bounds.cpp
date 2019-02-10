@@ -1516,8 +1516,15 @@ bool overlap(const Cylinder& _cylinder, const Obb& _obb)
 
 bool overlap(const Disk& _disk, const Vec3& _pos)
 {
-	BX_UNUSED(_disk, _pos);
-	return false;
+	Plane plane;
+	calcPlane(plane, _disk.normal, _disk.center);
+
+	if (!nearZero(distance(plane, _pos) ) )
+	{
+		return false;
+	}
+
+	return distanceSq(_disk.center, _pos) <= square(_disk.radius);
 }
 
 bool overlap(const Disk& _disk, const Sphere& _sphere)
@@ -1851,9 +1858,9 @@ bool overlap(const Triangle& _triangle, const Capsule& _capsule)
 	};
 
 	Hit hit;
-	if (!intersect(line, plane, &hit) )
+	if (intersect(line, plane, &hit) )
 	{
-		return false;
+		return true;
 	}
 
 	const Vec3 pos = closestPoint(plane, hit.pos);
