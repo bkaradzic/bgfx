@@ -5219,6 +5219,7 @@ namespace bgfx { namespace d3d12
 									desc.Texture2DArray.FirstArraySlice = at.layer;
 									desc.Texture2DArray.ArraySize       = 1;
 									desc.Texture2DArray.MipSlice        = at.mip;
+									desc.Texture2DArray.PlaneSlice      = 0;
 								}
 								else
 								{
