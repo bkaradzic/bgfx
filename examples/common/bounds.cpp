@@ -1762,8 +1762,7 @@ bool overlap(const Obb& _obbA, const Obb& _obbB)
 
 bool overlap(const Plane& _plane, const Vec3& _pos)
 {
-	BX_UNUSED(_plane, _pos);
-	return false;
+	return isNearZero(distance(_plane, _pos) );
 }
 
 bool overlap(const Plane& _plane, const Sphere& _sphere)
@@ -1935,8 +1934,44 @@ bool overlap(const Triangle& _triangle, const Plane& _plane)
 
 bool overlap(const Triangle& _triangleA, const Triangle& _triangleB)
 {
-	BX_UNUSED(_triangleA, _triangleB);
-	return false;
+	const Vec3 baA = sub(_triangleA.v1, _triangleA.v0);
+	const Vec3 cbA = sub(_triangleA.v2, _triangleA.v1);
+	const Vec3 acA = sub(_triangleA.v0, _triangleA.v2);
+
+	const Vec3 baB = sub(_triangleB.v1, _triangleB.v0);
+	const Vec3 cbB = sub(_triangleB.v2, _triangleB.v1);
+	const Vec3 acB = sub(_triangleB.v0, _triangleB.v2);
+
+	const Vec3 axes[] =
+	{
+		cross(baA, cbA),
+		cross(baB, cbB),
+
+		cross(baB, baA),
+		cross(baB, cbA),
+		cross(baB, acA),
+
+		cross(cbB, baA),
+		cross(cbB, cbA),
+		cross(cbB, acA),
+
+		cross(acB, baA),
+		cross(acB, cbA),
+		cross(acB, acA),
+	};
+
+	for (uint32_t ii = 0; ii < BX_COUNTOF(axes); ++ii)
+	{
+		const Interval ia = projectToAxis(axes[ii], _triangleA);
+		const Interval ib = projectToAxis(axes[ii], _triangleB);
+
+		if (!overlap(ia, ib) )
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool overlap(const Triangle& _triangle, const Cylinder& _cylinder)
