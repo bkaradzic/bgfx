@@ -864,13 +864,13 @@ void calcPlane(Plane& _outPlane, const Triangle& _triangle)
 	calcPlane(_outPlane, _triangle.v0, _triangle.v1, _triangle.v2);
 }
 
-struct Range1
+struct Interval
 {
 	float start;
 	float end;
 };
 
-bool overlap(const Range1& _a, const Range1& _b)
+bool overlap(const Interval& _a, const Interval& _b)
 {
 	return _a.end > _b.start
 		&& _b.end > _a.start
@@ -882,7 +882,7 @@ float projectToAxis(const Vec3& _axis, const Vec3& _point)
 	return dot(_axis, _point);
 }
 
-Range1 projectToAxis(const Vec3& _axis, const Aabb& _aabb)
+Interval projectToAxis(const Vec3& _axis, const Aabb& _aabb)
 {
 	const float extent = bx::abs(dot(abs(_axis), getExtents(_aabb) ) );
 	const float center =         dot(    _axis , getCenter (_aabb) );
@@ -893,7 +893,7 @@ Range1 projectToAxis(const Vec3& _axis, const Aabb& _aabb)
 	};
 }
 
-Range1 projectToAxis(const Vec3& _axis, const Triangle& _triangle)
+Interval projectToAxis(const Vec3& _axis, const Triangle& _triangle)
 {
 	const float a0 = dot(_axis, _triangle.v0);
 	const float a1 = dot(_axis, _triangle.v1);
@@ -1302,8 +1302,8 @@ bool overlap(const Aabb& _aabb, const Triangle& _triangle)
 		{
 			const Vec3 axis = cross(kAxis[ii], edge[jj]);
 
-			const Range1 aabbR = projectToAxis(axis, _aabb);
-			const Range1 triR  = projectToAxis(axis, _triangle);
+			const Interval aabbR = projectToAxis(axis, _aabb);
+			const Interval triR  = projectToAxis(axis, _triangle);
 
 			if (!overlap(aabbR, triR) )
 			{
