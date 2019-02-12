@@ -1019,6 +1019,11 @@ struct Line
 	Vec3 dir;
 };
 
+inline Vec3 getPointAt(const Line& _line, float _t)
+{
+	return mad(_line.dir, _t, _line.pos);
+}
+
 bool intersect(Line& _outLine, const Plane& _planeA, const Plane& _planeB)
 {
 	const Vec3  axb   = cross(_planeA.normal, _planeB.normal);
@@ -1161,7 +1166,7 @@ float distance(const Plane& _plane, const LineSegment& _line)
 Vec3 closestPoint(const Line& _line, const Vec3& _point)
 {
 	const float tt = projectToAxis(_line.dir, sub(_point, _line.pos) );
-	return mad(_line.dir, tt, _line.pos);
+	return getPointAt(_line, tt);
 }
 
 Vec3 closestPoint(const LineSegment& _line, const Vec3& _point, float& _outT)
@@ -1175,8 +1180,8 @@ Vec3 closestPoint(const LineSegment& _line, const Vec3& _point, float& _outT)
 
 Vec3 closestPoint(const LineSegment& _line, const Vec3& _point)
 {
-	float ignore;
-	return closestPoint(_line, _point, ignore);
+	float ignored;
+	return closestPoint(_line, _point, ignored);
 }
 
 Vec3 closestPoint(const Plane& _plane, const Vec3& _point)
