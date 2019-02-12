@@ -1932,6 +1932,13 @@ bool overlap(const Triangle& _triangle, const Plane& _plane)
 		;
 }
 
+inline bool overlap(const Triangle& _triangleA, const Triangle& _triangleB, const Vec3& _axis)
+{
+	const Interval ia = projectToAxis(_axis, _triangleA);
+	const Interval ib = projectToAxis(_axis, _triangleB);
+	return overlap(ia, ib);
+}
+
 bool overlap(const Triangle& _triangleA, const Triangle& _triangleB)
 {
 	const Vec3 baA = sub(_triangleA.v1, _triangleA.v0);
@@ -1942,36 +1949,18 @@ bool overlap(const Triangle& _triangleA, const Triangle& _triangleB)
 	const Vec3 cbB = sub(_triangleB.v2, _triangleB.v1);
 	const Vec3 acB = sub(_triangleB.v0, _triangleB.v2);
 
-	const Vec3 axes[] =
-	{
-		cross(baA, cbA),
-		cross(baB, cbB),
-
-		cross(baB, baA),
-		cross(baB, cbA),
-		cross(baB, acA),
-
-		cross(cbB, baA),
-		cross(cbB, cbA),
-		cross(cbB, acA),
-
-		cross(acB, baA),
-		cross(acB, cbA),
-		cross(acB, acA),
-	};
-
-	for (uint32_t ii = 0; ii < BX_COUNTOF(axes); ++ii)
-	{
-		const Interval ia = projectToAxis(axes[ii], _triangleA);
-		const Interval ib = projectToAxis(axes[ii], _triangleB);
-
-		if (!overlap(ia, ib) )
-		{
-			return false;
-		}
-	}
-
-	return true;
+	return overlap(_triangleA, _triangleB, cross(baA, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(baB, cbB) )
+		&& overlap(_triangleA, _triangleB, cross(baB, baA) )
+		&& overlap(_triangleA, _triangleB, cross(baB, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(baB, acA) )
+		&& overlap(_triangleA, _triangleB, cross(cbB, baA) )
+		&& overlap(_triangleA, _triangleB, cross(cbB, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(cbB, acA) )
+		&& overlap(_triangleA, _triangleB, cross(acB, baA) )
+		&& overlap(_triangleA, _triangleB, cross(acB, cbA) )
+		&& overlap(_triangleA, _triangleB, cross(acB, acA) )
+		;
 }
 
 bool overlap(const Triangle& _triangle, const Cylinder& _cylinder)
