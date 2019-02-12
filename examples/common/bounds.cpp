@@ -1126,6 +1126,31 @@ bool intersect(const LineSegment& _a, const LineSegment _b)
 		;
 }
 
+bool intersect(const LineSegment& _line, const Plane& _plane, Hit* _hit)
+{
+	const float dist  = distance(_plane, _line.pos);
+	const float flip  = sign(dist);
+	const Vec3  dir   = normalize(sub(_line.end, _line.pos) );
+	const float ndotd = dot(dir, _plane.normal);
+	const float tt    = -dist/ndotd;
+	const float len   = length(sub(_line.end, _line.pos) );
+
+	if (tt < 0.0f || tt > len)
+	{
+		return false;
+	}
+
+	if (NULL != _hit)
+	{
+		_hit->pos = mad(dir, tt, _line.pos);
+
+		_hit->plane.normal =  mul(_plane.normal, flip);
+		_hit->plane.dist   = -dot(_hit->plane.normal, _hit->pos);
+	}
+
+	return true;
+}
+
 float distance(const Plane& _plane, const LineSegment& _line)
 {
 	const float pd = distance(_plane, _line.pos);
@@ -1967,31 +1992,6 @@ bool overlap(const Triangle& _triangle, const Cylinder& _cylinder)
 {
 	BX_UNUSED(_triangle, _cylinder);
 	return false;
-}
-
-bool intersect(const LineSegment& _line, const Plane& _plane, Hit* _hit)
-{
-	const float dist  = distance(_plane, _line.pos);
-	const float flip  = sign(dist);
-	const Vec3  dir   = normalize(sub(_line.end, _line.pos) );
-	const float ndotd = dot(dir, _plane.normal);
-	const float tt    = -dist/ndotd;
-	const float len   = length(sub(_line.end, _line.pos) );
-
-	if (tt < 0.0f || tt > len)
-	{
-		return false;
-	}
-
-	if (NULL != _hit)
-	{
-		_hit->pos = mad(dir, tt, _line.pos);
-
-		_hit->plane.normal =  mul(_plane.normal, flip);
-		_hit->plane.dist   = -dot(_hit->plane.normal, _hit->pos);
-	}
-
-	return true;
 }
 
 bool overlap(const Triangle& _triangle, const Capsule& _capsule)
