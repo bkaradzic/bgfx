@@ -1135,7 +1135,9 @@ namespace bgfx
 				||  0 == bx::strCmp(typen, "noperspective", 13)
 				||  0 == bx::strCmp(typen, "centroid", 8) )
 				{
-					if ('f' == _options.shaderType)
+					if ('f' == _options.shaderType
+					||    0 != glsl
+					||    0 != essl)
 					{
 						interpolation = typen;
 						usesInterpolationQualifiers = true;
