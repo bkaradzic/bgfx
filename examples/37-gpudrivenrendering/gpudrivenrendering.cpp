@@ -604,6 +604,7 @@ public:
 
 			// Create programs from shaders for occlusion pass.
 			m_programOcclusionPass    = loadProgram("vs_gdr_render_occlusion", NULL);
+			m_programCopyZ            = loadProgram("cs_gdr_copy_z", NULL);
 			m_programDownscaleHiZ     = loadProgram("cs_gdr_downscale_hi_z", NULL);
 			m_programOccludeProps     = loadProgram("cs_gdr_occlude_props", NULL);
 			m_programStreamCompaction = loadProgram("cs_gdr_stream_compaction", NULL);
@@ -706,6 +707,7 @@ public:
 
 		bgfx::destroy(m_programMainPass);
 		bgfx::destroy(m_programOcclusionPass);
+		bgfx::destroy(m_programCopyZ);
 		bgfx::destroy(m_programDownscaleHiZ);
 		bgfx::destroy(m_programOccludeProps);
 		bgfx::destroy(m_programStreamCompaction);
@@ -813,29 +815,29 @@ public:
 		uint32_t width = m_hiZwidth;
 		uint32_t height = m_hiZheight;
 
-		for (uint8_t lod = 0; lod < m_noofHiZMips; ++lod)
+		// copy mip zero over to the hi Z buffer.
+		// We can't currently use blit as it requires same format and CopyResource is not exposed.
 		{
-			float coordinateScale = lod > 0 ? 2.0f : 1.0f;
-
-			float inputRendertargetSize[4] = { (float)width, (float)height, coordinateScale, coordinateScale };
+			float inputRendertargetSize[4] = { (float)width, (float)height, 0.0f, 0.0f };
 			bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
 
-			if (lod > 0)
-			{
-				// down scale mip 1 onwards
-				width /= 2;
-				height /= 2;
+			bgfx::setTexture(0, s_texOcclusionDepth, getTexture(m_hiZDepthBuffer, 0));
+			bgfx::setImage(1, getTexture(m_hiZBuffer,      0), 0, bgfx::Access::Write);
+		
+			bgfx::dispatch(RENDER_PASS_HIZ_DOWNSCALE_ID, m_programCopyZ, width/16, height/16);
+		}
 
-				bgfx::setImage(0, getTexture(m_hiZBuffer, 0), lod - 1, bgfx::Access::Read);
-				bgfx::setImage(1, getTexture(m_hiZBuffer, 0), lod,     bgfx::Access::Write);
-			}
-			else
-			{
-				// copy mip zero over to the hi Z buffer.
-				// We can't currently use blit as it requires same format and CopyResource is not exposed.
-				bgfx::setImage(0, getTexture(m_hiZDepthBuffer, 0), 0, bgfx::Access::Read);
-				bgfx::setImage(1, getTexture(m_hiZBuffer,      0), 0, bgfx::Access::Write);
-			}
+		for (uint8_t lod = 1; lod < m_noofHiZMips; ++lod)
+		{
+			float inputRendertargetSize[4] = { (float)width, (float)height, 2.0f, 2.0f };
+			bgfx::setUniform(u_inputRTSize, inputRendertargetSize);
+
+			// down scale mip 1 onwards
+			width /= 2;
+			height /= 2;
+
+			bgfx::setImage(0, getTexture(m_hiZBuffer, 0), lod - 1, bgfx::Access::Read);
+			bgfx::setImage(1, getTexture(m_hiZBuffer, 0), lod,     bgfx::Access::Write);
 
 			bgfx::dispatch(RENDER_PASS_HIZ_DOWNSCALE_ID, m_programDownscaleHiZ, width/16, height/16);
 		}
@@ -1086,6 +1088,7 @@ public:
 
 	bgfx::ProgramHandle m_programMainPass;
 	bgfx::ProgramHandle m_programOcclusionPass;
+	bgfx::ProgramHandle m_programCopyZ;
 	bgfx::ProgramHandle m_programDownscaleHiZ;
 	bgfx::ProgramHandle m_programOccludeProps;
 	bgfx::ProgramHandle m_programStreamCompaction;
