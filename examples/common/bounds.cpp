@@ -1203,10 +1203,10 @@ Vec3 closestPoint(const Obb& _obb, const Vec3& _point)
 	toAabb(aabb, srt.scale);
 
 	const Quaternion invRotation = invert(srt.rotation);
-	const Vec3 obbSpacePos = mul(sub(_point, srt.translation), invRotation);
+	const Vec3 obbSpacePos = mul(sub(_point, srt.translation), srt.rotation);
 	const Vec3 pos = closestPoint(aabb, obbSpacePos);
 
-	return add(mul(pos, srt.rotation), srt.translation);
+	return add(mul(pos, invRotation), srt.translation);
 }
 
 Vec3 closestPoint(const Triangle& _triangle, const Vec3& _point)
