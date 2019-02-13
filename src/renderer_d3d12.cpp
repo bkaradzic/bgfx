@@ -4883,9 +4883,6 @@ namespace bgfx { namespace d3d12
 				break;
 			}
 
-{HRESULT hr = device->GetDeviceRemovedReason();
- BX_CHECK(SUCCEEDED(hr), "%x %x", hr, DXGI_ERROR_INVALID_CALL);}
-
 			m_ptr = createCommittedResource(device, HeapProperty::Texture, &resourceDesc, clearValue, renderTarget);
 
 			if (directAccess)
@@ -4921,9 +4918,6 @@ namespace bgfx { namespace d3d12
 			{
 				setState(commandList, state);
 			}
-
-{HRESULT hr = device->GetDeviceRemovedReason();
- BX_CHECK(SUCCEEDED(hr), "%x %x", hr, DXGI_ERROR_INVALID_CALL);}
 
 			if (0 != kk)
 			{
