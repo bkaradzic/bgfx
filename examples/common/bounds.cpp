@@ -1074,7 +1074,7 @@ inline Vec3 getPointAt(const LineSegment& _line, float _t)
 	return lerp(_line.pos, _line.end, _t);
 }
 
-bool intersect(float& _outTa, float& _outTb, const LineSegment& _a, const LineSegment _b)
+bool intersect(float& _outTa, float& _outTb, const LineSegment& _a, const LineSegment& _b)
 {
 	// Reference(s):
 	//
@@ -1116,7 +1116,7 @@ bool intersect(float& _outTa, float& _outTb, const LineSegment& _a, const LineSe
 	return true;
 }
 
-bool intersect(const LineSegment& _a, const LineSegment _b)
+bool intersect(const LineSegment& _a, const LineSegment& _b)
 {
 	float ta, tb;
 	if (!intersect(ta, tb, _a, _b) )
@@ -1347,8 +1347,7 @@ bool overlap(const Aabb& _aabb, const Triangle& _triangle)
 
 bool overlap(const Aabb& _aabb, const Cylinder& _cylinder)
 {
-	BX_UNUSED(_aabb, _cylinder);
-	return false;
+	return overlap(_cylinder, _aabb);
 }
 
 bool overlap(const Aabb& _aabb, const Capsule& _capsule)
@@ -1411,8 +1410,7 @@ bool overlap(const Capsule& _capsule, const Triangle& _triangle)
 
 bool overlap(const Capsule& _capsule, const Cylinder& _cylinder)
 {
-	BX_UNUSED(_capsule, _cylinder);
-	return false;
+	return overlap(_cylinder, _capsule);
 }
 
 bool overlap(const Capsule& _capsuleA, const Capsule& _capsuleB)
@@ -1538,20 +1536,20 @@ bool overlap(const Cone& _cone, const Obb& _obb)
 
 bool overlap(const Cylinder& _cylinder, const Vec3& _pos)
 {
-	BX_UNUSED(_cylinder, _pos);
-	return false;
+	const Vec3 pos = closestPoint(LineSegment{_cylinder.pos, _cylinder.end}, _pos);
+	return overlap(Disk{pos, normalize(sub(_cylinder.end, _cylinder.pos) ), _cylinder.radius}, _pos);
 }
 
 bool overlap(const Cylinder& _cylinder, const Sphere& _sphere)
 {
-	BX_UNUSED(_cylinder, _sphere);
-	return false;
+	const Vec3 pos = closestPoint(LineSegment{_cylinder.pos, _cylinder.end}, _sphere.center);
+	return overlap(Disk{pos, normalize(sub(_cylinder.end, _cylinder.pos) ), _cylinder.radius}, _sphere);
 }
 
 bool overlap(const Cylinder& _cylinder, const Aabb& _aabb)
 {
-	BX_UNUSED(_cylinder, _aabb);
-	return false;
+	const Vec3 pos = closestPoint(LineSegment{_cylinder.pos, _cylinder.end}, getCenter(_aabb) );
+	return overlap(Disk{pos, normalize(sub(_cylinder.end, _cylinder.pos) ), _cylinder.radius}, _aabb);
 }
 
 bool overlap(const Cylinder& _cylinder, const Plane& _plane)
@@ -1639,8 +1637,7 @@ bool overlap(const Disk& _disk, const Triangle& _triangle)
 
 bool overlap(const Disk& _disk, const Cylinder& _cylinder)
 {
-	BX_UNUSED(_disk, _cylinder);
-	return false;
+	return overlap(_cylinder, _disk);
 }
 
 bool overlap(const Disk& _disk, const Capsule& _capsule)
@@ -1820,8 +1817,7 @@ bool overlap(const Plane& _plane, const Triangle& _triangle)
 
 bool overlap(const Plane& _plane, const Cylinder& _cylinder)
 {
-	BX_UNUSED(_plane, _cylinder);
-	return false;
+	return overlap(_cylinder, _plane);
 }
 
 bool overlap(const Plane& _plane, const Capsule& _capsule)
@@ -1892,8 +1888,7 @@ bool overlap(const Sphere& _sphere, const Triangle& _triangle)
 
 bool overlap(const Sphere& _sphere, const Cylinder& _cylinder)
 {
-	BX_UNUSED(_sphere, _cylinder);
-	return false;
+	return overlap(_cylinder, _sphere);
 }
 
 bool overlap(const Sphere& _sphere, const Capsule& _capsule)
@@ -1995,8 +1990,7 @@ bool overlap(const Triangle& _triangleA, const Triangle& _triangleB)
 
 bool overlap(const Triangle& _triangle, const Cylinder& _cylinder)
 {
-	BX_UNUSED(_triangle, _cylinder);
-	return false;
+	return overlap(_cylinder, _triangle);
 }
 
 bool overlap(const Triangle& _triangle, const Capsule& _capsule)
