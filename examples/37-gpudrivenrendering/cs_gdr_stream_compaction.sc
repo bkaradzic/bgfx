@@ -32,8 +32,8 @@ void main()
 	int NoofDrawcalls = int(u_cullingConfig.w);
 
 	int offset = 1;
-	temp[2 * tID    ] = uint(instancePredicates[2 * tID    ]); // load input into shared memory
-	temp[2 * tID + 1] = uint(instancePredicates[2 * tID + 1]);
+	temp[2 * tID    ] = uint(instancePredicates[2 * tID    ] ? 1 : 0); // load input into shared memory
+	temp[2 * tID + 1] = uint(instancePredicates[2 * tID + 1] ? 1 : 0);
 
 	int d;
 
