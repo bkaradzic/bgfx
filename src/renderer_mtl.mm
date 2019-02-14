@@ -1071,44 +1071,44 @@ namespace bgfx { namespace mtl
 					, _blitter.m_vb->data
 					, true
 					);
-				
+
 				endEncoding();
-				
+
 				uint32_t width  = m_resolution.width;
 				uint32_t height = m_resolution.height;
-				
+
 				FrameBufferHandle fbh = BGFX_INVALID_HANDLE;
-				
+
 				RenderPassDescriptor renderPassDescriptor = newRenderPassDescriptor();
-				
+
 				setFrameBuffer(renderPassDescriptor, fbh);
-				
+
 				renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
 				renderPassDescriptor.colorAttachments[0].storeAction =
 				NULL != renderPassDescriptor.colorAttachments[0].resolveTexture
 				? MTLStoreActionMultisampleResolve
 				: MTLStoreActionStore
 				;
-				
+
 				RenderCommandEncoder rce = m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
 				m_renderCommandEncoder = rce;
 				m_renderCommandEncoderFrameBufferHandle = fbh;
 				MTL_RELEASE(renderPassDescriptor);
-				
+
 				MTLViewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
 				rce.setViewport(viewport);
 				MTLScissorRect rc = { 0,0,width,height };
 				rce.setScissorRect(rc);
 				rce.setCullMode(MTLCullModeNone);
-				
+
 				uint64_t state = 0
 				| BGFX_STATE_WRITE_RGB
 				| BGFX_STATE_WRITE_A
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
-				
+
 				setDepthStencilState(state);
-				
+
 				PipelineStateMtl* pso = getPipelineState(
 														 state
 														 , 0
@@ -1118,31 +1118,31 @@ namespace bgfx { namespace mtl
 														 , 0
 														 );
 				rce.setRenderPipelineState(pso->m_rps);
-				
+
 				const uint32_t vertexUniformBufferSize   = pso->m_vshConstantBufferSize;
 				const uint32_t fragmentUniformBufferSize = pso->m_fshConstantBufferSize;
-				
+
 				if (vertexUniformBufferSize)
 				{
 					m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, pso->m_vshConstantBufferAlignmentMask);
 					rce.setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
 				}
-				
+
 				m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
-				
+
 				if (0 != fragmentUniformBufferSize)
 				{
 					m_uniformBufferFragmentOffset = BX_ALIGN_MASK(m_uniformBufferFragmentOffset, pso->m_fshConstantBufferAlignmentMask);
 					rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 				}
-				
+
 				float proj[16];
 				bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
-				
+
 				PredefinedUniform& predefined = pso->m_predefined[0];
 				uint8_t flags = predefined.m_type;
 				setShaderUniform(flags, predefined.m_loc, proj, 4);
-				
+
 				m_textures[_blitter.m_texture.idx].commit(0, false, true);
 
 				VertexBufferMtl& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
@@ -1497,7 +1497,7 @@ namespace bgfx { namespace mtl
 				m_uniformBufferVertexOffset = BX_ALIGN_MASK(m_uniformBufferVertexOffset, pso->m_vshConstantBufferAlignmentMask);
 				m_renderCommandEncoder.setVertexBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
 			}
-			
+
 			m_uniformBufferFragmentOffset = m_uniformBufferVertexOffset + vertexUniformBufferSize;
 			if (fragmentUniformBufferSize)
 			{
@@ -1544,7 +1544,7 @@ namespace bgfx { namespace mtl
 						, mrtClearColor
 						, bx::uint32_min(fragmentUniformBufferSize, sizeof(mrtClearColor) )
 						);
-			
+
 
 			m_uniformBufferFragmentOffset += fragmentUniformBufferSize;
 			m_uniformBufferVertexOffset    = m_uniformBufferFragmentOffset;
@@ -2201,7 +2201,7 @@ namespace bgfx { namespace mtl
 			if (NULL == m_blitCommandEncoder)
 			{
 				endEncoding();
-				
+
 				if (NULL == m_commandBuffer)
 				{
 					m_commandBuffer = m_cmd.alloc();
@@ -2485,7 +2485,7 @@ namespace bgfx { namespace mtl
 	void BufferMtl::create(uint32_t _size, void* _data, uint16_t _flags, uint16_t _stride, bool _vertex)
 	{
 		BX_UNUSED(_stride);
-		
+
 		m_size = _size;
 		m_flags = _flags;
 		m_vertex = _vertex;
@@ -3219,7 +3219,7 @@ namespace bgfx { namespace mtl
 		return m_activeCommandBuffer;
 	}
 
-	static void commandBufferFinishedCallback(void* _data)
+	inline void commandBufferFinishedCallback(void* _data)
 	{
 		CommandQueueMtl* queue = (CommandQueueMtl*)_data;
 
@@ -3402,8 +3402,10 @@ namespace bgfx { namespace mtl
 
 	void RendererContextMtl::submitBlit(BlitState& _bs, uint16_t _view)
 	{
-		if (!_bs.hasItem(_view))
+		if (!_bs.hasItem(_view) )
+		{
 			return;
+		}
 
 		endEncoding();
 
@@ -3674,11 +3676,11 @@ namespace bgfx { namespace mtl
 							}
 
 							clearWithRenderPass = true
-							&& 0 == viewRect.m_x
-							&& 0      == viewRect.m_y
-							&& width  == viewRect.m_width
-							&& height == viewRect.m_height
-							;
+								&& 0      == viewRect.m_x
+								&& 0      == viewRect.m_y
+								&& width  == viewRect.m_width
+								&& height == viewRect.m_height
+								;
 
 							setFrameBuffer(renderPassDescriptor, fbh);
 
@@ -3728,13 +3730,13 @@ namespace bgfx { namespace mtl
 								{
 									depthAttachment.clearDepth = clr.m_depth;
 									depthAttachment.loadAction = 0 != (BGFX_CLEAR_DEPTH & clr.m_flags)
-									? MTLLoadActionClear
-									: MTLLoadActionLoad
-									;
-									depthAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
-									? MTLStoreActionDontCare
-									: MTLStoreActionStore
-									;
+										? MTLLoadActionClear
+										: MTLLoadActionLoad
+										;
+										depthAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
+										? MTLStoreActionDontCare
+										: MTLStoreActionStore
+										;
 								}
 
 								RenderPassStencilAttachmentDescriptor stencilAttachment = renderPassDescriptor.stencilAttachment;
@@ -3743,13 +3745,13 @@ namespace bgfx { namespace mtl
 								{
 									stencilAttachment.clearStencil = clr.m_stencil;
 									stencilAttachment.loadAction   = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
-									? MTLLoadActionClear
-									: MTLLoadActionLoad
-									;
+										? MTLLoadActionClear
+										: MTLLoadActionLoad
+										;
 									stencilAttachment.storeAction = NULL != m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
-									? MTLStoreActionDontCare
-									: MTLStoreActionStore
-									;
+										? MTLStoreActionDontCare
+										: MTLStoreActionStore
+										;
 								}
 							}
 							else
@@ -3863,7 +3865,7 @@ namespace bgfx { namespace mtl
 					if (isValid(currentProgram)
 					&&  NULL != currentPso)
 					{
-						uint32_t vertexUniformBufferSize   = currentPso->m_vshConstantBufferSize;
+						uint32_t vertexUniformBufferSize = currentPso->m_vshConstantBufferSize;
 
 						if (0 != vertexUniformBufferSize)
 						{
@@ -3898,7 +3900,7 @@ namespace bgfx { namespace mtl
 									TextureMtl& texture = m_textures[bind.m_idx];
 									m_computeCommandEncoder.setTexture(texture.getTextureMipLevel(bind.m_mip), stage);
 								}
-									break;
+								break;
 
 								case Binding::Texture:
 								{
@@ -3907,13 +3909,13 @@ namespace bgfx { namespace mtl
 
 									m_computeCommandEncoder.setTexture(texture.m_ptr, stage);
 									m_computeCommandEncoder.setSamplerState(
-																			0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
-																			? getSamplerState(flags)
-																			: texture.m_sampler
-																			, stage
-																			);
+										0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & flags)
+										? getSamplerState(flags)
+										: texture.m_sampler
+										, stage
+										);
 								}
-									break;
+								break;
 
 								case Binding::IndexBuffer:
 								case Binding::VertexBuffer:
@@ -3924,12 +3926,16 @@ namespace bgfx { namespace mtl
 									;
 									m_computeCommandEncoder.setBuffer(buffer.m_ptr, 0, stage + 1);
 								}
-									break;
+								break;
 							}
 						}
 					}
 
-					MTLSize threadsPerGroup = MTLSizeMake(currentPso->m_numThreads[0], currentPso->m_numThreads[1], currentPso->m_numThreads[2]);
+					MTLSize threadsPerGroup = MTLSizeMake(
+						  currentPso->m_numThreads[0]
+						, currentPso->m_numThreads[1]
+						, currentPso->m_numThreads[2]
+						);
 
 					if (isValid(compute.m_indirectBuffer) )
 					{
@@ -3943,14 +3949,20 @@ namespace bgfx { namespace mtl
 						uint32_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 						for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 						{
-							m_computeCommandEncoder.dispatchThreadgroupsWithIndirectBuffer(vb.m_ptr, args, threadsPerGroup);
+							m_computeCommandEncoder.dispatchThreadgroupsWithIndirectBuffer(
+								  vb.m_ptr
+								, args
+								, threadsPerGroup
+								);
 							args += BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 						}
 					}
 					else
 					{
-						m_computeCommandEncoder.dispatchThreadgroups(MTLSizeMake(compute.m_numX, compute.m_numY, compute.m_numZ)
-																	 ,threadsPerGroup);
+						m_computeCommandEncoder.dispatchThreadgroups(
+							  MTLSizeMake(compute.m_numX, compute.m_numY, compute.m_numZ)
+							, threadsPerGroup
+							);
 					}
 					continue;
 				}

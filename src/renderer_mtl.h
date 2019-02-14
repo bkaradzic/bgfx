@@ -140,7 +140,7 @@ namespace bgfx { namespace mtl
 		{
 			return (uint32_t)m_obj.length;
 		}
-	
+
 		void setLabel(const char* _label)
 		{
 			[m_obj setLabel:@(_label)];
@@ -783,7 +783,7 @@ namespace bgfx { namespace mtl
 		{
 			MTL_RELEASE(m_ptr);
 
-			if (m_dynamic)
+			if (NULL != m_dynamic)
 			{
 				BX_DELETE(g_allocator, m_dynamic);
 				m_dynamic = NULL;
@@ -794,8 +794,8 @@ namespace bgfx { namespace mtl
 		uint16_t m_flags;
 		bool     m_vertex;
 
-		Buffer 		m_ptr;
-		uint8_t* 	m_dynamic;
+		Buffer   m_ptr;
+		uint8_t* m_dynamic;
 	};
 
 	typedef BufferMtl IndexBufferMtl;
