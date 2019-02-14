@@ -584,12 +584,12 @@ public:
 
 						// Set render states.
 						bgfx::setState(0
-								| BGFX_STATE_WRITE_RGB
-								| BGFX_STATE_WRITE_A
-								| BGFX_STATE_WRITE_Z
-								| BGFX_STATE_DEPTH_TEST_LESS
-								| BGFX_STATE_MSAA
-								);
+							| BGFX_STATE_WRITE_RGB
+							| BGFX_STATE_WRITE_A
+							| BGFX_STATE_WRITE_Z
+							| BGFX_STATE_DEPTH_TEST_LESS
+							| BGFX_STATE_MSAA
+							);
 
 						// Submit primitive for rendering to view 0.
 						bgfx::submit(RENDER_PASS_GEOMETRY_ID, m_geomProgram);
@@ -686,10 +686,10 @@ public:
 								bgfx::setVertexBuffer(0, &tvb);
 								bgfx::setIndexBuffer(&tib);
 								bgfx::setState(0
-										| BGFX_STATE_WRITE_RGB
-										| BGFX_STATE_PT_LINES
-										| BGFX_STATE_BLEND_ALPHA
-										);
+									| BGFX_STATE_WRITE_RGB
+									| BGFX_STATE_PT_LINES
+									| BGFX_STATE_BLEND_ALPHA
+									);
 								bgfx::submit(RENDER_PASS_DEBUG_LIGHTS_ID, m_lineProgram);
 							}
 						}
@@ -712,12 +712,16 @@ public:
 						bgfx::setTexture(0, s_normal, bgfx::getTexture(m_gbuffer, 1) );
 						bgfx::setTexture(1, s_depth,  bgfx::getTexture(m_gbuffer, 2) );
 						bgfx::setState(0
-								| BGFX_STATE_WRITE_RGB
-								| BGFX_STATE_WRITE_A
-								| BGFX_STATE_BLEND_ADD
-								);
+							| BGFX_STATE_WRITE_RGB
+							| BGFX_STATE_WRITE_A
+							| BGFX_STATE_BLEND_ADD
+							);
 						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-						bgfx::submit(RENDER_PASS_LIGHT_ID, bgfx::isValid(m_lightTaProgram) && m_useTArray ? m_lightTaProgram : m_lightProgram);
+						bgfx::submit(RENDER_PASS_LIGHT_ID
+							, bgfx::isValid(m_lightTaProgram) && m_useTArray
+							? m_lightTaProgram
+							: m_lightProgram
+							);
 					}
 				}
 
@@ -725,9 +729,9 @@ public:
 				bgfx::setTexture(0, s_albedo, bgfx::getTexture(m_gbuffer,     0) );
 				bgfx::setTexture(1, s_light,  bgfx::getTexture(m_lightBuffer, 0) );
 				bgfx::setState(0
-						| BGFX_STATE_WRITE_RGB
-						| BGFX_STATE_WRITE_A
-						);
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					);
 				screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
 				bgfx::submit(RENDER_PASS_COMBINE_ID, m_combineProgram);
 
