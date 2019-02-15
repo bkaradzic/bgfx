@@ -4629,26 +4629,46 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <div class="section" id="dispatch">
 <h4>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h4>
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::dispatch&#8221; with arguments (ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t, uint8_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t">
+<span id="bgfx::dispatch__ViewId.ProgramHandle.uint32_t.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1a9f6bd8e2823a16aa9a3631cd41195bba"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, uint32_t <em>_numX</em> = 1, uint32_t <em>_numY</em> = 1, uint32_t <em>_numZ</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle8uint32_t8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch compute. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Compute program. </li>
+<li><code class="docutils literal"><span class="pre">_numX</span></code>: Number of groups X. </li>
+<li><code class="docutils literal"><span class="pre">_numY</span></code>: Number of groups Y. </li>
+<li><code class="docutils literal"><span class="pre">_numZ</span></code>: Number of groups Z.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::dispatch(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t)
-- void bgfx::dispatch(ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t)
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::dispatch&#8221; with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint8_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t">
+<span id="bgfx::dispatch__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t"></span><span class="target" id="namespacebgfx_1ac1f473d951bfef9bced6c25b60991368"></span>void <code class="descclassname">bgfx::</code><code class="descname">dispatch</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_handle</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8dispatchE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch compute indirect. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_dispatch_indirect</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Compute program. </li>
+<li><code class="docutils literal"><span class="pre">_indirectHandle</span></code>: Indirect buffer. </li>
+<li><code class="docutils literal"><span class="pre">_start</span></code>: First element in indirect buffer. </li>
+<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of dispatches.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::dispatch(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t)
-- void bgfx::dispatch(ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="blit">
