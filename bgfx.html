@@ -2578,7 +2578,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dd><p>Set view sorting mode. </p>
 <p><dl class="docutils">
 <dt><strong>Remark</strong></dt>
-<dd>View mode must be set prior calling <code class="docutils literal"><span class="pre">bgfx::submit</span></code> for the view.</dd>
+<dd>View mode must be set prior calling <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1a7cf173234b32e983f412055bb29e0512"><span><span class="pre">bgfx::submit</span></span></a></code> for the view.</dd>
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_mode</span></code>. </dd>
 <dt><strong>Parameters</strong></dt>
@@ -4378,39 +4378,67 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <p>Within view all draw commands are executed after blit and compute commands.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (ViewId, ProgramHandle, int32_t, bool) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle8uint32_tb">
+<span id="bgfx::submit__ViewId.ProgramHandle.uint32_t.b"></span><span class="target" id="namespacebgfx_1a7cf173234b32e983f412055bb29e0512"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle8uint32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit primitive for rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_program</span></code>: Program. </li>
+<li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth for sorting. </li>
+<li><code class="docutils literal"><span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::submit(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, bool)
-- void bgfx::submit(ViewId, ProgramHandle, OcclusionQueryHandle, uint32_t, bool)
-- void bgfx::submit(ViewId, ProgramHandle, uint32_t, bool)
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (ViewId, ProgramHandle, OcclusionQueryHandle, int32_t, bool) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb">
+<span id="bgfx::submit__ViewId.ProgramHandle.OcclusionQueryHandle.uint32_t.b"></span><span class="target" id="namespacebgfx_1a331fdb17a610d89b38d1e3ea18b7b06b"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, OcclusionQueryHandle <em>_occlusionQuery</em>, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20OcclusionQueryHandle8uint32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit primitive with occlusion query for rendering. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_occlusion_query</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_program</span></code>: Program. </li>
+<li><code class="docutils literal"><span class="pre">_occlusionQuery</span></code>: Occlusion query. </li>
+<li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth for sorting. </li>
+<li><code class="docutils literal"><span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::submit(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, bool)
-- void bgfx::submit(ViewId, ProgramHandle, OcclusionQueryHandle, uint32_t, bool)
-- void bgfx::submit(ViewId, ProgramHandle, uint32_t, bool)
-</pre></div>
-</div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::submit&#8221; with arguments (ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, int32_t, bool) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb">
+<span id="bgfx::submit__ViewId.ProgramHandle.IndirectBufferHandle.uint16_t.uint16_t.uint32_t.b"></span><span class="target" id="namespacebgfx_1ac8b8cd8b363188812bb68afdbac7959e"></span>void <code class="descclassname">bgfx::</code><code class="descname">submit</code><span class="sig-paren">(</span>ViewId <em>_id</em>, ProgramHandle <em>_program</em>, IndirectBufferHandle <em>_indirectHandle</em>, uint16_t <em>_start</em> = 0, uint16_t <em>_num</em> = 1, uint32_t <em>_depth</em> = 0, bool <em>_preserveState</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx6submitE6ViewId13ProgramHandle20IndirectBufferHandle8uint16_t8uint16_t8uint32_tb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit primitive for rendering with index and instance data info from indirect buffer. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_submit_indirect</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_id</span></code>: View id. </li>
+<li><code class="docutils literal"><span class="pre">_program</span></code>: Program. </li>
+<li><code class="docutils literal"><span class="pre">_indirectHandle</span></code>: Indirect buffer. </li>
+<li><code class="docutils literal"><span class="pre">_start</span></code>: First element in indirect buffer. </li>
+<li><code class="docutils literal"><span class="pre">_num</span></code>: Number of dispatches. </li>
+<li><code class="docutils literal"><span class="pre">_depth</span></code>: Depth for sorting. </li>
+<li><code class="docutils literal"><span class="pre">_preserveState</span></code>: Preserve internal draw state for next draw call submit.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::submit(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t, uint32_t, bool)
-- void bgfx::submit(ViewId, ProgramHandle, OcclusionQueryHandle, uint32_t, bool)
-- void bgfx::submit(ViewId, ProgramHandle, uint32_t, bool)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="compute">
