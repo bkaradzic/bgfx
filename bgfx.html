@@ -113,17 +113,26 @@
 <li class="toctree-l2"><a class="reference internal" href="#encoder">Encoder</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">Encoder</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#draw">Draw</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">Debug</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#state">State</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">State</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#state-flags">State Flags</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#stencil">Stencil</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#stencil-flags">Stencil Flags</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#scissor">Scissor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#transform">Transform</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#conditional-rendering">Conditional Rendering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#buffers">Buffers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#textures">Textures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#submit">Submit</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#compute">Compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compute">Compute</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id4">Buffers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#images">Images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dispatch">Dispatch</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#blit">Blit</a></li>
 </ul>
 </li>
@@ -132,7 +141,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#uniforms">Uniforms</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vertex-buffers">Vertex Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#index-buffers">Index Buffers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#textures">Textures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Textures</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#frame-buffers">Frame Buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#instance-buffer">Instance Buffer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#indirect-buffer">Indirect Buffer</a></li>
@@ -3535,6 +3544,9 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <h3>Draw<a class="headerlink" href="#draw" title="Permalink to this headline">¶</a></h3>
 <p>Draw state is not preserved between two draw calls. All state is cleared after calling
 <cite>bgfx::submit</cite>.</p>
+<div class="section" id="state">
+<h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
+</div>
 <div class="section" id="id2">
 <h4>Debug<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
@@ -3585,8 +3597,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 </div>
-<div class="section" id="state">
-<h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id3">
+<h4>State<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setStateE8uint64_t8uint32_t">
 <span id="bgfx::setState__uint64_t.uint32_t"></span><span class="target" id="namespacebgfx_1a3e5edf50886f88e8f022e18a3e53ba4d"></span>void <code class="descclassname">bgfx::</code><code class="descname">setState</code><span class="sig-paren">(</span>uint64_t <em>_state</em>, uint32_t <em>_rgba</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setStateE8uint64_t8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -4038,6 +4050,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="buffers">
+<h4>Buffers<a class="headerlink" href="#buffers" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle">
 <span id="bgfx::setIndexBuffer__IndexBufferHandle"></span><span class="target" id="namespacebgfx_1a788bf7feee1fd76127e628fcc0e879d4"></span>void <code class="descclassname">bgfx::</code><code class="descname">setIndexBuffer</code><span class="sig-paren">(</span>IndexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setIndexBufferE17IndexBufferHandle" title="Permalink to this definition">¶</a></dt>
@@ -4354,6 +4369,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="textures">
+<h4>Textures<a class="headerlink" href="#textures" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t">
 <span id="bgfx::setTexture__uint8_t.UniformHandle.TextureHandle.uint32_t"></span><span class="target" id="namespacebgfx_1a62ed3fb0f144798a2a8ba2e19d0e2dc0"></span>void <code class="descclassname">bgfx::</code><code class="descname">setTexture</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, UniformHandle <em>_sampler</em>, TextureHandle <em>_handle</em>, uint32_t <em>_flags</em> = UINT32_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10setTextureE7uint8_t13UniformHandle13TextureHandle8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -4377,6 +4395,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="submit">
+<h4>Submit<a class="headerlink" href="#submit" title="Permalink to this headline">¶</a></h4>
 <p>Within view all draw commands are executed after blit and compute commands.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx6submitE6ViewId13ProgramHandle8uint32_tb">
@@ -4445,6 +4466,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Compute<a class="headerlink" href="#compute" title="Permalink to this headline">¶</a></h3>
 <p>Compute state is not preserved between two compute dispatches. All state is cleared after calling
 <cite>bgfx::dispatch</cite>.</p>
+<div class="section" id="id4">
+<h4>Buffers<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
 <dl class="class">
 <dt id="_CPPv2N4bgfx6AccessE">
 <span id="bgfx::Access"></span><span class="target" id="structbgfx_1_1_access"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">Access</code><a class="headerlink" href="#_CPPv2N4bgfx6AccessE" title="Permalink to this definition">¶</a></dt>
@@ -4579,6 +4602,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="images">
+<h4>Images<a class="headerlink" href="#images" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="_CPPv2N4bgfx8setImageE7uint8_t13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE">
 <span id="bgfx::setImage__uint8_t.TextureHandle.uint8_t.Access::Enum.TextureFormat::Enum"></span><span class="target" id="namespacebgfx_1aff6a7e1638d103b42340e553eed29796"></span>void <code class="descclassname">bgfx::</code><code class="descname">setImage</code><span class="sig-paren">(</span>uint8_t <em>_stage</em>, TextureHandle <em>_handle</em>, uint8_t <em>_mip</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em> = TextureFormat::Count<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx8setImageE7uint8_t13TextureHandle7uint8_tN6Access4EnumEN13TextureFormat4EnumE" title="Permalink to this definition">¶</a></dt>
@@ -4599,6 +4625,9 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
+</div>
+<div class="section" id="dispatch">
+<h4>Dispatch<a class="headerlink" href="#dispatch" title="Permalink to this headline">¶</a></h4>
 <p>Within view all compute commands are dispatched after blit commands, and before draw commands.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
@@ -4618,6 +4647,7 @@ Potential matches:
 <div class="last highlight-python"><div class="highlight"><pre>- void bgfx::dispatch(ViewId, ProgramHandle, IndirectBufferHandle, uint16_t, uint16_t)
 - void bgfx::dispatch(ViewId, ProgramHandle, uint32_t, uint32_t, uint32_t)
 </pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -5680,8 +5710,8 @@ Potential matches:
 </dd></dl>
 
 </div>
-<div class="section" id="textures">
-<h3>Textures<a class="headerlink" href="#textures" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id5">
+<h3>Textures<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="_CPPv2N4bgfx13TextureFormatE">
 <span id="bgfx::TextureFormat"></span><span class="target" id="structbgfx_1_1_texture_format"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TextureFormat</code><a class="headerlink" href="#_CPPv2N4bgfx13TextureFormatE" title="Permalink to this definition">¶</a></dt>
