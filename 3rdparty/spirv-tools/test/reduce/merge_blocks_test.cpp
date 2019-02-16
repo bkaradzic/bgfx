@@ -508,6 +508,144 @@ TEST(MergeBlocksReductionPassTest, MergeWithOpPhi) {
   CheckEqual(env, after, context.get());
 }
 
+void MergeBlocksReductionPassTest_LoopReturn_Helper(bool reverse) {
+  // A merge block opportunity stores a block that can be merged with its
+  // predecessor.
+  // Given blocks A -> B -> C:
+  // This test demonstrates how merging B->C can invalidate
+  // the opportunity of merging A->B, and vice-versa. E.g.
+  // B->C are merged: B is now terminated with OpReturn.
+  // A->B can now no longer be merged because A is a loop header, which
+  // cannot be terminated with OpReturn.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %2 "main"
+          %3 = OpTypeVoid
+          %4 = OpTypeFunction %3
+          %5 = OpTypeInt 32 1
+          %6 = OpTypePointer Function %5
+          %7 = OpTypeBool
+          %8 = OpConstantFalse %7
+          %2 = OpFunction %3 None %4
+          %9 = OpLabel
+               OpBranch %10
+         %10 = OpLabel                   ; A (loop header)
+               OpLoopMerge %13 %12 None
+               OpBranch %11
+         %12 = OpLabel                   ; (unreachable continue block)
+               OpBranch %10
+         %11 = OpLabel                   ; B
+               OpBranch %15
+         %15 = OpLabel                   ; C
+               OpReturn
+         %13 = OpLabel                   ; (unreachable merge block)
+               OpReturn
+               OpFunctionEnd
+  )";
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context =
+      BuildModule(env, consumer, shader, kReduceAssembleOption);
+  ASSERT_NE(context.get(), nullptr);
+  auto opportunities =
+      MergeBlocksReductionOpportunityFinder().GetAvailableOpportunities(
+          context.get());
+
+  // A->B and B->C
+  ASSERT_EQ(opportunities.size(), 2);
+
+  // Test applying opportunities in both orders.
+  if (reverse) {
+    std::reverse(opportunities.begin(), opportunities.end());
+  }
+
+  size_t num_applied = 0;
+  for (auto& ri : opportunities) {
+    if (ri->PreconditionHolds()) {
+      ri->TryToApply();
+      ++num_applied;
+    }
+  }
+
+  // Only 1 opportunity can be applied, as both disable each other.
+  ASSERT_EQ(num_applied, 1);
+
+  std::string after = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %2 "main"
+          %3 = OpTypeVoid
+          %4 = OpTypeFunction %3
+          %5 = OpTypeInt 32 1
+          %6 = OpTypePointer Function %5
+          %7 = OpTypeBool
+          %8 = OpConstantFalse %7
+          %2 = OpFunction %3 None %4
+          %9 = OpLabel
+               OpBranch %10
+         %10 = OpLabel                   ; A-B (loop header)
+               OpLoopMerge %13 %12 None
+               OpBranch %15
+         %12 = OpLabel                   ; (unreachable continue block)
+               OpBranch %10
+         %15 = OpLabel                   ; C
+               OpReturn
+         %13 = OpLabel                   ; (unreachable merge block)
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  // The only difference is the labels.
+  std::string after_reversed = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %2 "main"
+          %3 = OpTypeVoid
+          %4 = OpTypeFunction %3
+          %5 = OpTypeInt 32 1
+          %6 = OpTypePointer Function %5
+          %7 = OpTypeBool
+          %8 = OpConstantFalse %7
+          %2 = OpFunction %3 None %4
+          %9 = OpLabel
+               OpBranch %10
+         %10 = OpLabel                   ; A (loop header)
+               OpLoopMerge %13 %12 None
+               OpBranch %11
+         %12 = OpLabel                   ; (unreachable continue block)
+               OpBranch %10
+         %11 = OpLabel                   ; B-C
+               OpReturn
+         %13 = OpLabel                   ; (unreachable merge block)
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CheckEqual(env, reverse ? after_reversed : after, context.get());
+}
+
+TEST(MergeBlocksReductionPassTest, LoopReturn) {
+  MergeBlocksReductionPassTest_LoopReturn_Helper(false);
+}
+
+TEST(MergeBlocksReductionPassTest, LoopReturnReverse) {
+  MergeBlocksReductionPassTest_LoopReturn_Helper(true);
+}
+
 }  // namespace
 }  // namespace reduce
 }  // namespace spvtools

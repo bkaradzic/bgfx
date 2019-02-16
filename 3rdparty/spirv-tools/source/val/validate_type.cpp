@@ -324,10 +324,12 @@ spv_result_t ValidateTypeFunction(ValidationState_t& _,
            << num_args << " arguments.";
   }
 
-  // The only valid uses of OpTypeFunction are in an OpFunction instruction.
+  // The only valid uses of OpTypeFunction are in an OpFunction, debugging, or
+  // decoration instruction.
   for (auto& pair : inst->uses()) {
     const auto* use = pair.first;
-    if (use->opcode() != SpvOpFunction) {
+    if (use->opcode() != SpvOpFunction && !spvOpcodeIsDebug(use->opcode()) &&
+        !spvOpcodeIsDecoration(use->opcode())) {
       return _.diag(SPV_ERROR_INVALID_ID, use)
              << "Invalid use of function type result id "
              << _.getIdName(inst->id()) << ".";

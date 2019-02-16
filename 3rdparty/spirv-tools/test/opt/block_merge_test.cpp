@@ -483,6 +483,8 @@ TEST_F(BlockMergeTest, RemoveStructuredDeclaration) {
 ; CHECK-NOT: OpLoopMerge
 ; CHECK: OpReturn
 ; CHECK: [[continue:%\w+]] = OpLabel
+; CHECK-NEXT: OpBranch [[block:%\w+]]
+; CHECK: [[block]] = OpLabel
 ; CHECK-NEXT: OpBranch [[header]]
 OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
@@ -878,6 +880,47 @@ OpFunctionEnd
 )";
   SinglePassRunAndCheck<BlockMergePass>(prefix + suffix_before,
                                         prefix + suffix_after, true, true);
+}
+
+TEST_F(BlockMergeTest, UnreachableLoop) {
+  const std::string spirv = R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource ESSL 310
+OpName %main "main"
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+%bool = OpTypeBool
+%false = OpConstantFalse %bool
+%main = OpFunction %void None %4
+%9 = OpLabel
+OpBranch %10
+%11 = OpLabel
+OpLoopMerge %12 %13 None
+OpBranchConditional %false %13 %14
+%13 = OpLabel
+OpSelectionMerge %15 None
+OpBranchConditional %false %16 %17
+%16 = OpLabel
+OpBranch %15
+%17 = OpLabel
+OpBranch %15
+%15 = OpLabel
+OpBranch %11
+%14 = OpLabel
+OpReturn
+%12 = OpLabel
+OpBranch %10
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<BlockMergePass>(spirv, spirv, true, true);
 }
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
