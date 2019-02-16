@@ -30,6 +30,24 @@
 			|| BX_PLATFORM_WINDOWS \
 			)
 
+#define BGFX_GL_PROFILER_BEGIN(_view, _abgr)                                               \
+	BX_MACRO_BLOCK_BEGIN                                                                   \
+		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, s_viewName[view]) ); \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);                                      \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_GL_PROFILER_BEGIN_LITERAL(_name, _abgr)                                       \
+	BX_MACRO_BLOCK_BEGIN                                                                   \
+		GL_CHECK(glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "" # _name) );       \
+		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);                                    \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_GL_PROFILER_END()        \
+	BX_MACRO_BLOCK_BEGIN              \
+		BGFX_PROFILER_END();          \
+		GL_CHECK(glPopDebugGroup() ); \
+	BX_MACRO_BLOCK_END
+
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
 #		include <gl/glcorearb.h>

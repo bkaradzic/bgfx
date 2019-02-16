@@ -2295,7 +2295,7 @@ VK_IMPORT_DEVICE
 
 		void setMarker(const char* _marker, uint16_t _len) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				BX_UNUSED(_len);
 
@@ -3865,12 +3865,14 @@ VK_DESTROY
 
 		if (0 < _render->m_iboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 //			TransientIndexBuffer* ib = _render->m_transientIb;
 //			m_indexBuffers[ib->handle.idx].update(m_commandList, 0, _render->m_iboffset, ib->data);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 //			TransientVertexBuffer* vb = _render->m_transientVb;
 //			m_vertexBuffers[vb->handle.idx].update(m_commandList, 0, _render->m_vboffset, vb->data);
 		}
@@ -3999,7 +4001,7 @@ VK_DESTROY
 						vkCmdEndRenderPass(m_commandBuffer);
 						beginRenderPass = false;
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
 							vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);
 						}
@@ -4034,7 +4036,7 @@ BX_UNUSED(currentSamplerStateIdx);
 					rpbi.renderArea.extent.height = rect.m_height;
 					VK_CHECK(vkBeginCommandBuffer(m_commandBuffer, &cbbi) );
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
 						VkDebugUtilsLabelEXT dul;
 						dul.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
@@ -4285,7 +4287,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						wasCompute = false;
 					}
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
 						BX_UNUSED(s_viewName);
 // 						wchar_t* viewNameW = s_viewNameW[view];
@@ -4821,7 +4823,7 @@ BX_UNUSED(presentMin, presentMax);
 			vkCmdEndRenderPass(m_commandBuffer);
 			beginRenderPass = false;
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				vkCmdEndDebugUtilsLabelEXT(m_commandBuffer);
 			}

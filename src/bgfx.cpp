@@ -2681,6 +2681,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateIndexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("CreateIndexBuffer", 0xff2040ff);
+
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2698,6 +2700,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyIndexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("DestroyIndexBuffer", 0xff2040ff);
+
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2707,6 +2711,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateVertexDecl:
 				{
+					BGFX_PROFILER_SCOPE("CreateVertexDecl", 0xff2040ff);
+
 					VertexDeclHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2719,6 +2725,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyVertexDecl:
 				{
+					BGFX_PROFILER_SCOPE("DestroyVertexDecl", 0xff2040ff);
+
 					VertexDeclHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2728,6 +2736,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateVertexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("CreateVertexBuffer", 0xff2040ff);
+
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2748,6 +2758,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyVertexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("DestroyVertexBuffer", 0xff2040ff);
+
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2757,6 +2769,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateDynamicIndexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("CreateDynamicIndexBuffer", 0xff2040ff);
+
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2772,6 +2786,8 @@ namespace bgfx
 
 			case CommandBuffer::UpdateDynamicIndexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("UpdateDynamicIndexBuffer", 0xff2040ff);
+
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2792,6 +2808,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyDynamicIndexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("DestroyDynamicIndexBuffer", 0xff2040ff);
+
 					IndexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2801,6 +2819,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateDynamicVertexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("CreateDynamicVertexBuffer", 0xff2040ff);
+
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2816,6 +2836,8 @@ namespace bgfx
 
 			case CommandBuffer::UpdateDynamicVertexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("UpdateDynamicVertexBuffer", 0xff2040ff);
+
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2836,6 +2858,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyDynamicVertexBuffer:
 				{
+					BGFX_PROFILER_SCOPE("DestroyDynamicVertexBuffer", 0xff2040ff);
+
 					VertexBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2845,6 +2869,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateShader:
 				{
+					BGFX_PROFILER_SCOPE("CreateShader", 0xff2040ff);
+
 					ShaderHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2859,6 +2885,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyShader:
 				{
+					BGFX_PROFILER_SCOPE("DestroyShader", 0xff2040ff);
+
 					ShaderHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2868,6 +2896,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateProgram:
 				{
+					BGFX_PROFILER_SCOPE("CreateProgram", 0xff2040ff);
+
 					ProgramHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2883,6 +2913,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyProgram:
 				{
+					BGFX_PROFILER_SCOPE("DestroyProgram", 0xff2040ff);
+
 					ProgramHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2892,6 +2924,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateTexture:
 				{
+					BGFX_PROFILER_SCOPE("CreateTexture", 0xff2040ff);
+
 					TextureHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2932,6 +2966,8 @@ namespace bgfx
 
 			case CommandBuffer::UpdateTexture:
 				{
+					BGFX_PROFILER_SCOPE("UpdateTexture", 0xff2040ff);
+
 					if (m_textureUpdateBatch.isFull() )
 					{
 						flushTextureUpdateBatch(_cmdbuf);
@@ -2965,6 +3001,8 @@ namespace bgfx
 
 			case CommandBuffer::ReadTexture:
 				{
+					BGFX_PROFILER_SCOPE("ReadTexture", 0xff2040ff);
+
 					TextureHandle handle;
 					_cmdbuf.read(handle);
 
@@ -2980,6 +3018,8 @@ namespace bgfx
 
 			case CommandBuffer::ResizeTexture:
 				{
+					BGFX_PROFILER_SCOPE("ResizeTexture", 0xff2040ff);
+
 					TextureHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3001,6 +3041,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyTexture:
 				{
+					BGFX_PROFILER_SCOPE("DestroyTexture", 0xff2040ff);
+
 					TextureHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3010,6 +3052,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateFrameBuffer:
 				{
+					BGFX_PROFILER_SCOPE("CreateFrameBuffer", 0xff2040ff);
+
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3050,6 +3094,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyFrameBuffer:
 				{
+					BGFX_PROFILER_SCOPE("DestroyFrameBuffer", 0xff2040ff);
+
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3059,6 +3105,8 @@ namespace bgfx
 
 			case CommandBuffer::CreateUniform:
 				{
+					BGFX_PROFILER_SCOPE("CreateUniform", 0xff2040ff);
+
 					UniformHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3079,6 +3127,8 @@ namespace bgfx
 
 			case CommandBuffer::DestroyUniform:
 				{
+					BGFX_PROFILER_SCOPE("DestroyUniform", 0xff2040ff);
+
 					UniformHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3088,6 +3138,8 @@ namespace bgfx
 
 			case CommandBuffer::RequestScreenShot:
 				{
+					BGFX_PROFILER_SCOPE("RequestScreenShot", 0xff2040ff);
+
 					FrameBufferHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3102,6 +3154,8 @@ namespace bgfx
 
 			case CommandBuffer::UpdateViewName:
 				{
+					BGFX_PROFILER_SCOPE("UpdateViewName", 0xff2040ff);
+
 					ViewId id;
 					_cmdbuf.read(id);
 
@@ -3116,6 +3170,8 @@ namespace bgfx
 
 			case CommandBuffer::InvalidateOcclusionQuery:
 				{
+					BGFX_PROFILER_SCOPE("InvalidateOcclusionQuery", 0xff2040ff);
+
 					OcclusionQueryHandle handle;
 					_cmdbuf.read(handle);
 
@@ -3125,6 +3181,8 @@ namespace bgfx
 
 			case CommandBuffer::SetName:
 				{
+					BGFX_PROFILER_SCOPE("SetName", 0xff2040ff);
+
 					Handle handle;
 					_cmdbuf.read(handle);
 
@@ -3216,7 +3274,7 @@ namespace bgfx
 		, vendorId(BGFX_PCI_ID_NONE)
 		, deviceId(0)
 		, debug(BX_ENABLED(BGFX_CONFIG_DEBUG) )
-		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+		, profile(BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		, callback(NULL)
 		, allocator(NULL)
 	{

@@ -15,14 +15,22 @@
 #	endif // BX_PLATFORM_WINRT
 #endif // !BX_PLATFORM_WINDOWS
 
-#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
+#if BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 PFN_PIX_GET_THREAD_INFO      bgfx_PIXGetThreadInfo;
 PFN_PIX_EVENTS_REPLACE_BLOCK bgfx_PIXEventsReplaceBlock;
-#endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 
 namespace bgfx { namespace d3d12
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+
+	inline void setViewType(ViewId _view, const bx::StringView _str)
+	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
+		{
+			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
+		}
+	}
 
 	struct PrimInfo
 	{
@@ -623,7 +631,7 @@ namespace bgfx { namespace d3d12
 #endif // BX_COMPILER_MSVC
 	}
 
-#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
+#if BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 	static PIXEventsThreadInfo s_pixEventsThreadInfo;
 
 	PIXEventsThreadInfo* WINAPI stubPIXGetThreadInfo()
@@ -636,7 +644,7 @@ namespace bgfx { namespace d3d12
 		BX_UNUSED(_getEarliestTime);
 		return 0;
 	}
-#endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 
 	struct RendererContextD3D12 : public RendererContextI
 	{
@@ -680,7 +688,7 @@ namespace bgfx { namespace d3d12
 			ErrorState::Enum errorState = ErrorState::Default;
 //			LUID luid;
 
-#if BGFX_CONFIG_DEBUG_PIX && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
+#if BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 			m_winPixEvent = bx::dlopen("WinPixEventRuntime.dll");
 
 			if (NULL != m_winPixEvent)
@@ -695,7 +703,7 @@ namespace bgfx { namespace d3d12
 				bgfx_PIXGetThreadInfo      = stubPIXGetThreadInfo;
 				bgfx_PIXEventsReplaceBlock = stubPIXEventsReplaceBlock;
 			}
-#endif // BGFX_CONFIG_DEBUG_PIX && BX_PLATFORM_WINDOWS
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION && (BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT)
 
 			if (_init.debug
 			||  _init.profile)
@@ -1868,9 +1876,9 @@ namespace bgfx { namespace d3d12
 		{
 			BX_UNUSED(_len);
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
-				PIX3_SETMARKER(m_commandList, D3DCOLOR_MARKER, _marker);
+				PIX3_SETMARKER(m_commandList, kColorMarker, _marker);
 			}
 		}
 
@@ -5696,8 +5704,6 @@ namespace bgfx { namespace d3d12
 
 	void RendererContextD3D12::submit(Frame* _render, ClearQuad& /*_clearQuad*/, TextVideoMemBlitter& _textVideoMemBlitter)
 	{
-		PIX3_BEGINEVENT(m_commandList, D3DCOLOR_FRAME, "rendererSubmit");
-
 		if (m_lost
 		||  updateResolution(_render->m_resolution) )
 		{
@@ -5709,6 +5715,8 @@ namespace bgfx { namespace d3d12
 			renderDocTriggerCapture();
 		}
 
+		BGFX_D3D12_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorFrame);
+
 		int64_t timeBegin = bx::getHPCounter();
 		int64_t captureElapsed = 0;
 
@@ -5716,12 +5724,14 @@ namespace bgfx { namespace d3d12
 
 		if (0 < _render->m_iboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 			TransientIndexBuffer* ib = _render->m_transientIb;
 			m_indexBuffers[ib->handle.idx].update(m_commandList, 0, _render->m_iboffset, ib->data);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 			TransientVertexBuffer* vb = _render->m_transientVb;
 			m_vertexBuffers[vb->handle.idx].update(m_commandList, 0, _render->m_vboffset, vb->data);
 		}
@@ -5919,13 +5929,9 @@ namespace bgfx { namespace d3d12
 					{
 						wasCompute = true;
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							char* viewName = s_viewName[view];
-							viewName[3] = L'C';
-							PIX3_ENDEVENT(m_commandList);
-							PIX3_BEGINEVENT(m_commandList, D3DCOLOR_COMPUTE, viewName);
-						}
+						setViewType(view, "C");
+						BGFX_D3D12_PROFILER_END();
+						BGFX_D3D12_PROFILER_BEGIN(view, kColorCompute);
 
 						commandListChanged = true;
 					}
@@ -6128,14 +6134,9 @@ namespace bgfx { namespace d3d12
 				{
 					wasCompute = false;
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-					{
-						BX_UNUSED(s_viewName);
- 						char* viewName = s_viewName[view];
- 						viewName[3] = ' ';
- 						PIX3_ENDEVENT(m_commandList);
- 						PIX3_BEGINEVENT(m_commandList, D3DCOLOR_DRAW, viewName);
-					}
+					setViewType(view, " ");
+					BGFX_D3D12_PROFILER_END();
+					BGFX_D3D12_PROFILER_BEGIN(view, kColorDraw);
 
 					commandListChanged = true;
 				}
@@ -6514,13 +6515,9 @@ namespace bgfx { namespace d3d12
 
 			if (wasCompute)
 			{
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-				{
-					char* viewName = s_viewName[view];
-					viewName[3] = L'C';
-					PIX3_ENDEVENT(m_commandList);
-					PIX3_BEGINEVENT(m_commandList, D3DCOLOR_DRAW, viewName);
-				}
+				setViewType(view, "C");
+				BGFX_D3D12_PROFILER_END();
+				BGFX_D3D12_PROFILER_BEGIN(view, kColorCompute);
 			}
 
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
@@ -6540,7 +6537,7 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		PIX3_ENDEVENT(m_commandList);
+		BGFX_D3D12_PROFILER_END();
 
 		int64_t timeEnd   = bx::getHPCounter();
 		int64_t frameTime = timeEnd - timeBegin;
@@ -6602,7 +6599,7 @@ namespace bgfx { namespace d3d12
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			PIX3_BEGINEVENT(m_commandList, D3DCOLOR_FRAME, "debugstats");
+			BGFX_D3D12_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
 //			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -6766,15 +6763,15 @@ namespace bgfx { namespace d3d12
 
 			blit(this, _textVideoMemBlitter, tvm);
 
-			PIX3_ENDEVENT(m_commandList);
+			BGFX_D3D12_PROFILER_END();
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			PIX3_BEGINEVENT(m_commandList, D3DCOLOR_FRAME, "debugtext");
+			BGFX_D3D12_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
-			PIX3_ENDEVENT(m_commandList);
+			BGFX_D3D12_PROFILER_END();
 		}
 
 		m_commandList->OMSetRenderTargets(0, NULL, false, NULL);

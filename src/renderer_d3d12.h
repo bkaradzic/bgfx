@@ -52,7 +52,7 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 #include "nvapi.h"
 #include "dxgi.h"
 
-#if BGFX_CONFIG_DEBUG_PIX
+#if BGFX_CONFIG_DEBUG_ANNOTATION
 #	if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 typedef struct PIXEventsThreadInfo* (WINAPI* PFN_PIX_GET_THREAD_INFO)();
 typedef uint64_t                    (WINAPI* PFN_PIX_EVENTS_REPLACE_BLOCK)(bool _getEarliestTime);
@@ -80,7 +80,25 @@ extern "C" uint64_t                    WINAPI bgfx_PIXEventsReplaceBlock(bool _g
 #	define PIX3_BEGINEVENT(_commandList, _color, _name) BX_UNUSED(_commandList, _color, _name)
 #	define PIX3_SETMARKER(_commandList, _color, _name)  BX_UNUSED(_commandList, _color, _name)
 #	define PIX3_ENDEVENT(_commandList)                  BX_UNUSED(_commandList)
-#endif // BGFX_CONFIG_DEBUG_PIX
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION
+
+#define BGFX_D3D12_PROFILER_BEGIN(_view, _abgr)                   \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		PIX3_BEGINEVENT(m_commandList, _abgr, s_viewName[_view]); \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);             \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_D3D12_PROFILER_BEGIN_LITERAL(_name, _abgr)           \
+	BX_MACRO_BLOCK_BEGIN                                          \
+		PIX3_BEGINEVENT(m_commandList, _abgr, "" # _name);        \
+		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);           \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_D3D12_PROFILER_END()     \
+	BX_MACRO_BLOCK_BEGIN              \
+		BGFX_PROFILER_END();          \
+		PIX3_ENDEVENT(m_commandList); \
+	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace d3d12
 {

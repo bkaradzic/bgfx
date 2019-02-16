@@ -64,16 +64,6 @@
 
 namespace bgfx
 {
-	constexpr uint32_t toRgba8(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
-	{
-		return 0
-			| (uint32_t(_r)<<24)
-			| (uint32_t(_g)<<16)
-			| (uint32_t(_b)<< 8)
-			| (uint32_t(_a)    )
-			;
-	}
-
 #if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 	typedef ::IUnknown IUnknown;
 #else
@@ -133,11 +123,11 @@ namespace bgfx
 	typedef void    (WINAPI* PFN_D3DPERF_SET_OPTIONS)(DWORD _options);
 	typedef DWORD   (WINAPI* PFN_D3DPERF_GET_STATUS)();
 
-#define _PIX_SETMARKER(_col, _name)  D3DPERF_SetMarker(_col, _name)
-#define _PIX_BEGINEVENT(_col, _name) D3DPERF_BeginEvent(_col, _name)
-#define _PIX_ENDEVENT()              D3DPERF_EndEvent()
+#define _PIX_SETMARKER(_color, _name)    D3DPERF_SetMarker(_color, _name)
+#define _PIX_BEGINEVENT(_color, _name)   D3DPERF_BeginEvent(_color, _name)
+#define _PIX_ENDEVENT()                  D3DPERF_EndEvent()
 
-#if BGFX_CONFIG_DEBUG_PIX
+#if BGFX_CONFIG_DEBUG_ANNOTATION
 #	define PIX_SETMARKER(_color, _name)  _PIX_SETMARKER(_color, _name)
 #	define PIX_BEGINEVENT(_color, _name) _PIX_BEGINEVENT(_color, _name)
 #	define PIX_ENDEVENT()                _PIX_ENDEVENT()
@@ -145,15 +135,7 @@ namespace bgfx
 #	define PIX_SETMARKER(_color, _name)  BX_UNUSED(_name)
 #	define PIX_BEGINEVENT(_color, _name) BX_UNUSED(_name)
 #	define PIX_ENDEVENT()
-#endif // BGFX_CONFIG_DEBUG_PIX
-
-#define D3DCOLOR_FRAME   toRgba8(0xff, 0xd7, 0xc9, 0xff)
-#define D3DCOLOR_VIEW    toRgba8(0xe4, 0xb4, 0x8e, 0xff)
-#define D3DCOLOR_VIEW_L  toRgba8(0xf9, 0xee, 0xe5, 0xff)
-#define D3DCOLOR_VIEW_R  toRgba8(0xe8, 0xd3, 0xc0, 0xff)
-#define D3DCOLOR_DRAW    toRgba8(0xc6, 0xe5, 0xb9, 0xff)
-#define D3DCOLOR_COMPUTE toRgba8(0xa7, 0xdb, 0xd8, 0xff)
-#define D3DCOLOR_MARKER  toRgba8(0xff, 0x00, 0x00, 0xff)
+#endif // BGFX_CONFIG_DEBUG_ANNOTATION
 
 	inline bool isType(IUnknown* _interface, const GUID& _id)
 	{

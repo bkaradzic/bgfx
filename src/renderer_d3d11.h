@@ -10,8 +10,8 @@
 #define USE_D3D11_STAGING_BUFFER 0
 
 #if !USE_D3D11_DYNAMIC_LIB
-#   undef  BGFX_CONFIG_DEBUG_PIX
-#   define BGFX_CONFIG_DEBUG_PIX 0
+#   undef  BGFX_CONFIG_DEBUG_ANNOTATION
+#   define BGFX_CONFIG_DEBUG_ANNOTATION 0
 #endif // !USE_D3D11_DYNAMIC_LIB
 
 BX_PRAGMA_DIAGNOSTIC_PUSH();
@@ -40,19 +40,37 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 #include "nvapi.h"
 #include "dxgi.h"
 
-#define BGFX_D3D11_BLEND_STATE_MASK (0 \
-			| BGFX_STATE_BLEND_MASK \
-			| BGFX_STATE_BLEND_EQUATION_MASK \
-			| BGFX_STATE_BLEND_INDEPENDENT \
-			| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE \
-			| BGFX_STATE_WRITE_A \
-			| BGFX_STATE_WRITE_RGB \
-			)
+#define BGFX_D3D11_BLEND_STATE_MASK (0   \
+	| BGFX_STATE_BLEND_MASK              \
+	| BGFX_STATE_BLEND_EQUATION_MASK     \
+	| BGFX_STATE_BLEND_INDEPENDENT       \
+	| BGFX_STATE_BLEND_ALPHA_TO_COVERAGE \
+	| BGFX_STATE_WRITE_A                 \
+	| BGFX_STATE_WRITE_RGB               \
+	)
 
 #define BGFX_D3D11_DEPTH_STENCIL_MASK (0 \
-			| BGFX_STATE_WRITE_Z \
-			| BGFX_STATE_DEPTH_TEST_MASK \
-			)
+	| BGFX_STATE_WRITE_Z                 \
+	| BGFX_STATE_DEPTH_TEST_MASK         \
+	)
+
+#define BGFX_D3D11_PROFILER_BEGIN(_view, _abgr)          \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		PIX_BEGINEVENT(_abgr, s_viewNameW[_view]);       \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr);    \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_D3D11_PROFILER_BEGIN_LITERAL(_name, _abgr)  \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		PIX_BEGINEVENT(_abgr, L"" # _name);              \
+		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr);  \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_D3D11_PROFILER_END()                        \
+	BX_MACRO_BLOCK_BEGIN                                 \
+		BGFX_PROFILER_END();                             \
+		PIX_ENDEVENT();                                  \
+	BX_MACRO_BLOCK_END
 
 namespace bgfx { namespace d3d11
 {

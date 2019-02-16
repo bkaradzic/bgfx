@@ -987,14 +987,11 @@ namespace bgfx { namespace mtl
 
 		void updateViewName(ViewId _id, const char* _name) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-			{
-				bx::strCopy(
-					  &s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
-					, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
-					, _name
-					);
-			}
+			bx::strCopy(
+				  &s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
+				, BX_COUNTOF(s_viewName[0])-BGFX_CONFIG_MAX_VIEW_NAME_RESERVED
+				, _name
+				);
 		}
 
 		void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) override
@@ -1011,7 +1008,7 @@ namespace bgfx { namespace mtl
 		{
 			BX_UNUSED(_len);
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				m_renderCommandEncoder.insertDebugSignpost(_marker);
 			}
@@ -3787,12 +3784,12 @@ namespace bgfx { namespace mtl
 							m_renderCommandEncoderFrameBufferHandle = fbh;
 							MTL_RELEASE(renderPassDescriptor);
 						}
-						else if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
+						else if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
 							rce.popDebugGroup();
 						}
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
+						if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 						{
 							rce.pushDebugGroup(s_viewName[view]);
 						}
@@ -3827,12 +3824,13 @@ namespace bgfx { namespace mtl
 
 						m_computeCommandEncoder = m_commandBuffer.computeCommandEncoder();
 					}
-					else if (viewChanged && BX_ENABLED(BGFX_CONFIG_DEBUG_MTL))
+					else if (viewChanged && BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
 						m_computeCommandEncoder.popDebugGroup();
 					}
 
-					if ( viewChanged && BX_ENABLED(BGFX_CONFIG_DEBUG_MTL))
+					if (viewChanged
+					&&  BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 					{
 						s_viewName[view][3] = L'C';
 						m_computeCommandEncoder.pushDebugGroup(s_viewName[view]);
@@ -4409,7 +4407,7 @@ namespace bgfx { namespace mtl
 			}
 		}
 
-		if (BX_ENABLED(BGFX_CONFIG_DEBUG_MTL) )
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 		{
 			if (0 < _render->m_numRenderItems)
 			{

@@ -11,7 +11,22 @@
 namespace bgfx { namespace d3d11
 {
 	static wchar_t s_viewNameW[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
-	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+	static char    s_viewName [BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
+
+	inline void setViewType(ViewId _view, const bx::StringView _str)
+	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION | BGFX_CONFIG_PROFILER) )
+		{
+			const uint32_t len = _str.getLength();
+
+			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), len);
+
+			wchar_t tmpW[16];
+			mbstowcs(tmpW, _str.getPtr(), len);
+
+			bx::memCopy(&s_viewNameW[_view][3], tmpW, len*2);
+		}
+	}
 
 	struct PrimInfo
 	{
@@ -798,7 +813,7 @@ namespace bgfx { namespace d3d11
 
 			m_d3d9Dll = NULL;
 
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				// D3D11_1.h has ID3DUserDefinedAnnotation
 				// https://web.archive.org/web/20190207230424/https://docs.microsoft.com/en-us/windows/desktop/api/d3d11_1/nn-d3d11_1-id3duserdefinedannotation
@@ -808,11 +823,20 @@ namespace bgfx { namespace d3d11
 					D3DPERF_SetMarker  = (PFN_D3DPERF_SET_MARKER )bx::dlsym(m_d3d9Dll, "D3DPERF_SetMarker" );
 					D3DPERF_BeginEvent = (PFN_D3DPERF_BEGIN_EVENT)bx::dlsym(m_d3d9Dll, "D3DPERF_BeginEvent");
 					D3DPERF_EndEvent   = (PFN_D3DPERF_END_EVENT  )bx::dlsym(m_d3d9Dll, "D3DPERF_EndEvent"  );
-					BX_CHECK(NULL != D3DPERF_SetMarker
-						  && NULL != D3DPERF_BeginEvent
-						  && NULL != D3DPERF_EndEvent
-						  , "Failed to initialize PIX events."
-						  );
+
+					if (NULL == D3DPERF_SetMarker
+					||  NULL == D3DPERF_BeginEvent
+					||  NULL == D3DPERF_EndEvent)
+					{
+						BX_TRACE("Failed to initialize PIX events.");
+
+						D3DPERF_SetMarker  = NULL;
+						D3DPERF_BeginEvent = NULL;
+						D3DPERF_EndEvent   = NULL;
+
+						bx::dlclose(m_d3d9Dll);
+						m_d3d9Dll = NULL;
+					}
 				}
 			}
 
@@ -1081,7 +1105,7 @@ namespace bgfx { namespace d3d11
 			m_numWindows = 1;
 
 #if USE_D3D11_DYNAMIC_LIB
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				HRESULT hr = m_deviceCtx->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&m_annotation);
 
@@ -1962,7 +1986,7 @@ namespace bgfx { namespace d3d11
 
 		void updateViewName(ViewId _id, const char* _name) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				mbstowcs(&s_viewNameW[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
 					, _name
@@ -1988,13 +2012,13 @@ namespace bgfx { namespace d3d11
 
 		void setMarker(const char* _marker, uint16_t _len) override
 		{
-			if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
+			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )
 			{
 				uint32_t size = _len*sizeof(wchar_t);
 				wchar_t* name = (wchar_t*)alloca(size+2);
 				name[_len] = L'\0';
 				mbstowcs(name, _marker, _len);
-				PIX_SETMARKER(D3DCOLOR_MARKER, name);
+				PIX_SETMARKER(kColorMarker, name);
 			}
 		}
 
@@ -5210,7 +5234,7 @@ namespace bgfx { namespace d3d11
 			renderDocTriggerCapture();
 		}
 
-		PIX_BEGINEVENT(D3DCOLOR_FRAME, L"rendererSubmit");
+		BGFX_D3D11_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 
 		ID3D11DeviceContext* deviceCtx = m_deviceCtx;
 
@@ -5226,12 +5250,14 @@ namespace bgfx { namespace d3d11
 
 		if (0 < _render->m_iboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 			TransientIndexBuffer* ib = _render->m_transientIb;
 			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data, true);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 			TransientVertexBuffer* vb = _render->m_transientVb;
 			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data, true);
 		}
@@ -5325,21 +5351,18 @@ namespace bgfx { namespace d3d11
 						setFrameBuffer(fbh);
 					}
 
-					PIX_ENDEVENT();
 					if (item > 1)
 					{
 						profiler.end();
 					}
+
+					BGFX_D3D11_PROFILER_END();
+					setViewType(view, "  ");
+					BGFX_D3D11_PROFILER_BEGIN(view, kColorView);
+
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-					{
-						wchar_t* viewNameW = s_viewNameW[view];
-						viewNameW[3] = L' ';
-						viewNameW[4] = L' ';
-						PIX_BEGINEVENT(D3DCOLOR_VIEW, viewNameW);
-					}
 
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
 					viewHasScissor = !scissorRect.isZero();
@@ -5370,13 +5393,9 @@ namespace bgfx { namespace d3d11
 					{
 						wasCompute = true;
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							wchar_t* viewNameW = s_viewNameW[view];
-							viewNameW[3] = L'C';
-							PIX_ENDEVENT();
-							PIX_BEGINEVENT(D3DCOLOR_COMPUTE, viewNameW);
-						}
+						setViewType(view, "C");
+						BGFX_D3D11_PROFILER_END();
+						BGFX_D3D11_PROFILER_BEGIN(view, kColorCompute);
 
 						deviceCtx->IASetVertexBuffers(0, 2, s_zero.m_buffer, s_zero.m_zero, s_zero.m_zero);
 						deviceCtx->IASetIndexBuffer(NULL, DXGI_FORMAT_R16_UINT, 0);
@@ -5529,13 +5548,9 @@ namespace bgfx { namespace d3d11
 
 				if (wasCompute)
 				{
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-					{
-						wchar_t* viewNameW = s_viewNameW[view];
-						viewNameW[3] = L' ';
-						PIX_ENDEVENT();
-						PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
-					}
+					setViewType(view, " ");
+					BGFX_D3D11_PROFILER_END();
+					BGFX_D3D11_PROFILER_BEGIN(view, kColorDraw);
 
 					currentProgram   = BGFX_INVALID_HANDLE;
 					m_currentProgram = NULL;
@@ -6057,13 +6072,9 @@ namespace bgfx { namespace d3d11
 
 			if (wasCompute)
 			{
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-				{
-					wchar_t* viewNameW = s_viewNameW[view];
-					viewNameW[3] = L'C';
-					PIX_ENDEVENT();
-					PIX_BEGINEVENT(D3DCOLOR_DRAW, viewNameW);
-				}
+				setViewType(view, "C");
+				BGFX_D3D11_PROFILER_END();
+				BGFX_D3D11_PROFILER_BEGIN(view, kColorCompute);
 
 				invalidateCompute();
 			}
@@ -6085,7 +6096,7 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		PIX_ENDEVENT();
+		BGFX_D3D11_PROFILER_END();
 
 		int64_t timeEnd = bx::getHPCounter();
 		int64_t frameTime = timeEnd - timeBegin;
@@ -6130,7 +6141,7 @@ namespace bgfx { namespace d3d11
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
-			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugstats");
+			BGFX_D3D11_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
 
 			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
@@ -6258,15 +6269,15 @@ namespace bgfx { namespace d3d11
 
 			blit(this, _textVideoMemBlitter, tvm);
 
-			PIX_ENDEVENT();
+			BGFX_D3D11_PROFILER_END();
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
-			PIX_BEGINEVENT(D3DCOLOR_FRAME, L"debugtext");
+			BGFX_D3D11_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
 
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
 
-			PIX_ENDEVENT();
+			BGFX_D3D11_PROFILER_END();
 		}
 
 		m_deviceCtx->OMSetRenderTargets(1, s_zero.m_rtv, NULL);

@@ -25,24 +25,24 @@
 #include <inttypes.h>
 
 // Check handle, cannot be bgfx::kInvalidHandle and must be valid.
-#define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle)    \
-			BX_CHECK(isValid(_handle)                      \
-				&& _handleAlloc.isValid(_handle.idx)       \
-				, "Invalid handle. %s handle: %d (max %d)" \
-				, _desc                                    \
-				, _handle.idx                              \
-				, _handleAlloc.getMaxHandles()             \
-				)
+#define BGFX_CHECK_HANDLE(_desc, _handleAlloc, _handle) \
+	BX_CHECK(isValid(_handle)                           \
+		&& _handleAlloc.isValid(_handle.idx)            \
+		, "Invalid handle. %s handle: %d (max %d)"      \
+		, _desc                                         \
+		, _handle.idx                                   \
+		, _handleAlloc.getMaxHandles()                  \
+		)
 
 // Check handle, it's ok to be bgfx::kInvalidHandle or must be valid.
 #define BGFX_CHECK_HANDLE_INVALID_OK(_desc, _handleAlloc, _handle) \
-			BX_CHECK(!isValid(_handle)                             \
-				|| _handleAlloc.isValid(_handle.idx)               \
-				, "Invalid handle. %s handle: %d (max %d)"         \
-				, _desc                                            \
-				, _handle.idx                                      \
-				, _handleAlloc.getMaxHandles()                     \
-				)
+	BX_CHECK(!isValid(_handle)                                     \
+		|| _handleAlloc.isValid(_handle.idx)                       \
+		, "Invalid handle. %s handle: %d (max %d)"                 \
+		, _desc                                                    \
+		, _handle.idx                                              \
+		, _handleAlloc.getMaxHandles()                             \
+		)
 
 #if BGFX_CONFIG_MULTITHREADED
 #	define BGFX_MUTEX_SCOPE(_mutex) bx::MutexScope BX_CONCATENATE(mutexScope, __LINE__)(_mutex)
@@ -51,14 +51,16 @@
 #endif // BGFX_CONFIG_MULTITHREADED
 
 #if BGFX_CONFIG_PROFILER
-#	define BGFX_PROFILER_SCOPE(_name, _abgr) ProfilerScope BX_CONCATENATE(profilerScope, __LINE__)(_name, _abgr, __FILE__, uint16_t(__LINE__) )
-#	define BGFX_PROFILER_BEGIN(_name, _abgr) g_callback->profilerBeginLiteral(_name, _abgr, __FILE__, uint16_t(__LINE__) )
-#	define BGFX_PROFILER_END() g_callback->profilerEnd()
+#	define BGFX_PROFILER_SCOPE(_name, _abgr)            ProfilerScope BX_CONCATENATE(profilerScope, __LINE__)(_name, _abgr, __FILE__, uint16_t(__LINE__) )
+#	define BGFX_PROFILER_BEGIN(_name, _abgr)            g_callback->profilerBegin(_name, _abgr, __FILE__, uint16_t(__LINE__) )
+#	define BGFX_PROFILER_BEGIN_LITERAL(_name, _abgr)    g_callback->profilerBeginLiteral(_name, _abgr, __FILE__, uint16_t(__LINE__) )
+#	define BGFX_PROFILER_END()                          g_callback->profilerEnd()
 #	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
 #else
-#	define BGFX_PROFILER_SCOPE(_name, _abgr) BX_NOOP()
-#	define BGFX_PROFILER_BEGIN(_name, _abgr) BX_NOOP()
-#	define BGFX_PROFILER_END() BX_NOOP()
+#	define BGFX_PROFILER_SCOPE(_name, _abgr)            BX_NOOP()
+#	define BGFX_PROFILER_BEGIN(_name, _abgr)            BX_NOOP()
+#	define BGFX_PROFILER_BEGIN_LITERAL(_name, _abgr)    BX_NOOP()
+#	define BGFX_PROFILER_END()                          BX_NOOP()
 #	define BGFX_PROFILER_SET_CURRENT_THREAD_NAME(_name) BX_NOOP()
 #endif // BGFX_PROFILER_SCOPE
 

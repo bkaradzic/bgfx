@@ -14,6 +14,14 @@ namespace bgfx { namespace gl
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][BGFX_CONFIG_MAX_VIEW_NAME];
 
+	inline void setViewType(ViewId _view, const bx::StringView _str)
+	{
+		if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION || BGFX_CONFIG_PROFILER) )
+		{
+			bx::memCopy(&s_viewName[_view][3], _str.getPtr(), _str.getLength() );
+		}
+	}
+
 	struct PrimInfo
 	{
 		GLenum m_type;
@@ -1002,6 +1010,14 @@ namespace bgfx { namespace gl
 	}
 
 	static void GL_APIENTRY stubInsertEventMarker(GLsizei /*_length*/, const char* /*_marker*/)
+	{
+	}
+
+	static void GL_APIENTRY stubPushDebugGroup(GLenum /*_source*/, GLuint /*_id*/, GLsizei /*_length*/, const char* /*_message*/)
+	{
+	}
+
+	static void GL_APIENTRY stubPopDebugGroup()
 	{
 	}
 
@@ -2502,6 +2518,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, NULL
 							, GL_TRUE
 							) );
+					}
+
+					if (NULL == glPushDebugGroup
+					||  NULL == glPopDebugGroup)
+					{
+						glPushDebugGroup = stubPushDebugGroup;
+						glPopDebugGroup  = stubPopDebugGroup;
 					}
 				}
 
@@ -6299,6 +6322,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			renderDocTriggerCapture();
 		}
 
+		BGFX_GL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
+
 		if (1 < m_numWindows
 		&&  m_vaoSupport)
 		{
@@ -6334,12 +6359,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		if (0 < _render->m_iboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
 			TransientIndexBuffer* ib = _render->m_transientIb;
 			m_indexBuffers[ib->handle.idx].update(0, _render->m_iboffset, ib->data, true);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
+			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
 			TransientVertexBuffer* vb = _render->m_transientVb;
 			m_vertexBuffers[vb->handle.idx].update(0, _render->m_vboffset, vb->data, true);
 		}
@@ -6452,16 +6479,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						profiler.end();
 					}
 
+					BGFX_GL_PROFILER_END();
+					setViewType(view, "  ");
+					BGFX_GL_PROFILER_BEGIN(view, kColorView);
+
 					profiler.begin(view);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-					{
-						char* viewName = s_viewName[view];
-						viewName[3] = ' ';
-						viewName[4] = ' ';
-						GL_CHECK(glInsertEventMarker(0, viewName) );
-					}
 
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
 					viewHasScissor  = !scissorRect.isZero();
@@ -6496,12 +6520,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					{
 						wasCompute = true;
 
-						if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-						{
-							char* viewName = s_viewName[view];
-							viewName[3] = 'C';
-							GL_CHECK(glInsertEventMarker(0, viewName) );
-						}
+						setViewType(view, "C");
+						BGFX_GL_PROFILER_END();
+						BGFX_GL_PROFILER_BEGIN(view, kColorCompute);
 					}
 
 					if (computeSupported)
@@ -6618,12 +6639,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				{
 					wasCompute = false;
 
-					if (BX_ENABLED(BGFX_CONFIG_DEBUG_PIX) )
-					{
-						char* viewName = s_viewName[view];
-						viewName[3] = ' ';
-						GL_CHECK(glInsertEventMarker(0, viewName) );
-					}
+					setViewType(view, " ");
+					BGFX_GL_PROFILER_END();
+					BGFX_GL_PROFILER_BEGIN(view, kColorDraw);
 				}
 
 				const RenderDraw& draw = renderItem.draw;
@@ -7341,6 +7359,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				boundProgram = BGFX_INVALID_HANDLE;
 			}
 
+			if (wasCompute)
+			{
+				setViewType(view, "C");
+				BGFX_GL_PROFILER_END();
+				BGFX_GL_PROFILER_BEGIN(view, kColorCompute);
+			}
+
 			submitBlit(bs, BGFX_CONFIG_MAX_VIEWS);
 
 			blitMsaaFbo();
@@ -7364,6 +7389,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				profiler.end();
 			}
 		}
+
+		BGFX_GL_PROFILER_END();
 
 		m_glctx.makeCurrent(NULL);
 		int64_t timeEnd = bx::getHPCounter();
@@ -7410,6 +7437,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		if (_render->m_debug & (BGFX_DEBUG_IFH|BGFX_DEBUG_STATS) )
 		{
+			BGFX_GL_PROFILER_BEGIN_LITERAL("debugstats", kColorFrame);
+
 			m_needPresent = true;
 			TextVideoMem& tvm = m_textVideoMem;
 
@@ -7578,10 +7607,16 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 
 			blit(this, _textVideoMemBlitter, tvm);
+
+			BGFX_GL_PROFILER_END();
 		}
 		else if (_render->m_debug & BGFX_DEBUG_TEXT)
 		{
+			BGFX_GL_PROFILER_BEGIN_LITERAL("debugtext", kColorFrame);
+
 			blit(this, _textVideoMemBlitter, _render->m_textVideoMem);
+
+			BGFX_GL_PROFILER_END();
 		}
 	}
 } } // namespace bgfx
