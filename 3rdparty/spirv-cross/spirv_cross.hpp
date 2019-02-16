@@ -117,7 +117,9 @@ struct EntryPoint
 enum ExtendedDecorations
 {
 	SPIRVCrossDecorationPacked,
-	SPIRVCrossDecorationPackedType
+	SPIRVCrossDecorationPackedType,
+	SPIRVCrossDecorationInterfaceMemberIndex,
+	SPIRVCrossDecorationInterfaceOrigID,
 };
 
 class Compiler
@@ -182,27 +184,6 @@ public:
 
 	// Gets the SPIR-V type of a variable.
 	const SPIRType &get_type_from_variable(uint32_t id) const;
-
-	// Gets the id of SPIR-V type underlying the given type_id, which might be a pointer.
-	uint32_t get_pointee_type_id(uint32_t type_id) const;
-
-	// Gets the SPIR-V type underlying the given type, which might be a pointer.
-	const SPIRType &get_pointee_type(const SPIRType &type) const;
-
-	// Gets the SPIR-V type underlying the given type_id, which might be a pointer.
-	const SPIRType &get_pointee_type(uint32_t type_id) const;
-
-	// Gets the ID of the SPIR-V type underlying a variable.
-	uint32_t get_variable_data_type_id(const SPIRVariable &var) const;
-
-	// Gets the SPIR-V type underlying a variable.
-	SPIRType &get_variable_data_type(const SPIRVariable &var);
-
-	// Gets the SPIR-V type underlying a variable.
-	const SPIRType &get_variable_data_type(const SPIRVariable &var) const;
-
-	// Returns if the given type refers to a sampled image.
-	bool is_sampled_image_type(const SPIRType &type);
 
 	// Gets the underlying storage class for an OpVariable.
 	spv::StorageClass get_storage_class(uint32_t id) const;
@@ -602,6 +583,33 @@ protected:
 		else
 			return nullptr;
 	}
+
+	// Gets the id of SPIR-V type underlying the given type_id, which might be a pointer.
+	uint32_t get_pointee_type_id(uint32_t type_id) const;
+
+	// Gets the SPIR-V type underlying the given type, which might be a pointer.
+	const SPIRType &get_pointee_type(const SPIRType &type) const;
+
+	// Gets the SPIR-V type underlying the given type_id, which might be a pointer.
+	const SPIRType &get_pointee_type(uint32_t type_id) const;
+
+	// Gets the ID of the SPIR-V type underlying a variable.
+	uint32_t get_variable_data_type_id(const SPIRVariable &var) const;
+
+	// Gets the SPIR-V type underlying a variable.
+	SPIRType &get_variable_data_type(const SPIRVariable &var);
+
+	// Gets the SPIR-V type underlying a variable.
+	const SPIRType &get_variable_data_type(const SPIRVariable &var) const;
+
+	// Gets the SPIR-V element type underlying an array variable.
+	SPIRType &get_variable_element_type(const SPIRVariable &var);
+
+	// Gets the SPIR-V element type underlying an array variable.
+	const SPIRType &get_variable_element_type(const SPIRVariable &var) const;
+
+	// Returns if the given type refers to a sampled image.
+	bool is_sampled_image_type(const SPIRType &type);
 
 	const SPIREntryPoint &get_entry_point() const;
 	SPIREntryPoint &get_entry_point();

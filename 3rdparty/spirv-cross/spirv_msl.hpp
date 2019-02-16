@@ -170,6 +170,9 @@ public:
 		uint32_t aux_buffer_index = 30;
 		uint32_t indirect_params_buffer_index = 29;
 		uint32_t shader_output_buffer_index = 28;
+		uint32_t shader_patch_output_buffer_index = 27;
+		uint32_t shader_tess_factor_buffer_index = 26;
+		uint32_t shader_input_wg_index = 0;
 		bool enable_point_size_builtin = true;
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
@@ -231,7 +234,8 @@ public:
 	// rasterization if vertex shader requires rasterization to be disabled.
 	bool get_is_rasterization_disabled() const
 	{
-		return is_rasterization_disabled && (get_entry_point().model == spv::ExecutionModelVertex);
+		return is_rasterization_disabled && (get_entry_point().model == spv::ExecutionModelVertex ||
+		                                     get_entry_point().model == spv::ExecutionModelTessellationControl);
 	}
 
 	// Provide feedback to calling API to allow it to pass an auxiliary
@@ -246,6 +250,20 @@ public:
 	bool needs_output_buffer() const
 	{
 		return capture_output_to_buffer && stage_out_var_id != 0;
+	}
+
+	// Provide feedback to calling API to allow it to pass a patch output
+	// buffer if the shader needs it.
+	bool needs_patch_output_buffer() const
+	{
+		return capture_output_to_buffer && patch_stage_out_var_id != 0;
+	}
+
+	// Provide feedback to calling API to allow it to pass an input threadgroup
+	// buffer if the shader needs it.
+	bool needs_input_threadgroup_mem() const
+	{
+		return capture_output_to_buffer && stage_in_var_id != 0;
 	}
 
 	// An enum of SPIR-V functions that are implemented in additional
@@ -384,19 +402,24 @@ protected:
 	void extract_global_variables_from_function(uint32_t func_id, std::set<uint32_t> &added_arg_ids,
 	                                            std::unordered_set<uint32_t> &global_var_ids,
 	                                            std::unordered_set<uint32_t> &processed_func_ids);
-	uint32_t add_interface_block(spv::StorageClass storage);
+	uint32_t add_interface_block(spv::StorageClass storage, bool patch = false);
+	uint32_t add_interface_block_pointer(uint32_t ib_var_id, spv::StorageClass storage);
 
 	void add_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref, SPIRType &ib_type,
-	                                     SPIRVariable &var);
+	                                     SPIRVariable &var, bool strip_array);
 	void add_composite_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
-	                                               SPIRType &ib_type, SPIRVariable &var);
+	                                               SPIRType &ib_type, SPIRVariable &var, bool strip_array);
 	void add_plain_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
-	                                           SPIRType &ib_type, SPIRVariable &var);
+	                                           SPIRType &ib_type, SPIRVariable &var, bool strip_array);
 	void add_plain_member_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
-	                                                  SPIRType &ib_type, SPIRVariable &var, uint32_t index);
+	                                                  SPIRType &ib_type, SPIRVariable &var, uint32_t index,
+	                                                  bool strip_array);
 	void add_composite_member_variable_to_interface_block(spv::StorageClass storage, const std::string &ib_var_ref,
-	                                                      SPIRType &ib_type, SPIRVariable &var, uint32_t index);
-	uint32_t get_accumulated_member_location(const SPIRVariable &var, uint32_t mbr_idx);
+	                                                      SPIRType &ib_type, SPIRVariable &var, uint32_t index,
+	                                                      bool strip_array);
+	uint32_t get_accumulated_member_location(const SPIRVariable &var, uint32_t mbr_idx, bool strip_array);
+
+	void fix_up_interface_member_indices(spv::StorageClass storage, uint32_t ib_type_id);
 
 	void mark_location_as_used_by_shader(uint32_t location, spv::StorageClass storage);
 	uint32_t ensure_correct_builtin_type(uint32_t type_id, spv::BuiltIn builtin);
@@ -431,7 +454,10 @@ protected:
 	MSLStructMemberKey get_struct_member_key(uint32_t type_id, uint32_t index);
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type);
+	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
+	SPIRType &get_patch_stage_out_struct_type();
+	std::string get_tess_factor_struct_name();
 	void emit_atomic_func_op(uint32_t result_type, uint32_t result_id, const char *op, uint32_t mem_order_1,
 	                         uint32_t mem_order_2, bool has_mem_order_2, uint32_t op0, uint32_t op1 = 0,
 	                         bool op1_is_pointer = false, bool op1_is_literal = false, uint32_t op2 = 0);
@@ -448,6 +474,8 @@ protected:
 	uint32_t builtin_base_vertex_id = 0;
 	uint32_t builtin_instance_idx_id = 0;
 	uint32_t builtin_base_instance_id = 0;
+	uint32_t builtin_invocation_id_id = 0;
+	uint32_t builtin_primitive_id_id = 0;
 	uint32_t aux_buffer_id = 0;
 
 	void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
@@ -455,6 +483,8 @@ protected:
 	void emit_store_statement(uint32_t lhs_expression, uint32_t rhs_expression) override;
 
 	void analyze_sampled_image_usage();
+
+	bool emit_tessellation_control_access_chain(const uint32_t *ops, uint32_t length);
 
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
@@ -468,6 +498,9 @@ protected:
 	MSLResourceBinding next_metal_resource_index;
 	uint32_t stage_in_var_id = 0;
 	uint32_t stage_out_var_id = 0;
+	uint32_t patch_stage_out_var_id = 0;
+	uint32_t stage_in_ptr_var_id = 0;
+	uint32_t stage_out_ptr_var_id = 0;
 	bool has_sampled_images = false;
 	bool needs_vertex_idx_arg = false;
 	bool needs_instance_idx_arg = false;
@@ -478,9 +511,13 @@ protected:
 	std::string qual_pos_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
+	std::string patch_stage_out_var_name = "patchOut";
 	std::string sampler_name_suffix = "Smplr";
 	std::string swizzle_name_suffix = "Swzl";
+	std::string input_wg_var_name = "gl_in";
 	std::string output_buffer_var_name = "spvOut";
+	std::string patch_output_buffer_var_name = "spvPatchOut";
+	std::string tess_factor_buffer_var_name = "spvTessLevel";
 	spv::Op previous_instruction_opcode = spv::OpNop;
 
 	std::unordered_map<uint32_t, MSLConstexprSampler> constexpr_samplers;

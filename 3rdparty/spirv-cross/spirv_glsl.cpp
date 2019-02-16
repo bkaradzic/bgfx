@@ -262,13 +262,7 @@ void CompilerGLSL::reset()
 	expression_usage_counts.clear();
 	forwarded_temporaries.clear();
 
-	resource_names.clear();
-	block_input_names.clear();
-	block_output_names.clear();
-	block_ubo_names.clear();
-	block_ssbo_names.clear();
-	block_names.clear();
-	function_overloads.clear();
+	reset_name_caches();
 
 	ir.for_each_typed_id<SPIRFunction>([&](uint32_t, SPIRFunction &func) {
 		func.active = false;
@@ -1561,6 +1555,10 @@ void CompilerGLSL::emit_buffer_block_native(const SPIRVariable &var)
 		i++;
 	}
 
+	// var.self can be used as a backup name for the block name,
+	// so we need to make sure we don't disturb the name here on a recompile.
+	// It will need to be reset if we have to recompile.
+	preserve_alias_on_reset(var.self);
 	add_resource_name(var.self);
 	end_scope_decl(to_name(var.self) + type_to_array_glsl(type));
 	statement("");
@@ -10983,4 +10981,24 @@ void CompilerGLSL::bitcast_to_builtin_store(uint32_t target_id, std::string &exp
 
 void CompilerGLSL::emit_block_hints(const SPIRBlock &)
 {
+}
+
+void CompilerGLSL::preserve_alias_on_reset(uint32_t id)
+{
+	preserved_aliases[id] = get_name(id);
+}
+
+void CompilerGLSL::reset_name_caches()
+{
+	for (auto &preserved : preserved_aliases)
+		set_name(preserved.first, preserved.second);
+
+	preserved_aliases.clear();
+	resource_names.clear();
+	block_input_names.clear();
+	block_output_names.clear();
+	block_ubo_names.clear();
+	block_ssbo_names.clear();
+	block_names.clear();
+	function_overloads.clear();
 }

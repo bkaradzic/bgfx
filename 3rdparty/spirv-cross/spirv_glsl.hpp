@@ -358,6 +358,9 @@ protected:
 	std::unordered_set<std::string> block_ssbo_names;
 	std::unordered_set<std::string> block_names; // A union of all block_*_names.
 	std::unordered_map<std::string, std::unordered_set<uint64_t>> function_overloads;
+	std::unordered_map<uint32_t, std::string> preserved_aliases;
+	void preserve_alias_on_reset(uint32_t id);
+	void reset_name_caches();
 
 	bool processing_entry_point = false;
 

@@ -1094,6 +1094,22 @@ const SPIRType &Compiler::get_variable_data_type(const SPIRVariable &var) const
 	return get<SPIRType>(get_variable_data_type_id(var));
 }
 
+SPIRType &Compiler::get_variable_element_type(const SPIRVariable &var)
+{
+	SPIRType *type = &get_variable_data_type(var);
+	if (is_array(*type))
+		type = &get<SPIRType>(type->parent_type);
+	return *type;
+}
+
+const SPIRType &Compiler::get_variable_element_type(const SPIRVariable &var) const
+{
+	const SPIRType *type = &get_variable_data_type(var);
+	if (is_array(*type))
+		type = &get<SPIRType>(type->parent_type);
+	return *type;
+}
+
 bool Compiler::is_sampled_image_type(const SPIRType &type)
 {
 	return (type.basetype == SPIRType::Image || type.basetype == SPIRType::SampledImage) && type.image.sampled == 1 &&
@@ -1183,6 +1199,14 @@ void Compiler::set_extended_decoration(uint32_t id, ExtendedDecorations decorati
 	case SPIRVCrossDecorationPackedType:
 		dec.extended.packed_type = value;
 		break;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		dec.extended.ib_member_index = value;
+		break;
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		dec.extended.ib_orig_id = value;
+		break;
 	}
 }
 
@@ -1201,6 +1225,14 @@ void Compiler::set_extended_member_decoration(uint32_t type, uint32_t index, Ext
 	case SPIRVCrossDecorationPackedType:
 		dec.extended.packed_type = value;
 		break;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		dec.extended.ib_member_index = value;
+		break;
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		dec.extended.ib_orig_id = value;
+		break;
 	}
 }
 
@@ -1218,6 +1250,12 @@ uint32_t Compiler::get_extended_decoration(uint32_t id, ExtendedDecorations deco
 
 	case SPIRVCrossDecorationPackedType:
 		return dec.extended.packed_type;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		return dec.extended.ib_member_index;
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		return dec.extended.ib_orig_id;
 	}
 
 	return 0;
@@ -1240,6 +1278,12 @@ uint32_t Compiler::get_extended_member_decoration(uint32_t type, uint32_t index,
 
 	case SPIRVCrossDecorationPackedType:
 		return dec.extended.packed_type;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		return dec.extended.ib_member_index;
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		return dec.extended.ib_orig_id;
 	}
 
 	return 0;
@@ -1259,6 +1303,12 @@ bool Compiler::has_extended_decoration(uint32_t id, ExtendedDecorations decorati
 
 	case SPIRVCrossDecorationPackedType:
 		return dec.extended.packed_type != 0;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		return dec.extended.ib_member_index != uint32_t(-1);
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		return dec.extended.ib_orig_id != 0;
 	}
 
 	return false;
@@ -1281,6 +1331,12 @@ bool Compiler::has_extended_member_decoration(uint32_t type, uint32_t index, Ext
 
 	case SPIRVCrossDecorationPackedType:
 		return dec.extended.packed_type != 0;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		return dec.extended.ib_member_index != uint32_t(-1);
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		return dec.extended.ib_orig_id != 0;
 	}
 
 	return false;
@@ -1298,6 +1354,14 @@ void Compiler::unset_extended_decoration(uint32_t id, ExtendedDecorations decora
 	case SPIRVCrossDecorationPackedType:
 		dec.extended.packed_type = 0;
 		break;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		dec.extended.ib_member_index = -1;
+		break;
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		dec.extended.ib_orig_id = 0;
+		break;
 	}
 }
 
@@ -1314,6 +1378,14 @@ void Compiler::unset_extended_member_decoration(uint32_t type, uint32_t index, E
 
 	case SPIRVCrossDecorationPackedType:
 		dec.extended.packed_type = 0;
+		break;
+
+	case SPIRVCrossDecorationInterfaceMemberIndex:
+		dec.extended.ib_member_index = -1;
+		break;
+
+	case SPIRVCrossDecorationInterfaceOrigID:
+		dec.extended.ib_orig_id = 0;
 		break;
 	}
 }
@@ -3527,7 +3599,7 @@ bool Compiler::ActiveBuiltinHandler::handle(spv::Op opcode, const uint32_t *args
 		auto *type = &compiler.get_variable_data_type(*var);
 
 		auto &flags =
-		    type->storage == StorageClassInput ? compiler.active_input_builtins : compiler.active_output_builtins;
+		    var->storage == StorageClassInput ? compiler.active_input_builtins : compiler.active_output_builtins;
 
 		uint32_t count = length - 3;
 		args += 3;
