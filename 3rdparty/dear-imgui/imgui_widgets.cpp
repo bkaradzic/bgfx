@@ -730,7 +730,7 @@ void ImGui::Scrollbar(ImGuiLayoutType direction)
     const bool horizontal = (direction == ImGuiLayoutType_Horizontal);
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = GetScrollbarID(direction);
-    
+
     // Render background
     bool other_scrollbar = (horizontal ? window->ScrollbarY : window->ScrollbarX);
     float other_scrollbar_size_w = other_scrollbar ? style.ScrollbarSize : 0.0f;
@@ -2631,6 +2631,8 @@ int ImParseFormatPrecision(const char* fmt, int default_precision)
 // FIXME: Facilitate using this in variety of other situations.
 bool ImGui::InputScalarAsWidgetReplacement(const ImRect& bb, ImGuiID id, const char* label, ImGuiDataType data_type, void* data_ptr, const char* format)
 {
+    IM_UNUSED(id);
+
     ImGuiContext& g = *GImGui;
 
     // On the first frame, g.ScalarAsInputTextId == 0, then on subsequent frames it becomes == id.
