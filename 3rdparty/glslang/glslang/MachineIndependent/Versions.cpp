@@ -1025,7 +1025,7 @@ void TParseVersions::float16OpaqueCheck(const TSourceLoc& loc, const char* op, b
 void TParseVersions::explicitInt16Check(const TSourceLoc& loc, const char* op, bool builtIn)
 {
     if (! builtIn) {
-    	const char* const extensions[] = {
+        const char* const extensions[] = {
 #if AMD_EXTENSIONS
                                            E_GL_AMD_gpu_shader_int16,
 #endif

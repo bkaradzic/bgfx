@@ -98,46 +98,46 @@ public:
         }
     }
 
-    void addPipeInput(const TIntermSymbol& base)
+    void addPipeIOVariable(const TIntermSymbol& base)
     {
         if (processedDerefs.find(&base) == processedDerefs.end()) {
             processedDerefs.insert(&base);
 
             const TString &name = base.getName();
             const TType &type = base.getType();
+            const bool input = base.getQualifier().isPipeInput();
 
-            TReflection::TNameToIndex::const_iterator it = reflection.nameToIndex.find(name.c_str());
-            if (it == reflection.nameToIndex.end()) {
-                reflection.nameToIndex[name.c_str()] = (int)reflection.indexToPipeInput.size();
-                reflection.indexToPipeInput.push_back(TObjectReflection(name.c_str(), type, 0, mapToGlType(type), 0, 0));
+            TReflection::TMapIndexToReflection &ioItems =
+                input ? reflection.indexToPipeInput : reflection.indexToPipeOutput;
 
-                EShLanguageMask& stages = reflection.indexToPipeInput.back().stages;
-                stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+            if (reflection.options & EShReflectionUnwrapIOBlocks) {
+                bool anonymous = IsAnonymous(name);
+
+                TString baseName;
+                if (type.getBasicType() == EbtBlock) {
+                    baseName = anonymous ? TString() : type.getTypeName();
+                } else {
+                    baseName = anonymous ? TString() : name;
+                }
+
+                // by convention if this is an arrayed block we ignore the array in the reflection
+                if (type.isArray()) {
+                    blowUpIOAggregate(input, baseName, TType(type, 0));
+                } else {               
+                    blowUpIOAggregate(input, baseName, type);
+                }
             } else {
-                EShLanguageMask& stages = reflection.indexToPipeInput[it->second].stages;
-                stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
-            }
-        }
-    }
+                TReflection::TNameToIndex::const_iterator it = reflection.nameToIndex.find(name.c_str());
+                if (it == reflection.nameToIndex.end()) {
+                    reflection.nameToIndex[name.c_str()] = (int)ioItems.size();
+                    ioItems.push_back(TObjectReflection(name.c_str(), type, 0, mapToGlType(type), 0, 0));
 
-    void addPipeOutput(const TIntermSymbol& base)
-    {
-        if (processedDerefs.find(&base) == processedDerefs.end()) {
-            processedDerefs.insert(&base);
-
-            const TString &name = base.getName();
-            const TType &type = base.getType();
-
-            TReflection::TNameToIndex::const_iterator it = reflection.nameToIndex.find(name.c_str());
-            if (it == reflection.nameToIndex.end()) {
-                reflection.nameToIndex[name.c_str()] = (int)reflection.indexToPipeOutput.size();
-                reflection.indexToPipeOutput.push_back(TObjectReflection(name.c_str(), type, 0, mapToGlType(type), 0, 0));
-
-                EShLanguageMask& stages = reflection.indexToPipeOutput.back().stages;
-                stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
-            } else {
-                EShLanguageMask& stages = reflection.indexToPipeOutput[it->second].stages;
-                stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+                    EShLanguageMask& stages = ioItems.back().stages;
+                    stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+                } else {
+                    EShLanguageMask& stages = ioItems[it->second].stages;
+                    stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+                }
             }
         }
     }
@@ -471,6 +471,67 @@ public:
               EShLanguageMask& stages = variables[it->second].stages;
               stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
             }
+        }
+    }
+    
+    // similar to blowUpActiveAggregate, but with simpler rules and no dereferences to follow.
+    void blowUpIOAggregate(bool input, const TString &baseName, const TType &type)
+    {
+        TString name = baseName;
+
+        // if the type is still too coarse a granularity, this is still an aggregate to expand, expand it...
+        if (! isReflectionGranularity(type)) {
+            if (type.isArray()) {
+                // Visit all the indices of this array, and for each one,
+                // fully explode the remaining aggregate to dereference
+                for (int i = 0; i < std::max(type.getOuterArraySize(), 1); ++i) {
+                    TString newBaseName = name;
+                    newBaseName.append(TString("[") + String(i) + "]");
+                    TType derefType(type, 0);
+
+                    blowUpIOAggregate(input, newBaseName, derefType);
+                }
+            } else {
+                // Visit all members of this aggregate, and for each one,
+                // fully explode the remaining aggregate to dereference
+                const TTypeList& typeList = *type.getStruct();
+
+                for (int i = 0; i < (int)typeList.size(); ++i) {
+                    TString newBaseName = name;
+                    if (newBaseName.size() > 0)
+                        newBaseName.append(".");
+                    newBaseName.append(typeList[i].type->getFieldName());
+                    TType derefType(type, i);
+
+                    blowUpIOAggregate(input, newBaseName, derefType);
+                }
+            }
+
+            // it was all completed in the recursive calls above
+            return;
+        }
+
+        if ((reflection.options & EShReflectionBasicArraySuffix) && type.isArray()) {
+            name.append(TString("[0]"));
+        }
+
+        TReflection::TMapIndexToReflection &ioItems =
+            input ? reflection.indexToPipeInput : reflection.indexToPipeOutput;
+
+        std::string namespacedName = input ? "in " : "out ";
+        namespacedName += name.c_str();
+
+        TReflection::TNameToIndex::const_iterator it = reflection.nameToIndex.find(namespacedName);
+        if (it == reflection.nameToIndex.end()) {
+            reflection.nameToIndex[namespacedName] = (int)ioItems.size();
+            ioItems.push_back(
+                TObjectReflection(name.c_str(), type, 0, mapToGlType(type), mapToGlArraySize(type), 0));
+
+            EShLanguageMask& stages = ioItems.back().stages;
+            stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
+        } else {
+            EShLanguageMask& stages = ioItems[it->second].stages;
+            stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
         }
     }
 
@@ -1027,11 +1088,9 @@ void TReflectionTraverser::visitSymbol(TIntermSymbol* base)
     if (base->getQualifier().storage == EvqUniform)
         addUniform(*base);
 
-    if (intermediate.getStage() == reflection.firstStage && base->getQualifier().isPipeInput())
-        addPipeInput(*base);
-
-    if (intermediate.getStage() == reflection.lastStage && base->getQualifier().isPipeOutput())
-        addPipeOutput(*base);
+    if ((intermediate.getStage() == reflection.firstStage && base->getQualifier().isPipeInput()) ||
+        (intermediate.getStage() == reflection.lastStage && base->getQualifier().isPipeOutput()))
+        addPipeIOVariable(*base);
 }
 
 //

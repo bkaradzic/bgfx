@@ -534,6 +534,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                         ReflectOptions |= EShReflectionSeparateBuffers;
                     } else if (lowerword == "reflect-all-block-variables") {
                         ReflectOptions |= EShReflectionAllBlockVariables;
+                    } else if (lowerword == "reflect-unwrap-io-blocks") {
+                        ReflectOptions |= EShReflectionUnwrapIOBlocks;
                     } else if (lowerword == "resource-set-bindings" ||  // synonyms
                                lowerword == "resource-set-binding"  ||
                                lowerword == "rsb") {
@@ -1538,6 +1540,8 @@ void usage()
            "                                    separately to uniforms\n"
            "  --reflect-all-block-variables     reflect all variables in blocks, whether\n"
            "                                    inactive or active\n"
+           "  --reflect-unwrap-io-blocks        unwrap input/output blocks the same as\n"
+           "                                    uniform blocks\n"
            "  --resource-set-binding [stage] name set binding\n"
            "                                    set descriptor set and binding for\n"
            "                                    individual resources\n"

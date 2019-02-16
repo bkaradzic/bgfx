@@ -33,8 +33,11 @@ VertexCollection: offset -1, type ffffffff, size 400, index -1, binding -1, stag
 MultipleArrays: offset -1, type ffffffff, size 500, index -1, binding -1, stages 1, numMembers 9
 
 Pipeline input reflection:
-gl_InstanceID: offset 0, type 1404, size 0, index 0, binding -1, stages 1
+gl_InstanceID: offset 0, type 1404, size 1, index 0, binding -1, stages 1
 
 Pipeline output reflection:
-outval: offset 0, type 1406, size 0, index 0, binding -1, stages 1
+outval.val: offset 0, type 1406, size 1, index 0, binding -1, stages 1
+outval.a: offset 0, type 8b51, size 1, index 0, binding -1, stages 1
+outval.b[0]: offset 0, type 8b50, size 4, index 0, binding -1, stages 1
+outval.c: offset 0, type 8b5a, size 1, index 0, binding -1, stages 1
 

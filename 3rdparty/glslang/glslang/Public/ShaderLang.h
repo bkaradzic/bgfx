@@ -246,6 +246,7 @@ typedef enum {
     EShReflectionIntermediateIO    = (1 << 2), // reflect inputs and outputs to program, even with no vertex shader
     EShReflectionSeparateBuffers   = (1 << 3), // buffer variables and buffer blocks are reflected separately
     EShReflectionAllBlockVariables = (1 << 4), // reflect all variables in blocks, even if they are inactive
+    EShReflectionUnwrapIOBlocks    = (1 << 5), // unwrap input/output blocks the same as with uniform blocks
 } EShReflectionOptions;
 
 //

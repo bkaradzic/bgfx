@@ -1197,7 +1197,7 @@ bool HlslGrammar::acceptSamplerTypeDX9(TType &type)
     TSampler sampler;
     sampler.set(txType.getBasicType(), dim, false, isShadow, false);
 
-	if (!parseContext.setTextureReturnType(sampler, txType, token.loc))
+    if (!parseContext.setTextureReturnType(sampler, txType, token.loc))
         return false;
 
     type.shallowCopy(TType(sampler, EvqUniform, arraySizes));
@@ -1489,7 +1489,7 @@ bool HlslGrammar::acceptType(TType& type, TIntermNode*& nodeList)
     case EHTokSampler3d:              // ...
     case EHTokSamplerCube:            // ...
         if (parseContext.hlslDX9Compatible())
-			return acceptSamplerTypeDX9(type);
+            return acceptSamplerTypeDX9(type);
         else
             return acceptSamplerType(type);
         break;
