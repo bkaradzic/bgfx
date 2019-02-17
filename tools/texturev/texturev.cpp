@@ -23,8 +23,6 @@
 #include <imgui/imgui.h>
 #include <bgfx_utils.h>
 
-#include <dirent.h>
-
 #include <tinystl/allocator.h>
 #include <tinystl/vector.h>
 namespace stl = tinystl;
@@ -671,68 +669,76 @@ struct View
 
 	void updateFileList(const bx::FilePath& _filePath)
 	{
-		DIR* dir = opendir(_filePath.get() );
+		bx::DirectoryReader dr;
 
-		if (NULL == dir)
-		{
-			m_path = _filePath.getPath();
-			dir = opendir(m_path.get() );
-		}
-		else
+		if (bx::open(&dr, _filePath) )
 		{
 			m_path = _filePath;
 		}
-
-		if (NULL != dir)
+		else if (bx::open(&dr, _filePath.getPath() ) )
 		{
-			for (dirent* item = readdir(dir); NULL != item; item = readdir(dir) )
-			{
-				if (0 == (item->d_type & DT_DIR) )
-				{
-					const bx::StringView fileName(item->d_name);
-					bx::StringView ext = bx::strRFind(fileName, '.');
-					if (!ext.isEmpty() )
-					{
-						ext.set(ext.getPtr()+1, fileName.getTerm() );
-						bool supported = false;
-						for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
-						{
-							if (0 == bx::strCmpI(ext, s_supportedExt[ii]) )
-							{
-								supported = true;
-								break;
-							}
-						}
+			m_path = _filePath.getPath();
+		}
+		else
+		{
+			DBG("File path `%s` not found.", _filePath.get() );
+			return;
+		}
 
-						if (supported)
+		bx::Error err;
+
+		while (err.isOk() )
+		{
+			bx::FileInfo fi;
+			bx::read(&dr, fi, &err);
+
+			if (err.isOk()
+			&&  bx::FileType::File == fi.type)
+			{
+				bx::StringView ext = fi.filePath.getExt();
+
+				if (!ext.isEmpty() )
+				{
+					ext.set(ext.getPtr()+1, ext.getTerm() );
+
+					bool supported = false;
+					for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
+					{
+						if (0 == bx::strCmpI(ext, s_supportedExt[ii]) )
 						{
-							m_fileList.push_back(item->d_name);
+							supported = true;
+							break;
 						}
+					}
+
+					if (supported)
+					{
+						m_fileList.push_back(fi.filePath.get() );
 					}
 				}
 			}
+		}
 
-			std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
+		bx::close(&dr);
 
-			m_fileIndex = 0;
-			uint32_t idx = 0;
-			for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
+		std::sort(m_fileList.begin(), m_fileList.end(), sortNameAscending);
+
+		m_fileIndex = 0;
+		uint32_t idx = 0;
+		for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
+		{
+			if (0 == bx::strCmpI(it->c_str(), _filePath.getFileName() ) )
 			{
-				if (0 == bx::strCmpI(it->c_str(), _filePath.getFileName() ) )
-				{
-					// If it is case-insensitive match then might be correct one, but keep
-					// searching.
-					m_fileIndex = idx;
+				// If it is case-insensitive match then might be correct one, but keep
+				// searching.
+				m_fileIndex = idx;
 
-					if (0 == bx::strCmp(it->c_str(), _filePath.getFileName() ) )
-					{
-						// If it is exact match we're done.
-						break;
-					}
+				if (0 == bx::strCmp(it->c_str(), _filePath.getFileName() ) )
+				{
+					// If it is exact match we're done.
+					break;
 				}
 			}
-
-			closedir(dir);
 		}
 	}
 
