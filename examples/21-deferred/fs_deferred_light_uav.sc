@@ -1,14 +1,17 @@
 $input v_texcoord0
 
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #include "common.sh"
+#include <bgfx_compute.sh>
 
 SAMPLER2D(s_normal, 0);
 SAMPLER2D(s_depth,  1);
+
+IMAGE2D_RW(s_lights, rgba8, 1);
 
 uniform vec4 u_lightPosRadius[1];
 uniform vec4 u_lightRgbInnerR[1];
@@ -29,7 +32,9 @@ void main()
 	vec3 view = mul(u_view, vec4(wpos, 0.0) ).xyz;
 	view = -normalize(view);
 
+    ivec2 coord = ivec2(gl_FragCoord.xy);
+    
 	vec3 lightColor = calcLight(wpos, normal, view, u_lightPosRadius[0].xyz, u_lightPosRadius[0].w, u_lightRgbInnerR[0].xyz, u_lightRgbInnerR[0].w);
-	gl_FragColor.xyz = toGamma(lightColor.xyz);
-	gl_FragColor.w = 1.0;
+    vec4 color = imageLoad(s_lights, coord);
+    imageStore(s_lights, coord, color + vec4(toGamma(lightColor.xyz), 1.0));
 }

@@ -391,10 +391,12 @@ namespace bgfx { namespace d3d11
 
 		void clear()
 		{
+			bx::memSet(m_uav, 0, sizeof(m_uav));
 			bx::memSet(m_srv, 0, sizeof(m_srv) );
 			bx::memSet(m_sampler, 0, sizeof(m_sampler) );
 		}
 
+		ID3D11UnorderedAccessView* m_uav[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		ID3D11SamplerState* m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
@@ -1178,6 +1180,9 @@ namespace bgfx { namespace d3d11
 						: 0)
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
+					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_1)
+						? BGFX_CAPS_READ_WRITE_ATTACH
+						: 0)
 					);
 
 				m_timerQuerySupport   = m_featureLevel >= D3D_FEATURE_LEVEL_10_0;
@@ -2503,7 +2508,7 @@ namespace bgfx { namespace d3d11
 				m_currentColor        = m_backBufferColor;
 				m_currentDepthStencil = m_backBufferDepthStencil;
 
-				m_deviceCtx->OMSetRenderTargets(1, &m_currentColor, m_currentDepthStencil);
+				m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(1, &m_currentColor, m_currentDepthStencil, 1, 0, NULL, NULL);
 				m_needPresent |= _needPresent;
 			}
 			else
@@ -4579,6 +4584,10 @@ namespace bgfx { namespace d3d11
 		{
 			m_rtv[ii] = NULL;
 		}
+		for(uint32_t ii = 0; ii < BX_COUNTOF(m_uav); ++ii)
+		{
+			m_uav[ii] = NULL;
+		}
 		m_dsv       = NULL;
 		m_swapChain = NULL;
 
@@ -4690,6 +4699,8 @@ namespace bgfx { namespace d3d11
 		if (0 < m_numTh)
 		{
 			m_num = 0;
+			m_numUav = 0;
+
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
 			{
 				const Attachment& at = m_attachment[ii];
@@ -4851,7 +4862,8 @@ namespace bgfx { namespace d3d11
 					}
 					else
 					{
-						BX_CHECK(false, "");
+						m_uav[m_num + m_numUav] = texture.m_uav;
+						m_numUav++;
 					}
 				}
 			}
@@ -4924,7 +4936,7 @@ namespace bgfx { namespace d3d11
 
 	void FrameBufferD3D11::set()
 	{
-		s_renderD3D11->m_deviceCtx->OMSetRenderTargets(m_num, m_rtv, m_dsv);
+		s_renderD3D11->m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(m_num, m_rtv, m_dsv, m_num, m_numUav, m_uav + m_num, NULL);
 		m_needPresent = UINT16_MAX != m_denseIdx;
 		s_renderD3D11->m_currentColor        = m_rtv[0];
 		s_renderD3D11->m_currentDepthStencil = m_dsv;
