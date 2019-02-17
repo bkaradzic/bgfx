@@ -96,6 +96,7 @@ INSTANTIATE_TEST_CASE_P(
         "cppNest.vert",
         "cppBad.vert",
         "cppBad2.vert",
+        "cppBad3.vert",
         "cppComplexExpr.vert",
         "cppDeepNest.frag",
         "cppPassMacroName.frag",

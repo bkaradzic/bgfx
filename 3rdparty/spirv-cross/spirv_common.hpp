@@ -1381,6 +1381,8 @@ struct Meta
 		{
 			uint32_t packed_type = 0;
 			bool packed = false;
+			uint32_t ib_member_index = -1;
+			uint32_t ib_orig_id = 0;
 		} extended;
 	};
 

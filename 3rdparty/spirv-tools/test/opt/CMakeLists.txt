@@ -34,6 +34,7 @@ add_spvtools_unittest(TARGET opt
        def_use_test.cpp
        eliminate_dead_const_test.cpp
        eliminate_dead_functions_test.cpp
+       eliminate_dead_member_test.cpp
        feature_manager_test.cpp
        flatten_decoration_test.cpp
        fold_spec_const_op_composite_test.cpp

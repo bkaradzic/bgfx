@@ -147,6 +147,10 @@ int TPpContext::CPPdefine(TPpToken* ppToken)
         }
 
         token = scanToken(ppToken);
+    } else if (token != '\n' && token != EndOfInput && !ppToken->space) {
+        parseContext.ppWarn(ppToken->loc, "missing space after macro name", "#define", "");
+
+        return token;
     }
 
     // record the definition of the macro

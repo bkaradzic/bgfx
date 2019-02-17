@@ -299,8 +299,8 @@ public:
     void fixIoArraySize(const TSourceLoc&, TType&);
     void ioArrayCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void handleIoResizeArrayAccess(const TSourceLoc&, TIntermTyped* base);
-    void checkIoArraysConsistency(const TSourceLoc&, bool tailOnly = false, bool isPerPrimitive = false);
-    int getIoArrayImplicitSize(bool isPerPrimitive = false) const;
+    void checkIoArraysConsistency(const TSourceLoc&, bool tailOnly = false);
+    int getIoArrayImplicitSize(const TQualifier&, TString* featureString = nullptr) const;
     void checkIoArrayConsistency(const TSourceLoc&, int requiredSize, const char* feature, TType&, const TString&);
 
     TIntermTyped* handleBinaryMath(const TSourceLoc&, const char* str, TOperator op, TIntermTyped* left, TIntermTyped* right);

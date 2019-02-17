@@ -31,6 +31,7 @@
 #include "source/opt/dead_variable_elimination.h"
 #include "source/opt/eliminate_dead_constant_pass.h"
 #include "source/opt/eliminate_dead_functions_pass.h"
+#include "source/opt/eliminate_dead_members_pass.h"
 #include "source/opt/flatten_decoration_pass.h"
 #include "source/opt/fold_spec_constant_op_and_composite_pass.h"
 #include "source/opt/freeze_spec_constant_value_pass.h"

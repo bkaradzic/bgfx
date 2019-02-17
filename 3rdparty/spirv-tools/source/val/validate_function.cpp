@@ -41,18 +41,22 @@ spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
            << _.getIdName(return_id) << "'.";
   }
 
+  const std::vector<SpvOp> acceptable = {
+      SpvOpDecorate,
+      SpvOpEnqueueKernel,
+      SpvOpEntryPoint,
+      SpvOpExecutionMode,
+      SpvOpExecutionModeId,
+      SpvOpFunctionCall,
+      SpvOpGetKernelNDrangeSubGroupCount,
+      SpvOpGetKernelNDrangeMaxSubGroupSize,
+      SpvOpGetKernelWorkGroupSize,
+      SpvOpGetKernelPreferredWorkGroupSizeMultiple,
+      SpvOpGetKernelLocalSizeForSubgroupCount,
+      SpvOpGetKernelMaxNumSubgroups,
+      SpvOpName};
   for (auto& pair : inst->uses()) {
     const auto* use = pair.first;
-    const std::vector<SpvOp> acceptable = {
-        SpvOpFunctionCall,
-        SpvOpEntryPoint,
-        SpvOpEnqueueKernel,
-        SpvOpGetKernelNDrangeSubGroupCount,
-        SpvOpGetKernelNDrangeMaxSubGroupSize,
-        SpvOpGetKernelWorkGroupSize,
-        SpvOpGetKernelPreferredWorkGroupSizeMultiple,
-        SpvOpGetKernelLocalSizeForSubgroupCount,
-        SpvOpGetKernelMaxNumSubgroups};
     if (std::find(acceptable.begin(), acceptable.end(), use->opcode()) ==
         acceptable.end()) {
       return _.diag(SPV_ERROR_INVALID_ID, use)

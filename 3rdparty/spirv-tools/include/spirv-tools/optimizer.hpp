@@ -226,6 +226,11 @@ Optimizer::PassToken CreateStripReflectInfoPass();
 // functions are not needed because they will never be called.
 Optimizer::PassToken CreateEliminateDeadFunctionsPass();
 
+// Creates an eliminate-dead-members pass.
+// An eliminate-dead-members pass will remove all unused members of structures.
+// This will not affect the data layout of the remaining members.
+Optimizer::PassToken CreateEliminateDeadMembersPass();
+
 // Creates a set-spec-constant-default-value pass from a mapping from spec-ids
 // to the default values in the form of string.
 // A set-spec-constant-default-value pass sets the default values for the
