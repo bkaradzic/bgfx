@@ -293,7 +293,7 @@ public:
 			m_lightTaProgram = BGFX_INVALID_HANDLE;
 		}
 
-		if(0 != (BGFX_CAPS_READ_WRITE_ATTACH & bgfx::getCaps()->supported))
+		if (0 != (BGFX_CAPS_FRAMEBUFFER_RW & bgfx::getCaps()->supported) )
 		{
 			m_lightUavProgram = loadProgram("vs_deferred_light", "fs_deferred_light_uav");
 			m_clearUavProgram = loadProgram("vs_deferred_light", "fs_deferred_clear_uav");

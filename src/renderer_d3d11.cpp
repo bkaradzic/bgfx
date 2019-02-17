@@ -1181,7 +1181,7 @@ namespace bgfx { namespace d3d11
 					| BGFX_CAPS_TEXTURE_2D_ARRAY
 					| BGFX_CAPS_TEXTURE_CUBE_ARRAY
 					| ((m_featureLevel >= D3D_FEATURE_LEVEL_11_1)
-						? BGFX_CAPS_READ_WRITE_ATTACH
+						? BGFX_CAPS_FRAMEBUFFER_RW
 						: 0)
 					);
 
