@@ -469,7 +469,7 @@ public:
 
 					bgfx::Attachment gbufferAt[3];
 
-					if(m_useTArray)
+					if (m_useTArray)
 					{
 						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 2, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
 						gbufferAt[0].init(m_gbufferTex[0], bgfx::Access::Write, 0);
@@ -488,12 +488,12 @@ public:
 
 					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAt), gbufferAt, true);
 
-					if(bgfx::isValid(m_lightBuffer))
+					if (bgfx::isValid(m_lightBuffer) )
 					{
 						bgfx::destroy(m_lightBuffer);
 					}
 
-					if(m_useUav)
+					if (m_useUav)
 					{
 						bgfx::Attachment lightAt[2];
 
@@ -640,13 +640,13 @@ public:
 				}
 
 				// Clear UAV texture
-				if(m_useUav)
+				if (m_useUav)
 				{
-					screenSpaceQuad((float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
+					screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
 					bgfx::setState(0
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
-					);
+						);
 					bgfx::submit(RENDER_PASS_LIGHT_ID, m_clearUavProgram);
 				}
 
