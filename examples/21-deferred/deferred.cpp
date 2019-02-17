@@ -282,6 +282,7 @@ public:
 		m_lineProgram    = loadProgram("vs_deferred_debug_line", "fs_deferred_debug_line");
 
 		m_useTArray = false;
+		m_useUav = false;
 
 		if (0 != (BGFX_CAPS_TEXTURE_2D_ARRAY & bgfx::getCaps()->supported) )
 		{
@@ -290,6 +291,17 @@ public:
 		else
 		{
 			m_lightTaProgram = BGFX_INVALID_HANDLE;
+		}
+
+		if(0 != (BGFX_CAPS_READ_WRITE_ATTACH & bgfx::getCaps()->supported))
+		{
+			m_lightUavProgram = loadProgram("vs_deferred_light", "fs_deferred_light_uav");
+			m_clearUavProgram = loadProgram("vs_deferred_light", "fs_deferred_clear_uav");
+		}
+		else
+		{
+			m_lightUavProgram = BGFX_INVALID_HANDLE;
+			m_clearUavProgram = BGFX_INVALID_HANDLE;
 		}
 
 		// Load diffuse texture.
@@ -423,6 +435,7 @@ public:
 				||  m_oldHeight    != m_height
 				||  m_oldReset     != m_reset
 				||  m_oldUseTArray != m_useTArray
+				||  m_oldUseUav    != m_useUav
 				||  !bgfx::isValid(m_gbuffer) )
 				{
 					// Recreate variable size render targets when resolution changes.
@@ -430,6 +443,7 @@ public:
 					m_oldHeight    = m_height;
 					m_oldReset     = m_reset;
 					m_oldUseTArray = m_useTArray;
+					m_oldUseUav    = m_useUav;
 
 					if (bgfx::isValid(m_gbuffer) )
 					{
@@ -440,7 +454,6 @@ public:
 					}
 
 					const uint64_t tsFlags = 0
-						| BGFX_TEXTURE_RT
 						| BGFX_SAMPLER_MIN_POINT
 						| BGFX_SAMPLER_MAG_POINT
 						| BGFX_SAMPLER_MIP_POINT
@@ -448,33 +461,48 @@ public:
 						| BGFX_SAMPLER_V_CLAMP
 						;
 
-					bgfx::Attachment at[3];
+					bgfx::Attachment gbufferAt[3];
 
-					if (m_useTArray)
+					if(m_useTArray)
 					{
-						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 2, bgfx::TextureFormat::BGRA8, tsFlags);
-						at[0].init(m_gbufferTex[0], bgfx::Access::Write, 0);
-						at[1].init(m_gbufferTex[0], bgfx::Access::Write, 1);
+						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 2, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						gbufferAt[0].init(m_gbufferTex[0], bgfx::Access::Write, 0);
+						gbufferAt[1].init(m_gbufferTex[0], bgfx::Access::Write, 1);
 					}
 					else
 					{
-						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
-						m_gbufferTex[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, tsFlags);
-						at[0].init(m_gbufferTex[0]);
-						at[1].init(m_gbufferTex[1]);
+						m_gbufferTex[0] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						m_gbufferTex[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						gbufferAt[0].init(m_gbufferTex[0]);
+						gbufferAt[1].init(m_gbufferTex[1]);
 					}
 
-					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, tsFlags);
-					at[2].init(m_gbufferTex[2]);
+					m_gbufferTex[2] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | tsFlags);
+					gbufferAt[2].init(m_gbufferTex[2]);
 
-					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(at), at, true);
+					m_gbuffer = bgfx::createFrameBuffer(BX_COUNTOF(gbufferAt), gbufferAt, true);
 
-					if (bgfx::isValid(m_lightBuffer) )
+					if(bgfx::isValid(m_lightBuffer))
 					{
 						bgfx::destroy(m_lightBuffer);
 					}
 
-					m_lightBuffer = bgfx::createFrameBuffer(uint16_t(m_width), uint16_t(m_height), bgfx::TextureFormat::BGRA8, tsFlags);
+					if(m_useUav)
+					{
+						bgfx::Attachment lightAt[2];
+
+						bgfx::TextureHandle target = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						m_lightBufferTex = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_COMPUTE_WRITE | tsFlags);
+						lightAt[0].init(target);
+						lightAt[1].init(m_lightBufferTex, bgfx::Access::ReadWrite);
+
+						m_lightBuffer = bgfx::createFrameBuffer(BX_COUNTOF(lightAt), lightAt, true);
+					}
+					else
+					{
+						m_lightBufferTex = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
+						m_lightBuffer = bgfx::createFrameBuffer(1, &m_lightBufferTex, true);
+					}
 				}
 
 				ImGui::SetNextWindowPos(
@@ -501,6 +529,15 @@ public:
 				else
 				{
 					ImGui::Text("Texture array frame buffer is not supported.");
+				}
+
+				if(bgfx::isValid(m_lightUavProgram))
+				{
+					ImGui::Checkbox("Use UAV frame buffer attachment.", &m_useUav);
+				}
+				else
+				{
+					ImGui::Text("UAV frame buffer attachment is not supported.");
 				}
 
 				ImGui::Checkbox("Animate mesh.", &m_animateMesh);
@@ -594,6 +631,17 @@ public:
 						// Submit primitive for rendering to view 0.
 						bgfx::submit(RENDER_PASS_GEOMETRY_ID, m_geomProgram);
 					}
+				}
+
+				// Clear UAV texture
+				if(m_useUav)
+				{
+					screenSpaceQuad((float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
+					bgfx::setState(0
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
+					);
+					bgfx::submit(RENDER_PASS_LIGHT_ID, m_clearUavProgram);
 				}
 
 				// Draw lights into light buffer.
@@ -717,17 +765,18 @@ public:
 							| BGFX_STATE_BLEND_ADD
 							);
 						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-						bgfx::submit(RENDER_PASS_LIGHT_ID
-							, bgfx::isValid(m_lightTaProgram) && m_useTArray
-							? m_lightTaProgram
-							: m_lightProgram
-							);
+						if(bgfx::isValid(m_lightTaProgram) && m_useTArray)
+							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightTaProgram);
+						else if(bgfx::isValid(m_lightUavProgram) && m_useUav)
+							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightUavProgram);
+						else
+							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightProgram);
 					}
 				}
 
 				// Combine color and light buffers.
-				bgfx::setTexture(0, s_albedo, bgfx::getTexture(m_gbuffer,     0) );
-				bgfx::setTexture(1, s_light,  bgfx::getTexture(m_lightBuffer, 0) );
+				bgfx::setTexture(0, s_albedo, m_gbufferTex[0]);
+				bgfx::setTexture(1, s_light,  m_lightBufferTex);
 				bgfx::setState(0
 					| BGFX_STATE_WRITE_RGB
 					| BGFX_STATE_WRITE_A
@@ -788,6 +837,8 @@ public:
 	bgfx::ProgramHandle m_geomProgram;
 	bgfx::ProgramHandle m_lightProgram;
 	bgfx::ProgramHandle m_lightTaProgram;
+	bgfx::ProgramHandle m_lightUavProgram;
+	bgfx::ProgramHandle m_clearUavProgram;
 	bgfx::ProgramHandle m_combineProgram;
 	bgfx::ProgramHandle m_debugProgram;
 	bgfx::ProgramHandle m_lineProgram;
@@ -795,6 +846,7 @@ public:
 	bgfx::TextureHandle m_textureNormal;
 
 	bgfx::TextureHandle m_gbufferTex[3];
+	bgfx::TextureHandle m_lightBufferTex;
 	bgfx::FrameBufferHandle m_gbuffer;
 	bgfx::FrameBufferHandle m_lightBuffer;
 
@@ -809,6 +861,9 @@ public:
 
 	bool m_useTArray;
 	bool m_oldUseTArray;
+
+	bool m_useUav;
+	bool m_oldUseUav;
 
 	int32_t m_scrollArea;
 	int32_t m_numLights;

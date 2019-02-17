@@ -2434,12 +2434,18 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				m_atocSupport = s_extension[Extension::ARB_multisample].m_supported;
 				m_conservativeRasterSupport = s_extension[Extension::NV_conservative_raster].m_supported;
 
+				m_imageLoadStoreSupport = false
+					|| s_extension[Extension::ARB_shader_image_load_store].m_supported
+					|| s_extension[Extension::EXT_shader_image_load_store].m_supported
+					;
+
 				g_caps.supported |= 0
 					| (m_atocSupport               ? BGFX_CAPS_ALPHA_TO_COVERAGE      : 0)
 					| (m_conservativeRasterSupport ? BGFX_CAPS_CONSERVATIVE_RASTER    : 0)
 					| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
 					| (m_depthTextureSupport       ? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL : 0)
 					| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
+					| (m_imageLoadStoreSupport     ? BGFX_CAPS_READ_WRITE_ATTACH                    : 0)
 					;
 
 				g_caps.supported |= m_glctx.getCaps();
@@ -3244,6 +3250,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					m_glctx.makeCurrent(NULL);
 					m_currentFbo = frameBuffer.m_fbo[0];
 				}
+
+				frameBuffer.set();
 			}
 
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_currentFbo) );
@@ -3888,6 +3896,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		bool m_occlusionQuerySupport;
 		bool m_atocSupport;
 		bool m_conservativeRasterSupport;
+		bool m_imageLoadStoreSupport;
 		bool m_flip;
 
 		uint64_t m_hash;
@@ -5936,7 +5945,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							attachment = GL_DEPTH_ATTACHMENT;
 						}
 					}
-					else
+					else if (Access::Write == at.access)
 					{
 						buffers[colorIdx] = attachment;
 						++colorIdx;
@@ -5968,7 +5977,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								) );
 						}
 					}
-					else if (Access::Write == at.access)
+					else
 					{
 						if (1 < texture.m_numLayers
 						&&  !texture.isCubeMap())
@@ -5994,10 +6003,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								, at.mip
 								) );
 						}
-					}
-					else
-					{
-						BX_CHECK(false, "");
 					}
 
 					needResolve |= (0 != texture.m_rbo) && (0 != texture.m_id);
@@ -6194,6 +6199,33 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		}
 
 		GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, idx, buffers) );
+	}
+
+	void FrameBufferGL::set()
+	{
+		for(uint32_t ii = 0; ii < m_numTh; ++ii)
+		{
+			if(m_attachment[ii].access == Access::Write)
+				continue;
+
+			TextureHandle handle = m_attachment[ii].handle;
+			if(isValid(handle))
+			{
+				const TextureGL& texture = s_renderGL->m_textures[handle.idx];
+
+				if(0 != (texture.m_flags&BGFX_TEXTURE_COMPUTE_WRITE))
+				{
+					GL_CHECK(glBindImageTexture(ii
+						, texture.m_id
+						, m_attachment[ii].mip
+						, GL_FALSE //texture.isLayered() ? GL_TRUE : GL_FALSE
+						, m_attachment[ii].layer
+						, s_access[Access::ReadWrite]
+						, s_imageFormat[texture.m_textureFormat])
+					);
+				}
+			}
+		}
 	}
 
 	void OcclusionQueryGL::create()

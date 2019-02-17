@@ -502,6 +502,7 @@
 #define BGFX_CAPS_VERTEX_ATTRIB_HALF     UINT64_C(0x0000000001000000) //!< Vertex attribute half-float is supported.
 #define BGFX_CAPS_VERTEX_ATTRIB_UINT10   UINT64_C(0x0000000002000000) //!< Vertex attribute 10_10_10_2 is supported.
 #define BGFX_CAPS_VERTEX_ID              UINT64_C(0x0000000004000000) //!< Rendering with VertexID only is supported.
+#define BGFX_CAPS_READ_WRITE_ATTACH      UINT64_C(0x0000000008000000) //!< Read/Write frame buffer attachments are supported.
 
 ///
 #define BGFX_CAPS_FORMAT_TEXTURE_NONE             UINT16_C(0x0000) //!< Texture format is not supported.
