@@ -1091,13 +1091,18 @@ void keyBindingHelp(const char* _bindings, const char* _description)
 	ImGui::Text(_description);
 }
 
+#if BX_PLATFORM_WINDOWS
+extern "C" void*    GetModuleHandleA(const char* _moduleName);
+extern "C" uint32_t GetModuleFileNameA(void* _module, char* _outFilePath, uint32_t _size);
+#endif // BX_PLATFORM_WINDOWS
+
 void associate()
 {
 #if BX_PLATFORM_WINDOWS
 	std::string str;
 
-	char exec[MAX_PATH];
-	GetModuleFileNameA(GetModuleHandleA(NULL), exec, MAX_PATH);
+	char exec[bx::kMaxFilePath];
+	GetModuleFileNameA(GetModuleHandleA(NULL), exec, sizeof(exec) );
 
 	std::string strExec = bx::replaceAll<std::string>(exec, "\\", "\\\\");
 

@@ -107,7 +107,7 @@ namespace bgfx { namespace hlsl
 
 			if (g_verbose)
 			{
-				char filePath[MAX_PATH];
+				char filePath[bx::kMaxFilePath];
 				GetModuleFileNameA( (HMODULE)s_d3dcompilerdll, filePath, sizeof(filePath) );
 				BX_TRACE("Loaded %s compiler (%s).", compiler->fileName, filePath);
 			}
