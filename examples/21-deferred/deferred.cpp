@@ -366,6 +366,12 @@ public:
 			bgfx::destroy(m_lightTaProgram);
 		}
 
+		if (bgfx::isValid(m_lightUavProgram) )
+		{
+			bgfx::destroy(m_lightUavProgram);
+			bgfx::destroy(m_clearUavProgram);
+		}
+
 		bgfx::destroy(m_combineProgram);
 		bgfx::destroy(m_debugProgram);
 		bgfx::destroy(m_lineProgram);
@@ -531,7 +537,7 @@ public:
 					ImGui::Text("Texture array frame buffer is not supported.");
 				}
 
-				if(bgfx::isValid(m_lightUavProgram))
+				if (bgfx::isValid(m_lightUavProgram) )
 				{
 					ImGui::Checkbox("Use UAV frame buffer attachment.", &m_useUav);
 				}
@@ -765,12 +771,18 @@ public:
 							| BGFX_STATE_BLEND_ADD
 							);
 						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-						if(bgfx::isValid(m_lightTaProgram) && m_useTArray)
+						if (bgfx::isValid(m_lightTaProgram) && m_useTArray)
+						{
 							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightTaProgram);
-						else if(bgfx::isValid(m_lightUavProgram) && m_useUav)
+						}
+						else if (bgfx::isValid(m_lightUavProgram) && m_useUav)
+						{
 							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightUavProgram);
+						}
 						else
+						{
 							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightProgram);
+						}
 					}
 				}
 
