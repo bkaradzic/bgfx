@@ -2525,13 +2525,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, GL_TRUE
 							) );
 					}
+				}
 
-					if (NULL == glPushDebugGroup
-					||  NULL == glPopDebugGroup)
-					{
-						glPushDebugGroup = stubPushDebugGroup;
-						glPopDebugGroup  = stubPopDebugGroup;
-					}
+				if (NULL == glPushDebugGroup
+				||  NULL == glPopDebugGroup)
+				{
+					glPushDebugGroup = stubPushDebugGroup;
+					glPopDebugGroup  = stubPopDebugGroup;
 				}
 
 				if (s_extension[Extension::ARB_seamless_cube_map].m_supported)
