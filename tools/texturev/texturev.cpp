@@ -1092,8 +1092,8 @@ void keyBindingHelp(const char* _bindings, const char* _description)
 }
 
 #if BX_PLATFORM_WINDOWS
-extern "C" void*    GetModuleHandleA(const char* _moduleName);
-extern "C" uint32_t GetModuleFileNameA(void* _module, char* _outFilePath, uint32_t _size);
+extern "C" void*    _stdcall GetModuleHandleA(const char* _moduleName);
+extern "C" uint32_t _stdcall GetModuleFileNameA(void* _module, char* _outFilePath, uint32_t _size);
 #endif // BX_PLATFORM_WINDOWS
 
 void associate()
