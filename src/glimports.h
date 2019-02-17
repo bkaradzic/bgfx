@@ -423,8 +423,6 @@ GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGECONTROLPROC,               glDebugMessag
 GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGEINSERTPROC,                glDebugMessageInsert);
 GL_IMPORT_ARB__(true,  PFNGLDEBUGMESSAGECALLBACKPROC,              glDebugMessageCallback);
 GL_IMPORT_ARB__(true,  PFNGLGETDEBUGMESSAGELOGPROC,                glGetDebugMessageLog);
-GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
-GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT_ARB__(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
 GL_IMPORT_ARB__(true,  PFNGLGETOBJECTLABELPROC,                    glGetObjectLabel);
 GL_IMPORT_ARB__(true,  PFNGLOBJECTPTRLABELPROC,                    glObjectPtrLabel);
@@ -468,6 +466,8 @@ GL_IMPORT______(false, PFNGLCLEARDEPTHFPROC,                       glClearDepthf
 #	endif // BGFX_CONFIG_RENDERER_OPENGL
 
 GL_IMPORT______(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
+GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
+GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT______(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
 GL_IMPORT______(true,  PFNGLPOPGROUPMARKEREXTPROC,                 glPopGroupMarker);
 #else
@@ -512,6 +512,8 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DM
 GL_IMPORT_EXT__(true,  PFNGLFRAMEBUFFERTEXTURELAYERPROC,           glFramebufferTextureLayer);
 
 GL_IMPORT_EXT__(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
+GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
+GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT_EXT__(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
 GL_IMPORT_EXT__(true,  PFNGLPOPGROUPMARKEREXTPROC,                 glPopGroupMarker);
 GL_IMPORT_EXT__(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
@@ -596,6 +598,8 @@ GL_IMPORT______(true,  PFNGLTEXIMAGE3DMULTISAMPLEPROC,             glTexImage3DM
 GL_IMPORT______(true,  PFNGLFRAMEBUFFERTEXTURELAYERPROC,           glFramebufferTextureLayer);
 
 GL_IMPORT______(true,  PFNGLINSERTEVENTMARKEREXTPROC,              glInsertEventMarker);
+GL_IMPORT_ARB__(true,  PFNGLPUSHDEBUGGROUPPROC,                    glPushDebugGroup);
+GL_IMPORT_ARB__(true,  PFNGLPOPDEBUGGROUPPROC,                     glPopDebugGroup);
 GL_IMPORT______(true,  PFNGLPUSHGROUPMARKEREXTPROC,                glPushGroupMarker);
 GL_IMPORT______(true,  PFNGLPOPGROUPMARKEREXTPROC,                 glPopGroupMarker);
 GL_IMPORT______(true,  PFNGLOBJECTLABELPROC,                       glObjectLabel);
