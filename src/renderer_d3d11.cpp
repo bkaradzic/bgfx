@@ -2508,7 +2508,15 @@ namespace bgfx { namespace d3d11
 				m_currentColor        = m_backBufferColor;
 				m_currentDepthStencil = m_backBufferDepthStencil;
 
-				m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(1, &m_currentColor, m_currentDepthStencil, 1, 0, NULL, NULL);
+				m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+					  1
+					, &m_currentColor
+					, m_currentDepthStencil
+					, 1
+					, 0
+					, NULL
+					, NULL
+					);
 				m_needPresent |= _needPresent;
 			}
 			else
@@ -4698,7 +4706,7 @@ namespace bgfx { namespace d3d11
 
 		if (0 < m_numTh)
 		{
-			m_num = 0;
+			m_num    = 0;
 			m_numUav = 0;
 
 			for (uint32_t ii = 0; ii < m_numTh; ++ii)
@@ -4936,7 +4944,15 @@ namespace bgfx { namespace d3d11
 
 	void FrameBufferD3D11::set()
 	{
-		s_renderD3D11->m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(m_num, m_rtv, m_dsv, m_num, m_numUav, m_uav + m_num, NULL);
+		s_renderD3D11->m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+			  m_num
+			, m_rtv
+			, m_dsv
+			, m_num
+			, m_numUav
+			, m_uav + m_num
+			, NULL
+			);
 		m_needPresent = UINT16_MAX != m_denseIdx;
 		s_renderD3D11->m_currentColor        = m_rtv[0];
 		s_renderD3D11->m_currentDepthStencil = m_dsv;
