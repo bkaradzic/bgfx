@@ -10,7 +10,19 @@
 
 #ifndef __cplusplus
 
-#define FRAMEBUFFER_IMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, 16+(_reg) )
+#if BGFX_SHADER_LANGUAGE_GLSL
+#	define __UAV_REG_0 4
+#	define __UAV_REG_1 5
+#	define __UAV_REG_2 6
+#	define __UAV_REG_3 7
+#else
+#	define __UAV_REG_0 16
+#	define __UAV_REG_1 17
+#	define __UAV_REG_2 18
+#	define __UAV_REG_3 19
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+
+#define FRAMEBUFFER_IMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, __UAV_REG_ ## _reg)
 
 #if BGFX_SHADER_LANGUAGE_GLSL
 
