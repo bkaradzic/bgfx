@@ -6205,24 +6205,27 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 	{
 		for(uint32_t ii = 0; ii < m_numTh; ++ii)
 		{
-			if(m_attachment[ii].access == Access::Write)
-				continue;
+			const Attachment& at = m_attachment[ii];
 
-			TextureHandle handle = m_attachment[ii].handle;
-			if(isValid(handle))
+			if (at.access == Access::Write)
 			{
-				const TextureGL& texture = s_renderGL->m_textures[handle.idx];
+				continue;
+			}
+
+			if (isValid(at.handle) )
+			{
+				const TextureGL& texture = s_renderGL->m_textures[at.handle.idx];
 
 				if(0 != (texture.m_flags&BGFX_TEXTURE_COMPUTE_WRITE))
 				{
 					GL_CHECK(glBindImageTexture(ii
 						, texture.m_id
-						, m_attachment[ii].mip
+						, at.mip
 						, GL_FALSE //texture.isLayered() ? GL_TRUE : GL_FALSE
-						, m_attachment[ii].layer
+						, at.layer
 						, s_access[Access::ReadWrite]
 						, s_imageFormat[texture.m_textureFormat])
-					);
+						);
 				}
 			}
 		}

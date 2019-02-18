@@ -10,6 +10,8 @@
 
 #ifndef __cplusplus
 
+#define FRAMEBUFFER_IMAGE2D_RW(_name, _format, _reg) IMAGE2D_RW(_name, _format, 16+(_reg) )
+
 #if BGFX_SHADER_LANGUAGE_GLSL
 
 #define SHARED shared

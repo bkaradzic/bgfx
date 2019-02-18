@@ -391,14 +391,14 @@ namespace bgfx { namespace d3d11
 
 		void clear()
 		{
-			bx::memSet(m_uav, 0, sizeof(m_uav));
-			bx::memSet(m_srv, 0, sizeof(m_srv) );
+			bx::memSet(m_uav,     0, sizeof(m_uav) );
+			bx::memSet(m_srv,     0, sizeof(m_srv) );
 			bx::memSet(m_sampler, 0, sizeof(m_sampler) );
 		}
 
 		ID3D11UnorderedAccessView* m_uav[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-		ID3D11ShaderResourceView* m_srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-		ID3D11SamplerState* m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		ID3D11ShaderResourceView*  m_srv[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		ID3D11SamplerState*        m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 	};
 
 	BX_PRAGMA_DIAGNOSTIC_PUSH();
@@ -4592,10 +4592,12 @@ namespace bgfx { namespace d3d11
 		{
 			m_rtv[ii] = NULL;
 		}
-		for(uint32_t ii = 0; ii < BX_COUNTOF(m_uav); ++ii)
+
+		for (uint32_t ii = 0; ii < BX_COUNTOF(m_uav); ++ii)
 		{
 			m_uav[ii] = NULL;
 		}
+
 		m_dsv       = NULL;
 		m_swapChain = NULL;
 
@@ -4870,8 +4872,7 @@ namespace bgfx { namespace d3d11
 					}
 					else
 					{
-						m_uav[m_num + m_numUav] = texture.m_uav;
-						m_numUav++;
+						m_uav[m_numUav++] = texture.m_uav;
 					}
 				}
 			}
@@ -4948,9 +4949,9 @@ namespace bgfx { namespace d3d11
 			  m_num
 			, m_rtv
 			, m_dsv
-			, m_num
+			, 16
 			, m_numUav
-			, m_uav + m_num
+			, m_uav
 			, NULL
 			);
 		m_needPresent = UINT16_MAX != m_denseIdx;
@@ -5373,12 +5374,6 @@ namespace bgfx { namespace d3d11
 					view = key.m_view;
 					currentProgram = BGFX_INVALID_HANDLE;
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
-					{
-						fbh = _render->m_view[view].m_fbh;
-						setFrameBuffer(fbh);
-					}
-
 					if (item > 1)
 					{
 						profiler.end();
@@ -5389,6 +5384,12 @@ namespace bgfx { namespace d3d11
 					BGFX_D3D11_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
+
+					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					{
+						fbh = _render->m_view[view].m_fbh;
+						setFrameBuffer(fbh);
+					}
 
 					viewState.m_rect = _render->m_view[view].m_rect;
 
