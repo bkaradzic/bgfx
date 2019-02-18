@@ -12,11 +12,11 @@
 namespace
 {
 
-#define RENDER_PASS_GEOMETRY_ID       0
-#define RENDER_PASS_LIGHT_ID          1
-#define RENDER_PASS_COMBINE_ID        2
-#define RENDER_PASS_DEBUG_LIGHTS_ID   3
-#define RENDER_PASS_DEBUG_GBUFFER_ID  4
+constexpr bgfx::ViewId kRenderPassGeometry     = 0;
+constexpr bgfx::ViewId kRenderPassLight        = 1;
+constexpr bgfx::ViewId kRenderPassCombine      = 2;
+constexpr bgfx::ViewId kRenderPassDebugLights  = 3;
+constexpr bgfx::ViewId kRenderPassDebugGBuffer = 4;
 
 static float s_texelHalf = 0.0f;
 
@@ -225,7 +225,7 @@ public:
 		bgfx::setPaletteColor(1, UINT32_C(0x303030ff) );
 
 		// Set geometry pass view clear state.
-		bgfx::setViewClear(RENDER_PASS_GEOMETRY_ID
+		bgfx::setViewClear(kRenderPassGeometry
 				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 				, 1.0f
 				, 0
@@ -233,7 +233,7 @@ public:
 				);
 
 		// Set light pass view clear state.
-		bgfx::setViewClear(RENDER_PASS_LIGHT_ID
+		bgfx::setViewClear(kRenderPassLight
 				, BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH
 				, 1.0f
 				, 0
@@ -561,19 +561,19 @@ public:
 				float vp[16];
 				float invMvp[16];
 				{
-					bgfx::setViewRect(RENDER_PASS_GEOMETRY_ID,      0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_LIGHT_ID,         0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_COMBINE_ID,       0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_DEBUG_LIGHTS_ID,  0, 0, uint16_t(m_width), uint16_t(m_height) );
-					bgfx::setViewRect(RENDER_PASS_DEBUG_GBUFFER_ID, 0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassGeometry,      0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassLight,         0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassCombine,       0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassDebugLights,  0, 0, uint16_t(m_width), uint16_t(m_height) );
+					bgfx::setViewRect(kRenderPassDebugGBuffer, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 
-					bgfx::setViewFrameBuffer(RENDER_PASS_LIGHT_ID, m_lightBuffer);
+					bgfx::setViewFrameBuffer(kRenderPassLight, m_lightBuffer);
 
 					float proj[16];
 					bx::mtxProj(proj, 60.0f, float(m_width)/float(m_height), 0.1f, 100.0f, m_caps->homogeneousDepth);
 
-					bgfx::setViewFrameBuffer(RENDER_PASS_GEOMETRY_ID, m_gbuffer);
-					bgfx::setViewTransform(RENDER_PASS_GEOMETRY_ID, view, proj);
+					bgfx::setViewFrameBuffer(kRenderPassGeometry, m_gbuffer);
+					bgfx::setViewTransform(kRenderPassGeometry, view, proj);
 
 					bx::mtxMul(vp, view, proj);
 					bx::mtxInverse(invMvp, vp);
@@ -581,16 +581,16 @@ public:
 					const bgfx::Caps* caps = bgfx::getCaps();
 
 					bx::mtxOrtho(proj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f, caps->homogeneousDepth);
-					bgfx::setViewTransform(RENDER_PASS_LIGHT_ID,   NULL, proj);
-					bgfx::setViewTransform(RENDER_PASS_COMBINE_ID, NULL, proj);
+					bgfx::setViewTransform(kRenderPassLight,   NULL, proj);
+					bgfx::setViewTransform(kRenderPassCombine, NULL, proj);
 
 					const float aspectRatio = float(m_height)/float(m_width);
 					const float size = 10.0f;
 					bx::mtxOrtho(proj, -size, size, size*aspectRatio, -size*aspectRatio, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
-					bgfx::setViewTransform(RENDER_PASS_DEBUG_GBUFFER_ID, NULL, proj);
+					bgfx::setViewTransform(kRenderPassDebugGBuffer, NULL, proj);
 
 					bx::mtxOrtho(proj, 0.0f, (float)m_width, 0.0f, (float)m_height, 0.0f, 1000.0f, 0.0f, caps->homogeneousDepth);
-					bgfx::setViewTransform(RENDER_PASS_DEBUG_LIGHTS_ID, NULL, proj);
+					bgfx::setViewTransform(kRenderPassDebugLights, NULL, proj);
 				}
 
 				const uint32_t dim = 11;
@@ -635,7 +635,7 @@ public:
 							);
 
 						// Submit primitive for rendering to view 0.
-						bgfx::submit(RENDER_PASS_GEOMETRY_ID, m_geomProgram);
+						bgfx::submit(kRenderPassGeometry, m_geomProgram);
 					}
 				}
 
@@ -647,7 +647,7 @@ public:
 						| BGFX_STATE_WRITE_RGB
 						| BGFX_STATE_WRITE_A
 						);
-					bgfx::submit(RENDER_PASS_LIGHT_ID, m_clearUavProgram);
+					bgfx::submit(kRenderPassLight, m_clearUavProgram);
 				}
 
 				// Draw lights into light buffer.
@@ -744,7 +744,7 @@ public:
 									| BGFX_STATE_PT_LINES
 									| BGFX_STATE_BLEND_ALPHA
 									);
-								bgfx::submit(RENDER_PASS_DEBUG_LIGHTS_ID, m_lineProgram);
+								bgfx::submit(kRenderPassDebugLights, m_lineProgram);
 							}
 						}
 
@@ -771,17 +771,20 @@ public:
 							| BGFX_STATE_BLEND_ADD
 							);
 						screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-						if (bgfx::isValid(m_lightTaProgram) && m_useTArray)
+
+						if (bgfx::isValid(m_lightTaProgram)
+						&&  m_useTArray)
 						{
-							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightTaProgram);
+							bgfx::submit(kRenderPassLight, m_lightTaProgram);
 						}
-						else if (bgfx::isValid(m_lightUavProgram) && m_useUav)
+						else if (bgfx::isValid(m_lightUavProgram)
+							 &&  m_useUav)
 						{
-							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightUavProgram);
+							bgfx::submit(kRenderPassLight, m_lightUavProgram);
 						}
 						else
 						{
-							bgfx::submit(RENDER_PASS_LIGHT_ID, m_lightProgram);
+							bgfx::submit(kRenderPassLight, m_lightProgram);
 						}
 					}
 				}
@@ -794,7 +797,7 @@ public:
 					| BGFX_STATE_WRITE_A
 					);
 				screenSpaceQuad( (float)m_width, (float)m_height, s_texelHalf, m_caps->originBottomLeft);
-				bgfx::submit(RENDER_PASS_COMBINE_ID, m_combineProgram);
+				bgfx::submit(kRenderPassCombine, m_combineProgram);
 
 				if (m_showGBuffer)
 				{
@@ -815,7 +818,7 @@ public:
 						bgfx::setIndexBuffer(m_ibh, 0, 6);
 						bgfx::setTexture(0, s_texColor, m_gbufferTex[ii]);
 						bgfx::setState(BGFX_STATE_WRITE_RGB);
-						bgfx::submit(RENDER_PASS_DEBUG_GBUFFER_ID, m_debugProgram);
+						bgfx::submit(kRenderPassDebugGBuffer, m_debugProgram);
 					}
 				}
 			}

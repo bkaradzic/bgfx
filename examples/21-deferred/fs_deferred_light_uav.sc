@@ -11,7 +11,7 @@ $input v_texcoord0
 SAMPLER2D(s_normal, 0);
 SAMPLER2D(s_depth,  1);
 
-IMAGE2D_RW(s_lights, rgba8, 1);
+FRAMEBUFFER_IMAGE2D_RW(s_light, rgba8, 0);
 
 uniform vec4 u_lightPosRadius[1];
 uniform vec4 u_lightRgbInnerR[1];
@@ -24,17 +24,17 @@ void main()
 	float depth       = toClipSpaceDepth(deviceDepth);
 
 	vec3 clip = vec3(v_texcoord0 * 2.0 - 1.0, depth);
-#if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
+#if !BGFX_SHADER_LANGUAGE_GLSL
 	clip.y = -clip.y;
-#endif // BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_METAL
+#endif // !BGFX_SHADER_LANGUAGE_GLSL
 	vec3 wpos = clipToWorld(u_mtx, clip);
 
 	vec3 view = mul(u_view, vec4(wpos, 0.0) ).xyz;
 	view = -normalize(view);
 
     ivec2 coord = ivec2(gl_FragCoord.xy);
-    
+
 	vec3 lightColor = calcLight(wpos, normal, view, u_lightPosRadius[0].xyz, u_lightPosRadius[0].w, u_lightRgbInnerR[0].xyz, u_lightRgbInnerR[0].w);
-    vec4 color = imageLoad(s_lights, coord);
-    imageStore(s_lights, coord, color + vec4(toGamma(lightColor.xyz), 1.0));
+    vec4 color = imageLoad(s_light, coord);
+    imageStore(s_light, coord, color + vec4(toGamma(lightColor.xyz), 1.0));
 }

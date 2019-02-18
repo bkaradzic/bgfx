@@ -8,10 +8,10 @@ $input v_texcoord0
 #include "common.sh"
 #include <bgfx_compute.sh>
 
-IMAGE2D_RW(s_lights, rgba8, 1);
+FRAMEBUFFER_IMAGE2D_RW(s_light, rgba8, 0);
 
 void main()
 {
     ivec2 coord = ivec2(gl_FragCoord.xy);
-    imageStore(s_lights, coord, vec4(0.0, 0.0, 0.0, 0.0));
+    imageStore(s_light, coord, vec4(0.0, 0.0, 0.0, 0.0));
 }
