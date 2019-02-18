@@ -269,8 +269,7 @@ bool openFileSelectionDialog(
 		, _inOutfilePath.get()
 		);
 
-	bx::LineReader lr(_filter);
-	while (!lr.isDone() )
+	for (bx::LineReader lr(_filter); !lr.isDone();)
 	{
 		const bx::StringView line = lr.next();
 
