@@ -224,7 +224,7 @@ static const InputBinding* s_binding[] =
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
 
 static const char* s_filter = ""
-	"All texture files (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, pgm, png, ppm, psd, pvr, tga) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.pgm *.png *.ppm *.psd *.pvr *.tga\n"
+	"All Image Formats (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, pgm, png, ppm, psd, pvr, tga) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.pgm *.png *.ppm *.psd *.pvr *.tga\n"
 	"Windows Bitmap (bmp) | *.bmp\n"
 	"Direct Draw Surface (dds) | *.dds\n"
 	"OpenEXR (exr) | *.exr\n"
