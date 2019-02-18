@@ -223,6 +223,85 @@ static const InputBinding* s_binding[] =
 };
 BX_STATIC_ASSERT(Binding::Count == BX_COUNTOF(s_binding) );
 
+static const char* s_filter = ""
+	"All texture files (bmp, dds, exr, gif, gnf, jpg, jpeg, hdr, ktx, pgm, png, ppm, psd, pvr, tga) | *.bmp *.dds *.exr *.gif *.gnf *.jpg *.jpeg *.hdr *.ktx *.pgm *.png *.ppm *.psd *.pvr *.tga\n"
+	"Windows Bitmap (bmp) | *.bmp\n"
+	"Direct Draw Surface (dds) | *.dds\n"
+	"OpenEXR (exr) | *.exr\n"
+	"Graphics Interchange Format (gif) | *.gif\n"
+	"JPEG Interchange Format (jpg, jpeg) | *.jpg *.jpeg\n"
+	"Radiance RGBE (hdr) | *.hdr\n"
+	"Khronos Texture (ktx) | *.ktx\n"
+	"Portable Graymap/Pixmap Format (pgm, ppm) | *.pgm *.ppm\n"
+	"Portable Network Graphics (png) | *.png\n"
+	"Photoshop Document (psd) | *.psd\n"
+	"PowerVR (pvr) | *.pvr\n"
+	"Truevision TGA (tga) | *.tga\n"
+	;
+
+struct FileSelectionDialogType
+{
+	enum Enum
+	{
+		Open,
+		Save,
+
+		Count
+	};
+};
+
+bool openFileSelectionDialog(
+	  bx::FilePath& _inOutfilePath
+	, FileSelectionDialogType::Enum _type
+	, const bx::StringView& _title
+	, const bx::StringView& _filter = "All Files | *"
+	)
+{
+#if BX_PLATFORM_LINUX || BX_PLATFORM_OSX
+	char tmp[4096];
+	bx::StaticMemoryBlockWriter writer(tmp, sizeof(tmp) );
+
+	bx::Error err;
+	bx::write(&writer, &err
+		, "--file-selection%s --title \"%.*s\" --filename \"%s\""
+		, FileSelectionDialogType::Save == _type ? " --save" : ""
+		, _title.getLength(),  _title.getPtr()
+		, _inOutfilePath.get()
+		);
+
+	bx::LineReader lr(_filter);
+	while (!lr.isDone() )
+	{
+		const bx::StringView line = lr.next();
+
+		bx::write(&writer, &err
+			, " --file-filter \"%.*s\""
+			, line.getLength(), line.getPtr()
+			);
+	}
+
+	if (err.isOk() )
+	{
+		bx::ProcessReader pr;
+
+		if (bx::open(&pr, "zenity", tmp, &err) )
+		{
+			char buffer[1024];
+			int32_t total = bx::read(&pr, buffer, sizeof(buffer), &err);
+			bx::close(&pr);
+
+			if (0 == pr.getExitCode() )
+			{
+				_inOutfilePath.set(bx::strRTrim(bx::StringView(buffer, total), "\n\r") );
+				return true;
+			}
+		}
+	}
+#endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
+
+	return false;
+}
+
 struct View
 {
 	View()
@@ -687,6 +766,8 @@ struct View
 
 		bx::Error err;
 
+		m_fileList.clear();
+
 		while (err.isOk() )
 		{
 			bx::FileInfo fi;
@@ -713,7 +794,8 @@ struct View
 
 					if (supported)
 					{
-						m_fileList.push_back(fi.filePath.get() );
+						const bx::StringView fileName = fi.filePath.getFileName();
+						m_fileList.push_back(std::string(fileName.getPtr(), fileName.getTerm() ) );
 					}
 				}
 			}
@@ -725,15 +807,18 @@ struct View
 
 		m_fileIndex = 0;
 		uint32_t idx = 0;
+
+		const bx::StringView fileName = _filePath.getFileName();
+
 		for (FileList::const_iterator it = m_fileList.begin(); it != m_fileList.end(); ++it, ++idx)
 		{
-			if (0 == bx::strCmpI(it->c_str(), _filePath.getFileName() ) )
+			if (0 == bx::strCmpI(it->c_str(), fileName) )
 			{
 				// If it is case-insensitive match then might be correct one, but keep
 				// searching.
 				m_fileIndex = idx;
 
-				if (0 == bx::strCmp(it->c_str(), _filePath.getFileName() ) )
+				if (0 == bx::strCmp(it->c_str(), fileName) )
 				{
 					// If it is exact match we're done.
 					break;
@@ -1447,6 +1532,20 @@ int _main_(int _argc, char** _argv)
 			{
 				if (ImGui::BeginMenu("File"))
 				{
+					if (ImGui::MenuItem("Open File") )
+					{
+						bx::FilePath tmp = view.m_path;
+						if (openFileSelectionDialog(
+							  tmp
+							, FileSelectionDialogType::Open
+							, "texturev: Open File"
+							, s_filter
+							) )
+						{
+							view.updateFileList(tmp);
+						}
+					}
+
 					if (ImGui::MenuItem("Show File List", NULL, view.m_files) )
 					{
 						cmdExec("view files");
