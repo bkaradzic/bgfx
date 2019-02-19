@@ -483,7 +483,6 @@ namespace bgfx { namespace mtl
 				| BGFX_CAPS_VERTEX_ATTRIB_HALF
 				| BGFX_CAPS_VERTEX_ATTRIB_UINT10
 				| BGFX_CAPS_COMPUTE
-				| BGFX_CAPS_DRAW_INDIRECT
 				);
 
 			if (BX_ENABLED(BX_PLATFORM_IOS) )
@@ -498,12 +497,27 @@ namespace bgfx { namespace mtl
 				}
 
 				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet( (MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
+				
+				if ( m_device.supportsFeatureSet( (MTLFeatureSet)4 /* MTLFeatureSet_iOS_GPUFamily3_v1 */ ))
+				{
+					g_caps.supported |= BGFX_CAPS_DRAW_INDIRECT;
+				}
+				
+				if ( m_device.supportsFeatureSet( (MTLFeatureSet)11 /* MTLFeatureSet_iOS_GPUFamily4_v1 */ ))
+				{
+					g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
+				}
 			}
 			else if (BX_ENABLED(BX_PLATFORM_OSX) )
 			{
 				g_caps.limits.maxTextureSize   = 16384;
 				g_caps.limits.maxFBAttachments = 8;
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
+				
+				if ( m_device.supportsFeatureSet( (MTLFeatureSet)10001 /* MTLFeatureSet_macOS_GPUFamily1_v2 */ ))
+				{
+					g_caps.supported |= BGFX_CAPS_DRAW_INDIRECT;
+				}
 			}
 
 			g_caps.limits.maxTextureLayers = 2048;
