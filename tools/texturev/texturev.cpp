@@ -266,7 +266,7 @@ bool openFileSelectionDialog(
 		, "--file-selection%s --title \"%.*s\" --filename \"%s\""
 		, FileSelectionDialogType::Save == _type ? " --save" : ""
 		, _title.getLength(),  _title.getPtr()
-		, _inOutFilePath.get()
+		, _inOutFilePath.getCPtr()
 		);
 
 	for (bx::LineReader lr(_filter); !lr.isDone();)
