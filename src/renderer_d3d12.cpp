@@ -775,54 +775,42 @@ namespace bgfx { namespace d3d12
 
 			HRESULT hr;
 
-			if (_init.debug
-			||  _init.profile)
 			{
-				ID3D12Debug* debug0;
-				hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug0);
-
-				if (SUCCEEDED(hr) )
+#if BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
+				if (_init.debug
+				||  _init.profile)
 				{
-					uint32_t debugFlags = 0;
+					ID3D12Debug* debug0;
+					hr = D3D12GetDebugInterface(IID_ID3D12Debug, (void**)&debug0);
 
-					if (_init.debug)
+					if (SUCCEEDED(hr) )
 					{
-#if BX_PLATFORM_WINDOWS
-						debug0->EnableDebugLayer();
+						uint32_t debugFlags = 0;
 
+						if (_init.debug)
 						{
-							ID3D12Debug1* debug1;
-							hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
+#if BX_PLATFORM_WINDOWS
+							debug0->EnableDebugLayer();
 
-							if (SUCCEEDED(hr) )
 							{
-//								debug1->SetEnableGPUBasedValidation(true);
-//								debug1->SetEnableSynchronizedCommandQueueValidation(true);
+								ID3D12Debug1* debug1;
+								hr = debug0->QueryInterface(IID_ID3D12Debug1, (void**)&debug1);
+
+								if (SUCCEEDED(hr))
+								{
+//									debug1->SetEnableGPUBasedValidation(true);
+//									debug1->SetEnableSynchronizedCommandQueueValidation(true);
+								}
+
+								DX_RELEASE(debug1, 1);
 							}
-
-							DX_RELEASE(debug1, 1);
-						}
-#elif BX_PLATFORM_XBOXONE
-						debugFlags |= D3D12_PROCESS_DEBUG_FLAG_DEBUG_LAYER_ENABLED;
 #endif // BX_PLATFORM_WINDOWS
+						}
+
+						DX_RELEASE(debug0, 0);
 					}
-
-#if BX_PLATFORM_XBOXONE
-					// https://github.com/Microsoft/Xbox-ATG-Samples/blob/76d236e3bd372aceec18b2ad0556a7879dbd9628/XDKSamples/IntroGraphics/SimpleTriangle12/DeviceResources.cpp#L67
-					debugFlags |= _init.profile ? D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED : 0;
-
-					if (0 != debugFlags)
-					{
-						debug0->SetProcessDebugFlags(D3D12XBOX_PROCESS_DEBUG_FLAGS(debugFlags) );
-					}
-#endif // BX_PLATFORM_XBOXONE
-					BX_UNUSED(debugFlags);
-
-					DX_RELEASE(debug0, 0);
 				}
-			}
 
-			{
 				D3D_FEATURE_LEVEL featureLevel[] =
 				{
 					D3D_FEATURE_LEVEL_12_1,
@@ -845,6 +833,35 @@ namespace bgfx { namespace d3d12
 						);
 					m_featureLevel = featureLevel[ii];
 				}
+#else
+				// Reference(s):
+				//  - https://github.com/Microsoft/Xbox-ATG-Samples/blob/1271bfd61b4883c775f395b6f13aeabea70290ca/XDKSamples/Graphics/AdvancedESRAM12/DeviceResources.cpp#L64
+				D3D12XBOX_CREATE_DEVICE_PARAMETERS params = {};
+				params.Version = D3D12_SDK_VERSION;
+				params.ProcessDebugFlags = D3D12XBOX_PROCESS_DEBUG_FLAGS(0
+					| (_init.debug   ? D3D12XBOX_PROCESS_DEBUG_FLAG_DEBUG        : 0)
+					| (_init.profile ? D3D12XBOX_PROCESS_DEBUG_FLAG_INSTRUMENTED : 0)
+					);
+				params.GraphicsCommandQueueRingSizeBytes = UINT32_MAX;
+				params.GraphicsScratchMemorySizeBytes    = UINT32_MAX;
+				params.ComputeScratchMemorySizeBytes     = UINT32_MAX;
+				params.DisableGeometryShaderAllocations     = true;
+				params.DisableTessellationShaderAllocations = true;
+
+				hr = D3D12XboxCreateDevice(
+						  m_dxgi.m_adapter
+						, &params
+						, IID_ID3D12Device
+						, (void**)&m_device
+						);
+				m_featureLevel = D3D_FEATURE_LEVEL_12_1;
+
+				if (SUCCEEDED(hr) )
+				{
+					m_device->SetDebugErrorFilterX(0x73EC9EAF, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_BREAKS);
+					m_device->SetDebugErrorFilterX(0x8EC9B15C, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_OUTPUT);
+				}
+#endif // BX_PLATFORM_WINDOWS || BX_PLATFORM_WINRT
 			}
 
 			if (FAILED(hr) )
@@ -873,11 +890,6 @@ namespace bgfx { namespace d3d12
 					}
 				}
 			}
-
-#if BX_PLATFORM_XBOXONE
-			m_device->SetDebugErrorFilterX(0x73EC9EAF, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_BREAKS);
-			m_device->SetDebugErrorFilterX(0x8EC9B15C, D3D12XBOX_DEBUG_FILTER_FLAG_DISABLE_OUTPUT);
-#endif // BX_PLATFORM_XBOXONE
 
 			if (BGFX_PCI_ID_NVIDIA != m_dxgi.m_adapterDesc.VendorId)
 			{
