@@ -46,7 +46,7 @@ namespace entry
 		virtual bool open(const bx::FilePath& _filePath, bx::Error* _err) override
 		{
 			String filePath(s_currentDir);
-			filePath.append(_filePath.get() );
+			filePath.append(_filePath);
 			return super::open(filePath.getPtr(), _err);
 		}
 	};
@@ -59,7 +59,7 @@ namespace entry
 		virtual bool open(const bx::FilePath& _filePath, bool _append, bx::Error* _err) override
 		{
 			String filePath(s_currentDir);
-			filePath.append(_filePath.get() );
+			filePath.append(_filePath);
 			return super::open(filePath.getPtr(), _append, _err);
 		}
 	};
@@ -752,7 +752,7 @@ restart:
 				case Event::DropFile:
 					{
 						const DropFileEvent* drop = static_cast<const DropFileEvent*>(ev);
-						DBG("%s", drop->m_filePath.get() );
+						DBG("%s", drop->m_filePath.getCPtr() );
 					}
 					break;
 

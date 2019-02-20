@@ -14,13 +14,15 @@
   */
 
 #pragma once
-#include "common.h"
-#include "bgfx_utils.h"
-#include "bimg/decode.h"
+
+#include <bimg/decode.h>
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_set.h>
 #include <tinystl/vector.h>
 #include <functional>
+
+#include "common.h"
+#include "bgfx_utils.h"
 
 namespace vt
 {

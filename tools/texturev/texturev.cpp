@@ -251,7 +251,7 @@ struct FileSelectionDialogType
 };
 
 bool openFileSelectionDialog(
-	  bx::FilePath& _inOutfilePath
+	  bx::FilePath& _inOutFilePath
 	, FileSelectionDialogType::Enum _type
 	, const bx::StringView& _title
 	, const bx::StringView& _filter = "All Files | *"
@@ -266,7 +266,7 @@ bool openFileSelectionDialog(
 		, "--file-selection%s --title \"%.*s\" --filename \"%s\""
 		, FileSelectionDialogType::Save == _type ? " --save" : ""
 		, _title.getLength(),  _title.getPtr()
-		, _inOutfilePath.get()
+		, _inOutFilePath.get()
 		);
 
 	for (bx::LineReader lr(_filter); !lr.isDone();)
@@ -291,11 +291,13 @@ bool openFileSelectionDialog(
 
 			if (0 == pr.getExitCode() )
 			{
-				_inOutfilePath.set(bx::strRTrim(bx::StringView(buffer, total), "\n\r") );
+				_inOutFilePath.set(bx::strRTrim(bx::StringView(buffer, total), "\n\r") );
 				return true;
 			}
 		}
 	}
+#else
+	BX_UNUSED(_inOutFilePath, _type, _title, _filter);
 #endif // BX_PLATFORM_LINUX || BX_PLATFORM_OSX
 
 	return false;
@@ -759,7 +761,7 @@ struct View
 		}
 		else
 		{
-			DBG("File path `%s` not found.", _filePath.get() );
+			DBG("File path `%s` not found.", _filePath.getCPtr() );
 			return;
 		}
 
@@ -1225,7 +1227,7 @@ void associate()
 		if (err.isOk() )
 		{
 			std::string cmd;
-			bx::stringPrintf(cmd, "/s %s", filePath.get() );
+			bx::stringPrintf(cmd, "/s %s", filePath.getCPtr() );
 
 			bx::ProcessReader reader;
 			if (bx::open(&reader, "regedit.exe", cmd.c_str(), &err) )
@@ -1864,7 +1866,7 @@ int _main_(int _argc, char** _argv)
 			if (view.m_files)
 			{
 				char temp[bx::kMaxFilePath];
-				bx::snprintf(temp, BX_COUNTOF(temp), "%s##File", view.m_path.get() );
+				bx::snprintf(temp, BX_COUNTOF(temp), "%s##File", view.m_path.getCPtr() );
 
 				ImGui::SetNextWindowSize(
 					  ImVec2(400.0f, 400.0f)
@@ -2023,7 +2025,7 @@ int _main_(int _argc, char** _argv)
 				fp.join(view.m_fileList[view.m_fileIndex].c_str() );
 
 				bimg::Orientation::Enum orientation;
-				texture = loadTexture(fp.get()
+				texture = loadTexture(fp.getCPtr()
 					, 0
 					| BGFX_SAMPLER_U_CLAMP
 					| BGFX_SAMPLER_V_CLAMP
@@ -2072,7 +2074,7 @@ int _main_(int _argc, char** _argv)
 					}
 
 					bx::stringPrintf(title, "%s (%d x %d%s, mips: %d, layers %d, %s)"
-						, fp.get()
+						, fp.getCPtr()
 						, view.m_textureInfo.width
 						, view.m_textureInfo.height
 						, name

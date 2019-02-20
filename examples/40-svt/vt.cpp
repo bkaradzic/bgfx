@@ -13,9 +13,10 @@
   *   http://web.archive.org/web/20190103162730/http://www.celestiamotherlode.net/catalog/mars.php
   */
 
-#include "vt.h"
 #include <bx/file.h>
 #include <bx/sort.h>
+
+#include "vt.h"
 
 namespace vt
 {
@@ -1063,7 +1064,7 @@ bx::AllocatorI* VirtualTexture::getAllocator()
 TileDataFile::TileDataFile(const bx::FilePath& filename, VirtualTextureInfo* _info, bool _readWrite) : m_info(_info)
 {
 	const char* access = _readWrite ? "w+b" : "rb";
-	m_file = fopen(filename.get(), access);
+	m_file = fopen(filename.getCPtr(), access);
 	m_size = m_info->GetPageSize() * m_info->GetPageSize() * s_channelCount;
 }
 
@@ -1133,39 +1134,41 @@ TileGenerator::~TileGenerator()
 	BX_DELETE(VirtualTexture::getAllocator(), m_tileImage);
 }
 
-bool TileGenerator::generate(const bx::FilePath& _filename)
+bool TileGenerator::generate(const bx::FilePath& _filePath)
 {
+	const bx::StringView baseName = _filePath.getBaseName();
+
 	// Generate cache filename
 	char tmp[256];
-	bx::snprintf(tmp, sizeof(tmp), "%.*s.vt", _filename.getBaseName().getLength(), _filename.getBaseName().getPtr() );
+	bx::snprintf(tmp, sizeof(tmp), "%.*s.vt", baseName.getLength(), baseName.getPtr() );
 
-	bx::FilePath cacheFilename("temp");
-	cacheFilename.join(tmp);
+	bx::FilePath cacheFilePath("temp");
+	cacheFilePath.join(tmp);
 
 	// Check if tile file already exist
 	{
 		bx::Error err;
 		bx::FileReader fileReader;
 
-		if (bx::open(&fileReader, cacheFilename, &err) )
+		if (bx::open(&fileReader, cacheFilePath, &err) )
 		{
 			bx::close(&fileReader);
 
-			bx::debugPrintf("Tile data file '%s' already exists. Skipping generation.\n", cacheFilename.get() );
+			bx::debugPrintf("Tile data file '%s' already exists. Skipping generation.\n", cacheFilePath.getCPtr() );
 			return true;
 		}
 	}
 
 	// Read image
 	{
-		bx::debugPrintf("Reading image '%s'.\n", _filename.get() );
+		bx::debugPrintf("Reading image '%s'.\n", _filePath.getCPtr() );
 
 		bx::Error err;
 		bx::FileReader fileReader;
 
-		if (!bx::open(&fileReader, bx::FilePath(_filename.get() ), &err) )
+		if (!bx::open(&fileReader, _filePath, &err) )
 		{
-			bx::debugPrintf("Image open failed'%s'.\n", _filename.get() );
+			bx::debugPrintf("Image open failed'%s'.\n", _filePath.getCPtr() );
 			return false;
 		}
 
@@ -1173,7 +1176,7 @@ bool TileGenerator::generate(const bx::FilePath& _filename)
 
 		if (0 == size)
 		{
-			bx::debugPrintf("Image '%s' size is 0.\n", _filename.get() );
+			bx::debugPrintf("Image '%s' size is 0.\n", _filePath.getCPtr() );
 			return false;
 		}
 
@@ -1184,7 +1187,7 @@ bool TileGenerator::generate(const bx::FilePath& _filename)
 
 		if (!err.isOk() )
 		{
-			bx::debugPrintf("Image read failed'%s'.\n", _filename.get() );
+			bx::debugPrintf("Image read failed'%s'.\n", _filePath.getCPtr() );
 			BX_FREE(VirtualTexture::getAllocator(), rawImage);
 			return false;
 		}
@@ -1194,7 +1197,7 @@ bool TileGenerator::generate(const bx::FilePath& _filename)
 
 		if (!err.isOk() )
 		{
-			bx::debugPrintf("Image parse failed'%s'.\n", _filename.get() );
+			bx::debugPrintf("Image parse failed'%s'.\n", _filePath.getCPtr() );
 			return false;
 		}
 	}
@@ -1204,7 +1207,7 @@ bool TileGenerator::generate(const bx::FilePath& _filename)
 	m_indexer = BX_NEW(VirtualTexture::getAllocator(), PageIndexer)(m_info);
 
 	// Open tile data file
-	m_tileDataFile = BX_NEW(VirtualTexture::getAllocator(), TileDataFile)(cacheFilename, m_info, true);
+	m_tileDataFile = BX_NEW(VirtualTexture::getAllocator(), TileDataFile)(cacheFilePath, m_info, true);
 	m_page1Image   = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
 	m_page2Image   = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_pagesize, m_pagesize, s_channelCount, 0xff);
 	m_tileImage    = BX_NEW(VirtualTexture::getAllocator(), SimpleImage)(m_tilesize, m_tilesize, s_channelCount, 0xff);
