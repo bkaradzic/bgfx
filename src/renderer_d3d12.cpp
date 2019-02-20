@@ -785,8 +785,6 @@ namespace bgfx { namespace d3d12
 
 					if (SUCCEEDED(hr) )
 					{
-						uint32_t debugFlags = 0;
-
 						if (_init.debug)
 						{
 #if BX_PLATFORM_WINDOWS

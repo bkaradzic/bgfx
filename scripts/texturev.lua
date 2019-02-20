@@ -80,6 +80,7 @@ project ("texturev")
 
 	configuration { "vs20* or mingw*" }
 		links {
+			"comdlg32",
 			"gdi32",
 			"psapi",
 		}
