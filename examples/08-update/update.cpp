@@ -302,13 +302,7 @@ public:
 		}
 
 		{
-			m_textureCube[3] = bgfx::createTextureCube(
-													   kTextureSide
-													   , false
-													   , 1
-													   , bgfx::TextureFormat::RGBA8
-													   , BGFX_TEXTURE_RT
-													   );
+			m_textureCube[3] = bgfx::createTextureCube(kTextureSide, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_textureCubeFaceFb); ++ii)
 			{
