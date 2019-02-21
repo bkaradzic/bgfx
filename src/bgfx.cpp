@@ -1515,30 +1515,30 @@ namespace bgfx
 
 		BX_TRACE("");
 		BX_TRACE("Sort key masks:");
-		BX_TRACE("\t   View     %016" PRIx64, SORT_KEY_VIEW_MASK);
-		BX_TRACE("\t   Draw bit %016" PRIx64, SORT_KEY_DRAW_BIT);
+		BX_TRACE("\t   View     %016" PRIx64, kSortKeyViewMask);
+		BX_TRACE("\t   Draw bit %016" PRIx64, kSortKeyDrawBit);
 
 		BX_TRACE("");
-		BX_TRACE("\tD  Type     %016" PRIx64, SORT_KEY_DRAW_TYPE_MASK);
+		BX_TRACE("\tD  Type     %016" PRIx64, kSortKeyDrawTypeMask);
 
 		BX_TRACE("");
-		BX_TRACE("\tD0 Trans    %016" PRIx64, SORT_KEY_DRAW_0_TRANS_MASK);
-		BX_TRACE("\tD0 Program  %016" PRIx64, SORT_KEY_DRAW_0_PROGRAM_MASK);
-		BX_TRACE("\tD0 Depth    %016" PRIx64, SORT_KEY_DRAW_0_DEPTH_MASK);
+		BX_TRACE("\tD0 Trans    %016" PRIx64, kSortKeyDraw0TransMask);
+		BX_TRACE("\tD0 Program  %016" PRIx64, kSortKeyDraw0ProgramMask);
+		BX_TRACE("\tD0 Depth    %016" PRIx64, kSortKeyDraw0DepthMask);
 
 		BX_TRACE("");
-		BX_TRACE("\tD1 Depth    %016" PRIx64, SORT_KEY_DRAW_1_DEPTH_MASK);
-		BX_TRACE("\tD1 Trans    %016" PRIx64, SORT_KEY_DRAW_1_TRANS_MASK);
-		BX_TRACE("\tD1 Program  %016" PRIx64, SORT_KEY_DRAW_1_PROGRAM_MASK);
+		BX_TRACE("\tD1 Depth    %016" PRIx64, kSortKeyDraw1DepthMask);
+		BX_TRACE("\tD1 Trans    %016" PRIx64, kSortKeyDraw1TransMask);
+		BX_TRACE("\tD1 Program  %016" PRIx64, kSortKeyDraw1ProgramMask);
 
 		BX_TRACE("");
-		BX_TRACE("\tD2 Seq      %016" PRIx64, SORT_KEY_DRAW_2_SEQ_MASK);
-		BX_TRACE("\tD2 Trans    %016" PRIx64, SORT_KEY_DRAW_2_TRANS_MASK);
-		BX_TRACE("\tD2 Program  %016" PRIx64, SORT_KEY_DRAW_2_PROGRAM_MASK);
+		BX_TRACE("\tD2 Seq      %016" PRIx64, kSortKeyDraw2SeqMask);
+		BX_TRACE("\tD2 Trans    %016" PRIx64, kSortKeyDraw2TransMask);
+		BX_TRACE("\tD2 Program  %016" PRIx64, kSortKeyDraw2ProgramMask);
 
 		BX_TRACE("");
-		BX_TRACE("\t C Seq      %016" PRIx64, SORT_KEY_COMPUTE_SEQ_MASK);
-		BX_TRACE("\t C Program  %016" PRIx64, SORT_KEY_COMPUTE_PROGRAM_MASK);
+		BX_TRACE("\t C Seq      %016" PRIx64, kSortKeyComputeSeqMask);
+		BX_TRACE("\t C Program  %016" PRIx64, kSortKeyComputeProgramMask);
 
 		BX_TRACE("");
 		BX_TRACE("Supported capabilities (renderer %s, vendor 0x%04x, device 0x%04x):"
