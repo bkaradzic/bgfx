@@ -5887,15 +5887,19 @@ namespace bgfx { namespace d3d12
 					currentProgram         = BGFX_INVALID_HANDLE;
 					hasPredefined          = false;
 
-					fbh = _render->m_view[view].m_fbh;
-					setFrameBuffer(fbh);
-
 					if (item > 1)
 					{
 						profiler.end();
 					}
 
+					BGFX_D3D12_PROFILER_END();
+					setViewType(view, "  ");
+					BGFX_D3D12_PROFILER_BEGIN(view, kColorView);
+
 					profiler.begin(view);
+
+					fbh = _render->m_view[view].m_fbh;
+					setFrameBuffer(fbh);
 
 					viewState.m_rect = _render->m_view[view].m_rect;
 					const Rect& rect        = _render->m_view[view].m_rect;

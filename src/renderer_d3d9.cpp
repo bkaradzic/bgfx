@@ -3858,12 +3858,6 @@ namespace bgfx { namespace d3d9
 					view = key.m_view;
 					currentProgram = BGFX_INVALID_HANDLE;
 
-					if (_render->m_view[view].m_fbh.idx != fbh.idx)
-					{
-						fbh = _render->m_view[view].m_fbh;
-						setFrameBuffer(fbh);
-					}
-
 					if (item > 0)
 					{
 						profiler.end();
@@ -3873,6 +3867,12 @@ namespace bgfx { namespace d3d9
 					BGFX_D3D9_PROFILER_BEGIN(view, kColorView);
 
 					profiler.begin(view);
+
+					if (_render->m_view[view].m_fbh.idx != fbh.idx)
+					{
+						fbh = _render->m_view[view].m_fbh;
+						setFrameBuffer(fbh);
+					}
 
 					viewState.m_rect        = _render->m_view[view].m_rect;
 					const Rect& scissorRect = _render->m_view[view].m_scissor;
