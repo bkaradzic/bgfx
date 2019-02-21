@@ -2804,26 +2804,24 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				const TextureGL& texture = m_textures[_handle.idx];
 				const bool compressed    = bimg::isCompressed(bimg::TextureFormat::Enum(texture.m_textureFormat) );
 
-				if(!compressed)
+				if (!compressed)
 				{
-					Attachment attachment[1];
-					attachment[0].handle = _handle;
-					attachment[0].mip = 0;
-					attachment[0].layer = 0;
+					Attachment at[1];
+					at[0].init(_handle);
 
 					FrameBufferGL frameBuffer;
-					frameBuffer.create(1, attachment);
+					frameBuffer.create(BX_COUNTOF(at), at);
 					GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]) );
 					GL_CHECK(glFramebufferTexture2D(
 						  GL_FRAMEBUFFER
 						, GL_COLOR_ATTACHMENT0
 						, GL_TEXTURE_2D
 						, texture.m_id
-						, attachment[0].mip
+						, at[0].mip
 						) );
 
 					if (!BX_ENABLED(BX_PLATFORM_EMSCRIPTEN)
-					&&  !BX_ENABLED(BX_PLATFORM_IOS))
+					&&  !BX_ENABLED(BX_PLATFORM_IOS) )
 					{
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0) );
 					}
