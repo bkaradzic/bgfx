@@ -62,6 +62,8 @@ Languages:
 [Building](https://bkaradzic.github.io/bgfx/build.html)
 ----------------------------------------------------
 
+See https://bkaradzic.github.io/bgfx/build.html
+
  - AppVeyor https://ci.appveyor.com/project/bkaradzic/bgfx
  - TravisCI https://travis-ci.org/bkaradzic/bgfx
 
