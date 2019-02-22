@@ -44,9 +44,6 @@ namespace entry
 
 			m_eventQueue.postSizeEvent(s_defaultWindow, _width, _height);
 
-			// Prevent render thread creation.
-			bgfx::renderFrame();
-
 			m_thread.init(MainThreadEntry::threadFunc, &m_mte);
 		}
 
@@ -166,9 +163,6 @@ static	void* m_device = NULL;
 
 
 @interface View : UIView
-{
-	CADisplayLink* m_displayLink;
-}
 
 @end
 
@@ -217,32 +211,6 @@ static	void* m_device = NULL;
 	uint32_t frameW = (uint32_t)(self.contentScaleFactor * self.frame.size.width);
 	uint32_t frameH = (uint32_t)(self.contentScaleFactor * self.frame.size.height);
 	s_ctx->m_eventQueue.postSizeEvent(s_defaultWindow, frameW, frameH);
-}
-
-- (void)start
-{
-	if (nil == m_displayLink)
-	{
-		m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
-		//[m_displayLink setFrameInterval:1];
-		//[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-		//		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop]];
-		[m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
-	}
-}
-
-- (void)stop
-{
-	if (nil != m_displayLink)
-	{
-		[m_displayLink invalidate];
-		m_displayLink = nil;
-	}
-}
-
-- (void)renderFrame
-{
-	bgfx::renderFrame();
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
@@ -337,7 +305,6 @@ static	void* m_device = NULL;
 {
 	BX_UNUSED(application);
 	s_ctx->m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::WillSuspend);
-	[m_view stop];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
@@ -356,13 +323,11 @@ static	void* m_device = NULL;
 {
 	BX_UNUSED(application);
 	s_ctx->m_eventQueue.postSuspendEvent(s_defaultWindow, Suspend::DidResume);
-	[m_view start];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
 	BX_UNUSED(application);
-	[m_view stop];
 }
 
 - (void)dealloc
