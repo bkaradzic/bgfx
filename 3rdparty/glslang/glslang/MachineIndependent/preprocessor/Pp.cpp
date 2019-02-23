@@ -166,29 +166,43 @@ int TPpContext::CPPdefine(TPpToken* ppToken)
     if (existing != nullptr) {
         if (! existing->undef) {
             // Already defined -- need to make sure they are identical:
-            // "Two replacement lists are identical if and only if the preprocessing tokens in both have the same number,
-            // ordering, spelling, and white-space separation, where all white-space separations are considered identical."
-            if (existing->functionLike != mac.functionLike)
-                parseContext.ppError(defineLoc, "Macro redefined; function-like versus object-like:", "#define", atomStrings.getString(defAtom));
-            else if (existing->args.size() != mac.args.size())
-                parseContext.ppError(defineLoc, "Macro redefined; different number of arguments:", "#define", atomStrings.getString(defAtom));
-            else {
-                if (existing->args != mac.args)
-                    parseContext.ppError(defineLoc, "Macro redefined; different argument names:", "#define", atomStrings.getString(defAtom));
+            // "Two replacement lists are identical if and only if the
+            // preprocessing tokens in both have the same number,
+            // ordering, spelling, and white-space separation, where all
+            // white-space separations are considered identical."
+            if (existing->functionLike != mac.functionLike) {
+                parseContext.ppError(defineLoc, "Macro redefined; function-like versus object-like:", "#define",
+                    atomStrings.getString(defAtom));
+            } else if (existing->args.size() != mac.args.size()) {
+                parseContext.ppError(defineLoc, "Macro redefined; different number of arguments:", "#define",
+                    atomStrings.getString(defAtom));
+            } else {
+                if (existing->args != mac.args) {
+                    parseContext.ppError(defineLoc, "Macro redefined; different argument names:", "#define",
+                       atomStrings.getString(defAtom));
+                }
+                // set up to compare the two
                 existing->body.reset();
                 mac.body.reset();
                 int newToken;
+                bool firstToken = true;
                 do {
                     int oldToken;
                     TPpToken oldPpToken;
                     TPpToken newPpToken;
                     oldToken = existing->body.getToken(parseContext, &oldPpToken);
                     newToken = mac.body.getToken(parseContext, &newPpToken);
+                    // for the first token, preceding spaces don't matter
+                    if (firstToken) {
+                        newPpToken.space = oldPpToken.space;
+                        firstToken = false;
+                    }
                     if (oldToken != newToken || oldPpToken != newPpToken) {
-                        parseContext.ppError(defineLoc, "Macro redefined; different substitutions:", "#define", atomStrings.getString(defAtom));
+                        parseContext.ppError(defineLoc, "Macro redefined; different substitutions:", "#define",
+                            atomStrings.getString(defAtom));
                         break;
                     }
-                } while (newToken > 0);
+                } while (newToken != EndOfInput);
             }
         }
         *existing = mac;
@@ -866,8 +880,7 @@ int TPpContext::CPPextension(TPpToken* ppToken)
     if (token != PpAtomIdentifier)
         parseContext.ppError(ppToken->loc, "extension name expected", "#extension", "");
 
-    assert(strlen(ppToken->name) <= MaxTokenLength);
-    strcpy(extensionName, ppToken->name);
+    snprintf(extensionName, sizeof(extensionName), "%s", ppToken->name);
 
     token = scanToken(ppToken);
     if (token != ':') {
@@ -1027,7 +1040,9 @@ TPpContext::TokenStream* TPpContext::PrescanMacroArg(TokenStream& arg, TPpToken*
             case MacroExpandNotStarted:
                 break;
             case MacroExpandError:
-                token = EndOfInput;
+                // toss the rest of the pushed-input argument by scanning until tMarkerInput
+                while ((token = scanToken(ppToken)) != tMarkerInput::marker && token != EndOfInput)
+                    ;
                 break;
             case MacroExpandStarted:
             case MacroExpandUndef:
@@ -1039,13 +1054,10 @@ TPpContext::TokenStream* TPpContext::PrescanMacroArg(TokenStream& arg, TPpToken*
         expandedArg->putToken(token, ppToken);
     }
 
-    if (token == EndOfInput) {
+    if (token != tMarkerInput::marker) {
         // Error, or MacroExpand ate the marker, so had bad input, recover
         delete expandedArg;
         expandedArg = nullptr;
-    } else {
-        // remove the marker
-        popInput();
     }
 
     return expandedArg;
@@ -1262,7 +1274,7 @@ MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, b
 
             if (token == ')') {
                 // closing paren of call
-                if (in->mac->args.size() == 1 && tokenRecorded == 0)
+                if (in->mac->args.size() == 1 && !tokenRecorded)
                     break;
                 arg++;
                 break;

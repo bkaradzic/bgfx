@@ -107,6 +107,7 @@ layout(location = 2) in vec2 attributeFloat2;
 in vec3 attributeFloat3;
 in vec4 attributeFloat4;
 in mat4 attributeMat4;
+in float attributeFloatArray[3];
 
 uniform deep3 deepA[2], deepB[2], deepC[3], deepD[2];
 
@@ -212,6 +213,7 @@ void main()
         f += deepB[i].d2.d1[i].va[1].x;
         deep3 d = deepC[1];
         deep3 da[2] = deepD;
+        deep1 db = deepA[i].d2.d1[i];
     } else
         f = ufDead3;
 
@@ -223,6 +225,7 @@ void main()
     f += attributeFloat3.x;
     f += attributeFloat4.x;
     f += attributeMat4[0][1];
+    f += attributeFloatArray[2];
     f += buf1i.runtimeArray[3];
     f += buf2i.runtimeArray[3].c;
     f += buf3i.runtimeArray[gl_InstanceID];

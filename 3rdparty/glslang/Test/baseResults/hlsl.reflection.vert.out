@@ -72,11 +72,11 @@ Buffer variable reflection:
 Buffer block reflection:
 
 Pipeline input reflection:
-attributeFloat: offset 0, type 1406, size 0, index 0, binding -1, stages 1
-attributeFloat2: offset 0, type 8b50, size 0, index 0, binding -1, stages 1
-attributeFloat3: offset 0, type 8b51, size 0, index 0, binding -1, stages 1
-attributeFloat4: offset 0, type 8b52, size 0, index 0, binding -1, stages 1
-attributeMat4: offset 0, type 8b5c, size 0, index 0, binding -1, stages 1
+attributeFloat: offset 0, type 1406, size 1, index 0, binding -1, stages 1
+attributeFloat2: offset 0, type 8b50, size 1, index 0, binding -1, stages 1
+attributeFloat3: offset 0, type 8b51, size 1, index 0, binding -1, stages 1
+attributeFloat4: offset 0, type 8b52, size 1, index 0, binding -1, stages 1
+attributeMat4: offset 0, type 8b5c, size 1, index 0, binding -1, stages 1
 
 Pipeline output reflection:
 

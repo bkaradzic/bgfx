@@ -473,8 +473,8 @@ function_identifier
 
         if ($$.function == 0) {
             // error recover
-            TString empty("");
-            $$.function = new TFunction(&empty, TType(EbtVoid), EOpNull);
+            TString* empty = NewPoolTString("");
+            $$.function = new TFunction(empty, TType(EbtVoid), EOpNull);
         }
     }
     | non_uniform_qualifier {

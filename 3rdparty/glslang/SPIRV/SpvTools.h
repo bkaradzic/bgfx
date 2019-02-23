@@ -75,6 +75,6 @@ void SpirvToolsLegalize(const glslang::TIntermediate& intermediate, std::vector<
 
 #endif
 
-}; // end namespace glslang
+} // end namespace glslang
 
 #endif // GLSLANG_SPV_TOOLS_H

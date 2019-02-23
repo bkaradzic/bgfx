@@ -4607,7 +4607,7 @@ void HlslParseContext::decomposeIntrinsic(const TSourceLoc& loc, TIntermTyped*& 
         if (nullptr == symbol) {
             type.getQualifier().builtIn = builtin;
 
-            TVariable* variable = new TVariable(new TString(name), type);
+            TVariable* variable = new TVariable(NewPoolTString(name), type);
 
             symbolTable.insert(*variable);
 

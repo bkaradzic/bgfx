@@ -4447,8 +4447,8 @@ yyreduce:
 
         if ((yyval.interm).function == 0) {
             // error recover
-            TString empty("");
-            (yyval.interm).function = new TFunction(&empty, TType(EbtVoid), EOpNull);
+            TString* empty = NewPoolTString("");
+            (yyval.interm).function = new TFunction(empty, TType(EbtVoid), EOpNull);
         }
     }
 #line 4455 "MachineIndependent/glslang_tab.cpp" /* yacc.c:1646  */

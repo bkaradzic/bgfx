@@ -96,12 +96,19 @@ namespace glslang {
 /////////////////////////////////// Floating point constants: /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-* lFloatConst() - Scan a single- or double-precision floating point constant.  Assumes that the scanner
-*         has seen at least one digit, followed by either a decimal '.' or the
-*         letter 'e', or a precision ending (e.g., F or LF).
-*/
-
+// 
+// Scan a single- or double-precision floating point constant.
+// Assumes that the scanner has seen at least one digit,
+// followed by either a decimal '.' or the letter 'e', or a
+// precision ending (e.g., F or LF).
+//
+// This is technically not correct, as the preprocessor should just
+// accept the numeric literal along with whatever suffix it has, but
+// currently, it stops on seeing a bad suffix, treating that as the
+// next token. This effects things like token pasting, where it is
+// relevant how many tokens something was broken into.
+//
+// See peekContinuedPasting().
 int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
 {
     const auto saveName = [&](int ch) {
@@ -434,6 +441,14 @@ int TPpContext::characterLiteral(TPpToken* ppToken)
 
 //
 // Scanner used to tokenize source stream.
+//
+// N.B. Invalid numeric suffixes are not consumed.//
+// This is technically not correct, as the preprocessor should just
+// accept the numeric literal along with whatever suffix it has, but
+// currently, it stops on seeing a bad suffix, treating that as the
+// next token. This effects things like token pasting, where it is
+// relevant how many tokens something was broken into.
+// See peekContinuedPasting().
 //
 int TPpContext::tStringInput::scan(TPpToken* ppToken)
 {
@@ -1056,7 +1071,7 @@ int TPpContext::tokenize(TPpToken& ppToken)
         // Handle token-pasting logic
         token = tokenPaste(token, ppToken);
 
-        if (token == EndOfInput || token == tMarkerInput::marker) {
+        if (token == EndOfInput) {
             missingEndifCheck();
             return EndOfInput;
         }
@@ -1116,7 +1131,7 @@ int TPpContext::tokenize(TPpToken& ppToken)
             parseContext.ppError(ppToken.loc, "character literals not supported", "\'", "");
             continue;
         default:
-            strcpy(ppToken.name, atomStrings.getString(token));
+            snprintf(ppToken.name, sizeof(ppToken.name), "%s", atomStrings.getString(token));
             break;
         }
 
@@ -1153,61 +1168,69 @@ int TPpContext::tokenPaste(int token, TPpToken& ppToken)
             break;
         }
 
-        // get the token after the ##
-        token = scanToken(&pastedPpToken);
+        // Get the token(s) after the ##.
+        // Because of "space" semantics, and prior tokenization, what
+        // appeared a single token, e.g. "3A", might have been tokenized
+        // into two tokens "3" and "A", but the "A" will have 'space' set to
+        // false.  Accumulate all of these to recreate the original lexical
+        // appearing token.
+        do {
+            token = scanToken(&pastedPpToken);
 
-        // This covers end of argument expansion
-        if (token == tMarkerInput::marker) {
-            parseContext.ppError(ppToken.loc, "unexpected location; end of argument", "##", "");
-            break;
-        }
+            // This covers end of argument expansion
+            if (token == tMarkerInput::marker) {
+                parseContext.ppError(ppToken.loc, "unexpected location; end of argument", "##", "");
+                return resultToken;
+            }
 
-        // get the token text
-        switch (resultToken) {
-        case PpAtomIdentifier:
-            // already have the correct text in token.names
-            break;
-        case '=':
-        case '!':
-        case '-':
-        case '~':
-        case '+':
-        case '*':
-        case '/':
-        case '%':
-        case '<':
-        case '>':
-        case '|':
-        case '^':
-        case '&':
-        case PpAtomRight:
-        case PpAtomLeft:
-        case PpAtomAnd:
-        case PpAtomOr:
-        case PpAtomXor:
-            strcpy(ppToken.name, atomStrings.getString(resultToken));
-            strcpy(pastedPpToken.name, atomStrings.getString(token));
-            break;
-        default:
-            parseContext.ppError(ppToken.loc, "not supported for these tokens", "##", "");
-            return resultToken;
-        }
+            // get the token text
+            switch (resultToken) {
+            case PpAtomIdentifier:
+                // already have the correct text in token.names
+                break;
+            case '=':
+            case '!':
+            case '-':
+            case '~':
+            case '+':
+            case '*':
+            case '/':
+            case '%':
+            case '<':
+            case '>':
+            case '|':
+            case '^':
+            case '&':
+            case PpAtomRight:
+            case PpAtomLeft:
+            case PpAtomAnd:
+            case PpAtomOr:
+            case PpAtomXor:
+                snprintf(ppToken.name, sizeof(ppToken.name), "%s", atomStrings.getString(resultToken));
+                snprintf(pastedPpToken.name, sizeof(pastedPpToken.name), "%s", atomStrings.getString(token));
+                break;
+            default:
+                parseContext.ppError(ppToken.loc, "not supported for these tokens", "##", "");
+                return resultToken;
+            }
 
-        // combine the tokens
-        if (strlen(ppToken.name) + strlen(pastedPpToken.name) > MaxTokenLength) {
-            parseContext.ppError(ppToken.loc, "combined tokens are too long", "##", "");
-            return resultToken;
-        }
-        strncat(ppToken.name, pastedPpToken.name, MaxTokenLength - strlen(ppToken.name));
+            // combine the tokens
+            if (strlen(ppToken.name) + strlen(pastedPpToken.name) > MaxTokenLength) {
+                parseContext.ppError(ppToken.loc, "combined tokens are too long", "##", "");
+                return resultToken;
+            }
+            snprintf(&ppToken.name[0] + strlen(ppToken.name), sizeof(ppToken.name) - strlen(ppToken.name),
+                "%s", pastedPpToken.name);
 
-        // correct the kind of token we are making, if needed (identifiers stay identifiers)
-        if (resultToken != PpAtomIdentifier) {
-            int newToken = atomStrings.getAtom(ppToken.name);
-            if (newToken > 0)
-                resultToken = newToken;
-            else
-                parseContext.ppError(ppToken.loc, "combined token is invalid", "##", "");
-        }
+            // correct the kind of token we are making, if needed (identifiers stay identifiers)
+            if (resultToken != PpAtomIdentifier) {
+                int newToken = atomStrings.getAtom(ppToken.name);
+                if (newToken > 0)
+                    resultToken = newToken;
+                else
+                    parseContext.ppError(ppToken.loc, "combined token is invalid", "##", "");
+            }
+        } while (peekContinuedPasting(resultToken));
     }
 
     return resultToken;
