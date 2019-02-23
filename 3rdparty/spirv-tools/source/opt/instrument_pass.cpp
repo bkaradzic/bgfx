@@ -617,11 +617,7 @@ bool InstrumentPass::InstrumentFunction(Function* func, uint32_t stage_idx,
   // Start count after function and param instructions
   uint32_t instruction_idx = funcIdx2offset_[function_idx] + 1;
   func->ForEachParam(
-      [this, &instruction_idx](const Instruction* i) {
-        (void)i;
-        ++instruction_idx;
-      },
-      true);
+      [&instruction_idx](const Instruction*) { ++instruction_idx; }, true);
   // Using block iterators here because of block erasures and insertions.
   for (auto bi = func->begin(); bi != func->end(); ++bi) {
     // Count block's label
@@ -792,12 +788,8 @@ void InstrumentPass::InitializeInstrument() {
   for (++curr_fn; curr_fn != get_module()->end(); ++curr_fn) {
     // Count function, end and param instructions
     uint32_t func_size = 2;
-    prev_fn->ForEachParam(
-        [this, &func_size](const Instruction* i) {
-          (void)i;
-          ++func_size;
-        },
-        true);
+    prev_fn->ForEachParam([&func_size](const Instruction*) { ++func_size; },
+                          true);
     for (auto& blk : *prev_fn) {
       // Count label
       func_size += 1;

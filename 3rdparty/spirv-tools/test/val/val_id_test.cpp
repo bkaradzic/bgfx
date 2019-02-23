@@ -2178,6 +2178,47 @@ OpFunctionEnd
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
+TEST_F(ValidateIdWithMessage, OpFunctionWithNonMemoryObject) {
+  // DXC generates code that looks like when given something like:
+  //   T t;
+  //   t.s.fn_1();
+  // This needs to be accepted before legalization takes place, so we
+  // will include it with the relaxed logical pointer.
+
+  const std::string spirv = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %1 "main"
+               OpSource HLSL 600
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+       %void = OpTypeVoid
+          %9 = OpTypeFunction %void
+  %_struct_5 = OpTypeStruct
+  %_struct_6 = OpTypeStruct %_struct_5
+%_ptr_Function__struct_6 = OpTypePointer Function %_struct_6
+%_ptr_Function__struct_5 = OpTypePointer Function %_struct_5
+         %23 = OpTypeFunction %void %_ptr_Function__struct_5
+          %1 = OpFunction %void None %9
+         %10 = OpLabel
+         %11 = OpVariable %_ptr_Function__struct_6 Function
+         %20 = OpAccessChain %_ptr_Function__struct_5 %11 %int_0
+         %21 = OpFunctionCall %void %12 %20
+               OpReturn
+               OpFunctionEnd
+         %12 = OpFunction %void None %23
+         %13 = OpFunctionParameter %_ptr_Function__struct_5
+         %14 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  auto options = getValidatorOptions();
+  options->relax_logical_pointer = true;
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
 TEST_F(ValidateIdWithMessage,
        OpVariablePointerVariablePointersStorageBufferGood) {
   const std::string spirv = R"(

@@ -909,6 +909,13 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
                     : (push_constant ? "PushConstant" : "StorageBuffer");
 
         if (spvIsVulkanEnv(vstate.context()->target_env)) {
+          if (storage_buffer &&
+              hasDecoration(id, SpvDecorationBufferBlock, vstate)) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(var_id))
+                   << "Storage buffer id '" << var_id
+                   << " In Vulkan, BufferBlock is disallowed on variables in "
+                      "the StorageBuffer storage class";
+          }
           // Vulkan 14.5.1: Check Block decoration for PushConstant variables.
           if (push_constant && !hasDecoration(id, SpvDecorationBlock, vstate)) {
             return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(id))
@@ -1028,6 +1035,10 @@ bool AtMostOncePerMember(SpvDecoration decoration) {
 // Returns the string name for |decoration|.
 const char* GetDecorationName(SpvDecoration decoration) {
   switch (decoration) {
+    case SpvDecorationAliased:
+      return "Aliased";
+    case SpvDecorationRestrict:
+      return "Restrict";
     case SpvDecorationArrayStride:
       return "ArrayStride";
     case SpvDecorationOffset:
@@ -1054,7 +1065,8 @@ spv_result_t CheckDecorationsCompatibility(ValidationState_t& vstate) {
   // An Array of pairs where the decorations in the pair cannot both be applied
   // to the same id.
   static const SpvDecoration mutually_exclusive_per_id[][2] = {
-      {SpvDecorationBlock, SpvDecorationBufferBlock}};
+      {SpvDecorationBlock, SpvDecorationBufferBlock},
+      {SpvDecorationRestrict, SpvDecorationAliased}};
   static const auto num_mutually_exclusive_per_id_pairs =
       sizeof(mutually_exclusive_per_id) / (2 * sizeof(SpvDecoration));
 

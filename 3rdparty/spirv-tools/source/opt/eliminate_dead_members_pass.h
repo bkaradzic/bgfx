@@ -137,6 +137,7 @@ class EliminateDeadMembersPass : public MemPass {
   // type that are used, and must be kept.
   std::unordered_map<uint32_t, std::set<uint32_t>> used_members_;
   void MarkStructOperandsAsFullyUsed(const Instruction* inst);
+  void MarkPointeeTypeAsFullUsed(uint32_t ptr_type_id);
 };
 
 }  // namespace opt

@@ -39,10 +39,18 @@ void EliminateDeadMembersPass::FindLiveMembers() {
   // Until we have implemented the rewritting of OpSpecConsantOp instructions,
   // we have to mark them as fully used just to be safe.
   for (auto& inst : get_module()->types_values()) {
-    if (inst.opcode() != SpvOpSpecConstantOp) {
-      continue;
+    if (inst.opcode() == SpvOpSpecConstantOp) {
+      MarkTypeAsFullyUsed(inst.type_id());
+    } else if (inst.opcode() == SpvOpVariable) {
+      switch (inst.GetSingleWordInOperand(0)) {
+        case SpvStorageClassInput:
+        case SpvStorageClassOutput:
+          MarkPointeeTypeAsFullUsed(inst.type_id());
+          break;
+        default:
+          break;
+      }
     }
-    MarkTypeAsFullyUsed(inst.type_id());
   }
 
   for (const Function& func : *get_module()) {
@@ -125,6 +133,12 @@ void EliminateDeadMembersPass::MarkTypeAsFullyUsed(uint32_t type_id) {
   for (uint32_t i = 0; i < type_inst->NumInOperands(); ++i) {
     MarkTypeAsFullyUsed(type_inst->GetSingleWordInOperand(i));
   }
+}
+
+void EliminateDeadMembersPass::MarkPointeeTypeAsFullUsed(uint32_t ptr_type_id) {
+  Instruction* ptr_type_inst = get_def_use_mgr()->GetDef(ptr_type_id);
+  assert(ptr_type_inst->opcode() == SpvOpTypePointer);
+  MarkTypeAsFullyUsed(ptr_type_inst->GetSingleWordInOperand(1));
 }
 
 void EliminateDeadMembersPass::MarkMembersAsLiveForCopyMemory(
@@ -619,6 +633,5 @@ void EliminateDeadMembersPass::MarkStructOperandsAsFullyUsed(
     }
   });
 }
-
 }  // namespace opt
 }  // namespace spvtools

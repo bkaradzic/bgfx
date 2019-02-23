@@ -225,7 +225,7 @@ TEST_F(ValidateAtomics, AtomicLoadKernelSuccess) {
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
-TEST_F(ValidateAtomics, AtomicLoadVulkanSuccess) {
+TEST_F(ValidateAtomics, AtomicLoadInt32VulkanSuccess) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %device %relaxed
 %val2 = OpAtomicLoad %u32 %u32_var %workgroup %acquire
@@ -233,6 +233,41 @@ TEST_F(ValidateAtomics, AtomicLoadVulkanSuccess) {
 
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+}
+
+TEST_F(ValidateAtomics, AtomicLoadFloatVulkan) {
+  const std::string body = R"(
+%val1 = OpAtomicLoad %f32 %f32_var %device %relaxed
+%val2 = OpAtomicLoad %f32 %f32_var %workgroup %acquire
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("expected Result Type to be int scalar type"));
+}
+
+TEST_F(ValidateAtomics, AtomicLoadInt64WithCapabilityVulkanSuccess) {
+  const std::string body = R"(
+  %val1 = OpAtomicLoad %u64 %u64_var %device %relaxed
+  %val2 = OpAtomicLoad %u64 %u64_var %workgroup %acquire
+  )";
+
+  CompileSuccessfully(GenerateShaderCode(body, "OpCapability Int64Atomics\n"),
+                      SPV_ENV_VULKAN_1_0);
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+}
+
+TEST_F(ValidateAtomics, AtomicLoadInt64WithoutCapabilityVulkan) {
+  const std::string body = R"(
+  %val1 = OpAtomicLoad %u64 %u64_var %device %relaxed
+  %val2 = OpAtomicLoad %u64 %u64_var %workgroup %acquire
+  )";
+
+  CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("64-bit atomics require the Int64Atomics capability"));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreOpenCLFunctionPointerStorageTypeSuccess) {

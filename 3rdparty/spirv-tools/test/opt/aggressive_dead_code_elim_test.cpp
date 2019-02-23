@@ -5151,7 +5151,6 @@ OpFunctionEnd
 TEST_F(AggressiveDCETest, ParitallyDeadDecorationGroup) {
   const std::string text = R"(
 ; CHECK: OpDecorate [[grp:%\w+]] Restrict
-; CHECK: OpDecorate [[grp]] Aliased
 ; CHECK: [[grp]] = OpDecorationGroup
 ; CHECK: OpGroupDecorate [[grp]] [[output:%\w+]]
 ; CHECK: [[output]] = OpVariable {{%\w+}} Output
@@ -5161,7 +5160,6 @@ OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main" %output
 OpExecutionMode %main OriginUpperLeft
 OpDecorate %1 Restrict
-OpDecorate %1 Aliased
 %1 = OpDecorationGroup
 OpGroupDecorate %1 %var %output
 %void = OpTypeVoid
@@ -5185,7 +5183,6 @@ OpFunctionEnd
 TEST_F(AggressiveDCETest, ParitallyDeadDecorationGroupDifferentGroupDecorate) {
   const std::string text = R"(
 ; CHECK: OpDecorate [[grp:%\w+]] Restrict
-; CHECK: OpDecorate [[grp]] Aliased
 ; CHECK: [[grp]] = OpDecorationGroup
 ; CHECK: OpGroupDecorate [[grp]] [[output:%\w+]]
 ; CHECK-NOT: OpGroupDecorate
@@ -5196,7 +5193,6 @@ OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %main "main" %output
 OpExecutionMode %main OriginUpperLeft
 OpDecorate %1 Restrict
-OpDecorate %1 Aliased
 %1 = OpDecorationGroup
 OpGroupDecorate %1 %output
 OpGroupDecorate %1 %var

@@ -47,8 +47,8 @@ class InstBindlessCheckPass : public InstrumentPass {
 
  private:
   // Generate instructions into |builder| to read length of runtime descriptor
-  // array |image_id| from debug input buffer and return id of value.
-  uint32_t GenDebugReadLength(uint32_t image_id, InstructionBuilder* builder);
+  // array |var_id| from debug input buffer and return id of value.
+  uint32_t GenDebugReadLength(uint32_t var_id, InstructionBuilder* builder);
 
   // Initialize state for instrumenting bindless checking
   void InitializeInstBindlessCheck();

@@ -253,7 +253,8 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
     }
 
     if (_.addressing_model() == SpvAddressingModelLogical) {
-      if (parameter_type->opcode() == SpvOpTypePointer) {
+      if (parameter_type->opcode() == SpvOpTypePointer &&
+          !_.options()->relax_logical_pointer) {
         SpvStorageClass sc = parameter_type->GetOperandAs<SpvStorageClass>(1u);
         // Validate which storage classes can be pointer operands.
         switch (sc) {

@@ -1,7 +1,42 @@
 Revision history for SPIRV-Tools
 
-v2019.2-dev 2019-01-07
- - Start v2019.2-dev
+2019.3-dev 2019-02-20
+   - Start 2019.3-dev
+
+v2019.2 2019-02-20
+ - General:
+   - Support SPV_EXT_physical_storage_buffer
+   - A number of memory leak have been fixed.
+   - Removed use of deprecated Google test macro:
+   - Changed the BUILD.gn to only build tests in Chromium.
+ - Optimizer
+   - Upgrade memory model improvments for modf and frexp.
+   - Add a new pass to move loads closer to their uses: code sinking.
+   - Invalidating the type manager now invalidates the constnat manager.
+   - Expand instrumentation pass for bindless bounds checking to runtime-sized descriptor arrays.
+   - Add a new pass that removes members from structs that are not used: dead member elimination.
+   Fixes:
+   - #2292: Remove undefined behaviour when folding bit shifts.
+   - #2294: Fixes for instrumentation code.
+   - #2293: Fix overflow when folding -INT_MIN.
+   - #2374: Don't merge unreachable blocks when merging blocks.
+ - Validator
+   - Support SPV_KHR_no_integer_wrap and related decorations.
+   - Validate Vulkan rules for OpTypeRuntimeArray.
+   - Validate NonWritable decoration.
+   - Many WebGPU specific validation rules were added.
+   - Validate variable pointer related function call rules.
+   - Better error messages.
+   Fixes:
+   - #2307: Check forwards references in OpTypeArray.
+   - #2315, #2303: Fixed the layout check for relaxed layout.
+   - #1628: Emit an error when an OpSwitch target is not an OpLabel.
+ - Reduce
+   - Added more documentation for spirv-reduce.
+   - Add ability to remove OpPhi instructions.
+   - Add ability to merge two basic blocks.
+   - Add ability to remove unused functions and unused basic blocks.
+   Fixes:
 
 v2019.1 2019-01-07
  - General:

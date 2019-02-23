@@ -582,13 +582,17 @@ ConstantFoldingRule FoldOpDotWithConstants() {
     std::vector<uint32_t> words = result.GetWords();
     const analysis::Constant* result_const =
         const_mgr->GetConstant(float_type, words);
-    for (uint32_t i = 0; i < a_components.size(); ++i) {
+    for (uint32_t i = 0; i < a_components.size() && result_const != nullptr;
+         ++i) {
       if (a_components[i] == nullptr || b_components[i] == nullptr) {
         return nullptr;
       }
 
       const analysis::Constant* component = FOLD_FPARITH_OP(*)(
           new_type, a_components[i], b_components[i], const_mgr);
+      if (component == nullptr) {
+        return nullptr;
+      }
       result_const =
           FOLD_FPARITH_OP(+)(new_type, result_const, component, const_mgr);
     }

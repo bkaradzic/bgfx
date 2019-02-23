@@ -36,14 +36,14 @@ namespace spvtools {
 namespace opt {
 
 uint32_t InstBindlessCheckPass::GenDebugReadLength(
-    uint32_t image_id, InstructionBuilder* builder) {
+    uint32_t var_id, InstructionBuilder* builder) {
   uint32_t desc_set_idx =
-      var2desc_set_[image_id] + kDebugInputBindlessOffsetLengths;
+      var2desc_set_[var_id] + kDebugInputBindlessOffsetLengths;
   uint32_t desc_set_idx_id = builder->GetUintConstantId(desc_set_idx);
   uint32_t desc_set_offset_id = GenDebugDirectRead(desc_set_idx_id, builder);
   Instruction* binding_idx_inst =
       builder->AddBinaryOp(GetUintId(), SpvOpIAdd, desc_set_offset_id,
-                           builder->GetUintConstantId(var2binding_[image_id]));
+                           builder->GetUintConstantId(var2binding_[var_id]));
   return GenDebugDirectRead(binding_idx_inst->result_id(), builder);
 }
 
@@ -161,7 +161,7 @@ void InstBindlessCheckPass::GenBindlessCheckCode(
   if (length_id == 0) {
     assert(ptr_type_inst->opcode() == SpvOpTypeRuntimeArray &&
            "unexpected bindless type");
-    length_id = GenDebugReadLength(image_id, &builder);
+    length_id = GenDebugReadLength(ptr_id, &builder);
   }
   Instruction* ult_inst =
       builder.AddBinaryOp(GetBoolId(), SpvOpULessThan, index_id, length_id);

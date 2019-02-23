@@ -1,6 +1,7 @@
 static const SpvCapability pygen_variable_caps_Addresses[] = {SpvCapabilityAddresses};
 static const SpvCapability pygen_variable_caps_AddressesPhysicalStorageBufferAddressesEXT[] = {SpvCapabilityAddresses, SpvCapabilityPhysicalStorageBufferAddressesEXT};
 static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBufferPhysicalStorageBufferAddressesEXT[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer, SpvCapabilityPhysicalStorageBufferAddressesEXT};
+static const SpvCapability pygen_variable_caps_CooperativeMatrixNV[] = {SpvCapabilityCooperativeMatrixNV};
 static const SpvCapability pygen_variable_caps_DerivativeControl[] = {SpvCapabilityDerivativeControl};
 static const SpvCapability pygen_variable_caps_DeviceEnqueue[] = {SpvCapabilityDeviceEnqueue};
 static const SpvCapability pygen_variable_caps_FragmentMaskAMD[] = {SpvCapabilityFragmentMaskAMD};
@@ -42,6 +43,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_decorate_stringS
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {spvtools::Extension::kSPV_KHR_shader_ballot};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_vote[] = {spvtools::Extension::kSPV_KHR_subgroup_vote};
+static const spvtools::Extension pygen_variable_exts_SPV_NV_cooperative_matrix[] = {spvtools::Extension::kSPV_NV_cooperative_matrix};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_NV_mesh_shader};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_ray_tracing[] = {spvtools::Extension::kSPV_NV_ray_tracing};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_shader_image_footprint[] = {spvtools::Extension::kSPV_NV_shader_image_footprint};
@@ -413,6 +415,11 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"TraceNV", SpvOpTraceNV, 1, pygen_variable_caps_RayTracingNV, 11, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_NV_ray_tracing, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"TypeAccelerationStructureNV", SpvOpTypeAccelerationStructureNV, 1, pygen_variable_caps_RayTracingNV, 1, {SPV_OPERAND_TYPE_RESULT_ID}, 1, 0, 1, pygen_variable_exts_SPV_NV_ray_tracing, SPV_SPIRV_VERSION_WORD(1, 0)},
   {"ExecuteCallableNV", SpvOpExecuteCallableNV, 1, pygen_variable_caps_RayTracingNV, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_NV_ray_tracing, SPV_SPIRV_VERSION_WORD(1, 0)},
+  {"TypeCooperativeMatrixNV", SpvOpTypeCooperativeMatrixNV, 1, pygen_variable_caps_CooperativeMatrixNV, 5, {SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 0, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, 0xffffffffu},
+  {"CooperativeMatrixLoadNV", SpvOpCooperativeMatrixLoadNV, 1, pygen_variable_caps_CooperativeMatrixNV, 6, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS}, 1, 1, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, 0xffffffffu},
+  {"CooperativeMatrixStoreNV", SpvOpCooperativeMatrixStoreNV, 1, pygen_variable_caps_CooperativeMatrixNV, 5, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_MEMORY_ACCESS}, 0, 0, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, 0xffffffffu},
+  {"CooperativeMatrixMulAddNV", SpvOpCooperativeMatrixMulAddNV, 1, pygen_variable_caps_CooperativeMatrixNV, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, 0xffffffffu},
+  {"CooperativeMatrixLengthNV", SpvOpCooperativeMatrixLengthNV, 1, pygen_variable_caps_CooperativeMatrixNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, 0xffffffffu},
   {"SubgroupShuffleINTEL", SpvOpSubgroupShuffleINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu},
   {"SubgroupShuffleDownINTEL", SpvOpSubgroupShuffleDownINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu},
   {"SubgroupShuffleUpINTEL", SpvOpSubgroupShuffleUpINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu},

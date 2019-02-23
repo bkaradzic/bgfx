@@ -112,6 +112,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_KHR_vulkan_memory_model
 static const spvtools::Extension pygen_variable_exts_SPV_NVX_multiview_per_view_attributes[] = {spvtools::Extension::kSPV_NVX_multiview_per_view_attributes};
 static const spvtools::Extension pygen_variable_exts_SPV_NVX_multiview_per_view_attributesSPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_NVX_multiview_per_view_attributes, spvtools::Extension::kSPV_NV_mesh_shader};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_compute_shader_derivatives[] = {spvtools::Extension::kSPV_NV_compute_shader_derivatives};
+static const spvtools::Extension pygen_variable_exts_SPV_NV_cooperative_matrix[] = {spvtools::Extension::kSPV_NV_cooperative_matrix};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_fragment_shader_barycentric[] = {spvtools::Extension::kSPV_NV_fragment_shader_barycentric};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_geometry_shader_passthrough[] = {spvtools::Extension::kSPV_NV_geometry_shader_passthrough};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_NV_mesh_shader};
@@ -778,6 +779,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"VulkanMemoryModelDeviceScopeKHR", 5346, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, 0xffffffffu},
   {"PhysicalStorageBufferAddressesEXT", 5347, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, 0xffffffffu},
   {"ComputeDerivativeGroupLinearNV", 5350, 0, nullptr, 1, pygen_variable_exts_SPV_NV_compute_shader_derivatives, {}, 0xffffffffu},
+  {"CooperativeMatrixNV", 5357, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, {}, 0xffffffffu},
   {"SubgroupShuffleINTEL", 5568, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu},
   {"SubgroupBufferBlockIOINTEL", 5569, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu},
   {"SubgroupImageBlockIOINTEL", 5570, 0, nullptr, 1, pygen_variable_exts_SPV_INTEL_subgroups, {}, 0xffffffffu},

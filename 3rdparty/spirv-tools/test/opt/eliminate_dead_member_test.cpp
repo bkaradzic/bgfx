@@ -1007,18 +1007,74 @@ TEST_F(EliminateDeadMemberTest, DontRemoveModfStructResultTypeMembers) {
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %PS_TerrainElevation "PS_TerrainElevation"
-               OpExecutionMode %PS_TerrainElevation OriginUpperLeft
+               OpEntryPoint Fragment %main "main"
+               OpExecutionMode %main OriginUpperLeft
                OpSource HLSL 600
       %float = OpTypeFloat 32
        %void = OpTypeVoid
          %21 = OpTypeFunction %void
 %ModfStructType = OpTypeStruct %float %float
-%PS_TerrainElevation = OpFunction %void None %21
+%main = OpFunction %void None %21
          %22 = OpLabel
          %23 = OpUndef %float
          %24 = OpExtInst %ModfStructType %1 ModfStruct %23
          %25 = OpCompositeExtract %float %24 1
+               OpReturn
+               OpFunctionEnd
+)";
+
+  auto result = SinglePassRunAndDisassemble<opt::EliminateDeadMembersPass>(
+      text, /* skip_nop = */ true, /* do_validation = */ true);
+  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
+TEST_F(EliminateDeadMemberTest, DontChangeInputStructs) {
+  // The input for a shader has to match the type of the output from the
+  // previous shader in the pipeline.  Because of that, we cannot change the
+  // types of input variables.
+  const std::string text = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %input_var
+               OpExecutionMode %main OriginUpperLeft
+               OpSource HLSL 600
+      %float = OpTypeFloat 32
+       %void = OpTypeVoid
+         %21 = OpTypeFunction %void
+%in_var_type = OpTypeStruct %float %float
+%in_ptr_type = OpTypePointer Input %in_var_type
+%input_var = OpVariable %in_ptr_type Input
+%main = OpFunction %void None %21
+         %22 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  auto result = SinglePassRunAndDisassemble<opt::EliminateDeadMembersPass>(
+      text, /* skip_nop = */ true, /* do_validation = */ true);
+  EXPECT_EQ(opt::Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
+TEST_F(EliminateDeadMemberTest, DontChangeOutputStructs) {
+  // The output for a shader has to match the type of the output from the
+  // previous shader in the pipeline.  Because of that, we cannot change the
+  // types of output variables.
+  const std::string text = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %output_var
+               OpExecutionMode %main OriginUpperLeft
+               OpSource HLSL 600
+      %float = OpTypeFloat 32
+       %void = OpTypeVoid
+         %21 = OpTypeFunction %void
+%out_var_type = OpTypeStruct %float %float
+%out_ptr_type = OpTypePointer Output %out_var_type
+%output_var = OpVariable %out_ptr_type Output
+%main = OpFunction %void None %21
+         %22 = OpLabel
                OpReturn
                OpFunctionEnd
 )";
