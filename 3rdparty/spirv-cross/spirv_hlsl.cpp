@@ -4618,7 +4618,6 @@ string CompilerHLSL::compile()
 	options.vulkan_semantics = true;
 	backend.float_literal_suffix = true;
 	backend.double_literal_suffix = false;
-	backend.half_literal_suffix = nullptr;
 	backend.long_long_literal_suffix = true;
 	backend.uint32_t_literal_suffix = true;
 	backend.int16_t_literal_suffix = nullptr;

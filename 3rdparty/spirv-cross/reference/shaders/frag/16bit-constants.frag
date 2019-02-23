@@ -18,7 +18,7 @@ layout(location = 2) out uint16_t baz;
 
 void main()
 {
-    foo = 1.0hf;
+    foo = float16_t(1.0);
     bar = 2s;
     baz = 3us;
 }

@@ -13,7 +13,7 @@ struct main0_out
 fragment main0_out main0()
 {
     main0_out out = {};
-    out.foo = 1.0h;
+    out.foo = half(1.0);
     out.bar = 2;
     out.baz = 3u;
     return out;

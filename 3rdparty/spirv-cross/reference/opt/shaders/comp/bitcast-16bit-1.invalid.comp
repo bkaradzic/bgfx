@@ -27,7 +27,7 @@ void main()
 {
     uint ident = gl_GlobalInvocationID.x;
     f16vec2 a = int16BitsToFloat16(_25.inputs[ident].xy);
-    _39.outputs[ident].x = int(packFloat2x16(a + f16vec2(1.0hf)));
+    _39.outputs[ident].x = int(packFloat2x16(a + f16vec2(float16_t(1.0))));
     _39.outputs[ident].y = packInt2x16(_25.inputs[ident].zw);
     _39.outputs[ident].z = int(packUint2x16(u16vec2(_25.inputs[ident].xy)));
 }

@@ -48,6 +48,7 @@ struct MSLVertexAttr
 	uint32_t msl_stride = 0;
 	bool per_instance = false;
 	MSLVertexFormat format = MSL_VERTEX_FORMAT_OTHER;
+	spv::BuiltIn builtin = spv::BuiltInMax;
 	bool used_by_shader = false;
 };
 
@@ -177,6 +178,7 @@ public:
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
 		bool swizzle_texture_samples = false;
+		bool tess_domain_origin_lower_left = false;
 
 		// Fragment output in MSL must have at least as many components as the render pass.
 		// Add support to explicit pad out components.
@@ -235,7 +237,8 @@ public:
 	bool get_is_rasterization_disabled() const
 	{
 		return is_rasterization_disabled && (get_entry_point().model == spv::ExecutionModelVertex ||
-		                                     get_entry_point().model == spv::ExecutionModelTessellationControl);
+		                                     get_entry_point().model == spv::ExecutionModelTessellationControl ||
+		                                     get_entry_point().model == spv::ExecutionModelTessellationEvaluation);
 	}
 
 	// Provide feedback to calling API to allow it to pass an auxiliary
@@ -388,6 +391,7 @@ protected:
 	void replace_illegal_names() override;
 	void declare_undefined_values() override;
 	void declare_constant_arrays();
+	bool is_patch_block(const SPIRType &type);
 	bool is_non_native_row_major_matrix(uint32_t id) override;
 	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
 	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, bool is_packed) override;
@@ -456,6 +460,7 @@ protected:
 	std::string get_type_address_space(const SPIRType &type);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
+	SPIRType &get_patch_stage_in_struct_type();
 	SPIRType &get_patch_stage_out_struct_type();
 	std::string get_tess_factor_struct_name();
 	void emit_atomic_func_op(uint32_t result_type, uint32_t result_id, const char *op, uint32_t mem_order_1,
@@ -484,11 +489,13 @@ protected:
 
 	void analyze_sampled_image_usage();
 
-	bool emit_tessellation_control_access_chain(const uint32_t *ops, uint32_t length);
+	bool emit_tessellation_access_chain(const uint32_t *ops, uint32_t length);
+	bool is_out_of_bounds_tessellation_level(uint32_t id_lhs);
 
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
 	std::unordered_map<uint32_t, MSLVertexAttr *> vtx_attrs_by_location;
+	std::unordered_map<uint32_t, MSLVertexAttr *> vtx_attrs_by_builtin;
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
 	std::unordered_map<MSLStructMemberKey, uint32_t> struct_member_padding;
 	std::set<std::string> pragma_lines;
@@ -498,6 +505,7 @@ protected:
 	MSLResourceBinding next_metal_resource_index;
 	uint32_t stage_in_var_id = 0;
 	uint32_t stage_out_var_id = 0;
+	uint32_t patch_stage_in_var_id = 0;
 	uint32_t patch_stage_out_var_id = 0;
 	uint32_t stage_in_ptr_var_id = 0;
 	uint32_t stage_out_ptr_var_id = 0;
@@ -511,6 +519,7 @@ protected:
 	std::string qual_pos_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
+	std::string patch_stage_in_var_name = "patchIn";
 	std::string patch_stage_out_var_name = "patchOut";
 	std::string sampler_name_suffix = "Smplr";
 	std::string swizzle_name_suffix = "Swzl";

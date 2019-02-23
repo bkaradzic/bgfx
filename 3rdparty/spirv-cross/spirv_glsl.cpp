@@ -2961,51 +2961,31 @@ string CompilerGLSL::convert_half_to_string(const SPIRConstant &c, uint32_t col,
 	string res;
 	float float_value = c.scalar_f16(col, row);
 
+	// There is no literal "hf" in GL_NV_gpu_shader5, so to avoid lots
+	// of complicated workarounds, just value-cast to the half type always.
 	if (std::isnan(float_value) || std::isinf(float_value))
 	{
-		if (backend.half_literal_suffix)
-		{
-			// There is no uintBitsToFloat for 16-bit, so have to rely on legacy fallback here.
-			if (float_value == numeric_limits<float>::infinity())
-				res = join("(1.0", backend.half_literal_suffix, " / 0.0", backend.half_literal_suffix, ")");
-			else if (float_value == -numeric_limits<float>::infinity())
-				res = join("(-1.0", backend.half_literal_suffix, " / 0.0", backend.half_literal_suffix, ")");
-			else if (std::isnan(float_value))
-				res = join("(0.0", backend.half_literal_suffix, " / 0.0", backend.half_literal_suffix, ")");
-			else
-				SPIRV_CROSS_THROW("Cannot represent non-finite floating point constant.");
-		}
-		else
-		{
-			SPIRType type;
-			type.basetype = SPIRType::Half;
-			type.vecsize = 1;
-			type.columns = 1;
+		SPIRType type;
+		type.basetype = SPIRType::Half;
+		type.vecsize = 1;
+		type.columns = 1;
 
-			if (float_value == numeric_limits<float>::infinity())
-				res = join(type_to_glsl(type), "(1.0 / 0.0)");
-			else if (float_value == -numeric_limits<float>::infinity())
-				res = join(type_to_glsl(type), "(-1.0 / 0.0)");
-			else if (std::isnan(float_value))
-				res = join(type_to_glsl(type), "(0.0 / 0.0)");
-			else
-				SPIRV_CROSS_THROW("Cannot represent non-finite floating point constant.");
-		}
+		if (float_value == numeric_limits<float>::infinity())
+			res = join(type_to_glsl(type), "(1.0 / 0.0)");
+		else if (float_value == -numeric_limits<float>::infinity())
+			res = join(type_to_glsl(type), "(-1.0 / 0.0)");
+		else if (std::isnan(float_value))
+			res = join(type_to_glsl(type), "(0.0 / 0.0)");
+		else
+			SPIRV_CROSS_THROW("Cannot represent non-finite floating point constant.");
 	}
 	else
 	{
-		if (backend.half_literal_suffix)
-			res = convert_to_string(float_value) + backend.half_literal_suffix;
-		else
-		{
-			// In HLSL (FXC), it's important to cast the literals to half precision right away.
-			// There is no literal for it.
-			SPIRType type;
-			type.basetype = SPIRType::Half;
-			type.vecsize = 1;
-			type.columns = 1;
-			res = join(type_to_glsl(type), "(", convert_to_string(float_value), ")");
-		}
+		SPIRType type;
+		type.basetype = SPIRType::Half;
+		type.vecsize = 1;
+		type.columns = 1;
+		res = join(type_to_glsl(type), "(", convert_to_string(float_value), ")");
 	}
 
 	return res;
@@ -4150,6 +4130,29 @@ void CompilerGLSL::emit_sampled_image_op(uint32_t result_type, uint32_t result_i
 	}
 }
 
+static inline bool image_opcode_is_sample_no_dref(Op op)
+{
+	switch (op)
+	{
+	case OpImageSampleExplicitLod:
+	case OpImageSampleImplicitLod:
+	case OpImageSampleProjExplicitLod:
+	case OpImageSampleProjImplicitLod:
+	case OpImageFetch:
+	case OpImageRead:
+	case OpImageSparseSampleExplicitLod:
+	case OpImageSparseSampleImplicitLod:
+	case OpImageSparseSampleProjExplicitLod:
+	case OpImageSparseSampleProjImplicitLod:
+	case OpImageSparseFetch:
+	case OpImageSparseRead:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 void CompilerGLSL::emit_texture_op(const Instruction &i)
 {
 	auto *ops = stream(i);
@@ -4303,6 +4306,20 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 	// texture(samplerXShadow) returns float. shadowX() returns vec4. Swizzle here.
 	if (is_legacy() && image_is_comparison(imgtype, img))
 		expr += ".r";
+
+	// Sampling from a texture which was deduced to be a depth image, might actually return 1 component here.
+	// Remap back to 4 components as sampling opcodes expect.
+	bool image_is_depth;
+	const auto *combined = maybe_get<SPIRCombinedImageSampler>(img);
+	if (combined)
+		image_is_depth = image_is_comparison(imgtype, combined->image);
+	else
+		image_is_depth = image_is_comparison(imgtype, img);
+
+	if (image_is_depth && backend.comparison_image_samples_scalar && image_opcode_is_sample_no_dref(op))
+	{
+		expr = remap_swizzle(get<SPIRType>(result_type), 1, expr);
+	}
 
 	// Deals with reads from MSL. We might need to downconvert to fewer components.
 	if (op == OpImageRead)
@@ -5669,6 +5686,12 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			else
 			{
 				append_index();
+			}
+
+			if (type->basetype == SPIRType::ControlPointArray)
+			{
+				type_id = type->parent_type;
+				type = &get<SPIRType>(type_id);
 			}
 
 			access_chain_is_arrayed = true;
@@ -8934,7 +8957,7 @@ bool CompilerGLSL::is_non_native_row_major_matrix(uint32_t id)
 		return false;
 
 	// Non-matrix or column-major matrix types do not need to be converted.
-	if (!ir.meta[id].decoration.decoration_flags.get(DecorationRowMajor))
+	if (!has_decoration(id, DecorationRowMajor))
 		return false;
 
 	// Only square row-major matrices can be converted at this time.
@@ -8955,7 +8978,7 @@ bool CompilerGLSL::member_is_non_native_row_major_matrix(const SPIRType &type, u
 		return false;
 
 	// Non-matrix or column-major matrix types do not need to be converted.
-	if (!combined_decoration_for_member(type, index).get(DecorationRowMajor))
+	if (!has_member_decoration(type.self, index, DecorationRowMajor))
 		return false;
 
 	// Only square row-major matrices can be converted at this time.

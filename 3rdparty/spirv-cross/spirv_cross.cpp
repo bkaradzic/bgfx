@@ -2017,6 +2017,16 @@ ExecutionModel Compiler::get_execution_model() const
 	return execution.model;
 }
 
+bool Compiler::is_tessellation_shader(ExecutionModel model)
+{
+	return model == ExecutionModelTessellationControl || model == ExecutionModelTessellationEvaluation;
+}
+
+bool Compiler::is_tessellation_shader() const
+{
+	return is_tessellation_shader(get_execution_model());
+}
+
 void Compiler::set_remapped_variable_state(uint32_t id, bool remap_enable)
 {
 	get<SPIRVariable>(id).remapped_variable = remap_enable;
@@ -3043,7 +3053,7 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 	}
 
 	case OpArrayLength:
-		// Uses literals, but cannot be a phi variable, so ignore.
+		// Uses literals, but cannot be a phi variable or temporary, so ignore.
 		break;
 
 		// Atomics shouldn't be able to access function-local variables.
@@ -3060,6 +3070,55 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		// Specialize for opcode which contains literals.
 		for (uint32_t i = 1; i < 3; i++)
 			notify_variable_access(args[i], current_block->self);
+		break;
+
+	case OpImageWrite:
+		for (uint32_t i = 0; i < length; i++)
+		{
+			// Argument 3 is a literal.
+			if (i != 3)
+				notify_variable_access(args[i], current_block->self);
+		}
+		break;
+
+	case OpImageSampleImplicitLod:
+	case OpImageSampleExplicitLod:
+	case OpImageSparseSampleImplicitLod:
+	case OpImageSparseSampleExplicitLod:
+	case OpImageSampleProjImplicitLod:
+	case OpImageSampleProjExplicitLod:
+	case OpImageSparseSampleProjImplicitLod:
+	case OpImageSparseSampleProjExplicitLod:
+	case OpImageFetch:
+	case OpImageSparseFetch:
+	case OpImageRead:
+	case OpImageSparseRead:
+		for (uint32_t i = 1; i < length; i++)
+		{
+			// Argument 4 is a literal.
+			if (i != 4)
+				notify_variable_access(args[i], current_block->self);
+		}
+		break;
+
+	case OpImageSampleDrefImplicitLod:
+	case OpImageSampleDrefExplicitLod:
+	case OpImageSparseSampleDrefImplicitLod:
+	case OpImageSparseSampleDrefExplicitLod:
+	case OpImageSampleProjDrefImplicitLod:
+	case OpImageSampleProjDrefExplicitLod:
+	case OpImageSparseSampleProjDrefImplicitLod:
+	case OpImageSparseSampleProjDrefExplicitLod:
+	case OpImageGather:
+	case OpImageSparseGather:
+	case OpImageDrefGather:
+	case OpImageSparseDrefGather:
+		for (uint32_t i = 1; i < length; i++)
+		{
+			// Argument 5 is a literal.
+			if (i != 5)
+				notify_variable_access(args[i], current_block->self);
+		}
 		break;
 
 	default:
@@ -3299,6 +3358,11 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 			// This should probably be an assert.
 			continue;
 		}
+
+		// There is no point in doing domination analysis for opaque types.
+		auto &type = get<SPIRType>(itr->second);
+		if (type_is_opaque_value(type))
+			continue;
 
 		DominatorBuilder builder(cfg);
 		bool force_temporary = false;
@@ -3986,7 +4050,7 @@ bool Compiler::instruction_to_result_type(uint32_t &result_type, uint32_t &resul
 		return false;
 
 	default:
-		if (length > 1)
+		if (length > 1 && maybe_get<SPIRType>(args[0]) != nullptr)
 		{
 			result_type = args[0];
 			result_id = args[1];
@@ -4054,4 +4118,10 @@ bool Compiler::is_desktop_only_format(spv::ImageFormat format)
 bool Compiler::image_is_comparison(const spirv_cross::SPIRType &type, uint32_t id) const
 {
 	return type.image.depth || (comparison_ids.count(id) != 0);
+}
+
+bool Compiler::type_is_opaque_value(const spirv_cross::SPIRType &type) const
+{
+	return !type.pointer && (type.basetype == SPIRType::SampledImage || type.basetype == SPIRType::Image ||
+	                         type.basetype == SPIRType::Sampler);
 }

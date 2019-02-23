@@ -30,19 +30,19 @@ f16mat3 test_mat3(f16vec3 a, f16vec3 b, f16vec3 c, f16vec3 d, f16vec3 e, f16vec3
 
 void test_constants()
 {
-    float16_t a = 1.0hf;
-    float16_t b = 1.5hf;
-    float16_t c = -1.5hf;
-    float16_t d = (0.0hf / 0.0hf);
-    float16_t e = (1.0hf / 0.0hf);
-    float16_t f = (-1.0hf / 0.0hf);
-    float16_t g = 1014.0hf;
-    float16_t h = 9.5367431640625e-07hf;
+    float16_t a = float16_t(1.0);
+    float16_t b = float16_t(1.5);
+    float16_t c = float16_t(-1.5);
+    float16_t d = float16_t(0.0 / 0.0);
+    float16_t e = float16_t(1.0 / 0.0);
+    float16_t f = float16_t(-1.0 / 0.0);
+    float16_t g = float16_t(1014.0);
+    float16_t h = float16_t(9.5367431640625e-07);
 }
 
 float16_t test_result()
 {
-    return 1.0hf;
+    return float16_t(1.0);
 }
 
 void test_conversions()
@@ -50,7 +50,7 @@ void test_conversions()
     float16_t one = test_result();
     int a = int(one);
     uint b = uint(one);
-    bool c = one != 0.0hf;
+    bool c = one != float16_t(0.0);
     float d = float(one);
     double e = double(one);
     float16_t a2 = float16_t(a);

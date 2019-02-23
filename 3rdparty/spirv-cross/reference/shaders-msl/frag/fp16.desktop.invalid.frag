@@ -52,19 +52,19 @@ half3x3 test_mat3(thread const half3& a, thread const half3& b, thread const hal
 
 void test_constants()
 {
-    half a = 1.0h;
-    half b = 1.5h;
-    half c = -1.5h;
-    half d = (0.0h / 0.0h);
-    half e = (1.0h / 0.0h);
-    half f = (-1.0h / 0.0h);
-    half g = 1014.0h;
-    half h = 9.5367431640625e-07h;
+    half a = half(1.0);
+    half b = half(1.5);
+    half c = half(-1.5);
+    half d = half(0.0 / 0.0);
+    half e = half(1.0 / 0.0);
+    half f = half(-1.0 / 0.0);
+    half g = half(1014.0);
+    half h = half(9.5367431640625e-07);
 }
 
 half test_result()
 {
-    return 1.0h;
+    return half(1.0);
 }
 
 void test_conversions()
@@ -72,7 +72,7 @@ void test_conversions()
     half one = test_result();
     int a = int(one);
     uint b = uint(one);
-    bool c = one != 0.0h;
+    bool c = one != half(0.0);
     float d = float(one);
     half a2 = half(a);
     half b2 = half(b);
