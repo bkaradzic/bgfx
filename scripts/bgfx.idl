@@ -1,4 +1,4 @@
--- bgfx interface 
+-- bgfx interface
 
 typedef "bool"
 typedef "char"
@@ -953,3 +953,233 @@ func.overrideInternal { cname = "override_internal_texture" }
 	.numMips "uint8_t"
 	.format  "TextureFormat::Enum"
 	.flags   "uint32_t"
+
+
+
+-- Legacy API:
+
+func.setMarker
+	"void"
+	.marker "const char *"
+
+func.setState
+	"void"
+	.state "uint64_t"
+	.rgba  "uint32_t"
+
+func.setCondition
+	"void"
+	.handle  "OcclusionQueryHandle"
+	.visible "bool"
+
+func.setStencil
+	"void"
+	.fstencil "uint32_t"
+	.bstencil "uint32_t"
+
+func.setScissor
+	"uint16_t"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+
+func.setScissor { cname = "set_scissor_cached" }
+	"void"
+	.cache "uint16_t"
+
+func.setTransform
+	"uint32_t"
+	.mtx "const void *"
+	.num "uint16_t"
+
+func.setTransform { cname = "set_transform_cached" }
+	"void"
+	.cache "uint32_t"
+	.num   "uint16_t"
+
+func.allocTransform
+	"uint32_t"
+	.transform "Transform *" { out }
+	.num       "uint16_t"
+
+func.setUniform
+	"void"
+	.handle "UniformHandle"
+	.value  "const void *"
+	.num    "uint16_t"
+
+func.setIndexBuffer
+	"void"
+	.handle     "IndexBufferHandle"
+	.firstIndex "uint32_t"
+	.numIndices "uint32_t"
+
+func.setIndexBuffer { cname = "set_dynamic_index_buffer" }
+	"void"
+	.handle     "DynamicIndexBufferHandle"
+	.firstIndex "uint32_t"
+	.numIndices "uint32_t"
+
+func.setIndexBuffer { cname = "set_transient_index_buffer" }
+	"void"
+	.tib        "const TransientIndexBuffer *"
+	.firstIndex "uint32_t"
+	.numIndices "uint32_t"
+
+func.setVertexBuffer
+	"void"
+	.stream      "uint8_t"
+	.handle      "VertexBufferHandle"
+	.startVertex "uint32_t"
+	.numVertices "uint32_t"
+
+func.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
+	"void"
+	.stream      "uint8_t"
+	.handle      "DynamicVertexBufferHandle"
+	.startVertex "uint32_t"
+	.numVertices "uint32_t"
+
+func.setVertexBuffer { cname = "set_transient_vertex_buffer" }
+	"void"
+	.stream      "uint8_t"
+	.tvb         "const TransientVertexBuffer *"
+	.startVertex "uint32_t"
+	.numVertices "uint32_t"
+
+func.setVertexCount
+	"void"
+	.numVertices "uint32_t"
+
+func.setInstanceDataBuffer
+	"void"
+	.idb   "const InstanceDataBuffer *"
+	.start "uint32_t"
+	.num   "uint32_t"
+
+func.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
+	"void"
+	.handle      "VertexBufferHandle"
+	.startVertex "uint32_t"
+	.num         "uint32_t"
+
+func.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
+	"void"
+	.handle      "DynamicVertexBufferHandle"
+	.startVertex "uint32_t"
+	.num         "uint32_t"
+
+func.setInstanceCount
+	"void"
+	.numInstances "uint32_t"
+
+func.setTexture
+	"void"
+	.stage   "uint8_t"
+	.sampler "UniformHandle"
+	.handle  "TextureHandle"
+	.flags   "uint32_t"
+
+func.touch
+	"void"
+	.id "ViewId"
+
+func.submit
+	"void"
+	.id            "ViewId"
+	.program       "ProgramHandle"
+	.depth         "uint32_t"
+	.preserveState "bool"
+
+func.submit { cname = "submit_occlusion_query" }
+	"void"
+	.id             "ViewId"
+	.program        "ProgramHandle"
+	.occlusionQuery "OcclusionQueryHandle"
+	.depth          "uint32_t"
+	.preserveState  "bool"
+
+func.submit { cname = "submit_indirect" }
+	"void"
+	.id             "ViewId"
+	.program        "ProgramHandle"
+	.indirectHandle "IndirectBufferHandle"
+	.start          "uint16_t"
+	.num            "uint16_t"
+	.depth          "uint32_t"
+	.preserveState  "bool"
+
+func.setBuffer { cname = "set_compute_index_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "IndexBufferHandle"
+	.access "Access::Enum"
+
+func.setBuffer { cname = "set_compute_vertex_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "VertexBufferHandle"
+	.access "Access::Enum"
+
+func.setBuffer { cname = "set_compute_dynamic_index_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "DynamicIndexBufferHandle"
+	.access "Access::Enum"
+
+func.setBuffer { cname = "set_compute_dynamic_vertex_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "DynamicVertexBufferHandle"
+	.access "Access::Enum"
+
+func.setBuffer { cname = "set_compute_indirect_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "IndirectBufferHandle"
+	.access "Access::Enum"
+
+func.setImage
+	"void"
+	.stage  "uint8_t"
+	.handle "TextureHandle"
+	.mip    "uint8_t"
+	.access "Access::Enum"
+	.format "TextureFormat::Enum"
+
+func.dispatch
+	"void"
+	.id      "ViewId"
+	.program "ProgramHandle"
+	.numX    "uint32_t"
+	.numY    "uint32_t"
+	.numZ    "uint32_t"
+
+func.dispatch { cname = "dispatch_indirect" }
+	"void"
+	.id             "ViewId"
+	.program        "ProgramHandle"
+	.indirectHandle "IndirectBufferHandle"
+	.start          "uint16_t"
+	.num            "uint16_t"
+
+func.discard
+	"void"
+
+func.blit
+	"void"
+	.id     "ViewId"
+	.dst    "TextureHandle"
+	.dstMip "uint8_t"
+	.dstX   "uint16_t"
+	.dstY   "uint16_t"
+	.dstZ   "uint16_t"
+	.src    "TextureHandle"
+	.srcMip "uint8_t"
+	.srcX   "uint16_t"
+	.srcY   "uint16_t"
+	.srcZ   "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+	.depth  "uint16_t"

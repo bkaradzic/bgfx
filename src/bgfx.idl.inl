@@ -916,6 +916,212 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handl
 	return bgfx::overrideInternal(handle.cpp, _width, _height, _numMips, (bgfx::TextureFormat::Enum)_format, _flags);
 }
 
+BGFX_C_API void bgfx_set_marker(const char * _marker)
+{
+	bgfx::setMarker(_marker);
+}
+
+BGFX_C_API void bgfx_set_state(uint64_t _state, uint32_t _rgba)
+{
+	bgfx::setState(_state, _rgba);
+}
+
+BGFX_C_API void bgfx_set_condition(bgfx_occlusion_query_handle_t _handle, bool _visible)
+{
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } handle = { _handle };
+	bgfx::setCondition(handle.cpp, _visible);
+}
+
+BGFX_C_API void bgfx_set_stencil(uint32_t _fstencil, uint32_t _bstencil)
+{
+	bgfx::setStencil(_fstencil, _bstencil);
+}
+
+BGFX_C_API uint16_t bgfx_set_scissor(uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
+{
+	return bgfx::setScissor(_x, _y, _width, _height);
+}
+
+BGFX_C_API void bgfx_set_scissor_cached(uint16_t _cache)
+{
+	bgfx::setScissor(_cache);
+}
+
+BGFX_C_API uint32_t bgfx_set_transform(const void * _mtx, uint16_t _num)
+{
+	return bgfx::setTransform(_mtx, _num);
+}
+
+BGFX_C_API void bgfx_set_transform_cached(uint32_t _cache, uint16_t _num)
+{
+	bgfx::setTransform(_cache, _num);
+}
+
+BGFX_C_API uint32_t bgfx_alloc_transform(bgfx_transform_t * _transform, uint16_t _num)
+{
+	return bgfx::allocTransform((bgfx::Transform *)_transform, _num);
+}
+
+BGFX_C_API void bgfx_set_uniform(bgfx_uniform_handle_t _handle, const void * _value, uint16_t _num)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } handle = { _handle };
+	bgfx::setUniform(handle.cpp, _value, _num);
+}
+
+BGFX_C_API void bgfx_set_index_buffer(bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices)
+{
+	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
+	bgfx::setIndexBuffer(handle.cpp, _firstIndex, _numIndices);
+}
+
+BGFX_C_API void bgfx_set_dynamic_index_buffer(bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices)
+{
+	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
+	bgfx::setIndexBuffer(handle.cpp, _firstIndex, _numIndices);
+}
+
+BGFX_C_API void bgfx_set_transient_index_buffer(const bgfx_transient_index_buffer_t * _tib, uint32_t _firstIndex, uint32_t _numIndices)
+{
+	bgfx::setIndexBuffer((const bgfx::TransientIndexBuffer *)_tib, _firstIndex, _numIndices);
+}
+
+BGFX_C_API void bgfx_set_vertex_buffer(uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices)
+{
+	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setVertexBuffer(_stream, handle.cpp, _startVertex, _numVertices);
+}
+
+BGFX_C_API void bgfx_set_dynamic_vertex_buffer(uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setVertexBuffer(_stream, handle.cpp, _startVertex, _numVertices);
+}
+
+BGFX_C_API void bgfx_set_transient_vertex_buffer(uint8_t _stream, const bgfx_transient_vertex_buffer_t * _tvb, uint32_t _startVertex, uint32_t _numVertices)
+{
+	bgfx::setVertexBuffer(_stream, (const bgfx::TransientVertexBuffer *)_tvb, _startVertex, _numVertices);
+}
+
+BGFX_C_API void bgfx_set_vertex_count(uint32_t _numVertices)
+{
+	bgfx::setVertexCount(_numVertices);
+}
+
+BGFX_C_API void bgfx_set_instance_data_buffer(const bgfx_instance_data_buffer_t * _idb, uint32_t _start, uint32_t _num)
+{
+	bgfx::setInstanceDataBuffer((const bgfx::InstanceDataBuffer *)_idb, _start, _num);
+}
+
+BGFX_C_API void bgfx_set_instance_data_from_vertex_buffer(bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num)
+{
+	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setInstanceDataBuffer(handle.cpp, _startVertex, _num);
+}
+
+BGFX_C_API void bgfx_set_instance_data_from_dynamic_vertex_buffer(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setInstanceDataBuffer(handle.cpp, _startVertex, _num);
+}
+
+BGFX_C_API void bgfx_set_instance_count(uint32_t _numInstances)
+{
+	bgfx::setInstanceCount(_numInstances);
+}
+
+BGFX_C_API void bgfx_set_texture(uint8_t _stage, bgfx_uniform_handle_t _sampler, bgfx_texture_handle_t _handle, uint32_t _flags)
+{
+	union { bgfx_uniform_handle_t c; bgfx::UniformHandle cpp; } sampler = { _sampler };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	bgfx::setTexture(_stage, sampler.cpp, handle.cpp, _flags);
+}
+
+BGFX_C_API void bgfx_touch(bgfx_view_id_t _id)
+{
+	bgfx::touch((bgfx::ViewId)_id);
+}
+
+BGFX_C_API void bgfx_submit(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _depth, bool _preserveState)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, _depth, _preserveState);
+}
+
+BGFX_C_API void bgfx_submit_occlusion_query(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_occlusion_query_handle_t _occlusionQuery, uint32_t _depth, bool _preserveState)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_occlusion_query_handle_t c; bgfx::OcclusionQueryHandle cpp; } occlusionQuery = { _occlusionQuery };
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, occlusionQuery.cpp, _depth, _preserveState);
+}
+
+BGFX_C_API void bgfx_submit_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num, uint32_t _depth, bool _preserveState)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
+	bgfx::submit((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num, _depth, _preserveState);
+}
+
+BGFX_C_API void bgfx_set_compute_index_buffer(uint8_t _stage, bgfx_index_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_index_buffer_handle_t c; bgfx::IndexBufferHandle cpp; } handle = { _handle };
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+}
+
+BGFX_C_API void bgfx_set_compute_vertex_buffer(uint8_t _stage, bgfx_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_vertex_buffer_handle_t c; bgfx::VertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+}
+
+BGFX_C_API void bgfx_set_compute_dynamic_index_buffer(uint8_t _stage, bgfx_dynamic_index_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_dynamic_index_buffer_handle_t c; bgfx::DynamicIndexBufferHandle cpp; } handle = { _handle };
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+}
+
+BGFX_C_API void bgfx_set_compute_dynamic_vertex_buffer(uint8_t _stage, bgfx_dynamic_vertex_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_dynamic_vertex_buffer_handle_t c; bgfx::DynamicVertexBufferHandle cpp; } handle = { _handle };
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+}
+
+BGFX_C_API void bgfx_set_compute_indirect_buffer(uint8_t _stage, bgfx_indirect_buffer_handle_t _handle, bgfx_access_t _access)
+{
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } handle = { _handle };
+	bgfx::setBuffer(_stage, handle.cpp, (bgfx::Access::Enum)_access);
+}
+
+BGFX_C_API void bgfx_set_image(uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
+	bgfx::setImage(_stage, handle.cpp, _mip, (bgfx::Access::Enum)_access, (bgfx::TextureFormat::Enum)_format);
+}
+
+BGFX_C_API void bgfx_dispatch(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	bgfx::dispatch((bgfx::ViewId)_id, program.cpp, _numX, _numY, _numZ);
+}
+
+BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num)
+{
+	union { bgfx_program_handle_t c; bgfx::ProgramHandle cpp; } program = { _program };
+	union { bgfx_indirect_buffer_handle_t c; bgfx::IndirectBufferHandle cpp; } indirectHandle = { _indirectHandle };
+	bgfx::dispatch((bgfx::ViewId)_id, program.cpp, indirectHandle.cpp, _start, _num);
+}
+
+BGFX_C_API void bgfx_discard()
+{
+	bgfx::discard();
+}
+
+BGFX_C_API void bgfx_blit(bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth)
+{
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } dst = { _dst };
+	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } src = { _src };
+	bgfx::blit((bgfx::ViewId)_id, dst.cpp, _dstMip, _dstX, _dstY, _dstZ, src.cpp, _srcMip, _srcX, _srcY, _srcZ, _width, _height, _depth);
+}
+
 /**/
 BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 {
@@ -1066,7 +1272,43 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 			bgfx_set_platform_data,
 			bgfx_get_internal_data,
 			bgfx_override_internal_texture_ptr,
-			bgfx_override_internal_texture
+			bgfx_override_internal_texture,
+			bgfx_set_marker,
+			bgfx_set_state,
+			bgfx_set_condition,
+			bgfx_set_stencil,
+			bgfx_set_scissor,
+			bgfx_set_scissor_cached,
+			bgfx_set_transform,
+			bgfx_set_transform_cached,
+			bgfx_alloc_transform,
+			bgfx_set_uniform,
+			bgfx_set_index_buffer,
+			bgfx_set_dynamic_index_buffer,
+			bgfx_set_transient_index_buffer,
+			bgfx_set_vertex_buffer,
+			bgfx_set_dynamic_vertex_buffer,
+			bgfx_set_transient_vertex_buffer,
+			bgfx_set_vertex_count,
+			bgfx_set_instance_data_buffer,
+			bgfx_set_instance_data_from_vertex_buffer,
+			bgfx_set_instance_data_from_dynamic_vertex_buffer,
+			bgfx_set_instance_count,
+			bgfx_set_texture,
+			bgfx_touch,
+			bgfx_submit,
+			bgfx_submit_occlusion_query,
+			bgfx_submit_indirect,
+			bgfx_set_compute_index_buffer,
+			bgfx_set_compute_vertex_buffer,
+			bgfx_set_compute_dynamic_index_buffer,
+			bgfx_set_compute_dynamic_vertex_buffer,
+			bgfx_set_compute_indirect_buffer,
+			bgfx_set_image,
+			bgfx_dispatch,
+			bgfx_dispatch_indirect,
+			bgfx_discard,
+			bgfx_blit
 		};
 
 		return &s_bgfx_interface;
