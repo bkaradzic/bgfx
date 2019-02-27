@@ -1,14 +1,16 @@
 -- Copyright 2019 云风 https://github.com/cloudwu . All rights reserved.
 -- License (the same with bgfx) : https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 
-local idl     = require "idl"
-local codegen = require "codegen"
+function doIdl()
 
-assert(loadfile("bgfx.idl" , "t", idl))()
+	local idl     = require "idl"
+	local codegen = require "codegen"
 
-codegen.nameconversion(idl.types, idl.funcs)
+	assert(loadfile("bgfx.idl" , "t", idl))()
 
-local code_temp_include = [[
+	codegen.nameconversion(idl.types, idl.funcs)
+
+	local code_temp_include = [[
 /*
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
@@ -27,7 +29,7 @@ typedef struct bgfx_interface_vtbl
 } bgfx_interface_vtbl_t;
 ]]
 
-local code_temp_impl = [[
+	local code_temp_impl = [[
 /*
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
@@ -56,38 +58,40 @@ BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version)
 }
 ]]
 
-local function codes()
-	local temp = {}
-	local action = {
-		c99 = "\n",
-		c99decl = "\n",
-		interface_struct = "\n\t",
-		interface_import = ",\n\t\t\t",
-	}
-	for k in pairs(action) do
-		temp[k] = {}
-	end
-	for _, f in ipairs(idl.funcs) do
+	local function codes()
+		local temp = {}
+		local action = {
+			c99 = "\n",
+			c99decl = "\n",
+			interface_struct = "\n\t",
+			interface_import = ",\n\t\t\t",
+		}
 		for k in pairs(action) do
-			table.insert(temp[k], (codegen["gen_"..k](f)))
+			temp[k] = {}
 		end
+		for _, f in ipairs(idl.funcs) do
+			for k in pairs(action) do
+				table.insert(temp[k], (codegen["gen_"..k](f)))
+			end
+		end
+
+		for k, ident in pairs(action) do
+			temp[k] = table.concat(temp[k], ident)
+		end
+
+		return temp
 	end
 
-	for k, ident in pairs(action) do
-		temp[k] = table.concat(temp[k], ident)
+	local codes_tbl = codes()
+
+	for filename, temp in pairs {
+		["../include/bgfx/c99/bgfx.idl.h"] = code_temp_include ,
+		["../src/bgfx.idl.inl"] = code_temp_impl } do
+
+		print ("Generate " .. filename)
+		local out = io.open(filename, "wb")
+		out:write((temp:gsub("$([%l%d_]+)", codes_tbl)))
+		out:close()
 	end
 
-	return temp
-end
-
-local codes_tbl = codes()
-
-for filename, temp in pairs {
-	["../include/bgfx/c99/bgfx.idl.h"] = code_temp_include ,
-	["../src/bgfx.idl.inl"] = code_temp_impl } do
-
-	print ("Generate " .. filename)
-	local out = io.open(filename, "wb")
-	out:write((temp:gsub("$([%l%d_]+)", codes_tbl)))
-	out:close()
 end

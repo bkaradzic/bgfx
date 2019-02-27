@@ -53,7 +53,7 @@ dofile "bgfx-idl.lua"
 newaction {
 	trigger = "idl",
 	description = "Generate bgfx interface source code",
-	execute = doidl
+	execute = doIdl
 }
 
 solution "bgfx"
