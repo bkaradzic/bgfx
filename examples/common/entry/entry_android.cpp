@@ -116,7 +116,7 @@ namespace entry
 				return false;
 			}
 
-			m_file = AAssetManager_open(m_assetManager, _filePath.get(), AASSET_MODE_RANDOM);
+			m_file = AAssetManager_open(m_assetManager, _filePath.getCPtr(), AASSET_MODE_RANDOM);
 			if (NULL == m_file)
 			{
 				BX_ERROR_SET(_err, BX_ERROR_READERWRITER_OPEN, "FileReader: Failed to open file.");
