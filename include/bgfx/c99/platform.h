@@ -36,7 +36,7 @@ BGFX_C_API bgfx_render_frame_t bgfx_render_frame(int32_t _msecs);
 /**/
 BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t* _data);
 
-typedef struct bgfx_internal_datauint8_t
+typedef struct bgfx_internal_data
 {
     const struct bgfx_caps* caps;
     void* context;
