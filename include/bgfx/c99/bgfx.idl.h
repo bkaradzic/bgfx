@@ -1,5 +1,4 @@
 /*
- * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -441,6 +440,7 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _h
 /**/
 BGFX_C_API uintptr_t bgfx_override_internal_texture(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint32_t _flags);
 
+/**/
 typedef struct bgfx_interface_vtbl
 {
 	void (*vertex_decl_begin)(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _renderer);

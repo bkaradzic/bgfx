@@ -674,4 +674,7 @@ typedef struct bgfx_encoder_s bgfx_encoder_t;
 
 #include "bgfx.idl.h"
 
+/**/
+BGFX_C_API bgfx_interface_vtbl_t* bgfx_get_interface(uint32_t _version);
+
 #endif // BGFX_C99_H_HEADER_GUARD
