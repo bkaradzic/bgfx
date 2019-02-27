@@ -48,6 +48,14 @@ newoption {
 	description = "Enable building examples.",
 }
 
+dofile "bgfx-idl.lua"
+
+newaction {
+	trigger = "idl",
+	description = "Generate bgfx interface source code",
+	execute = doidl
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",

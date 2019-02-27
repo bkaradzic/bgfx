@@ -1,0 +1,955 @@
+-- bgfx interface 
+
+typedef "bool"
+typedef "char"
+typedef "float"
+typedef "int32_t"
+typedef "uint8_t"
+typedef "uint16_t"
+typedef "uint32_t"
+typedef "uint64_t"
+typedef "uintptr_t"
+typedef "va_list"
+typedef "void"
+
+typedef "Attachment"
+typedef "Caps"
+typedef "Encoder"
+typedef "Init"
+typedef "InstanceDataBuffer"
+typedef "InternalData"
+typedef "Memory"
+typedef "PlatformData"
+typedef "ReleaseFn"
+typedef "Stats"
+typedef "TextureInfo"
+typedef "Transform"
+typedef "TransientIndexBuffer"
+typedef "TransientVertexBuffer"
+typedef "UniformInfo"
+typedef "VertexDecl"
+typedef "ViewId"
+
+typedef.Access               { enum }
+typedef.Attrib               { enum }
+typedef.AttribType           { enum }
+typedef.BackbufferRatio      { enum }
+typedef.OcclusionQueryResult { enum }
+typedef.RenderFrame          { enum }
+typedef.RendererType         { enum }
+typedef.TextureFormat        { enum }
+typedef.TopologyConvert      { enum }
+typedef.TopologySort         { enum }
+typedef.UniformType          { enum }
+typedef.ViewMode             { enum }
+
+typedef.DynamicIndexBufferHandle  { handle }
+typedef.DynamicVertexBufferHandle { handle }
+typedef.FrameBufferHandle         { handle }
+typedef.IndexBufferHandle         { handle }
+typedef.IndirectBufferHandle      { handle }
+typedef.OcclusionQueryHandle      { handle }
+typedef.ProgramHandle             { handle }
+typedef.ShaderHandle              { handle }
+typedef.TextureHandle             { handle }
+typedef.UniformHandle             { handle }
+typedef.VertexBufferHandle        { handle }
+typedef.VertexDeclHandle          { handle }
+
+func.VertexDecl.begin
+	"void"
+	.renderer        "RendererType::Enum"
+
+func.VertexDecl.add
+	"void"
+	.attrib          "Attrib::Enum"
+	.num             "uint8_t"
+	.type            "AttribType::Enum"
+	.normalized      "bool"
+	.asInt           "bool"
+
+func.VertexDecl.decode { const }
+	"void"
+	.attrib          "Attrib::Enum"
+	.num             "uint8_t &"          { out }
+	.type            "AttribType::Enum &" { out }
+	.normalized      "bool &"             { out }
+	.asInt           "bool &"             { out }
+
+func.VertexDecl.has { const }
+	"bool"
+	.attrib          "Attrib::Enum"
+
+func.VertexDecl.skip
+	"void"
+	.num             "uint8_t"
+
+-- Notice: `end` is a keyword in lua
+func.VertexDecl["end"]
+	"void"
+
+func.vertexPack
+	"void"
+	.input           "const float *"
+	.inputNormalized "bool"
+	.attr            "Attrib::Enum"
+	.decl            "const VertexDecl &"
+	.data            "void *"
+	.index           "uint32_t"
+
+func.vertexUnpack
+	"void"
+	.output          "float *" { out }
+	.attr            "Attrib::Enum"
+	.decl            "const VertexDecl &"
+	.data            "const void *"
+	.index           "uint32_t"
+
+func.vertexConvert
+	"void"
+	.dstDecl "const VertexDecl &"
+	.dstData "void *"
+	.srcDecl "const VertexDecl &"
+	.srcData "const void *"
+	.num     "uint32_t"
+
+func.weldVertices
+	"uint16_t"
+	.output  "uint16_t *"
+	.decl    "const VertexDecl &"
+	.data    "const void *"
+	.num     "uint16_t"
+	.epsilon "float"
+
+func.topologyConvert
+	"uint32_t"
+	.conversion "TopologyConvert::Enum"
+	.dst        "void *" { out }
+	.dstSize    "uint32_t"
+	.indices    "const void *"
+	.numIndices "uint32_t"
+	.index32    "bool"
+
+func.topologySortTriList
+	"void"
+	.sort       "TopologySort::Enum"
+	.dst        "void *" { out }
+	.dstSize    "uint32_t"
+	.dir        "const float *"
+	.pos        "const float *"
+	.vertices   "const void *"
+	.stride     "uint32_t"
+	.indices    "const void *"
+	.numIndices "uint32_t"
+	.index32    "bool"
+
+func.getSupportedRenderers
+	"uint8_t"
+	.max  "uint8_t"
+	.enum "RendererType::Enum *" { out }
+
+func.getRendererName
+	"const char *"
+	.type "RendererType::Enum"
+
+local init_ctor = [[
+	BX_PLACEMENT_NEW(_init, bgfx::Init);
+]]
+func.initCtor { cfunc = init_ctor }
+	"void"
+	.init "Init *"
+
+local init = [[
+	bgfx_init_t init = *_init;
+
+	if (init.callback != NULL)
+	{
+		static bgfx::CallbackC99 s_callback;
+		s_callback.m_interface = init.callback;
+		init.callback = reinterpret_cast<bgfx_callback_interface_t *>(&s_callback);
+	}
+
+	if (init.allocator != NULL)
+	{
+		static bgfx::AllocatorC99 s_allocator;
+		s_allocator.m_interface = init.allocator;
+		init.allocator = reinterpret_cast<bgfx_allocator_interface_t *>(&s_allocator);
+	}
+
+	union { const bgfx_init_t* c; const bgfx::Init* cpp; } in;
+	in.c = &init;
+
+	return bgfx::init(*in.cpp);
+]]
+func.init { cfunc = init }
+	"bool"
+	.init "const Init &"
+
+func.shutdown
+	"void"
+
+func.reset
+	"void"
+	.width  "uint32_t"
+	.height "uint32_t"
+	.flags  "uint32_t"
+	.format "TextureFormat::Enum"
+
+func.frame
+	"uint32_t"
+	.capture "bool"
+
+func.getRendererType
+	"RendererType::Enum"
+
+func.getCaps
+	"const Caps *"
+
+func.getStats
+	"const Stats *"
+
+func.alloc
+	"const Memory *"
+	.size "uint32_t"
+
+func.copy
+	"const Memory *"
+	.data "const void *"
+	.size "uint32_t"
+
+func.makeRef
+	"const Memory *"
+	.data "const void *"
+	.size "uint32_t"
+
+func.makeRef { cname = "make_ref_release" }
+	"const Memory *"
+	.data      "const void *"
+	.size      "uint32_t"
+	.releaseFn "ReleaseFn"
+	.userData  "void *"
+
+func.setDebug
+	"void"
+	.debug "uint32_t"
+
+func.dbgTextClear
+	"void"
+	.attr  "uint8_t"
+	.small "bool"
+
+func.dbgTextPrintf { vararg = "dbgTextPrintfVargs" }
+	"void"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.attr   "uint8_t"
+	.format "const char *"
+
+func.dbgTextPrintfVargs { cname = "dbg_text_vprintf" }
+	"void"
+	.x       "uint16_t"
+	.y       "uint16_t"
+	.attr    "uint8_t"
+	.format  "const char *"
+	.argList "va_list"
+
+func.dbgTextImage
+	"void"
+	.x       "uint16_t"
+	.y       "uint16_t"
+	.width   "uint16_t"
+	.height  "uint16_t"
+	.data    "const void *"
+	.pitch   "uint16_t"
+
+func.createIndexBuffer
+	"IndexBufferHandle"
+	.mem   "const Memory *"
+	.flags "uint16_t"
+
+func.setName { cname = "set_index_buffer_name" }
+	"void"
+	.handle "IndexBufferHandle"
+	.name   "const char *"
+	.len    "int32_t"
+
+func.destroy { cname = "destroy_index_buffer" }
+	"void"
+	.handle "IndexBufferHandle"
+
+func.createVertexBuffer
+	"VertexBufferHandle"
+	.mem   "const Memory *"
+	.decl  "const VertexDecl &"
+	.flags "uint16_t"
+
+func.setName { cname = "set_vertex_buffer_name" }
+	"void"
+	.handle "VertexBufferHandle"
+	.name   "const char *"
+	.len    "int32_t"
+
+func.destroy { cname = "destroy_vertex_buffer" }
+	"void"
+	.handle "VertexBufferHandle"
+
+func.createDynamicIndexBuffer
+	"DynamicIndexBufferHandle"
+	.num   "uint32_t"
+	.flags "uint16_t"
+
+func.createDynamicIndexBuffer { cname = "create_dynamic_index_buffer_mem" }
+	"DynamicIndexBufferHandle"
+	.mem   "const Memory *"
+	.flags "uint16_t"
+
+func.update { cname = "update_dynamic_index_buffer" }
+	"void"
+	.handle     "DynamicIndexBufferHandle"
+	.startIndex "uint32_t"
+	.mem        "const Memory *"
+
+func.destroy { cname = "destroy_dynamic_index_buffer" }
+	"void"
+	.handle "DynamicIndexBufferHandle"
+
+func.createDynamicVertexBuffer
+	"DynamicVertexBufferHandle"
+	.num   "uint32_t"
+	.decl  "const VertexDecl &"
+	.flags "uint16_t"
+
+func.createDynamicVertexBuffer { cname = "create_dynamic_vertex_buffer_mem" }
+	"DynamicVertexBufferHandle"
+	.mem   "const Memory *"
+	.decl  "const VertexDecl &"
+	.flags "uint16_t"
+
+func.update { cname = "update_dynamic_vertex_buffer" }
+	"void"
+	.handle      "DynamicVertexBufferHandle"
+	.startVertex "uint32_t"
+	.mem         "const Memory *"
+
+func.destroy { cname = "destroy_dynamic_vertex_buffer" }
+	"void"
+	.handle "DynamicVertexBufferHandle"
+
+func.getAvailTransientIndexBuffer
+	"uint32_t"
+	.num "uint32_t"
+
+func.getAvailTransientVertexBuffer
+	"uint32_t"
+	.num "uint32_t"
+	.decl  "const VertexDecl &"
+
+func.getAvailInstanceDataBuffer
+	"uint32_t"
+	.num    "uint32_t"
+	.stride "uint16_t"
+
+func.allocTransientIndexBuffer
+	"void"
+	.tib "TransientIndexBuffer *" { out }
+	.num "uint32_t"
+
+func.allocTransientVertexBuffer
+	"void"
+	.tvb  "TransientVertexBuffer *" { out }
+	.num  "uint32_t"
+	.decl "const VertexDecl &"
+
+func.allocTransientBuffers
+	"bool"
+	.tvb         "TransientVertexBuffer *" { out }
+	.decl        "const VertexDecl &"
+	.numVertices "uint32_t"
+	.tib         "TransientIndexBuffer *" { out }
+	.numIndices  "uint32_t"
+
+func.allocInstanceDataBuffer
+	"void"
+	.idb    "InstanceDataBuffer *" { out }
+	.num    "uint32_t"
+	.stride "uint16_t"
+
+func.createIndirectBuffer
+	"IndirectBufferHandle"
+	.num "uint32_t"
+
+func.destroy { cname = "destroy_indirect_buffer" }
+	"void"
+	.handle "IndirectBufferHandle"
+
+func.createShader
+	"ShaderHandle"
+	.mem "const Memory *"
+
+func.getShaderUniforms
+	"uint16_t"
+	.handle   "ShaderHandle"
+	.uniforms "UniformHandle *" { out }
+	.max      "uint16_t"
+
+func.setName { cname = "set_shader_name" }
+	"void"
+	.handle "ShaderHandle"
+	.name   "const char *"
+	.len    "int32_t"
+
+func.destroy { cname = "destroy_shader" }
+	"void"
+	.handle "ShaderHandle"
+
+func.createProgram
+	"ProgramHandle"
+	.vsh "ShaderHandle"
+	.fsh "ShaderHandle"
+	.destroyShaders "bool"
+
+func.createProgram { cname = "create_compute_program" }
+	"ProgramHandle"
+	.csh "ShaderHandle"
+	.destroyShaders "bool"
+
+func.destroy { cname = "destroy_program" }
+	"void"
+	.handle "ProgramHandle"
+
+func.isTextureValid
+	"bool"
+	.depth     "uint16_t"
+	.cubeMap   "bool"
+	.numLayers "uint16_t"
+	.format    "TextureFormat::Enum"
+	.flags     "uint64_t"
+
+func.calcTextureSize
+	"void"
+	.info      "TextureInfo &" { out }
+	.width     "uint16_t"
+	.height    "uint16_t"
+	.depth     "uint16_t"
+	.cubeMap   "bool"
+	.hasMips   "bool"
+	.numLayers "uint16_t"
+	.format    "TextureFormat::Enum"
+
+func.createTexture
+	"TextureHandle"
+	.mem   "const Memory *"
+	.flags "uint64_t"
+	.skip  "uint8_t"
+	.info  "TextureInfo *" { out }
+
+func.createTexture2D
+	"TextureHandle"
+	.width     "uint16_t"
+	.height    "uint16_t"
+	.hasMips   "bool"
+	.numLayers "uint16_t"
+	.format    "TextureFormat::Enum"
+	.flags     "uint64_t"
+	.mem       "const Memory *"
+
+func.createTexture2D { cname = "create_texture_2d_scaled" }
+	"TextureHandle"
+	.ratio     "BackbufferRatio::Enum"
+	.hasMips   "bool"
+	.numLayers "uint16_t"
+	.format    "TextureFormat::Enum"
+	.flags     "uint64_t"
+
+func.createTexture3D
+	"TextureHandle"
+	.width     "uint16_t"
+	.height    "uint16_t"
+	.depth     "uint16_t"
+	.hasMips   "bool"
+	.format    "TextureFormat::Enum"
+	.flags     "uint64_t"
+	.mem       "const Memory *"
+
+func.createTextureCube
+	"TextureHandle"
+	.size      "uint16_t"
+	.hasMips   "bool"
+	.numLayers "uint16_t"
+	.format    "TextureFormat::Enum"
+	.flags     "uint64_t"
+	.mem       "const Memory *"
+
+func.updateTexture2D
+	"void"
+	.handle "TextureHandle"
+	.layer  "uint16_t"
+	.mip    "uint16_t"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+	.mem    "const Memory *"
+	.pitch  "uint16_t"
+
+func.updateTexture3D
+	"void"
+	.handle "TextureHandle"
+	.mip    "uint16_t"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.z      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+	.depth  "uint16_t"
+	.mem    "const Memory *"
+
+func.updateTextureCube
+	"void"
+	.handle "TextureHandle"
+	.layer  "uint16_t"
+	.side   "uint8_t"
+	.mip    "uint8_t"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+	.mem    "const Memory *"
+	.pitch  "uint16_t"
+
+func.readTexture
+	"uint32_t"
+	.handle "TextureHandle"
+	.data   "void *"
+	.mip    "uint8_t"
+
+func.setName { cname = "set_texture_name" }
+	"void"
+	.handle "TextureHandle"
+	.name   "const char *"
+	.len    "int32_t"
+
+func.getDirectAccessPtr
+	"void *"
+	.handle "TextureHandle"
+
+func.destroy { cname = "destroy_texture" }
+	"void"
+	.handle "TextureHandle"
+
+func.createFrameBuffer
+	"FrameBufferHandle"
+	.width        "uint16_t"
+	.height       "uint16_t"
+	.format       "TextureFormat::Enum"
+	.textureFlags "uint64_t"
+
+func.createFrameBuffer { cname = "create_frame_buffer_scaled" }
+	"FrameBufferHandle"
+	.ratio        "BackbufferRatio::Enum"
+	.format       "TextureFormat::Enum"
+	.textureFlags "uint64_t"
+
+func.createFrameBuffer { cname = "create_frame_buffer_from_handles" }
+	"FrameBufferHandle"
+	.num            "uint8_t"
+	.handles        "const TextureHandle *"
+	.destroyTexture "bool"
+
+func.createFrameBuffer { cname = "create_frame_buffer_from_attachment" }
+	"FrameBufferHandle"
+	.num            "uint8_t"
+	.handles        "const Attachment *"
+	.destroyTexture "bool"
+
+func.createFrameBuffer { cname = "create_frame_buffer_from_nwh" }
+	"FrameBufferHandle"
+	.nwh         "void *"
+	.width       "uint16_t"
+	.height      "uint16_t"
+	.format      "TextureFormat::Enum"
+	.depthFormat "TextureFormat::Enum"
+
+func.setName { cname = "set_frame_buffer_name" }
+	"void"
+	.handle "FrameBufferHandle"
+	.name   "const char *"
+	.len    "int32_t"
+
+func.getTexture
+	"TextureHandle"
+	.handle     "FrameBufferHandle"
+	.attachment "uint8_t"
+
+func.destroy { cname = "destroy_frame_buffer" }
+	"void"
+	.handle "FrameBufferHandle"
+
+func.createUniform
+	"UniformHandle"
+	.name "const char *"
+	.type "UniformType::Enum"
+	.num  "uint16_t"
+
+func.getUniformInfo
+	"void"
+	.handle "UniformHandle"
+	.info   "UniformInfo &" { out }
+
+func.destroy { cname = "destroy_uniform" }
+	"void"
+	.handle "UniformHandle"
+
+func.createOcclusionQuery
+	"OcclusionQueryHandle"
+
+func.getResult
+	"OcclusionQueryResult::Enum"
+	.handle "OcclusionQueryHandle"
+	.result "int32_t *" { out }
+
+func.destroy { cname = "destroy_occlusion_query" }
+	"void"
+	.handle "OcclusionQueryHandle"
+
+func.setPaletteColor
+	"void"
+	.index "uint8_t"
+	.rgba  "const float *"
+
+func.setViewName
+	"void"
+	.id   "ViewId"
+	.name "const char *"
+
+func.setViewRect
+	"void"
+	.id     "ViewId"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+
+func.setViewRect { cname = "set_view_rect_ratio" }
+	"void"
+	.id    "ViewId"
+	.x     "uint16_t"
+	.y     "uint16_t"
+	.ratio "BackbufferRatio::Enum"
+
+func.setViewScissor
+	"void"
+	.id     "ViewId"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+
+func.setViewClear
+	"void"
+	.id      "ViewId"
+	.flags   "uint16_t"
+	.rgba    "uint32_t"
+	.depth   "float"
+	.stencil "uint8_t"
+
+func.setViewClear { cname = "set_view_clear_mrt" }
+	"void"
+	.id      "ViewId"
+	.flags   "uint16_t"
+	.depth   "float"
+	.stencil "uint8_t"
+	.c0      "uint8_t"
+	.c1      "uint8_t"
+	.c2      "uint8_t"
+	.c3      "uint8_t"
+	.c4      "uint8_t"
+	.c5      "uint8_t"
+	.c6      "uint8_t"
+	.c7      "uint8_t"
+
+func.setViewMode
+	"void"
+	.id   "ViewId"
+	.mode "ViewMode::Enum"
+
+func.setViewFrameBuffer
+	"void"
+	.id     "ViewId"
+	.handle "FrameBufferHandle"
+
+func.setViewTransform
+	"void"
+	.id   "ViewId"
+	.view "const void *"
+	.proj "const void *"
+
+func.setViewOrder
+	"void"
+	.id    "ViewId"
+	.num   "uint16_t"
+	.order "const ViewId *"
+
+func.begin { cname = "encoder_begin" }
+	"Encoder *"
+	.forThread "bool"
+
+func["end"] { cname = "encoder_end" }
+	"void"
+	.encoder "Encoder *"
+
+func.Encoder.setMarker
+	"void"
+	.marker "const char *"
+
+func.Encoder.setState
+	"void"
+	.state "uint64_t"
+	.rgba  "uint32_t"
+
+func.Encoder.setCondition
+	"void"
+	.handle  "OcclusionQueryHandle"
+	.visible "bool"
+
+func.Encoder.setStencil
+	"void"
+	.fstencil "uint32_t"
+	.bstencil "uint32_t"
+
+func.Encoder.setScissor
+	"uint16_t"
+	.x      "uint16_t"
+	.y      "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+
+func.Encoder.setScissor { cname = "set_scissor_cached" }
+	"void"
+	.cache "uint16_t"
+
+func.Encoder.setTransform
+	"uint32_t"
+	.mtx "const void *"
+	.num "uint16_t"
+
+func.Encoder.setTransform { cname = "set_transform_cached" }
+	"void"
+	.cache "uint32_t"
+	.num   "uint16_t"
+
+func.Encoder.allocTransform
+	"uint32_t"
+	.transform "Transform *" { out }
+	.num       "uint16_t"
+
+func.Encoder.setUniform
+	"void"
+	.handle "UniformHandle"
+	.value  "const void *"
+	.num    "uint16_t"
+
+func.Encoder.setIndexBuffer
+	"void"
+	.handle     "IndexBufferHandle"
+	.firstIndex "uint32_t"
+	.numIndices "uint32_t"
+
+func.Encoder.setIndexBuffer { cname = "set_dynamic_index_buffer" }
+	"void"
+	.handle     "DynamicIndexBufferHandle"
+	.firstIndex "uint32_t"
+	.numIndices "uint32_t"
+
+func.Encoder.setIndexBuffer { cname = "set_transient_index_buffer" }
+	"void"
+	.tib        "const TransientIndexBuffer *"
+	.firstIndex "uint32_t"
+	.numIndices "uint32_t"
+
+func.Encoder.setVertexBuffer
+	"void"
+	.stream      "uint8_t"
+	.handle      "VertexBufferHandle"
+	.startVertex "uint32_t"
+	.numVertices "uint32_t"
+
+func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
+	"void"
+	.stream      "uint8_t"
+	.handle      "DynamicVertexBufferHandle"
+	.startVertex "uint32_t"
+	.numVertices "uint32_t"
+
+func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
+	"void"
+	.stream      "uint8_t"
+	.tvb         "const TransientVertexBuffer *"
+	.startVertex "uint32_t"
+	.numVertices "uint32_t"
+
+func.Encoder.setVertexCount
+	"void"
+	.numVertices "uint32_t"
+
+func.Encoder.setInstanceDataBuffer
+	"void"
+	.idb   "const InstanceDataBuffer *"
+	.start "uint32_t"
+	.num   "uint32_t"
+
+func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_vertex_buffer" }
+	"void"
+	.handle      "VertexBufferHandle"
+	.startVertex "uint32_t"
+	.num         "uint32_t"
+
+func.Encoder.setInstanceDataBuffer { cname = "set_instance_data_from_dynamic_vertex_buffer" }
+	"void"
+	.handle      "DynamicVertexBufferHandle"
+	.startVertex "uint32_t"
+	.num         "uint32_t"
+
+func.Encoder.setInstanceCount
+	"void"
+	.numInstances "uint32_t"
+
+func.Encoder.setTexture
+	"void"
+	.stage   "uint8_t"
+	.sampler "UniformHandle"
+	.handle  "TextureHandle"
+	.flags   "uint32_t"
+
+func.Encoder.touch
+	"void"
+	.id "ViewId"
+
+func.Encoder.submit
+	"void"
+	.id            "ViewId"
+	.program       "ProgramHandle"
+	.depth         "uint32_t"
+	.preserveState "bool"
+
+func.Encoder.submit { cname = "submit_occlusion_query" }
+	"void"
+	.id             "ViewId"
+	.program        "ProgramHandle"
+	.occlusionQuery "OcclusionQueryHandle"
+	.depth          "uint32_t"
+	.preserveState  "bool"
+
+func.Encoder.submit { cname = "submit_indirect" }
+	"void"
+	.id             "ViewId"
+	.program        "ProgramHandle"
+	.indirectHandle "IndirectBufferHandle"
+	.start          "uint16_t"
+	.num            "uint16_t"
+	.depth          "uint32_t"
+	.preserveState  "bool"
+
+func.Encoder.setBuffer { cname = "set_compute_index_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "IndexBufferHandle"
+	.access "Access::Enum"
+
+func.Encoder.setBuffer { cname = "set_compute_vertex_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "VertexBufferHandle"
+	.access "Access::Enum"
+
+func.Encoder.setBuffer { cname = "set_compute_dynamic_index_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "DynamicIndexBufferHandle"
+	.access "Access::Enum"
+
+func.Encoder.setBuffer { cname = "set_compute_dynamic_vertex_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "DynamicVertexBufferHandle"
+	.access "Access::Enum"
+
+func.Encoder.setBuffer { cname = "set_compute_indirect_buffer" }
+	"void"
+	.stage  "uint8_t"
+	.handle "IndirectBufferHandle"
+	.access "Access::Enum"
+
+func.Encoder.setImage
+	"void"
+	.stage  "uint8_t"
+	.handle "TextureHandle"
+	.mip    "uint8_t"
+	.access "Access::Enum"
+	.format "TextureFormat::Enum"
+
+func.Encoder.dispatch
+	"void"
+	.id      "ViewId"
+	.program "ProgramHandle"
+	.numX    "uint32_t"
+	.numY    "uint32_t"
+	.numZ    "uint32_t"
+
+func.Encoder.dispatch { cname = "dispatch_indirect" }
+	"void"
+	.id             "ViewId"
+	.program        "ProgramHandle"
+	.indirectHandle "IndirectBufferHandle"
+	.start          "uint16_t"
+	.num            "uint16_t"
+
+func.Encoder.discard
+	"void"
+
+func.Encoder.blit
+	"void"
+	.id     "ViewId"
+	.dst    "TextureHandle"
+	.dstMip "uint8_t"
+	.dstX   "uint16_t"
+	.dstY   "uint16_t"
+	.dstZ   "uint16_t"
+	.src    "TextureHandle"
+	.srcMip "uint8_t"
+	.srcX   "uint16_t"
+	.srcY   "uint16_t"
+	.srcZ   "uint16_t"
+	.width  "uint16_t"
+	.height "uint16_t"
+	.depth  "uint16_t"
+
+func.requestScreenShot
+	"void"
+	.handle   "FrameBufferHandle"
+	.filePath "const char *"
+
+func.renderFrame
+	"RenderFrame::Enum"
+	.msecs "int32_t"
+
+func.setPlatformData
+	"void"
+	.data "const PlatformData &"
+
+func.getInternalData
+	"const InternalData *"
+
+func.overrideInternal { cname = "override_internal_texture_ptr" }
+	"uintptr_t"
+	.handle "TextureHandle"
+	.ptr    "uintptr_t"
+
+func.overrideInternal { cname = "override_internal_texture" }
+	"uintptr_t"
+	.handle  "TextureHandle"
+	.width   "uint16_t"
+	.height  "uint16_t"
+	.numMips "uint8_t"
+	.format  "TextureFormat::Enum"
+	.flags   "uint32_t"
