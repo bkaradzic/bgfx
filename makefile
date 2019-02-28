@@ -56,6 +56,10 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator64 gmake
 	$(GENIE)              --with-combined-examples                   --gcc=rpi             gmake
 
+idl: ## Generate code from IDL.
+	@echo Generating code from IDL.
+	$(GENIE) idl
+
 .build/projects/gmake-android-arm:
 	$(GENIE) --gcc=android-arm gmake
 android-arm-debug: .build/projects/gmake-android-arm ## Build - Android ARM Debug
