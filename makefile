@@ -38,7 +38,16 @@ clean: ## Clean all intermediate files.
 	-@rm -rf .build
 	@mkdir .build
 
-projgen: ## Generate project files for all configurations.
+IDLFILES= include/bgfx/c99/bgfx.idl.h src/bgfx.idl.inl
+
+$(IDLFILES) : scripts/bgfx.idl
+	$(GENIE) idl
+
+idl: ## Rebuild IDL
+	@echo Generate IDL files
+	$(GENIE) idl
+
+projgen: idl ## Generate project files for all configurations.
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib                       vs2017
 	$(GENIE) --with-tools --with-combined-examples                   --vs=winstore100      vs2017
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=mingw-gcc       gmake
@@ -56,143 +65,143 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator64 gmake
 	$(GENIE)              --with-combined-examples                   --gcc=rpi             gmake
 
-.build/projects/gmake-android-arm:
+.build/projects/gmake-android-arm: | $(IDLFILES)
 	$(GENIE) --gcc=android-arm gmake
-android-arm-debug: .build/projects/gmake-android-arm ## Build - Android ARM Debug
+android-arm-debug: .build/projects/gmake-android-arm $(IDLFILES) ## Build - Android ARM Debug
 	$(MAKE) -R -C .build/projects/gmake-android-arm config=debug
-android-arm-release: .build/projects/gmake-android-arm ## Build - Android ARM Release
+android-arm-release: .build/projects/gmake-android-arm $(IDLFILES) ## Build - Android ARM Release
 	$(MAKE) -R -C .build/projects/gmake-android-arm config=release
 android-arm: android-arm-debug android-arm-release ## Build - Android ARM Debug and Release
 
-.build/projects/gmake-android-x86:
+.build/projects/gmake-android-x86: | $(IDLFILES)
 	$(GENIE) --gcc=android-x86 gmake
-android-x86-debug: .build/projects/gmake-android-x86 ## Build - Android x86 Debug and Release
+android-x86-debug: .build/projects/gmake-android-x86 $(IDLFILES) ## Build - Android x86 Debug and Release
 	$(MAKE) -R -C .build/projects/gmake-android-x86 config=debug
-android-x86-release: .build/projects/gmake-android-x86 ## Build - Android x86 Debug and Release
+android-x86-release: .build/projects/gmake-android-x86 $(IDLFILES) ## Build - Android x86 Debug and Release
 	$(MAKE) -R -C .build/projects/gmake-android-x86 config=release
 android-x86: android-x86-debug android-x86-release ## Build - Android x86 Debug and Release
 
-.build/projects/gmake-asmjs:
+.build/projects/gmake-asmjs: | $(IDLFILES)
 	$(GENIE) --gcc=asmjs gmake
-asmjs-debug: .build/projects/gmake-asmjs ## Build - Emscripten Debug
+asmjs-debug: .build/projects/gmake-asmjs $(IDLFILES) ## Build - Emscripten Debug
 	$(MAKE) -R -C .build/projects/gmake-asmjs config=debug
-asmjs-release: .build/projects/gmake-asmjs ## Build - Emscripten Release
+asmjs-release: .build/projects/gmake-asmjs $(IDLFILES) ## Build - Emscripten Release
 	$(MAKE) -R -C .build/projects/gmake-asmjs config=release
 asmjs: asmjs-debug asmjs-release ## Build - Emscripten Debug and Release
 
-.build/projects/gmake-linux:
+.build/projects/gmake-linux: | $(IDLFILES)
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=linux-gcc gmake
-linux-debug64: .build/projects/gmake-linux ## Build - Linux x64 Debug
+linux-debug64: .build/projects/gmake-linux $(IDLFILES) ## Build - Linux x64 Debug
 	$(MAKE) -R -C .build/projects/gmake-linux config=debug64
-linux-release64: .build/projects/gmake-linux ## Build - Linux x64 Release
+linux-release64: .build/projects/gmake-linux $(IDLFILES) ## Build - Linux x64 Release
 	$(MAKE) -R -C .build/projects/gmake-linux config=release64
 linux: linux-debug64 linux-release64 ## Build - Linux x86/x64 Debug and Release
 
-.build/projects/gmake-freebsd:
+.build/projects/gmake-freebsd: | $(IDLFILES)
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=freebsd gmake
-freebsd-debug32: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Debug
+freebsd-debug32: .build/projects/gmake-freebsd $(IDLFILES) ## Build - FreeBSD x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-freebsd config=debug32
-freebsd-release32: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Release
+freebsd-release32: .build/projects/gmake-freebsd $(IDLFILES) ## Build - FreeBSD x86 Release
 	$(MAKE) -R -C .build/projects/gmake-freebsd config=release32
-freebsd-debug64: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Debug
+freebsd-debug64: .build/projects/gmake-freebsd $(IDLFILES) ## Build - FreeBSD x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-freebsd config=debug64
-freebsd-release64: .build/projects/gmake-freebsd ## Build - FreeBSD x86 Release
+freebsd-release64: .build/projects/gmake-freebsd $(IDLFILES) ## Build - FreeBSD x86 Release
 	$(MAKE) -R -C .build/projects/gmake-freebsd config=release64
 freebsd: freebsd-debug32 freebsd-release32 freebsd-debug64 freebsd-release64 ## Build - FreeBSD x86/x64 Debug and Release
 
-.build/projects/gmake-mingw-gcc:
+.build/projects/gmake-mingw-gcc: | $(IDLFILES)
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --os=windows --gcc=mingw-gcc gmake
-mingw-gcc-debug32: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x86 Debug
+mingw-gcc-debug32: .build/projects/gmake-mingw-gcc $(IDLFILES) ## Build - MinGW GCC x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-gcc config=debug32
-mingw-gcc-release32: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x86 Release
+mingw-gcc-release32: .build/projects/gmake-mingw-gcc $(IDLFILES) ## Build - MinGW GCC x86 Release
 	$(MAKE) -R -C .build/projects/gmake-mingw-gcc config=release32
-mingw-gcc-debug64: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x64 Debug
+mingw-gcc-debug64: .build/projects/gmake-mingw-gcc $(IDLFILES) ## Build - MinGW GCC x64 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-gcc config=debug64
-mingw-gcc-release64: .build/projects/gmake-mingw-gcc ## Build - MinGW GCC x64 Release
+mingw-gcc-release64: .build/projects/gmake-mingw-gcc $(IDLFILES) ## Build - MinGW GCC x64 Release
 	$(MAKE) -R -C .build/projects/gmake-mingw-gcc config=release64
 mingw-gcc: mingw-gcc-debug32 mingw-gcc-release32 mingw-gcc-debug64 mingw-gcc-release64 ## Build - MinGW GCC x86/x64 Debug and Release
 
-.build/projects/gmake-mingw-clang:
+.build/projects/gmake-mingw-clang: | $(IDLFILES)
 	$(GENIE) --gcc=mingw-clang gmake
-mingw-clang-debug32: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x86 Debug
+mingw-clang-debug32: .build/projects/gmake-mingw-clang $(IDLFILES) ## Build - MinGW Clang x86 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=debug32
-mingw-clang-release32: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x86 Release
+mingw-clang-release32: .build/projects/gmake-mingw-clang $(IDLFILES) ## Build - MinGW Clang x86 Release
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=release32
-mingw-clang-debug64: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x64 Debug
+mingw-clang-debug64: .build/projects/gmake-mingw-clang $(IDLFILES) ## Build - MinGW Clang x64 Debug
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=debug64
-mingw-clang-release64: .build/projects/gmake-mingw-clang ## Build - MinGW Clang x64 Release
+mingw-clang-release64: .build/projects/gmake-mingw-clang $(IDLFILES) ## Build - MinGW Clang x64 Release
 	$(MAKE) -R -C .build/projects/gmake-mingw-clang config=release64
 mingw-clang: mingw-clang-debug32 mingw-clang-release32 mingw-clang-debug64 mingw-clang-release64 ## Build - MinGW Clang x86/x64 Debug and Release
 
-.build/projects/vs2017:
+.build/projects/vs2017: | $(IDLFILES)
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib vs2017
-vs2017-debug32: .build/projects/vs2017 ## Build - vs2017 x86 Debug
+vs2017-debug32: .build/projects/vs2017 $(IDLFILES) ## Build - vs2017 x86 Debug
 	devenv .build/projects/vs2017/bgfx.sln /Build "Debug|Win32"
-vs2017-release32: .build/projects/vs2017 ## Build - vs2017 x86 Release
+vs2017-release32: .build/projects/vs2017 $(IDLFILES) ## Build - vs2017 x86 Release
 	devenv .build/projects/vs2017/bgfx.sln /Build "Release|Win32"
-vs2017-debug64: .build/projects/vs2017 ## Build - vs2017 x64 Debug
+vs2017-debug64: .build/projects/vs2017 $(IDLFILES) ## Build - vs2017 x64 Debug
 	devenv .build/projects/vs2017/bgfx.sln /Build "Debug|x64"
-vs2017-release64: .build/projects/vs2017 ## Build - vs2017 x64 Release
+vs2017-release64: .build/projects/vs2017 $(IDLFILES) ## Build - vs2017 x64 Release
 	devenv .build/projects/vs2017/bgfx.sln /Build "Release|x64"
 vs2017: vs2017-debug32 vs2017-release32 vs2017-debug64 vs2017-release64 ## Build - vs2017 x86/x64 Debug and Release
 
-.build/projects/vs2017-winstore100:
+.build/projects/vs2017-winstore100: | $(IDLFILES)
 	$(GENIE) --with-combined-examples --vs=winstore100 vs2017
-vs2017-winstore100-debug32: .build/projects/vs2017-winstore100 ## Build - vs2017-winstore100 x86 Debug
+vs2017-winstore100-debug32: .build/projects/vs2017-winstore100 $(IDLFILES) ## Build - vs2017-winstore100 x86 Debug
 	devenv .build/projects/vs2017-winstore100/bgfx.sln /Build "Debug|Win32"
-vs2017-winstore100-release32: .build/projects/vs2017-winstore100 ## Build - vs2017-winstore100 x86 Release
+vs2017-winstore100-release32: .build/projects/vs2017-winstore100 $(IDLFILES) ## Build - vs2017-winstore100 x86 Release
 	devenv .build/projects/vs2017-winstore100/bgfx.sln /Build "Release|Win32"
-vs2017-winstore100-debug64: .build/projects/vs2017-winstore100 ## Build - vs2017-winstore100 x64 Debug
+vs2017-winstore100-debug64: .build/projects/vs2017-winstore100 $(IDLFILES) ## Build - vs2017-winstore100 x64 Debug
 	devenv .build/projects/vs2017-winstore100/bgfx.sln /Build "Debug|x64"
-vs2017-winstore100-release64: .build/projects/vs2017-winstore100 ## Build - vs2017-winstore100 x64 Release
+vs2017-winstore100-release64: .build/projects/vs2017-winstore100 $(IDLFILES) ## Build - vs2017-winstore100 x64 Release
 	devenv .build/projects/vs2017-winstore100/bgfx.sln /Build "Release|x64"
 vs2017-winstore100: vs2017-winstore100-debug32 vs2017-winstore100-release32 vs2017-winstore100-debug64 vs2017-winstore100-release64 ## Build - vs2017-winstore100 x86/x64 Debug and Release
 
-.build/projects/gmake-osx:
+.build/projects/gmake-osx: | $(IDLFILES)
 	$(GENIE) --with-tools --with-combined-examples --with-shared-lib --gcc=osx gmake
-osx-debug64: .build/projects/gmake-osx ## Build - OSX x64 Debug
+osx-debug64: .build/projects/gmake-osx $(IDLFILES) ## Build - OSX x64 Debug
 	$(MAKE) -C .build/projects/gmake-osx config=debug64
-osx-release64: .build/projects/gmake-osx ## Build - OSX x64 Release
+osx-release64: .build/projects/gmake-osx $(IDLFILES) ## Build - OSX x64 Release
 	$(MAKE) -C .build/projects/gmake-osx config=release64
 osx: osx-debug64 osx-release64 ## Build - OSX x64 Debug and Release
 
-.build/projects/gmake-ios-arm:
+.build/projects/gmake-ios-arm: | $(IDLFILES)
 	$(GENIE) --gcc=ios-arm gmake
-ios-arm-debug: .build/projects/gmake-ios-arm ## Build - iOS ARM Debug
+ios-arm-debug: .build/projects/gmake-ios-arm $(IDLFILES) ## Build - iOS ARM Debug
 	$(MAKE) -R -C .build/projects/gmake-ios-arm config=debug
-ios-arm-release: .build/projects/gmake-ios-arm ## Build - iOS ARM Release
+ios-arm-release: .build/projects/gmake-ios-arm $(IDLFILES) ## Build - iOS ARM Release
 	$(MAKE) -R -C .build/projects/gmake-ios-arm config=release
 ios-arm: ios-arm-debug ios-arm-release ## Build - iOS ARM Debug and Release
 
-.build/projects/gmake-ios-arm64:
+.build/projects/gmake-ios-arm64: | $(IDLFILES)
 	$(GENIE) --gcc=ios-arm64 gmake
-ios-arm64-debug: .build/projects/gmake-ios-arm64 ## Build - iOS ARM64 Debug
+ios-arm64-debug: .build/projects/gmake-ios-arm64 $(IDLFILES) ## Build - iOS ARM64 Debug
 	$(MAKE) -R -C .build/projects/gmake-ios-arm64 config=debug
-ios-arm64-release: .build/projects/gmake-ios-arm64 ## Build - iOS ARM64 Release
+ios-arm64-release: .build/projects/gmake-ios-arm64 $(IDLFILES) ## Build - iOS ARM64 Release
 	$(MAKE) -R -C .build/projects/gmake-ios-arm64 config=release
 ios-arm64: ios-arm64-debug ios-arm64-release ## Build - iOS ARM64 Debug and Release
 
-.build/projects/gmake-ios-simulator:
+.build/projects/gmake-ios-simulator: | $(IDLFILES)
 	$(GENIE) --gcc=ios-simulator gmake
-ios-simulator-debug: .build/projects/gmake-ios-simulator ## Build - iOS Simulator Debug
+ios-simulator-debug: .build/projects/gmake-ios-simulator $(IDLFILES) ## Build - iOS Simulator Debug
 	$(MAKE) -R -C .build/projects/gmake-ios-simulator config=debug
-ios-simulator-release: .build/projects/gmake-ios-simulator ## Build - iOS Simulator Release
+ios-simulator-release: .build/projects/gmake-ios-simulator $(IDLFILES) ## Build - iOS Simulator Release
 	$(MAKE) -R -C .build/projects/gmake-ios-simulator config=release
 ios-simulator: ios-simulator-debug ios-simulator-release ## Build - iOS Simulator Debug and Release
 
-.build/projects/gmake-ios-simulator64:
+.build/projects/gmake-ios-simulator64: | $(IDLFILES)
 	$(GENIE) --gcc=ios-simulator64 gmake
-ios-simulator64-debug: .build/projects/gmake-ios-simulator64 ## Build - iOS Simulator Debug
+ios-simulator64-debug: .build/projects/gmake-ios-simulator64 $(IDLFILES) ## Build - iOS Simulator Debug
 	$(MAKE) -R -C .build/projects/gmake-ios-simulator64 config=debug
-ios-simulator64-release: .build/projects/gmake-ios-simulator64 ## Build - iOS Simulator Release
+ios-simulator64-release: .build/projects/gmake-ios-simulator64 $(IDLFILES) ## Build - iOS Simulator Release
 	$(MAKE) -R -C .build/projects/gmake-ios-simulator64 config=release
 ios-simulator64: ios-simulator64-debug ios-simulator64-release ## Build - iOS Simulator Debug and Release
 
-.build/projects/gmake-rpi:
+.build/projects/gmake-rpi: | $(IDLFILES)
 	$(GENIE) --gcc=rpi gmake
-rpi-debug: .build/projects/gmake-rpi ## Build - RasberryPi Debug
+rpi-debug: .build/projects/gmake-rpi $(IDLFILES) ## Build - RasberryPi Debug
 	$(MAKE) -R -C .build/projects/gmake-rpi config=debug
-rpi-release: .build/projects/gmake-rpi ## Build - RasberryPi Release
+rpi-release: .build/projects/gmake-rpi $(IDLFILES) ## Build - RasberryPi Release
 	$(MAKE) -R -C .build/projects/gmake-rpi config=release
 rpi: rpi-debug rpi-release ## Build - RasberryPi Debug and Release
 

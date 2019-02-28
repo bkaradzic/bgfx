@@ -5,3 +5,7 @@
 .svn
 tags
 .gdb_history
+
+# Genterate by `genie idl`
+include/bgfx/c99/bgfx.idl.h
+src/bgfx.idl.inl
