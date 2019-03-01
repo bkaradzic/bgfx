@@ -6725,11 +6725,38 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dl>
 </p>
 <div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv2N4bgfx10Attachment4initE13TextureHandleN6Access4EnumE8uint16_t8uint16_t7uint8_t">
+<span id="bgfx::Attachment::init__TextureHandle.Access::Enum.uint16_t.uint16_t.uint8_t"></span><span class="target" id="structbgfx_1_1_attachment_1a1556200260d1ae2b50ade579f99b0400"></span>void <code class="descname">init</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, <a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <em>_access</em> = Access::Write, uint16_t <em>_layer</em> = 0, uint16_t <em>_mip</em> = 0, uint8_t <em>_resolve</em> = BGFX_RESOLVE_AUTO_GEN_MIPS<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx10Attachment4initE13TextureHandleN6Access4EnumE8uint16_t8uint16_t7uint8_t" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#structbgfx_1_1_init"><span>Init</span></a> attachment. </p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Render target texture handle. </li>
+<li><code class="docutils literal"><span class="pre">_access</span></code>: <a class="reference internal" href="#structbgfx_1_1_access"><span>Access</span></a>. See <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span><span class="pre">Access::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_layer</span></code>: Cubemap side or depth layer/slice. </li>
+<li><code class="docutils literal"><span class="pre">_mip</span></code>: Mip level. </li>
+<li><code class="docutils literal"><span class="pre">_resolve</span></code>: Resolve flags. See: <code class="docutils literal"><span class="pre">BGFX_RESOLVE_*</span></code> </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N4bgfx10Attachment6accessE">
+<span id="bgfx::Attachment::access__Access::Enum"></span><span class="target" id="structbgfx_1_1_attachment_1a5891b655a2528f5bf70797745b9691d4"></span><a class="reference internal" href="#_CPPv2N4bgfx6AccessE" title="bgfx::Access">Access</a>::<a class="reference internal" href="#_CPPv2N4bgfx6Access4EnumE" title="bgfx::Access::Enum">Enum</a> <code class="descname">access</code><a class="headerlink" href="#_CPPv2N4bgfx10Attachment6accessE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attachement access. See <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_access_1a1deee3013ec4834c19370685b1719180"><span><span class="pre">Access::Enum</span></span></a></code>. </p>
+</dd></dl>
+
 <dl class="member">
 <dt id="_CPPv2N4bgfx10Attachment6handleE">
 <span id="bgfx::Attachment::handle__TextureHandle"></span><span class="target" id="structbgfx_1_1_attachment_1a9eb8a8e6925c92291c43781a304f2acb"></span>TextureHandle <code class="descname">handle</code><a class="headerlink" href="#_CPPv2N4bgfx10Attachment6handleE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Texture handle. </p>
+<dd><p>Render target texture handle. </p>
 </dd></dl>
 
 <dl class="member">
