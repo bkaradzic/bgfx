@@ -4062,7 +4062,19 @@ namespace bgfx
 
 	uint16_t getShaderUniforms(ShaderHandle _handle, UniformHandle* _uniforms, uint16_t _max)
 	{
-		return s_ctx->getShaderUniforms(_handle, _uniforms, _max);
+		BX_WARN(NULL == _uniforms || 0 != _max
+			, "Passing uniforms array pointer, but array maximum capacity is set to 0."
+			);
+
+		uint16_t num = s_ctx->getShaderUniforms(_handle, _uniforms, _max);
+
+		BX_WARN(0 == _max || num <= _max
+			, "Shader has more uniforms that capacity of output array. Output is truncated (num %d, max %d)."
+			, num
+			, _max
+			);
+
+		return num;
 	}
 
 	void setName(ShaderHandle _handle, const char* _name, int32_t _len)
