@@ -2868,6 +2868,83 @@ TEST_F(DeadBranchElimTest, SelectionMergeWithNestedLoop) {
   SinglePassRunAndMatch<DeadBranchElimPass>(body, true);
 }
 
+TEST_F(DeadBranchElimTest, DontFoldBackedge) {
+  const std::string body =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%bool = OpTypeBool
+%false = OpConstantFalse %bool
+%2 = OpFunction %void None %4
+%7 = OpLabel
+OpBranch %8
+%8 = OpLabel
+OpLoopMerge %9 %10 None
+OpBranch %11
+%11 = OpLabel
+%12 = OpUndef %bool
+OpSelectionMerge %10 None
+OpBranchConditional %12 %13 %10
+%13 = OpLabel
+OpBranch %9
+%10 = OpLabel
+OpBranch %14
+%14 = OpLabel
+OpBranchConditional %false %8 %9
+%9 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<DeadBranchElimPass>(body, body, true);
+}
+
+TEST_F(DeadBranchElimTest, FoldBackedgeToHeader) {
+  const std::string body =
+      R"(
+; CHECK: OpLabel
+; CHECK: [[header:%\w+]] = OpLabel
+; CHECK-NEXT: OpLoopMerge {{%\w+}} [[cont:%\w+]]
+; CHECK: [[cont]] = OpLabel
+; This branch may not be in the continue block, but must come after it.
+; CHECK: OpBranch [[header]]
+OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%2 = OpFunction %void None %4
+%7 = OpLabel
+OpBranch %8
+%8 = OpLabel
+OpLoopMerge %9 %10 None
+OpBranch %11
+%11 = OpLabel
+%12 = OpUndef %bool
+OpSelectionMerge %10 None
+OpBranchConditional %12 %13 %10
+%13 = OpLabel
+OpBranch %9
+%10 = OpLabel
+OpBranch %14
+%14 = OpLabel
+OpBranchConditional %true %8 %9
+%9 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<DeadBranchElimPass>(body, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    More complex control flow

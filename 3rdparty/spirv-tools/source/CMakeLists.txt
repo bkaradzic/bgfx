@@ -361,6 +361,14 @@ target_compile_definitions(${SPIRV_TOOLS}-shared
 )
 add_dependencies( ${SPIRV_TOOLS}-shared core_tables enum_string_mapping extinst_tables )
 
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  find_library(LIBRT rt)
+  if(LIBRT)
+    target_link_libraries(${SPIRV_TOOLS} ${LIBRT})
+    target_link_libraries(${SPIRV_TOOLS}-shared ${LIBRT})
+  endif()
+endif()
+
 if(ENABLE_SPIRV_TOOLS_INSTALL)
   install(TARGETS ${SPIRV_TOOLS} ${SPIRV_TOOLS}-shared
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

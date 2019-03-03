@@ -1510,6 +1510,158 @@ TEST_F(ValidateDecorations, BlockLayoutPermitsTightVec3ScalarPackingGood) {
       << getDiagnosticString();
 }
 
+TEST_F(ValidateDecorations, BlockCantAppearWithinABlockBad) {
+  // See https://github.com/KhronosGroup/SPIRV-Tools/issues/1587
+  std::string spirv = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main"
+               OpSource GLSL 450
+               OpMemberDecorate %S 0 Offset 0
+               OpMemberDecorate %S 1 Offset 16
+               OpMemberDecorate %S2 0 Offset 0
+               OpMemberDecorate %S2 1 Offset 12
+               OpDecorate %S Block
+               OpDecorate %S2 Block
+               OpDecorate %B DescriptorSet 0
+               OpDecorate %B Binding 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+         %S2 = OpTypeStruct %float %float
+          %S = OpTypeStruct %float %S2
+%_ptr_Uniform_S = OpTypePointer Uniform %S
+          %B = OpVariable %_ptr_Uniform_S Uniform
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("rules: A Block or BufferBlock cannot be nested within "
+                        "another Block or BufferBlock."));
+}
+
+TEST_F(ValidateDecorations, BufferblockCantAppearWithinABufferblockBad) {
+  // See https://github.com/KhronosGroup/SPIRV-Tools/issues/1587
+  std::string spirv = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main"
+               OpSource GLSL 450
+               OpMemberDecorate %S 0 Offset 0
+               OpMemberDecorate %S 1 Offset 16
+              OpMemberDecorate %S2 0 Offset 0
+               OpMemberDecorate %S2 1 Offset 16
+               OpMemberDecorate %S3 0 Offset 0
+               OpMemberDecorate %S3 1 Offset 12
+               OpDecorate %S BufferBlock
+               OpDecorate %S3 BufferBlock
+               OpDecorate %B DescriptorSet 0
+               OpDecorate %B Binding 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+         %S3 = OpTypeStruct %float %float
+         %S2 = OpTypeStruct %float %S3
+          %S = OpTypeStruct %float %S2
+%_ptr_Uniform_S = OpTypePointer Uniform %S
+          %B = OpVariable %_ptr_Uniform_S Uniform
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("rules: A Block or BufferBlock cannot be nested within "
+                        "another Block or BufferBlock."));
+}
+
+TEST_F(ValidateDecorations, BufferblockCantAppearWithinABlockBad) {
+  // See https://github.com/KhronosGroup/SPIRV-Tools/issues/1587
+  std::string spirv = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main"
+               OpSource GLSL 450
+               OpMemberDecorate %S 0 Offset 0
+               OpMemberDecorate %S 1 Offset 16
+              OpMemberDecorate %S2 0 Offset 0
+               OpMemberDecorate %S2 1 Offset 16
+               OpMemberDecorate %S3 0 Offset 0
+               OpMemberDecorate %S3 1 Offset 12
+               OpDecorate %S Block
+               OpDecorate %S3 BufferBlock
+               OpDecorate %B DescriptorSet 0
+               OpDecorate %B Binding 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+         %S3 = OpTypeStruct %float %float
+         %S2 = OpTypeStruct %float %S3
+          %S = OpTypeStruct %float %S2
+%_ptr_Uniform_S = OpTypePointer Uniform %S
+          %B = OpVariable %_ptr_Uniform_S Uniform
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("rules: A Block or BufferBlock cannot be nested within "
+                        "another Block or BufferBlock."));
+}
+
+TEST_F(ValidateDecorations, BlockCantAppearWithinABufferblockBad) {
+  // See https://github.com/KhronosGroup/SPIRV-Tools/issues/1587
+  std::string spirv = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main"
+               OpSource GLSL 450
+               OpMemberDecorate %S 0 Offset 0
+               OpMemberDecorate %S 1 Offset 16
+              OpMemberDecorate %S2 0 Offset 0
+               OpMemberDecorate %S2 1 Offset 16
+              OpMemberDecorate %S3 0 Offset 0
+               OpMemberDecorate %S3 1 Offset 16
+               OpMemberDecorate %S4 0 Offset 0
+               OpMemberDecorate %S4 1 Offset 12
+               OpDecorate %S BufferBlock
+               OpDecorate %S4 Block
+               OpDecorate %B DescriptorSet 0
+               OpDecorate %B Binding 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+         %S4 = OpTypeStruct %float %float
+         %S3 = OpTypeStruct %float %S4
+         %S2 = OpTypeStruct %float %S3
+          %S = OpTypeStruct %float %S2
+%_ptr_Uniform_S = OpTypePointer Uniform %S
+          %B = OpVariable %_ptr_Uniform_S Uniform
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("rules: A Block or BufferBlock cannot be nested within "
+                        "another Block or BufferBlock."));
+}
+
 TEST_F(ValidateDecorations, BlockLayoutForbidsTightScalarVec3PackingBad) {
   // See https://github.com/KhronosGroup/SPIRV-Tools/issues/1666
   std::string spirv = R"(
@@ -5591,7 +5743,7 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
             OpName %var_imsam "var_imsam"
             OpName %var_priv "var_priv"
             OpName %var_func "var_func"
-            OpName %struct_bad "struct_bad"
+            OpName %simple_struct "simple_struct"
 
             OpDecorate %struct_b Block
             OpDecorate %struct_bb BufferBlock
@@ -5614,7 +5766,7 @@ std::string ShaderWithNonWritableTarget(const std::string& target,
  %struct_bb = OpTypeStruct %float
  %rtarr = OpTypeRuntimeArray %float
 %struct_b_rtarr = OpTypeStruct %rtarr
-%struct_bad = OpTypeStruct %float
+%simple_struct = OpTypeStruct %float
  ; storage image
  %imstor = OpTypeImage %float 2D 0 0 0 2 R32f
  ; sampled image
@@ -5780,15 +5932,11 @@ TEST_F(ValidateDecorations, NonWritableMemberOfSsboInStorageBufferGood) {
   EXPECT_THAT(getDiagnosticString(), Eq(""));
 }
 
-TEST_F(ValidateDecorations, NonWritableMemberOfNonBlockStructBad) {
-  std::string spirv = ShaderWithNonWritableTarget("%struct_bad", true);
+TEST_F(ValidateDecorations, NonWritableMemberOfStructGood) {
+  std::string spirv = ShaderWithNonWritableTarget("%simple_struct", true);
 
   CompileSuccessfully(spirv);
-  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("Target of NonWritable member decoration is invalid: must be "
-                "the struct type of a uniform block or storage buffer"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateDecorations, NonWritableVarWorkgroupBad) {

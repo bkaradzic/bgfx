@@ -1269,17 +1269,6 @@ spv_result_t CheckNonWritableDecoration(ValidationState_t& vstate,
              << "Target of NonWritable decoration is invalid: must point to a "
                 "storage image, uniform block, or storage buffer";
     }
-  } else {
-    // The target is a struct member.  The annotations pass already checks that
-    // it is a structure.  So now fall through to ensure that the structure is
-    // used as a UBO or SSBO.
-    const auto type_id = inst.id();
-    if (!vstate.IsStructForUniformBlock(type_id) &&
-        !vstate.IsStructForStorageBuffer(type_id)) {
-      return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
-             << "Target of NonWritable member decoration is invalid: must be "
-                "the struct type of a uniform block or storage buffer";
-    }
   }
 
   return SPV_SUCCESS;

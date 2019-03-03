@@ -148,6 +148,14 @@ class DeadBranchElimPass : public MemPass {
                                                uint32_t merge_block_id,
                                                uint32_t loop_merge_id,
                                                uint32_t loop_continue_id);
+
+  // Adds to |blocks_with_back_edges| all of the blocks on the path from the
+  // basic block |cont_id| to |header_id| and |merge_id|.  The intention is that
+  // |cond_id| is a the continue target of a loop, |header_id| is the header of
+  // the loop, and |merge_id| is the merge block of the loop.
+  void AddBlocksWithBackEdge(
+      uint32_t cont_id, uint32_t header_id, uint32_t merge_id,
+      std::unordered_set<BasicBlock*>* blocks_with_back_edges);
 };
 
 }  // namespace opt

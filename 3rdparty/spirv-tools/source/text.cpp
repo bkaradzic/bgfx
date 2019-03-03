@@ -778,7 +778,7 @@ spv_result_t spvTextToBinary(const spv_const_context context,
                              const size_t input_text_size, spv_binary* pBinary,
                              spv_diagnostic* pDiagnostic) {
   return spvTextToBinaryWithOptions(context, input_text, input_text_size,
-                                    SPV_BINARY_TO_TEXT_OPTION_NONE, pBinary,
+                                    SPV_TEXT_TO_BINARY_OPTION_NONE, pBinary,
                                     pDiagnostic);
 }
 

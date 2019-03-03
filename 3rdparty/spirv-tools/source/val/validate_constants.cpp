@@ -247,6 +247,36 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
         }
       }
     } break;
+    case SpvOpTypeCooperativeMatrixNV: {
+      if (1 != constituent_count) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << opcode_name << " Constituent <id> '"
+               << _.getIdName(inst->type_id()) << "' count must be one.";
+      }
+      const auto constituent_id = inst->GetOperandAs<uint32_t>(2);
+      const auto constituent = _.FindDef(constituent_id);
+      if (!constituent || !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << opcode_name << " Constituent <id> '"
+               << _.getIdName(constituent_id)
+               << "' is not a constant or undef.";
+      }
+      const auto constituent_type = _.FindDef(constituent->type_id());
+      if (!constituent_type) {
+        return _.diag(SPV_ERROR_INVALID_ID, constituent)
+               << "Result type is not defined.";
+      }
+
+      const auto component_type_id = result_type->GetOperandAs<uint32_t>(1);
+      const auto component_type = _.FindDef(component_type_id);
+      if (!component_type || component_type->id() != constituent_type->id()) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << opcode_name << " Constituent <id> '"
+               << _.getIdName(constituent_id)
+               << "' type does not match the Result Type <id> '"
+               << _.getIdName(result_type->id()) << "'s component type.";
+      }
+    } break;
     default:
       break;
   }
@@ -285,6 +315,7 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
       return true;
     case SpvOpTypeArray:
     case SpvOpTypeMatrix:
+    case SpvOpTypeCooperativeMatrixNV:
     case SpvOpTypeVector: {
       auto base_type = _.FindDef(instruction[2]);
       return base_type && IsTypeNullable(base_type->words(), _);
@@ -320,7 +351,7 @@ spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
 
   // The binary parser already ensures that the op is valid for *some*
   // environment.  Here we check restrictions.
-  switch(op) {
+  switch (op) {
     case SpvOpQuantizeToF16:
       if (!_.HasCapability(SpvCapabilityShader)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
@@ -365,7 +396,7 @@ spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
       }
       break;
 
-  default:
+    default:
       break;
   }
 

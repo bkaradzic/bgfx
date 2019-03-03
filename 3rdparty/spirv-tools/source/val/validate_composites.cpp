@@ -118,6 +118,10 @@ spv_result_t GetExtractInsertValueType(ValidationState_t& _,
         *member_type = type_inst->word(component_index + 2);
         break;
       }
+      case SpvOpTypeCooperativeMatrixNV: {
+        *member_type = type_inst->word(2);
+        break;
+      }
       default:
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "Reached non-composite type while indexes still remain to "
@@ -311,6 +315,26 @@ spv_result_t ValidateCompositeConstruct(ValidationState_t& _,
                  << "Expected Constituent type to be equal to the "
                  << "corresponding member type of Result Type struct";
         }
+      }
+
+      break;
+    }
+    case SpvOpTypeCooperativeMatrixNV: {
+      const auto result_type_inst = _.FindDef(result_type);
+      assert(result_type_inst);
+      const auto component_type_id =
+          result_type_inst->GetOperandAs<uint32_t>(1);
+
+      if (3 != num_operands) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected single constituent";
+      }
+
+      const uint32_t operand_type_id = _.GetOperandTypeId(inst, 2);
+
+      if (operand_type_id != component_type_id) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "Expected Constituent type to be equal to the component type";
       }
 
       break;

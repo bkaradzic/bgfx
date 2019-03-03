@@ -168,6 +168,7 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
       global_vars_(),
       local_vars_(),
       struct_nesting_depth_(),
+      struct_has_nested_blockorbufferblock_struct_(),
       grammar_(ctx),
       addressing_model_(SpvAddressingModelMax),
       memory_model_(SpvMemoryModelMax),
@@ -609,6 +610,9 @@ uint32_t ValidationState_t::GetComponentType(uint32_t id) const {
     case SpvOpTypeMatrix:
       return GetComponentType(inst->word(2));
 
+    case SpvOpTypeCooperativeMatrixNV:
+      return inst->word(2);
+
     default:
       break;
   }
@@ -632,6 +636,10 @@ uint32_t ValidationState_t::GetDimension(uint32_t id) const {
     case SpvOpTypeVector:
     case SpvOpTypeMatrix:
       return inst->word(3);
+
+    case SpvOpTypeCooperativeMatrixNV:
+      // Actual dimension isn't known, return 0
+      return 0;
 
     default:
       break;
@@ -861,6 +869,86 @@ bool ValidationState_t::GetPointerTypeInfo(uint32_t id, uint32_t* data_type,
   return true;
 }
 
+bool ValidationState_t::IsCooperativeMatrixType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  assert(inst);
+  return inst->opcode() == SpvOpTypeCooperativeMatrixNV;
+}
+
+bool ValidationState_t::IsFloatCooperativeMatrixType(uint32_t id) const {
+  if (!IsCooperativeMatrixType(id)) return false;
+  return IsFloatScalarType(FindDef(id)->word(2));
+}
+
+bool ValidationState_t::IsIntCooperativeMatrixType(uint32_t id) const {
+  if (!IsCooperativeMatrixType(id)) return false;
+  return IsIntScalarType(FindDef(id)->word(2));
+}
+
+bool ValidationState_t::IsUnsignedIntCooperativeMatrixType(uint32_t id) const {
+  if (!IsCooperativeMatrixType(id)) return false;
+  return IsUnsignedIntScalarType(FindDef(id)->word(2));
+}
+
+spv_result_t ValidationState_t::CooperativeMatrixShapesMatch(
+    const Instruction* inst, uint32_t m1, uint32_t m2) {
+  const auto m1_type = FindDef(m1);
+  const auto m2_type = FindDef(m2);
+
+  if (m1_type->opcode() != SpvOpTypeCooperativeMatrixNV ||
+      m2_type->opcode() != SpvOpTypeCooperativeMatrixNV) {
+    return diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected cooperative matrix types";
+  }
+
+  uint32_t m1_scope_id = m1_type->GetOperandAs<uint32_t>(2);
+  uint32_t m1_rows_id = m1_type->GetOperandAs<uint32_t>(3);
+  uint32_t m1_cols_id = m1_type->GetOperandAs<uint32_t>(4);
+
+  uint32_t m2_scope_id = m2_type->GetOperandAs<uint32_t>(2);
+  uint32_t m2_rows_id = m2_type->GetOperandAs<uint32_t>(3);
+  uint32_t m2_cols_id = m2_type->GetOperandAs<uint32_t>(4);
+
+  bool m1_is_int32 = false, m1_is_const_int32 = false, m2_is_int32 = false,
+       m2_is_const_int32 = false;
+  uint32_t m1_value = 0, m2_value = 0;
+
+  std::tie(m1_is_int32, m1_is_const_int32, m1_value) =
+      EvalInt32IfConst(m1_scope_id);
+  std::tie(m2_is_int32, m2_is_const_int32, m2_value) =
+      EvalInt32IfConst(m2_scope_id);
+
+  if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value) {
+    return diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected scopes of Matrix and Result Type to be "
+           << "identical";
+  }
+
+  std::tie(m1_is_int32, m1_is_const_int32, m1_value) =
+      EvalInt32IfConst(m1_rows_id);
+  std::tie(m2_is_int32, m2_is_const_int32, m2_value) =
+      EvalInt32IfConst(m2_rows_id);
+
+  if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value) {
+    return diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected rows of Matrix type and Result Type to be "
+           << "identical";
+  }
+
+  std::tie(m1_is_int32, m1_is_const_int32, m1_value) =
+      EvalInt32IfConst(m1_cols_id);
+  std::tie(m2_is_int32, m2_is_const_int32, m2_value) =
+      EvalInt32IfConst(m2_cols_id);
+
+  if (m1_is_const_int32 && m2_is_const_int32 && m1_value != m2_value) {
+    return diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Expected columns of Matrix type and Result Type to be "
+           << "identical";
+  }
+
+  return SPV_SUCCESS;
+}
+
 uint32_t ValidationState_t::GetOperandTypeId(const Instruction* inst,
                                              size_t operand_index) const {
   return GetTypeId(inst->GetOperandAs<uint32_t>(operand_index));
@@ -889,7 +977,7 @@ bool ValidationState_t::GetConstantValUint64(uint32_t id, uint64_t* val) const {
 }
 
 std::tuple<bool, bool, uint32_t> ValidationState_t::EvalInt32IfConst(
-    uint32_t id) {
+    uint32_t id) const {
   const Instruction* const inst = FindDef(id);
   assert(inst);
   const uint32_t type = inst->type_id();
