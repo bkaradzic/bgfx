@@ -30,6 +30,8 @@ kernel void main0(main0_in in [[stage_in]], constant UBO& _41 [[buffer(0)]], uin
     if (gl_InvocationID < spvIndirectParams[0])
         gl_in[gl_InvocationID] = in;
     threadgroup_barrier(mem_flags::mem_threadgroup);
+    if (gl_InvocationID >= 1)
+        return;
     float2 _430 = (gl_in[0].vPatchPosBase - float2(10.0)) * _41.uScale.xy;
     float2 _440 = ((gl_in[0].vPatchPosBase + _41.uPatchSize) + float2(10.0)) * _41.uScale.xy;
     float3 _445 = float3(_430.x, -10.0, _430.y);

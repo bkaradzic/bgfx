@@ -422,6 +422,7 @@ protected:
 	                                                      SPIRType &ib_type, SPIRVariable &var, uint32_t index,
 	                                                      bool strip_array);
 	uint32_t get_accumulated_member_location(const SPIRVariable &var, uint32_t mbr_idx, bool strip_array);
+	void add_tess_level_input_to_interface_block(const std::string &ib_var_ref, SPIRType &ib_type, SPIRVariable &var);
 
 	void fix_up_interface_member_indices(spv::StorageClass storage, uint32_t ib_type_id);
 
@@ -516,6 +517,7 @@ protected:
 	bool capture_output_to_buffer = false;
 	bool needs_aux_buffer_def = false;
 	bool used_aux_buffer = false;
+	bool added_builtin_tess_level = false;
 	std::string qual_pos_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";

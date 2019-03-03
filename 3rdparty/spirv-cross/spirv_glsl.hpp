@@ -643,15 +643,10 @@ protected:
 
 	bool variable_is_lut(const SPIRVariable &var) const;
 
+	char current_locale_radix_character = '.';
+
 private:
-	void init()
-	{
-		if (ir.source.known)
-		{
-			options.es = ir.source.es;
-			options.version = ir.source.version;
-		}
-	}
+	void init();
 };
 } // namespace spirv_cross
 

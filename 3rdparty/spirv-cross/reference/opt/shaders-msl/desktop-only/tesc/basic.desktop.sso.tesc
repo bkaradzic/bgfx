@@ -25,6 +25,8 @@ kernel void main0(main0_in in [[stage_in]], uint gl_InvocationID [[thread_index_
     if (gl_InvocationID < spvIndirectParams[0])
         gl_in[gl_InvocationID] = in;
     threadgroup_barrier(mem_flags::mem_threadgroup);
+    if (gl_InvocationID >= 1)
+        return;
     spvTessLevel[gl_PrimitiveID].insideTessellationFactor[0] = half(8.8999996185302734375);
     spvTessLevel[gl_PrimitiveID].insideTessellationFactor[1] = half(6.900000095367431640625);
     spvTessLevel[gl_PrimitiveID].edgeTessellationFactor[0] = half(8.8999996185302734375);

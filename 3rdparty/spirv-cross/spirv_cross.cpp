@@ -64,8 +64,6 @@ void Compiler::set_ir(const ParsedIR &ir_)
 
 string Compiler::compile()
 {
-	// Force a classic "C" locale, reverts when function returns
-	ClassicLocale classic_locale;
 	return "";
 }
 

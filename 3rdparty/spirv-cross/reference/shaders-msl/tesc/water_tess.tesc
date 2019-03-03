@@ -112,6 +112,8 @@ kernel void main0(main0_in in [[stage_in]], constant UBO& v_41 [[buffer(0)]], ui
     if (gl_InvocationID < spvIndirectParams[0])
         gl_in[gl_InvocationID] = in;
     threadgroup_barrier(mem_flags::mem_threadgroup);
+    if (gl_InvocationID >= 1)
+        return;
     float2 p0 = gl_in[0].vPatchPosBase;
     float2 param = p0;
     if (!frustum_cull(param, v_41))

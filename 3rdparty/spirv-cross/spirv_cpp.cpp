@@ -306,9 +306,6 @@ void CompilerCPP::emit_resources()
 
 string CompilerCPP::compile()
 {
-	// Force a classic "C" locale, reverts when function returns
-	ClassicLocale classic_locale;
-
 	// Do not deal with ES-isms like precision, older extensions and such.
 	options.es = false;
 	options.version = 450;

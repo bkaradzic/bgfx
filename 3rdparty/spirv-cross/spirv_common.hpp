@@ -23,13 +23,13 @@
 #include <cstdio>
 #include <cstring>
 #include <functional>
-#include <locale>
 #include <memory>
 #include <sstream>
 #include <stack>
 #include <stdexcept>
 #include <stdint.h>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -245,10 +245,12 @@ inline std::string merge(const std::vector<std::string> &list)
 	return s;
 }
 
-template <typename T>
-inline std::string convert_to_string(T &&t)
+// Make sure we don't accidentally call this with float or doubles with SFINAE.
+// Have to use the radix-aware overload.
+template <typename T, typename std::enable_if<!std::is_floating_point<T>::value, int>::type = 0>
+inline std::string convert_to_string(const T &t)
 {
-	return std::to_string(std::forward<T>(t));
+	return std::to_string(t);
 }
 
 // Allow implementations to set a convenient standard precision
@@ -263,24 +265,43 @@ inline std::string convert_to_string(T &&t)
 #pragma warning(disable : 4996)
 #endif
 
-inline std::string convert_to_string(float t)
+static inline void fixup_radix_point(char *str, char radix_point)
+{
+	// Setting locales is a very risky business in multi-threaded program,
+	// so just fixup locales instead. We only need to care about the radix point.
+	if (radix_point != '.')
+	{
+		while (*str != '\0')
+		{
+			if (*str == radix_point)
+				*str = '.';
+			str++;
+		}
+	}
+}
+
+inline std::string convert_to_string(float t, char locale_radix_point)
 {
 	// std::to_string for floating point values is broken.
 	// Fallback to something more sane.
 	char buf[64];
 	sprintf(buf, SPIRV_CROSS_FLT_FMT, t);
+	fixup_radix_point(buf, locale_radix_point);
+
 	// Ensure that the literal is float.
 	if (!strchr(buf, '.') && !strchr(buf, 'e'))
 		strcat(buf, ".0");
 	return buf;
 }
 
-inline std::string convert_to_string(double t)
+inline std::string convert_to_string(double t, char locale_radix_point)
 {
 	// std::to_string for floating point values is broken.
 	// Fallback to something more sane.
 	char buf[64];
 	sprintf(buf, SPIRV_CROSS_FLT_FMT, t);
+	fixup_radix_point(buf, locale_radix_point);
+
 	// Ensure that the literal is float.
 	if (!strchr(buf, '.') && !strchr(buf, 'e'))
 		strcat(buf, ".0");
@@ -1403,22 +1424,6 @@ struct Meta
 // name_of_type is the textual name of the type which will be used in the code unless written to by the callback.
 using VariableTypeRemapCallback =
     std::function<void(const SPIRType &type, const std::string &var_name, std::string &name_of_type)>;
-
-class ClassicLocale
-{
-public:
-	ClassicLocale()
-	{
-		old = std::locale::global(std::locale::classic());
-	}
-	~ClassicLocale()
-	{
-		std::locale::global(old);
-	}
-
-private:
-	std::locale old;
-};
 
 class Hasher
 {

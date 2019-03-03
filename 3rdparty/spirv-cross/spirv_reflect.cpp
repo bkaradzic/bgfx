@@ -247,9 +247,6 @@ void CompilerReflection::set_format(const std::string &format)
 
 string CompilerReflection::compile()
 {
-	// Force a classic "C" locale, reverts when function returns
-	ClassicLocale classic_locale;
-
 	// Move constructor for this type is broken on GCC 4.9 ...
 	json_stream = std::make_shared<simple_json::Stream>();
 	json_stream->begin_json_object();

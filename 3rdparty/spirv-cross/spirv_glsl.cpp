@@ -21,7 +21,13 @@
 #include <assert.h>
 #include <cmath>
 #include <limits>
+#include <locale.h>
 #include <utility>
+
+#ifndef _WIN32
+#include <langinfo.h>
+#endif
+#include <locale.h>
 
 using namespace spv;
 using namespace spirv_cross;
@@ -147,6 +153,31 @@ string CompilerGLSL::sanitize_underscores(const string &str)
 		}
 	}
 	return res;
+}
+
+void CompilerGLSL::init()
+{
+	if (ir.source.known)
+	{
+		options.es = ir.source.es;
+		options.version = ir.source.version;
+	}
+
+	// Query the locale to see what the decimal point is.
+	// We'll rely on fixing it up ourselves in the rare case we have a comma-as-decimal locale
+	// rather than setting locales ourselves. Settings locales in a safe and isolated way is rather
+	// tricky.
+#ifdef _WIN32
+	// On Windows, localeconv uses thread-local storage, so it should be fine.
+	const struct lconv *conv = localeconv();
+	if (conv && conv->decimal_point)
+		current_locale_radix_character = *conv->decimal_point;
+#else
+	// localeconv, the portable function is not MT safe ...
+	const char *decimal_point = nl_langinfo(RADIXCHAR);
+	if (decimal_point && *decimal_point != '\0')
+		current_locale_radix_character = *decimal_point;
+#endif
 }
 
 static const char *to_pls_layout(PlsFormat format)
@@ -387,9 +418,6 @@ void CompilerGLSL::find_static_extensions()
 
 string CompilerGLSL::compile()
 {
-	// Force a classic "C" locale, reverts when function returns
-	ClassicLocale classic_locale;
-
 	if (options.vulkan_semantics)
 		backend.allow_precision_qualifiers = true;
 	backend.force_gl_in_out_block = true;
@@ -2985,7 +3013,7 @@ string CompilerGLSL::convert_half_to_string(const SPIRConstant &c, uint32_t col,
 		type.basetype = SPIRType::Half;
 		type.vecsize = 1;
 		type.columns = 1;
-		res = join(type_to_glsl(type), "(", convert_to_string(float_value), ")");
+		res = join(type_to_glsl(type), "(", convert_to_string(float_value, current_locale_radix_character), ")");
 	}
 
 	return res;
@@ -3043,7 +3071,7 @@ string CompilerGLSL::convert_float_to_string(const SPIRConstant &c, uint32_t col
 	}
 	else
 	{
-		res = convert_to_string(float_value);
+		res = convert_to_string(float_value, current_locale_radix_character);
 		if (backend.float_literal_suffix)
 			res += "f";
 	}
@@ -3115,7 +3143,7 @@ std::string CompilerGLSL::convert_double_to_string(const SPIRConstant &c, uint32
 	}
 	else
 	{
-		res = convert_to_string(double_value);
+		res = convert_to_string(double_value, current_locale_radix_character);
 		if (backend.double_literal_suffix)
 			res += "lf";
 	}

@@ -82,6 +82,8 @@ kernel void main0(main0_in in [[stage_in]], uint gl_InvocationID [[thread_index_
     if (gl_InvocationID < spvIndirectParams[0])
         gl_in[gl_InvocationID] = in;
     threadgroup_barrier(mem_flags::mem_threadgroup);
+    if (gl_InvocationID >= 3)
+        return;
     VertexOutput p[3];
     p[0].pos = gl_in[0].gl_Position;
     p[0].uv = gl_in[0].VertexOutput_uv;
