@@ -44,7 +44,7 @@ void toAabb(Aabb& _outAabb, const Cylinder& _cylinder)
 	const Vec3 axis = sub(_cylinder.end, _cylinder.pos);
 	const Vec3 asq  = mul(axis, axis);
 	const Vec3 nsq  = mul(asq, 1.0f/dot(axis, axis) );
-	const Vec3 tmp  = sub(1.0f, nsq);
+	const Vec3 tmp  = sub(Vec3(1.0f), nsq);
 
 	const float inv = 1.0f/(tmp.x*tmp.y*tmp.z);
 
@@ -1228,7 +1228,7 @@ Vec3 closestPoint(const Triangle& _triangle, const Vec3& _point)
 	const Vec3 pos = closestPoint(plane, _point);
 	const Vec3 uvw = barycentric(_triangle, pos);
 
-	return cartesian(_triangle, clamp<Vec3>(uvw, 0.0f, 1.0f) );
+	return cartesian(_triangle, clamp<Vec3>(uvw, Vec3(0.0f), Vec3(1.0f) ) );
 }
 
 bool overlap(const Aabb& _aabb, const Vec3& _pos)
