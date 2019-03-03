@@ -83,6 +83,7 @@ const MemorySemanticsMask MemorySemanticsAllMemory =
 struct IdImmediate {
     bool isId;      // true if word is an Id, false if word is an immediate
     unsigned word;
+    IdImmediate(bool i, unsigned w) : isId(i), word(w) {}
 };
 
 //

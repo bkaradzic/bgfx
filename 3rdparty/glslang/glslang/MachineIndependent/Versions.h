@@ -225,6 +225,8 @@ const char* const viewportEXTs[] = { E_GL_ARB_shader_viewport_layer_array, E_GL_
 const int Num_viewportEXTs = sizeof(viewportEXTs) / sizeof(viewportEXTs[0]);
 #endif
 
+const char* const E_GL_NV_cooperative_matrix                    = "GL_NV_cooperative_matrix";
+
 // AEP
 const char* const E_GL_ANDROID_extension_pack_es31a             = "GL_ANDROID_extension_pack_es31a";
 const char* const E_GL_KHR_blend_equation_advanced              = "GL_KHR_blend_equation_advanced";

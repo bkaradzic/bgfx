@@ -8,7 +8,7 @@ ERROR: 0:12: '' : can only have one auxiliary qualifier (centroid, patch, and sa
 ERROR: 0:13: 'uniform' : too many storage qualifiers 
 ERROR: 0:18: '=' : global const initializers must be constant ' const int'
 ERROR: 0:20: 'const' : no qualifiers allowed for function return 
-ERROR: 0:27: '' : array size must be a constant integer expression 
+ERROR: 0:27: '' : array size must be a constant integer expression
 ERROR: 0:38: 'j' : undeclared identifier 
 ERROR: 0:38: '=' :  cannot convert from ' temp float' to ' temp int'
 ERROR: 0:39: 'k' : undeclared identifier 
@@ -31,7 +31,7 @@ ERROR: 0:85: 'patch' : not supported in this stage: vertex
 ERROR: 0:85: '' : vertex input cannot be further qualified 
 ERROR: 0:86: 'patch' : not supported in this stage: vertex
 ERROR: 0:100: '=' : global const initializers must be constant ' const int'
-ERROR: 0:101: '' : array size must be a constant integer expression 
+ERROR: 0:101: '' : array size must be a constant integer expression
 ERROR: 0:107: 'image variables not declared 'writeonly' and without a format layout qualifier' : not supported for this version or the enabled extensions 
 ERROR: 0:114: 'imageAtomicMin' : only supported on image with format r32i or r32ui 
 ERROR: 0:115: 'imageAtomicMax' : no matching overloaded function found 

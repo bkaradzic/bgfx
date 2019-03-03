@@ -100,6 +100,7 @@ using namespace glslang;
             glslang::TArraySizes* arraySizes;
             glslang::TIdentifierList* identifierList;
         };
+        glslang::TArraySizes* typeParameters;
     } interm;
 }
 
@@ -166,6 +167,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> F64MAT4X2 F64MAT4X3 F64MAT4X4
 %token <lex> ATOMIC_UINT
 %token <lex> ACCSTRUCTNV
+%token <lex> FCOOPMATNV
 
 // combined image/sampler
 %token <lex> SAMPLER1D SAMPLER2D SAMPLER3D SAMPLERCUBE SAMPLER1DSHADOW SAMPLER2DSHADOW
@@ -272,6 +274,10 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm.type> precise_qualifier invariant_qualifier interpolation_qualifier storage_qualifier precision_qualifier
 %type <interm.type> layout_qualifier layout_qualifier_id_list layout_qualifier_id
 %type <interm.type> non_uniform_qualifier
+
+%type <interm.typeParameters> type_parameter_specifier
+%type <interm.typeParameters> type_parameter_specifier_opt
+%type <interm.typeParameters> type_parameter_specifier_list
 
 %type <interm.type> type_qualifier fully_specified_type type_specifier
 %type <interm.type> single_type_qualifier
@@ -1487,15 +1493,17 @@ type_name_list
     ;
 
 type_specifier
-    : type_specifier_nonarray {
+    : type_specifier_nonarray type_parameter_specifier_opt {
         $$ = $1;
         $$.qualifier.precision = parseContext.getDefaultPrecision($$);
+        $$.typeParameters = $2;
     }
-    | type_specifier_nonarray array_specifier {
-        parseContext.arrayOfArrayVersionCheck($2.loc, $2.arraySizes);
+    | type_specifier_nonarray type_parameter_specifier_opt array_specifier {
+        parseContext.arrayOfArrayVersionCheck($3.loc, $3.arraySizes);
         $$ = $1;
         $$.qualifier.precision = parseContext.getDefaultPrecision($$);
-        $$.arraySizes = $2.arraySizes;
+        $$.typeParameters = $2;
+        $$.arraySizes = $3.arraySizes;
     }
     ;
 
@@ -1510,7 +1518,7 @@ array_specifier
         $$.arraySizes = new TArraySizes;
 
         TArraySize size;
-        parseContext.arraySizeCheck($2->getLoc(), $2, size);
+        parseContext.arraySizeCheck($2->getLoc(), $2, size, "array size");
         $$.arraySizes->addInnerSize(size);
     }
     | array_specifier LEFT_BRACKET RIGHT_BRACKET {
@@ -1521,8 +1529,40 @@ array_specifier
         $$ = $1;
 
         TArraySize size;
-        parseContext.arraySizeCheck($3->getLoc(), $3, size);
+        parseContext.arraySizeCheck($3->getLoc(), $3, size, "array size");
         $$.arraySizes->addInnerSize(size);
+    }
+    ;
+
+type_parameter_specifier_opt
+    : type_parameter_specifier {
+        $$ = $1;
+    }
+    | /* May be null */ {
+        $$ = 0;
+    }
+    ;
+
+type_parameter_specifier
+    : LEFT_ANGLE type_parameter_specifier_list RIGHT_ANGLE {
+        $$ = $2;
+    }
+    ;
+
+type_parameter_specifier_list
+    : unary_expression {
+        $$ = new TArraySizes;
+
+        TArraySize size;
+        parseContext.arraySizeCheck($1->getLoc(), $1, size, "type parameter");
+        $$->addInnerSize(size);
+    }
+    | type_parameter_specifier_list COMMA unary_expression {
+        $$ = $1;
+
+        TArraySize size;
+        parseContext.arraySizeCheck($3->getLoc(), $3, size, "type parameter");
+        $$->addInnerSize(size);
     }
     ;
 
@@ -3171,6 +3211,12 @@ type_specifier_nonarray
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtSampler;
         $$.sampler.setSubpass(EbtUint, true);
+    }
+    | FCOOPMATNV {
+        parseContext.fcoopmatCheck($1.loc, "fcoopmatNV", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtFloat;
+        $$.coopmat = true;
     }
     | struct_specifier {
         $$ = $1;

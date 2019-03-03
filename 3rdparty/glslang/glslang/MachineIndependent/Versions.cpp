@@ -248,6 +248,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_NV_mesh_shader]                           = EBhDisable;
 #endif
 
+    extensionBehavior[E_GL_NV_cooperative_matrix]                    = EBhDisable;
+
     // AEP
     extensionBehavior[E_GL_ANDROID_extension_pack_es31a]             = EBhDisable;
     extensionBehavior[E_GL_KHR_blend_equation_advanced]              = EBhDisable;
@@ -427,6 +429,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_shader_texture_footprint 1\n"
             "#define GL_NV_mesh_shader 1\n"
 #endif
+            "#define GL_NV_cooperative_matrix 1\n"
+
             "#define GL_EXT_shader_explicit_arithmetic_types 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_int8 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_int16 1\n"
@@ -1080,6 +1084,14 @@ void TParseVersions::int64Check(const TSourceLoc& loc, const char* op, bool buil
         requireExtensions(loc, 3, extensions, op);
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, op);
         profileRequires(loc, ECoreProfile | ECompatibilityProfile, 400, nullptr, op);
+    }
+}
+
+void TParseVersions::fcoopmatCheck(const TSourceLoc& loc, const char* op, bool builtIn)
+{
+    if (!builtIn) {
+        const char* const extensions[] = {E_GL_NV_cooperative_matrix};
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
 

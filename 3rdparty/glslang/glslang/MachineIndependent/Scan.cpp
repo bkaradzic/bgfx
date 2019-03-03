@@ -714,6 +714,8 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["taskNV"] =                  PERTASKNV;
 #endif
 
+    (*KeywordMap)["fcoopmatNV"] =              FCOOPMATNV;
+
     ReservedSet = new std::unordered_set<const char*, str_hash, str_eq>;
 
     ReservedSet->insert("common");
@@ -1611,6 +1613,13 @@ int TScanContext::tokenizeIdentifier()
             return keyword;
         return identifierOrType();
 #endif
+
+    case FCOOPMATNV:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_cooperative_matrix))
+            return keyword;
+        return identifierOrType();
 
     default:
         parseContext.infoSink.info.message(EPrefixInternalError, "Unknown glslang keyword", loc);

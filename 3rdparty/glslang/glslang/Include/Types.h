@@ -1235,9 +1235,11 @@ public:
     int vectorSize : 4;
     int matrixCols : 4;
     int matrixRows : 4;
+    bool coopmat   : 1;
     TArraySizes* arraySizes;
     const TType* userDef;
     TSourceLoc loc;
+    TArraySizes* typeParameters;
 
     void initType(const TSourceLoc& l)
     {
@@ -1248,6 +1250,8 @@ public:
         arraySizes = nullptr;
         userDef = nullptr;
         loc = l;
+        typeParameters = nullptr;
+        coopmat = false;
     }
 
     void initQualifiers(bool global = false)
@@ -1299,8 +1303,8 @@ public:
     // for "empty" type (no args) or simple scalar/vector/matrix
     explicit TType(TBasicType t = EbtVoid, TStorageQualifier q = EvqTemporary, int vs = 1, int mc = 0, int mr = 0,
                    bool isVector = false) :
-                            basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1),
-                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+                            basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1), coopmat(false),
+                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1310,8 +1314,8 @@ public:
     // for explicit precision qualifier
     TType(TBasicType t, TStorageQualifier q, TPrecisionQualifier p, int vs = 1, int mc = 0, int mr = 0,
           bool isVector = false) :
-                            basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1),
-                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+                            basicType(t), vectorSize(vs), matrixCols(mc), matrixRows(mr), vector1(isVector && vs == 1), coopmat(false),
+                            arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr)
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1323,8 +1327,8 @@ public:
     // for turning a TPublicType into a TType, using a shallow copy
     explicit TType(const TPublicType& p) :
                             basicType(p.basicType),
-                            vectorSize(p.vectorSize), matrixCols(p.matrixCols), matrixRows(p.matrixRows), vector1(false),
-                            arraySizes(p.arraySizes), structure(nullptr), fieldName(nullptr), typeName(nullptr)
+                            vectorSize(p.vectorSize), matrixCols(p.matrixCols), matrixRows(p.matrixRows), vector1(false), coopmat(p.coopmat),
+                            arraySizes(p.arraySizes), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(p.typeParameters)
                             {
                                 if (basicType == EbtSampler)
                                     sampler = p.sampler;
@@ -1340,12 +1344,18 @@ public:
                                     }
                                     typeName = NewPoolTString(p.userDef->getTypeName().c_str());
                                 }
+                                if (p.coopmat && p.basicType == EbtFloat &&
+                                    p.typeParameters && p.typeParameters->getNumDims() > 0 &&
+                                    p.typeParameters->getDimSize(0) == 16) {
+                                    basicType = EbtFloat16;
+                                    qualifier.precision = EpqNone;
+                                }
                             }
     // for construction of sampler types
     TType(const TSampler& sampler, TStorageQualifier q = EvqUniform, TArraySizes* as = nullptr) :
-        basicType(EbtSampler), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
+        basicType(EbtSampler), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
         arraySizes(as), structure(nullptr), fieldName(nullptr), typeName(nullptr),
-        sampler(sampler)
+        sampler(sampler), typeParameters(nullptr)
     {
         qualifier.clear();
         qualifier.storage = q;
@@ -1386,13 +1396,16 @@ public:
                                         // dereference from vector to scalar
                                         vectorSize = 1;
                                         vector1 = false;
+                                    } else if (isCoopMat()) {
+                                        coopmat = false;
+                                        typeParameters = nullptr;
                                     }
                                 }
                             }
     // for making structures, ...
     TType(TTypeList* userDef, const TString& n) :
-                            basicType(EbtStruct), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
-                            arraySizes(nullptr), structure(userDef), fieldName(nullptr)
+                            basicType(EbtStruct), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
+                            arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr)
                             {
                                 sampler.clear();
                                 qualifier.clear();
@@ -1400,8 +1413,8 @@ public:
                             }
     // For interface blocks
     TType(TTypeList* userDef, const TString& n, const TQualifier& q) :
-                            basicType(EbtBlock), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false),
-                            qualifier(q), arraySizes(nullptr), structure(userDef), fieldName(nullptr)
+                            basicType(EbtBlock), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmat(false),
+                            qualifier(q), arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr)
                             {
                                 sampler.clear();
                                 typeName = NewPoolTString(n.c_str());
@@ -1439,6 +1452,8 @@ public:
         } else {
             referentType = copyOf.referentType;
         }
+        typeParameters = copyOf.typeParameters;
+        coopmat = copyOf.coopmat;
     }
 
     // Make complete copy of the whole type graph rooted at 'copyOf'.
@@ -1502,6 +1517,8 @@ public:
     virtual const TArraySizes* getArraySizes() const { return arraySizes; }
     virtual       TArraySizes* getArraySizes()       { return arraySizes; }
     virtual TType* getReferentType() const { return referentType; }
+    virtual const TArraySizes* getTypeParameters() const { return typeParameters; }
+    virtual       TArraySizes* getTypeParameters()       { return typeParameters; }
 
     virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray(); }
     virtual bool isScalarOrVec1() const { return isScalar() || vector1; }
@@ -1544,6 +1561,8 @@ public:
     virtual bool isImage()   const { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
     virtual bool isTexture() const { return basicType == EbtSampler && getSampler().isTexture(); }
+    virtual bool isParameterized()  const { return typeParameters != nullptr; }
+    virtual bool isCoopMat() const { return coopmat; }
 
     // return true if this type contains any subtype which satisfies the given predicate.
     template <typename P>
@@ -1633,6 +1652,11 @@ public:
         return containsBasicType(EbtInt8) || containsBasicType(EbtUint8);
     }
 
+    virtual bool containsCoopMat() const
+    {
+        return contains([](const TType* t) { return t->coopmat; } );
+    }
+
     // Array editing methods.  Array descriptors can be shared across
     // type instances.  This allows all uses of the same array
     // to be updated at once.  E.g., all nodes can be explicitly sized
@@ -1704,6 +1728,46 @@ public:
             (*structure)[lastMember].type->adoptImplicitArraySizes(getQualifier().storage == EvqBuffer);
         }
     }
+
+
+    void updateTypeParameters(const TType& type)
+    {
+        // For when we may already be sharing existing array descriptors,
+        // keeping the pointers the same, just updating the contents.
+        assert(typeParameters != nullptr);
+        assert(type.typeParameters != nullptr);
+        *typeParameters = *type.typeParameters;
+    }
+    void copyTypeParameters(const TArraySizes& s)
+    {
+        // For setting a fresh new set of type parameters, not yet worrying about sharing.
+        typeParameters = new TArraySizes;
+        *typeParameters = s;
+    }
+    void transferTypeParameters(TArraySizes* s)
+    {
+        // For setting an already allocated set of sizes that this type can use
+        // (no copy made).
+        typeParameters = s;
+    }
+    void clearTypeParameters()
+    {
+        typeParameters = nullptr;
+    }
+
+    // Add inner array sizes, to any existing sizes, via copy; the
+    // sizes passed in can still be reused for other purposes.
+    void copyTypeParametersInnerSizes(const TArraySizes* s)
+    {
+        if (s != nullptr) {
+            if (typeParameters == nullptr)
+                copyTypeParameters(*s);
+            else
+                typeParameters->addInnerSizes(*s);
+        }
+    }
+
+
 
     const char* getBasicString() const
     {
@@ -1919,6 +1983,15 @@ public:
                 }
             }
         }
+        if (isParameterized()) {
+            appendStr("<");
+            for(int i = 0; i < (int)typeParameters->getNumDims(); ++i) {
+                appendInt(typeParameters->getDimSize(i));
+                if (i != (int)typeParameters->getNumDims() - 1)
+                    appendStr(", ");
+            }
+            appendStr(">");
+        }
         if (qualifier.precision != EpqNone) {
             appendStr(" ");
             appendStr(getPrecisionQualifierString());
@@ -2075,6 +2148,13 @@ public:
         return arraySizes->sameInnerArrayness(*right.arraySizes);
     }
 
+    // See if two type's parameters match
+    bool sameTypeParameters(const TType& right) const
+    {
+        return ((typeParameters == nullptr && right.typeParameters == nullptr) ||
+                (typeParameters != nullptr && right.typeParameters != nullptr && *typeParameters == *right.typeParameters));
+    }
+
     // See if two type's elements match in all ways except basic type
     bool sameElementShape(const TType& right) const
     {
@@ -2083,14 +2163,23 @@ public:
                matrixCols == right.matrixCols &&
                matrixRows == right.matrixRows &&
                   vector1 == right.vector1    &&
+                  coopmat == right.coopmat    &&
                sameStructType(right)          &&
                sameReferenceType(right);
+    }
+
+    // See if a cooperative matrix type parameter with unspecified parameters is
+    // an OK function parameter
+    bool coopMatParameterOK(const TType& right) const
+    {
+        return coopmat && right.coopmat &&
+               typeParameters == nullptr && right.typeParameters != nullptr;
     }
 
     // See if two types match in all ways (just the actual type, not qualification)
     bool operator==(const TType& right) const
     {
-        return sameElementType(right) && sameArrayness(right);
+        return sameElementType(right) && sameArrayness(right) && sameTypeParameters(right);
     }
 
     bool operator!=(const TType& right) const
@@ -2113,6 +2202,11 @@ protected:
         if (copyOf.arraySizes) {
             arraySizes = new TArraySizes;
             *arraySizes = *copyOf.arraySizes;
+        }
+
+        if (copyOf.typeParameters) {
+            typeParameters = new TArraySizes;
+            *typeParameters = *copyOf.typeParameters;
         }
 
         if (copyOf.isStruct() && copyOf.structure) {
@@ -2150,6 +2244,7 @@ protected:
                                // functionality is added.
                                // HLSL does have a 1-component vectors, so this will be true to disambiguate
                                // from a scalar.
+    bool coopmat         : 1;
     TQualifier qualifier;
 
     TArraySizes* arraySizes;    // nullptr unless an array; can be shared across types
@@ -2162,6 +2257,7 @@ protected:
     TString *fieldName;         // for structure field names
     TString *typeName;          // for structure type name
     TSampler sampler;
+    TArraySizes* typeParameters;// nullptr unless a parameterized type; can be shared across types
 };
 
 } // end namespace glslang

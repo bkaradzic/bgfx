@@ -817,6 +817,7 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpConstructStruct:  out.debug << "Construct structure";  break;
     case EOpConstructTextureSampler: out.debug << "Construct combined texture-sampler"; break;
     case EOpConstructReference:  out.debug << "Construct reference";  break;
+    case EOpConstructCooperativeMatrix:  out.debug << "Construct cooperative matrix";  break;
 
     case EOpLessThan:         out.debug << "Compare Less Than";             break;
     case EOpGreaterThan:      out.debug << "Compare Greater Than";          break;
@@ -1065,6 +1066,10 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpExecuteCallableNV:                out.debug << "executeCallableNV"; break;
     case EOpWritePackedPrimitiveIndices4x8NV: out.debug << "writePackedPrimitiveIndices4x8NV"; break;
 #endif
+
+    case EOpCooperativeMatrixLoad:  out.debug << "Load cooperative matrix";  break;
+    case EOpCooperativeMatrixStore:  out.debug << "Store cooperative matrix";  break;
+    case EOpCooperativeMatrixMulAdd: out.debug << "MulAdd cooperative matrices"; break;
 
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }

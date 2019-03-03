@@ -930,6 +930,10 @@ const char* CapabilityString(int info)
 
     case CapabilityPhysicalStorageBufferAddressesEXT:   return "CapabilityPhysicalStorageBufferAddressesEXT";
 
+    case CapabilityVariablePointers:                    return "CapabilityVariablePointers";
+
+    case CapabilityCooperativeMatrixNV:     return "CapabilityCooperativeMatrixNV";
+
     default: return "Bad";
     }
 }
@@ -1333,6 +1337,12 @@ const char* OpcodeString(int op)
     case OpWritePackedPrimitiveIndices4x8NV: return "OpWritePackedPrimitiveIndices4x8NV";
 #endif
 
+    case OpTypeCooperativeMatrixNV:         return "OpTypeCooperativeMatrixNV";
+    case OpCooperativeMatrixLoadNV:         return "OpCooperativeMatrixLoadNV";
+    case OpCooperativeMatrixStoreNV:        return "OpCooperativeMatrixStoreNV";
+    case OpCooperativeMatrixMulAddNV:       return "OpCooperativeMatrixMulAddNV";
+    case OpCooperativeMatrixLengthNV:       return "OpCooperativeMatrixLengthNV";
+
     default:
         return "Bad";
     }
@@ -1444,6 +1454,8 @@ void Parameterize()
     InstructionDesc[OpGroupWaitEvents].setResultAndType(false, false);
     InstructionDesc[OpAtomicFlagClear].setResultAndType(false, false);
     InstructionDesc[OpModuleProcessed].setResultAndType(false, false);
+    InstructionDesc[OpTypeCooperativeMatrixNV].setResultAndType(true, false);
+    InstructionDesc[OpCooperativeMatrixStoreNV].setResultAndType(false, false);
 
     // Specific additional context-dependent operands
 
@@ -2714,6 +2726,32 @@ void Parameterize()
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Index Offset'");
     InstructionDesc[OpWritePackedPrimitiveIndices4x8NV].operands.push(OperandId, "'Packed Indices'");
 #endif
+
+    InstructionDesc[OpTypeCooperativeMatrixNV].operands.push(OperandId, "'Component Type'");
+    InstructionDesc[OpTypeCooperativeMatrixNV].operands.push(OperandId, "'Scope'");
+    InstructionDesc[OpTypeCooperativeMatrixNV].operands.push(OperandId, "'Rows'");
+    InstructionDesc[OpTypeCooperativeMatrixNV].operands.push(OperandId, "'Columns'");
+
+    InstructionDesc[OpCooperativeMatrixLoadNV].operands.push(OperandId, "'Pointer'");
+    InstructionDesc[OpCooperativeMatrixLoadNV].operands.push(OperandId, "'Stride'");
+    InstructionDesc[OpCooperativeMatrixLoadNV].operands.push(OperandId, "'Column Major'");
+    InstructionDesc[OpCooperativeMatrixLoadNV].operands.push(OperandMemoryAccess, "'Memory Access'");
+    InstructionDesc[OpCooperativeMatrixLoadNV].operands.push(OperandLiteralNumber, "", true);
+    InstructionDesc[OpCooperativeMatrixLoadNV].operands.push(OperandId, "", true);
+
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandId, "'Pointer'");
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandId, "'Object'");
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandId, "'Stride'");
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandId, "'Column Major'");
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandMemoryAccess, "'Memory Access'");
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandLiteralNumber, "", true);
+    InstructionDesc[OpCooperativeMatrixStoreNV].operands.push(OperandId, "", true);
+
+    InstructionDesc[OpCooperativeMatrixMulAddNV].operands.push(OperandId, "'A'");
+    InstructionDesc[OpCooperativeMatrixMulAddNV].operands.push(OperandId, "'B'");
+    InstructionDesc[OpCooperativeMatrixMulAddNV].operands.push(OperandId, "'C'");
+
+    InstructionDesc[OpCooperativeMatrixLengthNV].operands.push(OperandId, "'Type'");
 }
 
 }; // end spv namespace

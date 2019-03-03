@@ -615,6 +615,10 @@ enum TOperator {
     EOpAny,
     EOpAll,
 
+    EOpCooperativeMatrixLoad,
+    EOpCooperativeMatrixStore,
+    EOpCooperativeMatrixMulAdd,
+
     //
     // Branch
     //
@@ -737,6 +741,7 @@ enum TOperator {
     EOpConstructTextureSampler,
     EOpConstructNonuniform,     // expected to be transformed away, not present in final AST
     EOpConstructReference,
+    EOpConstructCooperativeMatrix,
     EOpConstructGuardEnd,
 
     //

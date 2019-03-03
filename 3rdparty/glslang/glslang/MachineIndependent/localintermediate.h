@@ -261,6 +261,7 @@ public:
         useStorageBuffer(false),
         useVulkanMemoryModel(false),
         hlslIoMapping(false),
+        useVariablePointers(false),
         textureSamplerTransformMode(EShTexSampTransKeep),
         needToLegalize(false),
         binaryDoubleOutput(false),
@@ -405,6 +406,12 @@ public:
         usePhysicalStorageBuffer = true;
     }
     bool usingPhysicalStorageBuffer() const { return usePhysicalStorageBuffer; }
+    void setUseVariablePointers()
+    {
+        useVariablePointers = true;
+        processes.addProcess("use-variable-pointers");
+    }
+    bool usingVariablePointers() const { return useVariablePointers; }
 
     template<class T> T addCounterBufferName(const T& name) const { return name + implicitCounterName; }
     bool hasCounterBufferName(const TString& name) const {
@@ -491,6 +498,7 @@ public:
     TIntermTyped* addConversion(TOperator, const TType&, TIntermTyped*) const;
     std::tuple<TIntermTyped*, TIntermTyped*> addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* node1) const;
     TIntermTyped* addUniShapeConversion(TOperator, const TType&, TIntermTyped*);
+    TIntermTyped* addConversion(TBasicType convertTo, TIntermTyped* node) const;
     void addBiShapeConversion(TOperator, TIntermTyped*& lhsNode, TIntermTyped*& rhsNode);
     TIntermTyped* addShapeConversion(const TType&, TIntermTyped*);
     TIntermTyped* addBinaryMath(TOperator, TIntermTyped* left, TIntermTyped* right, TSourceLoc);
@@ -852,6 +860,7 @@ protected:
     bool useStorageBuffer;
     bool useVulkanMemoryModel;
     bool hlslIoMapping;
+    bool useVariablePointers;
 
     std::set<TString> ioAccessed;           // set of names of statically read/written I/O that might need extra checking
     std::vector<TIoRange> usedIo[4];        // sets of used locations, one for each of in, out, uniform, and buffers
