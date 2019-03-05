@@ -7,9 +7,24 @@
 
 #if ENTRY_CONFIG_USE_SDL
 
-#if BX_PLATFORM_WINDOWS
+#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#	if !(defined(ENTRY_CONFIG_USE_WAYLAND) || defined(ENTRY_CONFIG_USE_X11))
+#		include <SDL2/SDL_config.h>
+#		if defined(SDL_VIDEO_DRIVER_X11)
+#			define ENTRY_CONFIG_USE_X11 1
+#		elif defined(SDL_VIDEO_DRIVER_WAYLAND)
+#			define ENTRY_CONFIG_USE_WAYLAND 1
+#		else
+#			error "X11 or Wayland video driver is required"
+#		endif
+#	endif
+#	if defined(ENTRY_CONFIG_USE_WAYLAND)
+#		include <wayland-egl.h>
+#	endif 
+#elif BX_PLATFORM_WINDOWS
 #	define SDL_MAIN_HANDLED
-#endif // BX_PLATFORM_WINDOWS
+#endif
+
 
 #include <bx/os.h>
 
@@ -34,6 +49,42 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace entry
 {
+	///
+	static void* sdlNativeWindowHandle(SDL_Window* _window)
+	{
+		SDL_SysWMinfo wmi;
+		SDL_VERSION(&wmi.version);
+		if (!SDL_GetWindowWMInfo(_window, &wmi) )
+		{
+			return NULL;
+		}
+
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_X11
+		return (void*)wmi.info.x11.window;
+#		elif ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
+		if(!win_impl)
+		{
+			int width, height;
+			SDL_GetWindowSize(_window, &width, &height);
+			struct wl_surface* surface = wmi.info.wl.surface;
+			if(!surface)
+				return nullptr;
+			win_impl = wl_egl_window_create(surface, width, height);
+			SDL_SetWindowData(_window, "wl_egl_window", win_impl);
+		}
+		return (void*)(uintptr_t)win_impl;
+#		endif
+#	elif BX_PLATFORM_OSX
+		return wmi.info.cocoa.window;
+#	elif BX_PLATFORM_WINDOWS
+		return wmi.info.win.window;
+#	elif BX_PLATFORM_STEAMLINK
+		return wmi.info.vivante.window;
+#	endif // BX_PLATFORM_
+	}
+
 	inline bool sdlSetWindow(SDL_Window* _window)
 	{
 		SDL_SysWMinfo wmi;
@@ -45,24 +96,43 @@ namespace entry
 
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_X11
 		pd.ndt          = wmi.info.x11.display;
-		pd.nwh          = (void*)(uintptr_t)wmi.info.x11.window;
+#		elif ENTRY_CONFIG_USE_WAYLAND
+		pd.ndt          = wmi.info.wl.display;
+#		endif
 #	elif BX_PLATFORM_OSX
 		pd.ndt          = NULL;
-		pd.nwh          = wmi.info.cocoa.window;
 #	elif BX_PLATFORM_WINDOWS
 		pd.ndt          = NULL;
-		pd.nwh          = wmi.info.win.window;
 #	elif BX_PLATFORM_STEAMLINK
 		pd.ndt          = wmi.info.vivante.display;
-		pd.nwh          = wmi.info.vivante.window;
 #	endif // BX_PLATFORM_
+		pd.nwh          = sdlNativeWindowHandle(_window);
+
 		pd.context      = NULL;
 		pd.backBuffer   = NULL;
 		pd.backBufferDS = NULL;
 		bgfx::setPlatformData(pd);
 
 		return true;
+	}
+
+	static void sdlDestroyWindow(SDL_Window* _window)
+	{
+		if(!_window) 
+			return;
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if defined(ENTRY_CONFIG_USE_WAYLAND) && ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
+		if(win_impl)
+		{
+			SDL_SetWindowData(_window, "wl_egl_window", nullptr);
+			wl_egl_window_destroy(win_impl);
+		}
+#		endif
+#	endif
+		SDL_DestroyWindow(_window);
 	}
 
 	static uint8_t translateKeyModifiers(uint16_t _sdl)
@@ -251,27 +321,6 @@ namespace entry
 
 		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 	};
-
-	///
-	static void* sdlNativeWindowHandle(SDL_Window* _window)
-	{
-		SDL_SysWMinfo wmi;
-		SDL_VERSION(&wmi.version);
-		if (!SDL_GetWindowWMInfo(_window, &wmi) )
-		{
-			return NULL;
-		}
-
-#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-		return (void*)wmi.info.x11.window;
-#	elif BX_PLATFORM_OSX
-		return wmi.info.cocoa.window;
-#	elif BX_PLATFORM_WINDOWS
-		return wmi.info.win.window;
-#	elif BX_PLATFORM_STEAMLINK
-		return wmi.info.vivante.window;
-#	endif // BX_PLATFORM_
-	}
 
 	struct Msg
 	{
@@ -858,7 +907,7 @@ namespace entry
 									if (isValid(handle) )
 									{
 										m_eventQueue.postWindowEvent(handle);
-										SDL_DestroyWindow(m_window[handle.idx]);
+										sdlDestroyWindow(m_window[handle.idx]);
 										m_window[handle.idx] = NULL;
 									}
 								}
@@ -952,7 +1001,7 @@ namespace entry
 			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 			m_thread.shutdown();
 
-			SDL_DestroyWindow(m_window[0]);
+			sdlDestroyWindow(m_window[0]);
 			SDL_Quit();
 
 			return m_thread.getExitCode();

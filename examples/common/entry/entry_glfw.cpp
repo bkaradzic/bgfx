@@ -15,8 +15,16 @@
 #endif // GLFW_VERSION_MINOR < 2
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#	define GLFW_EXPOSE_NATIVE_X11
-#	define GLFW_EXPOSE_NATIVE_GLX
+#	if !(defined(ENTRY_CONFIG_USE_WAYLAND) || defined(ENTRY_CONFIG_USE_X11))	// Use X11 by default
+#		define ENTRY_CONFIG_USE_X11 1
+#	endif
+#	if ENTRY_CONFIG_USE_X11
+#		define GLFW_EXPOSE_NATIVE_X11
+#		define GLFW_EXPOSE_NATIVE_GLX
+#	elif ENTRY_CONFIG_USE_WAYLAND
+#		include <wayland-egl.h>
+#		define GLFW_EXPOSE_NATIVE_WAYLAND
+#	endif
 #elif BX_PLATFORM_OSX
 #	define GLFW_EXPOSE_NATIVE_COCOA
 #	define GLFW_EXPOSE_NATIVE_NSGL
@@ -40,7 +48,22 @@ namespace entry
 	static void* glfwNativeWindowHandle(GLFWwindow* _window)
 	{
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_X11
 		return (void*)(uintptr_t)glfwGetX11Window(_window);
+# 		elif ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
+		if(!win_impl)
+		{
+			int width, height;
+			glfwGetWindowSize(_window, &width, &height);
+			struct wl_surface* surface = (struct wl_surface*)glfwGetWaylandWindow(_window);
+			if(!surface)
+				return nullptr;
+			win_impl = wl_egl_window_create(surface, width, height);
+			glfwSetWindowUserPointer(_window, (void*)(uintptr_t)win_impl);
+		}
+		return (void*)(uintptr_t)win_impl;
+#		endif
 #	elif BX_PLATFORM_OSX
 		return glfwGetCocoaWindow(_window);
 #	elif BX_PLATFORM_WINDOWS
@@ -48,11 +71,32 @@ namespace entry
 #	endif // BX_PLATFORM_
 	}
 
+	static void glfwDestroyWindowImpl(GLFWwindow *_window)
+	{
+		if(!_window)
+			return;
+#	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if defined(ENTRY_CONFIG_USE_WAYLAND) && ENTRY_CONFIG_USE_WAYLAND
+		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
+		if(win_impl)
+		{ 
+			glfwSetWindowUserPointer(_window, nullptr);
+			wl_egl_window_destroy(win_impl);
+		}
+#		endif
+#	endif
+		glfwDestroyWindow(_window);
+	}
+
 	static void glfwSetWindow(GLFWwindow* _window)
 	{
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
+#		if ENTRY_CONFIG_USE_X11
 		pd.ndt      = glfwGetX11Display();
+# 		elif ENTRY_CONFIG_USE_WAYLAND
+		pd.ndt      = glfwGetWaylandDisplay();
+		#endif
 #	elif BX_PLATFORM_OSX
 		pd.ndt      = NULL;
 #	elif BX_PLATFORM_WINDOWS
@@ -506,7 +550,7 @@ namespace entry
 							{
 								GLFWwindow* window = m_windows[msg->m_handle.idx];
 								m_eventQueue.postWindowEvent(msg->m_handle);
-								glfwDestroyWindow(window);
+								glfwDestroyWindowImpl(window);
 								m_windows[msg->m_handle.idx] = NULL;
 							}
 						}
@@ -598,7 +642,7 @@ namespace entry
 			m_eventQueue.postExitEvent();
 			m_thread.shutdown();
 
-			glfwDestroyWindow(m_windows[0]);
+			glfwDestroyWindowImpl(m_windows[0]);
 			glfwTerminate();
 
 			return m_thread.getExitCode();
