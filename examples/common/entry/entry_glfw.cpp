@@ -18,10 +18,12 @@
 #	if !(defined(ENTRY_CONFIG_USE_WAYLAND) || defined(ENTRY_CONFIG_USE_X11))	// Use X11 by default
 #		define ENTRY_CONFIG_USE_X11 1
 #	endif
-#	if ENTRY_CONFIG_USE_X11
+#	if defined(ENTRY_CONFIG_USE_X11) && ENTRY_CONFIG_USE_X11
+#		define ENTRY_CONFIG_USE_WAYLAND 0
 #		define GLFW_EXPOSE_NATIVE_X11
 #		define GLFW_EXPOSE_NATIVE_GLX
 #	elif ENTRY_CONFIG_USE_WAYLAND
+#		define ENTRY_CONFIG_USE_X11 0
 #		include <wayland-egl.h>
 #		define GLFW_EXPOSE_NATIVE_WAYLAND
 #	endif

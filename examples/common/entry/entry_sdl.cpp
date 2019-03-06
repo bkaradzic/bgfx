@@ -18,13 +18,18 @@
 #			error "X11 or Wayland video driver is required"
 #		endif
 #	endif
-#	if defined(ENTRY_CONFIG_USE_WAYLAND)
+#	if !defined(ENTRY_CONFIG_USE_X11)
+#		define ENTRY_CONFIG_USE_X11 0
+#	endif
+#	if !defined(ENTRY_CONFIG_USE_WAYLAND)
+#		define ENTRY_CONFIG_USE_WAYLAND 0
+#	endif
+#	if ENTRY_CONFIG_USE_WAYLAND
 #		include <wayland-egl.h>
 #	endif 
 #elif BX_PLATFORM_WINDOWS
 #	define SDL_MAIN_HANDLED
 #endif
-
 
 #include <bx/os.h>
 
@@ -123,7 +128,7 @@ namespace entry
 		if(!_window) 
 			return;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if defined(ENTRY_CONFIG_USE_WAYLAND) && ENTRY_CONFIG_USE_WAYLAND
+#		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
 		if(win_impl)
 		{
