@@ -125,6 +125,18 @@ end
 function copyLib()
 end
 
+if _OPTIONS["with-x11"] then
+defines {
+	"BGFX_USE_WAYLAND=0",
+	"BGFX_USE_X11=1",
+}
+elseif _OPTIONS["with-wayland"] then
+defines {
+	"BGFX_USE_WAYLAND=1",
+	"BGFX_USE_X11=0",
+}
+end
+
 if _OPTIONS["with-sdl"] then
 	if os.is("windows") then
 		if not os.getenv("SDL2_DIR") then

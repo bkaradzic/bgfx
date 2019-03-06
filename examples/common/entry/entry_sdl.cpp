@@ -8,23 +8,7 @@
 #if ENTRY_CONFIG_USE_SDL
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#	if !(defined(ENTRY_CONFIG_USE_WAYLAND) || defined(ENTRY_CONFIG_USE_X11))
-#		include <SDL2/SDL_config.h>
-#		if defined(SDL_VIDEO_DRIVER_X11)
-#			define ENTRY_CONFIG_USE_X11 1
-#		elif defined(SDL_VIDEO_DRIVER_WAYLAND)
-#			define ENTRY_CONFIG_USE_WAYLAND 1
-#		else
-#			error "X11 or Wayland video driver is required"
-#		endif
-#	endif
-#	if !defined(ENTRY_CONFIG_USE_X11)
-#		define ENTRY_CONFIG_USE_X11 0
-#	endif
-#	if !defined(ENTRY_CONFIG_USE_WAYLAND)
-#		define ENTRY_CONFIG_USE_WAYLAND 0
-#	endif
-#	if ENTRY_CONFIG_USE_WAYLAND
+#	if BGFX_USE_WAYLAND
 #		include <wayland-egl.h>
 #	endif 
 #elif BX_PLATFORM_WINDOWS
@@ -65,9 +49,9 @@ namespace entry
 		}
 
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if ENTRY_CONFIG_USE_X11
+#		if BGFX_USE_X11
 		return (void*)wmi.info.x11.window;
-#		elif ENTRY_CONFIG_USE_WAYLAND
+#		elif BGFX_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
 		if(!win_impl)
 		{
@@ -101,9 +85,9 @@ namespace entry
 
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if ENTRY_CONFIG_USE_X11
+#		if BGFX_USE_X11
 		pd.ndt          = wmi.info.x11.display;
-#		elif ENTRY_CONFIG_USE_WAYLAND
+#		elif BGFX_USE_WAYLAND
 		pd.ndt          = wmi.info.wl.display;
 #		endif
 #	elif BX_PLATFORM_OSX
@@ -128,7 +112,7 @@ namespace entry
 		if(!_window) 
 			return;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if ENTRY_CONFIG_USE_WAYLAND
+#		if BGFX_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
 		if(win_impl)
 		{
