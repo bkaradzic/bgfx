@@ -19,6 +19,16 @@ newoption {
 }
 
 newoption {
+	trigger = "with-wayland",
+	description = "Use Wayland backend.",
+}
+
+newoption {
+	trigger = "with-x11",
+	description = "Use X11 backend.",
+}
+
+newoption {
 	trigger = "with-profiler",
 	description = "Enable build with intrusive profiler.",
 }
@@ -159,6 +169,13 @@ function exampleProjectDefaults()
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
 		links   { "SDL2" }
 
+		configuration { "linux or freebsd" }
+			if _OPTIONS["with-wayland"]  then
+				links {
+					"wayland-egl",
+				}
+			end
+
 		configuration { "osx" }
 			libdirs { "$(SDL2_DIR)/lib" }
 
@@ -170,13 +187,19 @@ function exampleProjectDefaults()
 		links   { "glfw3" }
 
 		configuration { "linux or freebsd" }
-			links {
-				"Xrandr",
-				"Xinerama",
-				"Xi",
-				"Xxf86vm",
-				"Xcursor",
-			}
+			if _OPTIONS["with-x11"] then
+				links {
+					"Xrandr",
+					"Xinerama",
+					"Xi",
+					"Xxf86vm",
+					"Xcursor",
+				}
+			elseif _OPTIONS["with-wayland"]  then
+				links {
+					"wayland-egl",
+				}
+			end
 
 		configuration { "osx" }
 			linkoptions {
