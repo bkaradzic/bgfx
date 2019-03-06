@@ -484,7 +484,7 @@ func.updateTexture2D
 	"void"
 	.handle "TextureHandle"
 	.layer  "uint16_t"
-	.mip    "uint16_t"
+	.mip    "uint8_t"
 	.x      "uint16_t"
 	.y      "uint16_t"
 	.width  "uint16_t"
@@ -495,7 +495,7 @@ func.updateTexture2D
 func.updateTexture3D
 	"void"
 	.handle "TextureHandle"
-	.mip    "uint16_t"
+	.mip    "uint8_t"
 	.x      "uint16_t"
 	.y      "uint16_t"
 	.z      "uint16_t"

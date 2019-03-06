@@ -438,13 +438,13 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_cube(uint16_t _size, bool _
 	return handle_ret.c;
 }
 
-BGFX_C_API void bgfx_update_texture_2d(bgfx_texture_handle_t _handle, uint16_t _layer, uint16_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t * _mem, uint16_t _pitch)
+BGFX_C_API void bgfx_update_texture_2d(bgfx_texture_handle_t _handle, uint16_t _layer, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t * _mem, uint16_t _pitch)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
 	bgfx::updateTexture2D(handle.cpp, _layer, _mip, _x, _y, _width, _height, (const bgfx::Memory *)_mem, _pitch);
 }
 
-BGFX_C_API void bgfx_update_texture_3d(bgfx_texture_handle_t _handle, uint16_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const bgfx_memory_t * _mem)
+BGFX_C_API void bgfx_update_texture_3d(bgfx_texture_handle_t _handle, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _z, uint16_t _width, uint16_t _height, uint16_t _depth, const bgfx_memory_t * _mem)
 {
 	union { bgfx_texture_handle_t c; bgfx::TextureHandle cpp; } handle = { _handle };
 	bgfx::updateTexture3D(handle.cpp, _mip, _x, _y, _z, _width, _height, _depth, (const bgfx::Memory *)_mem);
