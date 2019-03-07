@@ -4945,15 +4945,22 @@ namespace bgfx { namespace d3d11
 
 	void FrameBufferD3D11::set()
 	{
-		s_renderD3D11->m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
-			  m_num
-			, m_rtv
-			, m_dsv
-			, 16
-			, m_numUav
-			, m_uav
-			, NULL
-			);
+		if (0 < m_numUav)
+		{
+			s_renderD3D11->m_deviceCtx->OMSetRenderTargetsAndUnorderedAccessViews(
+				  m_num
+				, m_rtv
+				, m_dsv
+				, 16
+				, m_numUav
+				, m_uav
+				, NULL
+				);
+		}
+		else
+		{
+			s_renderD3D11->m_deviceCtx->OMSetRenderTargets(m_num, m_rtv, m_dsv);
+		}
 		m_needPresent = UINT16_MAX != m_denseIdx;
 		s_renderD3D11->m_currentColor        = m_rtv[0];
 		s_renderD3D11->m_currentDepthStencil = m_dsv;
