@@ -74,12 +74,12 @@ Index of this file:
 //-------------------------------------------------------------------------
 
 // Those MIN/MAX values are not define because we need to point to them
-static const char           IM_S8_MIN  = -128;
-static const char           IM_S8_MAX  = 127;
+static const signed char    IM_S8_MIN  = -128;
+static const signed char    IM_S8_MAX  = 127;
 static const unsigned char  IM_U8_MIN  = 0;
 static const unsigned char  IM_U8_MAX  = 0xFF;
-static const short          IM_S16_MIN = -32768;
-static const short          IM_S16_MAX = 32767;
+static const signed short   IM_S16_MIN = -32768;
+static const signed short   IM_S16_MAX = 32767;
 static const unsigned short IM_U16_MIN = 0;
 static const unsigned short IM_U16_MAX = 0xFFFF;
 static const ImS32          IM_S32_MIN = INT_MIN;    // (-2147483647 - 1), (0x80000000);
@@ -4037,14 +4037,14 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
         const float w_item_last = ImMax(1.0f, (float)(int)(w_items_all - (w_item_one + style.ItemInnerSpacing.x) * (components-1)));
 
         const bool hide_prefix = (w_item_one <= CalcTextSize((flags & ImGuiColorEditFlags_Float) ? "M:0.000" : "M:000").x);
-        const char* ids[4] = { "##X", "##Y", "##Z", "##W" };
-        const char* fmt_table_int[3][4] =
+        static const char* ids[4] = { "##X", "##Y", "##Z", "##W" };
+        static const char* fmt_table_int[3][4] =
         {
             {   "%3d",   "%3d",   "%3d",   "%3d" }, // Short display
             { "R:%3d", "G:%3d", "B:%3d", "A:%3d" }, // Long display for RGBA
             { "H:%3d", "S:%3d", "V:%3d", "A:%3d" }  // Long display for HSVA
         };
-        const char* fmt_table_float[3][4] =
+        static const char* fmt_table_float[3][4] =
         {
             {   "%0.3f",   "%0.3f",   "%0.3f",   "%0.3f" }, // Short display
             { "R:%0.3f", "G:%0.3f", "B:%0.3f", "A:%0.3f" }, // Long display for RGBA
@@ -4144,21 +4144,19 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
     }
 
     // Convert back
-    if (picker_active_window == NULL)
+    if (value_changed && picker_active_window == NULL)
     {
         if (!value_changed_as_float)
             for (int n = 0; n < 4; n++)
                 f[n] = i[n] / 255.0f;
         if (flags & ImGuiColorEditFlags_DisplayHSV)
             ColorConvertHSVtoRGB(f[0], f[1], f[2], f[0], f[1], f[2]);
-        if (value_changed)
-        {
-            col[0] = f[0];
-            col[1] = f[1];
-            col[2] = f[2];
-            if (alpha)
-                col[3] = f[3];
-        }
+
+        col[0] = f[0];
+        col[1] = f[1];
+        col[2] = f[2];
+        if (alpha)
+            col[3] = f[3];
     }
 
     PopID();
@@ -4410,12 +4408,14 @@ bool ImGui::ColorPicker4(const char* label, float col[4], ImGuiColorEditFlags fl
         ImVec4 col_v4(col[0], col[1], col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : col[3]);
         if ((flags & ImGuiColorEditFlags_NoLabel))
             Text("Current");
-        ColorButton("##current", col_v4, (flags & (ImGuiColorEditFlags_HDR|ImGuiColorEditFlags_AlphaPreview|ImGuiColorEditFlags_AlphaPreviewHalf|ImGuiColorEditFlags_NoTooltip)), ImVec2(square_sz * 3, square_sz * 2));
+
+        ImGuiColorEditFlags sub_flags_to_forward = ImGuiColorEditFlags_HDR|ImGuiColorEditFlags_AlphaPreview|ImGuiColorEditFlags_AlphaPreviewHalf|ImGuiColorEditFlags_NoTooltip;
+        ColorButton("##current", col_v4, (flags & sub_flags_to_forward), ImVec2(square_sz * 3, square_sz * 2));
         if (ref_col != NULL)
         {
             Text("Original");
             ImVec4 ref_col_v4(ref_col[0], ref_col[1], ref_col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : ref_col[3]);
-            if (ColorButton("##original", ref_col_v4, (flags & (ImGuiColorEditFlags_HDR|ImGuiColorEditFlags_AlphaPreview|ImGuiColorEditFlags_AlphaPreviewHalf|ImGuiColorEditFlags_NoTooltip)), ImVec2(square_sz * 3, square_sz * 2)))
+            if (ColorButton("##original", ref_col_v4, (flags & sub_flags_to_forward), ImVec2(square_sz * 3, square_sz * 2)))
             {
                 memcpy(col, ref_col, components * sizeof(float));
                 value_changed = true;
@@ -6607,6 +6607,8 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     if (tab_appearing && (tab_bar->Flags & ImGuiTabBarFlags_AutoSelectNewTabs) && tab_bar->NextSelectedTabId == 0)
         if (!tab_bar_appearing || tab_bar->SelectedTabId == 0)
             tab_bar->NextSelectedTabId = id;  // New tabs gets activated
+    if ((flags & ImGuiTabItemFlags_SetSelected) && (tab_bar->SelectedTabId != id)) // SetSelected can only be passed on explicit tab bar
+        tab_bar->NextSelectedTabId = id;
 
     // Lock visibility
     bool tab_contents_visible = (tab_bar->VisibleTabId == id);
@@ -6658,9 +6660,9 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
         button_flags |= ImGuiButtonFlags_PressedOnDragDropHold;
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, button_flags);
-    hovered |= (g.HoveredId == id);
-    if (pressed || ((flags & ImGuiTabItemFlags_SetSelected) && !tab_contents_visible)) // SetSelected can only be passed on explicit tab bar
+    if (pressed)
         tab_bar->NextSelectedTabId = id;
+    hovered |= (g.HoveredId == id);
 
     // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
     if (!held)
