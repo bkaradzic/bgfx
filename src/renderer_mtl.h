@@ -1004,6 +1004,7 @@ namespace bgfx { namespace mtl
 		SwapChainMtl()
 			: m_metalLayer(nil)
 			, m_drawable(nil)
+			, m_drawableTexture(nil)
 			, m_backBufferColorMsaa()
 			, m_backBufferDepth()
 			, m_backBufferStencil()
@@ -1016,10 +1017,11 @@ namespace bgfx { namespace mtl
 		void init(void* _nwh);
 		void resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags);
 
-		id<CAMetalDrawable> currentDrawable();
+		id <MTLTexture> 	currentDrawableTexture();
 
 		CAMetalLayer* m_metalLayer;
 		id <CAMetalDrawable> m_drawable;
+		id <MTLTexture> 	 m_drawableTexture;
 		Texture m_backBufferColorMsaa;
 		Texture m_backBufferDepth;
 		Texture m_backBufferStencil;
