@@ -73,7 +73,9 @@ public:
 		// Imgui.
 		imguiCreate();
 
-		m_bigText = (char*)load("text/sherlock_holmes_a_scandal_in_bohemia_arthur_conan_doyle.txt");
+		uint32_t size;
+		m_txtFile = load("text/sherlock_holmes_a_scandal_in_bohemia_arthur_conan_doyle.txt", &size);
+		m_bigText = bx::StringView( (const char*)m_txtFile, size);
 
 		// Init the text rendering system.
 		m_fontManager = new FontManager(512);
@@ -111,7 +113,7 @@ public:
 	{
 		imguiDestroy();
 
-		BX_FREE(entry::getAllocator(), m_bigText);
+		unload(m_txtFile);
 
 		m_fontManager->destroyTtf(m_font);
 		// Destroy the fonts.
@@ -253,7 +255,8 @@ public:
 	uint32_t m_debug;
 	uint32_t m_reset;
 
-	char* m_bigText;
+	void* m_txtFile;
+	bx::StringView m_bigText;
 
 	// Init the text rendering system.
 	FontManager* m_fontManager;
