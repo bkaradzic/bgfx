@@ -8,6 +8,10 @@
 
 #if BGFX_USE_EGL
 
+#if BGFX_USE_WAYLAND
+#include <wayland-egl.h>
+#endif
+
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #if defined(Success)
