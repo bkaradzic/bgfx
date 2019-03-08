@@ -450,16 +450,17 @@ namespace bgfx { namespace mtl
 			if (NULL != lib)
 			{
 				m_screenshotBlitProgramVsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
+				release(lib);
 			}
 
 			lib = m_device.newLibraryWithSource(fshSource);
 			if (NULL != lib)
 			{
 				m_screenshotBlitProgramFsh.m_function = lib.newFunctionWithName(SHADER_FUNCTION_NAME);
+				release(lib);
 			}
 
 			m_screenshotBlitProgram.create(&m_screenshotBlitProgramVsh, &m_screenshotBlitProgramFsh);
-			release(lib);
 
 			reset(m_renderPipelineDescriptor);
 			m_renderPipelineDescriptor.colorAttachments[0].pixelFormat = m_mainFrameBuffer.m_swapChain->m_metalLayer.pixelFormat;
@@ -665,6 +666,9 @@ namespace bgfx { namespace mtl
 			m_pipelineStateCache.invalidate();
 			m_pipelineProgram.clear();
 
+			m_depthStencilStateCache.invalidate();
+			m_samplerStateCache.invalidate();
+
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_shaders); ++ii)
 			{
 				m_shaders[ii].destroy();
@@ -784,7 +788,7 @@ namespace bgfx { namespace mtl
 
 		void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) override
 		{
-			m_program[_handle.idx].create(&m_shaders[_vsh.idx], &m_shaders[_fsh.idx]);
+			m_program[_handle.idx].create(&m_shaders[_vsh.idx], isValid(_fsh) ? &m_shaders[_fsh.idx] : NULL);
 		}
 
 		void destroyProgram(ProgramHandle _handle) override
@@ -4610,6 +4614,8 @@ namespace bgfx { namespace mtl
 			renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
 
 			rce =  m_commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor);
+
+			MTL_RELEASE(renderPassDescriptor);
 
 			rce.setCullMode(MTLCullModeNone);
 
