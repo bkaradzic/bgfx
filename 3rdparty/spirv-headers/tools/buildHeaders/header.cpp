@@ -478,7 +478,7 @@ namespace {
         }
 
         virtual void printEpilogue(std::ostream& out) const override {
-            out << "#endif  // #ifndef spirv_" << headerGuardSuffix() << std::endl;
+            out << "#endif" << std::endl;
         }
 
         virtual void printTypes(std::ostream& out) const override {
@@ -552,7 +552,7 @@ namespace {
             }
 
             out << "\n}  // end namespace spv\n\n";
-            TPrinterCBase::printEpilogue(out);
+            out << "#endif  // #ifndef spirv_" << headerGuardSuffix() << std::endl;
         }
 
         std::string commentBOL() const override { return "// "; }

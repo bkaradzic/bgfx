@@ -2047,7 +2047,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
       ]
     },
@@ -2056,7 +2056,7 @@
       "opcode" : 228,
       "operands" : [
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2068,7 +2068,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2080,7 +2080,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Equal'" },
         { "kind" : "IdMemorySemantics", "name" : "'Unequal'" },
         { "kind" : "IdRef",             "name" : "'Value'" },
@@ -2094,7 +2094,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Equal'" },
         { "kind" : "IdMemorySemantics", "name" : "'Unequal'" },
         { "kind" : "IdRef",             "name" : "'Value'" },
@@ -2109,7 +2109,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
       ]
     },
@@ -2120,7 +2120,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
       ]
     },
@@ -2131,7 +2131,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2143,7 +2143,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2155,7 +2155,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2167,7 +2167,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2179,7 +2179,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2191,7 +2191,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2203,7 +2203,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2215,7 +2215,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2227,7 +2227,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" },
         { "kind" : "IdRef",             "name" : "'Value'" }
       ]
@@ -2999,7 +2999,7 @@
         { "kind" : "IdResultType" },
         { "kind" : "IdResult" },
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
       ],
       "capabilities" : [ "Kernel" ]
@@ -3009,7 +3009,7 @@
       "opcode" : 319,
       "operands" : [
         { "kind" : "IdRef",             "name" : "'Pointer'" },
-        { "kind" : "IdScope",           "name" : "'Scope'" },
+        { "kind" : "IdScope",           "name" : "'Memory'" },
         { "kind" : "IdMemorySemantics", "name" : "'Semantics'" }
       ],
       "capabilities" : [ "Kernel" ]
@@ -4022,6 +4022,1405 @@
       "version" : "None"
     },
     {
+      "opname" : "OpVmeImageINTEL",
+      "opcode" : 5699,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Image Type'" },
+        { "kind" : "IdRef", "name" : "'Sampler'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeVmeImageINTEL",
+      "opcode" : 5700,
+      "operands" : [
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Image Type'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcImePayloadINTEL",
+      "opcode" : 5701,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcRefPayloadINTEL",
+      "opcode" : 5702,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcSicPayloadINTEL",
+      "opcode" : 5703,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcMcePayloadINTEL",
+      "opcode" : 5704,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcMceResultINTEL",
+      "opcode" : 5705,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcImeResultINTEL",
+      "opcode" : 5706,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcImeResultSingleReferenceStreamoutINTEL",
+      "opcode" : 5707,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcImeResultDualReferenceStreamoutINTEL",
+      "opcode" : 5708,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcImeSingleReferenceStreaminINTEL",
+      "opcode" : 5709,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcImeDualReferenceStreaminINTEL",
+      "opcode" : 5710,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcRefResultINTEL",
+      "opcode" : 5711,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpTypeAvcSicResultINTEL",
+      "opcode" : 5712,
+      "operands" : [
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultInterBaseMultiReferencePenaltyINTEL",
+      "opcode" : 5713,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Slice Type'" },
+        { "kind" : "IdRef", "name" : "'Qp'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetInterBaseMultiReferencePenaltyINTEL",
+      "opcode" : 5714,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Reference Base Penalty'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultInterShapePenaltyINTEL",
+      "opcode" : 5715,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Slice Type'" },
+        { "kind" : "IdRef", "name" : "'Qp'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetInterShapePenaltyINTEL",
+      "opcode" : 5716,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Packed Shape Penalty'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultInterDirectionPenaltyINTEL",
+      "opcode" : 5717,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Slice Type'" },
+        { "kind" : "IdRef", "name" : "'Qp'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetInterDirectionPenaltyINTEL",
+      "opcode" : 5718,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Direction Cost'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultIntraLumaShapePenaltyINTEL",
+      "opcode" : 5719,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Slice Type'" },
+        { "kind" : "IdRef", "name" : "'Qp'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultInterMotionVectorCostTableINTEL",
+      "opcode" : 5720,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Slice Type'" },
+        { "kind" : "IdRef", "name" : "'Qp'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultHighPenaltyCostTableINTEL",
+      "opcode" : 5721,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultMediumPenaltyCostTableINTEL",
+      "opcode" : 5722,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultLowPenaltyCostTableINTEL",
+      "opcode" : 5723,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetMotionVectorCostFunctionINTEL",
+      "opcode" : 5724,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Packed Cost Center Delta'" },
+        { "kind" : "IdRef", "name" : "'Packed Cost Table'" },
+        { "kind" : "IdRef", "name" : "'Cost Precision'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultIntraLumaModePenaltyINTEL",
+      "opcode" : 5725,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Slice Type'" },
+        { "kind" : "IdRef", "name" : "'Qp'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultNonDcLumaIntraPenaltyINTEL",
+      "opcode" : 5726,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetDefaultIntraChromaModeBasePenaltyINTEL",
+      "opcode" : 5727,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationChromaINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetAcOnlyHaarINTEL",
+      "opcode" : 5728,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetSourceInterlacedFieldPolarityINTEL",
+      "opcode" : 5729,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Source Field Polarity'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetSingleReferenceInterlacedFieldPolarityINTEL",
+      "opcode" : 5730,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Reference Field Polarity'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceSetDualReferenceInterlacedFieldPolaritiesINTEL",
+      "opcode" : 5731,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Forward Reference Field Polarity'" },
+        { "kind" : "IdRef", "name" : "'Backward Reference Field Polarity'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceConvertToImePayloadINTEL",
+      "opcode" : 5732,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceConvertToImeResultINTEL",
+      "opcode" : 5733,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceConvertToRefPayloadINTEL",
+      "opcode" : 5734,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceConvertToRefResultINTEL",
+      "opcode" : 5735,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceConvertToSicPayloadINTEL",
+      "opcode" : 5736,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceConvertToSicResultINTEL",
+      "opcode" : 5737,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetMotionVectorsINTEL",
+      "opcode" : 5738,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterDistortionsINTEL",
+      "opcode" : 5739,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetBestInterDistortionsINTEL",
+      "opcode" : 5740,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterMajorShapeINTEL",
+      "opcode" : 5741,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterMinorShapeINTEL",
+      "opcode" : 5742,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterDirectionsINTEL",
+      "opcode" : 5743,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterMotionVectorCountINTEL",
+      "opcode" : 5744,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterReferenceIdsINTEL",
+      "opcode" : 5745,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcMceGetInterReferenceInterlacedFieldPolaritiesINTEL",
+      "opcode" : 5746,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Ids'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Parameter Field Polarities'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeInitializeINTEL",
+      "opcode" : 5747,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Coord'" },
+        { "kind" : "IdRef", "name" : "'Partition Mask'" },
+        { "kind" : "IdRef", "name" : "'SAD Adjustment'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeSetSingleReferenceINTEL",
+      "opcode" : 5748,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Ref Offset'" },
+        { "kind" : "IdRef", "name" : "'Search Window Config'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeSetDualReferenceINTEL",
+      "opcode" : 5749,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Offset'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Offset'" },
+        { "kind" : "IdRef", "name" : "'id> Search Window Config'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeRefWindowSizeINTEL",
+      "opcode" : 5750,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Search Window Config'" },
+        { "kind" : "IdRef", "name" : "'Dual Ref'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeAdjustRefOffsetINTEL",
+      "opcode" : 5751,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Ref Offset'" },
+        { "kind" : "IdRef", "name" : "'Src Coord'" },
+        { "kind" : "IdRef", "name" : "'Ref Window Size'" },
+        { "kind" : "IdRef", "name" : "'Image Size'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeConvertToMcePayloadINTEL",
+      "opcode" : 5752,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeSetMaxMotionVectorCountINTEL",
+      "opcode" : 5753,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Max Motion Vector Count'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeSetUnidirectionalMixDisableINTEL",
+      "opcode" : 5754,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeSetEarlySearchTerminationThresholdINTEL",
+      "opcode" : 5755,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Threshold'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeSetWeightedSadINTEL",
+      "opcode" : 5756,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Packed Sad Weights'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceINTEL",
+      "opcode" : 5757,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceINTEL",
+      "opcode" : 5758,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceStreaminINTEL",
+      "opcode" : 5759,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Streamin Components'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceStreaminINTEL",
+      "opcode" : 5760,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Streamin Components'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceStreamoutINTEL",
+      "opcode" : 5761,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceStreamoutINTEL",
+      "opcode" : 5762,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithSingleReferenceStreaminoutINTEL",
+      "opcode" : 5763,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Streamin Components'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeEvaluateWithDualReferenceStreaminoutINTEL",
+      "opcode" : 5764,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Streamin Components'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeConvertToMceResultINTEL",
+      "opcode" : 5765,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetSingleReferenceStreaminINTEL",
+      "opcode" : 5766,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetDualReferenceStreaminINTEL",
+      "opcode" : 5767,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeStripSingleReferenceStreamoutINTEL",
+      "opcode" : 5768,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeStripDualReferenceStreamoutINTEL",
+      "opcode" : 5769,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetStreamoutSingleReferenceMajorShapeMotionVectorsINTEL",
+      "opcode" : 5770,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Major Shape'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetStreamoutSingleReferenceMajorShapeDistortionsINTEL",
+      "opcode" : 5771,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Major Shape'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetStreamoutSingleReferenceMajorShapeReferenceIdsINTEL",
+      "opcode" : 5772,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Major Shape'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetStreamoutDualReferenceMajorShapeMotionVectorsINTEL",
+      "opcode" : 5773,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Major Shape'" },
+        { "kind" : "IdRef", "name" : "'Direction'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetStreamoutDualReferenceMajorShapeDistortionsINTEL",
+      "opcode" : 5774,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Major Shape'" },
+        { "kind" : "IdRef", "name" : "'Direction'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetStreamoutDualReferenceMajorShapeReferenceIdsINTEL",
+      "opcode" : 5775,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" },
+        { "kind" : "IdRef", "name" : "'Major Shape'" },
+        { "kind" : "IdRef", "name" : "'Direction'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetBorderReachedINTEL",
+      "opcode" : 5776,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Image Select'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetTruncatedSearchIndicationINTEL",
+      "opcode" : 5777,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetUnidirectionalEarlySearchTerminationINTEL",
+      "opcode" : 5778,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetWeightingPatternMinimumMotionVectorINTEL",
+      "opcode" : 5779,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcImeGetWeightingPatternMinimumDistortionINTEL",
+      "opcode" : 5780,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcFmeInitializeINTEL",
+      "opcode" : 5781,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Coord'" },
+        { "kind" : "IdRef", "name" : "'Motion Vectors'" },
+        { "kind" : "IdRef", "name" : "'Major Shapes'" },
+        { "kind" : "IdRef", "name" : "'Minor Shapes'" },
+        { "kind" : "IdRef", "name" : "'Direction'" },
+        { "kind" : "IdRef", "name" : "'Pixel Resolution'" },
+        { "kind" : "IdRef", "name" : "'Sad Adjustment'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcBmeInitializeINTEL",
+      "opcode" : 5782,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Coord'" },
+        { "kind" : "IdRef", "name" : "'Motion Vectors'" },
+        { "kind" : "IdRef", "name" : "'Major Shapes'" },
+        { "kind" : "IdRef", "name" : "'Minor Shapes'" },
+        { "kind" : "IdRef", "name" : "'Direction'" },
+        { "kind" : "IdRef", "name" : "'Pixel Resolution'" },
+        { "kind" : "IdRef", "name" : "'Bidirectional Weight'" },
+        { "kind" : "IdRef", "name" : "'Sad Adjustment'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefConvertToMcePayloadINTEL",
+      "opcode" : 5783,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefSetBidirectionalMixDisableINTEL",
+      "opcode" : 5784,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefSetBilinearFilterEnableINTEL",
+      "opcode" : 5785,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefEvaluateWithSingleReferenceINTEL",
+      "opcode" : 5786,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefEvaluateWithDualReferenceINTEL",
+      "opcode" : 5787,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefEvaluateWithMultiReferenceINTEL",
+      "opcode" : 5788,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Ids'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefEvaluateWithMultiReferenceInterlacedINTEL",
+      "opcode" : 5789,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Ids'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Field Polarities'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcRefConvertToMceResultINTEL",
+      "opcode" : 5790,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicInitializeINTEL",
+      "opcode" : 5791,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Coord'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicConfigureSkcINTEL",
+      "opcode" : 5792,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Skip Block Partition Type'" },
+        { "kind" : "IdRef", "name" : "'Skip Motion Vector Mask'" },
+        { "kind" : "IdRef", "name" : "'Motion Vectors'" },
+        { "kind" : "IdRef", "name" : "'Bidirectional Weight'" },
+        { "kind" : "IdRef", "name" : "'Sad Adjustment'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicConfigureIpeLumaINTEL",
+      "opcode" : 5793,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Luma Intra Partition Mask'" },
+        { "kind" : "IdRef", "name" : "'Intra Neighbour Availabilty'" },
+        { "kind" : "IdRef", "name" : "'Left Edge Luma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Upper Left Corner Luma Pixel'" },
+        { "kind" : "IdRef", "name" : "'Upper Edge Luma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Upper Right Edge Luma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Sad Adjustment'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicConfigureIpeLumaChromaINTEL",
+      "opcode" : 5794,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Luma Intra Partition Mask'" },
+        { "kind" : "IdRef", "name" : "'Intra Neighbour Availabilty'" },
+        { "kind" : "IdRef", "name" : "'Left Edge Luma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Upper Left Corner Luma Pixel'" },
+        { "kind" : "IdRef", "name" : "'Upper Edge Luma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Upper Right Edge Luma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Left Edge Chroma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Upper Left Corner Chroma Pixel'" },
+        { "kind" : "IdRef", "name" : "'Upper Edge Chroma Pixels'" },
+        { "kind" : "IdRef", "name" : "'Sad Adjustment'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationChromaINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetMotionVectorMaskINTEL",
+      "opcode" : 5795,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Skip Block Partition Type'" },
+        { "kind" : "IdRef", "name" : "'Direction'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicConvertToMcePayloadINTEL",
+      "opcode" : 5796,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicSetIntraLumaShapePenaltyINTEL",
+      "opcode" : 5797,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Packed Shape Penalty'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicSetIntraLumaModeCostFunctionINTEL",
+      "opcode" : 5798,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Luma Mode Penalty'" },
+        { "kind" : "IdRef", "name" : "'Luma Packed Neighbor Modes'" },
+        { "kind" : "IdRef", "name" : "'Luma Packed Non Dc Penalty'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicSetIntraChromaModeCostFunctionINTEL",
+      "opcode" : 5799,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Chroma Mode Base Penalty'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationChromaINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicSetBilinearFilterEnableINTEL",
+      "opcode" : 5800,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicSetSkcForwardTransformEnableINTEL",
+      "opcode" : 5801,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Packed Sad Coefficients'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicSetBlockBasedRawSkipSadINTEL",
+      "opcode" : 5802,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Block Based Skip Type'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicEvaluateIpeINTEL",
+      "opcode" : 5803,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicEvaluateWithSingleReferenceINTEL",
+      "opcode" : 5804,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicEvaluateWithDualReferenceINTEL",
+      "opcode" : 5805,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Fwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Bwd Ref Image'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicEvaluateWithMultiReferenceINTEL",
+      "opcode" : 5806,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Ids'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicEvaluateWithMultiReferenceInterlacedINTEL",
+      "opcode" : 5807,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Src Image'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Ids'" },
+        { "kind" : "IdRef", "name" : "'Packed Reference Field Polarities'" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicConvertToMceResultINTEL",
+      "opcode" : 5808,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetIpeLumaShapeINTEL",
+      "opcode" : 5809,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetBestIpeLumaDistortionINTEL",
+      "opcode" : 5810,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetBestIpeChromaDistortionINTEL",
+      "opcode" : 5811,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetPackedIpeLumaModesINTEL",
+      "opcode" : 5812,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetIpeChromaModeINTEL",
+      "opcode" : 5813,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationChromaINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL",
+      "opcode" : 5814,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL",
+      "opcode" : 5815,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL", "SubgroupAvcMotionEstimationIntraINTEL" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpSubgroupAvcSicGetInterRawSadsINTEL",
+      "opcode" : 5816,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdRef", "name" : "'Payload'" }
+      ],
+      "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
+      "version" : "None"
+    },	
+    {
       "opname" : "OpDecorateStringGOOGLE",
       "opcode" : 5632,
       "operands" : [
@@ -4076,7 +5475,7 @@
       "operands" : [
         { "kind" : "IdResult" },
         { "kind" : "IdRef",        "name" : "'Component Type'" },
-        { "kind" : "IdScope",      "name" : "'Scope'" },
+        { "kind" : "IdScope",      "name" : "'Execution'" },
         { "kind" : "IdRef",        "name" : "'Rows'" },
         { "kind" : "IdRef",        "name" : "'Columns'" }
       ],
@@ -7476,6 +8875,24 @@
           "enumerant" : "SubgroupImageMediaBlockIOINTEL",
           "value" : 5579,
           "extensions" : [ "SPV_INTEL_media_block_io" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SubgroupAvcMotionEstimationINTEL",
+          "value" : 5696,
+          "extensions" : [ "SPV_INTEL_device_side_avc_motion_estimation" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SubgroupAvcMotionEstimationIntraINTEL",
+          "value" : 5697,
+          "extensions" : [ "SPV_INTEL_device_side_avc_motion_estimation" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SubgroupAvcMotionEstimationChromaINTEL",
+          "value" : 5698,
+          "extensions" : [ "SPV_INTEL_device_side_avc_motion_estimation" ],
           "version" : "None"
         },
         {
