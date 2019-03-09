@@ -4558,10 +4558,14 @@ void CompilerHLSL::require_texture_query_variant(const SPIRType &type)
 	}
 }
 
-string CompilerHLSL::compile(std::vector<HLSLVertexAttributeRemap> vertex_attributes)
+void CompilerHLSL::set_root_constant_layouts(vector<RootConstants> layout)
 {
-	remap_vertex_attributes = move(vertex_attributes);
-	return compile();
+	root_constants_layout = move(layout);
+}
+
+void CompilerHLSL::add_vertex_attribute_remap(const HLSLVertexAttributeRemap &vertex_attributes)
+{
+	remap_vertex_attributes.push_back(vertex_attributes);
 }
 
 uint32_t CompilerHLSL::remap_num_workgroups_builtin()

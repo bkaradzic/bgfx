@@ -1109,9 +1109,12 @@ static int main_inner(int argc, char *argv[])
 	for (uint32_t i = 0; i < args.iterations; i++)
 	{
 		if (args.hlsl)
-			glsl = static_cast<CompilerHLSL *>(compiler.get())->compile(move(args.hlsl_attr_remap));
-		else
-			glsl = compiler->compile();
+		{
+			for (auto &remap : args.hlsl_attr_remap)
+				static_cast<CompilerHLSL *>(compiler.get())->add_vertex_attribute_remap(remap);
+		}
+
+		glsl = compiler->compile();
 	}
 
 	if (args.output)

@@ -32,14 +32,14 @@ namespace spirv_cross
 // some other format.
 enum MSLVertexFormat
 {
-	MSL_VERTEX_FORMAT_OTHER,
-	MSL_VERTEX_FORMAT_UINT8,
-	MSL_VERTEX_FORMAT_UINT16
+	MSL_VERTEX_FORMAT_OTHER = 0,
+	MSL_VERTEX_FORMAT_UINT8 = 1,
+	MSL_VERTEX_FORMAT_UINT16 = 2,
+	MSL_VERTEX_FORMAT_INT_MAX = 0x7fffffff
 };
 
 // Defines MSL characteristics of a vertex attribute at a particular location.
-// The used_by_shader flag is set to true during compilation of SPIR-V to MSL
-// if the shader makes use of this vertex attribute.
+// After compilation, it is possible to query whether or not this location was used.
 struct MSLVertexAttr
 {
 	uint32_t location = 0;
@@ -49,72 +49,72 @@ struct MSLVertexAttr
 	bool per_instance = false;
 	MSLVertexFormat format = MSL_VERTEX_FORMAT_OTHER;
 	spv::BuiltIn builtin = spv::BuiltInMax;
-	bool used_by_shader = false;
 };
 
 // Matches the binding index of a MSL resource for a binding within a descriptor set.
 // Taken together, the stage, desc_set and binding combine to form a reference to a resource
-// descriptor used in a particular shading stage. Generally, only one of the buffer, texture,
-// or sampler elements will be populated. The used_by_shader flag is set to true during
-// compilation of SPIR-V to MSL if the shader makes use of this vertex attribute.
+// descriptor used in a particular shading stage.
 struct MSLResourceBinding
 {
-	spv::ExecutionModel stage;
+	spv::ExecutionModel stage = spv::ExecutionModelMax;
 	uint32_t desc_set = 0;
 	uint32_t binding = 0;
-
 	uint32_t msl_buffer = 0;
 	uint32_t msl_texture = 0;
 	uint32_t msl_sampler = 0;
-
-	bool used_by_shader = false;
 };
 
 enum MSLSamplerCoord
 {
-	MSL_SAMPLER_COORD_NORMALIZED,
-	MSL_SAMPLER_COORD_PIXEL
+	MSL_SAMPLER_COORD_NORMALIZED = 0,
+	MSL_SAMPLER_COORD_PIXEL = 1,
+	MSL_SAMPLER_INT_MAX = 0x7fffffff
 };
 
 enum MSLSamplerFilter
 {
-	MSL_SAMPLER_FILTER_NEAREST,
-	MSL_SAMPLER_FILTER_LINEAR
+	MSL_SAMPLER_FILTER_NEAREST = 0,
+	MSL_SAMPLER_FILTER_LINEAR = 1,
+	MSL_SAMPLER_FILTER_INT_MAX = 0x7fffffff
 };
 
 enum MSLSamplerMipFilter
 {
-	MSL_SAMPLER_MIP_FILTER_NONE,
-	MSL_SAMPLER_MIP_FILTER_NEAREST,
-	MSL_SAMPLER_MIP_FILTER_LINEAR,
+	MSL_SAMPLER_MIP_FILTER_NONE = 0,
+	MSL_SAMPLER_MIP_FILTER_NEAREST = 1,
+	MSL_SAMPLER_MIP_FILTER_LINEAR = 2,
+	MSL_SAMPLER_MIP_FILTER_INT_MAX = 0x7fffffff
 };
 
 enum MSLSamplerAddress
 {
-	MSL_SAMPLER_ADDRESS_CLAMP_TO_ZERO,
-	MSL_SAMPLER_ADDRESS_CLAMP_TO_EDGE,
-	MSL_SAMPLER_ADDRESS_CLAMP_TO_BORDER,
-	MSL_SAMPLER_ADDRESS_REPEAT,
-	MSL_SAMPLER_ADDRESS_MIRRORED_REPEAT
+	MSL_SAMPLER_ADDRESS_CLAMP_TO_ZERO = 0,
+	MSL_SAMPLER_ADDRESS_CLAMP_TO_EDGE = 1,
+	MSL_SAMPLER_ADDRESS_CLAMP_TO_BORDER = 2,
+	MSL_SAMPLER_ADDRESS_REPEAT = 3,
+	MSL_SAMPLER_ADDRESS_MIRRORED_REPEAT = 4,
+	MSL_SAMPLER_ADDRESS_INT_MAX = 0x7fffffff
 };
 
 enum MSLSamplerCompareFunc
 {
-	MSL_SAMPLER_COMPARE_FUNC_NEVER,
-	MSL_SAMPLER_COMPARE_FUNC_LESS,
-	MSL_SAMPLER_COMPARE_FUNC_LESS_EQUAL,
-	MSL_SAMPLER_COMPARE_FUNC_GREATER,
-	MSL_SAMPLER_COMPARE_FUNC_GREATER_EQUAL,
-	MSL_SAMPLER_COMPARE_FUNC_EQUAL,
-	MSL_SAMPLER_COMPARE_FUNC_NOT_EQUAL,
-	MSL_SAMPLER_COMPARE_FUNC_ALWAYS
+	MSL_SAMPLER_COMPARE_FUNC_NEVER = 0,
+	MSL_SAMPLER_COMPARE_FUNC_LESS = 1,
+	MSL_SAMPLER_COMPARE_FUNC_LESS_EQUAL = 2,
+	MSL_SAMPLER_COMPARE_FUNC_GREATER = 3,
+	MSL_SAMPLER_COMPARE_FUNC_GREATER_EQUAL = 4,
+	MSL_SAMPLER_COMPARE_FUNC_EQUAL = 5,
+	MSL_SAMPLER_COMPARE_FUNC_NOT_EQUAL = 6,
+	MSL_SAMPLER_COMPARE_FUNC_ALWAYS = 7,
+	MSL_SAMPLER_COMPARE_FUNC_INT_MAX = 0x7fffffff
 };
 
 enum MSLSamplerBorderColor
 {
-	MSL_SAMPLER_BORDER_COLOR_TRANSPARENT_BLACK,
-	MSL_SAMPLER_BORDER_COLOR_OPAQUE_BLACK,
-	MSL_SAMPLER_BORDER_COLOR_OPAQUE_WHITE
+	MSL_SAMPLER_BORDER_COLOR_TRANSPARENT_BLACK = 0,
+	MSL_SAMPLER_BORDER_COLOR_OPAQUE_BLACK = 1,
+	MSL_SAMPLER_BORDER_COLOR_OPAQUE_WHITE = 2,
+	MSL_SAMPLER_BORDER_COLOR_INT_MAX = 0x7fffffff
 };
 
 struct MSLConstexprSampler
@@ -161,8 +161,8 @@ public:
 	{
 		typedef enum
 		{
-			iOS,
-			macOS,
+			iOS = 0,
+			macOS = 1
 		} Platform;
 
 		Platform platform = macOS;
@@ -210,21 +210,9 @@ public:
 		}
 	};
 
-	SPIRV_CROSS_DEPRECATED("CompilerMSL::get_options() is obsolete, use get_msl_options() instead.")
-	const Options &get_options() const
-	{
-		return msl_options;
-	}
-
 	const Options &get_msl_options() const
 	{
 		return msl_options;
-	}
-
-	SPIRV_CROSS_DEPRECATED("CompilerMSL::set_options() is obsolete, use set_msl_options() instead.")
-	void set_options(Options &opts)
-	{
-		msl_options = opts;
 	}
 
 	void set_msl_options(const Options &opts)
@@ -269,6 +257,44 @@ public:
 		return capture_output_to_buffer && stage_in_var_id != 0;
 	}
 
+	explicit CompilerMSL(std::vector<uint32_t> spirv);
+	CompilerMSL(const uint32_t *ir, size_t word_count);
+	explicit CompilerMSL(const ParsedIR &ir);
+	explicit CompilerMSL(ParsedIR &&ir);
+
+	// attr is a vertex attribute binding used to match
+	// vertex content locations to MSL attributes. If vertex attributes are provided,
+	// is_msl_vertex_attribute_used() will return true after calling ::compile() if
+	// the location was used by the MSL code.
+	void add_msl_vertex_attribute(const MSLVertexAttr &attr);
+
+	// resource is a resource binding to indicate the MSL buffer,
+	// texture or sampler index to use for a particular SPIR-V description set
+	// and binding. If resource bindings are provided,
+	// is_msl_resource_binding_used() will return true after calling ::compile() if
+	// the set/binding combination was used by the MSL code.
+	void add_msl_resource_binding(const MSLResourceBinding &resource);
+
+	// Query after compilation is done. This allows you to check if a location or set/binding combination was used by the shader.
+	bool is_msl_vertex_attribute_used(uint32_t location);
+	bool is_msl_resource_binding_used(spv::ExecutionModel model, uint32_t set, uint32_t binding);
+
+	// Compiles the SPIR-V code into Metal Shading Language.
+	std::string compile() override;
+
+	// Remap a sampler with ID to a constexpr sampler.
+	// Older iOS targets must use constexpr samplers in certain cases (PCF),
+	// so a static sampler must be used.
+	// The sampler will not consume a binding, but be declared in the entry point as a constexpr sampler.
+	// This can be used on both combined image/samplers (sampler2D) or standalone samplers.
+	// The remapped sampler must not be an array of samplers.
+	void remap_constexpr_sampler(uint32_t id, const MSLConstexprSampler &sampler);
+
+	// If using CompilerMSL::Options::pad_fragment_output_components, override the number of components we expect
+	// to use for a particular location. The default is 4 if number of components is not overridden.
+	void set_fragment_output_components(uint32_t location, uint32_t components);
+
+protected:
 	// An enum of SPIR-V functions that are implemented in additional
 	// source code that is added to the shader if necessary.
 	enum SPVFuncImpl
@@ -304,58 +330,6 @@ public:
 		SPVFuncImplArrayCopyMultidimMax = 6
 	};
 
-	// Constructs an instance to compile the SPIR-V code into Metal Shading Language,
-	// using the configuration parameters, if provided:
-	//  - p_vtx_attrs is an optional list of vertex attribute bindings used to match
-	//    vertex content locations to MSL attributes. If vertex attributes are provided,
-	//    the compiler will set the used_by_shader flag to true in any vertex attribute
-	//    actually used by the MSL code.
-	//  - p_res_bindings is a list of resource bindings to indicate the MSL buffer,
-	//    texture or sampler index to use for a particular SPIR-V description set
-	//    and binding. If resource bindings are provided, the compiler will set the
-	//    used_by_shader flag to true in any resource binding actually used by the MSL code.
-	CompilerMSL(std::vector<uint32_t> spirv, std::vector<MSLVertexAttr> *p_vtx_attrs = nullptr,
-	            std::vector<MSLResourceBinding> *p_res_bindings = nullptr);
-
-	// Alternate constructor avoiding use of std::vectors.
-	CompilerMSL(const uint32_t *ir, size_t word_count, MSLVertexAttr *p_vtx_attrs = nullptr, size_t vtx_attrs_count = 0,
-	            MSLResourceBinding *p_res_bindings = nullptr, size_t res_bindings_count = 0);
-
-	// Alternate constructors taking pre-parsed IR directly.
-	CompilerMSL(const ParsedIR &ir, MSLVertexAttr *p_vtx_attrs = nullptr, size_t vtx_attrs_count = 0,
-	            MSLResourceBinding *p_res_bindings = nullptr, size_t res_bindings_count = 0);
-
-	CompilerMSL(ParsedIR &&ir, MSLVertexAttr *p_vtx_attrs = nullptr, size_t vtx_attrs_count = 0,
-	            MSLResourceBinding *p_res_bindings = nullptr, size_t res_bindings_count = 0);
-
-	// Compiles the SPIR-V code into Metal Shading Language.
-	std::string compile() override;
-
-	// Compiles the SPIR-V code into Metal Shading Language, overriding configuration parameters.
-	// Any of the parameters here may be null to indicate that the configuration provided in the
-	// constructor should be used. They are not declared as optional to avoid a conflict with the
-	// inherited and overridden zero-parameter compile() function.
-	std::string compile(std::vector<MSLVertexAttr> *p_vtx_attrs, std::vector<MSLResourceBinding> *p_res_bindings);
-
-	// This legacy method is deprecated.
-	typedef Options MSLConfiguration;
-	SPIRV_CROSS_DEPRECATED("Please use get_msl_options() and set_msl_options() instead.")
-	std::string compile(MSLConfiguration &msl_cfg, std::vector<MSLVertexAttr> *p_vtx_attrs = nullptr,
-	                    std::vector<MSLResourceBinding> *p_res_bindings = nullptr);
-
-	// Remap a sampler with ID to a constexpr sampler.
-	// Older iOS targets must use constexpr samplers in certain cases (PCF),
-	// so a static sampler must be used.
-	// The sampler will not consume a binding, but be declared in the entry point as a constexpr sampler.
-	// This can be used on both combined image/samplers (sampler2D) or standalone samplers.
-	// The remapped sampler must not be an array of samplers.
-	void remap_constexpr_sampler(uint32_t id, const MSLConstexprSampler &sampler);
-
-	// If using CompilerMSL::Options::pad_fragment_output_components, override the number of components we expect
-	// to use for a particular location. The default is 4 if number of components is not overridden.
-	void set_fragment_output_components(uint32_t location, uint32_t components);
-
-protected:
 	void emit_binary_unord_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
 	void emit_instruction(const Instruction &instr) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -495,15 +469,20 @@ protected:
 
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
-	std::unordered_map<uint32_t, MSLVertexAttr *> vtx_attrs_by_location;
-	std::unordered_map<uint32_t, MSLVertexAttr *> vtx_attrs_by_builtin;
+	std::unordered_map<uint32_t, MSLVertexAttr> vtx_attrs_by_location;
+	std::unordered_map<uint32_t, MSLVertexAttr> vtx_attrs_by_builtin;
+	std::unordered_set<uint32_t> vtx_attrs_in_use;
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
 	std::unordered_map<MSLStructMemberKey, uint32_t> struct_member_padding;
 	std::set<std::string> pragma_lines;
 	std::set<std::string> typedef_lines;
 	std::vector<uint32_t> vars_needing_early_declaration;
-	std::vector<MSLResourceBinding *> resource_bindings;
-	MSLResourceBinding next_metal_resource_index;
+
+	std::vector<std::pair<MSLResourceBinding, bool>> resource_bindings;
+	uint32_t next_metal_resource_index_buffer = 0;
+	uint32_t next_metal_resource_index_texture = 0;
+	uint32_t next_metal_resource_index_sampler = 0;
+
 	uint32_t stage_in_var_id = 0;
 	uint32_t stage_out_var_id = 0;
 	uint32_t patch_stage_in_var_id = 0;

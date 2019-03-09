@@ -161,25 +161,9 @@ public:
 		init();
 	}
 
-	// Deprecate this interface because it doesn't overload properly with subclasses.
-	// Requires awkward static casting, which was a mistake.
-	SPIRV_CROSS_DEPRECATED("get_options() is obsolete, use get_common_options() instead.")
-	const Options &get_options() const
-	{
-		return options;
-	}
-
 	const Options &get_common_options() const
 	{
 		return options;
-	}
-
-	// Deprecate this interface because it doesn't overload properly with subclasses.
-	// Requires awkward static casting, which was a mistake.
-	SPIRV_CROSS_DEPRECATED("set_options() is obsolete, use set_common_options() instead.")
-	void set_options(Options &opts)
-	{
-		options = opts;
 	}
 
 	void set_common_options(const Options &opts)
@@ -419,7 +403,7 @@ protected:
 	std::string constant_value_macro_name(uint32_t id);
 	void emit_constant(const SPIRConstant &constant);
 	void emit_specialization_constant_op(const SPIRConstantOp &constant);
-	std::string emit_continue_block(uint32_t continue_block);
+	std::string emit_continue_block(uint32_t continue_block, bool follow_true_block, bool follow_false_block);
 	bool attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method method);
 	void propagate_loop_dominators(const SPIRBlock &block);
 

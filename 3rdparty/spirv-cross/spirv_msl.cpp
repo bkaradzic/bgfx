@@ -30,75 +30,51 @@ static const uint32_t k_unknown_component = ~0u;
 
 static const uint32_t k_aux_mbr_idx_swizzle_const = 0u;
 
-CompilerMSL::CompilerMSL(vector<uint32_t> spirv_, vector<MSLVertexAttr> *p_vtx_attrs,
-                         vector<MSLResourceBinding> *p_res_bindings)
+CompilerMSL::CompilerMSL(vector<uint32_t> spirv_)
     : CompilerGLSL(move(spirv_))
 {
-	if (p_vtx_attrs)
-		for (auto &va : *p_vtx_attrs)
-		{
-			vtx_attrs_by_location[va.location] = &va;
-			if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
-				vtx_attrs_by_builtin[va.builtin] = &va;
-		}
-
-	if (p_res_bindings)
-		for (auto &rb : *p_res_bindings)
-			resource_bindings.push_back(&rb);
 }
 
-CompilerMSL::CompilerMSL(const uint32_t *ir_, size_t word_count, MSLVertexAttr *p_vtx_attrs, size_t vtx_attrs_count,
-                         MSLResourceBinding *p_res_bindings, size_t res_bindings_count)
+CompilerMSL::CompilerMSL(const uint32_t *ir_, size_t word_count)
     : CompilerGLSL(ir_, word_count)
 {
-	if (p_vtx_attrs)
-		for (size_t i = 0; i < vtx_attrs_count; i++)
-		{
-			auto &va = p_vtx_attrs[i];
-			vtx_attrs_by_location[va.location] = &va;
-			if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
-				vtx_attrs_by_builtin[va.builtin] = &va;
-		}
-
-	if (p_res_bindings)
-		for (size_t i = 0; i < res_bindings_count; i++)
-			resource_bindings.push_back(&p_res_bindings[i]);
 }
 
-CompilerMSL::CompilerMSL(const ParsedIR &ir_, MSLVertexAttr *p_vtx_attrs, size_t vtx_attrs_count,
-                         MSLResourceBinding *p_res_bindings, size_t res_bindings_count)
+CompilerMSL::CompilerMSL(const ParsedIR &ir_)
     : CompilerGLSL(ir_)
 {
-	if (p_vtx_attrs)
-		for (size_t i = 0; i < vtx_attrs_count; i++)
-		{
-			auto &va = p_vtx_attrs[i];
-			vtx_attrs_by_location[va.location] = &va;
-			if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
-				vtx_attrs_by_builtin[va.builtin] = &va;
-		}
-
-	if (p_res_bindings)
-		for (size_t i = 0; i < res_bindings_count; i++)
-			resource_bindings.push_back(&p_res_bindings[i]);
 }
 
-CompilerMSL::CompilerMSL(ParsedIR &&ir_, MSLVertexAttr *p_vtx_attrs, size_t vtx_attrs_count,
-                         MSLResourceBinding *p_res_bindings, size_t res_bindings_count)
+CompilerMSL::CompilerMSL(ParsedIR &&ir_)
     : CompilerGLSL(std::move(ir_))
 {
-	if (p_vtx_attrs)
-		for (size_t i = 0; i < vtx_attrs_count; i++)
-		{
-			auto &va = p_vtx_attrs[i];
-			vtx_attrs_by_location[va.location] = &va;
-			if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
-				vtx_attrs_by_builtin[va.builtin] = &va;
-		}
+}
 
-	if (p_res_bindings)
-		for (size_t i = 0; i < res_bindings_count; i++)
-			resource_bindings.push_back(&p_res_bindings[i]);
+void CompilerMSL::add_msl_vertex_attribute(const MSLVertexAttr &va)
+{
+	vtx_attrs_by_location[va.location] = va;
+	if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
+		vtx_attrs_by_builtin[va.builtin] = va;
+}
+
+void CompilerMSL::add_msl_resource_binding(const MSLResourceBinding &binding)
+{
+	resource_bindings.push_back({ binding, false });
+}
+
+bool CompilerMSL::is_msl_vertex_attribute_used(uint32_t location)
+{
+	return vtx_attrs_in_use.count(location) != 0;
+}
+
+bool CompilerMSL::is_msl_resource_binding_used(ExecutionModel model, uint32_t desc_set, uint32_t binding)
+{
+	auto itr = find_if(begin(resource_bindings), end(resource_bindings),
+	                   [&](const std::pair<MSLResourceBinding, bool> &resource) -> bool {
+		                   return model == resource.first.stage && desc_set == resource.first.desc_set &&
+		                          binding == resource.first.binding;
+	                   });
+	return itr != end(resource_bindings) && itr->second;
 }
 
 void CompilerMSL::set_fragment_output_components(uint32_t location, uint32_t components)
@@ -662,7 +638,10 @@ string CompilerMSL::compile()
 
 		reset();
 
-		next_metal_resource_index = MSLResourceBinding(); // Start bindings at zero
+		// Start bindings at zero.
+		next_metal_resource_index_buffer = 0;
+		next_metal_resource_index_texture = 0;
+		next_metal_resource_index_sampler = 0;
 
 		// Move constructor for this type is broken on GCC 4.9 ...
 		buffer = unique_ptr<ostringstream>(new ostringstream());
@@ -677,36 +656,6 @@ string CompilerMSL::compile()
 	} while (force_recompile);
 
 	return buffer->str();
-}
-
-string CompilerMSL::compile(vector<MSLVertexAttr> *p_vtx_attrs, vector<MSLResourceBinding> *p_res_bindings)
-{
-	if (p_vtx_attrs)
-	{
-		vtx_attrs_by_location.clear();
-		for (auto &va : *p_vtx_attrs)
-		{
-			vtx_attrs_by_location[va.location] = &va;
-			if (va.builtin != BuiltInMax && !vtx_attrs_by_builtin.count(va.builtin))
-				vtx_attrs_by_builtin[va.builtin] = &va;
-		}
-	}
-
-	if (p_res_bindings)
-	{
-		resource_bindings.clear();
-		for (auto &rb : *p_res_bindings)
-			resource_bindings.push_back(&rb);
-	}
-
-	return compile();
-}
-
-string CompilerMSL::compile(MSLConfiguration &msl_cfg, vector<MSLVertexAttr> *p_vtx_attrs,
-                            vector<MSLResourceBinding> *p_res_bindings)
-{
-	msl_options = msl_cfg;
-	return compile(p_vtx_attrs, p_res_bindings);
 }
 
 // Register the need to output any custom functions.
@@ -1030,10 +979,8 @@ void CompilerMSL::mark_as_packable(SPIRType &type)
 // If a vertex attribute exists at the location, it is marked as being used by this shader
 void CompilerMSL::mark_location_as_used_by_shader(uint32_t location, StorageClass storage)
 {
-	MSLVertexAttr *p_va;
-	if ((get_execution_model() == ExecutionModelVertex || is_tessellation_shader()) && (storage == StorageClassInput) &&
-	    (p_va = vtx_attrs_by_location[location]))
-		p_va->used_by_shader = true;
+	if ((get_execution_model() == ExecutionModelVertex || is_tessellation_shader()) && (storage == StorageClassInput))
+		vtx_attrs_in_use.insert(location);
 }
 
 uint32_t CompilerMSL::get_target_components_for_fragment_location(uint32_t location) const
@@ -1141,7 +1088,7 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 	}
 	else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
 	{
-		uint32_t locn = vtx_attrs_by_builtin[builtin]->location;
+		uint32_t locn = vtx_attrs_by_builtin[builtin].location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, storage);
 	}
@@ -1268,7 +1215,7 @@ void CompilerMSL::add_composite_variable_to_interface_block(StorageClass storage
 		}
 		else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
 		{
-			uint32_t locn = vtx_attrs_by_builtin[builtin]->location + i;
+			uint32_t locn = vtx_attrs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
@@ -1417,7 +1364,7 @@ void CompilerMSL::add_composite_member_variable_to_interface_block(StorageClass 
 		}
 		else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
 		{
-			uint32_t locn = vtx_attrs_by_builtin[builtin]->location + i;
+			uint32_t locn = vtx_attrs_by_builtin[builtin].location + i;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, storage);
 		}
@@ -1553,7 +1500,10 @@ void CompilerMSL::add_plain_member_variable_to_interface_block(StorageClass stor
 	}
 	else if (is_builtin && is_tessellation_shader() && vtx_attrs_by_builtin.count(builtin))
 	{
-		uint32_t locn = vtx_attrs_by_builtin[builtin]->location;
+		uint32_t locn = 0;
+		auto builtin_itr = vtx_attrs_by_builtin.find(builtin);
+		if (builtin_itr != end(vtx_attrs_by_builtin))
+			locn = builtin_itr->second.location;
 		set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 		mark_location_as_used_by_shader(locn, storage);
 	}
@@ -1635,7 +1585,7 @@ void CompilerMSL::add_tess_level_input_to_interface_block(const std::string &ib_
 			}
 			else if (vtx_attrs_by_builtin.count(builtin))
 			{
-				uint32_t locn = vtx_attrs_by_builtin[builtin]->location;
+				uint32_t locn = vtx_attrs_by_builtin[builtin].location;
 				set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 				mark_location_as_used_by_shader(locn, StorageClassInput);
 			}
@@ -1696,7 +1646,7 @@ void CompilerMSL::add_tess_level_input_to_interface_block(const std::string &ib_
 		}
 		else if (vtx_attrs_by_builtin.count(builtin))
 		{
-			uint32_t locn = vtx_attrs_by_builtin[builtin]->location;
+			uint32_t locn = vtx_attrs_by_builtin[builtin].location;
 			set_member_decoration(ib_type.self, ib_mbr_idx, DecorationLocation, locn);
 			mark_location_as_used_by_shader(locn, StorageClassInput);
 		}
@@ -2119,11 +2069,11 @@ uint32_t CompilerMSL::ensure_correct_attribute_type(uint32_t type_id, uint32_t l
 {
 	auto &type = get<SPIRType>(type_id);
 
-	MSLVertexAttr *p_va = vtx_attrs_by_location[location];
-	if (!p_va)
+	auto p_va = vtx_attrs_by_location.find(location);
+	if (p_va == end(vtx_attrs_by_location))
 		return type_id;
 
-	switch (p_va->format)
+	switch (p_va->second.format)
 	{
 	case MSL_VERTEX_FORMAT_UINT8:
 	{
@@ -2157,6 +2107,7 @@ uint32_t CompilerMSL::ensure_correct_attribute_type(uint32_t type_id, uint32_t l
 		ptr_type.parent_type = base_type_id;
 		return ptr_type_id;
 	}
+
 	case MSL_VERTEX_FORMAT_UINT16:
 	{
 		switch (type.basetype)
@@ -2188,6 +2139,7 @@ uint32_t CompilerMSL::ensure_correct_attribute_type(uint32_t type_id, uint32_t l
 		return ptr_type_id;
 	}
 
+	default:
 	case MSL_VERTEX_FORMAT_OTHER:
 		break;
 	}
@@ -5792,24 +5744,25 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	uint32_t var_binding = (var.storage == StorageClassPushConstant) ? kPushConstBinding : var_dec.binding;
 
 	// If a matching binding has been specified, find and use it
-	for (auto p_res_bind : resource_bindings)
-	{
-		if (p_res_bind->stage == execution.model && p_res_bind->desc_set == var_desc_set &&
-		    p_res_bind->binding == var_binding)
-		{
+	auto itr = find_if(begin(resource_bindings), end(resource_bindings),
+	                   [&](const pair<MSLResourceBinding, bool> &resource) -> bool {
+		                   return var_desc_set == resource.first.desc_set && var_binding == resource.first.binding &&
+		                          execution.model == resource.first.stage;
+	                   });
 
-			p_res_bind->used_by_shader = true;
-			switch (basetype)
-			{
-			case SPIRType::Struct:
-				return p_res_bind->msl_buffer;
-			case SPIRType::Image:
-				return p_res_bind->msl_texture;
-			case SPIRType::Sampler:
-				return p_res_bind->msl_sampler;
-			default:
-				return 0;
-			}
+	if (itr != end(resource_bindings))
+	{
+		itr->second = true;
+		switch (basetype)
+		{
+		case SPIRType::Struct:
+			return itr->first.msl_buffer;
+		case SPIRType::Image:
+			return itr->first.msl_texture;
+		case SPIRType::Sampler:
+			return itr->first.msl_sampler;
+		default:
+			return 0;
 		}
 	}
 
@@ -5827,16 +5780,16 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	switch (basetype)
 	{
 	case SPIRType::Struct:
-		resource_index = next_metal_resource_index.msl_buffer;
-		next_metal_resource_index.msl_buffer += binding_stride;
+		resource_index = next_metal_resource_index_buffer;
+		next_metal_resource_index_buffer += binding_stride;
 		break;
 	case SPIRType::Image:
-		resource_index = next_metal_resource_index.msl_texture;
-		next_metal_resource_index.msl_texture += binding_stride;
+		resource_index = next_metal_resource_index_texture;
+		next_metal_resource_index_texture += binding_stride;
 		break;
 	case SPIRType::Sampler:
-		resource_index = next_metal_resource_index.msl_sampler;
-		next_metal_resource_index.msl_sampler += binding_stride;
+		resource_index = next_metal_resource_index_sampler;
+		next_metal_resource_index_sampler += binding_stride;
 		break;
 	default:
 		resource_index = 0;

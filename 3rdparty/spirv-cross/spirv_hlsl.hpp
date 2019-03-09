@@ -82,21 +82,9 @@ public:
 	{
 	}
 
-	SPIRV_CROSS_DEPRECATED("CompilerHLSL::get_options() is obsolete, use get_hlsl_options() instead.")
-	const Options &get_options() const
-	{
-		return hlsl_options;
-	}
-
 	const Options &get_hlsl_options() const
 	{
 		return hlsl_options;
-	}
-
-	SPIRV_CROSS_DEPRECATED("CompilerHLSL::get_options() is obsolete, use set_hlsl_options() instead.")
-	void set_options(Options &opts)
-	{
-		hlsl_options = opts;
 	}
 
 	void set_hlsl_options(const Options &opts)
@@ -108,16 +96,13 @@ public:
 	//
 	// Push constants ranges will be split up according to the
 	// layout specified.
-	void set_root_constant_layouts(std::vector<RootConstants> layout)
-	{
-		root_constants_layout = std::move(layout);
-	}
+	void set_root_constant_layouts(std::vector<RootConstants> layout);
 
 	// Compiles and remaps vertex attributes at specific locations to a fixed semantic.
 	// The default is TEXCOORD# where # denotes location.
 	// Matrices are unrolled to vectors with notation ${SEMANTIC}_#, where # denotes row.
 	// $SEMANTIC is either TEXCOORD# or a semantic name specified here.
-	std::string compile(std::vector<HLSLVertexAttributeRemap> vertex_attributes);
+	void add_vertex_attribute_remap(const HLSLVertexAttributeRemap &vertex_attributes);
 	std::string compile() override;
 
 	// This is a special HLSL workaround for the NumWorkGroups builtin.
