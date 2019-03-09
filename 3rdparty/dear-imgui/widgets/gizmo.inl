@@ -736,12 +736,17 @@ namespace ImGuizmo
 
       const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
       ImGui::SetNextWindowSize(io.DisplaySize);
-
-     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
+      ImGui::SetNextWindowPos(ImVec2(0, 0));
+      
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
+      ImGui::PushStyleColor(ImGuiCol_Border, 0);
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+     
       ImGui::Begin("gizmo", NULL, flags);
       gContext.mDrawList = ImGui::GetWindowDrawList();
       ImGui::End();
-     ImGui::PopStyleColor();
+      ImGui::PopStyleVar();
+      ImGui::PopStyleColor(2);
    }
 
    bool IsUsing()
@@ -860,8 +865,9 @@ namespace ImGuizmo
          belowAxisLimit = gContext.mBelowAxisLimit[axisIndex];
          belowPlaneLimit = gContext.mBelowPlaneLimit[axisIndex];
 
-         dirPlaneX *= gContext.mAxisFactor[axisIndex];
-         dirPlaneY *= gContext.mAxisFactor[(axisIndex + 1) % 3];
+         dirAxis *= gContext.mAxisFactor[axisIndex];
+         dirPlaneX *= gContext.mAxisFactor[(axisIndex + 1) % 3];
+         dirPlaneY *= gContext.mAxisFactor[(axisIndex + 2) % 3];
       }
       else
       {
@@ -891,7 +897,7 @@ namespace ImGuizmo
 
          // and store values
          gContext.mAxisFactor[axisIndex] = mulAxis;
-         gContext.mAxisFactor[(axisIndex + 1) % 3] = mulAxisY;
+         gContext.mAxisFactor[(axisIndex + 1) % 3] = mulAxisX;
          gContext.mAxisFactor[(axisIndex + 2) % 3] = mulAxisY;
          gContext.mBelowAxisLimit[axisIndex] = belowAxisLimit;
          gContext.mBelowPlaneLimit[axisIndex] = belowPlaneLimit;
@@ -1427,6 +1433,7 @@ namespace ImGuizmo
          bool belowAxisLimit, belowPlaneLimit;
          ComputeTripodAxisAndVisibility(i, dirAxis, dirPlaneX, dirPlaneY, belowAxisLimit, belowPlaneLimit);
 
+         dirAxis.TransformVector(gContext.mModel);
        const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, BuildPlan(gContext.mModel.v.position, dirAxis));
        vec_t posOnPlan = gContext.mRayOrigin + gContext.mRayVector * len;
 
@@ -1851,7 +1858,7 @@ namespace ImGuizmo
       // behind camera
       vec_t camSpacePosition;
       camSpacePosition.TransformPoint(makeVect(0.f, 0.f, 0.f), gContext.mMVP);
-      if (camSpacePosition.z < 0.001f)
+      if (!gContext.mIsOrthographic && camSpacePosition.z < 0.001f)
          return;
 
       // --
