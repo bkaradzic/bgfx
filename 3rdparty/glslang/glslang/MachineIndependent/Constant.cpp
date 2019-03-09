@@ -941,6 +941,10 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             newConstArray[i].setDConst(unionArray[i].getDConst()); break;
         case EOpConvDoubleToFloat:
             newConstArray[i].setDConst(unionArray[i].getDConst()); break;
+        case EOpConvPtrToUint64:
+        case EOpConvUint64ToPtr:
+        case EOpConstructReference:
+            newConstArray[i].setU64Const(unionArray[i].getU64Const()); break;
 
 
 

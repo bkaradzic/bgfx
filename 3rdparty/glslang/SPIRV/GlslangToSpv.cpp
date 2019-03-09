@@ -209,15 +209,6 @@ protected:
             builder.addExtension(ext);
     }
 
-    unsigned int getBufferReferenceAlignment(const glslang::TType &type) const {
-        if (type.getBasicType() == glslang::EbtReference) {
-            return type.getReferentType()->getQualifier().hasBufferReferenceAlign() ?
-                        (1u << type.getReferentType()->getQualifier().layoutBufferReferenceAlign) : 16u;
-        } else {
-            return 0;
-        }
-    }
-
     glslang::SpvOptions& options;
     spv::Function* shaderEntry;
     spv::Function* currentFunction;
@@ -565,14 +556,15 @@ spv::Builder::AccessChain::CoherentFlags TGlslangToSpvTraverser::TranslateCohere
     flags.workgroupcoherent = type.getQualifier().workgroupcoherent ||
                               type.getQualifier().storage == glslang::EvqShared;
     flags.subgroupcoherent = type.getQualifier().subgroupcoherent;
+    flags.volatil = type.getQualifier().volatil;
     // *coherent variables are implicitly nonprivate in GLSL
     flags.nonprivate = type.getQualifier().nonprivate ||
                        flags.subgroupcoherent ||
                        flags.workgroupcoherent ||
                        flags.queuefamilycoherent ||
                        flags.devicecoherent ||
-                       flags.coherent;
-    flags.volatil = type.getQualifier().volatil;
+                       flags.coherent ||
+                       flags.volatil;
     flags.isImage = type.getBasicType() == glslang::EbtSampler;
     return flags;
 }
@@ -580,7 +572,7 @@ spv::Builder::AccessChain::CoherentFlags TGlslangToSpvTraverser::TranslateCohere
 spv::Scope TGlslangToSpvTraverser::TranslateMemoryScope(const spv::Builder::AccessChain::CoherentFlags &coherentFlags)
 {
     spv::Scope scope;
-    if (coherentFlags.coherent) {
+    if (coherentFlags.volatil || coherentFlags.coherent) {
         // coherent defaults to Device scope in the old model, QueueFamilyKHR scope in the new model
         scope = glslangIntermediate->usingVulkanMemoryModel() ? spv::ScopeQueueFamilyKHR : spv::ScopeDevice;
     } else if (coherentFlags.devicecoherent) {
@@ -1734,7 +1726,7 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
                 }
 
                 // normal case for indexing array or structure or block
-                builder.accessChainPush(builder.makeIntConstant(spvIndex), TranslateCoherent(node->getLeft()->getType()), getBufferReferenceAlignment(node->getLeft()->getType()));
+                builder.accessChainPush(builder.makeIntConstant(spvIndex), TranslateCoherent(node->getLeft()->getType()), node->getLeft()->getType().getBufferReferenceAlignment());
 
                 // Add capabilities here for accessing PointSize and clip/cull distance.
                 // We have deferred generation of associated capabilities until now.
@@ -1773,7 +1765,7 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
                                                 TranslateCoherent(node->getLeft()->getType()),
                                                 glslangIntermediate->getBaseAlignmentScalar(node->getLeft()->getType(), dummySize));
             } else
-                builder.accessChainPush(index, TranslateCoherent(node->getLeft()->getType()), getBufferReferenceAlignment(node->getLeft()->getType()));
+                builder.accessChainPush(index, TranslateCoherent(node->getLeft()->getType()), node->getLeft()->getType().getBufferReferenceAlignment());
         }
         return false;
     case glslang::EOpVectorSwizzle:
@@ -2502,7 +2494,7 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
 
                 // Point to the first element of the array.
                 builder.accessChainPush(elementId, TranslateCoherent(glslangOperands[arg]->getAsTyped()->getType()),
-                                                   getBufferReferenceAlignment(glslangOperands[arg]->getAsTyped()->getType()));
+                                                   glslangOperands[arg]->getAsTyped()->getType().getBufferReferenceAlignment());
 
                 spv::Builder::AccessChain::CoherentFlags coherentFlags = builder.getAccessChain().coherentFlags;
                 unsigned int alignment = builder.getAccessChain().alignment;
@@ -3517,7 +3509,7 @@ spv::Id TGlslangToSpvTraverser::accessChainLoad(const glslang::TType& type)
     coherentFlags |= TranslateCoherent(type);
 
     unsigned int alignment = builder.getAccessChain().alignment;
-    alignment |= getBufferReferenceAlignment(type);
+    alignment |= type.getBufferReferenceAlignment();
 
     spv::Id loadedId = builder.accessChainLoad(TranslatePrecisionDecoration(type),
                                                TranslateNonUniformDecoration(type.getQualifier()),
@@ -3584,7 +3576,7 @@ void TGlslangToSpvTraverser::accessChainStore(const glslang::TType& type, spv::I
     coherentFlags |= TranslateCoherent(type);
 
     unsigned int alignment = builder.getAccessChain().alignment;
-    alignment |= getBufferReferenceAlignment(type);
+    alignment |= type.getBufferReferenceAlignment();
 
     builder.accessChainStore(rvalue,
                              spv::MemoryAccessMask(TranslateMemoryAccess(coherentFlags) & ~spv::MemoryAccessMakePointerVisibleKHRMask),
@@ -3634,7 +3626,7 @@ void TGlslangToSpvTraverser::multiTypeStore(const glslang::TType& type, spv::Id 
             // set up the target storage
             builder.clearAccessChain();
             builder.setAccessChainLValue(lValue);
-            builder.accessChainPush(builder.makeIntConstant(index), TranslateCoherent(type), getBufferReferenceAlignment(type));
+            builder.accessChainPush(builder.makeIntConstant(index), TranslateCoherent(type), type.getBufferReferenceAlignment());
 
             // store the member
             multiTypeStore(glslangElementType, elementRValue);
@@ -3654,7 +3646,7 @@ void TGlslangToSpvTraverser::multiTypeStore(const glslang::TType& type, spv::Id 
             // set up the target storage
             builder.clearAccessChain();
             builder.setAccessChainLValue(lValue);
-            builder.accessChainPush(builder.makeIntConstant(m), TranslateCoherent(type), getBufferReferenceAlignment(type));
+            builder.accessChainPush(builder.makeIntConstant(m), TranslateCoherent(type), type.getBufferReferenceAlignment());
 
             // store the member
             multiTypeStore(glslangMemberType, memberRValue);
@@ -7703,6 +7695,10 @@ spv::Id TGlslangToSpvTraverser::createSpvConstantFromConstUnionArray(const glsla
             break;
         case glslang::EbtBool:
             scalar = builder.makeBoolConstant(zero ? false : consts[nextConst].getBConst(), specConstant);
+            break;
+        case glslang::EbtReference:
+            scalar = builder.makeUint64Constant(zero ? 0 : consts[nextConst].getU64Const(), specConstant);
+            scalar = builder.createUnaryOp(spv::OpBitcast, typeId, scalar);
             break;
         default:
             assert(0);

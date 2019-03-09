@@ -613,6 +613,7 @@ equality_expression
         parseContext.arrayObjectCheck($2.loc, $1->getType(), "array comparison");
         parseContext.opaqueCheck($2.loc, $1->getType(), "==");
         parseContext.specializationCheck($2.loc, $1->getType(), "==");
+        parseContext.referenceCheck($2.loc, $1->getType(), "==");
         $$ = parseContext.handleBinaryMath($2.loc, "==", EOpEqual, $1, $3);
         if ($$ == 0)
             $$ = parseContext.intermediate.addConstantUnion(false, $2.loc);
@@ -621,6 +622,7 @@ equality_expression
         parseContext.arrayObjectCheck($2.loc, $1->getType(), "array comparison");
         parseContext.opaqueCheck($2.loc, $1->getType(), "!=");
         parseContext.specializationCheck($2.loc, $1->getType(), "!=");
+        parseContext.referenceCheck($2.loc, $1->getType(), "!=");
         $$ = parseContext.handleBinaryMath($2.loc, "!=", EOpNotEqual, $1, $3);
         if ($$ == 0)
             $$ = parseContext.intermediate.addConstantUnion(false, $2.loc);

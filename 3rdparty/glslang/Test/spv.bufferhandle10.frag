@@ -20,4 +20,6 @@ void main() {
     coherent blockType b = t.f;
     b.x[0] = 2;
 
+    volatile blockType b2 = t.f;
+    b2.x[0] = 3;
 }

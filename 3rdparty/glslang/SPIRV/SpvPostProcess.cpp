@@ -260,8 +260,6 @@ void Builder::postProcess(Instruction& inst)
                 assert(memoryAccess & MemoryAccessAlignedMask);
                 // Compute the index of the alignment operand.
                 int alignmentIdx = 2;
-                if (memoryAccess & MemoryAccessVolatileMask)
-                    alignmentIdx++;
                 if (inst.getOpCode() == OpStore)
                     alignmentIdx++;
                 // Merge new and old (mis)alignment

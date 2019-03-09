@@ -272,6 +272,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.bufferhandle13.frag",
         "spv.bufferhandle14.frag",
         "spv.bufferhandle15.frag",
+        "spv.bufferhandle16.frag",
+        "spv.bufferhandle17_Errors.frag",
         "spv.bufferhandle2.frag",
         "spv.bufferhandle3.frag",
         "spv.bufferhandle4.frag",

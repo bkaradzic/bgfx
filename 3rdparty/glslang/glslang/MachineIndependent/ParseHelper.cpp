@@ -4435,6 +4435,12 @@ void TParseContext::opaqueCheck(const TSourceLoc& loc, const TType& type, const 
         error(loc, "can't use with samplers or structs containing samplers", op, "");
 }
 
+void TParseContext::referenceCheck(const TSourceLoc& loc, const TType& type, const char* op)
+{
+    if (containsFieldWithBasicType(type, EbtReference))
+        error(loc, "can't use with reference types", op, "");
+}
+
 void TParseContext::storage16BitAssignmentCheck(const TSourceLoc& loc, const TType& type, const char* op)
 {
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtFloat16))
@@ -6290,6 +6296,9 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
 #ifdef NV_EXTENSIONS
     accStructNVCheck(loc, type, identifier);
 #endif
+    if (type.getQualifier().storage == EvqConst && type.containsBasicType(EbtReference)) {
+        error(loc, "variables with reference type can't have qualifier 'const'", "qualifier", "");
+    }
 
     if (type.getQualifier().storage != EvqUniform && type.getQualifier().storage != EvqBuffer) {
         if (type.containsBasicType(EbtFloat16))
@@ -6860,7 +6869,7 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
 
     case EOpConstructUint64:
         if (type.isScalar() && node->getType().getBasicType() == EbtReference) {
-            TIntermUnary* newNode = intermediate.addUnaryNode(EOpConvPtrToUint64, node, node->getLoc(), type);
+            TIntermTyped* newNode = intermediate.addBuiltInFunctionCall(node->getLoc(), EOpConvPtrToUint64, true, node, type);
             return newNode;
         }
         // fall through
@@ -6885,11 +6894,11 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructReference:
         // construct reference from reference
         if (node->getType().getBasicType() == EbtReference) {
-            newNode = intermediate.addUnaryNode(EOpConstructReference, node, node->getLoc(), type);
+            newNode = intermediate.addBuiltInFunctionCall(node->getLoc(), EOpConstructReference, true, node, type);
             return newNode;
         // construct reference from uint64
         } else if (node->getType().isScalar() && node->getType().getBasicType() == EbtUint64) {
-            TIntermUnary* newNode = intermediate.addUnaryNode(EOpConvUint64ToPtr, node, node->getLoc(), type);
+            TIntermTyped* newNode = intermediate.addBuiltInFunctionCall(node->getLoc(), EOpConvUint64ToPtr, true, node, type);
             return newNode;
         } else {
             return nullptr;

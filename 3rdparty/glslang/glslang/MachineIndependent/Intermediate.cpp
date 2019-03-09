@@ -743,7 +743,7 @@ TIntermTyped* TIntermediate::addConversion(TBasicType convertTo, TIntermTyped* n
 // Returns the converted pair of nodes.
 // Returns <nullptr, nullptr> when there is no conversion.
 std::tuple<TIntermTyped*, TIntermTyped*>
-TIntermediate::addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* node1) const
+TIntermediate::addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* node1)
 {
     if (!isConversionAllowed(op, node0) || !isConversionAllowed(op, node1))
         return std::make_tuple(nullptr, nullptr);
@@ -876,7 +876,7 @@ TIntermediate::addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* no
 //
 // Return nullptr if a conversion can't be done.
 //
-TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TIntermTyped* node) const
+TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TIntermTyped* node)
 {
     if (!isConversionAllowed(op, node))
         return nullptr;
