@@ -121,9 +121,7 @@ function copyLib()
 end
 
 if _OPTIONS["with-wayland"] then
-	defines { "BGFX_USE_WAYLAND=1" }
-else
-	defines { "BGFX_USE_WAYLAND=0" }
+	defines { "WL_EGL_PLATFORM=1" }
 end
 
 if _OPTIONS["with-sdl"] then

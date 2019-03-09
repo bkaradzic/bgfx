@@ -88,6 +88,12 @@ project ("example-common")
 		}
 	end
 
+	if _OPTIONS["with-wayland"] then
+		defines {
+			"ENTRY_CONFIG_USE_WAYLAND=1",
+		}
+	end
+
 	configuration { "linux-steamlink" }
 		defines {
 			"EGL_API_FB",
