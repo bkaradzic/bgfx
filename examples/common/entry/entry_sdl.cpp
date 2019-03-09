@@ -8,7 +8,7 @@
 #if ENTRY_CONFIG_USE_SDL
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#	if BGFX_USE_WAYLAND
+#	if ENTRY_CONFIG_USE_WAYLAND
 #		include <wayland-egl.h>
 #	endif 
 #elif BX_PLATFORM_WINDOWS
@@ -49,7 +49,7 @@ namespace entry
 		}
 
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if BGFX_USE_WAYLAND
+#		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
 		if(!win_impl)
 		{
@@ -85,7 +85,7 @@ namespace entry
 
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if BGFX_USE_WAYLAND
+#		if ENTRY_CONFIG_USE_WAYLAND
 		pd.ndt          = wmi.info.wl.display;
 #		else
 		pd.ndt          = wmi.info.x11.display;
@@ -112,7 +112,7 @@ namespace entry
 		if(!_window) 
 			return;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if BGFX_USE_WAYLAND
+#		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)SDL_GetWindowData(_window, "wl_egl_window");
 		if(win_impl)
 		{

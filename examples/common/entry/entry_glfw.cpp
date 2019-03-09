@@ -15,7 +15,7 @@
 #endif // GLFW_VERSION_MINOR < 2
 
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#	if BGFX_USE_WAYLAND
+#	if ENTRY_CONFIG_USE_WAYLAND
 #		include <wayland-egl.h>
 #		define GLFW_EXPOSE_NATIVE_WAYLAND
 #	else
@@ -45,7 +45,7 @@ namespace entry
 	static void* glfwNativeWindowHandle(GLFWwindow* _window)
 	{
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-# 		if BGFX_USE_WAYLAND
+# 		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
 		if(!win_impl)
 		{
@@ -73,7 +73,7 @@ namespace entry
 		if(!_window)
 			return;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-#		if BGFX_USE_WAYLAND
+#		if ENTRY_CONFIG_USE_WAYLAND
 		wl_egl_window *win_impl = (wl_egl_window*)glfwGetWindowUserPointer(_window);
 		if(win_impl)
 		{ 
@@ -89,7 +89,7 @@ namespace entry
 	{
 		bgfx::PlatformData pd;
 #	if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-# 		if BGFX_USE_WAYLAND
+# 		if ENTRY_CONFIG_USE_WAYLAND
 		pd.ndt      = glfwGetWaylandDisplay();
 #		else
 		pd.ndt      = glfwGetX11Display();
