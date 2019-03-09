@@ -2518,7 +2518,7 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <dl class="function">
 <dt id="_CPPv2N4bgfx12setViewClearE6ViewId8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t">
 <span id="bgfx::setViewClear__ViewId.uint16_t.float.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t.uint8_t"></span><span class="target" id="namespacebgfx_1abf98809ca6f644a2e2fe80013675b054"></span>void <code class="descclassname">bgfx::</code><code class="descname">setViewClear</code><span class="sig-paren">(</span>ViewId <em>_id</em>, uint16_t <em>_flags</em>, float <em>_depth</em>, uint8_t <em>_stencil</em>, uint8_t <em>_0</em> = UINT8_MAX, uint8_t <em>_1</em> = UINT8_MAX, uint8_t <em>_2</em> = UINT8_MAX, uint8_t <em>_3</em> = UINT8_MAX, uint8_t <em>_4</em> = UINT8_MAX, uint8_t <em>_5</em> = UINT8_MAX, uint8_t <em>_6</em> = UINT8_MAX, uint8_t <em>_7</em> = UINT8_MAX<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx12setViewClearE6ViewId8uint16_tf7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t7uint8_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set view clear flags with different clear color for each frame buffer texture. Must use setClearColor to setup clear color palette. </p>
+<dd><p>Set view clear flags with different clear color for each frame buffer texture. Must use <code class="docutils literal"><a class="reference internal" href="#namespacebgfx_1ad4ec3f3f2af1b2d69ec0eeefe960c2f0"><span><span class="pre">bgfx::setPaletteColor</span></span></a></code> to setup clear color palette. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_view_clear_mrt</span></code>. </dd>
@@ -6401,7 +6401,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dl class="function">
 <dt id="_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint64_t">
 <span id="bgfx::createTexture2D__BackbufferRatio::Enum.b.uint16_t.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1a67620ab3afd29e7acdacd9180ae86cd4"></span>TextureHandle <code class="descclassname">bgfx::</code><code class="descname">createTexture2D</code><span class="sig-paren">(</span>BackbufferRatio::Enum <em>_ratio</em>, bool <em>_hasMips</em>, uint16_t <em>_numLayers</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint64_t <em>_flags</em> = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15createTexture2DEN15BackbufferRatio4EnumEb8uint16_tN13TextureFormat4EnumE8uint64_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio if back buffer resolution changes. </p>
+<dd><p>Create texture with size based on backbuffer ratio. Texture will maintain ratio if back buffer resolution changes. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
 <dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_texture_2d_scaled</span></code>. </dd>
