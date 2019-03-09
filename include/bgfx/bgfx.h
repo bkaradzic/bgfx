@@ -3261,7 +3261,7 @@ namespace bgfx
 		);
 
 	/// Set view clear flags with different clear color for each
-	/// frame buffer texture. Must use setClearColor to setup clear color
+	/// frame buffer texture. Must use `bgfx::setPaletteColor` to setup clear color
 	/// palette.
 	///
 	/// @param[in] _id View id.
