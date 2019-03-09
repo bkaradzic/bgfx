@@ -86,6 +86,12 @@ spv_result_t Function::RegisterLoopMerge(uint32_t merge_id,
   continue_construct.set_corresponding_constructs({&loop_construct});
   loop_construct.set_corresponding_constructs({&continue_construct});
   merge_block_header_[&merge_block] = current_block_;
+  if (continue_target_headers_.find(&continue_target_block) ==
+      continue_target_headers_.end()) {
+    continue_target_headers_[&continue_target_block] = {current_block_};
+  } else {
+    continue_target_headers_[&continue_target_block].push_back(current_block_);
+  }
 
   return SPV_SUCCESS;
 }

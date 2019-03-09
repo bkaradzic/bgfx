@@ -176,7 +176,7 @@ if(NOT COMMAND find_host_program)
   endmacro()
 endif()
 
-find_host_package(PythonInterp 2.7 REQUIRED)
+find_host_package(PythonInterp)
 
 # Check for symbol exports on Linux.
 # At the moment, this check will fail on the OSX build machines for the Android NDK.
