@@ -2651,7 +2651,7 @@ namespace bgfx
 		, const Memory* _mem = NULL
 		);
 
-	/// Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
+	/// Create texture with size based on backbuffer ratio. Texture will maintain ratio
 	/// if back buffer resolution changes.
 	///
 	/// @param[in] _ratio Frame buffer size in respect to back-buffer size. See:
