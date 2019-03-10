@@ -18,6 +18,14 @@ local function camelcase_to_underscorecase(name)
 	return table.concat(tmp, "_")
 end
 
+local function underscorecase_to_camelcase(name)
+	local tmp = {}
+	for v in name:gmatch "[^_]+" do
+		tmp[#tmp+1] = v:sub(1,1):upper() .. v:sub(2)
+	end
+	return table.concat(tmp)
+end
+
 local function convert_funcname(name)
 	name = name:gsub("^%l", string.upper)	-- Change to upper CamlCase
 	return camelcase_to_underscorecase(name)
@@ -426,6 +434,8 @@ local function codetemp(func)
 		RET = func.ret.fulltype,
 		CRET = func.ret.ctype,
 		CFUNCNAME = func.cname,
+		CFUNCNAMEUPPER = func.cname:upper(),
+		CFUNCNAMECAML = underscorecase_to_camelcase(func.cname),
 		FUNCNAME = func.name,
 		CARGS = table.concat(cargs, ", "),
 		CPPARGS = table.concat(args, ", "),
@@ -734,6 +744,10 @@ typedef struct $NAME_s
 
 } $NAME_t;
 ]]
+local cstruct_empty_temp = [[
+struct $NAME_s;
+typedef struct $NAME_s $NAME_t;
+]]
 function codegen.gen_struct_cdefine(struct)
 	assert(type(struct.struct) == "table", "Not a struct")
 	local cname = struct.cname:match "(.-)_t$"
@@ -745,7 +759,8 @@ function codegen.gen_struct_cdefine(struct)
 		NAME = cname,
 		ITEMS = table.concat(items, "\n\t"),
 	}
-	return (cstruct_temp:gsub("$(%u+)", temp))
+	local codetemp = #struct.struct == 0 and cstruct_empty_temp or cstruct_temp
+	return (codetemp:gsub("$(%u+)", temp))
 end
 
 local chandle_temp = [[

@@ -864,11 +864,8 @@ typedef struct bgfx_vertex_decl_s
  * per thread should be used. Use `bgfx::begin()` to obtain an encoder for a thread.
  *
  */
-typedef struct bgfx_encoder_s
-{
-	
-
-} bgfx_encoder_t;
+struct bgfx_encoder_s;
+typedef struct bgfx_encoder_s bgfx_encoder_t;
 
 
 
