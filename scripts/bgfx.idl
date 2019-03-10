@@ -1164,87 +1164,92 @@ func.calcTextureSize
 
 --- Create texture from memory buffer.
 func.createTexture
-	"TextureHandle"               --- Texture handle.
-	.mem   "const Memory*"        --- DDS, KTX or PVR texture binary data.
-	.flags "uint64_t"             --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	                              --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
-	                              --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                              ---   mode.
-	                              --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                              ---   sampling.
-	.skip  "uint8_t"              --- Skip top level mips when parsing texture.
-	.info  "TextureInfo*" { out } --- When non-`NULL` is specified it returns parsed texture information.
+	"TextureHandle"                            --- Texture handle.
+	.mem   "const Memory*"                     --- DDS, KTX or PVR texture binary data.
+	.flags "uint64_t"                          --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                                           ---   mode.
+	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                                           ---   sampling.
+	.skip  "uint8_t"                           --- Skip top level mips when parsing texture.
+	 { default = 0 }
+	.info  "TextureInfo*" { out }              --- When non-`NULL` is specified it returns parsed texture information.
+	 { default = NULL }
 
 --- Create 2D texture.
 func.createTexture2D
-	"TextureHandle"                  --- Texture handle.
-	.width     "uint16_t"            --- Width.
-	.height    "uint16_t"            --- Height.
-	.hasMips   "bool"                --- Indicates that texture contains full mip-map chain.
-	.numLayers "uint16_t"            --- Number of layers in texture array. Must be 1 if caps
-	                                 --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
-	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
-	.flags     "uint64_t"            --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	                                 --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
-	                                 --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                                 ---   mode.
-	                                 --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                                 ---   sampling.
-	.mem       "const Memory*"       --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
-	                                 --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
-	                                 --- 1, expected memory layout is texture and all mips together for each array element.
+	"TextureHandle"                            --- Texture handle.
+	.width     "uint16_t"                      --- Width.
+	.height    "uint16_t"                      --- Height.
+	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	.numLayers "uint16_t"                      --- Number of layers in texture array. Must be 1 if caps
+	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
+	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" } --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                                           ---   mode.
+	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                                           ---   sampling.
+	.mem       "const Memory*"                 --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
+	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
+	                                           --- 1, expected memory layout is texture and all mips together for each array element.
 
 --- Create texture with size based on backbuffer ratio. Texture will maintain ratio
 --- if back buffer resolution changes.
 func.createTexture2D { cname = "create_texture_2d_scaled" }
-	"TextureHandle"                    --- Texture handle.
-	.ratio     "BackbufferRatio::Enum" --- Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
-	.hasMips   "bool"                  --- Indicates that texture contains full mip-map chain.
-	.numLayers "uint16_t"              --- Number of layers in texture array. Must be 1 if caps
-	                                   --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
-	.format    "TextureFormat::Enum"   --- Texture format. See: `TextureFormat::Enum`.
-	.flags     "uint64_t"              --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	                                   --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
-	                                   --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                                   ---   mode.
-	                                   --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                                   ---   sampling.
+	"TextureHandle"                            --- Texture handle.
+	.ratio     "BackbufferRatio::Enum"         --- Texture size in respect to back-buffer size. See: `BackbufferRatio::Enum`.
+	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	.numLayers "uint16_t"                      --- Number of layers in texture array. Must be 1 if caps
+	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
+	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" }
+	                                           --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                                           ---   mode.
+	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                                           ---   sampling.
 
 --- Create 3D texture.
 func.createTexture3D
-	"TextureHandle"                  --- Texture handle.
-	.width     "uint16_t"            --- Width.
-	.height    "uint16_t"            --- Height.
-	.depth     "uint16_t"            --- Depth.
-	.hasMips   "bool"                --- Indicates that texture contains full mip-map chain.
-	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
-	.flags     "uint64_t"            --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	                                 --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
-	                                 --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                                 ---   mode.
-	                                 --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                                 ---   sampling.
-	.mem       "const Memory*"       --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
-	                                 --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
-	                                 --- 1, expected memory layout is texture and all mips together for each array element.
+	"TextureHandle"                            --- Texture handle.
+	.width     "uint16_t"                      --- Width.
+	.height    "uint16_t"                      --- Height.
+	.depth     "uint16_t"                      --- Depth.
+	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
+	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" }
+	                                           --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                                           ---   mode.
+	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                                           ---   sampling.
+	.mem       "const Memory*"                 --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
+	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
+	                                           --- 1, expected memory layout is texture and all mips together for each array element.
 
 --- Create Cube texture.
 func.createTextureCube
-	"TextureHandle"                  --- Texture handle.
-	.size      "uint16_t"            --- Cube side size.
-	.hasMips   "bool"                --- Indicates that texture contains full mip-map chain.
-	.numLayers "uint16_t"            --- Number of layers in texture array. Must be 1 if caps
-	                                 --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
-	.format    "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
-	.flags     "uint64_t"            --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	                                 --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
-	                                 --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                                 ---   mode.
-	                                 --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                                 ---   sampling.
-	.mem       "const Memory*"       --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
-	                                 --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
-	                                 --- 1, expected memory layout is texture and all mips together for each array element.
+	"TextureHandle"                            --- Texture handle.
+	.size      "uint16_t"                      --- Cube side size.
+	.hasMips   "bool"                          --- Indicates that texture contains full mip-map chain.
+	.numLayers "uint16_t"                      --- Number of layers in texture array. Must be 1 if caps
+	                                           --- `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.
+	.format    "TextureFormat::Enum"           --- Texture format. See: `TextureFormat::Enum`.
+	.flags     "uint64_t"                      --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { default = "BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE" }
+	                                           --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	                                           --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                                           ---   mode.
+	                                           --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                                           ---   sampling.
+	.mem       "const Memory*"                 --- Texture data. If `_mem` is non-NULL, created texture will be immutable. If
+	 { default = NULL }                        --- `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than
+	                                           --- 1, expected memory layout is texture and all mips together for each array element.
 
 --- Update 2D texture.
 func.updateTexture2D
@@ -1352,6 +1357,7 @@ func.createFrameBuffer
 	.height       "uint16_t"            --- Texture height.
 	.format       "TextureFormat::Enum" --- Texture format. See: `TextureFormat::Enum`.
 	.textureFlags "uint64_t"            --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { default = "BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP" }
 	                                    --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
 	                                    --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
 	                                    ---   mode.
@@ -1361,16 +1367,17 @@ func.createFrameBuffer
 --- Create frame buffer with size based on backbuffer ratio. Frame buffer will maintain ratio
 --- if back buffer resolution changes.
 func.createFrameBuffer { cname = "create_frame_buffer_scaled" }
-	"FrameBufferHandle"                   --- Frame buffer handle.
-	.ratio        "BackbufferRatio::Enum" --- Frame buffer size in respect to back-buffer size. See:
-	                                      --- `BackbufferRatio::Enum`.
-	.format       "TextureFormat::Enum"   --- Texture format. See: `TextureFormat::Enum`.
-	.textureFlags "uint64_t"              --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
-	                                      --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
-	                                      --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                                      ---   mode.
-	                                      --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                                      ---   sampling.
+	"FrameBufferHandle"                 --- Frame buffer handle.
+	.ratio  "BackbufferRatio::Enum"     --- Frame buffer size in respect to back-buffer size. See:
+	                                    --- `BackbufferRatio::Enum`.
+	.format "TextureFormat::Enum"       --- Texture format. See: `TextureFormat::Enum`.
+	.textureFlags "uint64_t"            --- Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`)
+	 { default = "BGFX_SAMPLER_U_CLAMP|BGFX_SAMPLER_V_CLAMP" }
+	                                    --- flags. Default texture sampling mode is linear, and wrap mode is repeat.
+	                                    --- - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                                    ---   mode.
+	                                    --- - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                                    ---   sampling.
 
 --- Create MRT frame buffer from texture handles (simple).
 func.createFrameBuffer { cname = "create_frame_buffer_from_handles" }
@@ -1402,7 +1409,9 @@ func.createFrameBuffer { cname = "create_frame_buffer_from_nwh" }
 	.width       "uint16_t"            --- Window back buffer width.
 	.height      "uint16_t"            --- Window back buffer height.
 	.format      "TextureFormat::Enum" --- Window back buffer color format.
+	 { default = "TextureFormat::Count" }
 	.depthFormat "TextureFormat::Enum" --- Window back buffer depth format.
+	 { default = "TextureFormat::Count" }
 
 --- Set frame buffer debug name.
 func.setName { cname = "set_frame_buffer_name" }
@@ -1417,6 +1426,7 @@ func.getTexture
 	"TextureHandle"
 	.handle     "FrameBufferHandle" --- Frame buffer handle.
 	.attachment "uint8_t"
+	 { default = 0 }
 
 --- Destroy frame buffer.
 func.destroy { cname = "destroy_frame_buffer" }
@@ -1454,6 +1464,7 @@ func.createUniform
 	.name "const char*"       --- Uniform name in shader.
 	.type "UniformType::Enum" --- Type of uniform (See: `bgfx::UniformType`).
 	.num  "uint16_t"          --- Number of elements in array.
+	 { default = 1 }
 
 --- Retrieve uniform info.
 func.getUniformInfo
@@ -1476,6 +1487,7 @@ func.getResult
 	.handle "OcclusionQueryHandle" --- Handle to occlusion query object.
 	.result "int32_t*" { out }     --- Number of pixels that passed test. This argument
 	                               --- can be `NULL` if result of occlusion query is not needed.
+	 { default = NULL }
 
 --- Destroy occlusion query.
 func.destroy { cname = "destroy_occlusion_query" }
@@ -1535,9 +1547,13 @@ func.setViewScissor
 	"void"
 	.id     "ViewId"   --- View id.
 	.x      "uint16_t" --- Position x from the left corner of the window.
+	 { default = 0 }
 	.y      "uint16_t" --- Position y from the top corner of the window.
+	 { default = 0 }
 	.width  "uint16_t" --- Width of view scissor region.
+	 { default = 0 }
 	.height "uint16_t" --- Height of view scissor region.
+	 { default = 0 }
 
 --- Set view clear flags.
 func.setViewClear
@@ -1546,8 +1562,11 @@ func.setViewClear
 	.flags   "uint16_t" --- Clear flags. Use `BGFX_CLEAR_NONE` to remove any clear
 	                    --- operation. See: `BGFX_CLEAR_*`.
 	.rgba    "uint32_t" --- Color clear value.
+	 { default = "0x000000ff" }
 	.depth   "float"    --- Depth clear value.
+	 { default = "1.0f" }
 	.stencil "uint8_t"  --- Stencil clear value.
+	 { default = 0 }
 
 --- Set view clear flags with different clear color for each
 --- frame buffer texture. Must use `bgfx::setPaletteColor` to setup clear color
@@ -1560,13 +1579,21 @@ func.setViewClear { cname = "set_view_clear_mrt" }
 	.depth   "float"    --- Depth clear value.
 	.stencil "uint8_t"  --- Stencil clear value.
 	.c0      "uint8_t"  --- Palette index for frame buffer attachment 0.
+	 { default = UINT8_MAX }
 	.c1      "uint8_t"  --- Palette index for frame buffer attachment 1.
+	 { default = UINT8_MAX }
 	.c2      "uint8_t"  --- Palette index for frame buffer attachment 2.
+	 { default = UINT8_MAX }
 	.c3      "uint8_t"  --- Palette index for frame buffer attachment 3.
+	 { default = UINT8_MAX }
 	.c4      "uint8_t"  --- Palette index for frame buffer attachment 4.
+	 { default = UINT8_MAX }
 	.c5      "uint8_t"  --- Palette index for frame buffer attachment 5.
+	 { default = UINT8_MAX }
 	.c6      "uint8_t"  --- Palette index for frame buffer attachment 6.
+	 { default = UINT8_MAX }
 	.c7      "uint8_t"  --- Palette index for frame buffer attachment 7.
+	 { default = UINT8_MAX }
 
 --- Set view sorting mode.
 ---
@@ -1577,6 +1604,7 @@ func.setViewMode
 	"void"
 	.id   "ViewId"         --- View id.
 	.mode "ViewMode::Enum" --- View sort mode. See `ViewMode::Enum`.
+	 { default = "ViewMode::Default" }
 
 --- Set view frame buffer.
 ---
@@ -1602,9 +1630,12 @@ func.setViewTransform
 func.setViewOrder
 	"void"
 	.id    "ViewId"        --- First view id.
+	 { default = 0 }
 	.num   "uint16_t"      --- Number of views to remap.
+	 { default = UINT16_MAX }
 	.order "const ViewId*" --- View remap id table. Passing `NULL` will reset view ids
 	                       --- to default state.
+	 { default = NULL }
 
 --- Begin submitting draw calls from thread.
 func.begin { cname = "encoder_begin" }
@@ -1648,6 +1679,7 @@ func.Encoder.setState
 	                  ---   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.
 	.rgba  "uint32_t" --- Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and
 	                  ---   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.
+	 { default = 0 }
 
 --- Set condition for rendering.
 func.Encoder.setCondition
@@ -1661,6 +1693,7 @@ func.Encoder.setStencil
 	.fstencil "uint32_t" --- Front stencil state.
 	.bstencil "uint32_t" --- Back stencil state. If back is set to `BGFX_STENCIL_NONE`
 	                     --- _fstencil is applied to both front and back facing primitives.
+	 { default = "BGFX_STENCIL_NONE" }
 
 --- Set scissor for draw primitive.
 ---
@@ -1682,6 +1715,7 @@ func.Encoder.setScissor
 func.Encoder.setScissor { cname = "set_scissor_cached" }
 	"void"
 	.cache "uint16_t" --- Index in scissor cache.
+	 { default = UINT16_MAX }
 
 --- Set model matrix for draw primitive. If it is not called,
 --- the model will be rendered with an identity model matrix.
@@ -1696,6 +1730,7 @@ func.Encoder.setTransform { cname = "set_transform_cached" }
 	"void"
 	.cache "uint32_t" --- Index in matrix cache.
 	.num   "uint16_t" --- Number of matrices from cache.
+	 { default = 1 }
 
 --- Reserve matrices in internal matrix cache.
 ---
@@ -1713,6 +1748,7 @@ func.Encoder.setUniform
 	.value  "const void*"   --- Pointer to uniform data.
 	.num    "uint16_t"      --- Number of elements. Passing `UINT16_MAX` will
 	                        --- use the _num passed on uniform creation.
+	 { default = 1 }
 
 --- Set index buffer for draw primitive.
 func.Encoder.setIndexBuffer { cpponly }
@@ -1849,15 +1885,15 @@ func.Encoder.setInstanceCount
 --- Set texture stage for draw primitive.
 func.Encoder.setTexture
 	"void"
-	.stage   "uint8_t"       --- Texture unit.
-	.sampler "UniformHandle" --- Program sampler.
-	.handle  "TextureHandle" --- Texture handle.
-	.flags   "uint32_t"      --- Texture sampling mode. Default value UINT32_MAX uses
-	                         ---   texture sampling settings from the texture.
-	                         ---   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
-	                         ---     mode.
-	                         ---   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
-	                         ---     sampling.
+	.stage   "uint8_t"        --- Texture unit.
+	.sampler "UniformHandle"  --- Program sampler.
+	.handle  "TextureHandle"  --- Texture handle.
+	.flags   "uint32_t"       --- Texture sampling mode. Default value UINT32_MAX uses
+	 { default = UINT32_MAX } ---   texture sampling settings from the texture.
+	                          ---   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
+	                          ---     mode.
+	                          ---   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
+	                          ---     sampling.
 
 --- Submit an empty primitive for rendering. Uniforms and draw state
 --- will be applied but no geometry will be submitted.
@@ -1875,7 +1911,9 @@ func.Encoder.submit
 	.id            "ViewId"        --- View id.
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
+	 { default = 0 }
 	.preserveState "bool"          --- Preserve internal draw state for next draw call submit.
+	 { default = false }
 
 --- Submit primitive with occlusion query for rendering.
 func.Encoder.submit { cname = "submit_occlusion_query" }
@@ -1884,7 +1922,9 @@ func.Encoder.submit { cname = "submit_occlusion_query" }
 	.program        "ProgramHandle"        --- Program.
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
+	 { default = 0 }
 	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
+	 { default = false }
 
 --- Submit primitive for rendering with index and instance data info from
 --- indirect buffer.
@@ -1894,9 +1934,13 @@ func.Encoder.submit { cname = "submit_indirect" }
 	.program        "ProgramHandle"        --- Program.
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
+	 { default = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
+	 { default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
+	 { default = 0 }
 	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
+	 { default = false }
 
 --- Set compute index buffer.
 func.Encoder.setBuffer { cname = "set_compute_index_buffer" }
@@ -1936,11 +1980,12 @@ func.Encoder.setBuffer { cname = "set_compute_indirect_buffer" }
 --- Set compute image from texture.
 func.Encoder.setImage
 	"void"
-	.stage  "uint8_t"       --- Compute stage.
-	.handle "TextureHandle" --- Texture handle.
-	.mip    "uint8_t"       --- Mip level.
-	.access "Access::Enum"  --- Image access. See `Access::Enum`.
-	.format "TextureFormat::Enum" { default = "TextureFormat::Count" } --- Texture format. See: `TextureFormat::Enum`.
+	.stage  "uint8_t"              --- Compute stage.
+	.handle "TextureHandle"        --- Texture handle.
+	.mip    "uint8_t"              --- Mip level.
+	.access "Access::Enum"         --- Image access. See `Access::Enum`.
+	.format "TextureFormat::Enum"  --- Texture format. See: `TextureFormat::Enum`.
+	 { default = "TextureFormat::Count" }
 
 --- Dispatch compute.
 func.Encoder.dispatch
@@ -1948,8 +1993,11 @@ func.Encoder.dispatch
 	.id      "ViewId"        --- View id.
 	.program "ProgramHandle" --- Compute program.
 	.numX    "uint32_t"      --- Number of groups X.
+	 { deafult = 1 }
 	.numY    "uint32_t"      --- Number of groups Y.
+	 { deafult = 1 }
 	.numZ    "uint32_t"      --- Number of groups Z.
+	 { deafult = 1 }
 
 --- Dispatch compute indirect.
 func.Encoder.dispatch { cname = "dispatch_indirect" }
@@ -1958,7 +2006,9 @@ func.Encoder.dispatch { cname = "dispatch_indirect" }
 	.program        "ProgramHandle"        --- Compute program.
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
+	 { deafult = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
+	 { deafult = 1 }
 
 --- Discard all previously set state for draw or compute call.
 func.Encoder.discard
