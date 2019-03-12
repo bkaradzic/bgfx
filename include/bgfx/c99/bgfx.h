@@ -680,7 +680,7 @@ typedef struct bgfx_memory_s
  */
 typedef struct bgfx_transient_index_buffer_s
 {
-	int8_t*              data;               /** Pointer to data.                         */
+	uint8_t*             data;               /** Pointer to data.                         */
 	uint32_t             size;               /** Data size.                               */
 	uint32_t             startIndex;         /** First index.                             */
 	bgfx_index_buffer_handle_t handle;       /** Index buffer handle.                     */
@@ -693,7 +693,7 @@ typedef struct bgfx_transient_index_buffer_s
  */
 typedef struct bgfx_transient_vertex_buffer_s
 {
-	int8_t*              data;               /** Pointer to data.                         */
+	uint8_t*             data;               /** Pointer to data.                         */
 	uint32_t             size;               /** Data size.                               */
 	uint32_t             startVertex;        /** First vertex.                            */
 	uint16_t             stride;             /** Vertex stride.                           */
@@ -708,7 +708,7 @@ typedef struct bgfx_transient_vertex_buffer_s
  */
 typedef struct bgfx_instance_data_buffer_s
 {
-	int8_t*              data;               /** Pointer to data.                         */
+	uint8_t*             data;               /** Pointer to data.                         */
 	uint32_t             size;               /** Data size.                               */
 	uint32_t             offset;             /** Offset in vertex buffer.                 */
 	uint32_t             num;                /** Number of instances.                     */
@@ -887,7 +887,7 @@ BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_hand
  * @param[in] _rendererType
  *
  */
-BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _rendererType);
+BGFX_C_API bgfx_vertex_decl_t* bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _rendererType);
 
 /**
  * Add attribute to VertexDecl.
@@ -905,7 +905,7 @@ BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _this, bgfx_renderer_
  *  Unpacking code must be implemented inside vertex shader.
  *
  */
-BGFX_C_API void bgfx_vertex_decl_add(bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
+BGFX_C_API bgfx_vertex_decl_t* bgfx_vertex_decl_add(bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
 
 /**
  * Decode attribute.
@@ -933,7 +933,7 @@ BGFX_C_API bool bgfx_vertex_decl_has(const bgfx_vertex_decl_t* _this, bgfx_attri
  * @param[in] _num
  *
  */
-BGFX_C_API void bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _this, uint8_t _num);
+BGFX_C_API bgfx_vertex_decl_t* bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _this, uint8_t _num);
 
 /**
  * End VertexDecl.
@@ -3206,11 +3206,11 @@ BGFX_C_API void bgfx_blit(bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_
 struct bgfx_interface_vtbl
 {
 	void (*attachment_init)(bgfx_attachment_t* _this, bgfx_texture_handle_t _handle, bgfx_access_t _access, uint16_t _layer, uint16_t _mip, uint8_t _resolve);
-	void (*vertex_decl_begin)(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _rendererType);
-	void (*vertex_decl_add)(bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
+	bgfx_vertex_decl_t* (*vertex_decl_begin)(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _rendererType);
+	bgfx_vertex_decl_t* (*vertex_decl_add)(bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt);
 	void (*vertex_decl_decode)(const bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t * _num, bgfx_attrib_type_t * _type, bool * _normalized, bool * _asInt);
 	bool (*vertex_decl_has)(const bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib);
-	void (*vertex_decl_skip)(bgfx_vertex_decl_t* _this, uint8_t _num);
+	bgfx_vertex_decl_t* (*vertex_decl_skip)(bgfx_vertex_decl_t* _this, uint8_t _num);
 	void (*vertex_decl_end)(bgfx_vertex_decl_t* _this);
 	void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_decl_t * _decl, void* _data, uint32_t _index);
 	void (*vertex_unpack)(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_decl_t * _decl, const void* _data, uint32_t _index);

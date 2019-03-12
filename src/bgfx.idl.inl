@@ -15,16 +15,16 @@ BGFX_C_API void bgfx_attachment_init(bgfx_attachment_t* _this, bgfx_texture_hand
 	This->init(handle.cpp, (bgfx::Access::Enum)_access, _layer, _mip, _resolve);
 }
 
-BGFX_C_API void bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _rendererType)
+BGFX_C_API bgfx_vertex_decl_t* bgfx_vertex_decl_begin(bgfx_vertex_decl_t* _this, bgfx_renderer_type_t _rendererType)
 {
 	bgfx::VertexDecl* This = (bgfx::VertexDecl*)_this;
-	This->begin((bgfx::RendererType::Enum)_rendererType);
+	return (bgfx_vertex_decl_t*)&This->begin((bgfx::RendererType::Enum)_rendererType);
 }
 
-BGFX_C_API void bgfx_vertex_decl_add(bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt)
+BGFX_C_API bgfx_vertex_decl_t* bgfx_vertex_decl_add(bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t _num, bgfx_attrib_type_t _type, bool _normalized, bool _asInt)
 {
 	bgfx::VertexDecl* This = (bgfx::VertexDecl*)_this;
-	This->add((bgfx::Attrib::Enum)_attrib, _num, (bgfx::AttribType::Enum)_type, _normalized, _asInt);
+	return (bgfx_vertex_decl_t*)&This->add((bgfx::Attrib::Enum)_attrib, _num, (bgfx::AttribType::Enum)_type, _normalized, _asInt);
 }
 
 BGFX_C_API void bgfx_vertex_decl_decode(const bgfx_vertex_decl_t* _this, bgfx_attrib_t _attrib, uint8_t * _num, bgfx_attrib_type_t * _type, bool * _normalized, bool * _asInt)
@@ -41,10 +41,10 @@ BGFX_C_API bool bgfx_vertex_decl_has(const bgfx_vertex_decl_t* _this, bgfx_attri
 	return This->has((bgfx::Attrib::Enum)_attrib);
 }
 
-BGFX_C_API void bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _this, uint8_t _num)
+BGFX_C_API bgfx_vertex_decl_t* bgfx_vertex_decl_skip(bgfx_vertex_decl_t* _this, uint8_t _num)
 {
 	bgfx::VertexDecl* This = (bgfx::VertexDecl*)_this;
-	This->skip(_num);
+	return (bgfx_vertex_decl_t*)&This->skip(_num);
 }
 
 BGFX_C_API void bgfx_vertex_decl_end(bgfx_vertex_decl_t* _this)

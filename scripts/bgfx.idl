@@ -389,14 +389,14 @@ struct.Memory
 
 --- Transient index buffer.
 struct.TransientIndexBuffer
-	.data       "int8_t*"           --- Pointer to data.
+	.data       "uint8_t*"          --- Pointer to data.
 	.size       "uint32_t"          --- Data size.
 	.startIndex "uint32_t"          --- First index.
 	.handle     "IndexBufferHandle" --- Index buffer handle.
 
 --- Transient vertex buffer.
 struct.TransientVertexBuffer
-	.data        "int8_t*"            --- Pointer to data.
+	.data        "uint8_t*"           --- Pointer to data.
 	.size        "uint32_t"           --- Data size.
 	.startVertex "uint32_t"           --- First vertex.
 	.stride      "uint16_t"           --- Vertex stride.
@@ -405,7 +405,7 @@ struct.TransientVertexBuffer
 
 --- Instance data buffer info.
 struct.InstanceDataBuffer
-	.data   "int8_t*"            --- Pointer to data.
+	.data   "uint8_t*"           --- Pointer to data.
 	.size   "uint32_t"           --- Data size.
 	.offset "uint32_t"           --- Offset in vertex buffer.
 	.num    "uint32_t"           --- Number of instances.
@@ -431,7 +431,7 @@ struct.UniformInfo
 	.num  "uint16_t"          --- Number of elements in array.
 
 --- Frame buffer texture attachment info.
-struct.Attachment
+struct.Attachment { shortname }
 	.access  "Access::Enum"  --- Attachement access. See `Access::Enum`.
 	.handle  "TextureHandle" --- Render target texture handle.
 	.mip     "uint16_t"      --- Mip level.
@@ -549,15 +549,16 @@ handle "VertexDeclHandle"
 
 --- Start VertexDecl.
 func.VertexDecl.begin
-	"void"
+	"VertexDecl&"
 	.rendererType    "RendererType::Enum"
+	{ default = "RendererType::Noop" }
 
 --- Add attribute to VertexDecl.
 ---
 --- @remarks Must be called between begin/end.
 ---
 func.VertexDecl.add
-	"void"
+	"VertexDecl&"
 	.attrib          "Attrib::Enum"     --- Attribute semantics. See: `bgfx::Attrib`
 	.num             "uint8_t"          --- Number of elements 1, 2, 3 or 4.
 	.type            "AttribType::Enum" --- Element type.
@@ -585,7 +586,7 @@ func.VertexDecl.has { const }
 
 --- Skip `_num` bytes in vertex stream.
 func.VertexDecl.skip
-	"void"
+	"VertexDecl&"
 	.num "uint8_t"
 
 -- Notice: `end` is a keyword in lua.
@@ -825,7 +826,7 @@ func.dbgTextClear
 	.attr  "uint8_t" --- Background color.
 	 { default = 0 }
 	.small "bool"    --- Default or 8x8 font.
-	 { dafault = false }
+	 { default = false }
 
 --- Print formatted data to internal debug text character-buffer (VGA-compatible text mode).
 func.dbgTextPrintf { vararg = "dbgTextPrintfVargs" }
@@ -2026,7 +2027,6 @@ func.Encoder.blit { cpponly }
 	.dstX   "uint16_t"      --- Destination texture X position.
 	.dstY   "uint16_t"      --- Destination texture Y position.
 	.src    "TextureHandle" --- Source texture handle.
-	 { default = 0 }
 	.srcX   "uint16_t"      --- Source texture X position.
 	 { default = 0 }
 	.srcY   "uint16_t"      --- Source texture Y position.
@@ -2096,6 +2096,7 @@ func.requestScreenShot
 func.renderFrame
 	"RenderFrame::Enum" --- Current renderer context state. See: `bgfx::RenderFrame`.
 	.msecs "int32_t"    --- Timeout in milliseconds.
+	{ default = -1 }
 
 --- Set platform data.
 ---
@@ -2434,9 +2435,9 @@ func.submit
 	.id            "ViewId"        --- View id.
 	.program       "ProgramHandle" --- Program.
 	.depth         "uint32_t"      --- Depth for sorting.
-	 { default = 0 }
+	{ default = 0 }
 	.preserveState "bool"          --- Preserve internal draw state for next draw call submit.
-	 { default = false }
+	{ default = false }
 
 --- Submit primitive with occlusion query for rendering.
 func.submit { cname = "submit_occlusion_query" }
@@ -2445,9 +2446,9 @@ func.submit { cname = "submit_occlusion_query" }
 	.program        "ProgramHandle"        --- Program.
 	.occlusionQuery "OcclusionQueryHandle" --- Occlusion query.
 	.depth          "uint32_t"             --- Depth for sorting.
-	 { default = 0 }
+	{ default = 0 }
 	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
-	 { default = false }
+	{ default = false }
 
 --- Submit primitive for rendering with index and instance data info from
 --- indirect buffer.
@@ -2457,13 +2458,13 @@ func.submit { cname = "submit_indirect" }
 	.program        "ProgramHandle"        --- Program.
 	.indirectHandle "IndirectBufferHandle" --- Indirect buffer.
 	.start          "uint16_t"             --- First element in indirect buffer.
-	 { default = 0 }
+	{ default = 0 }
 	.num            "uint16_t"             --- Number of dispatches.
-	 { default = 1 }
+	{ default = 1 }
 	.depth          "uint32_t"             --- Depth for sorting.
-	 { default = 0 }
+	{ default = 0 }
 	.preserveState  "bool"                 --- Preserve internal draw state for next draw call submit.
-	 { default = false }
+	{ default = false }
 
 --- Set compute index buffer.
 func.setBuffer { cname = "set_compute_index_buffer" }
@@ -2549,7 +2550,6 @@ func.blit { cpponly }
 	.dstX   "uint16_t"      --- Destination texture X position.
 	.dstY   "uint16_t"      --- Destination texture Y position.
 	.src    "TextureHandle" --- Source texture handle.
-	 { default = 0 }
 	.srcX   "uint16_t"      --- Source texture X position.
 	 { default = 0 }
 	.srcY   "uint16_t"      --- Source texture Y position.
