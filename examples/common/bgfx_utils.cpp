@@ -110,6 +110,7 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 	case bgfx::RendererType::Direct3D12: shaderPath = "shaders/dx11/";  break;
 	case bgfx::RendererType::Gnm:        shaderPath = "shaders/pssl/";  break;
 	case bgfx::RendererType::Metal:      shaderPath = "shaders/metal/"; break;
+	case bgfx::RendererType::Nvn:        shaderPath = "shaders/nvn/";   break;
 	case bgfx::RendererType::OpenGL:     shaderPath = "shaders/glsl/";  break;
 	case bgfx::RendererType::OpenGLES:   shaderPath = "shaders/essl/";  break;
 	case bgfx::RendererType::Vulkan:     shaderPath = "shaders/spirv/"; break;

@@ -85,9 +85,10 @@ typedef enum bgfx_renderer_type
 	BGFX_RENDERER_TYPE_DIRECT3D12,            /** ( 3) Direct3D 12.0                  */
 	BGFX_RENDERER_TYPE_GNM,                   /** ( 4) GNM                            */
 	BGFX_RENDERER_TYPE_METAL,                 /** ( 5) Metal                          */
-	BGFX_RENDERER_TYPE_OPENGLES,              /** ( 6) OpenGL ES 2.0+                 */
-	BGFX_RENDERER_TYPE_OPENGL,                /** ( 7) OpenGL 2.1+                    */
-	BGFX_RENDERER_TYPE_VULKAN,                /** ( 8) Vulkan                         */
+	BGFX_RENDERER_TYPE_NVN,                   /** ( 6) NVN                            */
+	BGFX_RENDERER_TYPE_OPENGLES,              /** ( 7) OpenGL ES 2.0+                 */
+	BGFX_RENDERER_TYPE_OPENGL,                /** ( 8) OpenGL 2.1+                    */
+	BGFX_RENDERER_TYPE_VULKAN,                /** ( 9) Vulkan                         */
 
 	BGFX_RENDERER_TYPE_COUNT
 
