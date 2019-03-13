@@ -65,14 +65,14 @@ typedef uint16_t bgfx_view_id_t;
 /**/
 typedef struct bgfx_allocator_interface_s
 {
-    const struct bgfx_allocator_vtbl_s* vtbl;
+	const struct bgfx_allocator_vtbl_s* vtbl;
 
 } bgfx_allocator_interface_t;
 
 /**/
 typedef struct bgfx_allocator_vtbl_s
 {
-    void* (*realloc)(bgfx_allocator_interface_t* _this, void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
+	void* (*realloc)(bgfx_allocator_interface_t* _this, void* _ptr, size_t _size, size_t _align, const char* _file, uint32_t _line);
 
 } bgfx_allocator_vtbl_t;
 
@@ -82,7 +82,7 @@ typedef struct bgfx_interface_vtbl bgfx_interface_vtbl_t;
 /**/
 typedef struct bgfx_callback_interface_s
 {
-    const struct bgfx_callback_vtbl_s* vtbl;
+	const struct bgfx_callback_vtbl_s* vtbl;
 
 } bgfx_callback_interface_t;
 
@@ -90,19 +90,18 @@ typedef struct bgfx_callback_interface_s
 /**/
 typedef struct bgfx_callback_vtbl_s
 {
-    void (*fatal)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, bgfx_fatal_t _code, const char* _str);
-    void (*trace_vargs)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, const char* _format, va_list _argList);
-    void (*profiler_begin)(bgfx_callback_interface_t* _this, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line);
-    void (*profiler_begin_literal)(bgfx_callback_interface_t* _this, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line);
-    void (*profiler_end)(bgfx_callback_interface_t* _this);
-    uint32_t (*cache_read_size)(bgfx_callback_interface_t* _this, uint64_t _id);
-    bool (*cache_read)(bgfx_callback_interface_t* _this, uint64_t _id, void* _data, uint32_t _size);
-    void (*cache_write)(bgfx_callback_interface_t* _this, uint64_t _id, const void* _data, uint32_t _size);
-    void (*screen_shot)(bgfx_callback_interface_t* _this, const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip);
-    void (*capture_begin)(bgfx_callback_interface_t* _this, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
-    void (*capture_end)(bgfx_callback_interface_t* _this);
-    void (*capture_frame)(bgfx_callback_interface_t* _this, const void* _data, uint32_t _size);
-
+	void (*fatal)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, bgfx_fatal_t _code, const char* _str);
+	void (*trace_vargs)(bgfx_callback_interface_t* _this, const char* _filePath, uint16_t _line, const char* _format, va_list _argList);
+	void (*profiler_begin)(bgfx_callback_interface_t* _this, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line);
+	void (*profiler_begin_literal)(bgfx_callback_interface_t* _this, const char* _name, uint32_t _abgr, const char* _filePath, uint16_t _line);
+	void (*profiler_end)(bgfx_callback_interface_t* _this);
+	uint32_t (*cache_read_size)(bgfx_callback_interface_t* _this, uint64_t _id);
+	bool (*cache_read)(bgfx_callback_interface_t* _this, uint64_t _id, void* _data, uint32_t _size);
+	void (*cache_write)(bgfx_callback_interface_t* _this, uint64_t _id, const void* _data, uint32_t _size);
+	void (*screen_shot)(bgfx_callback_interface_t* _this, const char* _filePath, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _data, uint32_t _size, bool _yflip);
+	void (*capture_begin)(bgfx_callback_interface_t* _this, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
+	void (*capture_end)(bgfx_callback_interface_t* _this);
+	void (*capture_frame)(bgfx_callback_interface_t* _this, const void* _data, uint32_t _size);
 } bgfx_callback_vtbl_t;
 
 $chandles
