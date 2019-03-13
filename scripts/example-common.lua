@@ -37,11 +37,19 @@ project ("example-common")
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 
-	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"),
-		{ path.join(BGFX_DIR, "../bgfx-ext/examples/common/entry/entry_orbis.cpp") }) then
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"),
+		{ path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_orbis.cpp") }) then
 
 		files {
-			path.join(BGFX_DIR, "../bgfx-ext/examples/common/entry/entry_orbis.cpp"),
+			path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_orbis.cpp"),
+		}
+	end
+
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-nvn"),
+		{ path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_nx.cpp") }) then
+
+		files {
+			path.join(BGFX_DIR, "../bgfx-gnm/examples/common/entry/entry_nx.cpp"),
 		}
 	end
 

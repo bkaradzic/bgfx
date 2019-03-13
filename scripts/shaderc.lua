@@ -655,10 +655,10 @@ project "shaderc"
 
 	configuration {}
 
-	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"), {
 		path.join(BGFX_DIR, "scripts/shaderc.lua"), }) then
 
-		if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+		if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"), {
 			path.join(BGFX_DIR, "tools/shaderc/shaderc_pssl.cpp"), }) then
 
 			removefiles {
@@ -666,7 +666,7 @@ project "shaderc"
 			}
 		end
 
-		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/shaderc.lua") )
+		dofile(path.join(BGFX_DIR, "../bgfx-gnm/scripts/shaderc.lua") )
 	end
 
 	strip()
