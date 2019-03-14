@@ -86,7 +86,6 @@ typedef struct bgfx_callback_interface_s
 
 } bgfx_callback_interface_t;
 
-
 /**/
 typedef struct bgfx_callback_vtbl_s
 {
@@ -102,6 +101,7 @@ typedef struct bgfx_callback_vtbl_s
 	void (*capture_begin)(bgfx_callback_interface_t* _this, uint32_t _width, uint32_t _height, uint32_t _pitch, bgfx_texture_format_t _format, bool _yflip);
 	void (*capture_end)(bgfx_callback_interface_t* _this);
 	void (*capture_frame)(bgfx_callback_interface_t* _this, const void* _data, uint32_t _size);
+
 } bgfx_callback_vtbl_t;
 
 $chandles
@@ -112,6 +112,16 @@ $cstructs
 
 $c99decl
 
+/**/
+typedef enum bgfx_function_id
+{
+	$c99_functionid
+
+	BGFX_FUNCTION_ID_COUNT
+
+} bgfx_function_id_t;
+
+/**/
 struct bgfx_interface_vtbl
 {
 	$interface_struct
