@@ -53,12 +53,25 @@ newoption {
 	description = "Enable building examples.",
 }
 
-dofile "bgfx-idl.lua"
-
 newaction {
 	trigger = "idl",
 	description = "Generate bgfx interface source code",
-	execute = doIdl
+	execute = function ()
+
+		local gen = require "bgfx-codegen"
+
+		local function generate(tempfile, outputfile, indent)
+			local codes = gen.apply(tempfile)
+			codes = gen.format(codes, {indent = indent})
+			gen.write(codes, outputfile)
+			print("Generating: " .. outputfile)
+		end
+
+		generate("temp.bgfx.h" ,      "../include/bgfx/c99/bgfx.h", "    ")
+		generate("temp.bgfx.idl.inl", "../src/bgfx.idl.inl",        "\t")
+
+		os.exit()
+	end
 }
 
 solution "bgfx"
