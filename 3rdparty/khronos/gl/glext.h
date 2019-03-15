@@ -1117,6 +1117,7 @@ typedef khronos_uint16_t GLhalf;
 #define GL_VERTEX_ARRAY_BINDING           0x85B5
 #define GL_CLAMP_VERTEX_COLOR             0x891A
 #define GL_CLAMP_FRAGMENT_COLOR           0x891B
+#define GL_HALF_FLOAT_OES                 0x8D61
 #define GL_ALPHA_INTEGER                  0x8D97
 typedef void (APIENTRYP PFNGLCOLORMASKIPROC) (GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 typedef void (APIENTRYP PFNGLGETBOOLEANI_VPROC) (GLenum target, GLuint index, GLboolean *data);
