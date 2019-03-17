@@ -230,7 +230,21 @@ unsigned int NumberStringToBit(const std::string& str)
     return bit;
 }
 
-void jsonToSpirv(const std::string& jsonPath)
+bool ExcludeInstruction(unsigned op, bool buildingHeaders)
+{
+    // Some instructions in the grammar don't need to be reflected
+    // in the specification.
+
+    if (buildingHeaders)
+        return false;
+
+    if (op >= 5699 /* OpVmeImageINTEL */ && op <= 5816 /* OpSubgroupAvcSicGetInterRawSadsINTEL */)
+        return true;
+
+    return false;
+}
+
+void jsonToSpirv(const std::string& jsonPath, bool buildingHeaders)
 {
     // only do this once.
     static bool initialized = false;
@@ -288,6 +302,8 @@ void jsonToSpirv(const std::string& jsonPath)
     const Json::Value insts = root["instructions"];
     for (const auto& inst : insts) {
         const unsigned int opcode = inst["opcode"].asUInt();
+        if (ExcludeInstruction(opcode, buildingHeaders))
+            continue;
         const std::string name = inst["opname"].asString();
         EnumCaps caps = getCaps(inst);
         std::string version = inst["version"].asString();

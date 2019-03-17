@@ -54,11 +54,11 @@
 typedef unsigned int SpvId;
 
 #define SPV_VERSION 0x10300
-#define SPV_REVISION 6
+#define SPV_REVISION 7
 
 static const unsigned int SpvMagicNumber = 0x07230203;
 static const unsigned int SpvVersion = 0x00010300;
-static const unsigned int SpvRevision = 6;
+static const unsigned int SpvRevision = 7;
 static const unsigned int SpvOpCodeMask = 0xffff;
 static const unsigned int SpvWordCountShift = 16;
 
@@ -1330,5 +1330,5 @@ typedef enum SpvOp_ {
     SpvOpMax = 0x7fffffff,
 } SpvOp;
 
-#endif  // #ifndef spirv_H
+#endif
 
