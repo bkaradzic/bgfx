@@ -169,6 +169,14 @@ def cross_compile_msl(shader, spirv, opt, paths):
         msl_args.append('--msl-capture-output')
     if '.domain.' in shader:
         msl_args.append('--msl-domain-lower-left')
+    if '.argument.' in shader:
+        msl_args.append('--msl-argument-buffers')
+    if '.discrete.' in shader:
+        # Arbitrary for testing purposes.
+        msl_args.append('--msl-discrete-descriptor-set')
+        msl_args.append('2')
+        msl_args.append('--msl-discrete-descriptor-set')
+        msl_args.append('3')
 
     subprocess.check_call(msl_args)
 

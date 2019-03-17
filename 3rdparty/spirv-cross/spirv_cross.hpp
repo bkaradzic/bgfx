@@ -120,6 +120,7 @@ enum ExtendedDecorations
 	SPIRVCrossDecorationPackedType,
 	SPIRVCrossDecorationInterfaceMemberIndex,
 	SPIRVCrossDecorationInterfaceOrigID,
+	SPIRVCrossDecorationArgumentBufferID
 };
 
 class Compiler
@@ -208,9 +209,6 @@ public:
 	// Returns the qualified member identifier for OpTypeStruct ID, member number "index",
 	// or an empty string if no qualified alias exists
 	const std::string &get_member_qualified_name(uint32_t type_id, uint32_t index) const;
-
-	// Sets the qualified member identifier for OpTypeStruct ID, member number "index".
-	void set_member_qualified_name(uint32_t type_id, uint32_t index, const std::string &name);
 
 	// Gets the decoration mask for a member of a struct, similar to get_decoration_mask.
 	const Bitset &get_member_decoration_bitset(uint32_t id, uint32_t index) const;
@@ -586,6 +584,10 @@ protected:
 
 	// Gets the SPIR-V element type underlying an array variable.
 	const SPIRType &get_variable_element_type(const SPIRVariable &var) const;
+
+	// Sets the qualified member identifier for OpTypeStruct ID, member number "index".
+	void set_member_qualified_name(uint32_t type_id, uint32_t index, const std::string &name);
+	void set_qualified_name(uint32_t id, const std::string &name);
 
 	// Returns if the given type refers to a sampled image.
 	bool is_sampled_image_type(const SPIRType &type);

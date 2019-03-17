@@ -1091,6 +1091,11 @@ const std::string &Compiler::get_member_name(uint32_t id, uint32_t index) const
 	return ir.get_member_name(id, index);
 }
 
+void Compiler::set_qualified_name(uint32_t id, const string &name)
+{
+	ir.meta[id].decoration.qualified_alias = name;
+}
+
 void Compiler::set_member_qualified_name(uint32_t type_id, uint32_t index, const std::string &name)
 {
 	ir.meta[type_id].members.resize(max(ir.meta[type_id].members.size(), size_t(index) + 1));
@@ -1156,6 +1161,10 @@ void Compiler::set_extended_decoration(uint32_t id, ExtendedDecorations decorati
 	case SPIRVCrossDecorationInterfaceOrigID:
 		dec.extended.ib_orig_id = value;
 		break;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		dec.extended.argument_buffer_id = value;
+		break;
 	}
 }
 
@@ -1182,6 +1191,10 @@ void Compiler::set_extended_member_decoration(uint32_t type, uint32_t index, Ext
 	case SPIRVCrossDecorationInterfaceOrigID:
 		dec.extended.ib_orig_id = value;
 		break;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		dec.extended.argument_buffer_id = value;
+		break;
 	}
 }
 
@@ -1205,6 +1218,9 @@ uint32_t Compiler::get_extended_decoration(uint32_t id, ExtendedDecorations deco
 
 	case SPIRVCrossDecorationInterfaceOrigID:
 		return dec.extended.ib_orig_id;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		return dec.extended.argument_buffer_id;
 	}
 
 	return 0;
@@ -1233,6 +1249,9 @@ uint32_t Compiler::get_extended_member_decoration(uint32_t type, uint32_t index,
 
 	case SPIRVCrossDecorationInterfaceOrigID:
 		return dec.extended.ib_orig_id;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		return dec.extended.argument_buffer_id;
 	}
 
 	return 0;
@@ -1258,6 +1277,9 @@ bool Compiler::has_extended_decoration(uint32_t id, ExtendedDecorations decorati
 
 	case SPIRVCrossDecorationInterfaceOrigID:
 		return dec.extended.ib_orig_id != 0;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		return dec.extended.argument_buffer_id != 0;
 	}
 
 	return false;
@@ -1286,6 +1308,9 @@ bool Compiler::has_extended_member_decoration(uint32_t type, uint32_t index, Ext
 
 	case SPIRVCrossDecorationInterfaceOrigID:
 		return dec.extended.ib_orig_id != 0;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		return dec.extended.argument_buffer_id != uint32_t(-1);
 	}
 
 	return false;
@@ -1305,11 +1330,15 @@ void Compiler::unset_extended_decoration(uint32_t id, ExtendedDecorations decora
 		break;
 
 	case SPIRVCrossDecorationInterfaceMemberIndex:
-		dec.extended.ib_member_index = -1;
+		dec.extended.ib_member_index = ~(0u);
 		break;
 
 	case SPIRVCrossDecorationInterfaceOrigID:
 		dec.extended.ib_orig_id = 0;
+		break;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		dec.extended.argument_buffer_id = 0;
 		break;
 	}
 }
@@ -1330,11 +1359,15 @@ void Compiler::unset_extended_member_decoration(uint32_t type, uint32_t index, E
 		break;
 
 	case SPIRVCrossDecorationInterfaceMemberIndex:
-		dec.extended.ib_member_index = -1;
+		dec.extended.ib_member_index = ~(0u);
 		break;
 
 	case SPIRVCrossDecorationInterfaceOrigID:
 		dec.extended.ib_orig_id = 0;
+		break;
+
+	case SPIRVCrossDecorationArgumentBufferID:
+		dec.extended.argument_buffer_id = 0;
 		break;
 	}
 }

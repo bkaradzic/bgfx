@@ -470,6 +470,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		options->msl.platform = static_cast<CompilerMSL::Options::Platform>(value);
 		break;
 
+	case SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS:
+		options->msl.argument_buffers = value != 0;
+		break;
+
 	default:
 		options->context->report_error("Unknown option.");
 		return SPVC_ERROR_INVALID_ARGUMENT;
@@ -696,6 +700,19 @@ spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
 	bind.msl_texture = binding->msl_texture;
 	bind.msl_sampler = binding->msl_sampler;
 	msl.add_msl_resource_binding(bind);
+	return SPVC_SUCCESS;
+}
+
+spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set)
+{
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	msl.add_discrete_descriptor_set(desc_set);
 	return SPVC_SUCCESS;
 }
 
