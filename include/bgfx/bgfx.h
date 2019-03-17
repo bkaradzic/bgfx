@@ -2052,7 +2052,7 @@ namespace bgfx
 	/// Clear internal debug text buffer.
 	///
 	/// @param[in] _attr Background color.
-	/// @param[in] _small Default or 8x8 font.
+	/// @param[in] _small Default 8x16 or 8x8 font.
 	///
 	/// @attention C99 equivalent is `bgfx_dbg_text_clear`.
 	///

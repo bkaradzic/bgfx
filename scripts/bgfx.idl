@@ -826,7 +826,7 @@ func.dbgTextClear
 	"void"
 	.attr  "uint8_t" --- Background color.
 	 { default = 0 }
-	.small "bool"    --- Default or 8x8 font.
+	.small "bool"    --- Default 8x16 or 8x8 font.
 	 { default = false }
 
 --- Print formatted data to internal debug text character-buffer (VGA-compatible text mode).
