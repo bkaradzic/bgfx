@@ -521,7 +521,7 @@ namespace bgfx
 		return uint32_t( (_stencil >> (32*_0or1) ) );
 	}
 
-	inline bool needBorderColor(uint32_t _flags)
+	inline bool needBorderColor(uint64_t _flags)
 	{
 		return BGFX_SAMPLER_U_BORDER == (_flags & BGFX_SAMPLER_U_BORDER)
 			|| BGFX_SAMPLER_V_BORDER == (_flags & BGFX_SAMPLER_V_BORDER)

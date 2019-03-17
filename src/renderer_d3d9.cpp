@@ -1734,9 +1734,9 @@ namespace bgfx { namespace d3d9
 			}
 		}
 
-		void setSamplerState(uint8_t _stage, uint32_t _flags, const float _rgba[4])
+		void setSamplerState(uint8_t _stage, uint64_t _flags, const float _rgba[4])
 		{
-			const uint32_t flags = _flags&( (~BGFX_SAMPLER_RESERVED_MASK) | BGFX_SAMPLER_BITS_MASK | BGFX_TEXTURE_SRGB);
+			const uint64_t flags = _flags&( (~BGFX_SAMPLER_RESERVED_MASK) | BGFX_SAMPLER_BITS_MASK | BGFX_TEXTURE_SRGB);
 			BX_CHECK(_stage < BX_COUNTOF(m_samplerFlags), "");
 			if (m_samplerFlags[_stage] != flags)
 			{
@@ -2242,7 +2242,7 @@ namespace bgfx { namespace d3d9
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
-		uint32_t m_samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		uint64_t m_samplerFlags[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
 		TextureD3D9* m_updateTexture;
 		uint8_t* m_updateTextureBits;
@@ -3124,9 +3124,8 @@ namespace bgfx { namespace d3d9
 
 	void TextureD3D9::commit(uint8_t _stage, uint32_t _flags, const float _palette[][4])
 	{
-		const uint32_t flags = 0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags)
-			? _flags
-			: uint32_t(m_flags)
+		const uint64_t flags = (m_flags & BGFX_TEXTURE_SRGB)
+			| (0 == (BGFX_SAMPLER_INTERNAL_DEFAULT & _flags) ? _flags : uint32_t(m_flags) ) 
 			;
 		uint32_t index = (flags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT;
 		s_renderD3D9->setSamplerState(_stage, flags, _palette[index]);

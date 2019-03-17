@@ -4164,6 +4164,7 @@ namespace bgfx
 				| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 				) );
 		}
+
 		uint16_t srgbCaps = BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB;
 
 		if (_cubeMap)
@@ -4212,7 +4213,7 @@ namespace bgfx
 		}
 
 		if (0 != (_flags & BGFX_TEXTURE_SRGB)
-		&&  0 == (g_caps.supported & srgbCaps & (0
+		&&  0 == (g_caps.formats[_format] & srgbCaps & (0
 				| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 				| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
 				| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
