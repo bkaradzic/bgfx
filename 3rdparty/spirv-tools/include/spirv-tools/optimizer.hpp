@@ -208,6 +208,13 @@ class Optimizer {
 // A null pass does nothing to the SPIR-V module to be optimized.
 Optimizer::PassToken CreateNullPass();
 
+// Creates a strip-atomic-counter-memory pass.
+// A strip-atomic-counter-memory pass removes all usages of the
+// AtomicCounterMemory bit in Memory Semantics bitmasks. This bit is a no-op in
+// Vulkan, so isn't needed in that env. And the related capability is not
+// allowed in WebGPU, so it is not allowed in that env.
+Optimizer::PassToken CreateStripAtomicCounterMemoryPass();
+
 // Creates a strip-debug-info pass.
 // A strip-debug-info pass removes all debug instructions (as documented in
 // Section 3.32.2 of the SPIR-V spec) of the SPIR-V module to be optimized.

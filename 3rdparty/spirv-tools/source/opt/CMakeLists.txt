@@ -96,6 +96,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   simplification_pass.h
   ssa_rewrite_pass.h
   strength_reduction_pass.h
+  strip_atomic_counter_memory_pass.h
   strip_debug_info_pass.h
   strip_reflect_info_pass.h
   struct_cfg_analysis.h
@@ -189,6 +190,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   simplification_pass.cpp
   ssa_rewrite_pass.cpp
   strength_reduction_pass.cpp
+  strip_atomic_counter_memory_pass.cpp
   strip_debug_info_pass.cpp
   strip_reflect_info_pass.cpp
   struct_cfg_analysis.cpp

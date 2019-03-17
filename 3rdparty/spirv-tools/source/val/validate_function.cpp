@@ -24,6 +24,17 @@ namespace spvtools {
 namespace val {
 namespace {
 
+// Returns true if |a| and |b| are instruction defining pointers that point to
+// the same type.
+bool ArePointersToSameType(val::Instruction* a, val::Instruction* b) {
+  if (a->opcode() != SpvOpTypePointer || b->opcode() != SpvOpTypePointer) {
+    return false;
+  }
+
+  uint32_t a_type = a->GetOperandAs<uint32_t>(2);
+  return a_type && (a_type == b->GetOperandAs<uint32_t>(2));
+}
+
 spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
   const auto function_type_id = inst->GetOperandAs<uint32_t>(3);
   const auto function_type = _.FindDef(function_type_id);
@@ -245,7 +256,10 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
     const auto parameter_type_id =
         function_type->GetOperandAs<uint32_t>(param_index);
     const auto parameter_type = _.FindDef(parameter_type_id);
-    if (!parameter_type || argument_type->id() != parameter_type->id()) {
+    if (!parameter_type ||
+        (argument_type->id() != parameter_type->id() &&
+         !(_.options()->relax_logical_pointer &&
+           ArePointersToSameType(argument_type, parameter_type)))) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "OpFunctionCall Argument <id> '" << _.getIdName(argument_id)
              << "'s type does not match Function <id> '"
@@ -287,7 +301,8 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
               sc == SpvStorageClassStorageBuffer;
           const bool wg_vptr =
               _.features().variable_pointers && sc == SpvStorageClassWorkgroup;
-          if (!ssbo_vptr && !wg_vptr) {
+          const bool uc_ptr = sc == SpvStorageClassUniformConstant;
+          if (!ssbo_vptr && !wg_vptr && !uc_ptr) {
             return _.diag(SPV_ERROR_INVALID_ID, inst)
                    << "Pointer operand " << _.getIdName(argument_id)
                    << " must be a memory object declaration";

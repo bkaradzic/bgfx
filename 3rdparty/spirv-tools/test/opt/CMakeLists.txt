@@ -77,6 +77,7 @@ add_spvtools_unittest(TARGET opt
        set_spec_const_default_value_test.cpp
        simplification_test.cpp
        strength_reduction_test.cpp
+       strip_atomic_counter_memory_test.cpp
        strip_debug_info_test.cpp
        strip_reflect_info_test.cpp
        struct_cfg_analysis_test.cpp

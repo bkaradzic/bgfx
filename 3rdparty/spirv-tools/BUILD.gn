@@ -612,6 +612,8 @@ static_library("spvtools_opt") {
     "source/opt/ssa_rewrite_pass.h",
     "source/opt/strength_reduction_pass.cpp",
     "source/opt/strength_reduction_pass.h",
+    "source/opt/strip_atomic_counter_memory_pass.cpp",
+    "source/opt/strip_atomic_counter_memory_pass.h",
     "source/opt/strip_debug_info_pass.cpp",
     "source/opt/strip_debug_info_pass.h",
     "source/opt/strip_reflect_info_pass.cpp",

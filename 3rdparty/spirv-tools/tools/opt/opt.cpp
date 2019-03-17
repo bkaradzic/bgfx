@@ -340,6 +340,8 @@ Options (in lexicographical order):
                This options should be used rarely, and with caution.
   --strength-reduction
                Replaces instructions with equivalent and less expensive ones.
+  --strip-atomic-counter-memory
+               Removes AtomicCountMemory bit from memory semantics values.
   --strip-debug
                Remove all debug instructions.
   --strip-reflect
