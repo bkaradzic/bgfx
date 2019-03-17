@@ -17,6 +17,7 @@
 #include "renderer_gl.cpp"
 #include "renderer_vk.cpp"
 #include "renderer_gnm.cpp"
+#include "renderer_nvn.cpp"
 #include "shader_dxbc.cpp"
 #include "shader_dx9bc.cpp"
 #include "shader_spirv.cpp"
