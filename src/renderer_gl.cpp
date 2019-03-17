@@ -4792,7 +4792,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			if (!init(target
 				, ti.width
 				, ti.height
-				, ti.depth
+				, textureArray ? ti.numLayers : ti.depth
 				, ti.numMips
 				, _flags
 				) )
