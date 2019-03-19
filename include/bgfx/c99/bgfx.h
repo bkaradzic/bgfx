@@ -1208,7 +1208,7 @@ BGFX_C_API void bgfx_set_debug(uint32_t _debug);
  * Clear internal debug text buffer.
  *
  * @param[in] _attr Background color.
- * @param[in] _small Default or 8x8 font.
+ * @param[in] _small Default 8x16 or 8x8 font.
  *
  */
 BGFX_C_API void bgfx_dbg_text_clear(uint8_t _attr, bool _small);
