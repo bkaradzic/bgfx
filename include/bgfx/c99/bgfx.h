@@ -1781,6 +1781,7 @@ BGFX_C_API bgfx_texture_handle_t bgfx_create_texture_cube(uint16_t _size, bool _
 
 /**
  * Update 2D texture.
+ * @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
  *
  * @param[in] _handle Texture handle.
  * @param[in] _layer Layer in texture array.
@@ -1798,6 +1799,7 @@ BGFX_C_API void bgfx_update_texture_2d(bgfx_texture_handle_t _handle, uint16_t _
 
 /**
  * Update 3D texture.
+ * @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
  *
  * @param[in] _handle Texture handle.
  * @param[in] _mip Mip level.
@@ -1814,6 +1816,7 @@ BGFX_C_API void bgfx_update_texture_3d(bgfx_texture_handle_t _handle, uint8_t _m
 
 /**
  * Update Cube texture.
+ * @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
  *
  * @param[in] _handle Texture handle.
  * @param[in] _layer Layer in texture array.

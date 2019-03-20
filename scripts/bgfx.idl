@@ -1254,6 +1254,9 @@ func.createTextureCube
 	                                           --- 1, expected memory layout is texture and all mips together for each array element.
 
 --- Update 2D texture.
+---
+--- @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
+---
 func.updateTexture2D
 	"void"
 	.handle "TextureHandle" --- Texture handle.
@@ -1269,6 +1272,9 @@ func.updateTexture2D
 	 { default = UINT16_MAX }
 
 --- Update 3D texture.
+---
+--- @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
+---
 func.updateTexture3D
 	"void"
 	.handle "TextureHandle" --- Texture handle.
@@ -1282,6 +1288,9 @@ func.updateTexture3D
 	.mem    "const Memory*" --- Texture update data.
 
 --- Update Cube texture.
+---
+--- @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
+---
 func.updateTextureCube
 	"void"
 	.handle "TextureHandle" --- Texture handle.

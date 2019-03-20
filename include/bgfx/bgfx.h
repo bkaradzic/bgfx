@@ -2749,6 +2749,8 @@ namespace bgfx
 	/// @param[in] _pitch Pitch of input image (bytes). When _pitch is set to
 	///   UINT16_MAX, it will be calculated internally based on _width.
 	///
+	/// @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
+	///
 	/// @attention C99 equivalent is `bgfx_update_texture_2d`.
 	///
 	void updateTexture2D(
@@ -2774,6 +2776,8 @@ namespace bgfx
 	/// @param[in] _height Height of texture block.
 	/// @param[in] _depth Depth of texture block.
 	/// @param[in] _mem Texture update data.
+	///
+	/// @attention It's valid to update only mutable texture. See `bgfx::createTexture3D` for more info.
 	///
 	/// @attention C99 equivalent is `bgfx_update_texture_3d`.
 	///
@@ -2821,6 +2825,8 @@ namespace bgfx
 	/// @param[in] _mem Texture update data.
 	/// @param[in] _pitch Pitch of input image (bytes). When _pitch is set to
 	///   UINT16_MAX, it will be calculated internally based on _width.
+	///
+	/// @attention It's valid to update only mutable texture. See `bgfx::createTextureCube` for more info.
 	///
 	/// @attention C99 equivalent is `bgfx_update_texture_cube`.
 	///
