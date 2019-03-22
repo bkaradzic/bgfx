@@ -152,6 +152,7 @@ source_set("glslang_sources") {
   if (is_win && !is_clang) {
     cflags = [
       "/wd4018", # signed/unsigned mismatch
+      "/wd4189", # local variable is initialized but not referenced
     ]
   }
 

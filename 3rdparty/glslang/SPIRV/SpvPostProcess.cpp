@@ -258,6 +258,7 @@ void Builder::postProcess(Instruction& inst)
                 assert(inst.getNumOperands() >= 3);
                 unsigned int memoryAccess = inst.getImmediateOperand((inst.getOpCode() == OpStore) ? 2 : 1);
                 assert(memoryAccess & MemoryAccessAlignedMask);
+                static_cast<void>(memoryAccess);
                 // Compute the index of the alignment operand.
                 int alignmentIdx = 2;
                 if (inst.getOpCode() == OpStore)

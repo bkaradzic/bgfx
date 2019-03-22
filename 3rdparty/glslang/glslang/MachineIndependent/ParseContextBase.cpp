@@ -152,6 +152,10 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
     case EvqBuffer:
         if (node->getQualifier().readonly)
             message = "can't modify a readonly buffer";
+#ifdef NV_EXTENSIONS
+        if (node->getQualifier().layoutShaderRecordNV)
+            message = "can't modify a shaderrecordnv qualified buffer";
+#endif
         break;
 #ifdef NV_EXTENSIONS
     case EvqHitAttrNV:

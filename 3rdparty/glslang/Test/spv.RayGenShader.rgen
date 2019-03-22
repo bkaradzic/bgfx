@@ -5,8 +5,9 @@ layout(binding = 1, set = 0) uniform accelerationStructureNV accNV1; // Unused
 layout(location = 0) rayPayloadNV vec4 payload;
 layout(shaderRecordNV) buffer block
 {
-	float arr[4];
-	vec4 pad;
+	vec3 dir;
+	vec3 origin;
+
 };
 void main()
 {
@@ -14,7 +15,5 @@ void main()
     uint ly = gl_LaunchIDNV.y;
     uint sx = gl_LaunchSizeNV.x;
     uint sy = gl_LaunchSizeNV.y;
-    traceNV(accNV0, lx, ly, sx, sy, 0u, vec3(0.0f), 0.5f, vec3(1.0f), 0.75f, 1);
-    arr[3] = 1.0f;
-    pad = payload;
+    traceNV(accNV0, lx, ly, sx, sy, 0u, origin, 0.5f, dir, 0.75f, 1);
 }
