@@ -704,10 +704,14 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 
 // Create a pass to instrument bindless descriptor checking
 // This pass instruments all bindless references to check that descriptor
-// array indices are inbounds. If the reference is invalid, a record is
-// written to the debug output buffer (if space allows) and a null value is
-// returned. This pass is designed to support bindless validation in the Vulkan
-// validation layers.
+// array indices are inbounds, and if the descriptor indexing extension is
+// enabled, that the descriptor has been initialized. If the reference is
+// invalid, a record is written to the debug output buffer (if space allows)
+// and a null value is returned. This pass is designed to support bindless
+// validation in the Vulkan validation layers.
+//
+// TODO(greg-lunarg): Add support for buffer references. Currently only does
+// checking for image references.
 //
 // Dead code elimination should be run after this pass as the original,
 // potentially invalid code is not removed and could cause undefined behavior,
@@ -723,12 +727,12 @@ Optimizer::PassToken CreateCombineAccessChainsPass();
 // The instrumentation will read and write buffers in debug
 // descriptor set |desc_set|. It will write |shader_id| in each output record
 // to identify the shader module which generated the record.
-// |runtime_array_enable| controls instrumentation of runtime arrays which
-// require input buffer support.
-//
-// TODO(greg-lunarg): Add support for vk_ext_descriptor_indexing.
+// |input_length_enable| controls instrumentation of runtime descriptor array
+// references, and |input_init_enable| controls instrumentation of descriptor
+// initialization checking, both of which require input buffer support.
 Optimizer::PassToken CreateInstBindlessCheckPass(
-    uint32_t desc_set, uint32_t shader_id, bool runtime_array_enable = false);
+    uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
+    bool input_init_enable = false);
 
 // Create a pass to upgrade to the VulkanKHR memory model.
 // This pass upgrades the Logical GLSL450 memory model to Logical VulkanKHR.

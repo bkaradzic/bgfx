@@ -53,12 +53,24 @@ void Reducer::SetInterestingnessFunction(
 
 Reducer::ReductionResultStatus Reducer::Run(
     std::vector<uint32_t>&& binary_in, std::vector<uint32_t>* binary_out,
-    spv_const_reducer_options options) const {
-  std::vector<uint32_t> current_binary = binary_in;
+    spv_const_reducer_options options,
+    spv_validator_options validator_options) const {
+  std::vector<uint32_t> current_binary(std::move(binary_in));
+
+  spvtools::SpirvTools tools(impl_->target_env);
+  assert(tools.IsValid() && "Failed to create SPIRV-Tools interface");
 
   // Keeps track of how many reduction attempts have been tried.  Reduction
   // bails out if this reaches a given limit.
   uint32_t reductions_applied = 0;
+
+  // Initial state should be valid.
+  if (!tools.Validate(&current_binary[0], current_binary.size(),
+                      validator_options)) {
+    impl_->consumer(SPV_MSG_INFO, nullptr, {},
+                    "Initial binary is invalid; stopping.");
+    return Reducer::ReductionResultStatus::kInitialStateInvalid;
+  }
 
   // Initial state should be interesting.
   if (!impl_->interestingness_function(current_binary, reductions_applied)) {
@@ -106,7 +118,8 @@ Reducer::ReductionResultStatus Reducer::Run(
                      << reductions_applied << ".";
         impl_->consumer(SPV_MSG_INFO, nullptr, {},
                         (stringstream.str().c_str()));
-        if (!spvtools::SpirvTools(impl_->target_env).Validate(maybe_result)) {
+        if (!tools.Validate(&maybe_result[0], maybe_result.size(),
+                            validator_options)) {
           // The reduction step went wrong and an invalid binary was produced.
           // By design, this shouldn't happen; this is a safeguard to stop an
           // invalid binary from being regarded as interesting.

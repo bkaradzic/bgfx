@@ -110,6 +110,13 @@ Options (in lexicographical order):
                reducer will take before giving up.
   --version
                Display reducer version information.
+
+Supported validator options are as follows. See `spirv-val --help` for details.
+  --relax-logical-pointer
+  --relax-block-layout
+  --scalar-block-layout
+  --skip-block-layout
+  --relax-struct-store
 )",
       program, program);
 }
@@ -127,7 +134,8 @@ void ReduceDiagnostic(spv_message_level_t level, const char* /*source*/,
 
 ReduceStatus ParseFlags(int argc, const char** argv, const char** in_file,
                         const char** interestingness_test,
-                        spvtools::ReducerOptions* reducer_options) {
+                        spvtools::ReducerOptions* reducer_options,
+                        spvtools::ValidatorOptions* validator_options) {
   uint32_t positional_arg_index = 0;
 
   for (int argi = 1; argi < argc; ++argi) {
@@ -164,6 +172,16 @@ ReduceStatus ParseFlags(int argc, const char** argv, const char** in_file,
       assert(!*interestingness_test);
       *interestingness_test = cur_arg;
       positional_arg_index++;
+    } else if (0 == strcmp(cur_arg, "--relax-logical-pointer")) {
+      validator_options->SetRelaxLogicalPointer(true);
+    } else if (0 == strcmp(cur_arg, "--relax-block-layout")) {
+      validator_options->SetRelaxBlockLayout(true);
+    } else if (0 == strcmp(cur_arg, "--scalar-block-layout")) {
+      validator_options->SetScalarBlockLayout(true);
+    } else if (0 == strcmp(cur_arg, "--skip-block-layout")) {
+      validator_options->SetSkipBlockLayout(true);
+    } else if (0 == strcmp(cur_arg, "--relax-struct-store")) {
+      validator_options->SetRelaxStructStore(true);
     } else {
       spvtools::Error(ReduceDiagnostic, nullptr, {},
                       "Too many positional arguments specified");
@@ -195,9 +213,10 @@ int main(int argc, const char** argv) {
 
   spv_target_env target_env = kDefaultEnvironment;
   spvtools::ReducerOptions reducer_options;
+  spvtools::ValidatorOptions validator_options;
 
-  ReduceStatus status =
-      ParseFlags(argc, argv, &in_file, &interestingness_test, &reducer_options);
+  ReduceStatus status = ParseFlags(argc, argv, &in_file, &interestingness_test,
+                                   &reducer_options, &validator_options);
 
   if (status.action == REDUCE_STOP) {
     return status.code;
@@ -255,8 +274,8 @@ int main(int argc, const char** argv) {
   }
 
   std::vector<uint32_t> binary_out;
-  const auto reduction_status =
-      reducer.Run(std::move(binary_in), &binary_out, reducer_options);
+  const auto reduction_status = reducer.Run(std::move(binary_in), &binary_out,
+                                            reducer_options, validator_options);
 
   if (reduction_status ==
           Reducer::ReductionResultStatus::kInitialStateNotInteresting ||

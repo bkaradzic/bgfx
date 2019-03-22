@@ -229,8 +229,12 @@ TEST(ReducerTest, ExprToConstantAndRemoveUnreferenced) {
   std::vector<uint32_t> binary_out;
   spvtools::ReducerOptions reducer_options;
   reducer_options.set_step_limit(500);
+  spvtools::ValidatorOptions validator_options;
 
-  reducer.Run(std::move(binary_in), &binary_out, reducer_options);
+  Reducer::ReductionResultStatus status = reducer.Run(
+      std::move(binary_in), &binary_out, reducer_options, validator_options);
+
+  ASSERT_EQ(status, Reducer::ReductionResultStatus::kComplete);
 
   CheckEqual(env, expected, binary_out);
 }
@@ -255,7 +259,7 @@ TEST(ReducerTest, RemoveOpnameAndRemoveUnreferenced) {
          %10 = OpLabel
           %3 = OpVariable %8 Function
           %4 = OpLoad %7 %3
-               OpStore %3 %7
+               OpStore %3 %9
                OpReturn
                OpFunctionEnd
   )";
@@ -280,7 +284,7 @@ TEST(ReducerTest, RemoveOpnameAndRemoveUnreferenced) {
 
   spv_target_env env = SPV_ENV_UNIVERSAL_1_3;
   Reducer reducer(env);
-  // Make ping-pong interesting very quickly, as there are not much
+  // Make ping-pong interesting very quickly, as there are not many
   // opportunities.
   PingPongInteresting ping_pong_interesting(1);
   reducer.SetMessageConsumer(NopDiagnostic);
@@ -300,8 +304,12 @@ TEST(ReducerTest, RemoveOpnameAndRemoveUnreferenced) {
   std::vector<uint32_t> binary_out;
   spvtools::ReducerOptions reducer_options;
   reducer_options.set_step_limit(500);
+  spvtools::ValidatorOptions validator_options;
 
-  reducer.Run(std::move(binary_in), &binary_out, reducer_options);
+  Reducer::ReductionResultStatus status = reducer.Run(
+      std::move(binary_in), &binary_out, reducer_options, validator_options);
+
+  ASSERT_EQ(status, Reducer::ReductionResultStatus::kComplete);
 
   CheckEqual(env, expected, binary_out);
 }

@@ -52,6 +52,65 @@ class BlindlyRemoveGlobalValuesReductionOpportunityFinder
   }
 };
 
+// A dumb reduction opportunity that exists at the start of every function whose
+// first instruction is an OpVariable instruction. When applied, the OpVariable
+// instruction is duplicated (with a fresh result id). This allows each
+// reduction step to increase the number of variables to check if the validator
+// limits are enforced.
+class OpVariableDuplicatorReductionOpportunity : public ReductionOpportunity {
+ public:
+  OpVariableDuplicatorReductionOpportunity(Function* function_)
+      : function_(function_) {}
+
+  bool PreconditionHolds() override {
+    Instruction* first_instruction = &*function_->begin()[0].begin();
+    return first_instruction->opcode() == SpvOpVariable;
+  }
+
+ protected:
+  void Apply() override {
+    // Duplicate the first OpVariable instruction.
+
+    Instruction* first_instruction = &*function_->begin()[0].begin();
+    assert(first_instruction->opcode() == SpvOpVariable &&
+           "Expected first instruction to be OpVariable");
+    IRContext* context = first_instruction->context();
+    Instruction* cloned_instruction = first_instruction->Clone(context);
+    cloned_instruction->SetResultId(context->TakeNextId());
+    cloned_instruction->InsertBefore(first_instruction);
+  }
+
+ private:
+  Function* function_;
+};
+
+// A reduction opportunity finder that finds
+// OpVariableDuplicatorReductionOpportunity.
+class OpVariableDuplicatorReductionOpportunityFinder
+    : public ReductionOpportunityFinder {
+ public:
+  OpVariableDuplicatorReductionOpportunityFinder() = default;
+
+  ~OpVariableDuplicatorReductionOpportunityFinder() override = default;
+
+  std::string GetName() const final {
+    return "LocalVariableAdderReductionOpportunityFinder";
+  };
+
+  std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
+      opt::IRContext* context) const final {
+    std::vector<std::unique_ptr<ReductionOpportunity>> result;
+    for (auto& function : *context->module()) {
+      Instruction* first_instruction = &*function.begin()[0].begin();
+      if (first_instruction->opcode() == SpvOpVariable) {
+        result.push_back(
+            MakeUnique<OpVariableDuplicatorReductionOpportunity>(&function));
+      }
+    }
+    return result;
+  }
+};
+
 TEST(ValidationDuringReductionTest, CheckInvalidPassMakesNoProgress) {
   // A module whose global values are all referenced, so that any application of
   // MakeModuleInvalidPass will make the module invalid.
@@ -160,8 +219,12 @@ TEST(ValidationDuringReductionTest, CheckInvalidPassMakesNoProgress) {
   std::vector<uint32_t> binary_out;
   spvtools::ReducerOptions reducer_options;
   reducer_options.set_step_limit(500);
+  spvtools::ValidatorOptions validator_options;
 
-  reducer.Run(std::move(binary_in), &binary_out, reducer_options);
+  Reducer::ReductionResultStatus status = reducer.Run(
+      std::move(binary_in), &binary_out, reducer_options, validator_options);
+
+  ASSERT_EQ(status, Reducer::ReductionResultStatus::kComplete);
 
   // The reducer should have no impact.
   CheckEqual(env, original, binary_out);
@@ -365,9 +428,143 @@ TEST(ValidationDuringReductionTest, CheckNotAlwaysInvalidCanMakeProgress) {
   std::vector<uint32_t> binary_out;
   spvtools::ReducerOptions reducer_options;
   reducer_options.set_step_limit(500);
+  spvtools::ValidatorOptions validator_options;
 
-  reducer.Run(std::move(binary_in), &binary_out, reducer_options);
+  Reducer::ReductionResultStatus status = reducer.Run(
+      std::move(binary_in), &binary_out, reducer_options, validator_options);
+
+  ASSERT_EQ(status, Reducer::ReductionResultStatus::kComplete);
+
   CheckEqual(env, expected, binary_out);
+}
+
+// Sets up a Reducer for use in the CheckValidationOptions test; avoids
+// repetition.
+void setupReducerForCheckValidationOptions(Reducer* reducer) {
+  reducer->SetMessageConsumer(NopDiagnostic);
+
+  // Say that every module is interesting.
+  reducer->SetInterestingnessFunction(
+      [](const std::vector<uint32_t>&, uint32_t) -> bool { return true; });
+
+  // Each "reduction" step will duplicate the first OpVariable instruction in
+  // the function.
+  reducer->AddReductionPass(
+      MakeUnique<OpVariableDuplicatorReductionOpportunityFinder>());
+}
+
+TEST(ValidationDuringReductionTest, CheckValidationOptions) {
+  // A module that only validates when the "skip-block-layout" validator option
+  // is used. Also, the entry point's first instruction creates a local
+  // variable; this instruction will be duplicated on each reduction step.
+  std::string original = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %2 "Main" %3
+               OpSource HLSL 600
+               OpDecorate %3 BuiltIn Position
+               OpDecorate %4 DescriptorSet 0
+               OpDecorate %4 Binding 99
+               OpDecorate %5 ArrayStride 16
+               OpMemberDecorate %6 0 Offset 0
+               OpMemberDecorate %6 1 Offset 32
+               OpMemberDecorate %6 1 MatrixStride 16
+               OpMemberDecorate %6 1 ColMajor
+               OpMemberDecorate %6 2 Offset 96
+               OpMemberDecorate %6 3 Offset 100
+               OpMemberDecorate %6 4 Offset 112
+               OpMemberDecorate %6 4 MatrixStride 16
+               OpMemberDecorate %6 4 ColMajor
+               OpMemberDecorate %6 5 Offset 176
+               OpDecorate %6 Block
+          %7 = OpTypeFloat 32
+          %8 = OpTypeVector %7 4
+          %9 = OpTypeMatrix %8 4
+         %10 = OpTypeVector %7 2
+         %11 = OpTypeInt 32 1
+         %12 = OpTypeInt 32 0
+         %13 = OpConstant %12 2
+         %14 = OpConstant %11 1
+         %15 = OpConstant %11 5
+          %5 = OpTypeArray %8 %13
+          %6 = OpTypeStruct %5 %9 %12 %10 %9 %7
+         %16 = OpTypePointer Uniform %6
+         %17 = OpTypePointer Output %8
+         %18 = OpTypeVoid
+         %19 = OpTypeFunction %18
+         %20 = OpTypePointer Uniform %7
+          %4 = OpVariable %16 Uniform
+          %3 = OpVariable %17 Output
+         %21 = OpTypePointer Function %11
+          %2 = OpFunction %18 None %19
+         %22 = OpLabel
+         %23 = OpVariable %21 Function
+         %24 = OpAccessChain %20 %4 %15
+         %25 = OpLoad %7 %24
+         %26 = OpCompositeConstruct %8 %25 %25 %25 %25
+               OpStore %3 %26
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  spv_target_env env = SPV_ENV_UNIVERSAL_1_3;
+  std::vector<uint32_t> binary_in;
+  SpirvTools t(env);
+
+  ASSERT_TRUE(t.Assemble(original, &binary_in, kReduceAssembleOption));
+  std::vector<uint32_t> binary_out;
+  spvtools::ReducerOptions reducer_options;
+  spvtools::ValidatorOptions validator_options;
+
+  reducer_options.set_step_limit(3);
+
+  // Reduction should fail because the initial state is invalid without the
+  // "skip-block-layout" validator option. Note that the interestingness test
+  // always returns true.
+  {
+    Reducer reducer(env);
+    setupReducerForCheckValidationOptions(&reducer);
+
+    Reducer::ReductionResultStatus status =
+        reducer.Run(std::vector<uint32_t>(binary_in), &binary_out,
+                    reducer_options, validator_options);
+
+    ASSERT_EQ(status, Reducer::ReductionResultStatus::kInitialStateInvalid);
+  }
+
+  // Try again with validator option.
+  validator_options.SetSkipBlockLayout(true);
+
+  // Reduction should hit step limit; module is seen as valid, interestingness
+  // test always succeeds, and the finder yields infinite opportunities.
+  {
+    Reducer reducer(env);
+    setupReducerForCheckValidationOptions(&reducer);
+
+    Reducer::ReductionResultStatus status =
+        reducer.Run(std::vector<uint32_t>(binary_in), &binary_out,
+                    reducer_options, validator_options);
+
+    ASSERT_EQ(status, Reducer::ReductionResultStatus::kReachedStepLimit);
+  }
+
+  // Now set a limit on the number of local variables.
+  validator_options.SetUniversalLimit(spv_validator_limit_max_local_variables,
+                                      2);
+
+  // Reduction should "complete"; after one step, a local variable is added and
+  // the module becomes "invalid" given the validator limits.
+  {
+    Reducer reducer(env);
+    setupReducerForCheckValidationOptions(&reducer);
+
+    Reducer::ReductionResultStatus status =
+        reducer.Run(std::vector<uint32_t>(binary_in), &binary_out,
+                    reducer_options, validator_options);
+
+    ASSERT_EQ(status, Reducer::ReductionResultStatus::kComplete);
+  }
 }
 
 }  // namespace
