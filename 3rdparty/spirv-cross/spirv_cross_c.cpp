@@ -316,14 +316,19 @@ spvc_result spvc_compiler_create_compiler_options(spvc_compiler compiler, spvc_c
 		{
 		case SPVC_BACKEND_MSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_MSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
+			opt->glsl = static_cast<CompilerMSL *>(compiler->compiler.get())->get_common_options();
+			opt->msl = static_cast<CompilerMSL *>(compiler->compiler.get())->get_msl_options();
 			break;
 
 		case SPVC_BACKEND_HLSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_HLSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
+			opt->glsl = static_cast<CompilerHLSL *>(compiler->compiler.get())->get_common_options();
+			opt->hlsl = static_cast<CompilerHLSL *>(compiler->compiler.get())->get_hlsl_options();
 			break;
 
 		case SPVC_BACKEND_GLSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_GLSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
+			opt->glsl = static_cast<CompilerGLSL *>(compiler->compiler.get())->get_common_options();
 			break;
 
 		default:
@@ -472,6 +477,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS:
 		options->msl.argument_buffers = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_GLSL_EMIT_PUSH_CONSTANT_AS_UNIFORM_BUFFER:
+		options->glsl.emit_push_constant_as_uniform_buffer = value != 0;
 		break;
 
 	default:

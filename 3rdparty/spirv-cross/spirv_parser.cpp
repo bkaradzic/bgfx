@@ -879,9 +879,6 @@ void Parser::parse(const Instruction &instruction)
 		if (!current_block)
 			SPIRV_CROSS_THROW("Trying to end a non-existing block.");
 
-		if (current_block->merge == SPIRBlock::MergeNone)
-			SPIRV_CROSS_THROW("Switch statement is not structured");
-
 		current_block->terminator = SPIRBlock::MultiSelect;
 
 		current_block->condition = ops[0];

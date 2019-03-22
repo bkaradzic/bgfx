@@ -302,7 +302,7 @@ def validate_shader(shader, vulkan, paths):
     else:
         subprocess.check_call([paths.glslang, shader])
 
-def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, flatten_ubo, sso, flatten_dim, opt, paths):
+def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, flatten_ubo, sso, flatten_dim, opt, push_ubo, paths):
     spirv_path = create_temporary()
     glsl_path = create_temporary(os.path.basename(shader))
 
@@ -335,6 +335,8 @@ def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, fl
         extra_args += ['--separate-shader-objects']
     if flatten_dim:
         extra_args += ['--flatten-multidimensional-arrays']
+    if push_ubo:
+        extra_args += ['--glsl-emit-push-constant-as-ubo']
 
     spirv_cross_path = './spirv-cross'
 
@@ -496,6 +498,9 @@ def shader_is_flatten_dimensions(shader):
 def shader_is_noopt(shader):
     return '.noopt.' in shader
 
+def shader_is_push_ubo(shader):
+    return '.push-ubo.' in shader
+
 def test_shader(stats, shader, update, keep, opt, paths):
     joined_path = os.path.join(shader[0], shader[1])
     vulkan = shader_is_vulkan(shader[1])
@@ -508,9 +513,10 @@ def test_shader(stats, shader, update, keep, opt, paths):
     sso = shader_is_sso(shader[1])
     flatten_dim = shader_is_flatten_dimensions(shader[1])
     noopt = shader_is_noopt(shader[1])
+    push_ubo = shader_is_push_ubo(shader[1])
 
     print('Testing shader:', joined_path)
-    spirv, glsl, vulkan_glsl = cross_compile(joined_path, vulkan, is_spirv, invalid_spirv, eliminate, is_legacy, flatten_ubo, sso, flatten_dim, opt and (not noopt), paths)
+    spirv, glsl, vulkan_glsl = cross_compile(joined_path, vulkan, is_spirv, invalid_spirv, eliminate, is_legacy, flatten_ubo, sso, flatten_dim, opt and (not noopt), push_ubo, paths)
 
     # Only test GLSL stats if we have a shader following GL semantics.
     if stats and (not vulkan) and (not is_spirv) and (not desktop):
