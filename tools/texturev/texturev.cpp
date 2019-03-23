@@ -317,7 +317,7 @@ private:
 	const bx::StringView& m_str;
 	bx::StringView m_token;
 	char m_ch;
-}; 
+};
 
 bool openFileSelectionDialog(
 	  bx::FilePath& _inOutFilePath
@@ -424,7 +424,7 @@ bool openFileSelectionDialog(
 			bx::write(&writer, line, &err);
 			bx::write(&writer, '\0', &err);
 			bx::write(&writer, '\0', &err);
-		}	
+		}
 	}
 
 	bx::write(&writer, '\0', &err);
@@ -925,7 +925,9 @@ struct View
 					bool supported = false;
 					for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 					{
-						if (0 == bx::strCmpI(ext, s_supportedExt[ii]) )
+						const bx::StringView supportedExt(s_supportedExt[ii]);
+
+						if (0 == bx::strCmpI(bx::max(ext.getPtr(), ext.getTerm() - supportedExt.getLength() ), supportedExt) )
 						{
 							supported = true;
 							break;
