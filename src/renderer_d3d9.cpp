@@ -4228,11 +4228,12 @@ namespace bgfx { namespace d3d9
 
 					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
-					for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+					for (uint32_t idx = 0, streamMask = draw.m_streamMask
 						; 0 != streamMask
-						; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+						; streamMask >>= 1, idx += 1, ++numStreams
 						)
-					{
+					{ 
+                        const uint32_t ntz = bx::uint32_cnttz(streamMask);
 						streamMask >>= ntz;
 						idx         += ntz;
 

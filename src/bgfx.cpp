@@ -1232,11 +1232,12 @@ namespace bgfx
 		if (UINT8_MAX != m_draw.m_streamMask)
 		{
 			uint32_t numVertices = UINT32_MAX;
-			for (uint32_t idx = 0, streamMask = m_draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+			for (uint32_t idx = 0, streamMask = m_draw.m_streamMask
 				; 0 != streamMask
-				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+				; streamMask >>= 1, idx += 1
 				)
 			{
+                const uint32_t ntz = bx::uint32_cnttz(streamMask);
 				streamMask >>= ntz;
 				idx         += ntz;
 				numVertices = bx::min(numVertices, m_numVertices[idx]);
