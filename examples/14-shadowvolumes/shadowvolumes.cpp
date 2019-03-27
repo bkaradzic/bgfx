@@ -101,7 +101,7 @@ void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float 
 {
 	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
-        const uint32_t ntz = bx::uint32_cnttz(viewMask);
+		const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 

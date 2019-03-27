@@ -3957,9 +3957,9 @@ namespace bgfx { namespace d3d12
 				; streamMask >>= 1, idx += 1, ++numStreams
 				)
 			{
-                const uint32_t ntz = bx::uint32_cnttz(streamMask);
+				const uint32_t ntz = bx::uint32_cnttz(streamMask);
 				streamMask >>= ntz;
-				idx += ntz;
+				idx         += ntz;
 
 				const Stream& stream = _draw.m_stream[idx];
 
@@ -6261,9 +6261,9 @@ namespace bgfx { namespace d3d12
 							; streamMask >>= 1, idx += 1, ++numStreams
 							)
 						{
-                            const uint32_t ntz = bx::uint32_cnttz(streamMask);
+							const uint32_t ntz = bx::uint32_cnttz(streamMask);
 							streamMask >>= ntz;
-							idx += ntz;
+							idx         += ntz;
 
 							currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
 							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;

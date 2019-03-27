@@ -462,7 +462,7 @@ namespace bgfx
 			; streamMask >>= 1, idx += 1
 			)
 		{
-            const uint32_t ntz = bx::uint32_cnttz(streamMask);
+			const uint32_t ntz = bx::uint32_cnttz(streamMask);
 			streamMask >>= ntz;
 			idx         += ntz;
 

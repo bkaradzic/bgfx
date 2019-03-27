@@ -7117,8 +7117,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							; 0 != streamMask
 							; streamMask >>= 1, idx += 1
 							)
-						{ 
-                            const uint32_t ntz = bx::uint32_cnttz(streamMask);
+						{
+							const uint32_t ntz = bx::uint32_cnttz(streamMask);
 							streamMask >>= ntz;
 							idx         += ntz;
 
@@ -7146,7 +7146,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								; streamMask >>= 1, idx += 1
 								)
 							{
-                                const uint32_t ntz = bx::uint32_cnttz(streamMask);
+								const uint32_t ntz = bx::uint32_cnttz(streamMask);
 								streamMask >>= ntz;
 								idx         += ntz;
 
@@ -7179,8 +7179,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								; 0 != streamMask
 								; streamMask >>= 1, idx += 1
 								)
-							{ 
-                                const uint32_t ntz = bx::uint32_cnttz(streamMask);
+							{
+								const uint32_t ntz = bx::uint32_cnttz(streamMask);
 								streamMask >>= ntz;
 								idx         += ntz;
 
@@ -7209,8 +7209,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 										; 0 != streamMask
 										; streamMask >>= 1, idx += 1
 										)
-									{ 
-                                        const uint32_t ntz = bx::uint32_cnttz(streamMask);
+									{
+										const uint32_t ntz = bx::uint32_cnttz(streamMask);
 										streamMask >>= ntz;
 										idx         += ntz;
 
@@ -7244,7 +7244,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								; streamMask >>= 1, idx += 1
 								)
 							{
-                                const uint32_t ntz = bx::uint32_cnttz(streamMask);
+								const uint32_t ntz = bx::uint32_cnttz(streamMask);
 								streamMask >>= ntz;
 								idx         += ntz;
 

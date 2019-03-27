@@ -499,12 +499,12 @@ namespace bgfx { namespace mtl
 				}
 
 				g_caps.limits.maxFBAttachments = uint8_t(bx::uint32_min(m_device.supportsFeatureSet( (MTLFeatureSet)1 /* MTLFeatureSet_iOS_GPUFamily2_v1 */) ? 8 : 4, BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS) );
-				
+
 				if ( m_device.supportsFeatureSet( (MTLFeatureSet)4 /* MTLFeatureSet_iOS_GPUFamily3_v1 */ ))
 				{
 					g_caps.supported |= BGFX_CAPS_DRAW_INDIRECT;
 				}
-				
+
 				if ( m_device.supportsFeatureSet( (MTLFeatureSet)11 /* MTLFeatureSet_iOS_GPUFamily4_v1 */ ))
 				{
 					g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
@@ -515,7 +515,7 @@ namespace bgfx { namespace mtl
 				g_caps.limits.maxTextureSize   = 16384;
 				g_caps.limits.maxFBAttachments = 8;
 				g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
-				
+
 				if ( m_device.supportsFeatureSet( (MTLFeatureSet)10001 /* MTLFeatureSet_macOS_GPUFamily1_v2 */ ))
 				{
 					g_caps.supported |= BGFX_CAPS_DRAW_INDIRECT;
@@ -3017,7 +3017,7 @@ namespace bgfx { namespace mtl
 		m_metalLayer.device      = s_renderMtl->m_device;
 		m_metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
 		m_metalLayer.magnificationFilter = kCAFilterNearest;
-		
+
 		retain(m_metalLayer);
 	}
 
@@ -3106,7 +3106,7 @@ namespace bgfx { namespace mtl
 		murmur.add( (uint32_t)sampleCount);
 		_frameBuffer.m_pixelFormatHash = murmur.end();
 	}
-	
+
 	id <MTLTexture> SwapChainMtl::currentDrawableTexture()
 	{
 		if (NULL == m_drawableTexture)
@@ -3129,7 +3129,7 @@ namespace bgfx { namespace mtl
 				desc.mipmapLevelCount = 1;
 				desc.sampleCount = 1;
 				desc.arrayLength = 1;
-				
+
 				if (s_renderMtl->m_iOS9Runtime
 					||  s_renderMtl->m_macOS11Runtime)
 				{
@@ -3138,10 +3138,10 @@ namespace bgfx { namespace mtl
 					? (MTLStorageMode)0 // MTLStorageModeShared
 					: (MTLStorageMode)1 // MTLStorageModeManaged
 					;
-					
+
 					desc.usage = MTLTextureUsageRenderTarget;
 				}
-				
+
 				m_drawableTexture = s_renderMtl->m_device.newTextureWithDescriptor(desc);
 			}
 		}
@@ -4203,7 +4203,7 @@ namespace bgfx { namespace mtl
 						; 0 != streamMask
 						; streamMask >>= 1, idx += 1, ++numStreams
 						)
-					{ 
+					{
 						const uint32_t ntz = bx::uint32_cnttz(streamMask);
 						streamMask >>= ntz;
 						idx         += ntz;

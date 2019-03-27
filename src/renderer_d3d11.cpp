@@ -5886,7 +5886,7 @@ namespace bgfx { namespace d3d11
 							; streamMask >>= 1, idx += 1, ++numStreams
 							)
 						{
-                            const uint32_t ntz = bx::uint32_cnttz(streamMask);
+							const uint32_t ntz = bx::uint32_cnttz(streamMask);
 							streamMask >>= ntz;
 							idx         += ntz;
 
