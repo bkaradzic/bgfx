@@ -3008,7 +3008,6 @@ namespace bgfx { namespace mtl
 						return;
 					}
 
-					NSWindow* nsWindow = (NSWindow*)_nwh;
 					CALayer* layer = contentView.layer;
 					if(NULL != layer && [layer isKindOfClass:NSClassFromString(@"CAMetalLayer")])
 					{
