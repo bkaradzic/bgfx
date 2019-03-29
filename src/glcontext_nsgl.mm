@@ -192,7 +192,7 @@ namespace bgfx { namespace gl
 		uint64_t caps = 0;
 #if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 		NSObject* nwh = (NSObject*)g_platformData.nwh;
-		if ([nwh respondsToSelector:@selector(backingScaleFactor)] && (1.0f < [nwh backingScaleFactor]))
+		if ([nwh respondsToSelector:@selector(backingScaleFactor)] && (1.0f < [(id)nwh backingScaleFactor]))
 			caps |= BGFX_CAPS_HIDPI;
 #endif // defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 		return caps;
