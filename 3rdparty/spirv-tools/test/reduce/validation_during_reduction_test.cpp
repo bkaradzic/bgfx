@@ -113,7 +113,9 @@ class OpVariableDuplicatorReductionOpportunityFinder
 
 TEST(ValidationDuringReductionTest, CheckInvalidPassMakesNoProgress) {
   // A module whose global values are all referenced, so that any application of
-  // MakeModuleInvalidPass will make the module invalid.
+  // MakeModuleInvalidPass will make the module invalid. Check that the reducer
+  // makes no progress, as every step will be invalid and treated as
+  // uninteresting.
   std::string original = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
@@ -219,6 +221,8 @@ TEST(ValidationDuringReductionTest, CheckInvalidPassMakesNoProgress) {
   std::vector<uint32_t> binary_out;
   spvtools::ReducerOptions reducer_options;
   reducer_options.set_step_limit(500);
+  // Don't fail on a validation error; just treat it as uninteresting.
+  reducer_options.set_fail_on_validation_error(false);
   spvtools::ValidatorOptions validator_options;
 
   Reducer::ReductionResultStatus status = reducer.Run(
@@ -428,6 +432,8 @@ TEST(ValidationDuringReductionTest, CheckNotAlwaysInvalidCanMakeProgress) {
   std::vector<uint32_t> binary_out;
   spvtools::ReducerOptions reducer_options;
   reducer_options.set_step_limit(500);
+  // Don't fail on a validation error; just treat it as uninteresting.
+  reducer_options.set_fail_on_validation_error(false);
   spvtools::ValidatorOptions validator_options;
 
   Reducer::ReductionResultStatus status = reducer.Run(
@@ -518,6 +524,7 @@ TEST(ValidationDuringReductionTest, CheckValidationOptions) {
   spvtools::ValidatorOptions validator_options;
 
   reducer_options.set_step_limit(3);
+  reducer_options.set_fail_on_validation_error(true);
 
   // Reduction should fail because the initial state is invalid without the
   // "skip-block-layout" validator option. Note that the interestingness test
@@ -553,8 +560,9 @@ TEST(ValidationDuringReductionTest, CheckValidationOptions) {
   validator_options.SetUniversalLimit(spv_validator_limit_max_local_variables,
                                       2);
 
-  // Reduction should "complete"; after one step, a local variable is added and
-  // the module becomes "invalid" given the validator limits.
+  // Reduction should now fail due to reaching an invalid state; after one step,
+  // a local variable is added and the module becomes "invalid" given the
+  // validator limits.
   {
     Reducer reducer(env);
     setupReducerForCheckValidationOptions(&reducer);
@@ -563,7 +571,7 @@ TEST(ValidationDuringReductionTest, CheckValidationOptions) {
         reducer.Run(std::vector<uint32_t>(binary_in), &binary_out,
                     reducer_options, validator_options);
 
-    ASSERT_EQ(status, Reducer::ReductionResultStatus::kComplete);
+    ASSERT_EQ(status, Reducer::ReductionResultStatus::kStateInvalid);
   }
 }
 

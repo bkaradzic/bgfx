@@ -461,6 +461,26 @@ OpFunctionEnd
   }
 }
 
+TEST_F(StructCFGAnalysisTest, EmptyFunctionTest) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %func LinkageAttributes "x" Import
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+OpFunctionEnd
+)";
+
+  std::unique_ptr<IRContext> context =
+      BuildModule(SPV_ENV_UNIVERSAL_1_1, nullptr, text,
+                  SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  // #2451: This segfaulted on empty functions.
+  StructuredCFGAnalysis analysis(context.get());
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

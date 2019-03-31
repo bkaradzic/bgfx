@@ -748,6 +748,33 @@ spv_result_t ValidateTypeSampledImage(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+bool IsAllowedSampledImageOperand(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpSampledImage:
+    case SpvOpImageSampleImplicitLod:
+    case SpvOpImageSampleExplicitLod:
+    case SpvOpImageSampleDrefImplicitLod:
+    case SpvOpImageSampleDrefExplicitLod:
+    case SpvOpImageSampleProjImplicitLod:
+    case SpvOpImageSampleProjExplicitLod:
+    case SpvOpImageSampleProjDrefImplicitLod:
+    case SpvOpImageSampleProjDrefExplicitLod:
+    case SpvOpImageGather:
+    case SpvOpImageDrefGather:
+    case SpvOpImage:
+    case SpvOpImageQueryLod:
+    case SpvOpImageSparseSampleImplicitLod:
+    case SpvOpImageSparseSampleExplicitLod:
+    case SpvOpImageSparseSampleDrefImplicitLod:
+    case SpvOpImageSparseSampleDrefExplicitLod:
+    case SpvOpImageSparseGather:
+    case SpvOpImageSparseDrefGather:
+      return true;
+    default:
+      return false;
+  }
+}
+
 spv_result_t ValidateSampledImage(ValidationState_t& _,
                                   const Instruction* inst) {
   if (_.GetIdOpcode(inst->type_id()) != SpvOpTypeSampledImage) {
@@ -815,17 +842,25 @@ spv_result_t ValidateSampledImage(ValidationState_t& _,
                   "block. The consumer instruction <id> is '"
                << _.getIdName(consumer_instr->id()) << "'.";
       }
-      // TODO: The following check is incomplete. We should also check that the
-      // Sampled Image is not used by instructions that should not take
-      // SampledImage as an argument. We could find the list of valid
-      // instructions by scanning for "Sampled Image" in the operand description
-      // field in the grammar file.
+
       if (consumer_opcode == SpvOpPhi || consumer_opcode == SpvOpSelect) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
                << "Result <id> from OpSampledImage instruction must not appear "
                   "as "
                   "operands of Op"
                << spvOpcodeString(static_cast<SpvOp>(consumer_opcode)) << "."
+               << " Found result <id> '" << _.getIdName(inst->id())
+               << "' as an operand of <id> '"
+               << _.getIdName(consumer_instr->id()) << "'.";
+      }
+
+      if (!IsAllowedSampledImageOperand(consumer_opcode)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "Result <id> from OpSampledImage instruction must not appear "
+                  "as operand for Op"
+               << spvOpcodeString(static_cast<SpvOp>(consumer_opcode))
+               << ", since it is not specificed as taking an "
+               << "OpTypeSampledImage."
                << " Found result <id> '" << _.getIdName(inst->id())
                << "' as an operand of <id> '"
                << _.getIdName(consumer_instr->id()) << "'.";

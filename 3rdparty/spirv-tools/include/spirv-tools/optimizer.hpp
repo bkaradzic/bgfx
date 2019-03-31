@@ -199,6 +199,9 @@ class Optimizer {
   // |out| output stream.
   Optimizer& SetTimeReport(std::ostream* out);
 
+  // Sets the option to validate the module after each pass.
+  Optimizer& SetValidateAfterAll(bool validate);
+
  private:
   struct Impl;                  // Opaque struct for holding internal data.
   std::unique_ptr<Impl> impl_;  // Unique pointer to internal data.

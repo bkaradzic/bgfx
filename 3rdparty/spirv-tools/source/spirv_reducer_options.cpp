@@ -29,3 +29,8 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
     spv_reducer_options options, uint32_t step_limit) {
   options->step_limit = step_limit;
 }
+
+SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
+    spv_reducer_options options, bool fail_on_validation_error) {
+  options->fail_on_validation_error = fail_on_validation_error;
+}

@@ -507,6 +507,8 @@ bool Optimizer::Run(const uint32_t* original_binary,
 
   context->set_max_id_bound(opt_options->max_id_bound_);
 
+  impl_->pass_manager.SetValidatorOptions(&opt_options->val_options_);
+  impl_->pass_manager.SetTargetEnv(impl_->target_env);
   auto status = impl_->pass_manager.Run(context.get());
   if (status == opt::Pass::Status::SuccessWithChange ||
       (status == opt::Pass::Status::SuccessWithoutChange &&
@@ -526,6 +528,11 @@ Optimizer& Optimizer::SetPrintAll(std::ostream* out) {
 
 Optimizer& Optimizer::SetTimeReport(std::ostream* out) {
   impl_->pass_manager.SetTimeReport(out);
+  return *this;
+}
+
+Optimizer& Optimizer::SetValidateAfterAll(bool validate) {
+  impl_->pass_manager.SetValidateAfterAll(validate);
   return *this;
 }
 

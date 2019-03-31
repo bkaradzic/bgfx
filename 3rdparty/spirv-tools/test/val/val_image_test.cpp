@@ -2283,13 +2283,28 @@ TEST_F(ValidateImage, FetchNotImage) {
 %img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
 %sampler = OpLoad %type_sampler %uniform_sampler
 %simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
-%res1 = OpImageFetch %f32vec4 %simg %u32vec2_01
+%res1 = OpImageFetch %f32vec4 %sampler %u32vec2_01
 )";
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Expected Image to be of type OpTypeImage"));
+}
+
+TEST_F(ValidateImage, FetchSampledImageDirectly) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageFetch %f32vec4 %simg %u32vec2_01
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body).c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpSampledImage instruction must not appear as operand "
+                        "for OpImageFetch"));
 }
 
 TEST_F(ValidateImage, FetchNotSampled) {
@@ -3191,7 +3206,7 @@ TEST_F(ValidateImage, QueryFormatNotImage) {
 %img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
 %sampler = OpLoad %type_sampler %uniform_sampler
 %simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
-%res1 = OpImageQueryFormat %u32 %simg
+%res1 = OpImageQueryFormat %u32 %sampler
 )";
 
   CompileSuccessfully(GenerateKernelCode(body).c_str());
@@ -3227,7 +3242,7 @@ TEST_F(ValidateImage, QueryOrderNotImage) {
 %img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
 %sampler = OpLoad %type_sampler %uniform_sampler
 %simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
-%res1 = OpImageQueryOrder %u32 %simg
+%res1 = OpImageQueryOrder %u32 %sampler
 )";
 
   CompileSuccessfully(GenerateKernelCode(body).c_str());
@@ -3276,13 +3291,28 @@ TEST_F(ValidateImage, QuerySizeLodNotImage) {
 %img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
 %sampler = OpLoad %type_sampler %uniform_sampler
 %simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
-%res1 = OpImageQuerySizeLod %u32vec2 %simg %u32_1
+%res1 = OpImageQuerySizeLod %u32vec2 %sampler %u32_1
 )";
 
   CompileSuccessfully(GenerateKernelCode(body).c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Expected Image to be of type OpTypeImage"));
+}
+
+TEST_F(ValidateImage, QuerySizeLodSampledImageDirectly) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageQuerySizeLod %u32vec2 %simg %u32_1
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body).c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpSampledImage instruction must not appear as operand "
+                        "for OpImageQuerySizeLod"));
 }
 
 TEST_F(ValidateImage, QuerySizeLodWrongImageDim) {
@@ -3348,13 +3378,28 @@ TEST_F(ValidateImage, QuerySizeNotImage) {
 %img = OpLoad %type_image_f32_2d_0010 %uniform_image_f32_2d_0010
 %sampler = OpLoad %type_sampler %uniform_sampler
 %simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
-%res1 = OpImageQuerySize %u32vec2 %simg
+%res1 = OpImageQuerySize %u32vec2 %sampler
 )";
 
   CompileSuccessfully(GenerateKernelCode(body).c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Expected Image to be of type OpTypeImage"));
+}
+
+TEST_F(ValidateImage, QuerySizeSampledImageDirectly) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0010 %uniform_image_f32_2d_0010
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageQuerySize %u32vec2 %simg
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body).c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpSampledImage instruction must not appear as operand "
+                        "for OpImageQuerySize"));
 }
 
 TEST_F(ValidateImage, QuerySizeDimSubpassDataBad) {
@@ -3531,13 +3576,28 @@ TEST_F(ValidateImage, QueryLevelsNotImage) {
 %img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
 %sampler = OpLoad %type_sampler %uniform_sampler
 %simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
-%res1 = OpImageQueryLevels %u32 %simg
+%res1 = OpImageQueryLevels %u32 %sampler
 )";
 
   CompileSuccessfully(GenerateKernelCode(body).c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Expected Image to be of type OpTypeImage"));
+}
+
+TEST_F(ValidateImage, QueryLevelsSampledImageDirectly) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageQueryLevels %u32 %simg
+)";
+
+  CompileSuccessfully(GenerateShaderCode(body).c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpSampledImage instruction must not appear as operand "
+                        "for OpImageQueryLevels"));
 }
 
 TEST_F(ValidateImage, QueryLevelsWrongDim) {
@@ -4481,7 +4541,10 @@ TEST_F(ValidateImage, Issue2463NoSegFault) {
 )";
 
   CompileSuccessfully(spirv);
-  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpSampledImage instruction must not appear as operand "
+                        "for OpReturnValue"));
 }
 
 }  // namespace

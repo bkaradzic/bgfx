@@ -557,14 +557,17 @@ SPIRV_TOOLS_EXPORT spv_reducer_options spvReducerOptionsCreate();
 // Destroys the given reducer options object.
 SPIRV_TOOLS_EXPORT void spvReducerOptionsDestroy(spv_reducer_options options);
 
-// Records the maximum number of reduction steps that should run before the
-// reducer gives up.
+// Sets the maximum number of reduction steps that should run before the reducer
+// gives up.
 SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
     spv_reducer_options options, uint32_t step_limit);
 
-// Sets seed for random number generation.
-SPIRV_TOOLS_EXPORT void spvReducerOptionsSetSeed(spv_reducer_options options,
-                                                 uint32_t seed);
+// Sets the fail-on-validation-error option; if true, the reducer will return
+// kStateInvalid if a reduction step yields a state that fails SPIR-V
+// validation. Otherwise, an invalid state is treated as uninteresting and the
+// reduction backtracks and continues.
+SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
+    spv_reducer_options options, bool fail_on_validation_error);
 
 // Encodes the given SPIR-V assembly text to its binary representation. The
 // length parameter specifies the number of bytes for text. Encoded binary will

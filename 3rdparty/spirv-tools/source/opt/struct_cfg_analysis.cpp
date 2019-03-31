@@ -19,7 +19,7 @@
 namespace {
 const uint32_t kMergeNodeIndex = 0;
 const uint32_t kContinueNodeIndex = 1;
-}
+}  // namespace
 
 namespace spvtools {
 namespace opt {
@@ -37,6 +37,8 @@ StructuredCFGAnalysis::StructuredCFGAnalysis(IRContext* ctx) : context_(ctx) {
 }
 
 void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
+  if (func->begin() == func->end()) return;
+
   std::list<BasicBlock*> order;
   context_->cfg()->ComputeStructuredOrder(func, &*func->begin(), &order);
 

@@ -18,21 +18,10 @@
 #include <functional>
 
 #include "source/opt/build_module.h"
-#include "source/opt/ir_context.h"
 #include "source/opt/log.h"
-#include "source/reduce/merge_blocks_reduction_opportunity_finder.h"
-#include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
-#include "source/reduce/operand_to_dominating_id_reduction_opportunity_finder.h"
-#include "source/reduce/operand_to_undef_reduction_opportunity_finder.h"
 #include "source/reduce/reducer.h"
-#include "source/reduce/remove_function_reduction_opportunity_finder.h"
-#include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
-#include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
-#include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
 #include "source/spirv_reducer_options.h"
-#include "source/util/make_unique.h"
 #include "source/util/string_utils.h"
-#include "spirv-tools/libspirv.hpp"
 #include "tools/io.h"
 #include "tools/util/cli_consumer.h"
 
@@ -103,6 +92,10 @@ should be the path to a script.
 NOTE: The reducer is a work in progress.
 
 Options (in lexicographical order):
+
+  --fail-on-validation-error
+               Stop reduction with an error if any reduction step produces a
+               SPIR-V module that fails to validate.
   -h, --help
                Print this help.
   --step-limit
@@ -172,6 +165,8 @@ ReduceStatus ParseFlags(int argc, const char** argv, const char** in_file,
       assert(!*interestingness_test);
       *interestingness_test = cur_arg;
       positional_arg_index++;
+    } else if (0 == strcmp(cur_arg, "--fail-on-validation-error")) {
+      reducer_options->set_fail_on_validation_error(true);
     } else if (0 == strcmp(cur_arg, "--relax-logical-pointer")) {
       validator_options->SetRelaxLogicalPointer(true);
     } else if (0 == strcmp(cur_arg, "--relax-block-layout")) {
@@ -246,25 +241,7 @@ int main(int argc, const char** argv) {
         return ExecuteCommand(command);
       });
 
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<
-          RemoveOpNameInstructionReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<OperandToUndefReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<OperandToConstReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<OperandToDominatingIdReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<
-          RemoveUnreferencedInstructionReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<
-          StructuredLoopToSelectionReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<MergeBlocksReductionOpportunityFinder>());
-  reducer.AddReductionPass(
-      spvtools::MakeUnique<RemoveFunctionReductionOpportunityFinder>());
+  reducer.AddDefaultReductionPasses();
 
   reducer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
 

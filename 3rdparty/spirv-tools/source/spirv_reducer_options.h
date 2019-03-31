@@ -26,10 +26,14 @@ const uint32_t kDefaultStepLimit = 250;
 // Manages command line options passed to the SPIR-V Reducer. New struct
 // members may be added for any new option.
 struct spv_reducer_options_t {
-  spv_reducer_options_t() : step_limit(kDefaultStepLimit) {}
+  spv_reducer_options_t()
+      : step_limit(kDefaultStepLimit), fail_on_validation_error(false) {}
 
-  // The number of steps the reducer will run for before giving up.
+  // See spvReducerOptionsSetStepLimit.
   uint32_t step_limit;
+
+  // See spvReducerOptionsSetFailOnValidationError.
+  bool fail_on_validation_error;
 };
 
 #endif  // SOURCE_SPIRV_REDUCER_OPTIONS_H_

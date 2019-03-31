@@ -183,9 +183,15 @@ class BasicBlock {
   // block, if any.  If none, returns zero.
   uint32_t MergeBlockIdIfAny() const;
 
+  // Returns MergeBlockIdIfAny() and asserts that it is non-zero.
+  uint32_t MergeBlockId() const;
+
   // Returns the ID of the continue block declared by a merge instruction in
   // this block, if any.  If none, returns zero.
   uint32_t ContinueBlockIdIfAny() const;
+
+  // Returns ContinueBlockIdIfAny() and asserts that it is non-zero.
+  uint32_t ContinueBlockId() const;
 
   // Returns the terminator instruction.  Assumes the terminator exists.
   Instruction* terminator() { return &*tail(); }
