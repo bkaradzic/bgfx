@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include <utility>
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 enum PlsFormat
 {
@@ -429,8 +429,14 @@ protected:
 	void emit_trinary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2,
 	                          const char *op);
 	void emit_binary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
+
+	void emit_unary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op,
+	                             SPIRType::BaseType input_type, SPIRType::BaseType expected_result_type);
 	void emit_binary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op,
 	                              SPIRType::BaseType input_type, bool skip_cast_if_equal_type);
+	void emit_trinary_func_op_cast(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, uint32_t op2, const char *op,
+	                               SPIRType::BaseType input_type);
+
 	void emit_unary_func_op(uint32_t result_type, uint32_t result_id, uint32_t op0, const char *op);
 	void emit_unrolled_unary_op(uint32_t result_type, uint32_t result_id, uint32_t operand, const char *op);
 	void emit_binary_op(uint32_t result_type, uint32_t result_id, uint32_t op0, uint32_t op1, const char *op);
@@ -635,6 +641,7 @@ protected:
 	virtual void emit_store_statement(uint32_t lhs_expression, uint32_t rhs_expression);
 
 	uint32_t get_integer_width_for_instruction(const Instruction &instr) const;
+	uint32_t get_integer_width_for_glsl_instruction(GLSLstd450 op, const uint32_t *arguments, uint32_t length) const;
 
 	bool variable_is_lut(const SPIRVariable &var) const;
 

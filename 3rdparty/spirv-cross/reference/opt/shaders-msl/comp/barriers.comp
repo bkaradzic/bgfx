@@ -3,7 +3,7 @@
 
 using namespace metal;
 
-constant uint3 gl_WorkGroupSize = uint3(4u, 1u, 1u);
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(4u, 1u, 1u);
 
 kernel void main0()
 {

@@ -22,7 +22,7 @@
 #include <numeric>
 
 using namespace spv;
-using namespace spirv_cross;
+using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
 static const uint32_t k_unknown_location = ~0u;
@@ -563,7 +563,7 @@ string CompilerMSL::compile()
 	backend.null_pointer_literal = "nullptr";
 	backend.float_literal_suffix = false;
 	backend.uint32_t_literal_suffix = true;
-	backend.int16_t_literal_suffix = nullptr;
+	backend.int16_t_literal_suffix = "";
 	backend.uint16_t_literal_suffix = "u";
 	backend.basic_int_type = "int";
 	backend.basic_uint_type = "uint";
@@ -2952,7 +2952,7 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 				// TODO: This can be expressed as a [[threads_per_threadgroup]] input semantic, but we need to know
 				// the work group size at compile time in SPIR-V, and [[threads_per_threadgroup]] would need to be passed around as a global.
 				// The work group size may be a specialization constant.
-				statement("constant uint3 ", builtin_to_glsl(BuiltInWorkgroupSize, StorageClassWorkgroup), " = ",
+				statement("constant uint3 ", builtin_to_glsl(BuiltInWorkgroupSize, StorageClassWorkgroup), " [[maybe_unused]] = ",
 				          constant_expression(get<SPIRConstant>(workgroup_size_id)), ";");
 				emitted = true;
 			}
@@ -4085,7 +4085,12 @@ const char *CompilerMSL::get_memory_order(uint32_t)
 // Override for MSL-specific extension syntax instructions
 void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, const uint32_t *args, uint32_t count)
 {
-	GLSLstd450 op = static_cast<GLSLstd450>(eop);
+	auto op = static_cast<GLSLstd450>(eop);
+
+	// If we need to do implicit bitcasts, make sure we do it with the correct type.
+	uint32_t integer_width = get_integer_width_for_glsl_instruction(op, args, count);
+	auto int_type = to_signed_basetype(integer_width);
+	auto uint_type = to_unsigned_basetype(integer_width);
 
 	switch (op)
 	{
@@ -4100,10 +4105,11 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 		break;
 
 	case GLSLstd450FindSMsb:
-		emit_unary_func_op(result_type, id, args[0], "findSMSB");
+		emit_unary_func_op_cast(result_type, id, args[0], "findSMSB", int_type, int_type);
 		break;
+
 	case GLSLstd450FindUMsb:
-		emit_unary_func_op(result_type, id, args[0], "findUMSB");
+		emit_unary_func_op_cast(result_type, id, args[0], "findUMSB", uint_type, uint_type);
 		break;
 
 	case GLSLstd450PackSnorm4x8:
@@ -5400,7 +5406,12 @@ string CompilerMSL::get_argument_address_space(const SPIRVariable &argument)
 
 	case StorageClassStorageBuffer:
 	{
-		bool readonly = ir.get_buffer_block_flags(argument).get(DecorationNonWritable);
+		// For arguments from variable pointers, we use the write count deduction, so
+		// we should not assume any constness here. Only for global SSBOs.
+		bool readonly = false;
+		if (has_decoration(type.self, DecorationBlock))
+			readonly = ir.get_buffer_block_flags(argument).get(DecorationNonWritable);
+
 		return readonly ? "const device" : "device";
 	}
 

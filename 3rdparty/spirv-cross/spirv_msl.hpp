@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 
 // Indicates the format of the vertex attribute. Currently limited to specifying

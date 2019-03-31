@@ -20,7 +20,7 @@
 using namespace std;
 using namespace spv;
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 Parser::Parser(std::vector<uint32_t> spirv)
 {
@@ -645,6 +645,14 @@ void Parser::parse(const Instruction &instruction)
 		break;
 	}
 
+	case OpTypeAccelerationStructureNV:
+	{
+		uint32_t id = ops[0];
+		auto &type = set<SPIRType>(id);
+		type.basetype = SPIRType::AccelerationStructureNV;
+		break;
+	}
+
 	// Variable declaration
 	// All variables are essentially pointers with a storage qualifier.
 	case OpVariable:
@@ -767,6 +775,7 @@ void Parser::parse(const Instruction &instruction)
 				// We do not know their value, so any attempt to query SPIRConstant later
 				// will fail. We can only propagate the ID of the expression and use to_expression on it.
 				auto *constant_op = maybe_get<SPIRConstantOp>(ops[2 + i]);
+				auto *undef_op = maybe_get<SPIRUndef>(ops[2 + i]);
 				if (constant_op)
 				{
 					if (op == OpConstantComposite)
@@ -776,6 +785,13 @@ void Parser::parse(const Instruction &instruction)
 					remapped_constant_ops[i].self = constant_op->self;
 					remapped_constant_ops[i].constant_type = constant_op->basetype;
 					remapped_constant_ops[i].specialization = true;
+					c[i] = &remapped_constant_ops[i];
+				}
+				else if (undef_op)
+				{
+					// Undefined, just pick 0.
+					remapped_constant_ops[i].make_null(get<SPIRType>(undef_op->basetype));
+					remapped_constant_ops[i].constant_type = undef_op->basetype;
 					c[i] = &remapped_constant_ops[i];
 				}
 				else

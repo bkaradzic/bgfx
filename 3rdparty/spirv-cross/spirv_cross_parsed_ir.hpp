@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 
 // This data structure holds all information needed to perform cross-compilation and reflection.

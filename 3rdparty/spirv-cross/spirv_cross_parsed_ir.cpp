@@ -21,7 +21,7 @@
 using namespace std;
 using namespace spv;
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 void ParsedIR::set_id_bounds(uint32_t bounds)
 {

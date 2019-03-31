@@ -20,7 +20,7 @@
 #include "spirv_common.hpp"
 #include <assert.h>
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 class Compiler;
 class CFG

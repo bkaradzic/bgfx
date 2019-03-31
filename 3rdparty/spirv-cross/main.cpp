@@ -36,7 +36,7 @@
 #endif
 
 using namespace spv;
-using namespace spirv_cross;
+using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
 #ifdef SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
@@ -310,6 +310,18 @@ static const char *execution_model_to_str(spv::ExecutionModel model)
 		return "fragment";
 	case ExecutionModelGLCompute:
 		return "compute";
+	case ExecutionModelRayGenerationNV:
+		return "raygenNV";
+	case ExecutionModelIntersectionNV:
+		return "intersectionNV";
+	case ExecutionModelCallableNV:
+		return "callableNV";
+	case ExecutionModelAnyHitNV:
+		return "anyhitNV";
+	case ExecutionModelClosestHitNV:
+		return "closesthitNV";
+	case ExecutionModelMissNV:
+		return "missNV";
 	default:
 		return "???";
 	}
@@ -396,6 +408,7 @@ static void print_resources(const Compiler &compiler, const ShaderResources &res
 	print_resources(compiler, "ubos", res.uniform_buffers);
 	print_resources(compiler, "push", res.push_constant_buffers);
 	print_resources(compiler, "counters", res.atomic_counters);
+	print_resources(compiler, "acceleration structures", res.acceleration_structures);
 }
 
 static void print_push_constant_resources(const Compiler &compiler, const vector<Resource> &res)

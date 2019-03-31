@@ -15,12 +15,26 @@
  */
 
 #include "spirv_cross_c.h"
+
+#if SPIRV_CROSS_C_API_CPP
 #include "spirv_cpp.hpp"
+#endif
+#if SPIRV_CROSS_C_API_GLSL
 #include "spirv_glsl.hpp"
+#else
+#include "spirv_cross.hpp"
+#endif
+#if SPIRV_CROSS_C_API_HLSL
 #include "spirv_hlsl.hpp"
+#endif
+#if SPIRV_CROSS_C_API_MSL
 #include "spirv_msl.hpp"
-#include "spirv_parser.hpp"
+#endif
+#if SPIRV_CROSS_C_API_REFLECT
 #include "spirv_reflect.hpp"
+#endif
+#include "spirv_parser.hpp"
+#include <string.h>
 #include <memory>
 #include <new>
 
@@ -49,7 +63,7 @@
 #endif
 
 using namespace std;
-using namespace spirv_cross;
+using namespace SPIRV_CROSS_NAMESPACE;
 
 struct ScratchMemoryAllocation
 {
@@ -130,9 +144,15 @@ struct spvc_compiler_options_s : ScratchMemoryAllocation
 {
 	spvc_context context = nullptr;
 	uint32_t backend_flags = 0;
+#if SPIRV_CROSS_C_API_GLSL
 	CompilerGLSL::Options glsl;
+#endif
+#if SPIRV_CROSS_C_API_MSL
 	CompilerMSL::Options msl;
+#endif
+#if SPIRV_CROSS_C_API_HLSL
 	CompilerHLSL::Options hlsl;
+#endif
 };
 
 struct spvc_set_s : ScratchMemoryAllocation
@@ -164,6 +184,7 @@ struct spvc_resources_s : ScratchMemoryAllocation
 	std::vector<spvc_reflected_resource> push_constant_buffers;
 	std::vector<spvc_reflected_resource> separate_images;
 	std::vector<spvc_reflected_resource> separate_samplers;
+	std::vector<spvc_reflected_resource> acceleration_structures;
 
 	bool copy_resources(std::vector<spvc_reflected_resource> &outputs, const std::vector<Resource> &inputs);
 	bool copy_resources(const ShaderResources &resources);
@@ -252,40 +273,50 @@ spvc_result spvc_context_create_compiler(spvc_context context, spvc_backend back
 				comp->compiler.reset(new Compiler(parsed_ir->parsed));
 			break;
 
+#if SPIRV_CROSS_C_API_GLSL
 		case SPVC_BACKEND_GLSL:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
 				comp->compiler.reset(new CompilerGLSL(move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerGLSL(parsed_ir->parsed));
 			break;
+#endif
 
+#if SPIRV_CROSS_C_API_HLSL
 		case SPVC_BACKEND_HLSL:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
 				comp->compiler.reset(new CompilerHLSL(move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerHLSL(parsed_ir->parsed));
 			break;
+#endif
 
+#if SPIRV_CROSS_C_API_MSL
 		case SPVC_BACKEND_MSL:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
 				comp->compiler.reset(new CompilerMSL(move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerMSL(parsed_ir->parsed));
 			break;
+#endif
 
+#if SPIRV_CROSS_C_API_CPP
 		case SPVC_BACKEND_CPP:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
 				comp->compiler.reset(new CompilerCPP(move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerCPP(parsed_ir->parsed));
 			break;
+#endif
 
+#if SPIRV_CROSS_C_API_REFLECT
 		case SPVC_BACKEND_JSON:
 			if (mode == SPVC_CAPTURE_MODE_TAKE_OWNERSHIP)
 				comp->compiler.reset(new CompilerReflection(move(parsed_ir->parsed)));
 			else if (mode == SPVC_CAPTURE_MODE_COPY)
 				comp->compiler.reset(new CompilerReflection(parsed_ir->parsed));
 			break;
+#endif
 
 		default:
 			context->report_error("Invalid backend.");
@@ -314,22 +345,28 @@ spvc_result spvc_compiler_create_compiler_options(spvc_compiler compiler, spvc_c
 		opt->backend_flags = 0;
 		switch (compiler->backend)
 		{
+#if SPIRV_CROSS_C_API_MSL
 		case SPVC_BACKEND_MSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_MSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
 			opt->glsl = static_cast<CompilerMSL *>(compiler->compiler.get())->get_common_options();
 			opt->msl = static_cast<CompilerMSL *>(compiler->compiler.get())->get_msl_options();
 			break;
+#endif
 
+#if SPIRV_CROSS_C_API_HLSL
 		case SPVC_BACKEND_HLSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_HLSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
 			opt->glsl = static_cast<CompilerHLSL *>(compiler->compiler.get())->get_common_options();
 			opt->hlsl = static_cast<CompilerHLSL *>(compiler->compiler.get())->get_hlsl_options();
 			break;
+#endif
 
+#if SPIRV_CROSS_C_API_GLSL
 		case SPVC_BACKEND_GLSL:
 			opt->backend_flags |= SPVC_COMPILER_OPTION_GLSL_BIT | SPVC_COMPILER_OPTION_COMMON_BIT;
 			opt->glsl = static_cast<CompilerGLSL *>(compiler->compiler.get())->get_common_options();
 			break;
+#endif
 
 		default:
 			break;
@@ -350,6 +387,8 @@ spvc_result spvc_compiler_options_set_bool(spvc_compiler_options options, spvc_c
 
 spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_compiler_option option, unsigned value)
 {
+	(void)value;
+	(void)option;
 	uint32_t supported_mask = options->backend_flags;
 	uint32_t required_mask = option & SPVC_COMPILER_OPTION_LANG_BITS;
 	if ((required_mask | supported_mask) != supported_mask)
@@ -360,6 +399,7 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	switch (option)
 	{
+#if SPIRV_CROSS_C_API_GLSL
 	case SPVC_COMPILER_OPTION_FORCE_TEMPORARY:
 		options->glsl.force_temporary = value != 0;
 		break;
@@ -372,6 +412,7 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_FLIP_VERTEX_Y:
 		options->glsl.vertex.flip_vert_y = value != 0;
 		break;
+
 	case SPVC_COMPILER_OPTION_GLSL_SUPPORT_NONZERO_BASE_INSTANCE:
 		options->glsl.vertex.support_nonzero_base_instance = value != 0;
 		break;
@@ -398,7 +439,12 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		options->glsl.fragment.default_int_precision =
 		    value != 0 ? CompilerGLSL::Options::Precision::Highp : CompilerGLSL::Options::Precision::Mediump;
 		break;
+	case SPVC_COMPILER_OPTION_GLSL_EMIT_PUSH_CONSTANT_AS_UNIFORM_BUFFER:
+		options->glsl.emit_push_constant_as_uniform_buffer = value != 0;
+		break;
+#endif
 
+#if SPIRV_CROSS_C_API_HLSL
 	case SPVC_COMPILER_OPTION_HLSL_SHADER_MODEL:
 		options->hlsl.shader_model = value;
 		break;
@@ -414,7 +460,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_HLSL_SUPPORT_NONZERO_BASE_VERTEX_BASE_INSTANCE:
 		options->hlsl.support_nonzero_base_vertex_base_instance = value != 0;
 		break;
+#endif
 
+#if SPIRV_CROSS_C_API_MSL
 	case SPVC_COMPILER_OPTION_MSL_VERSION:
 		options->msl.msl_version = value;
 		break;
@@ -478,10 +526,7 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS:
 		options->msl.argument_buffers = value != 0;
 		break;
-
-	case SPVC_COMPILER_OPTION_GLSL_EMIT_PUSH_CONSTANT_AS_UNIFORM_BUFFER:
-		options->glsl.emit_push_constant_as_uniform_buffer = value != 0;
-		break;
+#endif
 
 	default:
 		options->context->report_error("Unknown option.");
@@ -493,19 +538,29 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 spvc_result spvc_compiler_install_compiler_options(spvc_compiler compiler, spvc_compiler_options options)
 {
+	(void)options;
 	switch (compiler->backend)
 	{
+#if SPIRV_CROSS_C_API_GLSL
 	case SPVC_BACKEND_GLSL:
 		static_cast<CompilerGLSL &>(*compiler->compiler).set_common_options(options->glsl);
 		break;
+#endif
+
+#if SPIRV_CROSS_C_API_HLSL
 	case SPVC_BACKEND_HLSL:
 		static_cast<CompilerHLSL &>(*compiler->compiler).set_common_options(options->glsl);
 		static_cast<CompilerHLSL &>(*compiler->compiler).set_hlsl_options(options->hlsl);
 		break;
+#endif
+
+#if SPIRV_CROSS_C_API_MSL
 	case SPVC_BACKEND_MSL:
 		static_cast<CompilerMSL &>(*compiler->compiler).set_common_options(options->glsl);
 		static_cast<CompilerMSL &>(*compiler->compiler).set_msl_options(options->msl);
 		break;
+#endif
+
 	default:
 		break;
 	}
@@ -515,6 +570,7 @@ spvc_result spvc_compiler_install_compiler_options(spvc_compiler compiler, spvc_
 
 spvc_result spvc_compiler_add_header_line(spvc_compiler compiler, const char *line)
 {
+#if SPIRV_CROSS_C_API_GLSL
 	if (compiler->backend == SPVC_BACKEND_NONE)
 	{
 		compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
@@ -523,10 +579,16 @@ spvc_result spvc_compiler_add_header_line(spvc_compiler compiler, const char *li
 
 	static_cast<CompilerGLSL *>(compiler->compiler.get())->add_header_line(line);
 	return SPVC_SUCCESS;
+#else
+	(void)line;
+	compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_require_extension(spvc_compiler compiler, const char *line)
 {
+#if SPIRV_CROSS_C_API_GLSL
 	if (compiler->backend == SPVC_BACKEND_NONE)
 	{
 		compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
@@ -535,10 +597,16 @@ spvc_result spvc_compiler_require_extension(spvc_compiler compiler, const char *
 
 	static_cast<CompilerGLSL *>(compiler->compiler.get())->require_extension(line);
 	return SPVC_SUCCESS;
+#else
+	(void)line;
+	compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_flatten_buffer_block(spvc_compiler compiler, spvc_variable_id id)
 {
+#if SPIRV_CROSS_C_API_GLSL
 	if (compiler->backend == SPVC_BACKEND_NONE)
 	{
 		compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
@@ -547,12 +615,18 @@ spvc_result spvc_compiler_flatten_buffer_block(spvc_compiler compiler, spvc_vari
 
 	static_cast<CompilerGLSL *>(compiler->compiler.get())->flatten_buffer_block(id);
 	return SPVC_SUCCESS;
+#else
+	(void)id;
+	compiler->context->report_error("Cross-compilation related option used on NONE backend which only supports reflection.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_hlsl_set_root_constants_layout(spvc_compiler compiler,
                                                          const spvc_hlsl_root_constants *constant_info,
                                                          size_t count)
 {
+#if SPIRV_CROSS_C_API_HLSL
 	if (compiler->backend != SPVC_BACKEND_HLSL)
 	{
 		compiler->context->report_error("HLSL function used on a non-HLSL backend.");
@@ -574,12 +648,19 @@ spvc_result spvc_compiler_hlsl_set_root_constants_layout(spvc_compiler compiler,
 
 	hlsl.set_root_constant_layouts(std::move(roots));
 	return SPVC_SUCCESS;
+#else
+	(void)constant_info;
+	(void)count;
+	compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_hlsl_add_vertex_attribute_remap(spvc_compiler compiler,
                                                           const spvc_hlsl_vertex_attribute_remap *remap,
                                                           size_t count)
 {
+#if SPIRV_CROSS_C_API_HLSL
 	if (compiler->backend != SPVC_BACKEND_HLSL)
 	{
 		compiler->context->report_error("HLSL function used on a non-HLSL backend.");
@@ -596,10 +677,17 @@ spvc_result spvc_compiler_hlsl_add_vertex_attribute_remap(spvc_compiler compiler
 	}
 
 	return SPVC_SUCCESS;
+#else
+	(void)remap;
+	(void)count;
+	compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_variable_id spvc_compiler_hlsl_remap_num_workgroups_builtin(spvc_compiler compiler)
 {
+#if SPIRV_CROSS_C_API_HLSL
 	if (compiler->backend != SPVC_BACKEND_HLSL)
 	{
 		compiler->context->report_error("HLSL function used on a non-HLSL backend.");
@@ -608,10 +696,15 @@ spvc_variable_id spvc_compiler_hlsl_remap_num_workgroups_builtin(spvc_compiler c
 
 	auto &hlsl = *static_cast<CompilerHLSL *>(compiler->compiler.get());
 	return hlsl.remap_num_workgroups_builtin();
+#else
+	compiler->context->report_error("HLSL function used on a non-HLSL backend.");
+	return 0;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_is_rasterization_disabled(spvc_compiler compiler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -620,10 +713,15 @@ spvc_bool spvc_compiler_msl_is_rasterization_disabled(spvc_compiler compiler)
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.get_is_rasterization_disabled() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_needs_aux_buffer(spvc_compiler compiler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -632,10 +730,15 @@ spvc_bool spvc_compiler_msl_needs_aux_buffer(spvc_compiler compiler)
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.needs_aux_buffer() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_needs_output_buffer(spvc_compiler compiler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -644,10 +747,15 @@ spvc_bool spvc_compiler_msl_needs_output_buffer(spvc_compiler compiler)
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.needs_output_buffer() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_needs_patch_output_buffer(spvc_compiler compiler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -656,10 +764,15 @@ spvc_bool spvc_compiler_msl_needs_patch_output_buffer(spvc_compiler compiler)
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.needs_patch_output_buffer() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_needs_input_threadgroup_mem(spvc_compiler compiler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -668,10 +781,15 @@ spvc_bool spvc_compiler_msl_needs_input_threadgroup_mem(spvc_compiler compiler)
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.needs_input_threadgroup_mem() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler compiler, const spvc_msl_vertex_attribute *va)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -689,11 +807,17 @@ spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler compiler, const
 	attr.per_instance = va->per_instance;
 	msl.add_msl_vertex_attribute(attr);
 	return SPVC_SUCCESS;
+#else
+	(void)va;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
                                                    const spvc_msl_resource_binding *binding)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -710,10 +834,16 @@ spvc_result spvc_compiler_msl_add_resource_binding(spvc_compiler compiler,
 	bind.msl_sampler = binding->msl_sampler;
 	msl.add_msl_resource_binding(bind);
 	return SPVC_SUCCESS;
+#else
+	(void)binding;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler, unsigned desc_set)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -723,10 +853,16 @@ spvc_result spvc_compiler_msl_add_discrete_descriptor_set(spvc_compiler compiler
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	msl.add_discrete_descriptor_set(desc_set);
 	return SPVC_SUCCESS;
+#else
+	(void)desc_set;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, unsigned location)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -735,11 +871,17 @@ spvc_bool spvc_compiler_msl_is_vertex_attribute_used(spvc_compiler compiler, uns
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.is_msl_vertex_attribute_used(location) ? SPVC_TRUE : SPVC_FALSE;
+#else
+	(void)location;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler, SpvExecutionModel model, unsigned set,
                                              unsigned binding)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -749,11 +891,19 @@ spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler, SpvExecutio
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.is_msl_resource_binding_used(static_cast<spv::ExecutionModel>(model), set, binding) ? SPVC_TRUE :
 	                                                                                                 SPVC_FALSE;
+#else
+	(void)model;
+	(void)set;
+	(void)binding;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
 }
 
 spvc_result spvc_compiler_msl_remap_constexpr_sampler(spvc_compiler compiler, spvc_variable_id id,
                                                       const spvc_msl_constexpr_sampler *sampler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -779,11 +929,18 @@ spvc_result spvc_compiler_msl_remap_constexpr_sampler(spvc_compiler compiler, sp
 	samp.border_color = static_cast<MSLSamplerBorderColor>(sampler->border_color);
 	msl.remap_constexpr_sampler(id, samp);
 	return SPVC_SUCCESS;
+#else
+	(void)id;
+	(void)sampler;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_msl_set_fragment_output_components(spvc_compiler compiler, unsigned location,
                                                              unsigned components)
 {
+#if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
 	{
 		compiler->context->report_error("MSL function used on a non-MSL backend.");
@@ -793,6 +950,12 @@ spvc_result spvc_compiler_msl_set_fragment_output_components(spvc_compiler compi
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	msl.set_fragment_output_components(location, components);
 	return SPVC_SUCCESS;
+#else
+	(void)location;
+	(void)components;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
 }
 
 spvc_result spvc_compiler_compile(spvc_compiler compiler, const char **source)
@@ -859,6 +1022,8 @@ bool spvc_resources_s::copy_resources(const ShaderResources &resources)
 	if (!copy_resources(separate_images, resources.separate_images))
 		return false;
 	if (!copy_resources(separate_samplers, resources.separate_samplers))
+		return false;
+	if (!copy_resources(acceleration_structures, resources.acceleration_structures))
 		return false;
 
 	return true;
@@ -997,6 +1162,10 @@ spvc_result spvc_resources_get_resource_list_for_type(spvc_resources resources, 
 
 	case SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS:
 		list = &resources->separate_samplers;
+		break;
+
+	case SPVC_RESOURCE_TYPE_ACCELERATION_STRUCTURE:
+		list = &resources->acceleration_structures;
 		break;
 
 	default:
@@ -1624,6 +1793,7 @@ unsigned spvc_msl_get_aux_buffer_struct_version(void)
 
 void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr)
 {
+#if SPIRV_CROSS_C_API_MSL
 	// Crude, but works.
 	MSLVertexAttr attr_default;
 	attr->location = attr_default.location;
@@ -1633,10 +1803,14 @@ void spvc_msl_vertex_attribute_init(spvc_msl_vertex_attribute *attr)
 	attr->msl_buffer = attr_default.msl_buffer;
 	attr->msl_offset = attr_default.msl_offset;
 	attr->msl_stride = attr_default.msl_stride;
+#else
+	memset(attr, 0, sizeof(*attr));
+#endif
 }
 
 void spvc_msl_resource_binding_init(spvc_msl_resource_binding *binding)
 {
+#if SPIRV_CROSS_C_API_MSL
 	MSLResourceBinding binding_default;
 	binding->desc_set = binding_default.desc_set;
 	binding->binding = binding_default.binding;
@@ -1644,10 +1818,14 @@ void spvc_msl_resource_binding_init(spvc_msl_resource_binding *binding)
 	binding->msl_texture = binding_default.msl_texture;
 	binding->msl_sampler = binding_default.msl_sampler;
 	binding->stage = static_cast<SpvExecutionModel>(binding_default.stage);
+#else
+	memset(binding, 0, sizeof(*binding));
+#endif
 }
 
 void spvc_msl_constexpr_sampler_init(spvc_msl_constexpr_sampler *sampler)
 {
+#if SPIRV_CROSS_C_API_MSL
 	MSLConstexprSampler defaults;
 	sampler->anisotropy_enable = defaults.anisotropy_enable ? SPVC_TRUE : SPVC_FALSE;
 	sampler->border_color = static_cast<spvc_msl_sampler_border_color>(defaults.border_color);
@@ -1664,6 +1842,9 @@ void spvc_msl_constexpr_sampler_init(spvc_msl_constexpr_sampler *sampler)
 	sampler->s_address = static_cast<spvc_msl_sampler_address>(defaults.s_address);
 	sampler->t_address = static_cast<spvc_msl_sampler_address>(defaults.t_address);
 	sampler->r_address = static_cast<spvc_msl_sampler_address>(defaults.r_address);
+#else
+	memset(sampler, 0, sizeof(*sampler));
+#endif
 }
 
 unsigned spvc_compiler_get_current_id_bound(spvc_compiler compiler)
