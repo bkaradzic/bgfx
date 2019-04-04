@@ -110,6 +110,7 @@ static bgfx::ShaderHandle loadShader(bx::FileReaderI* _reader, const char* _name
 	case bgfx::RendererType::Direct3D12: shaderPath = "shaders/dx11/";  break;
 	case bgfx::RendererType::Gnm:        shaderPath = "shaders/pssl/";  break;
 	case bgfx::RendererType::Metal:      shaderPath = "shaders/metal/"; break;
+	case bgfx::RendererType::Nvn:        shaderPath = "shaders/nvn/";   break;
 	case bgfx::RendererType::OpenGL:     shaderPath = "shaders/glsl/";  break;
 	case bgfx::RendererType::OpenGLES:   shaderPath = "shaders/essl/";  break;
 	case bgfx::RendererType::Vulkan:     shaderPath = "shaders/spirv/"; break;
@@ -158,7 +159,7 @@ static void imageReleaseCb(void* _ptr, void* _userData)
 	bimg::imageFree(imageContainer);
 }
 
-bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
+bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
 {
 	BX_UNUSED(_skip);
 	bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
@@ -244,7 +245,7 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath,
 	return handle;
 }
 
-bgfx::TextureHandle loadTexture(const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
+bgfx::TextureHandle loadTexture(const char* _name, uint64_t _flags, uint8_t _skip, bgfx::TextureInfo* _info, bimg::Orientation::Enum* _orientation)
 {
 	return loadTexture(entry::getFileReader(), _name, _flags, _skip, _info, _orientation);
 }

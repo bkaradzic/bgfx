@@ -36,20 +36,19 @@ std::vector<uint32_t> ReductionPass::TryApplyReduction(
   std::vector<std::unique_ptr<ReductionOpportunity>> opportunities =
       finder_->GetAvailableOpportunities(context.get());
 
-  if (!is_initialized_) {
-    is_initialized_ = true;
-    index_ = 0;
-    granularity_ = (uint32_t)opportunities.size();
-  }
-
-  if (opportunities.empty()) {
-    granularity_ = 1;
-    return std::vector<uint32_t>();
+  // There is no point in having a granularity larger than the number of
+  // opportunities, so reduce the granularity in this case.
+  if (granularity_ > opportunities.size()) {
+    granularity_ = std::max((uint32_t)1, (uint32_t)opportunities.size());
   }
 
   assert(granularity_ > 0);
 
   if (index_ >= opportunities.size()) {
+    // We have reached the end of the available opportunities and, therefore,
+    // the end of the round for this pass, so reset the index and decrease the
+    // granularity for the next round. Return an empty vector to signal the end
+    // of the round.
     index_ = 0;
     granularity_ = std::max((uint32_t)1, granularity_ / 2);
     return std::vector<uint32_t>();
@@ -61,8 +60,6 @@ std::vector<uint32_t> ReductionPass::TryApplyReduction(
     opportunities[i]->TryToApply();
   }
 
-  index_ += granularity_;
-
   std::vector<uint32_t> result;
   context->module()->ToBinary(&result, false);
   return result;
@@ -73,16 +70,17 @@ void ReductionPass::SetMessageConsumer(MessageConsumer consumer) {
 }
 
 bool ReductionPass::ReachedMinimumGranularity() const {
-  if (!is_initialized_) {
-    // Conceptually we can think that if the pass has not yet been initialized,
-    // it is operating at unbounded granularity.
-    return false;
-  }
   assert(granularity_ != 0);
   return granularity_ == 1;
 }
 
 std::string ReductionPass::GetName() const { return finder_->GetName(); }
+
+void ReductionPass::NotifyInteresting(bool interesting) {
+  if (!interesting) {
+    index_ += granularity_;
+  }
+}
 
 }  // namespace reduce
 }  // namespace spvtools

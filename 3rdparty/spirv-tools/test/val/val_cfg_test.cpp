@@ -1203,7 +1203,11 @@ std::string GetUnreachableMergeWithBranchUse(SpvCapability cap,
 TEST_P(ValidateCFG, UnreachableMergeWithBranchUse) {
   CompileSuccessfully(
       GetUnreachableMergeWithBranchUse(GetParam(), SPV_ENV_UNIVERSAL_1_0));
-  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Statically reachable blocks cannot be terminated by OpUnreachable"));
 }
 
 TEST_F(ValidateCFG, WebGPUUnreachableMergeWithBranchUse) {
@@ -1938,7 +1942,10 @@ OpDecorate %id BuiltIn GlobalInvocationId
   str += "OpFunctionEnd";
 
   CompileSuccessfully(str);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Statically reachable blocks cannot be terminated by "
+                        "OpUnreachable"));
 }
 
 TEST_F(ValidateCFG, LoopWithZeroBackEdgesBad) {
@@ -2850,6 +2857,134 @@ TEST_F(ValidateCFG, BranchTargetMustBeLabel) {
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("'Target Label' operands for OpBranch must "
                         "be the ID of an OpLabel instruction"));
+}
+
+TEST_F(ValidateCFG, ReachableOpUnreachableOneBlock) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+}
+
+TEST_F(ValidateCFG, ReachableOpUnreachableOpBranch) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpBranch %block
+%block = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+}
+
+TEST_F(ValidateCFG, ReachableOpUnreachableOpBranchConditional) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%bool = OpTypeBool
+%undef = OpUndef %bool
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpBranchConditional %undef %block %unreachable
+%block = OpLabel
+OpReturn
+%unreachable = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+}
+
+TEST_F(ValidateCFG, ReachableOpUnreachableOpSwitch) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%int = OpTypeInt 32 0
+%undef = OpUndef %int
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpSwitch %undef %block1 0 %unreachable 1 %block2
+%block1 = OpLabel
+OpReturn
+%unreachable = OpLabel
+OpUnreachable
+%block2 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+}
+
+TEST_F(ValidateCFG, ReachableOpUnreachableLoop) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%bool = OpTypeBool
+%undef = OpUndef %bool
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpBranch %loop
+%loop = OpLabel
+OpLoopMerge %unreachable %loop None
+OpBranchConditional %undef %loop %unreachable
+%unreachable = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Statically reachable blocks cannot be terminated by OpUnreachable"));
 }
 
 TEST_F(ValidateCFG, OneContinueTwoBackedges) {

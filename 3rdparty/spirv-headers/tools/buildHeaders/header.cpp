@@ -69,8 +69,8 @@ namespace {
 
         static const int         DocMagicNumber = 0x07230203;
         static const int         DocVersion     = 0x00010300;
-        static const int         DocRevision    = 6;
-        #define DocRevisionString                "6"
+        static const int         DocRevision    = 7;
+        #define DocRevisionString                "7"
         static const std::string DocCopyright;
         static const std::string DocComment1;
         static const std::string DocComment2;

@@ -153,9 +153,14 @@ function bgfxProjectBase(_kind, _defines)
 		path.join(BGFX_DIR, "src/**.bin.h"),
 	}
 
-	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"), {
 		path.join(BGFX_DIR, "src/renderer_gnm.cpp"),
 		path.join(BGFX_DIR, "src/renderer_gnm.h"),
+	})
+
+	overridefiles(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-nvn"), {
+		path.join(BGFX_DIR, "src/renderer_nvn.cpp"),
+		path.join(BGFX_DIR, "src/renderer_nvn.h"),
 	})
 
 	if _OPTIONS["with-amalgamated"] then
@@ -205,10 +210,16 @@ function bgfxProjectBase(_kind, _defines)
 		}
 	end
 
-	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-ext"), {
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-gnm"), {
 		path.join(BGFX_DIR, "scripts/bgfx.lua"), }) then
 
-		dofile(path.join(BGFX_DIR, "../bgfx-ext/scripts/bgfx.lua") )
+		dofile(path.join(BGFX_DIR, "../bgfx-gnm/scripts/bgfx.lua") )
+	end
+
+	if filesexist(BGFX_DIR, path.join(BGFX_DIR, "../bgfx-nvn"), {
+		path.join(BGFX_DIR, "scripts/bgfx.lua"), }) then
+
+		dofile(path.join(BGFX_DIR, "../bgfx-nvn/scripts/bgfx.lua") )
 	end
 
 	configuration {}

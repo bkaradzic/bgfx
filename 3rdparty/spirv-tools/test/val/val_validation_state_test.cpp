@@ -56,15 +56,16 @@ OpExecutionMode %1 OriginUpperLeft
 %4 = OpTypeFunction %void
 %float = OpTypeFloat 32
 %_struct_6 = OpTypeStruct %float %float
+%null = OpConstantNull %_struct_6
 %7 = OpTypeFunction %_struct_6
 %12 = OpFunction %_struct_6 None %7
 %13 = OpLabel
-OpUnreachable
+OpReturnValue %null
 OpFunctionEnd
 %9 = OpFunction %_struct_6 None %7
 %10 = OpLabel
 %11 = OpFunctionCall %_struct_6 %12
-OpUnreachable
+OpReturnValue %null
 OpFunctionEnd
 %1 = OpFunction %void Pure|Const %4
 %8 = OpLabel
@@ -89,7 +90,7 @@ OpFunctionEnd
 %1 = OpFunction %void Pure|Const %4
 %8 = OpLabel
 %2 = OpFunctionCall %_struct_6 %9
-OpUnreachable
+OpReturn
 OpFunctionEnd
 )";
 
@@ -100,16 +101,17 @@ OpExecutionMode %1 OriginUpperLeft
 %4 = OpTypeFunction %void
 %float = OpTypeFloat 32
 %_struct_6 = OpTypeStruct %float %float
+%null = OpConstantNull %_struct_6
 %7 = OpTypeFunction %_struct_6
 %9 = OpFunction %_struct_6 None %7
 %10 = OpLabel
 %11 = OpFunctionCall %_struct_6 %12
-OpUnreachable
+OpReturnValue %null
 OpFunctionEnd
 %12 = OpFunction %_struct_6 None %7
 %13 = OpLabel
 %14 = OpFunctionCall %_struct_6 %9
-OpUnreachable
+OpReturnValue %null
 OpFunctionEnd
 %1 = OpFunction %void Pure|Const %4
 %8 = OpLabel
@@ -303,7 +305,7 @@ TEST_F(ValidationStateTest, CheckWebGPUIndirectlyRecursiveBodyBad) {
             ValidateAndRetrieveValidationState(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("For WebGPU, functions need to be defined before being "
-                        "called.\n  %9 = OpFunctionCall %_struct_5 %10\n"));
+                        "called.\n  %10 = OpFunctionCall %_struct_5 %11\n"));
 }
 
 TEST_F(ValidationStateTest,

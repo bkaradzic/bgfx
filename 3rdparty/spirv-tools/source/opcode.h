@@ -133,4 +133,8 @@ bool spvOpcodeIsScalarizable(SpvOp opcode);
 // Returns true if the given opcode is a debug instruction.
 bool spvOpcodeIsDebug(SpvOp opcode);
 
+// Returns a vector containing the indices of the memory semantics <id>
+// operands for |opcode|.
+std::vector<uint32_t> spvOpcodeMemorySemanticsOperandIndices(SpvOp opcode);
+
 #endif  // SOURCE_OPCODE_H_

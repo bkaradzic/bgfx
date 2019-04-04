@@ -20,7 +20,7 @@
 #include <assert.h>
 
 using namespace spv;
-using namespace spirv_cross;
+using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
 static unsigned image_format_to_components(ImageFormat fmt)
@@ -3049,7 +3049,12 @@ string CompilerHLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &i
 
 void CompilerHLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, const uint32_t *args, uint32_t count)
 {
-	GLSLstd450 op = static_cast<GLSLstd450>(eop);
+	auto op = static_cast<GLSLstd450>(eop);
+
+	// If we need to do implicit bitcasts, make sure we do it with the correct type.
+	uint32_t integer_width = get_integer_width_for_glsl_instruction(op, args, count);
+	auto int_type = to_signed_basetype(integer_width);
+	auto uint_type = to_unsigned_basetype(integer_width);
 
 	switch (op)
 	{
@@ -3189,9 +3194,13 @@ void CompilerHLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 	case GLSLstd450FindILsb:
 		emit_unary_func_op(result_type, id, args[0], "firstbitlow");
 		break;
+
 	case GLSLstd450FindSMsb:
+		emit_unary_func_op_cast(result_type, id, args[0], "firstbithigh", int_type, int_type);
+		break;
+
 	case GLSLstd450FindUMsb:
-		emit_unary_func_op(result_type, id, args[0], "firstbithigh");
+		emit_unary_func_op_cast(result_type, id, args[0], "firstbithigh", uint_type, uint_type);
 		break;
 
 	case GLSLstd450MatrixInverse:
@@ -4624,7 +4633,7 @@ string CompilerHLSL::compile()
 	backend.double_literal_suffix = false;
 	backend.long_long_literal_suffix = true;
 	backend.uint32_t_literal_suffix = true;
-	backend.int16_t_literal_suffix = nullptr;
+	backend.int16_t_literal_suffix = "";
 	backend.uint16_t_literal_suffix = "u";
 	backend.basic_int_type = "int";
 	backend.basic_uint_type = "uint";

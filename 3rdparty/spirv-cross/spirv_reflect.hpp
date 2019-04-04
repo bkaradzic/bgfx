@@ -26,7 +26,7 @@ namespace simple_json
 class Stream;
 }
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 class CompilerReflection : public CompilerGLSL
 {

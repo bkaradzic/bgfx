@@ -3436,6 +3436,191 @@ TEST(StructuredLoopToSelectionReductionPassTest, LongAccessChains) {
   // CheckEqual(env, expected, context.get());
 }
 
+TEST(StructuredLoopToSelectionReductionPassTest, LoopyShaderWithOpDecorate) {
+  // A shader containing a function that contains a loop and some definitions
+  // that are "used" in OpDecorate instructions (outside the function). These
+  // "uses" were causing segfaults because we try to calculate their dominance
+  // information, which doesn't make sense.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main" %9
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %9 "_GLF_color"
+               OpName %14 "buf0"
+               OpMemberName %14 0 "a"
+               OpName %16 ""
+               OpDecorate %9 RelaxedPrecision
+               OpDecorate %9 Location 0
+               OpMemberDecorate %14 0 RelaxedPrecision
+               OpMemberDecorate %14 0 Offset 0
+               OpDecorate %14 Block
+               OpDecorate %16 DescriptorSet 0
+               OpDecorate %16 Binding 0
+               OpDecorate %21 RelaxedPrecision
+               OpDecorate %35 RelaxedPrecision
+               OpDecorate %36 RelaxedPrecision
+               OpDecorate %39 RelaxedPrecision
+               OpDecorate %40 RelaxedPrecision
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeFloat 32
+          %7 = OpTypeVector %6 4
+          %8 = OpTypePointer Output %7
+          %9 = OpVariable %8 Output
+         %10 = OpConstant %6 1
+         %11 = OpConstantComposite %7 %10 %10 %10 %10
+         %14 = OpTypeStruct %6
+         %15 = OpTypePointer Uniform %14
+         %16 = OpVariable %15 Uniform
+         %17 = OpTypeInt 32 1
+         %18 = OpConstant %17 0
+         %19 = OpTypePointer Uniform %6
+         %28 = OpConstant %6 2
+         %29 = OpTypeBool
+         %31 = OpTypeInt 32 0
+         %32 = OpConstant %31 0
+         %33 = OpTypePointer Output %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpStore %9 %11
+         %20 = OpAccessChain %19 %16 %18
+         %21 = OpLoad %6 %20
+               OpBranch %22
+         %22 = OpLabel
+         %40 = OpPhi %6 %21 %5 %39 %23
+         %30 = OpFOrdLessThan %29 %40 %28
+               OpLoopMerge %24 %23 None
+               OpBranchConditional %30 %23 %24
+         %23 = OpLabel
+         %34 = OpAccessChain %33 %9 %32
+         %35 = OpLoad %6 %34
+         %36 = OpFAdd %6 %35 %10
+               OpStore %34 %36
+         %39 = OpFAdd %6 %40 %10
+               OpBranch %22
+         %24 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
+  ASSERT_EQ(1, ops.size());
+
+  ASSERT_TRUE(ops[0]->PreconditionHolds());
+  ops[0]->TryToApply();
+  CheckValid(env, context.get());
+
+  std::string after_op_0 = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main" %9
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %9 "_GLF_color"
+               OpName %14 "buf0"
+               OpMemberName %14 0 "a"
+               OpName %16 ""
+               OpDecorate %9 RelaxedPrecision
+               OpDecorate %9 Location 0
+               OpMemberDecorate %14 0 RelaxedPrecision
+               OpMemberDecorate %14 0 Offset 0
+               OpDecorate %14 Block
+               OpDecorate %16 DescriptorSet 0
+               OpDecorate %16 Binding 0
+               OpDecorate %21 RelaxedPrecision
+               OpDecorate %35 RelaxedPrecision
+               OpDecorate %36 RelaxedPrecision
+               OpDecorate %39 RelaxedPrecision
+               OpDecorate %40 RelaxedPrecision
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeFloat 32
+          %7 = OpTypeVector %6 4
+          %8 = OpTypePointer Output %7
+          %9 = OpVariable %8 Output
+         %10 = OpConstant %6 1
+         %11 = OpConstantComposite %7 %10 %10 %10 %10
+         %14 = OpTypeStruct %6
+         %15 = OpTypePointer Uniform %14
+         %16 = OpVariable %15 Uniform
+         %17 = OpTypeInt 32 1
+         %18 = OpConstant %17 0
+         %19 = OpTypePointer Uniform %6
+         %28 = OpConstant %6 2
+         %29 = OpTypeBool
+         %31 = OpTypeInt 32 0
+         %32 = OpConstant %31 0
+         %33 = OpTypePointer Output %6
+         %41 = OpUndef %6                          ; Added
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpStore %9 %11
+         %20 = OpAccessChain %19 %16 %18
+         %21 = OpLoad %6 %20
+               OpBranch %22
+         %22 = OpLabel
+         %40 = OpPhi %6 %21 %5 %41 %23             ; Changed
+         %30 = OpFOrdLessThan %29 %40 %28
+               OpSelectionMerge %24 None           ; Changed
+               OpBranchConditional %30 %24 %24
+         %23 = OpLabel
+         %34 = OpAccessChain %33 %9 %32
+         %35 = OpLoad %6 %34
+         %36 = OpFAdd %6 %35 %10
+               OpStore %34 %36
+         %39 = OpFAdd %6 %41 %10                   ; Changed
+               OpBranch %22
+         %24 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+  CheckEqual(env, after_op_0, context.get());
+}
+
+TEST(StructuredLoopToSelectionReductionPassTest,
+     LoopWithCombinedHeaderAndContinue) {
+  // A shader containing a loop where the header is also the continue target.
+  // For now, we don't simplify such loops.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+         %30 = OpConstantFalse %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %10
+         %10 = OpLabel                       ; loop header and continue target
+               OpLoopMerge %12 %10 None
+               OpBranchConditional %30 %10 %12
+         %12 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto context = BuildModule(env, nullptr, shader, kReduceAssembleOption);
+  const auto ops = StructuredLoopToSelectionReductionOpportunityFinder()
+                       .GetAvailableOpportunities(context.get());
+  ASSERT_EQ(0, ops.size());
+}
+
 }  // namespace
 }  // namespace reduce
 }  // namespace spvtools

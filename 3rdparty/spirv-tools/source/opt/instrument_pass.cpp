@@ -57,8 +57,7 @@ void InstrumentPass::MovePreludeCode(
 }
 
 void InstrumentPass::MovePostludeCode(
-    UptrVectorIterator<BasicBlock> ref_block_itr,
-    std::unique_ptr<BasicBlock>* new_blk_ptr) {
+    UptrVectorIterator<BasicBlock> ref_block_itr, BasicBlock* new_blk_ptr) {
   // new_blk_ptr->reset(new BasicBlock(NewLabel(ref_block_itr->id())));
   // Move contents of original ref block.
   for (auto cii = ref_block_itr->begin(); cii != ref_block_itr->end();
@@ -77,7 +76,7 @@ void InstrumentPass::MovePostludeCode(
         same_block_post_[rid] = rid;
       }
     }
-    (*new_blk_ptr)->AddInstruction(std::move(mv_inst));
+    new_blk_ptr->AddInstruction(std::move(mv_inst));
   }
 }
 
@@ -222,16 +221,14 @@ void InstrumentPass::GenDebugStreamWrite(
   (void)builder->AddNaryOp(GetVoidId(), SpvOpFunctionCall, args);
 }
 
-uint32_t InstrumentPass::GenDebugDirectRead(uint32_t idx_id,
-                                            InstructionBuilder* builder) {
-  uint32_t input_buf_id = GetInputBufferId();
-  uint32_t buf_uint_ptr_id = GetBufferUintPtrId();
-  Instruction* ibuf_ac_inst = builder->AddTernaryOp(
-      buf_uint_ptr_id, SpvOpAccessChain, input_buf_id,
-      builder->GetUintConstantId(kDebugInputDataOffset), idx_id);
-  Instruction* load_inst =
-      builder->AddUnaryOp(GetUintId(), SpvOpLoad, ibuf_ac_inst->result_id());
-  return load_inst->result_id();
+uint32_t InstrumentPass::GenDebugDirectRead(
+    const std::vector<uint32_t>& offset_ids, InstructionBuilder* builder) {
+  // Call debug input function. Pass func_idx and offset ids as args.
+  uint32_t off_id_cnt = static_cast<uint32_t>(offset_ids.size());
+  uint32_t input_func_id = GetDirectReadFunctionId(off_id_cnt);
+  std::vector<uint32_t> args = {input_func_id};
+  (void)args.insert(args.end(), offset_ids.begin(), offset_ids.end());
+  return builder->AddNaryOp(GetUintId(), SpvOpFunctionCall, args)->result_id();
 }
 
 bool InstrumentPass::IsSameBlockOp(const Instruction* inst) const {
@@ -242,7 +239,7 @@ void InstrumentPass::CloneSameBlockOps(
     std::unique_ptr<Instruction>* inst,
     std::unordered_map<uint32_t, uint32_t>* same_blk_post,
     std::unordered_map<uint32_t, Instruction*>* same_blk_pre,
-    std::unique_ptr<BasicBlock>* block_ptr) {
+    BasicBlock* block_ptr) {
   (*inst)->ForEachInId(
       [&same_blk_post, &same_blk_pre, &block_ptr, this](uint32_t* iid) {
         const auto map_itr = (*same_blk_post).find(*iid);
@@ -259,7 +256,7 @@ void InstrumentPass::CloneSameBlockOps(
             sb_inst->SetResultId(nid);
             (*same_blk_post)[rid] = nid;
             *iid = nid;
-            (*block_ptr)->AddInstruction(std::move(sb_inst));
+            block_ptr->AddInstruction(std::move(sb_inst));
           }
         } else {
           // Reset same-block op operand.
@@ -604,6 +601,81 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
   return output_func_id_;
 }
 
+uint32_t InstrumentPass::GetDirectReadFunctionId(uint32_t param_cnt) {
+  uint32_t func_id = param2input_func_id_[param_cnt];
+  if (func_id != 0) return func_id;
+  // Create input function for param_cnt
+  func_id = TakeNextId();
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  std::vector<const analysis::Type*> param_types;
+  for (uint32_t c = 0; c < param_cnt; ++c)
+    param_types.push_back(type_mgr->GetType(GetUintId()));
+  analysis::Function func_ty(type_mgr->GetType(GetUintId()), param_types);
+  analysis::Type* reg_func_ty = type_mgr->GetRegisteredType(&func_ty);
+  std::unique_ptr<Instruction> func_inst(new Instruction(
+      get_module()->context(), SpvOpFunction, GetUintId(), func_id,
+      {{spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER,
+        {SpvFunctionControlMaskNone}},
+       {spv_operand_type_t::SPV_OPERAND_TYPE_ID,
+        {type_mgr->GetTypeInstruction(reg_func_ty)}}}));
+  get_def_use_mgr()->AnalyzeInstDefUse(&*func_inst);
+  std::unique_ptr<Function> input_func =
+      MakeUnique<Function>(std::move(func_inst));
+  // Add parameters
+  std::vector<uint32_t> param_vec;
+  for (uint32_t c = 0; c < param_cnt; ++c) {
+    uint32_t pid = TakeNextId();
+    param_vec.push_back(pid);
+    std::unique_ptr<Instruction> param_inst(new Instruction(
+        get_module()->context(), SpvOpFunctionParameter, GetUintId(), pid, {}));
+    get_def_use_mgr()->AnalyzeInstDefUse(&*param_inst);
+    input_func->AddParameter(std::move(param_inst));
+  }
+  // Create block
+  uint32_t blk_id = TakeNextId();
+  std::unique_ptr<Instruction> blk_label(NewLabel(blk_id));
+  std::unique_ptr<BasicBlock> new_blk_ptr =
+      MakeUnique<BasicBlock>(std::move(blk_label));
+  InstructionBuilder builder(
+      context(), &*new_blk_ptr,
+      IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
+  // For each offset parameter, generate new offset with parameter, adding last
+  // loaded value if it exists, and load value from input buffer at new offset.
+  // Return last loaded value.
+  uint32_t buf_id = GetInputBufferId();
+  uint32_t buf_uint_ptr_id = GetBufferUintPtrId();
+  uint32_t last_value_id = 0;
+  for (uint32_t p = 0; p < param_cnt; ++p) {
+    uint32_t offset_id;
+    if (p == 0) {
+      offset_id = param_vec[0];
+    } else {
+      Instruction* offset_inst = builder.AddBinaryOp(
+          GetUintId(), SpvOpIAdd, last_value_id, param_vec[p]);
+      offset_id = offset_inst->result_id();
+    }
+    Instruction* ac_inst = builder.AddTernaryOp(
+        buf_uint_ptr_id, SpvOpAccessChain, buf_id,
+        builder.GetUintConstantId(kDebugInputDataOffset), offset_id);
+    Instruction* load_inst =
+        builder.AddUnaryOp(GetUintId(), SpvOpLoad, ac_inst->result_id());
+    last_value_id = load_inst->result_id();
+  }
+  (void)builder.AddInstruction(MakeUnique<Instruction>(
+      context(), SpvOpReturnValue, 0, 0,
+      std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {last_value_id}}}));
+  // Close block and function and add function to module
+  new_blk_ptr->SetParent(&*input_func);
+  input_func->AddBasicBlock(std::move(new_blk_ptr));
+  std::unique_ptr<Instruction> func_end_inst(
+      new Instruction(get_module()->context(), SpvOpFunctionEnd, 0, 0, {}));
+  get_def_use_mgr()->AnalyzeInstDefUse(&*func_end_inst);
+  input_func->SetFunctionEnd(std::move(func_end_inst));
+  context()->AddFunction(std::move(input_func));
+  param2input_func_id_[param_cnt] = func_id;
+  return func_id;
+}
+
 bool InstrumentPass::InstrumentFunction(Function* func, uint32_t stage_idx,
                                         InstProcessFunction& pfn) {
   bool modified = false;
@@ -614,23 +686,17 @@ bool InstrumentPass::InstrumentFunction(Function* func, uint32_t stage_idx,
     ++function_idx;
   }
   std::vector<std::unique_ptr<BasicBlock>> new_blks;
-  // Start count after function and param instructions
-  uint32_t instruction_idx = funcIdx2offset_[function_idx] + 1;
-  func->ForEachParam(
-      [&instruction_idx](const Instruction*) { ++instruction_idx; }, true);
   // Using block iterators here because of block erasures and insertions.
   for (auto bi = func->begin(); bi != func->end(); ++bi) {
-    // Count block's label
-    ++instruction_idx;
-    for (auto ii = bi->begin(); ii != bi->end(); ++instruction_idx) {
-      // Bump instruction count if debug instructions
-      instruction_idx += static_cast<uint32_t>(ii->dbg_line_insts().size());
+    for (auto ii = bi->begin(); ii != bi->end();) {
       // Generate instrumentation if warranted
-      pfn(ii, bi, instruction_idx, stage_idx, &new_blks);
+      pfn(ii, bi, stage_idx, &new_blks);
       if (new_blks.size() == 0) {
         ++ii;
         continue;
       }
+      // Add new blocks to label id map
+      for (auto& blk : new_blks) id2block_[blk->id()] = &*blk;
       // If there are new blocks we know there will always be two or
       // more, so update succeeding phis with label of new last block.
       size_t newBlocksSize = new_blks.size();
@@ -660,6 +726,9 @@ bool InstrumentPass::InstProcessCallTreeFromRoots(InstProcessFunction& pfn,
                                                   uint32_t stage_idx) {
   bool modified = false;
   std::unordered_set<uint32_t> done;
+  // Don't process input and output functions
+  for (auto& ifn : param2input_func_id_) done.insert(ifn.second);
+  if (output_func_id_ != 0) done.insert(output_func_id_);
   // Process all functions from roots
   while (!roots->empty()) {
     const uint32_t fi = roots->front();
@@ -735,72 +804,68 @@ void InstrumentPass::InitializeInstrument() {
     }
   }
 
-  // Calculate instruction offset of first function
-  uint32_t pre_func_size = 0;
+  // Remember original instruction offsets
+  uint32_t module_offset = 0;
   Module* module = get_module();
   for (auto& i : context()->capabilities()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->extensions()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->ext_inst_imports()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
-  ++pre_func_size;  // memory_model
+  ++module_offset;  // memory_model
   for (auto& i : module->entry_points()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->execution_modes()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->debugs1()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->debugs2()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->debugs3()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->annotations()) {
     (void)i;
-    ++pre_func_size;
+    ++module_offset;
   }
   for (auto& i : module->types_values()) {
-    pre_func_size += 1;
-    pre_func_size += static_cast<uint32_t>(i.dbg_line_insts().size());
+    module_offset += 1;
+    module_offset += static_cast<uint32_t>(i.dbg_line_insts().size());
   }
-  funcIdx2offset_[0] = pre_func_size;
 
-  // Set instruction offsets for all other functions.
-  uint32_t func_idx = 1;
-  auto prev_fn = get_module()->begin();
-  auto curr_fn = prev_fn;
-  for (++curr_fn; curr_fn != get_module()->end(); ++curr_fn) {
-    // Count function, end and param instructions
-    uint32_t func_size = 2;
-    prev_fn->ForEachParam([&func_size](const Instruction*) { ++func_size; },
-                          true);
-    for (auto& blk : *prev_fn) {
+  auto curr_fn = get_module()->begin();
+  for (; curr_fn != get_module()->end(); ++curr_fn) {
+    // Count function instruction
+    module_offset += 1;
+    curr_fn->ForEachParam(
+        [&module_offset](const Instruction*) { module_offset += 1; }, true);
+    for (auto& blk : *curr_fn) {
       // Count label
-      func_size += 1;
+      module_offset += 1;
       for (auto& inst : blk) {
-        func_size += 1;
-        func_size += static_cast<uint32_t>(inst.dbg_line_insts().size());
+        module_offset += static_cast<uint32_t>(inst.dbg_line_insts().size());
+        uid2offset_[inst.unique_id()] = module_offset;
+        module_offset += 1;
       }
     }
-    funcIdx2offset_[func_idx] = funcIdx2offset_[func_idx - 1] + func_size;
-    ++prev_fn;
-    ++func_idx;
+    // Count function end instruction
+    module_offset += 1;
   }
 }
 

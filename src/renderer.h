@@ -457,11 +457,12 @@ namespace bgfx
 			return true;
 		}
 
-		for (uint32_t idx = 0, streamMask = _new.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+		for (uint32_t idx = 0, streamMask = _new.m_streamMask
 			; 0 != streamMask
-			; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask)
+			; streamMask >>= 1, idx += 1
 			)
 		{
+			const uint32_t ntz = bx::uint32_cnttz(streamMask);
 			streamMask >>= ntz;
 			idx         += ntz;
 

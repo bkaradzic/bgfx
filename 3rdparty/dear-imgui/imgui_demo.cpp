@@ -1,4 +1,4 @@
-// dear imgui, v1.69 WIP
+// dear imgui, v1.70 WIP
 // (demo code)
 
 // Message to the person tempted to delete this file when integrating Dear ImGui into their code base:
@@ -921,48 +921,89 @@ static void ShowDemoWindowWidgets()
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Filtered Text Input"))
+    if (ImGui::TreeNode("Text Input"))
     {
-        static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
-        static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
-        static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-        static char buf4[64] = ""; ImGui::InputText("uppercase", buf4, 64, ImGuiInputTextFlags_CharsUppercase);
-        static char buf5[64] = ""; ImGui::InputText("no blank", buf5, 64, ImGuiInputTextFlags_CharsNoBlank);
-        struct TextFilters { static int FilterImGuiLetters(ImGuiInputTextCallbackData* data) { if (data->EventChar < 256 && strchr("imgui", (char)data->EventChar)) return 0; return 1; } };
-        static char buf6[64] = ""; ImGui::InputText("\"imgui\" letters", buf6, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterImGuiLetters);
+        if (ImGui::TreeNode("Multi-line Text Input"))
+        {
+            // Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
+            // and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
+            static char text[1024 * 16] =
+                "/*\n"
+                " The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
+                " the hexadecimal encoding of one offending instruction,\n"
+                " more formally, the invalid operand with locked CMPXCHG8B\n"
+                " instruction bug, is a design flaw in the majority of\n"
+                " Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
+                " processors (all in the P5 microarchitecture).\n"
+                "*/\n\n"
+                "label:\n"
+                "\tlock cmpxchg8b eax\n";
 
-        ImGui::Text("Password input");
-        static char bufpass[64] = "password123";
-        ImGui::InputText("password", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
-        ImGui::SameLine(); HelpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
-        ImGui::InputTextWithHint("password (w/ hint)", "<password>", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
-        ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
+            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+            HelpMarker("You can use the ImGuiInputTextFlags_CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stdlib.h for an example. (This is not demonstrated in imgui_demo.cpp)");
+            ImGui::CheckboxFlags("ImGuiInputTextFlags_ReadOnly", (unsigned int*)&flags, ImGuiInputTextFlags_ReadOnly);
+            ImGui::CheckboxFlags("ImGuiInputTextFlags_AllowTabInput", (unsigned int*)&flags, ImGuiInputTextFlags_AllowTabInput);
+            ImGui::CheckboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", (unsigned int*)&flags, ImGuiInputTextFlags_CtrlEnterForNewLine);
+            ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16), flags);
+            ImGui::TreePop();
+        }
 
-        ImGui::TreePop();
-    }
+        if (ImGui::TreeNode("Filtered Text Input"))
+        {
+            static char buf1[64] = ""; ImGui::InputText("default", buf1, 64);
+            static char buf2[64] = ""; ImGui::InputText("decimal", buf2, 64, ImGuiInputTextFlags_CharsDecimal);
+            static char buf3[64] = ""; ImGui::InputText("hexadecimal", buf3, 64, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+            static char buf4[64] = ""; ImGui::InputText("uppercase", buf4, 64, ImGuiInputTextFlags_CharsUppercase);
+            static char buf5[64] = ""; ImGui::InputText("no blank", buf5, 64, ImGuiInputTextFlags_CharsNoBlank);
+            struct TextFilters { static int FilterImGuiLetters(ImGuiInputTextCallbackData* data) { if (data->EventChar < 256 && strchr("imgui", (char)data->EventChar)) return 0; return 1; } };
+            static char buf6[64] = ""; ImGui::InputText("\"imgui\" letters", buf6, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterImGuiLetters);
 
-    if (ImGui::TreeNode("Multi-line Text Input"))
-    {
-        // Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
-        // and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
-        static char text[1024*16] =
-            "/*\n"
-            " The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
-            " the hexadecimal encoding of one offending instruction,\n"
-            " more formally, the invalid operand with locked CMPXCHG8B\n"
-            " instruction bug, is a design flaw in the majority of\n"
-            " Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
-            " processors (all in the P5 microarchitecture).\n"
-            "*/\n\n"
-            "label:\n"
-            "\tlock cmpxchg8b eax\n";
+            ImGui::Text("Password input");
+            static char bufpass[64] = "password123";
+            ImGui::InputText("password", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
+            ImGui::SameLine(); HelpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.\n");
+            ImGui::InputTextWithHint("password (w/ hint)", "<password>", bufpass, 64, ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
+            ImGui::InputText("password (clear)", bufpass, 64, ImGuiInputTextFlags_CharsNoBlank);
+            ImGui::TreePop();
+        }
 
-        static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-        HelpMarker("You can use the ImGuiInputTextFlags_CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stdlib.h for an example. (This is not demonstrated in imgui_demo.cpp)");
-        ImGui::CheckboxFlags("ImGuiInputTextFlags_ReadOnly", (unsigned int*)&flags, ImGuiInputTextFlags_ReadOnly);
-        ImGui::CheckboxFlags("ImGuiInputTextFlags_AllowTabInput", (unsigned int*)&flags, ImGuiInputTextFlags_AllowTabInput);
-        ImGui::CheckboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", (unsigned int*)&flags, ImGuiInputTextFlags_CtrlEnterForNewLine);
-        ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16), flags);
+        if (ImGui::TreeNode("Resize Callback"))
+        {
+            // If you have a custom string type you would typically create a ImGui::InputText() wrapper than takes your type as input.
+            // See misc/cpp/imgui_stdlib.h and .cpp for an implementation of this using std::string.
+            HelpMarker("Demonstrate using ImGuiInputTextFlags_CallbackResize to wire your resizable string type to InputText().\n\nSee misc/cpp/imgui_stdlib.h for an implementation of this for std::string.");
+            struct Funcs
+            {
+                static int MyResizeCallback(ImGuiInputTextCallbackData* data)
+                {
+                    if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+                    {
+                        ImVector<char>* my_str = (ImVector<char>*)data->UserData;
+                        IM_ASSERT(my_str->begin() == data->Buf);
+                        my_str->resize(data->BufSize);  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+                        data->Buf = my_str->begin();
+                    }
+                    return 0;
+                }
+
+                // Tip: Because ImGui:: is a namespace you can add your own function into the namespace from your own source files.
+                static bool MyInputTextMultiline(const char* label, ImVector<char>* my_str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0)
+                {
+                    IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+                    return ImGui::InputTextMultiline(label, my_str->begin(), (size_t)my_str->size(), size, flags | ImGuiInputTextFlags_CallbackResize, Funcs::MyResizeCallback, (void*)my_str);
+                }
+            };
+
+            // For this demo we are using ImVector as a string container.
+            // Note that because we need to store a terminating zero character, our size/capacity are 1 more than usually reported by a typical string class.
+            static ImVector<char> my_str;
+            if (my_str.empty())
+                my_str.push_back(0);
+            Funcs::MyInputTextMultiline("##MyStr", &my_str, ImVec2(-1.0f, ImGui::GetTextLineHeight() * 16));
+            ImGui::Text("Data: %p\nSize: %d\nCapacity: %d", (void*)my_str.begin(), my_str.size(), my_str.capacity());
+            ImGui::TreePop();
+        }
+
         ImGui::TreePop();
     }
 
@@ -1505,7 +1546,7 @@ static void ShowDemoWindowWidgets()
             "IsItemEdited() = %d\n"
             "IsItemActivated() = %d\n"
             "IsItemDeactivated() = %d\n"
-            "IsItemDeactivatedEdit() = %d\n"
+            "IsItemDeactivatedAfterEdit() = %d\n"
             "IsItemVisible() = %d\n"
             "GetItemRectMin() = (%.1f, %.1f)\n"
             "GetItemRectMax() = (%.1f, %.1f)\n"
@@ -1553,6 +1594,7 @@ static void ShowDemoWindowWidgets()
             "IsWindowHovered(_AllowWhenBlockedByActiveItem) = %d\n"
             "IsWindowHovered(_ChildWindows) = %d\n"
             "IsWindowHovered(_ChildWindows|_RootWindow) = %d\n"
+            "IsWindowHovered(_ChildWindows|_AllowWhenBlockedByPopup) = %d\n"
             "IsWindowHovered(_RootWindow) = %d\n"
             "IsWindowHovered(_AnyWindow) = %d\n",
             ImGui::IsWindowHovered(),
@@ -1560,6 +1602,7 @@ static void ShowDemoWindowWidgets()
             ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem),
             ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows),
             ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_RootWindow),
+            ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByPopup),
             ImGui::IsWindowHovered(ImGuiHoveredFlags_RootWindow),
             ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow));
 
@@ -2524,9 +2567,9 @@ static void ShowDemoWindowMisc()
             ImGui::Text("Mouse released:"); for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++) if (ImGui::IsMouseReleased(i))         { ImGui::SameLine(); ImGui::Text("b%d", i); }
             ImGui::Text("Mouse wheel: %.1f", io.MouseWheel);
 
-            ImGui::Text("Keys down:");      for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (io.KeysDownDuration[i] >= 0.0f)     { ImGui::SameLine(); ImGui::Text("%d (%.02f secs)", i, io.KeysDownDuration[i]); }
-            ImGui::Text("Keys pressed:");   for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))             { ImGui::SameLine(); ImGui::Text("%d", i); }
-            ImGui::Text("Keys release:");   for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))            { ImGui::SameLine(); ImGui::Text("%d", i); }
+            ImGui::Text("Keys down:");      for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (io.KeysDownDuration[i] >= 0.0f)     { ImGui::SameLine(); ImGui::Text("%d (0x%X) (%.02f secs)", i, i, io.KeysDownDuration[i]); }
+            ImGui::Text("Keys pressed:");   for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyPressed(i))             { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
+            ImGui::Text("Keys release:");   for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); i++) if (ImGui::IsKeyReleased(i))            { ImGui::SameLine(); ImGui::Text("%d (0x%X)", i, i); }
             ImGui::Text("Keys mods: %s%s%s%s", io.KeyCtrl ? "CTRL " : "", io.KeyShift ? "SHIFT " : "", io.KeyAlt ? "ALT " : "", io.KeySuper ? "SUPER " : "");
 
             ImGui::Text("NavInputs down:"); for (int i = 0; i < IM_ARRAYSIZE(io.NavInputs); i++) if (io.NavInputs[i] > 0.0f)                    { ImGui::SameLine(); ImGui::Text("[%d] %.2f", i, io.NavInputs[i]); }
@@ -2605,22 +2648,17 @@ static void ShowDemoWindowMisc()
             for (int button = 0; button < 3; button++)
                 ImGui::Text("IsMouseDragging(%d):\n  w/ default threshold: %d,\n  w/ zero threshold: %d\n  w/ large threshold: %d",
                     button, ImGui::IsMouseDragging(button), ImGui::IsMouseDragging(button, 0.0f), ImGui::IsMouseDragging(button, 20.0f));
+
             ImGui::Button("Drag Me");
             if (ImGui::IsItemActive())
-            {
-                // Draw a line between the button and the mouse cursor
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                draw_list->PushClipRectFullScreen();
-                draw_list->AddLine(io.MouseClickedPos[0], io.MousePos, ImGui::GetColorU32(ImGuiCol_Button), 4.0f);
-                draw_list->PopClipRect();
+                ImGui::GetForegroundDrawList()->AddLine(io.MouseClickedPos[0], io.MousePos, ImGui::GetColorU32(ImGuiCol_Button), 4.0f); // Draw a line between the button and the mouse cursor
 
-                // Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
-                // You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
-                ImVec2 value_raw = ImGui::GetMouseDragDelta(0, 0.0f);
-                ImVec2 value_with_lock_threshold = ImGui::GetMouseDragDelta(0);
-                ImVec2 mouse_delta = io.MouseDelta;
-                ImGui::SameLine(); ImGui::Text("Raw (%.1f, %.1f), WithLockThresold (%.1f, %.1f), MouseDelta (%.1f, %.1f)", value_raw.x, value_raw.y, value_with_lock_threshold.x, value_with_lock_threshold.y, mouse_delta.x, mouse_delta.y);
-            }
+            // Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
+            // You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
+            ImVec2 value_raw = ImGui::GetMouseDragDelta(0, 0.0f);
+            ImVec2 value_with_lock_threshold = ImGui::GetMouseDragDelta(0);
+            ImVec2 mouse_delta = io.MouseDelta;
+            ImGui::Text("GetMouseDragDelta(0):\n  w/ default threshold: (%.1f, %.1f),\n  w/ zero threshold: (%.1f, %.1f)\nMouseDelta: (%.1f, %.1f)", value_with_lock_threshold.x, value_with_lock_threshold.y, value_raw.x, value_raw.y, mouse_delta.x, mouse_delta.y);
             ImGui::TreePop();
         }
 
@@ -4031,7 +4069,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
             draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + thickness, y + sz), col32); x += spacing + spacing;     // Vertical line (faster than AddLine, but only handle integer thickness)
             draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + 1, y + 1), col32);          x += sz;                  // Pixel (faster than AddLine)
             draw_list->AddRectFilledMultiColor(ImVec2(x, y), ImVec2(x + sz, y + sz), IM_COL32(0, 0, 0, 255), IM_COL32(255, 0, 0, 255), IM_COL32(255, 255, 0, 255), IM_COL32(0, 255, 0, 255));
-            ImGui::Dummy(ImVec2((sz + spacing) * 8, (sz + spacing) * 3));
+            ImGui::Dummy(ImVec2((sz + spacing) * 9.5f, (sz + spacing) * 3));
             ImGui::EndTabItem();
         }
 

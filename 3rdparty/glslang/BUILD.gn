@@ -152,6 +152,7 @@ source_set("glslang_sources") {
   if (is_win && !is_clang) {
     cflags = [
       "/wd4018", # signed/unsigned mismatch
+      "/wd4189", # local variable is initialized but not referenced
     ]
   }
 
@@ -169,7 +170,7 @@ source_set("glslang_default_resource_limits_sources") {
   public_configs = [ ":glslang_public" ]
 }
 
-source_set("glslang_validator") {
+executable("glslang_validator") {
   sources = [
     "StandAlone/DirStackFileIncluder.h",
     "StandAlone/StandAlone.cpp",

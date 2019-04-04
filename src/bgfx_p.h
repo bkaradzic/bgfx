@@ -221,9 +221,10 @@ namespace stl = std;
 #define BGFX_RENDERER_DIRECT3D9_NAME  "Direct3D 9"
 #define BGFX_RENDERER_DIRECT3D11_NAME "Direct3D 11"
 #define BGFX_RENDERER_DIRECT3D12_NAME "Direct3D 12"
-#define BGFX_RENDERER_METAL_NAME      "Metal"
-#define BGFX_RENDERER_VULKAN_NAME     "Vulkan"
 #define BGFX_RENDERER_GNM_NAME        "GNM"
+#define BGFX_RENDERER_METAL_NAME      "Metal"
+#define BGFX_RENDERER_NVN_NAME        "NVN"
+#define BGFX_RENDERER_VULKAN_NAME     "Vulkan"
 #define BGFX_RENDERER_NOOP_NAME       "Noop"
 
 #if BGFX_CONFIG_RENDERER_OPENGL
@@ -520,7 +521,7 @@ namespace bgfx
 		return uint32_t( (_stencil >> (32*_0or1) ) );
 	}
 
-	inline bool needBorderColor(uint32_t _flags)
+	inline bool needBorderColor(uint64_t _flags)
 	{
 		return BGFX_SAMPLER_U_BORDER == (_flags & BGFX_SAMPLER_U_BORDER)
 			|| BGFX_SAMPLER_V_BORDER == (_flags & BGFX_SAMPLER_V_BORDER)

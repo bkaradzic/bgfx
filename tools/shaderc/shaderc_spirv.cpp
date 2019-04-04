@@ -16,6 +16,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <SPIRV/GlslangToSpv.h>
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #include <spirv_msl.hpp>
+#include <spirv_reflect.hpp>
 #include <spirv-tools/optimizer.hpp>
 BX_PRAGMA_DIAGNOSTIC_POP()
 
@@ -583,6 +584,39 @@ namespace bgfx { namespace spirv
 		return bgfx::Attrib::Count;
 	}
 
+	static uint16_t writeUniformArray(bx::WriterI* _writer, const UniformArray& uniforms, bool isFragmentShader)
+	{
+		uint16_t size = 0;
+
+		uint16_t count = static_cast<uint16_t>(uniforms.size());
+		bx::write(_writer, count);
+
+		uint32_t fragmentBit = isFragmentShader ? BGFX_UNIFORM_FRAGMENTBIT : 0;
+		for (uint16_t ii = 0; ii < count; ++ii)
+		{
+			const Uniform& un = uniforms[ii];
+
+			size += un.regCount*16;
+
+			uint8_t nameSize = (uint8_t)un.name.size();
+			bx::write(_writer, nameSize);
+			bx::write(_writer, un.name.c_str(), nameSize);
+			bx::write(_writer, uint8_t(un.type | fragmentBit));
+			bx::write(_writer, un.num);
+			bx::write(_writer, un.regIndex);
+			bx::write(_writer, un.regCount);
+
+			BX_TRACE("%s, %s, %d, %d, %d"
+				, un.name.c_str()
+				, getUniformTypeName(un.type)
+				, un.num
+				, un.regIndex
+				, un.regCount
+			);
+		}
+		return size;
+	}
+
 	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _writer, bool _firstPass)
 	{
 		BX_UNUSED(_version);
@@ -674,8 +708,6 @@ namespace bgfx { namespace spirv
 			}
 			else
 			{
-				uint16_t size = 0;
-
 				program->buildReflection();
 
 				if (_firstPass)
@@ -733,11 +765,11 @@ namespace bgfx { namespace spirv
 					return compile(_options, _version, output.c_str(), _writer, false);
 				}
 
+				UniformArray uniforms;
+
 				{
 					uint16_t count = (uint16_t)program->getNumLiveUniformVariables();
-					bx::write(_writer, count);
 
-					uint32_t fragmentBit = _options.shaderType == 'f' ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 					for (uint16_t ii = 0; ii < count; ++ii)
 					{
 						Uniform un;
@@ -769,23 +801,7 @@ namespace bgfx { namespace spirv
 							break;
 						}
 
-						size += un.regCount*16;
-
-						uint8_t nameSize = (uint8_t)un.name.size();
-						bx::write(_writer, nameSize);
-						bx::write(_writer, un.name.c_str(), nameSize);
-						bx::write(_writer, uint8_t(un.type | fragmentBit));
-						bx::write(_writer, un.num);
-						bx::write(_writer, un.regIndex);
-						bx::write(_writer, un.regCount);
-
-						BX_TRACE("%s, %s, %d, %d, %d"
-							, un.name.c_str()
-							, getUniformTypeName(un.type)
-							, un.num
-							, un.regIndex
-							, un.regCount
-						);
+						uniforms.push_back(un);
 					}
 				}
 				if (g_verbose)
@@ -822,6 +838,30 @@ namespace bgfx { namespace spirv
 					bx::WriterI* writer = bx::getDebugOut();
 					bx::MemoryReader reader(spirv.data(), uint32_t(spirv.size()*4) );
 					disassemble(writer, &reader, &err);
+
+					spirv_cross::CompilerReflection refl(spirv);
+					spirv_cross::ShaderResources resourcesrefl = refl.get_shader_resources();
+
+					// Loop through the separate_images, and extract the uniform names:
+					for (auto &resource : resourcesrefl.separate_images)
+					{
+						std::string name = refl.get_name(resource.id);
+						if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
+						{
+							auto uniform_name = name.substr(0, name.length() - 7);
+
+							Uniform un;
+							un.name = uniform_name;
+							un.type = UniformType::Sampler;
+
+							un.num = 0;			// needed?
+							un.regIndex = 0;	// needed?
+							un.regCount = 0;	// needed?
+
+							uniforms.push_back(un);
+						}
+					}
+					uint16_t size = writeUniformArray( _writer, uniforms, _options.shaderType == 'f');
 
 					if (_version == BX_MAKEFOURCC('M', 'T', 'L', 0))
 					{

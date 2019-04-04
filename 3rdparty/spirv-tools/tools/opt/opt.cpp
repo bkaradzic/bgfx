@@ -340,6 +340,8 @@ Options (in lexicographical order):
                This options should be used rarely, and with caution.
   --strength-reduction
                Replaces instructions with equivalent and less expensive ones.
+  --strip-atomic-counter-memory
+               Removes AtomicCountMemory bit from memory semantics values.
   --strip-debug
                Remove all debug instructions.
   --strip-reflect
@@ -382,6 +384,8 @@ Options (in lexicographical order):
                Current workarounds: Avoid OpUnreachable in loops.
   --unify-const
                Remove the duplicated constants.
+  --validate-after-all
+               Validate the module after each pass is performed.
   -h, --help
                Print this help.
   --version
@@ -626,6 +630,8 @@ OptStatus ParseFlags(int argc, const char** argv,
 
         optimizer->SetTargetEnv(SPV_ENV_WEBGPU_0);
         optimizer->RegisterWebGPUPasses();
+      } else if (0 == strcmp(cur_arg, "--validate-after-all")) {
+        optimizer->SetValidateAfterAll(true);
       } else {
         // Some passes used to accept the form '--pass arg', canonicalize them
         // to '--pass=arg'.

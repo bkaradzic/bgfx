@@ -25,7 +25,7 @@ struct SSBO
     Data outdata[1];
 };
 
-constant uint3 gl_WorkGroupSize = uint3(2u, 1u, 1u);
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(2u, 1u, 1u);
 
 constant Data_1 _25[2] = { Data_1{ 1.0, 2.0 }, Data_1{ 3.0, 4.0 } };
 

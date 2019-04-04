@@ -55,6 +55,18 @@ std::string ToString(const CapabilitySet& capabilities,
   return ss.str();
 }
 
+bool IsValidWebGPUStorageClass(SpvStorageClass storage_class) {
+  return storage_class == SpvStorageClassUniformConstant ||
+         storage_class == SpvStorageClassUniform ||
+         storage_class == SpvStorageClassStorageBuffer ||
+         storage_class == SpvStorageClassInput ||
+         storage_class == SpvStorageClassOutput ||
+         storage_class == SpvStorageClassImage ||
+         storage_class == SpvStorageClassWorkgroup ||
+         storage_class == SpvStorageClassPrivate ||
+         storage_class == SpvStorageClassFunction;
+}
+
 // Returns capabilities that enable an opcode.  An empty result is interpreted
 // as no prohibition of use of the opcode.  If the result is non-empty, then
 // the opcode may only be used if at least one of the capabilities is specified
@@ -483,6 +495,15 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst) {
     if (auto error = LimitCheckNumVars(_, inst->id(), storage_class)) {
       return error;
     }
+
+    if (spvIsWebGPUEnv(_.context()->target_env) &&
+        !IsValidWebGPUStorageClass(storage_class)) {
+      return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+             << "For WebGPU, OpVariable storage class must be one of "
+                "UniformConstant, Uniform, StorageBuffer, Input, Output, "
+                "Image, Workgroup, Private, Function for WebGPU";
+    }
+
     if (storage_class == SpvStorageClassGeneric)
       return _.diag(SPV_ERROR_INVALID_BINARY, inst)
              << "OpVariable storage class cannot be Generic";
@@ -505,6 +526,15 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst) {
                << "Variables can not have a function[7] storage class "
                   "outside of a function";
       }
+    }
+  } else if (opcode == SpvOpTypePointer) {
+    const auto storage_class = inst->GetOperandAs<SpvStorageClass>(1);
+    if (spvIsWebGPUEnv(_.context()->target_env) &&
+        !IsValidWebGPUStorageClass(storage_class)) {
+      return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+             << "For WebGPU, OpTypePointer storage class must be one of "
+                "UniformConstant, Uniform, StorageBuffer, Input, Output, "
+                "Image, Workgroup, Private, Function";
     }
   }
 

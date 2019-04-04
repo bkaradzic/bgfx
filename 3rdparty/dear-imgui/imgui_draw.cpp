@@ -1,4 +1,4 @@
-// dear imgui, v1.69 WIP
+// dear imgui, v1.70 WIP
 // (drawing and font code)
 
 /*
@@ -73,6 +73,7 @@ Index of this file:
 #pragma GCC diagnostic ignored "-Wunused-function"          // warning: 'xxxx' defined but not used
 #pragma GCC diagnostic ignored "-Wdouble-promotion"         // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wconversion"               // warning: conversion to 'xxxx' from 'xxxx' may alter its value
+#pragma GCC diagnostic ignored "-Wstack-protector"          // warning: stack protector not protecting local variables: variable length buffer
 #if __GNUC__ >= 8
 #pragma GCC diagnostic ignored "-Wclass-memaccess"          // warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #endif
@@ -1287,8 +1288,8 @@ void ImDrawData::DeIndexAllBuffers()
     }
 }
 
-// Helper to scale the ClipRect field of each ImDrawCmd. 
-// Use if your final output buffer is at a different scale than draw_data->DisplaySize, 
+// Helper to scale the ClipRect field of each ImDrawCmd.
+// Use if your final output buffer is at a different scale than draw_data->DisplaySize,
 // or if there is a difference between your window resolution and framebuffer resolution.
 void ImDrawData::ScaleClipRects(const ImVec2& fb_scale)
 {
@@ -1594,9 +1595,9 @@ ImFont* ImFontAtlas::AddFontDefault(const ImFontConfig* font_cfg_template)
         font_cfg.OversampleH = font_cfg.OversampleV = 1;
         font_cfg.PixelSnapH = true;
     }
-    if (font_cfg.SizePixels <= 0.0f) 
+    if (font_cfg.SizePixels <= 0.0f)
         font_cfg.SizePixels = 13.0f * 1.0f;
-    if (font_cfg.Name[0] == '\0') 
+    if (font_cfg.Name[0] == '\0')
         ImFormatString(font_cfg.Name, IM_ARRAYSIZE(font_cfg.Name), "ProggyClean.ttf, %dpx", (int)font_cfg.SizePixels);
 
     const char* ttf_compressed_base85 = GetDefaultCompressedFontDataTTFBase85();
@@ -2341,6 +2342,23 @@ const ImWchar*  ImFontAtlas::GetGlyphRangesThai()
         0x0020, 0x00FF, // Basic Latin
         0x2010, 0x205E, // Punctuations
         0x0E00, 0x0E7F, // Thai
+        0,
+    };
+    return &ranges[0];
+}
+
+const ImWchar*  ImFontAtlas::GetGlyphRangesVietnamese()
+{
+    static const ImWchar ranges[] =
+    {
+        0x0020, 0x00FF, // Basic Latin
+        0x0102, 0x0103,
+        0x0110, 0x0111,
+        0x0128, 0x0129,
+        0x0168, 0x0169,
+        0x01A0, 0x01A1,
+        0x01AF, 0x01B0,
+        0x1EA0, 0x1EF9,
         0,
     };
     return &ranges[0];

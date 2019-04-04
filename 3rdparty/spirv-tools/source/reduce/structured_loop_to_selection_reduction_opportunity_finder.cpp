@@ -33,10 +33,9 @@ StructuredLoopToSelectionReductionOpportunityFinder::GetAvailableOpportunities(
   std::set<uint32_t> merge_block_ids;
   for (auto& function : *context->module()) {
     for (auto& block : function) {
-      auto merge_inst = block.GetMergeInst();
-      if (merge_inst) {
-        merge_block_ids.insert(
-            merge_inst->GetSingleWordOperand(kMergeNodeIndex));
+      auto merge_block_id = block.MergeBlockIdIfAny();
+      if (merge_block_id) {
+        merge_block_ids.insert(merge_block_id);
       }
     }
   }
@@ -50,11 +49,19 @@ StructuredLoopToSelectionReductionOpportunityFinder::GetAvailableOpportunities(
         continue;
       }
 
+      uint32_t continue_block_id =
+          loop_merge_inst->GetSingleWordOperand(kContinueNodeIndex);
+
       // Check whether the loop construct's continue target is the merge block
       // of some structured control flow construct.  If it is, we cautiously do
       // not consider applying a transformation.
-      if (merge_block_ids.find(loop_merge_inst->GetSingleWordOperand(
-              kContinueNodeIndex)) != merge_block_ids.end()) {
+      if (merge_block_ids.find(continue_block_id) != merge_block_ids.end()) {
+        continue;
+      }
+
+      // Check whether the loop header block is also the continue target. If it
+      // is, we cautiously do not consider applying a transformation.
+      if (block.id() == continue_block_id) {
         continue;
       }
 

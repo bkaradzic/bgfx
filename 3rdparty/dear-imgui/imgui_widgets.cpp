@@ -1,4 +1,4 @@
-// dear imgui, v1.69 WIP
+// dear imgui, v1.70 WIP
 // (widgets code)
 
 /*
@@ -1611,7 +1611,7 @@ static void DataTypeApplyOp(ImGuiDataType data_type, int op, void* output, void*
             if (op == '-') { *(float*)output = *(const float*)arg1 - *(const float*)arg2; }
             return;
         case ImGuiDataType_Double:
-            if (op == '+') { *(double*)output = *(const double*)arg1 + *(const double*)arg2; } 
+            if (op == '+') { *(double*)output = *(const double*)arg1 + *(const double*)arg2; }
             if (op == '-') { *(double*)output = *(const double*)arg1 - *(const double*)arg2; }
             return;
         case ImGuiDataType_COUNT: break;
@@ -3358,37 +3358,27 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     if (g.ActiveId == id && io.MouseClicked[0] && !init_state && !init_make_active) //-V560
         clear_active_id = true;
 
-    // When read-only we always use the live data passed to the function
-    // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
-    if (is_readonly && state != NULL)
-    {
-        const bool will_render_cursor = (g.ActiveId == id) || (user_scroll_active);
-        const bool will_render_selection = state->HasSelection() && (RENDER_SELECTION_WHEN_INACTIVE || will_render_cursor);
-        if (will_render_cursor || will_render_selection)
-        {
-            const char* buf_end = NULL;
-            state->TextW.resize(buf_size + 1);
-            state->CurLenW = ImTextStrFromUtf8(state->TextW.Data, state->TextW.Size, buf, NULL, &buf_end);
-            state->CurLenA = (int)(buf_end - buf);
-            state->CursorClamp();
-        }
-    }
-
     // Lock the decision of whether we are going to take the path displaying the cursor or selection
     const bool render_cursor = (g.ActiveId == id) || (state && user_scroll_active);
-    const bool render_selection = state && state->HasSelection() && (RENDER_SELECTION_WHEN_INACTIVE || render_cursor);
+    bool render_selection = state && state->HasSelection() && (RENDER_SELECTION_WHEN_INACTIVE || render_cursor);
     bool value_changed = false;
     bool enter_pressed = false;
 
-    // Select the buffer to render.
-    const char* buf_display = ((render_cursor || render_selection || g.ActiveId == id) && !is_readonly && state && state->TextAIsValid) ? state->TextA.Data : buf;
-    const char* buf_display_end = NULL; // We have specialized paths below for setting the length
-    const bool is_displaying_hint = (hint != NULL && buf_display[0] == 0);
-    if (is_displaying_hint)
+    // When read-only we always use the live data passed to the function
+    // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
+    if (is_readonly && state != NULL && (render_cursor || render_selection))
     {
-        buf_display = hint;
-        buf_display_end = hint + strlen(hint);
+        const char* buf_end = NULL;
+        state->TextW.resize(buf_size + 1);
+        state->CurLenW = ImTextStrFromUtf8(state->TextW.Data, state->TextW.Size, buf, NULL, &buf_end);
+        state->CurLenA = (int)(buf_end - buf);
+        state->CursorClamp();
+        render_selection &= state->HasSelection();
     }
+
+    // Select the buffer to render.
+    const bool buf_display_from_state = (render_cursor || render_selection || g.ActiveId == id) && !is_readonly && state && state->TextAIsValid;
+    const bool is_displaying_hint = (hint != NULL && (buf_display_from_state ? state->TextA.Data : buf)[0] == 0);
 
     // Password pushes a temporary font with only a fallback glyph
     if (is_password && !is_displaying_hint)
@@ -3506,9 +3496,9 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         {
             if (!state->HasSelection())
             {
-                if (is_wordmove_key_down) 
+                if (is_wordmove_key_down)
                     state->OnKeyPressed(STB_TEXTEDIT_K_WORDLEFT|STB_TEXTEDIT_K_SHIFT);
-                else if (is_osx && io.KeySuper && !io.KeyAlt && !io.KeyCtrl) 
+                else if (is_osx && io.KeySuper && !io.KeyAlt && !io.KeyCtrl)
                     state->OnKeyPressed(STB_TEXTEDIT_K_LINESTART|STB_TEXTEDIT_K_SHIFT);
             }
             state->OnKeyPressed(STB_TEXTEDIT_K_BACKSPACE | k_mask);
@@ -3595,6 +3585,9 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
                 MemFree(clipboard_filtered);
             }
         }
+
+        // Update render selection flag after events have been handled, so selection highlight can be displayed during the same frame.
+        render_selection |= state->HasSelection() && (RENDER_SELECTION_WHEN_INACTIVE || render_cursor);
     }
 
     // Process callbacks and apply result back to user's buffer.
@@ -3755,6 +3748,13 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     // without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
     // Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash.
     const int buf_display_max_length = 2 * 1024 * 1024;
+    const char* buf_display = buf_display_from_state ? state->TextA.Data : buf; //-V595
+    const char* buf_display_end = NULL; // We have specialized paths below for setting the length
+    if (is_displaying_hint)
+    {
+        buf_display = hint;
+        buf_display_end = hint + strlen(hint);
+    }
 
     // Render text. We currently only render selection when the widget is active or while scrolling.
     // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
@@ -3805,9 +3805,9 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
                     if (searches_result_line_no[1] == -1 && s >= searches_input_ptr[1]) { searches_result_line_no[1] = line_count; if (--searches_remaining <= 0) break; }
                 }
             line_count++;
-            if (searches_result_line_no[0] == -1) 
+            if (searches_result_line_no[0] == -1)
                 searches_result_line_no[0] = line_count;
-            if (searches_result_line_no[1] == -1) 
+            if (searches_result_line_no[1] == -1)
                 searches_result_line_no[1] = line_count;
 
             // Calculate 2d position by finding the beginning of the line and measuring distance
@@ -5290,14 +5290,14 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     if (flags & ImGuiSelectableFlags_Disabled)
     {
         ImGuiItemFlags backup_item_flags = window->DC.ItemFlags;
-        window->DC.ItemFlags |= ImGuiItemFlags_NoNav | ImGuiItemFlags_NoNavDefaultFocus;
+        window->DC.ItemFlags |= ImGuiItemFlags_Disabled | ImGuiItemFlags_NoNavDefaultFocus;
         item_add = ItemAdd(bb, id);
         window->DC.ItemFlags = backup_item_flags;
     }
     else
     {
         item_add = ItemAdd(bb, id);
-    }        
+    }
     if (!item_add)
     {
         if ((flags & ImGuiSelectableFlags_SpanAllColumns) && window->DC.ColumnsSet)
@@ -5689,7 +5689,6 @@ void ImGui::Value(const char* prefix, float v, const char* float_format)
 // Helpers for internal use
 ImGuiMenuColumns::ImGuiMenuColumns()
 {
-    Count = 0;
     Spacing = Width = NextWidth = 0.0f;
     memset(Pos, 0, sizeof(Pos));
     memset(NextWidths, 0, sizeof(NextWidths));
@@ -5697,12 +5696,12 @@ ImGuiMenuColumns::ImGuiMenuColumns()
 
 void ImGuiMenuColumns::Update(int count, float spacing, bool clear)
 {
-    IM_ASSERT(Count <= IM_ARRAYSIZE(Pos));
-    Count = count;
+    IM_ASSERT(count == IM_ARRAYSIZE(Pos));
     Width = NextWidth = 0.0f;
     Spacing = spacing;
-    if (clear) memset(NextWidths, 0, sizeof(NextWidths));
-    for (int i = 0; i < Count; i++)
+    if (clear)
+        memset(NextWidths, 0, sizeof(NextWidths));
+    for (int i = 0; i < IM_ARRAYSIZE(Pos); i++)
     {
         if (i > 0 && NextWidths[i] > 0.0f)
             Width += Spacing;
@@ -5718,7 +5717,7 @@ float ImGuiMenuColumns::DeclColumns(float w0, float w1, float w2) // not using v
     NextWidths[0] = ImMax(NextWidths[0], w0);
     NextWidths[1] = ImMax(NextWidths[1], w1);
     NextWidths[2] = ImMax(NextWidths[2], w2);
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < IM_ARRAYSIZE(Pos); i++)
         NextWidth += NextWidths[i] + ((i > 0 && NextWidths[i] > 0.0f) ? Spacing : 0.0f);
     return ImMax(Width, NextWidth);
 }
@@ -6079,7 +6078,7 @@ ImGuiTabBar::ImGuiTabBar()
     CurrFrameVisible = PrevFrameVisible = -1;
     ContentsHeight = 0.0f;
     OffsetMax = OffsetNextTab = 0.0f;
-    ScrollingAnim = ScrollingTarget = 0.0f;
+    ScrollingAnim = ScrollingTarget = ScrollingTargetDistToVisibility = ScrollingSpeed = 0.0f;
     Flags = ImGuiTabBarFlags_None;
     ReorderRequestTabId = 0;
     ReorderRequestDir = 0;
@@ -6373,9 +6372,19 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
             TabBarScrollToTab(tab_bar, scroll_track_selected_tab);
     tab_bar->ScrollingAnim = TabBarScrollClamp(tab_bar, tab_bar->ScrollingAnim);
     tab_bar->ScrollingTarget = TabBarScrollClamp(tab_bar, tab_bar->ScrollingTarget);
-    const float scrolling_speed = (tab_bar->PrevFrameVisible + 1 < g.FrameCount) ? FLT_MAX : (g.IO.DeltaTime * g.FontSize * 70.0f);
     if (tab_bar->ScrollingAnim != tab_bar->ScrollingTarget)
-        tab_bar->ScrollingAnim = ImLinearSweep(tab_bar->ScrollingAnim, tab_bar->ScrollingTarget, scrolling_speed);
+    {
+        // Scrolling speed adjust itself so we can always reach our target in 1/3 seconds.
+        // Teleport if we are aiming far off the visible line
+        tab_bar->ScrollingSpeed = ImMax(tab_bar->ScrollingSpeed, 70.0f * g.FontSize);
+        tab_bar->ScrollingSpeed = ImMax(tab_bar->ScrollingSpeed, ImFabs(tab_bar->ScrollingTarget - tab_bar->ScrollingAnim) / 0.3f);
+        const bool teleport = (tab_bar->PrevFrameVisible + 1 < g.FrameCount) || (tab_bar->ScrollingTargetDistToVisibility > 10.0f * g.FontSize);
+        tab_bar->ScrollingAnim = teleport ? tab_bar->ScrollingTarget : ImLinearSweep(tab_bar->ScrollingAnim, tab_bar->ScrollingTarget, g.IO.DeltaTime * tab_bar->ScrollingSpeed);
+    }
+    else
+    {
+        tab_bar->ScrollingSpeed = 0.0f;
+    }
 
     // Clear name buffers
     if ((tab_bar->Flags & ImGuiTabBarFlags_DockNode) == 0)
@@ -6453,10 +6462,17 @@ static void ImGui::TabBarScrollToTab(ImGuiTabBar* tab_bar, ImGuiTabItem* tab)
     int order = tab_bar->GetTabOrder(tab);
     float tab_x1 = tab->Offset + (order > 0 ? -margin : 0.0f);
     float tab_x2 = tab->Offset + tab->Width + (order + 1 < tab_bar->Tabs.Size ? margin : 1.0f);
+    tab_bar->ScrollingTargetDistToVisibility = 0.0f;
     if (tab_bar->ScrollingTarget > tab_x1)
+    {
+        tab_bar->ScrollingTargetDistToVisibility = ImMax(tab_bar->ScrollingAnim - tab_x2, 0.0f);
         tab_bar->ScrollingTarget = tab_x1;
-    if (tab_bar->ScrollingTarget + tab_bar->BarRect.GetWidth() < tab_x2)
+    }
+    else if (tab_bar->ScrollingTarget < tab_x2 - tab_bar->BarRect.GetWidth())
+    {
+        tab_bar->ScrollingTargetDistToVisibility = ImMax((tab_x1 - tab_bar->BarRect.GetWidth()) - tab_bar->ScrollingAnim, 0.0f);
         tab_bar->ScrollingTarget = tab_x2 - tab_bar->BarRect.GetWidth();
+    }
 }
 
 void ImGui::TabBarQueueChangeTabOrder(ImGuiTabBar* tab_bar, const ImGuiTabItem* tab, int dir)
@@ -6794,7 +6810,8 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     window->DC.CursorPos = backup_main_cursor_pos;
 
     // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
-    if (g.HoveredId == id && !held && g.HoveredIdNotActiveTimer > 0.50f)
+    // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
+    if (g.HoveredId == id && !held && g.HoveredIdNotActiveTimer > 0.50f && IsItemHovered())
         if (!(tab_bar->Flags & ImGuiTabBarFlags_NoTooltip))
             SetTooltip("%.*s", (int)(FindRenderedTextEnd(label) - label), label);
 

@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <vector>
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 class Parser
 {

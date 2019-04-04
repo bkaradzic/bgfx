@@ -65,10 +65,14 @@ TEST(RemoveUnreferencedInstructionReductionPassTest, RemoveStores) {
                OpStore %14 %15
   )" + epilogue;
 
-  const std::string expected = prologue + R"(
+  const std::string expected_after_2 = prologue + R"(
                OpStore %12 %13
          %15 = OpLoad %6 %8
                OpStore %14 %15
+  )" + epilogue;
+
+  const std::string expected_after_4 = prologue + R"(
+         %15 = OpLoad %6 %8
   )" + epilogue;
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
@@ -83,149 +87,14 @@ TEST(RemoveUnreferencedInstructionReductionPassTest, RemoveStores) {
   ASSERT_TRUE(ops[1]->PreconditionHolds());
   ops[1]->TryToApply();
 
-  CheckEqual(env, expected, context.get());
-}
+  CheckEqual(env, expected_after_2, context.get());
 
-TEST(RemoveUnreferencedInstructionReductionPassTest, ApplyReduction) {
-  const std::string prologue = R"(
-               OpCapability Shader
-          %1 = OpExtInstImport "GLSL.std.450"
-               OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main"
-               OpExecutionMode %4 OriginUpperLeft
-               OpSource ESSL 310
-               OpName %4 "main"
-               OpName %8 "a"
-               OpName %10 "b"
-               OpName %12 "c"
-               OpName %14 "d"
-          %2 = OpTypeVoid
-          %3 = OpTypeFunction %2
-          %6 = OpTypeInt 32 1
-          %7 = OpTypePointer Function %6
-          %9 = OpConstant %6 10
-         %11 = OpConstant %6 20
-         %13 = OpConstant %6 30
-          %4 = OpFunction %2 None %3
-          %5 = OpLabel
-          %8 = OpVariable %7 Function
-         %10 = OpVariable %7 Function
-         %12 = OpVariable %7 Function
-         %14 = OpVariable %7 Function
-  )";
+  ASSERT_TRUE(ops[2]->PreconditionHolds());
+  ops[2]->TryToApply();
+  ASSERT_TRUE(ops[3]->PreconditionHolds());
+  ops[3]->TryToApply();
 
-  const std::string epilogue = R"(
-               OpReturn
-               OpFunctionEnd
-  )";
-
-  const std::string original = prologue + R"(
-               OpStore %8 %9
-               OpStore %10 %11
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-  )" + epilogue;
-
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
-
-  std::vector<uint32_t> binary;
-  SpirvTools t(env);
-  ASSERT_TRUE(t.Assemble(original, &binary, kReduceAssembleOption));
-
-  ReductionPass pass(
-      env, spvtools::MakeUnique<
-               RemoveUnreferencedInstructionReductionOpportunityFinder>());
-
-  {
-    // Attempt 1 should remove everything removable.
-    const std::string expected_reduced = prologue + R"(
-         %15 = OpLoad %6 %8
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  // Attempt 2 should fail as pass with granularity 4 got to end.
-  ASSERT_EQ(0, pass.TryApplyReduction(binary).size());
-
-  {
-    // Attempt 3 should remove first two removable statements.
-    const std::string expected_reduced = prologue + R"(
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  {
-    // Attempt 4 should remove last two removable statements.
-    const std::string expected_reduced = prologue + R"(
-               OpStore %8 %9
-               OpStore %10 %11
-         %15 = OpLoad %6 %8
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  // Attempt 5 should fail as pass with granularity 2 got to end.
-  ASSERT_EQ(0, pass.TryApplyReduction(binary).size());
-
-  {
-    // Attempt 6 should remove first removable statement.
-    const std::string expected_reduced = prologue + R"(
-               OpStore %10 %11
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  {
-    // Attempt 7 should remove second removable statement.
-    const std::string expected_reduced = prologue + R"(
-               OpStore %8 %9
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  {
-    // Attempt 8 should remove third removable statement.
-    const std::string expected_reduced = prologue + R"(
-               OpStore %8 %9
-               OpStore %10 %11
-         %15 = OpLoad %6 %8
-               OpStore %14 %15
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  {
-    // Attempt 9 should remove fourth removable statement.
-    const std::string expected_reduced = prologue + R"(
-               OpStore %8 %9
-               OpStore %10 %11
-               OpStore %12 %13
-         %15 = OpLoad %6 %8
-    )" + epilogue;
-    auto reduced_binary = pass.TryApplyReduction(binary);
-    CheckEqual(env, expected_reduced, reduced_binary);
-  }
-
-  // Attempt 10 should fail as pass with granularity 1 got to end.
-  ASSERT_EQ(0, pass.TryApplyReduction(binary).size());
-
-  ASSERT_TRUE(pass.ReachedMinimumGranularity());
+  CheckEqual(env, expected_after_4, context.get());
 }
 
 }  // namespace

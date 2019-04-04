@@ -63,6 +63,7 @@
 #include "source/opt/simplification_pass.h"
 #include "source/opt/ssa_rewrite_pass.h"
 #include "source/opt/strength_reduction_pass.h"
+#include "source/opt/strip_atomic_counter_memory_pass.h"
 #include "source/opt/strip_debug_info_pass.h"
 #include "source/opt/strip_reflect_info_pass.h"
 #include "source/opt/unify_const_pass.h"

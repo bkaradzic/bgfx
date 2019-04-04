@@ -49,7 +49,7 @@ namespace Spv
     {
         public const uint MagicNumber = 0x07230203;
         public const uint Version = 0x00010300;
-        public const uint Revision = 6;
+        public const uint Revision = 7;
         public const uint OpCodeMask = 0xffff;
         public const uint WordCountShift = 16;
 

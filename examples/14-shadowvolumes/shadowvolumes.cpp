@@ -99,8 +99,9 @@ static bgfx::FrameBufferHandle s_stencilFb;
 
 void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil)
 {
-	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
+		const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -110,8 +111,9 @@ void setViewClearMask(uint32_t _viewMask, uint8_t _flags, uint32_t _rgba, float 
 
 void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _proj)
 {
-	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
+        const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 
@@ -121,8 +123,9 @@ void setViewTransformMask(uint32_t _viewMask, const void* _view, const void* _pr
 
 void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height)
 {
-	for (uint32_t view = 0, viewMask = _viewMask, ntz = bx::uint32_cnttz(_viewMask); 0 != viewMask; viewMask >>= 1, view += 1, ntz = bx::uint32_cnttz(viewMask) )
+	for (uint32_t view = 0, viewMask = _viewMask; 0 != viewMask; viewMask >>= 1, view += 1 )
 	{
+        const uint32_t ntz = bx::uint32_cnttz(viewMask);
 		viewMask >>= ntz;
 		view += ntz;
 

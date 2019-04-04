@@ -3952,13 +3952,14 @@ namespace bgfx { namespace d3d12
 
 		if (UINT8_MAX != _draw.m_streamMask)
 		{
-			for (uint32_t idx = 0, streamMask = _draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+			for (uint32_t idx = 0, streamMask = _draw.m_streamMask
 				; 0 != streamMask
-				; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+				; streamMask >>= 1, idx += 1, ++numStreams
 				)
 			{
+				const uint32_t ntz = bx::uint32_cnttz(streamMask);
 				streamMask >>= ntz;
-				idx += ntz;
+				idx         += ntz;
 
 				const Stream& stream = _draw.m_stream[idx];
 
@@ -6255,13 +6256,14 @@ namespace bgfx { namespace d3d12
 					uint8_t numStreams = 0;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
-						for (uint32_t idx = 0, streamMask = draw.m_streamMask, ntz = bx::uint32_cnttz(streamMask)
+						for (uint32_t idx = 0, streamMask = draw.m_streamMask
 							; 0 != streamMask
-							; streamMask >>= 1, idx += 1, ntz = bx::uint32_cnttz(streamMask), ++numStreams
+							; streamMask >>= 1, idx += 1, ++numStreams
 							)
 						{
+							const uint32_t ntz = bx::uint32_cnttz(streamMask);
 							streamMask >>= ntz;
-							idx += ntz;
+							idx         += ntz;
 
 							currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
 							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;

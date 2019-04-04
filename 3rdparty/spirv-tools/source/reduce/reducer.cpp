@@ -15,10 +15,17 @@
 #include <cassert>
 #include <sstream>
 
+#include "source/reduce/merge_blocks_reduction_opportunity_finder.h"
+#include "source/reduce/operand_to_const_reduction_opportunity_finder.h"
+#include "source/reduce/operand_to_dominating_id_reduction_opportunity_finder.h"
+#include "source/reduce/operand_to_undef_reduction_opportunity_finder.h"
+#include "source/reduce/remove_function_reduction_opportunity_finder.h"
+#include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
+#include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
+#include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
 #include "source/spirv_reducer_options.h"
 
 #include "reducer.h"
-#include "reduction_pass.h"
 
 namespace spvtools {
 namespace reduce {
@@ -53,12 +60,24 @@ void Reducer::SetInterestingnessFunction(
 
 Reducer::ReductionResultStatus Reducer::Run(
     std::vector<uint32_t>&& binary_in, std::vector<uint32_t>* binary_out,
-    spv_const_reducer_options options) const {
-  std::vector<uint32_t> current_binary = binary_in;
+    spv_const_reducer_options options,
+    spv_validator_options validator_options) const {
+  std::vector<uint32_t> current_binary(std::move(binary_in));
+
+  spvtools::SpirvTools tools(impl_->target_env);
+  assert(tools.IsValid() && "Failed to create SPIRV-Tools interface");
 
   // Keeps track of how many reduction attempts have been tried.  Reduction
   // bails out if this reaches a given limit.
   uint32_t reductions_applied = 0;
+
+  // Initial state should be valid.
+  if (!tools.Validate(&current_binary[0], current_binary.size(),
+                      validator_options)) {
+    impl_->consumer(SPV_MSG_INFO, nullptr, {},
+                    "Initial binary is invalid; stopping.");
+    return Reducer::ReductionResultStatus::kInitialStateInvalid;
+  }
 
   // Initial state should be interesting.
   if (!impl_->interestingness_function(current_binary, reductions_applied)) {
@@ -93,25 +112,31 @@ Reducer::ReductionResultStatus Reducer::Run(
       do {
         auto maybe_result = pass->TryApplyReduction(current_binary);
         if (maybe_result.empty()) {
-          // This pass did not have any impact, so move on to the next pass.
+          // For this round, the pass has no more opportunities (chunks) to
+          // apply, so move on to the next pass.
           impl_->consumer(
               SPV_MSG_INFO, nullptr, {},
               ("Pass " + pass->GetName() + " did not make a reduction step.")
                   .c_str());
           break;
         }
+        bool interesting = false;
         std::stringstream stringstream;
         reductions_applied++;
         stringstream << "Pass " << pass->GetName() << " made reduction step "
                      << reductions_applied << ".";
         impl_->consumer(SPV_MSG_INFO, nullptr, {},
                         (stringstream.str().c_str()));
-        if (!spvtools::SpirvTools(impl_->target_env).Validate(maybe_result)) {
+        if (!tools.Validate(&maybe_result[0], maybe_result.size(),
+                            validator_options)) {
           // The reduction step went wrong and an invalid binary was produced.
           // By design, this shouldn't happen; this is a safeguard to stop an
           // invalid binary from being regarded as interesting.
           impl_->consumer(SPV_MSG_INFO, nullptr, {},
                           "Reduction step produced an invalid binary.");
+          if (options->fail_on_validation_error) {
+            return Reducer::ReductionResultStatus::kStateInvalid;
+          }
         } else if (impl_->interestingness_function(maybe_result,
                                                    reductions_applied)) {
           // Success!  The binary produced by this reduction step is
@@ -120,8 +145,11 @@ Reducer::ReductionResultStatus Reducer::Run(
           impl_->consumer(SPV_MSG_INFO, nullptr, {},
                           "Reduction step succeeded.");
           current_binary = std::move(maybe_result);
+          interesting = true;
           another_round_worthwhile = true;
         }
+        // We must call this before the next call to TryApplyReduction.
+        pass->NotifyInteresting(interesting);
         // Bail out if the reduction step limit has been reached.
       } while (!impl_->ReachedStepLimit(reductions_applied, options));
     }
@@ -138,6 +166,25 @@ Reducer::ReductionResultStatus Reducer::Run(
   }
   impl_->consumer(SPV_MSG_INFO, nullptr, {}, "No more to reduce; stopping.");
   return Reducer::ReductionResultStatus::kComplete;
+}
+
+void Reducer::AddDefaultReductionPasses() {
+  AddReductionPass(spvtools::MakeUnique<
+                   RemoveOpNameInstructionReductionOpportunityFinder>());
+  AddReductionPass(
+      spvtools::MakeUnique<OperandToUndefReductionOpportunityFinder>());
+  AddReductionPass(
+      spvtools::MakeUnique<OperandToConstReductionOpportunityFinder>());
+  AddReductionPass(
+      spvtools::MakeUnique<OperandToDominatingIdReductionOpportunityFinder>());
+  AddReductionPass(spvtools::MakeUnique<
+                   RemoveUnreferencedInstructionReductionOpportunityFinder>());
+  AddReductionPass(spvtools::MakeUnique<
+                   StructuredLoopToSelectionReductionOpportunityFinder>());
+  AddReductionPass(
+      spvtools::MakeUnique<MergeBlocksReductionOpportunityFinder>());
+  AddReductionPass(
+      spvtools::MakeUnique<RemoveFunctionReductionOpportunityFinder>());
 }
 
 void Reducer::AddReductionPass(

@@ -35,7 +35,23 @@
 #include <utility>
 #include <vector>
 
-namespace spirv_cross
+// A bit crude, but allows projects which embed SPIRV-Cross statically to
+// effectively hide all the symbols from other projects.
+// There is a case where we have:
+// - Project A links against SPIRV-Cross statically.
+// - Project A links against Project B statically.
+// - Project B links against SPIRV-Cross statically (might be a different version).
+// This leads to a conflict with extremely bizarre results.
+// By overriding the namespace in one of the project builds, we can work around this.
+// If SPIRV-Cross is embedded in dynamic libraries,
+// prefer using -fvisibility=hidden on GCC/Clang instead.
+#ifdef SPIRV_CROSS_NAMESPACE_OVERRIDE
+#define SPIRV_CROSS_NAMESPACE SPIRV_CROSS_NAMESPACE_OVERRIDE
+#else
+#define SPIRV_CROSS_NAMESPACE spirv_cross
+#endif
+
+namespace SPIRV_CROSS_NAMESPACE
 {
 
 #ifdef SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
@@ -423,7 +439,6 @@ struct SPIRType : IVariant
 		Unknown,
 		Void,
 		Boolean,
-		Char,
 		SByte,
 		UByte,
 		Short,
@@ -440,7 +455,11 @@ struct SPIRType : IVariant
 		Image,
 		SampledImage,
 		Sampler,
-		ControlPointArray
+		AccelerationStructureNV,
+
+		// Keep internal types at the end.
+		ControlPointArray,
+		Char
 	};
 
 	// Scalar/vector/matrix support.
@@ -1404,8 +1423,9 @@ struct Meta
 		{
 			uint32_t packed_type = 0;
 			bool packed = false;
-			uint32_t ib_member_index = static_cast<uint32_t>(-1);
+			uint32_t ib_member_index = ~(0u);
 			uint32_t ib_orig_id = 0;
+			uint32_t argument_buffer_id = ~(0u);
 		} extended;
 	};
 

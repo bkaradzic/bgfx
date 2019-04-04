@@ -540,15 +540,15 @@ void ValidationState_t::RegisterInstruction(Instruction* inst) {
       const uint32_t operand_word = inst->word(operand.offset);
       Instruction* operand_inst = FindDef(operand_word);
       if (operand_inst && SpvOpSampledImage == operand_inst->opcode()) {
-        RegisterSampledImageConsumer(operand_word, inst->id());
+        RegisterSampledImageConsumer(operand_word, inst);
       }
     }
   }
 }
 
-std::vector<uint32_t> ValidationState_t::getSampledImageConsumers(
+std::vector<Instruction*> ValidationState_t::getSampledImageConsumers(
     uint32_t sampled_image_id) const {
-  std::vector<uint32_t> result;
+  std::vector<Instruction*> result;
   auto iter = sampled_image_consumers_.find(sampled_image_id);
   if (iter != sampled_image_consumers_.end()) {
     result = iter->second;
@@ -557,8 +557,8 @@ std::vector<uint32_t> ValidationState_t::getSampledImageConsumers(
 }
 
 void ValidationState_t::RegisterSampledImageConsumer(uint32_t sampled_image_id,
-                                                     uint32_t consumer_id) {
-  sampled_image_consumers_[sampled_image_id].push_back(consumer_id);
+                                                     Instruction* consumer) {
+  sampled_image_consumers_[sampled_image_id].push_back(consumer);
 }
 
 uint32_t ValidationState_t::getIdBound() const { return id_bound_; }

@@ -21,7 +21,7 @@
 
 using namespace std;
 
-namespace spirv_cross
+namespace SPIRV_CROSS_NAMESPACE
 {
 CFG::CFG(Compiler &compiler_, const SPIRFunction &func_)
     : compiler(compiler_)

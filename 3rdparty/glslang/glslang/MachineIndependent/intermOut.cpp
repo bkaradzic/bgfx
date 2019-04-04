@@ -43,6 +43,7 @@
 #else
 #include <cmath>
 #endif
+#include <cstdint>
 
 namespace {
 
@@ -1162,8 +1163,11 @@ static void OutputDouble(TInfoSink& out, double value, TOutputTraverser::EExtraO
         switch (extra) {
         case TOutputTraverser::BinaryDoubleOutput:
         {
+            uint64_t b;
+            static_assert(sizeof(b) == sizeof(value), "sizeof(uint64_t) != sizeof(double)");
+            memcpy(&b, &value, sizeof(b));
+
             out.debug << " : ";
-            long long b = *reinterpret_cast<long long*>(&value);
             for (size_t i = 0; i < 8 * sizeof(value); ++i, ++b) {
                 out.debug << ((b & 0x8000000000000000) != 0 ? "1" : "0");
                 b <<= 1;

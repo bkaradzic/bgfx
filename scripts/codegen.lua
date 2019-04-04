@@ -168,8 +168,17 @@ local function gen_ret_conversion(all_types, func)
 		postfix[#postfix+1] = "return handle_ret.c;"
 		postfix_cpp2c[#postfix_cpp2c+1] = "return handle_ret.cpp;"
 	elseif func.ret.fulltype ~= "void" then
-		local ctype_conversion = ctype.name == ctype.cname and "" or ("(" ..  func.ret.ctype .. ")")
-		local conversion_back = ctype.name == ctype.cname and "" or ("(" ..  func.ret.cpptype .. ")")
+		local ctype_conversion = ""
+		local conversion_back = ""
+		if ctype.name ~= ctype.cname then
+			if func.ret.ref then
+				ctype_conversion =  "(" ..  func.ret.ctype .. ")&"
+				conversion_back = "*(" ..  func.ret.ptype .. ")"
+			else
+				ctype_conversion = "(" ..  func.ret.ctype .. ")"
+				conversion_back = "(" ..  func.ret.cpptype .. ")"
+			end
+		end
 		if #postfix > 0 then
 			func.ret_prefix = string.format("%s retValue = %s", func.ret.ctype , ctype_conversion)
 			func.ret_prefix_cpp2c = string.format("%s retValue = %s", func.ret.cpptype , conversion_back)
@@ -219,6 +228,7 @@ function codegen.nameconversion(all_types, all_funcs)
 			v.cname = "bgfx_".. cname .. "_t"
 		end
 		if v.enum then
+			v.typename = v.name
 			v.name = v.name .. "::Enum"
 		end
 	end
@@ -379,8 +389,8 @@ local function codetemp(func)
 		if arg.array then
 			name = name .. arg.array
 		end
-		if arg.default then
-			name = name .. " = " .. arg.default
+		if arg.default ~= nil then
+			name = name .. " = " .. tostring(arg.default)
 		end
 		cargs[#cargs+1] = cname
 		args[#args+1] = name
@@ -596,7 +606,7 @@ function codegen.gen_enum_define(enum)
 		comment = "/// " .. enum.comment
 	end
 	local temp = {
-		NAME = enum.name,
+		NAME = enum.typename,
 		COMMENT = comment,
 		ITEMS = table.concat(items, "\n\t\t"),
 	}
@@ -701,7 +711,7 @@ function codegen.gen_struct_define(struct, methods)
 	assert(type(struct.struct) == "table", "Not a struct")
 	local items = {}
 	for _, item in ipairs(struct.struct) do
-		text_with_comments(items, item, false, methods ~= nil)
+		text_with_comments(items, item, false, methods ~= nil and not struct.shortname)
 	end
 	local ctor = {}
 	if struct.ctor then

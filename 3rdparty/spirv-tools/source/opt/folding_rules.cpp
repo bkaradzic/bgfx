@@ -2167,6 +2167,37 @@ FoldingRule VectorShuffleFeedingShuffle() {
   };
 }
 
+// Removes duplicate ids from the interface list of an OpEntryPoint
+// instruction.
+FoldingRule RemoveRedundantOperands() {
+  return [](IRContext*, Instruction* inst,
+            const std::vector<const analysis::Constant*>&) {
+    assert(inst->opcode() == SpvOpEntryPoint &&
+           "Wrong opcode.  Should be OpEntryPoint.");
+    bool has_redundant_operand = false;
+    std::unordered_set<uint32_t> seen_operands;
+    std::vector<Operand> new_operands;
+
+    new_operands.emplace_back(inst->GetOperand(0));
+    new_operands.emplace_back(inst->GetOperand(1));
+    new_operands.emplace_back(inst->GetOperand(2));
+    for (uint32_t i = 3; i < inst->NumOperands(); ++i) {
+      if (seen_operands.insert(inst->GetSingleWordOperand(i)).second) {
+        new_operands.emplace_back(inst->GetOperand(i));
+      } else {
+        has_redundant_operand = true;
+      }
+    }
+
+    if (!has_redundant_operand) {
+      return false;
+    }
+
+    inst->SetInOperands(std::move(new_operands));
+    return true;
+  };
+}
+
 }  // namespace
 
 FoldingRules::FoldingRules() {
@@ -2182,6 +2213,8 @@ FoldingRules::FoldingRules() {
   rules_[SpvOpCompositeExtract].push_back(FMixFeedingExtract());
 
   rules_[SpvOpDot].push_back(DotProductDoingExtract());
+
+  rules_[SpvOpEntryPoint].push_back(RemoveRedundantOperands());
 
   rules_[SpvOpExtInst].push_back(RedundantFMix());
 

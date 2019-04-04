@@ -20,6 +20,7 @@ add_spvtools_unittest(TARGET reduce
         reduce_test_util.cpp
         reduce_test_util.h
         reducer_test.cpp
+        remove_block_test.cpp
         remove_function_test.cpp
         remove_opname_instruction_test.cpp
         remove_unreferenced_instruction_test.cpp

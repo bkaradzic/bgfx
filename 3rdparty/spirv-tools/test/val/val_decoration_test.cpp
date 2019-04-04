@@ -3023,6 +3023,8 @@ TEST_F(ValidateDecorations,
             OpMemoryModel Logical GLSL450
             OpEntryPoint Fragment %1 "main"
             OpExecutionMode %1 OriginUpperLeft
+            OpDecorate %struct Block
+            OpMemberDecorate %struct 0 Offset 0
 
     %void = OpTypeVoid
   %voidfn = OpTypeFunction %void

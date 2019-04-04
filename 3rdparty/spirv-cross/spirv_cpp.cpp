@@ -17,7 +17,7 @@
 #include "spirv_cpp.hpp"
 
 using namespace spv;
-using namespace spirv_cross;
+using namespace SPIRV_CROSS_NAMESPACE;
 using namespace std;
 
 void CompilerCPP::emit_buffer_block(const SPIRVariable &var)

@@ -18,7 +18,7 @@ struct SSBO
 constant uint _21 = (uint(a) + 0u);
 constant uint _22_tmp [[function_constant(10)]];
 constant uint _22 = is_function_constant_defined(_22_tmp) ? _22_tmp : 1u;
-constant uint3 gl_WorkGroupSize = uint3(_22, 20u, 1u);
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(_22, 20u, 1u);
 constant uint _27 = gl_WorkGroupSize.x;
 constant uint _28 = (_21 + _27);
 constant uint _29 = gl_WorkGroupSize.y;

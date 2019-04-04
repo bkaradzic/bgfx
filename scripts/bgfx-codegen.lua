@@ -13,6 +13,8 @@ local func_actions = {
 	interface_import = ",\n\t\t\t",
 	c99_interface = "\n",
 	cpp_interface = "\n",
+	c99_functionid = "\n\t",
+	cpp_functionid = "\n\t\t",
 }
 
 local type_actions = {
@@ -56,6 +58,8 @@ BGFX_C_API $CRET bgfx_$CFUNCNAME($CARGS)
 	$POSTRETCTOC
 }
 ]]
+functemp.c99_functionid = "BGFX_FUNCTION_ID_$CFUNCNAMEUPPER,"
+functemp.cpp_functionid = "$CFUNCNAMECAML,"
 
 for action,temp in pairs(functemp) do
 	funcgen[action] = cfunc(function(func)
@@ -242,11 +246,11 @@ local function codes()
 		end
 	end
 
-	for k, ident in pairs(func_actions) do
-		temp[k] = table.concat(temp[k], ident)
+	for k, indent in pairs(func_actions) do
+		temp[k] = table.concat(temp[k], indent)
 	end
-	for k, ident in pairs(type_actions) do
-		temp[k] = table.concat(temp[k], ident)
+	for k, indent in pairs(type_actions) do
+		temp[k] = table.concat(temp[k], indent)
 	end
 
 	return temp
@@ -264,27 +268,61 @@ local function add_path(filename)
 	return path .. "/" .. filename
 end
 
-local function genidl(filename, outputfile)
-	local tempfile = "temp." .. filename
-	print ("Generate", outputfile, "from", tempfile)
+local function change_indent(str, indent)
+	if indent == "\t" then
+		-- strip trailing space only
+		return (str:gsub("(.-)\n", function (line)
+			return line:gsub("([ \t]*)$","\n") end))
+	else
+		return (str:gsub("(.-)\n", function (line)
+			return line:gsub("^(\t*)(.-)[ \t]*$",
+				function (tabs, content)
+					return indent:rep(#tabs) .. content .. "\n"
+				end)
+		end))
+	end
+end
+
+local gen = {}
+
+function gen.apply(tempfile)
 	local f = assert(io.open(tempfile, "rb"))
 	local temp = f:read "a"
 	f:close()
-	local out = assert(io.open(outputfile, "wb"))
 	codes_tbl.source = tempfile
-	out:write((temp:gsub("$([%l%d_]+)", codes_tbl)))
+	return (temp:gsub("$([%l%d_]+)", codes_tbl))
+end
+
+function gen.format(codes, f)
+	return change_indent(codes, f.indent)
+end
+
+function gen.changed(codes, outputfile)
+	local out = io.open(outputfile, "rb")
+	if out then
+		local origin = out:read "a"
+		out:close()
+		return origin ~= codes
+	end
+	return true
+end
+
+function gen.write(codes, outputfile)
+	local out = assert(io.open(outputfile, "wb"))
+	out:write(codes)
 	out:close()
 end
 
-function doIdl()
-	local files = {
-		["bgfx.h"] = "../include/bgfx/c99",
-		["bgfx.idl.inl"] = "../src",
-	}
+function gen.gen(tempfile, outputfile, indent)
+	print ("Generate", outputfile, "from", tempfile)
+	local codes = gen.apply(tempfile)
+	codes = change_indent(codes, indent)
 
-	for filename, path in pairs (files) do
-		genidl(filename, path .. "/" .. filename)
+	if not gen.changed(codes, outputfile) then
+		print("No change")
 	end
 
-	os.exit()
+	gen.write(codes, outputfile)
 end
+
+return gen

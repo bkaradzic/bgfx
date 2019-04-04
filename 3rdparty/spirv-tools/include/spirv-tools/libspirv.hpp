@@ -151,16 +151,20 @@ class ReducerOptions {
   ~ReducerOptions() { spvReducerOptionsDestroy(options_); }
 
   // Allow implicit conversion to the underlying object.
-  operator spv_reducer_options() const { return options_; }
+  operator spv_reducer_options() const {  // NOLINT(google-explicit-constructor)
+    return options_;
+  }
 
-  // Records the maximum number of reduction steps that should
-  // run before the reducer gives up.
+  // See spvReducerOptionsSetStepLimit.
   void set_step_limit(uint32_t step_limit) {
     spvReducerOptionsSetStepLimit(options_, step_limit);
   }
 
-  // Sets a seed to be used for random number generation.
-  void set_seed(uint32_t seed) { spvReducerOptionsSetSeed(options_, seed); }
+  // See spvReducerOptionsSetFailOnValidationError.
+  void set_fail_on_validation_error(bool fail_on_validation_error) {
+    spvReducerOptionsSetFailOnValidationError(options_,
+                                              fail_on_validation_error);
+  }
 
  private:
   spv_reducer_options options_;

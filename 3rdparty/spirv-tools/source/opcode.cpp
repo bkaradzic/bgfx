@@ -605,3 +605,35 @@ bool spvOpcodeIsDebug(SpvOp opcode) {
       return false;
   }
 }
+
+std::vector<uint32_t> spvOpcodeMemorySemanticsOperandIndices(SpvOp opcode) {
+  switch (opcode) {
+    case SpvOpMemoryBarrier:
+      return {1};
+    case SpvOpAtomicStore:
+    case SpvOpControlBarrier:
+    case SpvOpAtomicFlagClear:
+    case SpvOpMemoryNamedBarrier:
+      return {2};
+    case SpvOpAtomicLoad:
+    case SpvOpAtomicExchange:
+    case SpvOpAtomicIIncrement:
+    case SpvOpAtomicIDecrement:
+    case SpvOpAtomicIAdd:
+    case SpvOpAtomicISub:
+    case SpvOpAtomicSMin:
+    case SpvOpAtomicUMin:
+    case SpvOpAtomicSMax:
+    case SpvOpAtomicUMax:
+    case SpvOpAtomicAnd:
+    case SpvOpAtomicOr:
+    case SpvOpAtomicXor:
+    case SpvOpAtomicFlagTestAndSet:
+      return {4};
+    case SpvOpAtomicCompareExchange:
+    case SpvOpAtomicCompareExchangeWeak:
+      return {4, 5};
+    default:
+      return {};
+  }
+}
