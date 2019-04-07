@@ -73,7 +73,6 @@ Construct::ConstructBlockSet Construct::blocks(Function* function) const {
   auto header = entry_block();
   auto merge = exit_block();
   assert(header);
-  assert(merge);
   int header_depth = function->GetBlockDepth(const_cast<BasicBlock*>(header));
   ConstructBlockSet construct_blocks;
   std::unordered_set<BasicBlock*> corresponding_headers;

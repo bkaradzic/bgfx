@@ -21,6 +21,7 @@
 #include "source/reduce/operand_to_undef_reduction_opportunity_finder.h"
 #include "source/reduce/remove_function_reduction_opportunity_finder.h"
 #include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
+#include "source/reduce/remove_selection_reduction_opportunity_finder.h"
 #include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
 #include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
 #include "source/spirv_reducer_options.h"
@@ -185,6 +186,8 @@ void Reducer::AddDefaultReductionPasses() {
       spvtools::MakeUnique<MergeBlocksReductionOpportunityFinder>());
   AddReductionPass(
       spvtools::MakeUnique<RemoveFunctionReductionOpportunityFinder>());
+  AddReductionPass(
+      spvtools::MakeUnique<RemoveSelectionReductionOpportunityFinder>());
 }
 
 void Reducer::AddReductionPass(

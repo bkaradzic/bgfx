@@ -264,6 +264,12 @@ void LocalAccessChainConvertPass::Initialize() {
 }
 
 bool LocalAccessChainConvertPass::AllExtensionsSupported() const {
+  // This capability can now exist without the extension, so we have to check
+  // for the capability.  This pass is only looking at function scope symbols,
+  // so we do not care if there are variable pointers on storage buffers.
+  if (context()->get_feature_mgr()->HasCapability(
+          SpvCapabilityVariablePointers))
+    return false;
   // If any extension not in whitelist, return false
   for (auto& ei : get_module()->extensions()) {
     const char* extName =

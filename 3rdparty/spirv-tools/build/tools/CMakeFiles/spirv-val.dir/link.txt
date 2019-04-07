@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/spirv-val.dir/val/val.cpp.o CMakeFiles/spirv-val.dir/util/cli_consumer.cpp.o  -o spirv-val -rdynamic ../source/libSPIRV-Tools.a 

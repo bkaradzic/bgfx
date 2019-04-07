@@ -2987,6 +2987,39 @@ OpFunctionEnd
           "Statically reachable blocks cannot be terminated by OpUnreachable"));
 }
 
+TEST_F(ValidateCFG, UnreachableLoopBadBackedge) {
+  const std::string text = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+%4 = OpTypeVoid
+%5 = OpTypeFunction %4
+%8 = OpTypeBool
+%13 = OpConstantTrue %8
+%2 = OpFunction %4 None %5
+%14 = OpLabel
+OpSelectionMerge %15 None
+OpBranchConditional %13 %15 %15
+%16 = OpLabel
+OpLoopMerge %17 %18 None
+OpBranch %17
+%18 = OpLabel
+OpBranch %17
+%17 = OpLabel
+OpBranch %15
+%15 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  // The back-edge in this test is bad, but the validator fails to identify it
+  // because it is in an entirely unreachable section of code. Prior to #2488
+  // this code failed an assert in Construct::blocks().
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
 TEST_F(ValidateCFG, OneContinueTwoBackedges) {
   const std::string text = R"(
 OpCapability Shader

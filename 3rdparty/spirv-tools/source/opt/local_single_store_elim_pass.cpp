@@ -98,8 +98,7 @@ void LocalSingleStoreElimPass::InitExtensionWhiteList() {
       "SPV_NV_geometry_shader_passthrough",
       "SPV_AMD_texture_gather_bias_lod",
       "SPV_KHR_storage_buffer_storage_class",
-      // SPV_KHR_variable_pointers
-      //   Currently do not support extended pointer expressions
+      "SPV_KHR_variable_pointers",
       "SPV_AMD_gpu_shader_int16",
       "SPV_KHR_post_depth_coverage",
       "SPV_KHR_shader_atomic_counter_ops",

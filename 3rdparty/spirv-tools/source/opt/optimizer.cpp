@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <source/spirv_optimizer_options.h>
-#include "code_sink.h"
 #include "source/opt/build_module.h"
 #include "source/opt/log.h"
 #include "source/opt/pass_manager.h"
@@ -116,6 +115,10 @@ Optimizer& Optimizer::RegisterLegalizationPasses() {
           // Make private variable function scope
           .RegisterPass(CreateEliminateDeadFunctionsPass())
           .RegisterPass(CreatePrivateToLocalPass())
+          // Fix up the storage classes that DXC may have purposely generated
+          // incorrectly.  All functions are inlined, and a lot of dead code has
+          // been removed.
+          .RegisterPass(CreateFixStorageClassPass())
           // Propagate the value stored to the loads in very simple cases.
           .RegisterPass(CreateLocalSingleBlockLoadStoreElimPass())
           .RegisterPass(CreateLocalSingleStoreElimPass())
@@ -217,14 +220,17 @@ Optimizer& Optimizer::RegisterSizePasses() {
       .RegisterPass(CreateAggressiveDCEPass());
 }
 
-Optimizer& Optimizer::RegisterWebGPUPasses() {
+Optimizer& Optimizer::RegisterVulkanToWebGPUPasses() {
   return RegisterPass(CreateStripDebugInfoPass())
       .RegisterPass(CreateStripAtomicCounterMemoryPass())
+      .RegisterPass(CreateGenerateWebGPUInitializersPass())
       .RegisterPass(CreateEliminateDeadConstantPass())
       .RegisterPass(CreateFlattenDecorationPass())
       .RegisterPass(CreateAggressiveDCEPass())
       .RegisterPass(CreateDeadBranchElimPass());
 }
+
+Optimizer& Optimizer::RegisterWebGPUToVulkanPasses() { return *this; }
 
 bool Optimizer::RegisterPassesFromFlags(const std::vector<std::string>& flags) {
   for (const auto& flag : flags) {
@@ -450,12 +456,16 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateCCPPass());
   } else if (pass_name == "code-sink") {
     RegisterPass(CreateCodeSinkingPass());
+  } else if (pass_name == "fix-storage-class") {
+    RegisterPass(CreateFixStorageClassPass());
   } else if (pass_name == "O") {
     RegisterPerformancePasses();
   } else if (pass_name == "Os") {
     RegisterSizePasses();
   } else if (pass_name == "legalize-hlsl") {
     RegisterLegalizationPasses();
+  } else if (pass_name == "generate-webgpu-initializers") {
+    RegisterPass(CreateGenerateWebGPUInitializersPass());
   } else {
     Errorf(consumer(), nullptr, {},
            "Unknown flag '--%s'. Use --help for a list of valid flags",
@@ -510,10 +520,20 @@ bool Optimizer::Run(const uint32_t* original_binary,
   impl_->pass_manager.SetValidatorOptions(&opt_options->val_options_);
   impl_->pass_manager.SetTargetEnv(impl_->target_env);
   auto status = impl_->pass_manager.Run(context.get());
-  if (status == opt::Pass::Status::SuccessWithChange ||
-      (status == opt::Pass::Status::SuccessWithoutChange &&
-       (optimized_binary->data() != original_binary ||
-        optimized_binary->size() != original_binary_size))) {
+
+  bool binary_changed = false;
+  if (status == opt::Pass::Status::SuccessWithChange) {
+    binary_changed = true;
+  } else if (status == opt::Pass::Status::SuccessWithoutChange) {
+    if (optimized_binary->size() != original_binary_size ||
+        (memcmp(optimized_binary->data(), original_binary, original_binary_size) != 0)) {
+      binary_changed = true;
+      Logf(consumer(), SPV_MSG_WARNING, nullptr, {},
+           "Binary unexpectedly changed despite optimizer saying there was no change");
+    }
+  }
+
+  if (binary_changed) {
     optimized_binary->clear();
     context->module()->ToBinary(optimized_binary, /* skip_nop = */ true);
   }
@@ -824,6 +844,16 @@ Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
 Optimizer::PassToken CreateCodeSinkingPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::CodeSinkingPass>());
+}
+
+Optimizer::PassToken CreateGenerateWebGPUInitializersPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::GenerateWebGPUInitializersPass>());
+}
+
+Optimizer::PassToken CreateFixStorageClassPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::FixStorageClass>());
 }
 
 }  // namespace spvtools

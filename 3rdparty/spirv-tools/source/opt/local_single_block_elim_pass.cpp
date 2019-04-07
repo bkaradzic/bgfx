@@ -187,6 +187,7 @@ Pass::Status LocalSingleBlockLoadStoreElimPass::ProcessImpl() {
   // Assumes relaxed logical addressing only (see instruction.h).
   if (context()->get_feature_mgr()->HasCapability(SpvCapabilityAddresses))
     return Status::SuccessWithoutChange;
+
   // Do not process if module contains OpGroupDecorate. Additional
   // support required in KillNamesAndDecorates().
   // TODO(greg-lunarg): Add support for OpGroupDecorate
@@ -233,8 +234,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_NV_geometry_shader_passthrough",
       "SPV_AMD_texture_gather_bias_lod",
       "SPV_KHR_storage_buffer_storage_class",
-      // SPV_KHR_variable_pointers
-      //   Currently do not support extended pointer expressions
+      "SPV_KHR_variable_pointers",
       "SPV_AMD_gpu_shader_int16",
       "SPV_KHR_post_depth_coverage",
       "SPV_KHR_shader_atomic_counter_ops",

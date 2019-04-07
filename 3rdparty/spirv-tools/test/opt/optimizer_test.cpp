@@ -222,9 +222,9 @@ TEST(Optimizer, CanRegisterPassesFromFlags) {
   EXPECT_EQ(msg_level, SPV_MSG_ERROR);
 }
 
-TEST(Optimizer, WebGPUModeSetsCorrectPasses) {
+TEST(Optimizer, VulkanToWebGPUModeSetsCorrectPasses) {
   Optimizer opt(SPV_ENV_WEBGPU_0);
-  opt.RegisterWebGPUPasses();
+  opt.RegisterVulkanToWebGPUPasses();
   std::vector<const char*> pass_names = opt.GetPassNames();
 
   std::vector<std::string> registered_passes;
@@ -236,7 +236,8 @@ TEST(Optimizer, WebGPUModeSetsCorrectPasses) {
                                               "eliminate-dead-const",
                                               "flatten-decorations",
                                               "strip-debug",
-                                              "strip-atomic-counter-memory"};
+                                              "strip-atomic-counter-memory",
+                                              "generate-webgpu-initializers"};
   std::sort(registered_passes.begin(), registered_passes.end());
   std::sort(expected_passes.begin(), expected_passes.end());
 
@@ -245,7 +246,7 @@ TEST(Optimizer, WebGPUModeSetsCorrectPasses) {
     EXPECT_EQ(registered_passes[i], expected_passes[i]);
 }
 
-struct WebGPUPassCase {
+struct VulkanToWebGPUPassCase {
   // Input SPIR-V
   std::string input;
   // Expected result SPIR-V
@@ -254,15 +255,16 @@ struct WebGPUPassCase {
   std::string pass;
 };
 
-using WebGPUPassTest = PassTest<::testing::TestWithParam<WebGPUPassCase>>;
+using VulkanToWebGPUPassTest =
+    PassTest<::testing::TestWithParam<VulkanToWebGPUPassCase>>;
 
-TEST_P(WebGPUPassTest, Ran) {
+TEST_P(VulkanToWebGPUPassTest, Ran) {
   SpirvTools tools(SPV_ENV_WEBGPU_0);
   std::vector<uint32_t> binary;
   tools.Assemble(GetParam().input, &binary);
 
   Optimizer opt(SPV_ENV_WEBGPU_0);
-  opt.RegisterWebGPUPasses();
+  opt.RegisterVulkanToWebGPUPasses();
 
   std::vector<uint32_t> optimized;
   class ValidatorOptions validator_options;
@@ -276,8 +278,8 @@ TEST_P(WebGPUPassTest, Ran) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    Optimizer, WebGPUPassTest,
-    ::testing::ValuesIn(std::vector<WebGPUPassCase>{
+    Optimizer, VulkanToWebGPUPassTest,
+    ::testing::ValuesIn(std::vector<VulkanToWebGPUPassCase>{
         // FlattenDecorations
         {// input
          "OpCapability Shader\n"
@@ -436,7 +438,45 @@ INSTANTIATE_TEST_SUITE_P(
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
-         "strip-atomic-counter-memory"}}));
+         "strip-atomic-counter-memory"},
+        // Generate WebGPU Initializers
+        {// input
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %func \"shader\"\n"
+         "%u32 = OpTypeInt 32 0\n"
+         "%u32_ptr = OpTypePointer Private %u32\n"
+         "%u32_var = OpVariable %u32_ptr Private\n"
+         "%u32_0 = OpConstant %u32 0\n"
+         "%void = OpTypeVoid\n"
+         "%void_f = OpTypeFunction %void\n"
+         "%func = OpFunction %void None %void_f\n"
+         "%label = OpLabel\n"
+         "OpStore %u32_var %u32_0\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // expected
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%_ptr_Private_uint = OpTypePointer Private %uint\n"
+         "%9 = OpConstantNull %uint\n"
+         "%4 = OpVariable %_ptr_Private_uint Private %9\n"
+         "%uint_0 = OpConstant %uint 0\n"
+         "%void = OpTypeVoid\n"
+         "%7 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %7\n"
+         "%8 = OpLabel\n"
+         "OpStore %4 %uint_0\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // pass
+         "generate-webgpu-initializers"}}));
 
 }  // namespace
 }  // namespace opt

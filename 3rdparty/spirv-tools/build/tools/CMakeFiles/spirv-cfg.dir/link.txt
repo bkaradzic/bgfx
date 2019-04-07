@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/spirv-cfg.dir/cfg/cfg.cpp.o CMakeFiles/spirv-cfg.dir/cfg/bin_to_dot.cpp.o  -o spirv-cfg -rdynamic ../source/libSPIRV-Tools.a 

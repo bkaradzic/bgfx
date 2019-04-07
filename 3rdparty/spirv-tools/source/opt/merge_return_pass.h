@@ -240,12 +240,11 @@ class MergeReturnPass : public MemPass {
   // return block at the end of the pass.
   void CreateReturnBlock();
 
-  // Creates a Phi node in |merge_block| for the result of |inst| coming from
-  // |predecessor|.  Any uses of the result of |inst| that are no longer
+  // Creates a Phi node in |merge_block| for the result of |inst|.
+  // Any uses of the result of |inst| that are no longer
   // dominated by |inst|, are replaced with the result of the new |OpPhi|
   // instruction.
-  void CreatePhiNodesForInst(BasicBlock* merge_block, uint32_t predecessor,
-                             Instruction& inst);
+  void CreatePhiNodesForInst(BasicBlock* merge_block, Instruction& inst);
 
   // Traverse the nodes in |new_merge_nodes_|, and adds the OpPhi instructions
   // that are needed to make the code correct.  It is assumed that at this point
@@ -331,6 +330,11 @@ class MergeReturnPass : public MemPass {
   // values that will need a phi on the new edges.
   std::unordered_map<BasicBlock*, BasicBlock*> new_merge_nodes_;
   bool HasNontrivialUnreachableBlocks(Function* function);
+
+  // Contains all return blocks that are merged. This is set is populated while
+  // processing structured blocks and used to properly construct OpPhi
+  // instructions.
+  std::unordered_set<uint32_t> return_blocks_;
 };
 
 }  // namespace opt
