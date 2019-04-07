@@ -1,0 +1,53 @@
+language:
+  - cpp
+  - python
+
+python: 3.7
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      compiler: gcc
+      env:
+        - GENERATOR="Unix Makefiles"
+    - os: linux
+      dist: trusty
+      compiler: clang
+      env:
+        - GENERATOR="Unix Makefiles"
+    - os: osx
+      compiler: clang
+      osx_image: xcode10
+      env:
+        - GENERATOR="Unix Makefiles"
+    - os: windows
+      before_install:
+        - choco install python3
+        - choco install python2
+        - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+      env:
+        - GENERATOR="Visual Studio 15 2017"
+    - os: windows
+      before_install:
+        - choco install python3
+        - choco install python2
+        - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+      env:
+        - GENERATOR="Visual Studio 15 2017 Win64"
+
+before_script:
+  - ./checkout_glslang_spirv_tools.sh
+
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PYTHON3=$(which python); fi
+  - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
+  - ./build_glslang_spirv_tools.sh Release
+  - mkdir build
+  - cd build
+  - cmake .. -DSPIRV_CROSS_SHARED=ON -DCMAKE_INSTALL_PREFIX=output -DCMAKE_BUILD_TYPE=Release -G "${GENERATOR}" -DPYTHON_EXECUTABLE:FILEPATH="${PYTHON3}" -DSPIRV_CROSS_ENABLE_TESTS=ON
+  - cmake --build . --config Release
+  - cmake --build . --config Release --target install
+  - ctest --verbose -C Release
