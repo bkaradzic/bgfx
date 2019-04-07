@@ -1225,6 +1225,7 @@ namespace bgfx
 		/// @param[in] _handle Vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
+		/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_vertex_buffer`.
 		///
@@ -1233,6 +1234,7 @@ namespace bgfx
 			, VertexBufferHandle _handle
 			, uint32_t _startVertex
 			, uint32_t _numVertices
+			, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
 			);
 
 		/// Set vertex buffer for draw primitive.
@@ -1253,6 +1255,7 @@ namespace bgfx
 		/// @param[in] _handle Dynamic vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
+		/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_dynamic_vertex_buffer`.
 		///
@@ -1261,6 +1264,7 @@ namespace bgfx
 			, DynamicVertexBufferHandle _handle
 			, uint32_t _startVertex
 			, uint32_t _numVertices
+			, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
 			);
 
 		/// Set vertex buffer for draw primitive.
@@ -1281,6 +1285,7 @@ namespace bgfx
 		/// @param[in] _tvb Transient vertex buffer.
 		/// @param[in] _startVertex First vertex to render.
 		/// @param[in] _numVertices Number of vertices to render.
+		/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
 		///
 		/// @attention C99 equivalent is `bgfx_encoder_set_transient_vertex_buffer`.
 		///
@@ -1289,6 +1294,7 @@ namespace bgfx
 			, const TransientVertexBuffer* _tvb
 			, uint32_t _startVertex
 			, uint32_t _numVertices
+			, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
 			);
 
 		/// Set number of vertices for auto generated vertices use in conjuction
@@ -2159,6 +2165,12 @@ namespace bgfx
 	/// @attention C99 equivalent is `bgfx_destroy_index_buffer`.
 	///
 	void destroy(IndexBufferHandle _handle);
+
+	///
+	VertexDeclHandle createVertexDecl(const VertexDecl& _decl);
+
+	///
+	void destroy(VertexDeclHandle _handle);
 
 	/// Create static vertex buffer.
 	///
@@ -3603,6 +3615,7 @@ namespace bgfx
 	/// @param[in] _handle Vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
+	/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_vertex_buffer`.
 	///
@@ -3611,6 +3624,7 @@ namespace bgfx
 		, VertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
+		, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
 		);
 
 	/// Set vertex buffer for draw primitive.
@@ -3631,6 +3645,7 @@ namespace bgfx
 	/// @param[in] _handle Dynamic vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
+	/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_dynamic_vertex_buffer`.
 	///
@@ -3639,6 +3654,7 @@ namespace bgfx
 		, DynamicVertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
+		, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
 		);
 
 	/// Set vertex buffer for draw primitive.
@@ -3659,6 +3675,7 @@ namespace bgfx
 	/// @param[in] _tvb Transient vertex buffer.
 	/// @param[in] _startVertex First vertex to render.
 	/// @param[in] _numVertices Number of vertices to render.
+	/// @param[in] _declHandle VertexDecl handle for aliasing vertex buffer.
 	///
 	/// @attention C99 equivalent is `bgfx_set_transient_vertex_buffer`.
 	///
@@ -3667,6 +3684,7 @@ namespace bgfx
 		, const TransientVertexBuffer* _tvb
 		, uint32_t _startVertex
 		, uint32_t _numVertices
+		, VertexDeclHandle _declHandle = BGFX_INVALID_HANDLE
 		);
 
 	/// Set number of vertices for auto generated vertices use in conjuction
