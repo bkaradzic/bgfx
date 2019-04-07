@@ -45,7 +45,7 @@ namespace spv {
 
 // MSVC defines __cplusplus as an older value, even when it supports almost all of 11.
 // We handle that here by making our own symbol.
-#if __cplusplus >= 201103L || _MSC_VER >= 1700
+#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1700)
 #   define use_cpp11 1
 #endif
 
