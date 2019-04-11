@@ -101,10 +101,15 @@ class Optimizer {
   // from time to time.
   Optimizer& RegisterSizePasses();
 
-  // Registers passes that have been prescribed for WebGPU environments.
-  // This sequence of passes is subject to constant review and will change
-  // from time to time.
-  Optimizer& RegisterWebGPUPasses();
+  // Registers passes that have been prescribed for converting from Vulkan to
+  // WebGPU. This sequence of passes is subject to constant review and will
+  // change from time to time.
+  Optimizer& RegisterVulkanToWebGPUPasses();
+
+  // Registers passes that have been prescribed for converting from WebGPU to
+  // Vulkan. This sequence of passes is subject to constant review and will
+  // change from time to time.
+  Optimizer& RegisterWebGPUToVulkanPasses();
 
   // Registers passes that attempt to legalize the generated code.
   //
@@ -746,6 +751,17 @@ Optimizer::PassToken CreateUpgradeMemoryModelPass();
 // Create a pass to do code sinking.  Code sinking is a transformation
 // where an instruction is moved into a more deeply nested construct.
 Optimizer::PassToken CreateCodeSinkingPass();
+
+// Create a pass to adds initializers for OpVariable calls that require them
+// in WebGPU. Currently this pass naively initializes variables that are
+// missing an initializer with a null value. In the future it may initialize
+// variables to the first value stored in them, if that is a constant.
+Optimizer::PassToken CreateGenerateWebGPUInitializersPass();
+
+// Create a pass to fix incorrect storage classes.  In order to make code
+// generation simpler, DXC may generate code where the storage classes do not
+// match up correctly.  This pass will fix the errors that it can.
+Optimizer::PassToken CreateFixStorageClassPass();
 
 }  // namespace spvtools
 

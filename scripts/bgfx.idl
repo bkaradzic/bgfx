@@ -888,6 +888,16 @@ func.destroy { cname = "destroy_index_buffer" }
 	"void"
 	.handle "IndexBufferHandle" --- Static index buffer handle.
 
+--- Create vertex declaration.
+func.createVertexDecl
+	"VertexDeclHandle"
+	.decl  "const VertexDecl &" --- Vertex declaration.
+
+--- Destroy vertex declaration.
+func.destroy { cname = "destroy_vertex_decl" }
+	"void"
+	.handle "VertexDeclHandle" --- Vertex declaration handle.
+
 --- Create static vertex buffer.
 func.createVertexBuffer
 	"VertexBufferHandle"              --- Static vertex buffer handle.
@@ -1810,6 +1820,8 @@ func.Encoder.setVertexBuffer
 	.handle      "VertexBufferHandle" --- Vertex buffer.
 	.startVertex "uint32_t"           --- First vertex to render.
 	.numVertices "uint32_t"           --- Number of vertices to render.
+	.declHandle  "VertexDeclHandle"   --- VertexDecl handle for aliasing vertex buffer.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer { cpponly }
@@ -1824,6 +1836,8 @@ func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
 	.handle      "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
 	.startVertex "uint32_t"                  --- First vertex to render.
 	.numVertices "uint32_t"                  --- Number of vertices to render.
+	.declHandle  "VertexDeclHandle"          --- VertexDecl handle for aliasing vertex buffer.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer { cpponly }
@@ -1838,6 +1852,8 @@ func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
 	.tvb         "const TransientVertexBuffer*" --- Transient vertex buffer.
 	.startVertex "uint32_t"                     --- First vertex to render.
 	.numVertices "uint32_t"                     --- Number of vertices to render.
+	.declHandle  "VertexDeclHandle"             --- VertexDecl handle for aliasing vertex buffer.
+	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set number of vertices for auto generated vertices use in conjuction
 --- with gl_VertexID.

@@ -314,7 +314,7 @@ void Compiler::register_write(uint32_t chain)
 		if (var->parameter && var->parameter->write_count == 0)
 		{
 			var->parameter->write_count++;
-			force_recompile = true;
+			force_recompile();
 		}
 	}
 	else
@@ -1747,7 +1747,7 @@ uint32_t Compiler::type_struct_member_array_stride(const SPIRType &type, uint32_
 			SPIRV_CROSS_THROW("Struct member does not have ArrayStride set.");
 	}
 	else
-		SPIRV_CROSS_THROW("Struct member does not have Offset set.");
+		SPIRV_CROSS_THROW("Struct member does not have ArrayStride set.");
 }
 
 uint32_t Compiler::type_struct_member_matrix_stride(const SPIRType &type, uint32_t index) const
@@ -4118,4 +4118,20 @@ bool Compiler::type_is_opaque_value(const SPIRType &type) const
 {
 	return !type.pointer && (type.basetype == SPIRType::SampledImage || type.basetype == SPIRType::Image ||
 	                         type.basetype == SPIRType::Sampler);
+}
+
+// Make these member functions so we can easily break on any force_recompile events.
+void Compiler::force_recompile()
+{
+	is_force_recompile = true;
+}
+
+bool Compiler::is_forcing_recompilation() const
+{
+	return is_force_recompile;
+}
+
+void Compiler::clear_force_recompile()
+{
+	is_force_recompile = false;
 }

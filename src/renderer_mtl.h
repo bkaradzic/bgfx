@@ -18,6 +18,21 @@
 #	import <UIKit/UIKit.h>
 #endif // BX_PLATFORM_*
 
+#define BGFX_MTL_PROFILER_BEGIN(_view, _abgr)         \
+	BX_MACRO_BLOCK_BEGIN                              \
+		BGFX_PROFILER_BEGIN(s_viewName[view], _abgr); \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_MTL_PROFILER_BEGIN_LITERAL(_name, _abgr)   \
+	BX_MACRO_BLOCK_BEGIN                                \
+		BGFX_PROFILER_BEGIN_LITERAL("" # _name, _abgr); \
+	BX_MACRO_BLOCK_END
+
+#define BGFX_MTL_PROFILER_END() \
+	BX_MACRO_BLOCK_BEGIN        \
+		BGFX_PROFILER_END();    \
+	BX_MACRO_BLOCK_END
+
 namespace bgfx { namespace mtl
 {
 	//runtime os check
@@ -64,7 +79,7 @@ namespace bgfx { namespace mtl
 
 #define MTL_CLASS_END };
 
-		typedef void (*mtlCallback)(void* userData);
+	typedef void (*mtlCallback)(void* userData);
 
 	MTL_CLASS(BlitCommandEncoder)
 		void copyFromTexture(
@@ -1103,15 +1118,31 @@ namespace bgfx { namespace mtl
 
 		void init();
 		void shutdown();
+		uint32_t begin(uint32_t _resultIdx);
+		void end(uint32_t _idx);
 		void addHandlers(CommandBuffer& _commandBuffer);
 		bool get();
+
+		struct Result
+		{
+			void reset()
+			{
+				m_begin     = 0;
+				m_end       = 0;
+				m_pending   = 0;
+			}
+
+			uint64_t m_begin;
+			uint64_t m_end;
+			uint32_t m_pending;
+		};
 
 		uint64_t m_begin;
 		uint64_t m_end;
 		uint64_t m_elapsed;
 		uint64_t m_frequency;
 
-		uint64_t m_result[4*2];
+		Result m_result[4*2];
 		bx::RingBufferControl m_control;
 	};
 

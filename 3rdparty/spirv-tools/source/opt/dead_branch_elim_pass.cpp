@@ -336,21 +336,7 @@ bool DeadBranchElimPass::EraseDeadBlocks(
     const std::unordered_map<BasicBlock*, BasicBlock*>& unreachable_continues) {
   bool modified = false;
   for (auto ebi = func->begin(); ebi != func->end();) {
-    if (unreachable_merges.count(&*ebi)) {
-      if (ebi->begin() != ebi->tail() ||
-          ebi->terminator()->opcode() != SpvOpUnreachable) {
-        // Make unreachable, but leave the label.
-        KillAllInsts(&*ebi, false);
-        // Add unreachable terminator.
-        ebi->AddInstruction(
-            MakeUnique<Instruction>(context(), SpvOpUnreachable, 0, 0,
-                                    std::initializer_list<Operand>{}));
-        context()->AnalyzeUses(ebi->terminator());
-        context()->set_instr_block(ebi->terminator(), &*ebi);
-        modified = true;
-      }
-      ++ebi;
-    } else if (unreachable_continues.count(&*ebi)) {
+    if (unreachable_continues.count(&*ebi)) {
       uint32_t cont_id = unreachable_continues.find(&*ebi)->second->id();
       if (ebi->begin() != ebi->tail() ||
           ebi->terminator()->opcode() != SpvOpBranch ||
@@ -364,6 +350,20 @@ bool DeadBranchElimPass::EraseDeadBlocks(
             std::initializer_list<Operand>{{SPV_OPERAND_TYPE_ID, {cont_id}}}));
         get_def_use_mgr()->AnalyzeInstUse(&*ebi->tail());
         context()->set_instr_block(&*ebi->tail(), &*ebi);
+        modified = true;
+      }
+      ++ebi;
+    } else if (unreachable_merges.count(&*ebi)) {
+      if (ebi->begin() != ebi->tail() ||
+          ebi->terminator()->opcode() != SpvOpUnreachable) {
+        // Make unreachable, but leave the label.
+        KillAllInsts(&*ebi, false);
+        // Add unreachable terminator.
+        ebi->AddInstruction(
+            MakeUnique<Instruction>(context(), SpvOpUnreachable, 0, 0,
+                                    std::initializer_list<Operand>{}));
+        context()->AnalyzeUses(ebi->terminator());
+        context()->set_instr_block(ebi->terminator(), &*ebi);
         modified = true;
       }
       ++ebi;

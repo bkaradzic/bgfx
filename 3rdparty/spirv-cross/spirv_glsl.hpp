@@ -280,7 +280,7 @@ protected:
 	template <typename... Ts>
 	inline void statement(Ts &&... ts)
 	{
-		if (force_recompile)
+		if (is_forcing_recompilation())
 		{
 			// Do not bother emitting code while force_recompile is active.
 			// We will compile again.
@@ -289,7 +289,10 @@ protected:
 		}
 
 		if (redirect_statement)
+		{
 			redirect_statement->push_back(join(std::forward<Ts>(ts)...));
+			statement_count++;
+		}
 		else
 		{
 			for (uint32_t i = 0; i < indent; i++)

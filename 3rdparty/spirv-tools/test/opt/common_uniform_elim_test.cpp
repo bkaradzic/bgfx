@@ -1383,6 +1383,91 @@ TEST_F(CommonUniformElimTest, LoadPlacedAfterPhi) {
   SinglePassRunAndMatch<CommonUniformElimPass>(text, true);
 }
 
+TEST_F(CommonUniformElimTest, TestVariablePointer) {
+  // Same test a basic1 except the variable pointers capability has been added.
+  // This should stop the transformation from running.
+  const std::string test =
+      R"(OpCapability Shader
+OpCapability VariablePointers
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %BaseColor %fi %gl_FragColor
+OpExecutionMode %main OriginUpperLeft
+OpSource GLSL 140
+OpName %main "main"
+OpName %v "v"
+OpName %BaseColor "BaseColor"
+OpName %fi "fi"
+OpName %U_t "U_t"
+OpMemberName %U_t 0 "g_F"
+OpMemberName %U_t 1 "g_F2"
+OpName %_ ""
+OpName %f2 "f2"
+OpName %gl_FragColor "gl_FragColor"
+OpMemberDecorate %U_t 0 Offset 0
+OpMemberDecorate %U_t 1 Offset 4
+OpDecorate %U_t Block
+OpDecorate %_ DescriptorSet 0
+%void = OpTypeVoid
+%11 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%v4float = OpTypeVector %float 4
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+%_ptr_Input_v4float = OpTypePointer Input %v4float
+%BaseColor = OpVariable %_ptr_Input_v4float Input
+%_ptr_Input_float = OpTypePointer Input %float
+%fi = OpVariable %_ptr_Input_float Input
+%float_0 = OpConstant %float 0
+%bool = OpTypeBool
+%U_t = OpTypeStruct %float %float
+%_ptr_Uniform_U_t = OpTypePointer Uniform %U_t
+%_ = OpVariable %_ptr_Uniform_U_t Uniform
+%int = OpTypeInt 32 1
+%int_0 = OpConstant %int 0
+%_ptr_Uniform_float = OpTypePointer Uniform %float
+%_ptr_Function_float = OpTypePointer Function %float
+%int_1 = OpConstant %int 1
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%gl_FragColor = OpVariable %_ptr_Output_v4float Output
+%main = OpFunction %void None %11
+%26 = OpLabel
+%v = OpVariable %_ptr_Function_v4float Function
+%f2 = OpVariable %_ptr_Function_float Function
+%27 = OpLoad %v4float %BaseColor
+OpStore %v %27
+%28 = OpLoad %float %fi
+%29 = OpFOrdGreaterThan %bool %28 %float_0
+OpSelectionMerge %30 None
+OpBranchConditional %29 %31 %32
+%31 = OpLabel
+%33 = OpLoad %v4float %v
+%34 = OpAccessChain %_ptr_Uniform_float %_ %int_0
+%35 = OpLoad %float %34
+%36 = OpVectorTimesScalar %v4float %33 %35
+OpStore %v %36
+OpBranch %30
+%32 = OpLabel
+%37 = OpAccessChain %_ptr_Uniform_float %_ %int_1
+%38 = OpLoad %float %37
+%39 = OpAccessChain %_ptr_Uniform_float %_ %int_0
+%40 = OpLoad %float %39
+%41 = OpFSub %float %38 %40
+OpStore %f2 %41
+%42 = OpLoad %v4float %v
+%43 = OpLoad %float %f2
+%44 = OpVectorTimesScalar %v4float %42 %43
+OpStore %v %44
+OpBranch %30
+%30 = OpLabel
+%45 = OpLoad %v4float %v
+OpStore %gl_FragColor %45
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<CommonUniformElimPass>(test, test, true, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Disqualifying cases: extensions, decorations, non-logical addressing,

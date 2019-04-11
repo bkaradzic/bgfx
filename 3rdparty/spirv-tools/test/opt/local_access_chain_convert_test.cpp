@@ -700,6 +700,126 @@ OpFunctionEnd
                                                      true);
 }
 
+TEST_F(LocalAccessChainConvertTest, VariablePointersStorageBuffer) {
+  // A case with a storage buffer variable pointer.  We should still convert
+  // the access chain on the function scope symbol.
+  const std::string test =
+      R"(
+; CHECK: OpFunction
+; CHECK: [[var:%\w+]] = OpVariable {{%\w+}} Function
+; CHECK: [[ld:%\w+]] = OpLoad {{%\w+}} [[var]]
+; CHECK: OpCompositeExtract {{%\w+}} [[ld]] 0 0
+               OpCapability Shader
+               OpCapability VariablePointersStorageBuffer
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %2 "main"
+               OpExecutionMode %2 LocalSize 1 1 1
+               OpSource GLSL 450
+               OpMemberDecorate %_struct_3 0 Offset 0
+               OpDecorate %_struct_3 Block
+               OpDecorate %4 DescriptorSet 0
+               OpDecorate %4 Binding 0
+               OpDecorate %_ptr_StorageBuffer_int ArrayStride 4
+               OpDecorate %_arr_int_int_128 ArrayStride 4
+       %void = OpTypeVoid
+          %8 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+    %int_128 = OpConstant %int 128
+%_arr_int_int_128 = OpTypeArray %int %int_128
+  %_struct_3 = OpTypeStruct %_arr_int_int_128
+%_ptr_StorageBuffer__struct_3 = OpTypePointer StorageBuffer %_struct_3
+%_ptr_Function__struct_3 = OpTypePointer Function %_struct_3
+          %4 = OpVariable %_ptr_StorageBuffer__struct_3 StorageBuffer
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+      %int_0 = OpConstant %int 0
+      %int_1 = OpConstant %int 1
+%_ptr_StorageBuffer_int = OpTypePointer StorageBuffer %int
+%_ptr_Function_int = OpTypePointer Function %int
+          %2 = OpFunction %void None %8
+         %18 = OpLabel
+         %19 = OpVariable %_ptr_Function__struct_3 Function
+         %20 = OpAccessChain %_ptr_StorageBuffer_int %4 %int_0 %int_0
+               OpBranch %21
+         %21 = OpLabel
+         %22 = OpPhi %_ptr_StorageBuffer_int %20 %18 %23 %24
+               OpLoopMerge %25 %24 None
+               OpBranchConditional %true %26 %25
+         %26 = OpLabel
+               OpStore %22 %int_0
+               OpBranch %24
+         %24 = OpLabel
+         %23 = OpPtrAccessChain %_ptr_StorageBuffer_int %22 %int_1
+               OpBranch %21
+         %25 = OpLabel
+         %27 = OpAccessChain %_ptr_Function_int %19 %int_0 %int_0
+         %28 = OpLoad %int %27
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<LocalAccessChainConvertPass>(test, true);
+}
+
+TEST_F(LocalAccessChainConvertTest, VariablePointers) {
+  // A case with variable pointer capability.  We should not convert
+  // the access chain on the function scope symbol because the variable pointer
+  // could the analysis to miss references to function scope symbols.
+  const std::string test =
+      R"(OpCapability Shader
+OpCapability VariablePointers
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %2 "main"
+OpExecutionMode %2 LocalSize 1 1 1
+OpSource GLSL 450
+OpMemberDecorate %_struct_3 0 Offset 0
+OpDecorate %_struct_3 Block
+OpDecorate %4 DescriptorSet 0
+OpDecorate %4 Binding 0
+OpDecorate %_ptr_StorageBuffer_int ArrayStride 4
+OpDecorate %_arr_int_int_128 ArrayStride 4
+%void = OpTypeVoid
+%8 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%int_128 = OpConstant %int 128
+%_arr_int_int_128 = OpTypeArray %int %int_128
+%_struct_3 = OpTypeStruct %_arr_int_int_128
+%_ptr_StorageBuffer__struct_3 = OpTypePointer StorageBuffer %_struct_3
+%_ptr_Function__struct_3 = OpTypePointer Function %_struct_3
+%4 = OpVariable %_ptr_StorageBuffer__struct_3 StorageBuffer
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%_ptr_StorageBuffer_int = OpTypePointer StorageBuffer %int
+%_ptr_Function_int = OpTypePointer Function %int
+%2 = OpFunction %void None %8
+%18 = OpLabel
+%19 = OpVariable %_ptr_Function__struct_3 Function
+%20 = OpAccessChain %_ptr_StorageBuffer_int %4 %int_0 %int_0
+OpBranch %21
+%21 = OpLabel
+%22 = OpPhi %_ptr_StorageBuffer_int %20 %18 %23 %24
+OpLoopMerge %25 %24 None
+OpBranchConditional %true %26 %25
+%26 = OpLabel
+OpStore %22 %int_0
+OpBranch %24
+%24 = OpLabel
+%23 = OpPtrAccessChain %_ptr_StorageBuffer_int %22 %int_1
+OpBranch %21
+%25 = OpLabel
+%27 = OpAccessChain %_ptr_Function_int %19 %int_0 %int_0
+%28 = OpLoad %int %27
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<LocalAccessChainConvertPass>(test, test, false, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Assorted vector and matrix types

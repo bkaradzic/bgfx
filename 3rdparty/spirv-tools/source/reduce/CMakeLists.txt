@@ -30,6 +30,8 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
         remove_function_reduction_opportunity.h
         remove_function_reduction_opportunity_finder.h
         remove_opname_instruction_reduction_opportunity_finder.h
+        remove_selection_reduction_opportunity.h
+        remove_selection_reduction_opportunity_finder.h
         remove_unreferenced_instruction_reduction_opportunity_finder.h
         structured_loop_to_selection_reduction_opportunity.h
         structured_loop_to_selection_reduction_opportunity_finder.h
@@ -50,6 +52,8 @@ set(SPIRV_TOOLS_REDUCE_SOURCES
         remove_function_reduction_opportunity.cpp
         remove_function_reduction_opportunity_finder.cpp
         remove_instruction_reduction_opportunity.cpp
+        remove_selection_reduction_opportunity.cpp
+        remove_selection_reduction_opportunity_finder.cpp
         remove_unreferenced_instruction_reduction_opportunity_finder.cpp
         remove_opname_instruction_reduction_opportunity_finder.cpp
         structured_loop_to_selection_reduction_opportunity.cpp

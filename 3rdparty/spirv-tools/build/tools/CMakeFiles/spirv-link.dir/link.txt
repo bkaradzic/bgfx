@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/spirv-link.dir/link/linker.cpp.o  -o spirv-link -rdynamic ../source/link/libSPIRV-Tools-link.a ../source/libSPIRV-Tools.a ../source/opt/libSPIRV-Tools-opt.a ../source/libSPIRV-Tools.a 

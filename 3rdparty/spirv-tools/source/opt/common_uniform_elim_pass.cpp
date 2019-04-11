@@ -514,6 +514,9 @@ Pass::Status CommonUniformElimPass::ProcessImpl() {
   // TODO(greg-lunarg): Add support for physical addressing
   if (context()->get_feature_mgr()->HasCapability(SpvCapabilityAddresses))
     return Status::SuccessWithoutChange;
+  if (context()->get_feature_mgr()->HasCapability(
+          SpvCapabilityVariablePointersStorageBuffer))
+    return Status::SuccessWithoutChange;
   // Do not process if any disallowed extensions are enabled
   if (!AllExtensionsSupported()) return Status::SuccessWithoutChange;
   // Do not process if module contains OpGroupDecorate. Additional

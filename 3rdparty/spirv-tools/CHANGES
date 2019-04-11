@@ -1,7 +1,49 @@
 Revision history for SPIRV-Tools
 
-2019.3-dev 2019-02-20
-   - Start 2019.3-dev
+v2019.3-dev 2019-04-03
+ - General:
+   - Updated Python scripts to work for both Python 2 and Python 3.
+   - Add a continuous test that does memory checks using the address sanitizer.
+ - Optimizer
+   - Remove duplicates from list of interface IDs in OpEntryPoint instruction (#2449)
+   - Bindless Validation: Descriptor Initialization Check (#2419)
+   - Add option to validate after each pass (#2462)
+   Fixes:
+   - #2412: Dead memeber elimination should not change input and output variables.
+   - #2405: Fix OpDot folding of half float vectors.
+   - #2391: Dead branch elim should not fold away back edges.
+   - #2441: Removing decorations when doing constant propagation.
+   - #2455: Maintain inst to block mapping in merge return.
+   - #2453: Fix merge return in the face of breaks.
+   - #2456: Handle dead infinite loops in DCE.
+   - #2458: Handle variable pointer in some optimizations.
+   - #2452: Fix dead branch elimination to handle unreachable blocks better.
+ - Validator
+   - Add validation of storage classes for WebGPU (#2446)
+   - Add validation for ExecutionMode in WebGPU (#2443)
+   - Implement WebGPU specific CFG validation (#2386)
+   - Allow NonWritable to target struct members. (#2420)
+   - Allow storage type mismatch for parameter in relaxed addressing mode.
+   - Allow non memory objects as parameter in relaxed addressing mode.
+   - Disallow nested Blocks and buffer blocks (#2410).
+   - Add validation for SPV_NV_cooperative_matrix (#2404)
+   - Add --strip-atomic-counter-memory (#2413)
+   - Check OpSampledImage is only passed into valid instructions (#2467)
+   - Handle function decls in Structured CFG analysis (#2474)
+   - Validate that OpUnreacahble is not statically reachable (#2473)
+   - Add pass to generate needed initializers for WebGPU (#2481)
+   Fixes:
+   - #2439: Add missing DepthGreater case to Fragment only check.
+   - #2168: Disallow BufferBlock on StorageBuffer variables for Vulkan.
+   - #2408: Restrict and Aliased decorations cannot be applied to the same id.
+   - #2447: Improve function call parameter check.
+ - Reduce
+   - Add Pass to remove unreferenced blocks. (#2398)
+   - Allows passing options to the validator. (#2401)
+   - Improve reducer algorithm and other changes (#2472)
+   - Add Pass to remove selections (#2485)
+   Fixes:
+   - #2478: fix loop to selection pass for loops with combined header/continue block
 
 v2019.2 2019-02-20
  - General:

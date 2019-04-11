@@ -97,6 +97,7 @@ namespace {
         virtual void printEpilogue(std::ostream&) const { }
         virtual void printMeta(std::ostream&)     const;
         virtual void printTypes(std::ostream&)    const { }
+        virtual void printHasResultType(std::ostream&)     const { };
 
         virtual std::string escapeComment(const std::string& s) const;
 
@@ -364,6 +365,7 @@ namespace {
         printTypes(out);
         printMeta(out);
         printDefs(out);
+        printHasResultType(out);
         printEpilogue(out);
     }
 
@@ -494,6 +496,35 @@ namespace {
 
         virtual std::string pre() const { return ""; } // C name prefix
         virtual std::string headerGuardSuffix() const = 0;
+
+        virtual std::string fmtEnumUse(const std::string& opPrefix, const std::string& name) const { return pre() + name; }
+
+        virtual void printHasResultType(std::ostream& out) const
+        {
+            const Json::Value& enums = spvRoot["spv"]["enum"];
+
+            for (auto opClass = enums.begin(); opClass != enums.end(); ++opClass) {
+                const auto opName   = (*opClass)["Name"].asString();
+                if (opName != "Op") {
+                    continue;
+                }
+
+                out << "#ifdef SPV_ENABLE_UTILITY_CODE" << std::endl;
+                out << "inline void " << pre() << "HasResultAndType(" << pre() << opName << " opcode, bool *hasResult, bool *hasResultType) {" << std::endl;
+                out << "    *hasResult = *hasResultType = false;" << std::endl;
+                out << "    switch (opcode) {" << std::endl;
+                out << "    default: /* unknown opcode */ break;" << std::endl;
+
+                for (auto& inst : spv::InstructionDesc) {
+                    std::string name = inst.name;
+                    out << "    case " << fmtEnumUse("Op", name) << ": *hasResult = " << (inst.hasResult() ? "true" : "false") << "; *hasResultType = " << (inst.hasType() ? "true" : "false") << "; break;" << std::endl;
+                }
+
+                out << "    }" << std::endl;
+                out << "}" << std::endl;
+                out << "#endif /* SPV_ENABLE_UTILITY_CODE */" << std::endl << std::endl;
+            }
+        }
     };
 
     // C printer
@@ -599,6 +630,9 @@ namespace {
                                enumStyle_t style) const override {
             return enumFmt(s, v, style, true);
         }
+
+        // Add type prefix for scoped enum
+        virtual std::string fmtEnumUse(const std::string& opPrefix, const std::string& name) const { return opPrefix + "::" + name; }
 
         std::string headerGuardSuffix() const override { return "HPP"; }
     };
