@@ -5725,6 +5725,7 @@ ImGuiMenuColumns::ImGuiMenuColumns()
 void ImGuiMenuColumns::Update(int count, float spacing, bool clear)
 {
     IM_ASSERT(count == IM_ARRAYSIZE(Pos));
+    IM_UNUSED(count);
     Width = NextWidth = 0.0f;
     Spacing = spacing;
     if (clear)
