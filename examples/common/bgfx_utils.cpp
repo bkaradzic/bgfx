@@ -17,7 +17,7 @@ namespace stl = tinystl;
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 #include "entry/entry.h"
-#include <ib-compress/indexbufferdecompression.h>
+#include <meshoptimizer/src/meshoptimizer.h>
 
 #include "bgfx_utils.h"
 
@@ -418,8 +418,9 @@ struct Mesh
 	void load(bx::ReaderSeekerI* _reader)
 	{
 #define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
+#define BGFX_CHUNK_MAGIC_VBC BX_MAKEFOURCC('V', 'B', 'C', 0x0)
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x0)
+#define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x1)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
 		using namespace bx;
@@ -454,6 +455,34 @@ struct Mesh
 					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
 				}
 				break;
+			case BGFX_CHUNK_MAGIC_VBC:
+				{
+					read(_reader, group.m_sphere);
+					read(_reader, group.m_aabb);
+					read(_reader, group.m_obb);
+
+					read(_reader, m_decl);
+
+					uint16_t stride = m_decl.getStride();
+
+					uint16_t numVertices;
+					read(_reader, numVertices);
+
+					const bgfx::Memory* mem = bgfx::alloc(numVertices*stride);
+
+					uint32_t compressedSize;
+					bx::read(_reader, compressedSize);
+
+					void* compressedVertices = BX_ALLOC(allocator, compressedSize);
+					bx::read(_reader, compressedVertices, compressedSize);
+
+					meshopt_decodeVertexBuffer(mem->data, numVertices, stride, (uint8_t*)compressedVertices, compressedSize);
+
+					BX_FREE(allocator, compressedVertices);
+
+					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+				}
+				break;
 
 			case BGFX_CHUNK_MAGIC_IB:
 				{
@@ -479,8 +508,7 @@ struct Mesh
 
 					bx::read(_reader, compressedIndices, compressedSize);
 
-					ReadBitstream rbs( (const uint8_t*)compressedIndices, compressedSize);
-					DecompressIndexBuffer( (uint16_t*)mem->data, numIndices / 3, rbs);
+					meshopt_decodeIndexBuffer(mem->data, numIndices, 2, (uint8_t*)compressedIndices, compressedSize);
 
 					BX_FREE(allocator, compressedIndices);
 
