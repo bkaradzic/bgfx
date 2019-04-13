@@ -4,6 +4,10 @@ rule geometryc_pack_normal
     command = geometryc -f $in -o $out --packnormal 1
     description = Converting geometry $in...
 
+rule geometryc_pack_normal_compressed
+    command = geometryc -f $in -o $out --packnormal 1 -c
+    description = Converting geometry $in...
+
 rule geometryc_pack_normal_barycentric
     command = geometryc -f $in -o $out --packnormal 1 --barycentric
     description = Converting geometry $in...
