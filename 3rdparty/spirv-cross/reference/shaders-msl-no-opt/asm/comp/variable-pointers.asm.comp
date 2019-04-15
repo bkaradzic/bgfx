@@ -46,10 +46,11 @@ kernel void main0(device foo& buf [[buffer(0)]], constant bar& cb [[buffer(3)]],
     threadgroup int* cur = stgsm;
     device int* _73;
     _73 = &buf.a[0u];
+    threadgroup int* _76;
     int _77;
     for (;;)
     {
-        threadgroup int* _76 = cur;
+        _76 = cur;
         _77 = *_73;
         if (_77 != 0)
         {

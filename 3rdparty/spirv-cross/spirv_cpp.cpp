@@ -334,7 +334,7 @@ string CompilerCPP::compile()
 		reset();
 
 		// Move constructor for this type is broken on GCC 4.9 ...
-		buffer = unique_ptr<ostringstream>(new ostringstream());
+		buffer.reset();
 
 		emit_header();
 		emit_resources();
@@ -355,7 +355,7 @@ string CompilerCPP::compile()
 	// Entry point in CPP is always main() for the time being.
 	get_entry_point().name = "main";
 
-	return buffer->str();
+	return buffer.str();
 }
 
 void CompilerCPP::emit_c_linkage()

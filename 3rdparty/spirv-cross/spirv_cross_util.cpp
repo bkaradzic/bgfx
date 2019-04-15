@@ -22,8 +22,8 @@ using namespace SPIRV_CROSS_NAMESPACE;
 
 namespace spirv_cross_util
 {
-void rename_interface_variable(Compiler &compiler, const std::vector<Resource> &resources,
-                               uint32_t location, const std::string &name)
+void rename_interface_variable(Compiler &compiler, const SmallVector<Resource> &resources, uint32_t location,
+                               const std::string &name)
 {
 	for (auto &v : resources)
 	{

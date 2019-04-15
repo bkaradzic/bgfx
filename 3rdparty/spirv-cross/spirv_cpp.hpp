@@ -19,7 +19,6 @@
 
 #include "spirv_glsl.hpp"
 #include <utility>
-#include <vector>
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -27,7 +26,7 @@ class CompilerCPP : public CompilerGLSL
 {
 public:
 	explicit CompilerCPP(std::vector<uint32_t> spirv_)
-	    : CompilerGLSL(move(spirv_))
+	    : CompilerGLSL(std::move(spirv_))
 	{
 	}
 
@@ -75,13 +74,13 @@ private:
 
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
 
-	std::vector<std::string> resource_registrations;
+	SmallVector<std::string> resource_registrations;
 	std::string impl_type;
 	std::string resource_type;
 	uint32_t shared_counter = 0;
 
 	std::string interface_name;
 };
-} // namespace spirv_cross
+} // namespace SPIRV_CROSS_NAMESPACE
 
 #endif

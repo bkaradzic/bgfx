@@ -37,6 +37,7 @@ option(SPIRV_CROSS_SANITIZE_THREADS "Sanitize threads" OFF)
 option(SPIRV_CROSS_SANITIZE_UNDEFINED "Sanitize undefined" OFF)
 
 option(SPIRV_CROSS_NAMESPACE_OVERRIDE "" "Override the namespace used in the C++ API.")
+option(SPIRV_CROSS_FORCE_STL_TYPES "Force use of STL types instead of STL replacements in certain places. Might reduce performance." OFF)
 
 if(${CMAKE_GENERATOR} MATCHES "Makefile")
 	if(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
@@ -50,6 +51,10 @@ set(spirv-cross-link-flags "")
 
 if(SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 	set(spirv-compiler-defines ${spirv-compiler-defines} SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
+endif()
+
+if(SPIRV_CROSS_FORCE_STL_TYPES)
+	set(spirv-compiler-defines ${spirv-compiler-defines} SPIRV_CROSS_FORCE_STL_TYPES)
 endif()
 
 if (CMAKE_COMPILER_IS_GNUCXX OR (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
@@ -132,6 +137,8 @@ endmacro()
 set(spirv-cross-core-sources
 		${CMAKE_CURRENT_SOURCE_DIR}/GLSL.std.450.h
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_common.hpp
+		${CMAKE_CURRENT_SOURCE_DIR}/spirv_cross_containers.hpp
+		${CMAKE_CURRENT_SOURCE_DIR}/spirv_cross_error_handling.hpp
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv.hpp
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_cross.hpp
 		${CMAKE_CURRENT_SOURCE_DIR}/spirv_cross.cpp
@@ -415,11 +422,18 @@ if (SPIRV_CROSS_CLI)
 				add_executable(spirv-cross-c-api-test tests-other/c_api_test.c)
 				target_link_libraries(spirv-cross-c-api-test spirv-cross-c)
 				set_target_properties(spirv-cross-c-api-test PROPERTIES LINK_FLAGS "${spirv-cross-link-flags}")
+
+				add_executable(spirv-cross-small-vector-test tests-other/small_vector.cpp)
+				target_link_libraries(spirv-cross-small-vector-test spirv-cross-core)
+				set_target_properties(spirv-cross-small-vector-test PROPERTIES LINK_FLAGS "${spirv-cross-link-flags}")
+
 				if (CMAKE_COMPILER_IS_GNUCXX OR (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
 					target_compile_options(spirv-cross-c-api-test PRIVATE -std=c89 -Wall -Wextra)
 				endif()
 				add_test(NAME spirv-cross-c-api-test
 						COMMAND $<TARGET_FILE:spirv-cross-c-api-test> ${CMAKE_CURRENT_SOURCE_DIR}/tests-other/c_api_test.spv)
+				add_test(NAME spirv-cross-small-vector-test
+						COMMAND $<TARGET_FILE:spirv-cross-small-vector-test>)
 				add_test(NAME spirv-cross-test
 						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_shaders.py --parallel
 						${spirv-cross-externals}

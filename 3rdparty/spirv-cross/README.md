@@ -415,44 +415,39 @@ The reference files are stored inside the repository in order to be able to trac
 All pull requests should ensure that test output does not change unexpectedly. This can be tested with:
 
 ```
-./test_shaders.py shaders || exit 1
-./test_shaders.py shaders --opt || exit 1
-./test_shaders.py shaders-no-opt || exit 1
-./test_shaders.py shaders-msl --msl || exit 1
-./test_shaders.py shaders-msl --msl --opt || exit 1
-./test_shaders.py shaders-msl-no-opt --msl || exit 1
-./test_shaders.py shaders-hlsl --hlsl || exit 1
-./test_shaders.py shaders-hlsl --hlsl --opt || exit 1
-./test_shaders.py shaders-hlsl-no-opt --hlsl || exit 1
-./test_shaders.py shaders-reflection --reflect || exit 1
-```
-
-although there are a couple of convenience script for doing this:
-
-```
 ./checkout_glslang_spirv_tools.sh # Checks out glslang and SPIRV-Tools at a fixed revision which matches the reference output.
+                                  # NOTE: Some users have reported problems cloning from git:// paths. To use https:// instead pass in
+                                  # $ PROTOCOL=https ./checkout_glslang_spirv_tools.sh
+                                  # instead.
 ./build_glslang_spirv_tools.sh    # Builds glslang and SPIRV-Tools.
 ./test_shaders.sh                 # Runs over all changes and makes sure that there are no deltas compared to reference files.
+```
+
+`./test_shaders.sh` currently requires a Makefile setup with GCC/Clang to be set up.
+However, on Windows, this can be rather inconvenient if a MinGW environment is not set up.
+To use a spirv-cross binary you built with CMake (or otherwise), you can pass in an environment variable as such:
+
+```
+SPIRV_CROSS_PATH=path/to/custom/spirv-cross ./test_shaders.sh
 ```
 
 However, when improving SPIRV-Cross there are of course legitimate cases where reference output should change.
 In these cases, run:
 
 ```
-./update_test_shaders.sh
+./update_test_shaders.sh          # SPIRV_CROSS_PATH also works here.
 ```
 
 to update the reference files and include these changes as part of the pull request.
 Always make sure you are running the correct version of glslangValidator as well as SPIRV-Tools when updating reference files.
-See `checkout_glslang_spirv_tools.sh`.
+See `checkout_glslang_spirv_tools.sh` which revisions are currently expected. The revisions change regularly.
 
 In short, the master branch should always be able to run `./test_shaders.py shaders` and friends without failure.
 SPIRV-Cross uses Travis CI to test all pull requests, so it is not strictly needed to perform testing yourself if you have problems running it locally.
 A pull request which does not pass testing on Travis will not be accepted however.
 
 When adding support for new features to SPIRV-Cross, a new shader and reference file should be added which covers usage of the new shader features in question.
-
-Travis CI runs the test suite with the CMake, by running `ctest`. This method is compatible with MSVC.
+Travis CI runs the test suite with the CMake, by running `ctest`. This is a more straight-forward alternative to `./test_shaders.sh`.
 
 ### Licensing
 

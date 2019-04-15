@@ -34,9 +34,9 @@
 #include "spirv_reflect.hpp"
 #endif
 #include "spirv_parser.hpp"
-#include <string.h>
 #include <memory>
 #include <new>
+#include <string.h>
 
 // clang-format off
 
@@ -88,7 +88,7 @@ struct StringAllocation : ScratchMemoryAllocation
 template <typename T>
 struct TemporaryBuffer : ScratchMemoryAllocation
 {
-	std::vector<T> buffer;
+	SmallVector<T> buffer;
 };
 
 template <typename T, typename... Ts>
@@ -100,7 +100,7 @@ static inline std::unique_ptr<T> spvc_allocate(Ts &&... ts)
 struct spvc_context_s
 {
 	string last_error;
-	vector<unique_ptr<ScratchMemoryAllocation>> allocations;
+	SmallVector<unique_ptr<ScratchMemoryAllocation>> allocations;
 	const char *allocate_name(const std::string &name);
 
 	spvc_error_callback callback = nullptr;
@@ -173,20 +173,20 @@ struct spvc_constant_s : SPIRConstant
 struct spvc_resources_s : ScratchMemoryAllocation
 {
 	spvc_context context = nullptr;
-	std::vector<spvc_reflected_resource> uniform_buffers;
-	std::vector<spvc_reflected_resource> storage_buffers;
-	std::vector<spvc_reflected_resource> stage_inputs;
-	std::vector<spvc_reflected_resource> stage_outputs;
-	std::vector<spvc_reflected_resource> subpass_inputs;
-	std::vector<spvc_reflected_resource> storage_images;
-	std::vector<spvc_reflected_resource> sampled_images;
-	std::vector<spvc_reflected_resource> atomic_counters;
-	std::vector<spvc_reflected_resource> push_constant_buffers;
-	std::vector<spvc_reflected_resource> separate_images;
-	std::vector<spvc_reflected_resource> separate_samplers;
-	std::vector<spvc_reflected_resource> acceleration_structures;
+	SmallVector<spvc_reflected_resource> uniform_buffers;
+	SmallVector<spvc_reflected_resource> storage_buffers;
+	SmallVector<spvc_reflected_resource> stage_inputs;
+	SmallVector<spvc_reflected_resource> stage_outputs;
+	SmallVector<spvc_reflected_resource> subpass_inputs;
+	SmallVector<spvc_reflected_resource> storage_images;
+	SmallVector<spvc_reflected_resource> sampled_images;
+	SmallVector<spvc_reflected_resource> atomic_counters;
+	SmallVector<spvc_reflected_resource> push_constant_buffers;
+	SmallVector<spvc_reflected_resource> separate_images;
+	SmallVector<spvc_reflected_resource> separate_samplers;
+	SmallVector<spvc_reflected_resource> acceleration_structures;
 
-	bool copy_resources(std::vector<spvc_reflected_resource> &outputs, const std::vector<Resource> &inputs);
+	bool copy_resources(SmallVector<spvc_reflected_resource> &outputs, const SmallVector<Resource> &inputs);
 	bool copy_resources(const ShaderResources &resources);
 };
 
@@ -634,7 +634,7 @@ spvc_result spvc_compiler_hlsl_set_root_constants_layout(spvc_compiler compiler,
 	}
 
 	auto &hlsl = *static_cast<CompilerHLSL *>(compiler->compiler.get());
-	std::vector<RootConstants> roots;
+	vector<RootConstants> roots;
 	roots.reserve(count);
 	for (size_t i = 0; i < count; i++)
 	{
@@ -980,8 +980,8 @@ spvc_result spvc_compiler_compile(spvc_compiler compiler, const char **source)
 	SPVC_END_SAFE_SCOPE(compiler->context, SPVC_ERROR_UNSUPPORTED_SPIRV)
 }
 
-bool spvc_resources_s::copy_resources(std::vector<spvc_reflected_resource> &outputs,
-                                      const std::vector<Resource> &inputs)
+bool spvc_resources_s::copy_resources(SmallVector<spvc_reflected_resource> &outputs,
+                                      const SmallVector<Resource> &inputs)
 {
 	for (auto &i : inputs)
 	{
@@ -1117,7 +1117,7 @@ spvc_result spvc_resources_get_resource_list_for_type(spvc_resources resources, 
                                                       const spvc_reflected_resource **resource_list,
                                                       size_t *resource_size)
 {
-	const std::vector<spvc_reflected_resource> *list = nullptr;
+	const SmallVector<spvc_reflected_resource> *list = nullptr;
 	switch (type)
 	{
 	case SPVC_RESOURCE_TYPE_UNIFORM_BUFFER:
@@ -1275,7 +1275,7 @@ spvc_result spvc_compiler_get_entry_points(spvc_compiler compiler, const spvc_en
 	SPVC_BEGIN_SAFE_SCOPE
 	{
 		auto entries = compiler->compiler->get_entry_points_and_stages();
-		std::vector<spvc_entry_point> translated;
+		SmallVector<spvc_entry_point> translated;
 		translated.reserve(entries.size());
 
 		for (auto &entry : entries)
@@ -1406,7 +1406,7 @@ unsigned spvc_type_get_bit_width(spvc_type type)
 	return type->width;
 }
 
-unsigned spvc_type_get_vector_size(spvc_type type)
+unsigned spvc_type_get_SmallVector_size(spvc_type type)
 {
 	return type->vecsize;
 }
@@ -1566,7 +1566,7 @@ spvc_result spvc_compiler_get_combined_image_samplers(spvc_compiler compiler,
 	SPVC_BEGIN_SAFE_SCOPE
 	{
 		auto combined = compiler->compiler->get_combined_image_samplers();
-		std::vector<spvc_combined_image_sampler> translated;
+		SmallVector<spvc_combined_image_sampler> translated;
 		translated.reserve(combined.size());
 		for (auto &c : combined)
 		{
@@ -1591,7 +1591,7 @@ spvc_result spvc_compiler_get_specialization_constants(spvc_compiler compiler,
 	SPVC_BEGIN_SAFE_SCOPE
 	{
 		auto spec_constants = compiler->compiler->get_specialization_constants();
-		std::vector<spvc_specialization_constant> translated;
+		SmallVector<spvc_specialization_constant> translated;
 		translated.reserve(spec_constants.size());
 		for (auto &c : spec_constants)
 		{
@@ -1743,7 +1743,7 @@ spvc_result spvc_compiler_get_declared_extensions(spvc_compiler compiler, const 
 	SPVC_BEGIN_SAFE_SCOPE
 	{
 		auto &exts = compiler->compiler->get_declared_extensions();
-		std::vector<const char *> duped;
+		SmallVector<const char *> duped;
 		duped.reserve(exts.size());
 		for (auto &ext : exts)
 			duped.push_back(compiler->context->allocate_name(ext));

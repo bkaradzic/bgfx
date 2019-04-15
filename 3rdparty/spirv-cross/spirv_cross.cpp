@@ -1897,9 +1897,9 @@ bool Compiler::BufferAccessHandler::handle(Op opcode, const uint32_t *args, uint
 	return true;
 }
 
-std::vector<BufferRange> Compiler::get_active_buffer_ranges(uint32_t id) const
+SmallVector<BufferRange> Compiler::get_active_buffer_ranges(uint32_t id) const
 {
-	std::vector<BufferRange> ranges;
+	SmallVector<BufferRange> ranges;
 	BufferAccessHandler handler(*this, ranges, id);
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
 	return ranges;
@@ -2126,9 +2126,9 @@ void Compiler::inherit_expression_dependencies(uint32_t dst, uint32_t source_exp
 	e_deps.erase(unique(begin(e_deps), end(e_deps)), end(e_deps));
 }
 
-vector<EntryPoint> Compiler::get_entry_points_and_stages() const
+SmallVector<EntryPoint> Compiler::get_entry_points_and_stages() const
 {
-	vector<EntryPoint> entries;
+	SmallVector<EntryPoint> entries;
 	for (auto &entry : ir.entry_points)
 		entries.push_back({ entry.second.orig_name, entry.second.model });
 	return entries;
@@ -2715,9 +2715,9 @@ void Compiler::build_combined_image_samplers()
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
 }
 
-vector<SpecializationConstant> Compiler::get_specialization_constants() const
+SmallVector<SpecializationConstant> Compiler::get_specialization_constants() const
 {
-	vector<SpecializationConstant> spec_consts;
+	SmallVector<SpecializationConstant> spec_consts;
 	ir.for_each_typed_id<SPIRConstant>([&](uint32_t, const SPIRConstant &c) {
 		if (c.specialization && has_decoration(c.self, DecorationSpecId))
 			spec_consts.push_back({ c.self, get_decoration(c.self, DecorationSpecId) });
@@ -2874,6 +2874,9 @@ void Compiler::AnalyzeVariableScopeAccessHandler::set_current_block(const SPIRBl
 
 void Compiler::AnalyzeVariableScopeAccessHandler::notify_variable_access(uint32_t id, uint32_t block)
 {
+	if (id == 0)
+		return;
+
 	if (id_is_phi_variable(id))
 		accessed_variables_to_block[id].insert(block);
 	else if (id_is_potential_temporary(id))
@@ -2924,6 +2927,8 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 				partial_write_variables_to_block[var->self].insert(current_block->self);
 		}
 
+		// args[0] might be an access chain we have to track use of.
+		notify_variable_access(args[0], current_block->self);
 		// Might try to store a Phi variable here.
 		notify_variable_access(args[1], current_block->self);
 		break;
@@ -2941,8 +2946,15 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		if (var)
 			accessed_variables_to_block[var->self].insert(current_block->self);
 
-		for (uint32_t i = 3; i < length; i++)
+		// args[2] might be another access chain we have to track use of.
+		for (uint32_t i = 2; i < length; i++)
 			notify_variable_access(args[i], current_block->self);
+
+		// Also keep track of the access chain pointer itself.
+		// In exceptionally rare cases, we can end up with a case where
+		// the access chain is generated in the loop body, but is consumed in continue block.
+		// This means we need complex loop workarounds, and we must detect this via CFG analysis.
+		notify_variable_access(args[1], current_block->self);
 
 		// The result of an access chain is a fixed expression and is not really considered a temporary.
 		auto &e = compiler.set<SPIRExpression>(args[1], "", args[0], true);
@@ -2951,6 +2963,7 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 
 		// Other backends might use SPIRAccessChain for this later.
 		compiler.ir.ids[args[1]].set_allow_type_rewrite();
+		access_chain_expressions.insert(args[1]);
 		break;
 	}
 
@@ -2973,6 +2986,10 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 				partial_write_variables_to_block[var->self].insert(current_block->self);
 		}
 
+		// args[0:1] might be access chains we have to track use of.
+		for (uint32_t i = 0; i < 2; i++)
+			notify_variable_access(args[i], current_block->self);
+
 		var = compiler.maybe_get_backing_variable(rhs);
 		if (var)
 			accessed_variables_to_block[var->self].insert(current_block->self);
@@ -2987,6 +3004,11 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 		auto *var = compiler.maybe_get_backing_variable(args[2]);
 		if (var)
 			accessed_variables_to_block[var->self].insert(current_block->self);
+
+		// Might be an access chain which we have to keep track of.
+		notify_variable_access(args[1], current_block->self);
+		if (access_chain_expressions.count(args[2]))
+			access_chain_expressions.insert(args[1]);
 
 		// Might try to copy a Phi variable here.
 		notify_variable_access(args[2], current_block->self);
@@ -3004,6 +3026,9 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 
 		// Loaded value is a temporary.
 		notify_variable_access(args[1], current_block->self);
+
+		// Might be an access chain we have to track use of.
+		notify_variable_access(args[2], current_block->self);
 		break;
 	}
 
@@ -3370,7 +3395,14 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 			// If a temporary is used in more than one block, we might have to lift continue block
 			// access up to loop header like we did for variables.
 			if (blocks.size() != 1 && is_continue(block))
-				builder.add_block(ir.continue_block_to_loop_header[block]);
+			{
+				auto &loop_header_block = get<SPIRBlock>(ir.continue_block_to_loop_header[block]);
+				assert(loop_header_block.merge == SPIRBlock::MergeLoop);
+
+				// Only relevant if the loop is not marked as complex.
+				if (!loop_header_block.complex_continue)
+					builder.add_block(loop_header_block.self);
+			}
 			else if (blocks.size() != 1 && is_single_block_loop(block))
 			{
 				// Awkward case, because the loop header is also the continue block.
@@ -3387,14 +3419,27 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 
 			if (!first_use_is_dominator || force_temporary)
 			{
-				// This should be very rare, but if we try to declare a temporary inside a loop,
-				// and that temporary is used outside the loop as well (spirv-opt inliner likes this)
-				// we should actually emit the temporary outside the loop.
-				hoisted_temporaries.insert(var.first);
-				forced_temporaries.insert(var.first);
+				if (handler.access_chain_expressions.count(var.first))
+				{
+					// Exceptionally rare case.
+					// We cannot declare temporaries of access chains (except on MSL perhaps with pointers).
+					// Rather than do that, we force a complex loop to make sure access chains are created and consumed
+					// in expected order.
+					auto &loop_header_block = get<SPIRBlock>(dominating_block);
+					assert(loop_header_block.merge == SPIRBlock::MergeLoop);
+					loop_header_block.complex_continue = true;
+				}
+				else
+				{
+					// This should be very rare, but if we try to declare a temporary inside a loop,
+					// and that temporary is used outside the loop as well (spirv-opt inliner likes this)
+					// we should actually emit the temporary outside the loop.
+					hoisted_temporaries.insert(var.first);
+					forced_temporaries.insert(var.first);
 
-				auto &block_temporaries = get<SPIRBlock>(dominating_block).declare_temporary;
-				block_temporaries.emplace_back(handler.result_id_to_type[var.first], var.first);
+					auto &block_temporaries = get<SPIRBlock>(dominating_block).declare_temporary;
+					block_temporaries.emplace_back(handler.result_id_to_type[var.first], var.first);
+				}
 			}
 			else if (blocks.size() > 1)
 			{
@@ -3966,7 +4011,7 @@ void Compiler::make_constant_null(uint32_t id, uint32_t type)
 		if (!constant_type.array_size_literal.back())
 			SPIRV_CROSS_THROW("Array size of OpConstantNull must be a literal.");
 
-		vector<uint32_t> elements(constant_type.array.back());
+		SmallVector<uint32_t> elements(constant_type.array.back());
 		for (uint32_t i = 0; i < constant_type.array.back(); i++)
 			elements[i] = parent_id;
 		set<SPIRConstant>(id, type, elements.data(), uint32_t(elements.size()), false);
@@ -3974,7 +4019,7 @@ void Compiler::make_constant_null(uint32_t id, uint32_t type)
 	else if (!constant_type.member_types.empty())
 	{
 		uint32_t member_ids = ir.increase_bound_by(uint32_t(constant_type.member_types.size()));
-		vector<uint32_t> elements(constant_type.member_types.size());
+		SmallVector<uint32_t> elements(constant_type.member_types.size());
 		for (uint32_t i = 0; i < constant_type.member_types.size(); i++)
 		{
 			make_constant_null(member_ids + i, constant_type.member_types[i]);
@@ -3989,12 +4034,12 @@ void Compiler::make_constant_null(uint32_t id, uint32_t type)
 	}
 }
 
-const std::vector<spv::Capability> &Compiler::get_declared_capabilities() const
+const SmallVector<spv::Capability> &Compiler::get_declared_capabilities() const
 {
 	return ir.declared_capabilities;
 }
 
-const std::vector<std::string> &Compiler::get_declared_extensions() const
+const SmallVector<std::string> &Compiler::get_declared_extensions() const
 {
 	return ir.declared_extensions;
 }
