@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "reduce_test_util.h"
+#include "test/reduce/reduce_test_util.h"
 
 #include <iostream>
+
+#include "tools/io.h"
 
 namespace spvtools {
 namespace reduce {
@@ -89,6 +91,20 @@ void CLIMessageConsumer(spv_message_level_t level, const char*,
       break;
     default:
       break;
+  }
+}
+
+void DumpShader(opt::IRContext* context, const char* filename) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  DumpShader(binary, filename);
+}
+
+void DumpShader(const std::vector<uint32_t>& binary, const char* filename) {
+  auto write_file_succeeded =
+      WriteFile(filename, "wb", &binary[0], binary.size());
+  if (!write_file_succeeded) {
+    std::cerr << "Failed to dump shader" << std::endl;
   }
 }
 

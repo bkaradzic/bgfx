@@ -237,7 +237,8 @@ TEST(Optimizer, VulkanToWebGPUModeSetsCorrectPasses) {
                                               "flatten-decorations",
                                               "strip-debug",
                                               "strip-atomic-counter-memory",
-                                              "generate-webgpu-initializers"};
+                                              "generate-webgpu-initializers",
+                                              "legalize-vector-shuffle"};
   std::sort(registered_passes.begin(), registered_passes.end());
   std::sort(expected_passes.begin(), expected_passes.end());
 
@@ -476,7 +477,49 @@ INSTANTIATE_TEST_SUITE_P(
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
-         "generate-webgpu-initializers"}}));
+         "generate-webgpu-initializers"},
+        // Legalize Vector Shuffle
+        {// input
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%v3uint = OpTypeVector %uint 3\n"
+         "%_ptr_Function_v3uint = OpTypePointer Function %v3uint\n"
+         "%void = OpTypeVoid\n"
+         "%6 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %6\n"
+         "%7 = OpLabel\n"
+         "%8 = OpVariable %_ptr_Function_v3uint Function\n"
+         "%9 = OpLoad %v3uint %8\n"
+         "%10 = OpLoad %v3uint %8\n"
+         "%11 = OpVectorShuffle %v3uint %9 %10 2 1 0xFFFFFFFF\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // expected
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%v3uint = OpTypeVector %uint 3\n"
+         "%_ptr_Function_v3uint = OpTypePointer Function %v3uint\n"
+         "%void = OpTypeVoid\n"
+         "%6 = OpTypeFunction %void\n"
+         "%12 = OpConstantNull %v3uint\n"
+         "%1 = OpFunction %void None %6\n"
+         "%7 = OpLabel\n"
+         "%8 = OpVariable %_ptr_Function_v3uint Function %12\n"
+         "%9 = OpLoad %v3uint %8\n"
+         "%10 = OpLoad %v3uint %8\n"
+         "%11 = OpVectorShuffle %v3uint %9 %10 2 1 0\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // pass
+         "legalize-vector-shuffle"}}));
 
 }  // namespace
 }  // namespace opt

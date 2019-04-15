@@ -1362,11 +1362,13 @@ spv_result_t ValidateImageRead(ValidationState_t& _, const Instruction* inst) {
            << " components, but given only " << actual_coord_size;
   }
 
-  if (info.format == SpvImageFormatUnknown && info.dim != SpvDimSubpassData &&
-      !_.HasCapability(SpvCapabilityStorageImageReadWithoutFormat)) {
-    return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Capability StorageImageReadWithoutFormat is required to "
-           << "read storage image";
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (info.format == SpvImageFormatUnknown && info.dim != SpvDimSubpassData &&
+        !_.HasCapability(SpvCapabilityStorageImageReadWithoutFormat)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Capability StorageImageReadWithoutFormat is required to "
+             << "read storage image";
+    }
   }
 
   if (inst->words().size() <= 5) return SPV_SUCCESS;
@@ -1439,12 +1441,14 @@ spv_result_t ValidateImageWrite(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
-  if (info.format == SpvImageFormatUnknown && info.dim != SpvDimSubpassData &&
-      !_.HasCapability(SpvCapabilityStorageImageWriteWithoutFormat)) {
-    return _.diag(SPV_ERROR_INVALID_DATA, inst)
-           << "Capability StorageImageWriteWithoutFormat is required to "
-              "write "
-           << "to storage image";
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (info.format == SpvImageFormatUnknown && info.dim != SpvDimSubpassData &&
+        !_.HasCapability(SpvCapabilityStorageImageWriteWithoutFormat)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Capability StorageImageWriteWithoutFormat is required to "
+                "write "
+             << "to storage image";
+    }
   }
 
   if (inst->words().size() <= 4) return SPV_SUCCESS;

@@ -276,13 +276,8 @@ installed regardless of your OS:
 
 - [CMake](http://www.cmake.org/): for generating compilation targets.  Version
   2.8.12 or later.
-- [Python](http://www.python.org/): for utility scripts and running the test 
-suite. Version 2 or 3.
-
-We will be moving to Python3 only in the future.  If you are using Python2, you
-will need to install Python-future: 
-```pip install future
-```
+- [Python 3](http://www.python.org/): for utility scripts and running the test
+suite.
 
 SPIRV-Tools is regularly tested with the the following compilers:
 

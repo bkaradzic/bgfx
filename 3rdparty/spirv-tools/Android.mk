@@ -119,6 +119,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/instrument_pass.cpp \
 		source/opt/ir_context.cpp \
 		source/opt/ir_loader.cpp \
+                source/opt/legalize_vector_shuffle_pass.cpp \
 		source/opt/licm_pass.cpp \
 		source/opt/local_access_chain_convert_pass.cpp \
 		source/opt/local_redundancy_elimination.cpp \

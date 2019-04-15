@@ -440,6 +440,25 @@ TEST_F(FixStorageClassTest, FixSelect) {
   SinglePassRunAndMatch<FixStorageClass>(text, false);
 }
 
+TEST_F(FixStorageClassTest, BitCast) {
+  const std::string text = R"(OpCapability VariablePointersStorageBuffer
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %1 "main"
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%_ptr_Output_void = OpTypePointer Output %void
+%_ptr_Private__ptr_Output_void = OpTypePointer Private %_ptr_Output_void
+%6 = OpVariable %_ptr_Private__ptr_Output_void Private
+%1 = OpFunction %void Inline %3
+%7 = OpLabel
+%8 = OpBitcast %_ptr_Output_void %6
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<FixStorageClass>(text, text, false);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

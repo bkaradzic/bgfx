@@ -68,6 +68,7 @@ bool FixStorageClass::PropagateStorageClass(Instruction* inst,
     case SpvOpCopyMemory:
     case SpvOpCopyMemorySized:
     case SpvOpVariable:
+    case SpvOpBitcast:
       // Nothing to change for these opcode.  The result type is the same
       // regardless of the storage class of the operand.
       return false;

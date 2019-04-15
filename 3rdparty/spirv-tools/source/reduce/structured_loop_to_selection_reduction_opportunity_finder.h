@@ -15,7 +15,7 @@
 #ifndef SOURCE_REDUCE_STRUCTURED_LOOP_TO_SELECTION_REDUCTION_OPPORTUNITY_FINDER_H
 #define SOURCE_REDUCE_STRUCTURED_LOOP_TO_SELECTION_REDUCTION_OPPORTUNITY_FINDER_H
 
-#include "reduction_opportunity_finder.h"
+#include "source/reduce/reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {

@@ -18,9 +18,8 @@
 #include <functional>
 #include <string>
 
+#include "source/reduce/reduction_pass.h"
 #include "spirv-tools/libspirv.hpp"
-
-#include "reduction_pass.h"
 
 namespace spvtools {
 namespace reduce {

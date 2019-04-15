@@ -21,5 +21,5 @@ compile_commands.json
 *~
 
 # C-Lion
-.idea
-cmake-build-debug
+/.idea/
+/cmake-build-*/

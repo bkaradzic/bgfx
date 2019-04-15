@@ -15,9 +15,9 @@
 #ifndef SOURCE_REDUCE_MERGE_BLOCKS_REDUCTION_OPPORTUNITY_H_
 #define SOURCE_REDUCE_MERGE_BLOCKS_REDUCTION_OPPORTUNITY_H_
 
-#include "reduction_opportunity.h"
 #include "source/opt/basic_block.h"
 #include "source/opt/function.h"
+#include "source/reduce/reduction_opportunity.h"
 
 namespace spvtools {
 namespace reduce {

@@ -15,8 +15,8 @@
 #ifndef SOURCE_REDUCE_REDUCTION_OPPORTUNITY_FINDER_H_
 #define SOURCE_REDUCE_REDUCTION_OPPORTUNITY_FINDER_H_
 
-#include "reduction_opportunity.h"
 #include "source/opt/ir_context.h"
+#include "source/reduce/reduction_opportunity.h"
 
 namespace spvtools {
 namespace reduce {

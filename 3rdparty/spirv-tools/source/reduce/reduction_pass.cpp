@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+#include "source/reduce/reduction_pass.h"
 
-#include "reduction_pass.h"
+#include <algorithm>
 
 #include "source/opt/build_module.h"
 

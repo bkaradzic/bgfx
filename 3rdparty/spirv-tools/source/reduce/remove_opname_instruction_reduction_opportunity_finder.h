@@ -15,7 +15,7 @@
 #ifndef SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
 #define SOURCE_REDUCE_REMOVE_OPNAME_INSTRUCTION_REDUCTION_OPPORTUNITY_FINDER_H_
 
-#include "reduction_opportunity_finder.h"
+#include "source/reduce/reduction_opportunity_finder.h"
 
 namespace spvtools {
 namespace reduce {

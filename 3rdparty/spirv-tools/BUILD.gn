@@ -540,6 +540,8 @@ static_library("spvtools_opt") {
     "source/opt/ir_loader.cpp",
     "source/opt/ir_loader.h",
     "source/opt/iterator.h",
+    "source/opt/legalize_vector_shuffle_pass.cpp",
+    "source/opt/legalize_vector_shuffle_pass.h",
     "source/opt/licm_pass.cpp",
     "source/opt/licm_pass.h",
     "source/opt/local_access_chain_convert_pass.cpp",

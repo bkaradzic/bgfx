@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Google LLC
+// Copyright (c) 2019 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/reduce/remove_instruction_reduction_opportunity.h"
+#include "source/opt/legalize_vector_shuffle_pass.h"
 
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
-namespace reduce {
+namespace opt {
 
-bool RemoveInstructionReductionOpportunity::PreconditionHolds() { return true; }
+Pass::Status LegalizeVectorShufflePass::Process() {
+  bool changed = false;
+  context()->module()->ForEachInst([&changed](Instruction* inst) {
+    if (inst->opcode() != SpvOpVectorShuffle) return;
 
-void RemoveInstructionReductionOpportunity::Apply() {
-  inst_->context()->KillInst(inst_);
+    for (uint32_t idx = 2; idx < inst->NumInOperands(); ++idx) {
+      auto literal = inst->GetSingleWordInOperand(idx);
+      if (literal != 0xFFFFFFFF) continue;
+      changed = true;
+      inst->SetInOperand(idx, {0});
+    }
+  });
+
+  return changed ? Status::SuccessWithChange : Status::SuccessWithoutChange;
 }
 
-}  // namespace reduce
+}  // namespace opt
 }  // namespace spvtools

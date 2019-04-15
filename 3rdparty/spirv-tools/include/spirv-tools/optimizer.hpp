@@ -763,6 +763,11 @@ Optimizer::PassToken CreateGenerateWebGPUInitializersPass();
 // match up correctly.  This pass will fix the errors that it can.
 Optimizer::PassToken CreateFixStorageClassPass();
 
+// Create a pass to legalize OpVectorShuffle operands going into WebGPU. WebGPU
+// forbids using 0xFFFFFFFF, which indicates an undefined result, so this pass
+// converts those literals to 0.
+Optimizer::PassToken CreateLegalizeVectorShufflePass();
+
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

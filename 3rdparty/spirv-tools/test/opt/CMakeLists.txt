@@ -54,6 +54,7 @@ add_spvtools_unittest(TARGET opt
        ir_context_test.cpp
        ir_loader_test.cpp
        iterator_test.cpp
+       legalize_vector_shuffle_test.cpp
        line_debug_info_test.cpp
        local_access_chain_convert_test.cpp
        local_redundancy_elimination_test.cpp
