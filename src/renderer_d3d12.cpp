@@ -6271,7 +6271,9 @@ namespace bgfx { namespace d3d12
 
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D12& vb = m_vertexBuffers[handle];
-							uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+							const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
+								? draw.m_stream[idx].m_decl.idx
+								: vb.m_decl.idx;
 							const VertexDecl& vertexDecl = m_vertexDecls[decl];
 
 							decls[numStreams] = &vertexDecl;
