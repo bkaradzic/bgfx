@@ -455,6 +455,7 @@ struct Mesh
 					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
 				}
 				break;
+
 			case BGFX_CHUNK_MAGIC_VBC:
 				{
 					read(_reader, group.m_sphere);
