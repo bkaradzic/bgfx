@@ -5896,7 +5896,9 @@ namespace bgfx { namespace d3d11
 
 							const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D11& vb = m_vertexBuffers[handle];
-							const uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+							const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
+								? draw.m_stream[idx].m_decl.idx
+								: vb.m_decl.idx;
 							const VertexDecl& vertexDecl = m_vertexDecls[decl];
 							const uint32_t stride = vertexDecl.m_stride;
 
