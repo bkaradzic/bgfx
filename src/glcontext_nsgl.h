@@ -15,8 +15,6 @@ namespace bgfx { namespace gl
 	struct GlContext
 	{
 		GlContext()
-			: m_context(NULL)
-			, m_view(NULL)
 		{
 		}
 
@@ -37,8 +35,8 @@ namespace bgfx { namespace gl
 			return NULL != m_context;
 		}
 
-		void* m_context;
-		void* m_view;
+		void* m_context = NULL;
+		void* m_view = NULL;
 	};
 } /* namespace gl */ } // namespace bgfx
 

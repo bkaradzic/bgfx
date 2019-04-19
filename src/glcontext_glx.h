@@ -18,10 +18,6 @@ namespace bgfx { namespace gl
 	struct GlContext
 	{
 		GlContext()
-			: m_current(NULL)
-			, m_context(0)
-			, m_visualInfo(NULL)
-			, m_display(NULL)
 		{
 		}
 
@@ -42,10 +38,10 @@ namespace bgfx { namespace gl
 			return 0 != m_context;
 		}
 
-		SwapChainGL* m_current;
-		GLXContext m_context;
-		XVisualInfo* m_visualInfo;
-		::Display* m_display;
+		SwapChainGL* m_current = NULL;
+		GLXContext m_context = 0;
+		XVisualInfo* m_visualInfo = NULL;
+		::Display* m_display = NULL;
 	};
 } /* namespace gl */ } // namespace bgfx
 

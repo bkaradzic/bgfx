@@ -376,38 +376,30 @@ VK_DESTROY
 	struct ShaderVK
 	{
 		ShaderVK()
-			: m_code(NULL)
-			, m_module(VK_NULL_HANDLE)
-			, m_constantBuffer(NULL)
-			, m_hash(0)
-			, m_numUniforms(0)
-			, m_numPredefined(0)
 		{
 		}
 
 		void create(const Memory* _mem);
 		void destroy();
 
-		const Memory* m_code;
-		VkShaderModule m_module;
-		UniformBuffer* m_constantBuffer;
+		const Memory* m_code = NULL;
+		VkShaderModule m_module = VK_NULL_HANDLE;
+		UniformBuffer* m_constantBuffer = NULL;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];
 		uint8_t m_attrRemap[Attrib::Count];
 
-		uint32_t m_hash;
-		uint16_t m_numUniforms;
+		uint32_t m_hash = 0;
+		uint16_t m_numUniforms = 0;
 		uint16_t m_size;
-		uint8_t m_numPredefined;
+		uint8_t m_numPredefined = 0;
 		uint8_t m_numAttrs;
 	};
 
 	struct ProgramVK
 	{
 		ProgramVK()
-			: m_vsh(NULL)
-			, m_fsh(NULL)
 		{
 		}
 
@@ -434,8 +426,8 @@ VK_DESTROY
 			m_fsh = NULL;
 		}
 
-		const ShaderVK* m_vsh;
-		const ShaderVK* m_fsh;
+		const ShaderVK* m_vsh = NULL;
+		const ShaderVK* m_fsh = NULL;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;

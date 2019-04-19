@@ -22,10 +22,6 @@ namespace bgfx { namespace gl
 	struct GlContext
 	{
 		GlContext()
-			: m_current(NULL)
-			, m_context(NULL)
-			, m_display(NULL)
-			, m_surface(NULL)
 		{
 		}
 
@@ -47,11 +43,11 @@ namespace bgfx { namespace gl
 		}
 
 		void* m_eglLibrary;
-		SwapChainGL* m_current;
+		SwapChainGL* m_current = NULL;
 		EGLConfig  m_config;
-		EGLContext m_context;
-		EGLDisplay m_display;
-		EGLSurface m_surface;
+		EGLContext m_context = NULL;
+		EGLDisplay m_display = NULL;
+		EGLSurface m_surface = NULL;
 	};
 } /* namespace gl */ } // namespace bgfx
 

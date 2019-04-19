@@ -198,11 +198,6 @@ namespace bgfx { namespace d3d12
 	struct BufferD3D12
 	{
 		BufferD3D12()
-			: m_ptr(NULL)
-			, m_state(D3D12_RESOURCE_STATE_COMMON)
-			, m_size(0)
-			, m_flags(BGFX_BUFFER_NONE)
-			, m_dynamic(false)
 		{
 		}
 
@@ -214,12 +209,12 @@ namespace bgfx { namespace d3d12
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
-		ID3D12Resource* m_ptr;
+		ID3D12Resource* m_ptr = NULL;
 		D3D12_GPU_VIRTUAL_ADDRESS m_gpuVA;
-		D3D12_RESOURCE_STATES m_state;
-		uint32_t m_size;
-		uint16_t m_flags;
-		bool m_dynamic;
+		D3D12_RESOURCE_STATES m_state = D3D12_RESOURCE_STATE_COMMON;
+		uint32_t m_size = 0;
+		uint16_t m_flags = BGFX_BUFFER_NONE;
+		bool m_dynamic = false;
 	};
 
 	struct VertexBufferD3D12 : public BufferD3D12
@@ -232,11 +227,6 @@ namespace bgfx { namespace d3d12
 	struct ShaderD3D12
 	{
 		ShaderD3D12()
-			: m_code(NULL)
-			, m_constantBuffer(NULL)
-			, m_hash(0)
-			, m_numUniforms(0)
-			, m_numPredefined(0)
 		{
 		}
 
@@ -260,23 +250,21 @@ namespace bgfx { namespace d3d12
 			}
 		}
 
-		const Memory* m_code;
-		UniformBuffer* m_constantBuffer;
+		const Memory* m_code = NULL;
+		UniformBuffer* m_constantBuffer = NULL;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];
 
-		uint32_t m_hash;
-		uint16_t m_numUniforms;
+		uint32_t m_hash = 0;
+		uint16_t m_numUniforms = 0;
 		uint16_t m_size;
-		uint8_t m_numPredefined;
+		uint8_t m_numPredefined = 0;
 	};
 
 	struct ProgramD3D12
 	{
 		ProgramD3D12()
-			: m_vsh(NULL)
-			, m_fsh(NULL)
 		{
 		}
 
@@ -303,8 +291,8 @@ namespace bgfx { namespace d3d12
 			m_fsh = NULL;
 		}
 
-		const ShaderD3D12* m_vsh;
-		const ShaderD3D12* m_fsh;
+		const ShaderD3D12* m_vsh = NULL;
+		const ShaderD3D12* m_fsh = NULL;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
@@ -320,13 +308,7 @@ namespace bgfx { namespace d3d12
 		};
 
 		TextureD3D12()
-			: m_ptr(NULL)
-			, m_directAccessPtr(NULL)
-			, m_state(D3D12_RESOURCE_STATE_COMMON)
-			, m_numMips(0)
 		{
-			bx::memSet(&m_srvd, 0, sizeof(m_srvd) );
-			bx::memSet(&m_uavd, 0, sizeof(m_uavd) );
 		}
 
 		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
@@ -335,11 +317,11 @@ namespace bgfx { namespace d3d12
 		void resolve(uint8_t _resolve) const;
 		D3D12_RESOURCE_STATES setState(ID3D12GraphicsCommandList* _commandList, D3D12_RESOURCE_STATES _state);
 
-		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
-		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
-		ID3D12Resource* m_ptr;
-		void* m_directAccessPtr;
-		D3D12_RESOURCE_STATES m_state;
+		D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd = {};
+		D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd = {};
+		ID3D12Resource* m_ptr = NULL;
+		void* m_directAccessPtr = NULL;
+		D3D12_RESOURCE_STATES m_state = D3D12_RESOURCE_STATE_COMMON;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -349,21 +331,12 @@ namespace bgfx { namespace d3d12
 		uint8_t m_type;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
-		uint8_t m_numMips;
+		uint8_t m_numMips = 0;
 	};
 
 	struct FrameBufferD3D12
 	{
 		FrameBufferD3D12()
-			: m_swapChain(NULL)
-			, m_nwh(NULL)
-			, m_width(0)
-			, m_height(0)
-			, m_denseIdx(UINT16_MAX)
-			, m_num(0)
-			, m_numTh(0)
-			, m_state(D3D12_RESOURCE_STATE_PRESENT)
-			, m_needPresent(false)
 		{
 			m_depth.idx = bgfx::kInvalidHandle;
 		}
@@ -380,24 +353,22 @@ namespace bgfx { namespace d3d12
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 		TextureHandle m_depth;
-		Dxgi::SwapChainI* m_swapChain;
-		void* m_nwh;
-		uint32_t m_width;
-		uint32_t m_height;
-		uint16_t m_denseIdx;
-		uint8_t m_num;
-		uint8_t m_numTh;
+		Dxgi::SwapChainI* m_swapChain = NULL;
+		void* m_nwh = NULL;
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint16_t m_denseIdx = UINT16_MAX;
+		uint8_t m_num = 0;
+		uint8_t m_numTh = 0;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-		D3D12_RESOURCE_STATES m_state;
-		bool m_needPresent;
+		D3D12_RESOURCE_STATES m_state = D3D12_RESOURCE_STATE_PRESENT;
+		bool m_needPresent = false;
 	};
 
 	struct CommandQueueD3D12
 	{
 		CommandQueueD3D12()
-			: m_currentFence(0)
-			, m_completedFence(0)
-			, m_control(BX_COUNTOF(m_commandList) )
+			: m_control(BX_COUNTOF(m_commandList))
 		{
 			BX_STATIC_ASSERT(BX_COUNTOF(m_commandList) == BX_COUNTOF(m_release) );
 		}
@@ -419,8 +390,8 @@ namespace bgfx { namespace d3d12
 		};
 
 		ID3D12CommandQueue* m_commandQueue;
-		uint64_t m_currentFence;
-		uint64_t m_completedFence;
+		uint64_t m_currentFence = 0;
+		uint64_t m_completedFence = 0;
 		ID3D12Fence* m_fence;
 		CommandList m_commandList[256];
 		typedef stl::vector<ID3D12Resource*> ResourceArray;
@@ -439,12 +410,7 @@ namespace bgfx { namespace d3d12
 		};
 
 		BatchD3D12()
-			: m_currIndirect(0)
-			, m_maxDrawPerBatch(0)
-			, m_minIndirect(0)
-			, m_flushPerBatch(0)
 		{
-			bx::memSet(m_num, 0, sizeof(m_num) );
 		}
 
 		~BatchD3D12()
@@ -476,7 +442,7 @@ namespace bgfx { namespace d3d12
 		}
 
 		ID3D12CommandSignature* m_commandSignature[Count];
-		uint32_t m_num[Count];
+		uint32_t m_num[Count] = {};
 		void* m_cmds[Count];
 
 		struct DrawIndirectCommand
@@ -501,13 +467,13 @@ namespace bgfx { namespace d3d12
 		};
 
 		BufferD3D12 m_indirect[32];
-		uint32_t m_currIndirect;
+		uint32_t m_currIndirect = 0;
 		DrawIndexedIndirectCommand m_current;
 
 		Stats m_stats;
-		uint32_t m_maxDrawPerBatch;
-		uint32_t m_minIndirect;
-		uint32_t m_flushPerBatch;
+		uint32_t m_maxDrawPerBatch = 0;
+		uint32_t m_minIndirect = 0;
+		uint32_t m_flushPerBatch = 0;
 	};
 
 	struct TimerQueryD3D12

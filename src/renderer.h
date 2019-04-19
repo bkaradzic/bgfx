@@ -31,7 +31,6 @@ namespace bgfx
 	{
 		BlitState(const Frame* _frame)
 			: m_frame(_frame)
-			, m_item(0)
 		{
 			m_key.decode(_frame->m_blitKeys[0]);
 		}
@@ -55,7 +54,7 @@ namespace bgfx
 
 		const Frame* m_frame;
 		BlitKey  m_key;
-		uint16_t m_item;
+		uint16_t m_item = 0;
 	};
 
 	struct ViewState
@@ -483,8 +482,6 @@ namespace bgfx
 			: m_viewName(_viewName)
 			, m_frame(_frame)
 			, m_gpuTimer(_gpuTimer)
-			, m_queryIdx(UINT32_MAX)
-			, m_numViews(0)
 			, m_enabled(_enabled && 0 != (_frame->m_debug & BGFX_DEBUG_PROFILER) )
 		{
 		}
@@ -532,8 +529,8 @@ namespace bgfx
 		const char (*m_viewName)[BGFX_CONFIG_MAX_VIEW_NAME];
 		Frame*   m_frame;
 		Ty&      m_gpuTimer;
-		uint32_t m_queryIdx;
-		uint16_t m_numViews;
+		uint32_t m_queryIdx = UINT32_MAX;
+		uint16_t m_numViews = 0;
 		bool     m_enabled;
 	};
 

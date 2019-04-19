@@ -658,34 +658,6 @@ namespace bgfx { namespace d3d11
 	struct RendererContextD3D11 : public RendererContextI
 	{
 		RendererContextD3D11()
-			: m_d3d9Dll(NULL)
-			, m_d3d11Dll(NULL)
-			, m_renderDocDll(NULL)
-			, m_agsDll(NULL)
-			, m_ags(NULL)
-			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
-			, m_swapChain(NULL)
-			, m_lost(false)
-			, m_numWindows(0)
-			, m_device(NULL)
-			, m_deviceCtx(NULL)
-			, m_annotation(NULL)
-			, m_infoQueue(NULL)
-			, m_backBufferColor(NULL)
-			, m_backBufferDepthStencil(NULL)
-			, m_currentColor(NULL)
-			, m_currentDepthStencil(NULL)
-			, m_captureTexture(NULL)
-			, m_captureResolve(NULL)
-			, m_maxAnisotropy(1)
-			, m_depthClamp(false)
-			, m_wireframe(false)
-			, m_currentProgram(NULL)
-			, m_vsChanges(0)
-			, m_fsChanges(0)
-			, m_rtMsaa(false)
-			, m_timerQuerySupport(false)
-			, m_directAccessSupport(false)
 		{
 			m_fbh.idx = kInvalidHandle;
 			bx::memSet(&m_scd, 0, sizeof(m_scd) );
@@ -3419,51 +3391,51 @@ namespace bgfx { namespace d3d11
 			}
 		}
 
-		void* m_d3d9Dll;
-		void* m_d3d11Dll;
-		void* m_renderDocDll;
-		void* m_agsDll;
+		void* m_d3d9Dll = NULL;
+		void* m_d3d11Dll = NULL;
+		void* m_renderDocDll = NULL;
+		void* m_agsDll = NULL;
 
 		Dxgi m_dxgi;
-		AGSContext* m_ags;
+		AGSContext* m_ags = NULL;
 		NvApi m_nvapi;
 
-		D3D_FEATURE_LEVEL m_featureLevel;
+		D3D_FEATURE_LEVEL m_featureLevel = D3D_FEATURE_LEVEL(0);
 
-		Dxgi::SwapChainI* m_swapChain;
+		Dxgi::SwapChainI* m_swapChain = NULL;
 		ID3D11Texture2D*  m_msaaRt;
 
 		bool m_needPresent;
-		bool m_lost;
-		uint16_t m_numWindows;
+		bool m_lost = false;
+		uint16_t m_numWindows = 0;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
-		ID3D11Device*              m_device;
-		ID3D11DeviceContext*       m_deviceCtx;
-		ID3DUserDefinedAnnotation* m_annotation;
-		ID3D11InfoQueue*           m_infoQueue;
+		ID3D11Device*              m_device = NULL;
+		ID3D11DeviceContext*       m_deviceCtx = NULL;
+		ID3DUserDefinedAnnotation* m_annotation = NULL;
+		ID3D11InfoQueue*           m_infoQueue = NULL;
 
 		TimerQueryD3D11     m_gpuTimer;
 		OcclusionQueryD3D11 m_occlusionQuery;
 
 		uint32_t m_deviceInterfaceVersion;
 
-		ID3D11RenderTargetView* m_backBufferColor;
-		ID3D11DepthStencilView* m_backBufferDepthStencil;
-		ID3D11RenderTargetView* m_currentColor;
-		ID3D11DepthStencilView* m_currentDepthStencil;
+		ID3D11RenderTargetView* m_backBufferColor = NULL;
+		ID3D11DepthStencilView* m_backBufferDepthStencil = NULL;
+		ID3D11RenderTargetView* m_currentColor = NULL;
+		ID3D11DepthStencilView* m_currentDepthStencil = NULL;
 
-		ID3D11Texture2D* m_captureTexture;
-		ID3D11Texture2D* m_captureResolve;
+		ID3D11Texture2D* m_captureTexture = NULL;
+		ID3D11Texture2D* m_captureResolve = NULL;
 
 		Resolution m_resolution;
 
 		SwapChainDesc m_scd;
 		DXGI_SWAP_EFFECT m_swapEffect;
 		uint32_t m_swapBufferCount;
-		uint32_t m_maxAnisotropy;
-		bool m_depthClamp;
-		bool m_wireframe;
+		uint32_t m_maxAnisotropy = 1;
+		bool m_depthClamp = false;
+		bool m_wireframe = false;
 
 		IndexBufferD3D11 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D11 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -3487,17 +3459,17 @@ namespace bgfx { namespace d3d11
 
 		TextureStage m_textureStage;
 
-		ProgramD3D11* m_currentProgram;
+		ProgramD3D11* m_currentProgram = NULL;
 
 		uint8_t m_vsScratch[64<<10];
 		uint8_t m_fsScratch[64<<10];
-		uint32_t m_vsChanges;
-		uint32_t m_fsChanges;
+		uint32_t m_vsChanges = 0;
+		uint32_t m_fsChanges = 0;
 
 		FrameBufferHandle m_fbh;
-		bool m_rtMsaa;
-		bool m_timerQuerySupport;
-		bool m_directAccessSupport;
+		bool m_rtMsaa = false;
+		bool m_timerQuerySupport = false;
+		bool m_directAccessSupport = false;
 	};
 
 	static RendererContextD3D11* s_renderD3D11;

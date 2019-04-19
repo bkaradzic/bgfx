@@ -1727,35 +1727,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 	struct RendererContextGL : public RendererContextI
 	{
 		RendererContextGL()
-			: m_numWindows(1)
-			, m_rtMsaa(false)
-			, m_fbDiscard(BGFX_CLEAR_NONE)
-			, m_capture(NULL)
-			, m_captureSize(0)
-			, m_maxAnisotropy(0.0f)
-			, m_maxAnisotropyDefault(0.0f)
-			, m_maxMsaa(0)
-			, m_vao(0)
-			, m_blitSupported(false)
-			, m_readBackSupported(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-			, m_vaoSupport(false)
-			, m_samplerObjectSupport(false)
-			, m_shadowSamplersSupport(false)
-			, m_srgbWriteControlSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-			, m_borderColorSupport(BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-			, m_programBinarySupport(false)
-			, m_textureSwizzleSupport(false)
-			, m_depthTextureSupport(false)
-			, m_timerQuerySupport(false)
-			, m_occlusionQuerySupport(false)
-			, m_atocSupport(false)
-			, m_conservativeRasterSupport(false)
-			, m_flip(false)
-			, m_hash( (BX_PLATFORM_WINDOWS<<1) | BX_ARCH_64BIT)
-			, m_backBufferFbo(0)
-			, m_msaaBackBufferFbo(0)
-			, m_clearQuadColor(BGFX_INVALID_HANDLE)
-			, m_clearQuadDepth(BGFX_INVALID_HANDLE)
 		{
 			bx::memSet(m_msaaBackBufferRbos, 0, sizeof(m_msaaBackBufferRbos) );
 		}
@@ -3846,9 +3817,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			}
 		}
 
-		void* m_renderdocdll;
+		void* m_renderdocdll = NULL;
 
-		uint16_t m_numWindows;
+		uint16_t m_numWindows = 1;
 		FrameBufferHandle m_windows[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 
 		IndexBufferGL m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
@@ -3867,47 +3838,47 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		SamplerStateCache m_samplerStateCache;
 
 		TextVideoMem m_textVideoMem;
-		bool m_rtMsaa;
+		bool m_rtMsaa = false;
 
 		FrameBufferHandle m_fbh;
-		uint16_t m_fbDiscard;
+		uint16_t m_fbDiscard = BGFX_CLEAR_NONE;
 
 		Resolution m_resolution;
-		void* m_capture;
-		uint32_t m_captureSize;
-		float m_maxAnisotropy;
-		float m_maxAnisotropyDefault;
-		int32_t m_maxMsaa;
-		GLuint m_vao;
+		void* m_capture = NULL;
+		uint32_t m_captureSize = 0;
+		float m_maxAnisotropy = 0.0f;
+		float m_maxAnisotropyDefault = 0.0f;
+		int32_t m_maxMsaa = 0;
+		GLuint m_vao = 0;
 		uint16_t m_maxLabelLen;
-		bool m_blitSupported;
-		bool m_readBackSupported;
-		bool m_vaoSupport;
-		bool m_samplerObjectSupport;
-		bool m_shadowSamplersSupport;
-		bool m_srgbWriteControlSupport;
-		bool m_borderColorSupport;
-		bool m_programBinarySupport;
-		bool m_textureSwizzleSupport;
-		bool m_depthTextureSupport;
-		bool m_timerQuerySupport;
-		bool m_occlusionQuerySupport;
-		bool m_atocSupport;
-		bool m_conservativeRasterSupport;
-		bool m_imageLoadStoreSupport;
-		bool m_flip;
+		bool m_blitSupported = false;
+		bool m_readBackSupported = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL);
+		bool m_vaoSupport = false;
+		bool m_samplerObjectSupport = false;
+		bool m_shadowSamplersSupport = false;
+		bool m_srgbWriteControlSupport = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL);
+		bool m_borderColorSupport = BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL);
+		bool m_programBinarySupport = false;
+		bool m_textureSwizzleSupport = false;
+		bool m_depthTextureSupport = false;
+		bool m_timerQuerySupport = false;
+		bool m_occlusionQuerySupport = false;
+		bool m_atocSupport = false;
+		bool m_conservativeRasterSupport = false;
+		bool m_imageLoadStoreSupport = false;
+		bool m_flip = false;
 
-		uint64_t m_hash;
+		uint64_t m_hash = (BX_PLATFORM_WINDOWS << 1) | BX_ARCH_64BIT;
 
 		GLenum m_readPixelsFmt;
-		GLuint m_backBufferFbo;
-		GLuint m_msaaBackBufferFbo;
+		GLuint m_backBufferFbo = 0;
+		GLuint m_msaaBackBufferFbo = 0;
 		GLuint m_msaaBackBufferRbos[2];
 		GlContext m_glctx;
 		bool m_needPresent;
 
-		UniformHandle m_clearQuadColor;
-		UniformHandle m_clearQuadDepth;
+		UniformHandle m_clearQuadColor = BGFX_INVALID_HANDLE;
+		UniformHandle m_clearQuadDepth = BGFX_INVALID_HANDLE;
 
 		const char* m_vendor;
 		const char* m_renderer;

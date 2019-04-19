@@ -116,12 +116,6 @@ namespace bgfx
 	}
 
 	Dxgi::Dxgi()
-		: m_dxgiDll(NULL)
-		, m_dxgiDebugDll(NULL)
-		, m_driverType(D3D_DRIVER_TYPE_NULL)
-		, m_factory(NULL)
-		, m_adapter(NULL)
-		, m_output(NULL)
 	{
 	}
 

@@ -548,11 +548,6 @@ namespace bgfx
 	struct TextVideoMem
 	{
 		TextVideoMem()
-			: m_mem(NULL)
-			, m_size(0)
-			, m_width(0)
-			, m_height(0)
-			, m_small(false)
 		{
 			resize(false, 1, 1);
 			clear();
@@ -642,11 +637,11 @@ namespace bgfx
 			uint8_t character;
 		};
 
-		MemSlot* m_mem;
-		uint32_t m_size;
-		uint16_t m_width;
-		uint16_t m_height;
-		bool m_small;
+		MemSlot* m_mem = NULL;
+		uint32_t m_size = 0;
+		uint16_t m_width = 0;
+		uint16_t m_height = 0;
+		bool m_small = false;
 	};
 
 	struct TextVideoMemBlitter
@@ -674,7 +669,6 @@ namespace bgfx
 	struct UpdateBatchT
 	{
 		UpdateBatchT()
-			: m_num(0)
 		{
 		}
 
@@ -708,7 +702,7 @@ namespace bgfx
 			m_num = 0;
 		}
 
-		uint32_t m_num;
+		uint32_t m_num = 0;
 		uint32_t m_keys[maxKeys];
 		uint32_t m_values[maxKeys];
 	};
@@ -769,8 +763,6 @@ namespace bgfx
 
 	public:
 		CommandBuffer()
-			: m_pos(0)
-			, m_size(BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE)
 		{
 			finish();
 		}
@@ -882,8 +874,8 @@ namespace bgfx
 			m_pos = 0;
 		}
 
-		uint32_t m_pos;
-		uint32_t m_size;
+		uint32_t m_pos = 0;
+		uint32_t m_size = BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE;
 		uint8_t m_buffer[BGFX_CONFIG_MAX_COMMAND_BUFFER_SIZE];
 	};
 
@@ -1272,7 +1264,6 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 	struct RectCache
 	{
 		RectCache()
-			: m_num(0)
 		{
 		}
 
@@ -1297,7 +1288,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		}
 
 		Rect m_cache[BGFX_CONFIG_MAX_RECT_CACHE];
-		uint32_t m_num;
+		uint32_t m_num = 0;
 	};
 
 #define CONSTANT_OPCODE_TYPE_SHIFT 27
@@ -1427,7 +1418,6 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 	private:
 		UniformBuffer(uint32_t _size)
 			: m_size(_size)
-			, m_pos(0)
 		{
 			finish();
 		}
@@ -1437,7 +1427,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		}
 
 		uint32_t m_size;
-		uint32_t m_pos;
+		uint32_t m_pos = 0;
 		char m_buffer[256<<20];
 	};
 
@@ -1880,9 +1870,6 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 	BX_ALIGN_DECL_CACHE_LINE(struct) Frame
 	{
 		Frame()
-			: m_waitSubmit(0)
-			, m_waitRender(0)
-			, m_capture(false)
 		{
 			SortKey term;
 			term.reset();
@@ -2158,10 +2145,10 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		Stats     m_perfStats;
 		ViewStats m_viewStats[BGFX_CONFIG_MAX_VIEWS];
 
-		int64_t m_waitSubmit;
-		int64_t m_waitRender;
+		int64_t m_waitSubmit = 0;
+		int64_t m_waitRender = 0;
 
-		bool m_capture;
+		bool m_capture = false;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) EncoderImpl
@@ -2813,21 +2800,6 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		Context()
 			: m_render(&m_frame[0])
 			, m_submit(&m_frame[BGFX_CONFIG_MULTITHREADED ? 1 : 0])
-			, m_numFreeDynamicIndexBufferHandles(0)
-			, m_numFreeDynamicVertexBufferHandles(0)
-			, m_numFreeOcclusionQueryHandles(0)
-			, m_colorPaletteDirty(0)
-			, m_frames(0)
-			, m_debug(BGFX_DEBUG_NONE)
-			, m_rtMemoryUsed(0)
-			, m_textureMemoryUsed(0)
-			, m_renderCtx(NULL)
-			, m_renderMain(NULL)
-			, m_renderNoop(NULL)
-			, m_rendererInitialized(false)
-			, m_exit(false)
-			, m_flipAfterRender(false)
-			, m_singleThreaded(false)
 		{
 		}
 
@@ -4897,9 +4869,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		DynamicIndexBuffer  m_dynamicIndexBuffers[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
 		DynamicVertexBuffer m_dynamicVertexBuffers[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 
-		uint16_t m_numFreeDynamicIndexBufferHandles;
-		uint16_t m_numFreeDynamicVertexBufferHandles;
-		uint16_t m_numFreeOcclusionQueryHandles;
+		uint16_t m_numFreeDynamicIndexBufferHandles = 0;
+		uint16_t m_numFreeDynamicVertexBufferHandles = 0;
+		uint16_t m_numFreeOcclusionQueryHandles = 0;
 		DynamicIndexBufferHandle  m_freeDynamicIndexBufferHandle[BGFX_CONFIG_MAX_DYNAMIC_INDEX_BUFFERS];
 		DynamicVertexBufferHandle m_freeDynamicVertexBufferHandle[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 		OcclusionQueryHandle      m_freeOcclusionQueryHandle[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
@@ -4942,27 +4914,27 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		float m_clearColor[BGFX_CONFIG_MAX_COLOR_PALETTE][4];
 
-		uint8_t m_colorPaletteDirty;
+		uint8_t m_colorPaletteDirty = 0;
 
 		Init     m_init;
 		int64_t  m_frameTimeLast;
-		uint32_t m_frames;
-		uint32_t m_debug;
+		uint32_t m_frames = 0;
+		uint32_t m_debug = BGFX_DEBUG_NONE;
 
-		int64_t m_rtMemoryUsed;
-		int64_t m_textureMemoryUsed;
+		int64_t m_rtMemoryUsed = 0;
+		int64_t m_textureMemoryUsed = 0;
 
 		TextVideoMemBlitter m_textVideoMemBlitter;
 		ClearQuad m_clearQuad;
 
-		RendererContextI* m_renderCtx;
-		RendererContextI* m_renderMain;
-		RendererContextI* m_renderNoop;
+		RendererContextI* m_renderCtx = NULL;
+		RendererContextI* m_renderMain = NULL;
+		RendererContextI* m_renderNoop = NULL;
 
-		bool m_rendererInitialized;
-		bool m_exit;
-		bool m_flipAfterRender;
-		bool m_singleThreaded;
+		bool m_rendererInitialized = false;
+		bool m_exit = false;
+		bool m_flipAfterRender = false;
+		bool m_singleThreaded = false;
 		bool m_flipped;
 
 		typedef UpdateBatchT<256> TextureUpdateBatch;

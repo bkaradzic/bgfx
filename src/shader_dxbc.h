@@ -479,50 +479,34 @@ namespace bgfx
 	struct DxbcSubOperand
 	{
 		DxbcSubOperand()
-			: type(DxbcOperandType::Temp)
-			, mode(0)
-			, modeBits(0)
-			, num(0)
-			, numAddrModes(0)
-			, addrMode(0)
-			, regIndex(0)
 		{
 		}
 
-		DxbcOperandType::Enum type;
-		uint8_t mode;
-		uint8_t modeBits;
-		uint8_t num;
-		uint8_t numAddrModes;
-		uint8_t addrMode;
-		uint32_t regIndex;
+		DxbcOperandType::Enum type = DxbcOperandType::Temp;
+		uint8_t mode = 0;
+		uint8_t modeBits = 0;
+		uint8_t num = 0;
+		uint8_t numAddrModes = 0;
+		uint8_t addrMode = 0;
+		uint32_t regIndex = 0;
 	};
 
 	struct DxbcOperand
 	{
 		DxbcOperand()
-			: type(DxbcOperandType::Temp)
-			, mode(DxbcOperandMode::Mask)
-			, modeBits(0)
-			, num(0)
-			, modifier(DxbcOperandModifier::None)
-			, numAddrModes(0)
 		{
-			bx::memSet(addrMode, 0, sizeof(addrMode) );
-			bx::memSet(regIndex, 0, sizeof(regIndex) );
-			bx::memSet(un.imm64, 0, sizeof(un.imm64) );
 		}
 
-		DxbcOperandType::Enum type;
-		DxbcOperandMode::Enum mode;
-		uint8_t modeBits;
-		uint8_t num;
-		DxbcOperandModifier::Enum modifier;
+		DxbcOperandType::Enum type = DxbcOperandType::Temp;
+		DxbcOperandMode::Enum mode = DxbcOperandMode::Mask;
+		uint8_t modeBits = 0;
+		uint8_t num = 0;
+		DxbcOperandModifier::Enum modifier = DxbcOperandModifier::None;
 
-		uint8_t numAddrModes;
-		uint8_t addrMode[3];
-		uint32_t regIndex[3];
-		DxbcSubOperand subOperand[3];
+		uint8_t numAddrModes = 0;
+		uint8_t addrMode[3] = {};
+		uint32_t regIndex[3] = {};
+		DxbcSubOperand subOperand[3] = {};
 
 		union
 		{

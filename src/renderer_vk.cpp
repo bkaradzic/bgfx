@@ -804,12 +804,6 @@ VK_IMPORT_DEVICE
 	struct RendererContextVK : public RendererContextI
 	{
 		RendererContextVK()
-			: m_allocatorCb(NULL)
-			, m_renderDocDll(NULL)
-			, m_vulkan1Dll(NULL)
-			, m_maxAnisotropy(1)
-			, m_depthClamp(false)
-			, m_wireframe(false)
 		{
 		}
 
@@ -3189,7 +3183,7 @@ VK_IMPORT_DEVICE
 			return 0;
 		}
 
-		VkAllocationCallbacks*   m_allocatorCb;
+		VkAllocationCallbacks*   m_allocatorCb = NULL;
 		VkDebugReportCallbackEXT m_debugReportCallback;
 		VkInstance       m_instance;
 		VkPhysicalDevice m_physicalDevice;
@@ -3228,8 +3222,8 @@ VK_IMPORT_DEVICE
 		VkPipelineCache m_pipelineCache;
 		VkCommandPool m_commandPool;
 
-		void* m_renderDocDll;
-		void* m_vulkan1Dll;
+		void* m_renderDocDll = NULL;
+		void* m_vulkan1Dll = NULL;
 
 		IndexBufferVK m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferVK m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -3245,9 +3239,9 @@ VK_IMPORT_DEVICE
 		StateCacheT<VkPipeline> m_pipelineStateCache;
 
 		Resolution m_resolution;
-		uint32_t m_maxAnisotropy;
-		bool m_depthClamp;
-		bool m_wireframe;
+		uint32_t m_maxAnisotropy = 1;
+		bool m_depthClamp = false;
+		bool m_wireframe = false;
 
 		TextVideoMem m_textVideoMem;
 

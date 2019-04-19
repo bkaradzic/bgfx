@@ -405,22 +405,6 @@ namespace bgfx { namespace d3d9
 	struct RendererContextD3D9 : public RendererContextI
 	{
 		RendererContextD3D9()
-			: m_d3d9(NULL)
-			, m_device(NULL)
-			, m_flushQuery(NULL)
-			, m_swapChain(NULL)
-			, m_captureTexture(NULL)
-			, m_captureSurface(NULL)
-			, m_captureResolve(NULL)
-			, m_maxAnisotropy(1)
-			, m_initialized(false)
-			, m_amd(false)
-			, m_nvidia(false)
-			, m_atocSupport(false)
-			, m_instancingSupport(false)
-			, m_occlusionQuerySupport(false)
-			, m_timerQuerySupport(false)
-			, m_rtMsaa(false)
 		{
 		}
 
@@ -2191,14 +2175,14 @@ namespace bgfx { namespace d3d9
 		IDirect3D9Ex* m_d3d9ex;
 		IDirect3DDevice9Ex* m_deviceEx;
 
-		IDirect3D9*        m_d3d9;
-		IDirect3DDevice9*  m_device;
-		IDirect3DQuery9*   m_flushQuery;
+		IDirect3D9*        m_d3d9 = NULL;
+		IDirect3DDevice9*  m_device = NULL;
+		IDirect3DQuery9*   m_flushQuery = NULL;
 		TimerQueryD3D9     m_gpuTimer;
 		OcclusionQueryD3D9 m_occlusionQuery;
 		D3DPOOL m_pool;
 
-		IDirect3DSwapChain9* m_swapChain;
+		IDirect3DSwapChain9* m_swapChain = NULL;
 
 		bool m_needPresent;
 		uint16_t m_numWindows;
@@ -2207,9 +2191,9 @@ namespace bgfx { namespace d3d9
 		IDirect3DSurface9* m_backBufferColor;
 		IDirect3DSurface9* m_backBufferDepthStencil;
 
-		IDirect3DTexture9* m_captureTexture;
-		IDirect3DSurface9* m_captureSurface;
-		IDirect3DSurface9* m_captureResolve;
+		IDirect3DTexture9* m_captureTexture = NULL;
+		IDirect3DSurface9* m_captureSurface = NULL;
+		IDirect3DSurface9* m_captureResolve = NULL;
 
 		IDirect3DVertexDeclaration9* m_instanceDataDecls[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT];
 
@@ -2218,17 +2202,17 @@ namespace bgfx { namespace d3d9
 		uint32_t m_adapter;
 		D3DDEVTYPE m_deviceType;
 		D3DPRESENT_PARAMETERS m_params;
-		uint32_t m_maxAnisotropy;
+		uint32_t m_maxAnisotropy = 1;
 		D3DADAPTER_IDENTIFIER9 m_identifier;
 		Resolution m_resolution;
 
-		bool m_initialized;
-		bool m_amd;
-		bool m_nvidia;
-		bool m_atocSupport;
-		bool m_instancingSupport;
-		bool m_occlusionQuerySupport;
-		bool m_timerQuerySupport;
+		bool m_initialized = false;
+		bool m_amd = false;
+		bool m_nvidia = false;
+		bool m_atocSupport = false;
+		bool m_instancingSupport = false;
+		bool m_occlusionQuerySupport = false;
+		bool m_timerQuerySupport = false;
 
 		D3DFORMAT m_fmtDepth;
 
@@ -2255,7 +2239,7 @@ namespace bgfx { namespace d3d9
 		TextVideoMem m_textVideoMem;
 
 		FrameBufferHandle m_fbh;
-		bool m_rtMsaa;
+		bool m_rtMsaa = false;
 	};
 
 	static RendererContextD3D9* s_renderD3D9;

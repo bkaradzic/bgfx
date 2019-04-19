@@ -95,14 +95,14 @@ namespace bgfx
 		void trim();
 
 		///
-		void* m_dxgiDll;
-		void* m_dxgiDebugDll;
+		void* m_dxgiDll = NULL;
+		void* m_dxgiDebugDll = NULL;
 
-		D3D_DRIVER_TYPE   m_driverType;
+		D3D_DRIVER_TYPE   m_driverType = D3D_DRIVER_TYPE_NULL;
 		DXGI_ADAPTER_DESC m_adapterDesc;
-		FactoryI* m_factory;
-		AdapterI* m_adapter;
-		OutputI*  m_output;
+		FactoryI* m_factory = NULL;
+		AdapterI* m_adapter = NULL;
+		OutputI*  m_output = NULL;
 	};
 
 } // namespace bgfx

@@ -158,10 +158,6 @@ namespace bgfx
 	{
 	public:
 		AllocatorStub()
-#if BGFX_CONFIG_MEMORY_TRACKING
-			: m_numBlocks(0)
-			, m_maxBlocks(0)
-#endif // BGFX_CONFIG_MEMORY_TRACKING
 		{
 		}
 
@@ -231,8 +227,8 @@ namespace bgfx
 	protected:
 #if BGFX_CONFIG_MEMORY_TRACKING
 		bx::Mutex m_mutex;
-		uint32_t m_numBlocks;
-		uint32_t m_maxBlocks;
+		uint32_t m_numBlocks = 0;
+		uint32_t m_maxBlocks = 0;
 #endif // BGFX_CONFIG_MEMORY_TRACKING
 	};
 

@@ -69,11 +69,11 @@ namespace bgfx
 		void setMarker(const bx::StringView& _marker);
 
 		///
-		void* m_nvApiDll;
-		NvPhysicalGpuHandle* m_nvGpu;
+		void* m_nvApiDll = NULL;
+		NvPhysicalGpuHandle* m_nvGpu = NULL;
 
-		void* m_nvAftermathDll;
-		NvAftermathContextHandle* m_aftermathHandle;
+		void* m_nvAftermathDll = NULL;
+		NvAftermathContextHandle* m_aftermathHandle = NULL;
 
 		PFN_NVAPI_MULTIDRAWINDIRECT nvApiD3D11MultiDrawInstancedIndirect;
 		PFN_NVAPI_MULTIDRAWINDIRECT nvApiD3D11MultiDrawIndexedInstancedIndirect;

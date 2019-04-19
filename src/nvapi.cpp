@@ -97,10 +97,6 @@ namespace bgfx
 	static PFN_NVAFTERMATH_GETPAGEFAULTINFORMATION  nvAftermathGetPageFaultInformation;
 
 	NvApi::NvApi()
-		: m_nvApiDll(NULL)
-		, m_nvGpu(NULL)
-		, m_nvAftermathDll(NULL)
-		, m_aftermathHandle(NULL)
 	{
 	}
 

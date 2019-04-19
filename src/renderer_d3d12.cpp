@@ -649,20 +649,6 @@ namespace bgfx { namespace d3d12
 	struct RendererContextD3D12 : public RendererContextI
 	{
 		RendererContextD3D12()
-			: m_d3d12Dll(NULL)
-			, m_renderDocDll(NULL)
-			, m_winPixEvent(NULL)
-			, m_featureLevel(D3D_FEATURE_LEVEL(0) )
-			, m_swapChain(NULL)
-			, m_wireframe(false)
-			, m_lost(false)
-			, m_maxAnisotropy(1)
-			, m_depthClamp(false)
-			, m_fsChanges(0)
-			, m_vsChanges(0)
-			, m_backBufferColorIdx(0)
-			, m_rtMsaa(false)
-			, m_directAccessSupport(false)
 		{
 		}
 
@@ -3293,17 +3279,17 @@ namespace bgfx { namespace d3d12
 		NvApi m_nvapi;
 
 		void* m_kernel32Dll;
-		void* m_d3d12Dll;
-		void* m_renderDocDll;
-		void* m_winPixEvent;
+		void* m_d3d12Dll = NULL;
+		void* m_renderDocDll = NULL;
+		void* m_winPixEvent = NULL;
 
-		D3D_FEATURE_LEVEL m_featureLevel;
+		D3D_FEATURE_LEVEL m_featureLevel = D3D_FEATURE_LEVEL(0);
 
 		D3D_DRIVER_TYPE m_driverType;
 		D3D12_FEATURE_DATA_ARCHITECTURE m_architecture;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS m_options;
 
-		Dxgi::SwapChainI* m_swapChain;
+		Dxgi::SwapChainI* m_swapChain = NULL;
 		ID3D12Resource*   m_msaaRt;
 
 #if BX_PLATFORM_WINDOWS
@@ -3341,12 +3327,12 @@ namespace bgfx { namespace d3d12
 		ID3D12GraphicsCommandList* m_commandList;
 
 		Resolution m_resolution;
-		bool m_wireframe;
-		bool m_lost;
+		bool m_wireframe = false;
+		bool m_lost = false;
 
 		SwapChainDesc m_scd;
-		uint32_t m_maxAnisotropy;
-		bool m_depthClamp;
+		uint32_t m_maxAnisotropy = 1;
+		bool m_depthClamp = false;
 
 		BufferD3D12 m_indexBuffers[BGFX_CONFIG_MAX_INDEX_BUFFERS];
 		VertexBufferD3D12 m_vertexBuffers[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
@@ -3366,13 +3352,13 @@ namespace bgfx { namespace d3d12
 
 		uint8_t m_fsScratch[64<<10];
 		uint8_t m_vsScratch[64<<10];
-		uint32_t m_fsChanges;
-		uint32_t m_vsChanges;
+		uint32_t m_fsChanges = 0;
+		uint32_t m_vsChanges = 0;
 
 		FrameBufferHandle m_fbh;
-		uint32_t m_backBufferColorIdx;
-		bool m_rtMsaa;
-		bool m_directAccessSupport;
+		uint32_t m_backBufferColorIdx = 0;
+		bool m_rtMsaa = false;
+		bool m_directAccessSupport = false;
 	};
 
 	static RendererContextD3D12* s_renderD3D12;

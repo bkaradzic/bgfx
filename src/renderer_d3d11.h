@@ -77,14 +77,6 @@ namespace bgfx { namespace d3d11
 	struct BufferD3D11
 	{
 		BufferD3D11()
-			: m_ptr(NULL)
-#if USE_D3D11_STAGING_BUFFER
-			, m_staging(NULL)
-#endif // USE_D3D11_STAGING_BUFFER
-			, m_srv(NULL)
-			, m_uav(NULL)
-			, m_flags(BGFX_BUFFER_NONE)
-			, m_dynamic(false)
 		{
 		}
 
@@ -107,15 +99,15 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(m_uav, 0);
 		}
 
-		ID3D11Buffer* m_ptr;
+		ID3D11Buffer* m_ptr = NULL;
 #if USE_D3D11_STAGING_BUFFER
-		ID3D11Buffer* m_staging;
+		ID3D11Buffer* m_staging = NULL;
 #endif // USE_D3D11_STAGING_BUFFER
-		ID3D11ShaderResourceView*  m_srv;
-		ID3D11UnorderedAccessView* m_uav;
+		ID3D11ShaderResourceView*  m_srv = NULL;
+		ID3D11UnorderedAccessView* m_uav = NULL;
 		uint32_t m_size;
-		uint16_t m_flags;
-		bool m_dynamic;
+		uint16_t m_flags = BGFX_BUFFER_NONE;
+		bool m_dynamic = false;
 	};
 
 	typedef BufferD3D11 IndexBufferD3D11;
@@ -135,14 +127,6 @@ namespace bgfx { namespace d3d11
 	struct ShaderD3D11
 	{
 		ShaderD3D11()
-			: m_ptr(NULL)
-			, m_code(NULL)
-			, m_buffer(NULL)
-			, m_constantBuffer(NULL)
-			, m_hash(0)
-			, m_numUniforms(0)
-			, m_numPredefined(0)
-			, m_hasDepthOp(false)
 		{
 		}
 
@@ -178,27 +162,25 @@ namespace bgfx { namespace d3d11
 			ID3D11ComputeShader* m_computeShader;
 			ID3D11PixelShader*   m_pixelShader;
 			ID3D11VertexShader*  m_vertexShader;
-			ID3D11DeviceChild*   m_ptr;
+			ID3D11DeviceChild*   m_ptr = NULL;
 		};
-		const Memory* m_code;
-		ID3D11Buffer* m_buffer;
-		UniformBuffer* m_constantBuffer;
+		const Memory* m_code = NULL;
+		ID3D11Buffer* m_buffer = NULL;
+		UniformBuffer* m_constantBuffer = NULL;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count];
 		uint16_t m_attrMask[Attrib::Count];
 
-		uint32_t m_hash;
+		uint32_t m_hash = 0;
 
-		uint16_t m_numUniforms;
-		uint8_t m_numPredefined;
-		bool m_hasDepthOp;
+		uint16_t m_numUniforms = 0;
+		uint8_t m_numPredefined = 0;
+		bool m_hasDepthOp = false;
 	};
 
 	struct ProgramD3D11
 	{
 		ProgramD3D11()
-			: m_vsh(NULL)
-			, m_fsh(NULL)
 		{
 		}
 
@@ -225,8 +207,8 @@ namespace bgfx { namespace d3d11
 			m_fsh = NULL;
 		}
 
-		const ShaderD3D11* m_vsh;
-		const ShaderD3D11* m_fsh;
+		const ShaderD3D11* m_vsh = NULL;
+		const ShaderD3D11* m_fsh = NULL;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count*2];
 		uint8_t m_numPredefined;
@@ -245,8 +227,6 @@ namespace bgfx { namespace d3d11
 	struct DirectAccessResourceD3D11
 	{
 		DirectAccessResourceD3D11()
-			: m_ptr(NULL)
-			, m_descriptor(NULL)
 		{
 		}
 
@@ -256,12 +236,12 @@ namespace bgfx { namespace d3d11
 
 		union
 		{
-			ID3D11Resource*  m_ptr;
+			ID3D11Resource*  m_ptr = NULL;
 			ID3D11Texture2D* m_texture2d;
 			ID3D11Texture3D* m_texture3d;
 		};
 
-		IntelDirectAccessResourceDescriptor* m_descriptor;
+		IntelDirectAccessResourceDescriptor* m_descriptor = NULL;
 	};
 
 	struct TextureD3D11
@@ -274,11 +254,6 @@ namespace bgfx { namespace d3d11
 		};
 
 		TextureD3D11()
-			: m_ptr(NULL)
-			, m_rt(NULL)
-			, m_srv(NULL)
-			, m_uav(NULL)
-			, m_numMips(0)
 		{
 		}
 
@@ -293,7 +268,7 @@ namespace bgfx { namespace d3d11
 
 		union
 		{
-			ID3D11Resource*  m_ptr;
+			ID3D11Resource*  m_ptr = NULL;
 			ID3D11Texture2D* m_texture2d;
 			ID3D11Texture3D* m_texture3d;
 		};
@@ -302,12 +277,12 @@ namespace bgfx { namespace d3d11
 
 		union
 		{
-			ID3D11Resource* m_rt;
+			ID3D11Resource* m_rt = NULL;
 			ID3D11Texture2D* m_rt2d;
 		};
 
-		ID3D11ShaderResourceView*  m_srv;
-		ID3D11UnorderedAccessView* m_uav;
+		ID3D11ShaderResourceView*  m_srv = NULL;
+		ID3D11UnorderedAccessView* m_uav = NULL;
 		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
@@ -316,22 +291,12 @@ namespace bgfx { namespace d3d11
 		uint8_t  m_type;
 		uint8_t  m_requestedFormat;
 		uint8_t  m_textureFormat;
-		uint8_t  m_numMips;
+		uint8_t  m_numMips = 0;
 	};
 
 	struct FrameBufferD3D11
 	{
 		FrameBufferD3D11()
-			: m_dsv(NULL)
-			, m_swapChain(NULL)
-			, m_nwh(NULL)
-			, m_width(0)
-			, m_height(0)
-			, m_denseIdx(UINT16_MAX)
-			, m_num(0)
-			, m_numTh(0)
-			, m_numUav(0)
-			, m_needPresent(false)
 		{
 		}
 
@@ -348,18 +313,18 @@ namespace bgfx { namespace d3d11
 		ID3D11RenderTargetView*    m_rtv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11UnorderedAccessView* m_uav[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
 		ID3D11ShaderResourceView*  m_srv[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS-1];
-		ID3D11DepthStencilView*    m_dsv;
-		Dxgi::SwapChainI* m_swapChain;
-		void* m_nwh;
-		uint32_t m_width;
-		uint32_t m_height;
+		ID3D11DepthStencilView*    m_dsv = NULL;
+		Dxgi::SwapChainI* m_swapChain = NULL;
+		void* m_nwh = NULL;
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
 
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
-		uint16_t m_denseIdx;
-		uint8_t m_num;
-		uint8_t m_numTh;
-		uint8_t m_numUav;
-		bool m_needPresent;
+		uint16_t m_denseIdx = UINT16_MAX;
+		uint8_t m_num = 0;
+		uint8_t m_numTh = 0;
+		uint8_t m_numUav = 0;
+		bool m_needPresent = false;
 	};
 
 	struct TimerQueryD3D11

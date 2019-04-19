@@ -21,9 +21,6 @@ namespace bgfx { namespace gl
 	{
 		SwapChainGL(EAGLContext *_context, CAEAGLLayer *_layer)
 			: m_context(_context)
-			, m_fbo(0)
-			, m_colorRbo(0)
-			, m_depthStencilRbo(0)
 		{
 			_layer.contentsScale = [UIScreen mainScreen].scale;
 
@@ -152,9 +149,9 @@ namespace bgfx { namespace gl
 		EAGLContext* m_context;
 
 		CAEAGLLayer *m_layer;
-		GLuint m_fbo;
-		GLuint m_colorRbo;
-		GLuint m_depthStencilRbo;
+		GLuint m_fbo = 0;
+		GLuint m_colorRbo = 0;
+		GLuint m_depthStencilRbo = 0;
 		GLint m_width;
 		GLint m_height;
 	};

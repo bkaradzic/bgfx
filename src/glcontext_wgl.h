@@ -61,10 +61,6 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 	struct GlContext
 	{
 		GlContext()
-			: m_current(NULL)
-			, m_opengl32dll(NULL)
-			, m_context(NULL)
-			, m_hdc(NULL)
 		{
 		}
 
@@ -88,10 +84,10 @@ typedef void (APIENTRYP PFNGLSTENCILOPPROC) (GLenum fail, GLenum zfail, GLenum z
 		int32_t m_contextAttrs[9];
 		int m_pixelFormat;
 		PIXELFORMATDESCRIPTOR m_pfd;
-		SwapChainGL* m_current;
-		void* m_opengl32dll;
-		HGLRC m_context;
-		HDC m_hdc;
+		SwapChainGL* m_current = NULL;
+		void* m_opengl32dll = NULL;
+		HGLRC m_context = NULL;
+		HDC m_hdc = NULL;
 	};
 } /* namespace gl */ } // namespace bgfx
 
