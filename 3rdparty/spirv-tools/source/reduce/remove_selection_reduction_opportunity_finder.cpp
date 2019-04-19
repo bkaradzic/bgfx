@@ -19,7 +19,9 @@
 namespace spvtools {
 namespace reduce {
 
-using namespace opt;
+using opt::BasicBlock;
+using opt::IRContext;
+using opt::Instruction;
 
 namespace {
 const uint32_t kMergeNodeIndex = 0;
@@ -32,7 +34,7 @@ std::string RemoveSelectionReductionOpportunityFinder::GetName() const {
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
 RemoveSelectionReductionOpportunityFinder::GetAvailableOpportunities(
-    opt::IRContext* context) const {
+    IRContext* context) const {
   // Get all loop merge and continue blocks so we can check for these later.
   std::unordered_set<uint32_t> merge_and_continue_blocks_from_loops;
   for (auto& function : *context->module()) {
@@ -71,8 +73,8 @@ RemoveSelectionReductionOpportunityFinder::GetAvailableOpportunities(
 }
 
 bool RemoveSelectionReductionOpportunityFinder::CanOpSelectionMergeBeRemoved(
-    opt::IRContext* context, const opt::BasicBlock& header_block,
-    opt::Instruction* merge_instruction,
+    IRContext* context, const BasicBlock& header_block,
+    Instruction* merge_instruction,
     std::unordered_set<uint32_t> merge_and_continue_blocks_from_loops) {
   assert(header_block.GetMergeInst() == merge_instruction &&
          "CanOpSelectionMergeBeRemoved(...): header block and merge "

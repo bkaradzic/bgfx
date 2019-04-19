@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/opt/ir_context.h"
+#include "source/reduce/remove_instruction_reduction_opportunity.h"
 
-#include "remove_instruction_reduction_opportunity.h"
+#include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace reduce {

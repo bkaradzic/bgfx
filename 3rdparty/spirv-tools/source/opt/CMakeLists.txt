@@ -157,6 +157,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   instrument_pass.cpp
   ir_context.cpp
   ir_loader.cpp
+  legalize_vector_shuffle_pass.cpp
   licm_pass.cpp
   local_access_chain_convert_pass.cpp
   local_redundancy_elimination.cpp

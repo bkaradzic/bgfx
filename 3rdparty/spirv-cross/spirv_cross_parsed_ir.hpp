@@ -20,7 +20,6 @@
 #include "spirv_common.hpp"
 #include <stdint.h>
 #include <unordered_map>
-#include <vector>
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -32,7 +31,22 @@ namespace SPIRV_CROSS_NAMESPACE
 
 class ParsedIR
 {
+private:
+	// This must be destroyed after the "ids" vector.
+	std::unique_ptr<ObjectPoolGroup> pool_group;
+
 public:
+	ParsedIR();
+
+	// Due to custom allocations from object pools, we cannot use a default copy constructor.
+	ParsedIR(const ParsedIR &other);
+	ParsedIR &operator=(const ParsedIR &other);
+
+	// Moves are unproblematic, but we need to implement it anyways, since MSVC 2013 does not understand
+	// how to default-implement these.
+	ParsedIR(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT;
+	ParsedIR &operator=(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT;
+
 	// Resizes ids, meta and block_meta.
 	void set_id_bounds(uint32_t bounds);
 
@@ -40,7 +54,7 @@ public:
 	std::vector<uint32_t> spirv;
 
 	// Holds various data structures which inherit from IVariant.
-	std::vector<Variant> ids;
+	SmallVector<Variant> ids;
 
 	// Various meta data for IDs, decorations, names, etc.
 	std::unordered_map<uint32_t, Meta> meta;
@@ -48,19 +62,19 @@ public:
 	// Holds all IDs which have a certain type.
 	// This is needed so we can iterate through a specific kind of resource quickly,
 	// and in-order of module declaration.
-	std::vector<uint32_t> ids_for_type[TypeCount];
+	SmallVector<uint32_t> ids_for_type[TypeCount];
 
 	// Special purpose lists which contain a union of types.
 	// This is needed so we can declare specialization constants and structs in an interleaved fashion,
 	// among other things.
 	// Constants can be of struct type, and struct array sizes can use specialization constants.
-	std::vector<uint32_t> ids_for_constant_or_type;
-	std::vector<uint32_t> ids_for_constant_or_variable;
+	SmallVector<uint32_t> ids_for_constant_or_type;
+	SmallVector<uint32_t> ids_for_constant_or_variable;
 
 	// Declared capabilities and extensions in the SPIR-V module.
 	// Not really used except for reflection at the moment.
-	std::vector<spv::Capability> declared_capabilities;
-	std::vector<std::string> declared_extensions;
+	SmallVector<spv::Capability> declared_capabilities;
+	SmallVector<std::string> declared_extensions;
 
 	// Meta data about blocks. The cross-compiler needs to query if a block is either of these types.
 	// It is a bitset as there can be more than one tag per block.
@@ -73,7 +87,7 @@ public:
 		BLOCK_META_MULTISELECT_MERGE_BIT = 1 << 4
 	};
 	using BlockMetaFlags = uint8_t;
-	std::vector<BlockMetaFlags> block_meta;
+	SmallVector<BlockMetaFlags> block_meta;
 	std::unordered_map<uint32_t, uint32_t> continue_block_to_loop_header;
 
 	// Normally, we'd stick SPIREntryPoint in ids array, but it conflicts with SPIRFunction.
@@ -181,6 +195,6 @@ private:
 	std::string empty_string;
 	Bitset cleared_bitset;
 };
-} // namespace spirv_cross
+} // namespace SPIRV_CROSS_NAMESPACE
 
 #endif

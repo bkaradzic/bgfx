@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PROFILE=Release
+
 if [ ! -z $1 ]; then
 	PROFILE=$1
 fi

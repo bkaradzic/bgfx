@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "structured_loop_to_selection_reduction_opportunity_finder.h"
-#include "structured_loop_to_selection_reduction_opportunity.h"
+#include "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h"
+
+#include "source/reduce/structured_loop_to_selection_reduction_opportunity.h"
 
 namespace spvtools {
 namespace reduce {
 
-using namespace opt;
+using opt::IRContext;
 
 namespace {
 const uint32_t kMergeNodeIndex = 0;
@@ -27,7 +28,7 @@ const uint32_t kContinueNodeIndex = 1;
 
 std::vector<std::unique_ptr<ReductionOpportunity>>
 StructuredLoopToSelectionReductionOpportunityFinder::GetAvailableOpportunities(
-    opt::IRContext* context) const {
+    IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
   std::set<uint32_t> merge_block_ids;

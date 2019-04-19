@@ -19,7 +19,6 @@
 
 #include "spirv_cross_parsed_ir.hpp"
 #include <stdint.h>
-#include <vector>
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -84,12 +83,12 @@ private:
 	}
 
 	// This must be an ordered data structure so we always pick the same type aliases.
-	std::vector<uint32_t> global_struct_cache;
+	SmallVector<uint32_t> global_struct_cache;
 
 	bool types_are_logically_equivalent(const SPIRType &a, const SPIRType &b) const;
 	bool variable_storage_is_aliased(const SPIRVariable &v) const;
 	void make_constant_null(uint32_t id, uint32_t type);
 };
-} // namespace spirv_cross
+} // namespace SPIRV_CROSS_NAMESPACE
 
 #endif

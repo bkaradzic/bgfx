@@ -7217,7 +7217,9 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 										currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
 
 										const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
-										uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
+										const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
+											? draw.m_stream[idx].m_decl.idx
+											: vb.m_decl.idx;
 										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 										program.bindAttributes(m_vertexDecls[decl], draw.m_stream[idx].m_startVertex);
 									}

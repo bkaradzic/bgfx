@@ -28,8 +28,8 @@ project ("example-common")
 	}
 
 	files {
-		path.join(BGFX_DIR, "3rdparty/ib-compress/**.cpp"),
-		path.join(BGFX_DIR, "3rdparty/ib-compress/**.h"),
+		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.cpp"),
+		path.join(BGFX_DIR, "3rdparty/meshoptimizer/src/**.h"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.h"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
@@ -56,30 +56,6 @@ project ("example-common")
 	removefiles {
 		path.join(BGFX_DIR, "examples/common/example-glue.cpp"),
 	}
-
-	if _OPTIONS["with-scintilla"] then
-		defines {
-			"SCI_NAMESPACE",
-			"SCI_LEXER",
-		}
-
-		buildoptions {
---			"-Wno-missing-field-initializers",
-		}
-
-		includedirs {
-			path.join(BGFX_DIR, "3rdparty/scintilla/include"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib"),
-		}
-
-		files {
-			path.join(BGFX_DIR, "3rdparty/scintilla/src/**.cxx"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/src/**.h"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib/**.cxx"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexlib/**.h"),
-			path.join(BGFX_DIR, "3rdparty/scintilla/lexers/**.cxx"),
-		}
-	end
 
 	if _OPTIONS["with-sdl"] then
 		defines {

@@ -18,14 +18,13 @@
 #include <functional>
 
 #include "source/opt/build_module.h"
+#include "source/opt/ir_context.h"
 #include "source/opt/log.h"
 #include "source/reduce/reducer.h"
 #include "source/spirv_reducer_options.h"
 #include "source/util/string_utils.h"
 #include "tools/io.h"
 #include "tools/util/cli_consumer.h"
-
-using namespace spvtools::reduce;
 
 namespace {
 
@@ -200,6 +199,23 @@ ReduceStatus ParseFlags(int argc, const char** argv, const char** in_file,
 
 }  // namespace
 
+// Dumps |binary| to file |filename|. Useful for interactive debugging.
+void DumpShader(const std::vector<uint32_t>& binary, const char* filename) {
+  auto write_file_succeeded =
+      WriteFile(filename, "wb", &binary[0], binary.size());
+  if (!write_file_succeeded) {
+    std::cerr << "Failed to dump shader" << std::endl;
+  }
+}
+
+// Dumps the SPIRV-V module in |context| to file |filename|. Useful for
+// interactive debugging.
+void DumpShader(spvtools::opt::IRContext* context, const char* filename) {
+  std::vector<uint32_t> binary;
+  context->module()->ToBinary(&binary, false);
+  DumpShader(binary, filename);
+}
+
 const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_3;
 
 int main(int argc, const char** argv) {
@@ -223,7 +239,7 @@ int main(int argc, const char** argv) {
     return 2;
   }
 
-  Reducer reducer(target_env);
+  spvtools::reduce::Reducer reducer(target_env);
 
   reducer.SetInterestingnessFunction(
       [interestingness_test](std::vector<uint32_t> binary,
@@ -254,8 +270,8 @@ int main(int argc, const char** argv) {
   const auto reduction_status = reducer.Run(std::move(binary_in), &binary_out,
                                             reducer_options, validator_options);
 
-  if (reduction_status ==
-          Reducer::ReductionResultStatus::kInitialStateNotInteresting ||
+  if (reduction_status == spvtools::reduce::Reducer::ReductionResultStatus::
+                              kInitialStateNotInteresting ||
       !WriteFile<uint32_t>("_reduced_final.spv", "wb", binary_out.data(),
                            binary_out.size())) {
     return 1;

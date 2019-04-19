@@ -21,6 +21,11 @@
 namespace spvtools {
 namespace reduce {
 
+using opt::BasicBlock;
+using opt::IRContext;
+using opt::Instruction;
+using opt::Operand;
+
 namespace {
 const uint32_t kMergeNodeIndex = 0;
 }  // namespace
@@ -208,8 +213,8 @@ void StructuredLoopToSelectionReductionOpportunity::ChangeLoopToSelection() {
   // the "else" branch be the merge block.
   auto terminator = loop_construct_header_->terminator();
   if (terminator->opcode() == SpvOpBranch) {
-    analysis::Bool temp;
-    const analysis::Bool* bool_type =
+    opt::analysis::Bool temp;
+    const opt::analysis::Bool* bool_type =
         context_->get_type_mgr()->GetRegisteredType(&temp)->AsBool();
     auto const_mgr = context_->get_constant_mgr();
     auto true_const = const_mgr->GetConstant(bool_type, {1});

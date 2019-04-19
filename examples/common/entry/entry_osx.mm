@@ -502,7 +502,7 @@ namespace entry
 					return handle;
 				}
 			}
-			
+
 			WindowHandle invalid = { UINT16_MAX };
 			return invalid;
 		}
@@ -543,7 +543,7 @@ namespace entry
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
 		BX_UNUSED(_flags);
-		
+
 		bx::MutexScope scope(s_ctx.m_lock);
 		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
 
@@ -562,9 +562,9 @@ namespace entry
 				[window setAcceptsMouseMovedEvents:YES];
 				[window setBackgroundColor:[NSColor blackColor]];
 				[[Window sharedDelegate] windowCreated:window];
-				
+
 				s_ctx.m_window[handle.idx] = window;
-				
+
 				s_ctx.m_eventQueue.postSizeEvent(handle, _width, _height);
 				s_ctx.m_eventQueue.postWindowEvent(handle, window);
 			};
@@ -597,7 +597,7 @@ namespace entry
 								   {
 									   [window close];
 								   }
-								   
+
 								   if (0 == _handle.idx)
 								   {
 									   [NSApp terminate:nil];
@@ -609,7 +609,7 @@ namespace entry
 			s_ctx.m_windowAlloc.free(_handle.idx);
 		}
 	}
-	
+
 	void destroyWindow(WindowHandle _handle)
 	{
 		destroyWindow(_handle, true);
@@ -621,12 +621,12 @@ namespace entry
 					   , ^{
 						   NSWindow* window = s_ctx.m_window[_handle.idx];
 						   NSScreen* screen = [window screen];
-						   
+
 						   NSRect screenRect = [screen frame];
 						   CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
-						   
+
 						   NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
-						   
+
 						   [window setFrameTopLeftPoint: position];
 					   });
 	}
@@ -659,16 +659,16 @@ namespace entry
 	{
 		dispatch_async(dispatch_get_main_queue()
 					   , ^{
-						   
+
 						   NSWindow* window = s_ctx.m_window[_handle.idx];
 						   NSScreen* screen = [window screen];
 						   NSRect screenRect = [screen frame];
-						   
+
 						   if (!s_ctx.m_fullscreen)
 						   {
 							   s_ctx.m_style &= ~NSWindowStyleMaskTitled;
 							   s_ctx.m_fullscreen = true;
-							   
+
 							   [NSMenu setMenuBarVisible: false];
 							   [window setStyleMask: s_ctx.m_style];
 							   [window setFrame:screenRect display:YES];
@@ -677,7 +677,7 @@ namespace entry
 						   {
 							   s_ctx.m_style |= NSWindowStyleMaskTitled;
 							   s_ctx.m_fullscreen = false;
-							   
+
 							   [NSMenu setMenuBarVisible: true];
 							   [window setStyleMask: s_ctx.m_style];
 							   [window setFrame:s_ctx.m_windowFrame display:YES];
@@ -759,13 +759,14 @@ namespace entry
 	NSWindow *window = [notification object];
 
 	[window setDelegate:nil];
-	
+
 	destroyWindow(entry::s_ctx.findHandle(window), false);
 }
 
 - (BOOL)windowShouldClose:(NSWindow*)window
 {
 	assert(window);
+	BX_UNUSED(window);
 	return true;
 }
 

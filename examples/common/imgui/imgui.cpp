@@ -16,21 +16,13 @@
 //#define USE_ENTRY 1
 
 #ifndef USE_ENTRY
-#	if defined(SCI_NAMESPACE)
-#		define USE_ENTRY 1
-#	else
-#		define USE_ENTRY 0
-#	endif // defined(SCI_NAMESPACE)
+#	define USE_ENTRY 0
 #endif // USE_ENTRY
 
 #if USE_ENTRY
 #	include "../entry/entry.h"
 #	include "../entry/input.h"
 #endif // USE_ENTRY
-
-#if defined(SCI_NAMESPACE)
-#	include "scintilla.h"
-#endif // defined(SCI_NAMESPACE)
 
 #include "vs_ocornut_imgui.bin.h"
 #include "fs_ocornut_imgui.bin.h"
@@ -153,9 +145,9 @@ struct OcornutImguiContext
 					const uint16_t xx = uint16_t(bx::max(cmd->ClipRect.x, 0.0f) );
 					const uint16_t yy = uint16_t(bx::max(cmd->ClipRect.y, 0.0f) );
 					bgfx::setScissor(xx, yy
-							, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
-							, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
-							);
+						, uint16_t(bx::min(cmd->ClipRect.z, 65535.0f)-xx)
+						, uint16_t(bx::min(cmd->ClipRect.w, 65535.0f)-yy)
+						);
 
 					bgfx::setState(state);
 					bgfx::setTexture(0, s_tex, th);

@@ -36,10 +36,16 @@ using Stack = std::stack<State>;
 class Stream
 {
 	Stack stack;
-	std::ostringstream buffer;
+	StringStream<> buffer;
 	uint32_t indent{ 0 };
+	char current_locale_radix_character = '.';
 
 public:
+	void set_current_locale_radix_character(char c)
+	{
+		current_locale_radix_character = c;
+	}
+
 	void begin_json_object();
 	void end_json_object();
 	void emit_json_key(const std::string &key);
@@ -212,7 +218,7 @@ void Stream::emit_json_key_value(const std::string &key, int32_t value)
 void Stream::emit_json_key_value(const std::string &key, float value)
 {
 	emit_json_key(key);
-	statement_inner(value);
+	statement_inner(convert_to_string(value, current_locale_radix_character));
 }
 
 void Stream::emit_json_key_value(const std::string &key, bool value)
@@ -247,8 +253,8 @@ void CompilerReflection::set_format(const std::string &format)
 
 string CompilerReflection::compile()
 {
-	// Move constructor for this type is broken on GCC 4.9 ...
 	json_stream = std::make_shared<simple_json::Stream>();
+	json_stream->set_current_locale_radix_character(current_locale_radix_character);
 	json_stream->begin_json_object();
 	emit_entry_points();
 	emit_types();
@@ -439,7 +445,7 @@ void CompilerReflection::emit_resources()
 	emit_resources("acceleration_structures", res.acceleration_structures);
 }
 
-void CompilerReflection::emit_resources(const char *tag, const vector<Resource> &resources)
+void CompilerReflection::emit_resources(const char *tag, const SmallVector<Resource> &resources)
 {
 	if (resources.empty())
 	{

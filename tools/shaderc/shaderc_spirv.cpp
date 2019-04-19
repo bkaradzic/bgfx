@@ -874,7 +874,7 @@ namespace bgfx { namespace spirv
 
 						spirv_cross::ShaderResources resources = msl.get_shader_resources();
 
-						std::vector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
+						spirv_cross::SmallVector<spirv_cross::EntryPoint> entryPoints = msl.get_entry_points_and_stages();
 						if (!entryPoints.empty())
 							msl.rename_entry_point(entryPoints[0].name, "xlatMtlMain", entryPoints[0].execution_model);
 

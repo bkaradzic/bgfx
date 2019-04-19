@@ -19,7 +19,6 @@
 
 #include "spirv_glsl.hpp"
 #include <utility>
-#include <vector>
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -63,7 +62,7 @@ public:
 	};
 
 	explicit CompilerHLSL(std::vector<uint32_t> spirv_)
-	    : CompilerGLSL(move(spirv_))
+	    : CompilerGLSL(std::move(spirv_))
 	{
 	}
 
@@ -209,12 +208,12 @@ private:
 	void emit_builtin_variables();
 	bool require_output = false;
 	bool require_input = false;
-	std::vector<HLSLVertexAttributeRemap> remap_vertex_attributes;
+	SmallVector<HLSLVertexAttributeRemap> remap_vertex_attributes;
 
 	uint32_t type_to_consumed_locations(const SPIRType &type) const;
 
 	void emit_io_block(const SPIRVariable &var);
-	std::string to_semantic(uint32_t vertex_location);
+	std::string to_semantic(uint32_t location, spv::ExecutionModel em, spv::StorageClass sc);
 
 	uint32_t num_workgroups_builtin = 0;
 
@@ -222,6 +221,6 @@ private:
 	// when translating push constant ranges.
 	std::vector<RootConstants> root_constants_layout;
 };
-} // namespace spirv_cross
+} // namespace SPIRV_CROSS_NAMESPACE
 
 #endif
