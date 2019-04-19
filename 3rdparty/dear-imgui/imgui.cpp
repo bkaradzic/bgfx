@@ -2070,10 +2070,8 @@ ImGuiTextFilter::ImGuiTextFilter(const char* default_filter)
 bool ImGuiTextFilter::Draw(const char* label, float width)
 {
     if (width != 0.0f)
-        ImGui::PushItemWidth(width);
+        ImGui::SetNextItemWidth(width);
     bool value_changed = ImGui::InputText(label, InputBuf, IM_ARRAYSIZE(InputBuf));
-    if (width != 0.0f)
-        ImGui::PopItemWidth();
     if (value_changed)
         Build();
     return value_changed;
@@ -2975,27 +2973,14 @@ void ImGui::FocusableItemUnregister(ImGuiWindow* window)
     window->DC.FocusCounterTab--;
 }
 
-ImVec2 ImGui::CalcItemSize(ImVec2 size, float default_x, float default_y)
-{
-    ImGuiContext& g = *GImGui;
-    ImVec2 content_max;
-    if (size.x < 0.0f || size.y < 0.0f)
-        content_max = g.CurrentWindow->Pos + GetContentRegionMax();
-    if (size.x <= 0.0f)
-        size.x = (size.x == 0.0f) ? default_x : ImMax(content_max.x - g.CurrentWindow->DC.CursorPos.x, 4.0f) + size.x;
-    if (size.y <= 0.0f)
-        size.y = (size.y == 0.0f) ? default_y : ImMax(content_max.y - g.CurrentWindow->DC.CursorPos.y, 4.0f) + size.y;
-    return size;
-}
-
 float ImGui::CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x)
 {
     if (wrap_pos_x < 0.0f)
         return 0.0f;
 
-    ImGuiWindow* window = GetCurrentWindowRead();
+    ImGuiWindow* window = GImGui->CurrentWindow;
     if (wrap_pos_x == 0.0f)
-        wrap_pos_x = GetContentRegionMax().x + window->Pos.x;
+        wrap_pos_x = GetContentRegionMaxScreen().x;
     else if (wrap_pos_x > 0.0f)
         wrap_pos_x += window->Pos.x - window->Scroll.x; // wrap_pos_x is provided is window local space
 
@@ -5759,6 +5744,12 @@ void ImGui::FocusPreviousWindowIgnoringOne(ImGuiWindow* ignore_window)
     }
 }
 
+void ImGui::SetNextItemWidth(float item_width)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    window->DC.NextItemWidth = item_width;
+}
+
 void ImGui::PushItemWidth(float item_width)
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -5770,8 +5761,6 @@ void ImGui::PushMultiItemsWidths(int components, float w_full)
 {
     ImGuiWindow* window = GetCurrentWindow();
     const ImGuiStyle& style = GImGui->Style;
-    if (w_full <= 0.0f)
-        w_full = CalcItemWidth();
     const float w_item_one  = ImMax(1.0f, (float)(int)((w_full - (style.ItemInnerSpacing.x) * (components-1)) / (float)components));
     const float w_item_last = ImMax(1.0f, (float)(int)(w_full - (w_item_one + style.ItemInnerSpacing.x) * (components-1)));
     window->DC.ItemWidthStack.push_back(w_item_last);
@@ -5787,18 +5776,64 @@ void ImGui::PopItemWidth()
     window->DC.ItemWidth = window->DC.ItemWidthStack.empty() ? window->ItemWidthDefault : window->DC.ItemWidthStack.back();
 }
 
-float ImGui::CalcItemWidth()
+// Calculate default item width given value passed to PushItemWidth() or SetNextItemWidth(),
+// Then consume the 
+float ImGui::GetNextItemWidth()
 {
-    ImGuiWindow* window = GetCurrentWindowRead();
-    float w = window->DC.ItemWidth;
+    ImGuiWindow* window = GImGui->CurrentWindow;
+    float w;
+    if (window->DC.NextItemWidth != FLT_MAX)
+    {
+        w = window->DC.NextItemWidth;
+        window->DC.NextItemWidth = FLT_MAX;
+    }
+    else
+    {
+        w = window->DC.ItemWidth;
+    }
     if (w < 0.0f)
     {
-        // Align to a right-side limit. We include 1 frame padding in the calculation because this is how the width is always used (we add 2 frame padding to it), but we could move that responsibility to the widget as well.
-        float width_to_right_edge = GetContentRegionAvail().x;
-        w = ImMax(1.0f, width_to_right_edge + w);
+        float region_max_x = GetContentRegionMaxScreen().x;
+        w = ImMax(1.0f, region_max_x - window->DC.CursorPos.x + w);
     }
     w = (float)(int)w;
     return w;
+}
+
+// Calculate item width *without* popping/consuming NextItemWidth if it was set.
+// (rarely used, which is why we avoid calling this from GetNextItemWidth() and instead do a backup/restore here)
+float ImGui::CalcItemWidth()
+{
+    ImGuiWindow* window = GImGui->CurrentWindow;
+    float backup_next_item_width = window->DC.NextItemWidth;
+    float w = GetNextItemWidth();
+    window->DC.NextItemWidth = backup_next_item_width;
+    return w;
+}
+
+// [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == GetNextItemWidth().
+// Those two functions CalcItemWidth vs CalcItemSize are awkwardly named because they are not fully symmetrical.
+// Note that only CalcItemWidth() is publicly exposed.
+// The 4.0f here may be changed to match GetNextItemWidth() and/or BeginChild() (right now we have a mismatch which is harmless but undesirable)
+ImVec2 ImGui::CalcItemSize(ImVec2 size, float default_w, float default_h)
+{
+    ImGuiWindow* window = GImGui->CurrentWindow;
+
+    ImVec2 region_max;
+    if (size.x < 0.0f || size.y < 0.0f)
+        region_max = GetContentRegionMaxScreen();
+
+    if (size.x == 0.0f)
+        size.x = default_w;
+    else if (size.x < 0.0f)
+        size.x = ImMax(4.0f, region_max.x - window->DC.CursorPos.x + size.x);
+
+    if (size.y == 0.0f)
+        size.y = default_h;
+    else if (size.y < 0.0f)
+        size.y = ImMax(4.0f, region_max.y - window->DC.CursorPos.y + size.y);
+
+    return size;
 }
 
 void ImGui::SetCurrentFont(ImFont* font)
@@ -6366,17 +6401,27 @@ void ImGui::SetNextWindowBgAlpha(float alpha)
 // FIXME: This is in window space (not screen space!)
 ImVec2 ImGui::GetContentRegionMax()
 {
-    ImGuiWindow* window = GetCurrentWindowRead();
+    ImGuiWindow* window = GImGui->CurrentWindow;
     ImVec2 mx = window->ContentsRegionRect.Max - window->Pos;
     if (window->DC.CurrentColumns)
         mx.x = GetColumnOffset(window->DC.CurrentColumns->Current + 1) - window->WindowPadding.x;
     return mx;
 }
 
+// [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features.
+ImVec2 ImGui::GetContentRegionMaxScreen()
+{
+    ImGuiWindow* window = GImGui->CurrentWindow;
+    ImVec2 mx = window->ContentsRegionRect.Max;
+    if (window->DC.CurrentColumns)
+        mx.x = window->Pos.x + GetColumnOffset(window->DC.CurrentColumns->Current + 1) - window->WindowPadding.x;
+    return mx;
+}
+
 ImVec2 ImGui::GetContentRegionAvail()
 {
-    ImGuiWindow* window = GetCurrentWindowRead();
-    return GetContentRegionMax() - (window->DC.CursorPos - window->Pos);
+    ImGuiWindow* window = GImGui->CurrentWindow;
+    return GetContentRegionMaxScreen() - window->DC.CursorPos;
 }
 
 float ImGui::GetContentRegionAvailWidth()
@@ -9127,11 +9172,10 @@ void ImGui::LogButtons()
     const bool log_to_tty = Button("Log To TTY"); SameLine();
     const bool log_to_file = Button("Log To File"); SameLine();
     const bool log_to_clipboard = Button("Log To Clipboard"); SameLine();
-    PushItemWidth(80.0f);
     PushAllowKeyboardFocus(false);
+    SetNextItemWidth(80.0f);
     SliderInt("Default Depth", &g.LogDepthToExpandDefault, 0, 9, NULL);
     PopAllowKeyboardFocus();
-    PopItemWidth();
     PopID();
 
     // Start logging at the end of the function so that the buttons don't appear in the log
@@ -9719,9 +9763,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         ImGui::Checkbox("Show windows begin order", &show_windows_begin_order);
         ImGui::Checkbox("Show windows rectangles", &show_windows_rects);
         ImGui::SameLine();
-        ImGui::PushItemWidth(ImGui::GetFontSize() * 12);
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12);
         show_windows_rects |= ImGui::Combo("##rects_type", &show_windows_rect_type, "OuterRect\0" "OuterRectClipped\0" "InnerMainRect\0" "InnerClipRect\0" "ContentsRegionRect\0");
-        ImGui::PopItemWidth();
         ImGui::Checkbox("Show clipping rectangle when hovering ImDrawCmd node", &show_drawcmd_clip_rects);
         ImGui::TreePop();
     }
