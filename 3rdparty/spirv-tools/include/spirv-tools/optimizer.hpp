@@ -768,6 +768,10 @@ Optimizer::PassToken CreateFixStorageClassPass();
 // converts those literals to 0.
 Optimizer::PassToken CreateLegalizeVectorShufflePass();
 
+// Create a pass to decompose initialized variables into a seperate variable
+// declaration and an initial store.
+Optimizer::PassToken CreateDecomposeInitializedVariablesPass();
+
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

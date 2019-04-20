@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_OPT_STRIP_ATOMIC_COUNT_MEMORY_PASS_H_
-#define SOURCE_OPT_STRIP_ATOMIC_COUNT_MEMORY_PASS_H_
+#ifndef SOURCE_OPT_DECOMPOSE_INITALIZED_VAIRABLES_PASS_H_
+#define SOURCE_OPT_DECOMPOSE_INITALIZED_VAIRABLES_PASS_H_
 
 #include "source/opt/ir_context.h"
 #include "source/opt/module.h"
@@ -22,12 +22,18 @@
 namespace spvtools {
 namespace opt {
 
-// Removes the AtomicCounterMemory bit from the value being passed into memory
-// semantics. This bit being set is ignored in Vulkan environments and
-// forbidden WebGPU ones.
-class StripAtomicCounterMemoryPass : public Pass {
+// Converts variable declartions with initializers into seperate declaration and
+// assignment statements. This is done due to known issues with some Vulkan
+// implementations' handling of initialized variables.
+//
+// Only decomposes variables with storage classes that are valid in Vulkan
+// execution environments; Output, Private, and Function.
+// Currently only Function is implemented.
+class DecomposeInitializedVariablesPass : public Pass {
  public:
-  const char* name() const override { return "strip-atomic-counter-memory"; }
+  const char* name() const override {
+    return "decompose-initialized-variables";
+  }
   Status Process() override;
 
   IRContext::Analysis GetPreservedAnalyses() override {
@@ -48,4 +54,4 @@ class StripAtomicCounterMemoryPass : public Pass {
 }  // namespace opt
 }  // namespace spvtools
 
-#endif  // SOURCE_OPT_STRIP_ATOMIC_COUNT_MEMORY_PASS_H_
+#endif  // SOURCE_OPT_DECOMPOSE_INITALIZED_VAIRABLES_PASS_H_

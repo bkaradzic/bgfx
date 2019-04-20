@@ -231,7 +231,9 @@ Optimizer& Optimizer::RegisterVulkanToWebGPUPasses() {
       .RegisterPass(CreateDeadBranchElimPass());
 }
 
-Optimizer& Optimizer::RegisterWebGPUToVulkanPasses() { return *this; }
+Optimizer& Optimizer::RegisterWebGPUToVulkanPasses() {
+  return RegisterPass(CreateDecomposeInitializedVariablesPass());
+}
 
 bool Optimizer::RegisterPassesFromFlags(const std::vector<std::string>& flags) {
   for (const auto& flag : flags) {
@@ -864,6 +866,11 @@ Optimizer::PassToken CreateFixStorageClassPass() {
 Optimizer::PassToken CreateLegalizeVectorShufflePass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::LegalizeVectorShufflePass>());
+}
+
+Optimizer::PassToken CreateDecomposeInitializedVariablesPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::DecomposeInitializedVariablesPass>());
 }
 
 }  // namespace spvtools

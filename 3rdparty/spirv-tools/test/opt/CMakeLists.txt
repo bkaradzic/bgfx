@@ -30,6 +30,7 @@ add_spvtools_unittest(TARGET opt
        dead_branch_elim_test.cpp
        dead_insert_elim_test.cpp
        dead_variable_elim_test.cpp
+       decompose_initialized_variables_test.cpp
        decoration_manager_test.cpp
        def_use_test.cpp
        eliminate_dead_const_test.cpp

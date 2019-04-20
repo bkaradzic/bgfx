@@ -222,7 +222,7 @@ TEST(Optimizer, CanRegisterPassesFromFlags) {
   EXPECT_EQ(msg_level, SPV_MSG_ERROR);
 }
 
-TEST(Optimizer, VulkanToWebGPUModeSetsCorrectPasses) {
+TEST(Optimizer, VulkanToWebGPUSetsCorrectPasses) {
   Optimizer opt(SPV_ENV_WEBGPU_0);
   opt.RegisterVulkanToWebGPUPasses();
   std::vector<const char*> pass_names = opt.GetPassNames();
@@ -260,9 +260,11 @@ using VulkanToWebGPUPassTest =
     PassTest<::testing::TestWithParam<VulkanToWebGPUPassCase>>;
 
 TEST_P(VulkanToWebGPUPassTest, Ran) {
-  SpirvTools tools(SPV_ENV_WEBGPU_0);
   std::vector<uint32_t> binary;
-  tools.Assemble(GetParam().input, &binary);
+  {
+    SpirvTools tools(SPV_ENV_VULKAN_1_1);
+    tools.Assemble(GetParam().input, &binary);
+  }
 
   Optimizer opt(SPV_ENV_WEBGPU_0);
   opt.RegisterVulkanToWebGPUPasses();
@@ -272,7 +274,10 @@ TEST_P(VulkanToWebGPUPassTest, Ran) {
   ASSERT_TRUE(opt.Run(binary.data(), binary.size(), &optimized,
                       validator_options, true));
   std::string disassembly;
-  tools.Disassemble(optimized.data(), optimized.size(), &disassembly);
+  {
+    SpirvTools tools(SPV_ENV_WEBGPU_0);
+    tools.Disassemble(optimized.data(), optimized.size(), &disassembly);
+  }
 
   EXPECT_EQ(GetParam().expected, disassembly)
       << "Was expecting pass '" << GetParam().pass << "' to have been run.\n";
@@ -520,6 +525,101 @@ INSTANTIATE_TEST_SUITE_P(
          "OpFunctionEnd\n",
          // pass
          "legalize-vector-shuffle"}}));
+
+TEST(Optimizer, WebGPUToVulkanSetsCorrectPasses) {
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
+  opt.RegisterWebGPUToVulkanPasses();
+  std::vector<const char*> pass_names = opt.GetPassNames();
+
+  std::vector<std::string> registered_passes;
+  for (auto name = pass_names.begin(); name != pass_names.end(); ++name)
+    registered_passes.push_back(*name);
+
+  std::vector<std::string> expected_passes = {
+      "decompose-initialized-variables"};
+  std::sort(registered_passes.begin(), registered_passes.end());
+  std::sort(expected_passes.begin(), expected_passes.end());
+
+  ASSERT_EQ(registered_passes.size(), expected_passes.size());
+  for (size_t i = 0; i < registered_passes.size(); i++)
+    EXPECT_EQ(registered_passes[i], expected_passes[i]);
+}
+
+struct WebGPUToVulkanPassCase {
+  // Input SPIR-V
+  std::string input;
+  // Expected result SPIR-V
+  std::string expected;
+  // Specific pass under test, used for logging messages.
+  std::string pass;
+};
+
+using WebGPUToVulkanPassTest =
+    PassTest<::testing::TestWithParam<WebGPUToVulkanPassCase>>;
+
+TEST_P(WebGPUToVulkanPassTest, Ran) {
+  std::vector<uint32_t> binary;
+  {
+    SpirvTools tools(SPV_ENV_WEBGPU_0);
+    tools.Assemble(GetParam().input, &binary);
+  }
+
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
+  opt.RegisterWebGPUToVulkanPasses();
+
+  std::vector<uint32_t> optimized;
+  class ValidatorOptions validator_options;
+  ASSERT_TRUE(opt.Run(binary.data(), binary.size(), &optimized,
+                      validator_options, true));
+  std::string disassembly;
+  {
+    SpirvTools tools(SPV_ENV_VULKAN_1_1);
+    tools.Disassemble(optimized.data(), optimized.size(), &disassembly);
+  }
+
+  EXPECT_EQ(GetParam().expected, disassembly)
+      << "Was expecting pass '" << GetParam().pass << "' to have been run.\n";
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Optimizer, WebGPUToVulkanPassTest,
+    ::testing::ValuesIn(std::vector<WebGPUToVulkanPassCase>{
+        // Decompose Initialized Variables
+        {// input
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%_ptr_Function_uint = OpTypePointer Function %uint\n"
+         "%4 = OpConstantNull %uint\n"
+         "%void = OpTypeVoid\n"
+         "%6 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %6\n"
+         "%7 = OpLabel\n"
+         "%8 = OpVariable %_ptr_Function_uint Function %4\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // expected
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%_ptr_Function_uint = OpTypePointer Function %uint\n"
+         "%4 = OpConstantNull %uint\n"
+         "%void = OpTypeVoid\n"
+         "%6 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %6\n"
+         "%7 = OpLabel\n"
+         "%8 = OpVariable %_ptr_Function_uint Function\n"
+         "OpStore %8 %4\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // pass
+         "decompose-initialized-variables"}}));
 
 }  // namespace
 }  // namespace opt

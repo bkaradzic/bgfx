@@ -31,6 +31,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   dead_branch_elim_pass.h
   dead_insert_elim_pass.h
   dead_variable_elimination.h
+  decompose_initialized_variables_pass.h
   decoration_manager.h
   def_use_manager.h
   dominator_analysis.h
@@ -130,6 +131,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   dead_branch_elim_pass.cpp
   dead_insert_elim_pass.cpp
   dead_variable_elimination.cpp
+  decompose_initialized_variables_pass.cpp
   decoration_manager.cpp
   def_use_manager.cpp
   dominator_analysis.cpp

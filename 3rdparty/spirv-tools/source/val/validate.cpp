@@ -110,48 +110,6 @@ spv_result_t ProcessInstruction(void* user_data,
   return SPV_SUCCESS;
 }
 
-void printDot(const ValidationState_t& _, const BasicBlock& other) {
-  std::string block_string;
-  if (other.successors()->empty()) {
-    block_string += "end ";
-  } else {
-    for (auto block : *other.successors()) {
-      block_string += _.getIdName(block->id()) + " ";
-    }
-  }
-  printf("%10s -> {%s\b}\n", _.getIdName(other.id()).c_str(),
-         block_string.c_str());
-}
-
-void PrintBlocks(ValidationState_t& _, Function func) {
-  assert(func.first_block());
-
-  printf("%10s -> %s\n", _.getIdName(func.id()).c_str(),
-         _.getIdName(func.first_block()->id()).c_str());
-  for (const auto& block : func.ordered_blocks()) {
-    printDot(_, *block);
-  }
-}
-
-#ifdef __clang__
-#define UNUSED(func) [[gnu::unused]] func
-#elif defined(__GNUC__)
-#define UNUSED(func)            \
-  func __attribute__((unused)); \
-  func
-#elif defined(_MSC_VER)
-#define UNUSED(func) func
-#endif
-
-UNUSED(void PrintDotGraph(ValidationState_t& _, Function func)) {
-  if (func.first_block()) {
-    std::string func_name(_.getIdName(func.id()));
-    printf("digraph %s {\n", func_name.c_str());
-    PrintBlocks(_, func);
-    printf("}\n");
-  }
-}
-
 spv_result_t ValidateForwardDecls(ValidationState_t& _) {
   if (_.unresolved_forward_id_count() == 0) return SPV_SUCCESS;
 
@@ -279,6 +237,12 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
     return DiagnosticStream(position, context.consumer, "",
                             SPV_ERROR_INVALID_BINARY)
            << "Invalid SPIR-V magic number.";
+  }
+
+  if (spvIsWebGPUEnv(context.target_env) && endian != SPV_ENDIANNESS_LITTLE) {
+    return DiagnosticStream(position, context.consumer, "",
+                            SPV_ERROR_INVALID_BINARY)
+           << "WebGPU requires SPIR-V to be little endian.";
   }
 
   spv_header_t header;

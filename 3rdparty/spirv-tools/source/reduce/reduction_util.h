@@ -23,6 +23,9 @@
 namespace spvtools {
 namespace reduce {
 
+extern const uint32_t kTrueBranchOperandIndex;
+extern const uint32_t kFalseBranchOperandIndex;
+
 // Returns an OpUndef id from the global value list that is of the given type,
 // adding one if it does not exist.
 uint32_t FindOrCreateGlobalUndef(opt::IRContext* context, uint32_t type_id);

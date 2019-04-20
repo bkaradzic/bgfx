@@ -1203,11 +1203,7 @@ std::string GetUnreachableMergeWithBranchUse(SpvCapability cap,
 TEST_P(ValidateCFG, UnreachableMergeWithBranchUse) {
   CompileSuccessfully(
       GetUnreachableMergeWithBranchUse(GetParam(), SPV_ENV_UNIVERSAL_1_0));
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, WebGPUUnreachableMergeWithBranchUse) {
@@ -1942,10 +1938,7 @@ OpDecorate %id BuiltIn GlobalInvocationId
   str += "OpFunctionEnd";
 
   CompileSuccessfully(str);
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Statically reachable blocks cannot be terminated by "
-                        "OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, LoopWithZeroBackEdgesBad) {
@@ -2873,11 +2866,7 @@ OpFunctionEnd
 )";
 
   CompileSuccessfully(text);
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, ReachableOpUnreachableOpBranch) {
@@ -2896,11 +2885,7 @@ OpFunctionEnd
 )";
 
   CompileSuccessfully(text);
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, ReachableOpUnreachableOpBranchConditional) {
@@ -2923,11 +2908,7 @@ OpFunctionEnd
 )";
 
   CompileSuccessfully(text);
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, ReachableOpUnreachableOpSwitch) {
@@ -2952,11 +2933,7 @@ OpFunctionEnd
 )";
 
   CompileSuccessfully(text);
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, ReachableOpUnreachableLoop) {
@@ -2980,11 +2957,7 @@ OpFunctionEnd
 )";
 
   CompileSuccessfully(text);
-  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Statically reachable blocks cannot be terminated by OpUnreachable"));
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 TEST_F(ValidateCFG, UnreachableLoopBadBackedge) {

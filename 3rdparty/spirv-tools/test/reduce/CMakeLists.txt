@@ -13,7 +13,8 @@
 # limitations under the License.
 
 add_spvtools_unittest(TARGET reduce
-        SRCS merge_blocks_test.cpp
+        SRCS
+        merge_blocks_test.cpp
         operand_to_constant_test.cpp
         operand_to_undef_test.cpp
         operand_to_dominating_id_test.cpp
@@ -27,6 +28,8 @@ add_spvtools_unittest(TARGET reduce
         remove_unreferenced_instruction_test.cpp
         structured_loop_to_selection_test.cpp
         validation_during_reduction_test.cpp
+        conditional_branch_to_simple_conditional_branch_test.cpp
+        simple_conditional_branch_to_branch_test.cpp
         LIBS SPIRV-Tools-reduce
         )
 

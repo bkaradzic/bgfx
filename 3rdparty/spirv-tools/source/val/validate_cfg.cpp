@@ -725,36 +725,6 @@ spv_result_t PerformWebGPUCfgChecks(ValidationState_t& _, Function* function) {
   return SPV_SUCCESS;
 }
 
-// Checks that there are no OpUnreachable instructions reachable from the entry
-// block of |function|.
-spv_result_t ValidateUnreachableBlocks(ValidationState_t& _,
-                                       Function& function) {
-  auto* entry_block = function.first_block();
-  std::vector<BasicBlock*> stack;
-  std::unordered_set<BasicBlock*> seen;
-  if (entry_block) stack.push_back(entry_block);
-
-  while (!stack.empty()) {
-    auto* block = stack.back();
-    stack.pop_back();
-
-    if (!seen.insert(block).second) continue;
-
-    auto* terminator = block->terminator();
-    if (terminator->opcode() == SpvOpUnreachable) {
-      return _.diag(SPV_ERROR_INVALID_CFG, block->label())
-             << "Statically reachable blocks cannot be terminated by "
-                "OpUnreachable";
-    }
-
-    for (auto* succ : *block->successors()) {
-      stack.push_back(succ);
-    }
-  }
-
-  return SPV_SUCCESS;
-}
-
 spv_result_t PerformCfgChecks(ValidationState_t& _) {
   for (auto& function : _.functions()) {
     // Check all referenced blocks are defined within a function
@@ -856,8 +826,6 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
         }
       }
     }
-
-    if (auto error = ValidateUnreachableBlocks(_, function)) return error;
 
     /// Structured control flow checks are only required for shader capabilities
     if (_.HasCapability(SpvCapabilityShader)) {

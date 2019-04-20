@@ -373,30 +373,37 @@ TEST_F(ValidateAtomics, AtomicLoadVulkanInt64) {
           "AtomicLoad: 64-bit atomics require the Int64Atomics capability"));
 }
 
-TEST_F(ValidateAtomics, AtomicLoadWebGPUShaderSuccess) {
+TEST_F(ValidateAtomics, AtomicLoadWebGPUSuccess) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %queuefamily %relaxed
-%val2 = OpAtomicLoad %u32 %u32_var %workgroup %acquire
+%val2 = OpAtomicLoad %u32 %u32_var %workgroup %relaxed
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
 
-TEST_F(ValidateAtomics, AtomicLoadWebGPUShaderSequentiallyConsistentFailure) {
+TEST_F(ValidateAtomics, AtomicLoadWebGPUNonRelaxedFailure) {
+  const std::string body = R"(
+%val1 = OpAtomicLoad %u32 %u32_var %queuefamily %acquire
+%val2 = OpAtomicLoad %u32 %u32_var %workgroup %release
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
+}
+
+TEST_F(ValidateAtomics, AtomicLoadWebGPUSequentiallyConsistentFailure) {
   const std::string body = R"(
 %val3 = OpAtomicLoad %u32 %u32_var %subgroup %sequentially_consistent
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "WebGPU spec disallows any bit masks in Memory Semantics that are "
-          "not Acquire, Release, AcquireRelease, UniformMemory, "
-          "WorkgroupMemory, ImageMemory, OutputMemoryKHR, MakeAvailableKHR, or "
-          "MakeVisibleKHR\n  %34 = OpAtomicLoad %uint %29 %uint_3 %uint_16\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
 }
 
 TEST_F(ValidateAtomics, VK_KHR_shader_atomic_int64Success) {
@@ -579,11 +586,22 @@ OpAtomicStore %u32_var %device %sequentially_consistent %u32_1
 
 TEST_F(ValidateAtomics, AtomicStoreWebGPUSuccess) {
   const std::string body = R"(
-OpAtomicStore %u32_var %queuefamily %release %u32_1
+OpAtomicStore %u32_var %queuefamily %relaxed %u32_1
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+}
+
+TEST_F(ValidateAtomics, AtomicStoreWebGPUNonRelaxedFailure) {
+  const std::string body = R"(
+OpAtomicStore %u32_var %queuefamily %release %u32_1
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreWebGPUSequentiallyConsistent) {
@@ -593,14 +611,8 @@ OpAtomicStore %u32_var %queuefamily %sequentially_consistent %u32_1
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "WebGPU spec disallows any bit masks in Memory Semantics that are "
-          "not Acquire, Release, AcquireRelease, UniformMemory, "
-          "WorkgroupMemory, ImageMemory, OutputMemoryKHR, MakeAvailableKHR, or "
-          "MakeVisibleKHR\n"
-          "  OpAtomicStore %29 %uint_5 %uint_16 %uint_1\n"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("WebGPU spec disallows, for OpAtomic*, any bit masks"));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreWrongPointerType) {
