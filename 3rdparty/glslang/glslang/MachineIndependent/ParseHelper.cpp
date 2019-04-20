@@ -1156,6 +1156,15 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                             error(arguments->getLoc(), message, "readonly", "");
                         if (argQualifier.writeonly && ! formalQualifier.writeonly)
                             error(arguments->getLoc(), message, "writeonly", "");
+                        if (!builtIn && argQualifier.restrict && ! formalQualifier.restrict)
+                            error(arguments->getLoc(), message, "restrict", "");
+                    }
+                    if (!builtIn && argQualifier.layoutFormat != formalQualifier.layoutFormat) {
+                        // we have mismatched formats, which should only be allowed if writeonly
+                        // and at least one format is unknown
+                        if (!formalQualifier.writeonly || (formalQualifier.layoutFormat != ElfNone &&
+                                                              argQualifier.layoutFormat != ElfNone))
+                            error(arguments->getLoc(), "image formats must match", "format", "");
                     }
 
                     if (builtIn && arg->getAsTyped()->getType().containsBasicType(EbtFloat16))

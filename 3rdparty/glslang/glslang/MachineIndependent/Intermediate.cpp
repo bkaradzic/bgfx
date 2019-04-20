@@ -410,7 +410,7 @@ TIntermTyped* TIntermediate::addBuiltInFunctionCall(const TSourceLoc& loc, TOper
 //
 // This is the safe way to change the operator on an aggregate, as it
 // does lots of error checking and fixing.  Especially for establishing
-// a function call's operation on it's set of parameters.  Sequences
+// a function call's operation on its set of parameters.  Sequences
 // of instructions are also aggregates, but they just directly set
 // their operator to EOpSequence.
 //

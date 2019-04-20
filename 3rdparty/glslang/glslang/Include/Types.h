@@ -2018,7 +2018,7 @@ public:
         }
 
         // Add struct/block members
-        if (isStruct()) {
+        if (isStruct() && structure) {
             appendStr("{");
             for (size_t i = 0; i < structure->size(); ++i) {
                 if (! (*structure)[i].type->hiddenMember()) {
