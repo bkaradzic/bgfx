@@ -106,7 +106,7 @@ void compute_tess_levels(thread const float2& p0, constant UBO& v_41, device flo
     gl_TessLevelInner[1] = half(inner);
 }
 
-kernel void main0(main0_in in [[stage_in]], constant UBO& v_41 [[buffer(0)]], uint gl_InvocationID [[thread_index_in_threadgroup]], uint gl_PrimitiveID [[threadgroup_position_in_grid]], device uint* spvIndirectParams [[buffer(29)]], device main0_patchOut* spvPatchOut [[buffer(27)]], device MTLQuadTessellationFactorsHalf* spvTessLevel [[buffer(26)]], threadgroup main0_in* gl_in [[threadgroup(0)]])
+kernel void main0(main0_in in [[stage_in]], constant UBO& v_41 [[buffer(0)]], uint gl_InvocationID [[thread_index_in_threadgroup]], uint gl_PrimitiveID [[threadgroup_position_in_grid]], constant uint* spvIndirectParams [[buffer(29)]], device main0_patchOut* spvPatchOut [[buffer(27)]], device MTLQuadTessellationFactorsHalf* spvTessLevel [[buffer(26)]], threadgroup main0_in* gl_in [[threadgroup(0)]])
 {
     device main0_patchOut& patchOut = spvPatchOut[gl_PrimitiveID];
     if (gl_InvocationID < spvIndirectParams[0])
