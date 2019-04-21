@@ -6,25 +6,27 @@ local codegen = require "codegen"
 local doxygen = require "doxygen"
 
 local func_actions = {
-	c99 = "\n",
-	c99decl = "\n",
-	cppdecl = "\n",
+
+	c99              = "\n",
+	c99decl          = "\n",
+	cppdecl          = "\n",
 	interface_struct = "\n\t",
 	interface_import = ",\n\t\t\t",
-	c99_interface = "\n",
-	cpp_interface = "\n",
-	c99_functionid = "\n\t",
-	cpp_functionid = "\n\t\t",
+	c99_interface    = "\n",
+	cpp_interface    = "\n",
+	c99_functionid   = "\n\t",
+	cpp_functionid   = "\n\t\t",
 }
 
 local type_actions = {
-	enums = "\n",
-	cenums = "\n",
-	structs = "\n",
-	cstructs = "\n",
-	handles = "\n",
-	chandles = "\n",
-	funcptrs = "\n",
+
+	enums     = "\n",
+	cenums    = "\n",
+	structs   = "\n",
+	cstructs  = "\n",
+	handles   = "\n",
+	chandles  = "\n",
+	funcptrs  = "\n",
 	cfuncptrs = "\n",
 }
 
