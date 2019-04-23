@@ -556,37 +556,6 @@ void touch(bgfx::ViewId _id)
 	::submit(_id, handle);
 }
 
-struct Aabb
-{
-	float m_min[3];
-	float m_max[3];
-};
-
-struct Obb
-{
-	float m_mtx[16];
-};
-
-struct Sphere
-{
-	float m_center[3];
-	float m_radius;
-};
-
-struct Primitive
-{
-	uint32_t m_startIndex;
-	uint32_t m_numIndices;
-	uint32_t m_startVertex;
-	uint32_t m_numVertices;
-
-	Sphere m_sphere;
-	Aabb m_aabb;
-	Obb m_obb;
-};
-
-typedef std::vector<Primitive> PrimitiveArray;
-
 struct Face
 {
 	uint16_t m_i[3];
@@ -995,96 +964,37 @@ struct Mesh
 
 	void load(const char* _filePath)
 	{
-#define BGFX_CHUNK_MAGIC_VB  BX_MAKEFOURCC('V', 'B', ' ', 0x1)
-#define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
-#define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
+		::Mesh* mesh = ::meshLoad(_filePath, true);
+		m_decl = mesh->m_decl;
+		uint16_t stride = m_decl.getStride();
 
-		bx::FileReaderI* reader = entry::getFileReader();
-		bx::open(reader, _filePath);
-
-		Group group;
-
-		uint32_t chunk;
-		while (4 == bx::read(reader, chunk) )
+		for (::GroupArray::iterator it = mesh->m_groups.begin(), itEnd = mesh->m_groups.end(); it != itEnd; ++it)
 		{
-			switch (chunk)
-			{
-			case BGFX_CHUNK_MAGIC_VB:
-				{
-					bx::read(reader, group.m_sphere);
-					bx::read(reader, group.m_aabb);
-					bx::read(reader, group.m_obb);
+			Group group;
+			group.m_numVertices = it->m_numVertices;
+			const uint32_t vertexSize = group.m_numVertices*stride;
+			group.m_vertices = (uint8_t*)malloc(vertexSize);
+			bx::memCopy(group.m_vertices, it->m_vertices, vertexSize);
 
-					bgfx::read(reader, m_decl);
-					uint16_t stride = m_decl.getStride();
+			const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, vertexSize);
+			group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
+			
+			group.m_numIndices = it->m_numIndices;
+			const uint32_t indexSize = 2 * group.m_numIndices;
+			group.m_indices = (uint16_t*)malloc(indexSize);
+			bx::memCopy(group.m_indices, it->m_indices, indexSize);
+			
+			mem = bgfx::makeRef(group.m_indices, indexSize);
+			group.m_ibh = bgfx::createIndexBuffer(mem);
 
-					bx::read(reader, group.m_numVertices);
-					const uint32_t size = group.m_numVertices*stride;
-					group.m_vertices = (uint8_t*)malloc(size);
-					bx::read(reader, group.m_vertices, size);
-
-					const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, size);
-					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_IB:
-				{
-					bx::read(reader, group.m_numIndices);
-					const uint32_t size = group.m_numIndices*2;
-					group.m_indices = (uint16_t*)malloc(size);
-					bx::read(reader, group.m_indices, size);
-
-					const bgfx::Memory* mem = bgfx::makeRef(group.m_indices, size);
-					group.m_ibh = bgfx::createIndexBuffer(mem);
-				}
-				break;
-
-			case BGFX_CHUNK_MAGIC_PRI:
-				{
-					uint16_t len;
-					bx::read(reader, len);
-
-					std::string material;
-					material.resize(len);
-					bx::read(reader, const_cast<char*>(material.c_str() ), len);
-
-					uint16_t num;
-					bx::read(reader, num);
-
-					for (uint32_t ii = 0; ii < num; ++ii)
-					{
-						bx::read(reader, len);
-
-						std::string name;
-						name.resize(len);
-						bx::read(reader, const_cast<char*>(name.c_str() ), len);
-
-						Primitive prim;
-						bx::read(reader, prim.m_startIndex);
-						bx::read(reader, prim.m_numIndices);
-						bx::read(reader, prim.m_startVertex);
-						bx::read(reader, prim.m_numVertices);
-						bx::read(reader, prim.m_sphere);
-						bx::read(reader, prim.m_aabb);
-						bx::read(reader, prim.m_obb);
-
-						group.m_prims.push_back(prim);
-					}
-
-					m_groups.push_back(group);
-					group.reset();
-				}
-				break;
-
-			default:
-				DBG("%08x at %d", chunk, bx::seek(reader) );
-				abort();
-				break;
-			}
+			group.m_sphere = it->m_sphere;
+			group.m_aabb = it->m_aabb;
+			group.m_obb = it->m_obb;
+			group.m_prims = it->m_prims;
+			
+			m_groups.push_back(group);
 		}
-
-		bx::close(reader);
+		::meshUnload(mesh);
 
 		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
@@ -1774,17 +1684,17 @@ bool clipTest(const float* _planes, uint8_t _planeNum, const Mesh& _mesh, const 
 		const Group& group = *it;
 
 		Sphere sphere = group.m_sphere;
-		sphere.m_center[0] = sphere.m_center[0] * scale + _translate[0];
-		sphere.m_center[1] = sphere.m_center[1] * scale + _translate[1];
-		sphere.m_center[2] = sphere.m_center[2] * scale + _translate[2];
-		sphere.m_radius *= (scale+0.4f);
+		sphere.center.x = sphere.center.x * scale + _translate[0];
+		sphere.center.y = sphere.center.y * scale + _translate[1];
+		sphere.center.z = sphere.center.z * scale + _translate[2];
+		sphere.radius *= (scale+0.4f);
 
 		bool isInside = true;
 		for (uint8_t ii = 0; ii < _planeNum; ++ii)
 		{
 			const float* plane = volumePlanes[ii];
 
-			float positiveSide = bx::dot(bx::load<bx::Vec3>(plane), bx::load<bx::Vec3>(sphere.m_center) ) + plane[3] + sphere.m_radius;
+			float positiveSide = bx::dot(bx::load<bx::Vec3>(plane), sphere.center ) + plane[3] + sphere.radius;
 
 			if (positiveSide < 0.0f)
 			{
