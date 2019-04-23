@@ -2066,9 +2066,12 @@ namespace bgfx { namespace mtl
 				for (; stream < _numStreams; ++stream)
 				{
 					const VertexDecl& vertexDecl = *_vertexDecls[stream];
+					bool streamUsed = false;
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
 						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
+						if (attrSet[attr])
+							continue;
 						const uint32_t loc = program.m_attributes[attr];
 
 						uint8_t num;
@@ -2087,11 +2090,13 @@ namespace bgfx { namespace mtl
 							BX_TRACE("attrib: %s format: %d offset: %d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
 
 							attrSet[attr] = true;
+							streamUsed = true;
 						}
 					}
-
-					vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
-					vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
+					if (streamUsed) {
+						vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
+						vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
+					}
 				}
 
 				for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
