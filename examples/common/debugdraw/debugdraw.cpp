@@ -528,7 +528,7 @@ struct Program
 	};
 };
 
-struct Mesh
+struct DebugMesh
 {
 	enum Enum
 	{
@@ -640,8 +640,8 @@ struct DebugDrawShared
 		s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 		m_texture  = bgfx::createTexture2D(SPRITE_TEXTURE_SIZE, SPRITE_TEXTURE_SIZE, false, 1, bgfx::TextureFormat::BGRA8);
 
-		void* vertices[Mesh::Count] = {};
-		uint16_t* indices[Mesh::Count] = {};
+		void* vertices[DebugMesh::Count] = {};
+		uint16_t* indices[DebugMesh::Count] = {};
 		uint16_t stride = DebugShapeVertex::ms_decl.getStride();
 
 		uint32_t startVertex = 0;
@@ -649,7 +649,7 @@ struct DebugDrawShared
 
 		for (uint32_t mesh = 0; mesh < 4; ++mesh)
 		{
-			Mesh::Enum id = Mesh::Enum(Mesh::Sphere0+mesh);
+			DebugMesh::Enum id = DebugMesh::Enum(DebugMesh::Sphere0+mesh);
 
 			const uint8_t  tess = uint8_t(3-mesh);
 			const uint32_t numVertices = genSphere(tess);
@@ -701,7 +701,7 @@ struct DebugDrawShared
 
 		for (uint32_t mesh = 0; mesh < 4; ++mesh)
 		{
-			Mesh::Enum id = Mesh::Enum(Mesh::Cone0+mesh);
+			DebugMesh::Enum id = DebugMesh::Enum(DebugMesh::Cone0+mesh);
 
 			const uint32_t num = getCircleLod(uint8_t(mesh) );
 			const float step = bx::kPi * 2.0f / num;
@@ -762,7 +762,7 @@ struct DebugDrawShared
 
 		for (uint32_t mesh = 0; mesh < 4; ++mesh)
 		{
-			Mesh::Enum id = Mesh::Enum(Mesh::Cylinder0+mesh);
+			DebugMesh::Enum id = DebugMesh::Enum(DebugMesh::Cylinder0+mesh);
 
 			const uint32_t num = getCircleLod(uint8_t(mesh) );
 			const float step = bx::kPi * 2.0f / num;
@@ -832,7 +832,7 @@ struct DebugDrawShared
 
 		for (uint32_t mesh = 0; mesh < 4; ++mesh)
 		{
-			Mesh::Enum id = Mesh::Enum(Mesh::Capsule0+mesh);
+			DebugMesh::Enum id = DebugMesh::Enum(DebugMesh::Capsule0+mesh);
 
 			const uint32_t num = getCircleLod(uint8_t(mesh) );
 			const float step = bx::kPi * 2.0f / num;
@@ -900,30 +900,30 @@ struct DebugDrawShared
 			startIndex  += numIndices + numLineListIndices;
 		}
 
-		m_mesh[Mesh::Quad].m_startVertex = startVertex;
-		m_mesh[Mesh::Quad].m_numVertices = BX_COUNTOF(s_quadVertices);
-		m_mesh[Mesh::Quad].m_startIndex[0] = startIndex;
-		m_mesh[Mesh::Quad].m_numIndices[0] = BX_COUNTOF(s_quadIndices);
-		m_mesh[Mesh::Quad].m_startIndex[1] = 0;
-		m_mesh[Mesh::Quad].m_numIndices[1] = 0;
+		m_mesh[DebugMesh::Quad].m_startVertex = startVertex;
+		m_mesh[DebugMesh::Quad].m_numVertices = BX_COUNTOF(s_quadVertices);
+		m_mesh[DebugMesh::Quad].m_startIndex[0] = startIndex;
+		m_mesh[DebugMesh::Quad].m_numIndices[0] = BX_COUNTOF(s_quadIndices);
+		m_mesh[DebugMesh::Quad].m_startIndex[1] = 0;
+		m_mesh[DebugMesh::Quad].m_numIndices[1] = 0;
 		startVertex += BX_COUNTOF(s_quadVertices);
 		startIndex  += BX_COUNTOF(s_quadIndices);
 
-		m_mesh[Mesh::Cube].m_startVertex = startVertex;
-		m_mesh[Mesh::Cube].m_numVertices = BX_COUNTOF(s_cubeVertices);
-		m_mesh[Mesh::Cube].m_startIndex[0] = startIndex;
-		m_mesh[Mesh::Cube].m_numIndices[0] = BX_COUNTOF(s_cubeIndices);
-		m_mesh[Mesh::Cube].m_startIndex[1] = 0;
-		m_mesh[Mesh::Cube].m_numIndices[1] = 0;
-		startVertex += m_mesh[Mesh::Cube].m_numVertices;
-		startIndex  += m_mesh[Mesh::Cube].m_numIndices[0];
+		m_mesh[DebugMesh::Cube].m_startVertex = startVertex;
+		m_mesh[DebugMesh::Cube].m_numVertices = BX_COUNTOF(s_cubeVertices);
+		m_mesh[DebugMesh::Cube].m_startIndex[0] = startIndex;
+		m_mesh[DebugMesh::Cube].m_numIndices[0] = BX_COUNTOF(s_cubeIndices);
+		m_mesh[DebugMesh::Cube].m_startIndex[1] = 0;
+		m_mesh[DebugMesh::Cube].m_numIndices[1] = 0;
+		startVertex += m_mesh[DebugMesh::Cube].m_numVertices;
+		startIndex  += m_mesh[DebugMesh::Cube].m_numIndices[0];
 
 		const bgfx::Memory* vb = bgfx::alloc(startVertex*stride);
 		const bgfx::Memory* ib = bgfx::alloc(startIndex*sizeof(uint16_t) );
 
-		for (uint32_t mesh = Mesh::Sphere0; mesh < Mesh::Quad; ++mesh)
+		for (uint32_t mesh = DebugMesh::Sphere0; mesh < DebugMesh::Quad; ++mesh)
 		{
-			Mesh::Enum id = Mesh::Enum(mesh);
+			DebugMesh::Enum id = DebugMesh::Enum(mesh);
 			bx::memCopy(&vb->data[m_mesh[id].m_startVertex * stride]
 				 , vertices[id]
 				 , m_mesh[id].m_numVertices*stride
@@ -938,22 +938,22 @@ struct DebugDrawShared
 			BX_FREE(m_allocator, indices[id]);
 		}
 
-		bx::memCopy(&vb->data[m_mesh[Mesh::Quad].m_startVertex * stride]
+		bx::memCopy(&vb->data[m_mesh[DebugMesh::Quad].m_startVertex * stride]
 			, s_quadVertices
 			, sizeof(s_quadVertices)
 			);
 
-		bx::memCopy(&ib->data[m_mesh[Mesh::Quad].m_startIndex[0] * sizeof(uint16_t)]
+		bx::memCopy(&ib->data[m_mesh[DebugMesh::Quad].m_startIndex[0] * sizeof(uint16_t)]
 			, s_quadIndices
 			, sizeof(s_quadIndices)
 			);
 
-		bx::memCopy(&vb->data[m_mesh[Mesh::Cube].m_startVertex * stride]
+		bx::memCopy(&vb->data[m_mesh[DebugMesh::Cube].m_startVertex * stride]
 			, s_cubeVertices
 			, sizeof(s_cubeVertices)
 			);
 
-		bx::memCopy(&ib->data[m_mesh[Mesh::Cube].m_startIndex[0] * sizeof(uint16_t)]
+		bx::memCopy(&ib->data[m_mesh[DebugMesh::Cube].m_startIndex[0] * sizeof(uint16_t)]
 			, s_cubeIndices
 			, sizeof(s_cubeIndices)
 			);
@@ -1017,7 +1017,7 @@ struct DebugDrawShared
 	Sprite m_sprite;
 	Geometry m_geometry;
 
-	Mesh m_mesh[Mesh::Count];
+	DebugMesh m_mesh[DebugMesh::Count];
 
 	bgfx::UniformHandle s_texColor;
 	bgfx::TextureHandle m_texture;
@@ -1432,7 +1432,7 @@ struct DebugDrawEncoderImpl
 		{
 			Obb obb;
 			toObb(obb, _aabb);
-			draw(Mesh::Cube, obb.mtx, 1, false);
+			draw(DebugMesh::Cube, obb.mtx, 1, false);
 		}
 	}
 
@@ -1481,7 +1481,7 @@ struct DebugDrawEncoderImpl
 		}
 		else
 		{
-			draw(Mesh::Cube, _obb.mtx, 1, false);
+			draw(DebugMesh::Cube, _obb.mtx, 1, false);
 		}
 	}
 
@@ -1500,11 +1500,11 @@ struct DebugDrawEncoderImpl
 			, _sphere.center.y
 			, _sphere.center.z
 			);
-		uint8_t lod = attrib.m_lod > Mesh::SphereMaxLod
-			? uint8_t(Mesh::SphereMaxLod)
+		uint8_t lod = attrib.m_lod > DebugMesh::SphereMaxLod
+			? uint8_t(DebugMesh::SphereMaxLod)
 			: attrib.m_lod
 			;
-		draw(Mesh::Enum(Mesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
+		draw(DebugMesh::Enum(DebugMesh::Sphere0 + lod), mtx, 1, attrib.m_wireframe);
 	}
 
 	void draw(const Triangle& _triangle)
@@ -1855,7 +1855,7 @@ struct DebugDrawEncoderImpl
 		{
 			float mtx[16];
 			bx::mtxFromNormal(mtx, _normal, _size*0.5f, _center, attrib.m_spin);
-			draw(Mesh::Quad, mtx, 1, false);
+			draw(DebugMesh::Quad, mtx, 1, false);
 		}
 	}
 
@@ -1941,11 +1941,11 @@ struct DebugDrawEncoderImpl
 		mtx[1][13] = _to.y;
 		mtx[1][14] = _to.z;
 
-		uint8_t lod = attrib.m_lod > Mesh::ConeMaxLod
-			? uint8_t(Mesh::ConeMaxLod)
+		uint8_t lod = attrib.m_lod > DebugMesh::ConeMaxLod
+			? uint8_t(DebugMesh::ConeMaxLod)
 			: attrib.m_lod
 			;
-		draw(Mesh::Enum(Mesh::Cone0 + lod), mtx[0], 2, attrib.m_wireframe);
+		draw(DebugMesh::Enum(DebugMesh::Cone0 + lod), mtx[0], 2, attrib.m_wireframe);
 	}
 
 	void drawCylinder(const bx::Vec3& _from, const bx::Vec3& _to, float _radius, bool _capsule)
@@ -1963,11 +1963,11 @@ struct DebugDrawEncoderImpl
 
 		if (_capsule)
 		{
-			uint8_t lod = attrib.m_lod > Mesh::CapsuleMaxLod
-				? uint8_t(Mesh::CapsuleMaxLod)
+			uint8_t lod = attrib.m_lod > DebugMesh::CapsuleMaxLod
+				? uint8_t(DebugMesh::CapsuleMaxLod)
 				: attrib.m_lod
 				;
-			draw(Mesh::Enum(Mesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
+			draw(DebugMesh::Enum(DebugMesh::Capsule0 + lod), mtx[0], 2, attrib.m_wireframe);
 
 			Sphere sphere;
 			sphere.center = _from;
@@ -1979,11 +1979,11 @@ struct DebugDrawEncoderImpl
 		}
 		else
 		{
-			uint8_t lod = attrib.m_lod > Mesh::CylinderMaxLod
-				? uint8_t(Mesh::CylinderMaxLod)
+			uint8_t lod = attrib.m_lod > DebugMesh::CylinderMaxLod
+				? uint8_t(DebugMesh::CylinderMaxLod)
 				: attrib.m_lod
 				;
-			 draw(Mesh::Enum(Mesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
+			 draw(DebugMesh::Enum(DebugMesh::Cylinder0 + lod), mtx[0], 2, attrib.m_wireframe);
 		}
 	}
 
@@ -2125,11 +2125,11 @@ struct DebugDrawEncoderImpl
 		pop();
 	}
 
-	void draw(Mesh::Enum _mesh, const float* _mtx, uint16_t _num, bool _wireframe)
+	void draw(DebugMesh::Enum _mesh, const float* _mtx, uint16_t _num, bool _wireframe)
 	{
 		pushTransform(_mtx, _num, false /* flush */);
 
-		const Mesh& mesh = s_dds.m_mesh[_mesh];
+		const DebugMesh& mesh = s_dds.m_mesh[_mesh];
 
 		if (0 != mesh.m_numIndices[_wireframe])
 		{
