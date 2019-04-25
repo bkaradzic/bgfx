@@ -84,7 +84,7 @@ static bool bar(float _width, float _maxWidth, float _height, const ImVec4& _col
 	itemHovered |= ImGui::IsItemHovered();
 
 	ImGui::SameLine();
-	ImGui::InvisibleButton("", ImVec2(_maxWidth-_width, _height) );
+	ImGui::InvisibleButton("", ImVec2(bx::max(1.0f, _maxWidth-_width), _height) );
 	itemHovered |= ImGui::IsItemHovered();
 
 	ImGui::PopStyleVar(2);
