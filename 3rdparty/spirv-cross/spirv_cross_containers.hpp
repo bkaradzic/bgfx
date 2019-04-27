@@ -297,7 +297,10 @@ public:
 
 	void pop_back()
 	{
-		resize(this->buffer_size - 1);
+		// Work around false positive warning on GCC 8.3.
+		// Calling pop_back on empty vector is undefined.
+		if (!this->empty())
+			resize(this->buffer_size - 1);
 	}
 
 	template <typename... Ts>

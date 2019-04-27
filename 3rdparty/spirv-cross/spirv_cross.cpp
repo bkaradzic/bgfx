@@ -74,6 +74,7 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 	            ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
 	bool image = type.basetype == SPIRType::Image;
 	bool counter = type.basetype == SPIRType::AtomicCounter;
+	bool buffer_reference = type.storage == StorageClassPhysicalStorageBufferEXT;
 
 	bool is_restrict;
 	if (ssbo)
@@ -81,7 +82,7 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 	else
 		is_restrict = has_decoration(v.self, DecorationRestrict);
 
-	return !is_restrict && (ssbo || image || counter);
+	return !is_restrict && (ssbo || image || counter || buffer_reference);
 }
 
 bool Compiler::block_is_pure(const SPIRBlock &block)
@@ -300,18 +301,41 @@ void Compiler::register_write(uint32_t chain)
 
 	if (var)
 	{
+		bool check_argument_storage_qualifier = true;
+		auto &type = expression_type(chain);
+
 		// If our variable is in a storage class which can alias with other buffers,
 		// invalidate all variables which depend on aliased variables. And if this is a
 		// variable pointer, then invalidate all variables regardless.
 		if (get_variable_data_type(*var).pointer)
+		{
 			flush_all_active_variables();
-		if (variable_storage_is_aliased(*var))
+
+			if (type.pointer_depth == 1)
+			{
+				// We have a backing variable which is a pointer-to-pointer type.
+				// We are storing some data through a pointer acquired through that variable,
+				// but we are not writing to the value of the variable itself,
+				// i.e., we are not modifying the pointer directly.
+				// If we are storing a non-pointer type (pointer_depth == 1),
+				// we know that we are storing some unrelated data.
+				// A case here would be
+				// void foo(Foo * const *arg) {
+				//   Foo *bar = *arg;
+				//   bar->unrelated = 42;
+				// }
+				// arg, the argument is constant.
+				check_argument_storage_qualifier = false;
+			}
+		}
+
+		if (type.storage == StorageClassPhysicalStorageBufferEXT || variable_storage_is_aliased(*var))
 			flush_all_aliased_variables();
 		else if (var)
 			flush_dependees(*var);
 
 		// We tried to write to a parameter which is not marked with out qualifier, force a recompile.
-		if (var->parameter && var->parameter->write_count == 0)
+		if (check_argument_storage_qualifier && var->parameter && var->parameter->write_count == 0)
 		{
 			var->parameter->write_count++;
 			force_recompile();
@@ -624,11 +648,11 @@ bool Compiler::InterfaceVariableAccessHandler::handle(Op opcode, const uint32_t 
 
 		auto *var = compiler.maybe_get<SPIRVariable>(args[0]);
 		if (var && storage_class_is_interface(var->storage))
-			variables.insert(variable);
+			variables.insert(args[0]);
 
 		var = compiler.maybe_get<SPIRVariable>(args[1]);
 		if (var && storage_class_is_interface(var->storage))
-			variables.insert(variable);
+			variables.insert(args[1]);
 		break;
 	}
 
@@ -4114,8 +4138,13 @@ Bitset Compiler::combined_decoration_for_member(const SPIRType &type, uint32_t i
 
 		// If our type is a struct, traverse all the members as well recursively.
 		flags.merge_or(dec.decoration_flags);
+
 		for (uint32_t i = 0; i < type.member_types.size(); i++)
-			flags.merge_or(combined_decoration_for_member(get<SPIRType>(type.member_types[i]), i));
+		{
+			auto &memb_type = get<SPIRType>(type.member_types[i]);
+			if (!memb_type.pointer)
+				flags.merge_or(combined_decoration_for_member(memb_type, i));
+		}
 	}
 
 	return flags;
@@ -4179,4 +4208,45 @@ bool Compiler::is_forcing_recompilation() const
 void Compiler::clear_force_recompile()
 {
 	is_force_recompile = false;
+}
+
+Compiler::PhysicalStorageBufferPointerHandler::PhysicalStorageBufferPointerHandler(Compiler &compiler_)
+    : compiler(compiler_)
+{
+}
+
+bool Compiler::PhysicalStorageBufferPointerHandler::handle(Op op, const uint32_t *args, uint32_t)
+{
+	if (op == OpConvertUToPtr)
+	{
+		auto &type = compiler.get<SPIRType>(args[0]);
+		if (type.storage == StorageClassPhysicalStorageBufferEXT && type.pointer && type.pointer_depth == 1)
+		{
+			// If we need to cast to a pointer type which is not a block, we might need to synthesize ourselves
+			// a block type which wraps this POD type.
+			if (type.basetype != SPIRType::Struct)
+				types.insert(args[0]);
+		}
+	}
+
+	return true;
+}
+
+void Compiler::analyze_non_block_pointer_types()
+{
+	PhysicalStorageBufferPointerHandler handler(*this);
+	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+	physical_storage_non_block_pointer_types.reserve(handler.types.size());
+	for (auto type : handler.types)
+		physical_storage_non_block_pointer_types.push_back(type);
+	sort(begin(physical_storage_non_block_pointer_types), end(physical_storage_non_block_pointer_types));
+}
+
+bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
+{
+	if (!type.pointer)
+		return false;
+
+	// If parent type has same pointer depth, we must have an array of pointers.
+	return type.pointer_depth == get<SPIRType>(type.parent_type).pointer_depth;
 }

@@ -2006,7 +2006,7 @@ void CompilerHLSL::emit_function_prototype(SPIRFunction &func, const Bitset &ret
 	auto &type = get<SPIRType>(func.return_type);
 	if (type.array.empty())
 	{
-		decl += flags_to_precision_qualifiers_glsl(type, return_flags);
+		decl += flags_to_qualifiers_glsl(type, return_flags);
 		decl += type_to_glsl(type);
 		decl += " ";
 	}
@@ -3713,7 +3713,6 @@ void CompilerHLSL::emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op)
 	auto expr = bitcast_expression(type, expr_type, to_name(id));
 	set<SPIRExpression>(id, expr, result_type, true);
 	flush_all_atomic_capable_variables();
-	register_read(ops[1], ops[2], should_forward(ops[2]));
 }
 
 void CompilerHLSL::emit_subgroup_op(const Instruction &i)

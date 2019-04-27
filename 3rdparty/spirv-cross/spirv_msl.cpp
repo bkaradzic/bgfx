@@ -584,6 +584,7 @@ string CompilerMSL::compile()
 	backend.allow_truncated_access_chain = true;
 	backend.array_is_value_type = false;
 	backend.comparison_image_samples_scalar = true;
+	backend.native_pointers = true;
 
 	capture_output_to_buffer = msl_options.capture_output_to_buffer;
 	is_rasterization_disabled = msl_options.disable_rasterization || capture_output_to_buffer;
@@ -3729,6 +3730,9 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	case OpImageTexelPointer:
+		SPIRV_CROSS_THROW("MSL does not support atomic operations on images or texel buffers.");
+
 	// Casting
 	case OpQuantizeToF16:
 	{
@@ -4483,9 +4487,16 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 		if (coord_type.vecsize > 1)
 			tex_coords = enclose_expression(tex_coords) + ".x";
 
-		// Metal texel buffer textures are 2D, so convert 1D coord to 2D.
-		if (is_fetch)
-			tex_coords = "spvTexelBufferCoord(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
+		if (msl_options.texture_buffer_native)
+		{
+			tex_coords = "uint(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
+		}
+		else
+		{
+			// Metal texel buffer textures are 2D, so convert 1D coord to 2D.
+			if (is_fetch)
+				tex_coords = "spvTexelBufferCoord(" + round_fp_tex_coords(tex_coords, coord_is_fp) + ")";
+		}
 
 		alt_coord_component = 1;
 		break;
@@ -5613,14 +5624,14 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 			if (!ep_args.empty())
 				ep_args += ", ";
 			ep_args +=
-				join("constant uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
+			    join("constant uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
 		}
 		else if (stage_out_var_id)
 		{
 			if (!ep_args.empty())
 				ep_args += ", ";
 			ep_args +=
-				join("device uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
+			    join("device uint* spvIndirectParams [[buffer(", msl_options.indirect_params_buffer_index, ")]]");
 		}
 
 		// Tessellation control shaders get three additional parameters:
@@ -6643,6 +6654,18 @@ string CompilerMSL::image_type_glsl(const SPIRType &type, uint32_t id)
 			img_type_name += (img_type.arrayed ? "texture1d_array" : "texture1d");
 			break;
 		case DimBuffer:
+			if (img_type.ms || img_type.arrayed)
+				SPIRV_CROSS_THROW("Cannot use texel buffers with multisampling or array layers.");
+
+			if (msl_options.texture_buffer_native)
+			{
+				if (!msl_options.supports_msl_version(2, 1))
+					SPIRV_CROSS_THROW("Native texture_buffer type is only supported in MSL 2.1.");
+				img_type_name = "texture_buffer";
+			}
+			else
+				img_type_name += "texture2d";
+			break;
 		case Dim2D:
 		case DimSubpassData:
 			if (img_type.ms && img_type.arrayed)
@@ -7328,7 +7351,7 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 	{
 		// Retrieve the image type, and if it's a Buffer, emit a texel coordinate function
 		uint32_t tid = result_types[args[opcode == OpImageWrite ? 0 : 2]];
-		if (tid && compiler.get<SPIRType>(tid).image.dim == DimBuffer)
+		if (tid && compiler.get<SPIRType>(tid).image.dim == DimBuffer && !compiler.msl_options.texture_buffer_native)
 			return SPVFuncImplTexelBufferCoords;
 
 		if (opcode == OpImageFetch && compiler.msl_options.swizzle_texture_samples)

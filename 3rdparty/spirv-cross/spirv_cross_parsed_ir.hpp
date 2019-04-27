@@ -107,6 +107,9 @@ public:
 
 	Source source;
 
+	spv::AddressingModel addressing_model = spv::AddressingModelMax;
+	spv::MemoryModel memory_model = spv::MemoryModelMax;
+
 	// Decoration handling methods.
 	// Can be useful for simple "raw" reflection.
 	// However, most members are here because the Parser needs most of these,
