@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(lesspipe)
+if (NOT ${SPIRV_SKIP_EXECUTABLES})
+ add_subdirectory(lesspipe)
+endif()
 add_subdirectory(emacs)
 
 # Add a SPIR-V Tools command line tool. Signature:

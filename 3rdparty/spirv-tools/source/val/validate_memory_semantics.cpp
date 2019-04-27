@@ -55,9 +55,7 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
                           SpvMemorySemanticsMakeAvailableKHRMask |
                           SpvMemorySemanticsMakeVisibleKHRMask;
     if (!spvOpcodeIsAtomicOp(inst->opcode())) {
-      valid_bits |= SpvMemorySemanticsAcquireMask |
-                    SpvMemorySemanticsReleaseMask |
-                    SpvMemorySemanticsAcquireReleaseMask;
+      valid_bits |= SpvMemorySemanticsAcquireReleaseMask;
     }
 
     if (value & ~valid_bits) {
@@ -69,10 +67,17 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
       } else {
         return _.diag(SPV_ERROR_INVALID_DATA, inst)
                << "WebGPU spec disallows any bit masks in Memory Semantics "
-                  "that are not Acquire, Release, AcquireRelease, "
-                  "UniformMemory, WorkgroupMemory, ImageMemory, "
-                  "OutputMemoryKHR, MakeAvailableKHR, or MakeVisibleKHR";
+                  "that are not AcquireRelease, UniformMemory, "
+                  "WorkgroupMemory, ImageMemory, OutputMemoryKHR, "
+                  "MakeAvailableKHR, or MakeVisibleKHR";
       }
+    }
+
+    if (!spvOpcodeIsAtomicOp(inst->opcode()) &&
+        !(value & SpvMemorySemanticsAcquireReleaseMask)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "WebGPU spec requires AcquireRelease to set in Memory "
+                "Semantics.";
     }
   }
 
