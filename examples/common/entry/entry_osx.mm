@@ -85,7 +85,9 @@ namespace entry
 			}
 
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
-			return main(self->m_argc, self->m_argv);
+			uint32_t result = main(self->m_argc, self->m_argv);
+			[NSApp terminate:nil];
+			return result;
 		}
 	};
 
@@ -98,7 +100,6 @@ namespace entry
 			, m_scroll(0)
 			, m_style(0)
 			, m_exit(false)
-			, m_fullscreen(false)
 		{
 			s_translateKey[27]             = Key::Esc;
 			s_translateKey[uint8_t('\r')]  = Key::Return;
@@ -524,7 +525,6 @@ namespace entry
 		int32_t m_scroll;
 		int32_t m_style;
 		bool    m_exit;
-		bool    m_fullscreen;
 	};
 
 	static Context s_ctx;
@@ -665,27 +665,7 @@ namespace entry
 		dispatch_async(dispatch_get_main_queue()
 			, ^{
 				NSWindow* window = s_ctx.m_window[_handle.idx];
-				NSScreen* screen = [window screen];
-				NSRect screenRect = [screen frame];
-
-				if (!s_ctx.m_fullscreen)
-				{
-					s_ctx.m_style &= ~NSWindowStyleMaskTitled;
-					s_ctx.m_fullscreen = true;
-
-					[NSMenu setMenuBarVisible: false];
-					[window setStyleMask: s_ctx.m_style];
-					[window setFrame:screenRect display:YES];
-				}
-				else
-				{
-					s_ctx.m_style |= NSWindowStyleMaskTitled;
-					s_ctx.m_fullscreen = false;
-
-					[NSMenu setMenuBarVisible: true];
-					[window setStyleMask: s_ctx.m_style];
-					[window setFrame:s_ctx.m_windowFrame display:YES];
-				}
+				[window toggleFullScreen:nil];
 			});
 	}
 
