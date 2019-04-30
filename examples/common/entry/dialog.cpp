@@ -57,23 +57,22 @@ public:
 	, m_ch(_ch)
 	{
 	}
-	
+
 	bx::StringView next()
 	{
 		bx::StringView result = m_token;
 		m_token = bx::strTrim(
-							  bx::StringView(m_token.getTerm()+1
-											 , bx::strFind(bx::StringView(m_token.getTerm()+1, m_str.getTerm() ), m_ch).getPtr() )
-							  , " \t\n"
-							  );
+			  bx::StringView(m_token.getTerm()+1, bx::strFind(bx::StringView(m_token.getTerm()+1, m_str.getTerm() ), m_ch).getPtr() )
+			, " \t\n"
+			);
 		return result;
 	}
-	
+
 	bool isDone() const
 	{
 		return m_token.isEmpty();
 	}
-	
+
 private:
 	const bx::StringView& m_str;
 	bx::StringView m_token;
@@ -82,44 +81,46 @@ private:
 
 #if !BX_PLATFORM_OSX
 bool openFileSelectionDialog(
-							 bx::FilePath& _inOutFilePath
-							 , FileSelectionDialogType::Enum _type
-							 , const bx::StringView& _title
-							 , const bx::StringView& _filter
-							 )
+	  bx::FilePath& _inOutFilePath
+	, FileSelectionDialogType::Enum _type
+	, const bx::StringView& _title
+	, const bx::StringView& _filter
+	)
 {
 #if BX_PLATFORM_LINUX
 	char tmp[4096];
 	bx::StaticMemoryBlockWriter writer(tmp, sizeof(tmp) );
-	
+
 	bx::Error err;
 	bx::write(&writer, &err
-			  , "--file-selection%s --title \"%.*s\" --filename \"%s\""
-			  , FileSelectionDialogType::Save == _type ? " --save" : ""
-			  , _title.getLength(),  _title.getPtr()
-			  , _inOutFilePath.getCPtr()
-			  );
-	
+		, "--file-selection%s --title \"%.*s\" --filename \"%s\""
+		, FileSelectionDialogType::Save == _type ? " --save" : ""
+		, _title.getLength()
+		, _title.getPtr()
+		, _inOutFilePath.getCPtr()
+		);
+
 	for (bx::LineReader lr(_filter); !lr.isDone();)
 	{
 		const bx::StringView line = lr.next();
-		
+
 		bx::write(&writer, &err
-				  , " --file-filter \"%.*s\""
-				  , line.getLength(), line.getPtr()
-				  );
+			, " --file-filter \"%.*s\""
+			, line.getLength()
+			, line.getPtr()
+			);
 	}
-	
+
 	if (err.isOk() )
 	{
 		bx::ProcessReader pr;
-		
+
 		if (bx::open(&pr, "zenity", tmp, &err) )
 		{
 			char buffer[1024];
 			int32_t total = bx::read(&pr, buffer, sizeof(buffer), &err);
 			bx::close(&pr);
-			
+
 			if (0 == pr.getExitCode() )
 			{
 				_inOutFilePath.set(bx::strRTrim(bx::StringView(buffer, total), "\n\r") );
@@ -129,9 +130,9 @@ bool openFileSelectionDialog(
 	}
 #elif BX_PLATFORM_WINDOWS
 	BX_UNUSED(_type);
-	
+
 	char out[bx::kMaxFilePath] = { '\0' };
-	
+
 	OPENFILENAMEA ofn;
 	bx::memSet(&ofn, 0, sizeof(ofn) );
 	ofn.structSize = sizeof(OPENFILENAMEA);
@@ -139,34 +140,34 @@ bool openFileSelectionDialog(
 	ofn.file       = out;
 	ofn.maxFile    = sizeof(out);
 	ofn.flags      = 0
-	| /* OFN_EXPLORER        */ 0x00080000
-	| /* OFN_FILEMUSTEXIST   */ 0x00001000
-	| /* OFN_DONTADDTORECENT */ 0x02000000
-	;
-	
+		| /* OFN_EXPLORER        */ 0x00080000
+		| /* OFN_FILEMUSTEXIST   */ 0x00001000
+		| /* OFN_DONTADDTORECENT */ 0x02000000
+		;
+
 	char tmp[4096];
 	bx::StaticMemoryBlockWriter writer(tmp, sizeof(tmp) );
-	
+
 	bx::Error err;
-	
+
 	ofn.title = tmp;
 	bx::write(&writer, &err, "%.*s", _title.getLength(),  _title.getPtr() );
 	bx::write(&writer, '\0', &err);
-	
+
 	ofn.filter = tmp + uint32_t(bx::seek(&writer) );
-	
+
 	for (bx::LineReader lr(_filter); !lr.isDone() && err.isOk();)
 	{
 		const bx::StringView line = lr.next();
 		const bx::StringView sep  = bx::strFind(line, '|');
-		
+
 		if (!sep.isEmpty() )
 		{
 			bx::write(&writer, bx::strTrim(bx::StringView(line.getPtr(), sep.getPtr() ), " "), &err);
 			bx::write(&writer, '\0', &err);
-			
+
 			bool first = true;
-			
+
 			for (Split split(bx::strTrim(bx::StringView(sep.getPtr()+1, line.getTerm() ), " "), ' '); !split.isDone() && err.isOk();)
 			{
 				const bx::StringView token = split.next();
@@ -174,11 +175,11 @@ bool openFileSelectionDialog(
 				{
 					bx::write(&writer, ';', &err);
 				}
-				
+
 				first = false;
 				bx::write(&writer, token, &err);
 			}
-			
+
 			bx::write(&writer, '\0', &err);
 		}
 		else
@@ -188,11 +189,11 @@ bool openFileSelectionDialog(
 			bx::write(&writer, '\0', &err);
 		}
 	}
-	
+
 	bx::write(&writer, '\0', &err);
-	
+
 	if (err.isOk()
-		&&  GetOpenFileNameA(&ofn) )
+	&&  GetOpenFileNameA(&ofn) )
 	{
 		_inOutFilePath.set(ofn.file);
 		return true;
@@ -200,7 +201,7 @@ bool openFileSelectionDialog(
 #else
 	BX_UNUSED(_inOutFilePath, _type, _title, _filter);
 #endif // BX_PLATFORM_LINUX
-	
+
 	return false;
 }
-#endif !BX_PLATFORM_OSX
+#endif // !BX_PLATFORM_OSX
