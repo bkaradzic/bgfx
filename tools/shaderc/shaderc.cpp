@@ -470,6 +470,10 @@ namespace bgfx
 					m_size -= 3;
 				}
 
+				// remove last carriage return and new line(shader compile error occur X3004)
+				while (m_data[m_size - 2] == '\r' && m_data[m_size - 1] == '\n')
+					m_size -= 2;
+
 				m_data[m_size] = '\0';
 			}
 		}
@@ -2514,6 +2518,10 @@ namespace bgfx
 				bx::memMove(data, &data[3], size-3);
 				size -= 3;
 			}
+
+			// remove last carriage return and new line(shader compile error occur X3004)
+			while (data[size - 2] == '\r' && data[size - 1] == '\n')
+				size -= 2;
 
 			// Compiler generates "error X3000: syntax error: unexpected end of file"
 			// if input doesn't have empty line at EOF.
