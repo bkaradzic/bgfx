@@ -2985,7 +2985,7 @@ float ImGui::CalcWrapWidthForPos(const ImVec2& pos, float wrap_pos_x)
 
     ImGuiWindow* window = GImGui->CurrentWindow;
     if (wrap_pos_x == 0.0f)
-        wrap_pos_x = GetContentRegionMaxScreen().x;
+        wrap_pos_x = GetWorkRectMax().x;
     else if (wrap_pos_x > 0.0f)
         wrap_pos_x += window->Pos.x - window->Scroll.x; // wrap_pos_x is provided is window local space
 
@@ -5810,7 +5810,7 @@ float ImGui::GetNextItemWidth()
     }
     if (w < 0.0f)
     {
-        float region_max_x = GetContentRegionMaxScreen().x;
+        float region_max_x = GetWorkRectMax().x;
         w = ImMax(1.0f, region_max_x - window->DC.CursorPos.x + w);
     }
     w = (float)(int)w;
@@ -5838,7 +5838,7 @@ ImVec2 ImGui::CalcItemSize(ImVec2 size, float default_w, float default_h)
 
     ImVec2 region_max;
     if (size.x < 0.0f || size.y < 0.0f)
-        region_max = GetContentRegionMaxScreen();
+        region_max = GetWorkRectMax();
 
     if (size.x == 0.0f)
         size.x = default_w;
@@ -6426,7 +6426,7 @@ ImVec2 ImGui::GetContentRegionMax()
 }
 
 // [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features.
-ImVec2 ImGui::GetContentRegionMaxScreen()
+ImVec2 ImGui::GetWorkRectMax()
 {
     ImGuiWindow* window = GImGui->CurrentWindow;
     ImVec2 mx = window->ContentsRegionRect.Max;
@@ -6438,7 +6438,7 @@ ImVec2 ImGui::GetContentRegionMaxScreen()
 ImVec2 ImGui::GetContentRegionAvail()
 {
     ImGuiWindow* window = GImGui->CurrentWindow;
-    return GetContentRegionMaxScreen() - window->DC.CursorPos;
+    return GetWorkRectMax() - window->DC.CursorPos;
 }
 
 // In window space (not screen space!)
@@ -9376,21 +9376,22 @@ static void* SettingsHandlerWindow_ReadOpen(ImGuiContext*, ImGuiSettingsHandler*
     return (void*)settings;
 }
 
-static void SettingsHandlerWindow_ReadLine(ImGuiContext*, ImGuiSettingsHandler*, void* entry, const char* line)
+static void SettingsHandlerWindow_ReadLine(ImGuiContext* ctx, ImGuiSettingsHandler*, void* entry, const char* line)
 {
+    ImGuiContext& g = *ctx;
     ImGuiWindowSettings* settings = (ImGuiWindowSettings*)entry;
     float x, y;
     int i;
     if (sscanf(line, "Pos=%f,%f", &x, &y) == 2)         settings->Pos = ImVec2(x, y);
-    else if (sscanf(line, "Size=%f,%f", &x, &y) == 2)   settings->Size = ImMax(ImVec2(x, y), GImGui->Style.WindowMinSize);
+    else if (sscanf(line, "Size=%f,%f", &x, &y) == 2)   settings->Size = ImMax(ImVec2(x, y), g.Style.WindowMinSize);
     else if (sscanf(line, "Collapsed=%d", &i) == 1)     settings->Collapsed = (i != 0);
 }
 
-static void SettingsHandlerWindow_WriteAll(ImGuiContext* imgui_ctx, ImGuiSettingsHandler* handler, ImGuiTextBuffer* buf)
+static void SettingsHandlerWindow_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandler* handler, ImGuiTextBuffer* buf)
 {
     // Gather data from windows that were active during this session
     // (if a window wasn't opened in this session we preserve its settings)
-    ImGuiContext& g = *imgui_ctx;
+    ImGuiContext& g = *ctx;
     for (int i = 0; i != g.Windows.Size; i++)
     {
         ImGuiWindow* window = g.Windows[i];
