@@ -9,6 +9,7 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 #include <dear-imgui/imgui.h>
+#include <dear-imgui/imgui_internal.h>
 
 #include "imgui.h"
 #include "../bgfx_utils.h"
@@ -340,7 +341,7 @@ struct OcornutImguiContext
 		, int32_t _scroll
 		, int _width
 		, int _height
-		, char _inputChar
+		, int _inputChar
 		, bgfx::ViewId _viewId
 		)
 	{
@@ -350,6 +351,12 @@ struct OcornutImguiContext
 		if (_inputChar < 0x7f)
 		{
 			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
+		} else
+		{
+			char tmpstr[6];
+			ImWchar unicode[2] = { (ImWchar)_inputChar, 0 };
+			ImTextStrToUtf8(tmpstr, sizeof(tmpstr), unicode, unicode+1);
+			io.AddInputCharactersUTF8(tmpstr);
 		}
 
 		io.DisplaySize = ImVec2( (float)_width, (float)_height);
@@ -427,7 +434,7 @@ void imguiDestroy()
 	s_ctx.destroy();
 }
 
-void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, char _inputChar, bgfx::ViewId _viewId)
+void imguiBeginFrame(int32_t _mx, int32_t _my, uint8_t _button, int32_t _scroll, uint16_t _width, uint16_t _height, int _inputChar, bgfx::ViewId _viewId)
 {
 	s_ctx.beginFrame(_mx, _my, _button, _scroll, _width, _height, _inputChar, _viewId);
 }
