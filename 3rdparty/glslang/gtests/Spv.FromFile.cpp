@@ -300,6 +300,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.earlyReturnDiscard.frag",
         "spv.extPostDepthCoverage.frag",
         "spv.extPostDepthCoverage_Error.frag",
+        "spv.float16convertonlyarith.comp",
+        "spv.float16convertonlystorage.comp",
         "spv.flowControl.frag",
         "spv.forLoop.frag",
         "spv.forwardFun.frag",

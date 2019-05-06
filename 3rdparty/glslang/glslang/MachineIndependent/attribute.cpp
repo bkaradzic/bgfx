@@ -85,6 +85,9 @@ const TConstUnion* TAttributeArgs::getConstUnion(TBasicType basicType, int argNu
     if (argNum >= (int)args->getSequence().size())
         return nullptr;
 
+    if (args->getSequence()[argNum]->getAsConstantUnion() == nullptr)
+        return nullptr;
+
     const TConstUnion* constVal = &args->getSequence()[argNum]->getAsConstantUnion()->getConstArray()[0];
     if (constVal == nullptr || constVal->getType() != basicType)
         return nullptr;

@@ -17,6 +17,7 @@ ERROR: 0:47: 'gl_ClipDistance array size' : must be less than or equal to gl_Max
 ERROR: 0:51: 'start' : undeclared identifier 
 ERROR: 0:51: '' : constant expression required 
 ERROR: 0:51: 'layout-id value' : scalar integer expression required 
+ERROR: 0:51: 'location' : needs a literal integer 
 ERROR: 0:53: 'input block' : not supported in this stage: vertex
 ERROR: 0:54: 'location on block member' : not supported for this version or the enabled extensions 
 ERROR: 0:57: 'input block' : not supported in this stage: vertex
@@ -63,7 +64,7 @@ ERROR: 0:221: 'textureQueryLevels' : no matching overloaded function found
 ERROR: 0:221: 'assign' :  cannot convert from ' const float' to ' temp int'
 ERROR: 0:222: 'textureQueryLevels' : no matching overloaded function found 
 ERROR: 0:222: 'assign' :  cannot convert from ' const float' to ' temp int'
-ERROR: 64 compilation errors.  No code generated.
+ERROR: 65 compilation errors.  No code generated.
 
 
 Shader version: 430
