@@ -125,6 +125,12 @@ class Pass {
   // TODO(1841): Handle id overflow.
   uint32_t TakeNextId() { return context_->TakeNextId(); }
 
+  // Returns the id whose value is the same as |object_to_copy| except its type
+  // is |new_type_id|.  Any instructions needed to generate this value will be
+  // inserted before |insertion_position|.
+  uint32_t GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
+                        Instruction* insertion_position);
+
  private:
   MessageConsumer consumer_;  // Message consumer.
 

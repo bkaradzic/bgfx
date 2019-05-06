@@ -150,15 +150,25 @@ void CFG::ComputeStructuredSuccessors(Function* func) {
 void CFG::ComputePostOrderTraversal(BasicBlock* bb,
                                     std::vector<BasicBlock*>* order,
                                     std::unordered_set<BasicBlock*>* seen) {
-  seen->insert(bb);
-  static_cast<const BasicBlock*>(bb)->ForEachSuccessorLabel(
-      [&order, &seen, this](const uint32_t sbid) {
-        BasicBlock* succ_bb = id2block_[sbid];
-        if (!seen->count(succ_bb)) {
-          ComputePostOrderTraversal(succ_bb, order, seen);
-        }
-      });
-  order->push_back(bb);
+  std::vector<BasicBlock*> stack;
+  stack.push_back(bb);
+  while (!stack.empty()) {
+    bb = stack.back();
+    seen->insert(bb);
+    static_cast<const BasicBlock*>(bb)->WhileEachSuccessorLabel(
+        [&seen, &stack, this](const uint32_t sbid) {
+          BasicBlock* succ_bb = id2block_[sbid];
+          if (!seen->count(succ_bb)) {
+            stack.push_back(succ_bb);
+            return false;
+          }
+          return true;
+        });
+    if (stack.back() == bb) {
+      order->push_back(bb);
+      stack.pop_back();
+    }
+  }
 }
 
 BasicBlock* CFG::SplitLoopHeader(BasicBlock* bb) {

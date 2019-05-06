@@ -160,6 +160,11 @@ class BasicBlock {
   void ForEachSuccessorLabel(
       const std::function<void(const uint32_t)>& f) const;
 
+  // Runs the given function |f| on each label id of each successor block.  If
+  // |f| returns false, iteration is terminated and this function returns false.
+  bool WhileEachSuccessorLabel(
+      const std::function<bool(const uint32_t)>& f) const;
+
   // Runs the given function |f| on each label id of each successor block.
   // Modifying the pointed value will change the branch taken by the basic
   // block. It is the caller responsibility to update or invalidate the CFG.

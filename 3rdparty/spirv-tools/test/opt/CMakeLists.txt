@@ -21,6 +21,7 @@ add_spvtools_unittest(TARGET opt
        block_merge_test.cpp
        ccp_test.cpp
        cfg_cleanup_test.cpp
+       cfg_test.cpp
        code_sink_test.cpp
        combine_access_chains_test.cpp
        common_uniform_elim_test.cpp
