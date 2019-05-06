@@ -461,6 +461,29 @@ void CompilerGLSL::find_static_extensions()
 	{
 		SPIRV_CROSS_THROW("Only Logical and PhysicalStorageBuffer64EXT addressing models are supported.");
 	}
+
+	// Check for nonuniform qualifier.
+	// Instead of looping over all decorations to find this, just look at capabilities.
+	for (auto &cap : ir.declared_capabilities)
+	{
+		bool nonuniform_indexing = false;
+		switch (cap)
+		{
+		case CapabilityShaderNonUniformEXT:
+		case CapabilityRuntimeDescriptorArrayEXT:
+			if (!options.vulkan_semantics)
+				SPIRV_CROSS_THROW("GL_EXT_nonuniform_qualifier is only supported in Vulkan GLSL.");
+			require_extension_internal("GL_EXT_nonuniform_qualifier");
+			nonuniform_indexing = true;
+			break;
+
+		default:
+			break;
+		}
+
+		if (nonuniform_indexing)
+			break;
+	}
 }
 
 string CompilerGLSL::compile()
@@ -798,6 +821,8 @@ void CompilerGLSL::emit_struct(SPIRType &type)
 string CompilerGLSL::to_interpolation_qualifiers(const Bitset &flags)
 {
 	string res;
+	if (flags.get(DecorationNonUniformEXT))
+		res += "nonuniformEXT ";
 	//if (flags & (1ull << DecorationSmooth))
 	//    res += "smooth ";
 	if (flags.get(DecorationFlat))
@@ -6140,18 +6165,33 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 	bool pending_array_enclose = false;
 	bool dimension_flatten = false;
 
+	const auto append_index = [&](uint32_t index) {
+		expr += "[";
+
+		// If we are indexing into an array of SSBOs or UBOs, we need to index it with a non-uniform qualifier.
+		bool nonuniform_index =
+		    has_decoration(index, DecorationNonUniformEXT) &&
+		    (has_decoration(type->self, DecorationBlock) || has_decoration(type->self, DecorationBufferBlock));
+		if (nonuniform_index)
+		{
+			expr += backend.nonuniform_qualifier;
+			expr += "(";
+		}
+
+		if (index_is_literal)
+			expr += convert_to_string(index);
+		else
+			expr += to_expression(index, register_expression_read);
+
+		if (nonuniform_index)
+			expr += ")";
+
+		expr += "]";
+	};
+
 	for (uint32_t i = 0; i < count; i++)
 	{
 		uint32_t index = indices[i];
-
-		const auto append_index = [&]() {
-			expr += "[";
-			if (index_is_literal)
-				expr += convert_to_string(index);
-			else
-				expr += to_expression(index, register_expression_read);
-			expr += "]";
-		};
 
 		// Pointer chains
 		if (ptr_chain && i == 0)
@@ -6190,7 +6230,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			}
 			else
 			{
-				append_index();
+				append_index(index);
 			}
 
 			if (type->basetype == SPIRType::ControlPointArray)
@@ -6237,11 +6277,11 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 					else if (var->storage == StorageClassOutput)
 						expr = join("gl_out[", to_expression(index, register_expression_read), "].", expr);
 					else
-						append_index();
+						append_index(index);
 					break;
 
 				default:
-					append_index();
+					append_index(index);
 					break;
 				}
 			}
@@ -6271,7 +6311,7 @@ string CompilerGLSL::access_chain_internal(uint32_t base, const uint32_t *indice
 			}
 			else
 			{
-				append_index();
+				append_index(index);
 			}
 
 			type_id = type->parent_type;
@@ -7412,13 +7452,16 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// Similar workarounds are required for input arrays in tessellation.
 		unroll_array_from_complex_load(id, ptr, expr);
 
+		auto &type = get<SPIRType>(result_type);
+		if (has_decoration(id, DecorationNonUniformEXT))
+			convert_non_uniform_expression(type, expr);
+
 		if (ptr_expression)
 			ptr_expression->need_transpose = old_need_transpose;
 
 		// By default, suppress usage tracking since using same expression multiple times does not imply any extra work.
 		// However, if we try to load a complex, composite object from a flattened buffer,
 		// we should avoid emitting the same code over and over and lower the result to a temporary.
-		auto &type = get<SPIRType>(result_type);
 		bool usage_tracking = ptr_expression && flattened_buffer_blocks.count(ptr_expression->loaded_from) != 0 &&
 		                      (type.basetype == SPIRType::Struct || (type.columns > 1));
 
@@ -11784,6 +11827,35 @@ void CompilerGLSL::bitcast_to_builtin_store(uint32_t target_id, std::string &exp
 		auto type = expr_type;
 		type.basetype = expected_type;
 		expr = bitcast_expression(type, expr_type.basetype, expr);
+	}
+}
+
+void CompilerGLSL::convert_non_uniform_expression(const SPIRType &type, std::string &expr)
+{
+	// Handle SPV_EXT_descriptor_indexing.
+	if (type.basetype == SPIRType::Sampler || type.basetype == SPIRType::SampledImage ||
+	    type.basetype == SPIRType::Image)
+	{
+		// The image/sampler ID must be declared as non-uniform.
+		// However, it is not legal GLSL to have
+		// nonuniformEXT(samplers[index]), so we must move the nonuniform qualifier
+		// to the array indexing, like
+		// samplers[nonuniformEXT(index)].
+		// While the access chain will generally be nonuniformEXT, it's not necessarily so,
+		// so we might have to fixup the OpLoad-ed expression late.
+
+		auto start_array_index = expr.find_first_of('[');
+		auto end_array_index = expr.find_last_of(']');
+		// Doesn't really make sense to declare a non-arrayed image with nonuniformEXT, but there's
+		// nothing we can do here to express that.
+		if (start_array_index == string::npos || end_array_index == string::npos || end_array_index < start_array_index)
+			return;
+
+		start_array_index++;
+
+		expr = join(expr.substr(0, start_array_index), backend.nonuniform_qualifier, "(",
+		            expr.substr(start_array_index, end_array_index - start_array_index), ")",
+		            expr.substr(end_array_index, string::npos));
 	}
 }
 
