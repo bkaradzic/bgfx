@@ -217,24 +217,24 @@ local function func(sets)
 end
 
 idl.funcptr = setmetatable({}, { __index = func(all_types) })
-idl.func = setmetatable({}, { __index = func(all_funcs) })
-idl.funcs = all_funcs
+idl.func    = setmetatable({}, { __index = func(all_funcs) })
+idl.funcs   = all_funcs
 
-idl.vararg = "vararg"
-idl.out = "out"
-idl.inout = "inout"
-idl.const = "const"
-idl.ctor = "ctor"
-idl.cfunc = "cfunc"
+idl.vararg     = "vararg"
+idl.out        = "out"
+idl.inout      = "inout"
+idl.const      = "const"
+idl.ctor       = "ctor"
+idl.cfunc      = "cfunc"
 idl.underscore = "underscore"
-idl.conly = "conly"
-idl.cpponly = "cpponly"
-idl.shortname = "shortname"
-idl.NULL = "NULL"
+idl.conly      = "conly"
+idl.cpponly    = "cpponly"
+idl.shortname  = "shortname"
+idl.NULL       = "NULL"
 idl.UINT16_MAX = "UINT16_MAX"
-idl.INT32_MAX = "INT32_MAX"
+idl.INT32_MAX  = "INT32_MAX"
 idl.UINT32_MAX = "UINT32_MAX"
-idl.UINT8_MAX = "UINT8_MAX"
+idl.UINT8_MAX  = "UINT8_MAX"
 
 return setmetatable(idl , { __index = function (_, keyword)
 	error (tostring(keyword) .. " is invalid")

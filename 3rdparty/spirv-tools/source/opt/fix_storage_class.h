@@ -47,13 +47,19 @@ class FixStorageClass : public Pass {
   // Changes the storage class of the result of |inst| to |storage_class| in
   // appropriate, and propagates the change to the users of |inst| as well.
   // Returns true of any changes were made.
-  bool PropagateStorageClass(Instruction* inst, SpvStorageClass storage_class);
+  // |seen| is used to track OpPhi instructions that should not be processed.
+  bool PropagateStorageClass(Instruction* inst, SpvStorageClass storage_class,
+                             std::set<uint32_t>* seen);
 
   // Changes the storage class of the result of |inst| to |storage_class|.
   // Is it assumed that the result type of |inst| is a pointer type.
   // Propagates the change to the users of |inst| as well.
   // Returns true of any changes were made.
-  void FixInstruction(Instruction* inst, SpvStorageClass storage_class);
+  // |seen| is used to track OpPhi instructions that should not be processed by
+  // |PropagateStorageClass|
+  void FixInstructionStorageClass(Instruction* inst,
+                                  SpvStorageClass storage_class,
+                                  std::set<uint32_t>* seen);
 
   // Changes the storage class of the result of |inst| to |storage_class|.  The
   // result type of |inst| must be a pointer.
@@ -67,6 +73,18 @@ class FixStorageClass : public Pass {
   // |storage_class|.
   bool IsPointerToStorageClass(Instruction* inst,
                                SpvStorageClass storage_class);
+
+  // Change |inst| to match that operand |op_idx| now has type |type_id|, and
+  // adjust any uses of |inst| accordingly. Returns true if the code changed.
+  bool PropagateType(Instruction* inst, uint32_t type_id, uint32_t op_idx,
+                     std::set<uint32_t>* seen);
+
+  // Changes the result type of |inst| to |new_type_id|.
+  bool ChangeResultType(Instruction* inst, uint32_t new_type_id);
+
+  // Returns the type id of the member of the type |id| that would be returned
+  // by following the indices of the access chain instruction |inst|.
+  uint32_t WalkAccessChainType(Instruction* inst, uint32_t id);
 };
 
 }  // namespace opt

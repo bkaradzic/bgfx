@@ -92,6 +92,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/dead_branch_elim_pass.cpp \
 		source/opt/dead_insert_elim_pass.cpp \
 		source/opt/dead_variable_elimination.cpp \
+		source/opt/decompose_initialized_variables_pass.cpp \
 		source/opt/decoration_manager.cpp \
 		source/opt/def_use_manager.cpp \
 		source/opt/dominator_analysis.cpp \

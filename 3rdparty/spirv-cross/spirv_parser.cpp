@@ -158,7 +158,6 @@ void Parser::parse(const Instruction &instruction)
 
 	switch (op)
 	{
-	case OpMemoryModel:
 	case OpSourceContinued:
 	case OpSourceExtension:
 	case OpNop:
@@ -166,6 +165,11 @@ void Parser::parse(const Instruction &instruction)
 	case OpNoLine:
 	case OpString:
 	case OpModuleProcessed:
+		break;
+
+	case OpMemoryModel:
+		ir.addressing_model = static_cast<AddressingModel>(ops[0]);
+		ir.memory_model = static_cast<MemoryModel>(ops[1]);
 		break;
 
 	case OpSource:
@@ -595,6 +599,20 @@ void Parser::parse(const Instruction &instruction)
 		ptrbase.parent_type = ops[2];
 
 		// Do NOT set ptrbase.self!
+		break;
+	}
+
+	case OpTypeForwardPointer:
+	{
+		uint32_t id = ops[0];
+		auto &ptrbase = set<SPIRType>(id);
+		ptrbase.pointer = true;
+		ptrbase.pointer_depth++;
+		ptrbase.storage = static_cast<StorageClass>(ops[1]);
+
+		if (ptrbase.storage == StorageClassAtomicCounter)
+			ptrbase.basetype = SPIRType::AtomicCounter;
+
 		break;
 	}
 

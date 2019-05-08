@@ -267,7 +267,7 @@ endif()
 
 if (SPIRV_CROSS_SHARED)
 	set(spirv-cross-abi-major 0)
-	set(spirv-cross-abi-minor 5)
+	set(spirv-cross-abi-minor 6)
 	set(spirv-cross-abi-patch 0)
 	set(SPIRV_CROSS_VERSION ${spirv-cross-abi-major}.${spirv-cross-abi-minor}.${spirv-cross-abi-patch})
 	set(SPIRV_CROSS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)

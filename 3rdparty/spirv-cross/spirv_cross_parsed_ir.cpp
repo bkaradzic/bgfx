@@ -66,6 +66,8 @@ ParsedIR &ParsedIR::operator=(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT
 		continue_block_to_loop_header = move(other.continue_block_to_loop_header);
 		entry_points = move(other.entry_points);
 		ids = move(other.ids);
+		addressing_model = other.addressing_model;
+		memory_model = other.memory_model;
 
 		default_entry_point = other.default_entry_point;
 		source = other.source;
@@ -98,6 +100,8 @@ ParsedIR &ParsedIR::operator=(const ParsedIR &other)
 		default_entry_point = other.default_entry_point;
 		source = other.source;
 		loop_iteration_depth = other.loop_iteration_depth;
+		addressing_model = other.addressing_model;
+		memory_model = other.memory_model;
 
 		// Very deliberate copying of IDs. There is no default copy constructor, nor a simple default constructor.
 		// Construct object first so we have the correct allocator set-up, then we can copy object into our new pool group.
@@ -692,24 +696,27 @@ void ParsedIR::add_typed_id(Types type, uint32_t id)
 	if (loop_iteration_depth)
 		SPIRV_CROSS_THROW("Cannot add typed ID while looping over it.");
 
-	switch (type)
+	if (ids[id].empty() || ids[id].get_type() != type)
 	{
-	case TypeConstant:
-		ids_for_constant_or_variable.push_back(id);
-		ids_for_constant_or_type.push_back(id);
-		break;
+		switch (type)
+		{
+		case TypeConstant:
+			ids_for_constant_or_variable.push_back(id);
+			ids_for_constant_or_type.push_back(id);
+			break;
 
-	case TypeVariable:
-		ids_for_constant_or_variable.push_back(id);
-		break;
+		case TypeVariable:
+			ids_for_constant_or_variable.push_back(id);
+			break;
 
-	case TypeType:
-	case TypeConstantOp:
-		ids_for_constant_or_type.push_back(id);
-		break;
+		case TypeType:
+		case TypeConstantOp:
+			ids_for_constant_or_type.push_back(id);
+			break;
 
-	default:
-		break;
+		default:
+			break;
+		}
 	}
 
 	if (ids[id].empty())

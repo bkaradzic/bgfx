@@ -63,3 +63,15 @@ layout(binding = 3000) uniform sampler2D s3000;
 layout(binding = 3001) uniform b3001 { int a; };
 layout(location = 10) in vec4 in1;
 layout(location = 10) in vec4 in2;  // ERROR, no location aliasing
+
+layout(constant_id = 400) const int nonLit = 1;
+layout(location = nonLit, component = nonLit) in vec4 nonLit1;  // ERROR, non literal
+layout(binding = nonLit, set = nonLit) uniform nonLitBN {       // ERROR, non literal
+    layout(offset = nonLit) vec4 nonLit1;                       // ERROR, non literal
+    layout(align = nonLit) vec4 nonLit3;                        // ERROR, non literal
+    layout(xfb_offset = nonLit) vec4 nonLit4;                   // ERROR, non literal
+    layout(xfb_buffer = nonLit) vec4 nonLit5;                   // ERROR, non literal
+    layout(xfb_stride = nonLit) vec4 nonLit6;                   // ERROR, non literal
+} nonLitBI;
+layout(input_attachment_index = nonLit) vec4 nonLit3;           // ERROR, non literal
+layout(constant_id = nonLit) vec4 nonLit4;                      // ERROR, non literal

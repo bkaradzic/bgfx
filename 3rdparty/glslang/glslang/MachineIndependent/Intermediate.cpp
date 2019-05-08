@@ -410,7 +410,7 @@ TIntermTyped* TIntermediate::addBuiltInFunctionCall(const TSourceLoc& loc, TOper
 //
 // This is the safe way to change the operator on an aggregate, as it
 // does lots of error checking and fixing.  Especially for establishing
-// a function call's operation on it's set of parameters.  Sequences
+// a function call's operation on its set of parameters.  Sequences
 // of instructions are also aggregates, but they just directly set
 // their operator to EOpSequence.
 //
@@ -497,6 +497,58 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     TIntermUnary* newNode = nullptr;
 
     TOperator newOp = EOpNull;
+
+    // Certain explicit conversions are allowed conditionally
+    bool arithemeticInt8Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+                                  extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int8);
+#ifdef AMD_EXTENSIONS
+    bool arithemeticInt16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+                                   extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int16) ||
+                                   extensionRequested(E_GL_AMD_gpu_shader_int16);
+
+    bool arithemeticFloat16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+                                     extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_float16) ||
+                                     extensionRequested(E_GL_AMD_gpu_shader_half_float);
+#else
+    bool arithemeticInt16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+                                   extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int16);
+
+    bool arithemeticFloat16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+                                     extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_float16);
+#endif
+    bool convertToIntTypes = (convertTo == EbtInt8  || convertTo == EbtUint8  ||
+                              convertTo == EbtInt16 || convertTo == EbtUint16 ||
+                              convertTo == EbtInt   || convertTo == EbtUint   ||
+                              convertTo == EbtInt64 || convertTo == EbtUint64);
+
+    bool convertFromIntTypes = (node->getBasicType() == EbtInt8  || node->getBasicType() == EbtUint8  ||
+                                node->getBasicType() == EbtInt16 || node->getBasicType() == EbtUint16 ||
+                                node->getBasicType() == EbtInt   || node->getBasicType() == EbtUint   ||
+                                node->getBasicType() == EbtInt64 || node->getBasicType() == EbtUint64);
+
+    bool convertToFloatTypes = (convertTo == EbtFloat16 || convertTo == EbtFloat || convertTo == EbtDouble);
+
+    bool convertFromFloatTypes = (node->getBasicType() == EbtFloat16 ||
+                                  node->getBasicType() == EbtFloat ||
+                                  node->getBasicType() == EbtDouble);
+
+    if (! arithemeticInt8Enabled) {
+        if (((convertTo == EbtInt8 || convertTo == EbtUint8) && ! convertFromIntTypes) ||
+            ((node->getBasicType() == EbtInt8 || node->getBasicType() == EbtUint8) && ! convertToIntTypes))
+            return nullptr;
+    }
+
+    if (! arithemeticInt16Enabled) {
+        if (((convertTo == EbtInt16 || convertTo == EbtUint16) && ! convertFromIntTypes) ||
+            ((node->getBasicType() == EbtInt16 || node->getBasicType() == EbtUint16) && ! convertToIntTypes))
+            return nullptr;
+    }
+
+    if (! arithemeticFloat16Enabled) {
+        if ((convertTo == EbtFloat16 && ! convertFromFloatTypes) ||
+            (node->getBasicType() == EbtFloat16 && ! convertToFloatTypes))
+            return nullptr;
+    }
 
     switch (convertTo) {
     case EbtDouble:

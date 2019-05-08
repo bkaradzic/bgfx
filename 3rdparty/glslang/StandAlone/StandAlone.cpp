@@ -162,6 +162,7 @@ const char* shaderStageName = nullptr;
 const char* variableName = nullptr;
 bool HlslEnable16BitTypes = false;
 bool HlslDX9compatible = false;
+bool DumpBuiltinSymbols = false;
 std::vector<std::string> IncludeDirectoryList;
 
 // Source environment
@@ -494,6 +495,8 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                                 Error("--client expects vulkan100 or opengl100");
                         }
                         bumpArg();
+                    } else if (lowerword == "dump-builtin-symbols") {
+                        DumpBuiltinSymbols = true;
                     } else if (lowerword == "entry-point") {
                         entryPointName = argv[1];
                         if (argc <= 1)
@@ -833,6 +836,8 @@ void SetMessageOptions(EShMessages& messages)
         messages = (EShMessages)(messages | EShMsgHlslLegalization);
     if (HlslDX9compatible)
         messages = (EShMessages)(messages | EShMsgHlslDX9Compatible);
+    if (DumpBuiltinSymbols)
+        messages = (EShMessages)(messages | EShMsgBuiltinSymbolTable);
 }
 
 //
@@ -1520,6 +1525,7 @@ void usage()
            "  --auto-map-locations | --aml      automatically locate input/output lacking\n"
            "                                    'location' (fragile, not cross stage)\n"
            "  --client {vulkan<ver>|opengl<ver>} see -V and -G\n"
+           "  --dump-builtin-symbols            prints builtin symbol table prior each compile\n"
            "  -dumpfullversion | -dumpversion   print bare major.minor.patchlevel\n"
            "  --flatten-uniform-arrays | --fua  flatten uniform texture/sampler arrays to\n"
            "                                    scalars\n"

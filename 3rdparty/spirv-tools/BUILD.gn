@@ -484,6 +484,8 @@ static_library("spvtools_opt") {
     "source/opt/dead_insert_elim_pass.h",
     "source/opt/dead_variable_elimination.cpp",
     "source/opt/dead_variable_elimination.h",
+    "source/opt/decompose_initialized_variables_pass.cpp",
+    "source/opt/decompose_initialized_variables_pass.h",
     "source/opt/decoration_manager.cpp",
     "source/opt/decoration_manager.h",
     "source/opt/def_use_manager.cpp",

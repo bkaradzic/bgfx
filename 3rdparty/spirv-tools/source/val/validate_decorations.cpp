@@ -548,6 +548,9 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
                                 typeId, storage_class_str, decoration_str,
                                 blockRules, next_offset, constraints, vstate)))
           return recursive_status;
+        // If offsets accumulate up to a 16-byte multiple stop checking since
+        // it will just repeat.
+        if (i > 0 && (next_offset % 16 == 0)) break;
       }
 
       // Proceed to the element in case it is an array.

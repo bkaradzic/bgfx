@@ -108,21 +108,29 @@ void BasicBlock::KillAllInsts(bool killLabel) {
 
 void BasicBlock::ForEachSuccessorLabel(
     const std::function<void(const uint32_t)>& f) const {
+  WhileEachSuccessorLabel([f](const uint32_t l) {
+    f(l);
+    return true;
+  });
+}
+
+bool BasicBlock::WhileEachSuccessorLabel(
+    const std::function<bool(const uint32_t)>& f) const {
   const auto br = &insts_.back();
   switch (br->opcode()) {
-    case SpvOpBranch: {
-      f(br->GetOperand(0).words[0]);
-    } break;
+    case SpvOpBranch:
+      return f(br->GetOperand(0).words[0]);
     case SpvOpBranchConditional:
     case SpvOpSwitch: {
       bool is_first = true;
-      br->ForEachInId([&is_first, &f](const uint32_t* idp) {
-        if (!is_first) f(*idp);
+      return br->WhileEachInId([&is_first, &f](const uint32_t* idp) {
+        if (!is_first) return f(*idp);
         is_first = false;
+        return true;
       });
-    } break;
+    }
     default:
-      break;
+      return true;
   }
 }
 

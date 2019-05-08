@@ -377,6 +377,8 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
                                    infoSink, commonTable, symbolTables);
 #endif
 
+
+
     return true;
 }
 
@@ -472,6 +474,16 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     SetThreadPoolAllocator(&previousAllocator);
 
     glslang::ReleaseGlobalLock();
+}
+
+// Function to Print all builtins
+void DumpBuiltinSymbolTable(TInfoSink& infoSink, const TSymbolTable& symbolTable)
+{
+    infoSink.debug << "BuiltinSymbolTable {\n";
+
+    symbolTable.dump(infoSink, true);
+
+    infoSink.debug << "}\n";
 }
 
 // Return true if the shader was correctly specified for version/profile/stage.
@@ -904,6 +916,9 @@ bool ProcessDeferred(
                                     stage, source)) {
         return false;
     }
+
+    if (messages & EShMsgBuiltinSymbolTable)
+        DumpBuiltinSymbolTable(compiler->infoSink, *symbolTable);
 
     //
     // Now we can process the full shader under proper symbols and rules.

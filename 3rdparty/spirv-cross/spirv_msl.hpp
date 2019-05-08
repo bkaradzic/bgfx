@@ -194,6 +194,9 @@ public:
 		// Add support to explicit pad out components.
 		bool pad_fragment_output_components = false;
 
+		// Requires MSL 2.1, use the native support for texel buffers.
+		bool texture_buffer_native = false;
+
 		bool is_ios()
 		{
 			return platform == iOS;

@@ -5719,6 +5719,41 @@ OpFunctionEnd
                         "improperly straddling vector at offset 28"));
 }
 
+TEST_F(ValidateDecorations, LargeArray) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %array ArrayStride 24
+OpMemberDecorate %inner 0 Offset 0
+OpMemberDecorate %inner 1 Offset 8
+OpMemberDecorate %inner 2 Offset 16
+OpMemberDecorate %inner 3 Offset 20
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_2000000 = OpConstant %int 2000000
+%int2 = OpTypeVector %int 2
+%inner = OpTypeStruct %int %int2 %int %int
+%array = OpTypeArray %inner %int_2000000
+%struct = OpTypeStruct %array
+%ptr_struct = OpTypePointer StorageBuffer %struct
+%var = OpVariable %ptr_struct StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+}
+
 // NonWritable
 
 // Returns a SPIR-V shader module with variables in various storage classes,

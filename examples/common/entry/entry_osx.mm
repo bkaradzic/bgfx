@@ -85,7 +85,9 @@ namespace entry
 			}
 
 			MainThreadEntry* self = (MainThreadEntry*)_userData;
-			return main(self->m_argc, self->m_argv);
+			uint32_t result = main(self->m_argc, self->m_argv);
+			[NSApp terminate:nil];
+			return result;
 		}
 	};
 
@@ -98,7 +100,6 @@ namespace entry
 			, m_scroll(0)
 			, m_style(0)
 			, m_exit(false)
-			, m_fullscreen(false)
 		{
 			s_translateKey[27]             = Key::Esc;
 			s_translateKey[uint8_t('\r')]  = Key::Return;
@@ -196,10 +197,14 @@ namespace entry
 		uint8_t translateModifiers(int flags)
 		{
 			return 0
-				| (0 != (flags & NSEventModifierFlagShift  ) ) ? Modifier::LeftShift | Modifier::RightShift : 0
-				| (0 != (flags & NSEventModifierFlagOption ) ) ? Modifier::LeftAlt   | Modifier::RightAlt   : 0
-				| (0 != (flags & NSEventModifierFlagControl) ) ? Modifier::LeftCtrl  | Modifier::RightCtrl  : 0
-				| (0 != (flags & NSEventModifierFlagCommand) ) ? Modifier::LeftMeta  | Modifier::RightMeta  : 0
+				| (0 != (flags & NX_DEVICELSHIFTKEYMASK ) ) ? Modifier::LeftShift  : 0
+				| (0 != (flags & NX_DEVICERSHIFTKEYMASK ) ) ? Modifier::RightShift : 0
+				| (0 != (flags & NX_DEVICELALTKEYMASK ) )   ? Modifier::LeftAlt    : 0
+				| (0 != (flags & NX_DEVICERALTKEYMASK ) )   ? Modifier::RightAlt   : 0
+				| (0 != (flags & NX_DEVICELCTLKEYMASK ) )   ? Modifier::LeftCtrl   : 0
+				| (0 != (flags & NX_DEVICERCTLKEYMASK ) )   ? Modifier::RightCtrl  : 0
+				| (0 != (flags & NX_DEVICELCMDKEYMASK) )    ? Modifier::LeftMeta   : 0
+				| (0 != (flags & NX_DEVICERCMDKEYMASK) )    ? Modifier::RightMeta  : 0
 				;
 		}
 
@@ -520,7 +525,6 @@ namespace entry
 		int32_t m_scroll;
 		int32_t m_style;
 		bool    m_exit;
-		bool    m_fullscreen;
 	};
 
 	static Context s_ctx;
@@ -551,11 +555,12 @@ namespace entry
 		{
 			void (^createWindowBlock)(void) = ^(void) {
 				NSRect rect = NSMakeRect(_x, _y, _width, _height);
-				NSWindow* window = [[NSWindow alloc]
-									initWithContentRect:rect
-									styleMask:s_ctx.m_style
-									backing:NSBackingStoreBuffered defer:NO
-									];
+				NSWindow* window = [
+					[NSWindow alloc]
+					initWithContentRect:rect
+					styleMask:s_ctx.m_style
+					backing:NSBackingStoreBuffered defer:NO
+					];
 				NSString* appName = [NSString stringWithUTF8String:_title];
 				[window setTitle:appName];
 				[window makeKeyAndOrderFront:window];
@@ -586,24 +591,24 @@ namespace entry
 	{
 		if (isValid(_handle))
 		{
-			dispatch_async(dispatch_get_main_queue(), ^(void)
-						   {
-							   NSWindow *window = s_ctx.m_window[_handle.idx];
-							   if ( NULL != window)
-							   {
-								   s_ctx.m_eventQueue.postWindowEvent(_handle);
-								   s_ctx.m_window[_handle.idx] = NULL;
-								   if ( _closeWindow )
-								   {
-									   [window close];
-								   }
+			dispatch_async(dispatch_get_main_queue()
+				, ^(void){
+					NSWindow *window = s_ctx.m_window[_handle.idx];
+					if ( NULL != window)
+					{
+						s_ctx.m_eventQueue.postWindowEvent(_handle);
+						s_ctx.m_window[_handle.idx] = NULL;
+						if ( _closeWindow )
+						{
+							[window close];
+						}
 
-								   if (0 == _handle.idx)
-								   {
-									   [NSApp terminate:nil];
-								   }
-							   }
-						   });
+						if (0 == _handle.idx)
+						{
+							[NSApp terminate:nil];
+						}
+					}
+				});
 
 			bx::MutexScope scope(s_ctx.m_lock);
 			s_ctx.m_windowAlloc.free(_handle.idx);
@@ -618,36 +623,36 @@ namespace entry
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
 	{
 		dispatch_async(dispatch_get_main_queue()
-					   , ^{
-						   NSWindow* window = s_ctx.m_window[_handle.idx];
-						   NSScreen* screen = [window screen];
+			, ^{
+				NSWindow* window = s_ctx.m_window[_handle.idx];
+				NSScreen* screen = [window screen];
 
-						   NSRect screenRect = [screen frame];
-						   CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+				NSRect screenRect = [screen frame];
+				CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
 
-						   NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
+				NSPoint position = { float(_x), screenRect.size.height - menuBarHeight - float(_y) };
 
-						   [window setFrameTopLeftPoint: position];
-					   });
+				[window setFrameTopLeftPoint: position];
+			});
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
 		NSSize size = { float(_width), float(_height) };
 		dispatch_async(dispatch_get_main_queue()
-					   , ^{
-						   [s_ctx.m_window[_handle.idx] setContentSize: size];
-					   });
+			, ^{
+				[s_ctx.m_window[_handle.idx] setContentSize: size];
+			});
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
 		NSString* title = [[NSString alloc] initWithCString:_title encoding:1];
 		dispatch_async(dispatch_get_main_queue()
-					   , ^{
-						   [s_ctx.m_window[_handle.idx] setTitle: title];
-						   [title release];
-					   });
+			, ^{
+				[s_ctx.m_window[_handle.idx] setTitle: title];
+				[title release];
+			});
 	}
 
 	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
@@ -658,31 +663,10 @@ namespace entry
 	void toggleFullscreen(WindowHandle _handle)
 	{
 		dispatch_async(dispatch_get_main_queue()
-					   , ^{
-
-						   NSWindow* window = s_ctx.m_window[_handle.idx];
-						   NSScreen* screen = [window screen];
-						   NSRect screenRect = [screen frame];
-
-						   if (!s_ctx.m_fullscreen)
-						   {
-							   s_ctx.m_style &= ~NSWindowStyleMaskTitled;
-							   s_ctx.m_fullscreen = true;
-
-							   [NSMenu setMenuBarVisible: false];
-							   [window setStyleMask: s_ctx.m_style];
-							   [window setFrame:screenRect display:YES];
-						   }
-						   else
-						   {
-							   s_ctx.m_style |= NSWindowStyleMaskTitled;
-							   s_ctx.m_fullscreen = false;
-
-							   [NSMenu setMenuBarVisible: true];
-							   [window setStyleMask: s_ctx.m_style];
-							   [window setFrame:s_ctx.m_windowFrame display:YES];
-						   }
-					   });
+			, ^{
+				NSWindow* window = s_ctx.m_window[_handle.idx];
+				[window toggleFullScreen:nil];
+			});
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)

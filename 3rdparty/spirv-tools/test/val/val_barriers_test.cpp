@@ -78,9 +78,13 @@ OpCapability Shader
 %acquire_and_release = OpConstant %u32 6
 %sequentially_consistent = OpConstant %u32 16
 %acquire_release_uniform_workgroup = OpConstant %u32 328
+%acquire_uniform_workgroup = OpConstant %u32 322
+%release_uniform_workgroup = OpConstant %u32 324
 %acquire_and_release_uniform = OpConstant %u32 70
 %acquire_release_subgroup = OpConstant %u32 136
 %uniform = OpConstant %u32 64
+%uniform_workgroup = OpConstant %u32 320
+
 
 %main = OpFunction %void None %func
 %main_entry = OpLabel
@@ -245,14 +249,48 @@ OpControlBarrier %workgroup %workgroup %acquire_release_uniform_workgroup
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_0));
 }
 
-TEST_F(ValidateBarriers, OpControlBarrierWebGPUSuccess) {
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUAcquireReleaseSuccess) {
   const std::string body = R"(
-OpControlBarrier %workgroup %queuefamily %none
 OpControlBarrier %workgroup %workgroup %acquire_release_uniform_workgroup
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierWebGPURelaxedFailure) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %workgroup %uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("WebGPU spec requires AcquireRelease to set"));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUAcquireFailure) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %workgroup %acquire_uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUReleaseFailure) {
+  const std::string body = R"(
+OpControlBarrier %workgroup %workgroup %release_uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
 }
 
 TEST_F(ValidateBarriers, OpControlBarrierExecutionModelFragmentSpirv12) {
@@ -628,6 +666,50 @@ OpMemoryBarrier %workgroup %acquire_release_uniform_workgroup
 
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUAcquireReleaseSuccess) {
+  const std::string body = R"(
+OpMemoryBarrier %workgroup %acquire_release_uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPURelaxedFailure) {
+  const std::string body = R"(
+OpMemoryBarrier %workgroup %uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("WebGPU spec requires AcquireRelease to set"));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUAcquireFailure) {
+  const std::string body = R"(
+OpMemoryBarrier %workgroup %acquire_uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
+}
+
+TEST_F(ValidateBarriers, OpMemoryBarrierWebGPUReleaseFailure) {
+  const std::string body = R"(
+OpMemoryBarrier %workgroup %release_uniform_workgroup
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("WebGPU spec disallows any bit masks in Memory Semantics"));
 }
 
 TEST_F(ValidateBarriers, OpMemoryBarrierFloatMemoryScope) {

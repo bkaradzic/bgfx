@@ -217,12 +217,6 @@ class CopyPropagateArrays : public MemPass {
   // |original_ptr_inst| to |type_id| and still have valid code.
   bool CanUpdateUses(Instruction* original_ptr_inst, uint32_t type_id);
 
-  // Returns the id whose value is the same as |object_to_copy| except its type
-  // is |new_type_id|.  Any instructions need to generate this value will be
-  // inserted before |insertion_position|.
-  uint32_t GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
-                        Instruction* insertion_position);
-
   // Returns a store to |var_inst| that writes to the entire variable, and is
   // the only store that does so.  Note it does not look through OpAccessChain
   // instruction, so partial stores are not considered.

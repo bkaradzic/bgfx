@@ -16,10 +16,11 @@ uint2 spvTexelBufferCoord(uint tc)
     return uint2(tc % 4096, tc / 4096);
 }
 
-fragment main0_out main0(texture2d<float> buf [[texture(0)]])
+fragment main0_out main0(texture2d<float> buf [[texture(0)]], texture2d<float, access::write> bufOut [[texture(1)]], float4 gl_FragCoord [[position]])
 {
     main0_out out = {};
     out.FragColor = buf.read(spvTexelBufferCoord(0));
+    bufOut.write(out.FragColor, spvTexelBufferCoord(int(gl_FragCoord.x)));
     return out;
 }
 

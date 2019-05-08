@@ -1,4 +1,4 @@
-// dear imgui, v1.70 WIP
+// dear imgui, v1.70
 // (demo code)
 
 // Message to the person tempted to delete this file when integrating Dear ImGui into their code base:
@@ -550,9 +550,8 @@ static void ShowDemoWindowWidgets()
             ImGui::ListBox("listbox\n(single select)", &listbox_item_current, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
 
             //static int listbox_item_current2 = 2;
-            //ImGui::PushItemWidth(-1);
+            //ImGui::SetNextItemWidth(-1);
             //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
-            //ImGui::PopItemWidth();
         }
 
         ImGui::TreePop();
@@ -1052,7 +1051,8 @@ static void ShowDemoWindowWidgets()
         };
         static int func_type = 0, display_count = 70;
         ImGui::Separator();
-        ImGui::PushItemWidth(100); ImGui::Combo("func", &func_type, "Sin\0Saw\0"); ImGui::PopItemWidth();
+        ImGui::SetNextItemWidth(100);
+        ImGui::Combo("func", &func_type, "Sin\0Saw\0");
         ImGui::SameLine();
         ImGui::SliderInt("Sample count", &display_count, 1, 400);
         float (*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
@@ -1667,9 +1667,8 @@ static void ShowDemoWindowLayout()
         static int line = 50;
         bool goto_line = ImGui::Button("Goto");
         ImGui::SameLine();
-        ImGui::PushItemWidth(100);
+        ImGui::SetNextItemWidth(100);
         goto_line |= ImGui::InputInt("##Line", &line, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue);
-        ImGui::PopItemWidth();
 
         // Child 1: no border, enable horizontal scrollbar
         {
@@ -1740,35 +1739,36 @@ static void ShowDemoWindowLayout()
 
     if (ImGui::TreeNode("Widgets Width"))
     {
+        // Use SetNextItemWidth() to set the width of a single upcoming item.
+        // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
         static float f = 0.0f;
-        ImGui::Text("PushItemWidth(100)");
+        ImGui::Text("SetNextItemWidth/PushItemWidth(100)");
         ImGui::SameLine(); HelpMarker("Fixed width.");
-        ImGui::PushItemWidth(100);
+        ImGui::SetNextItemWidth(100);
         ImGui::DragFloat("float##1", &f);
-        ImGui::PopItemWidth();
 
-        ImGui::Text("PushItemWidth(GetWindowWidth() * 0.5f)");
+        ImGui::Text("SetNextItemWidth/PushItemWidth(GetWindowWidth() * 0.5f)");
         ImGui::SameLine(); HelpMarker("Half of window width.");
-        ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
+        ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * 0.5f);
         ImGui::DragFloat("float##2", &f);
-        ImGui::PopItemWidth();
 
-        ImGui::Text("PushItemWidth(GetContentRegionAvailWidth() * 0.5f)");
+        ImGui::Text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)");
         ImGui::SameLine(); HelpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)");
-        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth() * 0.5f);
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
         ImGui::DragFloat("float##3", &f);
-        ImGui::PopItemWidth();
 
-        ImGui::Text("PushItemWidth(-100)");
+        ImGui::Text("SetNextItemWidth/PushItemWidth(-100)");
         ImGui::SameLine(); HelpMarker("Align to right edge minus 100");
-        ImGui::PushItemWidth(-100);
+        ImGui::SetNextItemWidth(-100);
         ImGui::DragFloat("float##4", &f);
-        ImGui::PopItemWidth();
 
-        ImGui::Text("PushItemWidth(-1)");
+        // Demonstrate using PushItemWidth to surround three items. Calling SetNextItemWidth() before each of them would have the same effect.
+        ImGui::Text("SetNextItemWidth/PushItemWidth(-1)");
         ImGui::SameLine(); HelpMarker("Align to right edge");
         ImGui::PushItemWidth(-1);
-        ImGui::DragFloat("float##5", &f);
+        ImGui::DragFloat("float##5a", &f);
+        ImGui::DragFloat("float##5b", &f);
+        ImGui::DragFloat("float##5c", &f);
         ImGui::PopItemWidth();
 
         ImGui::TreePop();
@@ -2209,6 +2209,13 @@ static void ShowDemoWindowPopups()
                 if (ImGui::BeginMenu("Sub-menu"))
                 {
                     ImGui::MenuItem("Click me");
+                    if (ImGui::Button("Stacked Popup"))
+                        ImGui::OpenPopup("another popup");
+                    if (ImGui::BeginPopup("another popup"))
+                    {
+                        ImGui::Text("I am the last one here.");
+                        ImGui::EndPopup();
+                    }
                     ImGui::EndMenu();
                 }
                 ImGui::EndPopup();
@@ -2241,9 +2248,8 @@ static void ShowDemoWindowPopups()
         {
             if (ImGui::Selectable("Set to zero")) value = 0.0f;
             if (ImGui::Selectable("Set to PI")) value = 3.1415f;
-            ImGui::PushItemWidth(-1);
+            ImGui::SetNextItemWidth(-1);
             ImGui::DragFloat("##Value", &value, 0.1f, 0.0f, 0.0f);
-            ImGui::PopItemWidth();
             ImGui::EndPopup();
         }
 
@@ -2368,6 +2374,13 @@ static void ShowDemoWindowColumns()
 
     ImGui::PushID("Columns");
 
+    static bool disable_indent = false;
+    ImGui::Checkbox("Disable tree indentation", &disable_indent);
+    ImGui::SameLine();
+    HelpMarker("Disable the indenting of tree nodes so demo columns can use the full window width.");
+    if (disable_indent)
+        ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 0.0f);
+
     // Basic columns
     if (ImGui::TreeNode("Basic"))
     {
@@ -2473,7 +2486,10 @@ static void ShowDemoWindowColumns()
             if (h_borders && ImGui::GetColumnIndex() == 0)
                 ImGui::Separator();
             ImGui::Text("%c%c%c", 'a'+i, 'a'+i, 'a'+i);
-            ImGui::Text("Width %.2f\nOffset %.2f", ImGui::GetColumnWidth(), ImGui::GetColumnOffset());
+            ImGui::Text("Width %.2f", ImGui::GetColumnWidth());
+            ImGui::Text("Offset %.2f", ImGui::GetColumnOffset());
+            ImGui::Text("Long text that is likely to clip");
+            ImGui::Button("Button", ImVec2(-1.0f, 0.0f));
             ImGui::NextColumn();
         }
         ImGui::Columns(1);
@@ -2529,18 +2545,44 @@ static void ShowDemoWindowColumns()
         ImGui::TreePop();
     }
 
-    bool node_open = ImGui::TreeNode("Tree within single cell");
-    ImGui::SameLine(); HelpMarker("NB: Tree node must be poped before ending the cell. There's no storage of state per-cell.");
-    if (node_open)
+    if (ImGui::TreeNode("Tree"))
     {
-        ImGui::Columns(2, "tree items");
-        ImGui::Separator();
-        if (ImGui::TreeNode("Hello")) { ImGui::BulletText("Sailor"); ImGui::TreePop(); } ImGui::NextColumn();
-        if (ImGui::TreeNode("Bonjour")) { ImGui::BulletText("Marin"); ImGui::TreePop(); } ImGui::NextColumn();
+        ImGui::Columns(2, "tree", true);
+        for (int x = 0; x < 3; x++)
+        {
+            bool open1 = ImGui::TreeNode((void*)(intptr_t)x, "Node%d", x);
+            ImGui::NextColumn();
+            ImGui::Text("Node contents");
+            ImGui::NextColumn();
+            if (open1)
+            {
+                for (int y = 0; y < 5; y++)
+                {
+                    bool open2 = ImGui::TreeNode((void*)(intptr_t)y, "Node%d.%d", x, y);
+                    ImGui::NextColumn();
+                    ImGui::Text("Node contents");
+                    if (open2)
+                    {
+                        ImGui::Text("Even more contents");
+                        if (ImGui::TreeNode("Tree in column"))
+                        {
+                            ImGui::Text("The quick brown fox jumps over the lazy dog");
+                            ImGui::TreePop();
+                        }
+                    }
+                    ImGui::NextColumn();
+                    if (open2)
+                        ImGui::TreePop();
+                }
+                ImGui::TreePop();
+            }
+        }
         ImGui::Columns(1);
-        ImGui::Separator();
         ImGui::TreePop();
     }
+
+    if (disable_indent)
+        ImGui::PopStyleVar();
     ImGui::PopID();
 }
 
@@ -2968,7 +3010,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
                 }
                 ImGui::LogFinish();
             }
-            ImGui::SameLine(); ImGui::PushItemWidth(120); ImGui::Combo("##output_type", &output_dest, "To Clipboard\0To TTY\0"); ImGui::PopItemWidth();
+            ImGui::SameLine(); ImGui::SetNextItemWidth(120); ImGui::Combo("##output_type", &output_dest, "To Clipboard\0To TTY\0");
             ImGui::SameLine(); ImGui::Checkbox("Only Modified Colors", &output_only_modified);
 
             static ImGuiTextFilter filter;
@@ -3807,12 +3849,11 @@ static void ShowExampleAppPropertyEditor(bool* p_open)
                         ImGui::AlignTextToFramePadding();
                         ImGui::TreeNodeEx("Field", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Field_%d", i);
                         ImGui::NextColumn();
-                        ImGui::PushItemWidth(-1);
+                        ImGui::SetNextItemWidth(-1);
                         if (i >= 5)
                             ImGui::InputFloat("##value", &dummy_members[i], 1.0f);
                         else
                             ImGui::DragFloat("##value", &dummy_members[i], 0.01f);
-                        ImGui::PopItemWidth();
                         ImGui::NextColumn();
                     }
                     ImGui::PopID();
@@ -3952,10 +3993,10 @@ static void ShowExampleAppConstrainedResize(bool* p_open)
         if (ImGui::Button("200x200")) { ImGui::SetWindowSize(ImVec2(200, 200)); } ImGui::SameLine();
         if (ImGui::Button("500x500")) { ImGui::SetWindowSize(ImVec2(500, 500)); } ImGui::SameLine();
         if (ImGui::Button("800x200")) { ImGui::SetWindowSize(ImVec2(800, 200)); }
-        ImGui::PushItemWidth(200);
+        ImGui::SetNextItemWidth(200);
         ImGui::Combo("Constraint", &type, desc, IM_ARRAYSIZE(desc));
+        ImGui::SetNextItemWidth(200);
         ImGui::DragInt("Lines", &display_lines, 0.2f, 1, 100);
-        ImGui::PopItemWidth();
         ImGui::Checkbox("Auto-resize", &auto_resize);
         for (int i = 0; i < display_lines; i++)
             ImGui::Text("%*sHello, sailor! Making this line long enough for the example.", i * 4, "");
@@ -4059,42 +4100,48 @@ static void ShowExampleAppCustomRendering(bool* p_open)
         if (ImGui::BeginTabItem("Primitives"))
         {
             static float sz = 36.0f;
-            static float thickness = 4.0f;
-            static ImVec4 col = ImVec4(1.0f, 1.0f, 0.4f, 1.0f);
+            static float thickness = 3.0f;
+            static ImVec4 colf = ImVec4(1.0f, 1.0f, 0.4f, 1.0f);
             ImGui::DragFloat("Size", &sz, 0.2f, 2.0f, 72.0f, "%.0f");
             ImGui::DragFloat("Thickness", &thickness, 0.05f, 1.0f, 8.0f, "%.02f");
-            ImGui::ColorEdit4("Color", &col.x);
+            ImGui::ColorEdit4("Color", &colf.x);
             const ImVec2 p = ImGui::GetCursorScreenPos();
-            const ImU32 col32 = ImColor(col);
-            float x = p.x + 4.0f, y = p.y + 4.0f, spacing = 8.0f;
+            const ImU32 col = ImColor(colf);
+            float x = p.x + 4.0f, y = p.y + 4.0f;
+            float spacing = 10.0f;
+            ImDrawCornerFlags corners_none = 0;
+            ImDrawCornerFlags corners_all = ImDrawCornerFlags_All;
+            ImDrawCornerFlags corners_tl_br = ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_BotRight;
             for (int n = 0; n < 2; n++)
             {
-                // First line uses a thickness of 1.0, second line uses the configurable thickness
+                // First line uses a thickness of 1.0f, second line uses the configurable thickness
                 float th = (n == 0) ? 1.0f : thickness;
-                draw_list->AddCircle(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col32, 6, th); x += sz + spacing;   // Hexagon
-                draw_list->AddCircle(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col32, 20, th); x += sz + spacing;  // Circle
-                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col32, 0.0f,  ImDrawCornerFlags_All, th); x += sz + spacing;
-                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col32, 10.0f, ImDrawCornerFlags_All, th); x += sz + spacing;
-                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col32, 10.0f, ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_BotRight, th); x += sz + spacing;
-                draw_list->AddTriangle(ImVec2(x + sz*0.5f, y), ImVec2(x + sz, y + sz - 0.5f), ImVec2(x, y + sz - 0.5f), col32, th); x += sz + spacing;
-                draw_list->AddLine(ImVec2(x, y), ImVec2(x + sz, y), col32, th); x += sz + spacing;                  // Horizontal line (note: drawing a filled rectangle will be faster!)
-                draw_list->AddLine(ImVec2(x, y), ImVec2(x, y + sz), col32, th); x += spacing;                       // Vertical line (note: drawing a filled rectangle will be faster!)
-                draw_list->AddLine(ImVec2(x, y), ImVec2(x + sz, y + sz), col32, th); x += sz + spacing;             // Diagonal line
-                draw_list->AddBezierCurve(ImVec2(x, y), ImVec2(x + sz*1.3f, y + sz*0.3f), ImVec2(x + sz - sz*1.3f, y + sz - sz*0.3f), ImVec2(x + sz, y + sz), col32, th);
+                draw_list->AddCircle(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col, 6, th);                x += sz + spacing;  // Hexagon
+                draw_list->AddCircle(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col, 20, th);               x += sz + spacing;  // Circle
+                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 0.0f,  corners_none, th);     x += sz + spacing;  // Square
+                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 10.0f, corners_all, th);      x += sz + spacing;  // Square with all rounded corners
+                draw_list->AddRect(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 10.0f, corners_tl_br, th);    x += sz + spacing;  // Square with two rounded corners
+                draw_list->AddTriangle(ImVec2(x+sz*0.5f,y), ImVec2(x+sz, y+sz-0.5f), ImVec2(x, y+sz-0.5f), col, th);      x += sz + spacing;      // Triangle
+                draw_list->AddTriangle(ImVec2(x+sz*0.2f,y), ImVec2(x, y+sz-0.5f), ImVec2(x+sz*0.4f, y+sz-0.5f), col, th); x += sz*0.4f + spacing; // Thin triangle
+                draw_list->AddLine(ImVec2(x, y), ImVec2(x + sz, y), col, th);                               x += sz + spacing;  // Horizontal line (note: drawing a filled rectangle will be faster!)
+                draw_list->AddLine(ImVec2(x, y), ImVec2(x, y + sz), col, th);                               x += spacing;       // Vertical line (note: drawing a filled rectangle will be faster!)
+                draw_list->AddLine(ImVec2(x, y), ImVec2(x + sz, y + sz), col, th);                          x += sz + spacing;  // Diagonal line
+                draw_list->AddBezierCurve(ImVec2(x, y), ImVec2(x + sz*1.3f, y + sz*0.3f), ImVec2(x + sz - sz*1.3f, y + sz - sz*0.3f), ImVec2(x + sz, y + sz), col, th);
                 x = p.x + 4;
                 y += sz + spacing;
             }
-            draw_list->AddCircleFilled(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col32, 6); x += sz + spacing;     // Hexagon
-            draw_list->AddCircleFilled(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col32, 32); x += sz + spacing;    // Circle
-            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + sz), col32); x += sz + spacing;
-            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + sz), col32, 10.0f); x += sz + spacing;
-            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + sz), col32, 10.0f, ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_BotRight); x += sz + spacing;
-            draw_list->AddTriangleFilled(ImVec2(x + sz*0.5f, y), ImVec2(x + sz, y + sz - 0.5f), ImVec2(x, y + sz - 0.5f), col32); x += sz + spacing;
-            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + thickness), col32); x += sz + spacing;        // Horizontal line (faster than AddLine, but only handle integer thickness)
-            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + thickness, y + sz), col32); x += spacing + spacing;   // Vertical line (faster than AddLine, but only handle integer thickness)
-            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + 1, y + 1), col32);          x += sz;                  // Pixel (faster than AddLine)
+            draw_list->AddCircleFilled(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col, 6);              x += sz + spacing;  // Hexagon
+            draw_list->AddCircleFilled(ImVec2(x + sz*0.5f, y + sz*0.5f), sz*0.5f, col, 32);             x += sz + spacing;  // Circle
+            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + sz), col);                        x += sz + spacing;  // Square
+            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 10.0f);                 x += sz + spacing;  // Square with all rounded corners
+            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + sz), col, 10.0f, corners_tl_br);  x += sz + spacing;  // Square with two rounded corners
+            draw_list->AddTriangleFilled(ImVec2(x+sz*0.5f,y), ImVec2(x+sz, y+sz-0.5f), ImVec2(x, y+sz-0.5f), col);      x += sz + spacing;      // Triangle
+            draw_list->AddTriangleFilled(ImVec2(x+sz*0.2f,y), ImVec2(x, y+sz-0.5f), ImVec2(x+sz*0.4f, y+sz-0.5f), col); x += sz*0.4f + spacing; // Thin triangle
+            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + sz, y + thickness), col);                 x += sz + spacing;  // Horizontal line (faster than AddLine, but only handle integer thickness)
+            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + thickness, y + sz), col);                 x += spacing*2.0f;  // Vertical line (faster than AddLine, but only handle integer thickness)
+            draw_list->AddRectFilled(ImVec2(x, y), ImVec2(x + 1, y + 1), col);                          x += sz;            // Pixel (faster than AddLine)
             draw_list->AddRectFilledMultiColor(ImVec2(x, y), ImVec2(x + sz, y + sz), IM_COL32(0, 0, 0, 255), IM_COL32(255, 0, 0, 255), IM_COL32(255, 255, 0, 255), IM_COL32(0, 255, 0, 255));
-            ImGui::Dummy(ImVec2((sz + spacing) * 9.5f, (sz + spacing) * 3));
+            ImGui::Dummy(ImVec2((sz + spacing) * 9.8f, (sz + spacing) * 3));
             ImGui::EndTabItem();
         }
 
@@ -4401,12 +4448,14 @@ void ShowExampleAppDocuments(bool* p_open)
             if (ImGui::BeginPopupModal("Save?"))
             {
                 ImGui::Text("Save change to the following items?");
-                ImGui::PushItemWidth(-1.0f);
-                ImGui::ListBoxHeader("##", close_queue_unsaved_documents, 6);
-                for (int n = 0; n < close_queue.Size; n++)
-                    if (close_queue[n]->Dirty)
-                        ImGui::Text("%s", close_queue[n]->Name);
-                ImGui::ListBoxFooter();
+                ImGui::SetNextItemWidth(-1.0f);
+                if (ImGui::ListBoxHeader("##", close_queue_unsaved_documents, 6))
+                {
+                    for (int n = 0; n < close_queue.Size; n++)
+                        if (close_queue[n]->Dirty)
+                            ImGui::Text("%s", close_queue[n]->Name);
+                    ImGui::ListBoxFooter();
+                }
 
                 if (ImGui::Button("Yes", ImVec2(80, 0)))
                 {

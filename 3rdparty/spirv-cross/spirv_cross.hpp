@@ -106,7 +106,9 @@ enum BufferPackingStandard
 	BufferPackingStd140EnhancedLayout,
 	BufferPackingStd430EnhancedLayout,
 	BufferPackingHLSLCbuffer,
-	BufferPackingHLSLCbufferPackOffset
+	BufferPackingHLSLCbufferPackOffset,
+	BufferPackingScalar,
+	BufferPackingScalarEnhancedLayout
 };
 
 struct EntryPoint
@@ -932,6 +934,16 @@ protected:
 		uint32_t write_count = 0;
 	};
 
+	struct PhysicalStorageBufferPointerHandler : OpcodeHandler
+	{
+		PhysicalStorageBufferPointerHandler(Compiler &compiler_);
+		bool handle(spv::Op op, const uint32_t *args, uint32_t length) override;
+		Compiler &compiler;
+		std::unordered_set<uint32_t> types;
+	};
+	void analyze_non_block_pointer_types();
+	SmallVector<uint32_t> physical_storage_non_block_pointer_types;
+
 	void analyze_variable_scope(SPIRFunction &function, AnalyzeVariableScopeAccessHandler &handler);
 	void find_function_local_luts(SPIRFunction &function, const AnalyzeVariableScopeAccessHandler &handler,
 	                              bool single_function);
@@ -958,6 +970,8 @@ protected:
 	uint32_t get_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const;
 	bool has_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const;
 	void unset_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration);
+
+	bool type_is_array_of_pointers(const SPIRType &type) const;
 
 private:
 	// Used only to implement the old deprecated get_entry_point() interface.

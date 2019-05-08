@@ -2066,9 +2066,12 @@ namespace bgfx { namespace mtl
 				for (; stream < _numStreams; ++stream)
 				{
 					const VertexDecl& vertexDecl = *_vertexDecls[stream];
+					bool streamUsed = false;
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
 						Attrib::Enum attr = Attrib::Enum(program.m_used[ii]);
+						if (attrSet[attr])
+							continue;
 						const uint32_t loc = program.m_attributes[attr];
 
 						uint8_t num;
@@ -2087,11 +2090,13 @@ namespace bgfx { namespace mtl
 							BX_TRACE("attrib: %s format: %d offset: %d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
 
 							attrSet[attr] = true;
+							streamUsed = true;
 						}
 					}
-
-					vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
-					vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
+					if (streamUsed) {
+						vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
+						vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
+					}
 				}
 
 				for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
@@ -2333,12 +2338,11 @@ namespace bgfx { namespace mtl
 		ProgramMtl           m_screenshotBlitProgram;
 		RenderPipelineState  m_screenshotBlitRenderPipelineState;
 
-		CommandBuffer        m_commandBuffer;
-		CommandBuffer        m_prevCommandBuffer;
-		BlitCommandEncoder   m_blitCommandEncoder;
-		RenderCommandEncoder m_renderCommandEncoder;
+		CommandBuffer         m_commandBuffer;
+		BlitCommandEncoder    m_blitCommandEncoder;
+		RenderCommandEncoder  m_renderCommandEncoder;
 		ComputeCommandEncoder m_computeCommandEncoder;
-		FrameBufferHandle    m_renderCommandEncoderFrameBufferHandle;
+		FrameBufferHandle     m_renderCommandEncoderFrameBufferHandle;
 	};
 
 	RendererContextI* rendererCreate(const Init& _init)
@@ -3954,7 +3958,6 @@ namespace bgfx { namespace mtl
 					const RenderCompute& compute = renderItem.compute;
 
 					bool programChanged = false;
-					bool constantsChanged = compute.m_uniformBegin < compute.m_uniformEnd;
 					rendererUpdateUniforms(this, _render->m_uniformBuffer[compute.m_uniformIdx], compute.m_uniformBegin, compute.m_uniformEnd);
 
 					if (key.m_program.idx != currentProgram.idx)
@@ -3970,8 +3973,7 @@ namespace bgfx { namespace mtl
 						}
 
 						m_computeCommandEncoder.setComputePipelineState(currentPso->m_cps);
-						programChanged =
-							constantsChanged = true;
+						programChanged = true;
 					}
 
 					if (isValid(currentProgram)
@@ -3985,13 +3987,10 @@ namespace bgfx { namespace mtl
 							m_computeCommandEncoder.setBuffer(m_uniformBuffer, m_uniformBufferVertexOffset, 0);
 						}
 
-						if (constantsChanged)
+						UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
+						if (NULL != vcb)
 						{
-							UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
-							if (NULL != vcb)
-							{
-								commit(*vcb);
-							}
+							commit(*vcb);
 						}
 
 						viewState.setPredefined<4>(this, view, *currentPso, _render, compute);
@@ -4234,7 +4233,6 @@ namespace bgfx { namespace mtl
 				}
 
 				bool programChanged = false;
-				bool constantsChanged = draw.m_uniformBegin < draw.m_uniformEnd;
 				rendererUpdateUniforms(this, _render->m_uniformBuffer[draw.m_uniformIdx], draw.m_uniformBegin, draw.m_uniformEnd);
 
 				bool vertexStreamChanged = hasVertexStreamChanged(currentState, draw);
@@ -4334,8 +4332,7 @@ namespace bgfx { namespace mtl
 						rce.setVertexBuffer(inst.m_ptr, draw.m_instanceDataOffset, numStreams+1);
 					}
 
-					programChanged =
-						constantsChanged = true;
+					programChanged = true;
 				}
 
 				if (isValid(currentProgram) )
@@ -4356,19 +4353,16 @@ namespace bgfx { namespace mtl
 						rce.setFragmentBuffer(m_uniformBuffer, m_uniformBufferFragmentOffset, 0);
 					}
 
-					if (constantsChanged)
+					UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
+					if (NULL != vcb)
 					{
-						UniformBuffer* vcb = currentPso->m_vshConstantBuffer;
-						if (NULL != vcb)
-						{
-							commit(*vcb);
-						}
-
-						UniformBuffer* fcb = currentPso->m_fshConstantBuffer;
-						if (NULL != fcb)
-						{
-							commit(*fcb);
-						}
+						commit(*vcb);
+					}
+					
+					UniformBuffer* fcb = currentPso->m_fshConstantBuffer;
+					if (NULL != fcb)
+					{
+						commit(*fcb);
 					}
 
 					viewState.setPredefined<4>(this, view, *currentPso, _render, draw);

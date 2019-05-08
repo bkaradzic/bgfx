@@ -33,12 +33,11 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
            << "OpEntryPoint Entry Point <id> '" << _.getIdName(entry_point_id)
            << "' is not a function.";
   }
-  // don't check kernel function signatures
+
+  // Only check the shader execution models
   const SpvExecutionModel execution_model =
       inst->GetOperandAs<SpvExecutionModel>(0);
   if (execution_model != SpvExecutionModelKernel) {
-    // TODO: Check the entry point signature is void main(void), may be subject
-    // to change
     const auto entry_point_type_id = entry_point->GetOperandAs<uint32_t>(3);
     const auto entry_point_type = _.FindDef(entry_point_type_id);
     if (!entry_point_type || 3 != entry_point_type->words().size()) {
@@ -236,6 +235,36 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
   }
 
   const auto mode = inst->GetOperandAs<SpvExecutionMode>(1);
+  if (inst->opcode() == SpvOpExecutionModeId) {
+    size_t operand_count = inst->operands().size();
+    for (size_t i = 2; i < operand_count; ++i) {
+      const auto operand_id = inst->GetOperandAs<uint32_t>(2);
+      const auto* operand_inst = _.FindDef(operand_id);
+      if (mode == SpvExecutionModeSubgroupsPerWorkgroupId ||
+          mode == SpvExecutionModeLocalSizeHintId ||
+          mode == SpvExecutionModeLocalSizeId) {
+        if (!spvOpcodeIsConstant(operand_inst->opcode())) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "For OpExecutionModeId all Extra Operand ids must be "
+                    "constant "
+                    "instructions.";
+        }
+      } else {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpExecutionModeId is only valid when the Mode operand is an "
+                  "execution mode that takes Extra Operands that are id "
+                  "operands.";
+      }
+    }
+  } else if (mode == SpvExecutionModeSubgroupsPerWorkgroupId ||
+             mode == SpvExecutionModeLocalSizeHintId ||
+             mode == SpvExecutionModeLocalSizeId) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "OpExecutionMode is only valid when the Mode operand is an "
+              "execution mode that takes no Extra Operands, or takes Extra "
+              "Operands that are not id operands.";
+  }
+
   const auto* models = _.GetExecutionModels(entry_point_id);
   switch (mode) {
     case SpvExecutionModeInvocations:

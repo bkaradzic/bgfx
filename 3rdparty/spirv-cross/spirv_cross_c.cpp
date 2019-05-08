@@ -526,6 +526,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS:
 		options->msl.argument_buffers = value != 0;
 		break;
+
+	case SPVC_COMPILER_OPTION_MSL_TEXTURE_BUFFER_NATIVE:
+		options->msl.texture_buffer_native = value != 0;
+		break;
 #endif
 
 	default:

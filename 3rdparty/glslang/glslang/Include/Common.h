@@ -37,9 +37,10 @@
 #ifndef _COMMON_INCLUDED_
 #define _COMMON_INCLUDED_
 
+#include <sstream>
 
 #if defined(__ANDROID__) || (defined(_MSC_VER) && _MSC_VER < 1700)
-#include <sstream>
+
 namespace std {
 template<typename T>
 std::string to_string(const T& val) {
@@ -102,6 +103,7 @@ std::string to_string(const T& val) {
 #include <algorithm>
 #include <string>
 #include <cstdio>
+#include <cstdlib>
 #include <cassert>
 
 #include "PoolAlloc.h"

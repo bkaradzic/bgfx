@@ -172,6 +172,8 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('--msl-domain-lower-left')
     if '.argument.' in shader:
         msl_args.append('--msl-argument-buffers')
+    if '.texture-buffer-native.' in shader:
+        msl_args.append('--msl-texture-buffer-native')
     if '.discrete.' in shader:
         # Arbitrary for testing purposes.
         msl_args.append('--msl-discrete-descriptor-set')

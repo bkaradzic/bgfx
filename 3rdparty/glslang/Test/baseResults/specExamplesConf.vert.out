@@ -31,8 +31,10 @@ ERROR: 0:132: 'shared' : not supported in this stage: vertex
 ERROR: 0:134: '' : function does not return a value: funcA
 ERROR: 0:136: '' : function does not return a value: funcB
 ERROR: 0:153: '' : function does not return a value: func3
+ERROR: 0:169: 'format' : image formats must match 
 ERROR: 0:170: 'coherent' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 33 compilation errors.  No code generated.
+ERROR: 0:170: 'format' : image formats must match 
+ERROR: 35 compilation errors.  No code generated.
 
 
 Shader version: 430

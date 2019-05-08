@@ -3,19 +3,17 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <stdio.h>
-
 #include <algorithm>
-#include <vector>
 
 #include <bx/string.h>
 #include <bgfx/bgfx.h>
 #include "../../src/vertexdecl.h"
 
 #include <tinystl/allocator.h>
+#include <tinystl/string.h>
 #include <tinystl/unordered_map.h>
 #include <tinystl/unordered_set.h>
-#include <tinystl/string.h>
+#include <tinystl/vector.h>
 namespace stl = tinystl;
 
 #include <meshoptimizer/src/meshoptimizer.h>
@@ -26,7 +24,7 @@ namespace stl = tinystl;
 #if 0
 #	define BX_TRACE(_format, ...) \
 		do { \
-			printf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
+			bx::printf(BX_FILE_LINE_LITERAL "BGFX " _format "\n", ##__VA_ARGS__); \
 		} while(0)
 
 #	define BX_WARN(_condition, _format, ...) \
@@ -58,7 +56,7 @@ namespace stl = tinystl;
 
 #include "bounds.h"
 
-typedef std::vector<bx::Vec3> Vec3Array;
+typedef stl::vector<bx::Vec3> Vec3Array;
 
 struct Index3
 {
@@ -76,7 +74,7 @@ struct TriIndices
 	uint64_t m_index[3];
 };
 
-typedef std::vector<TriIndices> TriangleArray;
+typedef stl::vector<TriIndices> TriangleArray;
 
 struct Group
 {
@@ -86,7 +84,7 @@ struct Group
 	stl::string m_material;
 };
 
-typedef std::vector<Group> GroupArray;
+typedef stl::vector<Group> GroupArray;
 
 struct Primitive
 {
@@ -97,7 +95,7 @@ struct Primitive
 	stl::string m_name;
 };
 
-typedef std::vector<Primitive> PrimitiveArray;
+typedef stl::vector<Primitive> PrimitiveArray;
 
 static uint32_t s_obbSteps = 17;
 
@@ -106,15 +104,6 @@ static uint32_t s_obbSteps = 17;
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_IBC BX_MAKEFOURCC('I', 'B', 'C', 0x1)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
-
-long int fsize(FILE* _file)
-{
-	long int pos = ftell(_file);
-	fseek(_file, 0L, SEEK_END);
-	long int size = ftell(_file);
-	fseek(_file, pos, SEEK_SET);
-	return size;
-}
 
 void optimizeVertexCache(uint16_t* _indices, uint32_t _numIndices, uint32_t _numVertices)
 {
@@ -139,11 +128,11 @@ void writeCompressedIndices(bx::WriterI* _writer, const uint16_t* _indices, uint
 	size_t maxSize = meshopt_encodeIndexBufferBound(_numIndices, _numVertices);
 	unsigned char* compressedIndices = (unsigned char*)malloc(maxSize);
 	size_t compressedSize = meshopt_encodeIndexBuffer(compressedIndices, maxSize, _indices, _numIndices);
-	printf( "indices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
+	bx::printf( "indices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
 		, _numIndices*2
 		, (uint32_t)compressedSize
 		, 100.0f - float(compressedSize ) / float(_numIndices*2)*100.0f
-	);
+		);
 
 	bx::write(_writer, (uint32_t)compressedSize);
 	bx::write(_writer, compressedIndices, (uint32_t)compressedSize );
@@ -155,11 +144,11 @@ void writeCompressedVertices(bx::WriterI* _writer,  const uint8_t* _vertices, ui
 	size_t maxSize = meshopt_encodeVertexBufferBound(_numVertices, _stride);
 	unsigned char* compressedVertices = (unsigned char*)malloc(maxSize);
 	size_t compressedSize = meshopt_encodeVertexBuffer(compressedVertices, maxSize, _vertices, _numVertices, _stride);
-	printf("vertices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
+	bx::printf("vertices uncompressed: %10d, compressed: %10d, ratio: %0.2f%%\n"
 		, _numVertices * _stride
 		, (uint32_t)compressedSize
 		, 100.0f - float(compressedSize) / float(_numVertices * _stride)*100.0f
-	);
+		);
 
 	bx::write(_writer, (uint32_t)compressedSize);
 	bx::write(_writer, compressedVertices, (uint32_t)compressedSize );
@@ -379,11 +368,11 @@ void help(const char* _error = NULL)
 {
 	if (NULL != _error)
 	{
-		fprintf(stderr, "Error:\n%s\n\n", _error);
+		bx::printf("Error:\n%s\n\n", _error);
 	}
 
-	fprintf(stderr
-		, "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
+	bx::printf(
+		  "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
 		  "Copyright 2011-2019 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_GEOMETRYC_VERSION_MAJOR
@@ -391,8 +380,8 @@ void help(const char* _error = NULL)
 		, BGFX_API_VERSION
 		);
 
-	fprintf(stderr
-		, "Usage: geometryc -f <in> -o <out>\n"
+	bx::printf(
+		  "Usage: geometryc -f <in> -o <out>\n"
 
 		  "\n"
 		  "Supported input file types:\n"
@@ -431,8 +420,8 @@ int main(int _argc, const char* _argv[])
 
 	if (cmdLine.hasArg('v', "version") )
 	{
-		fprintf(stderr
-			, "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
+		bx::printf(
+			  "geometryc, bgfx geometry compiler tool, version %d.%d.%d.\n"
 			, BGFX_GEOMETRYC_VERSION_MAJOR
 			, BGFX_GEOMETRYC_VERSION_MINOR
 			, BGFX_API_VERSION
@@ -486,21 +475,21 @@ int main(int _argc, const char* _argv[])
 	bool hasTangent = cmdLine.hasArg("tangent");
 	bool hasBc = cmdLine.hasArg("barycentric");
 
-	FILE* file = fopen(filePath, "r");
-	if (NULL == file)
+	bx::FileReader fr;
+	if (!bx::open(&fr, filePath) )
 	{
-		printf("Unable to open input file '%s'.", filePath);
+		bx::printf("Unable to open input file '%s'.", filePath);
 		exit(bx::kExitFailure);
 	}
 
 	int64_t parseElapsed = -bx::getHPCounter();
 	int64_t triReorderElapsed = 0;
 
-	uint32_t size = (uint32_t)fsize(file);
+	uint32_t size = (uint32_t)bx::getSize(&fr);
 	char* data = new char[size+1];
-	size = (uint32_t)fread(data, 1, size, file);
+	size = bx::read(&fr, data, size);
 	data[size] = '\0';
-	fclose(file);
+	bx::close(&fr);
 
 	// Reference(s):
 	// - Wavefront .obj file
@@ -621,7 +610,7 @@ int main(int _argc, const char* _argv[])
 						{
 							if (ccw)
 							{
-								std::swap(triangle.m_index[1], triangle.m_index[2]);
+								bx::swap(triangle.m_index[1], triangle.m_index[2]);
 							}
 							triangles.push_back(triangle);
 						}
@@ -673,7 +662,7 @@ int main(int _argc, const char* _argv[])
 					if (once)
 					{
 						once = false;
-						printf("warning: 'parameter space vertices' are unsupported.\n");
+						bx::printf("warning: 'parameter space vertices' are unsupported.\n");
 					}
 				}
 				else if (0 == bx::strCmp(argv[0], "vt") )
@@ -894,7 +883,7 @@ int main(int _argc, const char* _argv[])
 	bx::FileWriter writer;
 	if (!bx::open(&writer, outFilePath) )
 	{
-		printf("Unable to open output file '%s'.", outFilePath);
+		bx::printf("Unable to open output file '%s'.", outFilePath);
 		exit(bx::kExitFailure);
 	}
 
@@ -1053,7 +1042,7 @@ int main(int _argc, const char* _argv[])
 
 	BX_CHECK(0 == primitives.size(), "Not all primitives are written");
 
-	printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
+	bx::printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
 	bx::close(&writer);
 
 	delete [] indexData;
@@ -1062,7 +1051,7 @@ int main(int _argc, const char* _argv[])
 	now = bx::getHPCounter();
 	convertElapsed += now;
 
-	printf("parse %f [s]\ntri reorder %f [s]\nconvert %f [s]\n# %d, g %d, p %d, v %d, i %d\n"
+	bx::printf("parse %f [s]\ntri reorder %f [s]\nconvert %f [s]\n# %d, g %d, p %d, v %d, i %d\n"
 		, double(parseElapsed)/bx::getHPFrequency()
 		, double(triReorderElapsed)/bx::getHPFrequency()
 		, double(convertElapsed)/bx::getHPFrequency()

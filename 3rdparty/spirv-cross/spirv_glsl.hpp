@@ -372,6 +372,7 @@ protected:
 		const char *basic_uint16_type = "uint16_t";
 		const char *int16_t_literal_suffix = "s";
 		const char *uint16_t_literal_suffix = "us";
+		const char *nonuniform_qualifier = "nonuniformEXT";
 		bool swizzle_is_function = false;
 		bool shared_is_implied = false;
 		bool flexible_member_array_supported = true;
@@ -392,11 +393,13 @@ protected:
 		bool supports_empty_struct = false;
 		bool array_is_value_type = true;
 		bool comparison_image_samples_scalar = false;
+		bool native_pointers = false;
 	} backend;
 
 	void emit_struct(SPIRType &type);
 	void emit_resources();
 	void emit_buffer_block_native(const SPIRVariable &var);
+	void emit_buffer_reference_block(SPIRType &type, bool forward_declaration);
 	void emit_buffer_block_legacy(const SPIRVariable &var);
 	void emit_buffer_block_flattened(const SPIRVariable &type);
 	void emit_declared_builtin_block(spv::StorageClass storage, spv::ExecutionModel model);
@@ -495,7 +498,7 @@ protected:
 	std::string to_enclosed_pointer_expression(uint32_t id, bool register_expression_read = true);
 	std::string to_extract_component_expression(uint32_t id, uint32_t index);
 	std::string enclose_expression(const std::string &expr);
-	std::string dereference_expression(const std::string &expr);
+	std::string dereference_expression(const SPIRType &expression_type, const std::string &expr);
 	std::string address_of_expression(const std::string &expr);
 	void strip_enclosed_expression(std::string &expr);
 	std::string to_member_name(const SPIRType &type, uint32_t index);
@@ -505,7 +508,7 @@ protected:
 	virtual std::string to_qualifiers_glsl(uint32_t id);
 	const char *to_precision_qualifiers_glsl(uint32_t id);
 	virtual const char *to_storage_qualifiers_glsl(const SPIRVariable &var);
-	const char *flags_to_precision_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
+	const char *flags_to_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
 	const char *format_to_glsl(spv::ImageFormat format);
 	virtual std::string layout_for_member(const SPIRType &type, uint32_t index);
 	virtual std::string to_interpolation_qualifiers(const Bitset &flags);
@@ -518,6 +521,8 @@ protected:
 
 	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing, uint32_t start_offset = 0,
 	                                uint32_t end_offset = ~(0u));
+	std::string buffer_to_packing_standard(const SPIRType &type, bool enable_std430);
+
 	uint32_t type_to_packed_base_size(const SPIRType &type, BufferPackingStandard packing);
 	uint32_t type_to_packed_alignment(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
 	uint32_t type_to_packed_array_stride(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
@@ -637,6 +642,7 @@ protected:
 	virtual void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type);
 	virtual void bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type);
 	void unroll_array_from_complex_load(uint32_t target_id, uint32_t source_id, std::string &expr);
+	void convert_non_uniform_expression(const SPIRType &type, std::string &expr);
 
 	void handle_store_to_invariant_variable(uint32_t store_id, uint32_t value_id);
 	void disallow_forwarding_in_expression_chain(const SPIRExpression &expr);
