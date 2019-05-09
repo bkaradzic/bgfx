@@ -462,11 +462,11 @@ namespace entry
 
 		int32_t run(int _argc, const char* const* _argv)
 		{
-			SetDllDirectoryW(L".");
+			SetDllDirectoryA(".");
 
 			s_xinput.init();
 
-			HINSTANCE instance = (HINSTANCE)GetModuleHandleW(NULL);
+			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
 			WNDCLASSEXW wnd;
 			bx::memSet(&wnd, 0, sizeof(wnd) );
@@ -474,17 +474,17 @@ namespace entry
 			wnd.style = CS_HREDRAW | CS_VREDRAW;
 			wnd.lpfnWndProc = wndProc;
 			wnd.hInstance = instance;
-			wnd.hIcon = LoadIconW(NULL, (LPWSTR)IDI_APPLICATION);
-			wnd.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_ARROW);
+			wnd.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+			wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wnd.lpszClassName = L"bgfx";
-			wnd.hIconSm = LoadIconW(NULL, (LPWSTR)IDI_APPLICATION);
+			wnd.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 			RegisterClassExW(&wnd);
 
 			m_windowAlloc.alloc();
-			m_hwnd[0] = CreateWindowExW(
+			m_hwnd[0] = CreateWindowExA(
 				  WS_EX_ACCEPTFILES
-				, L"bgfx"
-				, L"BGFX"
+				, "bgfx"
+				, "BGFX"
 				, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 				, 0
 				, 0
@@ -569,7 +569,7 @@ namespace entry
 							, msg->m_height
 							, NULL
 							, NULL
-							, (HINSTANCE)GetModuleHandleW(NULL)
+							, (HINSTANCE)GetModuleHandle(NULL)
 							, 0
 							);
 						clear(hwnd);
@@ -755,7 +755,7 @@ namespace entry
 							HWND parent = GetWindow(_hwnd, GW_OWNER);
 							if (NULL != parent)
 							{
-								PostMessageW(parent, _id, _wparam, _lparam);
+								PostMessage(parent, _id, _wparam, _lparam);
 							}
 						}
 					}
@@ -951,7 +951,7 @@ namespace entry
 			if (m_frame)
 			{
 				GetWindowRect(_hwnd, &m_rect);
-				m_style = GetWindowLongW(_hwnd, GWL_STYLE);
+				m_style = GetWindowLong(_hwnd, GWL_STYLE);
 			}
 
 			if (_windowFrame)
@@ -964,13 +964,13 @@ namespace entry
 				HMONITOR monitor = MonitorFromWindow(_hwnd, MONITOR_DEFAULTTONEAREST);
 				MONITORINFO mi;
 				mi.cbSize = sizeof(mi);
-				GetMonitorInfoW(monitor, &mi);
+				GetMonitorInfo(monitor, &mi);
 				newrect = mi.rcMonitor;
 				rect = mi.rcMonitor;
 				m_aspectRatio = float(newrect.right  - newrect.left)/float(newrect.bottom - newrect.top);
 			}
 
-			SetWindowLongW(_hwnd, GWL_STYLE, style);
+			SetWindowLong(_hwnd, GWL_STYLE, style);
 			uint32_t prewidth  = newrect.right - newrect.left;
 			uint32_t preheight = newrect.bottom - newrect.top;
 			AdjustWindowRect(&newrect, style, FALSE);
@@ -1109,7 +1109,7 @@ namespace entry
 			msg->m_height = _height;
 			msg->m_title  = _title;
 			msg->m_flags  = _flags;
-			PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_CREATE, handle.idx, (LPARAM)msg);
+			PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_CREATE, handle.idx, (LPARAM)msg);
 		}
 
 		return handle;
@@ -1119,7 +1119,7 @@ namespace entry
 	{
 		if (UINT16_MAX != _handle.idx)
 		{
-			PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_DESTROY, _handle.idx, 0);
+			PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_DESTROY, _handle.idx, 0);
 
 			bx::MutexScope scope(s_ctx.m_lock);
 			s_ctx.m_windowAlloc.free(_handle.idx);
@@ -1131,19 +1131,19 @@ namespace entry
 		Msg* msg = new Msg;
 		msg->m_x = _x;
 		msg->m_y = _y;
-		PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_POS, _handle.idx, (LPARAM)msg);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_POS, _handle.idx, (LPARAM)msg);
 	}
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_SIZE, _handle.idx, (_height<<16) | (_width&0xffff) );
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_SIZE, _handle.idx, (_height<<16) | (_width&0xffff) );
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
 	{
 		Msg* msg = new Msg;
 		msg->m_title = _title;
-		PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
 	}
 
 	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
@@ -1151,24 +1151,24 @@ namespace entry
 		Msg* msg = new Msg;
 		msg->m_flags = _flags;
 		msg->m_flagsEnabled = _enabled;
-		PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_FLAGS, _handle.idx, (LPARAM)msg);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_FLAGS, _handle.idx, (LPARAM)msg);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)
 	{
-		PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
 	}
 
 	void setMouseLock(WindowHandle _handle, bool _lock)
 	{
-		PostMessageW(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
 	}
 
 	int32_t MainThreadEntry::threadFunc(bx::Thread* /*_thread*/, void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
-		PostMessageW(s_ctx.m_hwnd[0], WM_QUIT, 0, 0);
+		PostMessage(s_ctx.m_hwnd[0], WM_QUIT, 0, 0);
 		return result;
 	}
 
