@@ -18,6 +18,7 @@
 
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
+#include <tinystl/vector.h>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -33,6 +34,16 @@
 
 namespace entry
 {
+	typedef tinystl::vector<WCHAR> WSTRING;
+
+	inline WSTRING UTF8ToUTF16(const char *utf8_str)
+	{
+		int len = MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, NULL, 0);
+		WSTRING utf16(len);
+		MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, utf16.data(), len);
+		return utf16;
+	}
+
 	///
 	inline void winSetHwnd(::HWND _window)
 	{
@@ -359,6 +370,7 @@ namespace entry
 			, m_init(false)
 			, m_exit(false)
 		{
+			m_surrogate = 0;
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]     = Key::Esc;
 			s_translateKey[VK_RETURN]     = Key::Return;
@@ -456,7 +468,7 @@ namespace entry
 
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
-			WNDCLASSEXA wnd;
+			WNDCLASSEXW wnd;
 			bx::memSet(&wnd, 0, sizeof(wnd) );
 			wnd.cbSize = sizeof(wnd);
 			wnd.style = CS_HREDRAW | CS_VREDRAW;
@@ -464,9 +476,9 @@ namespace entry
 			wnd.hInstance = instance;
 			wnd.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 			wnd.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wnd.lpszClassName = "bgfx";
+			wnd.lpszClassName = L"bgfx";
 			wnd.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-			RegisterClassExA(&wnd);
+			RegisterClassExW(&wnd);
 
 			m_windowAlloc.alloc();
 			m_hwnd[0] = CreateWindowExA(
@@ -521,10 +533,10 @@ namespace entry
 				s_xinput.update(m_eventQueue);
 				WaitForInputIdle(GetCurrentProcess(), 16);
 
-				while (0 != PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE) )
+				while (0 != PeekMessageW(&msg, NULL, 0U, 0U, PM_REMOVE) )
 				{
 					TranslateMessage(&msg);
-					DispatchMessage(&msg);
+					DispatchMessageW(&msg);
 				}
 			}
 
@@ -548,8 +560,8 @@ namespace entry
 				case WM_USER_WINDOW_CREATE:
 					{
 						Msg* msg = (Msg*)_lparam;
-						HWND hwnd = CreateWindowA("bgfx"
-							, msg->m_title.c_str()
+						HWND hwnd = CreateWindowW(L"bgfx"
+							, UTF8ToUTF16(msg->m_title.c_str()).data()
 							, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 							, msg->m_x
 							, msg->m_y
@@ -590,7 +602,7 @@ namespace entry
 				case WM_USER_WINDOW_SET_TITLE:
 					{
 						Msg* msg = (Msg*)_lparam;
-						SetWindowTextA(m_hwnd[_wparam], msg->m_title.c_str() );
+						SetWindowTextW(m_hwnd[_wparam], UTF8ToUTF16(msg->m_title.c_str()).data() );
 						delete msg;
 					}
 					break;
@@ -842,20 +854,36 @@ namespace entry
 
 				case WM_CHAR:
 					{
+						WCHAR utf16[2] = { (WCHAR)_wparam };
 						uint8_t utf8[4] = {};
-						uint8_t len = (uint8_t)WideCharToMultiByte(CP_UTF8
-											, 0
-											, (LPCWSTR)&_wparam
-											, 1
-											, (LPSTR)utf8
-											, BX_COUNTOF(utf8)
-											, NULL
-											, NULL
-											);
-						if (0 != len)
-						{
-							WindowHandle handle = findHandle(_hwnd);
-							m_eventQueue.postCharEvent(handle, len, utf8);
+
+						if (utf16[0] >= 0xD800 && utf16[0] <= 0xDBFF) {
+							m_surrogate = utf16[0];
+						} else {
+							int utf16_len;
+							if (utf16[0] >= 0xDC00 && utf16[0] <= 0xDFFF) {
+								utf16[1] = utf16[0];
+								utf16[0] = m_surrogate;
+								m_surrogate = 0;
+								utf16_len = 2;
+							} else {
+								utf16_len = 1;
+							}
+
+							uint8_t len = (uint8_t)WideCharToMultiByte(CP_UTF8
+												, 0
+												, utf16
+												, utf16_len
+												, (LPSTR)utf8
+												, BX_COUNTOF(utf8)
+												, NULL
+												, NULL
+												);
+							if (0 != len)
+							{
+								WindowHandle handle = findHandle(_hwnd);
+								m_eventQueue.postCharEvent(handle, len, utf8);
+							}
 						}
 					}
 					break;
@@ -864,8 +892,10 @@ namespace entry
 					{
 						HDROP drop = (HDROP)_wparam;
 						char tmp[bx::kMaxFilePath];
-						uint32_t result = DragQueryFileA(drop, 0, tmp, sizeof(tmp) );
+						WCHAR utf16[bx::kMaxFilePath];
+						uint32_t result = DragQueryFileW(drop, 0, utf16, bx::kMaxFilePath);
 						BX_UNUSED(result);
+						WideCharToMultiByte(CP_UTF8, 0, utf16, -1, tmp, bx::kMaxFilePath, NULL, NULL);
 						WindowHandle handle = findHandle(_hwnd);
 						m_eventQueue.postDropFileEvent(handle, tmp);
 					}
@@ -876,7 +906,7 @@ namespace entry
 				}
 			}
 
-			return DefWindowProc(_hwnd, _id, _wparam, _lparam);
+			return DefWindowProcW(_hwnd, _id, _wparam, _lparam);
 		}
 
 		WindowHandle findHandle(HWND _hwnd)
@@ -1015,6 +1045,7 @@ namespace entry
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
 		EventQueue m_eventQueue;
+		WCHAR m_surrogate;
 		bx::Mutex m_lock;
 
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
