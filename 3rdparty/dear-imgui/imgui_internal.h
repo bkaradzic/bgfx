@@ -1,4 +1,4 @@
-// dear imgui, v1.70
+// dear imgui, v1.71 WIP
 // (internal structures/api)
 
 // You may use this file to debug, understand or extend ImGui features but we don't provide any guarantee of forward compatibility!
@@ -354,7 +354,8 @@ enum ImGuiSeparatorFlags_
 {
     ImGuiSeparatorFlags_None                = 0,
     ImGuiSeparatorFlags_Horizontal          = 1 << 0,   // Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar
-    ImGuiSeparatorFlags_Vertical            = 1 << 1
+    ImGuiSeparatorFlags_Vertical            = 1 << 1,
+    ImGuiSeparatorFlags_SpanAllColumns      = 1 << 2
 };
 
 // Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
@@ -679,10 +680,11 @@ struct ImGuiColumns
     bool                IsBeingResized;
     int                 Current;
     int                 Count;
-    float               MinX, MaxX;
+    float               OffMinX, OffMaxX;       // Offsets from HostWorkRect.Min.x
     float               LineMinY, LineMaxY;
-    float               BackupCursorPosY;       // Backup of CursorPos at the time of BeginColumns()
-    float               BackupCursorMaxPosX;    // Backup of CursorMaxPos at the time of BeginColumns()
+    float               HostCursorPosY;         // Backup of CursorPos at the time of BeginColumns()
+    float               HostCursorMaxPosX;      // Backup of CursorMaxPos at the time of BeginColumns()
+    ImRect              HostClipRect;           // Backup of ClipRect at the time of BeginColumns()
     ImVector<ImGuiColumnData> Columns;
 
     ImGuiColumns()      { Clear(); }
@@ -694,10 +696,10 @@ struct ImGuiColumns
         IsBeingResized = false;
         Current = 0;
         Count = 1;
-        MinX = MaxX = 0.0f;
+        OffMinX = OffMaxX = 0.0f;
         LineMinY = LineMaxY = 0.0f;
-        BackupCursorPosY = 0.0f;
-        BackupCursorMaxPosX = 0.0f;
+        HostCursorPosY = 0.0f;
+        HostCursorMaxPosX = 0.0f;
         Columns.clear();
     }
 };
@@ -1502,7 +1504,9 @@ namespace ImGui
     // New Columns API (FIXME-WIP)
     IMGUI_API void          BeginColumns(const char* str_id, int count, ImGuiColumnsFlags flags = 0); // setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().
     IMGUI_API void          EndColumns();                                                             // close columns
-    IMGUI_API void          PushColumnClipRect(int column_index = -1);
+    IMGUI_API void          PushColumnClipRect(int column_index);
+    IMGUI_API void          PushColumnsBackground();
+    IMGUI_API void          PopColumnsBackground();
     IMGUI_API ImGuiID       GetColumnsID(const char* str_id, int count);
     IMGUI_API ImGuiColumns* FindOrCreateColumns(ImGuiWindow* window, ImGuiID id);
 
@@ -1548,7 +1552,7 @@ namespace ImGui
     IMGUI_API bool          ArrowButtonEx(const char* str_id, ImGuiDir dir, ImVec2 size_arg, ImGuiButtonFlags flags);
     IMGUI_API void          Scrollbar(ImGuiAxis axis);
     IMGUI_API ImGuiID       GetScrollbarID(ImGuiWindow* window, ImGuiAxis axis);
-    IMGUI_API void          VerticalSeparator();        // Vertical separator, for menu bars (use current line height). Not exposed because it is misleading and it doesn't have an effect on regular layout.
+    IMGUI_API void          SeparatorEx(ImGuiSeparatorFlags flags);
 
     // Widgets low-level behaviors
     IMGUI_API bool          ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool* out_held, ImGuiButtonFlags flags = 0);
