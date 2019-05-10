@@ -1248,44 +1248,16 @@ bool overlap(const Aabb& _aabb, const Sphere& _sphere)
 	return overlap(_sphere, _aabb);
 }
 
-uint32_t overlapTestMask(const Aabb& _aabbA, const Aabb& _aabbB)
-{
-	/// Returns 0 is two AABB don't overlap, otherwise returns flags of overlap
-	/// test.
-	const uint32_t ltMinX = _aabbA.max.x < _aabbB.min.x;
-	const uint32_t gtMaxX = _aabbA.min.x > _aabbB.max.x;
-	const uint32_t ltMinY = _aabbA.max.y < _aabbB.min.y;
-	const uint32_t gtMaxY = _aabbA.min.y > _aabbB.max.y;
-	const uint32_t ltMinZ = _aabbA.max.z < _aabbB.min.z;
-	const uint32_t gtMaxZ = _aabbA.min.z > _aabbB.max.z;
-
-	return 0
-		| (ltMinX << 0)
-		| (gtMaxX << 1)
-		| (ltMinY << 2)
-		| (gtMaxY << 3)
-		| (ltMinZ << 4)
-		| (gtMaxZ << 5)
-		;
-}
-
 bool overlap(const Aabb& _aabbA, const Aabb& _aabbB)
 {
-#if 0
-	return 0 != overlapTestMask(_aabbA, _aabbB);
-#else
-	const Vec3 ac  = getCenter(_aabbA);
-	const Vec3 bc  = getCenter(_aabbB);
-	const Vec3 abc = bx::abs(sub(ac, bc) );
-	const Vec3 ae  = getExtents(_aabbA);
-	const Vec3 be  = getExtents(_aabbB);
-	const Vec3 abe = add(ae, be);
-
-	return abc.x <= abe.x
-		&& abc.y <= abe.y
-		&& abc.z <= abe.z
+	return true
+		&& _aabbA.max.x > _aabbB.min.x
+		&& _aabbB.max.x > _aabbA.min.x
+		&& _aabbA.max.y > _aabbB.min.y
+		&& _aabbB.max.y > _aabbA.min.y
+		&& _aabbA.max.z > _aabbB.min.z
+		&& _aabbB.max.z > _aabbA.min.z
 		;
-#endif // 0
 }
 
 bool overlap(const Aabb& _aabb, const Plane& _plane)
