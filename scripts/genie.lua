@@ -75,7 +75,7 @@ solution "bgfx"
 		"Release",
 	}
 
-	if _ACTION == "xcode4" then
+	if _ACTION:match "xcode*" then
 		platforms {
 			"Universal",
 		}
@@ -343,13 +343,13 @@ function exampleProjectDefaults()
 			"-weak_framework Metal",
 		}
 
-	configuration { "xcode4", "ios" }
+	configuration { "xcode*", "ios" }
 		kind "WindowedApp"
 		files {
 			path.join(BGFX_DIR, "examples/runtime/iOS-Info.plist"),
 		}
 
-	configuration { "xcode4", "tvos" }
+	configuration { "xcode*", "tvos" }
 		kind "WindowedApp"
 		files {
 			path.join(BGFX_DIR, "examples/runtime/tvOS-Info.plist"),
