@@ -463,6 +463,8 @@ typedef struct bgfx_vertex_buffer_handle_s { uint16_t idx; } bgfx_vertex_buffer_
 typedef struct bgfx_vertex_decl_handle_s { uint16_t idx; } bgfx_vertex_decl_handle_t;
 
 
+#define BGFX_HANDLE_IS_VALID(h) ((h).idx != UINT16_MAX)
+
 /**
  * Memory release callback.
  *

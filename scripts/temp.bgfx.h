@@ -106,6 +106,8 @@ typedef struct bgfx_callback_vtbl_s
 
 $chandles
 
+#define BGFX_HANDLE_IS_VALID(h) ((h).idx != UINT16_MAX)
+
 $cfuncptrs
 
 $cstructs
