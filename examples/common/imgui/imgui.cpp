@@ -9,7 +9,6 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 #include <dear-imgui/imgui.h>
-#include <dear-imgui/imgui_internal.h>
 
 #include "imgui.h"
 #include "../bgfx_utils.h"
@@ -348,15 +347,9 @@ struct OcornutImguiContext
 		m_viewId = _viewId;
 
 		ImGuiIO& io = ImGui::GetIO();
-		if (_inputChar < 0x7f)
+		if (_inputChar >= 0)
 		{
-			io.AddInputCharacter(_inputChar); // ASCII or GTFO! :(
-		} else
-		{
-			char tmpstr[6];
-			ImWchar unicode[2] = { (ImWchar)_inputChar, 0 };
-			ImTextStrToUtf8(tmpstr, sizeof(tmpstr), unicode, unicode+1);
-			io.AddInputCharactersUTF8(tmpstr);
+			io.AddInputCharacter(_inputChar);
 		}
 
 		io.DisplaySize = ImVec2( (float)_width, (float)_height);

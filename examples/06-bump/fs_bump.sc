@@ -55,7 +55,7 @@ vec3 calcLight(int _idx, mat3 _tbn, vec3 _wpos, vec3 _normal, vec3 _view)
 
 mat3 mtx3FromCols(vec3 c0, vec3 c1, vec3 c2)
 {
-#ifdef BGFX_SHADER_LANGUAGE_GLSL
+#if BGFX_SHADER_LANGUAGE_GLSL
 	return mat3(c0, c1, c2);
 #else
 	return transpose(mat3(c0, c1, c2));

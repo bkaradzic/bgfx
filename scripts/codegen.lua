@@ -440,6 +440,11 @@ local function codetemp(func)
 		callfunc_c2c = func.cname
 	end
 
+	outCargs = table.concat(cargs, ", ")
+	if outCargs == "" then
+		outCargs = "void"
+	end
+
 	return {
 		RET = func.ret.fulltype,
 		CRET = func.ret.ctype,
@@ -447,7 +452,7 @@ local function codetemp(func)
 		CFUNCNAMEUPPER = func.cname:upper(),
 		CFUNCNAMECAML = underscorecase_to_camelcase(func.cname),
 		FUNCNAME = func.name,
-		CARGS = table.concat(cargs, ", "),
+		CARGS = outCargs,
 		CPPARGS = table.concat(args, ", "),
 		ARGS = ARGS,
 		CONVERSION = lines(conversion),

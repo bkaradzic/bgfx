@@ -1068,7 +1068,7 @@ BGFX_C_API bool bgfx_init(const bgfx_init_t * _init);
  * Shutdown bgfx library.
  *
  */
-BGFX_C_API void bgfx_shutdown();
+BGFX_C_API void bgfx_shutdown(void);
 
 /**
  * Reset graphic settings and back-buffer size.
@@ -1114,7 +1114,7 @@ BGFX_C_API uint32_t bgfx_frame(bool _capture);
  *   Library must be initialized.
  *
  */
-BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type();
+BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type(void);
 
 /**
  * Returns renderer capabilities.
@@ -1122,14 +1122,14 @@ BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type();
  *   Library must be initialized.
  *
  */
-BGFX_C_API const bgfx_caps_t* bgfx_get_caps();
+BGFX_C_API const bgfx_caps_t* bgfx_get_caps(void);
 
 /**
  * Returns performance counters.
  * @attention Pointer returned is valid until `bgfx::frame` is called.
  *
  */
-BGFX_C_API const bgfx_stats_t* bgfx_get_stats();
+BGFX_C_API const bgfx_stats_t* bgfx_get_stats(void);
 
 /**
  * Allocate buffer to pass to bgfx calls. Data will be freed inside bgfx.
@@ -2078,7 +2078,7 @@ BGFX_C_API void bgfx_destroy_uniform(bgfx_uniform_handle_t _handle);
  * Create occlusion query.
  *
  */
-BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query();
+BGFX_C_API bgfx_occlusion_query_handle_t bgfx_create_occlusion_query(void);
 
 /**
  * Retrieve occlusion query result from previous frame.
@@ -2744,7 +2744,7 @@ BGFX_C_API void bgfx_set_platform_data(const bgfx_platform_data_t * _data);
  * @warning Must be called only on render thread.
  *
  */
-BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data();
+BGFX_C_API const bgfx_internal_data_t* bgfx_get_internal_data(void);
 
 /**
  * Override internal texture with externally created texture. Previously
@@ -3195,7 +3195,7 @@ BGFX_C_API void bgfx_dispatch_indirect(bgfx_view_id_t _id, bgfx_program_handle_t
  * Discard all previously set state for draw or compute call.
  *
  */
-BGFX_C_API void bgfx_discard();
+BGFX_C_API void bgfx_discard(void);
 
 /**
  * Blit 2D texture region between two 2D textures.
@@ -3437,12 +3437,12 @@ struct bgfx_interface_vtbl
     const char* (*get_renderer_name)(bgfx_renderer_type_t _type);
     void (*init_ctor)(bgfx_init_t* _init);
     bool (*init)(const bgfx_init_t * _init);
-    void (*shutdown)();
+    void (*shutdown)(void);
     void (*reset)(uint32_t _width, uint32_t _height, uint32_t _flags, bgfx_texture_format_t _format);
     uint32_t (*frame)(bool _capture);
-    bgfx_renderer_type_t (*get_renderer_type)();
-    const bgfx_caps_t* (*get_caps)();
-    const bgfx_stats_t* (*get_stats)();
+    bgfx_renderer_type_t (*get_renderer_type)(void);
+    const bgfx_caps_t* (*get_caps)(void);
+    const bgfx_stats_t* (*get_stats)(void);
     const bgfx_memory_t* (*alloc)(uint32_t _size);
     const bgfx_memory_t* (*copy)(const void* _data, uint32_t _size);
     const bgfx_memory_t* (*make_ref)(const void* _data, uint32_t _size);
@@ -3509,7 +3509,7 @@ struct bgfx_interface_vtbl
     bgfx_uniform_handle_t (*create_uniform)(const char* _name, bgfx_uniform_type_t _type, uint16_t _num);
     void (*get_uniform_info)(bgfx_uniform_handle_t _handle, bgfx_uniform_info_t * _info);
     void (*destroy_uniform)(bgfx_uniform_handle_t _handle);
-    bgfx_occlusion_query_handle_t (*create_occlusion_query)();
+    bgfx_occlusion_query_handle_t (*create_occlusion_query)(void);
     bgfx_occlusion_query_result_t (*get_result)(bgfx_occlusion_query_handle_t _handle, int32_t* _result);
     void (*destroy_occlusion_query)(bgfx_occlusion_query_handle_t _handle);
     void (*set_palette_color)(uint8_t _index, const float _rgba[4]);
@@ -3565,7 +3565,7 @@ struct bgfx_interface_vtbl
     void (*request_screen_shot)(bgfx_frame_buffer_handle_t _handle, const char* _filePath);
     bgfx_render_frame_t (*render_frame)(int32_t _msecs);
     void (*set_platform_data)(const bgfx_platform_data_t * _data);
-    const bgfx_internal_data_t* (*get_internal_data)();
+    const bgfx_internal_data_t* (*get_internal_data)(void);
     uintptr_t (*override_internal_texture_ptr)(bgfx_texture_handle_t _handle, uintptr_t _ptr);
     uintptr_t (*override_internal_texture)(bgfx_texture_handle_t _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, bgfx_texture_format_t _format, uint64_t _flags);
     void (*set_marker)(const char* _marker);
@@ -3602,7 +3602,7 @@ struct bgfx_interface_vtbl
     void (*set_image)(uint8_t _stage, bgfx_texture_handle_t _handle, uint8_t _mip, bgfx_access_t _access, bgfx_texture_format_t _format);
     void (*dispatch)(bgfx_view_id_t _id, bgfx_program_handle_t _program, uint32_t _numX, uint32_t _numY, uint32_t _numZ);
     void (*dispatch_indirect)(bgfx_view_id_t _id, bgfx_program_handle_t _program, bgfx_indirect_buffer_handle_t _indirectHandle, uint16_t _start, uint16_t _num);
-    void (*discard)();
+    void (*discard)(void);
     void (*blit)(bgfx_view_id_t _id, bgfx_texture_handle_t _dst, uint8_t _dstMip, uint16_t _dstX, uint16_t _dstY, uint16_t _dstZ, bgfx_texture_handle_t _src, uint8_t _srcMip, uint16_t _srcX, uint16_t _srcY, uint16_t _srcZ, uint16_t _width, uint16_t _height, uint16_t _depth);
 };
 
