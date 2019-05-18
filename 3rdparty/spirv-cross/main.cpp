@@ -511,6 +511,7 @@ struct CLIArguments
 	bool msl_argument_buffers = false;
 	bool msl_texture_buffer_native = false;
 	bool glsl_emit_push_constant_as_ubo = false;
+	bool glsl_emit_ubo_as_plain_uniforms = false;
 	SmallVector<uint32_t> msl_discrete_descriptor_sets;
 	SmallVector<PLSArg> pls_in;
 	SmallVector<PLSArg> pls_out;
@@ -563,6 +564,7 @@ static void print_help()
 	                "\t[--cpp]\n"
 	                "\t[--cpp-interface-name <name>]\n"
 	                "\t[--glsl-emit-push-constant-as-ubo]\n"
+	                "\t[--glsl-emit-ubo-as-plain-uniforms]\n"
 	                "\t[--msl]\n"
 	                "\t[--msl-version <MMmmpp>]\n"
 	                "\t[--msl-capture-output]\n"
@@ -854,6 +856,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 	opts.vertex.flip_vert_y = args.yflip;
 	opts.vertex.support_nonzero_base_instance = args.support_nonzero_baseinstance;
 	opts.emit_push_constant_as_uniform_buffer = args.glsl_emit_push_constant_as_ubo;
+	opts.emit_uniform_buffer_as_plain_uniforms = args.glsl_emit_ubo_as_plain_uniforms;
 	compiler->set_common_options(opts);
 
 	// Set HLSL specific options.
@@ -1025,6 +1028,7 @@ static int main_inner(int argc, char *argv[])
 	cbs.add("--cpp-interface-name", [&args](CLIParser &parser) { args.cpp_interface_name = parser.next_string(); });
 	cbs.add("--metal", [&args](CLIParser &) { args.msl = true; }); // Legacy compatibility
 	cbs.add("--glsl-emit-push-constant-as-ubo", [&args](CLIParser &) { args.glsl_emit_push_constant_as_ubo = true; });
+	cbs.add("--glsl-emit-ubo-as-plain-uniforms", [&args](CLIParser &) { args.glsl_emit_ubo_as_plain_uniforms = true; });
 	cbs.add("--msl", [&args](CLIParser &) { args.msl = true; });
 	cbs.add("--hlsl", [&args](CLIParser &) { args.hlsl = true; });
 	cbs.add("--hlsl-enable-compat", [&args](CLIParser &) { args.hlsl_compat = true; });

@@ -22,7 +22,7 @@ void copy_node(restrict Node dst, restrict Node a, restrict Node b)
     dst.value = a.value + b.value;
 }
 
-void overwrite_node(out Node dst, Node src)
+void overwrite_node(out restrict Node dst, restrict Node src)
 {
     dst = src;
 }

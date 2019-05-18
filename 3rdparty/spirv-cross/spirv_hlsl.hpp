@@ -220,6 +220,8 @@ private:
 	// Custom root constant layout, which should be emitted
 	// when translating push constant ranges.
 	std::vector<RootConstants> root_constants_layout;
+
+	void validate_shader_model();
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

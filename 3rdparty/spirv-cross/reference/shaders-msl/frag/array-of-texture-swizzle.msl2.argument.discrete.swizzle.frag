@@ -5,6 +5,23 @@
 
 using namespace metal;
 
+struct spvDescriptorSetBuffer0
+{
+    constant uint* spvSwizzleConstants [[id(0)]];
+    array<texture2d<float>, 4> uSampler0 [[id(1)]];
+    array<sampler, 4> uSampler0Smplr [[id(5)]];
+};
+
+struct main0_out
+{
+    float4 FragColor [[color(0)]];
+};
+
+struct main0_in
+{
+    float2 vUV [[user(locn0)]];
+};
+
 enum class spvSwizzle : uint
 {
     none = 0,
@@ -125,9 +142,30 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-kernel void main0(constant uint* spvSwizzleConstants [[buffer(30)]], texture2d<float> foo [[texture(0)]], texture2d<float, access::write> bar [[texture(1)]], sampler fooSmplr [[sampler(0)]])
+float4 sample_in_func_1(thread const array<texture2d<float>, 4> uSampler0, thread const array<sampler, 4> uSampler0Smplr, constant uint32_t* uSampler0Swzl, thread float2& vUV)
 {
-    constant uint32_t& fooSwzl = spvSwizzleConstants[0];
-    bar.write(spvTextureSwizzle(foo.sample(fooSmplr, float2(1.0), level(0.0)), fooSwzl), uint2(int2(0)));
+    return spvTextureSwizzle(uSampler0[2].sample(uSampler0Smplr[2], vUV), uSampler0Swzl[2]);
+}
+
+float4 sample_in_func_2(thread float2& vUV, thread texture2d<float> uSampler1, thread const sampler uSampler1Smplr, constant uint32_t& uSampler1Swzl)
+{
+    return spvTextureSwizzle(uSampler1.sample(uSampler1Smplr, vUV), uSampler1Swzl);
+}
+
+float4 sample_single_in_func(thread const texture2d<float> s, thread const sampler sSmplr, constant uint32_t& sSwzl, thread float2& vUV)
+{
+    return spvTextureSwizzle(s.sample(sSmplr, vUV), sSwzl);
+}
+
+fragment main0_out main0(main0_in in [[stage_in]], constant spvDescriptorSetBuffer0& spvDescriptorSet0 [[buffer(0)]], constant uint* spvSwizzleConstants [[buffer(30)]], texture2d<float> uSampler1 [[texture(0)]], sampler uSampler1Smplr [[sampler(0)]])
+{
+    main0_out out = {};
+    constant uint32_t* spvDescriptorSet0_uSampler0Swzl = &spvDescriptorSet0.spvSwizzleConstants[1];
+    constant uint32_t& uSampler1Swzl = spvSwizzleConstants[0];
+    out.FragColor = sample_in_func_1(spvDescriptorSet0.uSampler0, spvDescriptorSet0.uSampler0Smplr, spvDescriptorSet0_uSampler0Swzl, in.vUV);
+    out.FragColor += sample_in_func_2(in.vUV, uSampler1, uSampler1Smplr, uSampler1Swzl);
+    out.FragColor += sample_single_in_func(spvDescriptorSet0.uSampler0[1], spvDescriptorSet0.uSampler0Smplr[1], spvDescriptorSet0_uSampler0Swzl[1], in.vUV);
+    out.FragColor += sample_single_in_func(uSampler1, uSampler1Smplr, uSampler1Swzl, in.vUV);
+    return out;
 }
 
