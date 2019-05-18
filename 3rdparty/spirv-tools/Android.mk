@@ -156,6 +156,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/scalar_replacement_pass.cpp \
 		source/opt/set_spec_constant_default_value_pass.cpp \
 		source/opt/simplification_pass.cpp \
+		source/opt/split_invalid_unreachable_pass.cpp \
 		source/opt/ssa_rewrite_pass.cpp \
 		source/opt/strength_reduction_pass.cpp \
 		source/opt/strip_atomic_counter_memory_pass.cpp \

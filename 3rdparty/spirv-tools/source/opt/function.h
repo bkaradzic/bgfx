@@ -125,6 +125,9 @@ class Function {
   BasicBlock* InsertBasicBlockAfter(std::unique_ptr<BasicBlock>&& new_block,
                                     BasicBlock* position);
 
+  BasicBlock* InsertBasicBlockBefore(std::unique_ptr<BasicBlock>&& new_block,
+                                     BasicBlock* position);
+
   // Return true if the function calls itself either directly or indirectly.
   bool IsRecursive() const;
 

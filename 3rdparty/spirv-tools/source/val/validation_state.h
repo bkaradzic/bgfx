@@ -106,9 +106,20 @@ class ValidationState_t {
     // Members need not be listed in offset order
     bool scalar_block_layout = false;
 
-    // Permit UConvert as an OpSpecConstantOp operation.
+    // SPIR-V 1.4 allows us to select between any two composite values
+    // of the same type.
+    bool select_between_composites = false;
+
+    // SPIR-V 1.4 allows two memory access operands for OpCopyMemory and
+    // OpCopyMemorySized.
+    bool copy_memory_permits_two_memory_accesses = false;
+
+    // SPIR-V 1.4 allows UConvert as a spec constant op in any environment.
     // The Kernel capability already enables it, separately from this flag.
     bool uconvert_spec_constant_op = false;
+
+    // SPIR-V 1.4 allows Function and Private variables to be NonWritable
+    bool nonwritable_var_in_function_or_private = false;
   };
 
   ValidationState_t(const spv_const_context context,
@@ -652,6 +663,21 @@ class ValidationState_t {
   // constants, we assume they can match because we can't prove they don't.
   spv_result_t CooperativeMatrixShapesMatch(const Instruction* inst,
                                             uint32_t m1, uint32_t m2);
+
+  // Returns true if |lhs| and |rhs| logically match and, if the decorations of
+  // |rhs| are a subset of |lhs|.
+  //
+  // 1. Must both be either OpTypeArray or OpTypeStruct
+  // 2. If OpTypeArray, then
+  //  * Length must be the same
+  //  * Element type must match or logically match
+  // 3. If OpTypeStruct, then
+  //  * Both have same number of elements
+  //  * Element N for both structs must match or logically match
+  //
+  // If |check_decorations| is false, then the decorations are not checked.
+  bool LogicallyMatch(const Instruction* lhs, const Instruction* rhs,
+                      bool check_decorations);
 
  private:
   ValidationState_t(const ValidationState_t&);

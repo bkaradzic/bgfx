@@ -12,27 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include <algorithm>
 
 #include "source/opcode.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
 namespace val {
 namespace {
 
-// Returns true if |a| and |b| are instruction defining pointers that point to
-// the same type.
-bool ArePointersToSameType(val::Instruction* a, val::Instruction* b) {
+// Returns true if |a| and |b| are instructions defining pointers that point to
+// types logically match and the decorations that apply to |b| are a subset
+// of the decorations that apply to |a|.
+bool DoPointeesLogicallyMatch(val::Instruction* a, val::Instruction* b,
+                              ValidationState_t& _) {
   if (a->opcode() != SpvOpTypePointer || b->opcode() != SpvOpTypePointer) {
     return false;
   }
 
+  const auto& dec_a = _.id_decorations(a->id());
+  const auto& dec_b = _.id_decorations(b->id());
+  for (const auto& dec : dec_b) {
+    if (std::find(dec_a.begin(), dec_a.end(), dec) == dec_a.end()) {
+      return false;
+    }
+  }
+
   uint32_t a_type = a->GetOperandAs<uint32_t>(2);
-  return a_type && (a_type == b->GetOperandAs<uint32_t>(2));
+  uint32_t b_type = b->GetOperandAs<uint32_t>(2);
+
+  if (a_type == b_type) {
+    return true;
+  }
+
+  Instruction* a_type_inst = _.FindDef(a_type);
+  Instruction* b_type_inst = _.FindDef(b_type);
+
+  return _.LogicallyMatch(a_type_inst, b_type_inst, true);
 }
 
 spv_result_t ValidateFunction(ValidationState_t& _, const Instruction* inst) {
@@ -256,14 +274,14 @@ spv_result_t ValidateFunctionCall(ValidationState_t& _,
     const auto parameter_type_id =
         function_type->GetOperandAs<uint32_t>(param_index);
     const auto parameter_type = _.FindDef(parameter_type_id);
-    if (!parameter_type ||
-        (argument_type->id() != parameter_type->id() &&
-         !(_.options()->relax_logical_pointer &&
-           ArePointersToSameType(argument_type, parameter_type)))) {
-      return _.diag(SPV_ERROR_INVALID_ID, inst)
-             << "OpFunctionCall Argument <id> '" << _.getIdName(argument_id)
-             << "'s type does not match Function <id> '"
-             << _.getIdName(parameter_type_id) << "'s parameter type.";
+    if (!parameter_type || argument_type->id() != parameter_type->id()) {
+      if (!_.options()->before_hlsl_legalization ||
+          !DoPointeesLogicallyMatch(argument_type, parameter_type, _)) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "OpFunctionCall Argument <id> '" << _.getIdName(argument_id)
+               << "'s type does not match Function <id> '"
+               << _.getIdName(parameter_type_id) << "'s parameter type.";
+      }
     }
 
     if (_.addressing_model() == SpvAddressingModelLogical) {

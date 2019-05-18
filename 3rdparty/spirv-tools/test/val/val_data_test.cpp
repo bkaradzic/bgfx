@@ -778,9 +778,10 @@ TEST_F(ValidateData, vulkan_disallow_free_fp_rounding_mode) {
       ASSERT_EQ(SPV_ERROR_INVALID_CAPABILITY, ValidateInstructions(env));
       EXPECT_THAT(
           getDiagnosticString(),
-          HasSubstr("Operand 2 of Decorate requires one of these capabilities: "
-                    "StorageBuffer16BitAccess StorageUniform16 "
-                    "StoragePushConstant16 StorageInputOutput16"));
+          HasSubstr(
+              "Operand 2 of Decorate requires one of these capabilities: "
+              "StorageBuffer16BitAccess UniformAndStorageBuffer16BitAccess "
+              "StoragePushConstant16 StorageInputOutput16"));
     }
   }
 }

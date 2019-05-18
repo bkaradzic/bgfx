@@ -49,18 +49,18 @@ class PassTest : public TestT {
             [](spv_message_level_t, const char*, const spv_position_t&,
                const char* message) { std::cerr << message << std::endl; }),
         context_(nullptr),
-        tools_(SPV_ENV_UNIVERSAL_1_3),
         manager_(new PassManager()),
         assemble_options_(SpirvTools::kDefaultAssembleOption),
-        disassemble_options_(SpirvTools::kDefaultDisassembleOption) {}
+        disassemble_options_(SpirvTools::kDefaultDisassembleOption),
+        env_(SPV_ENV_UNIVERSAL_1_3) {}
 
   // Runs the given |pass| on the binary assembled from the |original|.
   // Returns a tuple of the optimized binary and the boolean value returned
   // from pass Process() function.
   std::tuple<std::vector<uint32_t>, Pass::Status> OptimizeToBinary(
       Pass* pass, const std::string& original, bool skip_nop) {
-    context_ = std::move(BuildModule(SPV_ENV_UNIVERSAL_1_3, consumer_, original,
-                                     assemble_options_));
+    context_ =
+        std::move(BuildModule(env_, consumer_, original, assemble_options_));
     EXPECT_NE(nullptr, context()) << "Assembling failed for shader:\n"
                                   << original << std::endl;
     if (!context()) {
@@ -97,8 +97,7 @@ class PassTest : public TestT {
     std::tie(optimized_bin, status) = SinglePassRunToBinary<PassT>(
         assembly, skip_nop, std::forward<Args>(args)...);
     if (do_validation) {
-      spv_target_env target_env = SPV_ENV_UNIVERSAL_1_3;
-      spv_context spvContext = spvContextCreate(target_env);
+      spv_context spvContext = spvContextCreate(env_);
       spv_diagnostic diagnostic = nullptr;
       spv_const_binary_t binary = {optimized_bin.data(), optimized_bin.size()};
       spv_result_t error = spvValidateWithOptions(
@@ -109,8 +108,9 @@ class PassTest : public TestT {
       spvContextDestroy(spvContext);
     }
     std::string optimized_asm;
+    SpirvTools tools(env_);
     EXPECT_TRUE(
-        tools_.Disassemble(optimized_bin, &optimized_asm, disassemble_options_))
+        tools.Disassemble(optimized_bin, &optimized_asm, disassemble_options_))
         << "Disassembling failed for shader:\n"
         << assembly << std::endl;
     return std::make_tuple(optimized_asm, status);
@@ -134,8 +134,7 @@ class PassTest : public TestT {
     EXPECT_EQ(original == expected,
               status == Pass::Status::SuccessWithoutChange);
     if (do_validation) {
-      spv_target_env target_env = SPV_ENV_UNIVERSAL_1_3;
-      spv_context spvContext = spvContextCreate(target_env);
+      spv_context spvContext = spvContextCreate(env_);
       spv_diagnostic diagnostic = nullptr;
       spv_const_binary_t binary = {optimized_bin.data(), optimized_bin.size()};
       spv_result_t error = spvValidateWithOptions(
@@ -146,8 +145,9 @@ class PassTest : public TestT {
       spvContextDestroy(spvContext);
     }
     std::string optimized_asm;
+    SpirvTools tools(env_);
     EXPECT_TRUE(
-        tools_.Disassemble(optimized_bin, &optimized_asm, disassemble_options_))
+        tools.Disassemble(optimized_bin, &optimized_asm, disassemble_options_))
         << "Disassembling failed for shader:\n"
         << original << std::endl;
     EXPECT_EQ(expected, optimized_asm);
@@ -202,8 +202,8 @@ class PassTest : public TestT {
   void RunAndCheck(const std::string& original, const std::string& expected) {
     assert(manager_->NumPasses());
 
-    context_ = std::move(BuildModule(SPV_ENV_UNIVERSAL_1_3, nullptr, original,
-                                     assemble_options_));
+    context_ =
+        std::move(BuildModule(env_, nullptr, original, assemble_options_));
     ASSERT_NE(nullptr, context());
 
     manager_->Run(context());
@@ -212,7 +212,8 @@ class PassTest : public TestT {
     context()->module()->ToBinary(&binary, /* skip_nop = */ false);
 
     std::string optimized;
-    EXPECT_TRUE(tools_.Disassemble(binary, &optimized, disassemble_options_));
+    SpirvTools tools(env_);
+    EXPECT_TRUE(tools.Disassemble(binary, &optimized, disassemble_options_));
     EXPECT_EQ(expected, optimized);
   }
 
@@ -233,14 +234,16 @@ class PassTest : public TestT {
 
   spv_validator_options ValidatorOptions() { return &validator_options_; }
 
+  void SetTargetEnv(spv_target_env env) { env_ = env; }
+
  private:
-  MessageConsumer consumer_;            // Message consumer.
-  std::unique_ptr<IRContext> context_;  // IR context
-  SpirvTools tools_;  // An instance for calling SPIRV-Tools functionalities.
+  MessageConsumer consumer_;              // Message consumer.
+  std::unique_ptr<IRContext> context_;    // IR context
   std::unique_ptr<PassManager> manager_;  // The pass manager.
   uint32_t assemble_options_;
   uint32_t disassemble_options_;
   spv_validator_options_t validator_options_;
+  spv_target_env env_;
 };
 
 }  // namespace opt

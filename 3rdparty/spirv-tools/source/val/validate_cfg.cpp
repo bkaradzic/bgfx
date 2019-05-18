@@ -230,6 +230,78 @@ spv_result_t ValidateReturnValue(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
+  const auto merge_id = inst->GetOperandAs<uint32_t>(0);
+  const auto merge = _.FindDef(merge_id);
+  if (!merge || merge->opcode() != SpvOpLabel) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Merge Block " << _.getIdName(merge_id) << " must be an OpLabel";
+  }
+
+  const auto continue_id = inst->GetOperandAs<uint32_t>(1);
+  const auto continue_target = _.FindDef(continue_id);
+  if (!continue_target || continue_target->opcode() != SpvOpLabel) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Continue Target " << _.getIdName(continue_id)
+           << " must be an OpLabel";
+  }
+
+  if (merge_id == continue_id) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Merge Block and Continue Target must be different ids";
+  }
+
+  const auto loop_control = inst->GetOperandAs<uint32_t>(2);
+  if ((loop_control >> SpvLoopControlUnrollShift) & 0x1 &&
+      (loop_control >> SpvLoopControlDontUnrollShift) & 0x1) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Unroll and DontUnroll loop controls must not both be specified";
+  }
+  if ((loop_control >> SpvLoopControlDontUnrollShift) & 0x1 &&
+      (loop_control >> SpvLoopControlPeelCountShift) & 0x1) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst) << "PeelCount and DontUnroll "
+                                                   "loop controls must not "
+                                                   "both be specified";
+  }
+  if ((loop_control >> SpvLoopControlDontUnrollShift) & 0x1 &&
+      (loop_control >> SpvLoopControlPartialCountShift) & 0x1) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst) << "PartialCount and "
+                                                   "DontUnroll loop controls "
+                                                   "must not both be specified";
+  }
+
+  uint32_t operand = 3;
+  if ((loop_control >> SpvLoopControlDependencyLengthShift) & 0x1) {
+    ++operand;
+  }
+  if ((loop_control >> SpvLoopControlMinIterationsShift) & 0x1) {
+    ++operand;
+  }
+  if ((loop_control >> SpvLoopControlMaxIterationsShift) & 0x1) {
+    ++operand;
+  }
+  if ((loop_control >> SpvLoopControlIterationMultipleShift) & 0x1) {
+    if (inst->operands().size() < operand ||
+        inst->GetOperandAs<uint32_t>(operand) == 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst) << "IterationMultiple loop "
+                                                     "control operand must be "
+                                                     "greater than zero";
+    }
+    ++operand;
+  }
+  if ((loop_control >> SpvLoopControlPeelCountShift) & 0x1) {
+    ++operand;
+  }
+  if ((loop_control >> SpvLoopControlPartialCountShift) & 0x1) {
+    ++operand;
+  }
+
+  // That the right number of operands is present is checked by the parser. The
+  // above code tracks operands for expanded validation checking in the future.
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 void printDominatorList(const BasicBlock& b) {
@@ -580,16 +652,27 @@ spv_result_t StructuredControlFlowChecks(
       }
     }
 
-    // Check that for all non-header blocks, all predecessors are within this
-    // construct.
     Construct::ConstructBlockSet construct_blocks = construct.blocks(function);
     for (auto block : construct_blocks) {
+      std::string construct_name, header_name, exit_name;
+      std::tie(construct_name, header_name, exit_name) =
+          ConstructNames(construct.type());
+      // Check that all exits from the construct are via structured exits.
+      for (auto succ : *block->successors()) {
+        if (block->reachable() && !construct_blocks.count(succ) &&
+            !construct.IsStructuredExit(_, succ)) {
+          return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(block->id()))
+                 << "block <ID> " << _.getIdName(block->id()) << " exits the "
+                 << construct_name << " headed by <ID> "
+                 << _.getIdName(header->id())
+                 << ", but not via a structured exit";
+        }
+      }
       if (block == header) continue;
+      // Check that for all non-header blocks, all predecessors are within this
+      // construct.
       for (auto pred : *block->predecessors()) {
         if (pred->reachable() && !construct_blocks.count(pred)) {
-          std::string construct_name, header_name, exit_name;
-          std::tie(construct_name, header_name, exit_name) =
-              ConstructNames(construct.type());
           return _.diag(SPV_ERROR_INVALID_CFG, _.FindDef(pred->id()))
                  << "block <ID> " << pred->id() << " branches to the "
                  << construct_name << " construct, but not to the "
@@ -608,6 +691,7 @@ spv_result_t StructuredControlFlowChecks(
       }
     }
   }
+
   return SPV_SUCCESS;
 }
 
@@ -764,7 +848,8 @@ spv_result_t PerformCfgChecks(ValidationState_t& _) {
       auto edges = CFA<BasicBlock>::CalculateDominators(
           postorder, function.AugmentedCFGPredecessorsFunction());
       for (auto edge : edges) {
-        edge.first->SetImmediateDominator(edge.second);
+        if (edge.first != edge.second)
+          edge.first->SetImmediateDominator(edge.second);
       }
 
       /// calculate post dominators
@@ -930,6 +1015,9 @@ spv_result_t ControlFlowPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case SpvOpSwitch:
       if (auto error = ValidateSwitch(_, inst)) return error;
+      break;
+    case SpvOpLoopMerge:
+      if (auto error = ValidateLoopMerge(_, inst)) return error;
       break;
     default:
       break;

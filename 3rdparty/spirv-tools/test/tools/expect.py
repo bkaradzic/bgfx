@@ -26,6 +26,8 @@ import traceback
 from spirv_test_framework import SpirvTest
 from builtins import bytes
 
+DEFAULT_SPIRV_VERSION = 0x010000
+
 def convert_to_unix_line_endings(source):
   """Converts all line endings in source to be unix line endings."""
   result = source.replace('\r\n', '\n').replace('\r', '\n')
@@ -172,7 +174,7 @@ class CorrectBinaryLengthAndPreamble(SpirvTest):
     # profile
 
     if version != spv_version and version != 0:
-      return False, 'Incorrect SPV binary: wrong version number'
+      return False, 'Incorrect SPV binary: wrong version number: ' + hex(version) + ' expected ' + hex(spv_version)
     # Shaderc-over-Glslang (0x000d....) or
     # SPIRV-Tools (0x0007....) generator number
     if read_word(preamble, 2, little_endian) != 0x000d0007 and \
@@ -188,7 +190,9 @@ class CorrectBinaryLengthAndPreamble(SpirvTest):
 class CorrectObjectFilePreamble(CorrectBinaryLengthAndPreamble):
   """Provides methods for verifying preamble for a SPV object file."""
 
-  def verify_object_file_preamble(self, filename, spv_version=0x10000):
+  def verify_object_file_preamble(self,
+                                  filename,
+                                  spv_version=DEFAULT_SPIRV_VERSION):
     """Checks that the given SPIR-V binary file has correct preamble."""
 
     success, message = verify_file_non_empty(filename)
@@ -252,6 +256,21 @@ class ValidObjectFile1_3(ReturnCodeIsZero, CorrectObjectFilePreamble):
       object_filename = get_object_filename(input_filename)
       success, message = self.verify_object_file_preamble(
           os.path.join(status.directory, object_filename), 0x10300)
+      if not success:
+        return False, message
+    return True, ''
+
+
+class ValidObjectFile1_4(ReturnCodeIsZero, CorrectObjectFilePreamble):
+  """Mixin class for checking that every input file generates a valid SPIR-V 1.4
+    object file following the object file naming rule, and there is no output on
+    stdout/stderr."""
+
+  def check_object_file_preamble(self, status):
+    for input_filename in status.input_filenames:
+      object_filename = get_object_filename(input_filename)
+      success, message = self.verify_object_file_preamble(
+          os.path.join(status.directory, object_filename), 0x10400)
       if not success:
         return False, message
     return True, ''

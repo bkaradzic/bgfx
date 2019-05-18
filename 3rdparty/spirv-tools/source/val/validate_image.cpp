@@ -63,6 +63,8 @@ bool CheckAllImageOperandsHandled() {
     case SpvImageOperandsMakeTexelVisibleKHRMask:
     case SpvImageOperandsNonPrivateTexelKHRMask:
     case SpvImageOperandsVolatileTexelKHRMask:
+    case SpvImageOperandsSignExtendMask:
+    case SpvImageOperandsZeroExtendMask:
       return true;
   }
   return false;
@@ -218,10 +220,12 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
   const SpvOp opcode = inst->opcode();
   const size_t num_words = inst->words().size();
 
-  // NonPrivate and Volatile take no operand words.
+  // NonPrivate, Volatile, SignExtend, ZeroExtend take no operand words.
   const uint32_t mask_bits_having_operands =
       mask & ~uint32_t(SpvImageOperandsNonPrivateTexelKHRMask |
-                       SpvImageOperandsVolatileTexelKHRMask);
+                       SpvImageOperandsVolatileTexelKHRMask |
+                       SpvImageOperandsSignExtendMask |
+                       SpvImageOperandsZeroExtendMask);
   size_t expected_num_image_operand_words =
       spvtools::utils::CountSetBits(mask_bits_having_operands);
   if (mask & SpvImageOperandsGradMask) {
@@ -539,6 +543,32 @@ spv_result_t ValidateImageOperands(ValidationState_t& _,
 
     const auto visible_scope = inst->word(word_index++);
     if (auto error = ValidateMemoryScope(_, inst, visible_scope)) return error;
+  }
+
+  if (mask & SpvImageOperandsSignExtendMask) {
+    // Checked elsewhere: SPIR-V 1.4 version or later.
+
+    // "The texel value is converted to the target value via sign extension.
+    // Only valid when the texel type is a scalar or vector of integer type."
+    //
+    // We don't have enough information to know what the texel type is.
+    // In OpenCL, knowledge is deferred until runtime: the image SampledType is
+    // void, and the Format is Unknown.
+    // In Vulkan, the texel type is only known in all cases by the pipeline
+    // setup.
+  }
+
+  if (mask & SpvImageOperandsZeroExtendMask) {
+    // Checked elsewhere: SPIR-V 1.4 version or later.
+
+    // "The texel value is converted to the target value via zero extension.
+    // Only valid when the texel type is a scalar or vector of integer type."
+    //
+    // We don't have enough information to know what the texel type is.
+    // In OpenCL, knowledge is deferred until runtime: the image SampledType is
+    // void, and the Format is Unknown.
+    // In Vulkan, the texel type is only known in all cases by the pipeline
+    // setup.
   }
 
   return SPV_SUCCESS;

@@ -276,11 +276,11 @@ INSTANTIATE_TEST_SUITE_P(
                 {"OpCapability StorageBuffer16BitAccess\n",
                  MakeInstruction(SpvOpCapability,
                                  {SpvCapabilityStorageBuffer16BitAccess})},
-                {"OpCapability StorageUniform16\n",
+                {"OpCapability UniformAndStorageBuffer16BitAccess\n",
                  MakeInstruction(
                      SpvOpCapability,
                      {SpvCapabilityUniformAndStorageBuffer16BitAccess})},
-                {"OpCapability StorageUniform16\n",
+                {"OpCapability UniformAndStorageBuffer16BitAccess\n",
                  MakeInstruction(SpvOpCapability,
                                  {SpvCapabilityStorageUniform16})},
                 {"OpCapability StoragePushConstant16\n",
@@ -656,8 +656,38 @@ INSTANTIATE_TEST_SUITE_P(
 
 // SPV_GOOGLE_decorate_string
 
+// Now that OpDecorateString is the preferred spelling for
+// OpDecorateStringGOOGLE use that name in round trip tests, and the GOOGLE
+// name in an assembly-only test.
+
 INSTANTIATE_TEST_SUITE_P(
     SPV_GOOGLE_decorate_string, ExtensionRoundTripTest,
+    Combine(
+        // We'll get coverage over operand tables by trying the universal
+        // environments, and at least one specific environment.
+        Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
+               SPV_ENV_UNIVERSAL_1_2, SPV_ENV_VULKAN_1_0),
+        ValuesIn(std::vector<AssemblyCase>{
+            {"OpDecorateString %1 UserSemantic \"ABC\"\n",
+             MakeInstruction(SpvOpDecorateStringGOOGLE,
+                             {1, SpvDecorationHlslSemanticGOOGLE},
+                             MakeVector("ABC"))},
+            {"OpDecorateString %1 UserSemantic \"ABC\"\n",
+             MakeInstruction(SpvOpDecorateString,
+                             {1, SpvDecorationUserSemantic},
+                             MakeVector("ABC"))},
+            {"OpMemberDecorateString %1 3 UserSemantic \"DEF\"\n",
+             MakeInstruction(SpvOpMemberDecorateStringGOOGLE,
+                             {1, 3, SpvDecorationUserSemantic},
+                             MakeVector("DEF"))},
+            {"OpMemberDecorateString %1 3 UserSemantic \"DEF\"\n",
+             MakeInstruction(SpvOpMemberDecorateString,
+                             {1, 3, SpvDecorationUserSemantic},
+                             MakeVector("DEF"))},
+        })));
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_GOOGLE_decorate_string, ExtensionAssemblyTest,
     Combine(
         // We'll get coverage over operand tables by trying the universal
         // environments, and at least one specific environment.
@@ -676,8 +706,29 @@ INSTANTIATE_TEST_SUITE_P(
 
 // SPV_GOOGLE_hlsl_functionality1
 
+// Now that CounterBuffer is the preferred spelling for HlslCounterBufferGOOGLE,
+// use that name in round trip tests, and the GOOGLE name in an assembly-only
+// test.
 INSTANTIATE_TEST_SUITE_P(
     SPV_GOOGLE_hlsl_functionality1, ExtensionRoundTripTest,
+    Combine(
+        // We'll get coverage over operand tables by trying the universal
+        // environments, and at least one specific environment.
+        Values(SPV_ENV_UNIVERSAL_1_0, SPV_ENV_UNIVERSAL_1_1,
+               SPV_ENV_UNIVERSAL_1_2, SPV_ENV_VULKAN_1_0),
+        // HlslSemanticGOOGLE is tested in SPV_GOOGLE_decorate_string, since
+        // they are coupled together.
+        ValuesIn(std::vector<AssemblyCase>{
+            {"OpDecorateId %1 CounterBuffer %2\n",
+             MakeInstruction(SpvOpDecorateId,
+                             {1, SpvDecorationHlslCounterBufferGOOGLE, 2})},
+            {"OpDecorateId %1 CounterBuffer %2\n",
+             MakeInstruction(SpvOpDecorateId,
+                             {1, SpvDecorationCounterBuffer, 2})},
+        })));
+
+INSTANTIATE_TEST_SUITE_P(
+    SPV_GOOGLE_hlsl_functionality1, ExtensionAssemblyTest,
     Combine(
         // We'll get coverage over operand tables by trying the universal
         // environments, and at least one specific environment.

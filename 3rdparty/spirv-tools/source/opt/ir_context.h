@@ -456,7 +456,16 @@ class IRContext {
 
   // Return the next available SSA id and increment it.  Returns 0 if the
   // maximum SSA id has been reached.
-  inline uint32_t TakeNextId() { return module()->TakeNextIdBound(); }
+  inline uint32_t TakeNextId() {
+    uint32_t next_id = module()->TakeNextIdBound();
+    if (next_id == 0) {
+      if (consumer()) {
+        std::string message = "ID overflow. Try running compact-ids.";
+        consumer()(SPV_MSG_ERROR, "", {0, 0, 0}, message.c_str());
+      }
+    }
+    return next_id;
+  }
 
   FeatureManager* get_feature_mgr() {
     if (!feature_mgr_.get()) {

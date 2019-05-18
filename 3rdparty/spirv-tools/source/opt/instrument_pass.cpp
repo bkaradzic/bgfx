@@ -17,6 +17,7 @@
 #include "instrument_pass.h"
 
 #include "source/cfa.h"
+#include "source/spirv_constant.h"
 
 namespace {
 
@@ -147,10 +148,11 @@ void InstrumentPass::GenBuiltinOutputCode(uint32_t builtin_id,
                                           uint32_t base_offset_id,
                                           InstructionBuilder* builder) {
   // Load and store builtin
-  Instruction* load_inst =
-      builder->AddUnaryOp(GetUintId(), SpvOpLoad, builtin_id);
-  GenDebugOutputFieldCode(base_offset_id, builtin_off, load_inst->result_id(),
-                          builder);
+  Instruction* var_inst = get_def_use_mgr()->GetDef(builtin_id);
+  uint32_t type_id = GetPointeeTypeId(var_inst);
+  Instruction* load_inst = builder->AddUnaryOp(type_id, SpvOpLoad, builtin_id);
+  uint32_t val_id = GenUintCastCode(load_inst->result_id(), builder);
+  GenDebugOutputFieldCode(base_offset_id, builtin_off, val_id, builder);
 }
 
 void InstrumentPass::GenUintNullOutputCode(uint32_t field_off,
@@ -393,6 +395,13 @@ uint32_t InstrumentPass::GetOutputBufferId() {
     deco_mgr->AddDecorationVal(output_buffer_id_, SpvDecorationBinding,
                                GetOutputBufferBinding());
     AddStorageBufferExt();
+    if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+      // Add the new buffer to all entry points.
+      for (auto& entry : get_module()->entry_points()) {
+        entry.AddOperand({SPV_OPERAND_TYPE_ID, {output_buffer_id_}});
+        context()->AnalyzeUses(&entry);
+      }
+    }
   }
   return output_buffer_id_;
 }
@@ -430,6 +439,13 @@ uint32_t InstrumentPass::GetInputBufferId() {
     deco_mgr->AddDecorationVal(input_buffer_id_, SpvDecorationBinding,
                                GetInputBufferBinding());
     AddStorageBufferExt();
+    if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+      // Add the new buffer to all entry points.
+      for (auto& entry : get_module()->entry_points()) {
+        entry.AddOperand({SPV_OPERAND_TYPE_ID, {input_buffer_id_}});
+        context()->AnalyzeUses(&entry);
+      }
+    }
   }
   return input_buffer_id_;
 }

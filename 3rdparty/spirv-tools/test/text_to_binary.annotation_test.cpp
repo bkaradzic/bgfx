@@ -60,6 +60,29 @@ TEST_P(OpDecorateSimpleTest, AnySimpleDecoration) {
       Eq(input.str()));
 }
 
+// Like above, but parameters to the decoration are IDs.
+using OpDecorateSimpleIdTest =
+    spvtest::TextToBinaryTestBase<::testing::TestWithParam<
+        std::tuple<spv_target_env, EnumCase<SpvDecoration>>>>;
+
+TEST_P(OpDecorateSimpleIdTest, AnySimpleDecoration) {
+  // This string should assemble, but should not validate.
+  std::stringstream input;
+  input << "OpDecorateId %1 " << std::get<1>(GetParam()).name();
+  for (auto operand : std::get<1>(GetParam()).operands())
+    input << " %" << operand;
+  input << std::endl;
+  EXPECT_THAT(CompiledInstructions(input.str(), std::get<0>(GetParam())),
+              Eq(MakeInstruction(SpvOpDecorateId,
+                                 {1, uint32_t(std::get<1>(GetParam()).value())},
+                                 std::get<1>(GetParam()).operands())));
+  // Also check disassembly.
+  EXPECT_THAT(
+      EncodeAndDecodeSuccessfully(input.str(), SPV_BINARY_TO_TEXT_OPTION_NONE,
+                                  std::get<0>(GetParam())),
+      Eq(input.str()));
+}
+
 #define CASE(NAME) SpvDecoration##NAME, #NAME
 INSTANTIATE_TEST_SUITE_P(
     TextToBinaryDecorateSimple, OpDecorateSimpleTest,
@@ -112,6 +135,21 @@ INSTANTIATE_TEST_SUITE_P(TextToBinaryDecorateSimpleV11, OpDecorateSimpleTest,
                          Combine(Values(SPV_ENV_UNIVERSAL_1_1),
                                  Values(EnumCase<SpvDecoration>{
                                      CASE(MaxByteOffset), {128}})));
+
+INSTANTIATE_TEST_SUITE_P(TextToBinaryDecorateSimpleV14, OpDecorateSimpleTest,
+                         Combine(Values(SPV_ENV_UNIVERSAL_1_4),
+                                 ValuesIn(std::vector<EnumCase<SpvDecoration>>{
+                                     {CASE(Uniform), {}},
+                                 })));
+
+INSTANTIATE_TEST_SUITE_P(TextToBinaryDecorateSimpleIdV14,
+                         OpDecorateSimpleIdTest,
+                         Combine(Values(SPV_ENV_UNIVERSAL_1_4),
+                                 ValuesIn(std::vector<EnumCase<SpvDecoration>>{
+                                     // In 1.4, UniformId decoration takes a
+                                     // scope Id.
+                                     {CASE(UniformId), {1}},
+                                 })));
 #undef CASE
 
 TEST_F(OpDecorateSimpleTest, WrongDecoration) {

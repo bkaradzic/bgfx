@@ -147,6 +147,19 @@ BasicBlock* Function::InsertBasicBlockAfter(
   return nullptr;
 }
 
+BasicBlock* Function::InsertBasicBlockBefore(
+    std::unique_ptr<BasicBlock>&& new_block, BasicBlock* position) {
+  for (auto bb_iter = begin(); bb_iter != end(); ++bb_iter) {
+    if (&*bb_iter == position) {
+      new_block->SetParent(this);
+      bb_iter = bb_iter.InsertBefore(std::move(new_block));
+      return &*bb_iter;
+    }
+  }
+  assert(false && "Could not find insertion point.");
+  return nullptr;
+}
+
 bool Function::IsRecursive() const {
   IRContext* ctx = blocks_.front()->GetLabel()->context();
   IRContext::ProcessFunction mark_visited = [this](Function* fp) {

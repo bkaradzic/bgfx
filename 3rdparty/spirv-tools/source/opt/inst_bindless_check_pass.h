@@ -118,6 +118,7 @@ class InstBindlessCheckPass : public InstrumentPass {
   // AnalyzeDescriptorReference. It is necessary and sufficient for further
   // analysis and regeneration of the reference.
   typedef struct ref_analysis {
+    uint32_t desc_load_id;
     uint32_t image_id;
     uint32_t load_id;
     uint32_t ptr_id;
@@ -131,9 +132,12 @@ class InstBindlessCheckPass : public InstrumentPass {
   uint32_t CloneOriginalReference(ref_analysis* ref,
                                   InstructionBuilder* builder);
 
-  // If |inst| references through a descriptor, (ie references into an image
-  // or buffer), return the id of the value it references. Else return 0.
-  uint32_t GetDescriptorValueId(Instruction* inst);
+  // If |inst| references through an image, return the id of the image it
+  // references through. Else return 0.
+  uint32_t GetImageId(Instruction* inst);
+
+  // Get descriptor type inst of variable |var_inst|.
+  Instruction* GetDescriptorTypeInst(Instruction* var_inst);
 
   // Analyze descriptor reference |ref_inst| and save components into |ref|.
   // Return true if |ref_inst| is a descriptor reference, false otherwise.

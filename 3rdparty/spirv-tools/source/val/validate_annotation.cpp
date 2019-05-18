@@ -185,6 +185,21 @@ std::string LogStringForDecoration(uint32_t decoration) {
   return "Unknown";
 }
 
+// Returns true if the decoration takes ID parameters.
+// TODO(dneto): This can be generated from the grammar.
+bool DecorationTakesIdParameters(uint32_t type) {
+  switch (static_cast<SpvDecoration>(type)) {
+    case SpvDecorationUniformId:
+    case SpvDecorationAlignmentId:
+    case SpvDecorationMaxByteOffsetId:
+    case SpvDecorationHlslCounterBufferGOOGLE:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
 spv_result_t ValidateDecorate(ValidationState_t& _, const Instruction* inst) {
   const auto decoration = inst->GetOperandAs<uint32_t>(1);
   if (decoration == SpvDecorationSpecId) {
@@ -205,7 +220,24 @@ spv_result_t ValidateDecorate(ValidationState_t& _, const Instruction* inst) {
            << "' is not valid for the WebGPU execution environment.";
   }
 
+  if (DecorationTakesIdParameters(decoration)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Decorations taking ID parameters may not be used with "
+              "OpDecorateId";
+  }
   // TODO: Add validations for all decorations.
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateDecorateId(ValidationState_t& _, const Instruction* inst) {
+  const auto decoration = inst->GetOperandAs<uint32_t>(1);
+  if (!DecorationTakesIdParameters(decoration)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Decorations that don't take ID parameters may not be used with "
+              "OpDecorateId";
+  }
+  // TODO: Add validations for these decorations.
+  // UniformId is covered elsewhere.
   return SPV_SUCCESS;
 }
 
@@ -340,7 +372,8 @@ spv_result_t ValidateGroupMemberDecorate(ValidationState_t& _,
 spv_result_t RegisterDecorations(ValidationState_t& _,
                                  const Instruction* inst) {
   switch (inst->opcode()) {
-    case SpvOpDecorate: {
+    case SpvOpDecorate:
+    case SpvOpDecorateId: {
       const uint32_t target_id = inst->word(1);
       const SpvDecoration dec_type = static_cast<SpvDecoration>(inst->word(2));
       std::vector<uint32_t> dec_params;
@@ -415,6 +448,11 @@ spv_result_t AnnotationPass(ValidationState_t& _, const Instruction* inst) {
     case SpvOpDecorate:
       if (auto error = ValidateDecorate(_, inst)) return error;
       break;
+    case SpvOpDecorateId:
+      if (auto error = ValidateDecorateId(_, inst)) return error;
+      break;
+    // TODO(dneto): SpvOpDecorateStringGOOGLE
+    // See https://github.com/KhronosGroup/SPIRV-Tools/issues/2253
     case SpvOpMemberDecorate:
       if (auto error = ValidateMemberDecorate(_, inst)) return error;
       break;

@@ -88,6 +88,12 @@ class ValidatorOptions {
     spvValidatorOptionsSetRelaxBlockLayout(options_, val);
   }
 
+  // Enables VK_KHR_uniform_buffer_standard_layout when validating standard
+  // uniform layout.  If true, disables scalar block layout rules.
+  void SetUniformBufferStandardLayout(bool val) {
+    spvValidatorOptionsSetUniformBufferStandardLayout(options_, val);
+  }
+
   // Enables VK_EXT_scalar_block_layout when validating standard
   // uniform/storage buffer/push-constant layout.  If true, disables
   // relaxed block layout rules.
@@ -108,6 +114,21 @@ class ValidatorOptions {
   // 2) OpReturnValue returning a pointer value
   void SetRelaxLogicalPointer(bool val) {
     spvValidatorOptionsSetRelaxLogicalPointer(options_, val);
+  }
+
+  // Records whether or not the validator should relax the rules because it is
+  // expected that the optimizations will make the code legal.
+  //
+  // When relaxed, it will allow the following:
+  // 1) It will allow relaxed logical pointers.  Setting this option will also
+  //    set that option.
+  // 2) Pointers that are pass as parameters to function calls do not have to
+  //    match the storage class of the formal parameter.
+  // 3) Pointers that are actaul parameters on function calls do not have to
+  //    point to the same type pointed as the formal parameter.  The types just
+  //    need to logically match.
+  void SetBeforeHlslLegalization(bool val) {
+    spvValidatorOptionsSetBeforeHlslLegalization(options_, val);
   }
 
  private:

@@ -213,7 +213,7 @@ TEST_F(ValidateStorage, RelaxedLogicalPointerFunctionParam) {
           OpFunctionEnd
 )";
   CompileSuccessfully(str);
-  getValidatorOptions()->relax_logical_pointer = true;
+  getValidatorOptions()->before_hlsl_legalization = true;
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 

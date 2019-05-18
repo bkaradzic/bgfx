@@ -263,59 +263,40 @@ std::pair<SpvStorageClass, SpvStorageClass> GetStorageClass(
   return std::make_pair(dst_sc, src_sc);
 }
 
+// Returns the number of instruction words taken up by a memory access
+// argument and its implied operands.
+int MemoryAccessNumWords(uint32_t mask) {
+  int result = 1;  // Count the mask
+  if (mask & SpvMemoryAccessAlignedMask) ++result;
+  if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) ++result;
+  if (mask & SpvMemoryAccessMakePointerVisibleKHRMask) ++result;
+  return result;
+}
+
+// Returns the scope ID operand for MakeAvailable memory access with mask
+// at the given operand index.
 // This function is only called for OpLoad, OpStore, OpCopyMemory and
 // OpCopyMemorySized, OpCooperativeMatrixLoadNV, and
 // OpCooperativeMatrixStoreNV.
-uint32_t GetMakeAvailableScope(const Instruction* inst, uint32_t mask) {
-  uint32_t offset = 1;
-  if (mask & SpvMemoryAccessAlignedMask) ++offset;
-
-  uint32_t scope_id = 0;
-  switch (inst->opcode()) {
-    case SpvOpLoad:
-    case SpvOpCopyMemorySized:
-      return inst->GetOperandAs<uint32_t>(3 + offset);
-    case SpvOpStore:
-    case SpvOpCopyMemory:
-      return inst->GetOperandAs<uint32_t>(2 + offset);
-    case SpvOpCooperativeMatrixLoadNV:
-      return inst->GetOperandAs<uint32_t>(5 + offset);
-    case SpvOpCooperativeMatrixStoreNV:
-      return inst->GetOperandAs<uint32_t>(4 + offset);
-    default:
-      assert(false && "unexpected opcode");
-      break;
-  }
-
-  return scope_id;
+uint32_t GetMakeAvailableScope(const Instruction* inst, uint32_t mask,
+                               uint32_t mask_index) {
+  assert(mask & SpvMemoryAccessMakePointerAvailableKHRMask);
+  uint32_t this_bit = uint32_t(SpvMemoryAccessMakePointerAvailableKHRMask);
+  uint32_t index =
+      mask_index - 1 + MemoryAccessNumWords(mask & (this_bit | (this_bit - 1)));
+  return inst->GetOperandAs<uint32_t>(index);
 }
 
 // This function is only called for OpLoad, OpStore, OpCopyMemory,
 // OpCopyMemorySized, OpCooperativeMatrixLoadNV, and
 // OpCooperativeMatrixStoreNV.
-uint32_t GetMakeVisibleScope(const Instruction* inst, uint32_t mask) {
-  uint32_t offset = 1;
-  if (mask & SpvMemoryAccessAlignedMask) ++offset;
-  if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) ++offset;
-
-  uint32_t scope_id = 0;
-  switch (inst->opcode()) {
-    case SpvOpLoad:
-    case SpvOpCopyMemorySized:
-      return inst->GetOperandAs<uint32_t>(3 + offset);
-    case SpvOpStore:
-    case SpvOpCopyMemory:
-      return inst->GetOperandAs<uint32_t>(2 + offset);
-    case SpvOpCooperativeMatrixLoadNV:
-      return inst->GetOperandAs<uint32_t>(5 + offset);
-    case SpvOpCooperativeMatrixStoreNV:
-      return inst->GetOperandAs<uint32_t>(4 + offset);
-    default:
-      assert(false && "unexpected opcode");
-      break;
-  }
-
-  return scope_id;
+uint32_t GetMakeVisibleScope(const Instruction* inst, uint32_t mask,
+                             uint32_t mask_index) {
+  assert(mask & SpvMemoryAccessMakePointerVisibleKHRMask);
+  uint32_t this_bit = uint32_t(SpvMemoryAccessMakePointerVisibleKHRMask);
+  uint32_t index =
+      mask_index - 1 + MemoryAccessNumWords(mask & (this_bit | (this_bit - 1)));
+  return inst->GetOperandAs<uint32_t>(index);
 }
 
 bool DoesStructContainRTA(const ValidationState_t& _, const Instruction* inst) {
@@ -342,7 +323,7 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
     return SPV_SUCCESS;
   }
 
-  uint32_t mask = inst->GetOperandAs<uint32_t>(index);
+  const uint32_t mask = inst->GetOperandAs<uint32_t>(index);
   if (mask & SpvMemoryAccessMakePointerAvailableKHRMask) {
     if (inst->opcode() == SpvOpLoad ||
         inst->opcode() == SpvOpCooperativeMatrixLoadNV) {
@@ -357,7 +338,7 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
     }
 
     // Check the associated scope for MakeAvailableKHR.
-    const auto available_scope = GetMakeAvailableScope(inst, mask);
+    const auto available_scope = GetMakeAvailableScope(inst, mask, index);
     if (auto error = ValidateMemoryScope(_, inst, available_scope))
       return error;
   }
@@ -376,7 +357,7 @@ spv_result_t CheckMemoryAccess(ValidationState_t& _, const Instruction* inst,
     }
 
     // Check the associated scope for MakeVisibleKHR.
-    const auto visible_scope = GetMakeVisibleScope(inst, mask);
+    const auto visible_scope = GetMakeVisibleScope(inst, mask, index);
     if (auto error = ValidateMemoryScope(_, inst, visible_scope)) return error;
   }
 
@@ -863,6 +844,51 @@ spv_result_t ValidateStore(ValidationState_t& _, const Instruction* inst) {
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateCopyMemoryMemoryAccess(ValidationState_t& _,
+                                            const Instruction* inst) {
+  assert(inst->opcode() == SpvOpCopyMemory ||
+         inst->opcode() == SpvOpCopyMemorySized);
+  const uint32_t first_access_index = inst->opcode() == SpvOpCopyMemory ? 2 : 3;
+  if (inst->operands().size() > first_access_index) {
+    if (auto error = CheckMemoryAccess(_, inst, first_access_index))
+      return error;
+
+    const auto first_access = inst->GetOperandAs<uint32_t>(first_access_index);
+    const uint32_t second_access_index =
+        first_access_index + MemoryAccessNumWords(first_access);
+    if (inst->operands().size() > second_access_index) {
+      if (_.features().copy_memory_permits_two_memory_accesses) {
+        if (auto error = CheckMemoryAccess(_, inst, second_access_index))
+          return error;
+
+        // In the two-access form in SPIR-V 1.4 and later:
+        //  - the first is the target (write) access and it can't have
+        //  make-visible.
+        //  - the second is the source (read) access and it can't have
+        //  make-available.
+        if (first_access & SpvMemoryAccessMakePointerVisibleKHRMask) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Target memory access must not include "
+                    "MakePointerVisibleKHR";
+        }
+        const auto second_access =
+            inst->GetOperandAs<uint32_t>(second_access_index);
+        if (second_access & SpvMemoryAccessMakePointerAvailableKHRMask) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Source memory access must not include "
+                    "MakePointerAvailableKHR";
+        }
+      } else {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(static_cast<SpvOp>(inst->opcode()))
+               << " with two memory access operands requires SPIR-V 1.4 or "
+                  "later";
+      }
+    }
+  }
+  return SPV_SUCCESS;
+}
+
 spv_result_t ValidateCopyMemory(ValidationState_t& _, const Instruction* inst) {
   const auto target_index = 0;
   const auto target_id = inst->GetOperandAs<uint32_t>(target_index);
@@ -968,7 +994,7 @@ spv_result_t ValidateCopyMemory(ValidationState_t& _, const Instruction* inst) {
 
     if (auto error = CheckMemoryAccess(_, inst, 3)) return error;
   }
-  return SPV_SUCCESS;
+  return ValidateCopyMemoryMemoryAccess(_, inst);
 }
 
 spv_result_t ValidateAccessChain(ValidationState_t& _,
@@ -1326,6 +1352,57 @@ spv_result_t ValidateCooperativeMatrixLoadStoreNV(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidatePtrComparison(ValidationState_t& _,
+                                   const Instruction* inst) {
+  if (_.addressing_model() == SpvAddressingModelLogical &&
+      !_.features().variable_pointers_storage_buffer) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Instruction cannot be used without a variable pointers "
+              "capability";
+  }
+
+  const auto result_type = _.FindDef(inst->type_id());
+  if (inst->opcode() == SpvOpPtrDiff) {
+    if (!result_type || result_type->opcode() != SpvOpTypeInt) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Result Type must be an integer scalar";
+    }
+  } else {
+    if (!result_type || result_type->opcode() != SpvOpTypeBool) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Result Type must be OpTypeBool";
+    }
+  }
+
+  const auto op1 = _.FindDef(inst->GetOperandAs<uint32_t>(2u));
+  const auto op2 = _.FindDef(inst->GetOperandAs<uint32_t>(3u));
+  if (!op1 || !op2 || op1->type_id() != op2->type_id()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "The types of Operand 1 and Operand 2 must match";
+  }
+  const auto op1_type = _.FindDef(op1->type_id());
+  if (!op1_type || op1_type->opcode() != SpvOpTypePointer) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Operand type must be a pointer";
+  }
+
+  if (_.addressing_model() == SpvAddressingModelLogical) {
+    SpvStorageClass sc = op1_type->GetOperandAs<SpvStorageClass>(1u);
+    if (sc != SpvStorageClassWorkgroup && sc != SpvStorageClassStorageBuffer) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Invalid pointer storage class";
+    }
+
+    if (sc == SpvStorageClassWorkgroup && !_.features().variable_pointers) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Workgroup storage class pointer requires VariablePointers "
+                "capability to be specified";
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // namespace
 
 spv_result_t MemoryPass(ValidationState_t& _, const Instruction* inst) {
@@ -1361,6 +1438,11 @@ spv_result_t MemoryPass(ValidationState_t& _, const Instruction* inst) {
       break;
     case SpvOpCooperativeMatrixLengthNV:
       if (auto error = ValidateCooperativeMatrixLengthNV(_, inst)) return error;
+      break;
+    case SpvOpPtrEqual:
+    case SpvOpPtrNotEqual:
+    case SpvOpPtrDiff:
+      if (auto error = ValidatePtrComparison(_, inst)) return error;
       break;
     case SpvOpImageTexelPointer:
     case SpvOpGenericPtrMemSemantics:

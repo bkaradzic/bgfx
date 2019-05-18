@@ -754,13 +754,17 @@ TEST_F(ValidateLimits, ControlFlowNoEntryToLoopGood) {
            OpName %loop "loop"
            OpName %exit "exit"
 %voidt   = OpTypeVoid
+%boolt   = OpTypeBool
+%undef   = OpUndef %boolt
 %funct   = OpTypeFunction %voidt
 %main    = OpFunction %voidt None %funct
 %entry   = OpLabel
            OpBranch %exit
 %loop    = OpLabel
-           OpLoopMerge %loop %loop None
-           OpBranch %loop
+           OpLoopMerge %dead %loop None
+           OpBranchConditional %undef %loop %loop
+%dead    = OpLabel
+           OpUnreachable
 %exit    = OpLabel
            OpReturn
            OpFunctionEnd

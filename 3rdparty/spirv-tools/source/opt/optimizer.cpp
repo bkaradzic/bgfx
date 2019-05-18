@@ -225,6 +225,7 @@ Optimizer& Optimizer::RegisterVulkanToWebGPUPasses() {
       .RegisterPass(CreateStripAtomicCounterMemoryPass())
       .RegisterPass(CreateGenerateWebGPUInitializersPass())
       .RegisterPass(CreateLegalizeVectorShufflePass())
+      .RegisterPass(CreateSplitInvalidUnreachablePass())
       .RegisterPass(CreateEliminateDeadConstantPass())
       .RegisterPass(CreateFlattenDecorationPass())
       .RegisterPass(CreateAggressiveDCEPass())
@@ -871,6 +872,11 @@ Optimizer::PassToken CreateLegalizeVectorShufflePass() {
 Optimizer::PassToken CreateDecomposeInitializedVariablesPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::DecomposeInitializedVariablesPass>());
+}
+
+Optimizer::PassToken CreateSplitInvalidUnreachablePass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::SplitInvalidUnreachablePass>());
 }
 
 }  // namespace spvtools

@@ -129,6 +129,7 @@ set(TEST_SOURCES
   text_start_new_inst_test.cpp
   text_to_binary.annotation_test.cpp
   text_to_binary.barrier_test.cpp
+  text_to_binary.composite_test.cpp
   text_to_binary.constant_test.cpp
   text_to_binary.control_flow_test.cpp
   text_to_binary_test.cpp
