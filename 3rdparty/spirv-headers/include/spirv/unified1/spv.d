@@ -51,8 +51,8 @@
 module spv;
 
 enum uint MagicNumber = 0x07230203;
-enum uint Version = 0x00010300;
-enum uint Revision = 7;
+enum uint Version = 0x00010400;
+enum uint Revision = 1;
 enum uint OpCodeMask = 0xffff;
 enum uint WordCountShift = 16;
 
@@ -308,6 +308,8 @@ enum ImageOperandsShift : uint
     MakeTexelVisibleKHR = 9,
     NonPrivateTexelKHR = 10,
     VolatileTexelKHR = 11,
+    SignExtend = 12,
+    ZeroExtend = 13,
 }
 
 enum ImageOperandsMask : uint
@@ -325,6 +327,8 @@ enum ImageOperandsMask : uint
     MakeTexelVisibleKHR = 0x00000200,
     NonPrivateTexelKHR = 0x00000400,
     VolatileTexelKHR = 0x00000800,
+    SignExtend = 0x00001000,
+    ZeroExtend = 0x00002000,
 }
 
 enum FPFastMathModeShift : uint
@@ -407,6 +411,7 @@ enum Decoration : uint
     NonWritable = 24,
     NonReadable = 25,
     Uniform = 26,
+    UniformId = 27,
     SaturatedConversion = 28,
     Stream = 29,
     Location = 30,
@@ -441,8 +446,10 @@ enum Decoration : uint
     NonUniformEXT = 5300,
     RestrictPointerEXT = 5355,
     AliasedPointerEXT = 5356,
+    CounterBuffer = 5634,
     HlslCounterBufferGOOGLE = 5634,
     HlslSemanticGOOGLE = 5635,
+    UserSemantic = 5635,
 }
 
 enum BuiltIn : uint
@@ -566,6 +573,11 @@ enum LoopControlShift : uint
     DontUnroll = 1,
     DependencyInfinite = 2,
     DependencyLength = 3,
+    MinIterations = 4,
+    MaxIterations = 5,
+    IterationMultiple = 6,
+    PeelCount = 7,
+    PartialCount = 8,
 }
 
 enum LoopControlMask : uint
@@ -575,6 +587,11 @@ enum LoopControlMask : uint
     DontUnroll = 0x00000002,
     DependencyInfinite = 0x00000004,
     DependencyLength = 0x00000008,
+    MinIterations = 0x00000010,
+    MaxIterations = 0x00000020,
+    IterationMultiple = 0x00000040,
+    PeelCount = 0x00000080,
+    PartialCount = 0x00000100,
 }
 
 enum FunctionControlShift : uint
@@ -823,6 +840,7 @@ enum Capability : uint
     SubgroupBufferBlockIOINTEL = 5569,
     SubgroupImageBlockIOINTEL = 5570,
     SubgroupImageMediaBlockIOINTEL = 5579,
+    IntegerFunctions2INTEL = 5584,
     SubgroupAvcMotionEstimationINTEL = 5696,
     SubgroupAvcMotionEstimationIntraINTEL = 5697,
     SubgroupAvcMotionEstimationChromaINTEL = 5698,
@@ -1170,6 +1188,10 @@ enum Op : uint
     OpGroupNonUniformLogicalXor = 364,
     OpGroupNonUniformQuadBroadcast = 365,
     OpGroupNonUniformQuadSwap = 366,
+    OpCopyLogical = 400,
+    OpPtrEqual = 401,
+    OpPtrNotEqual = 402,
+    OpPtrDiff = 403,
     OpSubgroupBallotKHR = 4421,
     OpSubgroupFirstInvocationKHR = 4422,
     OpSubgroupAllKHR = 4428,
@@ -1210,7 +1232,23 @@ enum Op : uint
     OpSubgroupImageBlockWriteINTEL = 5578,
     OpSubgroupImageMediaBlockReadINTEL = 5580,
     OpSubgroupImageMediaBlockWriteINTEL = 5581,
+    OpUCountLeadingZerosINTEL = 5585,
+    OpUCountTrailingZerosINTEL = 5586,
+    OpAbsISubINTEL = 5587,
+    OpAbsUSubINTEL = 5588,
+    OpIAddSatINTEL = 5589,
+    OpUAddSatINTEL = 5590,
+    OpIAverageINTEL = 5591,
+    OpUAverageINTEL = 5592,
+    OpIAverageRoundedINTEL = 5593,
+    OpUAverageRoundedINTEL = 5594,
+    OpISubSatINTEL = 5595,
+    OpUSubSatINTEL = 5596,
+    OpIMul32x16INTEL = 5597,
+    OpUMul32x16INTEL = 5598,
+    OpDecorateString = 5632,
     OpDecorateStringGOOGLE = 5632,
+    OpMemberDecorateString = 5633,
     OpMemberDecorateStringGOOGLE = 5633,
     OpVmeImageINTEL = 5699,
     OpTypeVmeImageINTEL = 5700,

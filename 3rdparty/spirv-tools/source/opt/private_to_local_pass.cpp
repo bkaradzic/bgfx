@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "source/opt/ir_context.h"
+#include "source/spirv_constant.h"
 
 namespace spvtools {
 namespace opt {
@@ -38,6 +39,7 @@ Pass::Status PrivateToLocalPass::Process() {
     return Status::SuccessWithoutChange;
 
   std::vector<std::pair<Instruction*, Function*>> variables_to_move;
+  std::unordered_set<uint32_t> localized_variables;
   for (auto& inst : context()->types_values()) {
     if (inst.opcode() != SpvOpVariable) {
       continue;
@@ -57,6 +59,27 @@ Pass::Status PrivateToLocalPass::Process() {
   modified = !variables_to_move.empty();
   for (auto p : variables_to_move) {
     MoveVariable(p.first, p.second);
+    localized_variables.insert(p.first->result_id());
+  }
+
+  if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+    // In SPIR-V 1.4 and later entry points must list private storage class
+    // variables that are statically used by the entry point. Go through the
+    // entry points and remove any references to variables that were localized.
+    for (auto& entry : get_module()->entry_points()) {
+      std::vector<Operand> new_operands;
+      for (uint32_t i = 0; i < entry.NumInOperands(); ++i) {
+        // Execution model, function id and name are always kept.
+        if (i < 3 ||
+            !localized_variables.count(entry.GetSingleWordInOperand(i))) {
+          new_operands.push_back(entry.GetInOperand(i));
+        }
+      }
+      if (new_operands.size() != entry.NumInOperands()) {
+        entry.SetInOperands(std::move(new_operands));
+        context()->AnalyzeUses(&entry);
+      }
+    }
   }
 
   return (modified ? Status::SuccessWithChange : Status::SuccessWithoutChange);
@@ -165,6 +188,7 @@ void PrivateToLocalPass::UpdateUse(Instruction* inst) {
       UpdateUses(inst->result_id());
       break;
     case SpvOpName:
+    case SpvOpEntryPoint:  // entry points will be updated separately.
       break;
     default:
       assert(spvOpcodeIsDecoration(inst->opcode()) &&

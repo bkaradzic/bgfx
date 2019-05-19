@@ -772,6 +772,10 @@ Optimizer::PassToken CreateLegalizeVectorShufflePass();
 // declaration and an initial store.
 Optimizer::PassToken CreateDecomposeInitializedVariablesPass();
 
+// Create a pass to attempt to split up invalid unreachable merge-blocks and
+// continue-targets to legalize for WebGPU.
+Optimizer::PassToken CreateSplitInvalidUnreachablePass();
+
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

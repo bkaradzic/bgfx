@@ -288,9 +288,12 @@ TEST_P(ValidateExtIntoCore, DoNotAskForExtensionInLaterVersion) {
 
   CompileSuccessfully(code.c_str(), GetParam().env);
   if (GetParam().success) {
-    ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(GetParam().env));
+    ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(GetParam().env))
+        << getDiagnosticString();
   } else {
-    ASSERT_NE(SPV_SUCCESS, ValidateInstructions(GetParam().env));
+    ASSERT_NE(SPV_SUCCESS, ValidateInstructions(GetParam().env))
+        << " in " << spvTargetEnvDescription(GetParam().env) << ":\n"
+        << code;
     const std::string message = getDiagnosticString();
     if (spvIsVulkanEnv(GetParam().env)) {
       EXPECT_THAT(message, HasSubstr(std::string(GetParam().cap) +

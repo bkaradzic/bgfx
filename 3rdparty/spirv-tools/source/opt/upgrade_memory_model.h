@@ -15,10 +15,10 @@
 #ifndef LIBSPIRV_OPT_UPGRADE_MEMORY_MODEL_H_
 #define LIBSPIRV_OPT_UPGRADE_MEMORY_MODEL_H_
 
-#include "pass.h"
-
 #include <functional>
 #include <tuple>
+
+#include "pass.h"
 
 namespace spvtools {
 namespace opt {
@@ -122,6 +122,10 @@ class UpgradeMemoryModel : public Pass {
   // their struct versions. New extracts and a store are added in order to
   // facilitate adding memory model flags.
   void UpgradeExtInst(Instruction* modf);
+
+  // Returns the number of words taken up by a memory access argument and its
+  // implied operands.
+  uint32_t MemoryAccessNumWords(uint32_t mask);
 
   // Caches the result of TraceInstruction. For a given result id and set of
   // indices, stores whether that combination is coherent and/or volatile.

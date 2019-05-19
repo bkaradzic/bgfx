@@ -97,6 +97,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   scalar_replacement_pass.h
   set_spec_constant_default_value_pass.h
   simplification_pass.h
+  split_invalid_unreachable_pass.h
   ssa_rewrite_pass.h
   strength_reduction_pass.h
   strip_atomic_counter_memory_pass.h
@@ -195,6 +196,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   scalar_replacement_pass.cpp
   set_spec_constant_default_value_pass.cpp
   simplification_pass.cpp
+  split_invalid_unreachable_pass.cpp
   ssa_rewrite_pass.cpp
   strength_reduction_pass.cpp
   strip_atomic_counter_memory_pass.cpp

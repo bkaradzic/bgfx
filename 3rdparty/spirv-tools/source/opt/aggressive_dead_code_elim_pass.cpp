@@ -24,6 +24,7 @@
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/opt/iterator.h"
 #include "source/opt/reflect.h"
+#include "source/spirv_constant.h"
 
 namespace spvtools {
 namespace opt {
@@ -548,7 +549,26 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
   }
   // Keep all entry points.
   for (auto& entry : get_module()->entry_points()) {
-    AddToWorklist(&entry);
+    if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+      // In SPIR-V 1.4 and later, entry points must list all global variables
+      // used. DCE can still remove non-input/output variables and update the
+      // interface list. Mark the entry point as live and inputs and outputs as
+      // live, but defer decisions all other interfaces.
+      live_insts_.Set(entry.unique_id());
+      // The actual function is live always.
+      AddToWorklist(
+          get_def_use_mgr()->GetDef(entry.GetSingleWordInOperand(1u)));
+      for (uint32_t i = 3; i < entry.NumInOperands(); ++i) {
+        auto* var = get_def_use_mgr()->GetDef(entry.GetSingleWordInOperand(i));
+        auto storage_class = var->GetSingleWordInOperand(0u);
+        if (storage_class == SpvStorageClassInput ||
+            storage_class == SpvStorageClassOutput) {
+          AddToWorklist(var);
+        }
+      }
+    } else {
+      AddToWorklist(&entry);
+    }
   }
   // Keep workgroup size.
   for (auto& anno : get_module()->annotations()) {
@@ -777,6 +797,29 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
   for (auto& val : get_module()->types_values()) {
     if (IsDead(&val)) {
       to_kill_.push_back(&val);
+    }
+  }
+
+  if (get_module()->version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+    // Remove the dead interface variables from the entry point interface list.
+    for (auto& entry : get_module()->entry_points()) {
+      std::vector<Operand> new_operands;
+      for (uint32_t i = 0; i < entry.NumInOperands(); ++i) {
+        if (i < 3) {
+          // Execution model, function id and name are always valid.
+          new_operands.push_back(entry.GetInOperand(i));
+        } else {
+          auto* var =
+              get_def_use_mgr()->GetDef(entry.GetSingleWordInOperand(i));
+          if (!IsDead(var)) {
+            new_operands.push_back(entry.GetInOperand(i));
+          }
+        }
+      }
+      if (new_operands.size() != entry.NumInOperands()) {
+        entry.SetInOperands(std::move(new_operands));
+        get_def_use_mgr()->UpdateDefUse(&entry);
+      }
     }
   }
 

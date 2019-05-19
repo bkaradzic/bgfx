@@ -99,6 +99,10 @@ public:
 		// In non-Vulkan GLSL, emit push constant blocks as UBOs rather than plain uniforms.
 		bool emit_push_constant_as_uniform_buffer = false;
 
+		// Always emit uniform blocks as plain uniforms, regardless of the GLSL version, even when UBOs are supported.
+		// Does not apply to shader storage or push constant blocks.
+		bool emit_uniform_buffer_as_plain_uniforms = false;
+
 		enum Precision
 		{
 			DontCare,
@@ -375,7 +379,7 @@ protected:
 		const char *nonuniform_qualifier = "nonuniformEXT";
 		bool swizzle_is_function = false;
 		bool shared_is_implied = false;
-		bool flexible_member_array_supported = true;
+		bool unsized_array_supported = true;
 		bool explicit_struct_type = false;
 		bool use_initializer_list = false;
 		bool use_typed_initializer_list = false;

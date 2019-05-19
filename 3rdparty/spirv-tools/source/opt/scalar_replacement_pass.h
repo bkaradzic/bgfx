@@ -117,8 +117,8 @@ class ScalarReplacementPass : public Pass {
   // for element of the composite type. Uses of |inst| are updated as
   // appropriate. If the replacement variables are themselves scalarizable, they
   // get added to |worklist| for further processing. If any replacement
-  // variable ends up with no uses it is erased. Returns false if any
-  // subsequent access chain is out of bounds.
+  // variable ends up with no uses it is erased. Returns false if the variable
+  // could not be replaced.
   bool ReplaceVariable(Instruction* inst, std::queue<Instruction*>* worklist);
 
   // Returns the underlying storage type for |inst|.
@@ -145,13 +145,14 @@ class ScalarReplacementPass : public Pass {
                       std::vector<Instruction*>* replacements);
 
   // Populates |replacements| with a new OpVariable for each element of |inst|.
+  // Returns true if the replacement variables were successfully created.
   //
   // |inst| must be an OpVariable of a composite type. New variables are
   // initialized the same as the corresponding index in |inst|. |replacements|
   // will contain a variable for each element of the composite with matching
   // indexes (i.e. the 0'th element of |inst| is the 0'th entry of
   // |replacements|).
-  void CreateReplacementVariables(Instruction* inst,
+  bool CreateReplacementVariables(Instruction* inst,
                                   std::vector<Instruction*>* replacements);
 
   // Returns the value of an OpConstant of integer type.
@@ -217,6 +218,7 @@ class ScalarReplacementPass : public Pass {
 
   // Returns an instruction defining a null constant with type |type_id|.  If
   // one already exists, it is returned.  Otherwise a new one is created.
+  // Returns |nullptr| if the new constant could not be created.
   Instruction* CreateNullConstant(uint32_t type_id);
 
   // Maps storage type to a pointer type enclosing that type.

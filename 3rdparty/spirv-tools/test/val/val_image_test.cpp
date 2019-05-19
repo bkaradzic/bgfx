@@ -25,6 +25,7 @@ namespace spvtools {
 namespace val {
 namespace {
 
+using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::Not;
 
@@ -54,9 +55,33 @@ OpCapability ImageBuffer
     ss << "OpCapability SampledRect\n";
   }
 
+  // In 1.4, the entry point must list all module-scope variables used.  Just
+  // list all of them.
+  std::string interface_vars = (env != SPV_ENV_UNIVERSAL_1_4) ? "" :
+                                                              R"(
+%uniform_image_f32_1d_0001
+%uniform_image_f32_1d_0002_rgba32f
+%uniform_image_f32_2d_0001
+%uniform_image_f32_2d_0010
+%uniform_image_u32_2d_0001
+%uniform_image_u32_2d_0000
+%uniform_image_s32_3d_0001
+%uniform_image_f32_2d_0002
+%uniform_image_s32_2d_0002
+%uniform_image_f32_spd_0002
+%uniform_image_f32_3d_0111
+%uniform_image_f32_cube_0101
+%uniform_image_f32_cube_0102_rgba32f
+%uniform_sampler
+%private_image_u32_buffer_0002_r32ui
+%private_image_u32_spd_0002
+%private_image_f32_buffer_0002_r32ui
+)";
+
   ss << capabilities_and_extensions;
   ss << "OpMemoryModel Logical " << memory_model << "\n";
-  ss << "OpEntryPoint " << execution_model << " %main \"main\"\n";
+  ss << "OpEntryPoint " << execution_model
+     << " %main \"main\" " + interface_vars + "\n";
   if (execution_model == "Fragment") {
     ss << "OpExecutionMode %main OriginUpperLeft\n";
   }
@@ -79,6 +104,8 @@ OpDecorate %uniform_image_s32_3d_0001 DescriptorSet 1
 OpDecorate %uniform_image_s32_3d_0001 Binding 2
 OpDecorate %uniform_image_f32_2d_0002 DescriptorSet 1
 OpDecorate %uniform_image_f32_2d_0002 Binding 3
+OpDecorate %uniform_image_s32_2d_0002 DescriptorSet 1
+OpDecorate %uniform_image_s32_2d_0002 Binding 4
 OpDecorate %uniform_image_f32_spd_0002 DescriptorSet 2
 OpDecorate %uniform_image_f32_spd_0002 Binding 0
 OpDecorate %uniform_image_f32_3d_0111 DescriptorSet 2
@@ -221,6 +248,11 @@ OpDecorate %uniform_sampler Binding 0
 %ptr_image_f32_2d_0002 = OpTypePointer UniformConstant %type_image_f32_2d_0002
 %uniform_image_f32_2d_0002 = OpVariable %ptr_image_f32_2d_0002 UniformConstant
 %type_sampled_image_f32_2d_0002 = OpTypeSampledImage %type_image_f32_2d_0002
+
+%type_image_s32_2d_0002 = OpTypeImage %s32 2D 0 0 0 2 Unknown
+%ptr_image_s32_2d_0002 = OpTypePointer UniformConstant %type_image_s32_2d_0002
+%uniform_image_s32_2d_0002 = OpVariable %ptr_image_s32_2d_0002 UniformConstant
+%type_sampled_image_s32_2d_0002 = OpTypeSampledImage %type_image_s32_2d_0002
 
 %type_image_f32_spd_0002 = OpTypeImage %f32 SubpassData 0 0 0 2 Unknown
 %ptr_image_f32_spd_0002 = OpTypePointer UniformConstant %type_image_f32_spd_0002
@@ -703,7 +735,7 @@ TEST_F(ValidateImage, ImageTexelPointerImageNotResultTypePointer) {
 
   CompileSuccessfully(GenerateShaderCode(body).c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(), HasSubstr("Operand 136[%136] cannot be a "
+  EXPECT_THAT(getDiagnosticString(), HasSubstr("Operand 140[%140] cannot be a "
                                                "type"));
 }
 
@@ -4570,6 +4602,150 @@ TEST_F(ValidateImage, Issue2463NoSegFault) {
               HasSubstr("OpSampledImage instruction must not appear as operand "
                         "for OpReturnValue"));
 }
+
+TEST_F(ValidateImage, SignExtendV13Bad) {
+  const std::string body = R"(
+%img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
+%res1 = OpImageRead %u32vec4 %img %u32vec2_01 SignExtend
+)";
+
+  EXPECT_THAT(CompileFailure(GenerateShaderCode(body, "", "Fragment",
+                                                SPV_ENV_UNIVERSAL_1_3)),
+              HasSubstr("Invalid image operand 'SignExtend'"));
+}
+
+TEST_F(ValidateImage, ZeroExtendV13Bad) {
+  const std::string body = R"(
+%img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
+%res1 = OpImageRead %u32vec4 %img %u32vec2_01 ZeroExtend
+)";
+
+  EXPECT_THAT(CompileFailure(GenerateShaderCode(body, "", "Fragment",
+                                                SPV_ENV_UNIVERSAL_1_3)),
+              HasSubstr("Invalid image operand 'ZeroExtend'"));
+}
+
+TEST_F(ValidateImage, SignExtendScalarUIntTexelV14Good) {
+  // Unsigned int sampled type
+  const std::string body = R"(
+%img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
+%res1 = OpImageRead %u32 %img %u32vec2_01 SignExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateImage, SignExtendScalarSIntTexelV14Good) {
+  // Signed int sampled type
+  const std::string body = R"(
+%img = OpLoad %type_image_s32_2d_0002 %uniform_image_s32_2d_0002
+%res1 = OpImageRead %s32 %img %u32vec2_01 SignExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateImage, SignExtendScalarVectorUIntTexelV14Good) {
+  const std::string body = R"(
+%img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
+%res1 = OpImageRead %u32vec4 %img %u32vec2_01 SignExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateImage, SignExtendVectorSIntTexelV14Good) {
+  const std::string body = R"(
+%img = OpLoad %type_image_s32_2d_0002 %uniform_image_s32_2d_0002
+%res1 = OpImageRead %s32vec4 %img %u32vec2_01 SignExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+// No negative tests for SignExtend since we don't truly know the
+// texel format.
+
+TEST_F(ValidateImage, ZeroExtendScalarUIntTexelV14Good) {
+  // Unsigned int sampled type
+  const std::string body = R"(
+%img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
+%res1 = OpImageRead %u32 %img %u32vec2_01 ZeroExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateImage, ZeroExtendScalarSIntTexelV14Good) {
+  // Zeroed int sampled type
+  const std::string body = R"(
+%img = OpLoad %type_image_s32_2d_0002 %uniform_image_s32_2d_0002
+%res1 = OpImageRead %s32 %img %u32vec2_01 ZeroExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateImage, ZeroExtendScalarVectorUIntTexelV14Good) {
+  const std::string body = R"(
+%img = OpLoad %type_image_u32_2d_0000 %uniform_image_u32_2d_0000
+%res1 = OpImageRead %u32vec4 %img %u32vec2_01 ZeroExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateImage, ZeroExtendVectorSIntTexelV14Good) {
+  const std::string body = R"(
+%img = OpLoad %type_image_s32_2d_0002 %uniform_image_s32_2d_0002
+%res1 = OpImageRead %s32vec4 %img %u32vec2_01 ZeroExtend
+)";
+  const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
+
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+// No negative tests for ZeroExtend since we don't truly know the
+// texel format.
 
 }  // namespace
 }  // namespace val

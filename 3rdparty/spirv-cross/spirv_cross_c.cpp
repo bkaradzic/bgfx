@@ -442,6 +442,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_GLSL_EMIT_PUSH_CONSTANT_AS_UNIFORM_BUFFER:
 		options->glsl.emit_push_constant_as_uniform_buffer = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_GLSL_EMIT_UNIFORM_BUFFER_AS_PLAIN_UNIFORMS:
+		options->glsl.emit_uniform_buffer_as_plain_uniforms = value != 0;
+		break;
 #endif
 
 #if SPIRV_CROSS_C_API_HLSL
@@ -471,8 +474,8 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 		options->msl.texel_buffer_texture_width = value;
 		break;
 
-	case SPVC_COMPILER_OPTION_MSL_AUX_BUFFER_INDEX:
-		options->msl.aux_buffer_index = value;
+	case SPVC_COMPILER_OPTION_MSL_SWIZZLE_BUFFER_INDEX:
+		options->msl.swizzle_buffer_index = value;
 		break;
 
 	case SPVC_COMPILER_OPTION_MSL_INDIRECT_PARAMS_BUFFER_INDEX:
@@ -723,7 +726,7 @@ spvc_bool spvc_compiler_msl_is_rasterization_disabled(spvc_compiler compiler)
 #endif
 }
 
-spvc_bool spvc_compiler_msl_needs_aux_buffer(spvc_compiler compiler)
+spvc_bool spvc_compiler_msl_needs_swizzle_buffer(spvc_compiler compiler)
 {
 #if SPIRV_CROSS_C_API_MSL
 	if (compiler->backend != SPVC_BACKEND_MSL)
@@ -733,11 +736,16 @@ spvc_bool spvc_compiler_msl_needs_aux_buffer(spvc_compiler compiler)
 	}
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
-	return msl.needs_aux_buffer() ? SPVC_TRUE : SPVC_FALSE;
+	return msl.needs_swizzle_buffer() ? SPVC_TRUE : SPVC_FALSE;
 #else
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_FALSE;
 #endif
+}
+
+spvc_bool spvc_compiler_msl_needs_aux_buffer(spvc_compiler compiler)
+{
+	return spvc_compiler_msl_needs_swizzle_buffer(compiler);
 }
 
 spvc_bool spvc_compiler_msl_needs_output_buffer(spvc_compiler compiler)
@@ -1273,6 +1281,11 @@ const char *spvc_compiler_get_member_decoration_string(spvc_compiler compiler, s
 	    .c_str();
 }
 
+const char *spvc_compiler_get_member_name(spvc_compiler compiler, spvc_type_id id, unsigned member_index)
+{
+	return compiler->compiler->get_member_name(id, member_index).c_str();
+}
+
 spvc_result spvc_compiler_get_entry_points(spvc_compiler compiler, const spvc_entry_point **entry_points,
                                            size_t *num_entry_points)
 {
@@ -1410,7 +1423,7 @@ unsigned spvc_type_get_bit_width(spvc_type type)
 	return type->width;
 }
 
-unsigned spvc_type_get_SmallVector_size(spvc_type type)
+unsigned spvc_type_get_vector_size(spvc_type type)
 {
 	return type->vecsize;
 }
@@ -1638,6 +1651,32 @@ spvc_constant_id spvc_compiler_get_work_group_size_specialization_constants(spvc
 	z->id = tmpz.id;
 	z->constant_id = tmpz.constant_id;
 	return ret;
+}
+
+spvc_result spvc_compiler_get_active_buffer_ranges(spvc_compiler compiler,
+                                                   spvc_variable_id id,
+                                                   const spvc_buffer_range **ranges,
+                                                   size_t *num_ranges)
+{
+	SPVC_BEGIN_SAFE_SCOPE
+	{
+		auto active_ranges = compiler->compiler->get_active_buffer_ranges(id);
+		SmallVector<spvc_buffer_range> translated;
+		translated.reserve(active_ranges.size());
+		for (auto &r : active_ranges)
+		{
+			spvc_buffer_range trans = { r.index, r.offset, r.range };
+			translated.push_back(trans);
+		}
+
+		auto ptr = spvc_allocate<TemporaryBuffer<spvc_buffer_range>>();
+		ptr->buffer = std::move(translated);
+		*ranges = ptr->buffer.data();
+		*num_ranges = ptr->buffer.size();
+		compiler->context->allocations.push_back(std::move(ptr));
+	}
+	SPVC_END_SAFE_SCOPE(compiler->context, SPVC_ERROR_OUT_OF_MEMORY)
+	return SPVC_SUCCESS;
 }
 
 float spvc_constant_get_scalar_fp16(spvc_constant constant, unsigned column, unsigned row)

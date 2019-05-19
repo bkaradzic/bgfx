@@ -34,7 +34,7 @@ def empty_main_assembly():
 
 
 @inside_spirv_testsuite('SpirvOptBase')
-class TestAssemblyFileAsOnlyParameter(expect.ValidObjectFile1_3):
+class TestAssemblyFileAsOnlyParameter(expect.ValidObjectFile1_4):
   """Tests that spirv-opt accepts a SPIR-V object file."""
 
   shader = placeholder.FileSPIRVShader(empty_main_assembly(), '.spvasm')
@@ -52,7 +52,7 @@ class TestHelpFlag(expect.ReturnCodeIsZero, expect.StdoutMatch):
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestValidPassFlags(expect.ValidObjectFile1_3,
+class TestValidPassFlags(expect.ValidObjectFile1_4,
                          expect.ExecutedListOfPasses):
   """Tests that spirv-opt accepts all valid optimization flags."""
 
@@ -129,7 +129,7 @@ class TestValidPassFlags(expect.ValidObjectFile1_3,
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_3,
+class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_4,
                                         expect.ExecutedListOfPasses):
   """Tests that spirv-opt schedules all the passes triggered by -O."""
 
@@ -176,7 +176,7 @@ class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_3,
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestSizeOptimizationPasses(expect.ValidObjectFile1_3,
+class TestSizeOptimizationPasses(expect.ValidObjectFile1_4,
                                  expect.ExecutedListOfPasses):
   """Tests that spirv-opt schedules all the passes triggered by -Os."""
 
@@ -215,7 +215,7 @@ class TestSizeOptimizationPasses(expect.ValidObjectFile1_3,
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestLegalizationPasses(expect.ValidObjectFile1_3,
+class TestLegalizationPasses(expect.ValidObjectFile1_4,
                              expect.ExecutedListOfPasses):
   """Tests that spirv-opt schedules all the passes triggered by --legalize-hlsl.
   """

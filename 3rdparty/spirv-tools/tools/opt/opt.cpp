@@ -59,7 +59,7 @@ std::string GetListOfPassesAsString(const spvtools::Optimizer& optimizer) {
   return ss.str();
 }
 
-const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_3;
+const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_4;
 
 std::string GetLegalizationPasses() {
   spvtools::Optimizer optimizer(kDefaultEnvironment);
@@ -760,7 +760,7 @@ OptStatus ParseFlags(int argc, const char** argv,
         // If we were requested to legalize SPIR-V generated from the HLSL
         // front-end, skip validation.
         if (0 == strcmp(cur_arg, "--legalize-hlsl")) {
-          validator_options->SetRelaxLogicalPointer(true);
+          validator_options->SetBeforeHlslLegalization(true);
         }
       }
     } else {

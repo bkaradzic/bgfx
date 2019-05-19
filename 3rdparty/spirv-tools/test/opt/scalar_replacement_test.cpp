@@ -1620,6 +1620,43 @@ TEST_F(ScalarReplacementTest, TestAccessChainWithNoIndexes) {
   EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
 }
 
+// Test that id overflow is handled gracefully.
+TEST_F(ScalarReplacementTest, IdBoundOverflow) {
+  const std::string text = R"(
+OpCapability ImageQuery
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %4 "main"
+OpExecutionMode %4 OriginUpperLeft
+OpDecorate %4194302 DescriptorSet 1073495039
+%2 = OpTypeVoid
+%3 = OpTypeFunction %2
+%6 = OpTypeFloat 32
+%7 = OpTypeStruct %6 %6
+%557056 = OpTypeStruct %7
+%9 = OpTypePointer Function %7
+%18 = OpTypeFunction %7 %9
+%4 = OpFunction %2 Pure|Const %3
+%1836763 = OpLabel
+%4194302 = OpVariable %9 Function
+%10 = OpVariable %9 Function
+OpKill
+%4194301 = OpLabel
+%524296 = OpLoad %7 %4194302
+OpKill
+OpFunctionEnd
+  )";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."},
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result =
+      SinglePassRunAndDisassemble<ScalarReplacementPass>(text, true, false);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

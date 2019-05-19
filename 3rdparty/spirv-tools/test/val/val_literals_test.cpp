@@ -85,6 +85,16 @@ TEST_F(ValidateLiterals, LiteralsShaderGood) {
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
+TEST_F(ValidateLiterals, InvalidInt) {
+  std::string str = GenerateShaderCode() + R"(
+%11 = OpTypeInt 32 90
+  )";
+  CompileSuccessfully(str);
+  EXPECT_EQ(SPV_ERROR_INVALID_VALUE, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpTypeInt has invalid signedness:"));
+}
+
 TEST_P(ValidateLiteralsShader, LiteralsShaderBad) {
   std::string str = GenerateShaderCode() + GetParam();
   std::string inst_id = "11";

@@ -104,11 +104,12 @@ Options (in lexicographical order):
                Display reducer version information.
 
 Supported validator options are as follows. See `spirv-val --help` for details.
-  --relax-logical-pointer
+  --before-hlsl-legalization
   --relax-block-layout
+  --relax-logical-pointer
+  --relax-struct-store
   --scalar-block-layout
   --skip-block-layout
-  --relax-struct-store
 )",
       program, program);
 }
@@ -166,6 +167,8 @@ ReduceStatus ParseFlags(int argc, const char** argv, const char** in_file,
       positional_arg_index++;
     } else if (0 == strcmp(cur_arg, "--fail-on-validation-error")) {
       reducer_options->set_fail_on_validation_error(true);
+    } else if (0 == strcmp(cur_arg, "--before-hlsl-legalization")) {
+      validator_options->SetBeforeHlslLegalization(true);
     } else if (0 == strcmp(cur_arg, "--relax-logical-pointer")) {
       validator_options->SetRelaxLogicalPointer(true);
     } else if (0 == strcmp(cur_arg, "--relax-block-layout")) {
@@ -216,7 +219,7 @@ void DumpShader(spvtools::opt::IRContext* context, const char* filename) {
   DumpShader(binary, filename);
 }
 
-const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_3;
+const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_4;
 
 int main(int argc, const char** argv) {
   const char* in_file = nullptr;

@@ -364,7 +364,8 @@ spv_result_t ValidateSpecConstantOp(ValidationState_t& _,
       if (!_.features().uconvert_spec_constant_op &&
           !_.HasCapability(SpvCapabilityKernel)) {
         return _.diag(SPV_ERROR_INVALID_ID, inst)
-               << "UConvert requires Kernel capability or extension "
+               << "Prior to SPIR-V 1.4, specialization constant operation "
+                  "UConvert requires Kernel capability or extension "
                   "SPV_AMD_gpu_shader_int16";
       }
       break;

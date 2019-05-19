@@ -238,7 +238,8 @@ TEST(Optimizer, VulkanToWebGPUSetsCorrectPasses) {
                                               "strip-debug",
                                               "strip-atomic-counter-memory",
                                               "generate-webgpu-initializers",
-                                              "legalize-vector-shuffle"};
+                                              "legalize-vector-shuffle",
+                                              "split-invalid-unreachable"};
   std::sort(registered_passes.begin(), registered_passes.end());
   std::sort(expected_passes.begin(), expected_passes.end());
 
@@ -524,7 +525,74 @@ INSTANTIATE_TEST_SUITE_P(
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
-         "legalize-vector-shuffle"}}));
+         "legalize-vector-shuffle"},
+        // Split Invalid Unreachable
+        {// input
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%uint_1 = OpConstant %uint 1\n"
+         "%uint_2 = OpConstant %uint 2\n"
+         "%void = OpTypeVoid\n"
+         "%bool = OpTypeBool\n"
+         "%7 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %7\n"
+         "%8 = OpLabel\n"
+         "OpBranch %9\n"
+         "%9 = OpLabel\n"
+         "OpLoopMerge %10 %11 None\n"
+         "OpBranch %12\n"
+         "%12 = OpLabel\n"
+         "%13 = OpSLessThan %bool %uint_1 %uint_2\n"
+         "OpSelectionMerge %11 None\n"
+         "OpBranchConditional %13 %14 %15\n"
+         "%14 = OpLabel\n"
+         "OpReturn\n"
+         "%15 = OpLabel\n"
+         "OpReturn\n"
+         "%10 = OpLabel\n"
+         "OpUnreachable\n"
+         "%11 = OpLabel\n"
+         "OpBranch %9\n"
+         "OpFunctionEnd\n",
+         // expected
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%uint = OpTypeInt 32 0\n"
+         "%uint_1 = OpConstant %uint 1\n"
+         "%uint_2 = OpConstant %uint 2\n"
+         "%void = OpTypeVoid\n"
+         "%bool = OpTypeBool\n"
+         "%7 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %7\n"
+         "%8 = OpLabel\n"
+         "OpBranch %9\n"
+         "%9 = OpLabel\n"
+         "OpLoopMerge %10 %11 None\n"
+         "OpBranch %12\n"
+         "%12 = OpLabel\n"
+         "%13 = OpSLessThan %bool %uint_1 %uint_2\n"
+         "OpSelectionMerge %16 None\n"
+         "OpBranchConditional %13 %14 %15\n"
+         "%14 = OpLabel\n"
+         "OpReturn\n"
+         "%15 = OpLabel\n"
+         "OpReturn\n"
+         "%10 = OpLabel\n"
+         "OpUnreachable\n"
+         "%16 = OpLabel\n"
+         "OpUnreachable\n"
+         "%11 = OpLabel\n"
+         "OpBranch %9\n"
+         "OpFunctionEnd\n",
+         // pass
+         "split-invalid-unreachable"}}));
 
 TEST(Optimizer, WebGPUToVulkanSetsCorrectPasses) {
   Optimizer opt(SPV_ENV_VULKAN_1_1);

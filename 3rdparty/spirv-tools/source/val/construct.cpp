@@ -19,6 +19,7 @@
 #include <unordered_set>
 
 #include "source/val/function.h"
+#include "source/val/validation_state.h"
 
 namespace spvtools {
 namespace val {
@@ -105,7 +106,8 @@ Construct::ConstructBlockSet Construct::blocks(Function* function) const {
     // A selection construct nested directly within the loop construct is also
     // at the same depth. It is valid, however, to branch directly to the
     // continue target from within the selection construct.
-    if (block_depth == header_depth && type() == ConstructType::kSelection &&
+    if (block != header && block_depth == header_depth &&
+        type() == ConstructType::kSelection &&
         block->is_type(kBlockTypeContinue)) {
       // Continued to outer construct.
       continue;
@@ -124,6 +126,73 @@ Construct::ConstructBlockSet Construct::blocks(Function* function) const {
   }
 
   return construct_blocks;
+}
+
+bool Construct::IsStructuredExit(ValidationState_t& _, BasicBlock* dest) const {
+  // Structured Exits:
+  // - Selection:
+  //  - branch to its merge
+  //  - branch to nearest enclosing loop merge or continue
+  // - Loop:
+  //  - branch to its merge
+  //  - branch to its continue
+  // - Continue:
+  //  - branch to loop header
+  //  - branch to loop merge
+  //
+  // Note: we will never see a case construct here.
+  assert(type() != ConstructType::kCase);
+  if (type() == ConstructType::kLoop) {
+    auto header = entry_block();
+    auto terminator = header->terminator();
+    auto index = terminator - &_.ordered_instructions()[0];
+    auto merge_inst = &_.ordered_instructions()[index - 1];
+    auto merge_block_id = merge_inst->GetOperandAs<uint32_t>(0u);
+    auto continue_block_id = merge_inst->GetOperandAs<uint32_t>(1u);
+    if (dest->id() == merge_block_id || dest->id() == continue_block_id) {
+      return true;
+    }
+  } else if (type() == ConstructType::kContinue) {
+    auto loop_construct = corresponding_constructs()[0];
+    auto header = loop_construct->entry_block();
+    auto terminator = header->terminator();
+    auto index = terminator - &_.ordered_instructions()[0];
+    auto merge_inst = &_.ordered_instructions()[index - 1];
+    auto merge_block_id = merge_inst->GetOperandAs<uint32_t>(0u);
+    if (dest == header || dest->id() == merge_block_id) {
+      return true;
+    }
+  } else {
+    assert(type() == ConstructType::kSelection);
+    if (dest == exit_block()) {
+      return true;
+    }
+
+    auto header = entry_block();
+    auto block = header;
+    while (block) {
+      auto terminator = block->terminator();
+      auto index = terminator - &_.ordered_instructions()[0];
+      auto merge_inst = &_.ordered_instructions()[index - 1];
+      if (merge_inst->opcode() == SpvOpLoopMerge) {
+        auto merge_target = merge_inst->GetOperandAs<uint32_t>(0u);
+        auto merge_block = merge_inst->function()->GetBlock(merge_target).first;
+        if (merge_block->dominates(*header)) {
+          block = block->immediate_dominator();
+          continue;
+        }
+
+        auto continue_target = merge_inst->GetOperandAs<uint32_t>(1u);
+        if (dest->id() == merge_target || dest->id() == continue_target) {
+          return true;
+        }
+      }
+
+      block = block->immediate_dominator();
+    }
+  }
+
+  return false;
 }
 
 }  // namespace val

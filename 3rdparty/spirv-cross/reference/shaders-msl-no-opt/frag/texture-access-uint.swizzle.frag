@@ -5,11 +5,6 @@
 
 using namespace metal;
 
-struct spvAux
-{
-    uint swizzleConst[1];
-};
-
 // Returns 2D texture coords corresponding to 1D texel buffer coords
 uint2 spvTexelBufferCoord(uint tc)
 {
@@ -136,14 +131,14 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-fragment void main0(constant spvAux& spvAuxBuffer [[buffer(30)]], texture1d<uint> tex1d [[texture(0)]], texture2d<uint> tex2d [[texture(1)]], texture3d<uint> tex3d [[texture(2)]], texturecube<uint> texCube [[texture(3)]], texture2d_array<uint> tex2dArray [[texture(4)]], texturecube_array<uint> texCubeArray [[texture(5)]], texture2d<uint> texBuffer [[texture(6)]], sampler tex1dSmplr [[sampler(0)]], sampler tex2dSmplr [[sampler(1)]], sampler tex3dSmplr [[sampler(2)]], sampler texCubeSmplr [[sampler(3)]], sampler tex2dArraySmplr [[sampler(4)]], sampler texCubeArraySmplr [[sampler(5)]])
+fragment void main0(constant uint* spvSwizzleConstants [[buffer(30)]], texture1d<uint> tex1d [[texture(0)]], texture2d<uint> tex2d [[texture(1)]], texture3d<uint> tex3d [[texture(2)]], texturecube<uint> texCube [[texture(3)]], texture2d_array<uint> tex2dArray [[texture(4)]], texturecube_array<uint> texCubeArray [[texture(5)]], texture2d<uint> texBuffer [[texture(6)]], sampler tex1dSmplr [[sampler(0)]], sampler tex2dSmplr [[sampler(1)]], sampler tex3dSmplr [[sampler(2)]], sampler texCubeSmplr [[sampler(3)]], sampler tex2dArraySmplr [[sampler(4)]], sampler texCubeArraySmplr [[sampler(5)]])
 {
-    constant uint32_t& tex1dSwzl = spvAuxBuffer.swizzleConst[0];
-    constant uint32_t& tex2dSwzl = spvAuxBuffer.swizzleConst[1];
-    constant uint32_t& tex3dSwzl = spvAuxBuffer.swizzleConst[2];
-    constant uint32_t& texCubeSwzl = spvAuxBuffer.swizzleConst[3];
-    constant uint32_t& tex2dArraySwzl = spvAuxBuffer.swizzleConst[4];
-    constant uint32_t& texCubeArraySwzl = spvAuxBuffer.swizzleConst[5];
+    constant uint32_t& tex1dSwzl = spvSwizzleConstants[0];
+    constant uint32_t& tex2dSwzl = spvSwizzleConstants[1];
+    constant uint32_t& tex3dSwzl = spvSwizzleConstants[2];
+    constant uint32_t& texCubeSwzl = spvSwizzleConstants[3];
+    constant uint32_t& tex2dArraySwzl = spvSwizzleConstants[4];
+    constant uint32_t& texCubeArraySwzl = spvSwizzleConstants[5];
     float4 c = float4(spvTextureSwizzle(tex1d.sample(tex1dSmplr, 0.0), tex1dSwzl));
     c = float4(spvTextureSwizzle(tex2d.sample(tex2dSmplr, float2(0.0)), tex2dSwzl));
     c = float4(spvTextureSwizzle(tex3d.sample(tex3dSmplr, float3(0.0)), tex3dSwzl));

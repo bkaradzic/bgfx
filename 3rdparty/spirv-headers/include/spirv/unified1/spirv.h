@@ -53,12 +53,12 @@
 
 typedef unsigned int SpvId;
 
-#define SPV_VERSION 0x10300
-#define SPV_REVISION 7
+#define SPV_VERSION 0x10400
+#define SPV_REVISION 1
 
 static const unsigned int SpvMagicNumber = 0x07230203;
-static const unsigned int SpvVersion = 0x00010300;
-static const unsigned int SpvRevision = 7;
+static const unsigned int SpvVersion = 0x00010400;
+static const unsigned int SpvRevision = 1;
 static const unsigned int SpvOpCodeMask = 0xffff;
 static const unsigned int SpvWordCountShift = 16;
 
@@ -313,6 +313,8 @@ typedef enum SpvImageOperandsShift_ {
     SpvImageOperandsMakeTexelVisibleKHRShift = 9,
     SpvImageOperandsNonPrivateTexelKHRShift = 10,
     SpvImageOperandsVolatileTexelKHRShift = 11,
+    SpvImageOperandsSignExtendShift = 12,
+    SpvImageOperandsZeroExtendShift = 13,
     SpvImageOperandsMax = 0x7fffffff,
 } SpvImageOperandsShift;
 
@@ -330,6 +332,8 @@ typedef enum SpvImageOperandsMask_ {
     SpvImageOperandsMakeTexelVisibleKHRMask = 0x00000200,
     SpvImageOperandsNonPrivateTexelKHRMask = 0x00000400,
     SpvImageOperandsVolatileTexelKHRMask = 0x00000800,
+    SpvImageOperandsSignExtendMask = 0x00001000,
+    SpvImageOperandsZeroExtendMask = 0x00002000,
 } SpvImageOperandsMask;
 
 typedef enum SpvFPFastMathModeShift_ {
@@ -410,6 +414,7 @@ typedef enum SpvDecoration_ {
     SpvDecorationNonWritable = 24,
     SpvDecorationNonReadable = 25,
     SpvDecorationUniform = 26,
+    SpvDecorationUniformId = 27,
     SpvDecorationSaturatedConversion = 28,
     SpvDecorationStream = 29,
     SpvDecorationLocation = 30,
@@ -444,8 +449,10 @@ typedef enum SpvDecoration_ {
     SpvDecorationNonUniformEXT = 5300,
     SpvDecorationRestrictPointerEXT = 5355,
     SpvDecorationAliasedPointerEXT = 5356,
+    SpvDecorationCounterBuffer = 5634,
     SpvDecorationHlslCounterBufferGOOGLE = 5634,
     SpvDecorationHlslSemanticGOOGLE = 5635,
+    SpvDecorationUserSemantic = 5635,
     SpvDecorationMax = 0x7fffffff,
 } SpvDecoration;
 
@@ -568,6 +575,11 @@ typedef enum SpvLoopControlShift_ {
     SpvLoopControlDontUnrollShift = 1,
     SpvLoopControlDependencyInfiniteShift = 2,
     SpvLoopControlDependencyLengthShift = 3,
+    SpvLoopControlMinIterationsShift = 4,
+    SpvLoopControlMaxIterationsShift = 5,
+    SpvLoopControlIterationMultipleShift = 6,
+    SpvLoopControlPeelCountShift = 7,
+    SpvLoopControlPartialCountShift = 8,
     SpvLoopControlMax = 0x7fffffff,
 } SpvLoopControlShift;
 
@@ -577,6 +589,11 @@ typedef enum SpvLoopControlMask_ {
     SpvLoopControlDontUnrollMask = 0x00000002,
     SpvLoopControlDependencyInfiniteMask = 0x00000004,
     SpvLoopControlDependencyLengthMask = 0x00000008,
+    SpvLoopControlMinIterationsMask = 0x00000010,
+    SpvLoopControlMaxIterationsMask = 0x00000020,
+    SpvLoopControlIterationMultipleMask = 0x00000040,
+    SpvLoopControlPeelCountMask = 0x00000080,
+    SpvLoopControlPartialCountMask = 0x00000100,
 } SpvLoopControlMask;
 
 typedef enum SpvFunctionControlShift_ {
@@ -820,6 +837,7 @@ typedef enum SpvCapability_ {
     SpvCapabilitySubgroupBufferBlockIOINTEL = 5569,
     SpvCapabilitySubgroupImageBlockIOINTEL = 5570,
     SpvCapabilitySubgroupImageMediaBlockIOINTEL = 5579,
+    SpvCapabilityIntegerFunctions2INTEL = 5584,
     SpvCapabilitySubgroupAvcMotionEstimationINTEL = 5696,
     SpvCapabilitySubgroupAvcMotionEstimationIntraINTEL = 5697,
     SpvCapabilitySubgroupAvcMotionEstimationChromaINTEL = 5698,
@@ -1167,6 +1185,10 @@ typedef enum SpvOp_ {
     SpvOpGroupNonUniformLogicalXor = 364,
     SpvOpGroupNonUniformQuadBroadcast = 365,
     SpvOpGroupNonUniformQuadSwap = 366,
+    SpvOpCopyLogical = 400,
+    SpvOpPtrEqual = 401,
+    SpvOpPtrNotEqual = 402,
+    SpvOpPtrDiff = 403,
     SpvOpSubgroupBallotKHR = 4421,
     SpvOpSubgroupFirstInvocationKHR = 4422,
     SpvOpSubgroupAllKHR = 4428,
@@ -1207,7 +1229,23 @@ typedef enum SpvOp_ {
     SpvOpSubgroupImageBlockWriteINTEL = 5578,
     SpvOpSubgroupImageMediaBlockReadINTEL = 5580,
     SpvOpSubgroupImageMediaBlockWriteINTEL = 5581,
+    SpvOpUCountLeadingZerosINTEL = 5585,
+    SpvOpUCountTrailingZerosINTEL = 5586,
+    SpvOpAbsISubINTEL = 5587,
+    SpvOpAbsUSubINTEL = 5588,
+    SpvOpIAddSatINTEL = 5589,
+    SpvOpUAddSatINTEL = 5590,
+    SpvOpIAverageINTEL = 5591,
+    SpvOpUAverageINTEL = 5592,
+    SpvOpIAverageRoundedINTEL = 5593,
+    SpvOpUAverageRoundedINTEL = 5594,
+    SpvOpISubSatINTEL = 5595,
+    SpvOpUSubSatINTEL = 5596,
+    SpvOpIMul32x16INTEL = 5597,
+    SpvOpUMul32x16INTEL = 5598,
+    SpvOpDecorateString = 5632,
     SpvOpDecorateStringGOOGLE = 5632,
+    SpvOpMemberDecorateString = 5633,
     SpvOpMemberDecorateStringGOOGLE = 5633,
     SpvOpVmeImageINTEL = 5699,
     SpvOpTypeVmeImageINTEL = 5700,
@@ -1675,6 +1713,10 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpGroupNonUniformLogicalXor: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupNonUniformQuadBroadcast: *hasResult = true; *hasResultType = true; break;
     case SpvOpGroupNonUniformQuadSwap: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCopyLogical: *hasResult = true; *hasResultType = true; break;
+    case SpvOpPtrEqual: *hasResult = true; *hasResultType = true; break;
+    case SpvOpPtrNotEqual: *hasResult = true; *hasResultType = true; break;
+    case SpvOpPtrDiff: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupBallotKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupFirstInvocationKHR: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAllKHR: *hasResult = true; *hasResultType = true; break;
@@ -1691,6 +1733,8 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpGroupSMaxNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case SpvOpFragmentMaskFetchAMD: *hasResult = true; *hasResultType = true; break;
     case SpvOpFragmentFetchAMD: *hasResult = true; *hasResultType = true; break;
+    case SpvOpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;
     case SpvOpReportIntersectionNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpIgnoreIntersectionNV: *hasResult = false; *hasResultType = false; break;
@@ -1698,6 +1742,11 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpTraceNV: *hasResult = false; *hasResultType = false; break;
     case SpvOpTypeAccelerationStructureNV: *hasResult = true; *hasResultType = false; break;
     case SpvOpExecuteCallableNV: *hasResult = false; *hasResultType = false; break;
+    case SpvOpTypeCooperativeMatrixNV: *hasResult = true; *hasResultType = false; break;
+    case SpvOpCooperativeMatrixLoadNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCooperativeMatrixStoreNV: *hasResult = false; *hasResultType = false; break;
+    case SpvOpCooperativeMatrixMulAddNV: *hasResult = true; *hasResultType = true; break;
+    case SpvOpCooperativeMatrixLengthNV: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupShuffleINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupShuffleDownINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupShuffleUpINTEL: *hasResult = true; *hasResultType = true; break;
@@ -1708,6 +1757,22 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpSubgroupImageBlockWriteINTEL: *hasResult = false; *hasResultType = false; break;
     case SpvOpSubgroupImageMediaBlockReadINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupImageMediaBlockWriteINTEL: *hasResult = false; *hasResultType = false; break;
+    case SpvOpUCountLeadingZerosINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUCountTrailingZerosINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpAbsISubINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpAbsUSubINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpIAddSatINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUAddSatINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpIAverageINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUAverageINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpIAverageRoundedINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUAverageRoundedINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpISubSatINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUSubSatINTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpIMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpUMul32x16INTEL: *hasResult = true; *hasResultType = true; break;
+    case SpvOpDecorateString: *hasResult = false; *hasResultType = false; break;
+    case SpvOpMemberDecorateString: *hasResult = false; *hasResultType = false; break;
     case SpvOpVmeImageINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpTypeVmeImageINTEL: *hasResult = true; *hasResultType = false; break;
     case SpvOpTypeAvcImePayloadINTEL: *hasResult = true; *hasResultType = false; break;
@@ -1826,15 +1891,6 @@ inline void SpvHasResultAndType(SpvOp opcode, bool *hasResult, bool *hasResultTy
     case SpvOpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case SpvOpSubgroupAvcSicGetInterRawSadsINTEL: *hasResult = true; *hasResultType = true; break;
-    case SpvOpDecorateStringGOOGLE: *hasResult = false; *hasResultType = false; break;
-    case SpvOpMemberDecorateStringGOOGLE: *hasResult = false; *hasResultType = false; break;
-    case SpvOpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
-    case SpvOpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
-    case SpvOpTypeCooperativeMatrixNV: *hasResult = true; *hasResultType = false; break;
-    case SpvOpCooperativeMatrixLoadNV: *hasResult = true; *hasResultType = true; break;
-    case SpvOpCooperativeMatrixStoreNV: *hasResult = false; *hasResultType = false; break;
-    case SpvOpCooperativeMatrixMulAddNV: *hasResult = true; *hasResultType = true; break;
-    case SpvOpCooperativeMatrixLengthNV: *hasResult = true; *hasResultType = true; break;
     }
 }
 #endif /* SPV_ENABLE_UTILITY_CODE */

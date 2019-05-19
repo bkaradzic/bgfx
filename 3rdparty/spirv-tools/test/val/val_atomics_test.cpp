@@ -1975,6 +1975,29 @@ TEST_F(ValidateAtomics, WebGPUQueueFamilyMemoryScopeGood) {
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
 
+TEST_F(ValidateAtomics, CompareExchangeWeakV13ValV14Good) {
+  const std::string body = R"(
+%val1 = OpAtomicCompareExchangeWeak %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
+)";
+
+  CompileSuccessfully(GenerateKernelCode(body), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+}
+
+TEST_F(ValidateAtomics, CompareExchangeWeakV14Bad) {
+  const std::string body = R"(
+%val1 = OpAtomicCompareExchangeWeak %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
+)";
+
+  CompileSuccessfully(GenerateKernelCode(body), SPV_ENV_UNIVERSAL_1_4);
+  EXPECT_EQ(SPV_ERROR_WRONG_VERSION,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "AtomicCompareExchangeWeak requires SPIR-V version 1.3 or earlier"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

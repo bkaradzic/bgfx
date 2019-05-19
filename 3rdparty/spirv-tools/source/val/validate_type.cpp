@@ -14,11 +14,10 @@
 
 // Ensures type declarations are unique unless allowed by the specification.
 
-#include "source/val/validate.h"
-
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -64,6 +63,16 @@ spv_result_t ValidateUniqueness(ValidationState_t& _, const Instruction* inst) {
            << spvOpcodeString(opcode) << " id: " << inst->id();
   }
 
+  return SPV_SUCCESS;
+}
+
+spv_result_t ValidateTypeInt(ValidationState_t& _, const Instruction* inst) {
+  const auto signedness_index = 2;
+  const auto signedness = inst->GetOperandAs<uint32_t>(signedness_index);
+  if (signedness != 0 && signedness != 1) {
+    return _.diag(SPV_ERROR_INVALID_VALUE, inst)
+           << "OpTypeInt has invalid signedness:";
+  }
   return SPV_SUCCESS;
 }
 
@@ -310,6 +319,7 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
   }
   return SPV_SUCCESS;
 }
+}  // namespace
 
 spv_result_t ValidateTypeFunction(ValidationState_t& _,
                                   const Instruction* inst) {
@@ -428,8 +438,6 @@ spv_result_t ValidateTypeCooperativeMatrixNV(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
-}  // namespace
-
 spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
   if (!spvOpcodeGeneratesType(inst->opcode()) &&
       inst->opcode() != SpvOpTypeForwardPointer) {
@@ -439,6 +447,9 @@ spv_result_t TypePass(ValidationState_t& _, const Instruction* inst) {
   if (auto error = ValidateUniqueness(_, inst)) return error;
 
   switch (inst->opcode()) {
+    case SpvOpTypeInt:
+      if (auto error = ValidateTypeInt(_, inst)) return error;
+      break;
     case SpvOpTypeVector:
       if (auto error = ValidateTypeVector(_, inst)) return error;
       break;

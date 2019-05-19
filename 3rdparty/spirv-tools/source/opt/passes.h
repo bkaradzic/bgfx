@@ -65,6 +65,7 @@
 #include "source/opt/scalar_replacement_pass.h"
 #include "source/opt/set_spec_constant_default_value_pass.h"
 #include "source/opt/simplification_pass.h"
+#include "source/opt/split_invalid_unreachable_pass.h"
 #include "source/opt/ssa_rewrite_pass.h"
 #include "source/opt/strength_reduction_pass.h"
 #include "source/opt/strip_atomic_counter_memory_pass.h"

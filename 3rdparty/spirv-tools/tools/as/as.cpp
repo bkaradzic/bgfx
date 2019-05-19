@@ -41,14 +41,14 @@ Options:
                   Numeric IDs in the binary will have the same values as in the
                   source. Non-numeric IDs are allocated by filling in the gaps,
                   starting with 1 and going up.
-  --target-env {vulkan1.0|vulkan1.1|spv1.0|spv1.1|spv1.2|spv1.3}
+  --target-env {vulkan1.0|vulkan1.1|spv1.0|spv1.1|spv1.2|spv1.3|spv1.4}
                   Use Vulkan 1.0, Vulkan 1.1, SPIR-V 1.0, SPIR-V 1.1,
-                  SPIR-V 1.2, or SPIR-V 1.3
+                  SPIR-V 1.2, SPIR-V 1.3, or SPIR-V 1.4
 )",
       argv0, argv0);
 }
 
-static const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_3;
+static const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_4;
 
 int main(int argc, char** argv) {
   const char* inFile = nullptr;
