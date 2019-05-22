@@ -200,7 +200,7 @@
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">TL;DR for simple walkthrough how to use bgfx API, see <a class="reference external" href="https://dev.to/pperon/hello-bgfx-4dka">Hello, bgfx!</a>
-tutorial.</p>
+or <a class="reference external" href="https://www.sandeepnambiar.com/getting-started-with-bgfx/">Using the bgfx library with C++ on Ubuntu</a> tutorial.</p>
 </div>
 <div class="section" id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
@@ -3013,8 +3013,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::Encoder::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1aa72e2d3343575591c2d4bfcf6e002a73"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t.VertexDeclHandle"></span><span class="target" id="structbgfx_1_1_encoder_1a7b46760f032a32aae15c8ac85eb940a5"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexDeclHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3024,7 +3024,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Vertex buffer. </li>
 <li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
-<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render. </li>
+<li><code class="docutils literal"><span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> handle for aliasing vertex buffer.</li>
 </ul>
 </dd>
 </dl>
@@ -3049,8 +3050,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::Encoder::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1a3f2a49c7879a7b56e8606ca289c367e1"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t.VertexDeclHandle"></span><span class="target" id="structbgfx_1_1_encoder_1a3d982e47da954f9dd501f9487f69cbff"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexDeclHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3060,7 +3061,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
 <li><code class="docutils literal"><span class="pre">_handle</span></code>: Dynamic vertex buffer. </li>
 <li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
-<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render. </li>
+<li><code class="docutils literal"><span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> handle for aliasing vertex buffer.</li>
 </ul>
 </dd>
 </dl>
@@ -3085,8 +3087,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t">
-<span id="bgfx::Encoder::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t"></span><span class="target" id="structbgfx_1_1_encoder_1a6dd809b31661588edb32dcf0f5d3c61b"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t16VertexDeclHandle">
+<span id="bgfx::Encoder::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t.VertexDeclHandle"></span><span class="target" id="structbgfx_1_1_encoder_1a3a868366f692a584d6e3fee1caba98e4"></span>void <code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexDeclHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="docutils">
 <dt><strong>Attention</strong></dt>
@@ -3096,7 +3098,8 @@ In graphics debugger view name will appear as: <div class="highlight-python"><di
 <li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
 <li><code class="docutils literal"><span class="pre">_tvb</span></code>: Transient vertex buffer. </li>
 <li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
-<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render. </li>
+<li><code class="docutils literal"><span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> handle for aliasing vertex buffer.</li>
 </ul>
 </dd>
 </dl>
@@ -4206,25 +4209,20 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1a4dcd99aea03680359463065f7ebbfc50"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set vertex buffer for draw primitive. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Vertex buffer. </li>
-<li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
-<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setVertexBuffer&#8221; with arguments (uint8_t, VertexBufferHandle, uint32_t, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle)
+- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
+- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle)
+- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
+- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *)
+- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t, VertexDeclHandle)
+</pre></div>
+</div>
+</div>
 <dl class="function">
 <dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle">
 <span id="bgfx::setVertexBuffer__uint8_t.DynamicVertexBufferHandle"></span><span class="target" id="namespacebgfx_1ad6b0c076f266b1b7954ddc60c2e21571"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle" title="Permalink to this definition">¶</a></dt>
@@ -4242,25 +4240,20 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t">
-<span id="bgfx::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1a05fc6ec8f48cc5aef2cd1a8edfd145f2"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set vertex buffer for draw primitive. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
-<li><code class="docutils literal"><span class="pre">_handle</span></code>: Dynamic vertex buffer. </li>
-<li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
-<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setVertexBuffer&#8221; with arguments (uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle)
+- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
+- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle)
+- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
+- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *)
+- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t, VertexDeclHandle)
+</pre></div>
+</div>
+</div>
 <dl class="class">
 <dt id="_CPPv2N4bgfx21TransientVertexBufferE">
 <span id="bgfx::TransientVertexBuffer"></span><span class="target" id="structbgfx_1_1_transient_vertex_buffer"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TransientVertexBuffer</code><a class="headerlink" href="#_CPPv2N4bgfx21TransientVertexBufferE" title="Permalink to this definition">¶</a></dt>
@@ -4328,25 +4321,20 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<dl class="function">
-<dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t">
-<span id="bgfx::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t"></span><span class="target" id="namespacebgfx_1aa9547529632951c0f1b64c327444c4f6"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set vertex buffer for draw primitive. </p>
-<p><dl class="docutils">
-<dt><strong>Attention</strong></dt>
-<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
-<dt><strong>Parameters</strong></dt>
-<dd><ul class="breatheparameterlist first last simple">
-<li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
-<li><code class="docutils literal"><span class="pre">_tvb</span></code>: Transient vertex buffer. </li>
-<li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
-<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render.</li>
-</ul>
-</dd>
-</dl>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setVertexBuffer&#8221; with arguments (uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
+Potential matches:
 </p>
-</dd></dl>
-
+<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle)
+- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
+- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle)
+- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
+- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *)
+- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t, VertexDeclHandle)
+</pre></div>
+</div>
+</div>
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setVertexCountE8uint32_t">
 <span id="bgfx::setVertexCount__uint32_t"></span><span class="target" id="namespacebgfx_1ad86de33993e8c57ee016d5af8a2c51bd"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexCount</code><span class="sig-paren">(</span>uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setVertexCountE8uint32_t" title="Permalink to this definition">¶</a></dt>
