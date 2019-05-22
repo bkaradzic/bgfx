@@ -1990,16 +1990,37 @@ creating windows.</p>
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::overrideInternal&#8221; with arguments (TextureHandle, uint16_t, uint16_t, uint8_t, TextureFormat::Enum, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint64_t">
+<span id="bgfx::overrideInternal__TextureHandle.uint16_t.uint16_t.uint8_t.TextureFormat::Enum.uint64_t"></span><span class="target" id="namespacebgfx_1a0eec7cfc413525e405a4c35e1c5fe2ce"></span>uintptr_t <code class="descclassname">bgfx::</code><code class="descname">overrideInternal</code><span class="sig-paren">(</span>TextureHandle <em>_handle</em>, uint16_t <em>_width</em>, uint16_t <em>_height</em>, uint8_t <em>_numMips</em>, <a class="reference internal" href="#_CPPv2N4bgfx13TextureFormatE" title="bgfx::TextureFormat">TextureFormat</a>::<a class="reference internal" href="#_CPPv2N4bgfx13TextureFormat4EnumE" title="bgfx::TextureFormat::Enum">Enum</a> <em>_format</em>, uint64_t <em>_flags</em> = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16overrideInternalE13TextureHandle8uint16_t8uint16_t7uint8_tN13TextureFormat4EnumE8uint64_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override internal texture by creating new texture. Previously created internal texture will released. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>It&#8217;s expected you understand some bgfx internals before you use this call.</dd>
+<dt><strong>Return</strong></dt>
+<dd>Native API pointer to texture. If result is 0, texture is not created yet from the main thread.</dd>
+<dt><strong>Warning</strong></dt>
+<dd>Must be called only on render thread.</dd>
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_override_internal_texture</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Texture handle. </li>
+<li><code class="docutils literal"><span class="pre">_width</span></code>: Width. </li>
+<li><code class="docutils literal"><span class="pre">_height</span></code>: Height. </li>
+<li><code class="docutils literal"><span class="pre">_numMips</span></code>: Number of mip-maps. </li>
+<li><code class="docutils literal"><span class="pre">_format</span></code>: Texture format. See: <code class="docutils literal"><a class="reference internal" href="#structbgfx_1_1_texture_format_1a4fa5bcce97c848cf091d954362e501e6"><span><span class="pre">TextureFormat::Enum</span></span></a></code>. </li>
+<li><code class="docutils literal"><span class="pre">_flags</span></code>: Default texture sampling mode is linear, and wrap mode is repeat.<ul>
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]</span></code> - Mirror or clamp to edge wrap mode.</li>
+<li><code class="docutils literal"><span class="pre">BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]</span></code> - Point or anisotropic sampling.</li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- uintptr_t bgfx::overrideInternal(TextureHandle, uint16_t, uint16_t, uint8_t, TextureFormat::Enum, uint64_t)
-- uintptr_t bgfx::overrideInternal(TextureHandle, uintptr_t)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 </div>
 <div class="section" id="miscellaneous">
 <h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h3>
@@ -4209,20 +4230,26 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setVertexBuffer&#8221; with arguments (uint8_t, VertexBufferHandle, uint32_t, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle">
+<span id="bgfx::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t.VertexDeclHandle"></span><span class="target" id="namespacebgfx_1a60e68f48ae2c383c703becd215eb02ed"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexDeclHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Vertex buffer. </li>
+<li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render. </li>
+<li><code class="docutils literal"><span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> handle for aliasing vertex buffer.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle)
-- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
-- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle)
-- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
-- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *)
-- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t, VertexDeclHandle)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle">
 <span id="bgfx::setVertexBuffer__uint8_t.DynamicVertexBufferHandle"></span><span class="target" id="namespacebgfx_1ad6b0c076f266b1b7954ddc60c2e21571"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle" title="Permalink to this definition">¶</a></dt>
@@ -4240,20 +4267,26 @@ Potential matches:
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setVertexBuffer&#8221; with arguments (uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle">
+<span id="bgfx::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t.VertexDeclHandle"></span><span class="target" id="namespacebgfx_1ad069da4b43469699926da11208356bbc"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexDeclHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
+<li><code class="docutils literal"><span class="pre">_handle</span></code>: Dynamic vertex buffer. </li>
+<li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render. </li>
+<li><code class="docutils literal"><span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> handle for aliasing vertex buffer.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle)
-- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
-- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle)
-- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
-- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *)
-- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t, VertexDeclHandle)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 <dl class="class">
 <dt id="_CPPv2N4bgfx21TransientVertexBufferE">
 <span id="bgfx::TransientVertexBuffer"></span><span class="target" id="structbgfx_1_1_transient_vertex_buffer"></span><em class="property">struct </em><code class="descclassname">bgfx::</code><code class="descname">TransientVertexBuffer</code><a class="headerlink" href="#_CPPv2N4bgfx21TransientVertexBufferE" title="Permalink to this definition">¶</a></dt>
@@ -4321,20 +4354,26 @@ Potential matches:
 </p>
 </dd></dl>
 
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>doxygenfunction: Unable to resolve multiple matches for function &#8220;bgfx::setVertexBuffer&#8221; with arguments (uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t) in doxygen xml output for project &#8220;bgfx&#8221; from directory: ../../.build/docs/xml.
-Potential matches:
+<dl class="function">
+<dt id="_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t16VertexDeclHandle">
+<span id="bgfx::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t.VertexDeclHandle"></span><span class="target" id="namespacebgfx_1a3fc59aef2ce4f5983994ea28f0a406a6"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexDeclHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set vertex buffer for draw primitive. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">_stream</span></code>: Vertex stream. </li>
+<li><code class="docutils literal"><span class="pre">_tvb</span></code>: Transient vertex buffer. </li>
+<li><code class="docutils literal"><span class="pre">_startVertex</span></code>: First vertex to render. </li>
+<li><code class="docutils literal"><span class="pre">_numVertices</span></code>: Number of vertices to render. </li>
+<li><code class="docutils literal"><span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_decl"><span>VertexDecl</span></a> handle for aliasing vertex buffer.</li>
+</ul>
+</dd>
+</dl>
 </p>
-<div class="last highlight-python"><div class="highlight"><pre>- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle)
-- void bgfx::setVertexBuffer(uint8_t, DynamicVertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
-- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle)
-- void bgfx::setVertexBuffer(uint8_t, VertexBufferHandle, uint32_t, uint32_t, VertexDeclHandle)
-- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *)
-- void bgfx::setVertexBuffer(uint8_t, const TransientVertexBuffer *, uint32_t, uint32_t, VertexDeclHandle)
-</pre></div>
-</div>
-</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx14setVertexCountE8uint32_t">
 <span id="bgfx::setVertexCount__uint32_t"></span><span class="target" id="namespacebgfx_1ad86de33993e8c57ee016d5af8a2c51bd"></span>void <code class="descclassname">bgfx::</code><code class="descname">setVertexCount</code><span class="sig-paren">(</span>uint32_t <em>_numVertices</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx14setVertexCountE8uint32_t" title="Permalink to this definition">¶</a></dt>
@@ -5216,6 +5255,28 @@ Potential matches:
 </div>
 <div class="section" id="vertex-buffers">
 <h3>Vertex Buffers<a class="headerlink" href="#vertex-buffers" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="_CPPv2N4bgfx16createVertexDeclERK10VertexDecl">
+<span id="bgfx::createVertexDecl__VertexDeclCR"></span><span class="target" id="namespacebgfx_1a504a53b7334c2f28b5fa5d1ad998ae84"></span>VertexDeclHandle <code class="descclassname">bgfx::</code><code class="descname">createVertexDecl</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx16createVertexDeclERK10VertexDecl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create vertex declaration. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_create_vertex_decl</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N4bgfx7destroyE16VertexDeclHandle">
+<span id="bgfx::destroy__VertexDeclHandle"></span><span class="target" id="namespacebgfx_1a35a335b7ba845ddcb3d11804bfeb55b7"></span>void <code class="descclassname">bgfx::</code><code class="descname">destroy</code><span class="sig-paren">(</span>VertexDeclHandle <em>_handle</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx7destroyE16VertexDeclHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroy vertex declaration. </p>
+<p><dl class="docutils">
+<dt><strong>Attention</strong></dt>
+<dd>C99 equivalent is <code class="docutils literal"><span class="pre">bgfx_destroy_vertex_decl</span></code>. </dd>
+</dl>
+</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="_CPPv2N4bgfx18createVertexBufferEPK6MemoryRK10VertexDecl8uint16_t">
 <span id="bgfx::createVertexBuffer__MemoryCP.VertexDeclCR.uint16_t"></span><span class="target" id="namespacebgfx_1ac65f76911ef289f1bfcf7e4d6e5dcc52"></span>VertexBufferHandle <code class="descclassname">bgfx::</code><code class="descname">createVertexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N4bgfx10VertexDeclE" title="bgfx::VertexDecl">VertexDecl</a> &amp;<em>_decl</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N4bgfx18createVertexBufferEPK6MemoryRK10VertexDecl8uint16_t" title="Permalink to this definition">¶</a></dt>
