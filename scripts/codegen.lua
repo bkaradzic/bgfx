@@ -221,7 +221,9 @@ function codegen.nameconversion(all_types, all_funcs)
 				v.cname = name
 			end
 		end
-		if cname then
+		if v.flag then
+			v.cname = "BGFX_" .. cname:upper()
+		elseif cname then
 			if v.namespace then
 				cname = camelcase_to_underscorecase(v.namespace) .. "_" .. cname
 			end
@@ -238,8 +240,9 @@ function codegen.nameconversion(all_types, all_funcs)
 		if not v.namespace then
 			if all_types[v.name] then
 				error ("Duplicate type " .. v.name)
+			elseif not v.flag then
+				all_types[v.name] = v
 			end
-			all_types[v.name] = v
 		end
 	end
 
@@ -659,6 +662,129 @@ function codegen.gen_enum_cdefine(enum)
 	}
 
 	return (cenum_temp:gsub("$(%u+)", temp))
+end
+
+local function flag_format(flag)
+	if not flag.format then
+		flag.format = "%0" .. (flag.bits // 4) .. "x"
+	end
+end
+
+function codegen.gen_flag_cdefine(flag)
+	assert(type(flag.flag) == "table", "Not a flag")
+	flag_format(flag)
+	local s = {}
+	local shift = flag.shift
+	local base = flag.base or 0
+	local cap = 1 << (flag.range or 0)
+	for index, item in ipairs(flag.flag) do
+		local name
+		if item.cname then
+			name = flag.cname .. "_" .. item.cname
+		else
+			name = flag.cname .. "_" .. camelcase_to_underscorecase(item.name):upper()
+		end
+		local value = item.value
+		if flag.const then
+			-- use value directly
+		elseif shift then
+			if value then
+				if value > 0 then
+					value = value - 1
+				end
+			else
+				value = index + base - 1
+			end
+			if value >= cap then
+				error (string.format("Out of range for %s (%d/%d)", name, value, cap))
+			end
+			value = value << shift
+		elseif #item == 0 then
+			if value then
+				if value > 0 then
+					value = 1 << (value - 1)
+				end
+			else
+				local s = index + base - 2
+				if s >= 0 then
+					value = 1 << s
+				else
+					value = 0
+				end
+			end
+		end
+
+		if value == nil then
+			if item.comment then
+				if type(item.comment) == "table" then
+					for _, c in ipairs(item.comment) do
+						s[#s+1] = "/// " .. c
+					end
+				else
+					s[#s+1] = "/// " .. item.comment
+				end
+			end
+			local sets = { "" }
+			for _, v in ipairs(item) do
+				sets[#sets+1] = flag.cname .. "_" .. camelcase_to_underscorecase(v):upper()
+			end
+			s[#s+1] = string.format("#define %s (0%s \\\n\t)\n", name, table.concat(sets, " \\\n\t| "))
+		else
+			local comment = ""
+			if item.comment then
+				comment = " //!< " .. item.comment
+			end
+			value = string.format(flag.format, value)
+			local code = string.format("#define %s %sUINT%d_C(0x%s)%s",
+				name, namealign(name, 35), flag.bits, value, comment)
+			s[#s+1] = code
+		end
+	end
+
+	local mask
+	if flag.range then
+		if flag.range == 64 then
+			mask = "ffffffffffffffff"
+		else
+			mask = string.format(flag.format, ((1 << flag.range) - 1) << shift)
+		end
+		mask = string.format("UINT%d_C(0x%s)", flag.bits, mask)
+	end
+
+	if shift then
+		local name = flag.cname .. "_SHIFT"
+		local comment = flag.desc or ""
+		local shift_align = tostring(shift)
+		shift_align = shift_align .. namealign(shift_align, #mask)
+		local comment = ""
+		if flag.desc then
+			comment = string.format(" //!< %s bit shift", flag.desc)
+		end
+		local code = string.format("#define %s %s%s%s", name, namealign(name, 35), shift_align, comment)
+		s[#s+1] = code
+	end
+	if flag.range then
+		local name = flag.cname .. "_MASK"
+		local comment = ""
+		if flag.desc then
+			comment = string.format(" //!< %s bit mask", flag.desc)
+		end
+		local code = string.format("#define %s %s%s%s", name, namealign(name, 35), mask, comment)
+		s[#s+1] = code
+	end
+
+	if flag.helper then
+		s[#s+1] = string.format(
+			"#define %s(v) ( ( (uint%d_t)(v)<<%s )&%s)",
+			flag.cname,
+			flag.bits,
+			(flag.cname .. "_SHIFT"),
+			(flag.cname .. "_MASK"))
+	end
+
+	s[#s+1] = ""
+
+	return table.concat(s, "\n")
 end
 
 local function text_with_comments(items, item, cstyle, is_classmember)
