@@ -18,6 +18,17 @@ local function camelcase_to_underscorecase(name)
 	return table.concat(tmp, "_")
 end
 
+local function to_underscorecase(name)
+	local tmp = {}
+	for v in name:gmatch "[_%u][%l%d]*" do
+		if v:byte() == 95 then	-- '_'
+			v = v:sub(2)	-- remove _
+		end
+		tmp[#tmp+1] = v
+	end
+	return table.concat(tmp, "_")
+end
+
 local function underscorecase_to_camelcase(name)
 	local tmp = {}
 	for v in name:gmatch "[^_]+" do
@@ -217,13 +228,11 @@ function codegen.nameconversion(all_types, all_funcs)
 		if cname == nil then
 			if name:match "^%u" then
 				cname = camelcase_to_underscorecase(name)
-			else
+			elseif not v.flag then
 				v.cname = name
 			end
 		end
-		if v.flag then
-			v.cname = "BGFX_" .. cname:upper()
-		elseif cname then
+		if cname and not v.flag then
 			if v.namespace then
 				cname = camelcase_to_underscorecase(v.namespace) .. "_" .. cname
 			end
@@ -673,6 +682,7 @@ end
 function codegen.gen_flag_cdefine(flag)
 	assert(type(flag.flag) == "table", "Not a flag")
 	flag_format(flag)
+	local cname = "BGFX_" .. (flag.cname or to_underscorecase(flag.name):upper())
 	local s = {}
 	local shift = flag.shift
 	local base = flag.base or 0
@@ -680,9 +690,9 @@ function codegen.gen_flag_cdefine(flag)
 	for index, item in ipairs(flag.flag) do
 		local name
 		if item.cname then
-			name = flag.cname .. "_" .. item.cname
+			name = cname .. "_" .. item.cname
 		else
-			name = flag.cname .. "_" .. camelcase_to_underscorecase(item.name):upper()
+			name = cname .. "_" .. to_underscorecase(item.name):upper()
 		end
 		local value = item.value
 		if flag.const then
@@ -726,7 +736,7 @@ function codegen.gen_flag_cdefine(flag)
 			end
 			local sets = { "" }
 			for _, v in ipairs(item) do
-				sets[#sets+1] = flag.cname .. "_" .. camelcase_to_underscorecase(v):upper()
+				sets[#sets+1] = cname .. "_" .. to_underscorecase(v):upper()
 			end
 			s[#s+1] = string.format("#define %s (0%s \\\n\t)\n", name, table.concat(sets, " \\\n\t| "))
 		else
@@ -752,7 +762,7 @@ function codegen.gen_flag_cdefine(flag)
 	end
 
 	if shift then
-		local name = flag.cname .. "_SHIFT"
+		local name = cname .. "_SHIFT"
 		local comment = flag.desc or ""
 		local shift_align = tostring(shift)
 		shift_align = shift_align .. namealign(shift_align, #mask)
@@ -764,7 +774,7 @@ function codegen.gen_flag_cdefine(flag)
 		s[#s+1] = code
 	end
 	if flag.range then
-		local name = flag.cname .. "_MASK"
+		local name = cname .. "_MASK"
 		local comment = ""
 		if flag.desc then
 			comment = string.format(" //!< %s bit mask", flag.desc)
@@ -776,10 +786,10 @@ function codegen.gen_flag_cdefine(flag)
 	if flag.helper then
 		s[#s+1] = string.format(
 			"#define %s(v) ( ( (uint%d_t)(v)<<%s )&%s)",
-			flag.cname,
+			cname,
 			flag.bits,
-			(flag.cname .. "_SHIFT"),
-			(flag.cname .. "_MASK"))
+			(cname .. "_SHIFT"),
+			(cname .. "_MASK"))
 	end
 
 	s[#s+1] = ""
