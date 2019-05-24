@@ -5,11 +5,6 @@
 
 using namespace metal;
 
-struct spvAux
-{
-    uint swizzleConst[1];
-};
-
 enum class spvSwizzle : uint
 {
     none = 0,
@@ -130,9 +125,9 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-kernel void main0(constant spvAux& spvAuxBuffer [[buffer(30)]], texture2d<float> foo [[texture(0)]], texture2d<float, access::write> bar [[texture(1)]], sampler fooSmplr [[sampler(0)]])
+kernel void main0(constant uint* spvSwizzleConstants [[buffer(30)]], texture2d<float> foo [[texture(0)]], texture2d<float, access::write> bar [[texture(1)]], sampler fooSmplr [[sampler(0)]])
 {
-    constant uint32_t& fooSwzl = spvAuxBuffer.swizzleConst[0];
+    constant uint32_t& fooSwzl = spvSwizzleConstants[0];
     float4 a = spvTextureSwizzle(foo.sample(fooSmplr, float2(1.0), level(0.0)), fooSwzl);
     bar.write(a, uint2(int2(0)));
 }

@@ -19,3 +19,4 @@
 {18, "Wine", "VKD3D Shader Compiler", "Wine VKD3D Shader Compiler"},
 {19, "Clay", "Clay Shader Compiler", "Clay Clay Shader Compiler"},
 {20, "W3C WebGPU Group", "WHLSL Shader Translator", "W3C WebGPU Group WHLSL Shader Translator"},
+{21, "Google", "Clspv", "Google Clspv"},

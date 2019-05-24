@@ -1,10 +1,5 @@
 # SPIR-V Tools
 
-[![Build status](https://ci.appveyor.com/api/projects/status/gpue87cesrx3pi0d/branch/master?svg=true)](https://ci.appveyor.com/project/Khronoswebmaster/spirv-tools/branch/master)
-<img alt="Linux" src="kokoro/img/linux.png" width="20px" height="20px" hspace="2px"/>![Linux Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_linux_release.svg)
-<img alt="MacOS" src="kokoro/img/macos.png" width="20px" height="20px" hspace="2px"/>![MacOS Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_macos_release.svg)
-<img alt="Windows" src="kokoro/img/windows.png" width="20px" height="20px" hspace="2px"/>![Windows Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_windows_release.svg)
-
 ## Overview
 
 The SPIR-V Tools project provides an API and commands for processing SPIR-V
@@ -23,6 +18,15 @@ We don't anticipate making a breaking change for existing features.
 SPIR-V is defined by the Khronos Group Inc.
 See the [SPIR-V Registry][spirv-registry] for the SPIR-V specification,
 headers, and XML registry.
+
+## Downloads
+
+[![Build status](https://ci.appveyor.com/api/projects/status/gpue87cesrx3pi0d/branch/master?svg=true)](https://ci.appveyor.com/project/Khronoswebmaster/spirv-tools/branch/master)
+<img alt="Linux" src="kokoro/img/linux.png" width="20px" height="20px" hspace="2px"/>[![Linux Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_linux_clang_release.svg)](https://storage.googleapis.com/spirv-tools/badges/build_link_linux_clang_release.html)
+<img alt="MacOS" src="kokoro/img/macos.png" width="20px" height="20px" hspace="2px"/>[![MacOS Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_macos_clang_release.svg)](https://storage.googleapis.com/spirv-tools/badges/build_link_macos_clang_release.html)
+<img alt="Windows" src="kokoro/img/windows.png" width="20px" height="20px" hspace="2px"/>[![Windows Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_windows_release.svg)](https://storage.googleapis.com/spirv-tools/badges/build_link_windows_vs2017_release.html)
+
+[More downloads](downloads.md)
 
 ## Versioning SPIRV-Tools
 

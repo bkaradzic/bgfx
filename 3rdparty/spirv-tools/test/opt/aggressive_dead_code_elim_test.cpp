@@ -6389,6 +6389,113 @@ OpFunctionEnd
   SinglePassRunAndCheck<AggressiveDCEPass>(before, before, true, true);
 }
 
+TEST_F(AggressiveDCETest, DeadInputInterfaceV13) {
+  const std::string spirv = R"(
+; CHECK: OpEntryPoint GLCompute %main "main" [[var:%\w+]]
+; CHECK: [[var]] = OpVariable
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %dead
+OpExecutionMode %main LocalSize 1 1 1
+OpName %main "main"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%ptr_input_int = OpTypePointer Input %int
+%dead = OpVariable %ptr_input_int Input
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_3);
+  SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
+TEST_F(AggressiveDCETest, DeadInputInterfaceV14) {
+  const std::string spirv = R"(
+; CHECK: OpEntryPoint GLCompute %main "main" [[var:%\w+]]
+; CHECK: [[var]] = OpVariable
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %dead
+OpExecutionMode %main LocalSize 1 1 1
+OpName %main "main"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%ptr_input_int = OpTypePointer Input %int
+%dead = OpVariable %ptr_input_int Input
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
+TEST_F(AggressiveDCETest, DeadInterfaceV14) {
+  const std::string spirv = R"(
+; CHECK-NOT: OpEntryPoint GLCompute %main "main" %
+; CHECK: OpEntryPoint GLCompute %main "main"
+; CHECK-NOT: OpVariable
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %dead
+OpExecutionMode %main LocalSize 1 1 1
+OpName %main "main"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%ptr_private_int = OpTypePointer Private %int
+%dead = OpVariable %ptr_private_int Private
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
+TEST_F(AggressiveDCETest, DeadInterfacesV14) {
+  const std::string spirv = R"(
+; CHECK: OpEntryPoint GLCompute %main "main" %live1 %live2
+; CHECK-NOT: %dead
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %live1 %dead1 %dead2 %live2
+OpExecutionMode %main LocalSize 1 1 1
+OpName %main "main"
+OpName %live1 "live1"
+OpName %live2 "live2"
+OpName %dead1 "dead1"
+OpName %dead2 "dead2"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int0 = OpConstant %int 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%live1 = OpVariable %ptr_ssbo_int StorageBuffer
+%live2 = OpVariable %ptr_ssbo_int StorageBuffer
+%dead1 = OpVariable %ptr_ssbo_int StorageBuffer
+%dead2 = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpStore %live1 %int0
+OpStore %live2 %int0
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Check that logical addressing required

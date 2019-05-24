@@ -20,6 +20,7 @@ local func_actions = {
 
 local type_actions = {
 
+	cflags    = "\n",
 	enums     = "\n",
 	cenums    = "\n",
 	structs   = "\n",
@@ -173,6 +174,12 @@ function typegen.cenums(typedef)
 	end
 end
 
+function typegen.cflags(typedef)
+	if typedef.flag then
+		return add_doxygen(typedef, codegen.gen_flag_cdefine(typedef), true)
+	end
+end
+
 function typegen.structs(typedef)
 	if typedef.struct and not typedef.namespace then
 		local methods = typedef.methods
@@ -254,6 +261,8 @@ local function codes()
 	for k, indent in pairs(type_actions) do
 		temp[k] = table.concat(temp[k], indent)
 	end
+
+	temp.version = string.format("#define BGFX_API_VERSION UINT32_C(%d)", idl._version or 0)
 
 	return temp
 end

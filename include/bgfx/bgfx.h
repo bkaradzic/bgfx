@@ -2166,9 +2166,15 @@ namespace bgfx
 	///
 	void destroy(IndexBufferHandle _handle);
 
+	/// Create vertex declaration.
+	///
+	/// @attention C99 equivalent is `bgfx_create_vertex_decl`.
 	///
 	VertexDeclHandle createVertexDecl(const VertexDecl& _decl);
 
+	/// Destroy vertex declaration.
+	///
+	/// @attention C99 equivalent is `bgfx_destroy_vertex_decl`.
 	///
 	void destroy(VertexDeclHandle _handle);
 

@@ -997,7 +997,7 @@ CODE
 #endif
 
 // Clang/GCC warnings with -Weverything
-#ifdef __clang__
+#if defined(__clang__)
 #pragma clang diagnostic ignored "-Wunknown-pragmas"        // warning : unknown warning group '-Wformat-pedantic *'        // not all warnings are known by all clang versions.. so ignoring warnings triggers new warnings on some configuration. great!
 #pragma clang diagnostic ignored "-Wold-style-cast"         // warning : use of old-style cast                              // yes, they are more terse.
 #pragma clang diagnostic ignored "-Wfloat-equal"            // warning : comparing floating point with == or != is unsafe   // storing and comparing against same constants (typically 0.0f) is ok.
@@ -2833,9 +2833,13 @@ bool ImGui::ItemAdd(const ImRect& bb, ImGuiID id, const ImRect* nav_bb_arg)
     {
         // Navigation processing runs prior to clipping early-out
         //  (a) So that NavInitRequest can be honored, for newly opened windows to select a default widget
-        //  (b) So that we can scroll up/down past clipped items. This adds a small O(N) cost to regular navigation requests unfortunately, but it is still limited to one window.
-        //      it may not scale very well for windows with ten of thousands of item, but at least NavMoveRequest is only set on user interaction, aka maximum once a frame.
-        //      We could early out with "if (is_clipped && !g.NavInitRequest) return false;" but when we wouldn't be able to reach unclipped widgets. This would work if user had explicit scrolling control (e.g. mapped on a stick)
+        //  (b) So that we can scroll up/down past clipped items. This adds a small O(N) cost to regular navigation requests 
+        //      unfortunately, but it is still limited to one window. It may not scale very well for windows with ten of 
+        //      thousands of item, but at least NavMoveRequest is only set on user interaction, aka maximum once a frame.
+        //      We could early out with "if (is_clipped && !g.NavInitRequest) return false;" but when we wouldn't be able
+        //      to reach unclipped widgets. This would work if user had explicit scrolling control (e.g. mapped on a stick).
+        // We intentionally don't check if g.NavWindow != NULL because g.NavAnyRequest should only be set when it is non null.
+        // If we crash on a NULL g.NavWindow we need to fix the bug elsewhere.
         window->DC.NavLayerActiveMaskNext |= window->DC.NavLayerCurrentMask;
         if (g.NavId == id || g.NavAnyRequest)
             if (g.NavWindow->RootWindowForNav == window->RootWindowForNav)
@@ -5461,10 +5465,6 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->ContentsRegionRect.Max.x = window->Pos.x - window->Scroll.x - window->WindowPadding.x + (window->SizeContentsExplicit.x != 0.0f ? window->SizeContentsExplicit.x : (window->Size.x - window->ScrollbarSizes.x + ImMin(window->ScrollbarSizes.x, window->WindowBorderSize)));
         window->ContentsRegionRect.Max.y = window->Pos.y - window->Scroll.y - window->WindowPadding.y + (window->SizeContentsExplicit.y != 0.0f ? window->SizeContentsExplicit.y : (window->Size.y - window->ScrollbarSizes.y + ImMin(window->ScrollbarSizes.y, window->WindowBorderSize)));
 
-        // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
-        window->OuterRectClipped = window->Rect();
-        window->OuterRectClipped.ClipWith(window->ClipRect);
-
         // Inner rectangle
         // We set this up after processing the resize grip so that our clip rectangle doesn't lag by a frame
         // Note that if our window is collapsed we will end up with an inverted (~null) clipping rectangle which is the correct behavior.
@@ -5474,13 +5474,22 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->InnerMainRect.Max.x = window->Pos.x + window->Size.x - ImMax(window->ScrollbarSizes.x, window->WindowBorderSize);
         window->InnerMainRect.Max.y = window->Pos.y + window->Size.y - ImMax(window->ScrollbarSizes.y, window->WindowBorderSize);
 
-        // Inner clipping rectangle will extend a little bit outside the work region.
+        // Outer host rectangle for drawing background and borders
+        ImRect host_rect = ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_Popup) && !window_is_child_tooltip) ? parent_window->ClipRect : viewport_rect;
+
+        // Save clipped aabb so we can access it in constant-time in FindHoveredWindow()
+        window->OuterRectClipped = window->Rect();
+        window->OuterRectClipped.ClipWith(host_rect);
+
+        // Inner work/clipping rectangle will extend a little bit outside the work region.
         // This is to allow e.g. Selectable or CollapsingHeader or some separators to cover that space.
         // Force round operator last to ensure that e.g. (int)(max.x-min.x) in user's render code produce correct result.
-        window->InnerClipRect.Min.x = ImFloor(0.5f + window->InnerMainRect.Min.x + ImMax(0.0f, ImFloor(window->WindowPadding.x * 0.5f - window->WindowBorderSize)));
-        window->InnerClipRect.Min.y = ImFloor(0.5f + window->InnerMainRect.Min.y);
-        window->InnerClipRect.Max.x = ImFloor(0.5f + window->InnerMainRect.Max.x - ImMax(0.0f, ImFloor(window->WindowPadding.x * 0.5f - window->WindowBorderSize)));
-        window->InnerClipRect.Max.y = ImFloor(0.5f + window->InnerMainRect.Max.y);
+        window->InnerWorkRect.Min.x = ImFloor(0.5f + window->InnerMainRect.Min.x + ImMax(0.0f, ImFloor(window->WindowPadding.x * 0.5f - window->WindowBorderSize)));
+        window->InnerWorkRect.Min.y = ImFloor(0.5f + window->InnerMainRect.Min.y);
+        window->InnerWorkRect.Max.x = ImFloor(0.5f + window->InnerMainRect.Max.x - ImMax(0.0f, ImFloor(window->WindowPadding.x * 0.5f - window->WindowBorderSize)));
+        window->InnerWorkRect.Max.y = ImFloor(0.5f + window->InnerMainRect.Max.y);
+        window->InnerWorkRectClipped = window->InnerWorkRect;
+        window->InnerWorkRectClipped.ClipWithFull(host_rect);
 
         // DRAWING
 
@@ -5488,10 +5497,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->DrawList->Clear();
         window->DrawList->Flags = (g.Style.AntiAliasedLines ? ImDrawListFlags_AntiAliasedLines : 0) | (g.Style.AntiAliasedFill ? ImDrawListFlags_AntiAliasedFill : 0);
         window->DrawList->PushTextureID(g.Font->ContainerAtlas->TexID);
-        if ((flags & ImGuiWindowFlags_ChildWindow) && !(flags & ImGuiWindowFlags_Popup) && !window_is_child_tooltip)
-            PushClipRect(parent_window->ClipRect.Min, parent_window->ClipRect.Max, true);
-        else
-            PushClipRect(viewport_rect.Min, viewport_rect.Max, true);
+        PushClipRect(host_rect.Min, host_rect.Max, false);
 
         // Draw modal window background (darkens what is behind them, all viewports)
         const bool dim_bg_for_modal = (flags & ImGuiWindowFlags_Modal) && window == GetFrontMostPopupModal() && window->HiddenFramesCannotSkipItems <= 0;
@@ -5609,7 +5615,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         SetCurrentWindow(window);
     }
 
-    PushClipRect(window->InnerClipRect.Min, window->InnerClipRect.Max, true);
+    PushClipRect(window->InnerWorkRectClipped.Min, window->InnerWorkRectClipped.Max, true);
 
     // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
     if (first_begin_of_the_frame)
@@ -7231,6 +7237,8 @@ void ImGui::EndPopup()
 bool ImGui::BeginPopupContextItem(const char* str_id, int mouse_button)
 {
     ImGuiWindow* window = GImGui->CurrentWindow;
+    if (window->SkipItems)
+        return false;
     ImGuiID id = str_id ? window->GetID(str_id) : window->DC.LastItemId; // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
     IM_ASSERT(id != 0);                                                  // You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)
     if (IsMouseReleased(mouse_button) && IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
@@ -8437,7 +8445,8 @@ void ImGui::NextColumn()
     columns->LineMaxY = ImMax(columns->LineMaxY, window->DC.CursorPos.y);
     if (++columns->Current < columns->Count)
     {
-        // New column (columns 1+ cancels out IndentX)
+        // Columns 1+ cancel out IndentX
+        // FIXME-COLUMNS: Unnecessary, could be locked?
         window->DC.ColumnsOffset.x = GetColumnOffset(columns->Current) - window->DC.Indent.x + g.Style.ItemSpacing.x;
         window->DrawList->ChannelsSetCurrent(columns->Current + 1);
     }
@@ -8454,7 +8463,7 @@ void ImGui::NextColumn()
     window->DC.CurrLineSize = ImVec2(0.0f, 0.0f);
     window->DC.CurrLineTextBaseOffset = 0.0f;
 
-    PushColumnClipRect(columns->Current);
+    PushColumnClipRect(columns->Current);     // FIXME-COLUMNS: Could it be an overwrite?
     PushItemWidth(GetColumnWidth() * 0.65f);  // FIXME-COLUMNS: Move on columns setup
 }
 
@@ -8645,7 +8654,7 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
     window->DC.CurrentColumns = columns;
 
     // Set state for first column
-    const float content_region_width = (window->SizeContentsExplicit.x != 0.0f) ? (window->SizeContentsExplicit.x) : (window->InnerClipRect.Max.x - window->Pos.x);
+    const float content_region_width = (window->SizeContentsExplicit.x != 0.0f) ? (window->SizeContentsExplicit.x) : (window->InnerWorkRect.Max.x - window->Pos.x);
     columns->OffMinX = window->DC.Indent.x - g.Style.ItemSpacing.x; // Lock our horizontal range
     columns->OffMaxX = ImMax(content_region_width - window->Scroll.x, columns->OffMinX + 1.0f);
     columns->HostCursorPosY = window->DC.CursorPos.y;
@@ -9526,15 +9535,17 @@ static void SettingsHandlerWindow_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandl
 #else
 #include <windows.h>
 #endif
+#elif defined(__APPLE__)
+#include <TargetConditionals.h>
 #endif
 
-// Win32 API clipboard implementation
 #if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS)
 
 #ifdef _MSC_VER
 #pragma comment(lib, "user32")
 #endif
 
+// Win32 clipboard implementation
 static const char* GetClipboardTextFn_DefaultImpl(void*)
 {
     static ImVector<char> buf_local;
@@ -9578,16 +9589,66 @@ static void SetClipboardTextFn_DefaultImpl(void*, const char* text)
     ::CloseClipboard();
 }
 
+#elif defined(__APPLE__) && TARGET_OS_OSX && !defined(IMGUI_DISABLE_OSX_FUNCTIONS)
+
+#include <Carbon/Carbon.h>  // Use old API to avoid need for separate .mm file
+static PasteboardRef main_clipboard = 0;
+
+// OSX clipboard implementation
+static void SetClipboardTextFn_DefaultImpl(void*, const char* text)
+{
+    if (!main_clipboard)
+        PasteboardCreate(kPasteboardClipboard, &main_clipboard);
+    PasteboardClear(main_clipboard);
+    CFDataRef cf_data = CFDataCreate(kCFAllocatorDefault, (const UInt8*)text, strlen(text));
+    if (cf_data)
+    {
+        PasteboardPutItemFlavor(main_clipboard, (PasteboardItemID)1, CFSTR("public.utf8-plain-text"), cf_data, 0);
+        CFRelease(cf_data);
+    }
+}
+
+static const char* GetClipboardTextFn_DefaultImpl(void*)
+{
+    if (!main_clipboard)
+        PasteboardCreate(kPasteboardClipboard, &main_clipboard);
+    PasteboardSynchronize(main_clipboard);
+
+    ItemCount item_count = 0;
+    PasteboardGetItemCount(main_clipboard, &item_count);
+    for (int i = 0; i < item_count; i++)
+    {
+        PasteboardItemID item_id = 0;
+        PasteboardGetItemIdentifier(main_clipboard, i + 1, &item_id);
+        CFArrayRef flavor_type_array = 0;
+        PasteboardCopyItemFlavors(main_clipboard, item_id, &flavor_type_array);
+        for (CFIndex j = 0, nj = CFArrayGetCount(flavor_type_array); j < nj; j++)
+        {
+            CFDataRef cf_data;
+            if (PasteboardCopyItemFlavorData(main_clipboard, item_id, CFSTR("public.utf8-plain-text"), &cf_data) == noErr)
+            {
+                static ImVector<char> clipboard_text;
+                int length = (int)CFDataGetLength(cf_data);
+                clipboard_text.resize(length + 1);
+                CFDataGetBytes(cf_data, CFRangeMake(0, length), (UInt8*)clipboard_text.Data);
+                clipboard_text[length] = 0;
+                CFRelease(cf_data);
+                return clipboard_text.Data;
+            }
+        }
+    }
+    return NULL;
+}
+
 #else
 
-// Local ImGui-only clipboard implementation, if user hasn't defined better clipboard handlers
+// Local Dear ImGui-only clipboard implementation, if user hasn't defined better clipboard handlers.
 static const char* GetClipboardTextFn_DefaultImpl(void*)
 {
     ImGuiContext& g = *GImGui;
     return g.PrivateClipboard.empty() ? NULL : g.PrivateClipboard.begin();
 }
 
-// Local ImGui-only clipboard implementation, if user hasn't defined better clipboard handlers
 static void SetClipboardTextFn_DefaultImpl(void*, const char* text)
 {
     ImGuiContext& g = *GImGui;
@@ -9601,7 +9662,7 @@ static void SetClipboardTextFn_DefaultImpl(void*, const char* text)
 #endif
 
 // Win32 API IME support (for Asian languages, etc.)
-#if defined(_WIN32) && !defined(__GNUC__) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS)
+#if defined(_WIN32) && !defined(__GNUC__) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS)
 
 #include <imm.h>
 #ifdef _MSC_VER
@@ -9641,10 +9702,10 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         return;
     }
 
-    enum { RT_OuterRect, RT_OuterRectClipped, RT_InnerMainRect, RT_InnerClipRect, RT_ContentsRegionRect, RT_ContentsFullRect };
+    enum { RT_OuterRect, RT_OuterRectClipped, RT_InnerMainRect, RT_InnerWorkRect, RT_InnerWorkRectClipped, RT_ContentsRegionRect, RT_ContentsFullRect };
     static bool show_windows_begin_order = false;
     static bool show_windows_rects = false;
-    static int  show_windows_rect_type = RT_ContentsRegionRect;
+    static int  show_windows_rect_type = RT_InnerWorkRect;
     static bool show_drawcmd_clip_rects = true;
 
     ImGuiIO& io = ImGui::GetIO();
@@ -9858,7 +9919,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         ImGui::Checkbox("Show windows rectangles", &show_windows_rects);
         ImGui::SameLine();
         ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12);
-        show_windows_rects |= ImGui::Combo("##rects_type", &show_windows_rect_type, "OuterRect\0" "OuterRectClipped\0" "InnerMainRect\0" "InnerClipRect\0" "ContentsRegionRect\0");
+        show_windows_rects |= ImGui::Combo("##rects_type", &show_windows_rect_type, "OuterRect\0" "OuterRectClipped\0" "InnerMainRect\0" "InnerWorkRect\0" "InnerWorkRectClipped\0" "ContentsRegionRect\0");
         ImGui::Checkbox("Show clipping rectangle when hovering ImDrawCmd node", &show_drawcmd_clip_rects);
         ImGui::TreePop();
     }
@@ -9877,7 +9938,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 if (show_windows_rect_type == RT_OuterRect)                 { r = window->Rect(); }
                 else if (show_windows_rect_type == RT_OuterRectClipped)     { r = window->OuterRectClipped; }
                 else if (show_windows_rect_type == RT_InnerMainRect)        { r = window->InnerMainRect; }
-                else if (show_windows_rect_type == RT_InnerClipRect)        { r = window->InnerClipRect; }
+                else if (show_windows_rect_type == RT_InnerWorkRect)        { r = window->InnerWorkRect; }
+                else if (show_windows_rect_type == RT_InnerWorkRectClipped) { r = window->InnerWorkRectClipped; }
                 else if (show_windows_rect_type == RT_ContentsRegionRect)   { r = window->ContentsRegionRect; }
                 draw_list->AddRect(r.Min, r.Max, IM_COL32(255, 0, 128, 255));
             }

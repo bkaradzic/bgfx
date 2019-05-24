@@ -616,6 +616,8 @@ static_library("spvtools_opt") {
     "source/opt/set_spec_constant_default_value_pass.h",
     "source/opt/simplification_pass.cpp",
     "source/opt/simplification_pass.h",
+    "source/opt/split_invalid_unreachable_pass.cpp",
+    "source/opt/split_invalid_unreachable_pass.h",
     "source/opt/ssa_rewrite_pass.cpp",
     "source/opt/ssa_rewrite_pass.h",
     "source/opt/strength_reduction_pass.cpp",

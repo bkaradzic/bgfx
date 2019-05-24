@@ -1459,8 +1459,18 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 			attr.push_back(join("set = ", dec.set));
 	}
 
+	bool push_constant_block = options.vulkan_semantics && var.storage == StorageClassPushConstant;
+	bool ssbo_block = var.storage == StorageClassStorageBuffer ||
+	                  (var.storage == StorageClassUniform && typeflags.get(DecorationBufferBlock));
+	bool emulated_ubo = var.storage == StorageClassPushConstant && options.emit_push_constant_as_uniform_buffer;
+	bool ubo_block = var.storage == StorageClassUniform && typeflags.get(DecorationBlock);
+
 	// GL 3.0/GLSL 1.30 is not considered legacy, but it doesn't have UBOs ...
 	bool can_use_buffer_blocks = (options.es && options.version >= 300) || (!options.es && options.version >= 140);
+
+	// pretend no UBOs when options say so
+	if (ubo_block && options.emit_uniform_buffer_as_plain_uniforms)
+		can_use_buffer_blocks = false;
 
 	bool can_use_binding;
 	if (options.es)
@@ -1477,12 +1487,6 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 
 	if (flags.get(DecorationOffset))
 		attr.push_back(join("offset = ", dec.offset));
-
-	bool push_constant_block = options.vulkan_semantics && var.storage == StorageClassPushConstant;
-	bool ssbo_block = var.storage == StorageClassStorageBuffer ||
-	                  (var.storage == StorageClassUniform && typeflags.get(DecorationBufferBlock));
-	bool emulated_ubo = var.storage == StorageClassPushConstant && options.emit_push_constant_as_uniform_buffer;
-	bool ubo_block = var.storage == StorageClassUniform && typeflags.get(DecorationBlock);
 
 	// Instead of adding explicit offsets for every element here, just assume we're using std140 or std430.
 	// If SPIR-V does not comply with either layout, we cannot really work around it.
@@ -1611,9 +1615,13 @@ void CompilerGLSL::emit_push_constant_block_glsl(const SPIRVariable &var)
 
 void CompilerGLSL::emit_buffer_block(const SPIRVariable &var)
 {
+	auto &type = get<SPIRType>(var.basetype);
+	bool ubo_block = var.storage == StorageClassUniform && has_decoration(type.self, DecorationBlock);
+
 	if (flattened_buffer_blocks.count(var.self))
 		emit_buffer_block_flattened(var);
-	else if (is_legacy() || (!options.es && options.version == 130))
+	else if (is_legacy() || (!options.es && options.version == 130) ||
+	         (ubo_block && options.emit_uniform_buffer_as_plain_uniforms))
 		emit_buffer_block_legacy(var);
 	else
 		emit_buffer_block_native(var);
@@ -5772,6 +5780,10 @@ case OpGroupNonUniform##op: \
 
 string CompilerGLSL::bitcast_glsl_op(const SPIRType &out_type, const SPIRType &in_type)
 {
+	// OpBitcast can deal with pointers.
+	if (out_type.pointer || in_type.pointer)
+		return type_to_glsl(out_type);
+
 	if (out_type.basetype == in_type.basetype)
 		return "";
 
@@ -7566,7 +7578,8 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		uint32_t result_type = ops[0];
 		uint32_t id = ops[1];
 		auto e = access_chain_internal(ops[2], &ops[3], length - 3, ACCESS_CHAIN_INDEX_IS_LITERAL_BIT, nullptr);
-		set<SPIRExpression>(id, e + ".length()", result_type, true);
+		set<SPIRExpression>(id, join(type_to_glsl(get<SPIRType>(result_type)), "(", e, ".length())"), result_type,
+		                    true);
 		break;
 	}
 
@@ -9913,7 +9926,7 @@ string CompilerGLSL::to_array_size(const SPIRType &type, uint32_t index)
 		return to_expression(size);
 	else if (size)
 		return convert_to_string(size);
-	else if (!backend.flexible_member_array_supported)
+	else if (!backend.unsized_array_supported)
 	{
 		// For runtime-sized arrays, we can work around
 		// lack of standard support for this by simply having
@@ -11832,6 +11845,9 @@ void CompilerGLSL::bitcast_to_builtin_store(uint32_t target_id, std::string &exp
 
 void CompilerGLSL::convert_non_uniform_expression(const SPIRType &type, std::string &expr)
 {
+	if (*backend.nonuniform_qualifier == '\0')
+		return;
+
 	// Handle SPV_EXT_descriptor_indexing.
 	if (type.basetype == SPIRType::Sampler || type.basetype == SPIRType::SampledImage ||
 	    type.basetype == SPIRType::Image)

@@ -72,7 +72,9 @@ Pass::Status ScalarReplacementPass::ProcessFunction(Function* function) {
 bool ScalarReplacementPass::ReplaceVariable(
     Instruction* inst, std::queue<Instruction*>* worklist) {
   std::vector<Instruction*> replacements;
-  CreateReplacementVariables(inst, &replacements);
+  if (!CreateReplacementVariables(inst, &replacements)) {
+    return false;
+  }
 
   std::vector<Instruction*> dead;
   dead.push_back(inst);
@@ -257,7 +259,7 @@ bool ScalarReplacementPass::ReplaceAccessChain(
   return true;
 }
 
-void ScalarReplacementPass::CreateReplacementVariables(
+bool ScalarReplacementPass::CreateReplacementVariables(
     Instruction* inst, std::vector<Instruction*>* replacements) {
   Instruction* type = GetStorageType(inst);
 
@@ -302,6 +304,8 @@ void ScalarReplacementPass::CreateReplacementVariables(
   }
 
   TransferAnnotations(inst, replacements);
+  return std::find(replacements->begin(), replacements->end(), nullptr) ==
+         replacements->end();
 }
 
 void ScalarReplacementPass::TransferAnnotations(
@@ -801,7 +805,9 @@ Instruction* ScalarReplacementPass::CreateNullConstant(uint32_t type_id) {
   const analysis::Constant* null_const = const_mgr->GetConstant(type, {});
   Instruction* null_inst =
       const_mgr->GetDefiningInstruction(null_const, type_id);
-  context()->UpdateDefUse(null_inst);
+  if (null_inst != nullptr) {
+    context()->UpdateDefUse(null_inst);
+  }
   return null_inst;
 }
 

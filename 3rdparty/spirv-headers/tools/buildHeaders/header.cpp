@@ -42,6 +42,7 @@
 #include <cctype>
 #include <vector>
 #include <utility>
+#include <set>
 
 #include "jsoncpp/dist/json/json.h"
 
@@ -68,9 +69,9 @@ namespace {
         TPrinter();
 
         static const int         DocMagicNumber = 0x07230203;
-        static const int         DocVersion     = 0x00010300;
-        static const int         DocRevision    = 7;
-        #define DocRevisionString                "7"
+        static const int         DocVersion     = 0x00010400;
+        static const int         DocRevision    = 1;
+        #define DocRevisionString                "1"
         static const std::string DocCopyright;
         static const std::string DocComment1;
         static const std::string DocComment2;
@@ -347,7 +348,7 @@ namespace {
                 bool printMax = (style != enumMask && maxEnum.size() > 0);
 
                 for (const auto& v : sorted)
-                    out << enumFmt(opPrefix, v, style, !printMax && v.first == sorted.back().first);
+                    out << enumFmt(opPrefix, v, style, !printMax && v.second == sorted.back().second);
 
                 if (printMax)
                     out << maxEnum;
@@ -503,6 +504,8 @@ namespace {
         {
             const Json::Value& enums = spvRoot["spv"]["enum"];
 
+            std::set<unsigned> seenValues;
+
             for (auto opClass = enums.begin(); opClass != enums.end(); ++opClass) {
                 const auto opName   = (*opClass)["Name"].asString();
                 if (opName != "Op") {
@@ -516,6 +519,14 @@ namespace {
                 out << "    default: /* unknown opcode */ break;" << std::endl;
 
                 for (auto& inst : spv::InstructionDesc) {
+
+                    // Filter out duplicate enum values, which would break the switch statement.
+                    // These are probably just extension enums promoted to core.
+                    if (seenValues.find(inst.value) != seenValues.end()) {
+                        continue;
+                    }
+                    seenValues.insert(inst.value);
+
                     std::string name = inst.name;
                     out << "    case " << fmtEnumUse("Op", name) << ": *hasResult = " << (inst.hasResult() ? "true" : "false") << "; *hasResultType = " << (inst.hasType() ? "true" : "false") << "; break;" << std::endl;
                 }

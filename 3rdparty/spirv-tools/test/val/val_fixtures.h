@@ -21,6 +21,7 @@
 #include <string>
 
 #include "source/val/validation_state.h"
+#include "spirv-tools/libspirv.h"
 #include "test/test_fixture.h"
 #include "test/unit_spirv.h"
 
@@ -36,6 +37,11 @@ class ValidateBase : public ::testing::Test,
 
   // Returns the a spv_const_binary struct
   spv_const_binary get_const_binary();
+
+  // Assembles the given SPIR-V text, checks that it fails to assemble,
+  // and returns resulting diagnostic.  No internal state is updated.
+  std::string CompileFailure(std::string code,
+                             spv_target_env env = SPV_ENV_UNIVERSAL_1_0);
 
   // Checks that 'code' is valid SPIR-V text representation and stores the
   // binary version for further method calls.
@@ -101,16 +107,30 @@ void ValidateBase<T>::TearDown() {
 }
 
 template <typename T>
+std::string ValidateBase<T>::CompileFailure(std::string code,
+                                            spv_target_env env) {
+  spv_diagnostic diagnostic = nullptr;
+  EXPECT_NE(SPV_SUCCESS,
+            spvTextToBinary(ScopedContext(env).context, code.c_str(),
+                            code.size(), &binary_, &diagnostic));
+  std::string result(diagnostic->error);
+  spvDiagnosticDestroy(diagnostic);
+  return result;
+}
+
+template <typename T>
 void ValidateBase<T>::CompileSuccessfully(std::string code,
                                           spv_target_env env) {
   DestroyBinary();
   spv_diagnostic diagnostic = nullptr;
-  ASSERT_EQ(SPV_SUCCESS,
-            spvTextToBinary(ScopedContext(env).context, code.c_str(),
-                            code.size(), &binary_, &diagnostic))
+  ScopedContext context(env);
+  auto status = spvTextToBinary(context.context, code.c_str(), code.size(),
+                                &binary_, &diagnostic);
+  EXPECT_EQ(SPV_SUCCESS, status)
       << "ERROR: " << diagnostic->error
       << "\nSPIR-V could not be compiled into binary:\n"
       << code;
+  ASSERT_EQ(SPV_SUCCESS, status);
   spvDiagnosticDestroy(diagnostic);
 }
 

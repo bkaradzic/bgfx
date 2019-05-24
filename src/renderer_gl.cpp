@@ -3806,7 +3806,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						m_clearQuadDepth = infoClearDepth->m_handle;
 				}
 
-				float mrtClearDepth[4] = { _clear.m_depth * 2.0f - 1.0f };
+				float mrtClearDepth[4] = { g_caps.homogeneousDepth ? (_clear.m_depth * 2.0f - 1.0f) : _clear.m_depth };
 				updateUniform(m_clearQuadDepth.idx, mrtClearDepth, sizeof(float)*4);
 
 				float mrtClearColor[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS][4];

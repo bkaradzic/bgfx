@@ -483,7 +483,17 @@ bool Instruction::IsFoldableByFoldScalar() const {
 
 bool Instruction::IsFloatingPointFoldingAllowed() const {
   // TODO: Add the rules for kernels.  For now it will be pessimistic.
-  if (!context_->get_feature_mgr()->HasCapability(SpvCapabilityShader)) {
+  // For now, do not support capabilities introduced by SPV_KHR_float_controls.
+  if (!context_->get_feature_mgr()->HasCapability(SpvCapabilityShader) ||
+      context_->get_feature_mgr()->HasCapability(SpvCapabilityDenormPreserve) ||
+      context_->get_feature_mgr()->HasCapability(
+          SpvCapabilityDenormFlushToZero) ||
+      context_->get_feature_mgr()->HasCapability(
+          SpvCapabilitySignedZeroInfNanPreserve) ||
+      context_->get_feature_mgr()->HasCapability(
+          SpvCapabilityRoundingModeRTZ) ||
+      context_->get_feature_mgr()->HasCapability(
+          SpvCapabilityRoundingModeRTE)) {
     return false;
   }
 

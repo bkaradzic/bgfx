@@ -1,13 +1,22 @@
 Revision history for SPIRV-Tools
 
-v2019.3-dev 2019-04-03
+v2019.4-dev 2019-05-15
+ - Start v2019.4-dev
+
+v2019.3 2019-05-14
  - General:
-   - Updated Python scripts to work for both Python 2 and Python 3.
+   - Require Python 3 since Python 2 will out of service soon.
    - Add a continuous test that does memory checks using the address sanitizer.
+   - Fix the build files so the SPIRV_USE_SANITIZER=address build works.
+   - Packaging top of tree build artifacts again.
+   - Added support for SPIR-V 1.4. (#2550)
  - Optimizer
    - Remove duplicates from list of interface IDs in OpEntryPoint instruction (#2449)
    - Bindless Validation: Descriptor Initialization Check (#2419)
    - Add option to validate after each pass (#2462)
+   - Add legalization pass to fix mismatched pointer (#2430, #2535)
+   - Add error messages when the input contains unknown instructions. (#2487)
+   - Add pass to convert from WebGPU Spir-V to Vulkan Spir-V and back. (#2495)
    Fixes:
    - #2412: Dead memeber elimination should not change input and output variables.
    - #2405: Fix OpDot folding of half float vectors.
@@ -18,6 +27,8 @@ v2019.3-dev 2019-04-03
    - #2456: Handle dead infinite loops in DCE.
    - #2458: Handle variable pointer in some optimizations.
    - #2452: Fix dead branch elimination to handle unreachable blocks better.
+   - #2528: Fix undefined bit shift in sroa.
+   - #2539: Change implementation of post order CFG traversal.
  - Validator
    - Add validation of storage classes for WebGPU (#2446)
    - Add validation for ExecutionMode in WebGPU (#2443)
@@ -32,6 +43,12 @@ v2019.3-dev 2019-04-03
    - Handle function decls in Structured CFG analysis (#2474)
    - Validate that OpUnreacahble is not statically reachable (#2473)
    - Add pass to generate needed initializers for WebGPU (#2481)
+   - Allow images without format for OpenCL. (#2470)
+   - Remove unreachable block validation (#2525)
+   - Reduce runtime of array layout checks (#2534)
+   - Add validation specific to OpExecutionModeId (#2536)
+   - Validate sign of int types. (#2549)
+   - VK_KHR_uniform_buffer_standard_layout validation (#2562)
    Fixes:
    - #2439: Add missing DepthGreater case to Fragment only check.
    - #2168: Disallow BufferBlock on StorageBuffer variables for Vulkan.
@@ -42,6 +59,7 @@ v2019.3-dev 2019-04-03
    - Allows passing options to the validator. (#2401)
    - Improve reducer algorithm and other changes (#2472)
    - Add Pass to remove selections (#2485)
+   - Add passes to simplify branches (#2507)
    Fixes:
    - #2478: fix loop to selection pass for loops with combined header/continue block
 

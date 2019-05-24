@@ -81,7 +81,7 @@ def main():
         print('{}: error: {} does not exist'.format(PROG, args.library))
         sys.exit(1)
 
-    if os.name is 'posix':
+    if os.name == 'posix':
         status = check_library(args.library)
         sys.exit(status)
     else:

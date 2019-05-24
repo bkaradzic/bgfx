@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/val/basic_block.h"
 #include "source/val/construct.h"
@@ -146,6 +147,30 @@ spv_result_t CountInstructions(void* user_data,
   return SPV_SUCCESS;
 }
 
+spv_result_t setHeader(void* user_data, spv_endianness_t, uint32_t,
+                       uint32_t version, uint32_t generator, uint32_t id_bound,
+                       uint32_t) {
+  ValidationState_t& vstate =
+      *(reinterpret_cast<ValidationState_t*>(user_data));
+  vstate.setIdBound(id_bound);
+  vstate.setGenerator(generator);
+  vstate.setVersion(version);
+
+  return SPV_SUCCESS;
+}
+
+// Add features based on SPIR-V core version number.
+void UpdateFeaturesBasedOnSpirvVersion(ValidationState_t::Feature* features,
+                                       uint32_t version) {
+  assert(features);
+  if (version >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+    features->select_between_composites = true;
+    features->copy_memory_permits_two_memory_accesses = true;
+    features->uconvert_spec_constant_op = true;
+    features->nonwritable_var_in_function_or_private = true;
+  }
+}
+
 }  // namespace
 
 ValidationState_t::ValidationState_t(const spv_const_context ctx,
@@ -205,11 +230,12 @@ ValidationState_t::ValidationState_t(const spv_const_context ctx,
     spv_context_t hijacked_context = *ctx;
     hijacked_context.consumer = [](spv_message_level_t, const char*,
                                    const spv_position_t&, const char*) {};
-    spvBinaryParse(&hijacked_context, this, words, num_words,
-                   /* parsed_header = */ nullptr, CountInstructions,
+    spvBinaryParse(&hijacked_context, this, words, num_words, setHeader,
+                   CountInstructions,
                    /* diagnostic = */ nullptr);
     preallocateStorage();
   }
+  UpdateFeaturesBasedOnSpirvVersion(&features_, version_);
 
   friendly_mapper_ = spvtools::MakeUnique<spvtools::FriendlyNameMapper>(
       context_, words_, num_words_);
@@ -447,7 +473,7 @@ void ValidationState_t::set_addressing_model(SpvAddressingModel am) {
       pointer_size_and_alignment_ = 4;
       break;
     default:
-      // fall through
+    // fall through
     case SpvAddressingModelPhysical64:
     case SpvAddressingModelPhysicalStorageBuffer64EXT:
       pointer_size_and_alignment_ = 8;
@@ -1107,6 +1133,78 @@ std::string ValidationState_t::Disassemble(const uint32_t* words,
 
   return spvInstructionBinaryToText(context()->target_env, words, num_words,
                                     words_, num_words_, disassembly_options);
+}
+
+bool ValidationState_t::LogicallyMatch(const Instruction* lhs,
+                                       const Instruction* rhs,
+                                       bool check_decorations) {
+  if (lhs->opcode() != rhs->opcode()) {
+    return false;
+  }
+
+  if (check_decorations) {
+    const auto& dec_a = id_decorations(lhs->id());
+    const auto& dec_b = id_decorations(rhs->id());
+
+    for (const auto& dec : dec_b) {
+      if (std::find(dec_a.begin(), dec_a.end(), dec) == dec_a.end()) {
+        return false;
+      }
+    }
+  }
+
+  if (lhs->opcode() == SpvOpTypeArray) {
+    // Size operands must match.
+    if (lhs->GetOperandAs<uint32_t>(2u) != rhs->GetOperandAs<uint32_t>(2u)) {
+      return false;
+    }
+
+    // Elements must match or logically match.
+    const auto lhs_ele_id = lhs->GetOperandAs<uint32_t>(1u);
+    const auto rhs_ele_id = rhs->GetOperandAs<uint32_t>(1u);
+    if (lhs_ele_id == rhs_ele_id) {
+      return true;
+    }
+
+    const auto lhs_ele = FindDef(lhs_ele_id);
+    const auto rhs_ele = FindDef(rhs_ele_id);
+    if (!lhs_ele || !rhs_ele) {
+      return false;
+    }
+    return LogicallyMatch(lhs_ele, rhs_ele, check_decorations);
+  } else if (lhs->opcode() == SpvOpTypeStruct) {
+    // Number of elements must match.
+    if (lhs->operands().size() != rhs->operands().size()) {
+      return false;
+    }
+
+    for (size_t i = 1u; i < lhs->operands().size(); ++i) {
+      const auto lhs_ele_id = lhs->GetOperandAs<uint32_t>(i);
+      const auto rhs_ele_id = rhs->GetOperandAs<uint32_t>(i);
+      // Elements must match or logically match.
+      if (lhs_ele_id == rhs_ele_id) {
+        continue;
+      }
+
+      const auto lhs_ele = FindDef(lhs_ele_id);
+      const auto rhs_ele = FindDef(rhs_ele_id);
+      if (!lhs_ele || !rhs_ele) {
+        return false;
+      }
+
+      if (!LogicallyMatch(lhs_ele, rhs_ele, check_decorations)) {
+        return false;
+      }
+    }
+
+    // All checks passed.
+    return true;
+  }
+
+  // No other opcodes are acceptable at this point. Arrays and structs are
+  // caught above and if they're elements are not arrays or structs they are
+  // required to match exactly.
+  return false;
 }
 
 }  // namespace val

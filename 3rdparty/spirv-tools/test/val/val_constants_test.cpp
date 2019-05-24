@@ -199,6 +199,60 @@ INSTANTIATE_TEST_SUITE_P(
     }));
 
 INSTANTIATE_TEST_SUITE_P(
+    UConvert, ValidateConstantOp,
+    ValuesIn(std::vector<ConstantOpCase>{
+        // TODO(dneto): Conversions must change width.
+        {SPV_ENV_UNIVERSAL_1_0,
+         kKernelPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+        {SPV_ENV_UNIVERSAL_1_1,
+         kKernelPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+        {SPV_ENV_UNIVERSAL_1_3,
+         kKernelPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+        {SPV_ENV_UNIVERSAL_1_3,
+         kKernelPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+        {SPV_ENV_UNIVERSAL_1_4,
+         kKernelPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+        {SPV_ENV_UNIVERSAL_1_0,
+         kShaderPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         false,
+         "Prior to SPIR-V 1.4, specialization constant operation "
+         "UConvert requires Kernel capability"},
+        {SPV_ENV_UNIVERSAL_1_1,
+         kShaderPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         false,
+         "Prior to SPIR-V 1.4, specialization constant operation "
+         "UConvert requires Kernel capability"},
+        {SPV_ENV_UNIVERSAL_1_3,
+         kShaderPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         false,
+         "Prior to SPIR-V 1.4, specialization constant operation "
+         "UConvert requires Kernel capability"},
+        {SPV_ENV_UNIVERSAL_1_3,
+         kShaderPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         false,
+         "Prior to SPIR-V 1.4, specialization constant operation "
+         "UConvert requires Kernel capability"},
+        {SPV_ENV_UNIVERSAL_1_4,
+         kShaderPreamble kBasicTypes
+         "%v = OpSpecConstantOp %uint UConvert %uint_0",
+         true, ""},
+    }));
+
+INSTANTIATE_TEST_SUITE_P(
     KernelInKernel, ValidateConstantOp,
     ValuesIn(std::vector<ConstantOpCase>{
         // TODO(dneto): Conversions must change width.
@@ -293,6 +347,25 @@ INSTANTIATE_TEST_SUITE_P(
          "%v = OpSpecConstantOp %uint UConvert %uint_0",
          true, ""},
     }));
+
+TEST_F(ValidateConstant, SpecConstantUConvert1p3Binary1p4EnvBad) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%int = OpTypeInt 32 0
+%int0 = OpConstant %int 0
+%const = OpSpecConstantOp %int UConvert %int0
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Prior to SPIR-V 1.4, specialization constant operation UConvert "
+          "requires Kernel capability or extension SPV_AMD_gpu_shader_int16"));
+}
 
 }  // namespace
 }  // namespace val

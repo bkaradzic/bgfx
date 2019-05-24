@@ -513,6 +513,24 @@ spv_result_t ValidateVectorShuffle(ValidationState_t& _,
   return SPV_SUCCESS;
 }
 
+spv_result_t ValidateCopyLogical(ValidationState_t& _,
+                                 const Instruction* inst) {
+  const auto result_type = _.FindDef(inst->type_id());
+  const auto source = _.FindDef(inst->GetOperandAs<uint32_t>(2u));
+  const auto source_type = _.FindDef(source->type_id());
+  if (!source_type || !result_type || source_type == result_type) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Result Type must not equal the Operand type";
+  }
+
+  if (!_.LogicallyMatch(source_type, result_type, false)) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Result Type does not logically match the Operand type";
+  }
+
+  return SPV_SUCCESS;
+}
+
 }  // anonymous namespace
 
 // Validates correctness of composite instructions.
@@ -534,6 +552,8 @@ spv_result_t CompositesPass(ValidationState_t& _, const Instruction* inst) {
       return ValidateCopyObject(_, inst);
     case SpvOpTranspose:
       return ValidateTranspose(_, inst);
+    case SpvOpCopyLogical:
+      return ValidateCopyLogical(_, inst);
     default:
       break;
   }

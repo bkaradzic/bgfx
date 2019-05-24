@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include <algorithm>
 #include <cassert>
 #include <string>
@@ -25,8 +23,10 @@
 
 #include "source/diagnostic.h"
 #include "source/opcode.h"
+#include "source/spirv_constant.h"
 #include "source/spirv_target_env.h"
 #include "source/spirv_validator_options.h"
+#include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -384,6 +384,10 @@ spv_result_t checkLayout(uint32_t struct_id, const char* storage_class_str,
                          ValidationState_t& vstate) {
   if (vstate.options()->skip_block_layout) return SPV_SUCCESS;
 
+  // blockRules are the same as bufferBlock rules if the uniform buffer
+  // standard layout extension is being used.
+  if (vstate.options()->uniform_buffer_standard_layout) blockRules = false;
+
   // Relaxed layout and scalar layout can both be in effect at the same time.
   // For example, relaxed layout is implied by Vulkan 1.1.  But scalar layout
   // is more permissive than relaxed layout.
@@ -684,6 +688,7 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
     int num_builtin_inputs = 0;
     int num_builtin_outputs = 0;
     for (const auto& desc : descs) {
+      std::unordered_set<Instruction*> seen_vars;
       for (auto interface : desc.interfaces) {
         Instruction* var_instr = vstate.FindDef(interface);
         if (!var_instr || SpvOpVariable != var_instr->opcode()) {
@@ -694,14 +699,30 @@ spv_result_t CheckDecorationsOfEntryPoints(ValidationState_t& vstate) {
         }
         const SpvStorageClass storage_class =
             var_instr->GetOperandAs<SpvStorageClass>(2);
-        if (storage_class != SpvStorageClassInput &&
-            storage_class != SpvStorageClassOutput) {
-          return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
-                 << "OpEntryPoint interfaces must be OpVariables with "
-                    "Storage Class of Input(1) or Output(3). Found Storage "
-                    "Class "
-                 << storage_class << " for Entry Point id " << entry_point
-                 << ".";
+        if (vstate.version() >= SPV_SPIRV_VERSION_WORD(1, 4)) {
+          // Starting in 1.4, OpEntryPoint must list all global variables
+          // it statically uses and those interfaces must be unique.
+          if (storage_class == SpvStorageClassFunction) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
+                   << "OpEntryPoint interfaces should only list global "
+                      "variables";
+          }
+
+          if (!seen_vars.insert(var_instr).second) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
+                   << "Non-unique OpEntryPoint interface "
+                   << vstate.getIdName(interface) << " is disallowed";
+          }
+        } else {
+          if (storage_class != SpvStorageClassInput &&
+              storage_class != SpvStorageClassOutput) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, var_instr)
+                   << "OpEntryPoint interfaces must be OpVariables with "
+                      "Storage Class of Input(1) or Output(3). Found Storage "
+                      "Class "
+                   << storage_class << " for Entry Point id " << entry_point
+                   << ".";
+          }
         }
 
         const uint32_t ptr_id = var_instr->word(1);
@@ -964,10 +985,12 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
             vstate.RegisterPointerToUniformBlock(ptrInst->id());
             vstate.RegisterStructForUniformBlock(id);
           }
-          if ((uniform && bufferDeco) || (storage_buffer && blockDeco)) {
+          if ((uniform && bufferDeco) ||
+              ((storage_buffer || phys_storage_buffer) && blockDeco)) {
             vstate.RegisterPointerToStorageBuffer(ptrInst->id());
             vstate.RegisterStructForStorageBuffer(id);
           }
+
           if (blockRules || bufferRules) {
             const char* deco_str = blockDeco ? "Block" : "BufferBlock";
             spv_result_t recursive_status = SPV_SUCCESS;
@@ -1257,34 +1280,51 @@ spv_result_t CheckNonWritableDecoration(ValidationState_t& vstate,
   if (decoration.struct_member_index() == Decoration::kInvalidMember) {
     // The target must be a memory object declaration.
     // First, it must be a variable or function parameter.
-    if (inst.opcode() != SpvOpVariable &&
-        inst.opcode() != SpvOpFunctionParameter) {
+    const auto opcode = inst.opcode();
+    const auto type_id = inst.type_id();
+    if (opcode != SpvOpVariable && opcode != SpvOpFunctionParameter) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "Target of NonWritable decoration must be a memory object "
                 "declaration (a variable or a function parameter)";
     }
-    // Second, it must point to a UBO, SSBO, or storage image.
-    const auto type_id = inst.type_id();
-    if (!vstate.IsPointerToUniformBlock(type_id) &&
-        !vstate.IsPointerToStorageBuffer(type_id) &&
-        !vstate.IsPointerToStorageImage(type_id)) {
+    const auto var_storage_class = opcode == SpvOpVariable
+                                       ? inst.GetOperandAs<SpvStorageClass>(2)
+                                       : SpvStorageClassMax;
+    if ((var_storage_class == SpvStorageClassFunction ||
+         var_storage_class == SpvStorageClassPrivate) &&
+        vstate.features().nonwritable_var_in_function_or_private) {
+      // New permitted feature in SPIR-V 1.4.
+    } else if (
+        // It may point to a UBO, SSBO, or storage image.
+        vstate.IsPointerToUniformBlock(type_id) ||
+        vstate.IsPointerToStorageBuffer(type_id) ||
+        vstate.IsPointerToStorageImage(type_id)) {
+    } else {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
              << "Target of NonWritable decoration is invalid: must point to a "
-                "storage image, uniform block, or storage buffer";
+                "storage image, uniform block, "
+             << (vstate.features().nonwritable_var_in_function_or_private
+                     ? "storage buffer, or variable in Private or Function "
+                       "storage class"
+                     : "or storage buffer");
     }
   }
 
   return SPV_SUCCESS;
 }
 
-// Returns SPV_SUCCESS if validation rules are satisfied for Uniform
-// decorations. Otherwise emits a diagnostic and returns something other than
-// SPV_SUCCESS. Assumes each decoration on a group has been propagated down to
-// the group members.
+// Returns SPV_SUCCESS if validation rules are satisfied for Uniform or
+// UniformId decorations. Otherwise emits a diagnostic and returns something
+// other than SPV_SUCCESS. Assumes each decoration on a group has been
+// propagated down to the group members.  The |inst| parameter is the object
+// being decorated.
 spv_result_t CheckUniformDecoration(ValidationState_t& vstate,
                                     const Instruction& inst,
-                                    const Decoration&) {
-  // Uniform must decorate an "object"
+                                    const Decoration& decoration) {
+  const char* const dec_name =
+      decoration.dec_type() == SpvDecorationUniform ? "Uniform" : "UniformId";
+
+  // Uniform or UniformId must decorate an "object"
   //  - has a result ID
   //  - is an instantiation of a non-void type.  So it has a type ID, and that
   //  type is not void.
@@ -1293,19 +1333,33 @@ spv_result_t CheckUniformDecoration(ValidationState_t& vstate,
 
   if (inst.type_id() == 0) {
     return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
-           << "Uniform decoration applied to a non-object";
+           << dec_name << " decoration applied to a non-object";
   }
   if (Instruction* type_inst = vstate.FindDef(inst.type_id())) {
     if (type_inst->opcode() == SpvOpTypeVoid) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
-             << "Uniform decoration applied to a value with void type";
+             << dec_name << " decoration applied to a value with void type";
     }
   } else {
     // We might never get here because this would have been rejected earlier in
     // the flow.
     return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
-           << "Uniform decoration applied to an object with invalid type";
+           << dec_name << " decoration applied to an object with invalid type";
   }
+
+  // Use of Uniform with OpDecorate is checked elsewhere.
+  // Use of UniformId with OpDecorateId is checked elsewhere.
+
+  if (decoration.dec_type() == SpvDecorationUniformId) {
+    assert(decoration.params().size() == 1 &&
+           "Grammar ensures UniformId has one parameter");
+
+    // The scope id is an execution scope.
+    if (auto error =
+            ValidateExecutionScope(vstate, &inst, decoration.params()[0]))
+      return error;
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -1365,7 +1419,6 @@ spv_result_t CheckDecorationsFromDecoration(ValidationState_t& vstate) {
     // been propagated down to the group members.
     if (inst->opcode() == SpvOpDecorationGroup) continue;
 
-    // Validates FPRoundingMode decoration
     for (const auto& decoration : decorations) {
       switch (decoration.dec_type()) {
         case SpvDecorationFPRoundingMode:
@@ -1376,6 +1429,7 @@ spv_result_t CheckDecorationsFromDecoration(ValidationState_t& vstate) {
           PASS_OR_BAIL(CheckNonWritableDecoration(vstate, *inst, decoration));
           break;
         case SpvDecorationUniform:
+        case SpvDecorationUniformId:
           PASS_OR_BAIL(CheckUniformDecoration(vstate, *inst, decoration));
           break;
         case SpvDecorationNoSignedWrap:

@@ -4217,7 +4217,7 @@ Compiler::PhysicalStorageBufferPointerHandler::PhysicalStorageBufferPointerHandl
 
 bool Compiler::PhysicalStorageBufferPointerHandler::handle(Op op, const uint32_t *args, uint32_t)
 {
-	if (op == OpConvertUToPtr)
+	if (op == OpConvertUToPtr || op == OpBitcast)
 	{
 		auto &type = compiler.get<SPIRType>(args[0]);
 		if (type.storage == StorageClassPhysicalStorageBufferEXT && type.pointer && type.pointer_depth == 1)

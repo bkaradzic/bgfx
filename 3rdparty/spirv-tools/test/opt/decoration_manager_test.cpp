@@ -709,8 +709,8 @@ OpDecorate %1 Aliased
   EXPECT_THAT(GetErrorMessage(), "");
 
   std::string expected_decorations =
-      R"(OpDecorateStringGOOGLE %5 HlslSemanticGOOGLE "blah"
-OpDecorateId %5 HlslCounterBufferGOOGLE %2
+      R"(OpDecorateString %5 UserSemantic "blah"
+OpDecorateId %5 CounterBuffer %2
 OpDecorate %5 Aliased
 )";
   EXPECT_THAT(ToText(decorations), expected_decorations);
@@ -720,11 +720,11 @@ OpCapability Linkage
 OpExtension "SPV_GOOGLE_hlsl_functionality1"
 OpExtension "SPV_GOOGLE_decorate_string"
 OpMemoryModel Logical GLSL450
-OpDecorateStringGOOGLE %1 HlslSemanticGOOGLE "blah"
-OpDecorateId %1 HlslCounterBufferGOOGLE %2
+OpDecorateString %1 UserSemantic "blah"
+OpDecorateId %1 CounterBuffer %2
 OpDecorate %1 Aliased
-OpDecorateStringGOOGLE %5 HlslSemanticGOOGLE "blah"
-OpDecorateId %5 HlslCounterBufferGOOGLE %2
+OpDecorateString %5 UserSemantic "blah"
+OpDecorateId %5 CounterBuffer %2
 OpDecorate %5 Aliased
 %3 = OpTypeInt 32 0
 %4 = OpTypePointer Uniform %3

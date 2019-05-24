@@ -14,10 +14,9 @@
 
 #include "source/val/validate.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
-
-#include <algorithm>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -51,21 +50,6 @@ static uint32_t kDefaultMaxNumOfWarnings = 1;
 namespace spvtools {
 namespace val {
 namespace {
-
-// TODO(umar): Validate header
-// TODO(umar): The binary parser validates the magic word, and the length of the
-// header, but nothing else.
-spv_result_t setHeader(void* user_data, spv_endianness_t, uint32_t,
-                       uint32_t version, uint32_t generator, uint32_t id_bound,
-                       uint32_t) {
-  // Record the ID bound so that the validator can ensure no ID is out of bound.
-  ValidationState_t& _ = *(reinterpret_cast<ValidationState_t*>(user_data));
-  _.setIdBound(id_bound);
-  _.setGenerator(generator);
-  _.setVersion(version);
-
-  return SPV_SUCCESS;
-}
 
 // Parses OpExtension instruction and registers extension.
 void RegisterExtension(ValidationState_t& _,
@@ -282,7 +266,8 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
 
   // Parse the module and perform inline validation checks. These checks do
   // not require the the knowledge of the whole module.
-  if (auto error = spvBinaryParse(&context, vstate, words, num_words, setHeader,
+  if (auto error = spvBinaryParse(&context, vstate, words, num_words,
+                                  /*parsed_header =*/nullptr,
                                   ProcessInstruction, pDiagnostic)) {
     return error;
   }

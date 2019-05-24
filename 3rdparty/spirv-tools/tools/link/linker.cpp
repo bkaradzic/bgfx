@@ -39,8 +39,9 @@ Options:
   --allow-partial-linkage Allow partial linkage by accepting imported symbols to be unresolved.
   --verify-ids            Verify that IDs in the resulting modules are truly unique.
   --version               Display linker version information
-  --target-env            {vulkan1.0|spv1.0|spv1.1|spv1.2|opencl2.1|opencl2.2}
-                          Use Vulkan1.0/SPIR-V1.0/SPIR-V1.1/SPIR-V1.2/OpenCL-2.1/OpenCL2.2 validation rules.
+  --target-env            {vulkan1.0|vulkan1.1|spv1.0|spv1.1|spv1.2|spv1.3|spv1.4|opencl2.1|opencl2.2}
+                          Use Vulkan 1.0, Vulkan 1.1, SPIR-V 1.0, SPIR-V 1.1, SPIR-V 1.2, SPIR-V 1.3,
+                          SPIR-V1.4, OpenCL 2.1, OpenCL 2.2 validation rules.
 )",
       argv0, argv0);
 }
