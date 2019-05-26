@@ -192,6 +192,7 @@ function exampleProjectDefaults()
 
 	if _OPTIONS["with-glfw"] then
 		defines { "ENTRY_CONFIG_USE_GLFW=1" }
+		links   { "glfw3" }
 
 		configuration { "linux or freebsd" }
 			if _OPTIONS["with-wayland"] then
@@ -208,11 +209,7 @@ function exampleProjectDefaults()
 				}
 			end
 
-		configuration { "not osx" }
-			links { "glfw3" }
-
 		configuration { "osx" }
-			links { "glfw" }
 			linkoptions {
 				"-framework CoreVideo",
 				"-framework IOKit",
