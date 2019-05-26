@@ -5594,7 +5594,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 						if (BX_ENABLED(BX_PLATFORM_OSX) )
 						{
-							bx::write(&writer, "#define texture2DArrayLodEXT texture2DArray\n");
+							bx::write(&writer, "#define texture2DArrayLod texture2DArray\n");
 						}
 						else
 						{
