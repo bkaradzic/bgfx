@@ -811,7 +811,7 @@ struct ImGuiNextItemData
 // Tabs
 //-----------------------------------------------------------------------------
 
-struct ImGuiTabBarSortItem
+struct ImGuiShrinkWidthItem
 {
     int             Index;
     float           Width;
@@ -976,7 +976,7 @@ struct ImGuiContext
     ImPool<ImGuiTabBar>             TabBars;
     ImGuiTabBar*                    CurrentTabBar;
     ImVector<ImGuiTabBarRef>        CurrentTabBarStack;
-    ImVector<ImGuiTabBarSortItem>   TabSortByWidthBuffer;
+    ImVector<ImGuiShrinkWidthItem>  ShrinkWidthBuffer;
 
     // Widget state
     ImVec2                  LastValidMousePos;
@@ -1495,6 +1495,7 @@ namespace ImGui
     IMGUI_API void          PopItemFlag();
     IMGUI_API bool          IsItemToggledSelection();                                           // was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly)
     IMGUI_API ImVec2        GetWorkRectMax();
+    IMGUI_API void          ShrinkWidths(ImGuiShrinkWidthItem* items, int count, float width_excess);
 
     // Logging/Capture
     IMGUI_API void          LogBegin(ImGuiLogType type, int auto_open_depth);   // -> BeginCapture() when we design v2 api, for now stay under the radar by using the old name.
@@ -1581,7 +1582,7 @@ namespace ImGui
     // Widgets
     IMGUI_API void          TextEx(const char* text, const char* text_end = NULL, ImGuiTextFlags flags = 0);
     IMGUI_API bool          ButtonEx(const char* label, const ImVec2& size_arg = ImVec2(0,0), ImGuiButtonFlags flags = 0);
-    IMGUI_API bool          CloseButton(ImGuiID id, const ImVec2& pos, float radius);
+    IMGUI_API bool          CloseButton(ImGuiID id, const ImVec2& pos);
     IMGUI_API bool          CollapseButton(ImGuiID id, const ImVec2& pos);
     IMGUI_API bool          ArrowButtonEx(const char* str_id, ImGuiDir dir, ImVec2 size_arg, ImGuiButtonFlags flags);
     IMGUI_API void          Scrollbar(ImGuiAxis axis);

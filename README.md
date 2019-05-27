@@ -56,6 +56,7 @@ Languages:
  * [Lua language API bindings](https://github.com/cloudwu/lua-bgfx)
  * [Nim language API bindings](https://github.com/Halsys/nim-bgfx)
  * [Python language API bindings](https://github.com/jnadro/pybgfx#pybgf)
+ * [Python language API bindings (alternative)](https://github.com/fbertola/bgfx-python#-----bgfx-python--)
  * [Rust language API bindings](https://github.com/rhoot/bgfx-rs)
  * [Swift language API bindings](https://github.com/stuartcarnie/SwiftBGFX)
 

@@ -64,6 +64,7 @@ newaction {
 
 		generate("temp.bgfx.h" ,      "../include/bgfx/c99/bgfx.h", "    ")
 		generate("temp.bgfx.idl.inl", "../src/bgfx.idl.inl",        "\t")
+		generate("temp.defines.h",    "../include/bgfx/defines.h",  "\t")
 
 		os.exit()
 	end

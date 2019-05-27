@@ -12,13 +12,15 @@ end
 local all_types = {}
 
 local function copy_attribs(to, from)
-	assert(type(from) == "table", "Attribs should be a table")
-	for k, v in pairs(from) do
-		if type(k) == "number" then
-			to[v] = true
-		else
+	if type(from) == "table" then
+		for k, v in pairs(from) do
+			if type(k) == "number" then
+				to[v] = true
+			end
 			to[k] = v
 		end
+	else
+		to.value = from
 	end
 end
 
@@ -78,33 +80,38 @@ local function add_comment(item, comment)
 	end
 end
 
-local function enumdef(_, typename)
-	local t = new_type(typename)
-	t.enum = {}
+local function enumdef(what)
+	local function deffunc (_, typename)
+		local t = new_type(typename)
+		t[what] = {}
 
-	local function enum_attrib(obj, attribs)
-		copy_attribs(t, attribs)
-		return obj
-	end
-
-	local function new_enum_item(_, itemname)
-		local item = { name = itemname }
-		t.enum[#t.enum + 1] = item
-		local function add_attrib_or_comment(obj , attribs)
-			if type(attribs) == "string" then
-				add_comment(item, attribs)
-			elseif attribs then
-				copy_attribs(item, attribs)
-			end
+		local function enum_attrib(obj, attribs)
+			copy_attribs(t, attribs)
 			return obj
 		end
-		return setmetatable({}, { __index = new_enum_item, __call = add_attrib_or_comment })
+
+		local function new_enum_item(_, itemname)
+			local item = { name = itemname }
+			t[what][#t[what] + 1] = item
+			local function add_attrib_or_comment(obj , attribs)
+				if type(attribs) == "string" then
+					add_comment(item, attribs)
+				elseif attribs then
+					copy_attribs(item, attribs)
+				end
+				return obj
+			end
+			return setmetatable({}, { __index = new_enum_item, __call = add_attrib_or_comment })
+		end
+
+		return setmetatable({}, { __index = new_enum_item , __call = enum_attrib })
 	end
 
-	return setmetatable({}, { __index = new_enum_item , __call = enum_attrib })
+	return setmetatable({} , { __index = deffunc , __call = deffunc })
 end
 
-idl.enum = setmetatable({} , { __index = enumdef, __call = enumdef })
+idl.enum = enumdef "enum"
+idl.flag = enumdef "flag"
 
 local function structdef(_, typename)
 	local t = new_type(typename)
@@ -219,6 +226,10 @@ end
 idl.funcptr = setmetatable({}, { __index = func(all_types) })
 idl.func    = setmetatable({}, { __index = func(all_funcs) })
 idl.funcs   = all_funcs
+
+function idl.version(v)
+	rawset(idl, "_version", v)
+end
 
 idl.vararg     = "vararg"
 idl.out        = "out"
