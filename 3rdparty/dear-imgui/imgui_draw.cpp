@@ -33,7 +33,7 @@ Index of this file:
 
 #include <stdio.h>      // vsnprintf, sscanf, printf
 #if !defined(alloca)
-#if defined(__GLIBC__) || defined(__sun) || defined(__CYGWIN__) || defined(__APPLE__)
+#if defined(__GLIBC__) || defined(__sun) || defined(__CYGWIN__) || defined(__APPLE__) || defined(__SWITCH__)
 #include <alloca.h>     // alloca (glibc uses <alloca.h>. Note that Cygwin may have _WIN32 defined, so the order matters here)
 #elif defined(_WIN32)
 #include <malloc.h>     // alloca
@@ -568,7 +568,10 @@ void ImDrawList::ChannelsMerge()
     if (CmdBuffer.Size && CmdBuffer.back().ElemCount == 0)
         CmdBuffer.pop_back();
 
-    int new_cmd_buffer_count = 0, new_idx_buffer_count = 0;
+    // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
+    int new_cmd_buffer_count = 0;
+    int new_idx_buffer_count = 0;
+    int idx_offset = CmdBuffer.back().IdxOffset + CmdBuffer.back().ElemCount;
     for (int i = 1; i < _ChannelsCount; i++)
     {
         ImDrawChannel& ch = _Channels[i];
@@ -576,10 +579,16 @@ void ImDrawList::ChannelsMerge()
             ch.CmdBuffer.pop_back();
         new_cmd_buffer_count += ch.CmdBuffer.Size;
         new_idx_buffer_count += ch.IdxBuffer.Size;
+        for (int cmd_n = 0; cmd_n < ch.CmdBuffer.Size; cmd_n++)
+        {
+            ch.CmdBuffer.Data[cmd_n].IdxOffset = idx_offset;
+            idx_offset += ch.CmdBuffer.Data[cmd_n].ElemCount;
+        }
     }
     CmdBuffer.resize(CmdBuffer.Size + new_cmd_buffer_count);
     IdxBuffer.resize(IdxBuffer.Size + new_idx_buffer_count);
 
+    // Flatten our N channels at the end of the first one.
     ImDrawCmd* cmd_write = CmdBuffer.Data + CmdBuffer.Size - new_cmd_buffer_count;
     _IdxWritePtr = IdxBuffer.Data + IdxBuffer.Size - new_idx_buffer_count;
     for (int i = 1; i < _ChannelsCount; i++)
