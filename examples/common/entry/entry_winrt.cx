@@ -11,6 +11,7 @@
 #include <bx/thread.h>
 #include <bx/math.h>
 #include <Unknwn.h>
+#include <cmath>
 
 using namespace Windows::ApplicationModel;
 using namespace Windows::ApplicationModel::Core;
@@ -91,8 +92,8 @@ public:
 		auto dpi = DisplayInformation::GetForCurrentView()->LogicalDpi;
 		static const float dipsPerInch = 96.0f;
 		g_eventQueue.postSizeEvent(g_defaultWindow
-			, lround(bx::floor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
-			, lround(bx::floor(bounds.Height * dpi / dipsPerInch + 0.5f) )
+			, std::lround(bx::floor(bounds.Width  * dpi / dipsPerInch + 0.5f) )
+			, std::lround(bx::floor(bounds.Height * dpi / dipsPerInch + 0.5f) )
 			);
 #endif // BX_PLATFORM_WINRT
 
