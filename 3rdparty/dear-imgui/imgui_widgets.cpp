@@ -888,14 +888,14 @@ void ImGui::Scrollbar(ImGuiAxis axis)
     ImRect bb;
     if (axis == ImGuiAxis_X)
     {
-        bb.Min = ImVec2(window->InnerMainRect.Min.x, window->InnerMainRect.Max.y);
-        bb.Max = ImVec2(window->InnerMainRect.Max.x, outer_rect.Max.y - window->WindowBorderSize);
+        bb.Min = ImVec2(window->InnerRect.Min.x, window->InnerRect.Max.y);
+        bb.Max = ImVec2(window->InnerRect.Max.x, outer_rect.Max.y - window->WindowBorderSize);
         rounding_corners |= ImDrawCornerFlags_BotLeft;
     }
     else
     {
-        bb.Min = ImVec2(window->InnerMainRect.Max.x, window->InnerMainRect.Min.y);
-        bb.Max = ImVec2(outer_rect.Max.x - window->WindowBorderSize, window->InnerMainRect.Max.y);
+        bb.Min = ImVec2(window->InnerRect.Max.x, window->InnerRect.Min.y);
+        bb.Max = ImVec2(outer_rect.Max.x - window->WindowBorderSize, window->InnerRect.Max.y);
         rounding_corners |= ((window->Flags & ImGuiWindowFlags_NoTitleBar) && !(window->Flags & ImGuiWindowFlags_MenuBar)) ? ImDrawCornerFlags_TopRight : 0;
     }
     ScrollbarEx(bb, id, axis, &window->Scroll[axis], window->SizeFull[axis] - other_scrollbar_size, window->SizeContents[axis], rounding_corners);
@@ -5142,12 +5142,12 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
     // We vertically grow up to current line height up the typical widget height.
     const float text_base_offset_y = ImMax(padding.y, window->DC.CurrLineTextBaseOffset); // Latch before ItemSize changes it
     const float frame_height = ImMax(ImMin(window->DC.CurrLineSize.y, g.FontSize + style.FramePadding.y*2), label_size.y + padding.y*2);
-    ImRect frame_bb = ImRect(window->DC.CursorPos, ImVec2(GetWorkRectMax().x, window->DC.CursorPos.y + frame_height));
+    ImRect frame_bb = ImRect(window->DC.CursorPos, ImVec2(GetContentRegionMaxAbs().x, window->DC.CursorPos.y + frame_height));
     if (display_frame)
     {
         // Framed header expand a little outside the default padding
-        frame_bb.Min.x -= (float)(int)(window->WindowPadding.x*0.5f) - 1;
-        frame_bb.Max.x += (float)(int)(window->WindowPadding.x*0.5f) - 1;
+        frame_bb.Min.x -= (float)(int)(window->WindowPadding.x * 0.5f) - 1;
+        frame_bb.Max.x += (float)(int)(window->WindowPadding.x * 0.5f) - 1;
     }
 
     const float text_offset_x = (g.FontSize + (display_frame ? padding.x*3 : padding.x*2));   // Collapser arrow width + Spacing
@@ -5244,6 +5244,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char* l
         RenderFrame(frame_bb.Min, frame_bb.Max, col, true, style.FrameRounding);
         RenderNavHighlight(frame_bb, id, nav_highlight_flags);
         RenderArrow(frame_bb.Min + ImVec2(padding.x, text_base_offset_y), is_open ? ImGuiDir_Down : ImGuiDir_Right, 1.0f);
+        if (flags & ImGuiTreeNodeFlags_ClipLabelForTrailingButton)
+            frame_bb.Max.x -= g.FontSize + style.FramePadding.x;
         if (g.LogEnabled)
         {
             // NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text range to make sure the ## aren't stripped out here.
@@ -5370,7 +5372,8 @@ bool ImGui::CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags
         return false;
 
     ImGuiID id = window->GetID(label);
-    bool is_open = TreeNodeBehavior(id, flags | ImGuiTreeNodeFlags_CollapsingHeader | (p_open ? ImGuiTreeNodeFlags_AllowItemOverlap : 0), label);
+    flags |= ImGuiTreeNodeFlags_CollapsingHeader | (p_open ? ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_ClipLabelForTrailingButton : 0);
+    bool is_open = TreeNodeBehavior(id, flags, label);
     if (p_open)
     {
         // Create a small overlapping close button
@@ -5379,8 +5382,9 @@ bool ImGui::CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags
         ImGuiContext& g = *GImGui;
         ImGuiItemHoveredDataBackup last_item_backup;
         float button_size = g.FontSize;
-        ImVec2 button_pos = ImVec2(ImMin(window->DC.LastItemRect.Max.x, window->ClipRect.Max.x) - g.Style.FramePadding.x * 2.0f - button_size, window->DC.LastItemRect.Min.y);
-        if (CloseButton(window->GetID((void*)((intptr_t)id + 1)), button_pos))
+        float button_x = ImMax(window->DC.LastItemRect.Min.x, window->DC.LastItemRect.Max.x - g.Style.FramePadding.x * 2.0f - button_size);
+        float button_y = window->DC.LastItemRect.Min.y;
+        if (CloseButton(window->GetID((void*)((intptr_t)id + 1)), ImVec2(button_x, button_y)))
             *p_open = false;
         last_item_backup.Restore();
     }
@@ -6292,7 +6296,7 @@ bool    ImGui::BeginTabBar(const char* str_id, ImGuiTabBarFlags flags)
 
     ImGuiID id = window->GetID(str_id);
     ImGuiTabBar* tab_bar = g.TabBars.GetOrAddByKey(id);
-    ImRect tab_bar_bb = ImRect(window->DC.CursorPos.x, window->DC.CursorPos.y, window->InnerWorkRect.Max.x, window->DC.CursorPos.y + g.FontSize + g.Style.FramePadding.y * 2);
+    ImRect tab_bar_bb = ImRect(window->DC.CursorPos.x, window->DC.CursorPos.y, window->WorkRect.Max.x, window->DC.CursorPos.y + g.FontSize + g.Style.FramePadding.y * 2);
     tab_bar->ID = id;
     return BeginTabBarEx(tab_bar, tab_bar_bb, flags | ImGuiTabBarFlags_IsFocused);
 }
