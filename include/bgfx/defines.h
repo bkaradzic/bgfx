@@ -90,6 +90,9 @@
 #define BGFX_STATE_CULL_SHIFT               36                           //!< Culling mode bit shift
 #define BGFX_STATE_CULL_MASK                UINT64_C(0x0000003000000000) //!< Culling mode bit mask
 
+/// Front winding direction. Will default to clockwise unless otherwise specified.
+#define BGFX_STATE_FRONT_CCW               	UINT64_C(0x0000008000000000) //!< Front counter-clockwise (default is clockwise).
+
 /**
  * Alpha reference value.
  *
