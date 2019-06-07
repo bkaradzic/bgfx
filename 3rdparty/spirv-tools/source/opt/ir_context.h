@@ -491,10 +491,10 @@ class IRContext {
   uint32_t max_id_bound() const { return max_id_bound_; }
   void set_max_id_bound(uint32_t new_bound) { max_id_bound_ = new_bound; }
 
-  // Return id of variable only decorated with |builtin|, if in module.
+  // Return id of input variable only decorated with |builtin|, if in module.
   // Create variable and return its id otherwise. If builtin not currently
   // supported, return 0.
-  uint32_t GetBuiltinVarId(uint32_t builtin);
+  uint32_t GetBuiltinInputVarId(uint32_t builtin);
 
   // Returns the function whose id is |id|, if one exists.  Returns |nullptr|
   // otherwise.
@@ -657,9 +657,9 @@ class IRContext {
   // true if the cfg is invalidated.
   bool CheckCFG();
 
-  // Return id of variable only decorated with |builtin|, if in module.
+  // Return id of input variable only decorated with |builtin|, if in module.
   // Return 0 otherwise.
-  uint32_t FindBuiltinVar(uint32_t builtin);
+  uint32_t FindBuiltinInputVar(uint32_t builtin);
 
   // Add |var_id| to all entry points in module.
   void AddVarToEntryPoints(uint32_t var_id);

@@ -370,6 +370,8 @@ typedef struct spv_optimizer_options_t spv_optimizer_options_t;
 
 typedef struct spv_reducer_options_t spv_reducer_options_t;
 
+typedef struct spv_fuzzer_options_t spv_fuzzer_options_t;
+
 // Type Definitions
 
 typedef spv_const_binary_t* spv_const_binary;
@@ -385,6 +387,8 @@ typedef spv_optimizer_options_t* spv_optimizer_options;
 typedef const spv_optimizer_options_t* spv_const_optimizer_options;
 typedef spv_reducer_options_t* spv_reducer_options;
 typedef const spv_reducer_options_t* spv_const_reducer_options;
+typedef spv_fuzzer_options_t* spv_fuzzer_options;
+typedef const spv_fuzzer_options_t* spv_const_fuzzer_options;
 
 // Platform API
 
@@ -589,6 +593,19 @@ SPIRV_TOOLS_EXPORT void spvReducerOptionsSetStepLimit(
 // reduction backtracks and continues.
 SPIRV_TOOLS_EXPORT void spvReducerOptionsSetFailOnValidationError(
     spv_reducer_options options, bool fail_on_validation_error);
+
+// Creates a fuzzer options object with default options. Returns a valid
+// options object. The object remains valid until it is passed into
+// |spvFuzzerOptionsDestroy|.
+SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate();
+
+// Destroys the given fuzzer options object.
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsDestroy(spv_fuzzer_options options);
+
+// Sets the seed with which the random number generator used by the fuzzer
+// should be initialized.
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
+    spv_fuzzer_options options, uint32_t seed);
 
 // Encodes the given SPIR-V assembly text to its binary representation. The
 // length parameter specifies the number of bytes for text. Encoded binary will

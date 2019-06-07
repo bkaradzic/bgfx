@@ -718,6 +718,11 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
              << "Expected Sampled Type to be a 32-bit int or float "
                 "scalar type for Vulkan environment";
     }
+  } else if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if (!_.IsVoidType(info.sampled_type)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Sampled Type must be OpTypeVoid in the OpenCL environment.";
+    }
   } else {
     const SpvOp sampled_type_opcode = _.GetIdOpcode(info.sampled_type);
     if (sampled_type_opcode != SpvOpTypeVoid &&
@@ -741,14 +746,37 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
            << "Invalid Arrayed " << info.arrayed << " (must be 0 or 1)";
   }
 
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if ((info.arrayed == 1) && (info.dim != SpvDim1D) &&
+        (info.dim != SpvDim2D)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "In the OpenCL environment, Arrayed may only be set to 1 "
+             << "when Dim is either 1D or 2D.";
+    }
+  }
+
   if (info.multisampled > 1) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Invalid MS " << info.multisampled << " (must be 0 or 1)";
   }
 
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if (info.multisampled != 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "MS must be 0 in the OpenCL environement.";
+    }
+  }
+
   if (info.sampled > 2) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Invalid Sampled " << info.sampled << " (must be 0, 1 or 2)";
+  }
+
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if (info.sampled != 0) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Sampled must be 0 in the OpenCL environment.";
+    }
   }
 
   if (info.dim == SpvDimSubpassData) {
@@ -763,7 +791,15 @@ spv_result_t ValidateTypeImage(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
-  // Format and Access Qualifier are checked elsewhere.
+  // Format and Access Qualifier are also checked elsewhere.
+
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if (info.access_qualifier == SpvAccessQualifierMax) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "In the OpenCL environment, the optional Access Qualifier"
+             << " must be present.";
+    }
+  }
 
   return SPV_SUCCESS;
 }
@@ -1078,6 +1114,17 @@ spv_result_t ValidateImageLod(ValidationState_t& _, const Instruction* inst) {
   }
 
   const uint32_t mask = inst->word(5);
+
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if (opcode == SpvOpImageSampleExplicitLod) {
+      if (mask & SpvImageOperandsConstOffsetMask) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << "ConstOffset image operand not allowed "
+               << "in the OpenCL environment.";
+      }
+    }
+  }
+
   if (spv_result_t result =
           ValidateImageOperands(_, inst, info, mask, /* word_index = */ 6))
     return result;
@@ -1404,6 +1451,15 @@ spv_result_t ValidateImageRead(ValidationState_t& _, const Instruction* inst) {
   if (inst->words().size() <= 5) return SPV_SUCCESS;
 
   const uint32_t mask = inst->word(5);
+
+  if (spvIsOpenCLEnv(_.context()->target_env)) {
+    if (mask & SpvImageOperandsConstOffsetMask) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "ConstOffset image operand not allowed "
+             << "in the OpenCL environment.";
+    }
+  }
+
   if (spv_result_t result =
           ValidateImageOperands(_, inst, info, mask, /* word_index = */ 6))
     return result;
@@ -1481,7 +1537,15 @@ spv_result_t ValidateImageWrite(ValidationState_t& _, const Instruction* inst) {
     }
   }
 
-  if (inst->words().size() <= 4) return SPV_SUCCESS;
+  if (inst->words().size() <= 4) {
+    return SPV_SUCCESS;
+  } else {
+    if (spvIsOpenCLEnv(_.context()->target_env)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Optional Image Operands are not allowed in the OpenCL "
+             << "environment.";
+    }
+  }
 
   const uint32_t mask = inst->word(4);
   if (spv_result_t result =

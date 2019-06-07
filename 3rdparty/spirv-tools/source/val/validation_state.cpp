@@ -691,6 +691,12 @@ uint32_t ValidationState_t::GetBitWidth(uint32_t id) const {
   return 0;
 }
 
+bool ValidationState_t::IsVoidType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  assert(inst);
+  return inst->opcode() == SpvOpTypeVoid;
+}
+
 bool ValidationState_t::IsFloatScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
   assert(inst);

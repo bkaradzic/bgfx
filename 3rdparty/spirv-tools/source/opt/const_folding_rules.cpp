@@ -408,6 +408,28 @@ UnaryScalarFoldingRule FoldIToFOp() {
   };
 }
 
+// This defines a |UnaryScalarFoldingRule| that performs |OpQuantizeToF16|.
+UnaryScalarFoldingRule FoldQuantizeToF16Scalar() {
+  return [](const analysis::Type* result_type, const analysis::Constant* a,
+            analysis::ConstantManager* const_mgr) -> const analysis::Constant* {
+    assert(result_type != nullptr && a != nullptr);
+    const analysis::Float* float_type = a->type()->AsFloat();
+    assert(float_type != nullptr);
+    if (float_type->width() != 32) {
+      return nullptr;
+    }
+
+    float fa = a->GetFloat();
+    utils::HexFloat<utils::FloatProxy<float>> orignal(fa);
+    utils::HexFloat<utils::FloatProxy<utils::Float16>> quantized(0);
+    utils::HexFloat<utils::FloatProxy<float>> result(0.0f);
+    orignal.castTo(quantized, utils::round_direction::kToZero);
+    quantized.castTo(result, utils::round_direction::kToZero);
+    std::vector<uint32_t> words = {result.getBits()};
+    return const_mgr->GetConstant(result_type, words);
+  };
+}
+
 // This macro defines a |BinaryScalarFoldingRule| that applies |op|.  The
 // operator |op| must work for both float and double, and use syntax "f1 op f2".
 #define FOLD_FPARITH_OP(op)                                                \
@@ -438,6 +460,9 @@ UnaryScalarFoldingRule FoldIToFOp() {
 // Define the folding rule for conversion between floating point and integer
 ConstantFoldingRule FoldFToI() { return FoldFPUnaryOp(FoldFToIOp()); }
 ConstantFoldingRule FoldIToF() { return FoldFPUnaryOp(FoldIToFOp()); }
+ConstantFoldingRule FoldQuantizeToF16() {
+  return FoldFPUnaryOp(FoldQuantizeToF16Scalar());
+}
 
 // Define the folding rules for subtraction, addition, multiplication, and
 // division for floating point values.
@@ -848,6 +873,7 @@ ConstantFoldingRules::ConstantFoldingRules() {
   rules_[SpvOpVectorTimesScalar].push_back(FoldVectorTimesScalar());
 
   rules_[SpvOpFNegate].push_back(FoldFNegate());
+  rules_[SpvOpQuantizeToF16].push_back(FoldQuantizeToF16());
 }
 }  // namespace opt
 }  // namespace spvtools

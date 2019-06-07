@@ -9,6 +9,7 @@ compile_commands.json
 /external/spirv-headers
 /external/effcee
 /external/re2
+/external/protobuf
 /out
 /TAGS
 /third_party/llvm-build/

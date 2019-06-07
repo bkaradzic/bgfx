@@ -1547,11 +1547,14 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
         }
 
         if (p_storage_class != SpvStorageClassUniformConstant &&
-            p_storage_class != SpvStorageClassGeneric) {
+            p_storage_class != SpvStorageClassGeneric &&
+            p_storage_class != SpvStorageClassCrossWorkgroup &&
+            p_storage_class != SpvStorageClassWorkgroup &&
+            p_storage_class != SpvStorageClassFunction) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << ext_inst_name() << ": "
-                 << "expected operand P storage class to be UniformConstant or "
-                    "Generic";
+                 << "expected operand P storage class to be UniformConstant, "
+                    "Generic, CrossWorkgroup, Workgroup or Function";
         }
 
         if (_.GetComponentType(result_type) != p_data_type) {
@@ -1618,10 +1621,14 @@ spv_result_t ValidateExtInst(ValidationState_t& _, const Instruction* inst) {
                  << "expected operand P to be a pointer";
         }
 
-        if (p_storage_class != SpvStorageClassGeneric) {
+        if (p_storage_class != SpvStorageClassGeneric &&
+            p_storage_class != SpvStorageClassCrossWorkgroup &&
+            p_storage_class != SpvStorageClassWorkgroup &&
+            p_storage_class != SpvStorageClassFunction) {
           return _.diag(SPV_ERROR_INVALID_DATA, inst)
                  << ext_inst_name() << ": "
-                 << "expected operand P storage class to be Generic";
+                 << "expected operand P storage class to be Generic, "
+                    "CrossWorkgroup, Workgroup or Function";
         }
 
         if (_.GetComponentType(data_type) != p_data_type) {

@@ -3262,6 +3262,35 @@ OpFunctionEnd
           "IterationMultiple loop control operand must be greater than zero"));
 }
 
+TEST_F(ValidateCFG, LoopMergeTargetsHeader) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%bool = OpTypeBool
+%undef = OpUndef %bool
+%void_fn = OpTypeFunction %void
+%fn = OpFunction %void None %void_fn
+%entry = OpLabel
+OpBranch %loop
+%loop = OpLabel
+OpLoopMerge %loop %continue None
+OpBranch %body
+%continue = OpLabel
+OpBranch %loop
+%body = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Merge Block may not be the block containing the OpLoopMerge"));
+}
+
 TEST_F(ValidateCFG, InvalidSelectionExit) {
   const std::string text = R"(
 OpCapability Shader
@@ -3401,6 +3430,149 @@ OpFunctionEnd
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("block <ID> 13[%13] exits the selection headed by <ID> "
                         "9[%9], but not via a structured exit"));
+}
+
+TEST_F(ValidateCFG, BreakFromSwitch) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%1 = OpTypeVoid
+%2 = OpTypeBool
+%3 = OpTypeInt 32 0
+%4 = OpUndef %2
+%5 = OpUndef %3
+%6 = OpTypeFunction %1
+%7 = OpFunction %1 None %6
+%8 = OpLabel
+OpSelectionMerge %9 None
+OpSwitch %5 %9 0 %10
+%10 = OpLabel
+OpSelectionMerge %11 None
+OpBranchConditional %4 %11 %12
+%12 = OpLabel
+OpBranch %9
+%11 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateCFG, InvalidBreakFromSwitch) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%1 = OpTypeVoid
+%2 = OpTypeBool
+%3 = OpTypeInt 32 0
+%4 = OpUndef %2
+%5 = OpUndef %3
+%6 = OpTypeFunction %1
+%7 = OpFunction %1 None %6
+%8 = OpLabel
+OpSelectionMerge %9 None
+OpSwitch %5 %9 0 %10
+%10 = OpLabel
+OpSelectionMerge %11 None
+OpSwitch %5 %11 0 %12
+%12 = OpLabel
+OpBranch %9
+%11 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("block <ID> 12[%12] exits the selection headed by <ID> "
+                        "10[%10], but not via a structured exit"));
+}
+
+TEST_F(ValidateCFG, BreakToOuterSwitch) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%1 = OpTypeVoid
+%2 = OpTypeBool
+%3 = OpTypeInt 32 0
+%4 = OpUndef %2
+%5 = OpUndef %3
+%6 = OpTypeFunction %1
+%7 = OpFunction %1 None %6
+%8 = OpLabel
+OpSelectionMerge %9 None
+OpSwitch %5 %9 0 %10
+%10 = OpLabel
+OpSelectionMerge %11 None
+OpSwitch %5 %11 0 %12
+%12 = OpLabel
+OpSelectionMerge %13 None
+OpBranchConditional %4 %13 %14
+%14 = OpLabel
+OpBranch %9
+%13 = OpLabel
+OpBranch %11
+%11 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("block <ID> 14[%14] exits the selection headed by <ID> "
+                        "10[%10], but not via a structured exit"));
+}
+
+TEST_F(ValidateCFG, BreakToOuterLoop) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%1 = OpTypeVoid
+%2 = OpTypeBool
+%3 = OpUndef %2
+%4 = OpTypeFunction %1
+%5 = OpFunction %1 None %4
+%6 = OpLabel
+OpBranch %7
+%7 = OpLabel
+OpLoopMerge %8 %9 None
+OpBranch %10
+%10 = OpLabel
+OpLoopMerge %9 %11 None
+OpBranch %12
+%12 = OpLabel
+OpSelectionMerge %11 None
+OpBranchConditional %3 %11 %13
+%13 = OpLabel
+OpBranch %8
+%11 = OpLabel
+OpBranchConditional %3 %9 %10
+%9 = OpLabel
+OpBranchConditional %3 %8 %7
+%8 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("block <ID> 13[%13] exits the loop headed by <ID> "
+                        "10[%10], but not via a structured exit"));
 }
 
 /// TODO(umar): Nested CFG constructs

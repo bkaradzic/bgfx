@@ -90,6 +90,26 @@ spv_result_t ValidateEntryPoint(ValidationState_t& _, const Instruction* inst) {
                     "one of DepthGreater, DepthLess or DepthUnchanged "
                     "execution modes.";
         }
+        if (execution_modes &&
+            1 < std::count_if(
+                    execution_modes->begin(), execution_modes->end(),
+                    [](const SpvExecutionMode& mode) {
+                      switch (mode) {
+                        case SpvExecutionModePixelInterlockOrderedEXT:
+                        case SpvExecutionModePixelInterlockUnorderedEXT:
+                        case SpvExecutionModeSampleInterlockOrderedEXT:
+                        case SpvExecutionModeSampleInterlockUnorderedEXT:
+                        case SpvExecutionModeShadingRateInterlockOrderedEXT:
+                        case SpvExecutionModeShadingRateInterlockUnorderedEXT:
+                          return true;
+                        default:
+                          return false;
+                      }
+                    })) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "Fragment execution model entry points can specify at most "
+                    "one fragment shader interlock execution mode.";
+        }
         break;
       case SpvExecutionModelTessellationControl:
       case SpvExecutionModelTessellationEvaluation:
@@ -376,6 +396,12 @@ spv_result_t ValidateExecutionMode(ValidationState_t& _,
     case SpvExecutionModeDepthGreater:
     case SpvExecutionModeDepthLess:
     case SpvExecutionModeDepthUnchanged:
+    case SpvExecutionModePixelInterlockOrderedEXT:
+    case SpvExecutionModePixelInterlockUnorderedEXT:
+    case SpvExecutionModeSampleInterlockOrderedEXT:
+    case SpvExecutionModeSampleInterlockUnorderedEXT:
+    case SpvExecutionModeShadingRateInterlockOrderedEXT:
+    case SpvExecutionModeShadingRateInterlockUnorderedEXT:
       if (!std::all_of(models->begin(), models->end(),
                        [](const SpvExecutionModel& model) {
                          return model == SpvExecutionModelFragment;

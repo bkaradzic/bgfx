@@ -237,6 +237,10 @@ spv_result_t ValidateLoopMerge(ValidationState_t& _, const Instruction* inst) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Merge Block " << _.getIdName(merge_id) << " must be an OpLabel";
   }
+  if (merge_id == inst->block()->id()) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Merge Block may not be the block containing the OpLoopMerge\n";
+  }
 
   const auto continue_id = inst->GetOperandAs<uint32_t>(1);
   const auto continue_target = _.FindDef(continue_id);

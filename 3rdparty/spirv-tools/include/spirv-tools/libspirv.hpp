@@ -191,6 +191,26 @@ class ReducerOptions {
   spv_reducer_options options_;
 };
 
+// A C++ wrapper around a fuzzer options object.
+class FuzzerOptions {
+ public:
+  FuzzerOptions() : options_(spvFuzzerOptionsCreate()) {}
+  ~FuzzerOptions() { spvFuzzerOptionsDestroy(options_); }
+
+  // Allow implicit conversion to the underlying object.
+  operator spv_fuzzer_options() const {  // NOLINT(google-explicit-constructor)
+    return options_;
+  }
+
+  // See spvFuzzerOptionsSetRandomSeed.
+  void set_random_seed(uint32_t seed) {
+    spvFuzzerOptionsSetRandomSeed(options_, seed);
+  }
+
+ private:
+  spv_fuzzer_options options_;
+};
+
 // C++ interface for SPIRV-Tools functionalities. It wraps the context
 // (including target environment and the corresponding SPIR-V grammar) and
 // provides methods for assembling, disassembling, and validating.

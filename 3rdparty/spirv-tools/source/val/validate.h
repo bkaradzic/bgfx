@@ -199,6 +199,9 @@ spv_result_t ModeSettingPass(ValidationState_t& _, const Instruction* inst);
 /// Validates correctness of function instructions.
 spv_result_t FunctionPass(ValidationState_t& _, const Instruction* inst);
 
+/// Validates correctness of miscellaneous instructions.
+spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst);
+
 /// Validates execution limitations.
 ///
 /// Verifies execution models are allowed for all functionality they contain.

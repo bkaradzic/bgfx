@@ -140,6 +140,12 @@ Options (in lexicographical order):)",
                another.  It will only propagate an array if the source is never
                written to, and the only store to the target is the copy.)");
   printf(R"(
+  --decompose-initialized-variables
+               Decomposes initialized variable declarations into a declaration
+               followed by a store of the initial value. This is done to work
+               around known issues with some Vulkan drivers for initialize
+               variables.)");
+  printf(R"(
   --eliminate-common-uniform
                Perform load/load elimination for duplicate uniform values.
                Converts any constant index access chain uniform loads into
@@ -227,6 +233,11 @@ Options (in lexicographical order):)",
                Note this does not guarantee legal code. This option passes the
                option --relax-logical-pointer to the validator.)",
          GetLegalizationPasses().c_str());
+  printf(R"(
+  --legalize-vector-shuffle
+               Converts any usages of 0xFFFFFFFF for the literals in
+               OpVectorShuffle to a literal 0. This is done since 0xFFFFFFFF is
+               forbidden in WebGPU.)");
   printf(R"(
   --local-redundancy-elimination
                Looks for instructions in the same basic block that compute the
@@ -397,6 +408,13 @@ Options (in lexicographical order):)",
   --simplify-instructions
                Will simplify all instructions in the function as much as
                possible.)");
+  printf(R"(
+  --split-invalid-unreachable
+               Attempts to legalize for WebGPU cases where an unreachable
+               merge-block is also a continue-target by splitting it into two
+               seperate blocks. There exist legal, for Vulkan, instances of this
+               pattern that cannot be converted into legal WebGPU, so this
+               conversion may not succeed.)");
   printf(R"(
   --skip-validation
                Will not validate the SPIR-V before optimizing.  If the SPIR-V

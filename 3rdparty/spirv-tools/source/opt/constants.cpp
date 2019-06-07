@@ -185,8 +185,6 @@ Instruction* ConstantManager::BuildInstructionAndAddToModule(
 
 Instruction* ConstantManager::GetDefiningInstruction(
     const Constant* c, uint32_t type_id, Module::inst_iterator* pos) {
-  assert(type_id == 0 ||
-         context()->get_type_mgr()->GetType(type_id) == c->type());
   uint32_t decl_id = FindDeclaredConstant(c, type_id);
   if (decl_id == 0) {
     auto iter = context()->types_values_end();

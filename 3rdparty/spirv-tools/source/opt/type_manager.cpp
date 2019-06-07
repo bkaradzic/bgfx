@@ -66,7 +66,13 @@ uint32_t TypeManager::GetId(const Type* type) const {
 }
 
 void TypeManager::AnalyzeTypes(const Module& module) {
-  // First pass through the types.  Any types that reference a forward pointer
+  // First pass through the constants, as some will be needed when traversing
+  // the types in the next pass.
+  for (const auto* inst : module.GetConstants()) {
+    id_to_constant_inst_[inst->result_id()] = inst;
+  }
+
+  // Then pass through the types.  Any types that reference a forward pointer
   // (directly or indirectly) are incomplete, and are added to incomplete types.
   for (const auto* inst : module.GetTypes()) {
     RecordIfTypeDefinition(*inst);
@@ -154,7 +160,7 @@ void TypeManager::AnalyzeTypes(const Module& module) {
 
 #ifndef NDEBUG
   // Check if the type pool contains two types that are the same.  This
-  // is an indication that the hashing and comparision are wrong.  It
+  // is an indication that the hashing and comparison are wrong.  It
   // will cause a problem if the type pool gets resized and everything
   // is rehashed.
   for (auto& i : type_pool_) {
@@ -504,9 +510,8 @@ Type* TypeManager::RebuildType(const Type& type) {
     }
     case Type::kArray: {
       const Array* array_ty = type.AsArray();
-      const Type* ele_ty = array_ty->element_type();
       rebuilt_ty =
-          MakeUnique<Array>(RebuildType(*ele_ty), array_ty->LengthId());
+          MakeUnique<Array>(array_ty->element_type(), array_ty->length_info());
       break;
     }
     case Type::kRuntimeArray: {
@@ -636,15 +641,56 @@ Type* TypeManager::RecordIfTypeDefinition(const Instruction& inst) {
     case SpvOpTypeSampledImage:
       type = new SampledImage(GetType(inst.GetSingleWordInOperand(0)));
       break;
-    case SpvOpTypeArray:
-      type = new Array(GetType(inst.GetSingleWordInOperand(0)),
-                       inst.GetSingleWordInOperand(1));
+    case SpvOpTypeArray: {
+      const uint32_t length_id = inst.GetSingleWordInOperand(1);
+      const Instruction* length_constant_inst = id_to_constant_inst_[length_id];
+      assert(length_constant_inst);
+
+      // How will we distinguish one length value from another?
+      // Determine extra words required to distinguish this array length
+      // from another.
+      std::vector<uint32_t> extra_words{Array::LengthInfo::kDefiningId};
+      // If it is a specialised constant, retrieve its SpecId.
+      // Only OpSpecConstant has a SpecId.
+      uint32_t spec_id = 0u;
+      bool has_spec_id = false;
+      if (length_constant_inst->opcode() == SpvOpSpecConstant) {
+        context()->get_decoration_mgr()->ForEachDecoration(
+            length_id, SpvDecorationSpecId,
+            [&spec_id, &has_spec_id](const Instruction& decoration) {
+              assert(decoration.opcode() == SpvOpDecorate);
+              spec_id = decoration.GetSingleWordOperand(2u);
+              has_spec_id = true;
+            });
+      }
+      const auto opcode = length_constant_inst->opcode();
+      if (has_spec_id) {
+        extra_words.push_back(spec_id);
+      }
+      if ((opcode == SpvOpConstant) || (opcode == SpvOpSpecConstant)) {
+        // Always include the literal constant words.  In the spec constant
+        // case, the constant might not be overridden, so it's still
+        // significant.
+        extra_words.insert(extra_words.end(),
+                           length_constant_inst->GetOperand(2).words.begin(),
+                           length_constant_inst->GetOperand(2).words.end());
+        extra_words[0] = has_spec_id ? Array::LengthInfo::kConstantWithSpecId
+                                     : Array::LengthInfo::kConstant;
+      } else {
+        assert(extra_words[0] == Array::LengthInfo::kDefiningId);
+        extra_words.push_back(length_id);
+      }
+      assert(extra_words.size() >= 2);
+      Array::LengthInfo length_info{length_id, extra_words};
+
+      type = new Array(GetType(inst.GetSingleWordInOperand(0)), length_info);
+
       if (id_to_incomplete_type_.count(inst.GetSingleWordInOperand(0))) {
         incomplete_types_.emplace_back(inst.result_id(), type);
         id_to_incomplete_type_[inst.result_id()] = type;
         return type;
       }
-      break;
+    } break;
     case SpvOpTypeRuntimeArray:
       type = new RuntimeArray(GetType(inst.GetSingleWordInOperand(0)));
       if (id_to_incomplete_type_.count(inst.GetSingleWordInOperand(0))) {

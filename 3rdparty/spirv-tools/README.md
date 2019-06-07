@@ -307,8 +307,6 @@ The following CMake options are supported:
   the command line tools.  This will prevent the tests from being built.
 * `SPIRV_SKIP_EXECUTABLES={ON|OFF}`, default `OFF`- Build only the library, not
   the command line tools and tests.
-* `SPIRV_BUILD_COMPRESSION={ON|OFF}`, default `OFF`- Build SPIR-V compressing
-  codec.
 * `SPIRV_USE_SANITIZER=<sanitizer>`, default is no sanitizing - On UNIX
   platforms with an appropriate version of `clang` this option enables the use
   of the sanitizers documented [here][clang-sanitizers].

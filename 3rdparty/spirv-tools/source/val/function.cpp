@@ -389,5 +389,29 @@ bool Function::IsCompatibleWithExecutionModel(SpvExecutionModel model,
   return return_value;
 }
 
+bool Function::CheckLimitations(const ValidationState_t& _,
+                                const Function* entry_point,
+                                std::string* reason) const {
+  bool return_value = true;
+  std::stringstream ss_reason;
+
+  for (const auto& is_compatible : limitations_) {
+    std::string message;
+    if (!is_compatible(_, entry_point, &message)) {
+      if (!reason) return false;
+      return_value = false;
+      if (!message.empty()) {
+        ss_reason << message << "\n";
+      }
+    }
+  }
+
+  if (!return_value && reason) {
+    *reason = ss_reason.str();
+  }
+
+  return return_value;
+}
+
 }  // namespace val
 }  // namespace spvtools

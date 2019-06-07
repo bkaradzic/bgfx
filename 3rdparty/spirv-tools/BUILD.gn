@@ -422,6 +422,7 @@ static_library("spvtools_val") {
     "source/val/validate_logicals.cpp",
     "source/val/validate_memory.cpp",
     "source/val/validate_memory_semantics.cpp",
+    "source/val/validate_misc.cpp",
     "source/val/validate_mode_setting.cpp",
     "source/val/validate_non_uniform.cpp",
     "source/val/validate_primitives.cpp",

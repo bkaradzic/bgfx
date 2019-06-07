@@ -239,7 +239,8 @@ TEST(Optimizer, VulkanToWebGPUSetsCorrectPasses) {
                                               "strip-atomic-counter-memory",
                                               "generate-webgpu-initializers",
                                               "legalize-vector-shuffle",
-                                              "split-invalid-unreachable"};
+                                              "split-invalid-unreachable",
+                                              "compact-ids"};
   std::sort(registered_passes.begin(), registered_passes.end());
   std::sort(expected_passes.begin(), expected_passes.end());
 
@@ -317,14 +318,14 @@ INSTANTIATE_TEST_SUITE_P(
          "OpEntryPoint Fragment %1 \"main\" %2 %3 %4\n"
          "OpExecutionMode %1 OriginUpperLeft\n"
          "%void = OpTypeVoid\n"
-         "%7 = OpTypeFunction %void\n"
+         "%6 = OpTypeFunction %void\n"
          "%float = OpTypeFloat 32\n"
          "%_ptr_Input_float = OpTypePointer Input %float\n"
          "%2 = OpVariable %_ptr_Input_float Input\n"
          "%3 = OpVariable %_ptr_Input_float Input\n"
          "%4 = OpVariable %_ptr_Input_float Input\n"
-         "%1 = OpFunction %void None %7\n"
-         "%10 = OpLabel\n"
+         "%1 = OpFunction %void None %6\n"
+         "%9 = OpLabel\n"
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
@@ -351,9 +352,9 @@ INSTANTIATE_TEST_SUITE_P(
          "OpMemoryModel Logical VulkanKHR\n"
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%void = OpTypeVoid\n"
-         "%5 = OpTypeFunction %void\n"
-         "%1 = OpFunction %void None %5\n"
-         "%6 = OpLabel\n"
+         "%3 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %3\n"
+         "%4 = OpLabel\n"
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
@@ -388,9 +389,9 @@ INSTANTIATE_TEST_SUITE_P(
          "%_ptr_Workgroup_uint = OpTypePointer Workgroup %uint\n"
          "%4 = OpVariable %_ptr_Workgroup_uint Workgroup\n"
          "%void = OpTypeVoid\n"
-         "%10 = OpTypeFunction %void\n"
-         "%1 = OpFunction %void None %10\n"
-         "%11 = OpLabel\n"
+         "%6 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %6\n"
+         "%7 = OpLabel\n"
          "OpReturn\n"
          "OpFunctionEnd\n",
          "eliminate-dead-const"},
@@ -434,9 +435,9 @@ INSTANTIATE_TEST_SUITE_P(
          "%uint_1 = OpConstant %uint 1\n"
          "%uint_0_0 = OpConstant %uint 0\n"
          "%void = OpTypeVoid\n"
-         "%10 = OpTypeFunction %void\n"
+         "%9 = OpTypeFunction %void\n"
          "%uint_264 = OpConstant %uint 264\n"
-         "%1 = OpFunction %void None %10\n"
+         "%1 = OpFunction %void None %9\n"
          "%11 = OpLabel\n"
          "OpAtomicStore %4 %uint_0_0 %uint_264 %uint_1\n"
          "%12 = OpAtomicIIncrement %uint %4 %uint_0_0 %uint_264\n"
@@ -472,14 +473,14 @@ INSTANTIATE_TEST_SUITE_P(
          "OpEntryPoint Vertex %1 \"shader\"\n"
          "%uint = OpTypeInt 32 0\n"
          "%_ptr_Private_uint = OpTypePointer Private %uint\n"
-         "%9 = OpConstantNull %uint\n"
-         "%4 = OpVariable %_ptr_Private_uint Private %9\n"
+         "%4 = OpConstantNull %uint\n"
+         "%5 = OpVariable %_ptr_Private_uint Private %4\n"
          "%uint_0 = OpConstant %uint 0\n"
          "%void = OpTypeVoid\n"
-         "%7 = OpTypeFunction %void\n"
-         "%1 = OpFunction %void None %7\n"
-         "%8 = OpLabel\n"
-         "OpStore %4 %uint_0\n"
+         "%8 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %8\n"
+         "%9 = OpLabel\n"
+         "OpStore %5 %uint_0\n"
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
@@ -515,13 +516,13 @@ INSTANTIATE_TEST_SUITE_P(
          "%_ptr_Function_v3uint = OpTypePointer Function %v3uint\n"
          "%void = OpTypeVoid\n"
          "%6 = OpTypeFunction %void\n"
-         "%12 = OpConstantNull %v3uint\n"
+         "%7 = OpConstantNull %v3uint\n"
          "%1 = OpFunction %void None %6\n"
-         "%7 = OpLabel\n"
-         "%8 = OpVariable %_ptr_Function_v3uint Function %12\n"
-         "%9 = OpLoad %v3uint %8\n"
-         "%10 = OpLoad %v3uint %8\n"
-         "%11 = OpVectorShuffle %v3uint %9 %10 2 1 0\n"
+         "%8 = OpLabel\n"
+         "%9 = OpVariable %_ptr_Function_v3uint Function %7\n"
+         "%10 = OpLoad %v3uint %9\n"
+         "%11 = OpLoad %v3uint %9\n"
+         "%12 = OpVectorShuffle %v3uint %10 %11 2 1 0\n"
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
@@ -578,21 +579,48 @@ INSTANTIATE_TEST_SUITE_P(
          "OpBranch %12\n"
          "%12 = OpLabel\n"
          "%13 = OpSLessThan %bool %uint_1 %uint_2\n"
-         "OpSelectionMerge %16 None\n"
-         "OpBranchConditional %13 %14 %15\n"
-         "%14 = OpLabel\n"
-         "OpReturn\n"
+         "OpSelectionMerge %14 None\n"
+         "OpBranchConditional %13 %15 %16\n"
          "%15 = OpLabel\n"
+         "OpReturn\n"
+         "%16 = OpLabel\n"
          "OpReturn\n"
          "%10 = OpLabel\n"
          "OpUnreachable\n"
-         "%16 = OpLabel\n"
+         "%14 = OpLabel\n"
          "OpUnreachable\n"
          "%11 = OpLabel\n"
          "OpBranch %9\n"
          "OpFunctionEnd\n",
          // pass
-         "split-invalid-unreachable"}}));
+         "split-invalid-unreachable"},
+        // Compact IDs
+        {// input
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1000 \"shader\"\n"
+         "%10 = OpTypeVoid\n"
+         "%100 = OpTypeFunction %10\n"
+         "%1000 = OpFunction %10 None %100\n"
+         "%10000 = OpLabel\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // expected
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%void = OpTypeVoid\n"
+         "%3 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %3\n"
+         "%4 = OpLabel\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // pass
+         "compact-ids"}}));
 
 TEST(Optimizer, WebGPUToVulkanSetsCorrectPasses) {
   Optimizer opt(SPV_ENV_VULKAN_1_1);
@@ -603,8 +631,8 @@ TEST(Optimizer, WebGPUToVulkanSetsCorrectPasses) {
   for (auto name = pass_names.begin(); name != pass_names.end(); ++name)
     registered_passes.push_back(*name);
 
-  std::vector<std::string> expected_passes = {
-      "decompose-initialized-variables"};
+  std::vector<std::string> expected_passes = {"decompose-initialized-variables",
+                                              "compact-ids"};
   std::sort(registered_passes.begin(), registered_passes.end());
   std::sort(expected_passes.begin(), expected_passes.end());
 
@@ -687,7 +715,34 @@ INSTANTIATE_TEST_SUITE_P(
          "OpReturn\n"
          "OpFunctionEnd\n",
          // pass
-         "decompose-initialized-variables"}}));
+         "decompose-initialized-variables"},
+        // Compact IDs
+        {// input
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1000 \"shader\"\n"
+         "%10 = OpTypeVoid\n"
+         "%100 = OpTypeFunction %10\n"
+         "%1000 = OpFunction %10 None %100\n"
+         "%10000 = OpLabel\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // expected
+         "OpCapability Shader\n"
+         "OpCapability VulkanMemoryModelKHR\n"
+         "OpExtension \"SPV_KHR_vulkan_memory_model\"\n"
+         "OpMemoryModel Logical VulkanKHR\n"
+         "OpEntryPoint Vertex %1 \"shader\"\n"
+         "%void = OpTypeVoid\n"
+         "%3 = OpTypeFunction %void\n"
+         "%1 = OpFunction %void None %3\n"
+         "%4 = OpLabel\n"
+         "OpReturn\n"
+         "OpFunctionEnd\n",
+         // pass
+         "compact-ids"}}));
 
 }  // namespace
 }  // namespace opt
