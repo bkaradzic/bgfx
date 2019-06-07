@@ -701,9 +701,10 @@ static const char* GLSLextNVGetDebugNames(const char* name, unsigned entrypoint)
         strcmp(name, spv::E_SPV_NV_geometry_shader_passthrough) == 0 ||
         strcmp(name, spv::E_ARB_shader_viewport_layer_array) == 0 ||
         strcmp(name, spv::E_SPV_NV_viewport_array2) == 0 ||
-        strcmp(spv::E_SPV_NVX_multiview_per_view_attributes, name) == 0 ||
-        strcmp(spv::E_SPV_NV_fragment_shader_barycentric, name) == 0 ||
-        strcmp(name, spv::E_SPV_NV_mesh_shader) == 0) {
+        strcmp(name, spv::E_SPV_NVX_multiview_per_view_attributes) == 0 ||
+        strcmp(name, spv::E_SPV_NV_fragment_shader_barycentric) == 0 ||
+        strcmp(name, spv::E_SPV_NV_mesh_shader) == 0 ||
+        strcmp(name, spv::E_SPV_NV_shader_image_footprint) == 0) {
         switch (entrypoint) {
         // NV builtins
         case BuiltInViewportMaskNV:                 return "ViewportMaskNV";
@@ -729,6 +730,7 @@ static const char* GLSLextNVGetDebugNames(const char* name, unsigned entrypoint)
         case CapabilityPerViewAttributesNV:         return "PerViewAttributesNV";
         case CapabilityFragmentBarycentricNV:       return "FragmentBarycentricNV";
         case CapabilityMeshShadingNV:               return "MeshShadingNV";
+        case CapabilityImageFootprintNV:            return "ImageFootprintNV";
 
         // NV Decorations
         case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";

@@ -6,8 +6,8 @@ spv.memoryScopeSemantics.comp
                               Capability Shader
                               Capability Int64
                               Capability Int64Atomics
-                              Capability CapabilityVulkanMemoryModelKHR
-                              Capability CapabilityVulkanMemoryModelDeviceScopeKHR
+                              Capability VulkanMemoryModelKHR
+                              Capability VulkanMemoryModelDeviceScopeKHR
                               Extension  "SPV_KHR_vulkan_memory_model"
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel Logical VulkanKHR

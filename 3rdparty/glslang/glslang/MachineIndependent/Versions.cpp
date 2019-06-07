@@ -187,6 +187,7 @@ void TParseVersions::initializeExtensionBehavior()
 //    extensionBehavior[E_GL_ARB_cull_distance]                = EBhDisable;    // present for 4.5, but need extension control over block members
     extensionBehavior[E_GL_ARB_post_depth_coverage]          = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
+    extensionBehavior[E_GL_ARB_fragment_shader_interlock]    = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -209,6 +210,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_scalar_block_layout]                     = EBhDisable;
     extensionBehavior[E_GL_EXT_fragment_invocation_density]             = EBhDisable;
     extensionBehavior[E_GL_EXT_buffer_reference]                        = EBhDisable;
+    extensionBehavior[E_GL_EXT_buffer_reference2]                       = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_16bit_storage]                    = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_8bit_storage]                     = EBhDisable;
@@ -378,6 +380,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_shader_stencil_export 1\n"
 //            "#define GL_ARB_cull_distance 1\n"    // present for 4.5, but need extension control over block members
             "#define GL_ARB_post_depth_coverage 1\n"
+            "#define GL_ARB_fragment_shader_interlock 1\n"
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
             "#define GL_EXT_post_depth_coverage 1\n"
@@ -389,6 +392,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_scalar_block_layout 1\n"
             "#define GL_EXT_fragment_invocation_density 1\n"
             "#define GL_EXT_buffer_reference 1\n"
+            "#define GL_EXT_buffer_reference2 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"
@@ -808,6 +812,8 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
     else if (strcmp(extension, "GL_NV_shader_subgroup_partitioned") == 0)
         updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
 #endif
+    else if (strcmp(extension, "GL_EXT_buffer_reference2") == 0)
+        updateExtensionBehavior(line, "GL_EXT_buffer_reference", behaviorString);
 }
 
 void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBehavior behavior)

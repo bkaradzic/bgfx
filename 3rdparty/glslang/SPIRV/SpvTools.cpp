@@ -52,8 +52,21 @@ namespace glslang {
 spv_target_env MapToSpirvToolsEnv(const SpvVersion& spvVersion, spv::SpvBuildLogger* logger)
 {
     switch (spvVersion.vulkan) {
-    case glslang::EShTargetVulkan_1_0: return spv_target_env::SPV_ENV_VULKAN_1_0;
-    case glslang::EShTargetVulkan_1_1: return spv_target_env::SPV_ENV_VULKAN_1_1;
+    case glslang::EShTargetVulkan_1_0:
+        return spv_target_env::SPV_ENV_VULKAN_1_0;
+    case glslang::EShTargetVulkan_1_1:
+        switch (spvVersion.spv) {
+        case EShTargetSpv_1_0:
+        case EShTargetSpv_1_1:
+        case EShTargetSpv_1_2:
+        case EShTargetSpv_1_3:
+            return spv_target_env::SPV_ENV_VULKAN_1_1;
+        case EShTargetSpv_1_4:
+            return spv_target_env::SPV_ENV_VULKAN_1_1_SPIRV_1_4;
+        default:
+            logger->missingFunctionality("Target version for SPIRV-Tools validator");
+            return spv_target_env::SPV_ENV_VULKAN_1_1;
+        }
     default:
         break;
     }

@@ -184,7 +184,7 @@ void TSymbol::dumpExtensions(TInfoSink& infoSink) const
 
         for (int i = 0; i < numExtensions; i++)
             infoSink.debug << getExtensions()[i] << ",";
-        
+
         infoSink.debug << ">";
     }
 }
@@ -229,7 +229,7 @@ void TFunction::dump(TInfoSink& infoSink, bool complete) const
     infoSink.debug << "\n";
 }
 
-void TAnonMember::dump(TInfoSink& TInfoSink, bool complete) const
+void TAnonMember::dump(TInfoSink& TInfoSink, bool) const
 {
     TInfoSink.debug << "anonymous member " << getMemberNumber() << " of " << getAnonContainer().getName().c_str()
                     << "\n";

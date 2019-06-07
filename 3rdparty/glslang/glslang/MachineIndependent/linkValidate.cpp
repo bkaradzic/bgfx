@@ -1683,4 +1683,74 @@ int TIntermediate::getMemberAlignment(const TType& type, int& size, int& stride,
     }
 }
 
+// shared calculation by getOffset and getOffsets
+void TIntermediate::updateOffset(const TType& parentType, const TType& memberType, int& offset, int& memberSize)
+{
+    int dummyStride;
+
+    // modify just the children's view of matrix layout, if there is one for this member
+    TLayoutMatrix subMatrixLayout = memberType.getQualifier().layoutMatrix;
+    int memberAlignment = getMemberAlignment(memberType, memberSize, dummyStride,
+                                             parentType.getQualifier().layoutPacking,
+                                             subMatrixLayout != ElmNone
+                                                 ? subMatrixLayout == ElmRowMajor
+                                                 : parentType.getQualifier().layoutMatrix == ElmRowMajor);
+    RoundToPow2(offset, memberAlignment);
+}
+
+// Lookup or calculate the offset of a block member, using the recursively
+// defined block offset rules.
+int TIntermediate::getOffset(const TType& type, int index)
+{
+    const TTypeList& memberList = *type.getStruct();
+
+    // Don't calculate offset if one is present, it could be user supplied
+    // and different than what would be calculated.  That is, this is faster,
+    // but not just an optimization.
+    if (memberList[index].type->getQualifier().hasOffset())
+        return memberList[index].type->getQualifier().layoutOffset;
+
+    int memberSize = 0;
+    int offset = 0;
+    for (int m = 0; m <= index; ++m) {
+        updateOffset(type, *memberList[m].type, offset, memberSize);
+
+        if (m < index)
+            offset += memberSize;
+    }
+
+    return offset;
+}
+
+// Calculate the block data size.
+// Block arrayness is not taken into account, each element is backed by a separate buffer.
+int TIntermediate::getBlockSize(const TType& blockType)
+{
+    const TTypeList& memberList = *blockType.getStruct();
+    int lastIndex = (int)memberList.size() - 1;
+    int lastOffset = getOffset(blockType, lastIndex);
+
+    int lastMemberSize;
+    int dummyStride;
+    getMemberAlignment(*memberList[lastIndex].type, lastMemberSize, dummyStride,
+                       blockType.getQualifier().layoutPacking,
+                       blockType.getQualifier().layoutMatrix == ElmRowMajor);
+
+    return lastOffset + lastMemberSize;
+}
+
+int TIntermediate::computeBufferReferenceTypeSize(const TType& type)
+{
+    assert(type.getBasicType() == EbtReference);
+    int size = getBlockSize(*type.getReferentType());
+
+    int align = type.getBufferReferenceAlignment();
+
+    if (align) {
+        size = (size + align - 1) & ~(align-1);
+    }
+
+    return size;
+}
+
 } // end namespace glslang

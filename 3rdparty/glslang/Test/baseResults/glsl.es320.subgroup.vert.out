@@ -13,8 +13,8 @@ Requested GL_KHR_shader_subgroup_basic
 0:10              0 (const uint)
 0:10          'gl_VertexID' ( gl_VertexId highp int VertexId)
 0:10        Construct uvec4 ( temp highp 4-component vector of uint)
-0:10          'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
-0:10          'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
+0:10          'gl_SubgroupSize' ( in mediump uint SubgroupSize)
+0:10          'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
 0:10          Constant:
 0:10            0 (const uint)
 0:10          Constant:
@@ -42,8 +42,8 @@ Requested GL_KHR_shader_subgroup_basic
 0:10              0 (const uint)
 0:10          'gl_VertexID' ( gl_VertexId highp int VertexId)
 0:10        Construct uvec4 ( temp highp 4-component vector of uint)
-0:10          'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
-0:10          'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
+0:10          'gl_SubgroupSize' ( in mediump uint SubgroupSize)
+0:10          'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
 0:10          Constant:
 0:10            0 (const uint)
 0:10          Constant:

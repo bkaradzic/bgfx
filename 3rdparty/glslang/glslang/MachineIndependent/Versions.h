@@ -141,6 +141,7 @@ const char* const E_GL_ARB_shader_stencil_export        = "GL_ARB_shader_stencil
 // const char* const E_GL_ARB_cull_distance            = "GL_ARB_cull_distance";  // present for 4.5, but need extension control over block members
 const char* const E_GL_ARB_post_depth_coverage          = "GL_ARB_post_depth_coverage";
 const char* const E_GL_ARB_shader_viewport_layer_array  = "GL_ARB_shader_viewport_layer_array";
+const char* const E_GL_ARB_fragment_shader_interlock    = "GL_ARB_fragment_shader_interlock";
 
 const char* const E_GL_KHR_shader_subgroup_basic            = "GL_KHR_shader_subgroup_basic";
 const char* const E_GL_KHR_shader_subgroup_vote             = "GL_KHR_shader_subgroup_vote";
@@ -171,6 +172,7 @@ const char* const E_GL_EXT_samplerless_texture_functions    = "GL_EXT_samplerles
 const char* const E_GL_EXT_scalar_block_layout              = "GL_EXT_scalar_block_layout";
 const char* const E_GL_EXT_fragment_invocation_density      = "GL_EXT_fragment_invocation_density";
 const char* const E_GL_EXT_buffer_reference                 = "GL_EXT_buffer_reference";
+const char* const E_GL_EXT_buffer_reference2                = "GL_EXT_buffer_reference2";
 
 // Arrays of extensions for the above viewportEXTs duplications
 

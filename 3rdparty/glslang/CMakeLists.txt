@@ -114,6 +114,12 @@ function(glslang_set_link_args TARGET)
     endif()
 endfunction(glslang_set_link_args)
 
+# CMake needs to find the right version of python, right from the beginning,
+# otherwise, it will find the wrong version and fail later
+if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/External)
+    find_package(PythonInterp 3 REQUIRED)
+endif()
+
 # We depend on these for later projects, so they should come first.
 add_subdirectory(External)
 

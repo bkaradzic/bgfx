@@ -422,6 +422,18 @@ enum TBlendEquationShift {
     EBlendCount
 };
 
+enum TInterlockOrdering {
+    EioNone,
+    EioPixelInterlockOrdered,
+    EioPixelInterlockUnordered,
+    EioSampleInterlockOrdered,
+    EioSampleInterlockUnordered,
+    EioShadingRateInterlockOrdered,
+    EioShadingRateInterlockUnordered,
+
+    EioCount,
+};
+
 class TQualifier {
 public:
     static const int layoutNotSet = -1;
@@ -1110,6 +1122,18 @@ public:
         default:                    return 0;
         }
     }
+    static const char* getInterlockOrderingString(TInterlockOrdering order)
+    {
+        switch (order) {
+        case EioPixelInterlockOrdered:          return "pixel_interlock_ordered";
+        case EioPixelInterlockUnordered:        return "pixel_interlock_unordered";
+        case EioSampleInterlockOrdered:         return "sample_interlock_ordered";
+        case EioSampleInterlockUnordered:       return "sample_interlock_unordered";
+        case EioShadingRateInterlockOrdered:    return "shading_rate_interlock_ordered";
+        case EioShadingRateInterlockUnordered:  return "shading_rate_interlock_unordered";
+        default:                                return "none";
+        }
+    }
 };
 
 // Qualifiers that don't need to be keep per object.  They have shader scope, not object scope.
@@ -1130,6 +1154,7 @@ struct TShaderQualifiers {
     TLayoutDepth layoutDepth;
     bool blendEquation;       // true if any blend equation was specified
     int numViews;             // multiview extenstions
+    TInterlockOrdering interlockOrdering;
 
 #ifdef NV_EXTENSIONS
     bool layoutOverrideCoverage;        // true if layout override_coverage set
@@ -1165,6 +1190,7 @@ struct TShaderQualifiers {
         layoutDerivativeGroupLinear = false;
         primitives                  = TQualifier::layoutNotSet;
 #endif
+        interlockOrdering = EioNone;
     }
 
     // Merge in characteristics from the 'src' qualifier.  They can override when
@@ -1215,6 +1241,9 @@ struct TShaderQualifiers {
         if (src.primitives != TQualifier::layoutNotSet)
             primitives = src.primitives;
 #endif
+
+        if (src.interlockOrdering != EioNone)
+            interlockOrdering = src.interlockOrdering;
     }
 };
 

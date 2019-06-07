@@ -191,6 +191,13 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeDerivativeGroupLinearNV:  return "DerivativeGroupLinearNV";
 #endif
 
+    case ExecutionModePixelInterlockOrderedEXT:         return "PixelInterlockOrderedEXT";
+    case ExecutionModePixelInterlockUnorderedEXT:       return "PixelInterlockUnorderedEXT";
+    case ExecutionModeSampleInterlockOrderedEXT:        return "SampleInterlockOrderedEXT";
+    case ExecutionModeSampleInterlockUnorderedEXT:      return "SampleInterlockUnorderedEXT";
+    case ExecutionModeShadingRateInterlockOrderedEXT:   return "ShadingRateInterlockOrderedEXT";
+    case ExecutionModeShadingRateInterlockUnorderedEXT: return "ShadingRateInterlockUnorderedEXT";
+
     case ExecutionModeCeiling:
     default: return "Bad";
     }
@@ -575,7 +582,7 @@ const char* ImageChannelDataTypeString(int type)
     }
 }
 
-const int ImageOperandsCeiling = 12;
+const int ImageOperandsCeiling = 14;
 
 const char* ImageOperandsString(int format)
 {
@@ -592,6 +599,8 @@ const char* ImageOperandsString(int format)
     case ImageOperandsMakeTexelVisibleKHRShift:     return "MakeTexelVisibleKHR";
     case ImageOperandsNonPrivateTexelKHRShift:      return "NonPrivateTexelKHR";
     case ImageOperandsVolatileTexelKHRShift:        return "VolatileTexelKHR";
+    case ImageOperandsSignExtendShift:              return "SignExtend";
+    case ImageOperandsZeroExtendShift:              return "ZeroExtend";
 
     case ImageOperandsCeiling:
     default:
@@ -674,15 +683,20 @@ const char* SelectControlString(int cont)
     }
 }
 
-const int LoopControlCeiling = 4;
+const int LoopControlCeiling = LoopControlPartialCountShift + 1;
 
 const char* LoopControlString(int cont)
 {
     switch (cont) {
-    case 0:  return "Unroll";
-    case 1:  return "DontUnroll";
-    case 2:  return "DependencyInfinite";
-    case 3:  return "DependencyLength";
+    case LoopControlUnrollShift:             return "Unroll";
+    case LoopControlDontUnrollShift:         return "DontUnroll";
+    case LoopControlDependencyInfiniteShift: return "DependencyInfinite";
+    case LoopControlDependencyLengthShift:   return "DependencyLength";
+    case LoopControlMinIterationsShift:      return "MinIterations";
+    case LoopControlMaxIterationsShift:      return "MaxIterations";
+    case LoopControlIterationMultipleShift:  return "IterationMultiple";
+    case LoopControlPeelCountShift:          return "PeelCount";
+    case LoopControlPartialCountShift:       return "PartialCount";
 
     case LoopControlCeiling:
     default: return "Bad";
@@ -875,9 +889,9 @@ const char* CapabilityString(int info)
     case CapabilityStoragePushConstant16:       return "StoragePushConstant16";
     case CapabilityStorageInputOutput16:        return "StorageInputOutput16";
 
-    case CapabilityStorageBuffer8BitAccess:             return "CapabilityStorageBuffer8BitAccess";
-    case CapabilityUniformAndStorageBuffer8BitAccess:   return "CapabilityUniformAndStorageBuffer8BitAccess";
-    case CapabilityStoragePushConstant8:                return "CapabilityStoragePushConstant8";
+    case CapabilityStorageBuffer8BitAccess:             return "StorageBuffer8BitAccess";
+    case CapabilityUniformAndStorageBuffer8BitAccess:   return "UniformAndStorageBuffer8BitAccess";
+    case CapabilityStoragePushConstant8:                return "StoragePushConstant8";
 
     case CapabilityDeviceGroup: return "DeviceGroup";
     case CapabilityMultiView:   return "MultiView";
@@ -906,33 +920,38 @@ const char* CapabilityString(int info)
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
     case CapabilityFragmentBarycentricNV:           return "FragmentBarycentricNV";
     case CapabilityMeshShadingNV:                   return "MeshShadingNV";
-//    case CapabilityShadingRateNV:                   return "ShadingRateNV";  // superseded by CapabilityFragmentDensityEXT
+    case CapabilityImageFootprintNV:                return "ImageFootprintNV";
+//    case CapabilityShadingRateNV:                   return "ShadingRateNV";  // superseded by FragmentDensityEXT
 #endif
     case CapabilityFragmentDensityEXT:              return "FragmentDensityEXT";
 
     case CapabilityFragmentFullyCoveredEXT: return "FragmentFullyCoveredEXT";
 
-    case CapabilityShaderNonUniformEXT:                          return "CapabilityShaderNonUniformEXT";
-    case CapabilityRuntimeDescriptorArrayEXT:                    return "CapabilityRuntimeDescriptorArrayEXT";
-    case CapabilityInputAttachmentArrayDynamicIndexingEXT:       return "CapabilityInputAttachmentArrayDynamicIndexingEXT";
-    case CapabilityUniformTexelBufferArrayDynamicIndexingEXT:    return "CapabilityUniformTexelBufferArrayDynamicIndexingEXT";
-    case CapabilityStorageTexelBufferArrayDynamicIndexingEXT:    return "CapabilityStorageTexelBufferArrayDynamicIndexingEXT";
-    case CapabilityUniformBufferArrayNonUniformIndexingEXT:      return "CapabilityUniformBufferArrayNonUniformIndexingEXT";
-    case CapabilitySampledImageArrayNonUniformIndexingEXT:       return "CapabilitySampledImageArrayNonUniformIndexingEXT";
-    case CapabilityStorageBufferArrayNonUniformIndexingEXT:      return "CapabilityStorageBufferArrayNonUniformIndexingEXT";
-    case CapabilityStorageImageArrayNonUniformIndexingEXT:       return "CapabilityStorageImageArrayNonUniformIndexingEXT";
-    case CapabilityInputAttachmentArrayNonUniformIndexingEXT:    return "CapabilityInputAttachmentArrayNonUniformIndexingEXT";
-    case CapabilityUniformTexelBufferArrayNonUniformIndexingEXT: return "CapabilityUniformTexelBufferArrayNonUniformIndexingEXT";
-    case CapabilityStorageTexelBufferArrayNonUniformIndexingEXT: return "CapabilityStorageTexelBufferArrayNonUniformIndexingEXT";
+    case CapabilityShaderNonUniformEXT:                          return "ShaderNonUniformEXT";
+    case CapabilityRuntimeDescriptorArrayEXT:                    return "RuntimeDescriptorArrayEXT";
+    case CapabilityInputAttachmentArrayDynamicIndexingEXT:       return "InputAttachmentArrayDynamicIndexingEXT";
+    case CapabilityUniformTexelBufferArrayDynamicIndexingEXT:    return "UniformTexelBufferArrayDynamicIndexingEXT";
+    case CapabilityStorageTexelBufferArrayDynamicIndexingEXT:    return "StorageTexelBufferArrayDynamicIndexingEXT";
+    case CapabilityUniformBufferArrayNonUniformIndexingEXT:      return "UniformBufferArrayNonUniformIndexingEXT";
+    case CapabilitySampledImageArrayNonUniformIndexingEXT:       return "SampledImageArrayNonUniformIndexingEXT";
+    case CapabilityStorageBufferArrayNonUniformIndexingEXT:      return "StorageBufferArrayNonUniformIndexingEXT";
+    case CapabilityStorageImageArrayNonUniformIndexingEXT:       return "StorageImageArrayNonUniformIndexingEXT";
+    case CapabilityInputAttachmentArrayNonUniformIndexingEXT:    return "InputAttachmentArrayNonUniformIndexingEXT";
+    case CapabilityUniformTexelBufferArrayNonUniformIndexingEXT: return "UniformTexelBufferArrayNonUniformIndexingEXT";
+    case CapabilityStorageTexelBufferArrayNonUniformIndexingEXT: return "StorageTexelBufferArrayNonUniformIndexingEXT";
 
-    case CapabilityVulkanMemoryModelKHR:                return "CapabilityVulkanMemoryModelKHR";
-    case CapabilityVulkanMemoryModelDeviceScopeKHR:     return "CapabilityVulkanMemoryModelDeviceScopeKHR";
+    case CapabilityVulkanMemoryModelKHR:                return "VulkanMemoryModelKHR";
+    case CapabilityVulkanMemoryModelDeviceScopeKHR:     return "VulkanMemoryModelDeviceScopeKHR";
 
-    case CapabilityPhysicalStorageBufferAddressesEXT:   return "CapabilityPhysicalStorageBufferAddressesEXT";
+    case CapabilityPhysicalStorageBufferAddressesEXT:   return "PhysicalStorageBufferAddressesEXT";
 
-    case CapabilityVariablePointers:                    return "CapabilityVariablePointers";
+    case CapabilityVariablePointers:                    return "VariablePointers";
 
-    case CapabilityCooperativeMatrixNV:     return "CapabilityCooperativeMatrixNV";
+    case CapabilityCooperativeMatrixNV:     return "CooperativeMatrixNV";
+
+    case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
+    case CapabilityFragmentShaderPixelInterlockEXT:         return "CapabilityFragmentShaderPixelInterlockEXT";
+    case CapabilityFragmentShaderShadingRateInterlockEXT:   return "CapabilityFragmentShaderShadingRateInterlockEXT";
 
     default: return "Bad";
     }
@@ -1026,6 +1045,7 @@ const char* OpcodeString(int op)
     case 82:  return "OpCompositeInsert";
     case 83:  return "OpCopyObject";
     case 84:  return "OpTranspose";
+    case OpCopyLogical: return "OpCopyLogical";
     case 85:  return "Bad";
     case 86:  return "OpSampledImage";
     case 87:  return "OpImageSampleImplicitLod";
@@ -1343,6 +1363,9 @@ const char* OpcodeString(int op)
     case OpCooperativeMatrixMulAddNV:       return "OpCooperativeMatrixMulAddNV";
     case OpCooperativeMatrixLengthNV:       return "OpCooperativeMatrixLengthNV";
 
+    case OpBeginInvocationInterlockEXT:     return "OpBeginInvocationInterlockEXT";
+    case OpEndInvocationInterlockEXT:       return "OpEndInvocationInterlockEXT";
+
     default:
         return "Bad";
     }
@@ -1456,6 +1479,8 @@ void Parameterize()
     InstructionDesc[OpModuleProcessed].setResultAndType(false, false);
     InstructionDesc[OpTypeCooperativeMatrixNV].setResultAndType(true, false);
     InstructionDesc[OpCooperativeMatrixStoreNV].setResultAndType(false, false);
+    InstructionDesc[OpBeginInvocationInterlockEXT].setResultAndType(false, false);
+    InstructionDesc[OpEndInvocationInterlockEXT].setResultAndType(false, false);
 
     // Specific additional context-dependent operands
 
@@ -1932,6 +1957,8 @@ void Parameterize()
     InstructionDesc[OpQuantizeToF16].operands.push(OperandId, "'Value'");
 
     InstructionDesc[OpTranspose].operands.push(OperandId, "'Matrix'");
+
+    InstructionDesc[OpCopyLogical].operands.push(OperandId, "'Operand'");
 
     InstructionDesc[OpIsNan].operands.push(OperandId, "'x'");
 

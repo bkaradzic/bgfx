@@ -7,8 +7,8 @@ WARNING: 0:6: '' : all default precisions are highp; use precision statements to
 // Id's are bound by 60
 
                               Capability Shader
-                              Capability CapabilityStorageBuffer8BitAccess
-                              Capability CapabilityPhysicalStorageBufferAddressesEXT
+                              Capability StorageBuffer8BitAccess
+                              Capability PhysicalStorageBufferAddressesEXT
                               Extension  "SPV_EXT_physical_storage_buffer"
                               Extension  "SPV_KHR_8bit_storage"
                               Extension  "SPV_KHR_storage_buffer_storage_class"

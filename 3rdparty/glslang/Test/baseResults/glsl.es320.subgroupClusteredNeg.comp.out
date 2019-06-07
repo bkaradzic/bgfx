@@ -26,8 +26,8 @@ ERROR: node is still EOpNull!
 0:19          'invocation' ( temp highp uint)
 0:19          mod ( temp mediump uint)
 0:19            add ( temp mediump uint)
-0:19              'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
-0:19              'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
+0:19              'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
+0:19              'gl_SubgroupSize' ( in mediump uint SubgroupSize)
 0:19            Constant:
 0:19              4 (const uint)
 0:21      move second child to first child ( temp highp 2-component vector of float)
@@ -325,8 +325,8 @@ ERROR: node is still EOpNull!
 0:19          'invocation' ( temp highp uint)
 0:19          mod ( temp mediump uint)
 0:19            add ( temp mediump uint)
-0:19              'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
-0:19              'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
+0:19              'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
+0:19              'gl_SubgroupSize' ( in mediump uint SubgroupSize)
 0:19            Constant:
 0:19              4 (const uint)
 0:21      move second child to first child ( temp highp 2-component vector of float)

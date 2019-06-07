@@ -61,6 +61,14 @@
 
 namespace spv {
 
+typedef enum {
+    Spv_1_0 = (1 << 16),
+    Spv_1_1 = (1 << 16) | (1 << 8),
+    Spv_1_2 = (1 << 16) | (2 << 8),
+    Spv_1_3 = (1 << 16) | (3 << 8),
+    Spv_1_4 = (1 << 16) | (4 << 8),
+} SpvVersion;
+
 class Builder {
 public:
     Builder(unsigned int spvVersion, unsigned int userNumber, SpvBuildLogger* logger);
@@ -300,7 +308,7 @@ public:
     void makeDiscard();
 
     // Create a global or function local or IO variable.
-    Id createVariable(StorageClass, Id type, const char* name = 0);
+    Id createVariable(StorageClass, Id type, const char* name = 0, Id initializer = NoResult);
 
     // Create an intermediate with an undefined value.
     Id createUndefined(Id type);
@@ -408,7 +416,8 @@ public:
     };
 
     // Select the correct texture operation based on all inputs, and emit the correct instruction
-    Id createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather, bool noImplicit, const TextureParameters&);
+    Id createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather,
+        bool noImplicit, const TextureParameters&, ImageOperandsMask);
 
     // Emit the OpTextureQuery* instruction that was passed in.
     // Figure out the right return value and type, and return it.
@@ -662,7 +671,7 @@ public:
 
     void createBranch(Block* block);
     void createConditionalBranch(Id condition, Block* thenBlock, Block* elseBlock);
-    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control, unsigned int dependencyLength);
+    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control, const std::vector<unsigned int>& operands);
 
     // Sets to generate opcode for specialization constants.
     void setToSpecConstCodeGenMode() { generatingOpCodeForSpecConst = true; }
