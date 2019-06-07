@@ -256,6 +256,8 @@ string CompilerReflection::compile()
 	json_stream = std::make_shared<simple_json::Stream>();
 	json_stream->set_current_locale_radix_character(current_locale_radix_character);
 	json_stream->begin_json_object();
+	fixup_type_alias();
+	reorder_type_alias();
 	emit_entry_points();
 	emit_types();
 	emit_resources();

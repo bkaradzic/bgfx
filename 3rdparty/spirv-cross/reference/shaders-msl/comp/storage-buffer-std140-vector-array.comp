@@ -5,28 +5,28 @@ using namespace metal;
 
 struct Sub
 {
-    float4 f[2];
-    float4 f2[2];
-    float3 f3[2];
-    float4 f4[2];
-};
-
-struct Sub_1
-{
     float f[2];
     float2 f2[2];
     float3 f3[2];
     float4 f4[2];
 };
 
+struct Sub_1
+{
+    float4 f[2];
+    float4 f2[2];
+    float3 f3[2];
+    float4 f4[2];
+};
+
 struct SSBO
 {
-    Sub sub[2];
+    Sub_1 sub[2];
 };
 
 kernel void main0(device SSBO& _27 [[buffer(0)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
 {
-    Sub_1 foo;
+    Sub foo;
     foo.f[0] = _27.sub[gl_WorkGroupID.x].f[0].x;
     foo.f[1] = _27.sub[gl_WorkGroupID.x].f[1].x;
     foo.f2[0] = _27.sub[gl_WorkGroupID.x].f2[0].xy;

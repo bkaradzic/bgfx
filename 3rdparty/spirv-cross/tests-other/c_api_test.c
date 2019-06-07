@@ -103,6 +103,8 @@ static void compile(spvc_compiler compiler, const char *tag)
 
 int main(int argc, char **argv)
 {
+	const char *rev = NULL;
+
 	spvc_context context = NULL;
 	spvc_parsed_ir ir = NULL;
 	spvc_compiler compiler_glsl = NULL;
@@ -115,6 +117,12 @@ int main(int argc, char **argv)
 	spvc_resources resources = NULL;
 	SpvId *buffer = NULL;
 	size_t word_count = 0;
+
+	rev = spvc_get_commit_revision_and_timestamp();
+	if (!rev || *rev == '\0')
+		return 1;
+
+	printf("Revision: %s\n", rev);
 
 	if (argc != 5)
 		return 1;

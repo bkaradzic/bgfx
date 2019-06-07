@@ -49,6 +49,25 @@ set(spirv-compiler-options "")
 set(spirv-compiler-defines "")
 set(spirv-cross-link-flags "")
 
+message(STATUS "Finding Git version for SPIRV-Cross.")
+set(spirv-cross-build-version "unknown")
+find_package(Git)
+if (GIT_FOUND)
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		OUTPUT_VARIABLE spirv-cross-build-version
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+	message(STATUS "Git hash: ${spirv-cross-build-version}")
+else()
+	message(STATUS "Git not found, using unknown build version.")
+endif()
+
+string(TIMESTAMP spirv-cross-timestamp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.in.h ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h @ONLY)
+
 if(SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 	set(spirv-compiler-defines ${spirv-compiler-defines} SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 endif()
@@ -237,6 +256,8 @@ if (SPIRV_CROSS_STATIC)
 	if (SPIRV_CROSS_ENABLE_C_API)
 		spirv_cross_add_library(spirv-cross-c spirv_cross_c STATIC
 				${spirv-cross-c-sources})
+		target_include_directories(spirv-cross-c PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+		target_compile_definitions(spirv-cross-c PRIVATE HAVE_SPIRV_CROSS_GIT_VERSION)
 
 		if (SPIRV_CROSS_ENABLE_GLSL)
 			target_link_libraries(spirv-cross-c PRIVATE spirv-cross-glsl)
@@ -266,7 +287,7 @@ if (SPIRV_CROSS_STATIC)
 endif()
 
 set(spirv-cross-abi-major 0)
-set(spirv-cross-abi-minor 9)
+set(spirv-cross-abi-minor 12)
 set(spirv-cross-abi-patch 0)
 
 if (SPIRV_CROSS_SHARED)
@@ -281,6 +302,9 @@ if (SPIRV_CROSS_SHARED)
 	spirv_cross_add_library(spirv-cross-c-shared spirv_cross_c_shared SHARED
 			${spirv-cross-core-sources}
 			${spirv-cross-c-sources})
+
+	target_include_directories(spirv-cross-c-shared PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+	target_compile_definitions(spirv-cross-c-shared PRIVATE HAVE_SPIRV_CROSS_GIT_VERSION)
 
 	if (SPIRV_CROSS_ENABLE_GLSL)
 		target_sources(spirv-cross-c-shared PRIVATE ${spirv-cross-glsl-sources})
@@ -368,7 +392,8 @@ if (SPIRV_CROSS_CLI)
 	endif()
 	add_executable(spirv-cross main.cpp)
 	target_compile_options(spirv-cross PRIVATE ${spirv-compiler-options})
-	target_compile_definitions(spirv-cross PRIVATE ${spirv-compiler-defines})
+	target_include_directories(spirv-cross PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+	target_compile_definitions(spirv-cross PRIVATE ${spirv-compiler-defines} HAVE_SPIRV_CROSS_GIT_VERSION)
 	set_target_properties(spirv-cross PROPERTIES LINK_FLAGS "${spirv-cross-link-flags}")
 	install(TARGETS spirv-cross RUNTIME DESTINATION bin)
 	target_link_libraries(spirv-cross PRIVATE

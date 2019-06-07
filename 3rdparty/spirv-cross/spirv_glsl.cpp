@@ -494,6 +494,8 @@ string CompilerGLSL::compile()
 	backend.supports_extensions = true;
 
 	// Scan the SPIR-V to find trivial uses of extensions.
+	fixup_type_alias();
+	reorder_type_alias();
 	build_function_control_flow_graphs_and_analyze();
 	find_static_extensions();
 	fixup_image_load_store_access();
@@ -1408,6 +1410,8 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 
 	if (options.vulkan_semantics && var.storage == StorageClassPushConstant)
 		attr.push_back("push_constant");
+	else if (var.storage == StorageClassShaderRecordBufferNV)
+		attr.push_back("shaderRecordNV");
 
 	if (flags.get(DecorationRowMajor))
 		attr.push_back("row_major");
@@ -1453,14 +1457,14 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 
 	// Do not emit set = decoration in regular GLSL output, but
 	// we need to preserve it in Vulkan GLSL mode.
-	if (var.storage != StorageClassPushConstant)
+	if (var.storage != StorageClassPushConstant && var.storage != StorageClassShaderRecordBufferNV)
 	{
 		if (flags.get(DecorationDescriptorSet) && options.vulkan_semantics)
 			attr.push_back(join("set = ", dec.set));
 	}
 
 	bool push_constant_block = options.vulkan_semantics && var.storage == StorageClassPushConstant;
-	bool ssbo_block = var.storage == StorageClassStorageBuffer ||
+	bool ssbo_block = var.storage == StorageClassStorageBuffer || var.storage == StorageClassShaderRecordBufferNV ||
 	                  (var.storage == StorageClassUniform && typeflags.get(DecorationBufferBlock));
 	bool emulated_ubo = var.storage == StorageClassPushConstant && options.emit_push_constant_as_uniform_buffer;
 	bool ubo_block = var.storage == StorageClassUniform && typeflags.get(DecorationBlock);
@@ -1480,6 +1484,9 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 
 	// Make sure we don't emit binding layout for a classic uniform on GLSL 1.30.
 	if (!can_use_buffer_blocks && var.storage == StorageClassUniform)
+		can_use_binding = false;
+
+	if (var.storage == StorageClassShaderRecordBufferNV)
 		can_use_binding = false;
 
 	if (can_use_binding && flags.get(DecorationBinding))
@@ -1517,9 +1524,9 @@ string CompilerGLSL::layout_for_variable(const SPIRVariable &var)
 	return res;
 }
 
-string CompilerGLSL::buffer_to_packing_standard(const SPIRType &type, bool check_std430)
+string CompilerGLSL::buffer_to_packing_standard(const SPIRType &type, bool support_std430_without_scalar_layout)
 {
-	if (check_std430 && buffer_is_packing_standard(type, BufferPackingStd430))
+	if (support_std430_without_scalar_layout && buffer_is_packing_standard(type, BufferPackingStd430))
 		return "std430";
 	else if (buffer_is_packing_standard(type, BufferPackingStd140))
 		return "std140";
@@ -1528,7 +1535,8 @@ string CompilerGLSL::buffer_to_packing_standard(const SPIRType &type, bool check
 		require_extension_internal("GL_EXT_scalar_block_layout");
 		return "scalar";
 	}
-	else if (check_std430 && buffer_is_packing_standard(type, BufferPackingStd430EnhancedLayout))
+	else if (support_std430_without_scalar_layout &&
+	         buffer_is_packing_standard(type, BufferPackingStd430EnhancedLayout))
 	{
 		if (options.es && !options.vulkan_semantics)
 			SPIRV_CROSS_THROW("Push constant block cannot be expressed as neither std430 nor std140. ES-targets do "
@@ -1558,6 +1566,21 @@ string CompilerGLSL::buffer_to_packing_standard(const SPIRType &type, bool check
 		set_extended_decoration(type.self, SPIRVCrossDecorationPacked);
 		require_extension_internal("GL_EXT_scalar_block_layout");
 		return "scalar";
+	}
+	else if (!support_std430_without_scalar_layout && options.vulkan_semantics &&
+	         buffer_is_packing_standard(type, BufferPackingStd430))
+	{
+		// UBOs can support std430 with GL_EXT_scalar_block_layout.
+		require_extension_internal("GL_EXT_scalar_block_layout");
+		return "std430";
+	}
+	else if (!support_std430_without_scalar_layout && options.vulkan_semantics &&
+	         buffer_is_packing_standard(type, BufferPackingStd430EnhancedLayout))
+	{
+		// UBOs can support std430 with GL_EXT_scalar_block_layout.
+		set_extended_decoration(type.self, SPIRVCrossDecorationPacked);
+		require_extension_internal("GL_EXT_scalar_block_layout");
+		return "std430";
 	}
 	else
 	{
@@ -1727,7 +1750,7 @@ void CompilerGLSL::emit_buffer_block_native(const SPIRVariable &var)
 	auto &type = get<SPIRType>(var.basetype);
 
 	Bitset flags = ir.get_buffer_block_flags(var);
-	bool ssbo = var.storage == StorageClassStorageBuffer ||
+	bool ssbo = var.storage == StorageClassStorageBuffer || var.storage == StorageClassShaderRecordBufferNV ||
 	            ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
 	bool is_restrict = ssbo && flags.get(DecorationRestrict);
 	bool is_writeonly = ssbo && flags.get(DecorationNonReadable);
@@ -1843,6 +1866,14 @@ const char *CompilerGLSL::to_storage_qualifiers_glsl(const SPIRVariable &var)
 	else if (var.storage == StorageClassHitAttributeNV)
 	{
 		return "hitAttributeNV ";
+	}
+	else if (var.storage == StorageClassCallableDataNV)
+	{
+		return "callableDataNV ";
+	}
+	else if (var.storage == StorageClassIncomingCallableDataNV)
+	{
+		return "callableDataInNV ";
 	}
 
 	return "";
@@ -2545,7 +2576,8 @@ void CompilerGLSL::emit_resources()
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 		auto &type = this->get<SPIRType>(var.basetype);
 
-		bool is_block_storage = type.storage == StorageClassStorageBuffer || type.storage == StorageClassUniform;
+		bool is_block_storage = type.storage == StorageClassStorageBuffer || type.storage == StorageClassUniform ||
+		                        type.storage == StorageClassShaderRecordBufferNV;
 		bool has_block_flags = ir.meta[type.self].decoration.decoration_flags.get(DecorationBlock) ||
 		                       ir.meta[type.self].decoration.decoration_flags.get(DecorationBufferBlock);
 
@@ -2585,8 +2617,9 @@ void CompilerGLSL::emit_resources()
 
 		if (var.storage != StorageClassFunction && type.pointer &&
 		    (type.storage == StorageClassUniformConstant || type.storage == StorageClassAtomicCounter ||
-		     type.storage == StorageClassRayPayloadNV || type.storage == StorageClassHitAttributeNV ||
-		     type.storage == StorageClassIncomingRayPayloadNV) &&
+		     type.storage == StorageClassRayPayloadNV || type.storage == StorageClassIncomingRayPayloadNV ||
+		     type.storage == StorageClassCallableDataNV || type.storage == StorageClassIncomingCallableDataNV ||
+		     type.storage == StorageClassHitAttributeNV) &&
 		    !is_hidden_variable(var))
 		{
 			emit_uniform(var);
@@ -2762,13 +2795,22 @@ string CompilerGLSL::dereference_expression(const SPIRType &expr_type, const std
 
 string CompilerGLSL::address_of_expression(const std::string &expr)
 {
-	// If this expression starts with a dereference operator ('*'), then
-	// just return the part after the operator.
-	// TODO: Strip parens if unnecessary?
-	if (expr.front() == '*')
+	if (expr.size() > 3 && expr[0] == '(' && expr[1] == '*' && expr.back() == ')')
+	{
+		// If we have an expression which looks like (*foo), taking the address of it is the same as stripping
+		// the first two and last characters. We might have to enclose the expression.
+		// This doesn't work for cases like (*foo + 10),
+		// but this is an r-value expression which we cannot take the address of anyways.
+		return enclose_expression(expr.substr(2, expr.size() - 3));
+	}
+	else if (expr.front() == '*')
+	{
+		// If this expression starts with a dereference operator ('*'), then
+		// just return the part after the operator.
 		return expr.substr(1);
+	}
 	else
-		return join('&', expr);
+		return join('&', enclose_expression(expr));
 }
 
 // Just like to_expression except that we enclose the expression inside parentheses if needed.
@@ -9564,6 +9606,12 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		// Undefined value has been declared.
 		break;
 
+	case OpLine:
+	{
+		emit_line_directive(ops[0], ops[1]);
+		break;
+	}
+
 	default:
 		statement("// unimplemented op ", instruction.op);
 		break;
@@ -10503,6 +10551,8 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 		}
 	}
 
+	if (func.entry_line.file_id != 0)
+		emit_line_directive(func.entry_line.file_id, func.entry_line.line_literal);
 	emit_function_prototype(func, return_flags);
 	begin_scope();
 
@@ -10523,6 +10573,8 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 	for (auto &v : func.local_variables)
 	{
 		auto &var = get<SPIRVariable>(v);
+		var.deferred_declaration = false;
+
 		if (var.storage == StorageClassWorkgroup)
 		{
 			// Special variable type which cannot have initializer,
@@ -10582,10 +10634,16 @@ void CompilerGLSL::emit_function(SPIRFunction &func, const Bitset &return_flags)
 			var.deferred_declaration = false;
 	}
 
+	// Enforce declaration order for regression testing purposes.
+	for (auto &block_id : func.blocks)
+	{
+		auto &block = get<SPIRBlock>(block_id);
+		sort(begin(block.dominated_variables), end(block.dominated_variables));
+	}
+
 	for (auto &line : current_function->fixup_hooks_in)
 		line();
 
-	entry_block.loop_dominator = SPIRBlock::NoDominator;
 	emit_block_chain(entry_block);
 
 	end_scope();
@@ -10844,44 +10902,6 @@ void CompilerGLSL::branch(uint32_t from, uint32_t cond, uint32_t true_block, uin
 	}
 }
 
-void CompilerGLSL::propagate_loop_dominators(const SPIRBlock &block)
-{
-	// Propagate down the loop dominator block, so that dominated blocks can back trace.
-	if (block.merge == SPIRBlock::MergeLoop || block.loop_dominator)
-	{
-		uint32_t dominator = block.merge == SPIRBlock::MergeLoop ? block.self : block.loop_dominator;
-
-		auto set_dominator = [this](uint32_t self, uint32_t new_dominator) {
-			auto &dominated_block = this->get<SPIRBlock>(self);
-
-			// If we already have a loop dominator, we're trying to break out to merge targets
-			// which should not update the loop dominator.
-			if (!dominated_block.loop_dominator)
-				dominated_block.loop_dominator = new_dominator;
-		};
-
-		// After merging a loop, we inherit the loop dominator always.
-		if (block.merge_block)
-			set_dominator(block.merge_block, block.loop_dominator);
-
-		if (block.true_block)
-			set_dominator(block.true_block, dominator);
-		if (block.false_block)
-			set_dominator(block.false_block, dominator);
-		if (block.next_block)
-			set_dominator(block.next_block, dominator);
-		if (block.default_block)
-			set_dominator(block.default_block, dominator);
-
-		for (auto &c : block.cases)
-			set_dominator(c.block, dominator);
-
-		// In older glslang output continue_block can be == loop header.
-		if (block.continue_block && block.continue_block != block.self)
-			set_dominator(block.continue_block, dominator);
-	}
-}
-
 // FIXME: This currently cannot handle complex continue blocks
 // as in do-while.
 // This should be seen as a "trivial" continue block.
@@ -10902,7 +10922,6 @@ string CompilerGLSL::emit_continue_block(uint32_t continue_block, bool follow_tr
 	// Stamp out all blocks one after each other.
 	while ((ir.block_meta[block->self] & ParsedIR::BLOCK_META_LOOP_HEADER_BIT) == 0)
 	{
-		propagate_loop_dominators(*block);
 		// Write out all instructions we have in this block.
 		emit_block_instructions(*block);
 
@@ -11146,7 +11165,6 @@ bool CompilerGLSL::attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method 
 
 		if (current_count == statement_count && condition_is_temporary)
 		{
-			propagate_loop_dominators(child);
 			uint32_t target_block = child.true_block;
 
 			switch (continue_type)
@@ -11210,8 +11228,6 @@ bool CompilerGLSL::attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method 
 
 void CompilerGLSL::flush_undeclared_variables(SPIRBlock &block)
 {
-	// Enforce declaration order for regression testing purposes.
-	sort(begin(block.dominated_variables), end(block.dominated_variables));
 	for (auto &v : block.dominated_variables)
 		flush_variable_declaration(v);
 }
@@ -11240,8 +11256,6 @@ void CompilerGLSL::emit_hoisted_temporaries(SmallVector<pair<uint32_t, uint32_t>
 
 void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 {
-	propagate_loop_dominators(block);
-
 	bool select_branch_to_true_block = false;
 	bool select_branch_to_false_block = false;
 	bool skip_direct_branch = false;
@@ -11257,6 +11271,15 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 	// If we have loop variables, stop masking out access to the variable now.
 	for (auto var : block.loop_variables)
 		get<SPIRVariable>(var).loop_variable_enable = true;
+
+	// Remember deferred declaration state. We will restore it before returning.
+	SmallVector<bool, 64> rearm_dominated_variables(block.dominated_variables.size());
+	for (size_t i = 0; i < block.dominated_variables.size(); i++)
+	{
+		uint32_t var_id = block.dominated_variables[i];
+		auto &var = get<SPIRVariable>(var_id);
+		rearm_dominated_variables[i] = var.deferred_declaration;
+	}
 
 	// This is the method often used by spirv-opt to implement loops.
 	// The loop header goes straight into the continue block.
@@ -11636,6 +11659,15 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 
 	// Forget about control dependent expressions now.
 	block.invalidate_expressions.clear();
+
+	// After we return, we must be out of scope, so if we somehow have to re-emit this function,
+	// re-declare variables if necessary.
+	assert(rearm_dominated_variables.size() == block.dominated_variables.size());
+	for (size_t i = 0; i < block.dominated_variables.size(); i++)
+	{
+		uint32_t var = block.dominated_variables[i];
+		get<SPIRVariable>(var).deferred_declaration = rearm_dominated_variables[i];
+	}
 }
 
 void CompilerGLSL::begin_scope()
@@ -11897,4 +11929,80 @@ void CompilerGLSL::reset_name_caches()
 	block_ssbo_names.clear();
 	block_names.clear();
 	function_overloads.clear();
+}
+
+void CompilerGLSL::fixup_type_alias()
+{
+	// Due to how some backends work, the "master" type of type_alias must be a block-like type if it exists.
+	// FIXME: Multiple alias types which are both block-like will be awkward, for now, it's best to just drop the type
+	// alias if the slave type is a block type.
+	ir.for_each_typed_id<SPIRType>([&](uint32_t self, SPIRType &type) {
+		if (type.type_alias && type_is_block_like(type))
+		{
+			// Become the master.
+			ir.for_each_typed_id<SPIRType>([&](uint32_t other_id, SPIRType &other_type) {
+				if (other_id == type.self)
+					return;
+
+				if (other_type.type_alias == type.type_alias)
+					other_type.type_alias = type.self;
+			});
+
+			this->get<SPIRType>(type.type_alias).type_alias = self;
+			type.type_alias = 0;
+		}
+	});
+
+	ir.for_each_typed_id<SPIRType>([&](uint32_t, SPIRType &type) {
+		if (type.type_alias && type_is_block_like(type))
+		{
+			// This is not allowed, drop the type_alias.
+			type.type_alias = 0;
+		}
+	});
+}
+
+void CompilerGLSL::reorder_type_alias()
+{
+	// Reorder declaration of types so that the master of the type alias is always emitted first.
+	// We need this in case a type B depends on type A (A must come before in the vector), but A is an alias of a type Abuffer, which
+	// means declaration of A doesn't happen (yet), and order would be B, ABuffer and not ABuffer, B. Fix this up here.
+	auto &type_ids = ir.ids_for_type[TypeType];
+	for (auto alias_itr = begin(type_ids); alias_itr != end(type_ids); ++alias_itr)
+	{
+		auto &type = get<SPIRType>(*alias_itr);
+		if (type.type_alias != 0 && !has_extended_decoration(type.type_alias, SPIRVCrossDecorationPacked))
+		{
+			// We will skip declaring this type, so make sure the type_alias type comes before.
+			auto master_itr = find(begin(type_ids), end(type_ids), type.type_alias);
+			assert(master_itr != end(type_ids));
+
+			if (alias_itr < master_itr)
+			{
+				// Must also swap the type order for the constant-type joined array.
+				auto &joined_types = ir.ids_for_constant_or_type;
+				auto alt_alias_itr = find(begin(joined_types), end(joined_types), *alias_itr);
+				auto alt_master_itr = find(begin(joined_types), end(joined_types), *master_itr);
+				assert(alt_alias_itr != end(joined_types));
+				assert(alt_master_itr != end(joined_types));
+
+				swap(*alias_itr, *master_itr);
+				swap(*alt_alias_itr, *alt_master_itr);
+			}
+		}
+	}
+}
+
+void CompilerGLSL::emit_line_directive(uint32_t file_id, uint32_t line_literal)
+{
+	// If we are redirecting statements, ignore the line directive.
+	// Common case here is continue blocks.
+	if (redirect_statement)
+		return;
+
+	if (options.emit_line_directives)
+	{
+		require_extension_internal("GL_GOOGLE_cpp_style_line_directive");
+		statement_no_indent("#line ", line_literal, " \"", get<SPIRString>(file_id).str, "\"");
+	}
 }

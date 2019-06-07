@@ -4696,6 +4696,8 @@ string CompilerHLSL::compile()
 	backend.can_return_array = false;
 	backend.nonuniform_qualifier = "NonUniformResourceIndex";
 
+	fixup_type_alias();
+	reorder_type_alias();
 	build_function_control_flow_graphs_and_analyze();
 	validate_shader_model();
 	update_active_builtins();

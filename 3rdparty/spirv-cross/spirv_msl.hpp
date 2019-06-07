@@ -156,6 +156,10 @@ static const uint32_t kPushConstBinding = 0;
 // element to indicate the buffer binding for swizzle buffers.
 static const uint32_t kSwizzleBufferBinding = ~(1u);
 
+// Special constant used in a MSLResourceBinding binding
+// element to indicate the buffer binding for buffer size buffers to support OpArrayLength.
+static const uint32_t kBufferSizeBufferBinding = ~(2u);
+
 static const uint32_t kMaxArgumentBuffers = 8;
 
 // Decompiles SPIR-V to Metal Shading Language
@@ -179,6 +183,7 @@ public:
 		uint32_t shader_output_buffer_index = 28;
 		uint32_t shader_patch_output_buffer_index = 27;
 		uint32_t shader_tess_factor_buffer_index = 26;
+		uint32_t buffer_size_buffer_index = 25;
 		uint32_t shader_input_wg_index = 0;
 		bool enable_point_size_builtin = true;
 		bool disable_rasterization = false;
@@ -247,6 +252,13 @@ public:
 	bool needs_swizzle_buffer() const
 	{
 		return used_swizzle_buffer;
+	}
+
+	// Provide feedback to calling API to allow it to pass a buffer
+	// containing STORAGE_BUFFER buffer sizes to support OpArrayLength.
+	bool needs_buffer_size_buffer() const
+	{
+		return !buffers_requiring_array_length.empty();
 	}
 
 	// Provide feedback to calling API to allow it to pass an output
@@ -446,6 +458,7 @@ protected:
 	std::string ensure_valid_name(std::string name, std::string pfx);
 	std::string to_sampler_expression(uint32_t id);
 	std::string to_swizzle_expression(uint32_t id);
+	std::string to_buffer_size_expression(uint32_t id);
 	std::string builtin_qualifier(spv::BuiltIn builtin);
 	std::string builtin_type_decl(spv::BuiltIn builtin);
 	std::string built_in_func_arg(spv::BuiltIn builtin, bool prefix_comma);
@@ -475,6 +488,7 @@ protected:
 	void emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uint32_t id_mem_sem);
 	void emit_array_copy(const std::string &lhs, uint32_t rhs_id) override;
 	void build_implicit_builtins();
+	uint32_t build_constant_uint_array_pointer();
 	void emit_entry_point_declarations() override;
 	uint32_t builtin_frag_coord_id = 0;
 	uint32_t builtin_sample_id_id = 0;
@@ -487,6 +501,7 @@ protected:
 	uint32_t builtin_subgroup_invocation_id_id = 0;
 	uint32_t builtin_subgroup_size_id = 0;
 	uint32_t swizzle_buffer_id = 0;
+	uint32_t buffer_size_buffer_id = 0;
 
 	void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
 	void bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type) override;
@@ -496,6 +511,8 @@ protected:
 
 	bool emit_tessellation_access_chain(const uint32_t *ops, uint32_t length);
 	bool is_out_of_bounds_tessellation_level(uint32_t id_lhs);
+
+	void mark_implicit_builtin(spv::StorageClass storage, spv::BuiltIn builtin, uint32_t id);
 
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;
@@ -535,6 +552,7 @@ protected:
 	std::string patch_stage_out_var_name = "patchOut";
 	std::string sampler_name_suffix = "Smplr";
 	std::string swizzle_name_suffix = "Swzl";
+	std::string buffer_size_name_suffix = "BufferSize";
 	std::string input_wg_var_name = "gl_in";
 	std::string output_buffer_var_name = "spvOut";
 	std::string patch_output_buffer_var_name = "spvPatchOut";
@@ -542,6 +560,7 @@ protected:
 	spv::Op previous_instruction_opcode = spv::OpNop;
 
 	std::unordered_map<uint32_t, MSLConstexprSampler> constexpr_samplers;
+	std::unordered_set<uint32_t> buffers_requiring_array_length;
 	SmallVector<uint32_t> buffer_arrays;
 
 	uint32_t argument_buffer_ids[kMaxArgumentBuffers];

@@ -135,12 +135,12 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-float4 sample_in_func(thread const array<texture2d<float>, 4> uSampler, thread const array<sampler, 4> uSamplerSmplr, constant uint32_t* uSamplerSwzl, thread float2& vUV)
+float4 sample_in_func(thread const array<texture2d<float>, 4> uSampler, thread const array<sampler, 4> uSamplerSmplr, constant uint* uSamplerSwzl, thread float2& vUV)
 {
     return spvTextureSwizzle(uSampler[2].sample(uSamplerSmplr[2], vUV), uSamplerSwzl[2]);
 }
 
-float4 sample_single_in_func(thread const texture2d<float> s, thread const sampler sSmplr, constant uint32_t& sSwzl, thread float2& vUV)
+float4 sample_single_in_func(thread const texture2d<float> s, thread const sampler sSmplr, constant uint& sSwzl, thread float2& vUV)
 {
     return spvTextureSwizzle(s.sample(sSmplr, vUV), sSwzl);
 }
@@ -148,7 +148,7 @@ float4 sample_single_in_func(thread const texture2d<float> s, thread const sampl
 fragment main0_out main0(main0_in in [[stage_in]], constant uint* spvSwizzleConstants [[buffer(30)]], array<texture2d<float>, 4> uSampler [[texture(0)]], array<sampler, 4> uSamplerSmplr [[sampler(0)]])
 {
     main0_out out = {};
-    constant uint32_t* uSamplerSwzl = &spvSwizzleConstants[0];
+    constant uint* uSamplerSwzl = &spvSwizzleConstants[0];
     out.FragColor = sample_in_func(uSampler, uSamplerSmplr, uSamplerSwzl, in.vUV);
     out.FragColor += sample_single_in_func(uSampler[1], uSamplerSmplr[1], uSamplerSwzl[1], in.vUV);
     return out;

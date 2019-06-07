@@ -7,19 +7,19 @@ using namespace metal;
 
 struct Foo
 {
-    packed_float3 a;
+    float3 a;
     float b;
 };
 
 struct Foo_1
 {
-    float3 a;
+    packed_float3 a;
     float b;
 };
 
 struct buf
 {
-    Foo results[16];
+    Foo_1 results[16];
     float4 bar;
 };
 
@@ -31,7 +31,7 @@ struct main0_out
 float4 _main(thread const float4& pos, constant buf& v_11)
 {
     int _46 = int(pos.x) % 16;
-    Foo_1 foo;
+    Foo foo;
     foo.a = float3(v_11.results[_46].a);
     foo.b = v_11.results[_46].b;
     return float4(dot(foo.a, v_11.bar.xyz), foo.b, 0.0, 0.0);

@@ -103,6 +103,10 @@ public:
 		// Does not apply to shader storage or push constant blocks.
 		bool emit_uniform_buffer_as_plain_uniforms = false;
 
+		// Emit OpLine directives if present in the module.
+		// May not correspond exactly to original source, but should be a good approximation.
+		bool emit_line_directives = false;
+
 		enum Precision
 		{
 			DontCare,
@@ -233,6 +237,7 @@ protected:
 	virtual void emit_spv_amd_gcn_shader_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
 	                                        uint32_t count);
 	virtual void emit_header();
+	void emit_line_directive(uint32_t file_id, uint32_t line_literal);
 	void build_workgroup_size(SmallVector<std::string> &arguments, const SpecializationConstant &x,
 	                          const SpecializationConstant &y, const SpecializationConstant &z);
 
@@ -418,7 +423,6 @@ protected:
 	void emit_specialization_constant_op(const SPIRConstantOp &constant);
 	std::string emit_continue_block(uint32_t continue_block, bool follow_true_block, bool follow_false_block);
 	bool attempt_emit_loop_header(SPIRBlock &block, SPIRBlock::Method method);
-	void propagate_loop_dominators(const SPIRBlock &block);
 
 	void branch(uint32_t from, uint32_t to);
 	void branch_to_continue(uint32_t from, uint32_t to);
@@ -525,7 +529,7 @@ protected:
 
 	bool buffer_is_packing_standard(const SPIRType &type, BufferPackingStandard packing, uint32_t start_offset = 0,
 	                                uint32_t end_offset = ~(0u));
-	std::string buffer_to_packing_standard(const SPIRType &type, bool enable_std430);
+	std::string buffer_to_packing_standard(const SPIRType &type, bool support_std430_without_scalar_layout);
 
 	uint32_t type_to_packed_base_size(const SPIRType &type, BufferPackingStandard packing);
 	uint32_t type_to_packed_alignment(const SPIRType &type, const Bitset &flags, BufferPackingStandard packing);
@@ -660,6 +664,9 @@ protected:
 	bool variable_is_lut(const SPIRVariable &var) const;
 
 	char current_locale_radix_character = '.';
+
+	void fixup_type_alias();
+	void reorder_type_alias();
 
 private:
 	void init();

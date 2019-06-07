@@ -299,6 +299,7 @@ enum Types
 	TypeCombinedImageSampler,
 	TypeAccessChain,
 	TypeUndef,
+	TypeString,
 	TypeCount
 };
 
@@ -316,6 +317,23 @@ struct SPIRUndef : IVariant
 	uint32_t basetype;
 
 	SPIRV_CROSS_DECLARE_CLONE(SPIRUndef)
+};
+
+struct SPIRString : IVariant
+{
+	enum
+	{
+		type = TypeString
+	};
+
+	explicit SPIRString(std::string str_)
+	    : str(std::move(str_))
+	{
+	}
+
+	std::string str;
+
+	SPIRV_CROSS_DECLARE_CLONE(SPIRString)
 };
 
 // This type is only used by backends which need to access the combined image and sampler IDs separately after
@@ -765,6 +783,13 @@ struct SPIRFunction : IVariant
 	uint32_t entry_block = 0;
 	SmallVector<uint32_t> blocks;
 	SmallVector<CombinedImageSamplerParameter> combined_parameters;
+
+	struct EntryLine
+	{
+		uint32_t file_id = 0;
+		uint32_t line_literal = 0;
+	};
+	EntryLine entry_line;
 
 	void add_local_variable(uint32_t id)
 	{

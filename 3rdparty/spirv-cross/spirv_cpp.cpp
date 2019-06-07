@@ -321,6 +321,8 @@ string CompilerCPP::compile()
 	backend.explicit_struct_type = true;
 	backend.use_initializer_list = true;
 
+	fixup_type_alias();
+	reorder_type_alias();
 	build_function_control_flow_graphs_and_analyze();
 	update_active_builtins();
 

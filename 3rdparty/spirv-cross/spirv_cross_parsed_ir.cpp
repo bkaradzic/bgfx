@@ -41,6 +41,7 @@ ParsedIR::ParsedIR()
 	pool_group->pools[TypeCombinedImageSampler].reset(new ObjectPool<SPIRCombinedImageSampler>);
 	pool_group->pools[TypeAccessChain].reset(new ObjectPool<SPIRAccessChain>);
 	pool_group->pools[TypeUndef].reset(new ObjectPool<SPIRUndef>);
+	pool_group->pools[TypeString].reset(new ObjectPool<SPIRString>);
 }
 
 // Should have been default-implemented, but need this on MSVC 2013.

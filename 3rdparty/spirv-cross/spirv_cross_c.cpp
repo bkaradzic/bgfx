@@ -33,6 +33,11 @@
 #if SPIRV_CROSS_C_API_REFLECT
 #include "spirv_reflect.hpp"
 #endif
+
+#ifdef HAVE_SPIRV_CROSS_GIT_VERSION
+#include "gitversion.h"
+#endif
+
 #include "spirv_parser.hpp"
 #include <memory>
 #include <new>
@@ -412,6 +417,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_FLIP_VERTEX_Y:
 		options->glsl.vertex.flip_vert_y = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_EMIT_LINE_DIRECTIVES:
+		options->glsl.emit_line_directives = value != 0;
+		break;
 
 	case SPVC_COMPILER_OPTION_GLSL_SUPPORT_NONZERO_BASE_INSTANCE:
 		options->glsl.vertex.support_nonzero_base_instance = value != 0;
@@ -532,6 +540,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_TEXTURE_BUFFER_NATIVE:
 		options->msl.texture_buffer_native = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_BUFFER_SIZE_BUFFER_INDEX:
+		options->msl.buffer_size_buffer_index = value;
 		break;
 #endif
 
@@ -737,6 +749,23 @@ spvc_bool spvc_compiler_msl_needs_swizzle_buffer(spvc_compiler compiler)
 
 	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
 	return msl.needs_swizzle_buffer() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
+}
+
+spvc_bool spvc_compiler_msl_needs_buffer_size_buffer(spvc_compiler compiler)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_FALSE;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.needs_buffer_size_buffer() ? SPVC_TRUE : SPVC_FALSE;
 #else
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_FALSE;
@@ -1900,6 +1929,15 @@ void spvc_get_version(unsigned *major, unsigned *minor, unsigned *patch)
 	*major = SPVC_C_API_VERSION_MAJOR;
 	*minor = SPVC_C_API_VERSION_MINOR;
 	*patch = SPVC_C_API_VERSION_PATCH;
+}
+
+const char *spvc_get_commit_revision_and_timestamp(void)
+{
+#ifdef HAVE_SPIRV_CROSS_GIT_VERSION
+	return SPIRV_CROSS_GIT_REVISION;
+#else
+	return "";
+#endif
 }
 
 #ifdef _MSC_VER

@@ -180,6 +180,8 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('2')
         msl_args.append('--msl-discrete-descriptor-set')
         msl_args.append('3')
+    if '.line.' in shader:
+        msl_args.append('--emit-line-directives')
 
     subprocess.check_call(msl_args)
 
@@ -273,7 +275,11 @@ def cross_compile_hlsl(shader, spirv, opt, force_no_external_validation, iterati
     spirv_cross_path = paths.spirv_cross
 
     sm = shader_to_sm(shader)
-    subprocess.check_call([spirv_cross_path, '--entry', 'main', '--output', hlsl_path, spirv_path, '--hlsl-enable-compat', '--hlsl', '--shader-model', sm, '--iterations', str(iterations)])
+
+    hlsl_args = [spirv_cross_path, '--entry', 'main', '--output', hlsl_path, spirv_path, '--hlsl-enable-compat', '--hlsl', '--shader-model', sm, '--iterations', str(iterations)]
+    if '.line.' in shader:
+        hlsl_args.append('--emit-line-directives')
+    subprocess.check_call(hlsl_args)
 
     if not shader_is_invalid_spirv(hlsl_path):
         subprocess.check_call([paths.spirv_val, '--target-env', 'vulkan1.1', spirv_path])
@@ -345,6 +351,8 @@ def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, fl
         extra_args += ['--flatten-multidimensional-arrays']
     if push_ubo:
         extra_args += ['--glsl-emit-push-constant-as-ubo']
+    if '.line.' in shader:
+        extra_args += ['--emit-line-directives']
 
     spirv_cross_path = paths.spirv_cross
 
