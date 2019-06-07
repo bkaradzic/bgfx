@@ -141,6 +141,12 @@ spv = {
         DerivativeGroupQuadsNV = 5289,
         DerivativeGroupLinearNV = 5290,
         OutputTrianglesNV = 5298,
+        PixelInterlockOrderedEXT = 5366,
+        PixelInterlockUnorderedEXT = 5367,
+        SampleInterlockOrderedEXT = 5368,
+        SampleInterlockUnorderedEXT = 5369,
+        ShadingRateInterlockOrderedEXT = 5370,
+        ShadingRateInterlockUnorderedEXT = 5371,
     },
 
     StorageClass = {
@@ -523,6 +529,10 @@ spv = {
         HitTNV = 5332,
         HitKindNV = 5333,
         IncomingRayFlagsNV = 5351,
+        WarpsPerSMNV = 5374,
+        SMCountNV = 5375,
+        WarpIDNV = 5376,
+        SMIDNV = 5377,
     },
 
     SelectionControlShift = {
@@ -791,6 +801,10 @@ spv = {
         PhysicalStorageBufferAddressesEXT = 5347,
         ComputeDerivativeGroupLinearNV = 5350,
         CooperativeMatrixNV = 5357,
+        FragmentShaderSampleInterlockEXT = 5363,
+        FragmentShaderShadingRateInterlockEXT = 5372,
+        ShaderSMBuiltinsNV = 5373,
+        FragmentShaderPixelInterlockEXT = 5378,
         SubgroupShuffleINTEL = 5568,
         SubgroupBufferBlockIOINTEL = 5569,
         SubgroupImageBlockIOINTEL = 5570,
@@ -1176,6 +1190,8 @@ spv = {
         OpCooperativeMatrixStoreNV = 5360,
         OpCooperativeMatrixMulAddNV = 5361,
         OpCooperativeMatrixLengthNV = 5362,
+        OpBeginInvocationInterlockEXT = 5364,
+        OpEndInvocationInterlockEXT = 5365,
         OpSubgroupShuffleINTEL = 5571,
         OpSubgroupShuffleDownINTEL = 5572,
         OpSubgroupShuffleUpINTEL = 5573,

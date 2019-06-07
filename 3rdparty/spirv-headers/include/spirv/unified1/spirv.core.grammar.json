@@ -5771,6 +5771,20 @@
       ],
       "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
       "version" : "None"
+    },
+    {
+      "opname" : "OpBeginInvocationInterlockEXT",
+      "opcode" : 5364,
+      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
+      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpEndInvocationInterlockEXT",
+      "opcode" : 5365,
+      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
+      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -6661,6 +6675,48 @@
           "value" : 5298,
           "capabilities" : [ "MeshShadingNV" ],
           "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PixelInterlockOrderedEXT",
+          "value" : 5366,
+          "capabilities" : [ "FragmentShaderPixelInterlockEXT" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PixelInterlockUnorderedEXT",
+          "value" : 5367,
+          "capabilities" : [ "FragmentShaderPixelInterlockEXT" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SampleInterlockOrderedEXT",
+          "value" : 5368,
+          "capabilities" : [ "FragmentShaderSampleInterlockEXT" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "SampleInterlockUnorderedEXT",
+          "value" : 5369,
+          "capabilities" : [ "FragmentShaderSampleInterlockEXT" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShadingRateInterlockOrderedEXT",
+          "value" : 5370,
+          "capabilities" : [ "FragmentShaderShadingRateInterlockEXT" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShadingRateInterlockUnorderedEXT",
+          "value" : 5371,
+          "capabilities" : [ "FragmentShaderShadingRateInterlockEXT" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
           "version" : "None"
         }
       ]
@@ -8383,6 +8439,30 @@
           "value" : 5351,
           "capabilities" : [ "RayTracingNV" ],
           "extensions" : [ "SPV_NV_ray_tracing" ]
+        },
+        {
+          "enumerant" : "WarpsPerSMNV",
+          "value" : 5374,
+          "capabilities" : [ "ShaderSMBuiltinsNV" ],
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+        },
+        {
+          "enumerant" : "SMCountNV",
+          "value" : 5375,
+          "capabilities" : [ "ShaderSMBuiltinsNV" ],
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+        },
+        {
+          "enumerant" : "WarpIDNV",
+          "value" : 5376,
+          "capabilities" : [ "ShaderSMBuiltinsNV" ],
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+        },
+        {
+          "enumerant" : "SMIDNV",
+          "value" : 5377,
+          "capabilities" : [ "ShaderSMBuiltinsNV" ],
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
         }
       ]
     },
@@ -9281,6 +9361,34 @@
           "value" : 5357,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_NV_cooperative_matrix" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentShaderSampleInterlockEXT",
+          "value" : 5363,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentShaderShadingRateInterlockEXT",
+          "value" : 5372,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentShaderPixelInterlockEXT",
+          "value" : 5378,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShaderSMBuiltinsNV",
+          "value" : 5373,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
           "version" : "None"
         }
       ]

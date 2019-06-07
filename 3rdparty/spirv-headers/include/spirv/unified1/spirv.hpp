@@ -154,6 +154,12 @@ enum ExecutionMode {
     ExecutionModeDerivativeGroupQuadsNV = 5289,
     ExecutionModeDerivativeGroupLinearNV = 5290,
     ExecutionModeOutputTrianglesNV = 5298,
+    ExecutionModePixelInterlockOrderedEXT = 5366,
+    ExecutionModePixelInterlockUnorderedEXT = 5367,
+    ExecutionModeSampleInterlockOrderedEXT = 5368,
+    ExecutionModeSampleInterlockUnorderedEXT = 5369,
+    ExecutionModeShadingRateInterlockOrderedEXT = 5370,
+    ExecutionModeShadingRateInterlockUnorderedEXT = 5371,
     ExecutionModeMax = 0x7fffffff,
 };
 
@@ -551,6 +557,10 @@ enum BuiltIn {
     BuiltInHitTNV = 5332,
     BuiltInHitKindNV = 5333,
     BuiltInIncomingRayFlagsNV = 5351,
+    BuiltInWarpsPerSMNV = 5374,
+    BuiltInSMCountNV = 5375,
+    BuiltInWarpIDNV = 5376,
+    BuiltInSMIDNV = 5377,
     BuiltInMax = 0x7fffffff,
 };
 
@@ -829,6 +839,10 @@ enum Capability {
     CapabilityPhysicalStorageBufferAddressesEXT = 5347,
     CapabilityComputeDerivativeGroupLinearNV = 5350,
     CapabilityCooperativeMatrixNV = 5357,
+    CapabilityFragmentShaderSampleInterlockEXT = 5363,
+    CapabilityFragmentShaderShadingRateInterlockEXT = 5372,
+    CapabilityShaderSMBuiltinsNV = 5373,
+    CapabilityFragmentShaderPixelInterlockEXT = 5378,
     CapabilitySubgroupShuffleINTEL = 5568,
     CapabilitySubgroupBufferBlockIOINTEL = 5569,
     CapabilitySubgroupImageBlockIOINTEL = 5570,
@@ -1215,6 +1229,8 @@ enum Op {
     OpCooperativeMatrixStoreNV = 5360,
     OpCooperativeMatrixMulAddNV = 5361,
     OpCooperativeMatrixLengthNV = 5362,
+    OpBeginInvocationInterlockEXT = 5364,
+    OpEndInvocationInterlockEXT = 5365,
     OpSubgroupShuffleINTEL = 5571,
     OpSubgroupShuffleDownINTEL = 5572,
     OpSubgroupShuffleUpINTEL = 5573,
@@ -1887,6 +1903,8 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupAvcSicGetInterRawSadsINTEL: *hasResult = true; *hasResultType = true; break;
+    case OpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
+    case OpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
     }
 }
 #endif /* SPV_ENABLE_UTILITY_CODE */
