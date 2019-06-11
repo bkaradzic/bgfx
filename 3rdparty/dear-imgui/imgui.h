@@ -1841,7 +1841,7 @@ struct ImDrawListSplitter
     inline void                 Clear() { _Current = 0; _Count = 1; } // Do not clear Channels[] so our allocations are reused next frame
     IMGUI_API void              ClearFreeMemory();
     IMGUI_API void              Split(ImDrawList* draw_list, int count);
-    IMGUI_API void              Merge(ImDrawList* draw_lists);
+    IMGUI_API void              Merge(ImDrawList* draw_list);
     IMGUI_API void              SetCurrentChannel(ImDrawList* draw_list, int channel_idx);
 };
 
