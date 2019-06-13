@@ -143,6 +143,13 @@ namespace bgfx { namespace mtl
 		{
 			[m_obj endEncoding];
 		}
+
+		void generateMipmapsForTexture(
+			  id<MTLTexture> _texture
+			)
+		{
+			[m_obj generateMipmapsForTexture:_texture];
+		}
 	MTL_CLASS_END
 
 	MTL_CLASS(Buffer)
@@ -951,6 +958,7 @@ namespace bgfx { namespace mtl
 
 		TextureMtl()
 			: m_ptr(NULL)
+			, m_nativePtr(NULL)
 			, m_ptrMsaa(NULL)
 			, m_ptrStencil(NULL)
 			, m_sampler(NULL)
@@ -970,7 +978,8 @@ namespace bgfx { namespace mtl
 
 		void destroy()
 		{
-			MTL_RELEASE(m_ptr);
+			MTL_RELEASE(m_nativePtr);
+			m_ptr = 0;
 			MTL_RELEASE(m_ptrStencil);
 			for (uint32_t ii = 0; ii < m_numMips; ++ii)
 			{
@@ -998,6 +1007,7 @@ namespace bgfx { namespace mtl
 		Texture getTextureMipLevel(int _mip);
 
 		Texture m_ptr;
+		id<MTLTexture> m_nativePtr;
 		Texture m_ptrMsaa;
 		Texture m_ptrStencil; // for emulating packed depth/stencil formats - only for iOS8...
 		Texture m_ptrMips[14];

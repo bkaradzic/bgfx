@@ -5098,6 +5098,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0) );
 		}
 
+		if (m_numMips > 1)
+		{
+			GL_CHECK(glGenerateMipmap(m_target));
+		}
+
 		if (NULL != temp)
 		{
 			BX_FREE(g_allocator, temp);

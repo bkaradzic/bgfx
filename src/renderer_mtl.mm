@@ -2709,7 +2709,8 @@ namespace bgfx { namespace mtl
 				}
 			}
 
-			m_ptr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+			m_nativePtr = s_renderMtl->m_device.newTextureWithDescriptor(desc);
+			m_ptr = m_nativePtr;
 
 			if (sampleCount > 1)
 			{
@@ -2844,6 +2845,8 @@ namespace bgfx { namespace mtl
 			data = temp;
 		}
 
+		BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
+
 		if (NULL != s_renderMtl->m_renderCommandEncoder)
 		{
 			s_renderMtl->m_cmd.finish(true);
@@ -2858,8 +2861,6 @@ namespace bgfx { namespace mtl
 		}
 		else
 		{
-			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
-
 			const uint32_t dstpitch = bx::strideAlign(rectpitch, 64);
 
 			Buffer tempBuffer = s_renderMtl->m_device.newBufferWithLength(dstpitch*_rect.m_height, 0);
@@ -2884,6 +2885,11 @@ namespace bgfx { namespace mtl
 				, MTLOriginMake(_rect.m_x, _rect.m_y, zz)
 				);
 			release(tempBuffer);
+		}
+
+		if ([m_nativePtr mipmapLevelCount] > 1)
+		{
+			bce.generateMipmapsForTexture(m_nativePtr);
 		}
 
 		if (NULL != temp)
