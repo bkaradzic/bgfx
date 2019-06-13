@@ -49,7 +49,7 @@ projgen: ## Generate project files for all configurations.
 	$(GENIE)              --with-combined-examples --with-shared-lib --gcc=freebsd         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-arm     gmake
 	$(GENIE)              --with-combined-examples                   --gcc=android-x86     gmake
-	$(GENIE)              --with-combined-examples                   --gcc=asmjs           gmake
+	$(GENIE)              --with-examples                            --gcc=asmjs           gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm         gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-arm64       gmake
 	$(GENIE)              --with-combined-examples                   --gcc=ios-simulator   gmake
