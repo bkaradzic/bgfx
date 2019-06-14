@@ -1006,7 +1006,10 @@ namespace bgfx { namespace d3d11
 					bx::memSet(&m_scd, 0, sizeof(m_scd) );
 					m_scd.width  = _init.resolution.width;
 					m_scd.height = _init.resolution.height;
-					m_scd.format = s_textureFormat[_init.resolution.format].m_fmt;
+					m_scd.format = (_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+						? s_textureFormat[_init.resolution.format].m_fmtSrgb
+						: s_textureFormat[_init.resolution.format].m_fmt
+						;
 
 					updateMsaa(m_scd.format);
 					m_scd.sampleDesc  = s_msaa[(_init.resolution.reset&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];

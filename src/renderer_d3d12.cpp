@@ -934,7 +934,10 @@ namespace bgfx { namespace d3d12
 				bx::memSet(&m_scd, 0, sizeof(m_scd) );
 				m_scd.width  = _init.resolution.width;
 				m_scd.height = _init.resolution.height;
-				m_scd.format = s_textureFormat[_init.resolution.format].m_fmt;
+				m_scd.format = (_init.resolution.reset & BGFX_RESET_SRGB_BACKBUFFER)
+					? s_textureFormat[_init.resolution.format].m_fmtSrgb
+					: s_textureFormat[_init.resolution.format].m_fmt
+					;
 				m_scd.stereo  = false;
 
 				updateMsaa(m_scd.format);
