@@ -946,6 +946,24 @@ spv::BuiltIn TGlslangToSpvTraverser::TranslateBuiltInDecoration(glslang::TBuiltI
     case glslang::EbvMeshViewIndicesNV:
         return spv::BuiltInMeshViewIndicesNV;
 #endif
+
+    // sm builtins
+    case glslang::EbvWarpsPerSM:
+        builder.addExtension(spv::E_SPV_NV_shader_sm_builtins);
+        builder.addCapability(spv::CapabilityShaderSMBuiltinsNV);
+        return spv::BuiltInWarpsPerSMNV;
+    case glslang::EbvSMCount:
+        builder.addExtension(spv::E_SPV_NV_shader_sm_builtins);
+        builder.addCapability(spv::CapabilityShaderSMBuiltinsNV);
+        return spv::BuiltInSMCountNV;
+    case glslang::EbvWarpID:
+        builder.addExtension(spv::E_SPV_NV_shader_sm_builtins);
+        builder.addCapability(spv::CapabilityShaderSMBuiltinsNV);
+        return spv::BuiltInWarpIDNV;
+    case glslang::EbvSMID:
+        builder.addExtension(spv::E_SPV_NV_shader_sm_builtins);
+        builder.addCapability(spv::CapabilityShaderSMBuiltinsNV);
+        return spv::BuiltInSMIDNV;
     default:
         return spv::BuiltInMax;
     }
@@ -8090,11 +8108,14 @@ void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>& 
 #if ENABLE_OPT
     // If from HLSL, run spirv-opt to "legalize" the SPIR-V for Vulkan
     // eg. forward and remove memory writes of opaque types.
-    if ((intermediate.getSource() == EShSourceHlsl || options->optimizeSize) && !options->disableOptimizer)
+    bool prelegalization = intermediate.getSource() == EShSourceHlsl;
+    if ((intermediate.getSource() == EShSourceHlsl || options->optimizeSize) && !options->disableOptimizer) {
         SpirvToolsLegalize(intermediate, spirv, logger, options);
+        prelegalization = false;
+    }
 
     if (options->validate)
-        SpirvToolsValidate(intermediate, spirv, logger);
+        SpirvToolsValidate(intermediate, spirv, logger, prelegalization);
 
     if (options->disassemble)
         SpirvToolsDisassemble(std::cout, spirv);

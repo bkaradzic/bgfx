@@ -85,7 +85,11 @@ ERROR: 0:95: 'subgroupPartitionedExclusiveMaxNV' : required extension not reques
 ERROR: 0:96: 'subgroupPartitionedExclusiveAndNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
 ERROR: 0:97: 'subgroupPartitionedExclusiveOrNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
 ERROR: 0:98: 'subgroupPartitionedExclusiveXorNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
-ERROR: 86 compilation errors.  No code generated.
+ERROR: 0:236: 'gl_WarpsPerSMNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:237: 'gl_SMCountNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:238: 'gl_WarpIDNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:239: 'gl_SMIDNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 90 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -97,6 +101,7 @@ Requested GL_KHR_shader_subgroup_quad
 Requested GL_KHR_shader_subgroup_shuffle
 Requested GL_KHR_shader_subgroup_shuffle_relative
 Requested GL_KHR_shader_subgroup_vote
+Requested GL_NV_shader_sm_builtins
 Requested GL_NV_shader_subgroup_partitioned
 ERROR: node is still EOpNull!
 0:3  Function Definition: undeclared_errors(vf4; ( global 4-component vector of float)
@@ -602,6 +607,20 @@ ERROR: node is still EOpNull!
 0:230      subgroupPartitionedExclusiveXorNV ( global 4-component vector of uint)
 0:230        'ballot' ( temp 4-component vector of uint)
 0:230        'parti' ( temp 4-component vector of uint)
+0:234  Function Definition: sm_builtins_err( ( global void)
+0:234    Function Parameters: 
+0:236    Sequence
+0:236      'gl_WarpsPerSMNV' ( in uint WarpsPerSMNV)
+0:237      'gl_SMCountNV' ( in uint SMCountNV)
+0:238      'gl_WarpIDNV' ( in uint WarpIDNV)
+0:239      'gl_SMIDNV' ( in uint SMIDNV)
+0:246  Function Definition: sm_builtins( ( global void)
+0:246    Function Parameters: 
+0:248    Sequence
+0:248      'gl_WarpsPerSMNV' ( in uint WarpsPerSMNV)
+0:249      'gl_SMCountNV' ( in uint SMCountNV)
+0:250      'gl_WarpIDNV' ( in uint WarpIDNV)
+0:251      'gl_SMIDNV' ( in uint SMIDNV)
 0:?   Linker Objects
 0:?     'anon@0' (layout( set=0 binding=0 column_major std430) buffer block{layout( column_major std430 offset=0) buffer runtime-sized array of 4-component vector of uint result})
 0:?     'gl_VertexID' ( gl_VertexId int VertexId)
@@ -620,6 +639,7 @@ Requested GL_KHR_shader_subgroup_quad
 Requested GL_KHR_shader_subgroup_shuffle
 Requested GL_KHR_shader_subgroup_shuffle_relative
 Requested GL_KHR_shader_subgroup_vote
+Requested GL_NV_shader_sm_builtins
 Requested GL_NV_shader_subgroup_partitioned
 ERROR: node is still EOpNull!
 0:109  Function Definition: main( ( global void)

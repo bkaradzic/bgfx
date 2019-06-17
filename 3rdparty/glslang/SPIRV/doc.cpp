@@ -423,6 +423,10 @@ const char* BuiltInString(int builtIn)
     case BuiltInMeshViewCountNV:       return "MeshViewCountNV";
     case BuiltInMeshViewIndicesNV:     return "MeshViewIndicesNV";
 #endif
+    case BuiltInWarpsPerSMNV:           return "WarpsPerSMNV";
+    case BuiltInSMCountNV:              return "SMCountNV";
+    case BuiltInWarpIDNV:               return "WarpIDNV";
+    case BuiltInSMIDNV:                 return "SMIDNV";
 
     default: return "Bad";
     }
@@ -948,6 +952,7 @@ const char* CapabilityString(int info)
     case CapabilityVariablePointers:                    return "VariablePointers";
 
     case CapabilityCooperativeMatrixNV:     return "CooperativeMatrixNV";
+    case CapabilityShaderSMBuiltinsNV:      return "ShaderSMBuiltinsNV";
 
     case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
     case CapabilityFragmentShaderPixelInterlockEXT:         return "CapabilityFragmentShaderPixelInterlockEXT";

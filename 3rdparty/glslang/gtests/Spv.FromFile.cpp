@@ -410,6 +410,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.xfb2.vert",
         "spv.xfb3.vert",
         "spv.samplerlessTextureFunctions.frag",
+        "spv.smBuiltins.vert",
+        "spv.smBuiltins.frag",
     })),
     FileNameAsCustomTestSuffix
 );

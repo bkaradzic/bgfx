@@ -85,7 +85,11 @@ ERROR: 0:95: 'subgroupPartitionedExclusiveMaxNV' : required extension not reques
 ERROR: 0:96: 'subgroupPartitionedExclusiveAndNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
 ERROR: 0:97: 'subgroupPartitionedExclusiveOrNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
 ERROR: 0:98: 'subgroupPartitionedExclusiveXorNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
-ERROR: 86 compilation errors.  No code generated.
+ERROR: 0:288: 'gl_WarpsPerSMNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:289: 'gl_SMCountNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:290: 'gl_WarpIDNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:291: 'gl_SMIDNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 90 compilation errors.  No code generated.
 
 
 Shader version: 460
@@ -98,6 +102,7 @@ Requested GL_KHR_shader_subgroup_shuffle
 Requested GL_KHR_shader_subgroup_shuffle_relative
 Requested GL_KHR_shader_subgroup_vote
 Requested GL_NV_mesh_shader
+Requested GL_NV_shader_sm_builtins
 Requested GL_NV_shader_subgroup_partitioned
 local_size = (32, 1, 1)
 ERROR: node is still EOpNull!
@@ -729,6 +734,20 @@ ERROR: node is still EOpNull!
 0:282      subgroupPartitionedExclusiveXorNV ( global 4-component vector of uint)
 0:282        'ballot' ( temp 4-component vector of uint)
 0:282        'parti' ( temp 4-component vector of uint)
+0:286  Function Definition: sm_builtins_err( ( global void)
+0:286    Function Parameters: 
+0:288    Sequence
+0:288      'gl_WarpsPerSMNV' ( in uint WarpsPerSMNV)
+0:289      'gl_SMCountNV' ( in uint SMCountNV)
+0:290      'gl_WarpIDNV' ( in uint WarpIDNV)
+0:291      'gl_SMIDNV' ( in uint SMIDNV)
+0:298  Function Definition: sm_builtins( ( global void)
+0:298    Function Parameters: 
+0:300    Sequence
+0:300      'gl_WarpsPerSMNV' ( in uint WarpsPerSMNV)
+0:301      'gl_SMCountNV' ( in uint SMCountNV)
+0:302      'gl_WarpIDNV' ( in uint WarpIDNV)
+0:303      'gl_SMIDNV' ( in uint SMIDNV)
 0:?   Linker Objects
 0:?     'gl_WorkGroupSize' ( const 3-component vector of uint WorkGroupSize)
 0:?       32 (const uint)
@@ -753,6 +772,7 @@ Requested GL_KHR_shader_subgroup_shuffle
 Requested GL_KHR_shader_subgroup_shuffle_relative
 Requested GL_KHR_shader_subgroup_vote
 Requested GL_NV_mesh_shader
+Requested GL_NV_shader_sm_builtins
 Requested GL_NV_shader_subgroup_partitioned
 local_size = (32, 1, 1)
 ERROR: node is still EOpNull!

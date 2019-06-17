@@ -6141,6 +6141,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp   uvec4 gl_SubgroupGtMask;"
             "in highp   uvec4 gl_SubgroupLeMask;"
             "in highp   uvec4 gl_SubgroupLtMask;"
+            // GL_NV_shader_sm_builtins
+            "in highp   uint  gl_WarpsPerSMNV;"
+            "in highp   uint  gl_SMCountNV;"
+            "in highp   uint  gl_WarpIDNV;"
+            "in highp   uint  gl_SMIDNV;"
             "\n";
         const char* fragmentSubgroupDecls =
             "flat in mediump uint  gl_SubgroupSize;"
@@ -6150,6 +6155,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "flat in highp   uvec4 gl_SubgroupGtMask;"
             "flat in highp   uvec4 gl_SubgroupLeMask;"
             "flat in highp   uvec4 gl_SubgroupLtMask;"
+            // GL_NV_shader_sm_builtins
+            "flat in highp   uint  gl_WarpsPerSMNV;"
+            "flat in highp   uint  gl_SMCountNV;"
+            "flat in highp   uint  gl_WarpIDNV;"
+            "flat in highp   uint  gl_SMIDNV;"
             "\n";
         const char* computeSubgroupDecls =
             "in highp   uint  gl_NumSubgroups;"
@@ -8181,6 +8191,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupGtMask",       EbvSubgroupGtMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLeMask",       EbvSubgroupLeMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
 
         break;
@@ -8582,6 +8602,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveXorNV",            1, &E_GL_NV_shader_subgroup_partitioned);
 #endif
 
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
 
         if (profile == EEsProfile) {
@@ -8686,6 +8715,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupGtMask",       EbvSubgroupGtMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLeMask",       EbvSubgroupLeMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
 
         if ((profile != EEsProfile && version >= 140) ||
@@ -8800,6 +8839,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupGtMask",       EbvSubgroupGtMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLeMask",       EbvSubgroupLeMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
         break;
 
@@ -8934,6 +8983,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
 
             symbolTable.setFunctionExtensions("subgroupMemoryBarrierShared", 1, &E_GL_KHR_shader_subgroup_basic);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
         break;
 
@@ -9024,6 +9083,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
 
             symbolTable.setFunctionExtensions("subgroupMemoryBarrierShared", 1, &E_GL_KHR_shader_subgroup_basic);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
         break;
 #endif

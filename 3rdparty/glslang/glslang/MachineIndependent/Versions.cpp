@@ -251,6 +251,7 @@ void TParseVersions::initializeExtensionBehavior()
 #endif
 
     extensionBehavior[E_GL_NV_cooperative_matrix]                    = EBhDisable;
+    extensionBehavior[E_GL_NV_shader_sm_builtins]                    = EBhDisable;
 
     // AEP
     extensionBehavior[E_GL_ANDROID_extension_pack_es31a]             = EBhDisable;
@@ -459,6 +460,7 @@ void TParseVersions::getPreamble(std::string& preamble)
         preamble +=
             "#define GL_EXT_device_group 1\n"
             "#define GL_EXT_multiview 1\n"
+            "#define GL_NV_shader_sm_builtins 1\n"
             ;
     }
 

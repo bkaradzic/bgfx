@@ -275,6 +275,12 @@ enum TBuiltInVariable {
     EbvMeshViewIndicesNV,
 #endif
 
+    // sm builtins
+    EbvWarpsPerSM,
+    EbvSMCount,
+    EbvWarpID,
+    EbvSMID,
+
     // HLSL built-ins that live only temporarily, until they get remapped
     // to one of the above.
     EbvFragDepthGreater,
@@ -459,6 +465,11 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvMeshViewCountNV:            return "MeshViewCountNV";
     case EbvMeshViewIndicesNV:          return "MeshViewIndicesNV";
 #endif
+
+    case EbvWarpsPerSM:                 return "WarpsPerSMNV";
+    case EbvSMCount:                    return "SMCountNV";
+    case EbvWarpID:                     return "WarpIDNV";
+    case EbvSMID:                       return "SMIDNV";
 
     default:                      return "unknown built-in variable";
     }

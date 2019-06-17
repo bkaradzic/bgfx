@@ -291,3 +291,24 @@ void partitioned_works(vec4 f4)
   subgroupPartitionedExclusiveOrNV(ballot, parti);
   subgroupPartitionedExclusiveXorNV(ballot, parti);
 }
+
+// tests for NV_shader_sm_builtins
+void sm_builtins_err()
+{
+    gl_WarpsPerSMNV;    // ERROR, no extension
+    gl_SMCountNV;       // ERROR, no extension
+    gl_WarpIDNV;        // ERROR, no extension
+    gl_SMIDNV;          // ERROR, no extension
+}
+
+#ifdef GL_NV_shader_sm_builtins
+#extension GL_NV_shader_sm_builtins : enable
+#endif
+
+void sm_builtins()
+{
+    gl_WarpsPerSMNV;
+    gl_SMCountNV;
+    gl_WarpIDNV;
+    gl_SMIDNV;
+}

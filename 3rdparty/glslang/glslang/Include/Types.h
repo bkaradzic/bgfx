@@ -514,8 +514,9 @@ public:
 
     const char*         semanticName;
     TStorageQualifier   storage   : 6;
-    TBuiltInVariable    builtIn   : 8;
-    TBuiltInVariable    declaredBuiltIn : 8;
+    TBuiltInVariable    builtIn   : 9;
+    TBuiltInVariable    declaredBuiltIn : 9;
+    static_assert(EbvLast < 256, "need to increase size of TBuiltInVariable bitfields!");
     TPrecisionQualifier precision : 3;
     bool invariant    : 1; // require canonical treatment for cross-shader invariance
     bool noContraction: 1; // prevent contraction and reassociation, e.g., for 'precise' keyword, and expressions it affects
