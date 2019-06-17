@@ -453,6 +453,7 @@ namespace Spv
             HlslCounterBufferGOOGLE = 5634,
             HlslSemanticGOOGLE = 5635,
             UserSemantic = 5635,
+            UserTypeGOOGLE = 5636,
         }
 
         public enum BuiltIn
@@ -633,6 +634,7 @@ namespace Spv
             OutputMemoryKHR = 12,
             MakeAvailableKHR = 13,
             MakeVisibleKHR = 14,
+            Volatile = 15,
         }
 
         public enum MemorySemanticsMask
@@ -651,6 +653,7 @@ namespace Spv
             OutputMemoryKHR = 0x00001000,
             MakeAvailableKHR = 0x00002000,
             MakeVisibleKHR = 0x00004000,
+            Volatile = 0x00008000,
         }
 
         public enum MemoryAccessShift

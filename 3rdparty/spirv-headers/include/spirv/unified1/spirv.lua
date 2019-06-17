@@ -428,6 +428,7 @@ spv = {
         HlslCounterBufferGOOGLE = 5634,
         HlslSemanticGOOGLE = 5635,
         UserSemantic = 5635,
+        UserTypeGOOGLE = 5636,
     },
 
     BuiltIn = {
@@ -600,6 +601,7 @@ spv = {
         OutputMemoryKHR = 12,
         MakeAvailableKHR = 13,
         MakeVisibleKHR = 14,
+        Volatile = 15,
     },
 
     MemorySemanticsMask = {
@@ -617,6 +619,7 @@ spv = {
         OutputMemoryKHR = 0x00001000,
         MakeAvailableKHR = 0x00002000,
         MakeVisibleKHR = 0x00004000,
+        Volatile = 0x00008000,
     },
 
     MemoryAccessShift = {

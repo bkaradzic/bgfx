@@ -455,6 +455,7 @@ enum class Decoration : unsigned {
     HlslCounterBufferGOOGLE = 5634,
     HlslSemanticGOOGLE = 5635,
     UserSemantic = 5635,
+    UserTypeGOOGLE = 5636,
     Max = 0x7fffffff,
 };
 
@@ -632,6 +633,7 @@ enum class MemorySemanticsShift : unsigned {
     OutputMemoryKHR = 12,
     MakeAvailableKHR = 13,
     MakeVisibleKHR = 14,
+    Volatile = 15,
     Max = 0x7fffffff,
 };
 
@@ -650,6 +652,7 @@ enum class MemorySemanticsMask : unsigned {
     OutputMemoryKHR = 0x00001000,
     MakeAvailableKHR = 0x00002000,
     MakeVisibleKHR = 0x00004000,
+    Volatile = 0x00008000,
 };
 
 enum class MemoryAccessShift : unsigned {

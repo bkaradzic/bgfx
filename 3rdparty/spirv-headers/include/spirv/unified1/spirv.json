@@ -488,7 +488,8 @@
                     "CounterBuffer": 5634,
                     "HlslCounterBufferGOOGLE": 5634,
                     "HlslSemanticGOOGLE": 5635,
-                    "UserSemantic": 5635
+                    "UserSemantic": 5635,
+                    "UserTypeGOOGLE": 5636
                 }
             },
             {
@@ -653,7 +654,8 @@
                     "ImageMemory": 11,
                     "OutputMemoryKHR": 12,
                     "MakeAvailableKHR": 13,
-                    "MakeVisibleKHR": 14
+                    "MakeVisibleKHR": 14,
+                    "Volatile": 15
                 }
             },
             {

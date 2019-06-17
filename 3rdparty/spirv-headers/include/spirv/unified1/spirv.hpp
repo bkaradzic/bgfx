@@ -455,6 +455,7 @@ enum Decoration {
     DecorationHlslCounterBufferGOOGLE = 5634,
     DecorationHlslSemanticGOOGLE = 5635,
     DecorationUserSemantic = 5635,
+    DecorationUserTypeGOOGLE = 5636,
     DecorationMax = 0x7fffffff,
 };
 
@@ -632,6 +633,7 @@ enum MemorySemanticsShift {
     MemorySemanticsOutputMemoryKHRShift = 12,
     MemorySemanticsMakeAvailableKHRShift = 13,
     MemorySemanticsMakeVisibleKHRShift = 14,
+    MemorySemanticsVolatileShift = 15,
     MemorySemanticsMax = 0x7fffffff,
 };
 
@@ -650,6 +652,7 @@ enum MemorySemanticsMask {
     MemorySemanticsOutputMemoryKHRMask = 0x00001000,
     MemorySemanticsMakeAvailableKHRMask = 0x00002000,
     MemorySemanticsMakeVisibleKHRMask = 0x00004000,
+    MemorySemanticsVolatileMask = 0x00008000,
 };
 
 enum MemoryAccessShift {
