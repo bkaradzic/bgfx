@@ -16,6 +16,8 @@
 // from emscripten gl.c, because we're not going to go
 // through egl
 extern "C" void* emscripten_GetProcAddress(const char *name_);
+extern "C" void* emscripten_webgl1_get_proc_address(const char *name_);
+extern "C" void* emscripten_webgl2_get_proc_address(const char *name_);
 
 namespace bgfx { namespace gl
 {
@@ -130,7 +132,7 @@ namespace bgfx { namespace gl
 
 		SwapChainGL* swapChain = BX_NEW(g_allocator, SwapChainGL)(context, canvas);
 
-		import();
+		import(1);
 
 		return swapChain;
 	}
@@ -169,14 +171,16 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void GlContext::import()
+	void GlContext::import(int webGLVersion)
 	{
 		BX_TRACE("Import:");
 #		define GL_EXTENSION(_optional, _proto, _func, _import)                                                                                                   \
 			{                                                                                                                                                    \
 				if (NULL == _func)                                                                                                                               \
 				{                                                                                                                                                \
-					_func = (_proto)emscripten_GetProcAddress(#_import);                                                                                                 \
+					_func = (_proto)emscripten_webgl1_get_proc_address(#_import);                                                                                \
+					if (!_func && webGLVersion >= 2)                                                                                                             \
+					    _func = (_proto)emscripten_webgl2_get_proc_address(#_import);                                                                            \
 					BX_TRACE("\t%p " #_func " (" #_import ")", _func);                                                                                           \
 					BGFX_FATAL(_optional || NULL != _func, Fatal::UnableToInitialize, "Failed to create WebGL/OpenGLES context. GetProcAddress(\"%s\")", #_import); \
 				}                                                                                                                                                \
