@@ -3543,6 +3543,29 @@ OpFunctionEnd
 INSTANTIATE_TEST_SUITE_P(PointerComparisons, ValidatePointerComparisons,
                          Values("OpPtrEqual", "OpPtrNotEqual", "OpPtrDiff"));
 
+TEST_F(ValidateMemory, VariableInitializerWrongType) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpCapability VariablePointersStorageBuffer
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%float = OpTypeFloat 32
+%ptr_wg_int = OpTypePointer Workgroup %int
+%ptr_wg_float = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%ptr_private_wg_float = OpTypePointer Private %ptr_wg_float
+%priv_var = OpVariable %ptr_private_wg_float Private %wg_var
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Initializer type must match the type pointed to by "
+                        "the Result Type"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

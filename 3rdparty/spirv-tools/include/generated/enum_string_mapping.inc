@@ -38,6 +38,8 @@ const char* ExtensionToString(Extension extension) {
       return "SPV_GOOGLE_decorate_string";
     case Extension::kSPV_GOOGLE_hlsl_functionality1:
       return "SPV_GOOGLE_hlsl_functionality1";
+    case Extension::kSPV_GOOGLE_user_type:
+      return "SPV_GOOGLE_user_type";
     case Extension::kSPV_INTEL_device_side_avc_motion_estimation:
       return "SPV_INTEL_device_side_avc_motion_estimation";
     case Extension::kSPV_INTEL_media_block_io:
@@ -111,8 +113,8 @@ const char* ExtensionToString(Extension extension) {
 
 
     bool GetExtensionFromString(const char* str, Extension* extension) {
-        static const char* known_ext_strs[] = { "SPV_AMD_gcn_shader", "SPV_AMD_gpu_shader_half_float", "SPV_AMD_gpu_shader_half_float_fetch", "SPV_AMD_gpu_shader_int16", "SPV_AMD_shader_ballot", "SPV_AMD_shader_explicit_vertex_parameter", "SPV_AMD_shader_fragment_mask", "SPV_AMD_shader_image_load_store_lod", "SPV_AMD_shader_trinary_minmax", "SPV_AMD_texture_gather_bias_lod", "SPV_EXT_descriptor_indexing", "SPV_EXT_fragment_fully_covered", "SPV_EXT_fragment_invocation_density", "SPV_EXT_fragment_shader_interlock", "SPV_EXT_physical_storage_buffer", "SPV_EXT_shader_stencil_export", "SPV_EXT_shader_viewport_index_layer", "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1", "SPV_INTEL_device_side_avc_motion_estimation", "SPV_INTEL_media_block_io", "SPV_INTEL_shader_integer_functions2", "SPV_INTEL_subgroups", "SPV_KHR_16bit_storage", "SPV_KHR_8bit_storage", "SPV_KHR_device_group", "SPV_KHR_float_controls", "SPV_KHR_multiview", "SPV_KHR_no_integer_wrap_decoration", "SPV_KHR_post_depth_coverage", "SPV_KHR_shader_atomic_counter_ops", "SPV_KHR_shader_ballot", "SPV_KHR_shader_draw_parameters", "SPV_KHR_storage_buffer_storage_class", "SPV_KHR_subgroup_vote", "SPV_KHR_variable_pointers", "SPV_KHR_vulkan_memory_model", "SPV_NVX_multiview_per_view_attributes", "SPV_NV_compute_shader_derivatives", "SPV_NV_cooperative_matrix", "SPV_NV_fragment_shader_barycentric", "SPV_NV_geometry_shader_passthrough", "SPV_NV_mesh_shader", "SPV_NV_ray_tracing", "SPV_NV_sample_mask_override_coverage", "SPV_NV_shader_image_footprint", "SPV_NV_shader_sm_builtins", "SPV_NV_shader_subgroup_partitioned", "SPV_NV_shading_rate", "SPV_NV_stereo_view_rendering", "SPV_NV_viewport_array2", "SPV_VALIDATOR_ignore_type_decl_unique" };
-        static const Extension known_ext_ids[] = { Extension::kSPV_AMD_gcn_shader, Extension::kSPV_AMD_gpu_shader_half_float, Extension::kSPV_AMD_gpu_shader_half_float_fetch, Extension::kSPV_AMD_gpu_shader_int16, Extension::kSPV_AMD_shader_ballot, Extension::kSPV_AMD_shader_explicit_vertex_parameter, Extension::kSPV_AMD_shader_fragment_mask, Extension::kSPV_AMD_shader_image_load_store_lod, Extension::kSPV_AMD_shader_trinary_minmax, Extension::kSPV_AMD_texture_gather_bias_lod, Extension::kSPV_EXT_descriptor_indexing, Extension::kSPV_EXT_fragment_fully_covered, Extension::kSPV_EXT_fragment_invocation_density, Extension::kSPV_EXT_fragment_shader_interlock, Extension::kSPV_EXT_physical_storage_buffer, Extension::kSPV_EXT_shader_stencil_export, Extension::kSPV_EXT_shader_viewport_index_layer, Extension::kSPV_GOOGLE_decorate_string, Extension::kSPV_GOOGLE_hlsl_functionality1, Extension::kSPV_INTEL_device_side_avc_motion_estimation, Extension::kSPV_INTEL_media_block_io, Extension::kSPV_INTEL_shader_integer_functions2, Extension::kSPV_INTEL_subgroups, Extension::kSPV_KHR_16bit_storage, Extension::kSPV_KHR_8bit_storage, Extension::kSPV_KHR_device_group, Extension::kSPV_KHR_float_controls, Extension::kSPV_KHR_multiview, Extension::kSPV_KHR_no_integer_wrap_decoration, Extension::kSPV_KHR_post_depth_coverage, Extension::kSPV_KHR_shader_atomic_counter_ops, Extension::kSPV_KHR_shader_ballot, Extension::kSPV_KHR_shader_draw_parameters, Extension::kSPV_KHR_storage_buffer_storage_class, Extension::kSPV_KHR_subgroup_vote, Extension::kSPV_KHR_variable_pointers, Extension::kSPV_KHR_vulkan_memory_model, Extension::kSPV_NVX_multiview_per_view_attributes, Extension::kSPV_NV_compute_shader_derivatives, Extension::kSPV_NV_cooperative_matrix, Extension::kSPV_NV_fragment_shader_barycentric, Extension::kSPV_NV_geometry_shader_passthrough, Extension::kSPV_NV_mesh_shader, Extension::kSPV_NV_ray_tracing, Extension::kSPV_NV_sample_mask_override_coverage, Extension::kSPV_NV_shader_image_footprint, Extension::kSPV_NV_shader_sm_builtins, Extension::kSPV_NV_shader_subgroup_partitioned, Extension::kSPV_NV_shading_rate, Extension::kSPV_NV_stereo_view_rendering, Extension::kSPV_NV_viewport_array2, Extension::kSPV_VALIDATOR_ignore_type_decl_unique };
+        static const char* known_ext_strs[] = { "SPV_AMD_gcn_shader", "SPV_AMD_gpu_shader_half_float", "SPV_AMD_gpu_shader_half_float_fetch", "SPV_AMD_gpu_shader_int16", "SPV_AMD_shader_ballot", "SPV_AMD_shader_explicit_vertex_parameter", "SPV_AMD_shader_fragment_mask", "SPV_AMD_shader_image_load_store_lod", "SPV_AMD_shader_trinary_minmax", "SPV_AMD_texture_gather_bias_lod", "SPV_EXT_descriptor_indexing", "SPV_EXT_fragment_fully_covered", "SPV_EXT_fragment_invocation_density", "SPV_EXT_fragment_shader_interlock", "SPV_EXT_physical_storage_buffer", "SPV_EXT_shader_stencil_export", "SPV_EXT_shader_viewport_index_layer", "SPV_GOOGLE_decorate_string", "SPV_GOOGLE_hlsl_functionality1", "SPV_GOOGLE_user_type", "SPV_INTEL_device_side_avc_motion_estimation", "SPV_INTEL_media_block_io", "SPV_INTEL_shader_integer_functions2", "SPV_INTEL_subgroups", "SPV_KHR_16bit_storage", "SPV_KHR_8bit_storage", "SPV_KHR_device_group", "SPV_KHR_float_controls", "SPV_KHR_multiview", "SPV_KHR_no_integer_wrap_decoration", "SPV_KHR_post_depth_coverage", "SPV_KHR_shader_atomic_counter_ops", "SPV_KHR_shader_ballot", "SPV_KHR_shader_draw_parameters", "SPV_KHR_storage_buffer_storage_class", "SPV_KHR_subgroup_vote", "SPV_KHR_variable_pointers", "SPV_KHR_vulkan_memory_model", "SPV_NVX_multiview_per_view_attributes", "SPV_NV_compute_shader_derivatives", "SPV_NV_cooperative_matrix", "SPV_NV_fragment_shader_barycentric", "SPV_NV_geometry_shader_passthrough", "SPV_NV_mesh_shader", "SPV_NV_ray_tracing", "SPV_NV_sample_mask_override_coverage", "SPV_NV_shader_image_footprint", "SPV_NV_shader_sm_builtins", "SPV_NV_shader_subgroup_partitioned", "SPV_NV_shading_rate", "SPV_NV_stereo_view_rendering", "SPV_NV_viewport_array2", "SPV_VALIDATOR_ignore_type_decl_unique" };
+        static const Extension known_ext_ids[] = { Extension::kSPV_AMD_gcn_shader, Extension::kSPV_AMD_gpu_shader_half_float, Extension::kSPV_AMD_gpu_shader_half_float_fetch, Extension::kSPV_AMD_gpu_shader_int16, Extension::kSPV_AMD_shader_ballot, Extension::kSPV_AMD_shader_explicit_vertex_parameter, Extension::kSPV_AMD_shader_fragment_mask, Extension::kSPV_AMD_shader_image_load_store_lod, Extension::kSPV_AMD_shader_trinary_minmax, Extension::kSPV_AMD_texture_gather_bias_lod, Extension::kSPV_EXT_descriptor_indexing, Extension::kSPV_EXT_fragment_fully_covered, Extension::kSPV_EXT_fragment_invocation_density, Extension::kSPV_EXT_fragment_shader_interlock, Extension::kSPV_EXT_physical_storage_buffer, Extension::kSPV_EXT_shader_stencil_export, Extension::kSPV_EXT_shader_viewport_index_layer, Extension::kSPV_GOOGLE_decorate_string, Extension::kSPV_GOOGLE_hlsl_functionality1, Extension::kSPV_GOOGLE_user_type, Extension::kSPV_INTEL_device_side_avc_motion_estimation, Extension::kSPV_INTEL_media_block_io, Extension::kSPV_INTEL_shader_integer_functions2, Extension::kSPV_INTEL_subgroups, Extension::kSPV_KHR_16bit_storage, Extension::kSPV_KHR_8bit_storage, Extension::kSPV_KHR_device_group, Extension::kSPV_KHR_float_controls, Extension::kSPV_KHR_multiview, Extension::kSPV_KHR_no_integer_wrap_decoration, Extension::kSPV_KHR_post_depth_coverage, Extension::kSPV_KHR_shader_atomic_counter_ops, Extension::kSPV_KHR_shader_ballot, Extension::kSPV_KHR_shader_draw_parameters, Extension::kSPV_KHR_storage_buffer_storage_class, Extension::kSPV_KHR_subgroup_vote, Extension::kSPV_KHR_variable_pointers, Extension::kSPV_KHR_vulkan_memory_model, Extension::kSPV_NVX_multiview_per_view_attributes, Extension::kSPV_NV_compute_shader_derivatives, Extension::kSPV_NV_cooperative_matrix, Extension::kSPV_NV_fragment_shader_barycentric, Extension::kSPV_NV_geometry_shader_passthrough, Extension::kSPV_NV_mesh_shader, Extension::kSPV_NV_ray_tracing, Extension::kSPV_NV_sample_mask_override_coverage, Extension::kSPV_NV_shader_image_footprint, Extension::kSPV_NV_shader_sm_builtins, Extension::kSPV_NV_shader_subgroup_partitioned, Extension::kSPV_NV_shading_rate, Extension::kSPV_NV_stereo_view_rendering, Extension::kSPV_NV_viewport_array2, Extension::kSPV_VALIDATOR_ignore_type_decl_unique };
         const auto b = std::begin(known_ext_strs);
         const auto e = std::end(known_ext_strs);
         const auto found = std::equal_range(
@@ -330,6 +332,16 @@ const char* CapabilityToString(SpvCapability capability) {
       return "FragmentFullyCoveredEXT";
     case SpvCapabilityMeshShadingNV:
       return "MeshShadingNV";
+    case SpvCapabilityImageFootprintNV:
+      return "ImageFootprintNV";
+    case SpvCapabilityFragmentBarycentricNV:
+      return "FragmentBarycentricNV";
+    case SpvCapabilityComputeDerivativeGroupQuadsNV:
+      return "ComputeDerivativeGroupQuadsNV";
+    case SpvCapabilityFragmentDensityEXT:
+      return "FragmentDensityEXT";
+    case SpvCapabilityGroupNonUniformPartitionedNV:
+      return "GroupNonUniformPartitionedNV";
     case SpvCapabilityShaderNonUniformEXT:
       return "ShaderNonUniformEXT";
     case SpvCapabilityRuntimeDescriptorArrayEXT:
@@ -356,6 +368,24 @@ const char* CapabilityToString(SpvCapability capability) {
       return "StorageTexelBufferArrayNonUniformIndexingEXT";
     case SpvCapabilityRayTracingNV:
       return "RayTracingNV";
+    case SpvCapabilityVulkanMemoryModelKHR:
+      return "VulkanMemoryModelKHR";
+    case SpvCapabilityVulkanMemoryModelDeviceScopeKHR:
+      return "VulkanMemoryModelDeviceScopeKHR";
+    case SpvCapabilityPhysicalStorageBufferAddressesEXT:
+      return "PhysicalStorageBufferAddressesEXT";
+    case SpvCapabilityComputeDerivativeGroupLinearNV:
+      return "ComputeDerivativeGroupLinearNV";
+    case SpvCapabilityCooperativeMatrixNV:
+      return "CooperativeMatrixNV";
+    case SpvCapabilityFragmentShaderSampleInterlockEXT:
+      return "FragmentShaderSampleInterlockEXT";
+    case SpvCapabilityFragmentShaderShadingRateInterlockEXT:
+      return "FragmentShaderShadingRateInterlockEXT";
+    case SpvCapabilityShaderSMBuiltinsNV:
+      return "ShaderSMBuiltinsNV";
+    case SpvCapabilityFragmentShaderPixelInterlockEXT:
+      return "FragmentShaderPixelInterlockEXT";
     case SpvCapabilitySubgroupShuffleINTEL:
       return "SubgroupShuffleINTEL";
     case SpvCapabilitySubgroupBufferBlockIOINTEL:
@@ -372,34 +402,6 @@ const char* CapabilityToString(SpvCapability capability) {
       return "SubgroupAvcMotionEstimationIntraINTEL";
     case SpvCapabilitySubgroupAvcMotionEstimationChromaINTEL:
       return "SubgroupAvcMotionEstimationChromaINTEL";
-    case SpvCapabilityGroupNonUniformPartitionedNV:
-      return "GroupNonUniformPartitionedNV";
-    case SpvCapabilityVulkanMemoryModelKHR:
-      return "VulkanMemoryModelKHR";
-    case SpvCapabilityVulkanMemoryModelDeviceScopeKHR:
-      return "VulkanMemoryModelDeviceScopeKHR";
-    case SpvCapabilityImageFootprintNV:
-      return "ImageFootprintNV";
-    case SpvCapabilityFragmentBarycentricNV:
-      return "FragmentBarycentricNV";
-    case SpvCapabilityComputeDerivativeGroupQuadsNV:
-      return "ComputeDerivativeGroupQuadsNV";
-    case SpvCapabilityComputeDerivativeGroupLinearNV:
-      return "ComputeDerivativeGroupLinearNV";
-    case SpvCapabilityFragmentDensityEXT:
-      return "FragmentDensityEXT";
-    case SpvCapabilityPhysicalStorageBufferAddressesEXT:
-      return "PhysicalStorageBufferAddressesEXT";
-    case SpvCapabilityCooperativeMatrixNV:
-      return "CooperativeMatrixNV";
-    case SpvCapabilityFragmentShaderSampleInterlockEXT:
-      return "FragmentShaderSampleInterlockEXT";
-    case SpvCapabilityFragmentShaderShadingRateInterlockEXT:
-      return "FragmentShaderShadingRateInterlockEXT";
-    case SpvCapabilityFragmentShaderPixelInterlockEXT:
-      return "FragmentShaderPixelInterlockEXT";
-    case SpvCapabilityShaderSMBuiltinsNV:
-      return "ShaderSMBuiltinsNV";
     case SpvCapabilityMax:
       assert(0 && "Attempting to convert SpvCapabilityMax to string");
       return "";

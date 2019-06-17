@@ -21,6 +21,7 @@
 
 #include "source/fuzz/fuzzer.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/replayer.h"
 #include "source/opt/build_module.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/log.h"
@@ -32,7 +33,11 @@
 namespace {
 
 // Status and actions to perform after parsing command-line arguments.
-enum class FuzzActions { CONTINUE, STOP };
+enum class FuzzActions {
+  FUZZ,    // Run the fuzzer to apply transformations in a randomized fashion.
+  REPLAY,  // Replay an existing sequence of transformations.
+  STOP     // Do nothing.
+};
 
 struct FuzzStatus {
   FuzzActions action;
@@ -60,6 +65,9 @@ Options (in lexicographical order):
 
   -h, --help
                Print this help.
+  --replay
+               File from which to read a sequence of transformations to replay
+               (instead of fuzzing)
   --seed
                Unsigned 32-bit integer seed to control random number
                generation.
@@ -90,6 +98,7 @@ bool EndsWithSpv(const std::string& filename) {
 
 FuzzStatus ParseFlags(int argc, const char** argv, std::string* in_binary_file,
                       std::string* out_binary_file,
+                      std::string* replay_transformations_file,
                       spvtools::FuzzerOptions* fuzzer_options) {
   uint32_t positional_arg_index = 0;
 
@@ -110,6 +119,9 @@ FuzzStatus ParseFlags(int argc, const char** argv, std::string* in_binary_file,
           PrintUsage(argv[0]);
           return {FuzzActions::STOP, 1};
         }
+      } else if (0 == strncmp(cur_arg, "--replay=", sizeof("--replay=") - 1)) {
+        const auto split_flag = spvtools::utils::SplitFlagArgs(cur_arg);
+        *replay_transformations_file = std::string(split_flag.second);
       } else if (0 == strncmp(cur_arg, "--seed=", sizeof("--seed=") - 1)) {
         const auto split_flag = spvtools::utils::SplitFlagArgs(cur_arg);
         char* end = nullptr;
@@ -158,7 +170,64 @@ FuzzStatus ParseFlags(int argc, const char** argv, std::string* in_binary_file,
     return {FuzzActions::STOP, 1};
   }
 
-  return {FuzzActions::CONTINUE, 0};
+  if (!replay_transformations_file->empty()) {
+    // A replay transformations file was given, thus the tool is being invoked
+    // in replay mode.
+    return {FuzzActions::REPLAY, 0};
+  }
+
+  return {FuzzActions::FUZZ, 0};
+}
+
+bool Replay(const spv_target_env& target_env,
+            const std::vector<uint32_t>& binary_in,
+            const spvtools::fuzz::protobufs::FactSequence& initial_facts,
+            const std::string& replay_transformations_file,
+            std::vector<uint32_t>* binary_out,
+            spvtools::fuzz::protobufs::TransformationSequence*
+                transformations_applied) {
+  std::ifstream existing_transformations_file;
+  existing_transformations_file.open(replay_transformations_file,
+                                     std::ios::in | std::ios::binary);
+  spvtools::fuzz::protobufs::TransformationSequence
+      existing_transformation_sequence;
+  auto parse_success = existing_transformation_sequence.ParseFromIstream(
+      &existing_transformations_file);
+  existing_transformations_file.close();
+  if (!parse_success) {
+    spvtools::Error(FuzzDiagnostic, nullptr, {},
+                    "Error reading transformations for replay");
+    return false;
+  }
+  spvtools::fuzz::Replayer replayer(target_env);
+  replayer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
+  auto replay_result_status =
+      replayer.Run(binary_in, initial_facts, existing_transformation_sequence,
+                   binary_out, transformations_applied);
+  if (replay_result_status !=
+      spvtools::fuzz::Replayer::ReplayerResultStatus::kComplete) {
+    return false;
+  }
+  return true;
+}
+
+bool Fuzz(const spv_target_env& target_env,
+          const spvtools::FuzzerOptions& fuzzer_options,
+          const std::vector<uint>& binary_in,
+          const spvtools::fuzz::protobufs::FactSequence& initial_facts,
+          std::vector<uint32_t>* binary_out,
+          spvtools::fuzz::protobufs::TransformationSequence*
+              transformations_applied) {
+  spvtools::fuzz::Fuzzer fuzzer(target_env);
+  fuzzer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
+  auto fuzz_result_status = fuzzer.Run(binary_in, initial_facts, binary_out,
+                                       transformations_applied, fuzzer_options);
+  if (fuzz_result_status !=
+      spvtools::fuzz::Fuzzer::FuzzerResultStatus::kComplete) {
+    spvtools::Error(FuzzDiagnostic, nullptr, {}, "Error running fuzzer");
+    return false;
+  }
+  return true;
 }
 
 }  // namespace
@@ -168,12 +237,12 @@ const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_3;
 int main(int argc, const char** argv) {
   std::string in_binary_file;
   std::string out_binary_file;
+  std::string replay_transformations_file;
 
-  spv_target_env target_env = kDefaultEnvironment;
   spvtools::FuzzerOptions fuzzer_options;
 
   FuzzStatus status = ParseFlags(argc, argv, &in_binary_file, &out_binary_file,
-                                 &fuzzer_options);
+                                 &replay_transformations_file, &fuzzer_options);
 
   if (status.action == FuzzActions::STOP) {
     return status.code;
@@ -205,15 +274,25 @@ int main(int argc, const char** argv) {
   std::vector<uint32_t> binary_out;
   spvtools::fuzz::protobufs::TransformationSequence transformations_applied;
 
-  spvtools::fuzz::Fuzzer fuzzer(target_env);
-  fuzzer.SetMessageConsumer(spvtools::utils::CLIMessageConsumer);
-  auto fuzz_result_status =
-      fuzzer.Run(binary_in, initial_facts, &binary_out,
-                 &transformations_applied, fuzzer_options);
-  if (fuzz_result_status !=
-      spvtools::fuzz::Fuzzer::FuzzerResultStatus::kComplete) {
-    spvtools::Error(FuzzDiagnostic, nullptr, {}, "Error running fuzzer");
-    return 1;
+  spv_target_env target_env = kDefaultEnvironment;
+
+  switch (status.action) {
+    case FuzzActions::FUZZ:
+      if (!Fuzz(target_env, fuzzer_options, binary_in, initial_facts,
+                &binary_out, &transformations_applied)) {
+        return 1;
+      }
+      break;
+    case FuzzActions::REPLAY:
+      if (!Replay(target_env, binary_in, initial_facts,
+                  replay_transformations_file, &binary_out,
+                  &transformations_applied)) {
+        return 1;
+      }
+      break;
+    default:
+      assert(false && "Unknown fuzzer action.");
+      break;
   }
 
   if (!WriteFile<uint32_t>(out_binary_file.c_str(), "wb", binary_out.data(),

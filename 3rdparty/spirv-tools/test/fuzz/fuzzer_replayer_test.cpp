@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "source/fuzz/fuzzer.h"
+#include "source/fuzz/replayer.h"
 #include "test/fuzz/fuzz_test_util.h"
 
 namespace spvtools {
@@ -21,9 +22,11 @@ namespace {
 
 // Assembles the given |shader| text, and then runs the fuzzer |num_runs|
 // times, using successive seeds starting from |initial_seed|.  Checks that
-// the binary produced after each fuzzer run is valid.
-void RunFuzzer(const std::string& shader, uint32_t initial_seed,
-               uint32_t num_runs) {
+// the binary produced after each fuzzer run is valid, and that replaying
+// the transformations that were applied during fuzzing leads to an
+// identical binary.
+void RunFuzzerAndReplayer(const std::string& shader, uint32_t initial_seed,
+                          uint32_t num_runs) {
   const auto env = SPV_ENV_UNIVERSAL_1_3;
 
   std::vector<uint32_t> binary_in;
@@ -33,19 +36,38 @@ void RunFuzzer(const std::string& shader, uint32_t initial_seed,
 
   for (uint32_t seed = initial_seed; seed < initial_seed + num_runs; seed++) {
     protobufs::FactSequence initial_facts;
-    std::vector<uint32_t> binary_out;
-    protobufs::TransformationSequence transformation_sequence_out;
+    std::vector<uint32_t> fuzzer_binary_out;
+    protobufs::TransformationSequence fuzzer_transformation_sequence_out;
     spvtools::FuzzerOptions fuzzer_options;
     spvFuzzerOptionsSetRandomSeed(fuzzer_options, seed);
 
     Fuzzer fuzzer(env);
-    fuzzer.Run(binary_in, initial_facts, &binary_out,
-               &transformation_sequence_out, fuzzer_options);
-    ASSERT_TRUE(t.Validate(binary_out));
+    fuzzer.Run(binary_in, initial_facts, &fuzzer_binary_out,
+               &fuzzer_transformation_sequence_out, fuzzer_options);
+    ASSERT_TRUE(t.Validate(fuzzer_binary_out));
+
+    std::vector<uint32_t> replayer_binary_out;
+    protobufs::TransformationSequence replayer_transformation_sequence_out;
+
+    Replayer replayer(env);
+    replayer.Run(binary_in, initial_facts, fuzzer_transformation_sequence_out,
+                 &replayer_binary_out, &replayer_transformation_sequence_out);
+
+    // After replaying the transformations applied by the fuzzer, exactly those
+    // transformations should have been applied, and the binary resulting from
+    // replay should be identical to that which resulted from fuzzing.
+    std::string fuzzer_transformations_string;
+    std::string replayer_transformations_string;
+    fuzzer_transformation_sequence_out.SerializeToString(
+        &fuzzer_transformations_string);
+    replayer_transformation_sequence_out.SerializeToString(
+        &replayer_transformations_string);
+    ASSERT_EQ(fuzzer_transformations_string, replayer_transformations_string);
+    ASSERT_EQ(fuzzer_binary_out, replayer_binary_out);
   }
 }
 
-TEST(FuzzerTest, Miscellaneous1) {
+TEST(FuzzerReplayerTest, Miscellaneous1) {
   // The SPIR-V came from this GLSL:
   //
   // #version 310 es
@@ -211,10 +233,10 @@ TEST(FuzzerTest, Miscellaneous1) {
 
   // Do 10 fuzzer runs, starting from an initial seed of 0 (seed value chosen
   // arbitrarily).
-  RunFuzzer(shader, 0, 10);
+  RunFuzzerAndReplayer(shader, 0, 10);
 }
 
-TEST(FuzzerTest, Miscellaneous2) {
+TEST(FuzzerReplayerTest, Miscellaneous2) {
   // The SPIR-V came from this GLSL, which was then optimized using spirv-opt
   // with the -O argument:
   //
@@ -456,7 +478,7 @@ TEST(FuzzerTest, Miscellaneous2) {
 
   // Do 10 fuzzer runs, starting from an initial seed of 10 (seed value chosen
   // arbitrarily).
-  RunFuzzer(shader, 10, 10);
+  RunFuzzerAndReplayer(shader, 10, 10);
 }
 
 }  // namespace

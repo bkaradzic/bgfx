@@ -422,6 +422,11 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
              << "OpVariable Initializer <id> '" << _.getIdName(initializer_id)
              << "' is not a constant or module-scope variable.";
     }
+    if (initializer->type_id() != result_type->GetOperandAs<uint32_t>(2u)) {
+      return _.diag(SPV_ERROR_INVALID_ID, inst)
+             << "Initializer type must match the type pointed to by the Result "
+                "Type";
+    }
   }
 
   const auto storage_class =

@@ -99,6 +99,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_stencil_expo
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_viewport_index_layer[] = {spvtools::Extension::kSPV_EXT_shader_viewport_index_layer};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_viewport_index_layerSPV_NV_viewport_array2[] = {spvtools::Extension::kSPV_EXT_shader_viewport_index_layer, spvtools::Extension::kSPV_NV_viewport_array2};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
+static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_user_type[] = {spvtools::Extension::kSPV_GOOGLE_user_type};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_device_side_avc_motion_estimation[] = {spvtools::Extension::kSPV_INTEL_device_side_avc_motion_estimation};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_media_block_io[] = {spvtools::Extension::kSPV_INTEL_media_block_io};
 static const spvtools::Extension pygen_variable_exts_SPV_INTEL_shader_integer_functions2[] = {spvtools::Extension::kSPV_INTEL_shader_integer_functions2};
@@ -145,10 +146,10 @@ static const spv_operand_desc_t pygen_variable_ImageOperandsEntries[] = {
   {"ConstOffsets", 0x0020, 1, pygen_variable_caps_ImageGatherExtended, 0, nullptr, {SPV_OPERAND_TYPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Sample", 0x0040, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"MinLod", 0x0080, 1, pygen_variable_caps_MinLod, 0, nullptr, {SPV_OPERAND_TYPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MakeTexelAvailableKHR", 0x0100, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MakeTexelVisibleKHR", 0x0200, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"NonPrivateTexelKHR", 0x0400, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"VolatileTexelKHR", 0x0800, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"MakeTexelAvailableKHR", 0x0100, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"MakeTexelVisibleKHR", 0x0200, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"NonPrivateTexelKHR", 0x0400, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"VolatileTexelKHR", 0x0800, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"SignExtend", 0x1000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"ZeroExtend", 0x2000, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu}
 };
@@ -202,9 +203,10 @@ static const spv_operand_desc_t pygen_variable_MemorySemanticsEntries[] = {
   {"CrossWorkgroupMemory", 0x0200, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"AtomicCounterMemory", 0x0400, 1, pygen_variable_caps_AtomicStorage, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"ImageMemory", 0x0800, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"OutputMemoryKHR", 0x1000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MakeAvailableKHR", 0x2000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MakeVisibleKHR", 0x4000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"OutputMemoryKHR", 0x1000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MakeAvailableKHR", 0x2000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MakeVisibleKHR", 0x4000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"Volatile", 0x8000, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_MemoryAccessEntries[] = {
@@ -212,9 +214,9 @@ static const spv_operand_desc_t pygen_variable_MemoryAccessEntries[] = {
   {"Volatile", 0x0001, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Aligned", 0x0002, 0, nullptr, 0, nullptr, {SPV_OPERAND_TYPE_LITERAL_INTEGER}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Nontemporal", 0x0004, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MakePointerAvailableKHR", 0x0008, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MakePointerVisibleKHR", 0x0010, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"NonPrivatePointerKHR", 0x0020, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"MakePointerAvailableKHR", 0x0008, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"MakePointerVisibleKHR", 0x0010, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {SPV_OPERAND_TYPE_SCOPE_ID}, 0xffffffffu, 0xffffffffu},
+  {"NonPrivatePointerKHR", 0x0020, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_KernelProfilingInfoEntries[] = {
@@ -239,28 +241,28 @@ static const spv_operand_desc_t pygen_variable_ExecutionModelEntries[] = {
   {"Fragment", 4, 1, pygen_variable_caps_Shader, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"GLCompute", 5, 1, pygen_variable_caps_Shader, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Kernel", 6, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"TaskNV", 5267, 1, pygen_variable_caps_MeshShadingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MeshNV", 5268, 1, pygen_variable_caps_MeshShadingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayGenerationNV", 5313, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"IntersectionNV", 5314, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"AnyHitNV", 5315, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"ClosestHitNV", 5316, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"MissNV", 5317, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"CallableNV", 5318, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"TaskNV", 5267, 1, pygen_variable_caps_MeshShadingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MeshNV", 5268, 1, pygen_variable_caps_MeshShadingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"RayGenerationNV", 5313, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"IntersectionNV", 5314, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"AnyHitNV", 5315, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"ClosestHitNV", 5316, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"MissNV", 5317, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
+  {"CallableNV", 5318, 1, pygen_variable_caps_RayTracingNV, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_AddressingModelEntries[] = {
   {"Logical", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Physical32", 1, 1, pygen_variable_caps_Addresses, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Physical64", 2, 1, pygen_variable_caps_Addresses, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"PhysicalStorageBuffer64EXT", 5348, 1, pygen_variable_caps_PhysicalStorageBufferAddressesEXT, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"PhysicalStorageBuffer64EXT", 5348, 1, pygen_variable_caps_PhysicalStorageBufferAddressesEXT, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_MemoryModelEntries[] = {
   {"Simple", 0, 1, pygen_variable_caps_Shader, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"GLSL450", 1, 1, pygen_variable_caps_Shader, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"OpenCL", 2, 1, pygen_variable_caps_Kernel, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"VulkanKHR", 3, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"VulkanKHR", 3, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_ExecutionModeEntries[] = {
@@ -336,13 +338,13 @@ static const spv_operand_desc_t pygen_variable_StorageClassEntries[] = {
   {"AtomicCounter", 10, 1, pygen_variable_caps_AtomicStorage, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Image", 11, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"StorageBuffer", 12, 1, pygen_variable_caps_Shader, 2, pygen_variable_exts_SPV_KHR_storage_buffer_storage_classSPV_KHR_variable_pointers, {}, SPV_SPIRV_VERSION_WORD(1,3), 0xffffffffu},
-  {"CallableDataNV", 5328, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"IncomingCallableDataNV", 5329, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayPayloadNV", 5338, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"HitAttributeNV", 5339, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"IncomingRayPayloadNV", 5342, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"ShaderRecordBufferNV", 5343, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"PhysicalStorageBufferEXT", 5349, 1, pygen_variable_caps_PhysicalStorageBufferAddressesEXT, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"CallableDataNV", 5328, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"IncomingCallableDataNV", 5329, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"RayPayloadNV", 5338, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"HitAttributeNV", 5339, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"IncomingRayPayloadNV", 5342, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"ShaderRecordBufferNV", 5343, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"PhysicalStorageBufferEXT", 5349, 1, pygen_variable_caps_PhysicalStorageBufferAddressesEXT, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_DimEntries[] = {
@@ -548,7 +550,8 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"CounterBuffer", 5634, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_ID}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"HlslCounterBufferGOOGLE", 5634, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu},
   {"UserSemantic", 5635, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_LITERAL_STRING}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
-  {"HlslSemanticGOOGLE", 5635, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_LITERAL_STRING}, 0xffffffffu, 0xffffffffu}
+  {"HlslSemanticGOOGLE", 5635, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_LITERAL_STRING}, 0xffffffffu, 0xffffffffu},
+  {"UserTypeGOOGLE", 5636, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_user_type, {SPV_OPERAND_TYPE_LITERAL_STRING}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_BuiltInEntries[] = {
@@ -636,24 +639,24 @@ static const spv_operand_desc_t pygen_variable_BuiltInEntries[] = {
   {"FragmentSizeNV", 5292, 2, pygen_variable_caps_ShadingRateNVFragmentDensityEXT, 2, pygen_variable_exts_SPV_EXT_fragment_invocation_densitySPV_NV_shading_rate, {}, 0xffffffffu, 0xffffffffu},
   {"FragInvocationCountEXT", 5293, 2, pygen_variable_caps_FragmentDensityEXTShadingRateNV, 2, pygen_variable_exts_SPV_EXT_fragment_invocation_densitySPV_NV_shading_rate, {}, 0xffffffffu, 0xffffffffu},
   {"InvocationsPerPixelNV", 5293, 2, pygen_variable_caps_ShadingRateNVFragmentDensityEXT, 2, pygen_variable_exts_SPV_EXT_fragment_invocation_densitySPV_NV_shading_rate, {}, 0xffffffffu, 0xffffffffu},
-  {"LaunchIdNV", 5319, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"LaunchSizeNV", 5320, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"WorldRayOriginNV", 5321, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"WorldRayDirectionNV", 5322, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"ObjectRayOriginNV", 5323, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"ObjectRayDirectionNV", 5324, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayTminNV", 5325, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"RayTmaxNV", 5326, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"InstanceCustomIndexNV", 5327, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"ObjectToWorldNV", 5330, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"WorldToObjectNV", 5331, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"HitTNV", 5332, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"HitKindNV", 5333, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"IncomingRayFlagsNV", 5351, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"WarpsPerSMNV", 5374, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"SMCountNV", 5375, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"WarpIDNV", 5376, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"SMIDNV", 5377, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"LaunchIdNV", 5319, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"LaunchSizeNV", 5320, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"WorldRayOriginNV", 5321, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"WorldRayDirectionNV", 5322, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"ObjectRayOriginNV", 5323, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"ObjectRayDirectionNV", 5324, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"RayTminNV", 5325, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"RayTmaxNV", 5326, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"InstanceCustomIndexNV", 5327, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"ObjectToWorldNV", 5330, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"WorldToObjectNV", 5331, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"HitTNV", 5332, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"HitKindNV", 5333, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"IncomingRayFlagsNV", 5351, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
+  {"WarpsPerSMNV", 5374, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, 0xffffffffu, 0xffffffffu},
+  {"SMCountNV", 5375, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, 0xffffffffu, 0xffffffffu},
+  {"WarpIDNV", 5376, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, 0xffffffffu, 0xffffffffu},
+  {"SMIDNV", 5377, 1, pygen_variable_caps_ShaderSMBuiltinsNV, 1, pygen_variable_exts_SPV_NV_shader_sm_builtins, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_ScopeEntries[] = {
@@ -662,7 +665,7 @@ static const spv_operand_desc_t pygen_variable_ScopeEntries[] = {
   {"Workgroup", 2, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Subgroup", 3, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Invocation", 4, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"QueueFamilyKHR", 5, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu}
+  {"QueueFamilyKHR", 5, 1, pygen_variable_caps_VulkanMemoryModelKHR, 0, nullptr, {}, 0xffffffffu, 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_GroupOperationEntries[] = {

@@ -57,12 +57,63 @@ message IdUseDescriptor {
 
 }
 
+message UniformBufferElementDescriptor {
+
+  // Represents a data element inside a uniform buffer.  The element is
+  // specified via (a) the result id of a uniform variable in which the element
+  // is contained, and (b) a series of indices that need to be followed to get
+  // to the element (via fields and array/vector indices).
+  //
+  // Example: suppose %42 is the id of a uniform variable, and that the uniform
+  // variable has the following type (using GLSL-like syntax):
+  //
+  // struct S {
+  //   float f;
+  //   vec3 g;
+  //   int4 h[10];
+  // };
+  //
+  // Then:
+  // - 42[0] describes the 'f' field.
+  // - 42[1,1] describes the y component of the 'g' field.
+  // - 42[2,7,3] describes the w component of element 7 of the 'h' field
+
+  // The result id of a uniform variable.
+  uint32 uniform_variable_id = 1;
+
+  // An ordered sequence of indices through composite structures in the
+  // uniform buffer.
+  repeated uint32 index = 2;
+
+}
+
 message FactSequence {
   repeated Fact fact = 1;
 }
 
 message Fact {
-  // Currently there are no facts.
+  oneof fact {
+    // Order the fact options by numeric id (rather than alphabetically).
+    FactConstantUniform constant_uniform_fact = 1;
+  }
+}
+
+// Keep fact message types in alphabetical order:
+
+message FactConstantUniform {
+
+  // Records the fact that a uniform buffer element is guaranteed to be equal
+  // to a particular constant value.  spirv-fuzz can use such guarantees to
+  // obfuscate code, e.g. to manufacture an expression that will (due to the
+  // guarantee) evaluate to a particular value at runtime but in a manner that
+  // cannot be predicted at compile-time.
+
+  // An element of a uniform buffer
+  UniformBufferElementDescriptor uniform_buffer_element_descriptor = 1;
+
+  // The words of the associated constant
+  repeated uint32 constant_word = 2;
+
 }
 
 message TransformationSequence {
