@@ -57,7 +57,8 @@ void CompilerMSL::add_msl_vertex_attribute(const MSLVertexAttr &va)
 
 void CompilerMSL::add_msl_resource_binding(const MSLResourceBinding &binding)
 {
-	resource_bindings.push_back({ binding, false });
+	StageSetBinding tuple = { binding.stage, binding.desc_set, binding.binding };
+	resource_bindings[tuple] = { binding, false };
 }
 
 void CompilerMSL::add_discrete_descriptor_set(uint32_t desc_set)
@@ -73,12 +74,9 @@ bool CompilerMSL::is_msl_vertex_attribute_used(uint32_t location)
 
 bool CompilerMSL::is_msl_resource_binding_used(ExecutionModel model, uint32_t desc_set, uint32_t binding)
 {
-	auto itr = find_if(begin(resource_bindings), end(resource_bindings),
-	                   [&](const std::pair<MSLResourceBinding, bool> &resource) -> bool {
-		                   return model == resource.first.stage && desc_set == resource.first.desc_set &&
-		                          binding == resource.first.binding;
-	                   });
-	return itr != end(resource_bindings) && itr->second;
+	StageSetBinding tuple = { model, desc_set, binding };
+	auto itr = resource_bindings.find(tuple);
+	return itr != end(resource_bindings) && itr->second.second;
 }
 
 void CompilerMSL::set_fragment_output_components(uint32_t location, uint32_t components)
@@ -528,7 +526,7 @@ void CompilerMSL::emit_entry_point_declarations()
 	// FIXME: Get test coverage here ...
 
 	// Emit constexpr samplers here.
-	for (auto &samp : constexpr_samplers)
+	for (auto &samp : constexpr_samplers_by_id)
 	{
 		auto &var = get<SPIRVariable>(samp.first);
 		auto &type = get<SPIRType>(var.basetype);
@@ -1958,7 +1956,7 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 		bool is_interface_block_builtin =
 		    (bi_type == BuiltInPosition || bi_type == BuiltInPointSize || bi_type == BuiltInClipDistance ||
 		     bi_type == BuiltInCullDistance || bi_type == BuiltInLayer || bi_type == BuiltInViewportIndex ||
-		     bi_type == BuiltInFragDepth || bi_type == BuiltInSampleMask) ||
+		     bi_type == BuiltInFragDepth || bi_type == BuiltInFragStencilRefEXT || bi_type == BuiltInSampleMask) ||
 		    (get_execution_model() == ExecutionModelTessellationEvaluation &&
 		     (bi_type == BuiltInTessLevelOuter || bi_type == BuiltInTessLevelInner));
 
@@ -2092,7 +2090,7 @@ uint32_t CompilerMSL::add_interface_block(StorageClass storage, bool patch)
 	set_name(ib_type_id, to_name(ir.default_entry_point) + "_" + ib_var_ref);
 	set_name(ib_var_id, ib_var_ref);
 
-	for (auto p_var : vars)
+	for (auto *p_var : vars)
 	{
 		bool strip_array =
 		    (get_execution_model() == ExecutionModelTessellationControl ||
@@ -2190,7 +2188,8 @@ uint32_t CompilerMSL::ensure_correct_builtin_type(uint32_t type_id, BuiltIn buil
 	auto &type = get<SPIRType>(type_id);
 
 	if ((builtin == BuiltInSampleMask && is_array(type)) ||
-	    ((builtin == BuiltInLayer || builtin == BuiltInViewportIndex) && type.basetype != SPIRType::UInt))
+	    ((builtin == BuiltInLayer || builtin == BuiltInViewportIndex || builtin == BuiltInFragStencilRefEXT) &&
+	     type.basetype != SPIRType::UInt))
 	{
 		uint32_t next_id = ir.increase_bound_by(type.pointer ? 2 : 1);
 		uint32_t base_type_id = next_id++;
@@ -5634,6 +5633,11 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 		{
 			switch (builtin)
 			{
+			case BuiltInFragStencilRefEXT:
+				if (!msl_options.supports_msl_version(2, 1))
+					SPIRV_CROSS_THROW("Stencil export only supported in MSL 2.1 and up.");
+				return string(" [[") + builtin_qualifier(builtin) + "]]";
+
 			case BuiltInSampleMask:
 			case BuiltInFragDepth:
 				return string(" [[") + builtin_qualifier(builtin) + "]]";
@@ -6034,6 +6038,28 @@ string CompilerMSL::entry_point_args_argument_buffer(bool append_comma)
 	return ep_args;
 }
 
+const MSLConstexprSampler *CompilerMSL::find_constexpr_sampler(uint32_t id) const
+{
+	// Try by ID.
+	{
+		auto itr = constexpr_samplers_by_id.find(id);
+		if (itr != end(constexpr_samplers_by_id))
+			return &itr->second;
+	}
+
+	// Try by binding.
+	{
+		uint32_t desc_set = get_decoration(id, DecorationDescriptorSet);
+		uint32_t binding = get_decoration(id, DecorationBinding);
+
+		auto itr = constexpr_samplers_by_binding.find({ desc_set, binding });
+		if (itr != end(constexpr_samplers_by_binding))
+			return &itr->second;
+	}
+
+	return nullptr;
+}
+
 void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 {
 	// Output resources, sorted by resource index & type
@@ -6064,19 +6090,30 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 					return;
 			}
 
+			const MSLConstexprSampler *constexpr_sampler = nullptr;
+			if (type.basetype == SPIRType::SampledImage || type.basetype == SPIRType::Sampler)
+			{
+				constexpr_sampler = find_constexpr_sampler(var_id);
+				if (constexpr_sampler)
+				{
+					// Mark this ID as a constexpr sampler for later in case it came from set/bindings.
+					constexpr_samplers_by_id[var_id] = *constexpr_sampler;
+				}
+			}
+
 			if (type.basetype == SPIRType::SampledImage)
 			{
 				add_resource_name(var_id);
 				resources.push_back(
 				    { &var, to_name(var_id), SPIRType::Image, get_metal_resource_index(var, SPIRType::Image) });
 
-				if (type.image.dim != DimBuffer && constexpr_samplers.count(var_id) == 0)
+				if (type.image.dim != DimBuffer && !constexpr_sampler)
 				{
 					resources.push_back({ &var, to_sampler_expression(var_id), SPIRType::Sampler,
 					                      get_metal_resource_index(var, SPIRType::Sampler) });
 				}
 			}
-			else if (constexpr_samplers.count(var_id) == 0)
+			else if (!constexpr_sampler)
 			{
 				// constexpr samplers are not declared as resources.
 				add_resource_name(var_id);
@@ -6384,24 +6421,21 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	uint32_t var_desc_set = (var.storage == StorageClassPushConstant) ? kPushConstDescSet : var_dec.set;
 	uint32_t var_binding = (var.storage == StorageClassPushConstant) ? kPushConstBinding : var_dec.binding;
 
-	// If a matching binding has been specified, find and use it
-	auto itr = find_if(begin(resource_bindings), end(resource_bindings),
-	                   [&](const pair<MSLResourceBinding, bool> &resource) -> bool {
-		                   return var_desc_set == resource.first.desc_set && var_binding == resource.first.binding &&
-		                          execution.model == resource.first.stage;
-	                   });
+	// If a matching binding has been specified, find and use it.
+	auto itr = resource_bindings.find({ execution.model, var_desc_set, var_binding });
 
 	if (itr != end(resource_bindings))
 	{
-		itr->second = true;
+		auto &remap = itr->second;
+		remap.second = true;
 		switch (basetype)
 		{
 		case SPIRType::Image:
-			return itr->first.msl_texture;
+			return remap.first.msl_texture;
 		case SPIRType::Sampler:
-			return itr->first.msl_sampler;
+			return remap.first.msl_sampler;
 		default:
-			return itr->first.msl_buffer;
+			return remap.first.msl_buffer;
 		}
 	}
 
@@ -7498,6 +7532,7 @@ string CompilerMSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 	case BuiltInCullDistance:
 	case BuiltInLayer:
 	case BuiltInFragDepth:
+	case BuiltInFragStencilRefEXT:
 	case BuiltInSampleMask:
 		if (get_execution_model() == ExecutionModelTessellationControl)
 			break;
@@ -7570,7 +7605,14 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 	case BuiltInPointSize:
 		return "point_size";
 	case BuiltInPosition:
-		return "position";
+		if (position_invariant)
+		{
+			if (!msl_options.supports_msl_version(2, 1))
+				SPIRV_CROSS_THROW("Invariant position is only supported on MSL 2.1 and up.");
+			return "position, invariant";
+		}
+		else
+			return "position";
 	case BuiltInLayer:
 		return "render_target_array_index";
 	case BuiltInViewportIndex:
@@ -7628,6 +7670,9 @@ string CompilerMSL::builtin_qualifier(BuiltIn builtin)
 			return "depth(less)";
 		else
 			return "depth(any)";
+
+	case BuiltInFragStencilRefEXT:
+		return "stencil";
 
 	// Compute function in
 	case BuiltInGlobalInvocationId:
@@ -7751,6 +7796,9 @@ string CompilerMSL::builtin_type_decl(BuiltIn builtin)
 	// Fragment function out
 	case BuiltInFragDepth:
 		return "float";
+
+	case BuiltInFragStencilRefEXT:
+		return "uint";
 
 	// Compute function in
 	case BuiltInGlobalInvocationId:
@@ -8281,7 +8329,12 @@ void CompilerMSL::remap_constexpr_sampler(uint32_t id, const MSLConstexprSampler
 		SPIRV_CROSS_THROW("Can only remap SampledImage and Sampler type.");
 	if (!type.array.empty())
 		SPIRV_CROSS_THROW("Can not remap array of samplers.");
-	constexpr_samplers[id] = sampler;
+	constexpr_samplers_by_id[id] = sampler;
+}
+
+void CompilerMSL::remap_constexpr_sampler_by_binding(uint32_t desc_set, uint32_t binding, const MSLConstexprSampler &sampler)
+{
+	constexpr_samplers_by_binding[{ desc_set, binding }] = sampler;
 }
 
 void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type)
@@ -8306,6 +8359,7 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 	case BuiltInNumWorkgroups:
 	case BuiltInLayer:
 	case BuiltInViewportIndex:
+	case BuiltInFragStencilRefEXT:
 		expected_type = SPIRType::UInt;
 		break;
 
@@ -8346,6 +8400,7 @@ void CompilerMSL::bitcast_to_builtin_store(uint32_t target_id, std::string &expr
 	{
 	case BuiltInLayer:
 	case BuiltInViewportIndex:
+	case BuiltInFragStencilRefEXT:
 		expected_type = SPIRType::UInt;
 		break;
 
@@ -8439,6 +8494,17 @@ void CompilerMSL::analyze_argument_buffers()
 			if (desc_set >= kMaxArgumentBuffers)
 				SPIRV_CROSS_THROW("Descriptor set index is out of range.");
 
+			const MSLConstexprSampler *constexpr_sampler = nullptr;
+			if (type.basetype == SPIRType::SampledImage || type.basetype == SPIRType::Sampler)
+			{
+				constexpr_sampler = find_constexpr_sampler(var_id);
+				if (constexpr_sampler)
+				{
+					// Mark this ID as a constexpr sampler for later in case it came from set/bindings.
+					constexpr_samplers_by_id[var_id] = *constexpr_sampler;
+				}
+			}
+
 			if (type.basetype == SPIRType::SampledImage)
 			{
 				add_resource_name(var_id);
@@ -8453,13 +8519,13 @@ void CompilerMSL::analyze_argument_buffers()
 
 				resources_in_set[desc_set].push_back({ &var, to_name(var_id), SPIRType::Image, image_resource_index });
 
-				if (type.image.dim != DimBuffer && constexpr_samplers.count(var_id) == 0)
+				if (type.image.dim != DimBuffer && !constexpr_sampler)
 				{
 					resources_in_set[desc_set].push_back(
 					    { &var, to_sampler_expression(var_id), SPIRType::Sampler, sampler_resource_index });
 				}
 			}
-			else if (constexpr_samplers.count(var_id) == 0)
+			else if (!constexpr_sampler)
 			{
 				// constexpr samplers are not declared as resources.
 				add_resource_name(var_id);
@@ -8625,3 +8691,31 @@ void CompilerMSL::analyze_argument_buffers()
 		}
 	}
 }
+
+bool CompilerMSL::SetBindingPair::operator==(const SetBindingPair &other) const
+{
+	return desc_set == other.desc_set && binding == other.binding;
+}
+
+bool CompilerMSL::StageSetBinding::operator==(const StageSetBinding &other) const
+{
+	return model == other.model && desc_set == other.desc_set && binding == other.binding;
+}
+
+size_t CompilerMSL::InternalHasher::operator()(const SetBindingPair &value) const
+{
+	// Quality of hash doesn't really matter here.
+	auto hash_set = std::hash<uint32_t>()(value.desc_set);
+	auto hash_binding = std::hash<uint32_t>()(value.binding);
+	return (hash_set * 0x10001b31) ^ hash_binding;
+}
+
+size_t CompilerMSL::InternalHasher::operator()(const StageSetBinding &value) const
+{
+	// Quality of hash doesn't really matter here.
+	auto hash_model = std::hash<uint32_t>()(value.model);
+	auto hash_set = std::hash<uint32_t>()(value.desc_set);
+	auto tmp_hash = (hash_model * 0x10001b31) ^ hash_set;
+	return (tmp_hash * 0x10001b31) ^ value.binding;
+}
+
