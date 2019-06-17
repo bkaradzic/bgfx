@@ -30,7 +30,7 @@ namespace bgfx { namespace gl
 		void swap(SwapChainGL* _swapChain = NULL);
 		void makeCurrent(SwapChainGL* _swapChain = NULL);
 
-		void import();
+		void import(int webGLVersion);
 
 		bool isValid() const
 		{
