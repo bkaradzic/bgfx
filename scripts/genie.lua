@@ -508,4 +508,5 @@ if _OPTIONS["with-tools"] then
 	dofile "texturec.lua"
 	dofile "texturev.lua"
 	dofile "geometryc.lua"
+	dofile "geometryv.lua"
 end
