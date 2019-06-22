@@ -288,8 +288,11 @@ static uint32_t pls_format_to_components(PlsFormat format)
 
 static const char *vector_swizzle(int vecsize, int index)
 {
-	static const char *swizzle[4][4] = {
-		{ ".x", ".y", ".z", ".w" }, { ".xy", ".yz", ".zw" }, { ".xyz", ".yzw" }, { "" }
+	static const char *const swizzle[4][4] = {
+		{ ".x", ".y", ".z", ".w" },
+		{ ".xy", ".yz", ".zw", nullptr },
+		{ ".xyz", ".yzw", nullptr, nullptr },
+		{ "", nullptr, nullptr, nullptr },
 	};
 
 	assert(vecsize >= 1 && vecsize <= 4);
@@ -4700,6 +4703,7 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 	uint32_t offset = 0;
 	uint32_t coffsets = 0;
 	uint32_t sample = 0;
+	uint32_t minlod = 0;
 	uint32_t flags = 0;
 
 	if (length)
@@ -4725,14 +4729,15 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 	test(offset, ImageOperandsOffsetMask);
 	test(coffsets, ImageOperandsConstOffsetsMask);
 	test(sample, ImageOperandsSampleMask);
+	test(minlod, ImageOperandsMinLodMask);
 
 	string expr;
 	bool forward = false;
 	expr += to_function_name(img, imgtype, !!fetch, !!gather, !!proj, !!coffsets, (!!coffset || !!offset),
-	                         (!!grad_x || !!grad_y), !!dref, lod);
+	                         (!!grad_x || !!grad_y), !!dref, lod, minlod);
 	expr += "(";
 	expr += to_function_args(img, imgtype, fetch, gather, proj, coord, coord_components, dref, grad_x, grad_y, lod,
-	                         coffset, offset, bias, comp, sample, &forward);
+	                         coffset, offset, bias, comp, sample, minlod, &forward);
 	expr += ")";
 
 	// texture(samplerXShadow) returns float. shadowX() returns vec4. Swizzle here.
@@ -4797,8 +4802,11 @@ bool CompilerGLSL::expression_is_constant_null(uint32_t id) const
 // For some subclasses, the function is a method on the specified image.
 string CompilerGLSL::to_function_name(uint32_t tex, const SPIRType &imgtype, bool is_fetch, bool is_gather,
                                       bool is_proj, bool has_array_offsets, bool has_offset, bool has_grad, bool,
-                                      uint32_t lod)
+                                      uint32_t lod, uint32_t minlod)
 {
+	if (minlod != 0)
+		SPIRV_CROSS_THROW("Sparse texturing not yet supported.");
+
 	string fname;
 
 	// textureLod on sampler2DArrayShadow and samplerCubeShadow does not exist in GLSL for some reason.
@@ -4877,7 +4885,8 @@ std::string CompilerGLSL::convert_separate_image_to_expression(uint32_t id)
 string CompilerGLSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
                                       bool is_proj, uint32_t coord, uint32_t coord_components, uint32_t dref,
                                       uint32_t grad_x, uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset,
-                                      uint32_t bias, uint32_t comp, uint32_t sample, bool *p_forward)
+                                      uint32_t bias, uint32_t comp, uint32_t sample, uint32_t /*minlod*/,
+                                      bool *p_forward)
 {
 	string farg_str;
 	if (is_fetch)
@@ -6155,6 +6164,26 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		return "gl_HitKindNV";
 	case BuiltInIncomingRayFlagsNV:
 		return "gl_IncomingRayFlagsNV";
+
+	case BuiltInBaryCoordNV:
+	{
+		if (options.es && options.version < 320)
+			SPIRV_CROSS_THROW("gl_BaryCoordNV requires ESSL 320.");
+		else if (!options.es && options.version < 450)
+			SPIRV_CROSS_THROW("gl_BaryCoordNV requires GLSL 450.");
+		require_extension_internal("GL_NV_fragment_shader_barycentric");
+		return "gl_BaryCoordNV";
+	}
+
+	case BuiltInBaryCoordNoPerspNV:
+	{
+		if (options.es && options.version < 320)
+			SPIRV_CROSS_THROW("gl_BaryCoordNoPerspNV requires ESSL 320.");
+		else if (!options.es && options.version < 450)
+			SPIRV_CROSS_THROW("gl_BaryCoordNoPerspNV requires GLSL 450.");
+		require_extension_internal("GL_NV_fragment_shader_barycentric");
+		return "gl_BaryCoordNoPerspNV";
+	}
 
 	case BuiltInFragStencilRefEXT:
 	{
@@ -10698,6 +10727,8 @@ bool CompilerGLSL::flush_phi_required(uint32_t from, uint32_t to)
 void CompilerGLSL::flush_phi(uint32_t from, uint32_t to)
 {
 	auto &child = get<SPIRBlock>(to);
+	if (child.ignore_phi_from_block == from)
+		return;
 
 	unordered_set<uint32_t> temporary_phi_variables;
 
@@ -11458,7 +11489,8 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 	case SPIRBlock::MultiSelect:
 	{
 		auto &type = expression_type(block.condition);
-		bool unsigned_case = type.basetype == SPIRType::UInt || type.basetype == SPIRType::UShort;
+		bool unsigned_case =
+		    type.basetype == SPIRType::UInt || type.basetype == SPIRType::UShort || type.basetype == SPIRType::UByte;
 
 		if (block.merge == SPIRBlock::MergeNone)
 			SPIRV_CROSS_THROW("Switch statement is not structured");
@@ -11483,61 +11515,182 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		if (block.need_ladder_break)
 			statement("bool _", block.self, "_ladder_break = false;");
 
+		// Find all unique case constructs.
+		unordered_map<uint32_t, SmallVector<uint32_t>> case_constructs;
+		SmallVector<uint32_t> block_declaration_order;
+		SmallVector<uint32_t> literals_to_merge;
+
+		// If a switch case branches to the default block for some reason, we can just remove that literal from consideration
+		// and let the default: block handle it.
+		// 2.11 in SPIR-V spec states that for fall-through cases, there is a very strict declaration order which we can take advantage of here.
+		// We only need to consider possible fallthrough if order[i] branches to order[i + 1].
+		for (auto &c : block.cases)
+		{
+			if (c.block != block.next_block && c.block != block.default_block)
+			{
+				if (!case_constructs.count(c.block))
+					block_declaration_order.push_back(c.block);
+				case_constructs[c.block].push_back(c.value);
+			}
+			else if (c.block == block.next_block && block.default_block != block.next_block)
+			{
+				// We might have to flush phi inside specific case labels.
+				// If we can piggyback on default:, do so instead.
+				literals_to_merge.push_back(c.value);
+			}
+		}
+
+		// Empty literal array -> default.
+		if (block.default_block != block.next_block)
+		{
+			auto &default_block = get<SPIRBlock>(block.default_block);
+
+			// We need to slide in the default block somewhere in this chain
+			// if there are fall-through scenarios since the default is declared separately in OpSwitch.
+			// Only consider trivial fall-through cases here.
+			size_t num_blocks = block_declaration_order.size();
+			bool injected_block = false;
+
+			for (size_t i = 0; i < num_blocks; i++)
+			{
+				auto &case_block = get<SPIRBlock>(block_declaration_order[i]);
+				if (execution_is_direct_branch(case_block, default_block))
+				{
+					// Fallthrough to default block, we must inject the default block here.
+					block_declaration_order.insert(begin(block_declaration_order) + i + 1, block.default_block);
+					injected_block = true;
+					break;
+				}
+				else if (execution_is_direct_branch(default_block, case_block))
+				{
+					// Default case is falling through to another case label, we must inject the default block here.
+					block_declaration_order.insert(begin(block_declaration_order) + i, block.default_block);
+					injected_block = true;
+					break;
+				}
+			}
+
+			// Order does not matter.
+			if (!injected_block)
+				block_declaration_order.push_back(block.default_block);
+
+			case_constructs[block.default_block] = {};
+		}
+
+		size_t num_blocks = block_declaration_order.size();
+
+		const auto to_case_label = [](uint32_t literal, bool is_unsigned_case) -> string {
+			return is_unsigned_case ? convert_to_string(literal) : convert_to_string(int32_t(literal));
+		};
+
+		// We need to deal with a complex scenario for OpPhi. If we have case-fallthrough and Phi in the picture,
+		// we need to flush phi nodes outside the switch block in a branch,
+		// and skip any Phi handling inside the case label to make fall-through work as expected.
+		// This kind of code-gen is super awkward and it's a last resort. Normally we would want to handle this
+		// inside the case label if at all possible.
+		for (size_t i = 1; i < num_blocks; i++)
+		{
+			if (flush_phi_required(block.self, block_declaration_order[i]) &&
+			    flush_phi_required(block_declaration_order[i - 1], block_declaration_order[i]))
+			{
+				uint32_t target_block = block_declaration_order[i];
+
+				// Make sure we flush Phi, it might have been marked to be ignored earlier.
+				get<SPIRBlock>(target_block).ignore_phi_from_block = 0;
+
+				auto &literals = case_constructs[target_block];
+
+				if (literals.empty())
+				{
+					// Oh boy, gotta make a complete negative test instead! o.o
+					// Find all possible literals that would *not* make us enter the default block.
+					// If none of those literals match, we flush Phi ...
+					SmallVector<string> conditions;
+					for (size_t j = 0; j < num_blocks; j++)
+					{
+						auto &negative_literals = case_constructs[block_declaration_order[j]];
+						for (auto &case_label : negative_literals)
+							conditions.push_back(join(to_enclosed_expression(block.condition),
+							                          " != ", to_case_label(case_label, unsigned_case)));
+					}
+
+					statement("if (", merge(conditions, " && "), ")");
+					begin_scope();
+					flush_phi(block.self, target_block);
+					end_scope();
+				}
+				else
+				{
+					SmallVector<string> conditions;
+					conditions.reserve(literals.size());
+					for (auto &case_label : literals)
+						conditions.push_back(join(to_enclosed_expression(block.condition),
+						                          " == ", to_case_label(case_label, unsigned_case)));
+					statement("if (", merge(conditions, " || "), ")");
+					begin_scope();
+					flush_phi(block.self, target_block);
+					end_scope();
+				}
+
+				// Mark the block so that we don't flush Phi from header to case label.
+				get<SPIRBlock>(target_block).ignore_phi_from_block = block.self;
+			}
+		}
+
 		emit_block_hints(block);
 		statement("switch (", to_expression(block.condition), ")");
 		begin_scope();
 
-		// Multiple case labels can branch to same block, so find all unique blocks.
-		bool emitted_default = false;
-		unordered_set<uint32_t> emitted_blocks;
-
-		for (auto &c : block.cases)
+		for (size_t i = 0; i < num_blocks; i++)
 		{
-			if (emitted_blocks.count(c.block) != 0)
-				continue;
+			uint32_t target_block = block_declaration_order[i];
+			auto &literals = case_constructs[target_block];
 
-			// Emit all case labels which branch to our target.
-			// FIXME: O(n^2), revisit if we hit shaders with 100++ case labels ...
-			for (auto &other_case : block.cases)
+			if (literals.empty())
 			{
-				if (other_case.block == c.block)
+				// Default case.
+				statement("default:");
+			}
+			else
+			{
+				for (auto &case_literal : literals)
 				{
 					// The case label value must be sign-extended properly in SPIR-V, so we can assume 32-bit values here.
-					auto case_value = unsigned_case ? convert_to_string(uint32_t(other_case.value)) :
-					                                  convert_to_string(int32_t(other_case.value));
-					statement("case ", case_value, label_suffix, ":");
+					statement("case ", to_case_label(case_literal, unsigned_case), label_suffix, ":");
 				}
 			}
 
-			// Maybe we share with default block?
-			if (block.default_block == c.block)
+			auto &case_block = get<SPIRBlock>(target_block);
+			if (i + 1 < num_blocks &&
+			    execution_is_direct_branch(case_block, get<SPIRBlock>(block_declaration_order[i + 1])))
 			{
-				statement("default:");
-				emitted_default = true;
+				// We will fall through here, so just terminate the block chain early.
+				// We still need to deal with Phi potentially.
+				// No need for a stack-like thing here since we only do fall-through when there is a
+				// single trivial branch to fall-through target..
+				current_emitting_switch_fallthrough = true;
 			}
-
-			// Complete the target.
-			emitted_blocks.insert(c.block);
+			else
+				current_emitting_switch_fallthrough = false;
 
 			begin_scope();
-			branch(block.self, c.block);
+			branch(block.self, target_block);
 			end_scope();
+
+			current_emitting_switch_fallthrough = false;
 		}
 
-		if (!emitted_default)
+		// Might still have to flush phi variables if we branch from loop header directly to merge target.
+		if (flush_phi_required(block.self, block.next_block))
 		{
-			if (block.default_block != block.next_block)
+			if (block.default_block == block.next_block || !literals_to_merge.empty())
 			{
-				statement("default:");
-				begin_scope();
-				if (is_break(block.default_block))
-					SPIRV_CROSS_THROW("Cannot break; out of a switch statement and out of a loop at the same time ...");
-				branch(block.self, block.default_block);
-				end_scope();
-			}
-			else if (flush_phi_required(block.self, block.next_block))
-			{
-				statement("default:");
+				for (auto &case_literal : literals_to_merge)
+					statement("case ", to_case_label(case_literal, unsigned_case), label_suffix, ":");
+
+				if (block.default_block == block.next_block)
+					statement("default:");
+
 				begin_scope();
 				flush_phi(block.self, block.next_block);
 				statement("break;");
@@ -11619,22 +11772,26 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		if (block.merge != SPIRBlock::MergeSelection)
 			flush_phi(block.self, block.next_block);
 
-		// For merge selects we might have ignored the fact that a merge target
-		// could have been a break; or continue;
-		// We will need to deal with it here.
-		if (is_loop_break(block.next_block))
+		// For switch fallthrough cases, we terminate the chain here, but we still need to handle Phi.
+		if (!current_emitting_switch_fallthrough)
 		{
-			// Cannot check for just break, because switch statements will also use break.
-			assert(block.merge == SPIRBlock::MergeSelection);
-			statement("break;");
+			// For merge selects we might have ignored the fact that a merge target
+			// could have been a break; or continue;
+			// We will need to deal with it here.
+			if (is_loop_break(block.next_block))
+			{
+				// Cannot check for just break, because switch statements will also use break.
+				assert(block.merge == SPIRBlock::MergeSelection);
+				statement("break;");
+			}
+			else if (is_continue(block.next_block))
+			{
+				assert(block.merge == SPIRBlock::MergeSelection);
+				branch_to_continue(block.self, block.next_block);
+			}
+			else if (block.self != block.next_block)
+				emit_block_chain(get<SPIRBlock>(block.next_block));
 		}
-		else if (is_continue(block.next_block))
-		{
-			assert(block.merge == SPIRBlock::MergeSelection);
-			branch_to_continue(block.self, block.next_block);
-		}
-		else if (block.self != block.next_block)
-			emit_block_chain(get<SPIRBlock>(block.next_block));
 	}
 
 	if (block.merge == SPIRBlock::MergeLoop)

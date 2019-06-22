@@ -20,9 +20,9 @@
 #include "spirv_glsl.hpp"
 #include <map>
 #include <set>
+#include <stddef.h>
 #include <unordered_map>
 #include <unordered_set>
-#include <stddef.h>
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -314,6 +314,19 @@ public:
 	// by remap_constexpr_sampler(_by_binding).
 	bool is_msl_resource_binding_used(spv::ExecutionModel model, uint32_t set, uint32_t binding);
 
+	// This must only be called after a successful call to CompilerMSL::compile().
+	// For a variable resource ID obtained through reflection API, report the automatically assigned resource index.
+	// If the descriptor set was part of an argument buffer, report the [[id(N)]],
+	// or [[buffer/texture/sampler]] binding for other resources.
+	// If the resource was a combined image sampler, report the image binding here,
+	// use the _secondary version of this call to query the sampler half of the resource.
+	// If no binding exists, uint32_t(-1) is returned.
+	uint32_t get_automatic_msl_resource_binding(uint32_t id) const;
+
+	// Same as get_automatic_msl_resource_binding, but should only be used for combined image samplers, in which case the
+	// sampler's binding is returned instead. For any other resource type, -1 is returned.
+	uint32_t get_automatic_msl_resource_binding_secondary(uint32_t id) const;
+
 	// Compiles the SPIR-V code into Metal Shading Language.
 	std::string compile() override;
 
@@ -397,12 +410,12 @@ protected:
 	std::string to_func_call_arg(uint32_t id) override;
 	std::string to_name(uint32_t id, bool allow_alias = true) const override;
 	std::string to_function_name(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
-	                             bool has_array_offsets, bool has_offset, bool has_grad, bool has_dref,
-	                             uint32_t lod) override;
+	                             bool has_array_offsets, bool has_offset, bool has_grad, bool has_dref, uint32_t lod,
+	                             uint32_t minlod) override;
 	std::string to_function_args(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
 	                             uint32_t coord, uint32_t coord_components, uint32_t dref, uint32_t grad_x,
 	                             uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
-	                             uint32_t comp, uint32_t sample, bool *p_forward) override;
+	                             uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward) override;
 	std::string to_initializer_expression(const SPIRVariable &var) override;
 	std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t packed_type_id) override;
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
@@ -471,7 +484,7 @@ protected:
 	std::string to_swizzle_expression(uint32_t id);
 	std::string to_buffer_size_expression(uint32_t id);
 	std::string builtin_qualifier(spv::BuiltIn builtin);
-	std::string builtin_type_decl(spv::BuiltIn builtin);
+	std::string builtin_type_decl(spv::BuiltIn builtin, uint32_t id = 0);
 	std::string built_in_func_arg(spv::BuiltIn builtin, bool prefix_comma);
 	std::string member_attribute_qualifier(const SPIRType &type, uint32_t index);
 	std::string argument_decl(const SPIRFunction::Parameter &arg);
@@ -561,6 +574,7 @@ protected:
 	uint32_t next_metal_resource_index_buffer = 0;
 	uint32_t next_metal_resource_index_texture = 0;
 	uint32_t next_metal_resource_index_sampler = 0;
+	uint32_t next_metal_resource_ids[kMaxArgumentBuffers] = {};
 
 	uint32_t stage_in_var_id = 0;
 	uint32_t stage_out_var_id = 0;

@@ -37,7 +37,7 @@ struct main0_in
     float4 m_25 [[attribute(0)]];
 };
 
-vertex main0_out main0(main0_in in [[stage_in]], constant _42& _44 [[buffer(12)]], constant _15& _17 [[buffer(13)]])
+vertex main0_out main0(main0_in in [[stage_in]], constant _15& _17 [[buffer(0)]], constant _42& _44 [[buffer(1)]])
 {
     main0_out out = {};
     float3 _91;

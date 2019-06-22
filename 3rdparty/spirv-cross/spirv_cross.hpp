@@ -123,7 +123,10 @@ enum ExtendedDecorations
 	SPIRVCrossDecorationPackedType,
 	SPIRVCrossDecorationInterfaceMemberIndex,
 	SPIRVCrossDecorationInterfaceOrigID,
-	SPIRVCrossDecorationArgumentBufferID
+	SPIRVCrossDecorationResourceIndexPrimary,
+	// Used for decorations like resource indices for samplers when part of combined image samplers.
+	// A variable might need to hold two resource indices in this case.
+	SPIRVCrossDecorationResourceIndexSecondary,
 };
 
 class Compiler
@@ -669,6 +672,7 @@ protected:
 	bool block_is_outside_flow_control_from_block(const SPIRBlock &from, const SPIRBlock &to);
 
 	bool execution_is_branchless(const SPIRBlock &from, const SPIRBlock &to) const;
+	bool execution_is_direct_branch(const SPIRBlock &from, const SPIRBlock &to) const;
 	bool execution_is_noop(const SPIRBlock &from, const SPIRBlock &to) const;
 	SPIRBlock::ContinueBlockType continue_block_type(const SPIRBlock &continue_block) const;
 

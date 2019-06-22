@@ -223,6 +223,7 @@ protected:
 
 	SPIRBlock *current_emitting_block = nullptr;
 	SPIRBlock *current_emitting_switch = nullptr;
+	bool current_emitting_switch_fallthrough = false;
 
 	virtual void emit_instruction(const Instruction &instr);
 	void emit_block_instructions(SPIRBlock &block);
@@ -257,12 +258,12 @@ protected:
 	virtual std::string to_func_call_arg(uint32_t id);
 	virtual std::string to_function_name(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
 	                                     bool is_proj, bool has_array_offsets, bool has_offset, bool has_grad,
-	                                     bool has_dref, uint32_t lod);
+	                                     bool has_dref, uint32_t lod, uint32_t minlod);
 	virtual std::string to_function_args(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
 	                                     bool is_proj, uint32_t coord, uint32_t coord_components, uint32_t dref,
 	                                     uint32_t grad_x, uint32_t grad_y, uint32_t lod, uint32_t coffset,
 	                                     uint32_t offset, uint32_t bias, uint32_t comp, uint32_t sample,
-	                                     bool *p_forward);
+	                                     uint32_t minlod, bool *p_forward);
 	virtual void emit_buffer_block(const SPIRVariable &type);
 	virtual void emit_push_constant_block(const SPIRVariable &var);
 	virtual void emit_uniform(const SPIRVariable &var);

@@ -90,6 +90,21 @@ def print_msl_compiler_version():
     except OSError as e:
         if (e.errno != errno.ENOENT):    # Ignore xcrun not found error
             raise
+    except subprocess.CalledProcessError:
+        pass
+
+def msl_compiler_supports_22():
+    try:
+        subprocess.check_call(['xcrun', '--sdk', 'macosx', 'metal', '-x', 'metal', '-std=macos-metal2.2', '-'],
+                stdin = subprocess.DEVNULL, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+        print('Current SDK supports MSL 2.2. Enabling validation for MSL 2.2 shaders.')
+        return True
+    except OSError as e:
+        print('Failed to check if MSL 2.2 is not supported. It probably is not.')
+        return False
+    except subprocess.CalledProcessError:
+        print('Current SDK does NOT support MSL 2.2. Disabling validation for MSL 2.2 shaders.')
+        return False
 
 def path_to_msl_standard(shader):
     if '.ios.' in shader:
@@ -578,7 +593,12 @@ def test_shader_msl(stats, shader, args, paths):
     # executable from Xcode using args: `--msl --entry main --output msl_path spirv_path`.
 #    print('SPRIV shader: ' + spirv)
 
-    if not args.force_no_external_validation:
+    shader_is_msl22 = 'msl22' in joined_path
+    skip_validation = shader_is_msl22 and (not args.msl22)
+    if '.invalid.' in joined_path:
+        skip_validation = True
+
+    if (not args.force_no_external_validation) and (not skip_validation):
         validate_shader_msl(shader, args.opt)
 
     remove_file(spirv)
@@ -720,8 +740,10 @@ def main():
         sys.stderr.write('Parallel execution is disabled when using the flags --update, --malisc or --force-no-external-validation\n')
         args.parallel = False
         
+    args.msl22 = False
     if args.msl:
         print_msl_compiler_version()
+        args.msl22 = msl_compiler_supports_22()
 
     backend = 'glsl'
     if (args.msl or args.metal): 

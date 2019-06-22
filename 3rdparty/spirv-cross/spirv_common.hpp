@@ -183,14 +183,14 @@ std::string join(Ts &&... ts)
 	return stream.str();
 }
 
-inline std::string merge(const SmallVector<std::string> &list)
+inline std::string merge(const SmallVector<std::string> &list, const char *between = ", ")
 {
 	StringStream<> stream;
 	for (auto &elem : list)
 	{
 		stream << elem;
 		if (&elem != &list.back())
-			stream << ", ";
+			stream << between;
 	}
 	return stream.str();
 }
@@ -703,6 +703,10 @@ struct SPIRBlock : IVariant
 
 	// Do we need a ladder variable to defer breaking out of a loop construct after a switch block?
 	bool need_ladder_break = false;
+
+	// If marked, we have explicitly handled Phi from this block, so skip any flushes related to that on a branch.
+	// Used to handle an edge case with switch and case-label fallthrough where fall-through writes to Phi.
+	uint32_t ignore_phi_from_block = 0;
 
 	// The dominating block which this block might be within.
 	// Used in continue; blocks to determine if we really need to write continue.
@@ -1427,7 +1431,8 @@ struct Meta
 			bool packed = false;
 			uint32_t ib_member_index = ~(0u);
 			uint32_t ib_orig_id = 0;
-			uint32_t argument_buffer_id = ~(0u);
+			uint32_t resource_index_primary = ~(0u);
+			uint32_t resource_index_secondary = ~(0u);
 		} extended;
 	};
 

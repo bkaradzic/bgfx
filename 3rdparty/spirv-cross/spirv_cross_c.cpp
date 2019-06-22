@@ -1031,6 +1031,42 @@ spvc_result spvc_compiler_msl_set_fragment_output_components(spvc_compiler compi
 #endif
 }
 
+unsigned spvc_compiler_msl_get_automatic_resource_binding(spvc_compiler compiler, spvc_variable_id id)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return uint32_t(-1);
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.get_automatic_msl_resource_binding(id);
+#else
+	(void)id;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return uint32_t(-1);
+#endif
+}
+
+unsigned spvc_compiler_msl_get_automatic_resource_binding_secondary(spvc_compiler compiler, spvc_variable_id id)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return uint32_t(-1);
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.get_automatic_msl_resource_binding_secondary(id);
+#else
+	(void)id;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return uint32_t(-1);
+#endif
+}
+
 spvc_result spvc_compiler_compile(spvc_compiler compiler, const char **source)
 {
 	SPVC_BEGIN_SAFE_SCOPE
