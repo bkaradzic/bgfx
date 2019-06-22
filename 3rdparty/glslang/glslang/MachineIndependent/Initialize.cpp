@@ -6309,6 +6309,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append("const int gl_SemanticsAcquireRelease  = 0x8;\n");
         commonBuiltins.append("const int gl_SemanticsMakeAvailable   = 0x2000;\n");
         commonBuiltins.append("const int gl_SemanticsMakeVisible     = 0x4000;\n");
+        commonBuiltins.append("const int gl_SemanticsVolatile        = 0x8000;\n");
 
         commonBuiltins.append("const int gl_StorageSemanticsNone     = 0x0;\n");
         commonBuiltins.append("const int gl_StorageSemanticsBuffer   = 0x40;\n");
@@ -7899,19 +7900,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("readInvocationARB",      1, &E_GL_ARB_shader_ballot);
             symbolTable.setFunctionExtensions("readFirstInvocationARB", 1, &E_GL_ARB_shader_ballot);
 
-            BuiltInVariable("gl_SubGroupInvocationARB", EbvSubGroupInvocation, symbolTable);
-            BuiltInVariable("gl_SubGroupEqMaskARB",     EbvSubGroupEqMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupGeMaskARB",     EbvSubGroupGeMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupGtMaskARB",     EbvSubGroupGtMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupLeMaskARB",     EbvSubGroupLeMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupLtMaskARB",     EbvSubGroupLtMask,     symbolTable);
-
-            if (spvVersion.vulkan > 0)
-                // Treat "gl_SubGroupSizeARB" as shader input instead of uniform for Vulkan
-                SpecialQualifier("gl_SubGroupSizeARB", EvqVaryingIn, EbvSubGroupSize, symbolTable);
-            else
-                BuiltInVariable("gl_SubGroupSizeARB", EbvSubGroupSize, symbolTable);
-
             if (version >= 430) {
                 symbolTable.setFunctionExtensions("anyInvocationARB",       1, &E_GL_ARB_shader_group_vote);
                 symbolTable.setFunctionExtensions("allInvocationsARB",      1, &E_GL_ARB_shader_group_vote);
@@ -8172,7 +8160,22 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
             BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
         }
-        
+
+	if (profile != EEsProfile) {
+            BuiltInVariable("gl_SubGroupInvocationARB", EbvSubGroupInvocation, symbolTable);
+            BuiltInVariable("gl_SubGroupEqMaskARB",     EbvSubGroupEqMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupGeMaskARB",     EbvSubGroupGeMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupGtMaskARB",     EbvSubGroupGtMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupLeMaskARB",     EbvSubGroupLeMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupLtMaskARB",     EbvSubGroupLtMask,     symbolTable);
+
+            if (spvVersion.vulkan > 0)
+                // Treat "gl_SubGroupSizeARB" as shader input instead of uniform for Vulkan
+                SpecialQualifier("gl_SubGroupSizeARB", EvqVaryingIn, EbvSubGroupSize, symbolTable);
+            else
+                BuiltInVariable("gl_SubGroupSizeARB", EbvSubGroupSize, symbolTable);
+        }
+
         // GL_KHR_shader_subgroup
         if ((profile == EEsProfile && version >= 310) ||
             (profile != EEsProfile && version >= 140)) {
@@ -8630,6 +8633,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_SemanticsAcquireRelease", 1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_SemanticsMakeAvailable",  1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_SemanticsMakeVisible",    1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsVolatile",       1, &E_GL_KHR_memory_scope_semantics);
 
             symbolTable.setVariableExtensions("gl_StorageSemanticsNone",    1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_StorageSemanticsBuffer",  1, &E_GL_KHR_memory_scope_semantics);

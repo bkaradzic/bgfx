@@ -1641,6 +1641,7 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     const int gl_SemanticsAcquireRelease  = 0x8;
     const int gl_SemanticsMakeAvailable   = 0x2000;
     const int gl_SemanticsMakeVisible     = 0x4000;
+    const int gl_SemanticsVolatile        = 0x8000;
 
     //const int gl_StorageSemanticsNone     = 0x0;
     const int gl_StorageSemanticsBuffer   = 0x40;
@@ -1730,7 +1731,8 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
                                       gl_SemanticsRelease |
                                       gl_SemanticsAcquireRelease |
                                       gl_SemanticsMakeAvailable |
-                                      gl_SemanticsMakeVisible))) {
+                                      gl_SemanticsMakeVisible |
+                                      gl_SemanticsVolatile))) {
         error(loc, "Invalid semantics value", fnCandidate.getName().c_str(), "");
     }
     if (((storageClassSemantics | storageClassSemantics2) & ~(gl_StorageSemanticsBuffer |
@@ -1782,7 +1784,16 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
         error(loc, "gl_SemanticsMakeVisible requires gl_SemanticsAcquire or gl_SemanticsAcquireRelease",
               fnCandidate.getName().c_str(), "");
     }
-
+    if ((semantics & gl_SemanticsVolatile) &&
+        (callNode.getOp() == EOpMemoryBarrier || callNode.getOp() == EOpBarrier)) {
+        error(loc, "gl_SemanticsVolatile must not be used with memoryBarrier or controlBarrier",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((callNode.getOp() == EOpAtomicCompSwap || callNode.getOp() == EOpImageAtomicCompSwap) &&
+        ((semantics ^ semantics2) & gl_SemanticsVolatile)) {
+        error(loc, "semEqual and semUnequal must either both include gl_SemanticsVolatile or neither",
+              fnCandidate.getName().c_str(), "");
+    }
 }
 
 

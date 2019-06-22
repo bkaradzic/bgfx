@@ -632,6 +632,7 @@ enum MemorySemanticsShift {
     MemorySemanticsOutputMemoryKHRShift = 12,
     MemorySemanticsMakeAvailableKHRShift = 13,
     MemorySemanticsMakeVisibleKHRShift = 14,
+    MemorySemanticsVolatileShift = 15,
     MemorySemanticsMax = 0x7fffffff,
 };
 
@@ -650,6 +651,7 @@ enum MemorySemanticsMask {
     MemorySemanticsOutputMemoryKHRMask = 0x00001000,
     MemorySemanticsMakeAvailableKHRMask = 0x00002000,
     MemorySemanticsMakeVisibleKHRMask = 0x00004000,
+    MemorySemanticsVolatileMask = 0x00008000,
 };
 
 enum MemoryAccessShift {

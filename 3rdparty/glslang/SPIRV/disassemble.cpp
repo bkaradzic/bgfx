@@ -648,6 +648,9 @@ static void GLSLstd450GetDebugNames(const char** names)
     names[GLSLstd450InterpolateAtCentroid]   = "InterpolateAtCentroid";
     names[GLSLstd450InterpolateAtSample]     = "InterpolateAtSample";
     names[GLSLstd450InterpolateAtOffset]     = "InterpolateAtOffset";
+    names[GLSLstd450NMin]                    = "NMin";
+    names[GLSLstd450NMax]                    = "NMax";
+    names[GLSLstd450NClamp]                  = "NClamp";
 }
 
 #ifdef AMD_EXTENSIONS

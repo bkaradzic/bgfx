@@ -266,7 +266,8 @@ public:
         needToLegalize(false),
         binaryDoubleOutput(false),
         usePhysicalStorageBuffer(false),
-        uniformLocationBase(0)
+        uniformLocationBase(0),
+        nanMinMaxClamp(false)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -767,6 +768,9 @@ public:
     void setUniformLocationBase(int base) { uniformLocationBase = base; }
     int getUniformLocationBase() const { return uniformLocationBase; }
 
+    void setNanMinMaxClamp(bool setting) { nanMinMaxClamp = setting; }
+    bool getNanMinMaxClamp() const { return nanMinMaxClamp; }
+
     void setNeedsLegalization() { needToLegalize = true; }
     bool needsLegalization() const { return needToLegalize; }
 
@@ -900,6 +904,7 @@ protected:
 
     std::unordered_map<std::string, int> uniformLocationOverrides;
     int uniformLocationBase;
+    bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
 
 private:
     void operator=(TIntermediate&); // prevent assignments

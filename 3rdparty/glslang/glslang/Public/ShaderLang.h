@@ -435,6 +435,7 @@ public:
     void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);
     void setNoStorageFormat(bool useUnknownFormat);
+    void setNanMinMaxClamp(bool nanMinMaxClamp);
     void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
 
     // For setting up the environment (cleared to nothingness in the constructor).
