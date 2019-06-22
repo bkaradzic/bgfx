@@ -24,8 +24,10 @@
 #include "source/fuzz/transformation_add_type_boolean.h"
 #include "source/fuzz/transformation_add_type_float.h"
 #include "source/fuzz/transformation_add_type_int.h"
+#include "source/fuzz/transformation_add_type_pointer.h"
 #include "source/fuzz/transformation_move_block_down.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
+#include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/fuzz/transformation_split_block.h"
 #include "source/opt/build_module.h"
 #include "source/util/make_unique.h"
@@ -58,6 +60,9 @@ bool IsApplicable(const protobufs::Transformation& transformation,
     case protobufs::Transformation::TransformationCase::kAddTypeInt:
       return transformation::IsApplicable(transformation.add_type_int(),
                                           context, fact_manager);
+    case protobufs::Transformation::TransformationCase::kAddTypePointer:
+      return transformation::IsApplicable(transformation.add_type_pointer(),
+                                          context, fact_manager);
     case protobufs::Transformation::TransformationCase::kMoveBlockDown:
       return transformation::IsApplicable(transformation.move_block_down(),
                                           context, fact_manager);
@@ -66,6 +71,11 @@ bool IsApplicable(const protobufs::Transformation& transformation,
       return transformation::IsApplicable(
           transformation.replace_boolean_constant_with_constant_binary(),
           context, fact_manager);
+    case protobufs::Transformation::TransformationCase::
+        kReplaceConstantWithUniform:
+      return transformation::IsApplicable(
+          transformation.replace_constant_with_uniform(), context,
+          fact_manager);
     case protobufs::Transformation::TransformationCase::kSplitBlock:
       return transformation::IsApplicable(transformation.split_block(), context,
                                           fact_manager);
@@ -107,6 +117,10 @@ void Apply(const protobufs::Transformation& transformation,
       transformation::Apply(transformation.add_type_int(), context,
                             fact_manager);
       break;
+    case protobufs::Transformation::TransformationCase::kAddTypePointer:
+      transformation::Apply(transformation.add_type_pointer(), context,
+                            fact_manager);
+      break;
     case protobufs::Transformation::TransformationCase::kMoveBlockDown:
       transformation::Apply(transformation.move_block_down(), context,
                             fact_manager);
@@ -116,6 +130,11 @@ void Apply(const protobufs::Transformation& transformation,
       transformation::Apply(
           transformation.replace_boolean_constant_with_constant_binary(),
           context, fact_manager);
+      break;
+    case protobufs::Transformation::TransformationCase::
+        kReplaceConstantWithUniform:
+      transformation::Apply(transformation.replace_constant_with_uniform(),
+                            context, fact_manager);
       break;
     case protobufs::Transformation::TransformationCase::kSplitBlock:
       transformation::Apply(transformation.split_block(), context,

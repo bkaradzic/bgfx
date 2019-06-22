@@ -270,6 +270,10 @@ mkdir build && cd build
 cmake [-G <platform-generator>] <spirv-dir>
 ```
 
+*Note*:
+The script `utils/git-sync-deps` can be used to checkout and/or update the
+contents of the repos under `external/` instead of manually maintaining them.
+
 Once the build files have been generated, build using your preferred
 development environment.
 
@@ -343,6 +347,13 @@ $ANDROID_NDK/ndk-build -C ../android_test     \
                       NDK_LIBS_OUT=`pwd`/libs \
                       NDK_APP_OUT=`pwd`/app
 ```
+
+### Updating DEPS
+Occasionally the entries in DEPS will need to be updated. This is done on demand
+when there is a request to do this, often due to downstream breakages. There is
+a script `utils/roll_deps.sh` provided, which will generate a patch with the
+updated DEPS values. This will still need to be tested in your checkout to
+confirm that there are no integration issues that need to be resolved.
 
 ## Library
 

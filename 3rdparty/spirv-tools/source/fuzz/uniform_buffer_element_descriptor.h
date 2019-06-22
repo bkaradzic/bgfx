@@ -19,6 +19,8 @@
 #include <vector>
 
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/opt/instruction.h"
+#include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -26,7 +28,7 @@ namespace fuzz {
 // Factory method to create a uniform buffer element descriptor message from an
 // id and list of indices.
 protobufs::UniformBufferElementDescriptor MakeUniformBufferElementDescriptor(
-    uint32_t uniform_variable_id, std::vector<uint32_t>&& indices);
+    uint32_t descriptor_set, uint32_t binding, std::vector<uint32_t>&& indices);
 
 // Equality function for uniform buffer element descriptors.
 struct UniformBufferElementDescriptorEquals {
@@ -34,6 +36,16 @@ struct UniformBufferElementDescriptorEquals {
       const protobufs::UniformBufferElementDescriptor* first,
       const protobufs::UniformBufferElementDescriptor* second) const;
 };
+
+// Returns a pointer to an OpVariable in |context| that is decorated with the
+// descriptor set and binding associated with |uniform_buffer_element|.  Returns
+// nullptr if no such variable exists.  If multiple such variables exist, a
+// pointer to an arbitrary one of the associated instructions is returned if
+// |check_unique| is false, and nullptr is returned if |check_unique| is true.
+opt::Instruction* FindUniformVariable(
+    const protobufs::UniformBufferElementDescriptor&
+        uniform_buffer_element_descriptor,
+    opt::IRContext* context, bool check_unique);
 
 }  // namespace fuzz
 }  // namespace spvtools

@@ -92,6 +92,7 @@ std::string GetWebGPUToVulkanPasses() {
 }
 
 void PrintUsage(const char* program) {
+  std::string target_env_list = spvTargetEnvList(16, 80);
   // NOTE: Please maintain flags in lexicographical order.
   printf(
       R"(%s - Optimize a SPIR-V binary file.
@@ -436,9 +437,9 @@ Options (in lexicographical order):)",
   printf(R"(
   --target-env=<env>
                Set the target environment. Without this flag the target
-               enviroment defaults to spv1.3.
-               <env> must be one of vulkan1.0, vulkan1.1, opencl2.2, spv1.0,
-               spv1.1, spv1.2, spv1.3, or webgpu0.)");
+               enviroment defaults to spv1.3. <env> must be one of
+               {%s})",
+         target_env_list.c_str());
   printf(R"(
   --time-report
                Print the resource utilization of each pass (e.g., CPU time,

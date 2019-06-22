@@ -1168,8 +1168,10 @@ std::make_pair(std::string(kOpenCLMemoryModel) +
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n"
-          "OpDecorate %intt Component 0\n"
-          "%intt = OpTypeInt 32 0\n" + std::string(kVoidFVoid),
+          "OpDecorate %var Component 0\n"
+          "%intt = OpTypeInt 32 0\n"
+          "%ptr = OpTypePointer Input %intt\n"
+          "%var = OpVariable %ptr Input\n" + std::string(kVoidFVoid),
           ShaderDependencies()),
 std::make_pair(std::string(kOpenCLMemoryModel) +
           "OpEntryPoint Kernel %func \"compute\" \n"

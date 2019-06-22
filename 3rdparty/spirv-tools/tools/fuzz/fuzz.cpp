@@ -213,7 +213,7 @@ bool Replay(const spv_target_env& target_env,
 
 bool Fuzz(const spv_target_env& target_env,
           const spvtools::FuzzerOptions& fuzzer_options,
-          const std::vector<uint>& binary_in,
+          const std::vector<uint32_t>& binary_in,
           const spvtools::fuzz::protobufs::FactSequence& initial_facts,
           std::vector<uint32_t>* binary_out,
           spvtools::fuzz::protobufs::TransformationSequence*

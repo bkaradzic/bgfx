@@ -6400,6 +6400,314 @@ OpDecorate %1 BufferBlock
                         "requires SPIR-V version 1.3 or earlier"));
 }
 
+// Component
+
+TEST_F(ValidateDecorations, ComponentDecorationBadTarget) {
+  std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %main "main"
+OpDecorate %t Component 0
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%t = OpTypeVector %float 2
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of Component decoration must be "
+                        "a memory object declaration"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationBadStorageClass) {
+  std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %main "main"
+OpDecorate %v Component 0
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%t = OpTypeVector %float 2
+%ptr_private = OpTypePointer Private %t
+%v = OpVariable %ptr_private Private
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Target of Component decoration is invalid: must "
+                        "point to a Storage Class of Input(1) or Output(3)"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationBadTypeVulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability Matrix
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %main "main"
+OpDecorate %v Component 0
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%vtype = OpTypeVector %float 4
+%t = OpTypeMatrix %vtype 4
+%ptr_input = OpTypePointer Input %t
+%v = OpVariable %ptr_input Input
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Component decoration specified for type"));
+  EXPECT_THAT(getDiagnosticString(), HasSubstr("is not a scalar or vector"));
+}
+
+std::string ShaderWithComponentDecoration(const std::string& type,
+                                          const std::string& decoration) {
+  return R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %entryPointOutput
+OpExecutionMode %main OriginUpperLeft
+OpDecorate %entryPointOutput Location 0
+OpDecorate %entryPointOutput )" +
+         decoration + R"(
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%vtype = )" + type + R"(
+%float_0 = OpConstant %float 0
+%_ptr_Output_vtype = OpTypePointer Output %vtype
+%entryPointOutput = OpVariable %_ptr_Output_vtype Output
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationIntGood0Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 0");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationIntGood1Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 1");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationIntGood2Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 2");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationIntGood3Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 3");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationIntBad4Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 4");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Sequence of components starting with 4 "
+                        "and ending with 4 gets larger than 3"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationVector3GoodVulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeVector %float 3", "Component 1");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationVector4GoodVulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeVector %float 4", "Component 0");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationVector4Bad1Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeVector %float 4", "Component 1");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Sequence of components starting with 1 "
+                        "and ending with 4 gets larger than 3"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationVector4Bad3Vulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("OpTypeVector %float 4", "Component 3");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Sequence of components starting with 3 "
+                        "and ending with 6 gets larger than 3"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationBlockGood) {
+  std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %4 "main" %9 %12
+OpExecutionMode %4 OriginUpperLeft
+OpDecorate %9 Location 0
+OpMemberDecorate %block 0 Location 2
+OpMemberDecorate %block 0 Component 1
+OpDecorate %block Block
+%2 = OpTypeVoid
+%3 = OpTypeFunction %2
+%float = OpTypeFloat 32
+%vec3 = OpTypeVector %float 3
+%8 = OpTypePointer Output %vec3
+%9 = OpVariable %8 Output
+%block = OpTypeStruct %vec3
+%11 = OpTypePointer Input %block
+%12 = OpVariable %11 Input
+%int = OpTypeInt 32 1
+%14 = OpConstant %int 0
+%15 = OpTypePointer Input %vec3
+%4 = OpFunction %2 None %3
+%5 = OpLabel
+%16 = OpAccessChain %15 %12 %14
+%17 = OpLoad %vec3 %16
+OpStore %9 %17
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationBlockBadVulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %4 "main" %9 %12
+OpExecutionMode %4 OriginUpperLeft
+OpDecorate %9 Location 0
+OpMemberDecorate %block 0 Location 2
+OpMemberDecorate %block 0 Component 2
+OpDecorate %block Block
+%2 = OpTypeVoid
+%3 = OpTypeFunction %2
+%float = OpTypeFloat 32
+%vec3 = OpTypeVector %float 3
+%8 = OpTypePointer Output %vec3
+%9 = OpVariable %8 Output
+%block = OpTypeStruct %vec3
+%11 = OpTypePointer Input %block
+%12 = OpVariable %11 Input
+%int = OpTypeInt 32 1
+%14 = OpConstant %int 0
+%15 = OpTypePointer Input %vec3
+%4 = OpFunction %2 None %3
+%5 = OpLabel
+%16 = OpAccessChain %15 %12 %14
+%17 = OpLoad %vec3 %16
+OpStore %9 %17
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Sequence of components starting with 2 "
+                        "and ending with 4 gets larger than 3"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationFunctionParameter) {
+  std::string spirv = R"(
+              OpCapability Shader
+              OpMemoryModel Logical GLSL450
+              OpEntryPoint Vertex %main "main"
+
+              OpDecorate %param_f Component 0
+
+      %void = OpTypeVoid
+   %void_fn = OpTypeFunction %void
+     %float = OpTypeFloat 32
+   %float_0 = OpConstant %float 0
+   %int     = OpTypeInt 32 0
+   %int_2   = OpConstant %int 2
+  %struct_b = OpTypeStruct %float
+
+%extra_fn = OpTypeFunction %void %float
+
+  %helper = OpFunction %void None %extra_fn
+ %param_f = OpFunctionParameter %float
+%helper_label = OpLabel
+            OpReturn
+            OpFunctionEnd
+
+    %main = OpFunction %void None %void_fn
+   %label = OpLabel
+            OpReturn
+            OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState());
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

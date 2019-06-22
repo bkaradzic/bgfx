@@ -1213,5 +1213,18 @@ bool ValidationState_t::LogicallyMatch(const Instruction* lhs,
   return false;
 }
 
+const Instruction* ValidationState_t::TracePointer(
+    const Instruction* inst) const {
+  auto base_ptr = inst;
+  while (base_ptr->opcode() == SpvOpAccessChain ||
+         base_ptr->opcode() == SpvOpInBoundsAccessChain ||
+         base_ptr->opcode() == SpvOpPtrAccessChain ||
+         base_ptr->opcode() == SpvOpInBoundsPtrAccessChain ||
+         base_ptr->opcode() == SpvOpCopyObject) {
+    base_ptr = FindDef(base_ptr->GetOperandAs<uint32_t>(2u));
+  }
+  return base_ptr;
+}
+
 }  // namespace val
 }  // namespace spvtools

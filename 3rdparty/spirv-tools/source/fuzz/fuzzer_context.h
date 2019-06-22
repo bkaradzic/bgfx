@@ -15,6 +15,8 @@
 #ifndef SOURCE_FUZZ_FUZZER_CONTEXT_H_
 #define SOURCE_FUZZ_FUZZER_CONTEXT_H_
 
+#include <functional>
+
 #include "source/fuzz/random_generator.h"
 #include "source/opt/function.h"
 
@@ -43,7 +45,17 @@ class FuzzerContext {
   // Keep them in alphabetical order.
   uint32_t GetChanceOfAddingDeadBreak() { return chance_of_adding_dead_break_; }
   uint32_t GetChanceOfMovingBlockDown() { return chance_of_moving_block_down_; }
+  uint32_t GetChanceOfObfuscatingConstant() {
+    return chance_of_obfuscating_constant_;
+  }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
+
+  // Probability distributions to control how deeply to recurse.
+  // Keep them in alphabetical order.
+  const std::function<bool(uint32_t, RandomGenerator*)>&
+  GoDeeperInConstantObfuscation() {
+    return go_deeper_in_constant_obfuscation_;
+  }
 
  private:
   // The source of randomness.
@@ -55,7 +67,13 @@ class FuzzerContext {
   // Keep them in alphabetical order.
   uint32_t chance_of_adding_dead_break_;
   uint32_t chance_of_moving_block_down_;
+  uint32_t chance_of_obfuscating_constant_;
   uint32_t chance_of_splitting_block_;
+
+  // Functions to determine with what probability to go deeper when generating
+  // or mutating constructs recursively.
+  const std::function<bool(uint32_t, RandomGenerator*)>&
+      go_deeper_in_constant_obfuscation_;
 };
 
 }  // namespace fuzz

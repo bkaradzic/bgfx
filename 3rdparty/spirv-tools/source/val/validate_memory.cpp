@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -21,6 +19,7 @@
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"
 
@@ -808,6 +807,25 @@ spv_result_t ValidateStore(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "OpStore Pointer <id> '" << _.getIdName(pointer_id)
              << "' storage class is read-only";
+    }
+
+    if (spvIsVulkanEnv(_.context()->target_env) &&
+        storage_class == SpvStorageClassUniform) {
+      auto base_ptr = _.TracePointer(pointer);
+      if (base_ptr->opcode() == SpvOpVariable) {
+        // If it's not a variable a different check should catch the problem.
+        auto base_type = _.FindDef(base_ptr->GetOperandAs<uint32_t>(0));
+        // Get the pointed-to type.
+        base_type = _.FindDef(base_type->GetOperandAs<uint32_t>(2u));
+        if (base_type->opcode() == SpvOpTypeArray ||
+            base_type->opcode() == SpvOpTypeRuntimeArray) {
+          base_type = _.FindDef(base_type->GetOperandAs<uint32_t>(1u));
+        }
+        if (_.HasDecoration(base_type->id(), SpvDecorationBlock)) {
+          return _.diag(SPV_ERROR_INVALID_ID, inst)
+                 << "In the Vulkan environment, cannot store to Uniform Blocks";
+        }
+      }
     }
   }
 

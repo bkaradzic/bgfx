@@ -1998,6 +1998,153 @@ TEST_F(ValidateAtomics, CompareExchangeWeakV14Bad) {
           "AtomicCompareExchangeWeak requires SPIR-V version 1.3 or earlier"));
 }
 
+TEST_F(ValidateAtomics, CompareExchangeVolatileMatch) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpCapability Linkage
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%workgroup = OpConstant %int 2
+%volatile = OpConstant %int 32768
+%ptr_wg_int = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%cmp_ex = OpAtomicCompareExchange %int %wg_var %workgroup %volatile %volatile %int_0 %int_1
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateAtomics, CompareExchangeVolatileMismatch) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpCapability Linkage
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpMemoryModel Logical VulkanKHR
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%workgroup = OpConstant %int 2
+%volatile = OpConstant %int 32768
+%non_volatile = OpConstant %int 0
+%ptr_wg_int = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%cmp_ex = OpAtomicCompareExchange %int %wg_var %workgroup %non_volatile %volatile %int_0 %int_1
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Volatile mask setting must match for Equal and "
+                        "Unequal memory semantics"));
+}
+
+TEST_F(ValidateAtomics, CompareExchangeVolatileMismatchCooperativeMatrix) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability VulkanMemoryModelKHR
+OpCapability Linkage
+OpCapability CooperativeMatrixNV
+OpExtension "SPV_KHR_vulkan_memory_model"
+OpExtension "SPV_NV_cooperative_matrix"
+OpMemoryModel Logical VulkanKHR
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%workgroup = OpConstant %int 2
+%volatile = OpSpecConstant %int 32768
+%non_volatile = OpSpecConstant %int 32768
+%ptr_wg_int = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%cmp_ex = OpAtomicCompareExchange %int %wg_var %workgroup %volatile %non_volatile %int_0 %int_1
+OpReturn
+OpFunctionEnd
+)";
+
+  // This is ok because we cannot evaluate the spec constant defaults.
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateAtomics, VolatileRequiresVulkanMemoryModel) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%workgroup = OpConstant %int 2
+%volatile = OpConstant %int 32768
+%ptr_wg_int = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%ld = OpAtomicLoad %int %wg_var %workgroup %volatile
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Memory Semantics Volatile requires capability "
+                        "VulkanMemoryModelKHR"));
+}
+
+TEST_F(ValidateAtomics, CooperativeMatrixSemanticsMustBeConstant) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpCapability CooperativeMatrixNV
+OpExtension "SPV_NV_cooperative_matrix"
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%workgroup = OpConstant %int 2
+%undef = OpUndef %int
+%ptr_wg_int = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%ld = OpAtomicLoad %int %wg_var %workgroup %undef
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Memory Semantics must be a constant instruction when "
+                        "CooperativeMatrixNV capability is present"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

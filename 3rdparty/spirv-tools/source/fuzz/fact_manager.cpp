@@ -64,6 +64,11 @@ struct FactManager::ConstantUniformFacts {
       const protobufs::FactConstantUniform& constant_uniform_fact,
       uint32_t type_id) const;
 
+  // Checks that the width of a floating-point constant is supported, and that
+  // the constant is finite.
+  bool FloatingPointValueIsSuitable(const protobufs::FactConstantUniform& fact,
+                                    uint32_t width) const;
+
   std::vector<std::pair<protobufs::FactConstantUniform, uint32_t>>
       facts_and_type_ids;
 };
@@ -169,22 +174,48 @@ FactManager::ConstantUniformFacts::GetTypesForWhichUniformValuesAreKnown()
   return result;
 }
 
+bool FactManager::ConstantUniformFacts::FloatingPointValueIsSuitable(
+    const protobufs::FactConstantUniform& fact, uint32_t width) const {
+  const uint32_t kFloatWidth = 32;
+  const uint32_t kDoubleWidth = 64;
+  if (width != kFloatWidth && width != kDoubleWidth) {
+    // Only 32- and 64-bit floating-point types are handled.
+    return false;
+  }
+  std::vector<uint32_t> words = GetConstantWords(fact);
+  if (width == 32) {
+    float value;
+    memcpy(&value, words.data(), sizeof(float));
+    if (!std::isfinite(value)) {
+      return false;
+    }
+  } else {
+    double value;
+    memcpy(&value, words.data(), sizeof(double));
+    if (!std::isfinite(value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool FactManager::ConstantUniformFacts::AddFact(
     const protobufs::FactConstantUniform& fact, opt::IRContext* context) {
-  auto should_be_uniform_variable = context->get_def_use_mgr()->GetDef(
-      fact.uniform_buffer_element_descriptor().uniform_variable_id());
-  if (!should_be_uniform_variable) {
+  // Try to find a unique instruction that declares a variable such that the
+  // variable is decorated with the descriptor set and binding associated with
+  // the constant uniform fact.
+  opt::Instruction* uniform_variable = FindUniformVariable(
+      fact.uniform_buffer_element_descriptor(), context, true);
+
+  if (!uniform_variable) {
     return false;
   }
-  if (SpvOpVariable != should_be_uniform_variable->opcode()) {
-    return false;
-  }
-  if (SpvStorageClassUniform !=
-      should_be_uniform_variable->GetSingleWordInOperand(0)) {
-    return false;
-  }
+
+  assert(SpvOpVariable == uniform_variable->opcode());
+  assert(SpvStorageClassUniform == uniform_variable->GetSingleWordInOperand(0));
+
   auto should_be_uniform_pointer_type =
-      context->get_type_mgr()->GetType(should_be_uniform_variable->type_id());
+      context->get_type_mgr()->GetType(uniform_variable->type_id());
   if (!should_be_uniform_pointer_type->AsPointer()) {
     return false;
   }
@@ -193,7 +224,7 @@ bool FactManager::ConstantUniformFacts::AddFact(
     return false;
   }
   auto should_be_uniform_pointer_instruction =
-      context->get_def_use_mgr()->GetDef(should_be_uniform_variable->type_id());
+      context->get_def_use_mgr()->GetDef(uniform_variable->type_id());
   auto element_type =
       should_be_uniform_pointer_instruction->GetSingleWordInOperand(1);
 
@@ -236,6 +267,12 @@ bool FactManager::ConstantUniformFacts::AddFact(
   auto width = final_element_type->AsFloat()
                    ? final_element_type->AsFloat()->width()
                    : final_element_type->AsInteger()->width();
+
+  if (final_element_type->AsFloat() &&
+      !FloatingPointValueIsSuitable(fact, width)) {
+    return false;
+  }
+
   auto required_words = (width + 32 - 1) / 32;
   if (static_cast<uint32_t>(fact.constant_word().size()) != required_words) {
     return false;

@@ -39,10 +39,19 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
   }
 
   if (!is_const_int32) {
-    if (_.HasCapability(SpvCapabilityShader)) {
+    if (_.HasCapability(SpvCapabilityShader) &&
+        !_.HasCapability(SpvCapabilityCooperativeMatrixNV)) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << "Memory Semantics ids must be OpConstant when Shader "
                 "capability is present";
+    }
+
+    if (_.HasCapability(SpvCapabilityShader) &&
+        _.HasCapability(SpvCapabilityCooperativeMatrixNV) &&
+        !spvOpcodeIsConstant(_.GetIdOpcode(id))) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory Semantics must be a constant instruction when "
+                "CooperativeMatrixNV capability is present";
     }
     return SPV_SUCCESS;
   }
@@ -125,6 +134,21 @@ spv_result_t ValidateMemorySemantics(ValidationState_t& _,
            << spvOpcodeString(opcode)
            << ": Memory Semantics OutputMemoryKHR requires capability "
            << "VulkanMemoryModelKHR";
+  }
+
+  if (value & SpvMemorySemanticsVolatileMask) {
+    if (!_.HasCapability(SpvCapabilityVulkanMemoryModelKHR)) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << spvOpcodeString(opcode)
+             << ": Memory Semantics Volatile requires capability "
+                "VulkanMemoryModelKHR";
+    }
+
+    if (!spvOpcodeIsAtomicOp(inst->opcode())) {
+      return _.diag(SPV_ERROR_INVALID_DATA, inst)
+             << "Memory Semantics Volatile can only be used with atomic "
+                "instructions";
+    }
   }
 
   if (value & SpvMemorySemanticsUniformMemoryMask &&

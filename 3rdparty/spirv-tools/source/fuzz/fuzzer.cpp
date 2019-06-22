@@ -21,6 +21,7 @@
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/fuzzer_pass_add_dead_breaks.h"
 #include "source/fuzz/fuzzer_pass_add_useful_constructs.h"
+#include "source/fuzz/fuzzer_pass_obfuscate_constants.h"
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
 #include "source/fuzz/fuzzer_pass_split_blocks.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
@@ -113,8 +114,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   FuzzerPassAddDeadBreaks(ir_context.get(), &fact_manager, &fuzzer_context,
                           transformation_sequence_out)
       .Apply();
-
-  // TODO(afd) Various other passes will be added.
+  FuzzerPassObfuscateConstants(ir_context.get(), &fact_manager, &fuzzer_context,
+                               transformation_sequence_out)
+      .Apply();
 
   // Finally, give the blocks in the module a good shake-up.
   FuzzerPassPermuteBlocks(ir_context.get(), &fact_manager, &fuzzer_context,

@@ -64,8 +64,9 @@ message UniformBufferElementDescriptor {
   // is contained, and (b) a series of indices that need to be followed to get
   // to the element (via fields and array/vector indices).
   //
-  // Example: suppose %42 is the id of a uniform variable, and that the uniform
-  // variable has the following type (using GLSL-like syntax):
+  // Example: suppose there is a uniform variable with descriptor set 7 and
+  // binding 9, and that the uniform variable has the following type (using
+  // GLSL-like syntax):
   //
   // struct S {
   //   float f;
@@ -74,16 +75,17 @@ message UniformBufferElementDescriptor {
   // };
   //
   // Then:
-  // - 42[0] describes the 'f' field.
-  // - 42[1,1] describes the y component of the 'g' field.
-  // - 42[2,7,3] describes the w component of element 7 of the 'h' field
+  // - (7, 9, [0]) describes the 'f' field.
+  // - (7, 9, [1,1]) describes the y component of the 'g' field.
+  // - (7, 9, [2,7,3]) describes the w component of element 7 of the 'h' field
 
-  // The result id of a uniform variable.
-  uint32 uniform_variable_id = 1;
+  // The descriptor set and binding associated with a uniform variable.
+  uint32 descriptor_set = 1;
+  uint32 binding = 2;
 
   // An ordered sequence of indices through composite structures in the
   // uniform buffer.
-  repeated uint32 index = 2;
+  repeated uint32 index = 3;
 
 }
 
@@ -133,6 +135,8 @@ message Transformation {
     TransformationAddTypeInt add_type_int = 7;
     TransformationAddDeadBreak add_dead_break = 8;
     TransformationReplaceBooleanConstantWithConstantBinary replace_boolean_constant_with_constant_binary = 9;
+    TransformationAddTypePointer add_type_pointer = 10;
+    TransformationReplaceConstantWithUniform replace_constant_with_uniform = 11;
     // Add additional option using the next available number.
   }
 }
@@ -222,6 +226,22 @@ message TransformationAddTypeInt {
 
 }
 
+message TransformationAddTypePointer {
+
+  // Adds OpTypePointer to the module, with the given storage class and base
+  // type
+
+  // Id to be used for the type
+  uint32 fresh_id = 1;
+
+  // Pointer storage class
+  uint32 storage_class = 2;
+
+  // Id of the base type for the pointer
+  uint32 base_type_id = 3;
+
+}
+
 message TransformationMoveBlockDown {
 
   // A transformation that moves a basic block to be one position lower in
@@ -229,6 +249,24 @@ message TransformationMoveBlockDown {
 
   // The id of the block to move down.
   uint32 block_id = 1;
+}
+
+message TransformationReplaceConstantWithUniform {
+
+  // Replaces a use of a constant id with the the result of a load from an
+  // element of uniform buffer known to hold the same value as the constant
+
+  // A descriptor for the id we would like to replace
+  IdUseDescriptor id_use_descriptor = 1;
+
+  // Uniform descriptor to identify which uniform value to choose
+  UniformBufferElementDescriptor uniform_descriptor = 2;
+
+  // Id that will store the result of an access chain
+  uint32 fresh_id_for_access_chain = 3;
+
+  // Id that will store the result of a load
+  uint32 fresh_id_for_load = 4;
 
 }
 

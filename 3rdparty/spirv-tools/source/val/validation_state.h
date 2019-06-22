@@ -680,6 +680,15 @@ class ValidationState_t {
   bool LogicallyMatch(const Instruction* lhs, const Instruction* rhs,
                       bool check_decorations);
 
+  // Traces |inst| to find a single base pointer. Returns the base pointer.
+  // Will trace through the following instructions:
+  // * OpAccessChain
+  // * OpInBoundsAccessChain
+  // * OpPtrAccessChain
+  // * OpInBoundsPtrAccessChain
+  // * OpCopyObject
+  const Instruction* TracePointer(const Instruction* inst) const;
+
  private:
   ValidationState_t(const ValidationState_t&);
 
