@@ -70,6 +70,162 @@ newaction {
 	end
 }
 
+newaction {
+	trigger = "c#-idl",
+	description = "Generate bgfx C# bindings.",
+	execute = function ()
+
+		local idl = require "idl"
+
+		do
+			local doxygen = require "doxygen"
+			local source = doxygen.load "bgfx.idl"
+			local f = assert(load(source, "bgfx.idl" , "t", idl))
+			f()
+
+			local codegen = require "codegen"
+			codegen.nameconversion(idl.types, idl.funcs)
+		end
+
+		print("using System;")
+		print("using System.Runtime.InteropServices;")
+		print("using System.Security;")
+		print("")
+
+		print("internal struct NativeFunctions")
+		print("{")
+
+		local function ends_with(str, ending)
+			return ending == "" or str:sub(-#ending) == ending
+		end
+
+		local function convert_type_0(arg)
+
+			if arg.ctype == "uint64_t" then
+				return "ulong"
+			elseif arg.ctype == "uint32_t" then
+				return "uint"
+			elseif arg.ctype == "uint16_t" then
+				return "ushort"
+			elseif arg.ctype == "uint8_t" then
+				return "byte"
+			elseif arg.ctype == "const char*" then
+				return "[MarshalAs(UnmanagedType.LPStr)] string"
+			elseif ends_with(arg.fulltype, "Handle") then
+				return arg.fulltype
+			elseif ends_with(arg.fulltype, "::Enum") then
+				return arg.fulltype:gsub("::Enum", "")
+			end
+
+			return arg.ctype
+		end
+
+		local function convert_type(arg)
+			local ctype = convert_type_0(arg)
+			return ctype:gsub("const ", "")
+		end
+
+		for _, typ in ipairs(idl.types) do
+			if typ.handle then
+				print("\tpublic struct " .. typ.name .. "{ public ushort idx; }")
+			elseif ends_with(typ.name, "::Enum") then
+				print("\tpublic enum " .. typ.typename)
+				print("\t{")
+				for _, enum in ipairs(typ.enum) do
+					print("\t\t" .. enum.name .. ",")
+				end
+				print("\t}")
+				print("")
+			elseif typ.bits ~= nil then
+
+				print("\t[Flags]")
+
+				local format = "0x%08x"
+				if typ.bits == 64 then
+					format = "0x%016x"
+					print("\tpublic enum " .. typ.name .. " : long")
+				elseif typ.bits == 16 then
+					format = "0x%04x"
+					print("\tpublic enum " .. typ.name .. " : short")
+				else
+					print("\tpublic enum " .. typ.name)
+				end
+
+				print("\t{")
+
+--				local shift = typ.flag.shift
+--				local base = typ.flag.base or 0
+--				local cap = 1 << (typ.flag.range or 0)
+				if typ.const then
+					for _, flag in ipairs(typ.flag) do
+						print("\t\t"
+							.. flag.name
+							.. string.rep(" ", 22 - #(flag.name))
+							.. " = "
+							.. string.format(format, flag.value)
+							.. ","
+							)
+					end
+				else
+					for idx, flag in ipairs(typ.flag) do
+						local hex = 1<<(idx-1)
+						if flag.value then
+							hex = 1<<(flag.value-1)
+						end
+
+						print("\t\t"
+							.. flag.name
+							.. string.rep(" ", 22 - #(flag.name))
+							.. " = "
+							.. string.format(format, hex)
+							.. ","
+							)
+					end
+				end
+				print("\t}")
+				print("")
+			end
+		end
+
+		print("");
+
+		for idx, func in ipairs(idl.funcs) do
+
+			print("\t[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]")
+
+			if func.ret.cpptype == "bool" then
+				print("\t[return: MarshalAs(UnmanagedType:I1)]")
+			end
+
+			local first = ""
+			local args  = "("
+
+			for _, arg in ipairs(func.args) do
+
+				local argtype = convert_type(arg)
+
+				args = args .. first .. argtype .. " " .. arg.name
+				first = ", "
+			end
+
+			print("\tinternal static extern unsafe " .. convert_type(func.ret) .. " bgfx_" .. func.cname .. args .. ");")
+			print("")
+		end
+
+		print("#if DEBUG")
+		print("\tconst string DllName = \"bgfx_debug.dll\";")
+		print("#else")
+		print("\tconst string DllName = \"bgfx.dll\";")
+		print("#endif")
+		print("}")
+
+--		printtable("idl types", idl.types)
+--		printtable("idl funcs", idl.funcs)
+
+		os.exit()
+	end
+}
+
 solution "bgfx"
 	configurations {
 		"Debug",
