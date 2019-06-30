@@ -844,6 +844,8 @@ CODE
     main font. Then you can refer to icons within your strings.
     You may want to see ImFontConfig::GlyphMinAdvanceX to make your icon look monospace to facilitate alignment.
     (Read the 'misc/fonts/README.txt' file for more details about icons font loading.)
+    With some extra effort, you may use colorful icon by registering custom rectangle space inside the font atlas,
+    and copying your own graphics data into it. See misc/fonts/README.txt about using the AddCustomRectFontGlyph API.
 
  Q: How can I load multiple fonts?
  A: Use the font atlas to pack them into a single texture:
@@ -2239,20 +2241,64 @@ void ImGuiTextBuffer::appendfv(const char* fmt, va_list args)
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImGuiListClipper
-// This is currently not as flexible/powerful as it should be, needs some rework (see TODO)
+// This is currently not as flexible/powerful as it should be and really confusing/spaghetti, mostly because we changed
+// the API mid-way through development and support two ways to using the clipper, needs some rework (see TODO)
 //-----------------------------------------------------------------------------
+
+// Helper to calculate coarse clipping of large list of evenly sized items.
+// NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on how those use this sort of pattern.
+// NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX
+void ImGui::CalcListClipping(int items_count, float items_height, int* out_items_display_start, int* out_items_display_end)
+{
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    if (g.LogEnabled)
+    {
+        // If logging is active, do not perform any clipping
+        *out_items_display_start = 0;
+        *out_items_display_end = items_count;
+        return;
+    }
+    if (window->SkipItems)
+    {
+        *out_items_display_start = *out_items_display_end = 0;
+        return;
+    }
+
+    // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
+    ImRect unclipped_rect = window->ClipRect;
+    if (g.NavMoveRequest)
+        unclipped_rect.Add(g.NavScoringRectScreen);
+
+    const ImVec2 pos = window->DC.CursorPos;
+    int start = (int)((unclipped_rect.Min.y - pos.y) / items_height);
+    int end = (int)((unclipped_rect.Max.y - pos.y) / items_height);
+
+    // When performing a navigation request, ensure we have one item extra in the direction we are moving to
+    if (g.NavMoveRequest && g.NavMoveClipDir == ImGuiDir_Up)
+        start--;
+    if (g.NavMoveRequest && g.NavMoveClipDir == ImGuiDir_Down)
+        end++;
+
+    start = ImClamp(start, 0, items_count);
+    end = ImClamp(end + 1, start, items_count);
+    *out_items_display_start = start;
+    *out_items_display_end = end;
+}
 
 static void SetCursorPosYAndSetupDummyPrevLine(float pos_y, float line_height)
 {
     // Set cursor position and a few other things so that SetScrollHereY() and Columns() can work when seeking cursor.
     // FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble on the same issue.
     // The clipper should probably have a 4th step to display the last item in a regular manner.
-    ImGui::SetCursorPosY(pos_y);
-    ImGuiWindow* window = ImGui::GetCurrentWindow();
-    window->DC.CursorPosPrevLine.y = window->DC.CursorPos.y - line_height;      // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
-    window->DC.PrevLineSize.y = (line_height - GImGui->Style.ItemSpacing.y);    // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    window->DC.CursorPos.y = pos_y;
+    window->DC.CursorMaxPos.y = ImMax(window->DC.CursorMaxPos.y, pos_y);
+    window->DC.CursorPosPrevLine.y = window->DC.CursorPos.y - line_height;  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
+    window->DC.PrevLineSize.y = (line_height - g.Style.ItemSpacing.y);      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
     if (ImGuiColumns* columns = window->DC.CurrentColumns)
-        columns->LineMinY = window->DC.CursorPos.y;                             // Setting this so that cell Y position are set properly
+        columns->LineMinY = window->DC.CursorPos.y;                         // Setting this so that cell Y position are set properly
 }
 
 // Use case A: Begin() called from constructor with items_height<0, then called again from Sync() in StepNo 1
@@ -2260,7 +2306,10 @@ static void SetCursorPosYAndSetupDummyPrevLine(float pos_y, float line_height)
 // FIXME-LEGACY: Ideally we should remove the Begin/End functions but they are part of the legacy API we still support. This is why some of the code in Step() calling Begin() and reassign some fields, spaghetti style.
 void ImGuiListClipper::Begin(int count, float items_height)
 {
-    StartPosY = ImGui::GetCursorPosY();
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+
+    StartPosY = window->DC.CursorPos.y;
     ItemsHeight = items_height;
     ItemsCount = count;
     StepNo = 0;
@@ -2287,7 +2336,10 @@ void ImGuiListClipper::End()
 
 bool ImGuiListClipper::Step()
 {
-    if (ItemsCount == 0 || ImGui::GetCurrentWindowRead()->SkipItems)
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+
+    if (ItemsCount == 0 || window->SkipItems)
     {
         ItemsCount = -1;
         return false;
@@ -2296,16 +2348,16 @@ bool ImGuiListClipper::Step()
     {
         DisplayStart = 0;
         DisplayEnd = 1;
-        StartPosY = ImGui::GetCursorPosY();
+        StartPosY = window->DC.CursorPos.y;
         StepNo = 1;
         return true;
     }
     if (StepNo == 1) // Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and position the cursor before the first element.
     {
         if (ItemsCount == 1) { ItemsCount = -1; return false; }
-        float items_height = ImGui::GetCursorPosY() - StartPosY;
+        float items_height = window->DC.CursorPos.y - StartPosY;
         IM_ASSERT(items_height > 0.0f);   // If this triggers, it means Item 0 hasn't moved the cursor vertically
-        Begin(ItemsCount-1, items_height);
+        Begin(ItemsCount - 1, items_height);
         DisplayStart++;
         DisplayEnd++;
         StepNo = 3;
@@ -4121,47 +4173,6 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
     return text_size;
 }
 
-// Helper to calculate coarse clipping of large list of evenly sized items.
-// NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on how those use this sort of pattern.
-// NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX
-void ImGui::CalcListClipping(int items_count, float items_height, int* out_items_display_start, int* out_items_display_end)
-{
-    ImGuiContext& g = *GImGui;
-    ImGuiWindow* window = g.CurrentWindow;
-    if (g.LogEnabled)
-    {
-        // If logging is active, do not perform any clipping
-        *out_items_display_start = 0;
-        *out_items_display_end = items_count;
-        return;
-    }
-    if (window->SkipItems)
-    {
-        *out_items_display_start = *out_items_display_end = 0;
-        return;
-    }
-
-    // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
-    ImRect unclipped_rect = window->ClipRect;
-    if (g.NavMoveRequest)
-        unclipped_rect.Add(g.NavScoringRectScreen);
-
-    const ImVec2 pos = window->DC.CursorPos;
-    int start = (int)((unclipped_rect.Min.y - pos.y) / items_height);
-    int end = (int)((unclipped_rect.Max.y - pos.y) / items_height);
-
-    // When performing a navigation request, ensure we have one item extra in the direction we are moving to
-    if (g.NavMoveRequest && g.NavMoveClipDir == ImGuiDir_Up)
-        start--;
-    if (g.NavMoveRequest && g.NavMoveClipDir == ImGuiDir_Down)
-        end++;
-
-    start = ImClamp(start, 0, items_count);
-    end = ImClamp(end + 1, start, items_count);
-    *out_items_display_start = start;
-    *out_items_display_end = end;
-}
-
 // Find window given position, search front-to-back
 // FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programatically
 // with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
@@ -5823,9 +5834,11 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             if (window->OuterRectClipped.Min.x >= window->OuterRectClipped.Max.x || window->OuterRectClipped.Min.y >= window->OuterRectClipped.Max.y)
                 window->HiddenFramesCanSkipItems = 1;
 
-        // Completely hide along with parent or if parent is collapsed
-        if (parent_window && (parent_window->Collapsed || parent_window->Hidden))
+        // Hide along with parent or if parent is collapsed
+        if (parent_window && (parent_window->Collapsed || parent_window->HiddenFramesCanSkipItems > 0))
             window->HiddenFramesCanSkipItems = 1;
+        if (parent_window && (parent_window->Collapsed || parent_window->HiddenFramesCannotSkipItems > 0))
+            window->HiddenFramesCannotSkipItems = 1;
     }
 
     // Don't render if style alpha is 0.0 at the time of Begin(). This is arbitrary and inconsistent but has been there for a long while (may remove at some point)
