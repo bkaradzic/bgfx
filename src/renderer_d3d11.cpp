@@ -5880,7 +5880,7 @@ namespace bgfx { namespace d3d11
 					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
 
-					if (UINT8_MAX != draw.m_streamMask)
+					if (UINT32_MAX != draw.m_streamMask)
 					{
 						for (uint32_t idx = 0, streamMask = draw.m_streamMask
 							; 0 != streamMask

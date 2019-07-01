@@ -7203,7 +7203,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 								program.bindAttributesBegin();
 
-								if (UINT8_MAX != draw.m_streamMask)
+								if (UINT32_MAX != draw.m_streamMask)
 								{
 									for (uint32_t idx = 0, streamMask = draw.m_streamMask
 										; 0 != streamMask
