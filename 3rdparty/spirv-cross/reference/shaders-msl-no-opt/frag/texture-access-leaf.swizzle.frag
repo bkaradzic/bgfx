@@ -131,7 +131,7 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-float4 doSwizzle(thread texture1d<float> tex1d, thread const sampler tex1dSmplr, constant uint32_t& tex1dSwzl, thread texture2d<float> tex2d, thread const sampler tex2dSmplr, constant uint32_t& tex2dSwzl, thread texture3d<float> tex3d, thread const sampler tex3dSmplr, constant uint32_t& tex3dSwzl, thread texturecube<float> texCube, thread const sampler texCubeSmplr, constant uint32_t& texCubeSwzl, thread texture2d_array<float> tex2dArray, thread const sampler tex2dArraySmplr, constant uint32_t& tex2dArraySwzl, thread texturecube_array<float> texCubeArray, thread const sampler texCubeArraySmplr, constant uint32_t& texCubeArraySwzl, thread depth2d<float> depth2d, thread const sampler depth2dSmplr, constant uint32_t& depth2dSwzl, thread depthcube<float> depthCube, thread const sampler depthCubeSmplr, constant uint32_t& depthCubeSwzl, thread depth2d_array<float> depth2dArray, thread const sampler depth2dArraySmplr, constant uint32_t& depth2dArraySwzl, thread depthcube_array<float> depthCubeArray, thread const sampler depthCubeArraySmplr, constant uint32_t& depthCubeArraySwzl, thread texture2d<float> texBuffer)
+float4 doSwizzle(thread texture1d<float> tex1d, thread const sampler tex1dSmplr, constant uint& tex1dSwzl, thread texture2d<float> tex2d, thread const sampler tex2dSmplr, constant uint& tex2dSwzl, thread texture3d<float> tex3d, thread const sampler tex3dSmplr, constant uint& tex3dSwzl, thread texturecube<float> texCube, thread const sampler texCubeSmplr, constant uint& texCubeSwzl, thread texture2d_array<float> tex2dArray, thread const sampler tex2dArraySmplr, constant uint& tex2dArraySwzl, thread texturecube_array<float> texCubeArray, thread const sampler texCubeArraySmplr, constant uint& texCubeArraySwzl, thread depth2d<float> depth2d, thread const sampler depth2dSmplr, constant uint& depth2dSwzl, thread depthcube<float> depthCube, thread const sampler depthCubeSmplr, constant uint& depthCubeSwzl, thread depth2d_array<float> depth2dArray, thread const sampler depth2dArraySmplr, constant uint& depth2dArraySwzl, thread depthcube_array<float> depthCubeArray, thread const sampler depthCubeArraySmplr, constant uint& depthCubeArraySwzl, thread texture2d<float> texBuffer)
 {
     float4 c = spvTextureSwizzle(tex1d.sample(tex1dSmplr, 0.0), tex1dSwzl);
     c = spvTextureSwizzle(tex2d.sample(tex2dSmplr, float2(0.0)), tex2dSwzl);
@@ -178,18 +178,18 @@ float4 doSwizzle(thread texture1d<float> tex1d, thread const sampler tex1dSmplr,
     return c;
 }
 
-fragment void main0(constant uint* spvSwizzleConstants [[buffer(30)]], texture1d<float> tex1d [[texture(0)]], texture2d<float> tex2d [[texture(1)]], texture3d<float> tex3d [[texture(2)]], texturecube<float> texCube [[texture(3)]], texture2d_array<float> tex2dArray [[texture(4)]], texturecube_array<float> texCubeArray [[texture(5)]], texture2d<float> texBuffer [[texture(6)]], depth2d<float> depth2d [[texture(7)]], depthcube<float> depthCube [[texture(8)]], depth2d_array<float> depth2dArray [[texture(9)]], depthcube_array<float> depthCubeArray [[texture(10)]], sampler tex1dSmplr [[sampler(0)]], sampler tex2dSmplr [[sampler(1)]], sampler tex3dSmplr [[sampler(2)]], sampler texCubeSmplr [[sampler(3)]], sampler tex2dArraySmplr [[sampler(4)]], sampler texCubeArraySmplr [[sampler(5)]], sampler depth2dSmplr [[sampler(7)]], sampler depthCubeSmplr [[sampler(8)]], sampler depth2dArraySmplr [[sampler(9)]], sampler depthCubeArraySmplr [[sampler(10)]])
+fragment void main0(constant uint* spvSwizzleConstants [[buffer(30)]], texture1d<float> tex1d [[texture(0)]], texture2d<float> tex2d [[texture(1)]], texture3d<float> tex3d [[texture(2)]], texturecube<float> texCube [[texture(3)]], texture2d_array<float> tex2dArray [[texture(4)]], texturecube_array<float> texCubeArray [[texture(5)]], depth2d<float> depth2d [[texture(6)]], depthcube<float> depthCube [[texture(7)]], depth2d_array<float> depth2dArray [[texture(8)]], depthcube_array<float> depthCubeArray [[texture(9)]], texture2d<float> texBuffer [[texture(10)]], sampler tex1dSmplr [[sampler(0)]], sampler tex2dSmplr [[sampler(1)]], sampler tex3dSmplr [[sampler(2)]], sampler texCubeSmplr [[sampler(3)]], sampler tex2dArraySmplr [[sampler(4)]], sampler texCubeArraySmplr [[sampler(5)]], sampler depth2dSmplr [[sampler(6)]], sampler depthCubeSmplr [[sampler(7)]], sampler depth2dArraySmplr [[sampler(8)]], sampler depthCubeArraySmplr [[sampler(9)]])
 {
-    constant uint32_t& tex1dSwzl = spvSwizzleConstants[0];
-    constant uint32_t& tex2dSwzl = spvSwizzleConstants[1];
-    constant uint32_t& tex3dSwzl = spvSwizzleConstants[2];
-    constant uint32_t& texCubeSwzl = spvSwizzleConstants[3];
-    constant uint32_t& tex2dArraySwzl = spvSwizzleConstants[4];
-    constant uint32_t& texCubeArraySwzl = spvSwizzleConstants[5];
-    constant uint32_t& depth2dSwzl = spvSwizzleConstants[7];
-    constant uint32_t& depthCubeSwzl = spvSwizzleConstants[8];
-    constant uint32_t& depth2dArraySwzl = spvSwizzleConstants[9];
-    constant uint32_t& depthCubeArraySwzl = spvSwizzleConstants[10];
+    constant uint& tex1dSwzl = spvSwizzleConstants[0];
+    constant uint& tex2dSwzl = spvSwizzleConstants[1];
+    constant uint& tex3dSwzl = spvSwizzleConstants[2];
+    constant uint& texCubeSwzl = spvSwizzleConstants[3];
+    constant uint& tex2dArraySwzl = spvSwizzleConstants[4];
+    constant uint& texCubeArraySwzl = spvSwizzleConstants[5];
+    constant uint& depth2dSwzl = spvSwizzleConstants[6];
+    constant uint& depthCubeSwzl = spvSwizzleConstants[7];
+    constant uint& depth2dArraySwzl = spvSwizzleConstants[8];
+    constant uint& depthCubeArraySwzl = spvSwizzleConstants[9];
     float4 c = doSwizzle(tex1d, tex1dSmplr, tex1dSwzl, tex2d, tex2dSmplr, tex2dSwzl, tex3d, tex3dSmplr, tex3dSwzl, texCube, texCubeSmplr, texCubeSwzl, tex2dArray, tex2dArraySmplr, tex2dArraySwzl, texCubeArray, texCubeArraySmplr, texCubeArraySwzl, depth2d, depth2dSmplr, depth2dSwzl, depthCube, depthCubeSmplr, depthCubeSwzl, depth2dArray, depth2dArraySmplr, depth2dArraySwzl, depthCubeArray, depthCubeArraySmplr, depthCubeArraySwzl, texBuffer);
 }
 

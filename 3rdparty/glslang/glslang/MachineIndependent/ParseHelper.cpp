@@ -377,7 +377,8 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
     // basic type checks...
     variableCheck(base);
 
-    if (! base->isArray() && ! base->isMatrix() && ! base->isVector() && ! base->getType().isCoopMat()) {
+    if (! base->isArray() && ! base->isMatrix() && ! base->isVector() && ! base->getType().isCoopMat() &&
+        base->getBasicType() != EbtReference) {
         if (base->getAsSymbolNode())
             error(loc, " left of '[' is not of type array, matrix, or vector ", base->getAsSymbolNode()->getName().c_str(), "");
         else
@@ -405,6 +406,14 @@ TIntermTyped* TParseContext::handleBracketDereference(const TSourceLoc& loc, TIn
 
     // at least one of base and index is not a front-end constant variable...
     TIntermTyped* result = nullptr;
+
+    if (base->getBasicType() == EbtReference && ! base->isArray()) {
+        requireExtensions(loc, 1, &E_GL_EXT_buffer_reference2, "buffer reference indexing");
+        result = intermediate.addBinaryMath(EOpAdd, base, index, loc);
+        result->setType(base->getType());
+        return result;
+    }
+
     if (index->getQualifier().isFrontEndConstant())
         checkIndex(loc, base->getType(), indexValue);
 
@@ -1156,8 +1165,9 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                             error(arguments->getLoc(), message, "readonly", "");
                         if (argQualifier.writeonly && ! formalQualifier.writeonly)
                             error(arguments->getLoc(), message, "writeonly", "");
-                        if (!builtIn && argQualifier.restrict && ! formalQualifier.restrict)
-                            error(arguments->getLoc(), message, "restrict", "");
+                        // Don't check 'restrict', it is different than the rest:
+                        // "...but only restrict can be taken away from a calling argument, by a formal parameter that
+                        // lacks the restrict qualifier..."
                     }
                     if (!builtIn && argQualifier.layoutFormat != formalQualifier.layoutFormat) {
                         // we have mismatched formats, which should only be allowed if writeonly
@@ -1401,6 +1411,44 @@ void TParseContext::checkLocation(const TSourceLoc& loc, TOperator op)
                 error(loc, "tessellation control barrier() cannot be placed after a return from main()", "", "");
         }
         break;
+    case EOpBeginInvocationInterlock:
+        if (language != EShLangFragment)
+            error(loc, "beginInvocationInterlockARB() must be in a fragment shader", "", "");
+        if (! inMain)
+            error(loc, "beginInvocationInterlockARB() must be in main()", "", "");
+        else if (postEntryPointReturn)
+            error(loc, "beginInvocationInterlockARB() cannot be placed after a return from main()", "", "");
+        if (controlFlowNestingLevel > 0)
+            error(loc, "beginInvocationInterlockARB() cannot be placed within flow control", "", "");
+
+        if (beginInvocationInterlockCount > 0)
+            error(loc, "beginInvocationInterlockARB() must only be called once", "", "");
+        if (endInvocationInterlockCount > 0)
+            error(loc, "beginInvocationInterlockARB() must be called before endInvocationInterlockARB()", "", "");
+
+        beginInvocationInterlockCount++;
+
+        // default to pixel_interlock_ordered
+        if (intermediate.getInterlockOrdering() == EioNone)
+            intermediate.setInterlockOrdering(EioPixelInterlockOrdered);
+        break;
+    case EOpEndInvocationInterlock:
+        if (language != EShLangFragment)
+            error(loc, "endInvocationInterlockARB() must be in a fragment shader", "", "");
+        if (! inMain)
+            error(loc, "endInvocationInterlockARB() must be in main()", "", "");
+        else if (postEntryPointReturn)
+            error(loc, "endInvocationInterlockARB() cannot be placed after a return from main()", "", "");
+        if (controlFlowNestingLevel > 0)
+            error(loc, "endInvocationInterlockARB() cannot be placed within flow control", "", "");
+
+        if (endInvocationInterlockCount > 0)
+            error(loc, "endInvocationInterlockARB() must only be called once", "", "");
+        if (beginInvocationInterlockCount == 0)
+            error(loc, "beginInvocationInterlockARB() must be called before endInvocationInterlockARB()", "", "");
+
+        endInvocationInterlockCount++;
+        break;
     default:
         break;
     }
@@ -1593,6 +1641,7 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     const int gl_SemanticsAcquireRelease  = 0x8;
     const int gl_SemanticsMakeAvailable   = 0x2000;
     const int gl_SemanticsMakeVisible     = 0x4000;
+    const int gl_SemanticsVolatile        = 0x8000;
 
     //const int gl_StorageSemanticsNone     = 0x0;
     const int gl_StorageSemanticsBuffer   = 0x40;
@@ -1682,7 +1731,8 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
                                       gl_SemanticsRelease |
                                       gl_SemanticsAcquireRelease |
                                       gl_SemanticsMakeAvailable |
-                                      gl_SemanticsMakeVisible))) {
+                                      gl_SemanticsMakeVisible |
+                                      gl_SemanticsVolatile))) {
         error(loc, "Invalid semantics value", fnCandidate.getName().c_str(), "");
     }
     if (((storageClassSemantics | storageClassSemantics2) & ~(gl_StorageSemanticsBuffer |
@@ -1734,7 +1784,16 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
         error(loc, "gl_SemanticsMakeVisible requires gl_SemanticsAcquire or gl_SemanticsAcquireRelease",
               fnCandidate.getName().c_str(), "");
     }
-
+    if ((semantics & gl_SemanticsVolatile) &&
+        (callNode.getOp() == EOpMemoryBarrier || callNode.getOp() == EOpBarrier)) {
+        error(loc, "gl_SemanticsVolatile must not be used with memoryBarrier or controlBarrier",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((callNode.getOp() == EOpAtomicCompSwap || callNode.getOp() == EOpImageAtomicCompSwap) &&
+        ((semantics ^ semantics2) & gl_SemanticsVolatile)) {
+        error(loc, "semEqual and semUnequal must either both include gl_SemanticsVolatile or neither",
+              fnCandidate.getName().c_str(), "");
+    }
 }
 
 
@@ -3885,7 +3944,10 @@ void TParseContext::checkRuntimeSizable(const TSourceLoc& loc, const TIntermType
 
     // check for additional things allowed by GL_EXT_nonuniform_qualifier
     if (base.getBasicType() == EbtSampler ||
-            (base.getBasicType() == EbtBlock && base.getType().getQualifier().isUniformOrBuffer()))
+#ifdef NV_EXTENSIONS
+        base.getBasicType() == EbtAccStructNV ||
+#endif
+        (base.getBasicType() == EbtBlock && base.getType().getQualifier().isUniformOrBuffer()))
         requireExtensions(loc, 1, &E_GL_EXT_nonuniform_qualifier, "variable index");
     else
         error(loc, "", "[", "array must be redeclared with a size before being indexed with a variable");
@@ -4933,6 +4995,19 @@ void TParseContext::setLayoutQualifier(const TSourceLoc& loc, TPublicType& publi
                 return;
             }
         }
+        for (TInterlockOrdering order = (TInterlockOrdering)(EioNone + 1); order < EioCount; order = (TInterlockOrdering)(order+1)) {
+            if (id == TQualifier::getInterlockOrderingString(order)) {
+                requireProfile(loc, ECoreProfile | ECompatibilityProfile, "fragment shader interlock layout qualifier");
+                profileRequires(loc, ECoreProfile | ECompatibilityProfile, 450, nullptr, "fragment shader interlock layout qualifier");
+                requireExtensions(loc, 1, &E_GL_ARB_fragment_shader_interlock, TQualifier::getInterlockOrderingString(order));
+#ifdef NV_EXTENSIONS
+                if (order == EioShadingRateInterlockOrdered || order == EioShadingRateInterlockUnordered)
+                    requireExtensions(loc, 1, &E_GL_NV_shading_rate_image, TQualifier::getInterlockOrderingString(order));
+#endif
+                publicType.shaderQualifiers.interlockOrdering = order;
+                return;
+            }
+        }
         if (id.compare(0, 13, "blend_support") == 0) {
             bool found = false;
             for (TBlendEquationShift be = (TBlendEquationShift)0; be < EBlendCount; be = (TBlendEquationShift)(be + 1)) {
@@ -5933,6 +6008,8 @@ void TParseContext::checkNoShaderLayouts(const TSourceLoc& loc, const TShaderQua
         error(loc, message, "blend equation", "");
     if (shaderQualifiers.numViews != TQualifier::layoutNotSet)
         error(loc, message, "num_views", "");
+    if (shaderQualifiers.interlockOrdering != EioNone)
+        error(loc, message, TQualifier::getInterlockOrderingString(shaderQualifiers.interlockOrdering), "");
 }
 
 // Correct and/or advance an object's offset layout qualifier.
@@ -6942,9 +7019,10 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
         break;
 
     case EOpConstructNonuniform:
-        node->getWritableType().getQualifier().nonUniform = true;
-        return node;
-        break;
+        // Make a nonuniform copy of node
+        newNode = intermediate.addBuiltInFunctionCall(node->getLoc(), EOpCopyObject, true, node, node->getType());
+        newNode->getWritableType().getQualifier().nonUniform = true;
+        return newNode;
 
     case EOpConstructReference:
         // construct reference from reference
@@ -7860,6 +7938,14 @@ void TParseContext::updateStandaloneQualifierDefaults(const TSourceLoc& loc, con
     if (publicType.shaderQualifiers.blendEquation) {
         if (publicType.qualifier.storage != EvqVaryingOut)
             error(loc, "can only apply to 'out'", "blend equation", "");
+    }
+    if (publicType.shaderQualifiers.interlockOrdering) {
+        if (publicType.qualifier.storage == EvqVaryingIn) {
+            if (!intermediate.setInterlockOrdering(publicType.shaderQualifiers.interlockOrdering))
+                error(loc, "cannot change previously set fragment shader interlock ordering", TQualifier::getInterlockOrderingString(publicType.shaderQualifiers.interlockOrdering), "");
+        }
+        else
+            error(loc, "can only apply to 'in'", TQualifier::getInterlockOrderingString(publicType.shaderQualifiers.interlockOrdering), "");
     }
 
 #ifdef NV_EXTENSIONS

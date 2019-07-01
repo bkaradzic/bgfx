@@ -86,7 +86,8 @@ if(ENABLE_GLSLANG_INSTALL)
         endif()
         install(TARGETS SPIRV
                 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     else()
         if (ENABLE_SPVREMAPPER)
             install(TARGETS SPVRemapper

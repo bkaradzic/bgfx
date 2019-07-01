@@ -5,7 +5,7 @@ spv.bufferhandle9.frag
 
                               Capability Shader
                               Capability Int64
-                              Capability CapabilityPhysicalStorageBufferAddressesEXT
+                              Capability PhysicalStorageBufferAddressesEXT
                               Extension  "SPV_EXT_physical_storage_buffer"
                               Extension  "SPV_KHR_storage_buffer_storage_class"
                1:             ExtInstImport  "GLSL.std.450"

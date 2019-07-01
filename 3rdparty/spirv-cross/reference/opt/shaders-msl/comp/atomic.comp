@@ -12,7 +12,7 @@ struct SSBO
     int i32;
 };
 
-kernel void main0(device SSBO& ssbo [[buffer(2)]])
+kernel void main0(device SSBO& ssbo [[buffer(0)]])
 {
     threadgroup uint shared_u32;
     threadgroup int shared_i32;

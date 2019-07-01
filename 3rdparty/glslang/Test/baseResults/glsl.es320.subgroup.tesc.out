@@ -14,8 +14,8 @@ vertices = 1
 0:11              0 (const uint)
 0:11          'gl_PrimitiveID' ( in highp int PrimitiveID)
 0:11        Construct uvec4 ( temp highp 4-component vector of uint)
-0:11          'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
-0:11          'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
+0:11          'gl_SubgroupSize' ( in mediump uint SubgroupSize)
+0:11          'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
 0:11          Constant:
 0:11            0 (const uint)
 0:11          Constant:
@@ -42,8 +42,8 @@ vertices = 1
 0:11              0 (const uint)
 0:11          'gl_PrimitiveID' ( in highp int PrimitiveID)
 0:11        Construct uvec4 ( temp highp 4-component vector of uint)
-0:11          'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
-0:11          'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
+0:11          'gl_SubgroupSize' ( in mediump uint SubgroupSize)
+0:11          'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
 0:11          Constant:
 0:11            0 (const uint)
 0:11          Constant:

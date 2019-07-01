@@ -366,7 +366,7 @@ spv_result_t ValidateBinaryUsingContextAndValidationState(
 
     // Keep these passes in the order they appear in the SPIR-V specification
     // sections to maintain test consistency.
-    // Miscellaneous
+    if (auto error = MiscPass(*vstate, &instruction)) return error;
     if (auto error = DebugPass(*vstate, &instruction)) return error;
     if (auto error = AnnotationPass(*vstate, &instruction)) return error;
     if (auto error = ExtensionPass(*vstate, &instruction)) return error;

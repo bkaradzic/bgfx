@@ -33,6 +33,11 @@
 #if SPIRV_CROSS_C_API_REFLECT
 #include "spirv_reflect.hpp"
 #endif
+
+#ifdef HAVE_SPIRV_CROSS_GIT_VERSION
+#include "gitversion.h"
+#endif
+
 #include "spirv_parser.hpp"
 #include <memory>
 #include <new>
@@ -412,6 +417,9 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 	case SPVC_COMPILER_OPTION_FLIP_VERTEX_Y:
 		options->glsl.vertex.flip_vert_y = value != 0;
 		break;
+	case SPVC_COMPILER_OPTION_EMIT_LINE_DIRECTIVES:
+		options->glsl.emit_line_directives = value != 0;
+		break;
 
 	case SPVC_COMPILER_OPTION_GLSL_SUPPORT_NONZERO_BASE_INSTANCE:
 		options->glsl.vertex.support_nonzero_base_instance = value != 0;
@@ -532,6 +540,10 @@ spvc_result spvc_compiler_options_set_uint(spvc_compiler_options options, spvc_c
 
 	case SPVC_COMPILER_OPTION_MSL_TEXTURE_BUFFER_NATIVE:
 		options->msl.texture_buffer_native = value != 0;
+		break;
+
+	case SPVC_COMPILER_OPTION_MSL_BUFFER_SIZE_BUFFER_INDEX:
+		options->msl.buffer_size_buffer_index = value;
 		break;
 #endif
 
@@ -743,6 +755,23 @@ spvc_bool spvc_compiler_msl_needs_swizzle_buffer(spvc_compiler compiler)
 #endif
 }
 
+spvc_bool spvc_compiler_msl_needs_buffer_size_buffer(spvc_compiler compiler)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_FALSE;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.needs_buffer_size_buffer() ? SPVC_TRUE : SPVC_FALSE;
+#else
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_FALSE;
+#endif
+}
+
 spvc_bool spvc_compiler_msl_needs_aux_buffer(spvc_compiler compiler)
 {
 	return spvc_compiler_msl_needs_swizzle_buffer(compiler);
@@ -912,18 +941,9 @@ spvc_bool spvc_compiler_msl_is_resource_used(spvc_compiler compiler, SpvExecutio
 #endif
 }
 
-spvc_result spvc_compiler_msl_remap_constexpr_sampler(spvc_compiler compiler, spvc_variable_id id,
-                                                      const spvc_msl_constexpr_sampler *sampler)
-{
 #if SPIRV_CROSS_C_API_MSL
-	if (compiler->backend != SPVC_BACKEND_MSL)
-	{
-		compiler->context->report_error("MSL function used on a non-MSL backend.");
-		return SPVC_ERROR_INVALID_ARGUMENT;
-	}
-
-	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
-	MSLConstexprSampler samp;
+static void spvc_convert_msl_sampler(MSLConstexprSampler &samp, const spvc_msl_constexpr_sampler *sampler)
+{
 	samp.s_address = static_cast<MSLSamplerAddress>(sampler->s_address);
 	samp.t_address = static_cast<MSLSamplerAddress>(sampler->t_address);
 	samp.r_address = static_cast<MSLSamplerAddress>(sampler->r_address);
@@ -939,10 +959,51 @@ spvc_result spvc_compiler_msl_remap_constexpr_sampler(spvc_compiler compiler, sp
 	samp.compare_func = static_cast<MSLSamplerCompareFunc>(sampler->compare_func);
 	samp.coord = static_cast<MSLSamplerCoord>(sampler->coord);
 	samp.border_color = static_cast<MSLSamplerBorderColor>(sampler->border_color);
+}
+#endif
+
+spvc_result spvc_compiler_msl_remap_constexpr_sampler(spvc_compiler compiler, spvc_variable_id id,
+                                                      const spvc_msl_constexpr_sampler *sampler)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLConstexprSampler samp;
+	spvc_convert_msl_sampler(samp, sampler);
 	msl.remap_constexpr_sampler(id, samp);
 	return SPVC_SUCCESS;
 #else
 	(void)id;
+	(void)sampler;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+spvc_result spvc_compiler_msl_remap_constexpr_sampler_by_binding(spvc_compiler compiler,
+                                                                 unsigned desc_set, unsigned binding,
+                                                                 const spvc_msl_constexpr_sampler *sampler)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return SPVC_ERROR_INVALID_ARGUMENT;
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	MSLConstexprSampler samp;
+	spvc_convert_msl_sampler(samp, sampler);
+	msl.remap_constexpr_sampler_by_binding(desc_set, binding, samp);
+	return SPVC_SUCCESS;
+#else
+	(void)desc_set;
+	(void)binding;
 	(void)sampler;
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_ERROR_INVALID_ARGUMENT;
@@ -967,6 +1028,42 @@ spvc_result spvc_compiler_msl_set_fragment_output_components(spvc_compiler compi
 	(void)components;
 	compiler->context->report_error("MSL function used on a non-MSL backend.");
 	return SPVC_ERROR_INVALID_ARGUMENT;
+#endif
+}
+
+unsigned spvc_compiler_msl_get_automatic_resource_binding(spvc_compiler compiler, spvc_variable_id id)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return uint32_t(-1);
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.get_automatic_msl_resource_binding(id);
+#else
+	(void)id;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return uint32_t(-1);
+#endif
+}
+
+unsigned spvc_compiler_msl_get_automatic_resource_binding_secondary(spvc_compiler compiler, spvc_variable_id id)
+{
+#if SPIRV_CROSS_C_API_MSL
+	if (compiler->backend != SPVC_BACKEND_MSL)
+	{
+		compiler->context->report_error("MSL function used on a non-MSL backend.");
+		return uint32_t(-1);
+	}
+
+	auto &msl = *static_cast<CompilerMSL *>(compiler->compiler.get());
+	return msl.get_automatic_msl_resource_binding_secondary(id);
+#else
+	(void)id;
+	compiler->context->report_error("MSL function used on a non-MSL backend.");
+	return uint32_t(-1);
 #endif
 }
 
@@ -1900,6 +1997,15 @@ void spvc_get_version(unsigned *major, unsigned *minor, unsigned *patch)
 	*major = SPVC_C_API_VERSION_MAJOR;
 	*minor = SPVC_C_API_VERSION_MINOR;
 	*patch = SPVC_C_API_VERSION_PATCH;
+}
+
+const char *spvc_get_commit_revision_and_timestamp(void)
+{
+#ifdef HAVE_SPIRV_CROSS_GIT_VERSION
+	return SPIRV_CROSS_GIT_REVISION;
+#else
+	return "";
+#endif
 }
 
 #ifdef _MSC_VER

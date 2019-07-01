@@ -1002,6 +1002,105 @@ OpExecutionModeId %main LocalSizeId %int_1 %int_1 %int_1
                         "constant instructions."));
 }
 
+TEST_F(ValidateMode, FragmentShaderInterlockVertexBad) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability FragmentShaderPixelInterlockEXT
+OpExtension "SPV_EXT_fragment_shader_interlock"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %main "main"
+OpExecutionMode %main PixelInterlockOrderedEXT
+)" + kVoidFunction;
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Execution mode can only be used with the Fragment execution model"));
+}
+
+TEST_F(ValidateMode, FragmentShaderInterlockTooManyModesBad) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability FragmentShaderPixelInterlockEXT
+OpCapability FragmentShaderSampleInterlockEXT
+OpExtension "SPV_EXT_fragment_shader_interlock"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpExecutionMode %main PixelInterlockOrderedEXT
+OpExecutionMode %main SampleInterlockOrderedEXT
+)" + kVoidFunction;
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Fragment execution model entry points can specify at most "
+                "one fragment shader interlock execution mode"));
+}
+
+TEST_F(ValidateMode, FragmentShaderInterlockNoModeBad) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability FragmentShaderPixelInterlockEXT
+OpExtension "SPV_EXT_fragment_shader_interlock"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entryf = OpLabel
+OpBeginInvocationInterlockEXT
+OpEndInvocationInterlockEXT
+OpReturn
+OpFunctionEnd
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%1 = OpFunctionCall %void %func
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "OpBeginInvocationInterlockEXT/OpEndInvocationInterlockEXT require a "
+          "fragment shader interlock execution mode"));
+}
+
+TEST_F(ValidateMode, FragmentShaderInterlockGood) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability FragmentShaderPixelInterlockEXT
+OpExtension "SPV_EXT_fragment_shader_interlock"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpExecutionMode %main PixelInterlockOrderedEXT
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entryf = OpLabel
+OpBeginInvocationInterlockEXT
+OpEndInvocationInterlockEXT
+OpReturn
+OpFunctionEnd
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%1 = OpFunctionCall %void %func
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_SUCCESS, ValidateInstructions());
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

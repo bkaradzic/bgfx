@@ -78,16 +78,18 @@ class InstrumentPass : public Pass {
   }
 
  protected:
-  // Create instrumentation pass which utilizes descriptor set |desc_set|
-  // for debug input and output buffers and writes |shader_id| into debug
-  // output records.
-  InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id)
+  // Create instrumentation pass for |validation_id| which utilizes descriptor
+  // set |desc_set| for debug input and output buffers and writes |shader_id|
+  // into debug output records with format |version|.
+  InstrumentPass(uint32_t desc_set, uint32_t shader_id, uint32_t validation_id,
+                 uint32_t version)
       : Pass(),
         desc_set_(desc_set),
         shader_id_(shader_id),
-        validation_id_(validation_id) {}
+        validation_id_(validation_id),
+        version_(version) {}
 
-  // Initialize state for instrumentation of module by |validation_id|.
+  // Initialize state for instrumentation of module.
   void InitializeInstrument();
 
   // Call |pfn| on all instructions in all functions in the call tree of the
@@ -146,6 +148,7 @@ class InstrumentPass : public Pass {
   //     Stage
   //     Stage-specific Word 0
   //     Stage-specific Word 1
+  //     ...
   //     Validation Error Code
   //     Validation-specific Word 0
   //     Validation-specific Word 1
@@ -170,12 +173,12 @@ class InstrumentPass : public Pass {
   // following Stage-specific words.
   //
   // The Stage-specific Words identify which invocation of the shader generated
-  // the error. Every stage will write two words, although in some cases the
-  // second word is unused and so zero is written. Vertex shaders will write
-  // the Vertex and Instance ID. Fragment shaders will write FragCoord.xy.
-  // Compute shaders will write the Global Invocation ID and zero (unused).
-  // Both tesselation shaders will write the Invocation Id and zero (unused).
-  // The geometry shader will write the Primitive ID and Invocation ID.
+  // the error. Every stage will write a fixed number of words. Vertex shaders
+  // will write the Vertex and Instance ID. Fragment shaders will write
+  // FragCoord.xy. Compute shaders will write the GlobalInvocation ID.
+  // The tesselation eval shader will write the Primitive ID and TessCoords.uv.
+  // The tesselation control shader and geometry shader will write the
+  // Primitive ID and Invocation ID.
   //
   // The Validation Error Code specifies the exact error which has occurred.
   // These are enumerated with the kInstError* static consts. This allows
@@ -291,15 +294,14 @@ class InstrumentPass : public Pass {
                                       uint32_t component,
                                       InstructionBuilder* builder);
 
+  // Generate instructions into |builder| which will load |var_id| and return
+  // its result id.
+  uint32_t GenVarLoad(uint32_t var_id, InstructionBuilder* builder);
+
   // Generate instructions into |builder| which will load the uint |builtin_id|
   // and write it into the debug output buffer at |base_off| + |builtin_off|.
   void GenBuiltinOutputCode(uint32_t builtin_id, uint32_t builtin_off,
                             uint32_t base_off, InstructionBuilder* builder);
-
-  // Generate instructions into |builder| which will write a uint null into
-  // the debug output buffer at |base_off| + |builtin_off|.
-  void GenUintNullOutputCode(uint32_t field_off, uint32_t base_off,
-                             InstructionBuilder* builder);
 
   // Generate instructions into |builder| which will write the |stage_idx|-
   // specific members of the debug output stream at |base_off|.
@@ -375,6 +377,9 @@ class InstrumentPass : public Pass {
 
   // id for void type
   uint32_t void_id_;
+
+  // Record format version
+  uint32_t version_;
 
   // boolean to remember storage buffer extension
   bool storage_buffer_ext_defined_;

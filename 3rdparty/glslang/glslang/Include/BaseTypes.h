@@ -246,7 +246,7 @@ enum TBuiltInVariable {
     EbvFragFullyCoveredNV,
     EbvFragmentSizeNV,
     EbvInvocationsPerPixelNV,
-    // raytracing
+    // ray tracing
     EbvLaunchIdNV,
     EbvLaunchSizeNV,
     EbvInstanceCustomIndexNV,
@@ -261,8 +261,10 @@ enum TBuiltInVariable {
     EbvObjectToWorldNV,
     EbvWorldToObjectNV,
     EbvIncomingRayFlagsNV,
+    // barycentrics
     EbvBaryCoordNV,
     EbvBaryCoordNoPerspNV,
+    // mesh shaders
     EbvTaskCountNV,
     EbvPrimitiveCountNV,
     EbvPrimitiveIndicesNV,
@@ -271,7 +273,13 @@ enum TBuiltInVariable {
     EbvLayerPerViewNV,
     EbvMeshViewCountNV,
     EbvMeshViewIndicesNV,
-#endif 
+#endif
+
+    // sm builtins
+    EbvWarpsPerSM,
+    EbvSMCount,
+    EbvWarpID,
+    EbvSMID,
 
     // HLSL built-ins that live only temporarily, until they get remapped
     // to one of the above.
@@ -338,6 +346,8 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvLocalInvocationId:    return "LocalInvocationID";
     case EbvGlobalInvocationId:   return "GlobalInvocationID";
     case EbvLocalInvocationIndex: return "LocalInvocationIndex";
+    case EbvNumSubgroups:         return "NumSubgroups";
+    case EbvSubgroupID:           return "SubgroupID";
     case EbvSubGroupSize:         return "SubGroupSize";
     case EbvSubGroupInvocation:   return "SubGroupInvocation";
     case EbvSubGroupEqMask:       return "SubGroupEqMask";
@@ -345,6 +355,13 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvSubGroupGtMask:       return "SubGroupGtMask";
     case EbvSubGroupLeMask:       return "SubGroupLeMask";
     case EbvSubGroupLtMask:       return "SubGroupLtMask";
+    case EbvSubgroupSize2:        return "SubgroupSize";
+    case EbvSubgroupInvocation2:  return "SubgroupInvocationID";
+    case EbvSubgroupEqMask2:      return "SubgroupEqMask";
+    case EbvSubgroupGeMask2:      return "SubgroupGeMask";
+    case EbvSubgroupGtMask2:      return "SubgroupGtMask";
+    case EbvSubgroupLeMask2:      return "SubgroupLeMask";
+    case EbvSubgroupLtMask2:      return "SubgroupLtMask";
     case EbvVertexId:             return "VertexId";
     case EbvInstanceId:           return "InstanceId";
     case EbvVertexIndex:          return "VertexIndex";
@@ -438,6 +455,7 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
 
     case EbvBaryCoordNV:                return "BaryCoordNV";
     case EbvBaryCoordNoPerspNV:         return "BaryCoordNoPerspNV";
+
     case EbvTaskCountNV:                return "TaskCountNV";
     case EbvPrimitiveCountNV:           return "PrimitiveCountNV";
     case EbvPrimitiveIndicesNV:         return "PrimitiveIndicesNV";
@@ -446,7 +464,13 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvLayerPerViewNV:             return "LayerPerViewNV";
     case EbvMeshViewCountNV:            return "MeshViewCountNV";
     case EbvMeshViewIndicesNV:          return "MeshViewIndicesNV";
-#endif 
+#endif
+
+    case EbvWarpsPerSM:                 return "WarpsPerSMNV";
+    case EbvSMCount:                    return "SMCountNV";
+    case EbvWarpID:                     return "WarpIDNV";
+    case EbvSMID:                       return "SMIDNV";
+
     default:                      return "unknown built-in variable";
     }
 }

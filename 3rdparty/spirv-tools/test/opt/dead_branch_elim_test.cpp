@@ -2993,6 +2993,94 @@ OpFunctionEnd
   SinglePassRunAndMatch<DeadBranchElimPass>(spirv, true);
 }
 
+// Fold a switch with a nested break.  The only case should be the default.
+TEST_F(DeadBranchElimTest, FoldSwitchWithNestedBreak) {
+  const std::string spirv = R"(
+; CHECK: OpSwitch %int_3 [[case_bb:%\w+]]{{[[:space:]]}}
+; CHECK: [[case_bb]] = OpLabel
+; CHECK-NEXT: OpUndef
+; CHECK-NEXT: OpSelectionMerge
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %2 "main"
+               OpSource GLSL 450
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+      %int_3 = OpConstant %int 3
+      %int_1 = OpConstant %int 1
+       %bool = OpTypeBool
+          %2 = OpFunction %void None %4
+         %10 = OpLabel
+               OpSelectionMerge %11 None
+               OpSwitch %int_3 %12 3 %13
+         %12 = OpLabel
+               OpBranch %11
+         %13 = OpLabel
+         %14 = OpUndef %bool
+               OpSelectionMerge %15 None
+               OpBranchConditional %14 %16 %15
+         %16 = OpLabel
+               OpBranch %11
+         %15 = OpLabel
+               OpBranch %11
+         %11 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<DeadBranchElimPass>(spirv, true);
+}
+
+TEST_F(DeadBranchElimTest, FoldBranchWithBreakToSwitch) {
+  const std::string spirv = R"(
+; CHECK: OpSelectionMerge [[sel_merge:%\w+]]
+; CHECK-NEXT: OpSwitch {{%\w+}} {{%\w+}} 3 [[bb:%\w+]]
+; CHECK: [[bb]] = OpLabel
+; CHECK-NEXT: OpBranch [[bb2:%\w+]]
+; CHECK: [[bb2]] = OpLabel
+; CHECK-NOT: OpSelectionMerge
+; CHECK: OpFunctionEnd
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %2 "main"
+               OpSource GLSL 450
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+      %int_3 = OpConstant %int 3
+      %int_1 = OpConstant %int 1
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+          %2 = OpFunction %void None %4
+         %10 = OpLabel
+  %undef_int = OpUndef %int
+               OpSelectionMerge %11 None
+               OpSwitch %undef_int %12 3 %13
+         %12 = OpLabel
+               OpBranch %11
+         %13 = OpLabel
+               OpSelectionMerge %15 None
+               OpBranchConditional %true %16 %15
+         %16 = OpLabel
+         %14 = OpUndef %bool
+               OpBranchConditional %14 %11 %17
+         %17 = OpLabel
+               OpBranch %15
+         %15 = OpLabel
+               OpBranch %11
+         %11 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<DeadBranchElimPass>(spirv, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    More complex control flow

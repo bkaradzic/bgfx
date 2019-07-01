@@ -119,6 +119,62 @@ TIntermTyped* TIntermediate::addBinaryMath(TOperator op, TIntermTyped* left, TIn
     if (left->getType().getBasicType() == EbtBlock || right->getType().getBasicType() == EbtBlock)
         return nullptr;
 
+    // Convert "reference +/- int" and "reference - reference" to integer math
+    if ((op == EOpAdd || op == EOpSub) && extensionRequested(E_GL_EXT_buffer_reference2)) {
+
+        // No addressing math on struct with unsized array.
+        if ((left->getBasicType() == EbtReference && left->getType().getReferentType()->containsUnsizedArray()) ||
+            (right->getBasicType() == EbtReference && right->getType().getReferentType()->containsUnsizedArray())) {
+            return nullptr;
+        }
+
+        if (left->getBasicType() == EbtReference && isTypeInt(right->getBasicType())) {
+            const TType& referenceType = left->getType();
+            TIntermConstantUnion* size = addConstantUnion((unsigned long long)computeBufferReferenceTypeSize(left->getType()), loc, true);
+            left  = addBuiltInFunctionCall(loc, EOpConvPtrToUint64, true, left, TType(EbtUint64));
+
+            right = createConversion(EbtInt64, right);
+            right = addBinaryMath(EOpMul, right, size, loc);
+
+            TIntermTyped *node = addBinaryMath(op, left, right, loc);
+            node = addBuiltInFunctionCall(loc, EOpConvUint64ToPtr, true, node, referenceType);
+            return node;
+        }
+
+        if (op == EOpAdd && right->getBasicType() == EbtReference && isTypeInt(left->getBasicType())) {
+            const TType& referenceType = right->getType();
+            TIntermConstantUnion* size = addConstantUnion((unsigned long long)computeBufferReferenceTypeSize(right->getType()), loc, true);
+            right = addBuiltInFunctionCall(loc, EOpConvPtrToUint64, true, right, TType(EbtUint64));
+
+            left  = createConversion(EbtInt64, left);
+            left  = addBinaryMath(EOpMul, left, size, loc);
+
+            TIntermTyped *node = addBinaryMath(op, left, right, loc);
+            node = addBuiltInFunctionCall(loc, EOpConvUint64ToPtr, true, node, referenceType);
+            return node;
+        }
+
+        if (op == EOpSub && left->getBasicType() == EbtReference && right->getBasicType() == EbtReference) {
+            TIntermConstantUnion* size = addConstantUnion((long long)computeBufferReferenceTypeSize(left->getType()), loc, true);
+
+            left = addBuiltInFunctionCall(loc, EOpConvPtrToUint64, true, left, TType(EbtUint64));
+            right = addBuiltInFunctionCall(loc, EOpConvPtrToUint64, true, right, TType(EbtUint64));
+
+            left = addBuiltInFunctionCall(loc, EOpConvUint64ToInt64, true, left, TType(EbtInt64));
+            right = addBuiltInFunctionCall(loc, EOpConvUint64ToInt64, true, right, TType(EbtInt64));
+
+            left = addBinaryMath(EOpSub, left, right, loc);
+
+            TIntermTyped *node = addBinaryMath(EOpDiv, left, size, loc);
+            return node;
+        }
+
+        // No other math operators supported on references
+        if (left->getBasicType() == EbtReference || right->getBasicType() == EbtReference) {
+            return nullptr;
+        }
+    }
+
     // Try converting the children's base types to compatible types.
     auto children = addConversion(op, left, right);
     left = std::get<0>(children);
@@ -230,6 +286,26 @@ TIntermTyped* TIntermediate::addAssign(TOperator op, TIntermTyped* left, TInterm
     // No block assignment
     if (left->getType().getBasicType() == EbtBlock || right->getType().getBasicType() == EbtBlock)
         return nullptr;
+
+    // Convert "reference += int" to "reference = reference + int". We need this because the
+    // "reference + int" calculation involves a cast back to the original type, which makes it
+    // not an lvalue.
+    if ((op == EOpAddAssign || op == EOpSubAssign) && left->getBasicType() == EbtReference &&
+        extensionRequested(E_GL_EXT_buffer_reference2)) {
+
+        if (!(right->getType().isScalar() && right->getType().isIntegerDomain()))
+            return nullptr;
+
+        TIntermTyped* node = addBinaryMath(op == EOpAddAssign ? EOpAdd : EOpSub, left, right, loc);
+        if (!node)
+            return nullptr;
+
+        TIntermSymbol* symbol = left->getAsSymbolNode();
+        left = addSymbol(*symbol);
+
+        node = addAssign(EOpAssign, left, node, loc);
+        return node;
+    }
 
     //
     // Like adding binary math, except the conversion can only go

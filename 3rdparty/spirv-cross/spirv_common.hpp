@@ -183,14 +183,14 @@ std::string join(Ts &&... ts)
 	return stream.str();
 }
 
-inline std::string merge(const SmallVector<std::string> &list)
+inline std::string merge(const SmallVector<std::string> &list, const char *between = ", ")
 {
 	StringStream<> stream;
 	for (auto &elem : list)
 	{
 		stream << elem;
 		if (&elem != &list.back())
-			stream << ", ";
+			stream << between;
 	}
 	return stream.str();
 }
@@ -299,6 +299,7 @@ enum Types
 	TypeCombinedImageSampler,
 	TypeAccessChain,
 	TypeUndef,
+	TypeString,
 	TypeCount
 };
 
@@ -316,6 +317,23 @@ struct SPIRUndef : IVariant
 	uint32_t basetype;
 
 	SPIRV_CROSS_DECLARE_CLONE(SPIRUndef)
+};
+
+struct SPIRString : IVariant
+{
+	enum
+	{
+		type = TypeString
+	};
+
+	explicit SPIRString(std::string str_)
+	    : str(std::move(str_))
+	{
+	}
+
+	std::string str;
+
+	SPIRV_CROSS_DECLARE_CLONE(SPIRString)
 };
 
 // This type is only used by backends which need to access the combined image and sampler IDs separately after
@@ -686,6 +704,10 @@ struct SPIRBlock : IVariant
 	// Do we need a ladder variable to defer breaking out of a loop construct after a switch block?
 	bool need_ladder_break = false;
 
+	// If marked, we have explicitly handled Phi from this block, so skip any flushes related to that on a branch.
+	// Used to handle an edge case with switch and case-label fallthrough where fall-through writes to Phi.
+	uint32_t ignore_phi_from_block = 0;
+
 	// The dominating block which this block might be within.
 	// Used in continue; blocks to determine if we really need to write continue.
 	uint32_t loop_dominator = 0;
@@ -765,6 +787,13 @@ struct SPIRFunction : IVariant
 	uint32_t entry_block = 0;
 	SmallVector<uint32_t> blocks;
 	SmallVector<CombinedImageSamplerParameter> combined_parameters;
+
+	struct EntryLine
+	{
+		uint32_t file_id = 0;
+		uint32_t line_literal = 0;
+	};
+	EntryLine entry_line;
 
 	void add_local_variable(uint32_t id)
 	{
@@ -1402,7 +1431,8 @@ struct Meta
 			bool packed = false;
 			uint32_t ib_member_index = ~(0u);
 			uint32_t ib_orig_id = 0;
-			uint32_t argument_buffer_id = ~(0u);
+			uint32_t resource_index_primary = ~(0u);
+			uint32_t resource_index_secondary = ~(0u);
 		} extended;
 	};
 

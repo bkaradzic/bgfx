@@ -147,7 +147,8 @@ class DeadBranchElimPass : public MemPass {
   Instruction* FindFirstExitFromSelectionMerge(uint32_t start_block_id,
                                                uint32_t merge_block_id,
                                                uint32_t loop_merge_id,
-                                               uint32_t loop_continue_id);
+                                               uint32_t loop_continue_id,
+                                               uint32_t switch_merge_id);
 
   // Adds to |blocks_with_back_edges| all of the blocks on the path from the
   // basic block |cont_id| to |header_id| and |merge_id|.  The intention is that
@@ -156,6 +157,10 @@ class DeadBranchElimPass : public MemPass {
   void AddBlocksWithBackEdge(
       uint32_t cont_id, uint32_t header_id, uint32_t merge_id,
       std::unordered_set<BasicBlock*>* blocks_with_back_edges);
+
+  // Returns true if there is a brach to the merge node of the selection
+  // construct |switch_header_id| that is inside a nested selection construct.
+  bool SwitchHasNestedBreak(uint32_t switch_header_id);
 };
 
 }  // namespace opt

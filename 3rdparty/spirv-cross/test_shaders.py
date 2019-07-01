@@ -90,6 +90,21 @@ def print_msl_compiler_version():
     except OSError as e:
         if (e.errno != errno.ENOENT):    # Ignore xcrun not found error
             raise
+    except subprocess.CalledProcessError:
+        pass
+
+def msl_compiler_supports_22():
+    try:
+        subprocess.check_call(['xcrun', '--sdk', 'macosx', 'metal', '-x', 'metal', '-std=macos-metal2.2', '-'],
+                stdin = subprocess.DEVNULL, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+        print('Current SDK supports MSL 2.2. Enabling validation for MSL 2.2 shaders.')
+        return True
+    except OSError as e:
+        print('Failed to check if MSL 2.2 is not supported. It probably is not.')
+        return False
+    except subprocess.CalledProcessError:
+        print('Current SDK does NOT support MSL 2.2. Disabling validation for MSL 2.2 shaders.')
+        return False
 
 def path_to_msl_standard(shader):
     if '.ios.' in shader:
@@ -97,6 +112,8 @@ def path_to_msl_standard(shader):
             return '-std=ios-metal2.0'
         elif '.msl21.' in shader:
             return '-std=ios-metal2.1'
+        elif '.msl22.' in shader:
+            return '-std=ios-metal2.2'
         elif '.msl11.' in shader:
             return '-std=ios-metal1.1'
         elif '.msl10.' in shader:
@@ -108,6 +125,8 @@ def path_to_msl_standard(shader):
             return '-std=macos-metal2.0'
         elif '.msl21.' in shader:
             return '-std=macos-metal2.1'
+        elif '.msl22.' in shader:
+            return '-std=macos-metal2.2'
         elif '.msl11.' in shader:
             return '-std=macos-metal1.1'
         else:
@@ -118,6 +137,8 @@ def path_to_msl_standard_cli(shader):
         return '20000'
     elif '.msl21.' in shader:
         return '20100'
+    elif '.msl22.' in shader:
+        return '20200'
     elif '.msl11.' in shader:
         return '10100'
     else:
@@ -180,6 +201,8 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('2')
         msl_args.append('--msl-discrete-descriptor-set')
         msl_args.append('3')
+    if '.line.' in shader:
+        msl_args.append('--emit-line-directives')
 
     subprocess.check_call(msl_args)
 
@@ -273,7 +296,11 @@ def cross_compile_hlsl(shader, spirv, opt, force_no_external_validation, iterati
     spirv_cross_path = paths.spirv_cross
 
     sm = shader_to_sm(shader)
-    subprocess.check_call([spirv_cross_path, '--entry', 'main', '--output', hlsl_path, spirv_path, '--hlsl-enable-compat', '--hlsl', '--shader-model', sm, '--iterations', str(iterations)])
+
+    hlsl_args = [spirv_cross_path, '--entry', 'main', '--output', hlsl_path, spirv_path, '--hlsl-enable-compat', '--hlsl', '--shader-model', sm, '--iterations', str(iterations)]
+    if '.line.' in shader:
+        hlsl_args.append('--emit-line-directives')
+    subprocess.check_call(hlsl_args)
 
     if not shader_is_invalid_spirv(hlsl_path):
         subprocess.check_call([paths.spirv_val, '--target-env', 'vulkan1.1', spirv_path])
@@ -345,6 +372,8 @@ def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, fl
         extra_args += ['--flatten-multidimensional-arrays']
     if push_ubo:
         extra_args += ['--glsl-emit-push-constant-as-ubo']
+    if '.line.' in shader:
+        extra_args += ['--emit-line-directives']
 
     spirv_cross_path = paths.spirv_cross
 
@@ -564,7 +593,12 @@ def test_shader_msl(stats, shader, args, paths):
     # executable from Xcode using args: `--msl --entry main --output msl_path spirv_path`.
 #    print('SPRIV shader: ' + spirv)
 
-    if not args.force_no_external_validation:
+    shader_is_msl22 = 'msl22' in joined_path
+    skip_validation = shader_is_msl22 and (not args.msl22)
+    if '.invalid.' in joined_path:
+        skip_validation = True
+
+    if (not args.force_no_external_validation) and (not skip_validation):
         validate_shader_msl(shader, args.opt)
 
     remove_file(spirv)
@@ -706,8 +740,10 @@ def main():
         sys.stderr.write('Parallel execution is disabled when using the flags --update, --malisc or --force-no-external-validation\n')
         args.parallel = False
         
+    args.msl22 = False
     if args.msl:
         print_msl_compiler_version()
+        args.msl22 = msl_compiler_supports_22()
 
     backend = 'glsl'
     if (args.msl or args.metal): 

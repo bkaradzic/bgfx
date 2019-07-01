@@ -196,9 +196,9 @@ set_source_files_properties(
   ${CMAKE_CURRENT_SOURCE_DIR}/pch_source.cpp
   PROPERTIES OBJECT_DEPENDS "${PCH_DEPENDS}")
 
-add_subdirectory(comp)
 add_subdirectory(opt)
 add_subdirectory(reduce)
+add_subdirectory(fuzz)
 add_subdirectory(link)
 
 set(SPIRV_SOURCES
@@ -221,7 +221,6 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/enum_string_mapping.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_inst.h
   ${CMAKE_CURRENT_SOURCE_DIR}/extensions.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/id_descriptor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/instruction.h
   ${CMAKE_CURRENT_SOURCE_DIR}/latest_version_glsl_std_450_header.h
   ${CMAKE_CURRENT_SOURCE_DIR}/latest_version_opencl_std_header.h
@@ -235,6 +234,7 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_constant.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_definition.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_endian.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/spirv_fuzzer_options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_optimizer_options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_reducer_options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_target_env.h
@@ -254,7 +254,6 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/enum_string_mapping.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_inst.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/extensions.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/id_descriptor.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/libspirv.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/name_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/opcode.cpp
@@ -263,6 +262,7 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/software_version.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_endian.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/spirv_fuzzer_options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_optimizer_options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_reducer_options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/spirv_target_env.cpp
@@ -299,6 +299,7 @@ set(SPIRV_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_logicals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_memory.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_memory_semantics.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_misc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_mode_setting.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_non_uniform.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/val/validate_primitives.cpp

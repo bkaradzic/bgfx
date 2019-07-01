@@ -52,6 +52,7 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
   state.emplace_back();
   state[0].cinfo.containing_construct = 0;
   state[0].cinfo.containing_loop = 0;
+  state[0].cinfo.containing_switch = 0;
   state[0].merge_node = 0;
 
   for (BasicBlock* block : order) {
@@ -74,14 +75,26 @@ void StructuredCFGAnalysis::AddBlocksInFunction(Function* func) {
 
       if (merge_inst->opcode() == SpvOpLoopMerge) {
         new_state.cinfo.containing_loop = block->id();
+        new_state.cinfo.containing_switch = 0;
       } else {
         new_state.cinfo.containing_loop = state.back().cinfo.containing_loop;
+        if (merge_inst->NextNode()->opcode() == SpvOpSwitch) {
+          new_state.cinfo.containing_switch = block->id();
+        } else {
+          new_state.cinfo.containing_switch =
+              state.back().cinfo.containing_switch;
+        }
       }
 
       state.emplace_back(new_state);
       merge_blocks_.Set(new_state.merge_node);
     }
   }
+}
+
+uint32_t StructuredCFGAnalysis::ContainingConstruct(Instruction* inst) {
+  uint32_t bb = context_->get_instr_block(inst)->id();
+  return ContainingConstruct(bb);
 }
 
 uint32_t StructuredCFGAnalysis::MergeBlock(uint32_t bb_id) {
@@ -115,6 +128,17 @@ uint32_t StructuredCFGAnalysis::LoopContinueBlock(uint32_t bb_id) {
   BasicBlock* header = context_->cfg()->block(header_id);
   Instruction* merge_inst = header->GetMergeInst();
   return merge_inst->GetSingleWordInOperand(kContinueNodeIndex);
+}
+
+uint32_t StructuredCFGAnalysis::SwitchMergeBlock(uint32_t bb_id) {
+  uint32_t header_id = ContainingSwitch(bb_id);
+  if (header_id == 0) {
+    return 0;
+  }
+
+  BasicBlock* header = context_->cfg()->block(header_id);
+  Instruction* merge_inst = header->GetMergeInst();
+  return merge_inst->GetSingleWordInOperand(kMergeNodeIndex);
 }
 
 bool StructuredCFGAnalysis::IsContinueBlock(uint32_t bb_id) {

@@ -428,6 +428,10 @@ OpCapability Matrix
 %f16vec8_input = OpVariable %f16vec8_ptr_input Input
 %f16_ptr_input = OpTypePointer Input %f16
 
+%u32vec8_ptr_input = OpTypePointer Input %u32vec8
+%u32vec8_input = OpVariable %u32vec8_ptr_input Input
+%u32_ptr_input = OpTypePointer Input %u32
+
 %f32_ptr_generic = OpTypePointer Generic %f32
 %u32_ptr_generic = OpTypePointer Generic %u32
 
@@ -4485,14 +4489,15 @@ TEST_F(ValidateExtInst, VLoadNPNotPointer) {
 
 TEST_F(ValidateExtInst, VLoadNWrongStorageClass) {
   std::ostringstream ss;
-  ss << "%ptr = OpAccessChain %u32_ptr_workgroup %u32vec8_workgroup %u32_1\n";
+  ss << "%ptr = OpAccessChain %u32_ptr_input %u32vec8_input %u32_1\n";
   ss << "%val1 = OpExtInst %u32vec2 %extinst vloadn %u32_1 %ptr 2\n";
 
   CompileSuccessfully(GenerateKernelCode(ss.str()));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("OpenCL.std vloadn: expected operand P storage class "
-                        "to be UniformConstant or Generic"));
+                        "to be UniformConstant, Generic, CrossWorkgroup, "
+                        "Workgroup or Function"));
 }
 
 TEST_F(ValidateExtInst, VLoadNWrongComponentType) {
@@ -4746,19 +4751,21 @@ TEST_F(ValidateExtInst, VStoreNPNotPointer) {
   CompileSuccessfully(GenerateKernelCode(ss.str()));
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Operand 124[%_ptr_Generic_float] cannot be a type"));
+              HasSubstr("Operand 127[%_ptr_Generic_float] cannot be a type"));
 }
 
-TEST_F(ValidateExtInst, VStoreNPNotGeneric) {
+TEST_F(ValidateExtInst, VStoreNWrongStorageClass) {
   std::ostringstream ss;
-  ss << "%ptr_w = OpAccessChain %f32_ptr_workgroup %f32vec8_workgroup %u32_1\n";
+  ss << "%ptr_w = OpAccessChain %f32_ptr_uniform_constant "
+        "%f32vec8_uniform_constant %u32_1\n";
   ss << "%val1 = OpExtInst %void %extinst vstoren %f32vec2_01 %u32_1 %ptr_w\n";
 
   CompileSuccessfully(GenerateKernelCode(ss.str()));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("OpenCL.std vstoren: expected operand P storage class "
-                        "to be Generic"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("OpenCL.std vstoren: expected operand P storage class "
+                "to be Generic, CrossWorkgroup, Workgroup or Function"));
 }
 
 TEST_F(ValidateExtInst, VStorePWrongDataType) {
@@ -5060,7 +5067,7 @@ TEST_F(ValidateExtInst, OpenCLStdPrintfFormatNotPointer) {
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Operand 134[%_ptr_UniformConstant_uchar] cannot be a "
+              HasSubstr("Operand 137[%_ptr_UniformConstant_uchar] cannot be a "
                         "type"));
 }
 

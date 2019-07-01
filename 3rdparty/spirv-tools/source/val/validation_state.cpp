@@ -691,6 +691,12 @@ uint32_t ValidationState_t::GetBitWidth(uint32_t id) const {
   return 0;
 }
 
+bool ValidationState_t::IsVoidType(uint32_t id) const {
+  const Instruction* inst = FindDef(id);
+  assert(inst);
+  return inst->opcode() == SpvOpTypeVoid;
+}
+
 bool ValidationState_t::IsFloatScalarType(uint32_t id) const {
   const Instruction* inst = FindDef(id);
   assert(inst);
@@ -1205,6 +1211,19 @@ bool ValidationState_t::LogicallyMatch(const Instruction* lhs,
   // caught above and if they're elements are not arrays or structs they are
   // required to match exactly.
   return false;
+}
+
+const Instruction* ValidationState_t::TracePointer(
+    const Instruction* inst) const {
+  auto base_ptr = inst;
+  while (base_ptr->opcode() == SpvOpAccessChain ||
+         base_ptr->opcode() == SpvOpInBoundsAccessChain ||
+         base_ptr->opcode() == SpvOpPtrAccessChain ||
+         base_ptr->opcode() == SpvOpInBoundsPtrAccessChain ||
+         base_ptr->opcode() == SpvOpCopyObject) {
+    base_ptr = FindDef(base_ptr->GetOperandAs<uint32_t>(2u));
+  }
+  return base_ptr;
 }
 
 }  // namespace val

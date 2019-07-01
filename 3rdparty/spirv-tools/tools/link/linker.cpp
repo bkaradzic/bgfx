@@ -23,6 +23,7 @@
 #include "tools/io.h"
 
 void print_usage(char* argv0) {
+  std::string target_env_list = spvTargetEnvList(27, 95);
   printf(
       R"(%s - Link SPIR-V binary files together.
 
@@ -39,11 +40,10 @@ Options:
   --allow-partial-linkage Allow partial linkage by accepting imported symbols to be unresolved.
   --verify-ids            Verify that IDs in the resulting modules are truly unique.
   --version               Display linker version information
-  --target-env            {vulkan1.0|vulkan1.1|spv1.0|spv1.1|spv1.2|spv1.3|spv1.4|opencl2.1|opencl2.2}
-                          Use Vulkan 1.0, Vulkan 1.1, SPIR-V 1.0, SPIR-V 1.1, SPIR-V 1.2, SPIR-V 1.3,
-                          SPIR-V1.4, OpenCL 2.1, OpenCL 2.2 validation rules.
+  --target-env            {%s}
+                          Use validation rules from the specified environment.
 )",
-      argv0, argv0);
+      argv0, argv0, target_env_list.c_str());
 }
 
 int main(int argc, char** argv) {

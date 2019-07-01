@@ -65,6 +65,7 @@ std::string FileNameAsCustomTestSuffixIoMap(
 using CompileVulkanToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkanToDebugSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkan1_1ToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
+using CompileToSpirv14Test = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileOpenGLToSpirvTest = GlslangTest<::testing::TestWithParam<std::string>>;
 using VulkanSemantics = GlslangTest<::testing::TestWithParam<std::string>>;
 using OpenGLSemantics = GlslangTest<::testing::TestWithParam<std::string>>;
@@ -84,7 +85,7 @@ using CompileUpgradeTextureToSampledTextureAndDropSamplersTest = GlslangTest<::t
 TEST_P(CompileVulkanToSpirvTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv);
 }
 
@@ -94,7 +95,7 @@ TEST_P(CompileVulkanToDebugSpirvTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::Vulkan,
-                            glslang::EShTargetVulkan_1_0,
+                            glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv, true, "",
                             "/baseResults/", false, true);
 }
@@ -102,7 +103,14 @@ TEST_P(CompileVulkanToDebugSpirvTest, FromFile)
 TEST_P(CompileVulkan1_1ToSpirvTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_1,
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_1, glslang::EShTargetSpv_1_3,
+                            Target::Spv);
+}
+
+TEST_P(CompileToSpirv14Test, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_1, glslang::EShTargetSpv_1_4,
                             Target::Spv);
 }
 
@@ -111,7 +119,7 @@ TEST_P(CompileVulkan1_1ToSpirvTest, FromFile)
 TEST_P(CompileOpenGLToSpirvTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv);
 }
 
@@ -120,7 +128,7 @@ TEST_P(CompileOpenGLToSpirvTest, FromFile)
 TEST_P(VulkanSemantics, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv, false);
 }
 
@@ -129,7 +137,7 @@ TEST_P(VulkanSemantics, FromFile)
 TEST_P(OpenGLSemantics, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::OpenGL, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv, false);
 }
 
@@ -137,7 +145,7 @@ TEST_P(OpenGLSemantics, FromFile)
 TEST_P(VulkanAstSemantics, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::AST);
 }
 
@@ -177,7 +185,7 @@ TEST_P(GlslIoMap, FromFile)
 TEST_P(CompileVulkanToSpirvTestAMD, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv);
 }
 #endif
@@ -188,7 +196,7 @@ TEST_P(CompileVulkanToSpirvTestAMD, FromFile)
 TEST_P(CompileVulkanToSpirvTestNV, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
-                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0,
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
                             Target::Spv);
 }
 #endif
@@ -274,6 +282,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.bufferhandle15.frag",
         "spv.bufferhandle16.frag",
         "spv.bufferhandle17_Errors.frag",
+        "spv.bufferhandle18.frag",
+        "spv.bufferhandle19_Errors.frag",
         "spv.bufferhandle2.frag",
         "spv.bufferhandle3.frag",
         "spv.bufferhandle4.frag",
@@ -309,10 +319,13 @@ INSTANTIATE_TEST_CASE_P(
         "spv.fragmentDensity.vert",
         "spv.fragmentDensity-es.frag",
         "spv.fragmentDensity-neg.frag",
+        "spv.fsi.frag",
+        "spv.fsi_Error.frag",
         "spv.fullyCovered.frag",
         "spv.functionCall.frag",
         "spv.functionNestedOpaque.vert",
         "spv.functionSemantics.frag",
+        "spv.functionParameterTypes.frag",
         "spv.GeometryShaderPassthrough.geom",
         "spv.interpOps.frag",
         "spv.int64.frag",
@@ -333,6 +346,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.noDeadDecorations.vert",
         "spv.nonSquare.vert",
         "spv.nonuniform.frag",
+        "spv.nonuniform2.frag",
         "spv.noWorkgroup.comp",
         "spv.offsets.frag",
         "spv.Operations.frag",
@@ -340,6 +354,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.precision.frag",
         "spv.precisionNonESSamp.frag",
         "spv.prepost.frag",
+        "spv.privateVariableTypes.frag",
         "spv.qualifiers.vert",
         "spv.sample.frag",
         "spv.sampleId.frag",
@@ -397,6 +412,8 @@ INSTANTIATE_TEST_CASE_P(
         "spv.xfb2.vert",
         "spv.xfb3.vert",
         "spv.samplerlessTextureFunctions.frag",
+        "spv.smBuiltins.vert",
+        "spv.smBuiltins.frag",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -446,6 +463,24 @@ INSTANTIATE_TEST_CASE_P(
         "spv.subgroupQuad.comp",
         "spv.subgroupVote.comp",
         "spv.vulkan110.storageBuffer.vert",
+    })),
+    FileNameAsCustomTestSuffix
+);
+
+// clang-format off
+INSTANTIATE_TEST_CASE_P(
+    Glsl, CompileToSpirv14Test,
+    ::testing::ValuesIn(std::vector<std::string>({
+        "spv.1.4.LoopControl.frag",
+        "spv.1.4.NonWritable.frag",
+        "spv.1.4.OpEntryPoint.frag",
+        "spv.1.4.OpSelect.frag",
+        "spv.1.4.OpCopyLogical.comp",
+        "spv.1.4.OpCopyLogicalBool.comp",
+        "spv.1.4.OpCopyLogical.funcall.frag",
+        "spv.1.4.image.frag",
+        "spv.1.4.sparseTexture.frag",
+        "spv.1.4.texture.frag",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -564,6 +599,7 @@ INSTANTIATE_TEST_CASE_P(
     "spv.atomicInt64.comp",
     "spv.shadingRate.frag",
     "spv.RayGenShader.rgen",
+    "spv.RayGenShaderArray.rgen",
     "spv.RayGenShader_Errors.rgen",
     "spv.RayConstants.rgen",
     "spv.IntersectShader.rint",

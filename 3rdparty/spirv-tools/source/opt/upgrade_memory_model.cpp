@@ -25,6 +25,12 @@ namespace spvtools {
 namespace opt {
 
 Pass::Status UpgradeMemoryModel::Process() {
+  // TODO: This pass needs changes to support cooperative matrices.
+  if (context()->get_feature_mgr()->HasCapability(
+          SpvCapabilityCooperativeMatrixNV)) {
+    return Pass::Status::SuccessWithoutChange;
+  }
+
   // Only update Logical GLSL450 to Logical VulkanKHR.
   Instruction* memory_model = get_module()->GetMemoryModel();
   if (memory_model->GetSingleWordInOperand(0u) != SpvAddressingModelLogical ||
@@ -110,6 +116,12 @@ void UpgradeMemoryModel::UpgradeInstructions() {
       }
     });
   }
+
+  UpgradeMemoryAndImages();
+  UpgradeAtomics();
+}
+
+void UpgradeMemoryModel::UpgradeMemoryAndImages() {
   for (auto& func : *get_module()) {
     func.ForEachInst([this](Instruction* inst) {
       bool is_coherent = false;
@@ -237,6 +249,50 @@ void UpgradeMemoryModel::UpgradeInstructions() {
       }
     });
   }
+}
+
+void UpgradeMemoryModel::UpgradeAtomics() {
+  for (auto& func : *get_module()) {
+    func.ForEachInst([this](Instruction* inst) {
+      if (spvOpcodeIsAtomicOp(inst->opcode())) {
+        bool unused_coherent = false;
+        bool is_volatile = false;
+        SpvScope unused_scope = SpvScopeQueueFamilyKHR;
+        std::tie(unused_coherent, is_volatile, unused_scope) =
+            GetInstructionAttributes(inst->GetSingleWordInOperand(0));
+
+        UpgradeSemantics(inst, 2u, is_volatile);
+        if (inst->opcode() == SpvOpAtomicCompareExchange ||
+            inst->opcode() == SpvOpAtomicCompareExchangeWeak) {
+          UpgradeSemantics(inst, 3u, is_volatile);
+        }
+      }
+    });
+  }
+}
+
+void UpgradeMemoryModel::UpgradeSemantics(Instruction* inst,
+                                          uint32_t in_operand,
+                                          bool is_volatile) {
+  if (!is_volatile) return;
+
+  uint32_t semantics_id = inst->GetSingleWordInOperand(in_operand);
+  const analysis::Constant* constant =
+      context()->get_constant_mgr()->FindDeclaredConstant(semantics_id);
+  const analysis::Integer* type = constant->type()->AsInteger();
+  assert(type && type->width() == 32);
+  uint32_t value = 0;
+  if (type->IsSigned()) {
+    value = static_cast<uint32_t>(constant->GetS32());
+  } else {
+    value = constant->GetU32();
+  }
+
+  value |= SpvMemorySemanticsVolatileMask;
+  auto new_constant = context()->get_constant_mgr()->GetConstant(type, {value});
+  auto new_semantics =
+      context()->get_constant_mgr()->GetDefiningInstruction(new_constant);
+  inst->SetInOperand(in_operand, {new_semantics->result_id()});
 }
 
 std::tuple<bool, bool, SpvScope> UpgradeMemoryModel::GetInstructionAttributes(

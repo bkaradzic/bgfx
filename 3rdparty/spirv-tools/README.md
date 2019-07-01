@@ -270,6 +270,10 @@ mkdir build && cd build
 cmake [-G <platform-generator>] <spirv-dir>
 ```
 
+*Note*:
+The script `utils/git-sync-deps` can be used to checkout and/or update the
+contents of the repos under `external/` instead of manually maintaining them.
+
 Once the build files have been generated, build using your preferred
 development environment.
 
@@ -307,8 +311,6 @@ The following CMake options are supported:
   the command line tools.  This will prevent the tests from being built.
 * `SPIRV_SKIP_EXECUTABLES={ON|OFF}`, default `OFF`- Build only the library, not
   the command line tools and tests.
-* `SPIRV_BUILD_COMPRESSION={ON|OFF}`, default `OFF`- Build SPIR-V compressing
-  codec.
 * `SPIRV_USE_SANITIZER=<sanitizer>`, default is no sanitizing - On UNIX
   platforms with an appropriate version of `clang` this option enables the use
   of the sanitizers documented [here][clang-sanitizers].
@@ -345,6 +347,13 @@ $ANDROID_NDK/ndk-build -C ../android_test     \
                       NDK_LIBS_OUT=`pwd`/libs \
                       NDK_APP_OUT=`pwd`/app
 ```
+
+### Updating DEPS
+Occasionally the entries in DEPS will need to be updated. This is done on demand
+when there is a request to do this, often due to downstream breakages. There is
+a script `utils/roll_deps.sh` provided, which will generate a patch with the
+updated DEPS values. This will still need to be tested in your checkout to
+confirm that there are no integration issues that need to be resolved.
 
 ## Library
 

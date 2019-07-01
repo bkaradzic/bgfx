@@ -621,7 +621,7 @@ LoopDescriptor* IRContext::GetLoopDescriptor(const Function* f) {
   return &it->second;
 }
 
-uint32_t IRContext::FindBuiltinVar(uint32_t builtin) {
+uint32_t IRContext::FindBuiltinInputVar(uint32_t builtin) {
   for (auto& a : module_->annotations()) {
     if (a.opcode() != SpvOpDecorate) continue;
     if (a.GetSingleWordInOperand(kSpvDecorateDecorationInIdx) !=
@@ -631,6 +631,7 @@ uint32_t IRContext::FindBuiltinVar(uint32_t builtin) {
     uint32_t target_id = a.GetSingleWordInOperand(kSpvDecorateTargetIdInIdx);
     Instruction* b_var = get_def_use_mgr()->GetDef(target_id);
     if (b_var->opcode() != SpvOpVariable) continue;
+    if (b_var->GetSingleWordInOperand(0) != SpvStorageClassInput) continue;
     return target_id;
   }
   return 0;
@@ -653,14 +654,14 @@ void IRContext::AddVarToEntryPoints(uint32_t var_id) {
   }
 }
 
-uint32_t IRContext::GetBuiltinVarId(uint32_t builtin) {
+uint32_t IRContext::GetBuiltinInputVarId(uint32_t builtin) {
   if (!AreAnalysesValid(kAnalysisBuiltinVarId)) ResetBuiltinAnalysis();
   // If cached, return it.
   std::unordered_map<uint32_t, uint32_t>::iterator it =
       builtin_var_id_map_.find(builtin);
   if (it != builtin_var_id_map_.end()) return it->second;
   // Look for one in shader
-  uint32_t var_id = FindBuiltinVar(builtin);
+  uint32_t var_id = FindBuiltinInputVar(builtin);
   if (var_id == 0) {
     // If not found, create it
     // TODO(greg-lunarg): Add support for all builtins

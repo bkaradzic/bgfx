@@ -92,6 +92,7 @@ std::string GetWebGPUToVulkanPasses() {
 }
 
 void PrintUsage(const char* program) {
+  std::string target_env_list = spvTargetEnvList(16, 80);
   // NOTE: Please maintain flags in lexicographical order.
   printf(
       R"(%s - Optimize a SPIR-V binary file.
@@ -139,6 +140,12 @@ Options (in lexicographical order):)",
                Does propagation of memory references when an array is a copy of
                another.  It will only propagate an array if the source is never
                written to, and the only store to the target is the copy.)");
+  printf(R"(
+  --decompose-initialized-variables
+               Decomposes initialized variable declarations into a declaration
+               followed by a store of the initial value. This is done to work
+               around known issues with some Vulkan drivers for initialize
+               variables.)");
   printf(R"(
   --eliminate-common-uniform
                Perform load/load elimination for duplicate uniform values.
@@ -227,6 +234,11 @@ Options (in lexicographical order):)",
                Note this does not guarantee legal code. This option passes the
                option --relax-logical-pointer to the validator.)",
          GetLegalizationPasses().c_str());
+  printf(R"(
+  --legalize-vector-shuffle
+               Converts any usages of 0xFFFFFFFF for the literals in
+               OpVectorShuffle to a literal 0. This is done since 0xFFFFFFFF is
+               forbidden in WebGPU.)");
   printf(R"(
   --local-redundancy-elimination
                Looks for instructions in the same basic block that compute the
@@ -398,6 +410,13 @@ Options (in lexicographical order):)",
                Will simplify all instructions in the function as much as
                possible.)");
   printf(R"(
+  --split-invalid-unreachable
+               Attempts to legalize for WebGPU cases where an unreachable
+               merge-block is also a continue-target by splitting it into two
+               seperate blocks. There exist legal, for Vulkan, instances of this
+               pattern that cannot be converted into legal WebGPU, so this
+               conversion may not succeed.)");
+  printf(R"(
   --skip-validation
                Will not validate the SPIR-V before optimizing.  If the SPIR-V
                is invalid, the optimizer may fail or generate incorrect code.
@@ -418,9 +437,9 @@ Options (in lexicographical order):)",
   printf(R"(
   --target-env=<env>
                Set the target environment. Without this flag the target
-               enviroment defaults to spv1.3.
-               <env> must be one of vulkan1.0, vulkan1.1, opencl2.2, spv1.0,
-               spv1.1, spv1.2, spv1.3, or webgpu0.)");
+               enviroment defaults to spv1.3. <env> must be one of
+               {%s})",
+         target_env_list.c_str());
   printf(R"(
   --time-report
                Print the resource utilization of each pass (e.g., CPU time,

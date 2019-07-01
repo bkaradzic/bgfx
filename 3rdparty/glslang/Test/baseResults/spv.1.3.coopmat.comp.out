@@ -4,9 +4,9 @@ spv.1.3.coopmat.comp
 // Id's are bound by 52
 
                               Capability Shader
-                              Capability CapabilityVariablePointers
-                              Capability CapabilityVulkanMemoryModelKHR
-                              Capability CapabilityCooperativeMatrixNV
+                              Capability VariablePointers
+                              Capability VulkanMemoryModelKHR
+                              Capability CooperativeMatrixNV
                               Extension  "SPV_KHR_vulkan_memory_model"
                               Extension  "SPV_NV_cooperative_matrix"
                1:             ExtInstImport  "GLSL.std.450"

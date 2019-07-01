@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "source/opt/types.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <sstream>
+#include <string>
 #include <unordered_set>
 
-#include "source/opt/types.h"
 #include "source/util/make_unique.h"
+#include "spirv/unified1/spirv.h"
 
 namespace spvtools {
 namespace opt {
@@ -383,29 +386,42 @@ void SampledImage::GetExtraHashWords(
   image_type_->GetHashWords(words, seen);
 }
 
-Array::Array(Type* type, uint32_t length_id)
-    : Type(kArray), element_type_(type), length_id_(length_id) {
+Array::Array(const Type* type, const Array::LengthInfo& length_info_arg)
+    : Type(kArray), element_type_(type), length_info_(length_info_arg) {
+  assert(type != nullptr);
   assert(!type->AsVoid());
+  // We always have a word to say which case we're in, followed
+  // by at least one more word.
+  assert(length_info_arg.words.size() >= 2);
 }
 
 bool Array::IsSameImpl(const Type* that, IsSameCache* seen) const {
   const Array* at = that->AsArray();
   if (!at) return false;
-  return length_id_ == at->length_id_ &&
-         element_type_->IsSameImpl(at->element_type_, seen) &&
-         HasSameDecorations(that);
+  bool is_same = element_type_->IsSameImpl(at->element_type_, seen);
+  is_same = is_same && HasSameDecorations(that);
+  is_same = is_same && (length_info_.words == at->length_info_.words);
+  return is_same;
 }
 
 std::string Array::str() const {
   std::ostringstream oss;
-  oss << "[" << element_type_->str() << ", id(" << length_id_ << ")]";
+  oss << "[" << element_type_->str() << ", id(" << LengthId() << "), words(";
+  const char* spacer = "";
+  for (auto w : length_info_.words) {
+    oss << spacer << w;
+    spacer = ",";
+  }
+  oss << ")]";
   return oss.str();
 }
 
 void Array::GetExtraHashWords(std::vector<uint32_t>* words,
                               std::unordered_set<const Type*>* seen) const {
   element_type_->GetHashWords(words, seen);
-  words->push_back(length_id_);
+  // This should mirror the logic in IsSameImpl
+  words->insert(words->end(), length_info_.words.begin(),
+                length_info_.words.end());
 }
 
 void Array::ReplaceElementType(const Type* type) { element_type_ = type; }
@@ -540,7 +556,12 @@ bool Pointer::IsSameImpl(const Type* that, IsSameCache* seen) const {
   return HasSameDecorations(that);
 }
 
-std::string Pointer::str() const { return pointee_type_->str() + "*"; }
+std::string Pointer::str() const {
+  std::ostringstream os;
+  os << pointee_type_->str() << " " << static_cast<uint32_t>(storage_class_)
+     << "*";
+  return os.str();
+}
 
 void Pointer::GetExtraHashWords(std::vector<uint32_t>* words,
                                 std::unordered_set<const Type*>* seen) const {
@@ -609,7 +630,8 @@ void Pipe::GetExtraHashWords(std::vector<uint32_t>* words,
 bool ForwardPointer::IsSameImpl(const Type* that, IsSameCache*) const {
   const ForwardPointer* fpt = that->AsForwardPointer();
   if (!fpt) return false;
-  return target_id_ == fpt->target_id_ &&
+  return (pointer_ && fpt->pointer_ ? *pointer_ == *fpt->pointer_
+                                    : target_id_ == fpt->target_id_) &&
          storage_class_ == fpt->storage_class_ && HasSameDecorations(that);
 }
 

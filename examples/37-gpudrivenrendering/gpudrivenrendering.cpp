@@ -695,6 +695,7 @@ public:
 		m_timeOffset = bx::getHPCounter();
 
 		m_useIndirect = true;
+		m_firstFrame = true;
 
 		imguiCreate();
 	}
@@ -823,7 +824,7 @@ public:
 
 			bgfx::setTexture(0, s_texOcclusionDepth, getTexture(m_hiZDepthBuffer, 0));
 			bgfx::setImage(1, getTexture(m_hiZBuffer,      0), 0, bgfx::Access::Write);
-		
+
 			bgfx::dispatch(RENDER_PASS_HIZ_DOWNSCALE_ID, m_programCopyZ, width/16, height/16);
 		}
 
@@ -916,7 +917,9 @@ public:
 		// Set "material" data (currently a color only)
 		bgfx::setUniform(u_color, &m_materials[0].m_color, m_noofMaterials);
 
-		if (m_useIndirect)
+		// We can't use indirect drawing for the first frame because the content of m_drawcallInstanceCounts
+		// is initially undefined.
+		if (m_useIndirect && !m_firstFrame)
 		{
 			// Set vertex and index buffer.
 			bgfx::setVertexBuffer(0, m_allPropsVertexbufferHandle);
@@ -967,6 +970,7 @@ public:
 				}
 			}
 		}
+		m_firstFrame = false;
 	}
 
 	bool update() override
@@ -1131,6 +1135,7 @@ public:
 	uint8_t m_noofHiZMips;
 
 	bool m_useIndirect;
+	bool m_firstFrame;
 
 	Camera m_camera;
 	Mouse m_mouse;

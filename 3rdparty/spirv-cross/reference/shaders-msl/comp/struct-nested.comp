@@ -13,24 +13,24 @@ struct s2
     s1 b;
 };
 
-struct s2_1
-{
-    s1 b;
-};
-
 struct s1_1
 {
     int a;
 };
 
-struct dstbuffer
+struct s2_1
 {
-    s2 test[1];
+    s1_1 b;
 };
 
-kernel void main0(device dstbuffer& _19 [[buffer(1)]])
+struct dstbuffer
 {
-    s2_1 testVal;
+    s2_1 test[1];
+};
+
+kernel void main0(device dstbuffer& _19 [[buffer(0)]])
+{
+    s2 testVal;
     testVal.b.a = 0;
     _19.test[0].b.a = testVal.b.a;
 }

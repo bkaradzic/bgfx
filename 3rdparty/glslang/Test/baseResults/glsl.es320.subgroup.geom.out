@@ -17,8 +17,8 @@ output primitive = points
 0:12              0 (const uint)
 0:12          'gl_PrimitiveIDIn' ( in highp int PrimitiveID)
 0:12        Construct uvec4 ( temp highp 4-component vector of uint)
-0:12          'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
-0:12          'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
+0:12          'gl_SubgroupSize' ( in mediump uint SubgroupSize)
+0:12          'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
 0:12          Constant:
 0:12            0 (const uint)
 0:12          Constant:
@@ -48,8 +48,8 @@ output primitive = points
 0:12              0 (const uint)
 0:12          'gl_PrimitiveIDIn' ( in highp int PrimitiveID)
 0:12        Construct uvec4 ( temp highp 4-component vector of uint)
-0:12          'gl_SubgroupSize' ( in mediump uint unknown built-in variable)
-0:12          'gl_SubgroupInvocationID' ( in mediump uint unknown built-in variable)
+0:12          'gl_SubgroupSize' ( in mediump uint SubgroupSize)
+0:12          'gl_SubgroupInvocationID' ( in mediump uint SubgroupInvocationID)
 0:12          Constant:
 0:12            0 (const uint)
 0:12          Constant:

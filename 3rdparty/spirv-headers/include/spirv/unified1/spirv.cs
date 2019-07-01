@@ -150,6 +150,12 @@ namespace Spv
             DerivativeGroupQuadsNV = 5289,
             DerivativeGroupLinearNV = 5290,
             OutputTrianglesNV = 5298,
+            PixelInterlockOrderedEXT = 5366,
+            PixelInterlockUnorderedEXT = 5367,
+            SampleInterlockOrderedEXT = 5368,
+            SampleInterlockUnorderedEXT = 5369,
+            ShadingRateInterlockOrderedEXT = 5370,
+            ShadingRateInterlockUnorderedEXT = 5371,
         }
 
         public enum StorageClass
@@ -447,6 +453,7 @@ namespace Spv
             HlslCounterBufferGOOGLE = 5634,
             HlslSemanticGOOGLE = 5635,
             UserSemantic = 5635,
+            UserTypeGOOGLE = 5636,
         }
 
         public enum BuiltIn
@@ -549,6 +556,10 @@ namespace Spv
             HitTNV = 5332,
             HitKindNV = 5333,
             IncomingRayFlagsNV = 5351,
+            WarpsPerSMNV = 5374,
+            SMCountNV = 5375,
+            WarpIDNV = 5376,
+            SMIDNV = 5377,
         }
 
         public enum SelectionControlShift
@@ -623,6 +634,7 @@ namespace Spv
             OutputMemoryKHR = 12,
             MakeAvailableKHR = 13,
             MakeVisibleKHR = 14,
+            Volatile = 15,
         }
 
         public enum MemorySemanticsMask
@@ -641,6 +653,7 @@ namespace Spv
             OutputMemoryKHR = 0x00001000,
             MakeAvailableKHR = 0x00002000,
             MakeVisibleKHR = 0x00004000,
+            Volatile = 0x00008000,
         }
 
         public enum MemoryAccessShift
@@ -833,6 +846,10 @@ namespace Spv
             PhysicalStorageBufferAddressesEXT = 5347,
             ComputeDerivativeGroupLinearNV = 5350,
             CooperativeMatrixNV = 5357,
+            FragmentShaderSampleInterlockEXT = 5363,
+            FragmentShaderShadingRateInterlockEXT = 5372,
+            ShaderSMBuiltinsNV = 5373,
+            FragmentShaderPixelInterlockEXT = 5378,
             SubgroupShuffleINTEL = 5568,
             SubgroupBufferBlockIOINTEL = 5569,
             SubgroupImageBlockIOINTEL = 5570,
@@ -1219,6 +1236,8 @@ namespace Spv
             OpCooperativeMatrixStoreNV = 5360,
             OpCooperativeMatrixMulAddNV = 5361,
             OpCooperativeMatrixLengthNV = 5362,
+            OpBeginInvocationInterlockEXT = 5364,
+            OpEndInvocationInterlockEXT = 5365,
             OpSubgroupShuffleINTEL = 5571,
             OpSubgroupShuffleDownINTEL = 5572,
             OpSubgroupShuffleUpINTEL = 5573,

@@ -42,6 +42,11 @@ class StructuredCFGAnalysis {
     return it->second.containing_construct;
   }
 
+  // Returns the id of the header of the innermost merge construct
+  // that contains |inst|.  Returns |0| if |inst| is not contained in any
+  // merge construct.
+  uint32_t ContainingConstruct(Instruction* inst);
+
   // Returns the id of the merge block of the innermost merge construct
   // that contains |bb_id|.  Returns |0| if |bb_id| is not contained in any
   // merge construct.
@@ -68,6 +73,21 @@ class StructuredCFGAnalysis {
   // construct.
   uint32_t LoopContinueBlock(uint32_t bb_id);
 
+  // Returns the id of the header of the innermost switch construct
+  // that contains |bb_id| as long as there is no intervening loop.  Returns |0|
+  // if no such construct exists.
+  uint32_t ContainingSwitch(uint32_t bb_id) {
+    auto it = bb_to_construct_.find(bb_id);
+    if (it == bb_to_construct_.end()) {
+      return 0;
+    }
+    return it->second.containing_switch;
+  }
+  // Returns the id of the merge block of the innermost switch construct
+  // that contains |bb_id| as long as there is no intervening loop.  Return |0|
+  // if no such block exists.
+  uint32_t SwitchMergeBlock(uint32_t bb_id);
+
   bool IsContinueBlock(uint32_t bb_id);
   bool IsMergeBlock(uint32_t bb_id);
 
@@ -82,6 +102,7 @@ class StructuredCFGAnalysis {
   struct ConstructInfo {
     uint32_t containing_construct;
     uint32_t containing_loop;
+    uint32_t containing_switch;
   };
 
   // Populates |bb_to_construct_| with the innermost containing merge and loop

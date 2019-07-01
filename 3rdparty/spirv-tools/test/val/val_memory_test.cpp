@@ -3543,6 +3543,295 @@ OpFunctionEnd
 INSTANTIATE_TEST_SUITE_P(PointerComparisons, ValidatePointerComparisons,
                          Values("OpPtrEqual", "OpPtrNotEqual", "OpPtrDiff"));
 
+TEST_F(ValidateMemory, VariableInitializerWrongType) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpCapability VariablePointersStorageBuffer
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%float = OpTypeFloat 32
+%ptr_wg_int = OpTypePointer Workgroup %int
+%ptr_wg_float = OpTypePointer Workgroup %int
+%wg_var = OpVariable %ptr_wg_int Workgroup
+%ptr_private_wg_float = OpTypePointer Private %ptr_wg_float
+%priv_var = OpVariable %ptr_private_wg_float Private %wg_var
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Initializer type must match the type pointed to by "
+                        "the Result Type"));
+}
+
+TEST_F(ValidateMemory, StoreToUniformBlock) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int4 = OpTypeVector %int 4
+%struct = OpTypeStruct %int4
+%ptr_uniform_struct = OpTypePointer Uniform %struct
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_struct Uniform
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int4 %var %int_0
+%gep2 = OpAccessChain %ptr_uniform_int %gep1 %int_0
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateMemory, StoreToUniformBlockVulkan) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int4 = OpTypeVector %int 4
+%struct = OpTypeStruct %int4
+%ptr_uniform_struct = OpTypePointer Uniform %struct
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_struct Uniform
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int4 %var %int_0
+%gep2 = OpAccessChain %ptr_uniform_int %gep1 %int_0
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("In the Vulkan environment, cannot store to Uniform Blocks"));
+}
+
+// This test requires that the struct is not id 2.
+TEST_F(ValidateMemory, StoreToUniformBlockVulkan2) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %gid_var
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %3 Block
+OpMemberDecorate %3 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+OpDecorate %gid_var BuiltIn GlobalInvocationId
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int3 = OpTypeVector %int 3
+%int4 = OpTypeVector %int 4
+%3 = OpTypeStruct %int4
+%ptr_uniform_struct = OpTypePointer Uniform %3
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_struct Uniform
+%ptr_input_int3 = OpTypePointer Input %int3
+%gid_var = OpVariable %ptr_input_int3 Input
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int4 %var %int_0
+%gep2 = OpAccessChain %ptr_uniform_int %gep1 %int_0
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("In the Vulkan environment, cannot store to Uniform Blocks"));
+}
+
+TEST_F(ValidateMemory, StoreToUniformBufferBlockVulkan) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct BufferBlock
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int4 = OpTypeVector %int 4
+%struct = OpTypeStruct %int4
+%ptr_uniform_struct = OpTypePointer Uniform %struct
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_struct Uniform
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int4 %var %int_0
+%gep2 = OpAccessChain %ptr_uniform_int %gep1 %int_0
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+}
+
+TEST_F(ValidateMemory, StoreToUniformBlockVulkanArray) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%int4 = OpTypeVector %int 4
+%struct = OpTypeStruct %int4
+%array_struct = OpTypeArray %struct %int_1
+%ptr_uniform_array = OpTypePointer Uniform %array_struct
+%ptr_uniform_struct = OpTypePointer Uniform %struct
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_array Uniform
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int %var %int_0 %int_0 %int_0
+%gep2 = OpCopyObject %ptr_uniform_int %gep1
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("In the Vulkan environment, cannot store to Uniform Blocks"));
+}
+
+// This test requires that the struct is not id 2.
+TEST_F(ValidateMemory, StoreToUniformBlockVulkanArray2) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main" %gid_var
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+OpDecorate %gid_var BuiltIn GlobalInvocationId
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%int3 = OpTypeVector %int 3
+%int4 = OpTypeVector %int 4
+%struct = OpTypeStruct %int4
+%array_struct = OpTypeArray %struct %int_1
+%ptr_uniform_array = OpTypePointer Uniform %array_struct
+%ptr_uniform_struct = OpTypePointer Uniform %struct
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_array Uniform
+%ptr_input_int3 = OpTypePointer Input %int3
+%gid_var = OpVariable %ptr_input_int3 Input
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int %var %int_0 %int_0 %int_0
+%gep2 = OpCopyObject %ptr_uniform_int %gep1
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("In the Vulkan environment, cannot store to Uniform Blocks"));
+}
+
+TEST_F(ValidateMemory, StoreToUniformBlockVulkanRuntimeArray) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability RuntimeDescriptorArrayEXT
+OpExtension "SPV_EXT_descriptor_indexing"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
+OpDecorate %var DescriptorSet 0
+OpDecorate %var Binding 0
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int4 = OpTypeVector %int 4
+%struct = OpTypeStruct %int4
+%array_struct = OpTypeRuntimeArray %struct
+%ptr_uniform_array = OpTypePointer Uniform %array_struct
+%ptr_uniform_struct = OpTypePointer Uniform %struct
+%ptr_uniform_int4 = OpTypePointer Uniform %int4
+%ptr_uniform_int = OpTypePointer Uniform %int
+%var = OpVariable %ptr_uniform_array Uniform
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep1 = OpAccessChain %ptr_uniform_int4 %var %int_0 %int_0
+%gep2 = OpInBoundsAccessChain %ptr_uniform_int %gep1 %int_0
+OpStore %gep2 %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("In the Vulkan environment, cannot store to Uniform Blocks"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

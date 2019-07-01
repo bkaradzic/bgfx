@@ -58,6 +58,8 @@ source_set("glslang_sources") {
     "SPIRV/SpvBuilder.cpp",
     "SPIRV/SpvBuilder.h",
     "SPIRV/SpvPostProcess.cpp",
+    "SPIRV/SpvTools.cpp",
+    "SPIRV/SpvTools.h",
     "SPIRV/bitutils.h",
     "SPIRV/disassemble.cpp",
     "SPIRV/disassemble.h",
@@ -104,7 +106,6 @@ source_set("glslang_sources") {
     "glslang/MachineIndependent/attribute.cpp",
     "glslang/MachineIndependent/attribute.h",
     "glslang/MachineIndependent/gl_types.h",
-    "glslang/MachineIndependent/glslang.y",
     "glslang/MachineIndependent/glslang_tab.cpp",
     "glslang/MachineIndependent/glslang_tab.cpp.h",
     "glslang/MachineIndependent/intermOut.cpp",
@@ -130,7 +131,7 @@ source_set("glslang_sources") {
     "glslang/Public/ShaderLang.h",
   ]
 
-  defines = []
+  defines = [ "ENABLE_OPT=1" ]
   if (is_win) {
     sources += [ "glslang/OSDependent/Windows/ossource.cpp" ]
     defines += [ "GLSLANG_OSINCLUDE_WIN32" ]
@@ -158,6 +159,7 @@ source_set("glslang_sources") {
 
   deps = [
     "${spirv_tools_dir}:spvtools_opt",
+    "${spirv_tools_dir}:spvtools_val",
   ]
 }
 
@@ -178,7 +180,7 @@ executable("glslang_validator") {
   if (!is_win) {
     cflags = [ "-Woverflow" ]
   }
-  defines = [ "ENABLE_OPT=0" ]
+  defines = [ "ENABLE_OPT=1" ]
   deps = [
     ":glslang_default_resource_limits_sources",
     ":glslang_sources",

@@ -169,24 +169,43 @@ bool DeadBranchElimPass::MarkLiveBlocks(
 
     if (simplify) {
       modified = true;
-      // Replace with unconditional branch.
-      // Remove the merge instruction if it is a selection merge.
-      AddBranch(live_lab_id, block);
-      context()->KillInst(terminator);
+      // Replace branch with a simpler branch.
+      // Fix up the merge instruction if it is a selection merge.
       Instruction* mergeInst = block->GetMergeInst();
       if (mergeInst && mergeInst->opcode() == SpvOpSelectionMerge) {
-        Instruction* first_break = FindFirstExitFromSelectionMerge(
-            live_lab_id, mergeInst->GetSingleWordInOperand(0),
-            cfgAnalysis->LoopMergeBlock(live_lab_id),
-            cfgAnalysis->LoopContinueBlock(live_lab_id));
-        if (first_break == nullptr) {
-          context()->KillInst(mergeInst);
+        if (mergeInst->NextNode()->opcode() == SpvOpSwitch &&
+            SwitchHasNestedBreak(block->id())) {
+          // We have to keep the switch because it has a nest break, so we
+          // remove all cases except for the live one.
+          Instruction::OperandList new_operands;
+          new_operands.push_back(terminator->GetInOperand(0));
+          new_operands.push_back({SPV_OPERAND_TYPE_ID, {live_lab_id}});
+          terminator->SetInOperands(std::move(new_operands));
+          context()->UpdateDefUse(terminator);
         } else {
-          mergeInst->RemoveFromList();
-          first_break->InsertBefore(std::unique_ptr<Instruction>(mergeInst));
-          context()->set_instr_block(mergeInst,
-                                     context()->get_instr_block(first_break));
+          // Check if the merge instruction is still needed because of a
+          // non-nested break from the construct.  Move the merge instruction if
+          // it is still needed.
+          Instruction* first_break = FindFirstExitFromSelectionMerge(
+              live_lab_id, mergeInst->GetSingleWordInOperand(0),
+              cfgAnalysis->LoopMergeBlock(live_lab_id),
+              cfgAnalysis->LoopContinueBlock(live_lab_id),
+              cfgAnalysis->SwitchMergeBlock(live_lab_id));
+
+          AddBranch(live_lab_id, block);
+          context()->KillInst(terminator);
+          if (first_break == nullptr) {
+            context()->KillInst(mergeInst);
+          } else {
+            mergeInst->RemoveFromList();
+            first_break->InsertBefore(std::unique_ptr<Instruction>(mergeInst));
+            context()->set_instr_block(mergeInst,
+                                       context()->get_instr_block(first_break));
+          }
         }
+      } else {
+        AddBranch(live_lab_id, block);
+        context()->KillInst(terminator);
       }
       stack.push_back(GetParentBlock(live_lab_id));
     } else {
@@ -455,11 +474,12 @@ Pass::Status DeadBranchElimPass::Process() {
 
 Instruction* DeadBranchElimPass::FindFirstExitFromSelectionMerge(
     uint32_t start_block_id, uint32_t merge_block_id, uint32_t loop_merge_id,
-    uint32_t loop_continue_id) {
+    uint32_t loop_continue_id, uint32_t switch_merge_id) {
   // To find the "first" exit, we follow branches looking for a conditional
   // branch that is not in a nested construct and is not the header of a new
   // construct.  We follow the control flow from |start_block_id| to find the
   // first one.
+
   while (start_block_id != merge_block_id && start_block_id != loop_merge_id &&
          start_block_id != loop_continue_id) {
     BasicBlock* start_block = context()->get_instr_block(start_block_id);
@@ -483,6 +503,11 @@ Instruction* DeadBranchElimPass::FindFirstExitFromSelectionMerge(
               next_block_id = branch->GetSingleWordInOperand(3 - i);
               break;
             }
+            if (branch->GetSingleWordInOperand(i) == switch_merge_id &&
+                switch_merge_id != merge_block_id) {
+              next_block_id = branch->GetSingleWordInOperand(3 - i);
+              break;
+            }
           }
 
           if (next_block_id == 0) {
@@ -493,11 +518,15 @@ Instruction* DeadBranchElimPass::FindFirstExitFromSelectionMerge(
       case SpvOpSwitch:
         next_block_id = start_block->MergeBlockIdIfAny();
         if (next_block_id == 0) {
-          // A switch with no merge instructions can have at most 4 targets:
+          // A switch with no merge instructions can have at most 5 targets:
           //   a. |merge_block_id|
           //   b. |loop_merge_id|
           //   c. |loop_continue_id|
-          //   d. 1 block inside the current region.
+          //   d. |switch_merge_id|
+          //   e. 1 block inside the current region.
+          //
+          // Note that because this is a switch, |merge_block_id| must equal
+          // |switch_merge_id|.
           //
           // This leads to a number of cases of what to do.
           //
@@ -511,7 +540,6 @@ Instruction* DeadBranchElimPass::FindFirstExitFromSelectionMerge(
           //
           // 3.  Otherwise, this branch may break, but not to the current merge
           // block.  So we continue with the block that is inside the loop.
-
           bool found_break = false;
           for (uint32_t i = 1; i < branch->NumInOperands(); i += 2) {
             uint32_t target = branch->GetSingleWordInOperand(i);
@@ -583,6 +611,27 @@ void DeadBranchElimPass::AddBlocksWithBackEdge(
       blocks_with_back_edges->insert(bb);
     }
   }
+}
+
+bool DeadBranchElimPass::SwitchHasNestedBreak(uint32_t switch_header_id) {
+  std::vector<BasicBlock*> block_in_construct;
+  BasicBlock* start_block = context()->get_instr_block(switch_header_id);
+  uint32_t merge_block_id = start_block->MergeBlockIdIfAny();
+
+  StructuredCFGAnalysis* cfg_analysis = context()->GetStructuredCFGAnalysis();
+  return !get_def_use_mgr()->WhileEachUser(
+      merge_block_id,
+      [this, cfg_analysis, switch_header_id](Instruction* inst) {
+        if (!inst->IsBranch()) {
+          return true;
+        }
+
+        BasicBlock* bb = context()->get_instr_block(inst);
+        if (bb->id() == switch_header_id) {
+          return true;
+        }
+        return (cfg_analysis->ContainingConstruct(inst) == switch_header_id);
+      });
 }
 
 }  // namespace opt

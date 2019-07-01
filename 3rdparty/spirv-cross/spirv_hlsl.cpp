@@ -2536,6 +2536,7 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 	uint32_t offset = 0;
 	uint32_t coffsets = 0;
 	uint32_t sample = 0;
+	uint32_t minlod = 0;
 	uint32_t flags = 0;
 
 	if (length)
@@ -2562,9 +2563,13 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 	test(offset, ImageOperandsOffsetMask);
 	test(coffsets, ImageOperandsConstOffsetsMask);
 	test(sample, ImageOperandsSampleMask);
+	test(minlod, ImageOperandsMinLodMask);
 
 	string expr;
 	string texop;
+
+	if (minlod != 0)
+		SPIRV_CROSS_THROW("MinLod texture operand not supported in HLSL.");
 
 	if (op == OpImageFetch)
 	{
@@ -4696,6 +4701,8 @@ string CompilerHLSL::compile()
 	backend.can_return_array = false;
 	backend.nonuniform_qualifier = "NonUniformResourceIndex";
 
+	fixup_type_alias();
+	reorder_type_alias();
 	build_function_control_flow_graphs_and_analyze();
 	validate_shader_model();
 	update_active_builtins();

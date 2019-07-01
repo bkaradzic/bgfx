@@ -1,7 +1,7 @@
 spv.controlFlowAttributes.frag
-WARNING: 0:20: '' : attribute with arguments not recognized, skipping 
-WARNING: 0:21: '' : attribute with arguments not recognized, skipping 
-WARNING: 0:22: '' : attribute with arguments not recognized, skipping 
+WARNING: 0:20: 'unroll' : expected no arguments 
+WARNING: 0:21: 'dont_unroll' : expected no arguments 
+WARNING: 0:22: 'dependency_infinite' : expected no arguments 
 WARNING: 0:23: 'dependency_length' : expected a single integer argument 
 WARNING: 0:24: '' : attribute with arguments not recognized, skipping 
 WARNING: 0:25: '' : attribute with arguments not recognized, skipping 

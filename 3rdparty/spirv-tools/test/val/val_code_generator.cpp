@@ -46,6 +46,8 @@ std::string GetDefaultShaderTypes() {
 %bool = OpTypeBool
 %f32 = OpTypeFloat 32
 %f64 = OpTypeFloat 64
+%i32 = OpTypeInt 32 1
+%i64 = OpTypeInt 64 1
 %u32 = OpTypeInt 32 0
 %u64 = OpTypeInt 64 0
 %f32vec2 = OpTypeVector %f32 2

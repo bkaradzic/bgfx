@@ -143,45 +143,6 @@ public:
         }
     }
 
-    // shared calculation by getOffset and getOffsets
-    void updateOffset(const TType& parentType, const TType& memberType, int& offset, int& memberSize)
-    {
-        int dummyStride;
-
-        // modify just the children's view of matrix layout, if there is one for this member
-        TLayoutMatrix subMatrixLayout = memberType.getQualifier().layoutMatrix;
-        int memberAlignment = intermediate.getMemberAlignment(memberType, memberSize, dummyStride,
-                                                              parentType.getQualifier().layoutPacking,
-                                                              subMatrixLayout != ElmNone
-                                                                  ? subMatrixLayout == ElmRowMajor
-                                                                  : parentType.getQualifier().layoutMatrix == ElmRowMajor);
-        RoundToPow2(offset, memberAlignment);
-    }
-
-    // Lookup or calculate the offset of a block member, using the recursively
-    // defined block offset rules.
-    int getOffset(const TType& type, int index)
-    {
-        const TTypeList& memberList = *type.getStruct();
-
-        // Don't calculate offset if one is present, it could be user supplied
-        // and different than what would be calculated.  That is, this is faster,
-        // but not just an optimization.
-        if (memberList[index].type->getQualifier().hasOffset())
-            return memberList[index].type->getQualifier().layoutOffset;
-
-        int memberSize = 0;
-        int offset = 0;
-        for (int m = 0; m <= index; ++m) {
-            updateOffset(type, *memberList[m].type, offset, memberSize);
-
-            if (m < index)
-                offset += memberSize;
-        }
-
-        return offset;
-    }
-
     // Lookup or calculate the offset of all block members at once, using the recursively
     // defined block offset rules.
     void getOffsets(const TType& type, TVector<int>& offsets)
@@ -196,7 +157,7 @@ public:
                 offset = memberList[m].type->getQualifier().layoutOffset;
 
             // calculate the offset of the next member and align the current offset to this member
-            updateOffset(type, *memberList[m].type, offset, memberSize);
+            intermediate.updateOffset(type, *memberList[m].type, offset, memberSize);
 
             // save the offset of this member
             offsets[m] = offset;
@@ -224,23 +185,6 @@ public:
                                             : baseType.getQualifier().layoutMatrix == ElmRowMajor);
 
         return stride;
-    }
-
-    // Calculate the block data size.
-    // Block arrayness is not taken into account, each element is backed by a separate buffer.
-    int getBlockSize(const TType& blockType)
-    {
-        const TTypeList& memberList = *blockType.getStruct();
-        int lastIndex = (int)memberList.size() - 1;
-        int lastOffset = getOffset(blockType, lastIndex);
-
-        int lastMemberSize;
-        int dummyStride;
-        intermediate.getMemberAlignment(*memberList[lastIndex].type, lastMemberSize, dummyStride,
-                                        blockType.getQualifier().layoutPacking,
-                                        blockType.getQualifier().layoutMatrix == ElmRowMajor);
-
-        return lastOffset + lastMemberSize;
     }
 
     // count the total number of leaf members from iterating out of a block type
@@ -349,7 +293,7 @@ public:
             case EOpIndexDirectStruct:
                 index = visitNode->getRight()->getAsConstantUnion()->getConstArray()[0].getIConst();
                 if (offset >= 0)
-                    offset += getOffset(visitNode->getLeft()->getType(), index);
+                    offset += intermediate.getOffset(visitNode->getLeft()->getType(), index);
                 if (name.size() > 0)
                     name.append(".");
                 name.append((*visitNode->getLeft()->getType().getStruct())[index].type->getFieldName());
@@ -592,10 +536,10 @@ public:
                 assert(! anonymous);
                 for (int e = 0; e < base->getType().getCumulativeArraySize(); ++e)
                     blockIndex = addBlockName(blockName + "[" + String(e) + "]", derefType,
-                                              getBlockSize(base->getType()));
+                                              intermediate.getBlockSize(base->getType()));
                 baseName.append(TString("[0]"));
             } else
-                blockIndex = addBlockName(blockName, base->getType(), getBlockSize(base->getType()));
+                blockIndex = addBlockName(blockName, base->getType(), intermediate.getBlockSize(base->getType()));
 
             if (reflection.options & EShReflectionAllBlockVariables) {
                 // Use a degenerate (empty) set of dereferences to immediately put as at the end of

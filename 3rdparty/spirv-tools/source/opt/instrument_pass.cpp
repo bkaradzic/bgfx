@@ -143,23 +143,21 @@ void InstrumentPass::GenFragCoordEltDebugOutputCode(
                           element_val_inst->result_id(), builder);
 }
 
+uint32_t InstrumentPass::GenVarLoad(uint32_t var_id,
+                                    InstructionBuilder* builder) {
+  Instruction* var_inst = get_def_use_mgr()->GetDef(var_id);
+  uint32_t type_id = GetPointeeTypeId(var_inst);
+  Instruction* load_inst = builder->AddUnaryOp(type_id, SpvOpLoad, var_id);
+  return load_inst->result_id();
+}
+
 void InstrumentPass::GenBuiltinOutputCode(uint32_t builtin_id,
                                           uint32_t builtin_off,
                                           uint32_t base_offset_id,
                                           InstructionBuilder* builder) {
   // Load and store builtin
-  Instruction* var_inst = get_def_use_mgr()->GetDef(builtin_id);
-  uint32_t type_id = GetPointeeTypeId(var_inst);
-  Instruction* load_inst = builder->AddUnaryOp(type_id, SpvOpLoad, builtin_id);
-  uint32_t val_id = GenUintCastCode(load_inst->result_id(), builder);
-  GenDebugOutputFieldCode(base_offset_id, builtin_off, val_id, builder);
-}
-
-void InstrumentPass::GenUintNullOutputCode(uint32_t field_off,
-                                           uint32_t base_offset_id,
-                                           InstructionBuilder* builder) {
-  GenDebugOutputFieldCode(base_offset_id, field_off,
-                          builder->GetNullId(GetUintId()), builder);
+  uint32_t load_id = GenVarLoad(builtin_id, builder);
+  GenDebugOutputFieldCode(base_offset_id, builtin_off, load_id, builder);
 }
 
 void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
@@ -169,37 +167,97 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
   switch (stage_idx) {
     case SpvExecutionModelVertex: {
       // Load and store VertexId and InstanceId
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInVertexIndex),
-                           kInstVertOutVertexIndex, base_offset_id, builder);
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInstanceIndex),
-                           kInstVertOutInstanceIndex, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInVertexIndex),
+          kInstVertOutVertexIndex, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInInstanceIndex),
+          kInstVertOutInstanceIndex, base_offset_id, builder);
     } break;
     case SpvExecutionModelGLCompute: {
-      // Load and store GlobalInvocationId. Second word is unused; store zero.
-      GenBuiltinOutputCode(
-          context()->GetBuiltinVarId(SpvBuiltInGlobalInvocationId),
-          kInstCompOutGlobalInvocationId, base_offset_id, builder);
-      GenUintNullOutputCode(kInstCompOutUnused, base_offset_id, builder);
+      // Load and store GlobalInvocationId.
+      uint32_t load_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(SpvBuiltInGlobalInvocationId),
+          builder);
+      Instruction* x_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, load_id, 0);
+      Instruction* y_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, load_id, 1);
+      Instruction* z_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, load_id, 2);
+      if (version_ == 1) {
+        // For version 1 format, as a stopgap, pack uvec3 into first word:
+        // x << 21 | y << 10 | z. Second word is unused. (DEPRECATED)
+        Instruction* x_shft_inst = builder->AddBinaryOp(
+            GetUintId(), SpvOpShiftLeftLogical, x_inst->result_id(),
+            builder->GetUintConstantId(21));
+        Instruction* y_shft_inst = builder->AddBinaryOp(
+            GetUintId(), SpvOpShiftLeftLogical, y_inst->result_id(),
+            builder->GetUintConstantId(10));
+        Instruction* x_or_y_inst = builder->AddBinaryOp(
+            GetUintId(), SpvOpBitwiseOr, x_shft_inst->result_id(),
+            y_shft_inst->result_id());
+        Instruction* x_or_y_or_z_inst =
+            builder->AddBinaryOp(GetUintId(), SpvOpBitwiseOr,
+                                 x_or_y_inst->result_id(), z_inst->result_id());
+        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationId,
+                                x_or_y_or_z_inst->result_id(), builder);
+      } else {
+        // For version 2 format, write all three words
+        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdX,
+                                x_inst->result_id(), builder);
+        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdY,
+                                y_inst->result_id(), builder);
+        GenDebugOutputFieldCode(base_offset_id, kInstCompOutGlobalInvocationIdZ,
+                                z_inst->result_id(), builder);
+      }
     } break;
     case SpvExecutionModelGeometry: {
       // Load and store PrimitiveId and InvocationId.
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInPrimitiveId),
-                           kInstGeomOutPrimitiveId, base_offset_id, builder);
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInvocationId),
-                           kInstGeomOutInvocationId, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+          kInstGeomOutPrimitiveId, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInInvocationId),
+          kInstGeomOutInvocationId, base_offset_id, builder);
     } break;
-    case SpvExecutionModelTessellationControl:
+    case SpvExecutionModelTessellationControl: {
+      // Load and store InvocationId and PrimitiveId
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInInvocationId),
+          kInstTessCtlOutInvocationId, base_offset_id, builder);
+      GenBuiltinOutputCode(
+          context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+          kInstTessCtlOutPrimitiveId, base_offset_id, builder);
+    } break;
     case SpvExecutionModelTessellationEvaluation: {
-      // Load and store InvocationId. Second word is unused; store zero.
-      GenBuiltinOutputCode(context()->GetBuiltinVarId(SpvBuiltInInvocationId),
-                           kInstTessOutInvocationId, base_offset_id, builder);
-      GenUintNullOutputCode(kInstTessOutUnused, base_offset_id, builder);
+      if (version_ == 1) {
+        // For format version 1, load and store InvocationId.
+        GenBuiltinOutputCode(
+            context()->GetBuiltinInputVarId(SpvBuiltInInvocationId),
+            kInstTessOutInvocationId, base_offset_id, builder);
+      } else {
+        // For format version 2, load and store PrimitiveId and TessCoord.uv
+        GenBuiltinOutputCode(
+            context()->GetBuiltinInputVarId(SpvBuiltInPrimitiveId),
+            kInstTessEvalOutPrimitiveId, base_offset_id, builder);
+        uint32_t load_id = GenVarLoad(
+            context()->GetBuiltinInputVarId(SpvBuiltInTessCoord), builder);
+        Instruction* u_inst = builder->AddIdLiteralOp(
+            GetUintId(), SpvOpCompositeExtract, load_id, 0);
+        Instruction* v_inst = builder->AddIdLiteralOp(
+            GetUintId(), SpvOpCompositeExtract, load_id, 1);
+        GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordU,
+                                u_inst->result_id(), builder);
+        GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordV,
+                                v_inst->result_id(), builder);
+      }
     } break;
     case SpvExecutionModelFragment: {
       // Load FragCoord and convert to Uint
-      Instruction* frag_coord_inst =
-          builder->AddUnaryOp(GetVec4FloatId(), SpvOpLoad,
-                              context()->GetBuiltinVarId(SpvBuiltInFragCoord));
+      Instruction* frag_coord_inst = builder->AddUnaryOp(
+          GetVec4FloatId(), SpvOpLoad,
+          context()->GetBuiltinInputVarId(SpvBuiltInFragCoord));
       Instruction* uint_frag_coord_inst = builder->AddUnaryOp(
           GetVec4UintId(), SpvOpBitcast, frag_coord_inst->result_id());
       for (uint32_t u = 0; u < 2u; ++u)
@@ -547,7 +605,9 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
         context(), &*new_blk_ptr,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     // Gen test if debug output buffer size will not be exceeded.
-    uint32_t obuf_record_sz = kInstStageOutCnt + val_spec_param_cnt;
+    uint32_t val_spec_offset =
+        (version_ == 1) ? kInstStageOutCnt : kInst2StageOutCnt;
+    uint32_t obuf_record_sz = val_spec_offset + val_spec_param_cnt;
     uint32_t buf_id = GetOutputBufferId();
     uint32_t buf_uint_ptr_id = GetBufferUintPtrId();
     Instruction* obuf_curr_sz_ac_inst =
@@ -593,7 +653,7 @@ uint32_t InstrumentPass::GetStreamWriteFunctionId(uint32_t stage_idx,
     GenStageStreamWriteCode(stage_idx, obuf_curr_sz_id, &builder);
     // Gen writes of validation specific data
     for (uint32_t i = 0; i < val_spec_param_cnt; ++i) {
-      GenDebugOutputFieldCode(obuf_curr_sz_id, kInstStageOutCnt + i,
+      GenDebugOutputFieldCode(obuf_curr_sz_id, val_spec_offset + i,
                               param_vec[kInstCommonParamCnt + i], &builder);
     }
     // Close write block and gen merge block

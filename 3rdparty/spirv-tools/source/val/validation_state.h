@@ -548,6 +548,7 @@ class ValidationState_t {
 
   // Returns true iff |id| is a type corresponding to the name of the function.
   // Only works for types not for objects.
+  bool IsVoidType(uint32_t id) const;
   bool IsFloatScalarType(uint32_t id) const;
   bool IsFloatVectorType(uint32_t id) const;
   bool IsFloatScalarOrVectorType(uint32_t id) const;
@@ -678,6 +679,15 @@ class ValidationState_t {
   // If |check_decorations| is false, then the decorations are not checked.
   bool LogicallyMatch(const Instruction* lhs, const Instruction* rhs,
                       bool check_decorations);
+
+  // Traces |inst| to find a single base pointer. Returns the base pointer.
+  // Will trace through the following instructions:
+  // * OpAccessChain
+  // * OpInBoundsAccessChain
+  // * OpPtrAccessChain
+  // * OpInBoundsPtrAccessChain
+  // * OpCopyObject
+  const Instruction* TracePointer(const Instruction* inst) const;
 
  private:
   ValidationState_t(const ValidationState_t&);

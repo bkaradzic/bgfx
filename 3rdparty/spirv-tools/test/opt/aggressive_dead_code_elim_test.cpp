@@ -3811,7 +3811,7 @@ OpName %output "output"
 %6 = OpTypeFunction %void
 %float = OpTypeFloat 32
 %_ptr_Private_float = OpTypePointer Private %float
-%initializer = OpVariable %_ptr_Private_float Private
+%initializer = OpConstant %float 0
 %live = OpVariable %_ptr_Private_float Private %initializer
 %_ptr_Output_float = OpTypePointer Output %float
 %output = OpVariable %_ptr_Output_float Output

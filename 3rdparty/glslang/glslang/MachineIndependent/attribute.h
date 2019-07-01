@@ -71,7 +71,12 @@ namespace glslang {
         EatPushConstant,
         EatConstantId,
         EatDependencyInfinite,
-        EatDependencyLength
+        EatDependencyLength,
+        EatMinIterations,
+        EatMaxIterations,
+        EatIterationMultiple,
+        EatPeelCount,
+        EatPartialCount
     };
 
     class TIntermAggregate;

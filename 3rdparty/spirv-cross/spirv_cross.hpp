@@ -123,7 +123,10 @@ enum ExtendedDecorations
 	SPIRVCrossDecorationPackedType,
 	SPIRVCrossDecorationInterfaceMemberIndex,
 	SPIRVCrossDecorationInterfaceOrigID,
-	SPIRVCrossDecorationArgumentBufferID
+	SPIRVCrossDecorationResourceIndexPrimary,
+	// Used for decorations like resource indices for samplers when part of combined image samplers.
+	// A variable might need to hold two resource indices in this case.
+	SPIRVCrossDecorationResourceIndexSecondary,
 };
 
 class Compiler
@@ -669,6 +672,7 @@ protected:
 	bool block_is_outside_flow_control_from_block(const SPIRBlock &from, const SPIRBlock &to);
 
 	bool execution_is_branchless(const SPIRBlock &from, const SPIRBlock &to) const;
+	bool execution_is_direct_branch(const SPIRBlock &from, const SPIRBlock &to) const;
 	bool execution_is_noop(const SPIRBlock &from, const SPIRBlock &to) const;
 	SPIRBlock::ContinueBlockType continue_block_type(const SPIRBlock &continue_block) const;
 
@@ -947,6 +951,7 @@ protected:
 	void analyze_variable_scope(SPIRFunction &function, AnalyzeVariableScopeAccessHandler &handler);
 	void find_function_local_luts(SPIRFunction &function, const AnalyzeVariableScopeAccessHandler &handler,
 	                              bool single_function);
+	bool may_read_undefined_variable_in_block(const SPIRBlock &block, uint32_t var);
 
 	void make_constant_null(uint32_t id, uint32_t type);
 
@@ -972,15 +977,16 @@ protected:
 	void unset_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration);
 
 	bool type_is_array_of_pointers(const SPIRType &type) const;
+	bool type_is_block_like(const SPIRType &type) const;
+	bool type_is_opaque_value(const SPIRType &type) const;
+
+	bool reflection_ssbo_instance_name_is_significant() const;
+	std::string get_remapped_declared_block_name(uint32_t id, bool fallback_prefer_instance_name) const;
 
 private:
 	// Used only to implement the old deprecated get_entry_point() interface.
 	const SPIREntryPoint &get_first_entry_point(const std::string &name) const;
 	SPIREntryPoint &get_first_entry_point(const std::string &name);
-
-	void fixup_type_alias();
-	bool type_is_block_like(const SPIRType &type) const;
-	bool type_is_opaque_value(const SPIRType &type) const;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

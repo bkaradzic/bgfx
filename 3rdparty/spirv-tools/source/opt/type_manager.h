@@ -209,6 +209,8 @@ class TypeManager {
 
   IdToTypeMap id_to_incomplete_type_;  // Maps ids to their type representations
                                        // for incomplete types.
+
+  std::unordered_map<uint32_t, const Instruction*> id_to_constant_inst_;
 };
 
 }  // namespace analysis
