@@ -17,26 +17,33 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |message.fresh_id| must not be used by the module.
-// - The module must not yet declare OpTypeBoolean
-bool IsApplicable(const protobufs::TransformationAddTypeBoolean& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationAddTypeBoolean : public Transformation {
+ public:
+  explicit TransformationAddTypeBoolean(
+      const protobufs::TransformationAddTypeBoolean& message);
 
-// Adds OpTypeBoolean with |message.fresh_id| as result id.
-void Apply(const protobufs::TransformationAddTypeBoolean& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  explicit TransformationAddTypeBoolean(uint32_t fresh_id);
 
-// Helper factory to create a transformation message.
-protobufs::TransformationAddTypeBoolean MakeTransformationAddTypeBoolean(
-    uint32_t fresh_id);
+  // - |message_.fresh_id| must not be used by the module.
+  // - The module must not yet declare OpTypeBoolean
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // Adds OpTypeBoolean with |message_.fresh_id| as result id.
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationAddTypeBoolean message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

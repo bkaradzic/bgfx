@@ -99,46 +99,35 @@ TEST(TransformationAddTypePointerTest, BasicTest) {
   FactManager fact_manager;
 
   auto bad_type_id_does_not_exist =
-      transformation::MakeTransformationAddTypePointer(
-          100, SpvStorageClassFunction, 101);
+      TransformationAddTypePointer(100, SpvStorageClassFunction, 101);
   auto bad_type_id_is_not_type =
-      transformation::MakeTransformationAddTypePointer(
-          100, SpvStorageClassFunction, 23);
+      TransformationAddTypePointer(100, SpvStorageClassFunction, 23);
   auto bad_result_id_is_not_fresh =
-      transformation::MakeTransformationAddTypePointer(
-          17, SpvStorageClassFunction, 21);
+      TransformationAddTypePointer(17, SpvStorageClassFunction, 21);
 
   auto good_new_private_pointer_to_t =
-      transformation::MakeTransformationAddTypePointer(
-          101, SpvStorageClassPrivate, 7);
+      TransformationAddTypePointer(101, SpvStorageClassPrivate, 7);
   auto good_new_uniform_pointer_to_t =
-      transformation::MakeTransformationAddTypePointer(
-          102, SpvStorageClassUniform, 7);
+      TransformationAddTypePointer(102, SpvStorageClassUniform, 7);
   auto good_another_function_pointer_to_s =
-      transformation::MakeTransformationAddTypePointer(
-          103, SpvStorageClassFunction, 8);
+      TransformationAddTypePointer(103, SpvStorageClassFunction, 8);
   auto good_new_uniform_pointer_to_s =
-      transformation::MakeTransformationAddTypePointer(
-          104, SpvStorageClassUniform, 8);
+      TransformationAddTypePointer(104, SpvStorageClassUniform, 8);
   auto good_another_private_pointer_to_float =
-      transformation::MakeTransformationAddTypePointer(
-          105, SpvStorageClassPrivate, 21);
+      TransformationAddTypePointer(105, SpvStorageClassPrivate, 21);
   auto good_new_private_pointer_to_private_pointer_to_float =
-      transformation::MakeTransformationAddTypePointer(
-          106, SpvStorageClassPrivate, 105);
+      TransformationAddTypePointer(106, SpvStorageClassPrivate, 105);
   auto good_new_uniform_pointer_to_vec2 =
-      transformation::MakeTransformationAddTypePointer(
-          107, SpvStorageClassUniform, 24);
+      TransformationAddTypePointer(107, SpvStorageClassUniform, 24);
   auto good_new_private_pointer_to_uniform_pointer_to_vec2 =
-      transformation::MakeTransformationAddTypePointer(
-          108, SpvStorageClassPrivate, 107);
+      TransformationAddTypePointer(108, SpvStorageClassPrivate, 107);
 
-  ASSERT_FALSE(transformation::IsApplicable(bad_type_id_does_not_exist,
-                                            context.get(), fact_manager));
-  ASSERT_FALSE(transformation::IsApplicable(bad_type_id_is_not_type,
-                                            context.get(), fact_manager));
-  ASSERT_FALSE(transformation::IsApplicable(bad_result_id_is_not_fresh,
-                                            context.get(), fact_manager));
+  ASSERT_FALSE(
+      bad_type_id_does_not_exist.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(
+      bad_type_id_is_not_type.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(
+      bad_result_id_is_not_fresh.IsApplicable(context.get(), fact_manager));
 
   for (auto& transformation :
        {good_new_private_pointer_to_t, good_new_uniform_pointer_to_t,
@@ -147,9 +136,8 @@ TEST(TransformationAddTypePointerTest, BasicTest) {
         good_new_private_pointer_to_private_pointer_to_float,
         good_new_uniform_pointer_to_vec2,
         good_new_private_pointer_to_uniform_pointer_to_vec2}) {
-    ASSERT_TRUE(transformation::IsApplicable(transformation, context.get(),
-                                             fact_manager));
-    transformation::Apply(transformation, context.get(), &fact_manager);
+    ASSERT_TRUE(transformation.IsApplicable(context.get(), fact_manager));
+    transformation.Apply(context.get(), &fact_manager);
     ASSERT_TRUE(IsValid(env, context.get()));
   }
 

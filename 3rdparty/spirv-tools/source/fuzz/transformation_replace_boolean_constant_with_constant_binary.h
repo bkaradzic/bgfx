@@ -17,42 +17,53 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |message.fresh_id_for_binary_operation| must not already be used by the
-//   module.
-// - |message.id_use_descriptor| must identify a use of a boolean constant c.
-// - |message.lhs_id| and |message.rhs_id| must be the ids of constant
-//   instructions with the same type
-// - |message.opcode| must be suitable for applying to |message.lhs_id| and
-//   |message.rhs_id|, and the result must evaluate to the boolean constant c.
-bool IsApplicable(
-    const protobufs::TransformationReplaceBooleanConstantWithConstantBinary&
-        message,
-    opt::IRContext* context, const FactManager& fact_manager);
+class TransformationReplaceBooleanConstantWithConstantBinary
+    : public Transformation {
+ public:
+  explicit TransformationReplaceBooleanConstantWithConstantBinary(
+      const protobufs::TransformationReplaceBooleanConstantWithConstantBinary&
+          message);
 
-// A new instruction is added before the boolean constant usage that computes
-// the result of applying |message.opcode| to |message.lhs_id| and
-// |message.rhs_id| is added, with result id
-// |message.fresh_id_for_binary_operation|.  The boolean constant usage is
-// replaced with this result id.
-opt::Instruction* Apply(
-    const protobufs::TransformationReplaceBooleanConstantWithConstantBinary&
-        message,
-    opt::IRContext* context, FactManager* fact_manager);
+  TransformationReplaceBooleanConstantWithConstantBinary(
+      const protobufs::IdUseDescriptor& id_use_descriptor, uint32_t lhs_id,
+      uint32_t rhs_id, SpvOp comparison_opcode,
+      uint32_t fresh_id_for_binary_operation);
 
-// Helper factory to create a transformation message.
-protobufs::TransformationReplaceBooleanConstantWithConstantBinary
-MakeTransformationReplaceBooleanConstantWithConstantBinary(
-    const protobufs::IdUseDescriptor& id_use_descriptor, uint32_t lhs_id,
-    uint32_t rhs_id, SpvOp comparison_opcode,
-    uint32_t fresh_id_for_binary_operation);
+  // - |message_.fresh_id_for_binary_operation| must not already be used by the
+  //   module.
+  // - |message_.id_use_descriptor| must identify a use of a boolean constant c.
+  // - |message_.lhs_id| and |message.rhs_id| must be the ids of constant
+  //   instructions with the same type
+  // - |message_.opcode| must be suitable for applying to |message.lhs_id| and
+  //   |message_.rhs_id|, and the result must evaluate to the boolean constant
+  //   c.
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // A new instruction is added before the boolean constant usage that computes
+  // the result of applying |message_.opcode| to |message_.lhs_id| and
+  // |message_.rhs_id| is added, with result id
+  // |message_.fresh_id_for_binary_operation|.  The boolean constant usage is
+  // replaced with this result id.
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  // The same as Apply, except that the newly-added binary instruction is
+  // returned.
+  opt::Instruction* ApplyWithResult(opt::IRContext* context,
+                                    FactManager* fact_manager) const;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationReplaceBooleanConstantWithConstantBinary message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

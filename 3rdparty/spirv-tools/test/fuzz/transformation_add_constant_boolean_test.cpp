@@ -45,52 +45,40 @@ TEST(TransformationAddConstantBooleanTest, NeitherPresentInitiallyAddBoth) {
   FactManager fact_manager;
 
   // True and false can both be added as neither is present.
-  ASSERT_TRUE(transformation::IsApplicable(
-      transformation::MakeTransformationAddConstantBoolean(7, true),
+  ASSERT_TRUE(TransformationAddConstantBoolean(7, true).IsApplicable(
       context.get(), fact_manager));
-  ASSERT_TRUE(transformation::IsApplicable(
-      transformation::MakeTransformationAddConstantBoolean(7, false),
+  ASSERT_TRUE(TransformationAddConstantBoolean(7, false).IsApplicable(
       context.get(), fact_manager));
 
   // Id 5 is already taken.
-  ASSERT_FALSE(transformation::IsApplicable(
-      transformation::MakeTransformationAddConstantBoolean(5, true),
+  ASSERT_FALSE(TransformationAddConstantBoolean(5, true).IsApplicable(
       context.get(), fact_manager));
 
-  auto add_true = transformation::MakeTransformationAddConstantBoolean(7, true);
-  auto add_false =
-      transformation::MakeTransformationAddConstantBoolean(8, false);
+  auto add_true = TransformationAddConstantBoolean(7, true);
+  auto add_false = TransformationAddConstantBoolean(8, false);
 
-  ASSERT_TRUE(
-      transformation::IsApplicable(add_true, context.get(), fact_manager));
-  transformation::Apply(add_true, context.get(), &fact_manager);
+  ASSERT_TRUE(add_true.IsApplicable(context.get(), fact_manager));
+  add_true.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Having added true, we cannot add it again with the same id.
-  ASSERT_FALSE(
-      transformation::IsApplicable(add_true, context.get(), fact_manager));
+  ASSERT_FALSE(add_true.IsApplicable(context.get(), fact_manager));
   // But we can add it with a different id.
-  auto add_true_again =
-      transformation::MakeTransformationAddConstantBoolean(100, true);
-  ASSERT_TRUE(transformation::IsApplicable(add_true_again, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_true_again, context.get(), &fact_manager);
+  auto add_true_again = TransformationAddConstantBoolean(100, true);
+  ASSERT_TRUE(add_true_again.IsApplicable(context.get(), fact_manager));
+  add_true_again.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(
-      transformation::IsApplicable(add_false, context.get(), fact_manager));
-  transformation::Apply(add_false, context.get(), &fact_manager);
+  ASSERT_TRUE(add_false.IsApplicable(context.get(), fact_manager));
+  add_false.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Having added false, we cannot add it again with the same id.
-  ASSERT_FALSE(
-      transformation::IsApplicable(add_false, context.get(), fact_manager));
+  ASSERT_FALSE(add_false.IsApplicable(context.get(), fact_manager));
   // But we can add it with a different id.
-  auto add_false_again =
-      transformation::MakeTransformationAddConstantBoolean(101, false);
-  ASSERT_TRUE(transformation::IsApplicable(add_false_again, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_false_again, context.get(), &fact_manager);
+  auto add_false_again = TransformationAddConstantBoolean(101, false);
+  ASSERT_TRUE(add_false_again.IsApplicable(context.get(), fact_manager));
+  add_false_again.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   std::string after_transformation = R"(
@@ -142,11 +130,9 @@ TEST(TransformationAddConstantBooleanTest, NoOpTypeBoolPresent) {
   FactManager fact_manager;
 
   // Neither true nor false can be added as OpTypeBool is not present.
-  ASSERT_FALSE(transformation::IsApplicable(
-      transformation::MakeTransformationAddConstantBoolean(6, true),
+  ASSERT_FALSE(TransformationAddConstantBoolean(6, true).IsApplicable(
       context.get(), fact_manager));
-  ASSERT_FALSE(transformation::IsApplicable(
-      transformation::MakeTransformationAddConstantBoolean(6, false),
+  ASSERT_FALSE(TransformationAddConstantBoolean(6, false).IsApplicable(
       context.get(), fact_manager));
 }
 

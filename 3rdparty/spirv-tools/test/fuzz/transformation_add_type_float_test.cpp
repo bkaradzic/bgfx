@@ -44,21 +44,17 @@ TEST(TransformationAddTypeFloatTest, BasicTest) {
   FactManager fact_manager;
 
   // Not applicable because id 1 is already in use.
-  ASSERT_FALSE(transformation::IsApplicable(
-      transformation::MakeTransformationAddTypeFloat(1, 32), context.get(),
-      fact_manager));
+  ASSERT_FALSE(TransformationAddTypeFloat(1, 32).IsApplicable(context.get(),
+                                                              fact_manager));
 
-  auto add_type_float_32 =
-      transformation::MakeTransformationAddTypeFloat(100, 32);
-  ASSERT_TRUE(transformation::IsApplicable(add_type_float_32, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_type_float_32, context.get(), &fact_manager);
+  auto add_type_float_32 = TransformationAddTypeFloat(100, 32);
+  ASSERT_TRUE(add_type_float_32.IsApplicable(context.get(), fact_manager));
+  add_type_float_32.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Not applicable as we already have this type now.
-  ASSERT_FALSE(transformation::IsApplicable(
-      transformation::MakeTransformationAddTypeFloat(101, 32), context.get(),
-      fact_manager));
+  ASSERT_FALSE(TransformationAddTypeFloat(101, 32).IsApplicable(context.get(),
+                                                                fact_manager));
 
   std::string after_transformation = R"(
                OpCapability Shader

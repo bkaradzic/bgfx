@@ -18,44 +18,48 @@
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-using opt::IRContext;
+TransformationAddTypePointer::TransformationAddTypePointer(
+    const spvtools::fuzz::protobufs::TransformationAddTypePointer& message)
+    : message_(message) {}
 
-bool IsApplicable(const protobufs::TransformationAddTypePointer& message,
-                  IRContext* context,
-                  const spvtools::fuzz::FactManager& /*unused*/) {
+TransformationAddTypePointer::TransformationAddTypePointer(
+    uint32_t fresh_id, SpvStorageClass storage_class, uint32_t base_type_id) {
+  message_.set_fresh_id(fresh_id);
+  message_.set_storage_class(storage_class);
+  message_.set_base_type_id(base_type_id);
+}
+
+bool TransformationAddTypePointer::IsApplicable(
+    opt::IRContext* context,
+    const spvtools::fuzz::FactManager& /*unused*/) const {
   // The id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
     return false;
   }
   // The base type must be known.
-  return context->get_type_mgr()->GetType(message.base_type_id()) != nullptr;
+  return context->get_type_mgr()->GetType(message_.base_type_id()) != nullptr;
 }
 
-void Apply(const protobufs::TransformationAddTypePointer& message,
-           IRContext* context, spvtools::fuzz::FactManager* /*unused*/) {
+void TransformationAddTypePointer::Apply(
+    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
   // Add the pointer type.
   opt::Instruction::OperandList in_operands = {
-      {SPV_OPERAND_TYPE_STORAGE_CLASS, {message.storage_class()}},
-      {SPV_OPERAND_TYPE_ID, {message.base_type_id()}}};
+      {SPV_OPERAND_TYPE_STORAGE_CLASS, {message_.storage_class()}},
+      {SPV_OPERAND_TYPE_ID, {message_.base_type_id()}}};
   context->module()->AddType(MakeUnique<opt::Instruction>(
-      context, SpvOpTypePointer, 0, message.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message.fresh_id());
+      context, SpvOpTypePointer, 0, message_.fresh_id(), in_operands));
+  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(IRContext::Analysis::kAnalysisNone);
+  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 }
 
-protobufs::TransformationAddTypePointer MakeTransformationAddTypePointer(
-    uint32_t fresh_id, SpvStorageClass storage_class, uint32_t base_type_id) {
-  protobufs::TransformationAddTypePointer result;
-  result.set_fresh_id(fresh_id);
-  result.set_storage_class(storage_class);
-  result.set_base_type_id(base_type_id);
+protobufs::Transformation TransformationAddTypePointer::ToMessage() const {
+  protobufs::Transformation result;
+  *result.mutable_add_type_pointer() = message_;
   return result;
 }
 
-}  // namespace transformation
 }  // namespace fuzz
 }  // namespace spvtools

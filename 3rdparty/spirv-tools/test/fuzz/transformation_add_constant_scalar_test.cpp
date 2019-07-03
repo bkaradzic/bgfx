@@ -67,97 +67,75 @@ TEST(TransformationAddConstantScalarTest, BasicTest) {
   uint32_t uint_for_float[2];
   memcpy(uint_for_float, float_values, sizeof(float_values));
 
-  auto add_signed_int_1 =
-      transformation::MakeTransformationAddConstantScalar(100, 6, {1});
-  auto add_signed_int_10 =
-      transformation::MakeTransformationAddConstantScalar(101, 6, {10});
-  auto add_unsigned_int_2 =
-      transformation::MakeTransformationAddConstantScalar(102, 10, {2});
-  auto add_unsigned_int_20 =
-      transformation::MakeTransformationAddConstantScalar(103, 10, {20});
-  auto add_float_3 = transformation::MakeTransformationAddConstantScalar(
-      104, 14, {uint_for_float[0]});
-  auto add_float_30 = transformation::MakeTransformationAddConstantScalar(
-      105, 14, {uint_for_float[1]});
+  auto add_signed_int_1 = TransformationAddConstantScalar(100, 6, {1});
+  auto add_signed_int_10 = TransformationAddConstantScalar(101, 6, {10});
+  auto add_unsigned_int_2 = TransformationAddConstantScalar(102, 10, {2});
+  auto add_unsigned_int_20 = TransformationAddConstantScalar(103, 10, {20});
+  auto add_float_3 =
+      TransformationAddConstantScalar(104, 14, {uint_for_float[0]});
+  auto add_float_30 =
+      TransformationAddConstantScalar(105, 14, {uint_for_float[1]});
   auto bad_add_float_30_id_already_used =
-      transformation::MakeTransformationAddConstantScalar(104, 14,
-                                                          {uint_for_float[1]});
-  auto bad_id_already_used =
-      transformation::MakeTransformationAddConstantScalar(1, 6, {1});
-  auto bad_no_data =
-      transformation::MakeTransformationAddConstantScalar(100, 6, {});
-  auto bad_too_much_data =
-      transformation::MakeTransformationAddConstantScalar(100, 6, {1, 2});
+      TransformationAddConstantScalar(104, 14, {uint_for_float[1]});
+  auto bad_id_already_used = TransformationAddConstantScalar(1, 6, {1});
+  auto bad_no_data = TransformationAddConstantScalar(100, 6, {});
+  auto bad_too_much_data = TransformationAddConstantScalar(100, 6, {1, 2});
   auto bad_type_id_does_not_exist =
-      transformation::MakeTransformationAddConstantScalar(108, 2020,
-                                                          {uint_for_float[0]});
-  auto bad_type_id_is_not_a_type =
-      transformation::MakeTransformationAddConstantScalar(109, 9, {0});
-  auto bad_type_id_is_void =
-      transformation::MakeTransformationAddConstantScalar(110, 2, {0});
-  auto bad_type_id_is_pointer =
-      transformation::MakeTransformationAddConstantScalar(111, 11, {0});
+      TransformationAddConstantScalar(108, 2020, {uint_for_float[0]});
+  auto bad_type_id_is_not_a_type = TransformationAddConstantScalar(109, 9, {0});
+  auto bad_type_id_is_void = TransformationAddConstantScalar(110, 2, {0});
+  auto bad_type_id_is_pointer = TransformationAddConstantScalar(111, 11, {0});
 
   // Id is already in use.
-  ASSERT_FALSE(transformation::IsApplicable(bad_id_already_used, context.get(),
-                                            fact_manager));
+  ASSERT_FALSE(bad_id_already_used.IsApplicable(context.get(), fact_manager));
 
   // At least one word of data must be provided.
-  ASSERT_FALSE(
-      transformation::IsApplicable(bad_no_data, context.get(), fact_manager));
+  ASSERT_FALSE(bad_no_data.IsApplicable(context.get(), fact_manager));
 
   // Cannot give two data words for a 32-bit type.
-  ASSERT_FALSE(transformation::IsApplicable(bad_too_much_data, context.get(),
-                                            fact_manager));
+  ASSERT_FALSE(bad_too_much_data.IsApplicable(context.get(), fact_manager));
 
   // Type id does not exist
-  ASSERT_FALSE(transformation::IsApplicable(bad_type_id_does_not_exist,
-                                            context.get(), fact_manager));
+  ASSERT_FALSE(
+      bad_type_id_does_not_exist.IsApplicable(context.get(), fact_manager));
 
   // Type id is not a type
-  ASSERT_FALSE(transformation::IsApplicable(bad_type_id_is_not_a_type,
-                                            context.get(), fact_manager));
+  ASSERT_FALSE(
+      bad_type_id_is_not_a_type.IsApplicable(context.get(), fact_manager));
 
   // Type id is void
-  ASSERT_FALSE(transformation::IsApplicable(bad_type_id_is_void, context.get(),
-                                            fact_manager));
+  ASSERT_FALSE(bad_type_id_is_void.IsApplicable(context.get(), fact_manager));
 
   // Type id is pointer
-  ASSERT_FALSE(transformation::IsApplicable(bad_type_id_is_pointer,
-                                            context.get(), fact_manager));
+  ASSERT_FALSE(
+      bad_type_id_is_pointer.IsApplicable(context.get(), fact_manager));
 
-  ASSERT_TRUE(transformation::IsApplicable(add_signed_int_1, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_signed_int_1, context.get(), &fact_manager);
+  ASSERT_TRUE(add_signed_int_1.IsApplicable(context.get(), fact_manager));
+  add_signed_int_1.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(transformation::IsApplicable(add_signed_int_10, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_signed_int_10, context.get(), &fact_manager);
+  ASSERT_TRUE(add_signed_int_10.IsApplicable(context.get(), fact_manager));
+  add_signed_int_10.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(transformation::IsApplicable(add_unsigned_int_2, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_unsigned_int_2, context.get(), &fact_manager);
+  ASSERT_TRUE(add_unsigned_int_2.IsApplicable(context.get(), fact_manager));
+  add_unsigned_int_2.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(transformation::IsApplicable(add_unsigned_int_20, context.get(),
-                                           fact_manager));
-  transformation::Apply(add_unsigned_int_20, context.get(), &fact_manager);
+  ASSERT_TRUE(add_unsigned_int_20.IsApplicable(context.get(), fact_manager));
+  add_unsigned_int_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(
-      transformation::IsApplicable(add_float_3, context.get(), fact_manager));
-  transformation::Apply(add_float_3, context.get(), &fact_manager);
+  ASSERT_TRUE(add_float_3.IsApplicable(context.get(), fact_manager));
+  add_float_3.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_TRUE(
-      transformation::IsApplicable(add_float_30, context.get(), fact_manager));
-  transformation::Apply(add_float_30, context.get(), &fact_manager);
+  ASSERT_TRUE(add_float_30.IsApplicable(context.get(), fact_manager));
+  add_float_30.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
-  ASSERT_FALSE(transformation::IsApplicable(bad_add_float_30_id_already_used,
-                                            context.get(), fact_manager));
+  ASSERT_FALSE(bad_add_float_30_id_already_used.IsApplicable(context.get(),
+                                                             fact_manager));
 
   std::string after_transformation = R"(
                OpCapability Shader

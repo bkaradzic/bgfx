@@ -30,7 +30,7 @@ FuzzerPassAddDeadBreaks::~FuzzerPassAddDeadBreaks() = default;
 
 void FuzzerPassAddDeadBreaks::Apply() {
   // We first collect up lots of possibly-applicable transformations.
-  std::vector<protobufs::TransformationAddDeadBreak> candidate_transformations;
+  std::vector<TransformationAddDeadBreak> candidate_transformations;
   // We consider each function separately.
   for (auto& function : *GetIRContext()->module()) {
     // For a given function, we find all the merge blocks in that function.
@@ -51,13 +51,12 @@ void FuzzerPassAddDeadBreaks::Apply() {
         //  merge blocks.  This will lead to interesting opportunities being
         //  missed.
         std::vector<uint32_t> phi_ids;
-        auto candidate_transformation =
-            transformation::MakeTransformationAddDeadBreak(
-                block.id(), merge_block_id,
-                GetFuzzerContext()->GetRandomGenerator()->RandomBool(),
-                std::move(phi_ids));
-        if (transformation::IsApplicable(candidate_transformation,
-                                         GetIRContext(), *GetFactManager())) {
+        auto candidate_transformation = TransformationAddDeadBreak(
+            block.id(), merge_block_id,
+            GetFuzzerContext()->GetRandomGenerator()->RandomBool(),
+            std::move(phi_ids));
+        if (candidate_transformation.IsApplicable(GetIRContext(),
+                                                  *GetFactManager())) {
           // Only consider a transformation as a candidate if it is applicable.
           candidate_transformations.push_back(
               std::move(candidate_transformation));
@@ -92,11 +91,9 @@ void FuzzerPassAddDeadBreaks::Apply() {
     }
     // If the transformation can be applied, apply it and add it to the
     // sequence of transformations that have been applied.
-    if (transformation::IsApplicable(transformation, GetIRContext(),
-                                     *GetFactManager())) {
-      transformation::Apply(transformation, GetIRContext(), GetFactManager());
-      *GetTransformations()->add_transformation()->mutable_add_dead_break() =
-          transformation;
+    if (transformation.IsApplicable(GetIRContext(), *GetFactManager())) {
+      transformation.Apply(GetIRContext(), GetFactManager());
+      *GetTransformations()->add_transformation() = transformation.ToMessage();
     }
   }
 }

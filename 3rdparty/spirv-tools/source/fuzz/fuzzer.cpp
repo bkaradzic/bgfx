@@ -97,9 +97,7 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   FuzzerContext fuzzer_context(&random_generator, minimum_fresh_id);
 
   FactManager fact_manager;
-  if (!fact_manager.AddFacts(initial_facts, ir_context.get())) {
-    return Fuzzer::FuzzerResultStatus::kInitialFactsInvalid;
-  }
+  fact_manager.AddFacts(impl_->consumer, initial_facts, ir_context.get());
 
   // Add some essential ingredients to the module if they are not already
   // present, such as boolean constants.

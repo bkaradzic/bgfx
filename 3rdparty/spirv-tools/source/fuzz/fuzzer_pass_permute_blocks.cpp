@@ -65,14 +65,11 @@ void FuzzerPassPermuteBlocks::Apply() {
       // The loop is guaranteed to terminate because a block cannot be pushed
       // down indefinitely.
       while (true) {
-        protobufs::TransformationMoveBlockDown message;
-        message.set_block_id(*id);
-        if (transformation::IsApplicable(message, GetIRContext(),
-                                         *GetFactManager())) {
-          transformation::Apply(message, GetIRContext(), GetFactManager());
-          *GetTransformations()
-               ->add_transformation()
-               ->mutable_move_block_down() = message;
+        TransformationMoveBlockDown transformation(*id);
+        if (transformation.IsApplicable(GetIRContext(), *GetFactManager())) {
+          transformation.Apply(GetIRContext(), GetFactManager());
+          *GetTransformations()->add_transformation() =
+              transformation.ToMessage();
         } else {
           break;
         }

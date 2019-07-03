@@ -48,15 +48,13 @@ void FuzzerPassAddUsefulConstructs::MaybeAddIntConstant(
          "The relevant int type should have been added to the module already.");
   opt::analysis::IntConstant int_constant(registered_int_type, data);
   if (!GetIRContext()->get_constant_mgr()->FindConstant(&int_constant)) {
-    protobufs::TransformationAddConstantScalar add_constant_int =
-        transformation::MakeTransformationAddConstantScalar(
-            GetFuzzerContext()->GetFreshId(), int_type_id, data);
-    assert(transformation::IsApplicable(add_constant_int, GetIRContext(),
-                                        *GetFactManager()) &&
+    TransformationAddConstantScalar add_constant_int =
+        TransformationAddConstantScalar(GetFuzzerContext()->GetFreshId(),
+                                        int_type_id, data);
+    assert(add_constant_int.IsApplicable(GetIRContext(), *GetFactManager()) &&
            "Should be applicable by construction.");
-    transformation::Apply(add_constant_int, GetIRContext(), GetFactManager());
-    *GetTransformations()->add_transformation()->mutable_add_constant_scalar() =
-        add_constant_int;
+    add_constant_int.Apply(GetIRContext(), GetFactManager());
+    *GetTransformations()->add_transformation() = add_constant_int.ToMessage();
   }
 }
 
@@ -76,15 +74,14 @@ void FuzzerPassAddUsefulConstructs::MaybeAddFloatConstant(
       "The relevant float type should have been added to the module already.");
   opt::analysis::FloatConstant float_constant(registered_float_type, data);
   if (!GetIRContext()->get_constant_mgr()->FindConstant(&float_constant)) {
-    protobufs::TransformationAddConstantScalar add_constant_float =
-        transformation::MakeTransformationAddConstantScalar(
-            GetFuzzerContext()->GetFreshId(), float_type_id, data);
-    assert(transformation::IsApplicable(add_constant_float, GetIRContext(),
-                                        *GetFactManager()) &&
+    TransformationAddConstantScalar add_constant_float =
+        TransformationAddConstantScalar(GetFuzzerContext()->GetFreshId(),
+                                        float_type_id, data);
+    assert(add_constant_float.IsApplicable(GetIRContext(), *GetFactManager()) &&
            "Should be applicable by construction.");
-    transformation::Apply(add_constant_float, GetIRContext(), GetFactManager());
-    *GetTransformations()->add_transformation()->mutable_add_constant_scalar() =
-        add_constant_float;
+    add_constant_float.Apply(GetIRContext(), GetFactManager());
+    *GetTransformations()->add_transformation() =
+        add_constant_float.ToMessage();
   }
 }
 
@@ -93,15 +90,13 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     // Add boolean type if not present.
     opt::analysis::Bool temp_bool_type;
     if (!GetIRContext()->get_type_mgr()->GetId(&temp_bool_type)) {
-      protobufs::TransformationAddTypeBoolean add_type_boolean =
-          transformation::MakeTransformationAddTypeBoolean(
-              GetFuzzerContext()->GetFreshId());
-      assert(transformation::IsApplicable(add_type_boolean, GetIRContext(),
-                                          *GetFactManager()) &&
+      auto add_type_boolean =
+          TransformationAddTypeBoolean(GetFuzzerContext()->GetFreshId());
+      assert(add_type_boolean.IsApplicable(GetIRContext(), *GetFactManager()) &&
              "Should be applicable by construction.");
-      transformation::Apply(add_type_boolean, GetIRContext(), GetFactManager());
-      *GetTransformations()->add_transformation()->mutable_add_type_boolean() =
-          add_type_boolean;
+      add_type_boolean.Apply(GetIRContext(), GetFactManager());
+      *GetTransformations()->add_transformation() =
+          add_type_boolean.ToMessage();
     }
   }
 
@@ -110,15 +105,12 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     for (auto is_signed : {true, false}) {
       opt::analysis::Integer temp_int_type(32, is_signed);
       if (!GetIRContext()->get_type_mgr()->GetId(&temp_int_type)) {
-        protobufs::TransformationAddTypeInt add_type_int =
-            transformation::MakeTransformationAddTypeInt(
-                GetFuzzerContext()->GetFreshId(), 32, is_signed);
-        assert(transformation::IsApplicable(add_type_int, GetIRContext(),
-                                            *GetFactManager()) &&
+        TransformationAddTypeInt add_type_int = TransformationAddTypeInt(
+            GetFuzzerContext()->GetFreshId(), 32, is_signed);
+        assert(add_type_int.IsApplicable(GetIRContext(), *GetFactManager()) &&
                "Should be applicable by construction.");
-        transformation::Apply(add_type_int, GetIRContext(), GetFactManager());
-        *GetTransformations()->add_transformation()->mutable_add_type_int() =
-            add_type_int;
+        add_type_int.Apply(GetIRContext(), GetFactManager());
+        *GetTransformations()->add_transformation() = add_type_int.ToMessage();
       }
     }
   }
@@ -127,15 +119,12 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     // Add 32-bit float type if not present.
     opt::analysis::Float temp_float_type(32);
     if (!GetIRContext()->get_type_mgr()->GetId(&temp_float_type)) {
-      protobufs::TransformationAddTypeFloat add_type_float =
-          transformation::MakeTransformationAddTypeFloat(
-              GetFuzzerContext()->GetFreshId(), 32);
-      assert(transformation::IsApplicable(add_type_float, GetIRContext(),
-                                          *GetFactManager()) &&
+      TransformationAddTypeFloat add_type_float =
+          TransformationAddTypeFloat(GetFuzzerContext()->GetFreshId(), 32);
+      assert(add_type_float.IsApplicable(GetIRContext(), *GetFactManager()) &&
              "Should be applicable by construction.");
-      transformation::Apply(add_type_float, GetIRContext(), GetFactManager());
-      *GetTransformations()->add_transformation()->mutable_add_type_float() =
-          add_type_float;
+      add_type_float.Apply(GetIRContext(), GetFactManager());
+      *GetTransformations()->add_transformation() = add_type_float.ToMessage();
     }
   }
 
@@ -149,17 +138,14 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     // Add OpConstantTrue/False if not already there.
     opt::analysis::BoolConstant bool_constant(bool_type, boolean_value);
     if (!GetIRContext()->get_constant_mgr()->FindConstant(&bool_constant)) {
-      protobufs::TransformationAddConstantBoolean add_constant_boolean =
-          transformation::MakeTransformationAddConstantBoolean(
-              GetFuzzerContext()->GetFreshId(), boolean_value);
-      assert(transformation::IsApplicable(add_constant_boolean, GetIRContext(),
-                                          *GetFactManager()) &&
+      TransformationAddConstantBoolean add_constant_boolean(
+          GetFuzzerContext()->GetFreshId(), boolean_value);
+      assert(add_constant_boolean.IsApplicable(GetIRContext(),
+                                               *GetFactManager()) &&
              "Should be applicable by construction.");
-      transformation::Apply(add_constant_boolean, GetIRContext(),
-                            GetFactManager());
-      *GetTransformations()
-           ->add_transformation()
-           ->mutable_add_constant_boolean() = add_constant_boolean;
+      add_constant_boolean.Apply(GetIRContext(), GetFactManager());
+      *GetTransformations()->add_transformation() =
+          add_constant_boolean.ToMessage();
     }
   }
 
@@ -196,15 +182,13 @@ void FuzzerPassAddUsefulConstructs::Apply() {
     opt::analysis::Pointer uniform_pointer(element_type,
                                            SpvStorageClassUniform);
     if (!GetIRContext()->get_type_mgr()->GetId(&uniform_pointer)) {
-      auto add_pointer = transformation::MakeTransformationAddTypePointer(
-          GetFuzzerContext()->GetFreshId(), SpvStorageClassUniform,
-          element_type_id);
-      assert(transformation::IsApplicable(add_pointer, GetIRContext(),
-                                          *GetFactManager()) &&
+      auto add_pointer =
+          TransformationAddTypePointer(GetFuzzerContext()->GetFreshId(),
+                                       SpvStorageClassUniform, element_type_id);
+      assert(add_pointer.IsApplicable(GetIRContext(), *GetFactManager()) &&
              "Should be applicable by construction.");
-      transformation::Apply(add_pointer, GetIRContext(), GetFactManager());
-      *GetTransformations()->add_transformation()->mutable_add_type_pointer() =
-          add_pointer;
+      add_pointer.Apply(GetIRContext(), GetFactManager());
+      *GetTransformations()->add_transformation() = add_pointer.ToMessage();
     }
     std::vector<uint32_t> words;
     for (auto word : fact_and_type_id.first.constant_word()) {

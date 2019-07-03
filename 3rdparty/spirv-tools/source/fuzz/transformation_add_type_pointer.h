@@ -17,27 +17,36 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |message.fresh_id| must not be used by the module
-// - |message.base_type_id| must be the result id of an OpType[...] instruction
-bool IsApplicable(const protobufs::TransformationAddTypePointer& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationAddTypePointer : public Transformation {
+ public:
+  explicit TransformationAddTypePointer(
+      const protobufs::TransformationAddTypePointer& message);
 
-// Adds an OpTypePointer instruction with the given storage class and base type
-// to the module.
-void Apply(const protobufs::TransformationAddTypePointer& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  TransformationAddTypePointer(uint32_t fresh_id, SpvStorageClass storage_class,
+                               uint32_t base_type_id);
 
-// Helper factory to create a transformation message.
-protobufs::TransformationAddTypePointer MakeTransformationAddTypePointer(
-    uint32_t fresh_id, SpvStorageClass storage_class, uint32_t base_type_id);
+  // - |message_.fresh_id| must not be used by the module
+  // - |message_.base_type_id| must be the result id of an OpType[...]
+  // instruction
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // Adds an OpTypePointer instruction with the given storage class and base
+  // type to the module.
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationAddTypePointer message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

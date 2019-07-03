@@ -17,27 +17,34 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |message.fresh_id| must not be used by the module
-// - The module must not contain an OpTypeFloat instruction with width
-//   |message.width|
-bool IsApplicable(const protobufs::TransformationAddTypeFloat& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationAddTypeFloat : public Transformation {
+ public:
+  explicit TransformationAddTypeFloat(
+      const protobufs::TransformationAddTypeFloat& message);
 
-// Adds an OpTypeFloat instruction to the module with the given width
-void Apply(const protobufs::TransformationAddTypeFloat& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  TransformationAddTypeFloat(uint32_t fresh_id, uint32_t width);
 
-// Helper factory to create a transformation message.
-protobufs::TransformationAddTypeFloat MakeTransformationAddTypeFloat(
-    uint32_t fresh_id, uint32_t width);
+  // - |message_.fresh_id| must not be used by the module
+  // - The module must not contain an OpTypeFloat instruction with width
+  //   |message_.width|
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // Adds an OpTypeFloat instruction to the module with the given width
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationAddTypeFloat message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

@@ -54,9 +54,8 @@ TEST(TransformationMoveBlockDownTest, NoMovePossible1) {
 
   FactManager fact_manager;
 
-  auto transformation = transformation::MakeTransformationMoveBlockDown(11);
-  ASSERT_FALSE(transformation::IsApplicable(transformation, context.get(),
-                                            fact_manager));
+  auto transformation = TransformationMoveBlockDown(11);
+  ASSERT_FALSE(transformation.IsApplicable(context.get(), fact_manager));
 }
 
 TEST(TransformationMoveBlockDownTest, NoMovePossible2) {
@@ -92,9 +91,8 @@ TEST(TransformationMoveBlockDownTest, NoMovePossible2) {
 
   FactManager fact_manager;
 
-  auto transformation = transformation::MakeTransformationMoveBlockDown(5);
-  ASSERT_FALSE(transformation::IsApplicable(transformation, context.get(),
-                                            fact_manager));
+  auto transformation = TransformationMoveBlockDown(5);
+  ASSERT_FALSE(transformation.IsApplicable(context.get(), fact_manager));
 }
 
 TEST(TransformationMoveBlockDownTest, NoMovePossible3) {
@@ -132,9 +130,8 @@ TEST(TransformationMoveBlockDownTest, NoMovePossible3) {
 
   FactManager fact_manager;
 
-  auto transformation = transformation::MakeTransformationMoveBlockDown(100);
-  ASSERT_FALSE(transformation::IsApplicable(transformation, context.get(),
-                                            fact_manager));
+  auto transformation = TransformationMoveBlockDown(100);
+  ASSERT_FALSE(transformation.IsApplicable(context.get(), fact_manager));
 }
 
 TEST(TransformationMoveBlockDownTest, NoMovePossible4) {
@@ -176,81 +173,8 @@ TEST(TransformationMoveBlockDownTest, NoMovePossible4) {
 
   FactManager fact_manager;
 
-  auto transformation = transformation::MakeTransformationMoveBlockDown(12);
-  ASSERT_FALSE(transformation::IsApplicable(transformation, context.get(),
-                                            fact_manager));
-}
-
-TEST(TransformationMoveBlockDownTest, MovePossible) {
-  // Block 11 can be moved down as it does not dominate block 12 (both are
-  // unreachable).
-  std::string before_transformation = R"(
-               OpCapability Shader
-          %1 = OpExtInstImport "GLSL.std.450"
-               OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main"
-               OpExecutionMode %4 OriginUpperLeft
-               OpSource ESSL 310
-               OpDecorate %8 RelaxedPrecision
-          %2 = OpTypeVoid
-          %3 = OpTypeFunction %2
-          %6 = OpTypeInt 32 1
-          %7 = OpTypePointer Function %6
-          %9 = OpConstant %6 1
-         %10 = OpConstant %6 2
-          %4 = OpFunction %2 None %3
-          %5 = OpLabel
-          %8 = OpVariable %7 Function
-               OpStore %8 %9
-               OpStore %8 %10
-               OpReturn
-         %11 = OpLabel
-               OpReturn
-         %12 = OpLabel
-               OpReturn
-               OpFunctionEnd
-  )";
-
-  std::string after_transformation = R"(
-               OpCapability Shader
-          %1 = OpExtInstImport "GLSL.std.450"
-               OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main"
-               OpExecutionMode %4 OriginUpperLeft
-               OpSource ESSL 310
-               OpDecorate %8 RelaxedPrecision
-          %2 = OpTypeVoid
-          %3 = OpTypeFunction %2
-          %6 = OpTypeInt 32 1
-          %7 = OpTypePointer Function %6
-          %9 = OpConstant %6 1
-         %10 = OpConstant %6 2
-          %4 = OpFunction %2 None %3
-          %5 = OpLabel
-          %8 = OpVariable %7 Function
-               OpStore %8 %9
-               OpStore %8 %10
-               OpReturn
-         %12 = OpLabel
-               OpReturn
-         %11 = OpLabel
-               OpReturn
-               OpFunctionEnd
-  )";
-
-  const auto env = SPV_ENV_UNIVERSAL_1_3;
-  const auto consumer = nullptr;
-  const auto context =
-      BuildModule(env, consumer, before_transformation, kFuzzAssembleOption);
-
-  FactManager fact_manager;
-
-  auto transformation = transformation::MakeTransformationMoveBlockDown(11);
-  ASSERT_TRUE(transformation::IsApplicable(transformation, context.get(),
-                                           fact_manager));
-  transformation::Apply(transformation, context.get(), &fact_manager);
-  ASSERT_TRUE(IsValid(env, context.get()));
-  ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
+  auto transformation = TransformationMoveBlockDown(12);
+  ASSERT_FALSE(transformation.IsApplicable(context.get(), fact_manager));
 }
 
 TEST(TransformationMoveBlockDownTest, ManyMovesPossible) {
@@ -357,17 +281,17 @@ TEST(TransformationMoveBlockDownTest, ManyMovesPossible) {
   // The block ids are: 5 14 20 23 21 25 29 32 30 15
   // We make a transformation to move each of them down, plus a transformation
   // to move a non-block, 27, down.
-  auto move_down_5 = transformation::MakeTransformationMoveBlockDown(5);
-  auto move_down_14 = transformation::MakeTransformationMoveBlockDown(14);
-  auto move_down_20 = transformation::MakeTransformationMoveBlockDown(20);
-  auto move_down_23 = transformation::MakeTransformationMoveBlockDown(23);
-  auto move_down_21 = transformation::MakeTransformationMoveBlockDown(21);
-  auto move_down_25 = transformation::MakeTransformationMoveBlockDown(25);
-  auto move_down_29 = transformation::MakeTransformationMoveBlockDown(29);
-  auto move_down_32 = transformation::MakeTransformationMoveBlockDown(32);
-  auto move_down_30 = transformation::MakeTransformationMoveBlockDown(30);
-  auto move_down_15 = transformation::MakeTransformationMoveBlockDown(15);
-  auto move_down_27 = transformation::MakeTransformationMoveBlockDown(27);
+  auto move_down_5 = TransformationMoveBlockDown(5);
+  auto move_down_14 = TransformationMoveBlockDown(14);
+  auto move_down_20 = TransformationMoveBlockDown(20);
+  auto move_down_23 = TransformationMoveBlockDown(23);
+  auto move_down_21 = TransformationMoveBlockDown(21);
+  auto move_down_25 = TransformationMoveBlockDown(25);
+  auto move_down_29 = TransformationMoveBlockDown(29);
+  auto move_down_32 = TransformationMoveBlockDown(32);
+  auto move_down_30 = TransformationMoveBlockDown(30);
+  auto move_down_15 = TransformationMoveBlockDown(15);
+  auto move_down_27 = TransformationMoveBlockDown(27);
 
   // Dominance is as follows:
   //  5 dominates everything else
@@ -382,180 +306,110 @@ TEST(TransformationMoveBlockDownTest, ManyMovesPossible) {
   // 15 dominates nothing
 
   // Current ordering: 5 14 20 23 21 25 29 32 30 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
   // Let's bubble 20 all the way down.
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 23 20 21 25 29 32 30 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 23 21 20 25 29 32 30 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 23 21 25 20 29 32 30 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 23 21 25 29 20 32 30 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 23 21 25 29 32 20 30 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 23 21 25 29 32 30 20 15
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_20.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_15.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_20, context.get(), &fact_manager);
+  move_down_20.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   std::string after_bubbling_20_down = R"(
@@ -631,103 +485,63 @@ TEST(TransformationMoveBlockDownTest, ManyMovesPossible) {
   ASSERT_TRUE(IsEqual(env, after_bubbling_20_down, context.get()));
 
   // Current ordering: 5 14 23 21 25 29 32 30 15 20
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_15.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_20.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_23, context.get(), &fact_manager);
+  move_down_23.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 21 23 25 29 32 30 15 20
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_15.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_20.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_23, context.get(), &fact_manager);
+  move_down_23.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 21 25 23 29 32 30 15 20
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_15.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_20.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_21, context.get(), &fact_manager);
+  move_down_21.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   // Current ordering: 5 14 25 21 23 29 32 30 15 20
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_15.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_20.IsApplicable(context.get(), fact_manager));
 
-  transformation::Apply(move_down_14, context.get(), &fact_manager);
+  move_down_14.Apply(context.get(), &fact_manager);
   ASSERT_TRUE(IsValid(env, context.get()));
 
   std::string after_more_shuffling = R"(
@@ -803,26 +617,52 @@ TEST(TransformationMoveBlockDownTest, ManyMovesPossible) {
   ASSERT_TRUE(IsEqual(env, after_more_shuffling, context.get()));
 
   // Final ordering: 5 25 14 21 23 29 32 30 15 20
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_5, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_25, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_14, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_21, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_23, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_29, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_32, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_30, context.get(), fact_manager));
-  ASSERT_TRUE(
-      transformation::IsApplicable(move_down_15, context.get(), fact_manager));
-  ASSERT_FALSE(
-      transformation::IsApplicable(move_down_20, context.get(), fact_manager));
+  ASSERT_FALSE(move_down_5.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_25.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_14.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_21.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_23.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_29.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_32.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_30.IsApplicable(context.get(), fact_manager));
+  ASSERT_TRUE(move_down_15.IsApplicable(context.get(), fact_manager));
+  ASSERT_FALSE(move_down_20.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationMoveBlockDownTest, DoNotMoveUnreachable) {
+  // Block 6 is unreachable, so cannot be moved down.
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeInt 32 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpReturn
+          %6 = OpLabel
+          %7 = OpUndef %10
+               OpBranch %8
+          %8 = OpLabel
+          %9 = OpCopyObject %10 %7
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto transformation = TransformationMoveBlockDown(6);
+  ASSERT_FALSE(transformation.IsApplicable(context.get(), fact_manager));
 }
 
 }  // namespace

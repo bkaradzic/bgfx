@@ -80,17 +80,15 @@ void FuzzerPassSplitBlocks::Apply() {
     auto base_offset = base_offset_pairs
         [GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
             static_cast<uint32_t>(base_offset_pairs.size()))];
-    auto message = transformation::MakeTransformationSplitBlock(
-        base_offset.first, base_offset.second,
-        GetFuzzerContext()->GetFreshId());
+    auto transformation =
+        TransformationSplitBlock(base_offset.first, base_offset.second,
+                                 GetFuzzerContext()->GetFreshId());
     // If the position we have chosen turns out to be a valid place to split
     // the block, we apply the split. Otherwise the block just doesn't get
     // split.
-    if (transformation::IsApplicable(message, GetIRContext(),
-                                     *GetFactManager())) {
-      transformation::Apply(message, GetIRContext(), GetFactManager());
-      *GetTransformations()->add_transformation()->mutable_split_block() =
-          message;
+    if (transformation.IsApplicable(GetIRContext(), *GetFactManager())) {
+      transformation.Apply(GetIRContext(), GetFactManager());
+      *GetTransformations()->add_transformation() = transformation.ToMessage();
     }
   }
 }
