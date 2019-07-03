@@ -846,6 +846,7 @@ enum class Capability : unsigned {
     FragmentShaderShadingRateInterlockEXT = 5372,
     ShaderSMBuiltinsNV = 5373,
     FragmentShaderPixelInterlockEXT = 5378,
+    DemoteToHelperInvocationEXT = 5379,
     SubgroupShuffleINTEL = 5568,
     SubgroupBufferBlockIOINTEL = 5569,
     SubgroupImageBlockIOINTEL = 5570,
@@ -1234,6 +1235,8 @@ enum class Op : unsigned {
     OpCooperativeMatrixLengthNV = 5362,
     OpBeginInvocationInterlockEXT = 5364,
     OpEndInvocationInterlockEXT = 5365,
+    OpDemoteToHelperInvocationEXT = 5380,
+    OpIsHelperInvocationEXT = 5381,
     OpSubgroupShuffleINTEL = 5571,
     OpSubgroupShuffleDownINTEL = 5572,
     OpSubgroupShuffleUpINTEL = 5573,
@@ -1762,6 +1765,10 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpCooperativeMatrixStoreNV: *hasResult = false; *hasResultType = false; break;
     case Op::OpCooperativeMatrixMulAddNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpCooperativeMatrixLengthNV: *hasResult = true; *hasResultType = true; break;
+    case Op::OpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
+    case Op::OpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
+    case Op::OpDemoteToHelperInvocationEXT: *hasResult = false; *hasResultType = false; break;
+    case Op::OpIsHelperInvocationEXT: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupShuffleINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupShuffleDownINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupShuffleUpINTEL: *hasResult = true; *hasResultType = true; break;
@@ -1906,8 +1913,6 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case Op::OpSubgroupAvcSicGetInterRawSadsINTEL: *hasResult = true; *hasResultType = true; break;
-    case Op::OpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
-    case Op::OpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
     }
 }
 #endif /* SPV_ENABLE_UTILITY_CODE */
