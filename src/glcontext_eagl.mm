@@ -165,7 +165,7 @@ namespace bgfx { namespace gl
 		BX_CHECK(NULL != s_opengles, "OpenGLES dynamic library is not found!");
 
 		BX_UNUSED(_width, _height);
-		CAEAGLLayer* layer = (CAEAGLLayer*)g_platformData.nwh;
+		CAEAGLLayer* layer = (__bridge CAEAGLLayer*)g_platformData.nwh;
 		layer.opaque = [layer.style valueForKey:@"opaque"] == nil ? true : [[layer.style valueForKey:@"opaque"] boolValue];
 
 		layer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys
@@ -176,7 +176,7 @@ namespace bgfx { namespace gl
 			, nil
 			];
 
-		EAGLContext* context = (EAGLContext*)g_platformData.context;
+		EAGLContext* context = (__bridge EAGLContext*)g_platformData.context;
 		if (NULL == context)
 		{
 			context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
@@ -187,7 +187,7 @@ namespace bgfx { namespace gl
 		}
 		BX_CHECK(NULL != context, "No valid OpenGLES context.");
 
-		m_context = (void*)context;
+		m_context = (__bridge void*)context;
 		[EAGLContext setCurrentContext:context];
 		[CATransaction flush];
 
@@ -249,8 +249,7 @@ namespace bgfx { namespace gl
 			m_depthStencilRbo = 0;
 		}
 
-		EAGLContext* context = (EAGLContext*)m_context;
-		[context release];
+		EAGLContext* context = (__bridge EAGLContext*)m_context;
 
 		bx::dlclose(s_opengles);
 	}
@@ -284,7 +283,7 @@ namespace bgfx { namespace gl
 		GL_CHECK(glGenRenderbuffers(1, &m_colorRbo) );
 		GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
 
-		[((EAGLContext*)m_context) renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)g_platformData.nwh];
+		[((__bridge EAGLContext*)m_context) renderbufferStorage:GL_RENDERBUFFER fromDrawable:(__bridge CAEAGLLayer*)g_platformData.nwh];
 		GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorRbo) );
 
 		GLint width;
@@ -312,7 +311,7 @@ namespace bgfx { namespace gl
 
 	SwapChainGL* GlContext::createSwapChain(void* _nwh)
 	{
-		return BX_NEW(g_allocator, SwapChainGL)(/*m_display, m_config,*/ (EAGLContext*)m_context, (CAEAGLLayer*)_nwh);
+		return BX_NEW(g_allocator, SwapChainGL)(/*m_display, m_config,*/ (__bridge EAGLContext*)m_context, (__bridge CAEAGLLayer*)_nwh);
 	}
 
 	void GlContext::destroySwapChain(SwapChainGL* _swapChain)
@@ -327,7 +326,7 @@ namespace bgfx { namespace gl
 		if (NULL == _swapChain)
 		{
 			GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_colorRbo) );
-			EAGLContext* context = (EAGLContext*)m_context;
+			EAGLContext* context = (__bridge EAGLContext*)m_context;
 			[context presentRenderbuffer:GL_RENDERBUFFER];
 		}
 		else
@@ -344,7 +343,7 @@ namespace bgfx { namespace gl
 
 			if (NULL == _swapChain)
 			{
-				[EAGLContext setCurrentContext:(EAGLContext*)m_context];
+				[EAGLContext setCurrentContext:(__bridge EAGLContext*)m_context];
 				GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo) );
 			}
 			else
