@@ -292,7 +292,13 @@ static const char *vector_swizzle(int vecsize, int index)
 		{ ".x", ".y", ".z", ".w" },
 		{ ".xy", ".yz", ".zw", nullptr },
 		{ ".xyz", ".yzw", nullptr, nullptr },
+#if defined(__GNUC__) && (__GNUC__ == 9)
+		// This works around a GCC 9 bug, see details in https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90947.
+		// This array ends up being compiled as all nullptrs, tripping the assertions below.
+		{ "", nullptr, nullptr, "$" },
+#else
 		{ "", nullptr, nullptr, nullptr },
+#endif
 	};
 
 	assert(vecsize >= 1 && vecsize <= 4);
@@ -4596,7 +4602,7 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 
 	SmallVector<uint32_t> inherited_expressions;
 
-	uint32_t result_type = ops[0];
+	uint32_t result_type_id = ops[0];
 	uint32_t id = ops[1];
 	uint32_t img = ops[2];
 	uint32_t coord = ops[3];
@@ -4606,6 +4612,8 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 	bool proj = false;
 	bool fetch = false;
 	const uint32_t *opt = nullptr;
+
+	auto &result_type = get<SPIRType>(result_type_id);
 
 	inherited_expressions.push_back(coord);
 
@@ -4765,14 +4773,21 @@ void CompilerGLSL::emit_texture_op(const Instruction &i)
 			image_is_depth = true;
 
 		if (image_is_depth)
-			expr = remap_swizzle(get<SPIRType>(result_type), 1, expr);
+			expr = remap_swizzle(result_type, 1, expr);
+	}
+
+	if (!backend.support_small_type_sampling_result && result_type.width < 32)
+	{
+		// Just value cast (narrowing) to expected type since we cannot rely on narrowing to work automatically.
+		// Hopefully compiler picks this up and converts the texturing instruction to the appropriate precision.
+		expr = join(type_to_glsl_constructor(result_type), "(", expr, ")");
 	}
 
 	// Deals with reads from MSL. We might need to downconvert to fewer components.
 	if (op == OpImageRead)
-		expr = remap_swizzle(get<SPIRType>(result_type), 4, expr);
+		expr = remap_swizzle(result_type, 4, expr);
 
-	emit_op(result_type, id, expr, forward);
+	emit_op(result_type_id, id, expr, forward);
 	for (auto &inherit : inherited_expressions)
 		inherit_expression_dependencies(id, inherit);
 
@@ -7101,18 +7116,23 @@ string CompilerGLSL::variable_decl_function_local(SPIRVariable &var)
 	return expr;
 }
 
+void CompilerGLSL::emit_variable_temporary_copies(const SPIRVariable &var)
+{
+	if (var.allocate_temporary_copy)
+	{
+		auto &type = get<SPIRType>(var.basetype);
+		auto &flags = get_decoration_bitset(var.self);
+		statement(flags_to_qualifiers_glsl(type, flags), variable_decl(type, join("_", var.self, "_copy")), ";");
+	}
+}
+
 void CompilerGLSL::flush_variable_declaration(uint32_t id)
 {
 	auto *var = maybe_get<SPIRVariable>(id);
 	if (var && var->deferred_declaration)
 	{
 		statement(variable_decl_function_local(*var), ";");
-		if (var->allocate_temporary_copy)
-		{
-			auto &type = get<SPIRType>(var->basetype);
-			auto &flags = ir.meta[id].decoration.decoration_flags;
-			statement(flags_to_qualifiers_glsl(type, flags), variable_decl(type, join("_", id, "_copy")), ";");
-		}
+		emit_variable_temporary_copies(*var);
 		var->deferred_declaration = false;
 	}
 }
@@ -9867,7 +9887,16 @@ const char *CompilerGLSL::flags_to_qualifiers_glsl(const SPIRType &type, const B
 
 const char *CompilerGLSL::to_precision_qualifiers_glsl(uint32_t id)
 {
-	return flags_to_qualifiers_glsl(expression_type(id), ir.meta[id].decoration.decoration_flags);
+	auto &type = expression_type(id);
+	bool use_precision_qualifiers = backend.allow_precision_qualifiers || options.es;
+	if (use_precision_qualifiers && (type.basetype == SPIRType::Image || type.basetype == SPIRType::SampledImage))
+	{
+		// Force mediump for the sampler type. We cannot declare 16-bit or smaller image types.
+		auto &result_type = get<SPIRType>(type.image.type);
+		if (result_type.width < 32)
+			return "mediump ";
+	}
+	return flags_to_qualifiers_glsl(type, ir.meta[id].decoration.decoration_flags);
 }
 
 string CompilerGLSL::to_qualifiers_glsl(uint32_t id)
@@ -10083,14 +10112,21 @@ string CompilerGLSL::image_type_glsl(const SPIRType &type, uint32_t id)
 	switch (imagetype.basetype)
 	{
 	case SPIRType::Int:
+	case SPIRType::Short:
+	case SPIRType::SByte:
 		res = "i";
 		break;
 	case SPIRType::UInt:
+	case SPIRType::UShort:
+	case SPIRType::UByte:
 		res = "u";
 		break;
 	default:
 		break;
 	}
+
+	// For half image types, we will force mediump for the sampler, and cast to f16 after any sampling operation.
+	// We cannot express a true half texture type in GLSL. Neither for short integer formats for that matter.
 
 	if (type.basetype == SPIRType::Image && type.image.dim == DimSubpassData && options.vulkan_semantics)
 		return res + "subpassInput" + (type.image.ms ? "MS" : "");
@@ -11319,8 +11355,13 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 		continue_type = continue_block_type(get<SPIRBlock>(block.continue_block));
 
 	// If we have loop variables, stop masking out access to the variable now.
-	for (auto var : block.loop_variables)
-		get<SPIRVariable>(var).loop_variable_enable = true;
+	for (auto var_id : block.loop_variables)
+	{
+		auto &var = get<SPIRVariable>(var_id);
+		var.loop_variable_enable = true;
+		// We're not going to declare the variable directly, so emit a copy here.
+		emit_variable_temporary_copies(var);
+	}
 
 	// Remember deferred declaration state. We will restore it before returning.
 	SmallVector<bool, 64> rearm_dominated_variables(block.dominated_variables.size());
@@ -11661,7 +11702,7 @@ void CompilerGLSL::emit_block_chain(SPIRBlock &block)
 			}
 
 			auto &case_block = get<SPIRBlock>(target_block);
-			if (i + 1 < num_blocks &&
+			if (backend.support_case_fallthrough && i + 1 < num_blocks &&
 			    execution_is_direct_branch(case_block, get<SPIRBlock>(block_declaration_order[i + 1])))
 			{
 				// We will fall through here, so just terminate the block chain early.

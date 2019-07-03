@@ -161,6 +161,12 @@ static const uint32_t kSwizzleBufferBinding = ~(1u);
 // element to indicate the buffer binding for buffer size buffers to support OpArrayLength.
 static const uint32_t kBufferSizeBufferBinding = ~(2u);
 
+// Special constant used in a MSLResourceBinding binding
+// element to indicate the buffer binding used for the argument buffer itself.
+// This buffer binding should be kept as small as possible as all automatic bindings for buffers
+// will start at max(kArgumentBufferBinding) + 1.
+static const uint32_t kArgumentBufferBinding = ~(3u);
+
 static const uint32_t kMaxArgumentBuffers = 8;
 
 // Decompiles SPIR-V to Metal Shading Language
@@ -185,12 +191,14 @@ public:
 		uint32_t shader_patch_output_buffer_index = 27;
 		uint32_t shader_tess_factor_buffer_index = 26;
 		uint32_t buffer_size_buffer_index = 25;
+		uint32_t view_mask_buffer_index = 24;
 		uint32_t shader_input_wg_index = 0;
 		bool enable_point_size_builtin = true;
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
 		bool swizzle_texture_samples = false;
 		bool tess_domain_origin_lower_left = false;
+		bool multiview = false;
 
 		// Enable use of MSL 2.0 indirect argument buffers.
 		// MSL 2.0 must also be enabled.
@@ -260,6 +268,13 @@ public:
 	bool needs_buffer_size_buffer() const
 	{
 		return !buffers_requiring_array_length.empty();
+	}
+
+	// Provide feedback to calling API to allow it to pass a buffer
+	// containing the view mask for the current multiview subpass.
+	bool needs_view_mask_buffer() const
+	{
+		return msl_options.multiview;
 	}
 
 	// Provide feedback to calling API to allow it to pass an output
@@ -386,6 +401,8 @@ protected:
 		SPVFuncImplSubgroupBallotFindMSB,
 		SPVFuncImplSubgroupBallotBitCount,
 		SPVFuncImplSubgroupAllEqual,
+		SPVFuncImplReflectScalar,
+		SPVFuncImplRefractScalar,
 		SPVFuncImplArrayCopyMultidimMax = 6
 	};
 
@@ -406,7 +423,7 @@ protected:
 	std::string image_type_glsl(const SPIRType &type, uint32_t id = 0) override;
 	std::string sampler_type(const SPIRType &type);
 	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
-	size_t get_declared_struct_member_size(const SPIRType &struct_type, uint32_t index) const override;
+	size_t get_declared_struct_member_size_msl(const SPIRType &struct_type, uint32_t index) const;
 	std::string to_func_call_arg(uint32_t id) override;
 	std::string to_name(uint32_t id, bool allow_alias = true) const override;
 	std::string to_function_name(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
@@ -520,12 +537,15 @@ protected:
 	uint32_t builtin_base_vertex_id = 0;
 	uint32_t builtin_instance_idx_id = 0;
 	uint32_t builtin_base_instance_id = 0;
+	uint32_t builtin_view_idx_id = 0;
+	uint32_t builtin_layer_id = 0;
 	uint32_t builtin_invocation_id_id = 0;
 	uint32_t builtin_primitive_id_id = 0;
 	uint32_t builtin_subgroup_invocation_id_id = 0;
 	uint32_t builtin_subgroup_size_id = 0;
 	uint32_t swizzle_buffer_id = 0;
 	uint32_t buffer_size_buffer_id = 0;
+	uint32_t view_mask_buffer_id = 0;
 
 	void bitcast_to_builtin_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
 	void bitcast_from_builtin_load(uint32_t source_id, std::string &expr, const SPIRType &expr_type) override;
@@ -537,6 +557,8 @@ protected:
 	bool is_out_of_bounds_tessellation_level(uint32_t id_lhs);
 
 	void mark_implicit_builtin(spv::StorageClass storage, spv::BuiltIn builtin, uint32_t id);
+
+	std::string convert_to_f32(const std::string &expr, uint32_t components);
 
 	Options msl_options;
 	std::set<SPVFuncImpl> spv_function_implementations;

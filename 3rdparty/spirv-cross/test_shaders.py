@@ -203,6 +203,8 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('3')
     if '.line.' in shader:
         msl_args.append('--emit-line-directives')
+    if '.multiview.' in shader:
+        msl_args.append('--msl-multiview')
 
     subprocess.check_call(msl_args)
 
