@@ -624,6 +624,8 @@ enum TOperator {
     EOpBeginInvocationInterlock, // Fragment only
     EOpEndInvocationInterlock, // Fragment only
 
+    EOpIsHelperInvocation,
+
     //
     // Branch
     //
@@ -634,6 +636,7 @@ enum TOperator {
     EOpContinue,
     EOpCase,
     EOpDefault,
+    EOpDemote,          // Fragment only
 
     //
     // Constructors

@@ -455,6 +455,7 @@ enum Decoration {
     DecorationHlslCounterBufferGOOGLE = 5634,
     DecorationHlslSemanticGOOGLE = 5635,
     DecorationUserSemantic = 5635,
+    DecorationUserTypeGOOGLE = 5636,
     DecorationMax = 0x7fffffff,
 };
 
@@ -845,6 +846,7 @@ enum Capability {
     CapabilityFragmentShaderShadingRateInterlockEXT = 5372,
     CapabilityShaderSMBuiltinsNV = 5373,
     CapabilityFragmentShaderPixelInterlockEXT = 5378,
+    CapabilityDemoteToHelperInvocationEXT = 5379,
     CapabilitySubgroupShuffleINTEL = 5568,
     CapabilitySubgroupBufferBlockIOINTEL = 5569,
     CapabilitySubgroupImageBlockIOINTEL = 5570,
@@ -1233,6 +1235,8 @@ enum Op {
     OpCooperativeMatrixLengthNV = 5362,
     OpBeginInvocationInterlockEXT = 5364,
     OpEndInvocationInterlockEXT = 5365,
+    OpDemoteToHelperInvocationEXT = 5380,
+    OpIsHelperInvocationEXT = 5381,
     OpSubgroupShuffleINTEL = 5571,
     OpSubgroupShuffleDownINTEL = 5572,
     OpSubgroupShuffleUpINTEL = 5573,
@@ -1907,6 +1911,8 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpSubgroupAvcSicGetInterRawSadsINTEL: *hasResult = true; *hasResultType = true; break;
     case OpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
     case OpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
+    case OpDemoteToHelperInvocationEXT: *hasResult = false; *hasResultType = false; break;
+    case OpIsHelperInvocationEXT: *hasResult = true; *hasResultType = true; break;
     }
 }
 #endif /* SPV_ENABLE_UTILITY_CODE */

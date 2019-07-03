@@ -3111,6 +3111,12 @@ bool TGlslangToSpvTraverser::visitBranch(glslang::TVisit /* visit */, glslang::T
         builder.clearAccessChain();
         break;
 
+    case glslang::EOpDemote:
+        builder.createNoResultOp(spv::OpDemoteToHelperInvocationEXT);
+        builder.addExtension(spv::E_SPV_EXT_demote_to_helper_invocation);
+        builder.addCapability(spv::CapabilityDemoteToHelperInvocationEXT);
+        break;
+
     default:
         assert(0);
         break;
@@ -7609,6 +7615,13 @@ spv::Id TGlslangToSpvTraverser::createNoArgOperation(glslang::TOperator op, spv:
     case glslang::EOpEndInvocationInterlock:
         builder.createNoResultOp(spv::OpEndInvocationInterlockEXT);
         return 0;
+
+    case glslang::EOpIsHelperInvocation:
+    {
+        std::vector<spv::Id> args; // Dummy arguments
+        spv::Id id = builder.createOp(spv::OpIsHelperInvocationEXT, typeId, args);
+        return id;
+    }
 
     default:
         logger->missingFunctionality("unknown operation with no arguments");

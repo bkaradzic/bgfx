@@ -5034,6 +5034,10 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         "void beginInvocationInterlockARB(void);"
         "void endInvocationInterlockARB(void);");
 
+    stageBuiltins[EShLangFragment].append(
+        "bool helperInvocationEXT();"
+        "\n");
+
 #ifdef AMD_EXTENSIONS
     // GL_AMD_shader_explicit_vertex_parameter
     if (profile != EEsProfile && version >= 450) {
@@ -8641,6 +8645,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_StorageSemanticsImage",   1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_StorageSemanticsOutput",  1, &E_GL_KHR_memory_scope_semantics);
         }
+
+        symbolTable.setFunctionExtensions("helperInvocationEXT",            1, &E_GL_EXT_demote_to_helper_invocation);
         break;
 
     case EShLangCompute:
@@ -9294,6 +9300,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("bitCount",          EOpBitCount);
     symbolTable.relateToOperator("findLSB",           EOpFindLSB);
     symbolTable.relateToOperator("findMSB",           EOpFindMSB);
+
+    symbolTable.relateToOperator("helperInvocationEXT",  EOpIsHelperInvocation);
 
     if (PureOperatorBuiltins) {
         symbolTable.relateToOperator("imageSize",               EOpImageQuerySize);

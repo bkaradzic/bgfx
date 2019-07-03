@@ -148,6 +148,7 @@ source_set("glslang_sources") {
       "-Wno-inconsistent-missing-override",
       "-Wno-sign-compare",
       "-Wno-unused-variable",
+      "-Wno-missing-field-initializers",
     ]
   }
   if (is_win && !is_clang) {
@@ -183,6 +184,16 @@ executable("glslang_validator") {
   defines = [ "ENABLE_OPT=1" ]
   deps = [
     ":glslang_default_resource_limits_sources",
+    ":glslang_sources",
+  ]
+}
+
+executable("spirv-remap") {
+  sources = [
+    "StandAlone/spirv-remap.cpp",
+  ]
+  defines = [ "ENABLE_OPT=1" ]
+  deps = [
     ":glslang_sources",
   ]
 }

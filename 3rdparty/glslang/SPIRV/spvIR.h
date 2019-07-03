@@ -436,6 +436,6 @@ __inline void Block::addInstruction(std::unique_ptr<Instruction> inst)
         parent.getParent().mapInstruction(raw_instruction);
 }
 
-};  // end spv namespace
+}  // end spv namespace
 
 #endif // spvIR_H
