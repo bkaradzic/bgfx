@@ -221,6 +221,69 @@ local function convert_vararg(v)
 	end
 end
 
+local function calc_flag_values(flag)
+	local shift = flag.shift
+	local base = flag.base or 0
+	local cap = 1 << (flag.range or 0)
+
+	if flag.range then
+		if flag.range == 64 then
+			flag.mask = 0xffffffffffffffff
+		else
+			flag.mask = ((1 << flag.range) - 1) << shift
+		end
+	end
+
+	local values = {}
+	for index, item in ipairs(flag.flag) do
+		local value = item.value
+		if flag.const then
+			-- use value directly
+		elseif shift then
+			if value then
+				if value > 0 then
+					value = value - 1
+				end
+			else
+				value = index + base - 1
+			end
+			if value >= cap then
+				error (string.format("Out of range for %s (%d/%d)", name, value, cap))
+			end
+			value = value << shift
+		elseif #item == 0 then
+			if value then
+				if value > 0 then
+					value = 1 << (value - 1)
+				end
+			else
+				local s = index + base - 2
+				if s >= 0 then
+					value = 1 << s
+				else
+					value = 0
+				end
+			end
+		end
+		if not value then
+			-- It's a combine flags
+			value = 0
+			for _, name in ipairs(item) do
+				local v = values[name]
+				if v then
+					value = value | v
+				else
+					-- todo : it's a undefined flag
+					value = nil
+					break
+				end
+			end
+		end
+		item.value = value
+		values[item.name] = value
+	end
+end
+
 function codegen.nameconversion(all_types, all_funcs)
 	for _,v in ipairs(all_types) do
 		local name = v.name
@@ -241,6 +304,9 @@ function codegen.nameconversion(all_types, all_funcs)
 		if v.enum then
 			v.typename = v.name
 			v.name = v.name .. "::Enum"
+		end
+		if v.flag then
+			calc_flag_values(v)
 		end
 	end
 
@@ -685,8 +751,6 @@ function codegen.gen_flag_cdefine(flag)
 	local cname = "BGFX_" .. (flag.cname or to_underscorecase(flag.name):upper())
 	local s = {}
 	local shift = flag.shift
-	local base = flag.base or 0
-	local cap = 1 << (flag.range or 0)
 	for index, item in ipairs(flag.flag) do
 		local name
 		if item.cname then
@@ -695,36 +759,9 @@ function codegen.gen_flag_cdefine(flag)
 			name = cname .. "_" .. to_underscorecase(item.name):upper()
 		end
 		local value = item.value
-		if flag.const then
-			-- use value directly
-		elseif shift then
-			if value then
-				if value > 0 then
-					value = value - 1
-				end
-			else
-				value = index + base - 1
-			end
-			if value >= cap then
-				error (string.format("Out of range for %s (%d/%d)", name, value, cap))
-			end
-			value = value << shift
-		elseif #item == 0 then
-			if value then
-				if value > 0 then
-					value = 1 << (value - 1)
-				end
-			else
-				local s = index + base - 2
-				if s >= 0 then
-					value = 1 << s
-				else
-					value = 0
-				end
-			end
-		end
 
-		if value == nil then
+		-- combine flags
+		if #item > 0 then
 			if item.comment then
 				if type(item.comment) == "table" then
 					for _, c in ipairs(item.comment) do
@@ -752,12 +789,8 @@ function codegen.gen_flag_cdefine(flag)
 	end
 
 	local mask
-	if flag.range then
-		if flag.range == 64 then
-			mask = "ffffffffffffffff"
-		else
-			mask = string.format(flag.format, ((1 << flag.range) - 1) << shift)
-		end
+	if flag.mask then
+		mask = string.format(flag.format, flag.mask)
 		mask = string.format("UINT%d_C(0x%s)", flag.bits, mask)
 	end
 

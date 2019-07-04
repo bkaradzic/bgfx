@@ -29,10 +29,6 @@ internal struct NativeFunctions
 }
 ]]
 
-local function hasPrefix(str, prefix)
-	return prefix == "" or str:sub(1, #prefix) == prefix
-end
-
 local function hasSuffix(str, suffix)
 	return suffix == "" or str:sub(-#suffix) == suffix
 end
@@ -90,35 +86,62 @@ local function gen()
 	return r
 end
 
-local lastCombinedIdx = -1
-
 local combined = { "State", "Stencil", "Buffer", "Texture", "Sampler", "Reset" }
 
-local function isCombinedBlock(str)
-	for idx, prefix in ipairs(combined) do
-		if hasPrefix(str, prefix) then
-			return idx
-		end
-	end
-
-	return -1
+for _, v in ipairs(combined) do
+	combined[v] = {}
 end
 
-local function endCombinedBlock()
-	if lastCombinedIdx ~= -1 then
-		yield("}")
+local lastCombinedFlag
+
+local function FlagBlock(typ)
+	if typ == nil then
+		return
 	end
 
-	lastCombinedIdx = -1
+	local format = "0x%08x"
+	local enumType = ""
+	if typ.bits == 64 then
+		format = "0x%016x"
+		enumType = " : ulong"
+	elseif typ.bits == 16 then
+		format = "0x%04x"
+		enumType = " : ushort"
+	end
+
+	yield("[Flags]")
+	yield("public enum " .. typ.name .. enumType)
+	yield("{")
+
+	for _, flag in ipairs(typ.flag) do
+		yield("\t"
+			.. flag.name
+			.. string.rep(" ", 22 - #(flag.name))
+			.. " = "
+			.. string.format(format, flag.value)
+			.. ","
+			)
+	end
+	-- generate Mask
+	if typ.mask then
+		yield("\t"
+			.. "Mask"
+			.. string.rep(" ", 22 - #("Mask"))
+			.. " = "
+			.. string.format(format, flag.mask)
+			)
+	end
+
+	yield("}")
 end
 
 function converter.types(typ)
 	if typ.handle then
-		endCombinedBlock()
+		FlagBlock(combined[lastCombinedFlag])
 
 		yield("public struct " .. typ.name .. "{ public ushort idx; }")
 	elseif hasSuffix(typ.name, "::Enum") then
-		endCombinedBlock()
+		FlagBlock(combined[lastCombinedFlag])
 
 		yield("public enum " .. typ.typename)
 		yield("{")
@@ -127,55 +150,45 @@ function converter.types(typ)
 		end
 		yield("}")
 	elseif typ.bits ~= nil then
-
-		local idx = isCombinedBlock(typ.name)
-
-		if idx ~= lastCombinedIdx then
-			endCombinedBlock()
+		local prefix, name = typ.name:match "(%u%l+)(.*)"
+		if prefix ~= lastCombinedFlag then
+			FlagBlock(combined[lastCombinedFlag])
 		end
-
-		local format = "0x%08x"
-		local enumType = ""
-		if typ.bits == 64 then
-			format = "0x%016x"
-			enumType = " : ulong"
-		elseif typ.bits == 16 then
-			format = "0x%04x"
-			enumType = " : ushort"
-		end
-
-		if lastCombinedIdx == -1 then
-			yield("[Flags]")
-			if idx ~= -1 then
-				yield("public enum " .. combined[idx] .. enumType)
-			else
-				yield("public enum " .. typ.name .. enumType)
+		local combinedFlag = combined[prefix]
+		if combinedFlag then
+			lastCombinedFlag = prefix
+			combinedFlag.bits = typ.bits
+			combinedFlag.name = prefix
+			local flags = combinedFlag.flag or {}
+			combinedFlag.flag = flags
+			local lookup = combinedFlag.lookup or {}
+			combinedFlag.lookup = lookup
+			for _, flag in ipairs(typ.flag) do
+				local flagName = name .. flag.name
+				local value = flag.value
+				if value == nil then
+					-- It's a combined flag
+					value = 0
+					for _, v in ipairs(flag) do
+						value = value | assert(lookup[name .. v], v .. " is not defined for " .. flagName)
+					end
+				end
+				lookup[flagName] = value
+				table.insert(flags, {
+					name = flagName,
+					value = value,
+				})
 			end
-
-			lastCombinedIdx = idx
-			yield("{")
-		end
-
-		for _, flag in ipairs(typ.flag) do
-			if flag.value then
-				yield("\t"
-					.. flag.name
-					.. string.rep(" ", 22 - #(flag.name))
-					.. " = "
-					.. string.format(format, flag.value)
-					.. ","
-					)
-			else
-				yield("\t// Combined: "
-					.. flag.name
-					.. " = "
-					.. table.concat(flag, " | ")
-					)
+			if typ.mask then
+				-- generate Mask
+				table.insert(flags, {
+					name = name .. "Mask",
+					value = typ.mask,
+				})
+				lookup[name .. "Mask"] = typ.mask
 			end
-		end
-
-		if lastCombinedIdx == -1 then
-			yield("}")
+		else
+			FlagBlock(typ)
 		end
 	end
 end
