@@ -41,14 +41,16 @@ local function convert_type_0(arg)
 
 	if hasPrefix(arg.ctype, "uint64_t") then
 		return arg.ctype:gsub("uint64_t", "ulong")
+	elseif hasPrefix(arg.ctype, "int64_t") then
+		return arg.ctype:gsub("int64_t", "long")
 	elseif hasPrefix(arg.ctype, "uint32_t") then
 		return arg.ctype:gsub("uint32_t", "uint")
 	elseif hasPrefix(arg.ctype, "int32_t") then
 		return arg.ctype:gsub("int32_t", "int")
 	elseif hasPrefix(arg.ctype, "uint16_t") then
 		return arg.ctype:gsub("uint16_t", "ushort")
-	elseif arg.ctype == "bgfx_view_id_t" then
-		return "ushort"
+	elseif hasPrefix(arg.ctype, "bgfx_view_id_t") then
+		return arg.ctype:gsub("bgfx_view_id_t", "ushort")
 	elseif hasPrefix(arg.ctype, "uint8_t") then
 		return arg.ctype:gsub("uint8_t", "byte")
 	elseif hasPrefix(arg.ctype, "uintptr_t") then
@@ -234,6 +236,18 @@ function converter.types(typ)
 		else
 			FlagBlock(typ)
 		end
+	elseif typ.struct ~= nil then
+		yield("public unsafe struct " .. typ.name)
+		yield("{")
+
+		for _, member in ipairs(typ.struct) do
+			yield(
+				"\t"
+				.. convert_type(member) .. " " .. member.name .. ";"
+				)
+		end
+
+		yield("}")
 	end
 end
 
