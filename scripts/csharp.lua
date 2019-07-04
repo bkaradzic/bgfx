@@ -118,10 +118,19 @@ local function FlagBlock(typ)
 			.. flag.name
 			.. string.rep(" ", 22 - #(flag.name))
 			.. " = "
-			.. string.format(format, flag.value)
+			.. string.format(flag.format or format, flag.value)
 			.. ","
 			)
 	end
+	if typ.shift then
+		yield("\t"
+			.. "Shift"
+			.. string.rep(" ", 22 - #("Shift"))
+			.. " = "
+			.. flag.shift
+			)
+	end
+
 	-- generate Mask
 	if typ.mask then
 		yield("\t"
@@ -135,13 +144,20 @@ local function FlagBlock(typ)
 	yield("}")
 end
 
+local function lastCombinedFlagBlock()
+	if lastCombinedFlag then
+		FlagBlock(combined[lastCombinedFlag])
+		lastCombinedFlag = nil
+	end
+end
+
 function converter.types(typ)
 	if typ.handle then
-		FlagBlock(combined[lastCombinedFlag])
+		lastCombinedFlagBlock()
 
 		yield("public struct " .. typ.name .. "{ public ushort idx; }")
 	elseif hasSuffix(typ.name, "::Enum") then
-		FlagBlock(combined[lastCombinedFlag])
+		lastCombinedFlagBlock()
 
 		yield("public enum " .. typ.typename)
 		yield("{")
@@ -152,11 +168,11 @@ function converter.types(typ)
 	elseif typ.bits ~= nil then
 		local prefix, name = typ.name:match "(%u%l+)(.*)"
 		if prefix ~= lastCombinedFlag then
-			FlagBlock(combined[lastCombinedFlag])
+			lastCombinedFlagBlock()
+			lastCombinedFlag = prefix
 		end
 		local combinedFlag = combined[prefix]
 		if combinedFlag then
-			lastCombinedFlag = prefix
 			combinedFlag.bits = typ.bits
 			combinedFlag.name = prefix
 			local flags = combinedFlag.flag or {}
@@ -177,6 +193,13 @@ function converter.types(typ)
 				table.insert(flags, {
 					name = flagName,
 					value = value,
+				})
+			end
+			if typ.shift then
+				table.insert(flags, {
+					name = name .. "Shift",
+					value = typ.shift,
+					format = "%d",
 				})
 			end
 			if typ.mask then
