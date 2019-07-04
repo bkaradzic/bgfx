@@ -59,6 +59,15 @@ local function convert_type_0(arg)
 		return "[MarshalAs(UnmanagedType.LPStr)] string"
 	elseif hasSuffix(arg.fulltype, "Handle") then
 		return arg.fulltype
+	elseif arg.ctype == "..." then
+		return "[MarshalAs(UnmanagedType.LPStr)] string args"
+	elseif arg.ctype == "va_list"
+		or arg.fulltype == "bx::AllocatorI*"
+		or arg.fulltype == "CallbackI*"
+		or arg.fulltype == "ReleaseFn" then
+		return "IntPtr"
+	elseif arg.fulltype == "const ViewId*" then
+		return "ushort*"
 	end
 
 	return arg.fulltype
@@ -248,8 +257,7 @@ function converter.types(typ)
 
 		for _, member in ipairs(typ.struct) do
 			yield(
-				"\t"
-				.. convert_type(member) .. " " .. member.name .. ";"
+				"\tpublic " .. convert_type(member) .. " " .. member.name .. ";"
 				)
 		end
 
