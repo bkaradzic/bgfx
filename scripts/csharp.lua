@@ -146,14 +146,16 @@ local function FlagBlock(typ)
 	yield("{")
 
 	for _, flag in ipairs(typ.flag) do
+		local flagName = flag.name:gsub("_", "")
 		yield("\t"
-			.. flag.name
-			.. string.rep(" ", 22 - #(flag.name))
+			.. flagName
+			.. string.rep(" ", 22 - #(flagName))
 			.. " = "
 			.. string.format(flag.format or format, flag.value)
 			.. ","
 			)
 	end
+
 	if typ.shift then
 		yield("\t"
 			.. "Shift"
@@ -212,7 +214,7 @@ function converter.types(typ)
 			local lookup = combinedFlag.lookup or {}
 			combinedFlag.lookup = lookup
 			for _, flag in ipairs(typ.flag) do
-				local flagName = name .. flag.name
+				local flagName = name .. flag.name:gsub("_", "")
 				local value = flag.value
 				if value == nil then
 					-- It's a combined flag
