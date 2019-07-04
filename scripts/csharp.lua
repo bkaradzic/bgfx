@@ -94,7 +94,9 @@ end
 local converter = {}
 local yield = coroutine.yield
 
-local function gen()
+local gen = {}
+
+function gen.gen()
 	local r = csharp_template:gsub("$(%l+)", function(what)
 		local tmp = {}
 		for _, object in ipairs(idl[what]) do
@@ -290,7 +292,13 @@ function converter.funcs(func)
 	yield("internal static extern unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname .. args .. ");")
 end
 
-print(gen())
-
 -- printtable("idl types", idl.types)
 -- printtable("idl funcs", idl.funcs)
+
+function gen.write(codes, outputfile)
+	local out = assert(io.open(outputfile, "wb"))
+	out:write(codes)
+	out:close()
+end
+
+return gen

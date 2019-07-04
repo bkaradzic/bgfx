@@ -66,16 +66,10 @@ newaction {
 		generate("temp.bgfx.idl.inl", "../src/bgfx.idl.inl",        "\t")
 		generate("temp.defines.h",    "../include/bgfx/defines.h",  "\t")
 
-		os.exit()
-	end
-}
-
-newaction {
-	trigger = "c#-idl",
-	description = "Generate bgfx C# bindings.",
-	execute = function ()
-
-		local csidl = require "csharp"
+		do
+			local csgen = require "csharp"
+			csgen.write(csgen.gen(), "../bindings/cs/bgfx.cs")
+		end
 
 		os.exit()
 	end
