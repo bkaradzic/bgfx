@@ -133,7 +133,7 @@ local function FlagBlock(typ)
 	end
 
 	yield("[Flags]")
-	yield("public enum " .. typ.name .. enumType)
+	yield("public enum " .. typ.name .. "Flags" .. enumType)
 	yield("{")
 
 	for _, flag in ipairs(typ.flag) do
@@ -237,7 +237,13 @@ function converter.types(typ)
 			FlagBlock(typ)
 		end
 	elseif typ.struct ~= nil then
-		yield("public unsafe struct " .. typ.name)
+
+		if typ.namespace ~= nil then
+			yield("public unsafe struct " .. typ.namespace .. typ.name)
+		else
+			yield("public unsafe struct " .. typ.name)
+		end
+
 		yield("{")
 
 		for _, member in ipairs(typ.struct) do
