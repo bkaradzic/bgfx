@@ -1,14 +1,5 @@
-local idl = require "idl"
-
-do
-	local doxygen = require "doxygen"
-	local source = doxygen.load "bgfx.idl"
-	local f = assert(load(source, "bgfx.idl" , "t", idl))
-	f()
-
-	local codegen = require "codegen"
-	codegen.nameconversion(idl.types, idl.funcs)
-end
+local codegen = require "codegen"
+local idl = codegen.idl "bgfx.idl"
 
 local csharp_template = [[
 using System;

@@ -1,9 +1,8 @@
 -- Copyright 2019 云风 https://github.com/cloudwu . All rights reserved.
 -- License (the same with bgfx) : https://github.com/bkaradzic/bgfx/blob/master/LICENSE
 
-local idl     = require "idl"
 local codegen = require "codegen"
-local doxygen = require "doxygen"
+local idl = codegen.idl "bgfx.idl"
 
 local func_actions = {
 
@@ -30,14 +29,6 @@ local type_actions = {
 	funcptrs  = "\n",
 	cfuncptrs = "\n",
 }
-
-do
-	local source = doxygen.load "bgfx.idl"
-	local f = assert(load(source, "bgfx.idl" , "t", idl))
-	f()
-end
-
-codegen.nameconversion(idl.types, idl.funcs)
 
 local function cfunc(f)
 	return function(func)

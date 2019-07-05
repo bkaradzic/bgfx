@@ -248,7 +248,7 @@ local function calc_flag_values(flag)
 				value = index + base - 1
 			end
 			if value >= cap then
-				error (string.format("Out of range for %s (%d/%d)", name, value, cap))
+				error (string.format("Out of range for %s.%s (%d/%d)", flag.name, item.name, value, cap))
 			end
 			value = value << shift
 		elseif #item == 0 then
@@ -962,6 +962,33 @@ inline bool isValid($NAME _handle) { return bgfx::kInvalidHandle != _handle.idx;
 function codegen.gen_handle(handle)
 	assert(handle.handle, "Not a handle")
 	return (handle_temp:gsub("$(%u+)", { NAME = handle.name }))
+end
+
+local idl = require "idl"
+local doxygen = require "doxygen"
+local conversion
+local idlfile = {}
+
+function codegen.load(filename)
+	assert(conversion == nil, "Don't call codegen.load() after codegen.idl()")
+	assert(idlfile[filename] == nil, "Duplicate load " .. filename)
+	local source = doxygen.load(filename)
+
+	local f = assert(load(source, filename , "t", idl))
+	f()
+	idlfile[filename] = true
+end
+
+function codegen.idl(filename)
+	if conversion == nil then
+		if filename and not idlfile[filename] then
+			codegen.load(filename)
+		end
+		assert(next(idlfile), "call codegen.load() first")
+		conversion = true
+		codegen.nameconversion(idl.types, idl.funcs)
+	end
+	return idl
 end
 
 return codegen
