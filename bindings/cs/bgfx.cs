@@ -848,35 +848,35 @@ internal struct bgfx
 	
 
 	[DllImport(DllName, EntryPoint="bgfx_attachment_init", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void attachment_init(TextureHandle _handle, Access _access, ushort _layer, ushort _mip, byte _resolve);
+	internal static extern unsafe void attachment_init(Attachment* _this, TextureHandle _handle, Access _access, ushort _layer, ushort _mip, byte _resolve);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_begin", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe VertexDecl* vertex_decl_begin(RendererType _rendererType);
+	internal static extern unsafe VertexDecl* vertex_decl_begin(VertexDecl* _this, RendererType _rendererType);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_add", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe VertexDecl* vertex_decl_add(Attrib _attrib, byte _num, AttribType _type, bool _normalized, bool _asInt);
+	internal static extern unsafe VertexDecl* vertex_decl_add(VertexDecl* _this, Attrib _attrib, byte _num, AttribType _type, bool _normalized, bool _asInt);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_decode", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void vertex_decl_decode(Attrib _attrib, byte * _num, AttribType* _type, bool* _normalized, bool* _asInt);
+	internal static extern unsafe void vertex_decl_decode(VertexDecl* _this, Attrib _attrib, byte * _num, AttribType* _type, bool* _normalized, bool* _asInt);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_has", CallingConvention = CallingConvention.Cdecl)]
 	[return: MarshalAs(UnmanagedType.I1)]
-	internal static extern unsafe bool vertex_decl_has(Attrib _attrib);
+	internal static extern unsafe bool vertex_decl_has(VertexDecl* _this, Attrib _attrib);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_skip", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe VertexDecl* vertex_decl_skip(byte _num);
+	internal static extern unsafe VertexDecl* vertex_decl_skip(VertexDecl* _this, byte _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_end", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void vertex_decl_end();
+	internal static extern unsafe void vertex_decl_end(VertexDecl* _this);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_get_offset", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe ushort vertex_decl_get_offset(Attrib _attrib);
+	internal static extern unsafe ushort vertex_decl_get_offset(VertexDecl* _this, Attrib _attrib);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_get_stride", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe ushort vertex_decl_get_stride();
+	internal static extern unsafe ushort vertex_decl_get_stride(VertexDecl* _this);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_get_size", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe uint vertex_decl_get_size(uint _num);
+	internal static extern unsafe uint vertex_decl_get_size(VertexDecl* _this, uint _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_vertex_pack", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void vertex_pack(float _input, bool _inputNormalized, Attrib _attr, VertexDecl* _decl, void* _data, uint _index);
@@ -1180,142 +1180,142 @@ internal struct bgfx
 	internal static extern unsafe void encoder_end(Encoder* _encoder);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_marker", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_marker([MarshalAs(UnmanagedType.LPStr)] string _marker);
+	internal static extern unsafe void encoder_set_marker(Encoder* _this, [MarshalAs(UnmanagedType.LPStr)] string _marker);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_state", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_state(ulong _state, uint _rgba);
+	internal static extern unsafe void encoder_set_state(Encoder* _this, ulong _state, uint _rgba);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_condition", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_condition(OcclusionQueryHandle _handle, bool _visible);
+	internal static extern unsafe void encoder_set_condition(Encoder* _this, OcclusionQueryHandle _handle, bool _visible);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_stencil", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_stencil(uint _fstencil, uint _bstencil);
+	internal static extern unsafe void encoder_set_stencil(Encoder* _this, uint _fstencil, uint _bstencil);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_scissor", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe ushort encoder_set_scissor(ushort _x, ushort _y, ushort _width, ushort _height);
+	internal static extern unsafe ushort encoder_set_scissor(Encoder* _this, ushort _x, ushort _y, ushort _width, ushort _height);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_scissor_cached", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_scissor_cached(ushort _cache);
+	internal static extern unsafe void encoder_set_scissor_cached(Encoder* _this, ushort _cache);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_transform", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe uint encoder_set_transform(void* _mtx, ushort _num);
+	internal static extern unsafe uint encoder_set_transform(Encoder* _this, void* _mtx, ushort _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_transform_cached", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_transform_cached(uint _cache, ushort _num);
+	internal static extern unsafe void encoder_set_transform_cached(Encoder* _this, uint _cache, ushort _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_alloc_transform", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe uint encoder_alloc_transform(Transform* _transform, ushort _num);
+	internal static extern unsafe uint encoder_alloc_transform(Encoder* _this, Transform* _transform, ushort _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_uniform", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_uniform(UniformHandle _handle, void* _value, ushort _num);
+	internal static extern unsafe void encoder_set_uniform(Encoder* _this, UniformHandle _handle, void* _value, ushort _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(IndexBufferHandle _handle);
+	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, IndexBufferHandle _handle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(IndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
+	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, IndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(DynamicIndexBufferHandle _handle);
+	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, DynamicIndexBufferHandle _handle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_dynamic_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_dynamic_index_buffer(DynamicIndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
+	internal static extern unsafe void encoder_set_dynamic_index_buffer(Encoder* _this, DynamicIndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(TransientIndexBuffer* _tib);
+	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, TransientIndexBuffer* _tib);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_transient_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_transient_index_buffer(TransientIndexBuffer* _tib, uint _firstIndex, uint _numIndices);
+	internal static extern unsafe void encoder_set_transient_index_buffer(Encoder* _this, TransientIndexBuffer* _tib, uint _firstIndex, uint _numIndices);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(byte _stream, VertexBufferHandle _handle);
+	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, VertexBufferHandle _handle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
+	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(byte _stream, DynamicVertexBufferHandle _handle);
+	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, DynamicVertexBufferHandle _handle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_dynamic_vertex_buffer(byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
+	internal static extern unsafe void encoder_set_dynamic_vertex_buffer(Encoder* _this, byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(byte _stream, TransientVertexBuffer* _tvb);
+	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, TransientVertexBuffer* _tvb);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_transient_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_transient_vertex_buffer(byte _stream, TransientVertexBuffer* _tvb, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
+	internal static extern unsafe void encoder_set_transient_vertex_buffer(Encoder* _this, byte _stream, TransientVertexBuffer* _tvb, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_count", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_count(uint _numVertices);
+	internal static extern unsafe void encoder_set_vertex_count(Encoder* _this, uint _numVertices);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(InstanceDataBuffer* _idb);
+	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, InstanceDataBuffer* _idb);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(InstanceDataBuffer* _idb, uint _start, uint _num);
+	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, InstanceDataBuffer* _idb, uint _start, uint _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(VertexBufferHandle _handle);
+	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, VertexBufferHandle _handle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_from_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_from_vertex_buffer(VertexBufferHandle _handle, uint _startVertex, uint _num);
+	internal static extern unsafe void encoder_set_instance_data_from_vertex_buffer(Encoder* _this, VertexBufferHandle _handle, uint _startVertex, uint _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(DynamicVertexBufferHandle _handle);
+	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, DynamicVertexBufferHandle _handle);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_from_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_from_dynamic_vertex_buffer(DynamicVertexBufferHandle _handle, uint _startVertex, uint _num);
+	internal static extern unsafe void encoder_set_instance_data_from_dynamic_vertex_buffer(Encoder* _this, DynamicVertexBufferHandle _handle, uint _startVertex, uint _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_count", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_count(uint _numInstances);
+	internal static extern unsafe void encoder_set_instance_count(Encoder* _this, uint _numInstances);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_texture", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_texture(byte _stage, UniformHandle _sampler, TextureHandle _handle, uint _flags);
+	internal static extern unsafe void encoder_set_texture(Encoder* _this, byte _stage, UniformHandle _sampler, TextureHandle _handle, uint _flags);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_touch", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_touch(ushort _id);
+	internal static extern unsafe void encoder_touch(Encoder* _this, ushort _id);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_submit", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_submit(ushort _id, ProgramHandle _program, uint _depth, bool _preserveState);
+	internal static extern unsafe void encoder_submit(Encoder* _this, ushort _id, ProgramHandle _program, uint _depth, bool _preserveState);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_submit_occlusion_query", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_submit_occlusion_query(ushort _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint _depth, bool _preserveState);
+	internal static extern unsafe void encoder_submit_occlusion_query(Encoder* _this, ushort _id, ProgramHandle _program, OcclusionQueryHandle _occlusionQuery, uint _depth, bool _preserveState);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_submit_indirect", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_submit_indirect(ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num, uint _depth, bool _preserveState);
+	internal static extern unsafe void encoder_submit_indirect(Encoder* _this, ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num, uint _depth, bool _preserveState);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_compute_index_buffer(byte _stage, IndexBufferHandle _handle, Access _access);
+	internal static extern unsafe void encoder_set_compute_index_buffer(Encoder* _this, byte _stage, IndexBufferHandle _handle, Access _access);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_compute_vertex_buffer(byte _stage, VertexBufferHandle _handle, Access _access);
+	internal static extern unsafe void encoder_set_compute_vertex_buffer(Encoder* _this, byte _stage, VertexBufferHandle _handle, Access _access);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_dynamic_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_compute_dynamic_index_buffer(byte _stage, DynamicIndexBufferHandle _handle, Access _access);
+	internal static extern unsafe void encoder_set_compute_dynamic_index_buffer(Encoder* _this, byte _stage, DynamicIndexBufferHandle _handle, Access _access);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_compute_dynamic_vertex_buffer(byte _stage, DynamicVertexBufferHandle _handle, Access _access);
+	internal static extern unsafe void encoder_set_compute_dynamic_vertex_buffer(Encoder* _this, byte _stage, DynamicVertexBufferHandle _handle, Access _access);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_compute_indirect_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_compute_indirect_buffer(byte _stage, IndirectBufferHandle _handle, Access _access);
+	internal static extern unsafe void encoder_set_compute_indirect_buffer(Encoder* _this, byte _stage, IndirectBufferHandle _handle, Access _access);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_image", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_image(byte _stage, TextureHandle _handle, byte _mip, Access _access, TextureFormat _format);
+	internal static extern unsafe void encoder_set_image(Encoder* _this, byte _stage, TextureHandle _handle, byte _mip, Access _access, TextureFormat _format);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_dispatch", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_dispatch(ushort _id, ProgramHandle _program, uint _numX, uint _numY, uint _numZ);
+	internal static extern unsafe void encoder_dispatch(Encoder* _this, ushort _id, ProgramHandle _program, uint _numX, uint _numY, uint _numZ);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_dispatch_indirect", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_dispatch_indirect(ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num);
+	internal static extern unsafe void encoder_dispatch_indirect(Encoder* _this, ushort _id, ProgramHandle _program, IndirectBufferHandle _indirectHandle, ushort _start, ushort _num);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_discard", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_discard();
+	internal static extern unsafe void encoder_discard(Encoder* _this);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_blit", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_blit(ushort _id, TextureHandle _dst, ushort _dstX, ushort _dstY, TextureHandle _src, ushort _srcX, ushort _srcY, ushort _width, ushort _height);
+	internal static extern unsafe void encoder_blit(Encoder* _this, ushort _id, TextureHandle _dst, ushort _dstX, ushort _dstY, TextureHandle _src, ushort _srcX, ushort _srcY, ushort _width, ushort _height);
 	
 	[DllImport(DllName, EntryPoint="bgfx_encoder_blit", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_blit(ushort _id, TextureHandle _dst, byte _dstMip, ushort _dstX, ushort _dstY, ushort _dstZ, TextureHandle _src, byte _srcMip, ushort _srcX, ushort _srcY, ushort _srcZ, ushort _width, ushort _height, ushort _depth);
+	internal static extern unsafe void encoder_blit(Encoder* _this, ushort _id, TextureHandle _dst, byte _dstMip, ushort _dstX, ushort _dstY, ushort _dstZ, TextureHandle _src, byte _srcMip, ushort _srcX, ushort _srcY, ushort _srcZ, ushort _width, ushort _height, ushort _depth);
 	
 	[DllImport(DllName, EntryPoint="bgfx_request_screen_shot", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void request_screen_shot(FrameBufferHandle _handle, [MarshalAs(UnmanagedType.LPStr)] string _filePath);

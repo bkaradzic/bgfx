@@ -401,7 +401,7 @@ function codegen.nameconversion(all_types, all_funcs)
 			end
 			local classtype = { fulltype = classname .. "*" }
 			convert_arg(all_types, classtype, v)
-			v.this = classtype.ctype .. " _this"
+			v.this = classtype.ctype
 			v.this_conversion = string.format( "%s This = (%s)_this;", classtype.cpptype, classtype.cpptype)
 			v.this_to_c = string.format("(%s)this", classtype.ctype)
 		end
@@ -446,7 +446,7 @@ local function codetemp(func)
 
 	if func.class then
 		-- It's a member function
-		cargs[1] = func.this
+		cargs[1] = func.this  .. " _this"
 		conversion[1] = func.this_conversion
 		cppfunc = "This->" .. func.name
 		callargs[1] = "_this"
