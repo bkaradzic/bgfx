@@ -234,6 +234,36 @@ bool spvIsWebGPUEnv(spv_target_env env) {
   return false;
 }
 
+bool spvIsOpenGLEnv(spv_target_env env) {
+  switch (env) {
+    case SPV_ENV_UNIVERSAL_1_0:
+    case SPV_ENV_VULKAN_1_0:
+    case SPV_ENV_UNIVERSAL_1_1:
+    case SPV_ENV_UNIVERSAL_1_2:
+    case SPV_ENV_UNIVERSAL_1_3:
+    case SPV_ENV_VULKAN_1_1:
+    case SPV_ENV_OPENCL_1_2:
+    case SPV_ENV_OPENCL_EMBEDDED_1_2:
+    case SPV_ENV_OPENCL_2_0:
+    case SPV_ENV_OPENCL_EMBEDDED_2_0:
+    case SPV_ENV_OPENCL_EMBEDDED_2_1:
+    case SPV_ENV_OPENCL_EMBEDDED_2_2:
+    case SPV_ENV_OPENCL_2_1:
+    case SPV_ENV_OPENCL_2_2:
+    case SPV_ENV_WEBGPU_0:
+    case SPV_ENV_UNIVERSAL_1_4:
+    case SPV_ENV_VULKAN_1_1_SPIRV_1_4:
+      return false;
+    case SPV_ENV_OPENGL_4_0:
+    case SPV_ENV_OPENGL_4_1:
+    case SPV_ENV_OPENGL_4_2:
+    case SPV_ENV_OPENGL_4_3:
+    case SPV_ENV_OPENGL_4_5:
+      return true;
+  }
+  return false;
+}
+
 bool spvIsVulkanOrWebGPUEnv(spv_target_env env) {
   return spvIsVulkanEnv(env) || spvIsWebGPUEnv(env);
 }

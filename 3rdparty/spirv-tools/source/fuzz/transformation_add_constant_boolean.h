@@ -17,27 +17,34 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |fresh_id| must not be used by the module.
-// - The module must already contain OpTypeBool.
-bool IsApplicable(const protobufs::TransformationAddConstantBoolean& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationAddConstantBoolean : public Transformation {
+ public:
+  explicit TransformationAddConstantBoolean(
+      const protobufs::TransformationAddConstantBoolean& message);
 
-// - Adds OpConstantTrue (OpConstantFalse) to the module with id |fresh_id|
-// if |is_true| holds (does not hold).
-void Apply(const protobufs::TransformationAddConstantBoolean& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  TransformationAddConstantBoolean(uint32_t fresh_id, bool is_true);
 
-// Helper factory to create a transformation message.
-protobufs::TransformationAddConstantBoolean
-MakeTransformationAddConstantBoolean(uint32_t fresh_id, bool is_true);
+  // - |message_.fresh_id| must not be used by the module.
+  // - The module must already contain OpTypeBool.
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // - Adds OpConstantTrue (OpConstantFalse) to the module with id
+  //   |message_.fresh_id| if |message_.is_true| holds (does not hold).
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationAddConstantBoolean message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

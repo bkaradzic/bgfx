@@ -3,6 +3,7 @@ static const SpvCapability pygen_variable_caps_AddressesPhysicalStorageBufferAdd
 static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBuffer[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer};
 static const SpvCapability pygen_variable_caps_AddressesVariablePointersVariablePointersStorageBufferPhysicalStorageBufferAddressesEXT[] = {SpvCapabilityAddresses, SpvCapabilityVariablePointers, SpvCapabilityVariablePointersStorageBuffer, SpvCapabilityPhysicalStorageBufferAddressesEXT};
 static const SpvCapability pygen_variable_caps_CooperativeMatrixNV[] = {SpvCapabilityCooperativeMatrixNV};
+static const SpvCapability pygen_variable_caps_DemoteToHelperInvocationEXT[] = {SpvCapabilityDemoteToHelperInvocationEXT};
 static const SpvCapability pygen_variable_caps_DerivativeControl[] = {SpvCapabilityDerivativeControl};
 static const SpvCapability pygen_variable_caps_DeviceEnqueue[] = {SpvCapabilityDeviceEnqueue};
 static const SpvCapability pygen_variable_caps_FragmentMaskAMD[] = {SpvCapabilityFragmentMaskAMD};
@@ -45,6 +46,7 @@ static const SpvCapability pygen_variable_caps_SubgroupVoteKHR[] = {SpvCapabilit
 
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_ballot[] = {spvtools::Extension::kSPV_AMD_shader_ballot};
 static const spvtools::Extension pygen_variable_exts_SPV_AMD_shader_fragment_mask[] = {spvtools::Extension::kSPV_AMD_shader_fragment_mask};
+static const spvtools::Extension pygen_variable_exts_SPV_EXT_demote_to_helper_invocation[] = {spvtools::Extension::kSPV_EXT_demote_to_helper_invocation};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_interlock[] = {spvtools::Extension::kSPV_EXT_fragment_shader_interlock};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_decorate_string, spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
@@ -433,6 +435,8 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"CooperativeMatrixLengthNV", SpvOpCooperativeMatrixLengthNV, 1, pygen_variable_caps_CooperativeMatrixNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, 0xffffffffu, 0xffffffffu},
   {"BeginInvocationInterlockEXT", SpvOpBeginInvocationInterlockEXT, 3, pygen_variable_caps_FragmentShaderSampleInterlockEXTFragmentShaderPixelInterlockEXTFragmentShaderShadingRateInterlockEXT, 0, {}, 0, 0, 1, pygen_variable_exts_SPV_EXT_fragment_shader_interlock, 0xffffffffu, 0xffffffffu},
   {"EndInvocationInterlockEXT", SpvOpEndInvocationInterlockEXT, 3, pygen_variable_caps_FragmentShaderSampleInterlockEXTFragmentShaderPixelInterlockEXTFragmentShaderShadingRateInterlockEXT, 0, {}, 0, 0, 1, pygen_variable_exts_SPV_EXT_fragment_shader_interlock, 0xffffffffu, 0xffffffffu},
+  {"DemoteToHelperInvocationEXT", SpvOpDemoteToHelperInvocationEXT, 1, pygen_variable_caps_DemoteToHelperInvocationEXT, 0, {}, 0, 0, 1, pygen_variable_exts_SPV_EXT_demote_to_helper_invocation, 0xffffffffu, 0xffffffffu},
+  {"IsHelperInvocationEXT", SpvOpIsHelperInvocationEXT, 1, pygen_variable_caps_DemoteToHelperInvocationEXT, 2, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID}, 1, 1, 1, pygen_variable_exts_SPV_EXT_demote_to_helper_invocation, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleINTEL", SpvOpSubgroupShuffleINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleDownINTEL", SpvOpSubgroupShuffleDownINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},
   {"SubgroupShuffleUpINTEL", SpvOpSubgroupShuffleUpINTEL, 1, pygen_variable_caps_SubgroupShuffleINTEL, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 0, nullptr, 0xffffffffu, 0xffffffffu},

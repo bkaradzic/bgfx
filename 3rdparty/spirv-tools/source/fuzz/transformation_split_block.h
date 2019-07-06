@@ -17,35 +17,52 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |result_id| must be the result id of an instruction 'base' in some
-//   block 'blk'.
-// - 'blk' must contain an instruction 'inst' located |offset| instructions
-//   after 'inst' (if |offset| = 0 then 'inst' = 'base').
-// - Splitting 'blk' at 'inst', so that all instructions from 'inst' onwards
-//   appear in a new block that 'blk' directly jumps to must be valid.
-// - |fresh_id| must not be used by the module.
-bool IsApplicable(const protobufs::TransformationSplitBlock& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationSplitBlock : public Transformation {
+ public:
+  explicit TransformationSplitBlock(
+      const protobufs::TransformationSplitBlock& message);
 
-// - A new block with label |fresh_id| is inserted right after 'blk' in
-//   program order.
-// - All instructions of 'blk' from 'inst' onwards are moved into the new
-//   block.
-// - 'blk' is made to jump unconditionally to the new block.
-void Apply(const protobufs::TransformationSplitBlock& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  TransformationSplitBlock(uint32_t result_id, uint32_t offset,
+                           uint32_t fresh_id);
 
-// Creates a protobuf message representing a block-splitting transformation.
-protobufs::TransformationSplitBlock MakeTransformationSplitBlock(
-    uint32_t result_id, uint32_t offset, uint32_t fresh_id);
+  // - |message_.result_id| must be the result id of an instruction 'base' in
+  //   some block 'blk'.
+  // - 'blk' must contain an instruction 'inst' located |message_.offset|
+  //   instructions after 'inst' (if |message_.offset| = 0 then 'inst' =
+  //   'base').
+  // - Splitting 'blk' at 'inst', so that all instructions from 'inst' onwards
+  //   appear in a new block that 'blk' directly jumps to must be valid.
+  // - |message_.fresh_id| must not be used by the module.
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // - A new block with label |message_.fresh_id| is inserted right after 'blk'
+  //   in program order.
+  // - All instructions of 'blk' from 'inst' onwards are moved into the new
+  //   block.
+  // - 'blk' is made to jump unconditionally to the new block.
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  // Returns:
+  // - (true, block->end()) if the relevant instruction is in this block
+  //      but inapplicable
+  // - (true, it) if 'it' is an iterator for the relevant instruction
+  // - (false, _) otherwise.
+  std::pair<bool, opt::BasicBlock::iterator> FindInstToSplitBefore(
+      opt::BasicBlock* block) const;
+
+  protobufs::TransformationSplitBlock message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

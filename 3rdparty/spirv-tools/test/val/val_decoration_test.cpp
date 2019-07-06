@@ -6491,10 +6491,14 @@ OpDecorate %entryPointOutput )" +
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
 %float = OpTypeFloat 32
-%vtype = )" + type + R"(
+%v3float = OpTypeVector %float 3
+%v4float = OpTypeVector %float 4
+%uint = OpTypeInt 32 0
+%uint_2 = OpConstant %uint 2
+%arr_v3float_uint_2 = OpTypeArray %v3float %uint_2
 %float_0 = OpConstant %float 0
-%_ptr_Output_vtype = OpTypePointer Output %vtype
-%entryPointOutput = OpVariable %_ptr_Output_vtype Output
+%_ptr_Output_type = OpTypePointer Output %)" + type + R"(
+%entryPointOutput = OpVariable %_ptr_Output_type Output
 %main = OpFunction %void None %3
 %5 = OpLabel
 OpReturn
@@ -6504,8 +6508,7 @@ OpFunctionEnd
 
 TEST_F(ValidateDecorations, ComponentDecorationIntGood0Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 0");
+  std::string spirv = ShaderWithComponentDecoration("uint", "Component 0");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
@@ -6514,8 +6517,7 @@ TEST_F(ValidateDecorations, ComponentDecorationIntGood0Vulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationIntGood1Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 1");
+  std::string spirv = ShaderWithComponentDecoration("uint", "Component 1");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
@@ -6524,8 +6526,7 @@ TEST_F(ValidateDecorations, ComponentDecorationIntGood1Vulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationIntGood2Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 2");
+  std::string spirv = ShaderWithComponentDecoration("uint", "Component 2");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
@@ -6534,8 +6535,7 @@ TEST_F(ValidateDecorations, ComponentDecorationIntGood2Vulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationIntGood3Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 3");
+  std::string spirv = ShaderWithComponentDecoration("uint", "Component 3");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
@@ -6544,8 +6544,7 @@ TEST_F(ValidateDecorations, ComponentDecorationIntGood3Vulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationIntBad4Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeInt 32 0", "Component 4");
+  std::string spirv = ShaderWithComponentDecoration("uint", "Component 4");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
@@ -6556,8 +6555,7 @@ TEST_F(ValidateDecorations, ComponentDecorationIntBad4Vulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationVector3GoodVulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeVector %float 3", "Component 1");
+  std::string spirv = ShaderWithComponentDecoration("v3float", "Component 1");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
@@ -6566,8 +6564,7 @@ TEST_F(ValidateDecorations, ComponentDecorationVector3GoodVulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationVector4GoodVulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeVector %float 4", "Component 0");
+  std::string spirv = ShaderWithComponentDecoration("v4float", "Component 0");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
@@ -6576,8 +6573,7 @@ TEST_F(ValidateDecorations, ComponentDecorationVector4GoodVulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationVector4Bad1Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeVector %float 4", "Component 1");
+  std::string spirv = ShaderWithComponentDecoration("v4float", "Component 1");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
@@ -6588,14 +6584,35 @@ TEST_F(ValidateDecorations, ComponentDecorationVector4Bad1Vulkan) {
 
 TEST_F(ValidateDecorations, ComponentDecorationVector4Bad3Vulkan) {
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  std::string spirv =
-      ShaderWithComponentDecoration("OpTypeVector %float 4", "Component 3");
+  std::string spirv = ShaderWithComponentDecoration("v4float", "Component 3");
 
   CompileSuccessfully(spirv, env);
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Sequence of components starting with 3 "
                         "and ending with 6 gets larger than 3"));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationArrayGoodVulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("arr_v3float_uint_2", "Component 1");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_SUCCESS, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(), Eq(""));
+}
+
+TEST_F(ValidateDecorations, ComponentDecorationArrayBadVulkan) {
+  const spv_target_env env = SPV_ENV_VULKAN_1_0;
+  std::string spirv =
+      ShaderWithComponentDecoration("arr_v3float_uint_2", "Component 2");
+
+  CompileSuccessfully(spirv, env);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateAndRetrieveValidationState(env));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Sequence of components starting with 2 "
+                        "and ending with 4 gets larger than 3"));
 }
 
 TEST_F(ValidateDecorations, ComponentDecorationBlockGood) {

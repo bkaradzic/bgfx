@@ -257,7 +257,7 @@ int main(int argc, const char** argv) {
   const std::string dot_spv(".spv");
   std::string in_facts_file =
       in_binary_file.substr(0, in_binary_file.length() - dot_spv.length()) +
-      ".json";
+      ".facts";
   std::ifstream facts_input(in_facts_file);
   if (facts_input) {
     std::string facts_json_string((std::istreambuf_iterator<char>(facts_input)),

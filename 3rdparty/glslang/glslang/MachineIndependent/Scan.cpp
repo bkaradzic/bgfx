@@ -356,6 +356,7 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["default"] =                 DEFAULT;
     (*KeywordMap)["if"] =                      IF;
     (*KeywordMap)["else"] =                    ELSE;
+    (*KeywordMap)["demote"] =                  DEMOTE;
     (*KeywordMap)["discard"] =                 DISCARD;
     (*KeywordMap)["return"] =                  RETURN;
     (*KeywordMap)["void"] =                    VOID;
@@ -1620,6 +1621,12 @@ int TScanContext::tokenizeIdentifier()
             parseContext.extensionTurnedOn(E_GL_NV_cooperative_matrix))
             return keyword;
         return identifierOrType();
+
+    case DEMOTE:
+        if (parseContext.extensionTurnedOn(E_GL_EXT_demote_to_helper_invocation))
+            return keyword;
+        else
+            return identifierOrType();
 
     default:
         parseContext.infoSink.info.message(EPrefixInternalError, "Unknown glslang keyword", loc);

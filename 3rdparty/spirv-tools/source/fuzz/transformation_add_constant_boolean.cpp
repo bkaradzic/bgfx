@@ -19,42 +19,46 @@
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-using opt::IRContext;
+TransformationAddConstantBoolean::TransformationAddConstantBoolean(
+    const protobufs::TransformationAddConstantBoolean& message)
+    : message_(message) {}
 
-bool IsApplicable(const protobufs::TransformationAddConstantBoolean& message,
-                  IRContext* context, const FactManager& /*unused*/) {
+TransformationAddConstantBoolean::TransformationAddConstantBoolean(
+    uint32_t fresh_id, bool is_true) {
+  message_.set_fresh_id(fresh_id);
+  message_.set_is_true(is_true);
+}
+
+bool TransformationAddConstantBoolean::IsApplicable(
+    opt::IRContext* context, const FactManager& /*unused*/) const {
   opt::analysis::Bool bool_type;
   if (!context->get_type_mgr()->GetId(&bool_type)) {
     // No OpTypeBool is present.
     return false;
   }
-  return fuzzerutil::IsFreshId(context, message.fresh_id());
+  return fuzzerutil::IsFreshId(context, message_.fresh_id());
 }
 
-void Apply(const protobufs::TransformationAddConstantBoolean& message,
-           IRContext* context, FactManager* /*unused*/) {
+void TransformationAddConstantBoolean::Apply(opt::IRContext* context,
+                                             FactManager* /*unused*/) const {
   opt::analysis::Bool bool_type;
   // Add the boolean constant to the module, ensuring the module's id bound is
   // high enough.
-  fuzzerutil::UpdateModuleIdBound(context, message.fresh_id());
+  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
   context->module()->AddGlobalValue(
-      message.is_true() ? SpvOpConstantTrue : SpvOpConstantFalse,
-      message.fresh_id(), context->get_type_mgr()->GetId(&bool_type));
+      message_.is_true() ? SpvOpConstantTrue : SpvOpConstantFalse,
+      message_.fresh_id(), context->get_type_mgr()->GetId(&bool_type));
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(IRContext::Analysis::kAnalysisNone);
+  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 }
 
-protobufs::TransformationAddConstantBoolean
-MakeTransformationAddConstantBoolean(uint32_t fresh_id, bool is_true) {
-  protobufs::TransformationAddConstantBoolean result;
-  result.set_fresh_id(fresh_id);
-  result.set_is_true(is_true);
+protobufs::Transformation TransformationAddConstantBoolean::ToMessage() const {
+  protobufs::Transformation result;
+  *result.mutable_add_constant_boolean() = message_;
   return result;
 }
 
-}  // namespace transformation
 }  // namespace fuzz
 }  // namespace spvtools

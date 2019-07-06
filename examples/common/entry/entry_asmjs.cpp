@@ -303,7 +303,6 @@ namespace entry
 
 	EM_BOOL Context::focusCb(int eventType, const EmscriptenFocusEvent* event, void* userData)
 	{
-		printf("focusCb %d", eventType);
 		BX_UNUSED(event, userData);
 
 		if (event)

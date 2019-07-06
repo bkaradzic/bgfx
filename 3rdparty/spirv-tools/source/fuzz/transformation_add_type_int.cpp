@@ -18,46 +18,51 @@
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-using opt::IRContext;
+TransformationAddTypeInt::TransformationAddTypeInt(
+    const spvtools::fuzz::protobufs::TransformationAddTypeInt& message)
+    : message_(message) {}
 
-bool IsApplicable(const protobufs::TransformationAddTypeInt& message,
-                  IRContext* context,
-                  const spvtools::fuzz::FactManager& /*unused*/) {
+TransformationAddTypeInt::TransformationAddTypeInt(uint32_t fresh_id,
+                                                   uint32_t width,
+                                                   bool is_signed) {
+  message_.set_fresh_id(fresh_id);
+  message_.set_width(width);
+  message_.set_is_signed(is_signed);
+}
+
+bool TransformationAddTypeInt::IsApplicable(
+    opt::IRContext* context,
+    const spvtools::fuzz::FactManager& /*unused*/) const {
   // The id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
     return false;
   }
 
   // Applicable if there is no int type with this width and signedness already
   // declared in the module.
-  opt::analysis::Integer int_type(message.width(), message.is_signed());
+  opt::analysis::Integer int_type(message_.width(), message_.is_signed());
   return context->get_type_mgr()->GetId(&int_type) == 0;
 }
 
-void Apply(const protobufs::TransformationAddTypeInt& message,
-           IRContext* context, spvtools::fuzz::FactManager* /*unused*/) {
+void TransformationAddTypeInt::Apply(
+    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
   opt::Instruction::OperandList in_operands = {
-      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message.width()}},
-      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message.is_signed() ? 1u : 0u}}};
+      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message_.width()}},
+      {SPV_OPERAND_TYPE_LITERAL_INTEGER, {message_.is_signed() ? 1u : 0u}}};
   context->module()->AddType(MakeUnique<opt::Instruction>(
-      context, SpvOpTypeInt, 0, message.fresh_id(), in_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message.fresh_id());
+      context, SpvOpTypeInt, 0, message_.fresh_id(), in_operands));
+  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(IRContext::Analysis::kAnalysisNone);
+  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 }
 
-protobufs::TransformationAddTypeInt MakeTransformationAddTypeInt(
-    uint32_t fresh_id, uint32_t width, bool is_signed) {
-  protobufs::TransformationAddTypeInt result;
-  result.set_fresh_id(fresh_id);
-  result.set_width(width);
-  result.set_is_signed(is_signed);
+protobufs::Transformation TransformationAddTypeInt::ToMessage() const {
+  protobufs::Transformation result;
+  *result.mutable_add_type_int() = message_;
   return result;
 }
 
-}  // namespace transformation
 }  // namespace fuzz
 }  // namespace spvtools

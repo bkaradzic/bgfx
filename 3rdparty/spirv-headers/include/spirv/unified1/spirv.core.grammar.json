@@ -4045,6 +4045,38 @@
       "version" : "None"
     },
     {
+      "opname" : "OpBeginInvocationInterlockEXT",
+      "opcode" : 5364,
+      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
+      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpEndInvocationInterlockEXT",
+      "opcode" : 5365,
+      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
+      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpDemoteToHelperInvocationEXT",
+      "opcode" : 5380,
+      "capabilities" : [ "DemoteToHelperInvocationEXT" ],
+      "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpIsHelperInvocationEXT",
+      "opcode" : 5381,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "DemoteToHelperInvocationEXT" ],
+      "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpSubgroupShuffleINTEL",
       "opcode" : 5571,
       "operands" : [
@@ -5770,20 +5802,6 @@
         { "kind" : "IdRef", "name" : "'Payload'" }
       ],
       "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
-      "version" : "None"
-    },
-    {
-      "opname" : "OpBeginInvocationInterlockEXT",
-      "opcode" : 5364,
-      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
-      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
-      "version" : "None"
-    },
-    {
-      "opname" : "OpEndInvocationInterlockEXT",
-      "opcode" : 5365,
-      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
-      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
       "version" : "None"
     }
   ],
@@ -9401,6 +9419,13 @@
           "value" : 5378,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DemoteToHelperInvocationEXT",
+          "value" : 5379,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
           "version" : "None"
         },
         {

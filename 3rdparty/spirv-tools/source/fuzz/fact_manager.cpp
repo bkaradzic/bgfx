@@ -14,11 +14,59 @@
 
 #include "source/fuzz/fact_manager.h"
 
+#include <sstream>
+
 #include "source/fuzz/uniform_buffer_element_descriptor.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
+
+namespace {
+
+std::string ToString(const protobufs::Fact& fact) {
+  assert(fact.fact_case() == protobufs::Fact::kConstantUniformFact &&
+         "Right now this is the only fact.");
+  std::stringstream stream;
+  stream << "("
+         << fact.constant_uniform_fact()
+                .uniform_buffer_element_descriptor()
+                .descriptor_set()
+         << ", "
+         << fact.constant_uniform_fact()
+                .uniform_buffer_element_descriptor()
+                .binding()
+         << ")[";
+
+  bool first = true;
+  for (auto index : fact.constant_uniform_fact()
+                        .uniform_buffer_element_descriptor()
+                        .index()) {
+    if (first) {
+      first = false;
+    } else {
+      stream << ", ";
+    }
+    stream << index;
+  }
+
+  stream << "] == [";
+
+  first = true;
+  for (auto constant_word : fact.constant_uniform_fact().constant_word()) {
+    if (first) {
+      first = false;
+    } else {
+      stream << ", ";
+    }
+    stream << constant_word;
+  }
+
+  stream << "]";
+  return stream.str();
+}
+
+}  // namespace
 
 // The purpose of this struct is to group the fields and data used to represent
 // facts about uniform constants.
@@ -288,16 +336,16 @@ FactManager::FactManager() {
 
 FactManager::~FactManager() = default;
 
-bool FactManager::AddFacts(const protobufs::FactSequence& initial_facts,
+void FactManager::AddFacts(const MessageConsumer& message_consumer,
+                           const protobufs::FactSequence& initial_facts,
                            opt::IRContext* context) {
   for (auto& fact : initial_facts.fact()) {
     if (!AddFact(fact, context)) {
-      // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2621) Provide
-      //  information about the fact that could not be added.
-      return false;
+      message_consumer(
+          SPV_MSG_WARNING, nullptr, {},
+          ("Invalid fact " + ToString(fact) + " ignored.").c_str());
     }
   }
-  return true;
 }
 
 bool FactManager::AddFact(const spvtools::fuzz::protobufs::Fact& fact,

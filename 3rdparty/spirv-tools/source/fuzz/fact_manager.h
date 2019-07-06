@@ -41,11 +41,14 @@ class FactManager {
   ~FactManager();
 
   // Adds all the facts from |facts|, checking them for validity with respect to
-  // |context|. Returns true if and only if all facts are valid.
-  bool AddFacts(const protobufs::FactSequence& facts, opt::IRContext* context);
+  // |context|.  Warnings about invalid facts are communicated via
+  // |message_consumer|; such facts are otherwise ignored.
+  void AddFacts(const MessageConsumer& message_consumer,
+                const protobufs::FactSequence& facts, opt::IRContext* context);
 
-  // Adds |fact| to the fact manager, checking it for validity with respect to
-  // |context|. Returns true if and only if the fact is valid.
+  // Checks the fact for validity with respect to |context|.  Returns false,
+  // with no side effects, if the fact is invalid.  Otherwise adds |fact| to the
+  // fact manager.
   bool AddFact(const protobufs::Fact& fact, opt::IRContext* context);
 
   // The fact manager will ultimately be responsible for managing a few distinct

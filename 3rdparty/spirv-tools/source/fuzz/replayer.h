@@ -33,7 +33,6 @@ class Replayer {
     kComplete,
     kFailedToCreateSpirvToolsInterface,
     kInitialBinaryInvalid,
-    kInitialFactsInvalid,
   };
 
   // Constructs a replayer from the given target environment.

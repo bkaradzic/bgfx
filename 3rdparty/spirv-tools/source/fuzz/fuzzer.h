@@ -33,7 +33,6 @@ class Fuzzer {
     kComplete,
     kFailedToCreateSpirvToolsInterface,
     kInitialBinaryInvalid,
-    kInitialFactsInvalid,
   };
 
   // Constructs a fuzzer from the given target environment.

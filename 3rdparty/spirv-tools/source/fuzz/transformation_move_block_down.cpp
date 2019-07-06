@@ -18,19 +18,23 @@
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-using opt::BasicBlock;
-using opt::IRContext;
+TransformationMoveBlockDown::TransformationMoveBlockDown(
+    const spvtools::fuzz::protobufs::TransformationMoveBlockDown& message)
+    : message_(message) {}
 
-bool IsApplicable(const protobufs::TransformationMoveBlockDown& message,
-                  IRContext* context, const FactManager& /*unused*/) {
+TransformationMoveBlockDown::TransformationMoveBlockDown(uint32_t id) {
+  message_.set_block_id(id);
+}
+
+bool TransformationMoveBlockDown::IsApplicable(
+    opt::IRContext* context, const FactManager& /*unused*/) const {
   // Go through every block in every function, looking for a block whose id
   // matches that of the block we want to consider moving down.
   for (auto& function : *context->module()) {
     for (auto block_it = function.begin(); block_it != function.end();
          ++block_it) {
-      if (block_it->id() == message.block_id()) {
+      if (block_it->id() == message_.block_id()) {
         // We have found a match.
         if (block_it == function.begin()) {
           // The block is the first one appearing in the function.  We are not
@@ -38,7 +42,12 @@ bool IsApplicable(const protobufs::TransformationMoveBlockDown& message,
           return false;
         }
         // Record the block we would like to consider moving down.
-        BasicBlock* block_matching_id = &*block_it;
+        opt::BasicBlock* block_matching_id = &*block_it;
+        if (!context->GetDominatorAnalysis(&function)->IsReachable(
+                block_matching_id)) {
+          // The block is not reachable.  We are not allowed to move it down.
+          return false;
+        }
         // Now see whether there is some block following that block in program
         // order.
         ++block_it;
@@ -48,7 +57,7 @@ bool IsApplicable(const protobufs::TransformationMoveBlockDown& message,
           // apply.
           return false;
         }
-        BasicBlock* next_block_in_program_order = &*block_it;
+        opt::BasicBlock* next_block_in_program_order = &*block_it;
         // We can move the block of interest down if and only if it does not
         // dominate the block that comes next.
         return !context->GetDominatorAnalysis(&function)->Dominates(
@@ -62,26 +71,26 @@ bool IsApplicable(const protobufs::TransformationMoveBlockDown& message,
   return false;
 }
 
-void Apply(const protobufs::TransformationMoveBlockDown& message,
-           IRContext* context, FactManager* /*unused*/) {
+void TransformationMoveBlockDown::Apply(opt::IRContext* context,
+                                        FactManager* /*unused*/) const {
   // Go through every block in every function, looking for a block whose id
   // matches that of the block we want to move down.
   for (auto& function : *context->module()) {
     for (auto block_it = function.begin(); block_it != function.end();
          ++block_it) {
-      if (block_it->id() == message.block_id()) {
+      if (block_it->id() == message_.block_id()) {
         ++block_it;
         assert(block_it != function.end() &&
                "To be able to move a block down, it needs to have a "
                "program-order successor.");
-        function.MoveBasicBlockToAfter(message.block_id(), &*block_it);
+        function.MoveBasicBlockToAfter(message_.block_id(), &*block_it);
         // It is prudent to invalidate analyses after changing block ordering in
         // case any of them depend on it, but the ones that definitely do not
         // depend on ordering can be preserved. These include the following,
         // which can likely be extended.
         context->InvalidateAnalysesExceptFor(
-            IRContext::Analysis::kAnalysisDefUse |
-            IRContext::Analysis::kAnalysisDominatorAnalysis);
+            opt::IRContext::Analysis::kAnalysisDefUse |
+            opt::IRContext::Analysis::kAnalysisDominatorAnalysis);
 
         return;
       }
@@ -90,13 +99,11 @@ void Apply(const protobufs::TransformationMoveBlockDown& message,
   assert(false && "No block was found to move down.");
 }
 
-protobufs::TransformationMoveBlockDown MakeTransformationMoveBlockDown(
-    uint32_t id) {
-  protobufs::TransformationMoveBlockDown result;
-  result.set_block_id(id);
+protobufs::Transformation TransformationMoveBlockDown::ToMessage() const {
+  protobufs::Transformation result;
+  *result.mutable_move_block_down() = message_;
   return result;
 }
 
-}  // namespace transformation
 }  // namespace fuzz
 }  // namespace spvtools

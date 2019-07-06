@@ -30,16 +30,23 @@ void frag_main()
         case 0:
         {
             _30 = 3;
+            j = _30;
+            _31 = 0;
+            j = _31;
+            break;
         }
         default:
         {
             j = _30;
             _31 = 0;
+            j = _31;
+            break;
         }
         case 1:
         case 11:
         {
             j = _31;
+            break;
         }
         case 2:
         {
@@ -59,6 +66,8 @@ void frag_main()
         }
         case 4:
         {
+            i = 0;
+            break;
         }
         case 5:
         {

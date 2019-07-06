@@ -1623,6 +1623,16 @@ spvc_result spvc_compiler_get_declared_struct_size_runtime_array(spvc_compiler c
 	return SPVC_SUCCESS;
 }
 
+spvc_result spvc_compiler_get_declared_struct_member_size(spvc_compiler compiler, spvc_type struct_type, unsigned index, size_t *size)
+{
+	SPVC_BEGIN_SAFE_SCOPE
+	{
+		*size = compiler->compiler->get_declared_struct_member_size(*static_cast<const SPIRType *>(struct_type), index);
+	}
+	SPVC_END_SAFE_SCOPE(compiler->context, SPVC_ERROR_INVALID_ARGUMENT)
+	return SPVC_SUCCESS;
+}
+
 spvc_result spvc_compiler_type_struct_member_offset(spvc_compiler compiler, spvc_type type, unsigned index, unsigned *offset)
 {
 	SPVC_BEGIN_SAFE_SCOPE

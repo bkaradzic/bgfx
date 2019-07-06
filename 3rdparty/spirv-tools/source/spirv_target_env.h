@@ -28,6 +28,9 @@ bool spvIsOpenCLEnv(spv_target_env env);
 // Returns true if |env| is an WEBGPU environment, false otherwise.
 bool spvIsWebGPUEnv(spv_target_env env);
 
+// Returns true if |env| is an OPENGL environment, false otherwise.
+bool spvIsOpenGLEnv(spv_target_env env);
+
 // Returns true if |env| is a VULKAN or WEBGPU environment, false otherwise.
 bool spvIsVulkanOrWebGPUEnv(spv_target_env env);
 

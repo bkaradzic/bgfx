@@ -80,25 +80,20 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstantViaConstantPair(
   // We can now make a transformation that will replace |bool_constant_use|
   // with an expression of the form (written using infix notation):
   // |lhs_id| |comparison_opcode| |rhs_id|
-  auto transformation = transformation::
-      MakeTransformationReplaceBooleanConstantWithConstantBinary(
-          bool_constant_use, lhs_id, rhs_id, comparison_opcode,
-          GetFuzzerContext()->GetFreshId());
+  auto transformation = TransformationReplaceBooleanConstantWithConstantBinary(
+      bool_constant_use, lhs_id, rhs_id, comparison_opcode,
+      GetFuzzerContext()->GetFreshId());
   // The transformation should be applicable by construction.
-  assert(transformation::IsApplicable(transformation, GetIRContext(),
-                                      *GetFactManager()));
+  assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()));
 
   // Applying this transformation yields a pointer to the new instruction that
   // computes the result of the binary expression.
   auto binary_operator_instruction =
-      transformation::Apply(transformation, GetIRContext(), GetFactManager());
+      transformation.ApplyWithResult(GetIRContext(), GetFactManager());
 
   // Add this transformation to the sequence of transformations that have been
   // applied.
-  *GetTransformations()
-       ->add_transformation()
-       ->mutable_replace_boolean_constant_with_constant_binary() =
-      transformation;
+  *GetTransformations()->add_transformation() = transformation.ToMessage();
 
   // Having made a binary expression, there may now be opportunities to further
   // obfuscate the constants used as the LHS and RHS of the expression (e.g. by
@@ -331,17 +326,13 @@ void FuzzerPassObfuscateConstants::ObfuscateScalarConstant(
               static_cast<uint32_t>(uniform_descriptors.size()))];
   // Create, apply and record a transformation to replace the constant use with
   // the result of a load from the chosen uniform.
-  auto transformation =
-      transformation::MakeTransformationReplaceConstantWithUniform(
-          constant_use, uniform_descriptor, GetFuzzerContext()->GetFreshId(),
-          GetFuzzerContext()->GetFreshId());
+  auto transformation = TransformationReplaceConstantWithUniform(
+      constant_use, uniform_descriptor, GetFuzzerContext()->GetFreshId(),
+      GetFuzzerContext()->GetFreshId());
   // Transformation should be applicable by construction.
-  assert(transformation::IsApplicable(transformation, GetIRContext(),
-                                      *GetFactManager()));
-  transformation::Apply(transformation, GetIRContext(), GetFactManager());
-  *GetTransformations()
-       ->add_transformation()
-       ->mutable_replace_constant_with_uniform() = transformation;
+  assert(transformation.IsApplicable(GetIRContext(), *GetFactManager()));
+  transformation.Apply(GetIRContext(), GetFactManager());
+  *GetTransformations()->add_transformation() = transformation.ToMessage();
 }
 
 void FuzzerPassObfuscateConstants::ObfuscateConstant(

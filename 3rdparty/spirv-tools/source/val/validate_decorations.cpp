@@ -910,6 +910,25 @@ spv_result_t CheckDecorationsOfBuffers(ValidationState_t& vstate) {
         }
       }
 
+      if (spvIsOpenGLEnv(vstate.context()->target_env)) {
+        bool has_block = hasDecoration(var_id, SpvDecorationBlock, vstate);
+        bool has_buffer_block =
+            hasDecoration(var_id, SpvDecorationBufferBlock, vstate);
+        if ((uniform && (has_block || has_buffer_block)) ||
+            (storage_buffer && has_block)) {
+          auto entry_points = vstate.EntryPointReferences(var_id);
+          if (!entry_points.empty() &&
+              !hasDecoration(var_id, SpvDecorationBinding, vstate)) {
+            return vstate.diag(SPV_ERROR_INVALID_ID, vstate.FindDef(var_id))
+                   << (uniform ? "Uniform" : "Storage Buffer") << " id '"
+                   << var_id << "' is missing Binding decoration.\n"
+                   << "From ARB_gl_spirv extension:\n"
+                   << "Uniform and shader storage block variables must "
+                   << "also be decorated with a *Binding*.";
+          }
+        }
+      }
+
       const bool phys_storage_buffer =
           storageClass == SpvStorageClassPhysicalStorageBufferEXT;
       if (uniform || push_constant || storage_buffer || phys_storage_buffer) {
@@ -1440,6 +1459,11 @@ spv_result_t CheckComponentDecoration(ValidationState_t& vstate,
   }
 
   if (spvIsVulkanEnv(vstate.context()->target_env)) {
+    // Strip the array, if present.
+    if (vstate.GetIdOpcode(type_id) == SpvOpTypeArray) {
+      type_id = vstate.FindDef(type_id)->word(2u);
+    }
+
     if (!vstate.IsIntScalarOrVectorType(type_id) &&
         !vstate.IsFloatScalarOrVectorType(type_id)) {
       return vstate.diag(SPV_ERROR_INVALID_ID, &inst)
