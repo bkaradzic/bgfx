@@ -591,41 +591,41 @@ internal struct bgfx
 		Exiting,
 	}
 	
-	public unsafe struct CapsGPU
-	{
-		public ushort vendorId;
-		public ushort deviceId;
-	}
-	
-	public unsafe struct CapsLimits
-	{
-		public uint maxDrawCalls;
-		public uint maxBlits;
-		public uint maxTextureSize;
-		public uint maxTextureLayers;
-		public uint maxViews;
-		public uint maxFrameBuffers;
-		public uint maxFBAttachments;
-		public uint maxPrograms;
-		public uint maxShaders;
-		public uint maxTextures;
-		public uint maxTextureSamplers;
-		public uint maxComputeBindings;
-		public uint maxVertexDecls;
-		public uint maxVertexStreams;
-		public uint maxIndexBuffers;
-		public uint maxVertexBuffers;
-		public uint maxDynamicIndexBuffers;
-		public uint maxDynamicVertexBuffers;
-		public uint maxUniforms;
-		public uint maxOcclusionQueries;
-		public uint maxEncoders;
-		public uint transientVbSize;
-		public uint transientIbSize;
-	}
-	
 	public unsafe struct Caps
 	{
+		public unsafe struct GPU
+		{
+			public ushort vendorId;
+			public ushort deviceId;
+		}
+	
+		public unsafe struct Limits
+		{
+			public uint maxDrawCalls;
+			public uint maxBlits;
+			public uint maxTextureSize;
+			public uint maxTextureLayers;
+			public uint maxViews;
+			public uint maxFrameBuffers;
+			public uint maxFBAttachments;
+			public uint maxPrograms;
+			public uint maxShaders;
+			public uint maxTextures;
+			public uint maxTextureSamplers;
+			public uint maxComputeBindings;
+			public uint maxVertexDecls;
+			public uint maxVertexStreams;
+			public uint maxIndexBuffers;
+			public uint maxVertexBuffers;
+			public uint maxDynamicIndexBuffers;
+			public uint maxDynamicVertexBuffers;
+			public uint maxUniforms;
+			public uint maxOcclusionQueries;
+			public uint maxEncoders;
+			public uint transientVbSize;
+			public uint transientIbSize;
+		}
+	
 		public RendererType rendererType;
 		public ulong supported;
 		public ushort vendorId;
@@ -663,15 +663,15 @@ internal struct bgfx
 		public byte maxFrameLatency;
 	}
 	
-	public unsafe struct InitLimits
-	{
-		public ushort maxEncoders;
-		public uint transientVbSize;
-		public uint transientIbSize;
-	}
-	
 	public unsafe struct Init
 	{
+		public unsafe struct Limits
+		{
+			public ushort maxEncoders;
+			public uint transientVbSize;
+			public uint transientIbSize;
+		}
+	
 		public RendererType type;
 		public ushort vendorId;
 		public ushort deviceId;
@@ -2260,7 +2260,6 @@ internal struct bgfx
 	[DllImport(DllName, EntryPoint="bgfx_blit", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void blit(ushort _id, TextureHandle _dst, byte _dstMip, ushort _dstX, ushort _dstY, ushort _dstZ, TextureHandle _src, byte _srcMip, ushort _srcX, ushort _srcY, ushort _srcZ, ushort _width, ushort _height, ushort _depth);
 	
-
 #if DEBUG
 	const string DllName = "bgfx_debug.dll";
 #else

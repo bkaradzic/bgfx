@@ -11,7 +11,6 @@ internal struct bgfx
 	$types
 
 	$funcs
-
 #if DEBUG
 	const string DllName = "bgfx_debug.dll";
 #else
@@ -84,6 +83,7 @@ end
 
 local converter = {}
 local yield = coroutine.yield
+local indent = ""
 
 local gen = {}
 
@@ -178,6 +178,8 @@ local function lastCombinedFlagBlock()
 	end
 end
 
+local namespace = ""
+
 function converter.types(typ)
 	if typ.handle then
 		lastCombinedFlagBlock()
@@ -242,21 +244,33 @@ function converter.types(typ)
 		end
 	elseif typ.struct ~= nil then
 
+		local skip = false
+
 		if typ.namespace ~= nil then
-			yield("public unsafe struct " .. typ.namespace .. typ.name)
-		else
-			yield("public unsafe struct " .. typ.name)
+			if namespace ~= typ.namespace then
+				yield("public unsafe struct " .. typ.namespace)
+				yield("{")
+				namespace = typ.namespace
+				indent = "\t"
+			end
+		elseif namespace ~= "" then
+			indent = ""
+			namespace = ""
+			skip = true
 		end
 
-		yield("{")
+		if not skip then
+			yield(indent .. "public unsafe struct " .. typ.name)
+			yield(indent .. "{")
+		end
 
 		for _, member in ipairs(typ.struct) do
 			yield(
-				"\tpublic " .. convert_type(member) .. " " .. member.name .. ";"
+				indent .. "\tpublic " .. convert_type(member) .. " " .. member.name .. ";"
 				)
 		end
 
-		yield("}")
+		yield(indent .. "}")
 	end
 end
 
