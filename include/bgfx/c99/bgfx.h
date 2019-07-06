@@ -2769,17 +2769,6 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _h
  * internal texture will released.
  * @attention It's expected you understand some bgfx internals before you
  *   use this call.
- * @param[in] _handle Texture handle.
- * @param[in] _width Width.
- * @param[in] _height Height.
- * @param[in] _numMips Number of mip-maps.
- * @param[in] _format Texture format. See: `TextureFormat::Enum`.
- * @param[in] _flags Default texture sampling mode is linear, and wrap mode
- *   is repeat.
- *   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
- *     mode.
- *   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
- *     sampling.
  * @returns Native API pointer to texture. If result is 0, texture is not created yet from the
  *   main thread.
  * @warning Must be called only on render thread.
