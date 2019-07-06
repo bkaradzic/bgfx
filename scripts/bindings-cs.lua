@@ -276,6 +276,10 @@ end
 
 function converter.funcs(func)
 
+	if func.cpponly then
+		return
+	end
+
 	if func.comments ~= nil then
 		yield("/// <summary>")
 		for _, line in ipairs(func.comments) do

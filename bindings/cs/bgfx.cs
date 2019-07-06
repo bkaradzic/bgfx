@@ -892,24 +892,6 @@ internal struct bgfx
 	internal static extern unsafe void vertex_decl_end(VertexDecl* _this);
 	
 	/// <summary>
-	/// Returns relative attribute offset from the vertex.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_get_offset", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe ushort vertex_decl_get_offset(VertexDecl* _this, Attrib _attrib);
-	
-	/// <summary>
-	/// Returns vertex stride.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_get_stride", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe ushort vertex_decl_get_stride(VertexDecl* _this);
-	
-	/// <summary>
-	/// Returns size of vertex buffer for number of vertices.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_vertex_decl_get_size", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe uint vertex_decl_get_size(VertexDecl* _this, uint _num);
-	
-	/// <summary>
 	/// Pack vertex attribute into vertex stream format.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_vertex_pack", CallingConvention = CallingConvention.Cdecl)]
@@ -1666,31 +1648,13 @@ internal struct bgfx
 	/// Set index buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, IndexBufferHandle _handle);
-	
-	/// <summary>
-	/// Set index buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, IndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
-	
-	/// <summary>
-	/// Set index buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, DynamicIndexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set index buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_dynamic_index_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_set_dynamic_index_buffer(Encoder* _this, DynamicIndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
-	
-	/// <summary>
-	/// Set index buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_index_buffer(Encoder* _this, TransientIndexBuffer* _tib);
 	
 	/// <summary>
 	/// Set index buffer for draw primitive.
@@ -1702,31 +1666,13 @@ internal struct bgfx
 	/// Set vertex buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, VertexBufferHandle _handle);
-	
-	/// <summary>
-	/// Set vertex buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
-	
-	/// <summary>
-	/// Set vertex buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, DynamicVertexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_set_dynamic_vertex_buffer(Encoder* _this, byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexDeclHandle _declHandle);
-	
-	/// <summary>
-	/// Set vertex buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, TransientVertexBuffer* _tvb);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
@@ -1746,28 +1692,13 @@ internal struct bgfx
 	/// Set instance data buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, InstanceDataBuffer* _idb);
-	
-	/// <summary>
-	/// Set instance data buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, InstanceDataBuffer* _idb, uint _start, uint _num);
-	
-	/// <summary>
-	/// Set instance data buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, VertexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set instance data buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_from_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_set_instance_data_from_vertex_buffer(Encoder* _this, VertexBufferHandle _handle, uint _startVertex, uint _num);
-	
-	[DllImport(DllName, EntryPoint="bgfx_encoder_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_set_instance_data_buffer(Encoder* _this, DynamicVertexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set instance data buffer for draw primitive.
@@ -1870,14 +1801,6 @@ internal struct bgfx
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_encoder_discard", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void encoder_discard(Encoder* _this);
-	
-	/// <summary>
-	/// Blit 2D texture region between two 2D textures.
-	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_encoder_blit", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void encoder_blit(Encoder* _this, ushort _id, TextureHandle _dst, ushort _dstX, ushort _dstY, TextureHandle _src, ushort _srcX, ushort _srcY, ushort _width, ushort _height);
 	
 	/// <summary>
 	/// Blit 2D texture region between two 2D textures.
@@ -2039,31 +1962,13 @@ internal struct bgfx
 	/// Set index buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_index_buffer(IndexBufferHandle _handle);
-	
-	/// <summary>
-	/// Set index buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void set_index_buffer(IndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
-	
-	/// <summary>
-	/// Set index buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_index_buffer(DynamicIndexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set index buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_set_dynamic_index_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void set_dynamic_index_buffer(DynamicIndexBufferHandle _handle, uint _firstIndex, uint _numIndices);
-	
-	/// <summary>
-	/// Set index buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_index_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_index_buffer(TransientIndexBuffer* _tib);
 	
 	/// <summary>
 	/// Set index buffer for draw primitive.
@@ -2075,31 +1980,13 @@ internal struct bgfx
 	/// Set vertex buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_vertex_buffer(byte _stream, VertexBufferHandle _handle);
-	
-	/// <summary>
-	/// Set vertex buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void set_vertex_buffer(byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices);
-	
-	/// <summary>
-	/// Set vertex buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_vertex_buffer(byte _stream, DynamicVertexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_set_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void set_dynamic_vertex_buffer(byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices);
-	
-	/// <summary>
-	/// Set vertex buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_vertex_buffer(byte _stream, TransientVertexBuffer* _tvb);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
@@ -2119,28 +2006,13 @@ internal struct bgfx
 	/// Set instance data buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_instance_data_buffer(InstanceDataBuffer* _idb);
-	
-	/// <summary>
-	/// Set instance data buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void set_instance_data_buffer(InstanceDataBuffer* _idb, uint _start, uint _num);
-	
-	/// <summary>
-	/// Set instance data buffer for draw primitive.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_instance_data_buffer(VertexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set instance data buffer for draw primitive.
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_set_instance_data_from_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void set_instance_data_from_vertex_buffer(VertexBufferHandle _handle, uint _startVertex, uint _num);
-	
-	[DllImport(DllName, EntryPoint="bgfx_set_instance_data_buffer", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void set_instance_data_buffer(DynamicVertexBufferHandle _handle);
 	
 	/// <summary>
 	/// Set instance data buffer for draw primitive.
@@ -2243,14 +2115,6 @@ internal struct bgfx
 	/// </summary>
 	[DllImport(DllName, EntryPoint="bgfx_discard", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern unsafe void discard();
-	
-	/// <summary>
-	/// Blit 2D texture region between two 2D textures.
-	/// @attention Destination texture must be created with `BGFX_TEXTURE_BLIT_DST` flag.
-	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_BLIT`.
-	/// </summary>
-	[DllImport(DllName, EntryPoint="bgfx_blit", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern unsafe void blit(ushort _id, TextureHandle _dst, ushort _dstX, ushort _dstY, TextureHandle _src, ushort _srcX, ushort _srcY, ushort _width, ushort _height);
 	
 	/// <summary>
 	/// Blit 2D texture region between two 2D textures.
