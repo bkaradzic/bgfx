@@ -402,6 +402,7 @@ function codegen.nameconversion(all_types, all_funcs)
 			local classtype = { fulltype = classname .. "*" }
 			convert_arg(all_types, classtype, v)
 			v.this = classtype.ctype
+			v.this_type = classtype
 			v.this_conversion = string.format( "%s This = (%s)_this;", classtype.cpptype, classtype.cpptype)
 			v.this_to_c = string.format("(%s)this", classtype.ctype)
 		end

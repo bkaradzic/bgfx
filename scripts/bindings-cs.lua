@@ -296,33 +296,15 @@ function converter.funcs(func)
 		yield("[return: MarshalAs(UnmanagedType.LPStr)]")
 	end
 
-	local first = ""
-	local args  = "("
-
+	local args = {}
 	if func.this ~= nil then
-
-		local thisType = func.this:gsub("const ", "")
-		if thisType == "bgfx_encoder_t*" then
-			thisType = "Encoder*"
-		elseif thisType == "bgfx_attachment_t*" then
-			thisType = "Attachment*"
-		elseif thisType == "bgfx_vertex_decl_t*" then
-			thisType = "VertexDecl*"
-		end
-
-		args = args .. thisType .. " " .. "_this"
-		first = ", "
+		args[1] = func.this_type.type .. "* _this"
 	end
-
 	for _, arg in ipairs(func.args) do
-
-		local argtype = convert_type(arg)
-
-		args = args .. first .. argtype .. " " .. arg.name
-		first = ", "
+		table.insert(args, convert_type(arg) .. " " .. arg.name)
 	end
-
-	yield("internal static extern unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname .. args .. ");")
+	yield("internal static extern unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname
+		.. "(" .. table.concat(args, ", ") .. ");")
 end
 
 -- printtable("idl types", idl.types)
