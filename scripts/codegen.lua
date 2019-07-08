@@ -336,6 +336,7 @@ function codegen.nameconversion(all_types, all_funcs)
 			if substruct[v.name] then
 				error ( "Duplicate sub struct " .. v.name .. " in " .. v.namespace)
 			end
+			v.parent_class = super
 			substruct[#substruct+1] = v
 			substruct[v.name] = v
 		end

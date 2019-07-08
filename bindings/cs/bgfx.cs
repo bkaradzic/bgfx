@@ -123,6 +123,7 @@ internal struct bgfx
 		OpPassZShift           = 28,
 		OpPassZMask            = 0xf0000000,
 	}
+	
 	[Flags]
 	public enum ClearFlags : ushort
 	{
@@ -282,6 +283,7 @@ internal struct bgfx
 		ReservedShift          = 31,
 		ReservedMask           = 0x80000000,
 	}
+	
 	[Flags]
 	public enum CapsFlags : ulong
 	{

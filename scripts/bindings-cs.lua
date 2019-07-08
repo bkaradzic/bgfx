@@ -102,7 +102,7 @@ function gen.gen()
 				table.insert(tmp, v)
 				any = true
 			end
-			if any then
+			if any and tmp[#tmp] ~= "" then
 				table.insert(tmp, "")
 			end
 		end
@@ -120,10 +120,6 @@ end
 local lastCombinedFlag
 
 local function FlagBlock(typ)
-	if typ == nil then
-		return
-	end
-
 	local format = "0x%08x"
 	local enumType = " : uint"
 	if typ.bits == 64 then
@@ -173,7 +169,11 @@ end
 
 local function lastCombinedFlagBlock()
 	if lastCombinedFlag then
-		FlagBlock(combined[lastCombinedFlag])
+		local typ = combined[lastCombinedFlag]
+		if typ then
+			FlagBlock(combined[lastCombinedFlag])
+			yield("")
+		end
 		lastCombinedFlag = nil
 	end
 end
