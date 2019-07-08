@@ -286,6 +286,33 @@ function converter.funcs(func)
 			yield("/// " .. line)
 		end
 		yield("/// </summary>")
+		yield("///")
+
+		local hasParams = false
+
+		for _, arg in ipairs(func.args) do
+			if arg.comment ~= nil then
+				local comment = ""
+				if (type(arg.comment) == "table") then
+					comment = table.concat(arg.comment, " ")
+				else
+					comment = arg.comment
+				end
+
+				yield("/// <param name=\""
+					.. arg.name
+					.. "\">"
+					.. comment
+					.. "</param>"
+					)
+
+				hasParams = true
+			end
+		end
+
+		if hasParams then
+			yield("///")
+		end
 	end
 
 	yield("[DllImport(DllName, EntryPoint=\"bgfx_" .. func.cname .. "\", CallingConvention = CallingConvention.Cdecl)]")
