@@ -6,16 +6,22 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security;
 
-internal struct bgfx
+namespace Bgfx
+{
+public static partial class bgfx
 {
 	$types
 
 	$funcs
+
+#if !BGFX_CSHARP_CUSTOM_DLLNAME
 #if DEBUG
 	const string DllName = "bgfx_debug.dll";
 #else
 	const string DllName = "bgfx.dll";
 #endif
+#endif
+}
 }
 ]]
 
@@ -330,7 +336,7 @@ function converter.funcs(func)
 	for _, arg in ipairs(func.args) do
 		table.insert(args, convert_type(arg) .. " " .. arg.name)
 	end
-	yield("internal static extern unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname
+	yield("public static extern unsafe " .. convert_ret_type(func.ret) .. " " .. func.cname
 		.. "(" .. table.concat(args, ", ") .. ");")
 end
 
