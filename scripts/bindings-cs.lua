@@ -49,10 +49,16 @@ local function convert_type_0(arg)
 		return arg.ctype:gsub("bgfx_view_id_t", "ushort")
 	elseif hasPrefix(arg.ctype, "uint8_t") then
 		return arg.ctype:gsub("uint8_t", "byte")
+	elseif hasPrefix(arg.ctype, "bool") then
+		return arg.ctype:gsub("bool", "byte")
 	elseif hasPrefix(arg.ctype, "uintptr_t") then
 		return arg.ctype:gsub("uintptr_t", "UIntPtr")
+	elseif arg.ctype == "bgfx_caps_gpu_t" then
+	    return arg.ctype:gsub("bgfx_caps_gpu_t", "uint")
 	elseif arg.ctype == "const char*" then
 		return "[MarshalAs(UnmanagedType.LPStr)] string"
+	elseif hasPrefix(arg.ctype, "char") then
+		return arg.ctype:gsub("char", "byte")
 	elseif hasSuffix(arg.fulltype, "Handle") then
 		return arg.fulltype
 	elseif arg.ctype == "..." then
@@ -70,7 +76,8 @@ local function convert_type_0(arg)
 end
 
 local function convert_type(arg)
-	local ctype = convert_type_0(arg)
+    local ctype;
+	ctype = convert_type_0(arg)
 	ctype = ctype:gsub("::Enum", "")
 	ctype = ctype:gsub("const ", "")
 	ctype = ctype:gsub(" &", "*")
@@ -81,7 +88,7 @@ end
 local function convert_ret_type(arg)
 	local ctype = convert_type(arg)
 	if hasPrefix(ctype, "[MarshalAs(UnmanagedType.LPStr)]") then
-		return "string"
+		return "IntPtr"
 	end
 
 	return ctype
@@ -184,6 +191,22 @@ local function lastCombinedFlagBlock()
 	end
 end
 
+local function convert_array(member)
+	if string.find(member.array, "::") then 
+		return member.array:gsub("::", "."):gsub("%[","[(int)")
+	else
+		return member.array
+	end
+end
+
+local function convert_struct_member(member)
+	if member.array then
+		return "fixed " .. convert_type(member) .. " " .. member.name .. convert_array(member)
+	else
+		return convert_type(member) .. " " .. member.name
+	end 
+end
+
 local namespace = ""
 
 function converter.types(typ)
@@ -199,6 +222,8 @@ function converter.types(typ)
 		for _, enum in ipairs(typ.enum) do
 			yield("\t" .. enum.name .. ",")
 		end
+		yield("");
+		yield("\tCount")
 		yield("}")
 	elseif typ.bits ~= nil then
 		local prefix, name = typ.name:match "(%u%l+)(.*)"
@@ -271,8 +296,8 @@ function converter.types(typ)
 		end
 
 		for _, member in ipairs(typ.struct) do
-			yield(
-				indent .. "\tpublic " .. convert_type(member) .. " " .. member.name .. ";"
+			yield( 
+				indent .. "\tpublic " .. convert_struct_member(member) .. ";"
 				)
 		end
 
@@ -325,8 +350,6 @@ function converter.funcs(func)
 
 	if func.ret.cpptype == "bool" then
 		yield("[return: MarshalAs(UnmanagedType.I1)]")
-	elseif func.ret.cpptype == "const char*" then
-		yield("[return: MarshalAs(UnmanagedType.LPStr)]")
 	end
 
 	local args = {}
