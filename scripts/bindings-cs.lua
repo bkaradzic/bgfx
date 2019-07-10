@@ -2,6 +2,17 @@ local codegen = require "codegen"
 local idl = codegen.idl "bgfx.idl"
 
 local csharp_template = [[
+/*
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+ */
+
+/*
+ *
+ * AUTO GENERATED! DO NOT EDIT!
+ *
+ */
+
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -191,9 +202,11 @@ local function lastCombinedFlagBlock()
 	end
 end
 
+local enum = {}
+
 local function convert_array(member)
-	if string.find(member.array, "::") then 
-		return member.array:gsub("::", "."):gsub("%[","[(int)")
+	if string.find(member.array, "::") then
+		return string.format("[%d]", enum[member.array])
 	else
 		return member.array
 	end
@@ -204,7 +217,7 @@ local function convert_struct_member(member)
 		return "fixed " .. convert_type(member) .. " " .. member.name .. convert_array(member)
 	else
 		return convert_type(member) .. " " .. member.name
-	end 
+	end
 end
 
 local namespace = ""
@@ -225,6 +238,9 @@ function converter.types(typ)
 		yield("");
 		yield("\tCount")
 		yield("}")
+
+		enum["[" .. typ.typename .. "::Count]"] = #typ.enum
+
 	elseif typ.bits ~= nil then
 		local prefix, name = typ.name:match "(%u%l+)(.*)"
 		if prefix ~= lastCombinedFlag then
@@ -296,7 +312,7 @@ function converter.types(typ)
 		end
 
 		for _, member in ipairs(typ.struct) do
-			yield( 
+			yield(
 				indent .. "\tpublic " .. convert_struct_member(member) .. ";"
 				)
 		end
