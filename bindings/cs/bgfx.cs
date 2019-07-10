@@ -1,3 +1,14 @@
+/*
+ * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
+ * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
+ */
+
+/*
+ *
+ * AUTO GENERATED! DO NOT EDIT!
+ *
+ */
+
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -667,7 +678,7 @@ public static partial class bgfx
 		public byte numGPUs;
 		public fixed uint gpu[4];
 		public Limits limits;
-		public fixed ushort formats[(int)TextureFormat.Count];
+		public fixed ushort formats[85];
 	}
 	
 	public unsafe struct InternalData
@@ -829,7 +840,7 @@ public static partial class bgfx
 		public long rtMemoryUsed;
 		public int transientVbUsed;
 		public int transientIbUsed;
-		public fixed uint numPrims[(int)Topology.Count];
+		public fixed uint numPrims[5];
 		public long gpuMemoryMax;
 		public long gpuMemoryUsed;
 		public ushort width;
@@ -846,8 +857,8 @@ public static partial class bgfx
 	{
 		public uint hash;
 		public ushort stride;
-		public fixed ushort offset[(int)Attrib.Count];
-		public fixed ushort attributes[(int)Attrib.Count];
+		public fixed ushort offset[18];
+		public fixed ushort attributes[18];
 	}
 	
 	public unsafe struct Encoder
