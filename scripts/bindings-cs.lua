@@ -15,7 +15,6 @@ local csharp_template = [[
 
 using System;
 using System.Runtime.InteropServices;
-using System.Security;
 
 namespace Bgfx
 {
@@ -60,8 +59,6 @@ local function convert_type_0(arg)
 		return arg.ctype:gsub("bgfx_view_id_t", "ushort")
 	elseif hasPrefix(arg.ctype, "uint8_t") then
 		return arg.ctype:gsub("uint8_t", "byte")
-	elseif hasPrefix(arg.ctype, "bool") then
-		return arg.ctype:gsub("bool", "byte")
 	elseif hasPrefix(arg.ctype, "uintptr_t") then
 		return arg.ctype:gsub("uintptr_t", "UIntPtr")
 	elseif arg.ctype == "bgfx_caps_gpu_t" then
@@ -87,12 +84,19 @@ local function convert_type_0(arg)
 end
 
 local function convert_type(arg)
-    local ctype;
-	ctype = convert_type_0(arg)
+	local ctype = convert_type_0(arg)
 	ctype = ctype:gsub("::Enum", "")
 	ctype = ctype:gsub("const ", "")
 	ctype = ctype:gsub(" &", "*")
 	ctype = ctype:gsub("&", "*")
+	return ctype
+end
+
+local function convert_struct_type(arg)
+	local ctype = convert_type(arg)
+	if hasPrefix(arg.ctype, "bool") then
+		ctype = ctype:gsub("bool", "byte")
+	end
 	return ctype
 end
 
@@ -101,7 +105,6 @@ local function convert_ret_type(arg)
 	if hasPrefix(ctype, "[MarshalAs(UnmanagedType.LPStr)]") then
 		return "IntPtr"
 	end
-
 	return ctype
 end
 
@@ -214,9 +217,9 @@ end
 
 local function convert_struct_member(member)
 	if member.array then
-		return "fixed " .. convert_type(member) .. " " .. member.name .. convert_array(member)
+		return "fixed " .. convert_struct_type(member) .. " " .. member.name .. convert_array(member)
 	else
-		return convert_type(member) .. " " .. member.name
+		return convert_struct_type(member) .. " " .. member.name
 	end
 end
 
