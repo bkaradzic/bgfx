@@ -18,6 +18,7 @@ if (${SPIRV_BUILD_FUZZER})
           fuzz_test_util.h
 
           fuzzer_replayer_test.cpp
+          fuzzer_shrinker_test.cpp
           fact_manager_test.cpp
           fuzz_test_util.cpp
           fuzzer_pass_add_useful_constructs_test.cpp

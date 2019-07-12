@@ -158,6 +158,12 @@ spv_result_t ValidateVectorExtractDynamic(ValidationState_t& _,
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Index to be int scalar";
   }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot extract from a vector of 8- or 16-bit types";
+  }
   return SPV_SUCCESS;
 }
 
@@ -187,6 +193,12 @@ spv_result_t ValidateVectorInsertDyanmic(ValidationState_t& _,
   if (!_.IsIntScalarType(index_type)) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected Index to be int scalar";
+  }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot insert into a vector of 8- or 16-bit types";
   }
   return SPV_SUCCESS;
 }
@@ -344,6 +356,12 @@ spv_result_t ValidateCompositeConstruct(ValidationState_t& _,
              << "Expected Result Type to be a composite type";
     }
   }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot create a composite containing 8- or 16-bit types";
+  }
   return SPV_SUCCESS;
 }
 
@@ -361,6 +379,12 @@ spv_result_t ValidateCompositeExtract(ValidationState_t& _,
            << ") does not match the type that results from indexing into "
               "the composite (Op"
            << spvOpcodeString(_.GetIdOpcode(member_type)) << ").";
+  }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot extract from a composite of 8- or 16-bit types";
   }
   return SPV_SUCCESS;
 }
@@ -390,6 +414,12 @@ spv_result_t ValidateCompositeInsert(ValidationState_t& _,
            << ") does not match the type that results from indexing into the "
               "Composite (Op"
            << spvOpcodeString(_.GetIdOpcode(member_type)) << ").";
+  }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot insert into a composite of 8- or 16-bit types";
   }
   return SPV_SUCCESS;
 }
@@ -438,6 +468,12 @@ spv_result_t ValidateTranspose(ValidationState_t& _, const Instruction* inst) {
     return _.diag(SPV_ERROR_INVALID_DATA, inst)
            << "Expected number of columns and the column size of Matrix "
            << "to be the reverse of those of Result Type";
+  }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot transpose matrices of 16-bit floats";
   }
   return SPV_SUCCESS;
 }
@@ -510,6 +546,12 @@ spv_result_t ValidateVectorShuffle(ValidationState_t& _,
     }
   }
 
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot shuffle a vector of 8- or 16-bit types";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -526,6 +568,12 @@ spv_result_t ValidateCopyLogical(ValidationState_t& _,
   if (!_.LogicallyMatch(source_type, result_type, false)) {
     return _.diag(SPV_ERROR_INVALID_ID, inst)
            << "Result Type does not logically match the Operand type";
+  }
+
+  if (_.HasCapability(SpvCapabilityShader) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_DATA, inst)
+           << "Cannot copy composites of 8- or 16-bit types";
   }
 
   return SPV_SUCCESS;

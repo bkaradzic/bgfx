@@ -3081,6 +3081,82 @@ TEST_F(DeadBranchElimTest, FoldBranchWithBreakToSwitch) {
   SinglePassRunAndMatch<DeadBranchElimPass>(spirv, true);
 }
 
+TEST_F(DeadBranchElimTest, IfInSwitch) {
+  // #version 310 es
+  //
+  // void main()
+  // {
+  //  switch(0)
+  //  {
+  //   case 0:
+  //   if(false)
+  //   {
+  //   }
+  //   else
+  //   {
+  //   }
+  //  }
+  // }
+
+  const std::string before =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource ESSL 310
+OpName %main "main"
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%int_0 = OpConstant %int 0
+%bool = OpTypeBool
+%false = OpConstantFalse %bool
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpSelectionMerge %9 None
+OpSwitch %int_0 %9 0 %8
+%8 = OpLabel
+OpSelectionMerge %13 None
+OpBranchConditional %false %12 %13
+%12 = OpLabel
+OpBranch %13
+%13 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string after =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource ESSL 310
+OpName %main "main"
+%void = OpTypeVoid
+%4 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%int_0 = OpConstant %int 0
+%bool = OpTypeBool
+%false = OpConstantFalse %bool
+%main = OpFunction %void None %4
+%9 = OpLabel
+OpBranch %11
+%11 = OpLabel
+OpBranch %12
+%12 = OpLabel
+OpBranch %10
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<DeadBranchElimPass>(before, after, true, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    More complex control flow

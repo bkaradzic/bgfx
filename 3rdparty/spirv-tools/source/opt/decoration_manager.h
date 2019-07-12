@@ -74,6 +74,12 @@ class DecorationManager {
   // instructions that apply the same decorations but to different IDs, still
   // count as being the same.
   bool HaveTheSameDecorations(uint32_t id1, uint32_t id2) const;
+
+  // Returns whether two IDs have the same decorations. Two SpvOpGroupDecorate
+  // instructions that apply the same decorations but to different IDs, still
+  // count as being the same.
+  bool HaveSubsetOfDecorations(uint32_t id1, uint32_t id2) const;
+
   // Returns whether the two decorations instructions are the same and are
   // applying the same decorations; unless |ignore_target| is false, the targets
   // to which they are applied to does not matter, except for the member part.

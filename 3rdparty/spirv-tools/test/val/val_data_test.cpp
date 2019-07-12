@@ -717,8 +717,7 @@ OpTypeForwardPointer %_ptr_Generic_struct_A Generic
 }
 
 TEST_F(ValidateData, ext_16bit_storage_caps_allow_free_fp_rounding_mode) {
-  for (const char* cap : {"StorageUniform16", "StorageUniformBufferBlock16",
-                          "StoragePushConstant16", "StorageInputOutput16"}) {
+  for (const char* cap : {"StorageUniform16", "StorageUniformBufferBlock16"}) {
     for (const char* mode : {"RTE", "RTZ", "RTP", "RTN"}) {
       std::string str = std::string(R"(
         OpCapability Shader

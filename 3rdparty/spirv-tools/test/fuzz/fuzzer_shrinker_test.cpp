@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <functional>
+#include <vector>
+
 #include "source/fuzz/fuzzer.h"
-#include "source/fuzz/replayer.h"
+#include "source/fuzz/pseudo_random_generator.h"
+#include "source/fuzz/shrinker.h"
 #include "source/fuzz/uniform_buffer_element_descriptor.h"
 #include "test/fuzz/fuzz_test_util.h"
 
@@ -21,12 +25,133 @@ namespace spvtools {
 namespace fuzz {
 namespace {
 
-// Assembles the given |shader| text, and then runs the fuzzer |num_runs|
-// times, using successive seeds starting from |initial_seed|.  Checks that
-// the binary produced after each fuzzer run is valid, and that replaying
-// the transformations that were applied during fuzzing leads to an
-// identical binary.
-void RunFuzzerAndReplayer(const std::string& shader,
+// Abstract class exposing an interestingness function as a virtual method.
+class InterestingnessTest {
+ public:
+  virtual ~InterestingnessTest() = default;
+
+  // Abstract method that subclasses should implement for specific notions of
+  // interestingness. Its signature matches Shrinker::InterestingnessFunction.
+  // Argument |binary| is the SPIR-V binary to be checked; |counter| is used for
+  // debugging purposes.
+  virtual bool Interesting(const std::vector<uint32_t>& binary,
+                           uint32_t counter) = 0;
+
+  // Yields the Interesting instance method wrapped in a function object.
+  Shrinker::InterestingnessFunction AsFunction() {
+    return std::bind(&InterestingnessTest::Interesting, this,
+                     std::placeholders::_1, std::placeholders::_2);
+  }
+};
+
+// A test that says all binaries are interesting.
+class AlwaysInteresting : public InterestingnessTest {
+ public:
+  bool Interesting(const std::vector<uint32_t>&, uint32_t) override {
+    return true;
+  }
+};
+
+// A test that says a binary is interesting first time round, and uninteresting
+// thereafter.
+class OnlyInterestingFirstTime : public InterestingnessTest {
+ public:
+  explicit OnlyInterestingFirstTime() : first_time_(true) {}
+
+  bool Interesting(const std::vector<uint32_t>&, uint32_t) override {
+    if (first_time_) {
+      first_time_ = false;
+      return true;
+    }
+    return false;
+  }
+
+ private:
+  bool first_time_;
+};
+
+// A test that says a binary is interesting first time round, after which
+// interestingness ping pongs between false and true.
+class PingPong : public InterestingnessTest {
+ public:
+  explicit PingPong() : interesting_(false) {}
+
+  bool Interesting(const std::vector<uint32_t>&, uint32_t) override {
+    interesting_ = !interesting_;
+    return interesting_;
+  }
+
+ private:
+  bool interesting_;
+};
+
+// A test that says a binary is interesting first time round, thereafter
+// decides at random whether it is interesting.  This allows the logic of the
+// shrinker to be exercised quite a bit.
+class InterestingThenRandom : public InterestingnessTest {
+ public:
+  InterestingThenRandom(const PseudoRandomGenerator& random_generator)
+      : first_time_(true), random_generator_(random_generator) {}
+
+  bool Interesting(const std::vector<uint32_t>&, uint32_t) override {
+    if (first_time_) {
+      first_time_ = false;
+      return true;
+    }
+    return random_generator_.RandomBool();
+  }
+
+ private:
+  bool first_time_;
+  PseudoRandomGenerator random_generator_;
+};
+
+// |binary_in| and |initial_facts| are a SPIR-V binary and sequence of facts to
+// which |transformation_sequence_in| can be applied.  Shrinking of
+// |transformation_sequence_in| gets performed with respect to
+// |interestingness_function|.  If |expected_binary_out| is non-empty, it must
+// match the binary obtained by applying the final shrunk set of
+// transformations, in which case the number of such transforations should equal
+// |expected_transformations_out_size|.
+void RunAndCheckShrinker(
+    const spv_target_env& target_env, const std::vector<uint32_t>& binary_in,
+    const protobufs::FactSequence& initial_facts,
+    const protobufs::TransformationSequence& transformation_sequence_in,
+    const Shrinker::InterestingnessFunction& interestingness_function,
+    const std::vector<uint32_t>& expected_binary_out,
+    uint32_t expected_transformations_out_size) {
+  // We want tests to complete in reasonable time, so don't go on too long.
+  const uint32_t kStepLimit = 50;
+
+  // Run the shrinker.
+  Shrinker shrinker(target_env, kStepLimit);
+  shrinker.SetMessageConsumer(kSilentConsumer);
+
+  std::vector<uint32_t> binary_out;
+  protobufs::TransformationSequence transformations_out;
+  Shrinker::ShrinkerResultStatus shrinker_result_status =
+      shrinker.Run(binary_in, initial_facts, transformation_sequence_in,
+                   interestingness_function, &binary_out, &transformations_out);
+  ASSERT_TRUE(Shrinker::ShrinkerResultStatus::kComplete ==
+                  shrinker_result_status ||
+              Shrinker::ShrinkerResultStatus::kStepLimitReached ==
+                  shrinker_result_status);
+
+  // If a non-empty expected binary was provided, check that it matches the
+  // result of shrinking and that the expected number of transformations remain.
+  if (!expected_binary_out.empty()) {
+    ASSERT_EQ(expected_binary_out, binary_out);
+    ASSERT_EQ(expected_transformations_out_size,
+              static_cast<uint32_t>(transformations_out.transformation_size()));
+  }
+}
+
+// Assembles the given |shader| text, and then does the following |num_runs|
+// times, with successive seeds starting from |initial_seed|:
+// - Runs the fuzzer with the seed to yield a set of transformations
+// - Shrinks the transformation with various interestingness functions,
+//   asserting some properties about the result each time
+void RunFuzzerAndShrinker(const std::string& shader,
                           const protobufs::FactSequence& initial_facts,
                           uint32_t initial_seed, uint32_t num_runs) {
   const auto env = SPV_ENV_UNIVERSAL_1_3;
@@ -37,11 +162,11 @@ void RunFuzzerAndReplayer(const std::string& shader,
   ASSERT_TRUE(t.Validate(binary_in));
 
   for (uint32_t seed = initial_seed; seed < initial_seed + num_runs; seed++) {
+    // Run the fuzzer and check that it successfully yields a valid binary.
     std::vector<uint32_t> fuzzer_binary_out;
     protobufs::TransformationSequence fuzzer_transformation_sequence_out;
     spvtools::FuzzerOptions fuzzer_options;
     spvFuzzerOptionsSetRandomSeed(fuzzer_options, seed);
-
     Fuzzer fuzzer(env);
     fuzzer.SetMessageConsumer(kSilentConsumer);
     auto fuzzer_result_status =
@@ -50,33 +175,37 @@ void RunFuzzerAndReplayer(const std::string& shader,
     ASSERT_EQ(Fuzzer::FuzzerResultStatus::kComplete, fuzzer_result_status);
     ASSERT_TRUE(t.Validate(fuzzer_binary_out));
 
-    std::vector<uint32_t> replayer_binary_out;
-    protobufs::TransformationSequence replayer_transformation_sequence_out;
+    // With the AlwaysInteresting test, we should quickly shrink to the original
+    // binary with no transformations remaining.
+    RunAndCheckShrinker(env, binary_in, initial_facts,
+                        fuzzer_transformation_sequence_out,
+                        AlwaysInteresting().AsFunction(), binary_in, 0);
 
-    Replayer replayer(env);
-    replayer.SetMessageConsumer(kSilentConsumer);
-    auto replayer_result_status = replayer.Run(
-        binary_in, initial_facts, fuzzer_transformation_sequence_out,
-        &replayer_binary_out, &replayer_transformation_sequence_out);
-    ASSERT_EQ(Replayer::ReplayerResultStatus::kComplete,
-              replayer_result_status);
+    // With the OnlyInterestingFirstTime test, no shrinking should be achieved.
+    RunAndCheckShrinker(
+        env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
+        OnlyInterestingFirstTime().AsFunction(), fuzzer_binary_out,
+        static_cast<uint32_t>(
+            fuzzer_transformation_sequence_out.transformation_size()));
 
-    // After replaying the transformations applied by the fuzzer, exactly those
-    // transformations should have been applied, and the binary resulting from
-    // replay should be identical to that which resulted from fuzzing.
-    std::string fuzzer_transformations_string;
-    std::string replayer_transformations_string;
-    fuzzer_transformation_sequence_out.SerializeToString(
-        &fuzzer_transformations_string);
-    replayer_transformation_sequence_out.SerializeToString(
-        &replayer_transformations_string);
-    ASSERT_EQ(fuzzer_transformations_string, replayer_transformations_string);
-    ASSERT_EQ(fuzzer_binary_out, replayer_binary_out);
+    // The PingPong test is unpredictable; passing an empty expected binary
+    // means that we don't check anything beyond that shrinking completes
+    // successfully.
+    RunAndCheckShrinker(env, binary_in, initial_facts,
+                        fuzzer_transformation_sequence_out,
+                        PingPong().AsFunction(), {}, 0);
+
+    // The InterestingThenRandom test is unpredictable; passing an empty
+    // expected binary means that we do not check anything about shrinking
+    // results.
+    RunAndCheckShrinker(
+        env, binary_in, initial_facts, fuzzer_transformation_sequence_out,
+        InterestingThenRandom(PseudoRandomGenerator(seed)).AsFunction(), {}, 0);
   }
 }
 
-TEST(FuzzerReplayerTest, Miscellaneous1) {
-  // The SPIR-V came from this GLSL:
+TEST(FuzzerShrinkerTest, Miscellaneous1) {
+  // The following SPIR-V came from this GLSL:
   //
   // #version 310 es
   //
@@ -104,7 +233,7 @@ TEST(FuzzerReplayerTest, Miscellaneous1) {
   //   }
   // }
 
-  std::string shader = R"(
+  const std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
@@ -237,16 +366,17 @@ TEST(FuzzerReplayerTest, Miscellaneous1) {
          %16 = OpLabel
                OpReturn
                OpFunctionEnd
+
   )";
 
-  // Do 10 fuzzer runs, starting from an initial seed of 0 (seed value chosen
-  // arbitrarily).
-  RunFuzzerAndReplayer(shader, protobufs::FactSequence(), 0, 10);
+  // Do 2 fuzz-and-shrink runs, starting from an initial seed of 2 (seed value
+  // chosen arbitrarily).
+  RunFuzzerAndShrinker(shader, protobufs::FactSequence(), 2, 2);
 }
 
-TEST(FuzzerReplayerTest, Miscellaneous2) {
-  // The SPIR-V came from this GLSL, which was then optimized using spirv-opt
-  // with the -O argument:
+TEST(FuzzerShrinkerTest, Miscellaneous2) {
+  // The following SPIR-V came from this GLSL, which was then optimized using
+  // spirv-opt with the -O argument:
   //
   // #version 310 es
   //
@@ -298,7 +428,7 @@ TEST(FuzzerReplayerTest, Miscellaneous2) {
   //   }
   // }
 
-  std::string shader = R"(
+  const std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
@@ -484,14 +614,14 @@ TEST(FuzzerReplayerTest, Miscellaneous2) {
                OpFunctionEnd
   )";
 
-  // Do 10 fuzzer runs, starting from an initial seed of 10 (seed value chosen
+  // Do 2 fuzzer runs, starting from an initial seed of 19 (seed value chosen
   // arbitrarily).
-  RunFuzzerAndReplayer(shader, protobufs::FactSequence(), 10, 10);
+  RunFuzzerAndShrinker(shader, protobufs::FactSequence(), 19, 2);
 }
 
-TEST(FuzzerReplayerTest, Miscellaneous3) {
-  // The SPIR-V came from this GLSL, which was then optimized using spirv-opt
-  // with the -O argument:
+TEST(FuzzerShrinkerTest, Miscellaneous3) {
+  // The following SPIR-V came from this GLSL, which was then optimized using
+  // spirv-opt with the -O argument:
   //
   // #version 310 es
   //
@@ -598,7 +728,7 @@ TEST(FuzzerReplayerTest, Miscellaneous3) {
   //            }
   // }
 
-  std::string shader = R"(
+  const std::string shader = R"(
                OpCapability Shader
           %1 = OpExtInstImport "GLSL.std.450"
                OpMemoryModel Logical GLSL450
@@ -969,9 +1099,9 @@ TEST(FuzzerReplayerTest, Miscellaneous3) {
     *facts.mutable_fact()->Add() = temp;
   }
 
-  // Do 10 fuzzer runs, starting from an initial seed of 94 (seed value chosen
+  // Do 2 fuzzer runs, starting from an initial seed of 194 (seed value chosen
   // arbitrarily).
-  RunFuzzerAndReplayer(shader, facts, 94, 10);
+  RunFuzzerAndShrinker(shader, facts, 194, 2);
 }
 
 }  // namespace

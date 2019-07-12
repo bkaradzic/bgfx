@@ -569,6 +569,14 @@ class ValidationState_t {
   bool IsIntCooperativeMatrixType(uint32_t id) const;
   bool IsUnsignedIntCooperativeMatrixType(uint32_t id) const;
 
+  // Returns true if |id| is a type id that contains |type| (or integer or
+  // floating point type) of |width| bits.
+  bool ContainsSizedIntOrFloatType(uint32_t id, SpvOp type,
+                                   uint32_t width) const;
+  // Returns true if |id| is a type id that contains a 8- or 16-bit int or
+  // 16-bit float that is not generally enabled for use.
+  bool ContainsLimitedUseIntOrFloatType(uint32_t id) const;
+
   // Gets value from OpConstant and OpSpecConstant as uint64.
   // Returns false on failure (no instruction, wrong instruction, not int).
   bool GetConstantValUint64(uint32_t id, uint64_t* val) const;

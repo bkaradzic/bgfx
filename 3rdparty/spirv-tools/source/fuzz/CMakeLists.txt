@@ -41,6 +41,7 @@ if(SPIRV_BUILD_FUZZER)
         pseudo_random_generator.h
         random_generator.h
         replayer.h
+        shrinker.h
         transformation.h
         transformation_add_constant_boolean.h
         transformation_add_constant_scalar.h
@@ -70,6 +71,7 @@ if(SPIRV_BUILD_FUZZER)
         pseudo_random_generator.cpp
         random_generator.cpp
         replayer.cpp
+        shrinker.cpp
         transformation.cpp
         transformation_add_constant_boolean.cpp
         transformation_add_constant_scalar.cpp

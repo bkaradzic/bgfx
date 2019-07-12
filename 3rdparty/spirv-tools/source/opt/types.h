@@ -145,37 +145,6 @@ class Type {
   // TODO(alanbaker): Update this if variable pointers become a core feature.
   bool IsUniqueType(bool allowVariablePointers = false) const;
 
-// A bunch of methods for casting this type to a given type. Returns this if the
-// cast can be done, nullptr otherwise.
-#define DeclareCastMethod(target)                  \
-  virtual target* As##target() { return nullptr; } \
-  virtual const target* As##target() const { return nullptr; }
-  DeclareCastMethod(Void);
-  DeclareCastMethod(Bool);
-  DeclareCastMethod(Integer);
-  DeclareCastMethod(Float);
-  DeclareCastMethod(Vector);
-  DeclareCastMethod(Matrix);
-  DeclareCastMethod(Image);
-  DeclareCastMethod(Sampler);
-  DeclareCastMethod(SampledImage);
-  DeclareCastMethod(Array);
-  DeclareCastMethod(RuntimeArray);
-  DeclareCastMethod(Struct);
-  DeclareCastMethod(Opaque);
-  DeclareCastMethod(Pointer);
-  DeclareCastMethod(Function);
-  DeclareCastMethod(Event);
-  DeclareCastMethod(DeviceEvent);
-  DeclareCastMethod(ReserveId);
-  DeclareCastMethod(Queue);
-  DeclareCastMethod(Pipe);
-  DeclareCastMethod(ForwardPointer);
-  DeclareCastMethod(PipeStorage);
-  DeclareCastMethod(NamedBarrier);
-  DeclareCastMethod(AccelerationStructureNV);
-#undef DeclareCastMethod
-
   bool operator==(const Type& other) const;
 
   // Returns the hash value of this type.
@@ -197,6 +166,38 @@ class Type {
       std::vector<uint32_t>* words,
       std::unordered_set<const Type*>* pSet) const = 0;
 
+// A bunch of methods for casting this type to a given type. Returns this if the
+// cast can be done, nullptr otherwise.
+// clang-format off
+#define DeclareCastMethod(target)                  \
+  virtual target* As##target() { return nullptr; } \
+  virtual const target* As##target() const { return nullptr; }
+  DeclareCastMethod(Void)
+  DeclareCastMethod(Bool)
+  DeclareCastMethod(Integer)
+  DeclareCastMethod(Float)
+  DeclareCastMethod(Vector)
+  DeclareCastMethod(Matrix)
+  DeclareCastMethod(Image)
+  DeclareCastMethod(Sampler)
+  DeclareCastMethod(SampledImage)
+  DeclareCastMethod(Array)
+  DeclareCastMethod(RuntimeArray)
+  DeclareCastMethod(Struct)
+  DeclareCastMethod(Opaque)
+  DeclareCastMethod(Pointer)
+  DeclareCastMethod(Function)
+  DeclareCastMethod(Event)
+  DeclareCastMethod(DeviceEvent)
+  DeclareCastMethod(ReserveId)
+  DeclareCastMethod(Queue)
+  DeclareCastMethod(Pipe)
+  DeclareCastMethod(ForwardPointer)
+  DeclareCastMethod(PipeStorage)
+  DeclareCastMethod(NamedBarrier)
+  DeclareCastMethod(AccelerationStructureNV)
+#undef DeclareCastMethod
+
  protected:
   // Decorations attached to this type. Each decoration is encoded as a vector
   // of uint32_t numbers. The first uint32_t number is the decoration value,
@@ -210,6 +211,7 @@ class Type {
 
   Kind kind_;
 };
+// clang-format on
 
 class Integer : public Type {
  public:

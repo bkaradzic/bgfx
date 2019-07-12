@@ -55,8 +55,12 @@ bool SimplificationPass::SimplifyFunction(Function* function) {
             process_phis.insert(inst);
           }
 
-          if (inst->opcode() == SpvOpCopyObject ||
-              folder.FoldInstruction(inst)) {
+          bool is_foldable_copy =
+              inst->opcode() == SpvOpCopyObject &&
+              context()->get_decoration_mgr()->HaveSubsetOfDecorations(
+                  inst->result_id(), inst->GetSingleWordInOperand(0));
+
+          if (is_foldable_copy || folder.FoldInstruction(inst)) {
             modified = true;
             context()->AnalyzeUses(inst);
             get_def_use_mgr()->ForEachUser(inst, [&work_list, &process_phis,
@@ -85,7 +89,13 @@ bool SimplificationPass::SimplifyFunction(Function* function) {
   for (size_t i = 0; i < work_list.size(); ++i) {
     Instruction* inst = work_list[i];
     in_work_list.erase(inst);
-    if (inst->opcode() == SpvOpCopyObject || folder.FoldInstruction(inst)) {
+
+    bool is_foldable_copy =
+        inst->opcode() == SpvOpCopyObject &&
+        context()->get_decoration_mgr()->HaveSubsetOfDecorations(
+            inst->result_id(), inst->GetSingleWordInOperand(0));
+
+    if (is_foldable_copy || folder.FoldInstruction(inst)) {
       modified = true;
       context()->AnalyzeUses(inst);
       get_def_use_mgr()->ForEachUser(

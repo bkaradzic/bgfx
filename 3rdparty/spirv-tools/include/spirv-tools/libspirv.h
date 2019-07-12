@@ -574,6 +574,15 @@ SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetValidatorOptions(
 SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetMaxIdBound(
     spv_optimizer_options options, uint32_t val);
 
+// Records whether all bindings within the module should be preserved.
+SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetPreserveBindings(
+    spv_optimizer_options options, bool val);
+
+// Records whether all specialization constants within the module
+// should be preserved.
+SPIRV_TOOLS_EXPORT void spvOptimizerOptionsSetPreserveSpecConstants(
+    spv_optimizer_options options, bool val);
+
 // Creates a reducer options object with default options. Returns a valid
 // options object. The object remains valid until it is passed into
 // |spvReducerOptionsDestroy|.
@@ -606,6 +615,11 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsDestroy(spv_fuzzer_options options);
 // should be initialized.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
     spv_fuzzer_options options, uint32_t seed);
+
+// Sets the maximum number of steps that the shrinker should take before giving
+// up.
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
+    spv_fuzzer_options options, uint32_t shrinker_step_limit);
 
 // Encodes the given SPIR-V assembly text to its binary representation. The
 // length parameter specifies the number of bytes for text. Encoded binary will

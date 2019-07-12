@@ -357,6 +357,14 @@ Options (in lexicographical order):)",
                --merge-blocks followed by all the transformations implied by
                -O.)");
   printf(R"(
+  --preserve-bindings
+               Ensure that the optimizer preserves all bindings declared within
+               the module, even when those bindings are unused.)");
+  printf(R"(
+  --preserve-spec-constants
+               Ensure that the optimizer preserves all specialization constants declared
+               within the module, even when those constants are unused.)");
+  printf(R"(
   --print-all
                Print SPIR-V assembly to standard error output before each pass
                and after the last pass.)");
@@ -693,6 +701,10 @@ OptStatus ParseFlags(int argc, const char** argv,
         optimizer_options->set_run_validator(false);
       } else if (0 == strcmp(cur_arg, "--print-all")) {
         optimizer->SetPrintAll(&std::cerr);
+      } else if (0 == strcmp(cur_arg, "--preserve-bindings")) {
+        optimizer_options->set_preserve_bindings(true);
+      } else if (0 == strcmp(cur_arg, "--preserve-spec-constants")) {
+        optimizer_options->set_preserve_spec_constants(true);
       } else if (0 == strcmp(cur_arg, "--time-report")) {
         optimizer->SetTimeReport(&std::cerr);
       } else if (0 == strcmp(cur_arg, "--relax-struct-store")) {
