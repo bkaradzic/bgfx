@@ -107,6 +107,8 @@ EGL_IMPORT
 			: m_nwh(_nwh)
 			, m_display(_display)
 		{
+            EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+
 			m_surface = eglCreateWindowSurface(m_display, _config, _nwh, NULL);
 			BGFX_FATAL(m_surface != EGL_NO_SURFACE, Fatal::UnableToInitialize, "Failed to create surface.");
 
@@ -119,13 +121,18 @@ EGL_IMPORT
 			swapBuffers();
 			GL_CHECK(glClear(GL_COLOR_BUFFER_BIT) );
 			swapBuffers();
+            eglMakeCurrent(m_display, defaultSurface, defaultSurface, _context);
 		}
 
 		~SwapChainGL()
 		{
+            EGLSurface defaultSurface = eglGetCurrentSurface(EGL_DRAW);
+            EGLContext defaultContext = eglGetCurrentContext();
+
 			eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			eglDestroyContext(m_display, m_context);
 			eglDestroySurface(m_display, m_surface);
+            eglMakeCurrent(m_display, defaultSurface, defaultSurface, defaultContext);
 		}
 
 		void makeCurrent()
