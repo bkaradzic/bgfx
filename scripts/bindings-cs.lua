@@ -235,7 +235,18 @@ function converter.types(typ)
 
 		yield("public enum " .. typ.typename)
 		yield("{")
-		for _, enum in ipairs(typ.enum) do
+		for idx, enum in ipairs(typ.enum) do
+
+			if enum.comment ~= nil then
+				if idx ~= 1 then
+					yield("")
+				end
+
+				yield("\t/// <summary>")
+				yield("\t/// " .. enum.comment)
+				yield("\t/// </summary>")
+			end
+
 			yield("\t" .. enum.name .. ",")
 		end
 		yield("");

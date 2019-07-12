@@ -157,13 +157,13 @@ namespace bgfx
 		/// Texture formats:
 		enum Enum
 		{
-			BC1,          //!< DXT1
-			BC2,          //!< DXT3
-			BC3,          //!< DXT5
-			BC4,          //!< LATC1/ATI1
-			BC5,          //!< LATC2/ATI2
-			BC6H,         //!< BC6H
-			BC7,          //!< BC7
+			BC1,          //!< DXT1 R5G6B5A1
+			BC2,          //!< DXT3 R5G6B5A4
+			BC3,          //!< DXT5 R5G6B5A8
+			BC4,          //!< LATC1/ATI1 R8
+			BC5,          //!< LATC2/ATI2 RG8
+			BC6H,         //!< BC6H RGB16F
+			BC7,          //!< BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
 			ETC1,         //!< ETC1 RGB8
 			ETC2,         //!< ETC2 RGB8
 			ETC2A,        //!< ETC2 RGBA8

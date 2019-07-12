@@ -392,15 +392,54 @@ public static partial class bgfx
 	
 	public enum RendererType
 	{
+		/// <summary>
+		/// No rendering.
+		/// </summary>
 		Noop,
+	
+		/// <summary>
+		/// Direct3D 9.0
+		/// </summary>
 		Direct3D9,
+	
+		/// <summary>
+		/// Direct3D 11.0
+		/// </summary>
 		Direct3D11,
+	
+		/// <summary>
+		/// Direct3D 12.0
+		/// </summary>
 		Direct3D12,
+	
+		/// <summary>
+		/// GNM
+		/// </summary>
 		Gnm,
+	
+		/// <summary>
+		/// Metal
+		/// </summary>
 		Metal,
+	
+		/// <summary>
+		/// NVN
+		/// </summary>
 		Nvn,
+	
+		/// <summary>
+		/// OpenGL ES 2.0+
+		/// </summary>
 		OpenGLES,
+	
+		/// <summary>
+		/// OpenGL 2.1+
+		/// </summary>
 		OpenGL,
+	
+		/// <summary>
+		/// Vulkan
+		/// </summary>
 		Vulkan,
 	
 		Count
@@ -408,8 +447,19 @@ public static partial class bgfx
 	
 	public enum Access
 	{
+		/// <summary>
+		/// Read.
+		/// </summary>
 		Read,
+	
+		/// <summary>
+		/// Write.
+		/// </summary>
 		Write,
+	
+		/// <summary>
+		/// Read and write.
+		/// </summary>
 		ReadWrite,
 	
 		Count
@@ -417,23 +467,94 @@ public static partial class bgfx
 	
 	public enum Attrib
 	{
+		/// <summary>
+		/// a_position
+		/// </summary>
 		Position,
+	
+		/// <summary>
+		/// a_normal
+		/// </summary>
 		Normal,
+	
+		/// <summary>
+		/// a_tangent
+		/// </summary>
 		Tangent,
+	
+		/// <summary>
+		/// a_bitangent
+		/// </summary>
 		Bitangent,
+	
+		/// <summary>
+		/// a_color0
+		/// </summary>
 		Color0,
+	
+		/// <summary>
+		/// a_color1
+		/// </summary>
 		Color1,
+	
+		/// <summary>
+		/// a_color2
+		/// </summary>
 		Color2,
+	
+		/// <summary>
+		/// a_color3
+		/// </summary>
 		Color3,
+	
+		/// <summary>
+		/// a_indices
+		/// </summary>
 		Indices,
+	
+		/// <summary>
+		/// a_weight
+		/// </summary>
 		Weight,
+	
+		/// <summary>
+		/// a_texcoord0
+		/// </summary>
 		TexCoord0,
+	
+		/// <summary>
+		/// a_texcoord1
+		/// </summary>
 		TexCoord1,
+	
+		/// <summary>
+		/// a_texcoord2
+		/// </summary>
 		TexCoord2,
+	
+		/// <summary>
+		/// a_texcoord3
+		/// </summary>
 		TexCoord3,
+	
+		/// <summary>
+		/// a_texcoord4
+		/// </summary>
 		TexCoord4,
+	
+		/// <summary>
+		/// a_texcoord5
+		/// </summary>
 		TexCoord5,
+	
+		/// <summary>
+		/// a_texcoord6
+		/// </summary>
 		TexCoord6,
+	
+		/// <summary>
+		/// a_texcoord7
+		/// </summary>
 		TexCoord7,
 	
 		Count
@@ -441,10 +562,29 @@ public static partial class bgfx
 	
 	public enum AttribType
 	{
+		/// <summary>
+		/// Uint8
+		/// </summary>
 		Uint8,
+	
+		/// <summary>
+		/// Uint10, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_UINT10`.
+		/// </summary>
 		Uint10,
+	
+		/// <summary>
+		/// Int16
+		/// </summary>
 		Int16,
+	
+		/// <summary>
+		/// Half, availability depends on: `BGFX_CAPS_VERTEX_ATTRIB_HALF`.
+		/// </summary>
 		Half,
+	
+		/// <summary>
+		/// Float
+		/// </summary>
 		Float,
 	
 		Count
@@ -452,32 +592,139 @@ public static partial class bgfx
 	
 	public enum TextureFormat
 	{
+		/// <summary>
+		/// DXT1 R5G6B5A1
+		/// </summary>
 		BC1,
+	
+		/// <summary>
+		/// DXT3 R5G6B5A4
+		/// </summary>
 		BC2,
+	
+		/// <summary>
+		/// DXT5 R5G6B5A8
+		/// </summary>
 		BC3,
+	
+		/// <summary>
+		/// LATC1/ATI1 R8
+		/// </summary>
 		BC4,
+	
+		/// <summary>
+		/// LATC2/ATI2 RG8
+		/// </summary>
 		BC5,
+	
+		/// <summary>
+		/// BC6H RGB16F
+		/// </summary>
 		BC6H,
+	
+		/// <summary>
+		/// BC7 RGB 4-7 bits per color channel, 0-8 bits alpha
+		/// </summary>
 		BC7,
+	
+		/// <summary>
+		/// ETC1 RGB8
+		/// </summary>
 		ETC1,
+	
+		/// <summary>
+		/// ETC2 RGB8
+		/// </summary>
 		ETC2,
+	
+		/// <summary>
+		/// ETC2 RGBA8
+		/// </summary>
 		ETC2A,
+	
+		/// <summary>
+		/// ETC2 RGB8A1
+		/// </summary>
 		ETC2A1,
+	
+		/// <summary>
+		/// PVRTC1 RGB 2BPP
+		/// </summary>
 		PTC12,
+	
+		/// <summary>
+		/// PVRTC1 RGB 4BPP
+		/// </summary>
 		PTC14,
+	
+		/// <summary>
+		/// PVRTC1 RGBA 2BPP
+		/// </summary>
 		PTC12A,
+	
+		/// <summary>
+		/// PVRTC1 RGBA 4BPP
+		/// </summary>
 		PTC14A,
+	
+		/// <summary>
+		/// PVRTC2 RGBA 2BPP
+		/// </summary>
 		PTC22,
+	
+		/// <summary>
+		/// PVRTC2 RGBA 4BPP
+		/// </summary>
 		PTC24,
+	
+		/// <summary>
+		/// ATC RGB 4BPP
+		/// </summary>
 		ATC,
+	
+		/// <summary>
+		/// ATCE RGBA 8 BPP explicit alpha
+		/// </summary>
 		ATCE,
+	
+		/// <summary>
+		/// ATCI RGBA 8 BPP interpolated alpha
+		/// </summary>
 		ATCI,
+	
+		/// <summary>
+		/// ASTC 4x4 8.0 BPP
+		/// </summary>
 		ASTC4x4,
+	
+		/// <summary>
+		/// ASTC 5x5 5.12 BPP
+		/// </summary>
 		ASTC5x5,
+	
+		/// <summary>
+		/// ASTC 6x6 3.56 BPP
+		/// </summary>
 		ASTC6x6,
+	
+		/// <summary>
+		/// ASTC 8x5 3.20 BPP
+		/// </summary>
 		ASTC8x5,
+	
+		/// <summary>
+		/// ASTC 8x6 2.67 BPP
+		/// </summary>
 		ASTC8x6,
+	
+		/// <summary>
+		/// ASTC 10x5 2.56 BPP
+		/// </summary>
 		ASTC10x5,
+	
+		/// <summary>
+		/// Compressed formats above.
+		/// </summary>
 		Unknown,
 		R1,
 		A8,
@@ -528,6 +775,10 @@ public static partial class bgfx
 		RGB5A1,
 		RGB10A2,
 		RG11B10F,
+	
+		/// <summary>
+		/// Depth formats below.
+		/// </summary>
 		UnknownDepth,
 		D16,
 		D24,
@@ -543,10 +794,29 @@ public static partial class bgfx
 	
 	public enum UniformType
 	{
+		/// <summary>
+		/// Sampler.
+		/// </summary>
 		Sampler,
+	
+		/// <summary>
+		/// Reserved, do not use.
+		/// </summary>
 		End,
+	
+		/// <summary>
+		/// 4 floats vector.
+		/// </summary>
 		Vec4,
+	
+		/// <summary>
+		/// 3x3 matrix.
+		/// </summary>
 		Mat3,
+	
+		/// <summary>
+		/// 4x4 matrix.
+		/// </summary>
 		Mat4,
 	
 		Count
@@ -554,11 +824,34 @@ public static partial class bgfx
 	
 	public enum BackbufferRatio
 	{
+		/// <summary>
+		/// Equal to backbuffer.
+		/// </summary>
 		Equal,
+	
+		/// <summary>
+		/// One half size of backbuffer.
+		/// </summary>
 		Half,
+	
+		/// <summary>
+		/// One quarter size of backbuffer.
+		/// </summary>
 		Quarter,
+	
+		/// <summary>
+		/// One eighth size of backbuffer.
+		/// </summary>
 		Eighth,
+	
+		/// <summary>
+		/// One sixteenth size of backbuffer.
+		/// </summary>
 		Sixteenth,
+	
+		/// <summary>
+		/// Double size of backbuffer.
+		/// </summary>
 		Double,
 	
 		Count
@@ -566,8 +859,19 @@ public static partial class bgfx
 	
 	public enum OcclusionQueryResult
 	{
+		/// <summary>
+		/// Query failed test.
+		/// </summary>
 		Invisible,
+	
+		/// <summary>
+		/// Query passed test.
+		/// </summary>
 		Visible,
+	
+		/// <summary>
+		/// Query result is not available yet.
+		/// </summary>
 		NoResult,
 	
 		Count
@@ -575,10 +879,29 @@ public static partial class bgfx
 	
 	public enum Topology
 	{
+		/// <summary>
+		/// Triangle list.
+		/// </summary>
 		TriList,
+	
+		/// <summary>
+		/// Triangle strip.
+		/// </summary>
 		TriStrip,
+	
+		/// <summary>
+		/// Line list.
+		/// </summary>
 		LineList,
+	
+		/// <summary>
+		/// Line strip.
+		/// </summary>
 		LineStrip,
+	
+		/// <summary>
+		/// Point list.
+		/// </summary>
 		PointList,
 	
 		Count
@@ -586,10 +909,29 @@ public static partial class bgfx
 	
 	public enum TopologyConvert
 	{
+		/// <summary>
+		/// Flip winding order of triangle list.
+		/// </summary>
 		TriListFlipWinding,
+	
+		/// <summary>
+		/// Flip winding order of trinagle strip.
+		/// </summary>
 		TriStripFlipWinding,
+	
+		/// <summary>
+		/// Convert triangle list to line list.
+		/// </summary>
 		TriListToLineList,
+	
+		/// <summary>
+		/// Convert triangle strip to triangle list.
+		/// </summary>
 		TriStripToTriList,
+	
+		/// <summary>
+		/// Convert line strip to line list.
+		/// </summary>
 		LineStripToLineList,
 	
 		Count
@@ -615,9 +957,24 @@ public static partial class bgfx
 	
 	public enum ViewMode
 	{
+		/// <summary>
+		/// Default sort order.
+		/// </summary>
 		Default,
+	
+		/// <summary>
+		/// Sort in the same order in which submit calls were called.
+		/// </summary>
 		Sequential,
+	
+		/// <summary>
+		/// Sort draw call depth in ascending order.
+		/// </summary>
 		DepthAscending,
+	
+		/// <summary>
+		/// Sort draw call depth in descending order.
+		/// </summary>
 		DepthDescending,
 	
 		Count
@@ -625,9 +982,24 @@ public static partial class bgfx
 	
 	public enum RenderFrame
 	{
+		/// <summary>
+		/// Renderer context is not created yet.
+		/// </summary>
 		NoContext,
+	
+		/// <summary>
+		/// Renderer context is created and rendering.
+		/// </summary>
 		Render,
+	
+		/// <summary>
+		/// Renderer context wait for main thread signal timed out without rendering.
+		/// </summary>
 		Timeout,
+	
+		/// <summary>
+		/// Renderer context is getting destroyed.
+		/// </summary>
 		Exiting,
 	
 		Count
