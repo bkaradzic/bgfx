@@ -3,12 +3,12 @@
 
 using namespace metal;
 
-typedef float3x4 packed_float4x3;
+typedef packed_float4 packed_rm_float4x3[3];
 
 struct _15
 {
-    packed_float4x3 _m0;
-    packed_float4x3 _m1;
+    packed_rm_float4x3 _m0;
+    packed_rm_float4x3 _m1;
 };
 
 struct _42
@@ -41,7 +41,7 @@ vertex main0_out main0(main0_in in [[stage_in]], constant _15& _17 [[buffer(0)]]
 {
     main0_out out = {};
     float4 _70 = _44._m0 * float4(float3(_44._m3) + (in.m_25.xyz * (_44._m6 + _44._m7)), 1.0);
-    out.m_72 = normalize(float4(in.m_25.xyz, 0.0) * _17._m1);
+    out.m_72 = normalize(float4(in.m_25.xyz, 0.0) * float3x4(float4(_17._m1[0]), float4(_17._m1[1]), float4(_17._m1[2])));
     float4 _94 = _70;
     _94.y = -_70.y;
     out.gl_Position = _94;

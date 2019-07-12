@@ -511,7 +511,8 @@ protected:
 	size_t get_declared_struct_member_alignment(const SPIRType &struct_type, uint32_t index) const;
 	std::string to_component_argument(uint32_t id);
 	void align_struct(SPIRType &ib_type);
-	bool is_member_packable(SPIRType &ib_type, uint32_t index);
+	bool is_member_packable(SPIRType &ib_type, uint32_t index, uint32_t base_offset = 0);
+	uint32_t get_member_packed_type(SPIRType &ib_type, uint32_t index);
 	MSLStructMemberKey get_struct_member_key(uint32_t type_id, uint32_t index);
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id);
@@ -593,10 +594,12 @@ protected:
 	};
 
 	std::unordered_map<StageSetBinding, std::pair<MSLResourceBinding, bool>, InternalHasher> resource_bindings;
+
 	uint32_t next_metal_resource_index_buffer = 0;
 	uint32_t next_metal_resource_index_texture = 0;
 	uint32_t next_metal_resource_index_sampler = 0;
-	uint32_t next_metal_resource_ids[kMaxArgumentBuffers] = {};
+	// Intentionally uninitialized, works around MSVC 2013 bug.
+	uint32_t next_metal_resource_ids[kMaxArgumentBuffers];
 
 	uint32_t stage_in_var_id = 0;
 	uint32_t stage_out_var_id = 0;
