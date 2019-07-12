@@ -209,10 +209,8 @@ spv.8bitstorage-uint.frag
              115:     20(int) Constant 7
              116:     20(int) Constant 6
              117:             TypePointer Uniform 9(int)
-             167:   6(int8_t) Constant 1
-             168:   6(int8_t) Constant 2
-             169:   7(i8vec2) ConstantComposite 167 168
-             171:   6(int8_t) Constant 3
+             167:   39(ivec2) ConstantComposite 82 10
+             170:      9(int) Constant 3
          4(main):           2 Function None 3
                5:             Label
           69(x0):     68(ptr) Variable Function
@@ -332,8 +330,10 @@ spv.8bitstorage-uint.frag
              165:   6(int8_t) Load 164
              166:     28(ptr) AccessChain 19(b2) 21
                               Store 166 165
-             170:     42(ptr) AccessChain 19(b2) 32
-                              Store 170 169
+             168:   7(i8vec2) UConvert 167
+             169:     42(ptr) AccessChain 19(b2) 32
+                              Store 169 168
+             171:   6(int8_t) UConvert 170
              172:     28(ptr) AccessChain 19(b2) 21
                               Store 172 171
                               Return

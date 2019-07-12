@@ -6948,6 +6948,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructF16Mat4x4:
     case EOpConstructFloat16:
         basicOp = EOpConstructFloat16;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticFloat16Enabled()) {
+            TType tempType(EbtFloat, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructVec2 + op - EOpConstructF16Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtFloat16, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructI8Vec2:
@@ -6955,6 +6965,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructI8Vec4:
     case EOpConstructInt8:
         basicOp = EOpConstructInt8;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt8Enabled()) {
+            TType tempType(EbtInt, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructIVec2 + op - EOpConstructI8Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtInt8, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructU8Vec2:
@@ -6962,6 +6982,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructU8Vec4:
     case EOpConstructUint8:
         basicOp = EOpConstructUint8;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt8Enabled()) {
+            TType tempType(EbtUint, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructUVec2 + op - EOpConstructU8Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtUint8, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructI16Vec2:
@@ -6969,6 +6999,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructI16Vec4:
     case EOpConstructInt16:
         basicOp = EOpConstructInt16;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt16Enabled()) {
+            TType tempType(EbtInt, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructIVec2 + op - EOpConstructI16Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtInt16, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructU16Vec2:
@@ -6976,6 +7016,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructU16Vec4:
     case EOpConstructUint16:
         basicOp = EOpConstructUint16;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt16Enabled()) {
+            TType tempType(EbtUint, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructUVec2 + op - EOpConstructU16Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtUint16, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructIVec2:

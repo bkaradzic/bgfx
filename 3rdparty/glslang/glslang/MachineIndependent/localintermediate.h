@@ -780,6 +780,27 @@ public:
     const char* const implicitThisName;
     const char* const implicitCounterName;
 
+    // Certain explicit conversions are allowed conditionally
+    bool getArithemeticInt8Enabled() const {
+        return extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+               extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int8);
+    }
+    bool getArithemeticInt16Enabled() const {
+        return extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+#ifdef AMD_EXTENSIONS
+               extensionRequested(E_GL_AMD_gpu_shader_int16) ||
+#endif
+               extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int16);
+    }
+
+    bool getArithemeticFloat16Enabled() const {
+        return extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
+#ifdef AMD_EXTENSIONS
+               extensionRequested(E_GL_AMD_gpu_shader_half_float) ||
+#endif
+               extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_float16);
+    }
+
 protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const char*);

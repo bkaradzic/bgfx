@@ -188,6 +188,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_post_depth_coverage]          = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
     extensionBehavior[E_GL_ARB_fragment_shader_interlock]    = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_clock]                 = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -285,6 +286,7 @@ void TParseVersions::initializeExtensionBehavior()
     // EXT extensions
     extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
     extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_realtime_clock]    = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -408,6 +410,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_KHR_shader_subgroup_quad 1\n"
 
             "#define E_GL_EXT_shader_atomic_int64 1\n"
+            "#define E_GL_EXT_shader_realtime_clock 1\n"
 
 #ifdef AMD_EXTENSIONS
             "#define GL_AMD_shader_ballot 1\n"
