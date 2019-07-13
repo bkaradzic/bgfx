@@ -161,7 +161,18 @@ local function FlagBlock(typ)
 	yield("public enum " .. typ.name .. "Flags" .. enumType)
 	yield("{")
 
-	for _, flag in ipairs(typ.flag) do
+	for idx, flag in ipairs(typ.flag) do
+
+		if flag.comment ~= nil then
+			if idx ~= 1 then
+				yield("")
+			end
+
+			yield("\t/// <summary>")
+			yield("\t/// " .. flag.comment)
+			yield("\t/// </summary>")
+		end
+
 		local flagName = flag.name:gsub("_", "")
 		yield("\t"
 			.. flagName

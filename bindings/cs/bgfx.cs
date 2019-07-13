@@ -139,19 +139,74 @@ public static partial class bgfx
 	[Flags]
 	public enum ClearFlags : ushort
 	{
+		/// <summary>
+		/// No clear flags.
+		/// </summary>
 		None                   = 0x0000,
+	
+		/// <summary>
+		/// Clear color.
+		/// </summary>
 		Color                  = 0x0001,
+	
+		/// <summary>
+		/// Clear depth.
+		/// </summary>
 		Depth                  = 0x0002,
+	
+		/// <summary>
+		/// Clear stencil.
+		/// </summary>
 		Stencil                = 0x0004,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 0.
+		/// </summary>
 		DiscardColor0          = 0x0008,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 1.
+		/// </summary>
 		DiscardColor1          = 0x0010,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 2.
+		/// </summary>
 		DiscardColor2          = 0x0020,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 3.
+		/// </summary>
 		DiscardColor3          = 0x0040,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 4.
+		/// </summary>
 		DiscardColor4          = 0x0080,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 5.
+		/// </summary>
 		DiscardColor5          = 0x0100,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 6.
+		/// </summary>
 		DiscardColor6          = 0x0200,
+	
+		/// <summary>
+		/// Discard frame buffer attachment 7.
+		/// </summary>
 		DiscardColor7          = 0x0400,
+	
+		/// <summary>
+		/// Discard frame buffer depth attachment.
+		/// </summary>
 		DiscardDepth           = 0x0800,
+	
+		/// <summary>
+		/// Discard frame buffer stencil attachment.
+		/// </summary>
 		DiscardStencil         = 0x1000,
 		DiscardColorMask       = 0x07f8,
 		DiscardMask            = 0x1ff8,
@@ -160,11 +215,34 @@ public static partial class bgfx
 	[Flags]
 	public enum DebugFlags : uint
 	{
+		/// <summary>
+		/// No debug.
+		/// </summary>
 		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Enable wireframe for all primitives.
+		/// </summary>
 		Wireframe              = 0x00000001,
+	
+		/// <summary>
+		/// Enable infinitely fast hardware test. No draw calls will be submitted to driver. It’s useful when profiling to quickly assess bottleneck between CPU and GPU.
+		/// </summary>
 		Ifh                    = 0x00000002,
+	
+		/// <summary>
+		/// Enable statistics display.
+		/// </summary>
 		Stats                  = 0x00000004,
+	
+		/// <summary>
+		/// Enable debug text display.
+		/// </summary>
 		Text                   = 0x00000008,
+	
+		/// <summary>
+		/// Enable profiler.
+		/// </summary>
 		Profiler               = 0x00000010,
 	}
 	
@@ -299,83 +377,306 @@ public static partial class bgfx
 	[Flags]
 	public enum CapsFlags : ulong
 	{
+		/// <summary>
+		/// Alpha to coverage is supported.
+		/// </summary>
 		AlphaToCoverage        = 0x0000000000000001,
+	
+		/// <summary>
+		/// Blend independent is supported.
+		/// </summary>
 		BlendIndependent       = 0x0000000000000002,
+	
+		/// <summary>
+		/// Compute shaders are supported.
+		/// </summary>
 		Compute                = 0x0000000000000004,
+	
+		/// <summary>
+		/// Conservative rasterization is supported.
+		/// </summary>
 		ConservativeRaster     = 0x0000000000000008,
+	
+		/// <summary>
+		/// Draw indirect is supported.
+		/// </summary>
 		DrawIndirect           = 0x0000000000000010,
+	
+		/// <summary>
+		/// Fragment depth is accessible in fragment shader.
+		/// </summary>
 		FragmentDepth          = 0x0000000000000020,
+	
+		/// <summary>
+		/// Fragment ordering is available in fragment shader.
+		/// </summary>
 		FragmentOrdering       = 0x0000000000000040,
+	
+		/// <summary>
+		/// Read/Write frame buffer attachments are supported.
+		/// </summary>
 		FramebufferRw          = 0x0000000000000080,
+	
+		/// <summary>
+		/// Graphics debugger is present.
+		/// </summary>
 		GraphicsDebugger       = 0x0000000000000100,
 		Reserved               = 0x0000000000000200,
+	
+		/// <summary>
+		/// HDR10 rendering is supported.
+		/// </summary>
 		Hdr10                  = 0x0000000000000400,
+	
+		/// <summary>
+		/// HiDPI rendering is supported.
+		/// </summary>
 		Hidpi                  = 0x0000000000000800,
+	
+		/// <summary>
+		/// 32-bit indices are supported.
+		/// </summary>
 		Index32                = 0x0000000000001000,
+	
+		/// <summary>
+		/// Instancing is supported.
+		/// </summary>
 		Instancing             = 0x0000000000002000,
+	
+		/// <summary>
+		/// Occlusion query is supported.
+		/// </summary>
 		OcclusionQuery         = 0x0000000000004000,
+	
+		/// <summary>
+		/// Renderer is on separate thread.
+		/// </summary>
 		RendererMultithreaded  = 0x0000000000008000,
+	
+		/// <summary>
+		/// Multiple windows are supported.
+		/// </summary>
 		SwapChain              = 0x0000000000010000,
+	
+		/// <summary>
+		/// 2D texture array is supported.
+		/// </summary>
 		Texture2dArray         = 0x0000000000020000,
+	
+		/// <summary>
+		/// 3D textures are supported.
+		/// </summary>
 		Texture3d              = 0x0000000000040000,
+	
+		/// <summary>
+		/// Texture blit is supported.
+		/// </summary>
 		TextureBlit            = 0x0000000000080000,
+	
+		/// <summary>
+		/// All texture compare modes are supported.
+		/// </summary>
 		TextureCompareReserved = 0x0000000000100000,
+	
+		/// <summary>
+		/// Texture compare less equal mode is supported.
+		/// </summary>
 		TextureCompareLequal   = 0x0000000000200000,
+	
+		/// <summary>
+		/// Cubemap texture array is supported.
+		/// </summary>
 		TextureCubeArray       = 0x0000000000400000,
+	
+		/// <summary>
+		/// CPU direct access to GPU texture memory.
+		/// </summary>
 		TextureDirectAccess    = 0x0000000000800000,
+	
+		/// <summary>
+		/// Read-back texture is supported.
+		/// </summary>
 		TextureReadBack        = 0x0000000001000000,
+	
+		/// <summary>
+		/// Vertex attribute half-float is supported.
+		/// </summary>
 		VertexAttribHalf       = 0x0000000002000000,
+	
+		/// <summary>
+		/// Vertex attribute 10_10_10_2 is supported.
+		/// </summary>
 		VertexAttribUint10     = 0x0000000004000000,
+	
+		/// <summary>
+		/// Rendering with VertexID only is supported.
+		/// </summary>
 		VertexId               = 0x0000000008000000,
+	
+		/// <summary>
+		/// All texture compare modes are supported.
+		/// </summary>
 		TextureCompareAll      = 0x0000000000300000,
 	}
 	
 	[Flags]
 	public enum CapsFormatFlags : ushort
 	{
+		/// <summary>
+		/// Texture format is not supported.
+		/// </summary>
 		TextureNone            = 0x0000,
+	
+		/// <summary>
+		/// Texture format is supported.
+		/// </summary>
 		Texture2d              = 0x0001,
+	
+		/// <summary>
+		/// Texture as sRGB format is supported.
+		/// </summary>
 		Texture2dSrgb          = 0x0002,
+	
+		/// <summary>
+		/// Texture format is emulated.
+		/// </summary>
 		Texture2dEmulated      = 0x0004,
+	
+		/// <summary>
+		/// Texture format is supported.
+		/// </summary>
 		Texture3d              = 0x0008,
+	
+		/// <summary>
+		/// Texture as sRGB format is supported.
+		/// </summary>
 		Texture3dSrgb          = 0x0010,
+	
+		/// <summary>
+		/// Texture format is emulated.
+		/// </summary>
 		Texture3dEmulated      = 0x0020,
+	
+		/// <summary>
+		/// Texture format is supported.
+		/// </summary>
 		TextureCube            = 0x0040,
+	
+		/// <summary>
+		/// Texture as sRGB format is supported.
+		/// </summary>
 		TextureCubeSrgb        = 0x0080,
+	
+		/// <summary>
+		/// Texture format is emulated.
+		/// </summary>
 		TextureCubeEmulated    = 0x0100,
+	
+		/// <summary>
+		/// Texture format can be used from vertex shader.
+		/// </summary>
 		TextureVertex          = 0x0200,
+	
+		/// <summary>
+		/// Texture format can be used as image from compute shader.
+		/// </summary>
 		TextureImage           = 0x0400,
+	
+		/// <summary>
+		/// Texture format can be used as frame buffer.
+		/// </summary>
 		TextureFramebuffer     = 0x0800,
+	
+		/// <summary>
+		/// Texture format can be used as MSAA frame buffer.
+		/// </summary>
 		TextureFramebufferMsaa = 0x1000,
+	
+		/// <summary>
+		/// Texture can be sampled as MSAA.
+		/// </summary>
 		TextureMsaa            = 0x2000,
+	
+		/// <summary>
+		/// Texture format supports auto-generated mips.
+		/// </summary>
 		TextureMipAutogen      = 0x4000,
 	}
 	
 	[Flags]
 	public enum ResolveFlags : uint
 	{
+		/// <summary>
+		/// No resolve flags.
+		/// </summary>
 		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Auto-generate mip maps on resolve.
+		/// </summary>
 		AutoGenMips            = 0x00000001,
 	}
 	
 	[Flags]
 	public enum PciIdFlags : ushort
 	{
+		/// <summary>
+		/// Autoselect adapter.
+		/// </summary>
 		None                   = 0x0000,
+	
+		/// <summary>
+		/// Software rasterizer.
+		/// </summary>
 		SoftwareRasterizer     = 0x0001,
+	
+		/// <summary>
+		/// AMD adapter.
+		/// </summary>
 		Amd                    = 0x1002,
+	
+		/// <summary>
+		/// Intel adapter.
+		/// </summary>
 		Intel                  = 0x8086,
+	
+		/// <summary>
+		/// nVidia adapter.
+		/// </summary>
 		Nvidia                 = 0x10de,
 	}
 	
 	[Flags]
 	public enum CubeMapFlags : uint
 	{
+		/// <summary>
+		/// Cubemap +x.
+		/// </summary>
 		PositiveX              = 0x00000000,
+	
+		/// <summary>
+		/// Cubemap -x.
+		/// </summary>
 		NegativeX              = 0x00000001,
+	
+		/// <summary>
+		/// Cubemap +y.
+		/// </summary>
 		PositiveY              = 0x00000002,
+	
+		/// <summary>
+		/// Cubemap -y.
+		/// </summary>
 		NegativeY              = 0x00000003,
+	
+		/// <summary>
+		/// Cubemap +z.
+		/// </summary>
 		PositiveZ              = 0x00000004,
+	
+		/// <summary>
+		/// Cubemap -z.
+		/// </summary>
 		NegativeZ              = 0x00000005,
 	}
 	
