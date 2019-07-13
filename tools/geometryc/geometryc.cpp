@@ -11,8 +11,6 @@
 
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
-#include <tinystl/unordered_map.h>
-#include <tinystl/unordered_set.h>
 #include <tinystl/vector.h>
 namespace stl = tinystl;
 
@@ -63,15 +61,12 @@ struct Index3
 	int32_t m_position;
 	int32_t m_texcoord;
 	int32_t m_normal;
-	int32_t m_vertexIndex;
 	int32_t m_vbc; // Barycentric ID. Holds eigher 0, 1 or 2.
 };
 
-typedef stl::unordered_map<uint64_t, Index3> Index3Map;
-
 struct TriIndices
 {
-	uint64_t m_index[3];
+	Index3 m_index[3];
 };
 
 typedef stl::vector<TriIndices> TriangleArray;
@@ -498,7 +493,6 @@ int main(int _argc, const char* _argv[])
 	Vec3Array positions;
 	Vec3Array normals;
 	Vec3Array texcoords;
-	Index3Map indexMap;
 	TriangleArray triangles;
 	GroupArray groups;
 
@@ -539,7 +533,6 @@ int main(int _argc, const char* _argv[])
 					Index3 index;
 					index.m_texcoord = -1;
 					index.m_normal = -1;
-					index.m_vertexIndex = -1;
 					if (hasBc)
 					{
 						index.m_vbc = edge < 3 ? edge : (1+(edge+1) )&1;
@@ -583,29 +576,10 @@ int main(int _argc, const char* _argv[])
 						index.m_position = (pos < 0) ? pos + numPositions : pos - 1;
 					}
 
-					const uint64_t hash0 = uint64_t(index.m_position)<< 0;
-					const uint64_t hash1 = uint64_t(index.m_texcoord)<<20;
-					const uint64_t hash2 = uint64_t(index.m_normal  )<<40;
-					const uint64_t hash3 = uint64_t(index.m_vbc     )<<60;
-					const uint64_t hash  = hash0^hash1^hash2^hash3;
-
-					stl::pair<Index3Map::iterator, bool> result = indexMap.insert(stl::make_pair(hash, index) );
-					if (!result.second)
-					{
-						Index3& oldIndex = result.first->second;
-						BX_UNUSED(oldIndex);
-						BX_CHECK(true
-							&& oldIndex.m_position == index.m_position
-							&& oldIndex.m_texcoord == index.m_texcoord
-							&& oldIndex.m_normal   == index.m_normal
-							, "Hash collision!"
-							);
-					}
-
 					switch (edge)
 					{
 					case 0:	case 1:	case 2:
-						triangle.m_index[edge] = hash;
+						triangle.m_index[edge] = index;
 						if (2 == edge)
 						{
 							if (ccw)
@@ -620,12 +594,12 @@ int main(int _argc, const char* _argv[])
 						if (ccw)
 						{
 							triangle.m_index[2] = triangle.m_index[1];
-							triangle.m_index[1] = hash;
+							triangle.m_index[1] = index;
 						}
 						else
 						{
 							triangle.m_index[1] = triangle.m_index[2];
-							triangle.m_index[2] = hash;
+							triangle.m_index[2] = index;
 						}
 
 						triangles.push_back(triangle);
@@ -770,38 +744,50 @@ int main(int _argc, const char* _argv[])
 	bool hasNormal;
 	bool hasTexcoord;
 	{
-		Index3Map::const_iterator it = indexMap.begin();
-		hasNormal   = -1 != it->second.m_normal;
-		hasTexcoord = -1 != it->second.m_texcoord;
+		TriangleArray::const_iterator it = triangles.begin();
+		hasNormal   = -1 != it->m_index[0].m_normal;
+		hasTexcoord = -1 != it->m_index[0].m_texcoord;
 
 		if (!hasTexcoord)
 		{
-			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd && !hasTexcoord; ++jt)
+			for (TriangleArray::iterator jt = triangles.begin(), jtEnd = triangles.end(); jt != jtEnd && !hasTexcoord; ++jt)
 			{
-				hasTexcoord |= -1 != jt->second.m_texcoord;
+				for (uint32_t i = 0; i < 3; ++i)
+				{
+					hasTexcoord |= -1 != jt->m_index[i].m_texcoord;
+				}
 			}
 
 			if (hasTexcoord)
 			{
-				for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
+				for (TriangleArray::iterator jt = triangles.begin(), jtEnd = triangles.end(); jt != jtEnd; ++jt)
 				{
-					jt->second.m_texcoord = -1 == jt->second.m_texcoord ? 0 : jt->second.m_texcoord;
+					for (uint32_t i = 0; i < 3; ++i)
+					{
+						jt->m_index[i].m_texcoord = -1 == jt->m_index[i].m_texcoord ? 0 : jt->m_index[i].m_texcoord;
+					}
 				}
 			}
 		}
 
 		if (!hasNormal)
 		{
-			for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd && !hasNormal; ++jt)
+			for (TriangleArray::iterator jt = triangles.begin(), jtEnd = triangles.end(); jt != jtEnd && !hasNormal; ++jt)
 			{
-				hasNormal |= -1 != jt->second.m_normal;
+				for (uint32_t i = 0; i < 3; ++i)
+				{
+					hasNormal |= -1 != jt->m_index[i].m_normal;
+				}
 			}
 
 			if (hasNormal)
 			{
-				for (Index3Map::iterator jt = indexMap.begin(), jtEnd = indexMap.end(); jt != jtEnd; ++jt)
+				for (TriangleArray::iterator jt = triangles.begin(), jtEnd = triangles.end(); jt != jtEnd; ++jt)
 				{
-					jt->second.m_normal = -1 == jt->second.m_normal ? 0 : jt->second.m_normal;
+					for (uint32_t i = 0; i < 3; ++i)
+					{
+						jt->m_index[i].m_normal = -1 == jt->m_index[i].m_normal ? 0 : jt->m_index[i].m_normal;
+					}
 				}
 			}
 		}
@@ -875,7 +861,12 @@ int main(int _argc, const char* _argv[])
 
 	uint8_t* vertices = vertexData;
 	uint16_t* indices = indexData;
-
+	
+	const uint32_t tableSize = 65536 * 2;
+	const uint32_t hashmod = tableSize - 1;
+	uint32_t* table = new uint32_t[tableSize];
+	bx::memSet(table, 0xff, tableSize * sizeof(uint32_t));
+	
 	stl::string material = groups.begin()->m_material;
 
 	PrimitiveArray primitives;
@@ -942,11 +933,8 @@ int main(int _argc, const char* _argv[])
 					, primitives
 					);
 				primitives.clear();
-
-				for (Index3Map::iterator indexIt = indexMap.begin(); indexIt != indexMap.end(); ++indexIt)
-				{
-					indexIt->second.m_vertexIndex = -1;
-				}
+				
+				bx::memSet(table, 0xff, tableSize * sizeof(uint32_t));
 
 				++writtenPrimitives;
 				writtenVertices += numVertices;
@@ -968,56 +956,81 @@ int main(int _argc, const char* _argv[])
 			TriIndices& triangle = triangles[tri];
 			for (uint32_t edge = 0; edge < 3; ++edge)
 			{
-				uint64_t hash = triangle.m_index[edge];
-				Index3& index = indexMap[hash];
-				if (index.m_vertexIndex == -1)
+				Index3& index = triangle.m_index[edge];
+				
+				float* position = (float*)(vertices + positionOffset);
+				bx::memCopy(position, &positions[index.m_position], 3*sizeof(float) );
+				
+				if (hasColor)
 				{
-		 			index.m_vertexIndex = numVertices++;
-
-					float* position = (float*)(vertices + positionOffset);
-					bx::memCopy(position, &positions[index.m_position], 3*sizeof(float) );
-
-					if (hasColor)
+					uint32_t* color0 = (uint32_t*)(vertices + color0Offset);
+					*color0 = rgbaToAbgr(numVertices%255, numIndices%255, 0, 0xff);
+				}
+				
+				if (hasBc)
+				{
+					const float bc[3] =
 					{
-						uint32_t* color0 = (uint32_t*)(vertices + color0Offset);
-						*color0 = rgbaToAbgr(numVertices%255, numIndices%255, 0, 0xff);
-					}
-
-					if (hasBc)
+						(index.m_vbc == 0) ? 1.0f : 0.0f,
+						(index.m_vbc == 1) ? 1.0f : 0.0f,
+						(index.m_vbc == 2) ? 1.0f : 0.0f,
+					};
+					bgfx::vertexPack(bc, true, bgfx::Attrib::Color1, decl, vertices);
+				}
+				
+				if (hasTexcoord)
+				{
+					float uv[2];
+					bx::memCopy(uv, &texcoords[index.m_texcoord], 2*sizeof(float) );
+					
+					if (flipV)
 					{
-						const float bc[3] =
-						{
-							(index.m_vbc == 0) ? 1.0f : 0.0f,
-							(index.m_vbc == 1) ? 1.0f : 0.0f,
-							(index.m_vbc == 2) ? 1.0f : 0.0f,
-						};
-						bgfx::vertexPack(bc, true, bgfx::Attrib::Color1, decl, vertices);
+						uv[1] = -uv[1];
 					}
-
-					if (hasTexcoord)
-					{
-						float uv[2];
-						bx::memCopy(uv, &texcoords[index.m_texcoord], 2*sizeof(float) );
-
-						if (flipV)
-						{
-							uv[1] = -uv[1];
-						}
-
-						bgfx::vertexPack(uv, true, bgfx::Attrib::TexCoord0, decl, vertices);
-					}
-
-					if (hasNormal)
-					{
-						float normal[4];
-						bx::store(normal, bx::normalize(bx::load<bx::Vec3>(&normals[index.m_normal]) ) );
-						bgfx::vertexPack(normal, true, bgfx::Attrib::Normal, decl, vertices);
-					}
-
-					vertices += stride;
+					
+					bgfx::vertexPack(uv, true, bgfx::Attrib::TexCoord0, decl, vertices);
+				}
+				
+				if (hasNormal)
+				{
+					float normal[4];
+					bx::store(normal, bx::normalize(bx::load<bx::Vec3>(&normals[index.m_normal]) ) );
+					normal[3] = 0.0f;
+					bgfx::vertexPack(normal, true, bgfx::Attrib::Normal, decl, vertices);
 				}
 
-				*indices++ = (uint16_t)index.m_vertexIndex;
+				uint32_t hash = bx::hash<bx::HashMurmur2A>(vertices, stride);
+				size_t bucket = hash & hashmod;
+				uint32_t vertexIndex = UINT32_MAX;
+				
+				for (size_t probe = 0; probe <= hashmod; ++probe)
+				{
+					uint32_t& item = table[bucket];
+					
+					if (item == ~0u)
+					{
+						vertices += stride;
+						item = numVertices++;
+						vertexIndex = item;
+						break;
+					}
+					
+					if (0 == bx::memCmp(vertexData + item * stride, vertices, stride))
+					{
+						vertexIndex = item;
+						break;
+					}
+					
+					bucket = (bucket + probe + 1) & hashmod;
+				}
+				
+				if ( vertexIndex == UINT32_MAX )
+				{
+					bx::printf("hash table insert failed");
+					exit(bx::kExitFailure);
+				}
+				
+				*indices++ = (uint16_t)vertexIndex;
 				++numIndices;
 			}
 		}
@@ -1045,6 +1058,7 @@ int main(int _argc, const char* _argv[])
 	bx::printf("size: %d\n", uint32_t(bx::seek(&writer) ) );
 	bx::close(&writer);
 
+	delete [] table;
 	delete [] indexData;
 	delete [] vertexData;
 
