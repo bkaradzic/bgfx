@@ -369,6 +369,7 @@ CODE
  When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all imgui files.
  You can read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2019/07/12 (1.72) - renamed ImFontAtlas::CustomRect to ImFontAtlasCustomRect. Keep redirection typedef (will obsolete).
  - 2019/06/14 (1.72) - removed redirecting functions/enums names that were marked obsolete in 1.51 (June 2017): ImGuiCol_Column*, ImGuiSetCond_*, IsItemHoveredRect(), IsPosHoveringAnyWindow(), IsMouseHoveringAnyWindow(), IsMouseHoveringWindow(), IMGUI_ONCE_UPON_A_FRAME. Grep this log for details and new names.
  - 2019/06/07 (1.71) - rendering of child window outer decorations (bg color, border, scrollbars) is now performed as part of the parent window. If you have
                        overlapping child windows in a same parent, and relied on their relative z-order to be mapped to their submission order, this will affect your rendering.
@@ -1925,15 +1926,15 @@ ImU32 ImGui::GetColorU32(ImU32 col)
 //-----------------------------------------------------------------------------
 
 // std::lower_bound but without the bullshit
-static ImGuiStorage::Pair* LowerBound(ImVector<ImGuiStorage::Pair>& data, ImGuiID key)
+static ImGuiStorage::ImGuiStoragePair* LowerBound(ImVector<ImGuiStorage::ImGuiStoragePair>& data, ImGuiID key)
 {
-    ImGuiStorage::Pair* first = data.Data;
-    ImGuiStorage::Pair* last = data.Data + data.Size;
+    ImGuiStorage::ImGuiStoragePair* first = data.Data;
+    ImGuiStorage::ImGuiStoragePair* last = data.Data + data.Size;
     size_t count = (size_t)(last - first);
     while (count > 0)
     {
         size_t count2 = count >> 1;
-        ImGuiStorage::Pair* mid = first + count2;
+        ImGuiStorage::ImGuiStoragePair* mid = first + count2;
         if (mid->key < key)
         {
             first = ++mid;
@@ -1955,18 +1956,18 @@ void ImGuiStorage::BuildSortByKey()
         static int IMGUI_CDECL PairCompareByID(const void* lhs, const void* rhs)
         {
             // We can't just do a subtraction because qsort uses signed integers and subtracting our ID doesn't play well with that.
-            if (((const Pair*)lhs)->key > ((const Pair*)rhs)->key) return +1;
-            if (((const Pair*)lhs)->key < ((const Pair*)rhs)->key) return -1;
+            if (((const ImGuiStoragePair*)lhs)->key > ((const ImGuiStoragePair*)rhs)->key) return +1;
+            if (((const ImGuiStoragePair*)lhs)->key < ((const ImGuiStoragePair*)rhs)->key) return -1;
             return 0;
         }
     };
     if (Data.Size > 1)
-        ImQsort(Data.Data, (size_t)Data.Size, sizeof(Pair), StaticFunc::PairCompareByID);
+        ImQsort(Data.Data, (size_t)Data.Size, sizeof(ImGuiStoragePair), StaticFunc::PairCompareByID);
 }
 
 int ImGuiStorage::GetInt(ImGuiID key, int default_val) const
 {
-    ImGuiStorage::Pair* it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    ImGuiStoragePair* it = LowerBound(const_cast<ImVector<ImGuiStoragePair>&>(Data), key);
     if (it == Data.end() || it->key != key)
         return default_val;
     return it->val_i;
@@ -1979,7 +1980,7 @@ bool ImGuiStorage::GetBool(ImGuiID key, bool default_val) const
 
 float ImGuiStorage::GetFloat(ImGuiID key, float default_val) const
 {
-    ImGuiStorage::Pair* it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    ImGuiStoragePair* it = LowerBound(const_cast<ImVector<ImGuiStoragePair>&>(Data), key);
     if (it == Data.end() || it->key != key)
         return default_val;
     return it->val_f;
@@ -1987,7 +1988,7 @@ float ImGuiStorage::GetFloat(ImGuiID key, float default_val) const
 
 void* ImGuiStorage::GetVoidPtr(ImGuiID key) const
 {
-    ImGuiStorage::Pair* it = LowerBound(const_cast<ImVector<ImGuiStorage::Pair>&>(Data), key);
+    ImGuiStoragePair* it = LowerBound(const_cast<ImVector<ImGuiStoragePair>&>(Data), key);
     if (it == Data.end() || it->key != key)
         return NULL;
     return it->val_p;
@@ -1996,9 +1997,9 @@ void* ImGuiStorage::GetVoidPtr(ImGuiID key) const
 // References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
 int* ImGuiStorage::GetIntRef(ImGuiID key, int default_val)
 {
-    ImGuiStorage::Pair* it = LowerBound(Data, key);
+    ImGuiStoragePair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
-        it = Data.insert(it, Pair(key, default_val));
+        it = Data.insert(it, ImGuiStoragePair(key, default_val));
     return &it->val_i;
 }
 
@@ -2009,27 +2010,27 @@ bool* ImGuiStorage::GetBoolRef(ImGuiID key, bool default_val)
 
 float* ImGuiStorage::GetFloatRef(ImGuiID key, float default_val)
 {
-    ImGuiStorage::Pair* it = LowerBound(Data, key);
+    ImGuiStoragePair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
-        it = Data.insert(it, Pair(key, default_val));
+        it = Data.insert(it, ImGuiStoragePair(key, default_val));
     return &it->val_f;
 }
 
 void** ImGuiStorage::GetVoidPtrRef(ImGuiID key, void* default_val)
 {
-    ImGuiStorage::Pair* it = LowerBound(Data, key);
+    ImGuiStoragePair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
-        it = Data.insert(it, Pair(key, default_val));
+        it = Data.insert(it, ImGuiStoragePair(key, default_val));
     return &it->val_p;
 }
 
 // FIXME-OPT: Need a way to reuse the result of lower_bound when doing GetInt()/SetInt() - not too bad because it only happens on explicit interaction (maximum one a frame)
 void ImGuiStorage::SetInt(ImGuiID key, int val)
 {
-    ImGuiStorage::Pair* it = LowerBound(Data, key);
+    ImGuiStoragePair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
     {
-        Data.insert(it, Pair(key, val));
+        Data.insert(it, ImGuiStoragePair(key, val));
         return;
     }
     it->val_i = val;
@@ -2042,10 +2043,10 @@ void ImGuiStorage::SetBool(ImGuiID key, bool val)
 
 void ImGuiStorage::SetFloat(ImGuiID key, float val)
 {
-    ImGuiStorage::Pair* it = LowerBound(Data, key);
+    ImGuiStoragePair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
     {
-        Data.insert(it, Pair(key, val));
+        Data.insert(it, ImGuiStoragePair(key, val));
         return;
     }
     it->val_f = val;
@@ -2053,10 +2054,10 @@ void ImGuiStorage::SetFloat(ImGuiID key, float val)
 
 void ImGuiStorage::SetVoidPtr(ImGuiID key, void* val)
 {
-    ImGuiStorage::Pair* it = LowerBound(Data, key);
+    ImGuiStoragePair* it = LowerBound(Data, key);
     if (it == Data.end() || it->key != key)
     {
-        Data.insert(it, Pair(key, val));
+        Data.insert(it, ImGuiStoragePair(key, val));
         return;
     }
     it->val_p = val;
@@ -2097,7 +2098,7 @@ bool ImGuiTextFilter::Draw(const char* label, float width)
     return value_changed;
 }
 
-void ImGuiTextFilter::TextRange::split(char separator, ImVector<TextRange>* out) const
+void ImGuiTextFilter::ImGuiTextRange::split(char separator, ImVector<ImGuiTextRange>* out) const
 {
     out->resize(0);
     const char* wb = b;
@@ -2106,25 +2107,25 @@ void ImGuiTextFilter::TextRange::split(char separator, ImVector<TextRange>* out)
     {
         if (*we == separator)
         {
-            out->push_back(TextRange(wb, we));
+            out->push_back(ImGuiTextRange(wb, we));
             wb = we + 1;
         }
         we++;
     }
     if (wb != we)
-        out->push_back(TextRange(wb, we));
+        out->push_back(ImGuiTextRange(wb, we));
 }
 
 void ImGuiTextFilter::Build()
 {
     Filters.resize(0);
-    TextRange input_range(InputBuf, InputBuf+strlen(InputBuf));
+    ImGuiTextRange input_range(InputBuf, InputBuf+strlen(InputBuf));
     input_range.split(',', &Filters);
 
     CountGrep = 0;
     for (int i = 0; i != Filters.Size; i++)
     {
-        TextRange& f = Filters[i];
+        ImGuiTextRange& f = Filters[i];
         while (f.b < f.e && ImCharIsBlankA(f.b[0]))
             f.b++;
         while (f.e > f.b && ImCharIsBlankA(f.e[-1]))
@@ -2146,19 +2147,19 @@ bool ImGuiTextFilter::PassFilter(const char* text, const char* text_end) const
 
     for (int i = 0; i != Filters.Size; i++)
     {
-        const TextRange& f = Filters[i];
+        const ImGuiTextRange& f = Filters[i];
         if (f.empty())
             continue;
         if (f.b[0] == '-')
         {
             // Subtract
-            if (ImStristr(text, text_end, f.begin()+1, f.end()) != NULL)
+            if (ImStristr(text, text_end, f.b + 1, f.e) != NULL)
                 return false;
         }
         else
         {
             // Grep
-            if (ImStristr(text, text_end, f.begin(), f.end()) != NULL)
+            if (ImStristr(text, text_end, f.b, f.e) != NULL)
                 return true;
         }
     }
@@ -9559,6 +9560,8 @@ ImGuiWindowSettings* ImGui::CreateNewWindowSettings(const char* name)
     ImGuiContext& g = *GImGui;
     g.SettingsWindows.push_back(ImGuiWindowSettings());
     ImGuiWindowSettings* settings = &g.SettingsWindows.back();
+    if (const char* p = strstr(name, "###"))  // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
+        name = p;
     settings->Name = ImStrdup(name);
     settings->ID = ImHashStr(name);
     return settings;
@@ -9744,10 +9747,7 @@ static void SettingsHandlerWindow_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandl
         const ImGuiWindowSettings* settings = &g.SettingsWindows[i];
         if (settings->Pos.x == FLT_MAX)
             continue;
-        const char* name = settings->Name;
-        if (const char* p = strstr(name, "###"))  // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-            name = p;
-        buf->appendf("[%s][%s]\n", handler->TypeName, name);
+        buf->appendf("[%s][%s]\n", handler->TypeName, settings->Name);
         buf->appendf("Pos=%d,%d\n", (int)settings->Pos.x, (int)settings->Pos.y);
         buf->appendf("Size=%d,%d\n", (int)settings->Size.x, (int)settings->Size.y);
         buf->appendf("Collapsed=%d\n", settings->Collapsed);
@@ -10104,7 +10104,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     NodeColumns(&window->ColumnsStorage[n]);
                 ImGui::TreePop();
             }
-            ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.Size * (int)sizeof(ImGuiStorage::Pair));
+            ImGui::BulletText("Storage: %d bytes", window->StateStorage.Data.size_in_bytes());
             ImGui::TreePop();
         }
 
