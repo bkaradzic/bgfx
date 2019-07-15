@@ -959,6 +959,7 @@ const char* CapabilityString(int info)
     case CapabilityFragmentShaderShadingRateInterlockEXT:   return "CapabilityFragmentShaderShadingRateInterlockEXT";
 
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
+    case CapabilityShaderClockKHR:                          return "ShaderClockKHR";
 
     default: return "Bad";
     }
@@ -1348,6 +1349,8 @@ const char* OpcodeString(int op)
     case 5011: return "OpFragmentMaskFetchAMD";
     case 5012: return "OpFragmentFetchAMD";
 #endif
+
+    case OpReadClockKHR:               return "OpReadClockKHR";
 
     case OpDecorateStringGOOGLE:       return "OpDecorateStringGOOGLE";
     case OpMemberDecorateStringGOOGLE: return "OpMemberDecorateStringGOOGLE";
@@ -2790,6 +2793,8 @@ void Parameterize()
     InstructionDesc[OpCooperativeMatrixLengthNV].operands.push(OperandId, "'Type'");
 
     InstructionDesc[OpDemoteToHelperInvocationEXT].setResultAndType(false, false);
+
+    InstructionDesc[OpReadClockKHR].operands.push(OperandScope, "'Scope'");
 }
 
 }; // end spv namespace

@@ -397,7 +397,7 @@ TEST_F(ValidateAtomics, AtomicLoadWebGPUNonRelaxedFailure) {
 
 TEST_F(ValidateAtomics, AtomicLoadWebGPUSequentiallyConsistentFailure) {
   const std::string body = R"(
-%val3 = OpAtomicLoad %u32 %u32_var %subgroup %sequentially_consistent
+%val3 = OpAtomicLoad %u32 %u32_var %invocation %sequentially_consistent
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
@@ -1916,7 +1916,7 @@ TEST_F(ValidateAtomics, WebGPUCrossDeviceMemoryScopeBad) {
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("AtomicLoad: in WebGPU environment Memory Scope is limited to "
-                "Workgroup, Subgroup and QueuFamilyKHR\n"
+                "Workgroup, Invocation, and QueueFamilyKHR\n"
                 "  %34 = OpAtomicLoad %uint %29 %uint_0_0 %uint_0_1\n"));
 }
 
@@ -1930,7 +1930,7 @@ TEST_F(ValidateAtomics, WebGPUDeviceMemoryScopeBad) {
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("AtomicLoad: in WebGPU environment Memory Scope is limited to "
-                "Workgroup, Subgroup and QueuFamilyKHR\n"
+                "Workgroup, Invocation, and QueueFamilyKHR\n"
                 "  %34 = OpAtomicLoad %uint %29 %uint_1_0 %uint_0_1\n"));
 }
 
@@ -1943,18 +1943,9 @@ TEST_F(ValidateAtomics, WebGPUWorkgroupMemoryScopeGood) {
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
 
-TEST_F(ValidateAtomics, WebGPUSubgroupMemoryScopeGood) {
+TEST_F(ValidateAtomics, WebGPUSubgroupMemoryScopeBad) {
   const std::string body = R"(
 %val1 = OpAtomicLoad %u32 %u32_var %subgroup %relaxed
-)";
-
-  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
-  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
-}
-
-TEST_F(ValidateAtomics, WebGPUInvocationMemoryScopeBad) {
-  const std::string body = R"(
-%val1 = OpAtomicLoad %u32 %u32_var %invocation %relaxed
 )";
 
   CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
@@ -1962,8 +1953,17 @@ TEST_F(ValidateAtomics, WebGPUInvocationMemoryScopeBad) {
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("AtomicLoad: in WebGPU environment Memory Scope is limited to "
-                "Workgroup, Subgroup and QueuFamilyKHR\n"
-                "  %34 = OpAtomicLoad %uint %29 %uint_4 %uint_0_1\n"));
+                "Workgroup, Invocation, and QueueFamilyKHR\n"
+                "  %34 = OpAtomicLoad %uint %29 %uint_3 %uint_0_1\n"));
+}
+
+TEST_F(ValidateAtomics, WebGPUInvocationMemoryScopeGood) {
+  const std::string body = R"(
+%val1 = OpAtomicLoad %u32 %u32_var %invocation %relaxed
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_WEBGPU_0));
 }
 
 TEST_F(ValidateAtomics, WebGPUQueueFamilyMemoryScopeGood) {

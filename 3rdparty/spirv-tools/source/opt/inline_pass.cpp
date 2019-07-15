@@ -629,12 +629,39 @@ bool InlinePass::GenInlineCode(
   return true;
 }
 
-bool InlinePass::IsInlinableFunctionCall(const Instruction* inst) {
+bool InlinePass::IsInlinableFunctionCall(Instruction* inst) {
   if (inst->opcode() != SpvOp::SpvOpFunctionCall) return false;
   const uint32_t calleeFnId =
       inst->GetSingleWordOperand(kSpvFunctionCallFunctionId);
   const auto ci = inlinable_.find(calleeFnId);
-  return ci != inlinable_.cend();
+  if (ci == inlinable_.cend()) {
+    return false;
+  }
+
+  if (funcs_with_opkill_.count(calleeFnId) == 0) {
+    return true;
+  }
+
+  // We cannot inline into a continue construct if the function has an OpKill.
+  auto* cfg_analysis = context()->GetStructuredCFGAnalysis();
+  BasicBlock* bb = context()->get_instr_block(inst);
+  uint32_t loop_header_id = cfg_analysis->ContainingLoop(bb->id());
+  if (loop_header_id == 0) {
+    // Not in a loop, so we can inline.
+    return true;
+  }
+  BasicBlock* loop_header_bb = context()->get_instr_block(loop_header_id);
+  uint32_t loop_continue =
+      loop_header_bb->GetLoopMergeInst()->GetSingleWordOperand(1);
+
+  Function* caller_func = bb->GetParent();
+  DominatorAnalysis* dom = context()->GetDominatorAnalysis(caller_func);
+  if (dom->Dominates(loop_continue, bb->id())) {
+    // The function call is the continue construct and the callee contains an
+    // OpKill.
+    return false;
+  }
+  return true;
 }
 
 void InlinePass::UpdateSucceedingPhis(
@@ -711,6 +738,9 @@ bool InlinePass::IsInlinableFunction(Function* func) {
   // the returns as a branch to the loop's merge block. However, this can only
   // done validly if the return was not in a loop in the original function.
   // Also remember functions with multiple (early) returns.
+
+  // Do not inline functions with an OpKill because they may be inlined into a
+  // continue construct.
   AnalyzeReturns(func);
   if (no_return_in_loop_.find(func->result_id()) == no_return_in_loop_.cend()) {
     return false;
@@ -741,6 +771,13 @@ void InlinePass::InitializeInline() {
     }
     // Compute inlinability
     if (IsInlinableFunction(&fn)) inlinable_.insert(fn.result_id());
+
+    bool has_opkill = !fn.WhileEachInst(
+        [](Instruction* inst) { return inst->opcode() != SpvOpKill; });
+
+    if (has_opkill) {
+      funcs_with_opkill_.insert(fn.result_id());
+    }
   }
 }
 

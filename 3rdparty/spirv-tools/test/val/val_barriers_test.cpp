@@ -403,7 +403,7 @@ OpControlBarrier %device %workgroup %none
                         "is limited to Workgroup and Subgroup"));
 }
 
-TEST_F(ValidateBarriers, OpControlBarrierWebGPUExecutionScopeDevice) {
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUExecutionScopeDeviceBad) {
   const std::string body = R"(
 OpControlBarrier %device %workgroup %none
 )";
@@ -412,7 +412,19 @@ OpControlBarrier %device %workgroup %none
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("ControlBarrier: in WebGPU environment Execution Scope "
-                        "is limited to Workgroup and Subgroup"));
+                        "is limited to Workgroup"));
+}
+
+TEST_F(ValidateBarriers, OpControlBarrierWebGPUExecutionScopeSubgroupBad) {
+  const std::string body = R"(
+OpControlBarrier %subgroup %workgroup %none
+)";
+
+  CompileSuccessfully(GenerateWebGPUShaderCode(body), SPV_ENV_WEBGPU_0);
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_WEBGPU_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("ControlBarrier: in WebGPU environment Execution Scope "
+                        "is limited to Workgroup"));
 }
 
 TEST_F(ValidateBarriers, OpControlBarrierVulkanMemoryScopeSubgroup) {

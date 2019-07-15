@@ -36,7 +36,13 @@ Pass::Status MergeReturnPass::Process() {
   ProcessFunction pfn = [&failed, is_shader, this](Function* function) {
     std::vector<BasicBlock*> return_blocks = CollectReturnBlocks(function);
     if (return_blocks.size() <= 1) {
-      return false;
+      if (!is_shader || return_blocks.size() == 0) {
+        return false;
+      }
+      if (context()->GetStructuredCFGAnalysis()->ContainingConstruct(
+              return_blocks[0]->id()) == 0) {
+        return false;
+      }
     }
 
     function_ = function;

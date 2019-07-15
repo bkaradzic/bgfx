@@ -574,24 +574,6 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
 
     TOperator newOp = EOpNull;
 
-    // Certain explicit conversions are allowed conditionally
-    bool arithemeticInt8Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
-                                  extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int8);
-#ifdef AMD_EXTENSIONS
-    bool arithemeticInt16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
-                                   extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int16) ||
-                                   extensionRequested(E_GL_AMD_gpu_shader_int16);
-
-    bool arithemeticFloat16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
-                                     extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_float16) ||
-                                     extensionRequested(E_GL_AMD_gpu_shader_half_float);
-#else
-    bool arithemeticInt16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
-                                   extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_int16);
-
-    bool arithemeticFloat16Enabled = extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types) ||
-                                     extensionRequested(E_GL_EXT_shader_explicit_arithmetic_types_float16);
-#endif
     bool convertToIntTypes = (convertTo == EbtInt8  || convertTo == EbtUint8  ||
                               convertTo == EbtInt16 || convertTo == EbtUint16 ||
                               convertTo == EbtInt   || convertTo == EbtUint   ||
@@ -608,19 +590,19 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
                                   node->getBasicType() == EbtFloat ||
                                   node->getBasicType() == EbtDouble);
 
-    if (! arithemeticInt8Enabled) {
+    if (! getArithemeticInt8Enabled()) {
         if (((convertTo == EbtInt8 || convertTo == EbtUint8) && ! convertFromIntTypes) ||
             ((node->getBasicType() == EbtInt8 || node->getBasicType() == EbtUint8) && ! convertToIntTypes))
             return nullptr;
     }
 
-    if (! arithemeticInt16Enabled) {
+    if (! getArithemeticInt16Enabled()) {
         if (((convertTo == EbtInt16 || convertTo == EbtUint16) && ! convertFromIntTypes) ||
             ((node->getBasicType() == EbtInt16 || node->getBasicType() == EbtUint16) && ! convertToIntTypes))
             return nullptr;
     }
 
-    if (! arithemeticFloat16Enabled) {
+    if (! getArithemeticFloat16Enabled()) {
         if ((convertTo == EbtFloat16 && ! convertFromFloatTypes) ||
             (node->getBasicType() == EbtFloat16 && ! convertToFloatTypes))
             return nullptr;
@@ -841,9 +823,15 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
 
     if (node->getAsConstantUnion()) {
-        TIntermTyped* folded = node->getAsConstantUnion()->fold(newOp, newType);
-        if (folded)
-            return folded;
+        // 8/16-bit storage extensions don't support 8/16-bit constants, so don't fold conversions
+        // to those types
+        if ((getArithemeticInt8Enabled() || !(convertTo == EbtInt8 || convertTo == EbtUint8)) &&
+            (getArithemeticInt16Enabled() || !(convertTo == EbtInt16 || convertTo == EbtUint16)) &&
+            (getArithemeticFloat16Enabled() || !(convertTo == EbtFloat16))) {
+            TIntermTyped* folded = node->getAsConstantUnion()->fold(newOp, newType);
+            if (folded)
+                return folded;
+        }
     }
 
     // Propagate specialization-constant-ness, if allowed

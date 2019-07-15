@@ -2479,6 +2479,10 @@ void CompilerHLSL::emit_texture_op(const Instruction &i)
 
 	inherited_expressions.push_back(coord);
 
+	// Make sure non-uniform decoration is back-propagated to where it needs to be.
+	if (has_decoration(img, DecorationNonUniformEXT))
+		propagate_nonuniform_qualifier(img);
+
 	switch (op)
 	{
 	case OpImageSampleDrefImplicitLod:
@@ -3458,6 +3462,9 @@ void CompilerHLSL::emit_load(const Instruction &instruction)
 		uint32_t id = ops[1];
 		uint32_t ptr = ops[2];
 
+		if (has_decoration(ptr, DecorationNonUniformEXT))
+			propagate_nonuniform_qualifier(ptr);
+
 		auto load_expr = read_access_chain(*chain);
 
 		bool forward = should_forward(ptr) && forced_temporaries.find(id) == end(forced_temporaries);
@@ -3490,6 +3497,9 @@ void CompilerHLSL::write_access_chain(const SPIRAccessChain &chain, uint32_t val
 
 	// Make sure we trigger a read of the constituents in the access chain.
 	track_expression_read(chain.self);
+
+	if (has_decoration(chain.self, DecorationNonUniformEXT))
+		propagate_nonuniform_qualifier(chain.self);
 
 	SPIRType target_type;
 	target_type.basetype = SPIRType::UInt;

@@ -3838,12 +3838,13 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     }
 
     // GL_AMD_gcn_shader
-    if (profile != EEsProfile && version >= 450) {
+    if (profile != EEsProfile && version >= 440) {
         commonBuiltins.append(
             "float cubeFaceIndexAMD(vec3);"
             "vec2  cubeFaceCoordAMD(vec3);"
             "uint64_t timeAMD();"
 
+            "in int gl_SIMDGroupSizeAMD;"
             "\n");
     }
 
@@ -5086,6 +5087,16 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "f16vec3   interpolateAtOffset(f16vec3,   f16vec2);"
             "f16vec4   interpolateAtOffset(f16vec4,   f16vec2);"
 
+            "\n");
+    }
+
+    // GL_ARB_shader_clock & GL_EXT_shader_realtime_clock
+    if (profile != EEsProfile && version >= 450) {
+        commonBuiltins.append(
+            "uvec2 clock2x32ARB();"
+            "uint64_t clockARB();"
+            "uvec2 clockRealtime2x32EXT();"
+            "uint64_t clockRealtimeEXT();"
             "\n");
     }
 
@@ -7752,14 +7763,6 @@ void TBuiltIns::initialize(const TBuiltInResource &resources, int version, EProf
         s.append(builtInConstant);
     }
 
-#ifdef AMD_EXTENSIONS
-    // GL_AMD_gcn_shader
-    if (profile != EEsProfile && version >= 450) {
-        snprintf(builtInConstant, maxSize, "const int gl_SIMDGroupSizeAMD = 64;");
-        s.append(builtInConstant);
-    }
-#endif
-
 #ifdef NV_EXTENSIONS
     // SPV_NV_mesh_shader
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
@@ -7911,6 +7914,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             }
         }
 
+
 #ifdef AMD_EXTENSIONS
         if (profile != EEsProfile) {
             symbolTable.setFunctionExtensions("minInvocationsAMD",                1, &E_GL_AMD_shader_ballot);
@@ -7945,6 +7949,9 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         if (profile != EEsProfile) {
+            symbolTable.setVariableExtensions("gl_SIMDGroupSizeAMD", 1, &E_GL_AMD_gcn_shader);
+            SpecialQualifier("gl_SIMDGroupSizeAMD", EvqVaryingIn, EbvSubGroupSize, symbolTable);
+
             symbolTable.setFunctionExtensions("cubeFaceIndexAMD", 1, &E_GL_AMD_gcn_shader);
             symbolTable.setFunctionExtensions("cubeFaceCoordAMD", 1, &E_GL_AMD_gcn_shader);
             symbolTable.setFunctionExtensions("timeAMD",          1, &E_GL_AMD_gcn_shader);
@@ -8460,6 +8467,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         }
 
         symbolTable.setVariableExtensions("gl_FragDepthEXT", 1, &E_GL_EXT_frag_depth);
+
+        symbolTable.setFunctionExtensions("clockARB",     1, &E_GL_ARB_shader_clock);
+        symbolTable.setFunctionExtensions("clock2x32ARB", 1, &E_GL_ARB_shader_clock);
+
+        symbolTable.setFunctionExtensions("clockRealtimeEXT",     1, &E_GL_EXT_shader_realtime_clock);
+        symbolTable.setFunctionExtensions("clockRealtime2x32EXT", 1, &E_GL_EXT_shader_realtime_clock);
 
         if (profile == EEsProfile && version < 320) {
             symbolTable.setVariableExtensions("gl_PrimitiveID",  Num_AEP_geometry_shader, AEP_geometry_shader);
@@ -9274,6 +9287,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("atomicCounterIncrement", EOpAtomicCounterIncrement);
     symbolTable.relateToOperator("atomicCounterDecrement", EOpAtomicCounterDecrement);
     symbolTable.relateToOperator("atomicCounter",          EOpAtomicCounter);
+
+    symbolTable.relateToOperator("clockARB",     EOpReadClockSubgroupKHR);
+    symbolTable.relateToOperator("clock2x32ARB", EOpReadClockSubgroupKHR);
+
+    symbolTable.relateToOperator("clockRealtimeEXT",     EOpReadClockDeviceKHR);
+    symbolTable.relateToOperator("clockRealtime2x32EXT", EOpReadClockDeviceKHR);
 
     if (profile != EEsProfile && version >= 460) {
         symbolTable.relateToOperator("atomicCounterAdd",      EOpAtomicCounterAdd);

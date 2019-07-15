@@ -170,13 +170,13 @@ typedef enum bgfx_attrib_type
  */
 typedef enum bgfx_texture_format
 {
-    BGFX_TEXTURE_FORMAT_BC1,                  /** ( 0) DXT1                           */
-    BGFX_TEXTURE_FORMAT_BC2,                  /** ( 1) DXT3                           */
-    BGFX_TEXTURE_FORMAT_BC3,                  /** ( 2) DXT5                           */
-    BGFX_TEXTURE_FORMAT_BC4,                  /** ( 3) LATC1/ATI1                     */
-    BGFX_TEXTURE_FORMAT_BC5,                  /** ( 4) LATC2/ATI2                     */
-    BGFX_TEXTURE_FORMAT_BC6H,                 /** ( 5) BC6H                           */
-    BGFX_TEXTURE_FORMAT_BC7,                  /** ( 6) BC7                            */
+    BGFX_TEXTURE_FORMAT_BC1,                  /** ( 0) DXT1 R5G6B5A1                  */
+    BGFX_TEXTURE_FORMAT_BC2,                  /** ( 1) DXT3 R5G6B5A4                  */
+    BGFX_TEXTURE_FORMAT_BC3,                  /** ( 2) DXT5 R5G6B5A8                  */
+    BGFX_TEXTURE_FORMAT_BC4,                  /** ( 3) LATC1/ATI1 R8                  */
+    BGFX_TEXTURE_FORMAT_BC5,                  /** ( 4) LATC2/ATI2 RG8                 */
+    BGFX_TEXTURE_FORMAT_BC6H,                 /** ( 5) BC6H RGB16F                    */
+    BGFX_TEXTURE_FORMAT_BC7,                  /** ( 6) BC7 RGB 4-7 bits per color channel, 0-8 bits alpha */
     BGFX_TEXTURE_FORMAT_ETC1,                 /** ( 7) ETC1 RGB8                      */
     BGFX_TEXTURE_FORMAT_ETC2,                 /** ( 8) ETC2 RGB8                      */
     BGFX_TEXTURE_FORMAT_ETC2A,                /** ( 9) ETC2 RGBA8                     */
@@ -2769,17 +2769,6 @@ BGFX_C_API uintptr_t bgfx_override_internal_texture_ptr(bgfx_texture_handle_t _h
  * internal texture will released.
  * @attention It's expected you understand some bgfx internals before you
  *   use this call.
- * @param[in] _handle Texture handle.
- * @param[in] _width Width.
- * @param[in] _height Height.
- * @param[in] _numMips Number of mip-maps.
- * @param[in] _format Texture format. See: `TextureFormat::Enum`.
- * @param[in] _flags Default texture sampling mode is linear, and wrap mode
- *   is repeat.
- *   - `BGFX_TEXTURE_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
- *     mode.
- *   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
- *     sampling.
  * @returns Native API pointer to texture. If result is 0, texture is not created yet from the
  *   main thread.
  * @warning Must be called only on render thread.

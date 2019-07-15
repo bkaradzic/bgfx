@@ -1672,6 +1672,58 @@ OpFunctionEnd
   SinglePassRunAndMatch<MergeReturnPass>(spirv, true);
 }
 
+TEST_F(MergeReturnPassTest, SingleReturnInLoop) {
+  const std::string predefs =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource ESSL 310
+%void = OpTypeVoid
+%7 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%9 = OpTypeFunction %float
+%float_1 = OpConstant %float 1
+)";
+
+  const std::string caller =
+      R"(
+; CHECK: OpFunction
+; CHECK: OpFunctionEnd
+%main = OpFunction %void None %7
+%22 = OpLabel
+%30 = OpFunctionCall %float %f_
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string callee =
+      R"(
+; CHECK: OpFunction
+; CHECK: OpLoopMerge [[merge:%\w+]]
+; CHECK: [[merge]] = OpLabel
+; CHECK: OpReturnValue
+; CHECK-NEXT: OpFunctionEnd
+%f_ = OpFunction %float None %9
+%33 = OpLabel
+OpBranch %34
+%34 = OpLabel
+OpLoopMerge %35 %36 None
+OpBranch %37
+%37 = OpLabel
+OpReturnValue %float_1
+%36 = OpLabel
+OpBranch %34
+%35 = OpLabel
+OpUnreachable
+OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndMatch<MergeReturnPass>(predefs + caller + callee, true);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

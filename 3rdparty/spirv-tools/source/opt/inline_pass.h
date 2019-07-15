@@ -122,7 +122,7 @@ class InlinePass : public Pass {
                      UptrVectorIterator<BasicBlock> call_block_itr);
 
   // Return true if |inst| is a function call that can be inlined.
-  bool IsInlinableFunctionCall(const Instruction* inst);
+  bool IsInlinableFunctionCall(Instruction* inst);
 
   // Return true if |func| does not have a return that is
   // nested in a structured if, switch or loop.
@@ -158,6 +158,9 @@ class InlinePass : public Pass {
 
   // Set of ids of functions with no returns in loop
   std::set<uint32_t> no_return_in_loop_;
+
+  // Set of ids of functions with no returns in loop
+  std::unordered_set<uint32_t> funcs_with_opkill_;
 
   // Set of ids of inlinable functions
   std::set<uint32_t> inlinable_;

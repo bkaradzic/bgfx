@@ -100,7 +100,9 @@ class IRContext {
         constant_mgr_(nullptr),
         type_mgr_(nullptr),
         id_to_name_(nullptr),
-        max_id_bound_(kDefaultMaxIdBound) {
+        max_id_bound_(kDefaultMaxIdBound),
+        preserve_bindings_(false),
+        preserve_spec_constants_(false) {
     SetContextMessageConsumer(syntax_context_, consumer_);
     module_->SetContext(this);
   }
@@ -115,7 +117,9 @@ class IRContext {
         valid_analyses_(kAnalysisNone),
         type_mgr_(nullptr),
         id_to_name_(nullptr),
-        max_id_bound_(kDefaultMaxIdBound) {
+        max_id_bound_(kDefaultMaxIdBound),
+        preserve_bindings_(false),
+        preserve_spec_constants_(false) {
     SetContextMessageConsumer(syntax_context_, consumer_);
     module_->SetContext(this);
     InitializeCombinators();
@@ -491,6 +495,16 @@ class IRContext {
   uint32_t max_id_bound() const { return max_id_bound_; }
   void set_max_id_bound(uint32_t new_bound) { max_id_bound_ = new_bound; }
 
+  bool preserve_bindings() const { return preserve_bindings_; }
+  void set_preserve_bindings(bool should_preserve_bindings) {
+    preserve_bindings_ = should_preserve_bindings;
+  }
+
+  bool preserve_spec_constants() const { return preserve_spec_constants_; }
+  void set_preserve_spec_constants(bool should_preserve_spec_constants) {
+    preserve_spec_constants_ = should_preserve_spec_constants;
+  }
+
   // Return id of input variable only decorated with |builtin|, if in module.
   // Create variable and return its id otherwise. If builtin not currently
   // supported, return 0.
@@ -750,6 +764,13 @@ class IRContext {
 
   // The maximum legal value for the id bound.
   uint32_t max_id_bound_;
+
+  // Whether all bindings within |module_| should be preserved.
+  bool preserve_bindings_;
+
+  // Whether all specialization constants within |module_|
+  // should be preserved.
+  bool preserve_spec_constants_;
 };
 
 inline IRContext::Analysis operator|(IRContext::Analysis lhs,

@@ -3,7 +3,7 @@
 
 using namespace metal;
 
-typedef float3x2 packed_float2x3;
+typedef packed_float2 packed_rm_float2x3[3];
 
 struct S0
 {
@@ -58,7 +58,7 @@ struct SSBO1
     float3x2 m3;
     float2x2 m4;
     float2x2 m5[9];
-    packed_float2x3 m6[4][2];
+    packed_rm_float2x3 m6[4][2];
     char _m10_pad[8];
     float3x2 m7;
     char _m11_pad[8];
@@ -142,6 +142,6 @@ kernel void main0(device SSBO1& ssbo_430 [[buffer(0)]], device SSBO0& ssbo_140 [
     ssbo_430.content.m3s[5].c = _60.m3s[5].c;
     ssbo_430.content.m3s[6].c = _60.m3s[6].c;
     ssbo_430.content.m3s[7].c = _60.m3s[7].c;
-    ssbo_430.content.m1.a = ssbo_430.content.m3.a * ssbo_430.m6[1][1];
+    ssbo_430.content.m1.a = ssbo_430.content.m3.a * float3x2(float2(ssbo_430.m6[1][1][0]), float2(ssbo_430.m6[1][1][1]), float2(ssbo_430.m6[1][1][2]));
 }
 

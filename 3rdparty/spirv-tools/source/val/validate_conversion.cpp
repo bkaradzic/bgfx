@@ -58,11 +58,6 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                  << spvOpcodeString(opcode);
       }
 
-      if (!_.features().use_int8_type && (8 == _.GetBitWidth(result_type)))
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Invalid cast to 8-bit integer from a floating-point: "
-               << spvOpcodeString(opcode);
-
       break;
     }
 
@@ -92,11 +87,6 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                  << "Expected input to have the same dimension as Result Type: "
                  << spvOpcodeString(opcode);
       }
-
-      if (!_.features().use_int8_type && (8 == _.GetBitWidth(result_type)))
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Invalid cast to 8-bit integer from a floating-point: "
-               << spvOpcodeString(opcode);
 
       break;
     }
@@ -129,11 +119,6 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
                  << "Expected input to have the same dimension as Result Type: "
                  << spvOpcodeString(opcode);
       }
-
-      if (!_.features().use_int8_type && (8 == _.GetBitWidth(input_type)))
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Invalid cast to floating-point from an 8-bit integer: "
-               << spvOpcodeString(opcode);
 
       break;
     }
@@ -507,6 +492,25 @@ spv_result_t ConversionPass(ValidationState_t& _, const Instruction* inst) {
 
     default:
       break;
+  }
+
+  if (_.HasCapability(SpvCapabilityShader)) {
+    switch (inst->opcode()) {
+      case SpvOpConvertFToU:
+      case SpvOpConvertFToS:
+      case SpvOpConvertSToF:
+      case SpvOpConvertUToF:
+      case SpvOpBitcast:
+        if (_.ContainsLimitedUseIntOrFloatType(inst->type_id()) ||
+            _.ContainsLimitedUseIntOrFloatType(_.GetOperandTypeId(inst, 2u))) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << "8- or 16-bit types can only be used with width-only "
+                    "conversions";
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   return SPV_SUCCESS;

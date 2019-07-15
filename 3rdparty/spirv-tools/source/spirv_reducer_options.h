@@ -20,14 +20,10 @@
 #include <string>
 #include <utility>
 
-// The default maximum number of steps for the reducer to run before giving up.
-const uint32_t kDefaultStepLimit = 250;
-
 // Manages command line options passed to the SPIR-V Reducer. New struct
 // members may be added for any new option.
 struct spv_reducer_options_t {
-  spv_reducer_options_t()
-      : step_limit(kDefaultStepLimit), fail_on_validation_error(false) {}
+  spv_reducer_options_t();
 
   // See spvReducerOptionsSetStepLimit.
   uint32_t step_limit;

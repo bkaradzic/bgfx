@@ -476,6 +476,7 @@ struct SPIRExtension : IVariant
 	{
 		Unsupported,
 		GLSL,
+		SPV_debug_info,
 		SPV_AMD_shader_ballot,
 		SPV_AMD_shader_explicit_vertex_parameter,
 		SPV_AMD_shader_trinary_minmax,

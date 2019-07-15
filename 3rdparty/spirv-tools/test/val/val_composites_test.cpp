@@ -17,6 +17,7 @@
 
 #include "gmock/gmock.h"
 #include "test/unit_spirv.h"
+#include "test/val/val_code_generator.h"
 #include "test/val/val_fixtures.h"
 
 namespace spvtools {
@@ -25,6 +26,7 @@ namespace {
 
 using ::testing::HasSubstr;
 using ::testing::Not;
+using ::testing::Values;
 
 using ValidateComposites = spvtest::ValidateBase<bool>;
 
@@ -1769,6 +1771,211 @@ OpFunctionEnd
 
   CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
+}
+
+using ValidateSmallComposites = spvtest::ValidateBase<std::string>;
+
+CodeGenerator GetSmallCompositesCodeGenerator() {
+  CodeGenerator generator;
+  generator.capabilities_ = R"(
+OpCapability Shader
+OpCapability Linkage
+OpCapability UniformAndStorageBuffer16BitAccess
+OpCapability UniformAndStorageBuffer8BitAccess
+)";
+  generator.extensions_ = R"(
+OpExtension "SPV_KHR_16bit_storage"
+OpExtension "SPV_KHR_8bit_storage"
+)";
+  generator.memory_model_ = "OpMemoryModel Logical GLSL450\n";
+  generator.before_types_ = R"(
+OpDecorate %char_block Block
+OpMemberDecorate %char_block 0 Offset 0
+OpDecorate %short_block Block
+OpMemberDecorate %short_block 0 Offset 0
+OpDecorate %half_block Block
+OpMemberDecorate %half_block 0 Offset 0
+)";
+  generator.types_ = R"(
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%char = OpTypeInt 8 0
+%char2 = OpTypeVector %char 2
+%short = OpTypeInt 16 0
+%short2 = OpTypeVector %short 2
+%half = OpTypeFloat 16
+%half2 = OpTypeVector %half 2
+%char_block = OpTypeStruct %char2
+%short_block = OpTypeStruct %short2
+%half_block = OpTypeStruct %half2
+%ptr_ssbo_char_block = OpTypePointer StorageBuffer %char_block
+%ptr_ssbo_char2 = OpTypePointer StorageBuffer %char2
+%ptr_ssbo_char = OpTypePointer StorageBuffer %char
+%ptr_ssbo_short_block = OpTypePointer StorageBuffer %short_block
+%ptr_ssbo_short2 = OpTypePointer StorageBuffer %short2
+%ptr_ssbo_short = OpTypePointer StorageBuffer %short
+%ptr_ssbo_half_block = OpTypePointer StorageBuffer %half_block
+%ptr_ssbo_half2 = OpTypePointer StorageBuffer %half2
+%ptr_ssbo_half = OpTypePointer StorageBuffer %half
+%void_fn = OpTypeFunction %void
+%char_var = OpVariable %ptr_ssbo_char_block StorageBuffer
+%short_var = OpVariable %ptr_ssbo_short_block StorageBuffer
+%half_var = OpVariable %ptr_ssbo_half_block StorageBuffer
+)";
+  generator.after_types_ = R"(
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%char2_gep = OpAccessChain %ptr_ssbo_char2 %char_var %int_0
+%ld_char2 = OpLoad %char2 %char2_gep
+%char_gep = OpAccessChain %ptr_ssbo_char %char_var %int_0 %int_0
+%ld_char = OpLoad %char %char_gep
+%short2_gep = OpAccessChain %ptr_ssbo_short2 %short_var %int_0
+%ld_short2 = OpLoad %short2 %short2_gep
+%short_gep = OpAccessChain %ptr_ssbo_short %short_var %int_0 %int_0
+%ld_short = OpLoad %short %short_gep
+%half2_gep = OpAccessChain %ptr_ssbo_half2 %half_var %int_0
+%ld_half2 = OpLoad %half2 %half2_gep
+%half_gep = OpAccessChain %ptr_ssbo_half %half_var %int_0 %int_0
+%ld_half = OpLoad %half %half_gep
+)";
+  generator.add_at_the_end_ = R"(
+OpReturn
+OpFunctionEnd
+)";
+  return generator;
+}
+
+TEST_P(ValidateSmallComposites, VectorExtractDynamic) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst =
+      "%inst = OpVectorExtractDynamic %" + type + " %ld_" + type + "2 %int_0\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Cannot extract from a vector of 8- or 16-bit types"));
+}
+
+TEST_P(ValidateSmallComposites, VectorInsertDynamic) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst = "%inst = OpVectorInsertDynamic %" + type + "2 %ld_" +
+                     type + "2 %ld_" + type + " %int_0\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Cannot insert into a vector of 8- or 16-bit types"));
+}
+
+TEST_P(ValidateSmallComposites, VectorShuffle) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst = "%inst = OpVectorShuffle %" + type + "2 %ld_" + type +
+                     "2 %ld_" + type + "2 0 0\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Cannot shuffle a vector of 8- or 16-bit types"));
+}
+
+TEST_P(ValidateSmallComposites, CompositeConstruct) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst = "%inst = OpCompositeConstruct %" + type + "2 %ld_" + type +
+                     " %ld_" + type + "\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Cannot create a composite containing 8- or 16-bit types"));
+}
+
+TEST_P(ValidateSmallComposites, CompositeExtract) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst =
+      "%inst = OpCompositeExtract %" + type + " %ld_" + type + "2 0\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Cannot extract from a composite of 8- or 16-bit types"));
+}
+
+TEST_P(ValidateSmallComposites, CompositeInsert) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst = "%inst = OpCompositeInsert %" + type + "2 %ld_" + type +
+                     " %ld_" + type + "2 0\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Cannot insert into a composite of 8- or 16-bit types"));
+}
+
+TEST_P(ValidateSmallComposites, CopyObject) {
+  std::string type = GetParam();
+  CodeGenerator generator = GetSmallCompositesCodeGenerator();
+  std::string inst = "%inst = OpCopyObject %" + type + "2 %ld_" + type + "2\n";
+  generator.after_types_ += inst;
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+}
+
+INSTANTIATE_TEST_SUITE_P(SmallCompositeInstructions, ValidateSmallComposites,
+                         Values("char", "short", "half"));
+
+TEST_F(ValidateComposites, HalfMatrixCannotTranspose) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Linkage
+OpCapability UniformAndStorageBuffer16BitAccess
+OpExtension "SPV_KHR_16bit_storage"
+OpMemoryModel Logical GLSL450
+OpDecorate %block Block
+OpMemberDecorate %block 0 Offset 0
+OpMemberDecorate %block 0 RowMajor
+OpMemberDecorate %block 0 MatrixStride 8
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%float = OpTypeFloat 16
+%float2 = OpTypeVector %float 2
+%mat2x2 = OpTypeMatrix %float2 2
+%block = OpTypeStruct %mat2x2
+%ptr_ssbo_block = OpTypePointer StorageBuffer %block
+%ptr_ssbo_mat2x2 = OpTypePointer StorageBuffer %mat2x2
+%var = OpVariable %ptr_ssbo_block StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep = OpAccessChain %ptr_ssbo_mat2x2 %var %int_0
+%ld = OpLoad %mat2x2 %gep
+%inst = OpTranspose %mat2x2 %ld
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Cannot transpose matrices of 16-bit floats"));
 }
 
 }  // namespace

@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include "source/opcode.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -430,6 +429,16 @@ spv_result_t ConstantPass(ValidationState_t& _, const Instruction* inst) {
       break;
     default:
       break;
+  }
+
+  // Generally disallow creating 8- or 16-bit constants unless the full
+  // capabilities are present.
+  if (spvOpcodeIsConstant(inst->opcode()) &&
+      _.HasCapability(SpvCapabilityShader) &&
+      !_.IsPointerType(inst->type_id()) &&
+      _.ContainsLimitedUseIntOrFloatType(inst->type_id())) {
+    return _.diag(SPV_ERROR_INVALID_ID, inst)
+           << "Cannot form constants of 8- or 16-bit types";
   }
 
   return SPV_SUCCESS;

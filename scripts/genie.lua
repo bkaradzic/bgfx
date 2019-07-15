@@ -66,6 +66,11 @@ newaction {
 		generate("temp.bgfx.idl.inl", "../src/bgfx.idl.inl",        "\t")
 		generate("temp.defines.h",    "../include/bgfx/defines.h",  "\t")
 
+		do
+			local csgen = require "bindings-cs"
+			csgen.write(csgen.gen(), "../bindings/cs/bgfx.cs")
+		end
+
 		os.exit()
 	end
 }

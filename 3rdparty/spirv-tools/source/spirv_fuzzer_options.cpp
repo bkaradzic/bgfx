@@ -14,7 +14,15 @@
 
 #include "source/spirv_fuzzer_options.h"
 
-spv_fuzzer_options_t::spv_fuzzer_options_t() = default;
+namespace {
+// The default maximum number of steps for the reducer to run before giving up.
+const uint32_t kDefaultStepLimit = 250;
+}  // namespace
+
+spv_fuzzer_options_t::spv_fuzzer_options_t()
+    : has_random_seed(false),
+      random_seed(0),
+      shrinker_step_limit(kDefaultStepLimit) {}
 
 SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate() {
   return new spv_fuzzer_options_t();
@@ -28,4 +36,9 @@ SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(
     spv_fuzzer_options options, uint32_t seed) {
   options->has_random_seed = true;
   options->random_seed = seed;
+}
+
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetShrinkerStepLimit(
+    spv_fuzzer_options options, uint32_t shrinker_step_limit) {
+  options->shrinker_step_limit = shrinker_step_limit;
 }

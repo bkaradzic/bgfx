@@ -114,12 +114,6 @@ derivative of the original Torque Engine.
 target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
 alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
-## Lumix Engine
-
-https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
-The main goal is performance and Unity-like usability.  
-![LumixEngine screenshot](https://cloud.githubusercontent.com/assets/153526/12904252/3fcf130e-cece-11e5-878b-c9fe24c1b11a.png)
-
 ## Kepler Orbits
 
 https://github.com/podgorskiy/KeplerOrbits KeplerOrbits - Tool that calculates
@@ -220,16 +214,6 @@ width="640" height="480" border="0" /></a>
 https://github.com/s1ddok/Fiber2D#fiber2d - Fiber2D - Cross-platform 2D Game
 Engine in pure Swift  
 ![Fiber2D Demo Gif](http://imgur.com/CP6d9kT.gif)
-
-## On the Hunt / Lumix Engine
-
-http://www.indiedb.com/games/on-the-hunt - On the Hunt is an open world hunting
-game in development. It's a combination of FPS and stealth.
-
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=cAsqLbqSDBg" 
-target="_blank"><img src="http://img.youtube.com/vi/cAsqLbqSDBg/0.jpg" 
-alt="Lumix Engine - new features v0.29 & v0.30"
-width="640" height="480" border="0" /></a>
 
 ## vg-renderer
 

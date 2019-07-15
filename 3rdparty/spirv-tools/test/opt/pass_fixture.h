@@ -27,6 +27,7 @@
 #include "source/opt/build_module.h"
 #include "source/opt/pass_manager.h"
 #include "source/opt/passes.h"
+#include "source/spirv_optimizer_options.h"
 #include "source/spirv_validator_options.h"
 #include "source/util/make_unique.h"
 #include "spirv-tools/libspirv.hpp"
@@ -66,6 +67,10 @@ class PassTest : public TestT {
     if (!context()) {
       return std::make_tuple(std::vector<uint32_t>(), Pass::Status::Failure);
     }
+
+    context()->set_preserve_bindings(OptimizerOptions()->preserve_bindings_);
+    context()->set_preserve_spec_constants(
+        OptimizerOptions()->preserve_spec_constants_);
 
     const auto status = pass->Run(context());
 
@@ -206,6 +211,10 @@ class PassTest : public TestT {
         std::move(BuildModule(env_, nullptr, original, assemble_options_));
     ASSERT_NE(nullptr, context());
 
+    context()->set_preserve_bindings(OptimizerOptions()->preserve_bindings_);
+    context()->set_preserve_spec_constants(
+        OptimizerOptions()->preserve_spec_constants_);
+
     manager_->Run(context());
 
     std::vector<uint32_t> binary;
@@ -232,6 +241,8 @@ class PassTest : public TestT {
     consumer_ = msg_consumer;
   }
 
+  spv_optimizer_options OptimizerOptions() { return &optimizer_options_; }
+
   spv_validator_options ValidatorOptions() { return &validator_options_; }
 
   void SetTargetEnv(spv_target_env env) { env_ = env; }
@@ -242,6 +253,7 @@ class PassTest : public TestT {
   std::unique_ptr<PassManager> manager_;  // The pass manager.
   uint32_t assemble_options_;
   uint32_t disassemble_options_;
+  spv_optimizer_options_t optimizer_options_;
   spv_validator_options_t validator_options_;
   spv_target_env env_;
 };

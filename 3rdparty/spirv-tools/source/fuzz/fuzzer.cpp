@@ -55,14 +55,14 @@ void Fuzzer::SetMessageConsumer(MessageConsumer c) {
 Fuzzer::FuzzerResultStatus Fuzzer::Run(
     const std::vector<uint32_t>& binary_in,
     const protobufs::FactSequence& initial_facts,
-    std::vector<uint32_t>* binary_out,
-    protobufs::TransformationSequence* transformation_sequence_out,
-    spv_const_fuzzer_options options) const {
+    spv_const_fuzzer_options options, std::vector<uint32_t>* binary_out,
+    protobufs::TransformationSequence* transformation_sequence_out) const {
   // Check compatibility between the library version being linked with and the
   // header files being used.
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   spvtools::SpirvTools tools(impl_->target_env);
+  tools.SetMessageConsumer(impl_->consumer);
   if (!tools.IsValid()) {
     impl_->consumer(SPV_MSG_ERROR, nullptr, {},
                     "Failed to create SPIRV-Tools interface; stopping.");

@@ -38,7 +38,7 @@ class BlindlyRemoveGlobalValuesReductionOpportunityFinder
   ~BlindlyRemoveGlobalValuesReductionOpportunityFinder() override = default;
 
   // The name of this pass.
-  std::string GetName() const final { return "BlindlyRemoveGlobalValuesPass"; };
+  std::string GetName() const final { return "BlindlyRemoveGlobalValuesPass"; }
 
   // Finds opportunities to remove all global values.  Assuming they are all
   // referenced (directly or indirectly) from elsewhere in the module, each such
@@ -99,7 +99,7 @@ class OpVariableDuplicatorReductionOpportunityFinder
 
   std::string GetName() const final {
     return "LocalVariableAdderReductionOpportunityFinder";
-  };
+  }
 
   std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
       IRContext* context) const final {

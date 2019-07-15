@@ -7623,6 +7623,22 @@ spv::Id TGlslangToSpvTraverser::createNoArgOperation(glslang::TOperator op, spv:
         return id;
     }
 
+    case glslang::EOpReadClockSubgroupKHR: {
+        std::vector<spv::Id> args;
+        args.push_back(builder.makeUintConstant(spv::ScopeSubgroup));
+        builder.addExtension(spv::E_SPV_KHR_shader_clock);
+        builder.addCapability(spv::CapabilityShaderClockKHR);
+        return builder.createOp(spv::OpReadClockKHR, typeId, args);
+    }
+
+    case glslang::EOpReadClockDeviceKHR: {
+        std::vector<spv::Id> args;
+        args.push_back(builder.makeUintConstant(spv::ScopeDevice));
+        builder.addExtension(spv::E_SPV_KHR_shader_clock);
+        builder.addCapability(spv::CapabilityShaderClockKHR);
+        return builder.createOp(spv::OpReadClockKHR, typeId, args);
+    }
+
     default:
         logger->missingFunctionality("unknown operation with no arguments");
         return 0;

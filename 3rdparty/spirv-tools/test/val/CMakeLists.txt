@@ -61,6 +61,7 @@ add_spvtools_unittest(TARGET val_fghijklmnop
        val_literals_test.cpp
        val_logicals_test.cpp
        val_memory_test.cpp
+       val_misc_test.cpp
        val_modes_test.cpp
        val_non_uniform_test.cpp
        val_opencl_test.cpp
@@ -72,6 +73,7 @@ add_spvtools_unittest(TARGET val_fghijklmnop
 
 add_spvtools_unittest(TARGET val_stuvw
   SRCS
+       val_small_type_uses_test.cpp
        val_ssa_test.cpp
        val_state_test.cpp
        val_storage_test.cpp
