@@ -576,13 +576,9 @@ local function doxygen_funcret(r, func, prefix)
 		return
 	end
 	r[#r+1] = prefix
-	if type(func.ret.comment) == "string" then
-		r[#r+1] = string.format("%s @returns %s", prefix, func.ret.comment)
-	else
-		r[#r+1] = string.format("%s @returns %s", prefix, func.ret.comment[1])
-		for i = 2,#func.ret.comment do
-			r[#r+1] = string.format("%s  %s", prefix, func.ret.comment[i])
-		end
+	r[#r+1] = string.format("%s @returns %s", prefix, func.ret.comment[1])
+	for i = 2,#func.ret.comment do
+		r[#r+1] = string.format("%s  %s", prefix, func.ret.comment[i])
 	end
 	return r
 end
@@ -603,13 +599,9 @@ local function doxygen_func(r, func, prefix)
 		end
 		local comment = string.format("%s @param[%s] %s", prefix, inout, arg.name)
 		if arg.comment then
-			if type(arg.comment) == "string" then
-				r[#r+1] = comment .. " " .. arg.comment
-			else
-				r[#r+1] = comment .. " " .. arg.comment[1]
-				for i = 2,#arg.comment do
-					r[#r+1] = string.format("%s  %s", prefix, arg.comment[i])
-				end
+			r[#r+1] = comment .. " " .. arg.comment[1]
+			for i = 2,#arg.comment do
+				r[#r+1] = string.format("%s  %s", prefix, arg.comment[i])
 			end
 		else
 			r[#r+1] = comment
@@ -681,8 +673,9 @@ function codegen.gen_enum_define(enum)
 		if not item.comment then
 			text = item.name .. ","
 		else
+			local comment = table.concat(item.comment, " ")
 			text = string.format("%s,%s //!< %s",
-				item.name, namealign(item.name), item.comment)
+				item.name, namealign(item.name), comment)
 		end
 		items[#items+1] = text
 	end
@@ -713,7 +706,10 @@ function codegen.gen_enum_cdefine(enum)
 	local uname = cname:upper()
 	local items = {}
 	for index , item in ipairs(enum.enum) do
-		local comment = item.comment or ""
+		local comment = ""
+		if item.comment then
+			comment = table.concat(item.comment, " ")
+		end
 		local ename = item.cname
 		if not ename then
 			if enum.underscore then
@@ -765,12 +761,8 @@ function codegen.gen_flag_cdefine(flag)
 		-- combine flags
 		if #item > 0 then
 			if item.comment then
-				if type(item.comment) == "table" then
-					for _, c in ipairs(item.comment) do
-						s[#s+1] = "/// " .. c
-					end
-				else
-					s[#s+1] = "/// " .. item.comment
+				for _, c in ipairs(item.comment) do
+					s[#s+1] = "/// " .. c
 				end
 			end
 			local sets = { "" }
@@ -781,7 +773,13 @@ function codegen.gen_flag_cdefine(flag)
 		else
 			local comment = ""
 			if item.comment then
-				comment = " //!< " .. item.comment
+				if #item.comment > 1 then
+					for _, c in ipairs(item.comment) do
+						s[#s+1] = "/// " .. c
+					end
+				else
+					comment = " //!< " .. item.comment[1]
+				end
 			end
 			value = string.format(flag.format, value)
 			local code = string.format("#define %s %sUINT%d_C(0x%s)%s",
@@ -852,7 +850,7 @@ local function text_with_comments(items, item, cstyle, is_classmember)
 	end
 	local text = string.format("%s%s %s;", typename, namealign(typename), name)
 	if item.comment then
-		if type(item.comment) == "table" then
+		if #item.comment > 1 then
 			table.insert(items, "")
 			if cstyle then
 				table.insert(items, "/**")
@@ -868,7 +866,7 @@ local function text_with_comments(items, item, cstyle, is_classmember)
 		else
 			text = string.format(
 				cstyle and "%s %s/** %s%s */" or "%s %s//!< %s",
-				text, namealign(text, 40),  item.comment, namealign(item.comment, 40))
+				text, namealign(text, 40),  item.comment[1], namealign(item.comment[1], 40))
 		end
 	end
 	items[#items+1] = text

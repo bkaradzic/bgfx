@@ -538,7 +538,8 @@ public static partial class bgfx
 		Wireframe              = 0x00000001,
 	
 		/// <summary>
-		/// Enable infinitely fast hardware test. No draw calls will be submitted to driver. It’s useful when profiling to quickly assess bottleneck between CPU and GPU.
+		/// Enable infinitely fast hardware test. No draw calls will be submitted to driver.
+		/// It's useful when profiling to quickly assess bottleneck between CPU and GPU.
 		/// </summary>
 		Ifh                    = 0x00000002,
 	
@@ -917,7 +918,8 @@ public static partial class bgfx
 		FlushAfterRender       = 0x00002000,
 	
 		/// <summary>
-		/// This flag  specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+		/// This flag specifies where flip occurs. Default behavior is that flip occurs
+		/// before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 		/// </summary>
 		FlipAfterRender        = 0x00004000,
 	

@@ -202,7 +202,8 @@ flag.Clear { bits = 16 }
 flag.Debug { bits = 32 }
 	.None                    --- No debug.
 	.Wireframe               --- Enable wireframe for all primitives.
-	.Ifh                     --- Enable infinitely fast hardware test. No draw calls will be submitted to driver. It’s useful when profiling to quickly assess bottleneck between CPU and GPU.
+	.Ifh                     --- Enable infinitely fast hardware test. No draw calls will be submitted to driver.
+	                         --- It's useful when profiling to quickly assess bottleneck between CPU and GPU.
 	.Stats                   --- Enable statistics display.
 	.Text                    --- Enable debug text display.
 	.Profiler                --- Enable profiler.
@@ -328,7 +329,8 @@ flag.Reset { bits = 32 }
 	.Maxanisotropy       (9)   --- Turn on/off max anisotropy.
 	.Capture             (10)  --- Begin screen capture.
 	.FlushAfterRender    (14)  --- Flush rendering after submitting to GPU.
-	.FlipAfterRender     (15)  --- This flag specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	.FlipAfterRender     (15)  --- This flag specifies where flip occurs. Default behavior is that flip occurs
+	                           --- before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	.SrgbBackbuffer      (16)  --- Enable sRGB backbuffer.
 	.Hdr10               (17)  --- Enable HDR10 rendering.
 	.Hidpi               (18)  --- Enable HiDPI rendering.

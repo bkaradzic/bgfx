@@ -169,12 +169,9 @@ local function FlagBlock(typ)
 			end
 
 			yield("\t/// <summary>")
-			if (type(flag.comment) == "table") then
-				comment = table.concat(flag.comment, "\n\t\t/// ")
-			else
-				comment = flag.comment
+			for _, comment in ipairs(flag.comment) do
+				yield("\t/// " .. comment)
 			end
-			yield("\t/// " .. comment)
 			yield("\t/// </summary>")
 		end
 
@@ -259,7 +256,9 @@ function converter.types(typ)
 				end
 
 				yield("\t/// <summary>")
-				yield("\t/// " .. enum.comment)
+				for _, comment in ipairs(enum.comment) do
+					yield("\t/// " .. comment)
+				end
 				yield("\t/// </summary>")
 			end
 
@@ -296,18 +295,11 @@ function converter.types(typ)
 					end
 				end
 				lookup[flagName] = value
-				if flag.comment ~= nil then
-					table.insert(flags, {
-						name = flagName,
-						value = value,
-						comment = flag.comment,
-					})
-				else
-					table.insert(flags, {
-						name = flagName,
-						value = value,
-					})
-				end
+				table.insert(flags, {
+					name = flagName,
+					value = value,
+					comment = flag.comment,
+				})
 			end
 
 			if typ.shift then
@@ -381,12 +373,7 @@ function converter.funcs(func)
 
 		for _, arg in ipairs(func.args) do
 			if arg.comment ~= nil then
-				local comment = ""
-				if (type(arg.comment) == "table") then
-					comment = table.concat(arg.comment, " ")
-				else
-					comment = arg.comment
-				end
+				local comment = table.concat(arg.comment, " ")
 
 				yield("/// <param name=\""
 					.. arg.name
@@ -428,6 +415,11 @@ function gen.write(codes, outputfile)
 	local out = assert(io.open(outputfile, "wb"))
 	out:write(codes)
 	out:close()
+end
+
+if (...) == nil then
+	-- run `lua bindings-cs.lua` in command line
+	print(gen.gen())
 end
 
 return gen
