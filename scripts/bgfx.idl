@@ -328,7 +328,7 @@ flag.Reset { bits = 32 }
 	.Maxanisotropy       (9)   --- Turn on/off max anisotropy.
 	.Capture             (10)  --- Begin screen capture.
 	.FlushAfterRender    (14)  --- Flush rendering after submitting to GPU.
-	.FlipAfterRender     (15)  --- This flag  specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+	.FlipAfterRender     (15)  --- This flag specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
 	.SrgbBackbuffer      (16)  --- Enable sRGB backbuffer.
 	.Hdr10               (17)  --- Enable HDR10 rendering.
 	.Hidpi               (18)  --- Enable HiDPI rendering.

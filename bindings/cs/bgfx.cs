@@ -19,65 +19,249 @@ public static partial class bgfx
 	[Flags]
 	public enum StateFlags : ulong
 	{
+		/// <summary>
+		/// Enable R write.
+		/// </summary>
 		WriteR                 = 0x0000000000000001,
+	
+		/// <summary>
+		/// Enable G write.
+		/// </summary>
 		WriteG                 = 0x0000000000000002,
+	
+		/// <summary>
+		/// Enable B write.
+		/// </summary>
 		WriteB                 = 0x0000000000000004,
+	
+		/// <summary>
+		/// Enable alpha write.
+		/// </summary>
 		WriteA                 = 0x0000000000000008,
+	
+		/// <summary>
+		/// Enable depth write.
+		/// </summary>
 		WriteZ                 = 0x0000004000000000,
+	
+		/// <summary>
+		/// Enable RGB write.
+		/// </summary>
 		WriteRgb               = 0x0000000000000007,
+	
+		/// <summary>
+		/// Write all channels mask.
+		/// </summary>
 		WriteMask              = 0x000000400000000f,
+	
+		/// <summary>
+		/// Enable depth test, less.
+		/// </summary>
 		DepthTestLess          = 0x0000000000000010,
+	
+		/// <summary>
+		/// Enable depth test, less or equal.
+		/// </summary>
 		DepthTestLequal        = 0x0000000000000020,
+	
+		/// <summary>
+		/// Enable depth test, equal.
+		/// </summary>
 		DepthTestEqual         = 0x0000000000000030,
+	
+		/// <summary>
+		/// Enable depth test, greater or equal.
+		/// </summary>
 		DepthTestGequal        = 0x0000000000000040,
+	
+		/// <summary>
+		/// Enable depth test, greater.
+		/// </summary>
 		DepthTestGreater       = 0x0000000000000050,
+	
+		/// <summary>
+		/// Enable depth test, not equal.
+		/// </summary>
 		DepthTestNotequal      = 0x0000000000000060,
+	
+		/// <summary>
+		/// Enable depth test, never.
+		/// </summary>
 		DepthTestNever         = 0x0000000000000070,
+	
+		/// <summary>
+		/// Enable depth test, always.
+		/// </summary>
 		DepthTestAlways        = 0x0000000000000080,
 		DepthTestShift         = 4,
 		DepthTestMask          = 0x00000000000000f0,
+	
+		/// <summary>
+		/// 0, 0, 0, 0
+		/// </summary>
 		BlendZero              = 0x0000000000001000,
+	
+		/// <summary>
+		/// 1, 1, 1, 1
+		/// </summary>
 		BlendOne               = 0x0000000000002000,
+	
+		/// <summary>
+		/// Rs, Gs, Bs, As
+		/// </summary>
 		BlendSrcColor          = 0x0000000000003000,
+	
+		/// <summary>
+		/// 1-Rs, 1-Gs, 1-Bs, 1-As
+		/// </summary>
 		BlendInvSrcColor       = 0x0000000000004000,
+	
+		/// <summary>
+		/// As, As, As, As
+		/// </summary>
 		BlendSrcAlpha          = 0x0000000000005000,
+	
+		/// <summary>
+		/// 1-As, 1-As, 1-As, 1-As
+		/// </summary>
 		BlendInvSrcAlpha       = 0x0000000000006000,
+	
+		/// <summary>
+		/// Ad, Ad, Ad, Ad
+		/// </summary>
 		BlendDstAlpha          = 0x0000000000007000,
+	
+		/// <summary>
+		/// 1-Ad, 1-Ad, 1-Ad ,1-Ad
+		/// </summary>
 		BlendInvDstAlpha       = 0x0000000000008000,
+	
+		/// <summary>
+		/// Rd, Gd, Bd, Ad
+		/// </summary>
 		BlendDstColor          = 0x0000000000009000,
+	
+		/// <summary>
+		/// 1-Rd, 1-Gd, 1-Bd, 1-Ad
+		/// </summary>
 		BlendInvDstColor       = 0x000000000000a000,
+	
+		/// <summary>
+		/// f, f, f, 1; f = min(As, 1-Ad)
+		/// </summary>
 		BlendSrcAlphaSat       = 0x000000000000b000,
+	
+		/// <summary>
+		/// Blend factor
+		/// </summary>
 		BlendFactor            = 0x000000000000c000,
+	
+		/// <summary>
+		/// 1-Blend factor
+		/// </summary>
 		BlendInvFactor         = 0x000000000000d000,
 		BlendShift             = 12,
 		BlendMask              = 0x000000000ffff000,
+	
+		/// <summary>
+		/// Blend add: src + dst.
+		/// </summary>
 		BlendEquationAdd       = 0x0000000000000000,
+	
+		/// <summary>
+		/// Blend subtract: src - dst.
+		/// </summary>
 		BlendEquationSub       = 0x0000000010000000,
+	
+		/// <summary>
+		/// Blend reverse subtract: dst - src.
+		/// </summary>
 		BlendEquationRevsub    = 0x0000000020000000,
+	
+		/// <summary>
+		/// Blend min: min(src, dst).
+		/// </summary>
 		BlendEquationMin       = 0x0000000030000000,
+	
+		/// <summary>
+		/// Blend max: max(src, dst).
+		/// </summary>
 		BlendEquationMax       = 0x0000000040000000,
 		BlendEquationShift     = 28,
 		BlendEquationMask      = 0x00000003f0000000,
+	
+		/// <summary>
+		/// Cull clockwise triangles.
+		/// </summary>
 		CullCw                 = 0x0000001000000000,
+	
+		/// <summary>
+		/// Cull counter-clockwise triangles.
+		/// </summary>
 		CullCcw                = 0x0000002000000000,
 		CullShift              = 36,
 		CullMask               = 0x0000003000000000,
 		AlphaRefShift          = 40,
 		AlphaRefMask           = 0x0000ff0000000000,
+	
+		/// <summary>
+		/// Tristrip.
+		/// </summary>
 		PtTristrip             = 0x0001000000000000,
+	
+		/// <summary>
+		/// Lines.
+		/// </summary>
 		PtLines                = 0x0002000000000000,
+	
+		/// <summary>
+		/// Line strip.
+		/// </summary>
 		PtLinestrip            = 0x0003000000000000,
+	
+		/// <summary>
+		/// Points.
+		/// </summary>
 		PtPoints               = 0x0004000000000000,
 		PtShift                = 48,
 		PtMask                 = 0x0007000000000000,
 		PointSizeShift         = 52,
 		PointSizeMask          = 0x00f0000000000000,
+	
+		/// <summary>
+		/// Enable MSAA rasterization.
+		/// </summary>
 		Msaa                   = 0x0100000000000000,
+	
+		/// <summary>
+		/// Enable line AA rasterization.
+		/// </summary>
 		Lineaa                 = 0x0200000000000000,
+	
+		/// <summary>
+		/// Enable conservative rasterization.
+		/// </summary>
 		ConservativeRaster     = 0x0400000000000000,
+	
+		/// <summary>
+		/// No state.
+		/// </summary>
 		None                   = 0x0000000000000000,
+	
+		/// <summary>
+		/// Enable blend independent.
+		/// </summary>
 		BlendIndependent       = 0x0000000400000000,
+	
+		/// <summary>
+		/// Enable alpha to coverage.
+		/// </summary>
 		BlendAlphaToCoverage   = 0x0000000800000000,
+	
+		/// <summary>
+		/// Default state is write to RGB, alpha, and depth with depth test less enabled, with clockwise
+		/// culling and MSAA (when writing into MSAA frame buffer, otherwise this flag is ignored).
+		/// </summary>
 		Default                = 0x010000500000001f,
 		Mask                   = 0xffffffffffffffff,
 		ReservedShift          = 61,
@@ -94,43 +278,171 @@ public static partial class bgfx
 		None                   = 0x00000000,
 		Mask                   = 0xffffffff,
 		Default                = 0x00000000,
+	
+		/// <summary>
+		/// Enable stencil test, less.
+		/// </summary>
 		TestLess               = 0x00010000,
+	
+		/// <summary>
+		/// Enable stencil test, less or equal.
+		/// </summary>
 		TestLequal             = 0x00020000,
+	
+		/// <summary>
+		/// Enable stencil test, equal.
+		/// </summary>
 		TestEqual              = 0x00030000,
+	
+		/// <summary>
+		/// Enable stencil test, greater or equal.
+		/// </summary>
 		TestGequal             = 0x00040000,
+	
+		/// <summary>
+		/// Enable stencil test, greater.
+		/// </summary>
 		TestGreater            = 0x00050000,
+	
+		/// <summary>
+		/// Enable stencil test, not equal.
+		/// </summary>
 		TestNotequal           = 0x00060000,
+	
+		/// <summary>
+		/// Enable stencil test, never.
+		/// </summary>
 		TestNever              = 0x00070000,
+	
+		/// <summary>
+		/// Enable stencil test, always.
+		/// </summary>
 		TestAlways             = 0x00080000,
 		TestShift              = 16,
 		TestMask               = 0x000f0000,
+	
+		/// <summary>
+		/// Zero.
+		/// </summary>
 		OpFailSZero            = 0x00000000,
+	
+		/// <summary>
+		/// Keep.
+		/// </summary>
 		OpFailSKeep            = 0x00100000,
+	
+		/// <summary>
+		/// Replace.
+		/// </summary>
 		OpFailSReplace         = 0x00200000,
+	
+		/// <summary>
+		/// Increment and wrap.
+		/// </summary>
 		OpFailSIncr            = 0x00300000,
+	
+		/// <summary>
+		/// Increment and clamp.
+		/// </summary>
 		OpFailSIncrsat         = 0x00400000,
+	
+		/// <summary>
+		/// Decrement and wrap.
+		/// </summary>
 		OpFailSDecr            = 0x00500000,
+	
+		/// <summary>
+		/// Decrement and clamp.
+		/// </summary>
 		OpFailSDecrsat         = 0x00600000,
+	
+		/// <summary>
+		/// Invert.
+		/// </summary>
 		OpFailSInvert          = 0x00700000,
 		OpFailSShift           = 20,
 		OpFailSMask            = 0x00f00000,
+	
+		/// <summary>
+		/// Zero.
+		/// </summary>
 		OpFailZZero            = 0x00000000,
+	
+		/// <summary>
+		/// Keep.
+		/// </summary>
 		OpFailZKeep            = 0x01000000,
+	
+		/// <summary>
+		/// Replace.
+		/// </summary>
 		OpFailZReplace         = 0x02000000,
+	
+		/// <summary>
+		/// Increment and wrap.
+		/// </summary>
 		OpFailZIncr            = 0x03000000,
+	
+		/// <summary>
+		/// Increment and clamp.
+		/// </summary>
 		OpFailZIncrsat         = 0x04000000,
+	
+		/// <summary>
+		/// Decrement and wrap.
+		/// </summary>
 		OpFailZDecr            = 0x05000000,
+	
+		/// <summary>
+		/// Decrement and clamp.
+		/// </summary>
 		OpFailZDecrsat         = 0x06000000,
+	
+		/// <summary>
+		/// Invert.
+		/// </summary>
 		OpFailZInvert          = 0x07000000,
 		OpFailZShift           = 24,
 		OpFailZMask            = 0x0f000000,
+	
+		/// <summary>
+		/// Zero.
+		/// </summary>
 		OpPassZZero            = 0x00000000,
+	
+		/// <summary>
+		/// Keep.
+		/// </summary>
 		OpPassZKeep            = 0x10000000,
+	
+		/// <summary>
+		/// Replace.
+		/// </summary>
 		OpPassZReplace         = 0x20000000,
+	
+		/// <summary>
+		/// Increment and wrap.
+		/// </summary>
 		OpPassZIncr            = 0x30000000,
+	
+		/// <summary>
+		/// Increment and clamp.
+		/// </summary>
 		OpPassZIncrsat         = 0x40000000,
+	
+		/// <summary>
+		/// Decrement and wrap.
+		/// </summary>
 		OpPassZDecr            = 0x50000000,
+	
+		/// <summary>
+		/// Decrement and clamp.
+		/// </summary>
 		OpPassZDecrsat         = 0x60000000,
+	
+		/// <summary>
+		/// Invert.
+		/// </summary>
 		OpPassZInvert          = 0x70000000,
 		OpPassZShift           = 28,
 		OpPassZMask            = 0xf0000000,
@@ -249,27 +561,94 @@ public static partial class bgfx
 	[Flags]
 	public enum BufferFlags : ushort
 	{
+		/// <summary>
+		/// 1 8-bit value
+		/// </summary>
 		ComputeFormat8x1       = 0x0001,
+	
+		/// <summary>
+		/// 2 8-bit values
+		/// </summary>
 		ComputeFormat8x2       = 0x0002,
+	
+		/// <summary>
+		/// 4 8-bit values
+		/// </summary>
 		ComputeFormat8x4       = 0x0003,
+	
+		/// <summary>
+		/// 1 16-bit value
+		/// </summary>
 		ComputeFormat16x1      = 0x0004,
+	
+		/// <summary>
+		/// 2 16-bit values
+		/// </summary>
 		ComputeFormat16x2      = 0x0005,
+	
+		/// <summary>
+		/// 4 16-bit values
+		/// </summary>
 		ComputeFormat16x4      = 0x0006,
+	
+		/// <summary>
+		/// 1 32-bit value
+		/// </summary>
 		ComputeFormat32x1      = 0x0007,
+	
+		/// <summary>
+		/// 2 32-bit values
+		/// </summary>
 		ComputeFormat32x2      = 0x0008,
+	
+		/// <summary>
+		/// 4 32-bit values
+		/// </summary>
 		ComputeFormat32x4      = 0x0009,
 		ComputeFormatShift     = 0,
 		ComputeFormatMask      = 0x000f,
+	
+		/// <summary>
+		/// Type `int`.
+		/// </summary>
 		ComputeTypeInt         = 0x0010,
+	
+		/// <summary>
+		/// Type `uint`.
+		/// </summary>
 		ComputeTypeUint        = 0x0020,
+	
+		/// <summary>
+		/// Type `float`.
+		/// </summary>
 		ComputeTypeFloat       = 0x0030,
 		ComputeTypeShift       = 4,
 		ComputeTypeMask        = 0x0030,
 		None                   = 0x0000,
+	
+		/// <summary>
+		/// Buffer will be read by shader.
+		/// </summary>
 		ComputeRead            = 0x0100,
+	
+		/// <summary>
+		/// Buffer will be used for writing.
+		/// </summary>
 		ComputeWrite           = 0x0200,
+	
+		/// <summary>
+		/// Buffer will be used for storing draw indirect commands.
+		/// </summary>
 		DrawIndirect           = 0x0400,
+	
+		/// <summary>
+		/// Allow dynamic index/vertex buffer resize during update.
+		/// </summary>
 		AllowResize            = 0x0800,
+	
+		/// <summary>
+		/// Index buffer contains 32-bit indices.
+		/// </summary>
 		Index32                = 0x1000,
 		ComputeReadWrite       = 0x0300,
 	}
@@ -278,18 +657,62 @@ public static partial class bgfx
 	public enum TextureFlags : ulong
 	{
 		None                   = 0x0000000000000000,
+	
+		/// <summary>
+		/// Texture will be used for MSAA sampling.
+		/// </summary>
 		MsaaSample             = 0x0000000800000000,
+	
+		/// <summary>
+		/// Render target no MSAA.
+		/// </summary>
 		Rt                     = 0x0000001000000000,
+	
+		/// <summary>
+		/// Texture will be used for compute write.
+		/// </summary>
 		ComputeWrite           = 0x0000100000000000,
+	
+		/// <summary>
+		/// Sample texture as sRGB.
+		/// </summary>
 		Srgb                   = 0x0000200000000000,
+	
+		/// <summary>
+		/// Texture will be used as blit destination.
+		/// </summary>
 		BlitDst                = 0x0000400000000000,
+	
+		/// <summary>
+		/// Texture will be used for read back from GPU.
+		/// </summary>
 		ReadBack               = 0x0000800000000000,
+	
+		/// <summary>
+		/// Render target MSAAx2 mode.
+		/// </summary>
 		RtMsaaX2               = 0x0000002000000000,
+	
+		/// <summary>
+		/// Render target MSAAx4 mode.
+		/// </summary>
 		RtMsaaX4               = 0x0000003000000000,
+	
+		/// <summary>
+		/// Render target MSAAx8 mode.
+		/// </summary>
 		RtMsaaX8               = 0x0000004000000000,
+	
+		/// <summary>
+		/// Render target MSAAx16 mode.
+		/// </summary>
 		RtMsaaX16              = 0x0000005000000000,
 		RtMsaaShift            = 36,
 		RtMsaaMask             = 0x0000007000000000,
+	
+		/// <summary>
+		/// Render target will be used for writing
+		/// </summary>
 		RtWriteOnly            = 0x0000008000000000,
 		RtShift                = 36,
 		RtMask                 = 0x000000f000000000,
@@ -298,39 +721,126 @@ public static partial class bgfx
 	[Flags]
 	public enum SamplerFlags : uint
 	{
+		/// <summary>
+		/// Wrap U mode: Mirror
+		/// </summary>
 		UMirror                = 0x00000001,
+	
+		/// <summary>
+		/// Wrap U mode: Clamp
+		/// </summary>
 		UClamp                 = 0x00000002,
+	
+		/// <summary>
+		/// Wrap U mode: Border
+		/// </summary>
 		UBorder                = 0x00000003,
 		UShift                 = 0,
 		UMask                  = 0x00000003,
+	
+		/// <summary>
+		/// Wrap V mode: Mirror
+		/// </summary>
 		VMirror                = 0x00000004,
+	
+		/// <summary>
+		/// Wrap V mode: Clamp
+		/// </summary>
 		VClamp                 = 0x00000008,
+	
+		/// <summary>
+		/// Wrap V mode: Border
+		/// </summary>
 		VBorder                = 0x0000000c,
 		VShift                 = 2,
 		VMask                  = 0x0000000c,
+	
+		/// <summary>
+		/// Wrap W mode: Mirror
+		/// </summary>
 		WMirror                = 0x00000010,
+	
+		/// <summary>
+		/// Wrap W mode: Clamp
+		/// </summary>
 		WClamp                 = 0x00000020,
+	
+		/// <summary>
+		/// Wrap W mode: Border
+		/// </summary>
 		WBorder                = 0x00000030,
 		WShift                 = 4,
 		WMask                  = 0x00000030,
+	
+		/// <summary>
+		/// Min sampling mode: Point
+		/// </summary>
 		MinPoint               = 0x00000040,
+	
+		/// <summary>
+		/// Min sampling mode: Anisotropic
+		/// </summary>
 		MinAnisotropic         = 0x00000080,
 		MinShift               = 6,
 		MinMask                = 0x000000c0,
+	
+		/// <summary>
+		/// Mag sampling mode: Point
+		/// </summary>
 		MagPoint               = 0x00000100,
+	
+		/// <summary>
+		/// Mag sampling mode: Anisotropic
+		/// </summary>
 		MagAnisotropic         = 0x00000200,
 		MagShift               = 8,
 		MagMask                = 0x00000300,
+	
+		/// <summary>
+		/// Mip sampling mode: Point
+		/// </summary>
 		MipPoint               = 0x00000400,
 		MipShift               = 10,
 		MipMask                = 0x00000400,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: less.
+		/// </summary>
 		CompareLess            = 0x00010000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: less or equal.
+		/// </summary>
 		CompareLequal          = 0x00020000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: equal.
+		/// </summary>
 		CompareEqual           = 0x00030000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: greater or equal.
+		/// </summary>
 		CompareGequal          = 0x00040000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: greater.
+		/// </summary>
 		CompareGreater         = 0x00050000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: not equal.
+		/// </summary>
 		CompareNotequal        = 0x00060000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: never.
+		/// </summary>
 		CompareNever           = 0x00070000,
+	
+		/// <summary>
+		/// Compare when sampling depth texture: always.
+		/// </summary>
 		CompareAlways          = 0x00080000,
 		CompareShift           = 16,
 		CompareMask            = 0x000f0000,
@@ -339,6 +849,10 @@ public static partial class bgfx
 		ReservedShift          = 28,
 		ReservedMask           = 0xf0000000,
 		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Sample stencil instead of depth.
+		/// </summary>
 		SampleStencil          = 0x00100000,
 		Point                  = 0x00000540,
 		UvwMirror              = 0x00000015,
@@ -350,23 +864,86 @@ public static partial class bgfx
 	[Flags]
 	public enum ResetFlags : uint
 	{
+		/// <summary>
+		/// Enable 2x MSAA.
+		/// </summary>
 		MsaaX2                 = 0x00000010,
+	
+		/// <summary>
+		/// Enable 4x MSAA.
+		/// </summary>
 		MsaaX4                 = 0x00000020,
+	
+		/// <summary>
+		/// Enable 8x MSAA.
+		/// </summary>
 		MsaaX8                 = 0x00000030,
+	
+		/// <summary>
+		/// Enable 16x MSAA.
+		/// </summary>
 		MsaaX16                = 0x00000040,
 		MsaaShift              = 4,
 		MsaaMask               = 0x00000070,
+	
+		/// <summary>
+		/// No reset flags.
+		/// </summary>
 		None                   = 0x00000000,
+	
+		/// <summary>
+		/// Not supported yet.
+		/// </summary>
 		Fullscreen             = 0x00000001,
+	
+		/// <summary>
+		/// Enable V-Sync.
+		/// </summary>
 		Vsync                  = 0x00000080,
+	
+		/// <summary>
+		/// Turn on/off max anisotropy.
+		/// </summary>
 		Maxanisotropy          = 0x00000100,
+	
+		/// <summary>
+		/// Begin screen capture.
+		/// </summary>
 		Capture                = 0x00000200,
+	
+		/// <summary>
+		/// Flush rendering after submitting to GPU.
+		/// </summary>
 		FlushAfterRender       = 0x00002000,
+	
+		/// <summary>
+		/// This flag  specifies where flip occurs. Default behavior is that flip occurs before rendering new frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.
+		/// </summary>
 		FlipAfterRender        = 0x00004000,
+	
+		/// <summary>
+		/// Enable sRGB backbuffer.
+		/// </summary>
 		SrgbBackbuffer         = 0x00008000,
+	
+		/// <summary>
+		/// Enable HDR10 rendering.
+		/// </summary>
 		Hdr10                  = 0x00010000,
+	
+		/// <summary>
+		/// Enable HiDPI rendering.
+		/// </summary>
 		Hidpi                  = 0x00020000,
+	
+		/// <summary>
+		/// Enable depth clamp.
+		/// </summary>
 		DepthClamp             = 0x00040000,
+	
+		/// <summary>
+		/// Suspend rendering.
+		/// </summary>
 		Suspend                = 0x00080000,
 		FullscreenShift        = 0,
 		FullscreenMask         = 0x00000001,

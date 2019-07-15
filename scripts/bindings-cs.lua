@@ -169,7 +169,12 @@ local function FlagBlock(typ)
 			end
 
 			yield("\t/// <summary>")
-			yield("\t/// " .. flag.comment)
+			if (type(flag.comment) == "table") then
+				comment = table.concat(flag.comment, "\n\t\t/// ")
+			else
+				comment = flag.comment
+			end
+			yield("\t/// " .. comment)
 			yield("\t/// </summary>")
 		end
 
@@ -291,23 +296,35 @@ function converter.types(typ)
 					end
 				end
 				lookup[flagName] = value
-				table.insert(flags, {
-					name = flagName,
-					value = value,
-				})
+				if flag.comment ~= nil then
+					table.insert(flags, {
+						name = flagName,
+						value = value,
+						comment = flag.comment,
+					})
+				else
+					table.insert(flags, {
+						name = flagName,
+						value = value,
+					})
+				end
 			end
+
 			if typ.shift then
 				table.insert(flags, {
 					name = name .. "Shift",
 					value = typ.shift,
 					format = "%d",
+					comment = typ.comment,
 				})
 			end
+
 			if typ.mask then
 				-- generate Mask
 				table.insert(flags, {
 					name = name .. "Mask",
 					value = typ.mask,
+					comment = typ.comment,
 				})
 				lookup[name .. "Mask"] = typ.mask
 			end
