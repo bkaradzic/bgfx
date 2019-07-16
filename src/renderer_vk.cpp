@@ -8,6 +8,13 @@
 #if BGFX_CONFIG_RENDERER_VULKAN
 #	include "renderer_vk.h"
 
+#if BX_PLATFORM_OSX
+#	import <Cocoa/Cocoa.h>
+#   import <Foundation/Foundation.h>
+#   import <QuartzCore/QuartzCore.h>
+#   import <Metal/Metal.h>
+#endif
+
 namespace bgfx { namespace vk
 {
 	static char s_viewName[BGFX_CONFIG_MAX_VIEWS][256];
@@ -829,9 +836,10 @@ VK_IMPORT_DEVICE
 					LoadedVulkan1,
 					InstanceCreated,
 					DeviceCreated,
-					RenderPassCreated,
 					SurfaceCreated,
 					SwapchainCreated,
+                    RenderPassCreated,
+                    FrameBufferCreated,
 					CommandBuffersCreated,
 					DescriptorCreated,
 				};
@@ -859,6 +867,8 @@ VK_IMPORT_DEVICE
 					"vulkan-1.dll"
 #elif BX_PLATFORM_ANDROID
 					"libvulkan.so"
+#elif BX_PLATFORM_OSX
+                    "libvulkan.dylib"
 #else
 					"libvulkan.so.1"
 #endif // BX_PLATFORM_*
@@ -901,14 +911,15 @@ VK_IMPORT
 				const char* enabledLayerNames[] =
 				{
 #if BGFX_CONFIG_DEBUG
-//					"VK_LAYER_GOOGLE_threading",
-//					"VK_LAYER_GOOGLE_unique_objects",
+//				"VK_LAYER_GOOGLE_threading",
+//				"VK_LAYER_GOOGLE_unique_objects",
 //					"VK_LAYER_LUNARG_device_limits",
 //					"VK_LAYER_LUNARG_standard_validation",
 //					"VK_LAYER_LUNARG_image",
 //					"VK_LAYER_LUNARG_mem_tracker",
-//					"VK_LAYER_LUNARG_object_tracker",
-//					"VK_LAYER_LUNARG_parameter_validation",
+//				"VK_LAYER_LUNARG_core_validation",
+//				"VK_LAYER_LUNARG_object_tracker",
+//				"VK_LAYER_LUNARG_parameter_validation",
 //					"VK_LAYER_LUNARG_swapchain",
 //					"VK_LAYER_LUNARG_vktrace",
 //					"VK_LAYER_RENDERDOC_Capture",
@@ -1304,80 +1315,6 @@ VK_IMPORT_DEVICE
 			vkGetDeviceQueue(m_device, m_qfiGraphics, 0, &m_queueGraphics);
 			vkGetDeviceQueue(m_device, m_qfiCompute,  0, &m_queueCompute);
 
-			m_backBufferDepthStencilFormat =
-				VK_FORMAT_D32_SFLOAT_S8_UINT
-//				VK_FORMAT_D24_UNORM_S8_UINT
-				;
-
-			{
-				m_sci.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-
-				VkAttachmentDescription ad[2];
-				ad[0].flags   = 0;
-				ad[0].format  = m_sci.imageFormat;
-				ad[0].samples = VK_SAMPLE_COUNT_1_BIT;
-				ad[0].loadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				ad[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				ad[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				ad[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				ad[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-				ad[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				ad[1].flags   = 0;
-				ad[1].format  = m_backBufferDepthStencilFormat;
-				ad[1].samples = VK_SAMPLE_COUNT_1_BIT;
-				ad[1].loadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				ad[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				ad[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				ad[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				ad[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-				ad[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-				VkAttachmentReference colorAr[1];
-				colorAr[0].attachment = 0;
-				colorAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-				VkAttachmentReference resolveAr[1];
-				resolveAr[0].attachment = VK_ATTACHMENT_UNUSED;
-				resolveAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-				VkAttachmentReference depthAr[1];
-				depthAr[0].attachment = 1;
-				depthAr[0].layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-				VkSubpassDescription sd[1];
-				sd[0].flags = 0;
-				sd[0].pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-				sd[0].inputAttachmentCount = 0;
-				sd[0].pInputAttachments    = NULL;
-				sd[0].colorAttachmentCount = BX_COUNTOF(colorAr);
-				sd[0].pColorAttachments    = colorAr;
-				sd[0].pResolveAttachments  = resolveAr;
-				sd[0].pDepthStencilAttachment = depthAr;
-				sd[0].preserveAttachmentCount = 0;
-				sd[0].pPreserveAttachments    = NULL;
-
-				VkRenderPassCreateInfo rpi;
-				rpi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-				rpi.pNext = NULL;
-				rpi.flags = 0;
-				rpi.attachmentCount = BX_COUNTOF(ad);
-				rpi.pAttachments    = ad;
-				rpi.subpassCount    = BX_COUNTOF(sd);
-				rpi.pSubpasses      = sd;
-				rpi.dependencyCount = 0;
-				rpi.pDependencies   = NULL;
-
-				result = vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &m_renderPass);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreateRenderPass failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-			}
-
-			errorState = ErrorState::RenderPassCreated;
-
 #if BX_PLATFORM_WINDOWS
 			{
 				VkWin32SurfaceCreateInfoKHR sci;
@@ -1394,6 +1331,7 @@ VK_IMPORT_DEVICE
 				sci.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
 				sci.pNext = NULL;
 				sci.flags = 0;
+				sci.window = (ANativeWindow*)g_platformData.nwh;
 				result = vkCreateAndroidSurfaceKHR(m_instance, &sci, m_allocatorCb, &m_surface);
 			}
 #elif BX_PLATFORM_LINUX
@@ -1434,6 +1372,25 @@ VK_IMPORT_DEVICE
 					}
 				}
 			}
+#elif BX_PLATFORM_OSX
+            {
+                if (NULL != vkCreateMacOSSurfaceMVK)
+                {
+                    NSWindow* window = (NSWindow*)(g_platformData.nwh);
+                    NSView* contentView = (NSView*)window.contentView;
+                    CAMetalLayer* layer = [CAMetalLayer layer];
+                    layer.contentsScale = [window backingScaleFactor];
+                    [contentView setWantsLayer:YES];
+                    [contentView setLayer:layer];
+
+                    VkMacOSSurfaceCreateInfoMVK sci;
+                    sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+                    sci.pNext = NULL;
+                    sci.flags  = 0;
+                    sci.pView = (__bridge void*)layer;
+                    result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
+                }
+            }
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
@@ -1465,6 +1422,13 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
+				uint32_t width = bx::clamp<uint32_t>(_init.resolution.width,
+				    surfaceCapabilities.minImageExtent.width,
+                    surfaceCapabilities.maxImageExtent.width);
+				uint32_t height = bx::clamp<uint32_t>(_init.resolution.height,
+                    surfaceCapabilities.minImageExtent.height,
+                    surfaceCapabilities.maxImageExtent.height);
+
 				uint32_t numSurfaceFormats;
 				result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &numSurfaceFormats, NULL);
 
@@ -1474,12 +1438,32 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				VkSurfaceFormatKHR surfaceFormats[10];
+				VkSurfaceFormatKHR surfaceFormats[64];
 				numSurfaceFormats = bx::min<uint32_t>(numSurfaceFormats, BX_COUNTOF(surfaceFormats) );
 				vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
 
 				// find the best match...
-				uint32_t surfaceFormatIdx = 0;
+				VkFormat preferredSurfaceFormat[4] = {
+				    VK_FORMAT_B8G8R8A8_UNORM,
+                    VK_FORMAT_B8G8R8A8_SRGB,
+                    VK_FORMAT_R8G8B8A8_UNORM,
+                    VK_FORMAT_R8G8B8A8_SRGB,
+				};
+				uint32_t surfaceFormatIdx = numSurfaceFormats;
+				for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormat); jj++) {
+                    for (uint32_t ii = 0; ii < numSurfaceFormats; ii++) {
+                        BX_TRACE("Supported surface format: %d", surfaceFormats[ii].format);
+                        if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format) {
+                            surfaceFormatIdx = ii;
+                            break;
+                        }
+                    }
+                    if (surfaceFormatIdx < numSurfaceFormats) {// found
+                        BX_TRACE("Preferred surface format found: %d", surfaceFormats[surfaceFormatIdx].format);
+                        break;
+                    }
+				}
+				BX_CHECK(surfaceFormatIdx < numSurfaceFormats, "cannot found preferred surface format from supported surface format");
 
 				uint32_t numPresentModes;
 				result = vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, NULL);
@@ -1489,29 +1473,51 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				VkPresentModeKHR presentModes[10];
+				VkPresentModeKHR presentModes[VK_PRESENT_MODE_RANGE_SIZE_KHR];
 				numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
 				vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
 
 				// find the best match...
 				uint32_t presentModeIdx = 0;
 
+                BX_TRACE("get format properties.");
+                {
+                    VkFormatProperties prop;
+                    vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D32_SFLOAT_S8_UINT, &prop);
+                    vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D24_UNORM_S8_UINT, &prop);
+                    vkGetPhysicalDeviceFormatProperties(m_physicalDevice, VK_FORMAT_D32_SFLOAT_S8_UINT, &prop);
+                }
+                m_backBufferDepthStencilFormat =
+//    				VK_FORMAT_D32_SFLOAT_S8_UINT
+                    VK_FORMAT_D24_UNORM_S8_UINT
+                    ;
+
+				VkCompositeAlphaFlagBitsKHR compositeAlpha = (VkCompositeAlphaFlagBitsKHR)0;
+				if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
+				    compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+				else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+				    compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+				else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
+				    compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+				else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+				    compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
 				m_sci.flags = 0;
 				m_sci.surface = m_surface;
-				m_sci.minImageCount   = BX_COUNTOF(m_backBufferColorImage);
+				m_sci.minImageCount   = 2;
 				m_sci.imageFormat     = surfaceFormats[surfaceFormatIdx].format;
 				m_sci.imageColorSpace = surfaceFormats[surfaceFormatIdx].colorSpace;
-				m_sci.imageExtent.width  = _init.resolution.width;
-				m_sci.imageExtent.height = _init.resolution.height;
+				m_sci.imageExtent.width  = width;
+				m_sci.imageExtent.height = height;
 				m_sci.imageArrayLayers = 1;
 				m_sci.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 				m_sci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				m_sci.queueFamilyIndexCount = 0;
 				m_sci.pQueueFamilyIndices   = NULL;
 				m_sci.preTransform   = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-				m_sci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+				m_sci.compositeAlpha = compositeAlpha;
 				m_sci.presentMode    = presentModes[presentModeIdx];
 				m_sci.clipped        = VK_TRUE;
 				m_sci.oldSwapchain   = VK_NULL_HANDLE;
@@ -1523,8 +1529,7 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				uint32_t numSwapchainImages;
-				result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &numSwapchainImages, NULL);
+				result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, NULL);
 
 				if (VK_SUCCESS != result)
 				{
@@ -1532,19 +1537,19 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				if (numSwapchainImages < m_sci.minImageCount)
+				if (m_numSwapchainImages < m_sci.minImageCount)
 				{
 					BX_TRACE("Init error: vkGetSwapchainImagesKHR: numSwapchainImages %d, minImageCount %d."
-						, numSwapchainImages
+						, m_numSwapchainImages
 						, m_sci.minImageCount
 						);
 					goto error;
 				}
 
-				numSwapchainImages = m_sci.minImageCount;
-				result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &numSwapchainImages, &m_backBufferColorImage[0]);
+//				numSwapchainImages = m_sci.minImageCount;
 
-				if (VK_SUCCESS != result)
+				result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
+				if (VK_SUCCESS != result && VK_INCOMPLETE != result)
 				{
 					BX_TRACE("Init error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
 					goto error;
@@ -1574,8 +1579,8 @@ VK_IMPORT_DEVICE
 					| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
 					;
 				ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-				ici.queueFamilyIndexCount = 0; //m_sci.queueFamilyIndexCount;
-				ici.pQueueFamilyIndices   = NULL; //m_sci.pQueueFamilyIndices;
+				ici.queueFamilyIndexCount = m_sci.queueFamilyIndexCount;
+				ici.pQueueFamilyIndices   = m_sci.pQueueFamilyIndices;
 				ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				result = vkCreateImage(m_device, &ici, m_allocatorCb, &m_backBufferDepthStencilImage);
 
@@ -1642,29 +1647,12 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				::VkImageView attachments[] =
-				{
-					VK_NULL_HANDLE,
-					m_backBufferDepthStencilImageView,
-				};
-
-				VkFramebufferCreateInfo fci;
-				fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				fci.pNext = NULL;
-				fci.flags = 0;
-				fci.renderPass = m_renderPass;
-				fci.attachmentCount = BX_COUNTOF(attachments);
-				fci.pAttachments    = attachments;
-				fci.width  = m_sci.imageExtent.width;
-				fci.height = m_sci.imageExtent.height;
-				fci.layers = 1;
-
 				VkSemaphoreCreateInfo sci;
 				sci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 				sci.pNext = NULL;
 				sci.flags = 0;
 
-				for (uint32_t ii = 0; ii < numSwapchainImages; ++ii)
+				for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 				{
 					ivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 					ivci.pNext = NULL;
@@ -1690,28 +1678,119 @@ VK_IMPORT_DEVICE
 						goto error;
 					}
 
-					attachments[0] = m_backBufferColorImageView[ii];
-					result = vkCreateFramebuffer(m_device, &fci, m_allocatorCb, &m_backBufferColor[ii]);
 
-					if (VK_SUCCESS != result)
-					{
-						BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
-						goto error;
-					}
+                    result = vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDone[ii]);
 
-					result = vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDone[ii]);
-
-					if (VK_SUCCESS != result)
-					{
-						BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
-						goto error;
-					}
+                    if (VK_SUCCESS != result)
+                    {
+                        BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
+                        goto error;
+                    }
 
 					sci.flags = 0;
 				}
 			}
 
 			errorState = ErrorState::SwapchainCreated;
+
+
+            {
+                VkAttachmentDescription ad[2];
+                ad[0].flags   = 0;
+                ad[0].format  = m_sci.imageFormat;
+                ad[0].samples = VK_SAMPLE_COUNT_1_BIT;
+                ad[0].loadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ad[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                ad[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ad[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                ad[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+                ad[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                ad[1].flags   = 0;
+                ad[1].format  = m_backBufferDepthStencilFormat;
+                ad[1].samples = VK_SAMPLE_COUNT_1_BIT;
+                ad[1].loadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ad[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                ad[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ad[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                ad[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+                ad[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentReference colorAr[1];
+                colorAr[0].attachment = 0;
+                colorAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentReference resolveAr[1];
+                resolveAr[0].attachment = VK_ATTACHMENT_UNUSED;
+                resolveAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentReference depthAr[1];
+                depthAr[0].attachment = 1;
+                depthAr[0].layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+                VkSubpassDescription sd[1];
+                sd[0].flags = 0;
+                sd[0].pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+                sd[0].inputAttachmentCount = 0;
+                sd[0].pInputAttachments    = NULL;
+                sd[0].colorAttachmentCount = BX_COUNTOF(colorAr);
+                sd[0].pColorAttachments    = colorAr;
+                sd[0].pResolveAttachments  = resolveAr;
+                sd[0].pDepthStencilAttachment = depthAr;
+                sd[0].preserveAttachmentCount = 0;
+                sd[0].pPreserveAttachments    = NULL;
+
+                VkRenderPassCreateInfo rpi;
+                rpi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+                rpi.pNext = NULL;
+                rpi.flags = 0;
+                rpi.attachmentCount = BX_COUNTOF(ad);
+                rpi.pAttachments    = ad;
+                rpi.subpassCount    = BX_COUNTOF(sd);
+                rpi.pSubpasses      = sd;
+                rpi.dependencyCount = 0;
+                rpi.pDependencies   = NULL;
+
+                result = vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &m_renderPass);
+
+                if (VK_SUCCESS != result)
+                {
+                    BX_TRACE("Init error: vkCreateRenderPass failed %d: %s.", result, getName(result) );
+                    goto error;
+                }
+            }
+
+            errorState = ErrorState::RenderPassCreated;
+
+		    // framebuffer creation
+            for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+            {
+                ::VkImageView attachments[] =
+                    {
+                        m_backBufferColorImageView[ii],
+                        m_backBufferDepthStencilImageView,
+                    };
+
+                VkFramebufferCreateInfo fci;
+                fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+                fci.pNext = NULL;
+                fci.flags = 0;
+                fci.renderPass = m_renderPass;
+                fci.attachmentCount = BX_COUNTOF(attachments);
+                fci.pAttachments    = attachments;
+                fci.width  = m_sci.imageExtent.width;
+                fci.height = m_sci.imageExtent.height;
+                fci.layers = 1;
+
+                result = vkCreateFramebuffer(m_device, &fci, m_allocatorCb, &m_backBufferColor[ii]);
+
+                if (VK_SUCCESS != result)
+                {
+                    BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
+                    goto error;
+                }
+            }
+
+            errorState = ErrorState::FrameBufferCreated;
 
 			{
 				VkFenceCreateInfo fci;
@@ -1782,7 +1861,7 @@ VK_IMPORT_DEVICE
 					, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 					);
 
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImage); ++ii)
+				for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 				{
 					setImageMemoryBarrier(commandBuffer
 						, m_backBufferColorImage[ii]
@@ -1815,14 +1894,14 @@ VK_IMPORT_DEVICE
 			{
 				VkDescriptorPoolSize dps[] =
 				{
-//					{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
+					{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (10 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS) << 10 },
 					{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         10<<10                           },
 //					{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
 				};
 
 				VkDescriptorSetLayoutBinding dslb[] =
 				{
-//					{ DslBinding::CombinedImageSampler,  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
+					{ DslBinding::CombinedImageSampler,  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
 					{ DslBinding::VertexUniformBuffer,   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1,                                VK_SHADER_STAGE_ALL,          NULL },
 					{ DslBinding::FragmentUniformBuffer, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1,                                VK_SHADER_STAGE_FRAGMENT_BIT, NULL },
 //					{ DslBinding::StorageBuffer,         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
@@ -1891,6 +1970,7 @@ VK_IMPORT_DEVICE
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 			{
+			    BX_TRACE("Create scratch buffer %d", ii);
 				m_scratchBuffer[ii].create(BGFX_CONFIG_MAX_DRAW_CALLS*1024
 					, 1024 //BGFX_CONFIG_MAX_TEXTURES + BGFX_CONFIG_MAX_SHADERS + BGFX_CONFIG_MAX_DRAW_CALLS
 					);
@@ -1940,17 +2020,26 @@ VK_IMPORT_DEVICE
 				vkDestroy(m_fence);
 				BX_FALLTHROUGH;
 
-			case ErrorState::SwapchainCreated:
+            case ErrorState::FrameBufferCreated:
+                for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
+                {
+                    if (VK_NULL_HANDLE != m_backBufferColor[ii])
+                    {
+                        vkDestroy(m_backBufferColor[ii]);
+                    }
+                }
+                BX_FALLTHROUGH;
+
+            case ErrorState::RenderPassCreated:
+                vkDestroy(m_renderPass);
+                BX_FALLTHROUGH;
+
+            case ErrorState::SwapchainCreated:
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 				{
 					if (VK_NULL_HANDLE != m_backBufferColorImageView[ii])
 					{
 						vkDestroy(m_backBufferColorImageView[ii]);
-					}
-
-					if (VK_NULL_HANDLE != m_backBufferColor[ii])
-					{
-						vkDestroy(m_backBufferColor[ii]);
 					}
 
 					if (VK_NULL_HANDLE != m_presentDone[ii])
@@ -1963,10 +2052,6 @@ VK_IMPORT_DEVICE
 
 			case ErrorState::SurfaceCreated:
 				vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
-				BX_FALLTHROUGH;
-
-			case ErrorState::RenderPassCreated:
-				vkDestroy(m_renderPass);
 				BX_FALLTHROUGH;
 
 			case ErrorState::DeviceCreated:
@@ -3158,7 +3243,7 @@ VK_IMPORT_DEVICE
 			si.pSignalSemaphores    = &_signal;
 
 //			VK_CHECK(vkResetFences(m_device, 1, &m_fence) );
-			VK_CHECK(vkQueueSubmit(m_queueGraphics, 1, &si, VK_NULL_HANDLE) );
+			vkQueueSubmit(m_queueGraphics, 1, &si, VK_NULL_HANDLE);
 			return 0;
 		}
 
@@ -3189,6 +3274,7 @@ VK_IMPORT_DEVICE
 			return 0;
 		}
 
+#define NUM_SWAPCHAIN_IMAGE 4
 		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
 		VkInstance       m_instance;
@@ -3200,10 +3286,11 @@ VK_IMPORT_DEVICE
 		VkSwapchainCreateInfoKHR m_sci;
 		VkSurfaceKHR     m_surface;
 		VkSwapchainKHR   m_swapchain;
-		VkImage          m_backBufferColorImage[4];
-		VkImageView      m_backBufferColorImageView[4];
-		VkFramebuffer    m_backBufferColor[4];
-		VkCommandBuffer  m_commandBuffers[4];
+		uint32_t         m_numSwapchainImages;
+		VkImage          m_backBufferColorImage[NUM_SWAPCHAIN_IMAGE];
+		VkImageView      m_backBufferColorImageView[NUM_SWAPCHAIN_IMAGE];
+		VkFramebuffer    m_backBufferColor[NUM_SWAPCHAIN_IMAGE];
+		VkCommandBuffer  m_commandBuffers[NUM_SWAPCHAIN_IMAGE];
 		VkCommandBuffer  m_commandBuffer;
 
 		VkFormat         m_backBufferDepthStencilFormat;
@@ -3211,8 +3298,8 @@ VK_IMPORT_DEVICE
 		VkImage          m_backBufferDepthStencilImage;
 		VkImageView      m_backBufferDepthStencilImageView;
 
-		ScratchBufferVK  m_scratchBuffer[4];
-		VkSemaphore      m_presentDone[4];
+		ScratchBufferVK  m_scratchBuffer[NUM_SWAPCHAIN_IMAGE];
+		VkSemaphore      m_presentDone[NUM_SWAPCHAIN_IMAGE];
 
 		uint32_t m_qfiGraphics;
 		uint32_t m_qfiCompute;

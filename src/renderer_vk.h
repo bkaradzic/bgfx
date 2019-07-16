@@ -21,6 +21,10 @@
 #	define VK_USE_PLATFORM_WIN32_KHR
 #	define KHR_SURFACE_EXTENSION_NAME  VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_WINDOWS
+#elif BX_PLATFORM_OSX
+#	define VK_USE_PLATFORM_MACOS_MVK
+#	define KHR_SURFACE_EXTENSION_NAME  VK_MVK_MACOS_SURFACE_EXTENSION_NAME
+#	define VK_IMPORT_INSTANCE_PLATFORM VK_IMPORT_INSTANCE_MACOS
 #else
 #	define KHR_SURFACE_EXTENSION_NAME ""
 #	define VK_IMPORT_INSTANCE_PLATFORM
@@ -56,6 +60,9 @@
 #define VK_IMPORT_INSTANCE_WINDOWS \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateWin32SurfaceKHR); \
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWin32PresentationSupportKHR);
+
+#define VK_IMPORT_INSTANCE_MACOS \
+            VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK);
 
 #define VK_IMPORT_INSTANCE                                                             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyInstance);                         \
@@ -239,7 +246,7 @@ VK_DESTROY
 	{
 		enum Enum
 		{
-//			CombinedImageSampler,
+			CombinedImageSampler,
 			VertexUniformBuffer,
 			FragmentUniformBuffer,
 //			StorageBuffer,
