@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Aleö Mlakar. All rights reserved.
+ * Copyright 2018 Ale≈° Mlakar. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
