@@ -30,7 +30,7 @@ void main()
     uint threadID = gl_GlobalInvocationID.x;
 
 
-	if (threadID >= u_AtomicClockBuffer[2])
+	if (threadID >= u_AtomicCounterBuffer[2])
 		return;
 
     // get coarse triangle associated to the key
@@ -76,7 +76,7 @@ void main()
     if (u_cull == 0 || frustumCullingTest(mvp, bmin.xyz, bmax.xyz)) {
         // write key
 		uint idx = 0;
-		atomicFetchAndAdd(u_AtomicClockBuffer[1], 2, idx);
+		atomicFetchAndAdd(u_AtomicCounterBuffer[1], 2, idx);
         u_CulledSubdBuffer[idx] = primID;
 		u_CulledSubdBuffer[idx+1] = key;
     }

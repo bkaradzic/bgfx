@@ -6,7 +6,7 @@
 
 #include "uniforms.sh"
 
-BUFFER_RW(u_AtomicClockBuffer, uint, 4);
+BUFFER_RW(u_AtomicCounterBuffer, uint, 4);
 
 BUFFER_RW(u_SubdBufferOut, uint, 1);
 
@@ -53,7 +53,7 @@ void writeKey(uint primID, uint key)
 {
     uint idx = 0;
 	
-	atomicFetchAndAdd(u_AtomicClockBuffer[0], 2, idx);
+	atomicFetchAndAdd(u_AtomicCounterBuffer[0], 2, idx);
 
     u_SubdBufferOut[idx] = primID; 
 	u_SubdBufferOut[idx+1] = key;
