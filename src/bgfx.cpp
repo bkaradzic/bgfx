@@ -878,7 +878,7 @@ namespace bgfx
 
 	const char* s_uniformTypeName[] =
 	{
-		"int1",
+		"sampler1",
 		NULL,
 		"vec4",
 		"mat3",

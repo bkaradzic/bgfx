@@ -7,6 +7,7 @@
 
 #if BGFX_CONFIG_RENDERER_VULKAN
 #	include "renderer_vk.h"
+#   include <spirv-cross/spirv_cross_c.h>
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -914,7 +915,7 @@ VK_IMPORT
 //				"VK_LAYER_GOOGLE_threading",
 //				"VK_LAYER_GOOGLE_unique_objects",
 //					"VK_LAYER_LUNARG_device_limits",
-//					"VK_LAYER_LUNARG_standard_validation",
+					"VK_LAYER_LUNARG_standard_validation",
 //					"VK_LAYER_LUNARG_image",
 //					"VK_LAYER_LUNARG_mem_tracker",
 //				"VK_LAYER_LUNARG_core_validation",
@@ -1923,35 +1924,35 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				VkDescriptorSetLayoutCreateInfo dsl;
-				dsl.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				dsl.pNext = NULL;
-				dsl.flags = 0;
-				dsl.bindingCount = BX_COUNTOF(dslb);
-				dsl.pBindings    = dslb;
-				result = vkCreateDescriptorSetLayout(m_device, &dsl, m_allocatorCb, &m_descriptorSetLayout);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreateDescriptorSetLayout failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				VkPipelineLayoutCreateInfo pl;
-				pl.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-				pl.pNext = NULL;
-				pl.flags = 0;
-				pl.setLayoutCount = 1;
-				pl.pSetLayouts    = &m_descriptorSetLayout;
-				pl.pushConstantRangeCount = 0;
-				pl.pPushConstantRanges    = NULL;
-				result = vkCreatePipelineLayout(m_device, &pl, m_allocatorCb, &m_pipelineLayout);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreatePipelineLayout failed %d: %s.", result, getName(result) );
-					goto error;
-				}
+//				VkDescriptorSetLayoutCreateInfo dsl;
+//				dsl.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+//				dsl.pNext = NULL;
+//				dsl.flags = 0;
+//				dsl.bindingCount = BX_COUNTOF(dslb);
+//				dsl.pBindings    = dslb;
+//				result = vkCreateDescriptorSetLayout(m_device, &dsl, m_allocatorCb, &m_descriptorSetLayout);
+//
+//				if (VK_SUCCESS != result)
+//				{
+//					BX_TRACE("Init error: vkCreateDescriptorSetLayout failed %d: %s.", result, getName(result) );
+//					goto error;
+//				}
+//
+//				VkPipelineLayoutCreateInfo pl;
+//				pl.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+//				pl.pNext = NULL;
+//				pl.flags = 0;
+//				pl.setLayoutCount = 1;
+//				pl.pSetLayouts    = &m_descriptorSetLayout;
+//				pl.pushConstantRangeCount = 0;
+//				pl.pPushConstantRanges    = NULL;
+//				result = vkCreatePipelineLayout(m_device, &pl, m_allocatorCb, &m_pipelineLayout);
+//
+//				if (VK_SUCCESS != result)
+//				{
+//					BX_TRACE("Init error: vkCreatePipelineLayout failed %d: %s.", result, getName(result) );
+//					goto error;
+//				}
 
 				VkPipelineCacheCreateInfo pcci;
 				pcci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -2009,8 +2010,8 @@ VK_IMPORT_DEVICE
 			{
 			case ErrorState::DescriptorCreated:
 				vkDestroy(m_pipelineCache);
-				vkDestroy(m_pipelineLayout);
-				vkDestroy(m_descriptorSetLayout);
+//				vkDestroy(m_pipelineLayout);
+//				vkDestroy(m_descriptorSetLayout);
 				vkDestroy(m_descriptorPool);
 				BX_FALLTHROUGH;
 
@@ -2120,8 +2121,8 @@ VK_IMPORT_DEVICE
 			}
 
 			vkDestroy(m_pipelineCache);
-			vkDestroy(m_pipelineLayout);
-			vkDestroy(m_descriptorSetLayout);
+//			vkDestroy(m_pipelineLayout);
+//			vkDestroy(m_descriptorSetLayout);
 			vkDestroy(m_descriptorPool);
 
 			vkFreeCommandBuffers(m_device, m_commandPool, BX_COUNTOF(m_commandBuffers), m_commandBuffers);
@@ -2540,7 +2541,9 @@ VK_IMPORT_DEVICE
 
 		void commitShaderUniforms(VkCommandBuffer _commandBuffer, ProgramHandle _program)
 		{
-			const ProgramVK& program = m_program[_program.idx];
+			ProgramVK& program = m_program[_program.idx];
+
+			initProgramPipelineLayout(program);
 
 			const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
 			const uint32_t vsize = bx::strideAlign(program.m_vsh->m_size, align);
@@ -2551,7 +2554,8 @@ VK_IMPORT_DEVICE
 			{
 				ScratchBufferVK& sb = m_scratchBuffer[m_backBufferColorIdx];
 
-				uint8_t* data = (uint8_t*)sb.allocUbv(vsize, fsize);
+//				uint8_t* data = (uint8_t*)sb.allocUbv(vsize, fsize);
+                uint8_t* data = (uint8_t*)sb.allocUbv(program.m_descriptorSet, vsize, fsize);
 
 				bx::memCopy(data, m_vsScratch, program.m_vsh->m_size);
 				data += vsize;
@@ -2563,10 +2567,12 @@ VK_IMPORT_DEVICE
 
 				vkCmdBindDescriptorSets(_commandBuffer
 					, VK_PIPELINE_BIND_POINT_GRAPHICS
-					, m_pipelineLayout
+//					, m_pipelineLayout
+                    , program.m_pipelineLayout
 					, 0
 					, 1
-					, &sb.m_descriptorSet[sb.m_currentDs - 1]
+//					, &sb.m_descriptorSet[sb.m_currentDs - 1]
+                    , &program.m_descriptorSet
 					, 0
 					, NULL
 					);
@@ -2575,6 +2581,56 @@ VK_IMPORT_DEVICE
 			m_vsChanges = 0;
 			m_fsChanges = 0;
 		}
+
+		void initProgramPipelineLayout(ProgramVK& program)
+        {
+            if (program.m_pipelineLayout == VK_NULL_HANDLE)
+            {
+                // create exact pipeline layout
+                VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
+                if (program.m_vsh->m_numBindings + program.m_fsh->m_numBindings > 0) {
+                    dsl = m_descriptorSetLayoutCache.find(program.m_descriptorSetLayoutHash);
+                    if (NULL == dsl)
+                    {
+                        VkDescriptorSetLayoutBinding bindings[64];
+                        bx::memCopy(bindings, program.m_vsh->m_bindings,
+                            sizeof(VkDescriptorSetLayoutBinding) * program.m_vsh->m_numBindings);
+                        bx::memCopy(bindings + program.m_vsh->m_numBindings, program.m_fsh->m_bindings,
+                            sizeof(VkDescriptorSetLayoutBinding) * program.m_fsh->m_numBindings);
+
+                        VkDescriptorSetLayoutCreateInfo dslci;
+                        dslci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                        dslci.pNext = NULL;
+                        dslci.flags = 0;
+                        dslci.bindingCount = program.m_vsh->m_numBindings + program.m_fsh->m_numBindings;
+                        dslci.pBindings = bindings;
+
+                        VK_CHECK(vkCreateDescriptorSetLayout(m_device, &dslci, m_allocatorCb, &dsl) );
+
+                        m_descriptorSetLayoutCache.add(program.m_descriptorSetLayoutHash, dsl);
+                    }
+
+                    VkDescriptorSetAllocateInfo dsai;
+                    dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                    dsai.pNext = NULL;
+                    dsai.descriptorPool = m_descriptorPool;
+                    dsai.descriptorSetCount = 1;
+                    dsai.pSetLayouts = &dsl;
+                    vkAllocateDescriptorSets(m_device, &dsai, &program.m_descriptorSet);
+                }
+
+                VkPipelineLayoutCreateInfo plci;
+                plci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+                plci.pNext = NULL;
+                plci.flags = 0;
+                plci.pushConstantRangeCount = 0;
+                plci.pPushConstantRanges = NULL;
+                plci.setLayoutCount = (dsl == VK_NULL_HANDLE ? 0 : 1);
+                plci.pSetLayouts = &dsl;
+
+                VK_CHECK(vkCreatePipelineLayout(m_device, &plci, m_allocatorCb, &program.m_pipelineLayout) );
+            }
+        }
 
 		void setFrameBuffer(FrameBufferHandle _fbh, bool _msaa = true)
 		{
@@ -2987,6 +3043,8 @@ VK_IMPORT_DEVICE
 			multisampleState.alphaToCoverageEnable = !!(BGFX_STATE_BLEND_ALPHA_TO_COVERAGE & _state);
 			multisampleState.alphaToOneEnable      = VK_FALSE;
 
+			initProgramPipelineLayout(program);
+
 			VkGraphicsPipelineCreateInfo graphicsPipeline;
 			graphicsPipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 			graphicsPipeline.pNext = NULL;
@@ -3002,7 +3060,8 @@ VK_IMPORT_DEVICE
 			graphicsPipeline.pDepthStencilState  = &depthStencilState;
 			graphicsPipeline.pColorBlendState    = &colorBlendState;
 			graphicsPipeline.pDynamicState       = &dynamicState;
-			graphicsPipeline.layout     = m_pipelineLayout;
+//			graphicsPipeline.layout     = m_pipelineLayout;
+            graphicsPipeline.layout     = program.m_pipelineLayout;
 			graphicsPipeline.renderPass = m_renderPass;
 			graphicsPipeline.subpass    = 0;
 			graphicsPipeline.basePipelineHandle = VK_NULL_HANDLE;
@@ -3310,8 +3369,8 @@ VK_IMPORT_DEVICE
 		VkFence  m_fence;
 		VkRenderPass m_renderPass;
 		VkDescriptorPool m_descriptorPool;
-		VkDescriptorSetLayout m_descriptorSetLayout;
-		VkPipelineLayout m_pipelineLayout;
+//		VkDescriptorSetLayout m_descriptorSetLayout;
+//		VkPipelineLayout m_pipelineLayout;
 		VkPipelineCache m_pipelineCache;
 		VkCommandPool m_commandPool;
 
@@ -3330,6 +3389,7 @@ VK_IMPORT_DEVICE
 		UniformRegistry m_uniformReg;
 
 		StateCacheT<VkPipeline> m_pipelineStateCache;
+		StateCacheT<VkDescriptorSetLayout> m_descriptorSetLayoutCache;
 
 		Resolution m_resolution;
 		uint32_t m_maxAnisotropy;
@@ -3382,21 +3442,21 @@ VK_DESTROY
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _maxDescriptors)
 	{
 		m_maxDescriptors = _maxDescriptors;
-		m_descriptorSet  = (VkDescriptorSet*)BX_ALLOC(g_allocator, _maxDescriptors * sizeof(VkDescriptorSet) );
+//		m_descriptorSet  = (VkDescriptorSet*)BX_ALLOC(g_allocator, _maxDescriptors * sizeof(VkDescriptorSet) );
 
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		VkDevice device = s_renderVK->m_device;
 
-		VkDescriptorSetAllocateInfo dsai;
-		dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		dsai.pNext = NULL;
-		dsai.descriptorPool = s_renderVK->m_descriptorPool;
-		dsai.descriptorSetCount = 1;
-		dsai.pSetLayouts        = &s_renderVK->m_descriptorSetLayout;
-		for (uint32_t ii = 0, num = m_maxDescriptors; ii < num; ++ii)
-		{
-			VK_CHECK(vkAllocateDescriptorSets(device, &dsai, &m_descriptorSet[ii]) );
-		}
+//		VkDescriptorSetAllocateInfo dsai;
+//		dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+//		dsai.pNext = NULL;
+//		dsai.descriptorPool = s_renderVK->m_descriptorPool;
+//		dsai.descriptorSetCount = 1;
+//		dsai.pSetLayouts        = &s_renderVK->m_descriptorSetLayout;
+//		for (uint32_t ii = 0, num = m_maxDescriptors; ii < num; ++ii)
+//		{
+//			VK_CHECK(vkAllocateDescriptorSets(device, &dsai, &m_descriptorSet[ii]) );
+//		}
 
 		VkBufferCreateInfo bci;
 		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -3449,8 +3509,8 @@ VK_DESTROY
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
 		VkDevice device = s_renderVK->m_device;
 
-		vkFreeDescriptorSets(device, s_renderVK->m_descriptorPool, m_maxDescriptors, m_descriptorSet);
-		BX_FREE(g_allocator, m_descriptorSet);
+//		vkFreeDescriptorSets(device, s_renderVK->m_descriptorPool, m_maxDescriptors, m_descriptorSet);
+//		BX_FREE(g_allocator, m_descriptorSet);
 
 		vkUnmapMemory(device, m_deviceMem);
 
@@ -3468,20 +3528,22 @@ VK_DESTROY
 		m_currentDs = 0;
 	}
 
-	void* ScratchBufferVK::allocUbv(uint32_t _vsize, uint32_t _fsize)
+	void* ScratchBufferVK::allocUbv(VkDescriptorSet descriptorSet, uint32_t _vsize, uint32_t _fsize)
 	{
 		VkDescriptorBufferInfo dbi[2];
 
 		dbi[0].buffer = m_buffer;
 		dbi[0].offset = m_pos;
-		dbi[0].range  = _vsize;
+		dbi[0].range  = _vsize + _fsize;
 
 		VkWriteDescriptorSet wds[2];
 
 		wds[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		wds[0].pNext = NULL;
-		wds[0].dstSet     = m_descriptorSet[m_currentDs];
-		wds[0].dstBinding = DslBinding::VertexUniformBuffer;
+//		wds[0].dstSet     = m_descriptorSet[m_currentDs];
+        wds[0].dstSet     = descriptorSet;
+//		wds[0].dstBinding = DslBinding::VertexUniformBuffer;
+        wds[0].dstBinding = 0;
 		wds[0].dstArrayElement  = 0;
 		wds[0].descriptorCount  = 1;
 		wds[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -3491,25 +3553,27 @@ VK_DESTROY
 
 		uint32_t numWds = 1;
 
-		if (0 != _fsize)
-		{
-			dbi[1].buffer = m_buffer;
-			dbi[1].offset = m_pos + _vsize;
-			dbi[1].range  = _fsize;
-
-			wds[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			wds[1].pNext = NULL;
-			wds[1].dstSet     = m_descriptorSet[m_currentDs];
-			wds[1].dstBinding = DslBinding::FragmentUniformBuffer;
-			wds[1].dstArrayElement  = 0;
-			wds[1].descriptorCount  = 1;
-			wds[1].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			wds[1].pImageInfo       = NULL;
-			wds[1].pBufferInfo      = &dbi[1];
-			wds[1].pTexelBufferView = NULL;
-
-			++numWds;
-		}
+//		if (0 != _fsize)
+//		{
+//			dbi[1].buffer = m_buffer;
+//			dbi[1].offset = m_pos + _vsize;
+//			dbi[1].range  = _fsize;
+//
+//			wds[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//			wds[1].pNext = NULL;
+////			wds[1].dstSet     = m_descriptorSet[m_currentDs];
+//            wds[1].dstSet     = descriptorSet;
+////			wds[1].dstBinding = DslBinding::FragmentUniformBuffer;
+//            wds[1].dstBinding = 0;
+//			wds[1].dstArrayElement  = 0;
+//			wds[1].descriptorCount  = 1;
+//			wds[1].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+//			wds[1].pImageInfo       = NULL;
+//			wds[1].pBufferInfo      = &dbi[1];
+//			wds[1].pTexelBufferView = NULL;
+//
+//			++numWds;
+//		}
 
 		vkUpdateDescriptorSets(s_renderVK->m_device, numWds, wds, 0, NULL);
 
@@ -3851,6 +3915,60 @@ VK_DESTROY
 			, shaderSize
 			);
 
+        {
+            spvc_context spvContext = nullptr;
+            spvc_parsed_ir ir = nullptr;
+            spvc_compiler compilerGlsl = nullptr;
+            spvc_resources resources = nullptr;
+
+            spvc_context_create(&spvContext);
+            spvc_context_set_error_callback(spvContext, [](void *userdata, const char *error) {
+                BX_TRACE("spirv cross error: %s", error);
+            }, nullptr);
+            spvc_context_parse_spirv(spvContext, (const SpvId*)m_code->data, shaderSize / 4, &ir);
+            spvc_context_create_compiler(spvContext, SPVC_BACKEND_GLSL, ir, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &compilerGlsl);
+            spvc_compiler_create_shader_resources(compilerGlsl, &resources);
+
+            size_t resourceCount = 0;
+            const spvc_reflected_resource* list = nullptr;
+            uint16_t bidx = 0;
+
+            const spvc_resource_type resourceTypes[] = {
+                SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
+                SPVC_RESOURCE_TYPE_UNIFORM_BUFFER,
+            };
+            const VkDescriptorType descriptorTypes[] = {
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            };
+            const char* resourceTypeNames[] = {
+                "separate_image",
+                "uniform_buffer",
+            };
+
+            for (size_t j = 0; j < BX_COUNTOF(resourceTypes); j++)
+            {
+                auto resourceType = resourceTypes[j];
+                auto descriptorType = descriptorTypes[j];
+                spvc_resources_get_resource_list_for_type(resources, resourceType, &list, &resourceCount);
+                for (size_t i = 0; i < resourceCount; i++)
+                {
+                    auto setIndex = spvc_compiler_get_decoration(compilerGlsl, list[i].id, SpvDecorationDescriptorSet);
+                    auto bind = spvc_compiler_get_decoration(compilerGlsl, list[i].id, SpvDecorationBinding);
+                    m_bindings[bidx].stageFlags = shaderStage;
+                    m_bindings[bidx].descriptorType = descriptorType;
+                    m_bindings[bidx].binding = bind;
+                    m_bindings[bidx].pImmutableSamplers = NULL;
+                    m_bindings[bidx].descriptorCount = 1;
+                    BX_TRACE("\t%s: %s - set: %d, binding: %d", resourceTypeNames[j], list[i].name, setIndex, bind);
+                    bidx++;
+                }
+            }
+            m_numBindings = bidx;
+
+            spvc_context_destroy(spvContext);
+        }
+
 		VkShaderModuleCreateInfo smci;
 		smci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		smci.pNext = NULL;
@@ -3921,6 +4039,38 @@ VK_DESTROY
 			vkDestroy(m_module);
 		}
 	}
+
+	void ProgramVK::create(const ShaderVK* _vsh, const ShaderVK* _fsh)
+    {
+        BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
+        m_vsh = _vsh;
+        bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
+        m_numPredefined = _vsh->m_numPredefined;
+
+        if (NULL != _fsh)
+        {
+            BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
+            m_fsh = _fsh;
+            bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
+            m_numPredefined += _fsh->m_numPredefined;
+        }
+
+        // generate descriptor set layout hash
+        bx::HashMurmur2A murmur;
+        murmur.begin();
+        murmur.add(m_vsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_vsh->m_numBindings);
+        murmur.add(m_fsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings);
+        m_descriptorSetLayoutHash = murmur.end();
+    }
+
+
+    void ProgramVK::destroy()
+    {
+        vkDestroy(m_pipelineLayout);
+        m_numPredefined = 0;
+        m_vsh = NULL;
+        m_fsh = NULL;
+    }
 
 	void TextureVK::destroy()
 	{

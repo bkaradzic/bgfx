@@ -33,6 +33,7 @@
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
+#include <spirv-cross/spirv_glsl.hpp>
 #include "renderer.h"
 #include "debug_renderdoc.h"
 
@@ -320,9 +321,9 @@ VK_DESTROY
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
 		void reset(VkDescriptorBufferInfo& _gpuAddress);
-		void* allocUbv(uint32_t _vsize, uint32_t _fsize);
+		void* allocUbv(VkDescriptorSet descriptorSet, uint32_t _vsize, uint32_t _fsize);
 
-		VkDescriptorSet* m_descriptorSet;
+//		VkDescriptorSet* m_descriptorSet;
 		VkBuffer m_buffer;
 		VkDeviceMemory m_deviceMem;
 		uint8_t* m_data;
@@ -389,6 +390,7 @@ VK_DESTROY
 			, m_hash(0)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
+			, m_numBindings(0)
 		{
 		}
 
@@ -408,6 +410,9 @@ VK_DESTROY
 		uint16_t m_size;
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
+
+		uint16_t m_numBindings;
+		VkDescriptorSetLayoutBinding m_bindings[32];
 	};
 
 	struct ProgramVK
@@ -415,37 +420,23 @@ VK_DESTROY
 		ProgramVK()
 			: m_vsh(NULL)
 			, m_fsh(NULL)
+			, m_descriptorSetLayoutHash(0)
 		{
 		}
 
-		void create(const ShaderVK* _vsh, const ShaderVK* _fsh)
-		{
-			BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
-			m_vsh = _vsh;
-			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform));
-			m_numPredefined = _vsh->m_numPredefined;
-
-			if (NULL != _fsh)
-			{
-				BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
-				m_fsh = _fsh;
-				bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform));
-				m_numPredefined += _fsh->m_numPredefined;
-			}
-		}
-
-		void destroy()
-		{
-			m_numPredefined = 0;
-			m_vsh = NULL;
-			m_fsh = NULL;
-		}
+		void create(const ShaderVK* _vsh, const ShaderVK* _fsh);
+		void destroy();
 
 		const ShaderVK* m_vsh;
 		const ShaderVK* m_fsh;
 
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
+
+		// TODO: rinthel - add pipeline layout here
+		uint32_t m_descriptorSetLayoutHash;
+		VkPipelineLayout m_pipelineLayout;
+		VkDescriptorSet m_descriptorSet;
 	};
 
 	struct TextureVK

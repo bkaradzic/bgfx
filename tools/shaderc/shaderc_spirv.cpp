@@ -641,6 +641,8 @@ namespace bgfx { namespace spirv
 			);
 
 		shader->setEntryPoint("main");
+        shader->setAutoMapBindings(true);
+        shader->setShiftBinding(glslang::EResSampler, 16);
 
 		const char* shaderStrings[] = { _code.c_str() };
 		shader->setStrings(
