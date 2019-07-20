@@ -55,11 +55,6 @@ namespace
 		TEXTURE_COUNT
 	};
 
-	struct {
-		char* pathToFile;
-		float scale;
-	} dmap;
-
 	struct Uniforms
 	{
 		enum { NumVec4 = 2 };
@@ -463,7 +458,8 @@ namespace
 
 			int mipcnt = dmap->m_numMips;
 
-			std::vector<float> smap(w * h * 2);
+			const bgfx::Memory* mem = bgfx::alloc(w * h * 2 * sizeof(float));
+			float* smap = (float*)mem->data;
 
 			for (int j = 0; j < h; ++j) {
 				for (int i = 0; i < w; ++i) {
@@ -488,7 +484,7 @@ namespace
 			}
 
 			m_textures[TEXTURE_SMAP] = bgfx::createTexture2D((uint16_t)w, (uint16_t)h, mipcnt > 1, 1, bgfx::TextureFormat::RG32F,
-				BGFX_TEXTURE_NONE, bgfx::copy(smap.data(), (unsigned int)smap.size()*sizeof(float)));
+				BGFX_TEXTURE_NONE, mem);
 
 		}
 
@@ -500,7 +496,7 @@ namespace
 		 */
 		void loadDmapTexture()
 		{
-			dmap = imageLoad(m_dmap.pathToFile, bgfx::TextureFormat::R16);
+			dmap = imageLoad(m_dmap.pathToFile.getCPtr(), bgfx::TextureFormat::R16);
 
 			m_textures[TEXTURE_DMAP] = bgfx::createTexture2D((uint16_t)dmap->m_width, (uint16_t)dmap->m_height, false, 1, bgfx::TextureFormat::R16,
 				BGFX_TEXTURE_NONE, bgfx::makeRef(dmap->m_data, dmap->m_size));
@@ -658,7 +654,7 @@ namespace
 		int64_t m_timeOffset;
 
 		struct {
-			char* pathToFile;
+			bx::FilePath pathToFile;
 			float scale;
 		} m_dmap;
 
