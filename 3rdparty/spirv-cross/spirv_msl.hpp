@@ -193,12 +193,14 @@ public:
 		uint32_t buffer_size_buffer_index = 25;
 		uint32_t view_mask_buffer_index = 24;
 		uint32_t shader_input_wg_index = 0;
+		uint32_t device_index = 0;
 		bool enable_point_size_builtin = true;
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
 		bool swizzle_texture_samples = false;
 		bool tess_domain_origin_lower_left = false;
 		bool multiview = false;
+		bool view_index_from_device_index = false;
 
 		// Enable use of MSL 2.0 indirect argument buffers.
 		// MSL 2.0 must also be enabled.
@@ -274,7 +276,7 @@ public:
 	// containing the view mask for the current multiview subpass.
 	bool needs_view_mask_buffer() const
 	{
-		return msl_options.multiview;
+		return msl_options.multiview && !msl_options.view_index_from_device_index;
 	}
 
 	// Provide feedback to calling API to allow it to pass an output
@@ -403,6 +405,7 @@ protected:
 		SPVFuncImplSubgroupAllEqual,
 		SPVFuncImplReflectScalar,
 		SPVFuncImplRefractScalar,
+		SPVFuncImplFaceForwardScalar,
 		SPVFuncImplArrayCopyMultidimMax = 6
 	};
 
@@ -410,6 +413,8 @@ protected:
 	void emit_instruction(const Instruction &instr) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
 	                  uint32_t count) override;
+	void emit_spv_amd_shader_trinary_minmax_op(uint32_t result_type, uint32_t result_id, uint32_t op,
+	                                           const uint32_t *args, uint32_t count) override;
 	void emit_header() override;
 	void emit_function_prototype(SPIRFunction &func, const Bitset &return_flags) override;
 	void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id) override;
@@ -516,6 +521,7 @@ protected:
 	MSLStructMemberKey get_struct_member_key(uint32_t type_id, uint32_t index);
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id);
+	const char *to_restrict(uint32_t id, bool space = true);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
 	SPIRType &get_patch_stage_in_struct_type();

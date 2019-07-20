@@ -369,6 +369,7 @@ protected:
 	struct BackendVariations
 	{
 		std::string discard_literal = "discard";
+		std::string demote_literal = "demote";
 		std::string null_pointer_literal = "";
 		bool float_literal_suffix = false;
 		bool double_literal_suffix = true;
@@ -383,6 +384,7 @@ protected:
 		const char *int16_t_literal_suffix = "s";
 		const char *uint16_t_literal_suffix = "us";
 		const char *nonuniform_qualifier = "nonuniformEXT";
+		const char *boolean_mix_function = "mix";
 		bool swizzle_is_function = false;
 		bool shared_is_implied = false;
 		bool unsized_array_supported = true;
@@ -393,7 +395,6 @@ protected:
 		bool can_declare_arrays_inline = true;
 		bool native_row_major_matrix = true;
 		bool use_constructor_splatting = true;
-		bool boolean_mix_support = true;
 		bool allow_precision_qualifiers = false;
 		bool can_swizzle_scalar = false;
 		bool force_gl_in_out_block = false;

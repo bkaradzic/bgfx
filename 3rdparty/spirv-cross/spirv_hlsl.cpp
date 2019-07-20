@@ -1772,6 +1772,16 @@ void CompilerHLSL::emit_resources()
 		end_scope();
 		statement("");
 	}
+
+	if (requires_scalar_faceforward)
+	{
+		// FP16/FP64? No templates in HLSL.
+		statement("float SPIRV_Cross_FaceForward(float n, float i, float nref)");
+		begin_scope();
+		statement("return i * nref < 0.0 ? n : -n;");
+		end_scope();
+		statement("");
+	}
 }
 
 string CompilerHLSL::layout_for_member(const SPIRType &type, uint32_t index)
@@ -3237,8 +3247,11 @@ void CompilerHLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 		SPIRV_CROSS_THROW("packDouble2x32/unpackDouble2x32 not supported in HLSL.");
 
 	case GLSLstd450FindILsb:
-		emit_unary_func_op(result_type, id, args[0], "firstbitlow");
+	{
+		auto basetype = expression_type(args[0]).basetype;
+		emit_unary_func_op_cast(result_type, id, args[0], "firstbitlow", basetype, basetype);
 		break;
+	}
 
 	case GLSLstd450FindSMsb:
 		emit_unary_func_op_cast(result_type, id, args[0], "firstbithigh", int_type, int_type);
@@ -3313,6 +3326,20 @@ void CompilerHLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 				force_recompile();
 			}
 			emit_trinary_func_op(result_type, id, args[0], args[1], args[2], "SPIRV_Cross_Refract");
+		}
+		else
+			CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
+		break;
+
+	case GLSLstd450FaceForward:
+		if (get<SPIRType>(result_type).vecsize == 1)
+		{
+			if (!requires_scalar_faceforward)
+			{
+				requires_scalar_faceforward = true;
+				force_recompile();
+			}
+			emit_trinary_func_op(result_type, id, args[0], args[1], args[2], "SPIRV_Cross_FaceForward");
 		}
 		else
 			CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
@@ -4636,6 +4663,9 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 		break;
 	}
 
+	case OpIsHelperInvocationEXT:
+		SPIRV_CROSS_THROW("helperInvocationEXT() is not supported in HLSL.");
+
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;
@@ -4792,13 +4822,14 @@ string CompilerHLSL::compile()
 	backend.uint16_t_literal_suffix = "u";
 	backend.basic_int_type = "int";
 	backend.basic_uint_type = "uint";
+	backend.demote_literal = "discard";
+	backend.boolean_mix_function = "";
 	backend.swizzle_is_function = false;
 	backend.shared_is_implied = true;
 	backend.unsized_array_supported = true;
 	backend.explicit_struct_type = false;
 	backend.use_initializer_list = true;
 	backend.use_constructor_splatting = false;
-	backend.boolean_mix_support = false;
 	backend.can_swizzle_scalar = true;
 	backend.can_declare_struct_inline = false;
 	backend.can_declare_arrays_inline = false;

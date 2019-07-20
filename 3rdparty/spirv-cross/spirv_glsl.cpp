@@ -600,6 +600,10 @@ void CompilerGLSL::emit_header()
 			require_extension_internal("GL_ARB_shader_image_load_store");
 	}
 
+	// Needed for: layout(post_depth_coverage) in;
+	if (execution.flags.get(ExecutionModePostDepthCoverage))
+		require_extension_internal("GL_ARB_post_depth_coverage");
+
 	for (auto &ext : forced_extensions)
 	{
 		if (ext == "GL_EXT_shader_explicit_arithmetic_types_float16")
@@ -763,6 +767,8 @@ void CompilerGLSL::emit_header()
 
 		if (execution.flags.get(ExecutionModeEarlyFragmentTests))
 			inputs.push_back("early_fragment_tests");
+		if (execution.flags.get(ExecutionModePostDepthCoverage))
+			inputs.push_back("post_depth_coverage");
 
 		if (!options.es && execution.flags.get(ExecutionModeDepthGreater))
 			statement("layout(depth_greater) out float gl_FragDepth;");
@@ -4493,7 +4499,7 @@ void CompilerGLSL::emit_mix_op(uint32_t result_type, uint32_t id, uint32_t left,
 	}
 
 	string mix_op;
-	bool has_boolean_mix = backend.boolean_mix_support &&
+	bool has_boolean_mix = *backend.boolean_mix_function &&
 	                       ((options.es && options.version >= 310) || (!options.es && options.version >= 450));
 	bool trivial_mix = to_trivial_mix_op(restype, mix_op, left, right, lerp);
 
@@ -4523,6 +4529,8 @@ void CompilerGLSL::emit_mix_op(uint32_t result_type, uint32_t id, uint32_t left,
 		inherit_expression_dependencies(id, right);
 		inherit_expression_dependencies(id, lerp);
 	}
+	else if (lerptype.basetype == SPIRType::Boolean)
+		emit_trinary_func_op(result_type, id, left, right, lerp, backend.boolean_mix_function);
 	else
 		emit_trinary_func_op(result_type, id, left, right, lerp, "mix");
 }
@@ -5437,7 +5445,8 @@ void CompilerGLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 
 	// Bit-fiddling
 	case GLSLstd450FindILsb:
-		emit_unary_func_op(result_type, id, args[0], "findLSB");
+		// findLSB always returns int.
+		emit_unary_func_op_cast(result_type, id, args[0], "findLSB", expression_type(args[0]).basetype, int_type);
 		break;
 
 	case GLSLstd450FindSMsb:
@@ -6280,6 +6289,12 @@ string CompilerGLSL::builtin_to_glsl(BuiltIn builtin, StorageClass storage)
 		else
 			SPIRV_CROSS_THROW("Stencil export not supported in GLES.");
 	}
+
+	case BuiltInDeviceIndex:
+		if (!options.vulkan_semantics)
+			SPIRV_CROSS_THROW("Need Vulkan semantics for device group support.");
+		require_extension_internal("GL_EXT_device_group");
+		return "gl_DeviceIndex";
 
 	default:
 		return join("gl_BuiltIn_", convert_to_string(builtin));
@@ -9761,6 +9776,20 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpNoLine:
+		break;
+
+	case OpDemoteToHelperInvocationEXT:
+		if (!options.vulkan_semantics)
+			SPIRV_CROSS_THROW("GL_EXT_demote_to_helper_invocation is only supported in Vulkan GLSL.");
+		require_extension_internal("GL_EXT_demote_to_helper_invocation");
+		statement(backend.demote_literal, ";");
+		break;
+
+	case OpIsHelperInvocationEXT:
+		if (!options.vulkan_semantics)
+			SPIRV_CROSS_THROW("GL_EXT_demote_to_helper_invocation is only supported in Vulkan GLSL.");
+		require_extension_internal("GL_EXT_demote_to_helper_invocation");
+		emit_op(ops[0], ops[1], "helperInvocationEXT()", false);
 		break;
 
 	default:
