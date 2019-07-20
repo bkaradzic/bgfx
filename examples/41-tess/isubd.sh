@@ -1,6 +1,4 @@
 
-
-
 uint findMSB(uint x)
 {
   uint i;
@@ -104,8 +102,6 @@ void subd(in uint key, in vec4 v_in[3], out vec4 v_out[3])
 	
     mat4x3 v = mul(xf, m);
 	
-	//mat4x3 v = mul(xf, transposed);
-	
 	v_out[0] = mtxGetRow(v, 0);
 	v_out[1] = mtxGetRow(v, 1);
 	v_out[2] = mtxGetRow(v, 2);	
@@ -121,9 +117,6 @@ void subd(in uint key, in vec4 v_in[3], out vec4 v_out[3], out vec4 v_out_p[3])
 	
 	mat4x3 v = mul(xf, m);
     mat4x3 vp = mul(xfp, m);
-	
-    //mat4x3 v = instMul(xf, m);
-    //mat4x3 vp = instMul(xfp, m);
 	
 	v_out[0] = mtxGetRow(v, 0);
 	v_out[1] = mtxGetRow(v, 1);
