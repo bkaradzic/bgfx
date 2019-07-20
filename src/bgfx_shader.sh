@@ -47,6 +47,7 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
+
 #	if BGFX_SHADER_LANGUAGE_HLSL > 4
 #		define REGISTER(_type, _reg) register(_type[_reg])
 #	else
@@ -583,6 +584,44 @@ mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
     return transpose(mat4(_0, _1, _2, _3) );
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
+
+mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    return mat3(_0, _1, _2);
+#else
+    return transpose(mat3(_0, _1, _2) );
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+vec4 mtxGetRow(mat4 _0, uint row)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    return vec4(_0[0][row], _0[1][row], _0[2][row], _0[3][row]);
+#else
+    return vec4(_0[row]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+vec4 mtxGetColumn(mat4 _0, uint column)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    return vec4(_0[column]);
+#else
+    return vec4(_0[0][column], _0[1][column], _0[2][column], _0[3][column]);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+float mtxGetElement(mat4 _0, uint column, uint row)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    return _0[column][row];
+#else
+    return _0[row][column];
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;
