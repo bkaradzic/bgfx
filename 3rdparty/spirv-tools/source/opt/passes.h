@@ -23,7 +23,6 @@
 #include "source/opt/cfg_cleanup_pass.h"
 #include "source/opt/code_sink.h"
 #include "source/opt/combine_access_chains.h"
-#include "source/opt/common_uniform_elim_pass.h"
 #include "source/opt/compact_ids_pass.h"
 #include "source/opt/copy_prop_arrays.h"
 #include "source/opt/dead_branch_elim_pass.h"

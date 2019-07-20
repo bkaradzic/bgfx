@@ -372,6 +372,11 @@ uint32_t Instruction::GetTypeComponent(uint32_t element) const {
   return subtype;
 }
 
+Instruction* Instruction::InsertBefore(std::unique_ptr<Instruction>&& i) {
+  i.get()->InsertBefore(this);
+  return i.release();
+}
+
 Instruction* Instruction::InsertBefore(
     std::vector<std::unique_ptr<Instruction>>&& list) {
   Instruction* first_node = list.front().get();
@@ -380,11 +385,6 @@ Instruction* Instruction::InsertBefore(
   }
   list.clear();
   return first_node;
-}
-
-Instruction* Instruction::InsertBefore(std::unique_ptr<Instruction>&& i) {
-  i.get()->InsertBefore(this);
-  return i.release();
 }
 
 bool Instruction::IsValidBasePointer() const {

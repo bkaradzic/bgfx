@@ -469,8 +469,6 @@ static_library("spvtools_opt") {
     "source/opt/code_sink.h",
     "source/opt/combine_access_chains.cpp",
     "source/opt/combine_access_chains.h",
-    "source/opt/common_uniform_elim_pass.cpp",
-    "source/opt/common_uniform_elim_pass.h",
     "source/opt/compact_ids_pass.cpp",
     "source/opt/compact_ids_pass.h",
     "source/opt/composite.cpp",
@@ -670,6 +668,7 @@ static_library("spvtools_link") {
   ]
   deps = [
     ":spvtools",
+    ":spvtools_opt",
     ":spvtools_val",
   ]
   public_deps = [
@@ -736,6 +735,8 @@ static_library("spvtools_reduce") {
     "source/reduce/structured_loop_to_selection_reduction_opportunity.h",
     "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.cpp",
     "source/reduce/structured_loop_to_selection_reduction_opportunity_finder.h",
+    "source/spirv_reducer_options.cpp",
+    "source/spirv_reducer_options.h",
   ]
   deps = [
     ":spvtools",
@@ -865,6 +866,7 @@ source_set("spvtools_software_version") {
   ]
   deps = [
     ":spvtools_build_version",
+    ":spvtools_headers",
   ]
   configs += [ ":spvtools_internal_config" ]
 }
@@ -949,12 +951,11 @@ if (!is_ios) {
   # iOS does not allow std::system calls which spirv-reduce requires
   executable("spirv-reduce") {
     sources = [
-      "source/spirv_reducer_options.cpp",
-      "source/spirv_reducer_options.h",
       "tools/reduce/reduce.cpp",
     ]
     deps = [
       ":spvtools",
+      ":spvtools_opt",
       ":spvtools_reduce",
       ":spvtools_software_version",
       ":spvtools_util_cli_consumer",

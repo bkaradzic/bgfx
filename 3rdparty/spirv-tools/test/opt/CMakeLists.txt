@@ -24,7 +24,6 @@ add_spvtools_unittest(TARGET opt
        cfg_test.cpp
        code_sink_test.cpp
        combine_access_chains_test.cpp
-       common_uniform_elim_test.cpp
        compact_ids_test.cpp
        constant_manager_test.cpp
        copy_prop_array_test.cpp

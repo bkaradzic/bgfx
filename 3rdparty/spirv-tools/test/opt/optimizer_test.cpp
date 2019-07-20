@@ -163,7 +163,6 @@ TEST(Optimizer, CanRegisterPassesFromFlags) {
       "--eliminate-dead-branches",
       "--eliminate-dead-functions",
       "--eliminate-local-multi-store",
-      "--eliminate-common-uniform",
       "--eliminate-dead-const",
       "--eliminate-dead-inserts",
       "--eliminate-dead-variables",

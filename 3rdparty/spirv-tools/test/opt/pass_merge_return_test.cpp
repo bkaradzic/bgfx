@@ -1724,6 +1724,62 @@ OpFunctionEnd
   SinglePassRunAndMatch<MergeReturnPass>(predefs + caller + callee, true);
 }
 
+TEST_F(MergeReturnPassTest, MergeToMergeBranch) {
+  const std::string text =
+      R"(
+; CHECK: [[new_undef:%\w+]] = OpUndef %uint
+; CHECK: OpLoopMerge
+; CHECK: OpLoopMerge [[merge1:%\w+]]
+; CHECK: OpLoopMerge [[merge2:%\w+]]
+; CHECK: [[merge1]] = OpLabel
+; CHECK-NEXT: OpPhi %uint [[new_undef]] [[merge2]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %2 "main"
+               OpExecutionMode %2 LocalSize 100 1 1
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+       %uint = OpTypeInt 32 0
+     %uint_1 = OpConstant %uint 1
+       %bool = OpTypeBool
+      %false = OpConstantFalse %bool
+     %uint_0 = OpConstant %uint 0
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+      %int_1 = OpConstant %int 1
+         %13 = OpUndef %bool
+          %2 = OpFunction %void None %4
+         %14 = OpLabel
+               OpBranch %15
+         %15 = OpLabel
+               OpLoopMerge %16 %17 None
+               OpBranch %18
+         %18 = OpLabel
+               OpLoopMerge %19 %20 None
+               OpBranchConditional %13 %21 %19
+         %21 = OpLabel
+               OpReturn
+         %20 = OpLabel
+               OpBranch %18
+         %19 = OpLabel
+         %22 = OpUndef %uint
+               OpBranch %23
+         %23 = OpLabel
+               OpBranch %16
+         %17 = OpLabel
+               OpBranch %15
+         %16 = OpLabel
+         %24 = OpCopyObject %uint %22
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndMatch<MergeReturnPass>(text, true);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools
