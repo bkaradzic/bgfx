@@ -105,6 +105,8 @@ else()
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
+add_compile_options(-fno-rtti)
+
 function(glslang_set_link_args TARGET)
     # For MinGW compiles, statically link against the GCC and C++ runtimes.
     # This avoids the need to ship those runtimes as DLLs.

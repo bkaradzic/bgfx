@@ -7619,8 +7619,9 @@ spv::Id TGlslangToSpvTraverser::createNoArgOperation(glslang::TOperator op, spv:
     case glslang::EOpIsHelperInvocation:
     {
         std::vector<spv::Id> args; // Dummy arguments
-        spv::Id id = builder.createOp(spv::OpIsHelperInvocationEXT, typeId, args);
-        return id;
+        builder.addExtension(spv::E_SPV_EXT_demote_to_helper_invocation);
+        builder.addCapability(spv::CapabilityDemoteToHelperInvocationEXT);
+        return builder.createOp(spv::OpIsHelperInvocationEXT, typeId, args);
     }
 
     case glslang::EOpReadClockSubgroupKHR: {
@@ -7738,6 +7739,7 @@ spv::Id TGlslangToSpvTraverser::getSymbolId(const glslang::TIntermSymbol* symbol
               decoration = (spv::Decoration)spv::DecorationMax;
         builder.addDecoration(id, decoration);
         if (decoration != spv::DecorationMax) {
+            builder.addCapability(spv::CapabilitySampleMaskOverrideCoverageNV);
             builder.addExtension(spv::E_SPV_NV_sample_mask_override_coverage);
         }
     }
