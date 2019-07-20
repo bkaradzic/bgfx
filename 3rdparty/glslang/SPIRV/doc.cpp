@@ -926,6 +926,7 @@ const char* CapabilityString(int info)
     case CapabilityMeshShadingNV:                   return "MeshShadingNV";
     case CapabilityImageFootprintNV:                return "ImageFootprintNV";
 //    case CapabilityShadingRateNV:                   return "ShadingRateNV";  // superseded by FragmentDensityEXT
+    case CapabilitySampleMaskOverrideCoverageNV:    return "SampleMaskOverrideCoverageNV";
 #endif
     case CapabilityFragmentDensityEXT:              return "FragmentDensityEXT";
 

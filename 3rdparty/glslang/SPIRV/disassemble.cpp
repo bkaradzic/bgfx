@@ -734,6 +734,7 @@ static const char* GLSLextNVGetDebugNames(const char* name, unsigned entrypoint)
         case CapabilityFragmentBarycentricNV:       return "FragmentBarycentricNV";
         case CapabilityMeshShadingNV:               return "MeshShadingNV";
         case CapabilityImageFootprintNV:            return "ImageFootprintNV";
+        case CapabilitySampleMaskOverrideCoverageNV:return "SampleMaskOverrideCoverageNV";
 
         // NV Decorations
         case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";
