@@ -13,40 +13,40 @@
 
   
   
+  
+  
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="bgfx 1.0 documentation" href="index.html"/>
-        <link rel="next" title="API Reference" href="bgfx.html"/>
-        <link rel="prev" title="Building" href="build.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="bgfx.html" />
+    <link rel="prev" title="Building" href="build.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -81,10 +81,13 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">Building</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Examples</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#helloworld">00-helloworld</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cubes">01-cubes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#metaballs">02-metaballs</a></li>
@@ -130,6 +133,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#bloom">38-bloom</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#assao">39-assao</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#svt">40-svt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tess">41-tess</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a></li>
@@ -147,32 +151,52 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">bgfx</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bgfx</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>Examples</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Examples</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -182,20 +206,20 @@
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
 <p>Most of the examples require shader/texture/mesh data to be loaded. When
 running examples your current directory should be examples/runtime.</p>
-<div class="highlight-python"><div class="highlight"><pre>&lt;bgfx_path&gt;/examples/runtime $ ../../.build/&lt;config&gt;/bin/example-00-helloworldDebug
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;bgfx_path&gt;/examples/runtime $ ../../.build/&lt;config&gt;/bin/example-00-helloworldDebug
 </pre></div>
 </div>
 <div class="section" id="helloworld">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/00-helloworld">00-helloworld</a><a class="headerlink" href="#helloworld" title="Permalink to this headline">¶</a></h2>
 <p>Initialization and debug text.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-00-helloworld" src="https://github.com/bkaradzic/bgfx/raw/master/examples/00-helloworld/screenshot.png" />
 </div>
 </div>
 <div class="section" id="cubes">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/01-cubes/cubes.cpp">01-cubes</a><a class="headerlink" href="#cubes" title="Permalink to this headline">¶</a></h2>
 <p>Rendering simple static mesh.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-01-cubes" src="https://github.com/bkaradzic/bgfx/raw/master/examples/01-cubes/screenshot.png" />
 </div>
 </div>
@@ -295,28 +319,28 @@ running examples your current directory should be examples/runtime.</p>
 <div class="section" id="raymarch">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/03-raymarch">03-raymarch</a><a class="headerlink" href="#raymarch" title="Permalink to this headline">¶</a></h2>
 <p>Updating shader uniforms.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-03-raymarch" src="https://github.com/bkaradzic/bgfx/raw/master/examples/03-raymarch/screenshot.png" />
 </div>
 </div>
 <div class="section" id="mesh">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/04-mesh">04-mesh</a><a class="headerlink" href="#mesh" title="Permalink to this headline">¶</a></h2>
 <p>Loading meshes.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-04-mesh" src="https://github.com/bkaradzic/bgfx/raw/master/examples/04-mesh/screenshot.png" />
 </div>
 </div>
 <div class="section" id="instancing">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/05-instancing">05-instancing</a><a class="headerlink" href="#instancing" title="Permalink to this headline">¶</a></h2>
 <p>Geometry instancing.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-05-instancing" src="https://github.com/bkaradzic/bgfx/raw/master/examples/05-instancing/screenshot.png" />
 </div>
 </div>
 <div class="section" id="bump">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/blob/master/examples/06-bump">06-bump</a><a class="headerlink" href="#bump" title="Permalink to this headline">¶</a></h2>
 <p>Loading textures.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-06-bump" src="https://github.com/bkaradzic/bgfx/raw/master/examples/06-bump/screenshot.png" />
 </div>
 </div>
@@ -332,54 +356,54 @@ caching OpenGL binary shaders, and video capture.</p>
 <div class="section" id="hdr">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/09-hdr">09-hdr</a><a class="headerlink" href="#hdr" title="Permalink to this headline">¶</a></h2>
 <p>Using multiple views with frame buffers, and view order remapping.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-09-hdr" src="https://github.com/bkaradzic/bgfx/raw/master/examples/09-hdr/screenshot.png" />
 </div>
 </div>
 <div class="section" id="font">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/10-font">10-font</a><a class="headerlink" href="#font" title="Permalink to this headline">¶</a></h2>
 <p>Use the font system to display text and styled text.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-10-font" src="https://github.com/bkaradzic/bgfx/raw/master/examples/10-font/screenshot.png" />
 </div>
 </div>
 <div class="section" id="fontsdf">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/11-fontsdf">11-fontsdf</a><a class="headerlink" href="#fontsdf" title="Permalink to this headline">¶</a></h2>
 <p>Use a single distance field font to render text of various size.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-11-fontsdf" src="https://github.com/bkaradzic/bgfx/raw/master/examples/11-fontsdf/screenshot.png" />
 </div>
 </div>
 <div class="section" id="lod">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/12-lod">12-lod</a><a class="headerlink" href="#lod" title="Permalink to this headline">¶</a></h2>
 <p>Mesh LOD transitions.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-12-lod" src="https://github.com/bkaradzic/bgfx/raw/master/examples/12-lod/screenshot.png" />
 </div>
 </div>
 <div class="section" id="stencil">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/13-stencil">13-stencil</a><a class="headerlink" href="#stencil" title="Permalink to this headline">¶</a></h2>
 <p>Stencil reflections and shadows.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-13-stencil" src="https://github.com/bkaradzic/bgfx/raw/master/examples/13-stencil/screenshot.png" />
 </div>
 </div>
 <div class="section" id="shadowvolumes">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/14-shadowvolumes">14-shadowvolumes</a><a class="headerlink" href="#shadowvolumes" title="Permalink to this headline">¶</a></h2>
 <p>Shadow volumes.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-14-shadowvolumes" src="https://github.com/bkaradzic/bgfx/raw/master/examples/14-shadowvolumes/screenshot.png" />
 </div>
 </div>
 <div class="section" id="shadowmaps-simple">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/15-shadowmaps-simple">15-shadowmaps-simple</a><a class="headerlink" href="#shadowmaps-simple" title="Permalink to this headline">¶</a></h2>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-15-shadowmaps-simple" src="https://github.com/bkaradzic/bgfx/raw/master/examples/15-shadowmaps-simple/screenshot.png" />
 </div>
 </div>
 <div class="section" id="shadowmaps">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/16-shadowmaps">16-shadowmaps</a><a class="headerlink" href="#shadowmaps" title="Permalink to this headline">¶</a></h2>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-16-shadowmaps" src="https://github.com/bkaradzic/bgfx/raw/master/examples/16-shadowmaps/screenshot.png" />
 </div>
 </div>
@@ -390,596 +414,596 @@ caching OpenGL binary shaders, and video capture.</p>
 <p>Draw stress is CPU stress test to show what is the maximimum number of
 draw calls while maintaining 60Hz frame rate. bgfx currently has default
 limit of 64K draw calls per frame. You can increase this limit by
-changing <code class="docutils literal"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code>.</p>
-<table border="1" class="docutils">
+changing <code class="docutils literal notranslate"><span class="pre">BGFX_CONFIG_MAX_DRAW_CALLS</span></code>.</p>
+<table class="docutils align-default">
 <colgroup>
-<col width="19%" />
-<col width="18%" />
-<col width="16%" />
-<col width="27%" />
-<col width="8%" />
-<col width="11%" />
+<col style="width: 19%" />
+<col style="width: 18%" />
+<col style="width: 16%" />
+<col style="width: 27%" />
+<col style="width: 8%" />
+<col style="width: 11%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">CPU</th>
-<th class="head">Renderer</th>
-<th class="head">GPU</th>
-<th class="head">Arch/Compiler/OS</th>
-<th class="head">Dim</th>
-<th class="head">Calls</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>CPU</p></th>
+<th class="head"><p>Renderer</p></th>
+<th class="head"><p>GPU</p></th>
+<th class="head"><p>Arch/Compiler/OS</p></th>
+<th class="head"><p>Dim</p></th>
+<th class="head"><p>Calls</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>i7-4770K 4.2</td>
-<td>GL2.1</td>
-<td>2xGTX780</td>
-<td>x64/VS2013/Win 8.1</td>
-<td>51</td>
-<td>132651</td>
+<tbody>
+<tr class="row-even"><td><p>i7-4770K 4.2</p></td>
+<td><p>GL2.1</p></td>
+<td><p>2xGTX780</p></td>
+<td><p>x64/VS2013/Win 8.1</p></td>
+<td><p>51</p></td>
+<td><p>132651</p></td>
 </tr>
-<tr class="row-odd"><td>i7-4770K 4.2</td>
-<td>DX11</td>
-<td>2xGTX780</td>
-<td>x64/VS2013/Win 8.1</td>
-<td>50</td>
-<td>125000</td>
+<tr class="row-odd"><td><p>i7-4770K 4.2</p></td>
+<td><p>DX11</p></td>
+<td><p>2xGTX780</p></td>
+<td><p>x64/VS2013/Win 8.1</p></td>
+<td><p>50</p></td>
+<td><p>125000</p></td>
 </tr>
-<tr class="row-even"><td>i7-4790K 4.0</td>
-<td>GL2.1</td>
-<td>GTX970</td>
-<td>x64/VS2015/Win 10</td>
-<td>47</td>
-<td>103823</td>
+<tr class="row-even"><td><p>i7-4790K 4.0</p></td>
+<td><p>GL2.1</p></td>
+<td><p>GTX970</p></td>
+<td><p>x64/VS2015/Win 10</p></td>
+<td><p>47</p></td>
+<td><p>103823</p></td>
 </tr>
-<tr class="row-odd"><td>i7-4790K 4.0</td>
-<td>DX11</td>
-<td>GTX970</td>
-<td>x64/VS2015/Win 10</td>
-<td>45</td>
-<td>91125</td>
+<tr class="row-odd"><td><p>i7-4790K 4.0</p></td>
+<td><p>DX11</p></td>
+<td><p>GTX970</p></td>
+<td><p>x64/VS2015/Win 10</p></td>
+<td><p>45</p></td>
+<td><p>91125</p></td>
 </tr>
-<tr class="row-even"><td>i7-4790K 4.0</td>
-<td>DX9</td>
-<td>GTX970</td>
-<td>x64/VS2013/Win 10</td>
-<td>40</td>
-<td>64000</td>
+<tr class="row-even"><td><p>i7-4790K 4.0</p></td>
+<td><p>DX9</p></td>
+<td><p>GTX970</p></td>
+<td><p>x64/VS2013/Win 10</p></td>
+<td><p>40</p></td>
+<td><p>64000</p></td>
 </tr>
-<tr class="row-odd"><td>i5-3570 3.8</td>
-<td>NV 331.49</td>
-<td>GTX560Ti</td>
-<td>x64/GCC/Linux</td>
-<td>40</td>
-<td>64000+</td>
+<tr class="row-odd"><td><p>i5-3570 3.8</p></td>
+<td><p>NV 331.49</p></td>
+<td><p>GTX560Ti</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>40</p></td>
+<td><p>64000+</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>GL2.1</td>
-<td>GTX650Ti</td>
-<td>x64/VS2008/Win 7</td>
-<td>38</td>
-<td>54872</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>GL2.1</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/VS2008/Win 7</p></td>
+<td><p>38</p></td>
+<td><p>54872</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>GL2.1</td>
-<td>GTX650Ti</td>
-<td>x86/VS2008/Win 7</td>
-<td>38</td>
-<td>54872</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>GL2.1</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/VS2008/Win 7</p></td>
+<td><p>38</p></td>
+<td><p>54872</p></td>
 </tr>
-<tr class="row-even"><td>i7-6700K 4.0</td>
-<td>GL2.1</td>
-<td>Skylake GT2</td>
-<td>x64/GCC/Win 10</td>
-<td>38</td>
-<td>54872</td>
+<tr class="row-even"><td><p>i7-6700K 4.0</p></td>
+<td><p>GL2.1</p></td>
+<td><p>Skylake GT2</p></td>
+<td><p>x64/GCC/Win 10</p></td>
+<td><p>38</p></td>
+<td><p>54872</p></td>
 </tr>
-<tr class="row-odd"><td>i7-4790K 4.0</td>
-<td>DX11</td>
-<td>R7 240</td>
-<td>x64/VS2015/Win 10</td>
-<td>36</td>
-<td>46656</td>
+<tr class="row-odd"><td><p>i7-4790K 4.0</p></td>
+<td><p>DX11</p></td>
+<td><p>R7 240</p></td>
+<td><p>x64/VS2015/Win 10</p></td>
+<td><p>36</p></td>
+<td><p>46656</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>NV 331.113</td>
-<td>GTX650Ti</td>
-<td>x64/GCC/Linux</td>
-<td>34</td>
-<td>39304</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>NV 331.113</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>34</p></td>
+<td><p>39304</p></td>
 </tr>
-<tr class="row-odd"><td>i7-6700K 4.0</td>
-<td>DX11</td>
-<td>Skylake GT2</td>
-<td>x64/GCC/Win 10</td>
-<td>34</td>
-<td>39304</td>
+<tr class="row-odd"><td><p>i7-6700K 4.0</p></td>
+<td><p>DX11</p></td>
+<td><p>Skylake GT2</p></td>
+<td><p>x64/GCC/Win 10</p></td>
+<td><p>34</p></td>
+<td><p>39304</p></td>
 </tr>
-<tr class="row-even"><td>i7-4790K 4.0</td>
-<td>DX9</td>
-<td>R7 240</td>
-<td>x64/VS2015/Win 10</td>
-<td>32</td>
-<td>32768</td>
+<tr class="row-even"><td><p>i7-4790K 4.0</p></td>
+<td><p>DX9</p></td>
+<td><p>R7 240</p></td>
+<td><p>x64/VS2015/Win 10</p></td>
+<td><p>32</p></td>
+<td><p>32768</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>DX9</td>
-<td>GTX650Ti</td>
-<td>x64/GCC/Win 7</td>
-<td>32</td>
-<td>32768</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>DX9</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/GCC/Win 7</p></td>
+<td><p>32</p></td>
+<td><p>32768</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>DX9</td>
-<td>GTX650Ti</td>
-<td>x64/VS2008/Win 7</td>
-<td>32</td>
-<td>32768</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>DX9</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/VS2008/Win 7</p></td>
+<td><p>32</p></td>
+<td><p>32768</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>DX9</td>
-<td>GTX650Ti</td>
-<td>x86/GCC/Win 7</td>
-<td>30</td>
-<td>27000</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>DX9</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/GCC/Win 7</p></td>
+<td><p>30</p></td>
+<td><p>27000</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>DX9</td>
-<td>GTX650Ti</td>
-<td>x86/VS2008/Win 7</td>
-<td>30</td>
-<td>27000</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>DX9</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/VS2008/Win 7</p></td>
+<td><p>30</p></td>
+<td><p>27000</p></td>
 </tr>
-<tr class="row-odd"><td>i5-6200U 2.3</td>
-<td>DX11</td>
-<td>Intel 520</td>
-<td>x64/GCC/Win 10</td>
-<td>30</td>
-<td>27000</td>
+<tr class="row-odd"><td><p>i5-6200U 2.3</p></td>
+<td><p>DX11</p></td>
+<td><p>Intel 520</p></td>
+<td><p>x64/GCC/Win 10</p></td>
+<td><p>30</p></td>
+<td><p>27000</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>GL2.1</td>
-<td>HD5000</td>
-<td>x64/Clang/OSX 10.9</td>
-<td>28</td>
-<td>21852</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>GL2.1</p></td>
+<td><p>HD5000</p></td>
+<td><p>x64/Clang/OSX 10.9</p></td>
+<td><p>28</p></td>
+<td><p>21852</p></td>
 </tr>
-<tr class="row-odd"><td>Q8200 2.33</td>
-<td>NV 319.32</td>
-<td>GTX260</td>
-<td>x64/GCC/Linux</td>
-<td>27</td>
-<td>19683</td>
+<tr class="row-odd"><td><p>Q8200 2.33</p></td>
+<td><p>NV 319.32</p></td>
+<td><p>GTX260</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>27</p></td>
+<td><p>19683</p></td>
 </tr>
-<tr class="row-even"><td>i7-6700K 4.0</td>
-<td>GL2.1</td>
-<td>Skylake GT2</td>
-<td>x64/GCC/Linux</td>
-<td>27</td>
-<td>19683</td>
+<tr class="row-even"><td><p>i7-6700K 4.0</p></td>
+<td><p>GL2.1</p></td>
+<td><p>Skylake GT2</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>27</p></td>
+<td><p>19683</p></td>
 </tr>
-<tr class="row-odd"><td>i7-2600K 3.4</td>
-<td>DX9</td>
-<td>AMD6800</td>
-<td>x64/VS2012/Win 7</td>
-<td>27</td>
-<td>19683</td>
+<tr class="row-odd"><td><p>i7-2600K 3.4</p></td>
+<td><p>DX9</p></td>
+<td><p>AMD6800</p></td>
+<td><p>x64/VS2012/Win 7</p></td>
+<td><p>27</p></td>
+<td><p>19683</p></td>
 </tr>
-<tr class="row-even"><td>i7-2600K 3.4</td>
-<td>GL2.1</td>
-<td>AMD6800</td>
-<td>x64/VS2012/Win 7</td>
-<td>26</td>
-<td>17576</td>
+<tr class="row-even"><td><p>i7-2600K 3.4</p></td>
+<td><p>GL2.1</p></td>
+<td><p>AMD6800</p></td>
+<td><p>x64/VS2012/Win 7</p></td>
+<td><p>26</p></td>
+<td><p>17576</p></td>
 </tr>
-<tr class="row-odd"><td>i7-4770R 3.2</td>
-<td>Mesa 10.5.9</td>
-<td>HD5200</td>
-<td>x64/GCC/Linux</td>
-<td>26</td>
-<td>17576</td>
+<tr class="row-odd"><td><p>i7-4770R 3.2</p></td>
+<td><p>Mesa 10.5.9</p></td>
+<td><p>HD5200</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>26</p></td>
+<td><p>17576</p></td>
 </tr>
-<tr class="row-even"><td>i5-6200U 2.3</td>
-<td>GL</td>
-<td>Intel 520</td>
-<td>x64/GCC/Win 10</td>
-<td>26</td>
-<td>17576</td>
+<tr class="row-even"><td><p>i5-6200U 2.3</p></td>
+<td><p>GL</p></td>
+<td><p>Intel 520</p></td>
+<td><p>x64/GCC/Win 10</p></td>
+<td><p>26</p></td>
+<td><p>17576</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>DX9-Wine</td>
-<td>GTX650Ti</td>
-<td>x64/GCC/Linux</td>
-<td>24</td>
-<td>13824</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>DX9-Wine</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>24</p></td>
+<td><p>13824</p></td>
 </tr>
-<tr class="row-even"><td>i5-6200U 2.3</td>
-<td>Mesa 10.5.9</td>
-<td>Intel 520</td>
-<td>x64/GCC/Linux</td>
-<td>23</td>
-<td>12167</td>
+<tr class="row-even"><td><p>i5-6200U 2.3</p></td>
+<td><p>Mesa 10.5.9</p></td>
+<td><p>Intel 520</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>23</p></td>
+<td><p>12167</p></td>
 </tr>
-<tr class="row-odd"><td>i7-4750HQ 2.0</td>
-<td>Mesa 10.0.1</td>
-<td>HD5200</td>
-<td>x64/GCC/Linux</td>
-<td>22</td>
-<td>10648</td>
+<tr class="row-odd"><td><p>i7-4750HQ 2.0</p></td>
+<td><p>Mesa 10.0.1</p></td>
+<td><p>HD5200</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>22</p></td>
+<td><p>10648</p></td>
 </tr>
-<tr class="row-even"><td>i7-4750HQ 2.0</td>
-<td>Mesa 10.1.3</td>
-<td>HD5200</td>
-<td>x64/GCC/Linux</td>
-<td>21</td>
-<td>9261</td>
+<tr class="row-even"><td><p>i7-4750HQ 2.0</p></td>
+<td><p>Mesa 10.1.3</p></td>
+<td><p>HD5200</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>21</p></td>
+<td><p>9261</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>ES2-ANGLE</td>
-<td>GTX650Ti</td>
-<td>x86/VS2008/Win 7</td>
-<td>21</td>
-<td>9261</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>ES2-ANGLE</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/VS2008/Win 7</p></td>
+<td><p>21</p></td>
+<td><p>9261</p></td>
 </tr>
-<tr class="row-even"><td>Q8200 2.33</td>
-<td>Gallium 0.4</td>
-<td>AMD5770</td>
-<td>x64/GCC/Linux</td>
-<td>21</td>
-<td>9261</td>
+<tr class="row-even"><td><p>Q8200 2.33</p></td>
+<td><p>Gallium 0.4</p></td>
+<td><p>AMD5770</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>21</p></td>
+<td><p>9261</p></td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
-<td>ES2</td>
-<td>HD5000</td>
-<td>JIT/Clang/PNaCl 31</td>
-<td>21</td>
-<td>9261</td>
+<tr class="row-odd"><td><p>i5-4250U 1.3</p></td>
+<td><p>ES2</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/PNaCl 31</p></td>
+<td><p>21</p></td>
+<td><p>9261</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>ES2</td>
-<td>HD5000</td>
-<td>x86/GCC/NaCl 31</td>
-<td>20</td>
-<td>8000</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>ES2</p></td>
+<td><p>HD5000</p></td>
+<td><p>x86/GCC/NaCl 31</p></td>
+<td><p>20</p></td>
+<td><p>8000</p></td>
 </tr>
-<tr class="row-odd"><td>Q8200 2.33</td>
-<td>Gallium 0.4</td>
-<td>GTX260</td>
-<td>x64/GCC/Linux</td>
-<td>19</td>
-<td>6859</td>
+<tr class="row-odd"><td><p>Q8200 2.33</p></td>
+<td><p>Gallium 0.4</p></td>
+<td><p>GTX260</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>19</p></td>
+<td><p>6859</p></td>
 </tr>
-<tr class="row-even"><td>i5-2450M 2.5</td>
-<td>Mesa 10.2.0</td>
-<td>HD3000</td>
-<td>x64/GCC/Linux</td>
-<td>19</td>
-<td>6859</td>
+<tr class="row-even"><td><p>i5-2450M 2.5</p></td>
+<td><p>Mesa 10.2.0</p></td>
+<td><p>HD3000</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>19</p></td>
+<td><p>6859</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>ES2-PowerVR</td>
-<td>GTX650Ti</td>
-<td>x86/VS2008/Win 7</td>
-<td>18</td>
-<td>5832</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>ES2-PowerVR</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/VS2008/Win 7</p></td>
+<td><p>18</p></td>
+<td><p>5832</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>FF27-GL</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>17</td>
-<td>4913</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>FF27-GL</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>17</p></td>
+<td><p>4913</p></td>
 </tr>
-<tr class="row-odd"><td>i7-6700K 4.0</td>
-<td>DX9</td>
-<td>Skylake GT2</td>
-<td>x64/GCC/Win 10</td>
-<td>16</td>
-<td>4096</td>
+<tr class="row-odd"><td><p>i7-6700K 4.0</p></td>
+<td><p>DX9</p></td>
+<td><p>Skylake GT2</p></td>
+<td><p>x64/GCC/Win 10</p></td>
+<td><p>16</p></td>
+<td><p>4096</p></td>
 </tr>
-<tr class="row-even"><td>i7-4750HQ 2.0</td>
-<td>Mesa 8.0.5</td>
-<td>LLVMPIPE</td>
-<td>x64/GCC/Linux</td>
-<td>16</td>
-<td>4096</td>
+<tr class="row-even"><td><p>i7-4750HQ 2.0</p></td>
+<td><p>Mesa 8.0.5</p></td>
+<td><p>LLVMPIPE</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>16</p></td>
+<td><p>4096</p></td>
 </tr>
-<tr class="row-odd"><td>i5-6200U 2.3</td>
-<td>DX9</td>
-<td>Intel 520</td>
-<td>x64/GCC/Win 10</td>
-<td>16</td>
-<td>4096</td>
+<tr class="row-odd"><td><p>i5-6200U 2.3</p></td>
+<td><p>DX9</p></td>
+<td><p>Intel 520</p></td>
+<td><p>x64/GCC/Win 10</p></td>
+<td><p>16</p></td>
+<td><p>4096</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>ES2-Qualcomm</td>
-<td>GTX650Ti</td>
-<td>x86/VS2008/Win 7</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>ES2-Qualcomm</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/VS2008/Win 7</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>ES2</td>
-<td>GTX650Ti</td>
-<td>x64/GCC/NaCl 31</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>ES2</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/GCC/NaCl 31</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>ES2</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/PNaCl 31</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>ES2</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/PNaCl 31</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-odd"><td>Q8200 2.33</td>
-<td>NV 319.32</td>
-<td>GTX260</td>
-<td>x64/GCC/NaCl 31</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-odd"><td><p>Q8200 2.33</p></td>
+<td><p>NV 319.32</p></td>
+<td><p>GTX260</p></td>
+<td><p>x64/GCC/NaCl 31</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-even"><td>Q8200 2.33</td>
-<td>NV 319.32</td>
-<td>GTX260</td>
-<td>x64/GCC/PNaCl 31</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-even"><td><p>Q8200 2.33</p></td>
+<td><p>NV 319.32</p></td>
+<td><p>GTX260</p></td>
+<td><p>x64/GCC/PNaCl 31</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-odd"><td>&#8216;12 Nexus 7</td>
-<td>ES2</td>
-<td>Tegra3</td>
-<td>ARM/GCC/Android</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-odd"><td><p>‘12 Nexus 7</p></td>
+<td><p>ES2</p></td>
+<td><p>Tegra3</p></td>
+<td><p>ARM/GCC/Android</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>ES2-FF27</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>ES2-FF27</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
-<td>Chrome33</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-odd"><td><p>i5-4250U 1.3</p></td>
+<td><p>Chrome33</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-even"><td>iPad mini 2</td>
-<td>ES2</td>
-<td>PVR G6430</td>
-<td>ARM64/Clang/iOS7</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-even"><td><p>iPad mini 2</p></td>
+<td><p>ES2</p></td>
+<td><p>PVR G6430</p></td>
+<td><p>ARM64/Clang/iOS7</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>Chrome33</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>14</td>
-<td>2744</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>Chrome33</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>14</p></td>
+<td><p>2744</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>FF27-ANGLE</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>14</td>
-<td>2744</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>FF27-ANGLE</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>14</p></td>
+<td><p>2744</p></td>
 </tr>
-<tr class="row-odd"><td>&#8216;13 Nexus 10</td>
-<td>ES2</td>
-<td>Mali T604</td>
-<td>ARM/GCC/Android</td>
-<td>13</td>
-<td>2197</td>
+<tr class="row-odd"><td><p>‘13 Nexus 10</p></td>
+<td><p>ES2</p></td>
+<td><p>Mali T604</p></td>
+<td><p>ARM/GCC/Android</p></td>
+<td><p>13</p></td>
+<td><p>2197</p></td>
 </tr>
-<tr class="row-even"><td>iPhone 5</td>
-<td>ES2</td>
-<td>PVR SGX543</td>
-<td>ARM/Clang/iOS7</td>
-<td>13</td>
-<td>2197</td>
+<tr class="row-even"><td><p>iPhone 5</p></td>
+<td><p>ES2</p></td>
+<td><p>PVR SGX543</p></td>
+<td><p>ARM/Clang/iOS7</p></td>
+<td><p>13</p></td>
+<td><p>2197</p></td>
 </tr>
-<tr class="row-odd"><td>&#8216;13 Nexus 7</td>
-<td>ES2</td>
-<td>S4 Pro</td>
-<td>ARM/GCC/Android</td>
-<td>12</td>
-<td>1728</td>
+<tr class="row-odd"><td><p>‘13 Nexus 7</p></td>
+<td><p>ES2</p></td>
+<td><p>S4 Pro</p></td>
+<td><p>ARM/GCC/Android</p></td>
+<td><p>12</p></td>
+<td><p>1728</p></td>
 </tr>
-<tr class="row-even"><td>iPad 2</td>
-<td>ES2</td>
-<td>PVR SGX543</td>
-<td>ARM/Clang/iOS6</td>
-<td>12</td>
-<td>1728</td>
+<tr class="row-even"><td><p>iPad 2</p></td>
+<td><p>ES2</p></td>
+<td><p>PVR SGX543</p></td>
+<td><p>ARM/Clang/iOS6</p></td>
+<td><p>12</p></td>
+<td><p>1728</p></td>
 </tr>
-<tr class="row-odd"><td>AMD A4-5000</td>
-<td>Gallium 0.4</td>
-<td>HD8330/Kabini</td>
-<td>x64/GCC/Linux</td>
-<td>12</td>
-<td>1728</td>
+<tr class="row-odd"><td><p>AMD A4-5000</p></td>
+<td><p>Gallium 0.4</p></td>
+<td><p>HD8330/Kabini</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>12</p></td>
+<td><p>1728</p></td>
 </tr>
-<tr class="row-even"><td>Xperia Z</td>
-<td>ES2</td>
-<td>Adreno320</td>
-<td>ARM/GCC/Android</td>
-<td>11</td>
-<td>1331</td>
+<tr class="row-even"><td><p>Xperia Z</p></td>
+<td><p>ES2</p></td>
+<td><p>Adreno320</p></td>
+<td><p>ARM/GCC/Android</p></td>
+<td><p>11</p></td>
+<td><p>1331</p></td>
 </tr>
-<tr class="row-odd"><td>iPod 4</td>
-<td>ES2</td>
-<td>PVR SGX535</td>
-<td>ARM/Clang/iOS6</td>
-<td>7</td>
-<td>343</td>
+<tr class="row-odd"><td><p>iPod 4</p></td>
+<td><p>ES2</p></td>
+<td><p>PVR SGX535</p></td>
+<td><p>ARM/Clang/iOS6</p></td>
+<td><p>7</p></td>
+<td><p>343</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>ES2-Mali</td>
-<td>GTX650Ti</td>
-<td>x86/VS2008/Windows7</td>
-<td>6</td>
-<td>216</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>ES2-Mali</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x86/VS2008/Windows7</p></td>
+<td><p>6</p></td>
+<td><p>216</p></td>
 </tr>
-<tr class="row-odd"><td>Creator CI20</td>
-<td>ES2</td>
-<td>PVR SGX540</td>
-<td>MIPS/GCC/Debian8</td>
-<td>7</td>
-<td>343</td>
+<tr class="row-odd"><td><p>Creator CI20</p></td>
+<td><p>ES2</p></td>
+<td><p>PVR SGX540</p></td>
+<td><p>MIPS/GCC/Debian8</p></td>
+<td><p>7</p></td>
+<td><p>343</p></td>
 </tr>
-<tr class="row-even"><td>i5-6200U 2.3</td>
-<td>ES2</td>
-<td>SwiftShader</td>
-<td>x64/GCC/Linux</td>
-<td>6</td>
-<td>216</td>
+<tr class="row-even"><td><p>i5-6200U 2.3</p></td>
+<td><p>ES2</p></td>
+<td><p>SwiftShader</p></td>
+<td><p>x64/GCC/Linux</p></td>
+<td><p>6</p></td>
+<td><p>216</p></td>
 </tr>
-<tr class="row-odd"><td>RaspberryPi</td>
-<td>ES2</td>
-<td>VC IV</td>
-<td>ARM/GCC/Raspbian</td>
-<td>6</td>
-<td>216</td>
+<tr class="row-odd"><td><p>RaspberryPi</p></td>
+<td><p>ES2</p></td>
+<td><p>VC IV</p></td>
+<td><p>ARM/GCC/Raspbian</p></td>
+<td><p>6</p></td>
+<td><p>216</p></td>
 </tr>
 </tbody>
 </table>
 <p>To test browsers in 60Hz mode following changes were made:</p>
 <ul class="simple">
-<li>Firefox 27 <a class="reference external" href="about:config">about:config</a> adjustments: <code class="docutils literal"><span class="pre">webgl.prefer-native-gl</span> <span class="pre">true</span></code>
-(on Windows), and <code class="docutils literal"><span class="pre">layout.frame_rate</span> <span class="pre">500</span></code>.</li>
-<li>Chrome 33 command line option: <code class="docutils literal"><span class="pre">--disable-gpu-vsync</span></code>.</li>
+<li><p>Firefox 27 <a class="reference external" href="about:config">about:config</a> adjustments: <code class="docutils literal notranslate"><span class="pre">webgl.prefer-native-gl</span> <span class="pre">true</span></code>
+(on Windows), and <code class="docutils literal notranslate"><span class="pre">layout.frame_rate</span> <span class="pre">500</span></code>.</p></li>
+<li><p>Chrome 33 command line option: <code class="docutils literal notranslate"><span class="pre">--disable-gpu-vsync</span></code>.</p></li>
 </ul>
 </div>
 <div class="section" id="hz-test-for-browsers">
 <h3>30Hz (test for browsers)<a class="headerlink" href="#hz-test-for-browsers" title="Permalink to this headline">¶</a></h3>
-<p>By default browsers are using vsync, and don&#8217;t have option to turn it
+<p>By default browsers are using vsync, and don’t have option to turn it
 off programatically.</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="19%" />
-<col width="14%" />
-<col width="14%" />
-<col width="31%" />
-<col width="8%" />
-<col width="12%" />
+<col style="width: 19%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 31%" />
+<col style="width: 8%" />
+<col style="width: 12%" />
 </colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">CPU</th>
-<th class="head">Renderer</th>
-<th class="head">GPU</th>
-<th class="head">Arch/Compiler/OS</th>
-<th class="head">Dim</th>
-<th class="head">Calls</th>
+<thead>
+<tr class="row-odd"><th class="head"><p>CPU</p></th>
+<th class="head"><p>Renderer</p></th>
+<th class="head"><p>GPU</p></th>
+<th class="head"><p>Arch/Compiler/OS</p></th>
+<th class="head"><p>Dim</p></th>
+<th class="head"><p>Calls</p></th>
 </tr>
 </thead>
-<tbody valign="top">
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>GL2.1</td>
-<td>GTX650Ti</td>
-<td>x64/VS2008/Win7</td>
-<td>38</td>
-<td>64000+</td>
+<tbody>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>GL2.1</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>x64/VS2008/Win7</p></td>
+<td><p>38</p></td>
+<td><p>64000+</p></td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
-<td>GL2.1</td>
-<td>HD5000</td>
-<td>x64/Clang/OSX 10.9</td>
-<td>36</td>
-<td>46656</td>
+<tr class="row-odd"><td><p>i5-4250U 1.3</p></td>
+<td><p>GL2.1</p></td>
+<td><p>HD5000</p></td>
+<td><p>x64/Clang/OSX 10.9</p></td>
+<td><p>36</p></td>
+<td><p>46656</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>Chrome34</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-PNaCl 31</td>
-<td>28</td>
-<td>21952</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>Chrome34</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-PNaCl 31</p></td>
+<td><p>28</p></td>
+<td><p>21952</p></td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
-<td>Chrome33</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-PNaCl 31</td>
-<td>27</td>
-<td>19683</td>
+<tr class="row-odd"><td><p>i5-4250U 1.3</p></td>
+<td><p>Chrome33</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-PNaCl 31</p></td>
+<td><p>27</p></td>
+<td><p>19683</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>FF28</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>25</td>
-<td>15625</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>FF28</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>25</p></td>
+<td><p>15625</p></td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
-<td>FF36</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>25</td>
-<td>15625</td>
+<tr class="row-odd"><td><p>i5-4250U 1.3</p></td>
+<td><p>FF36</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>25</p></td>
+<td><p>15625</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>Chrome41</td>
-<td>HD5000</td>
-<td>x64/GCC/OSX-NaCl 41</td>
-<td>24</td>
-<td>13824</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>Chrome41</p></td>
+<td><p>HD5000</p></td>
+<td><p>x64/GCC/OSX-NaCl 41</p></td>
+<td><p>24</p></td>
+<td><p>13824</p></td>
 </tr>
-<tr class="row-odd"><td>i5-4250U 1.3</td>
-<td>FF37</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>23</td>
-<td>12167</td>
+<tr class="row-odd"><td><p>i5-4250U 1.3</p></td>
+<td><p>FF37</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>23</p></td>
+<td><p>12167</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>FF27</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>20</td>
-<td>8000</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>FF27</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>20</p></td>
+<td><p>8000</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>Chrome33</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-PNaCl 31</td>
-<td>20</td>
-<td>8000</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>Chrome33</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-PNaCl 31</p></td>
+<td><p>20</p></td>
+<td><p>8000</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>Chrome34</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>18</td>
-<td>5832</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>Chrome34</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>18</p></td>
+<td><p>5832</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>Chrome33</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>18</td>
-<td>5832</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>Chrome33</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>18</p></td>
+<td><p>5832</p></td>
 </tr>
-<tr class="row-even"><td>i7-920 2.66</td>
-<td>FF28</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>18</td>
-<td>5832</td>
+<tr class="row-even"><td><p>i7-920 2.66</p></td>
+<td><p>FF28</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>18</p></td>
+<td><p>5832</p></td>
 </tr>
-<tr class="row-odd"><td>i7-920 2.66</td>
-<td>FF27</td>
-<td>GTX650Ti</td>
-<td>JIT/Clang/W7-asm.js</td>
-<td>18</td>
-<td>5832</td>
+<tr class="row-odd"><td><p>i7-920 2.66</p></td>
+<td><p>FF27</p></td>
+<td><p>GTX650Ti</p></td>
+<td><p>JIT/Clang/W7-asm.js</p></td>
+<td><p>18</p></td>
+<td><p>5832</p></td>
 </tr>
-<tr class="row-even"><td>i5-4250U 1.3</td>
-<td>Safari7</td>
-<td>HD5000</td>
-<td>JIT/Clang/OSX-asm.js</td>
-<td>15</td>
-<td>3375</td>
+<tr class="row-even"><td><p>i5-4250U 1.3</p></td>
+<td><p>Safari7</p></td>
+<td><p>HD5000</p></td>
+<td><p>JIT/Clang/OSX-asm.js</p></td>
+<td><p>15</p></td>
+<td><p>3375</p></td>
 </tr>
 </tbody>
 </table>
@@ -988,28 +1012,28 @@ off programatically.</p>
 <div class="section" id="ibl">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/18-ibl">18-ibl</a><a class="headerlink" href="#ibl" title="Permalink to this headline">¶</a></h2>
 <p>Image-based lighting.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-18-ibl" src="https://github.com/bkaradzic/bgfx/raw/master/examples/18-ibl/screenshot.png" />
 </div>
 </div>
 <div class="section" id="oit">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/19-oit">19-oit</a><a class="headerlink" href="#oit" title="Permalink to this headline">¶</a></h2>
 <p>Weighted, Blended Order-Independent Transparency</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-19-oit" src="https://github.com/bkaradzic/bgfx/raw/master/examples/19-oit/screenshot.png" />
 </div>
 </div>
 <div class="section" id="nanovg">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/20-nanovg">20-nanovg</a><a class="headerlink" href="#nanovg" title="Permalink to this headline">¶</a></h2>
 <p>NanoVG is small antialiased vector graphics rendering library.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-20-nanovg" src="https://github.com/bkaradzic/bgfx/raw/master/examples/20-nanovg/screenshot.png" />
 </div>
 </div>
 <div class="section" id="deferred">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/21-deferred">21-deferred</a><a class="headerlink" href="#deferred" title="Permalink to this headline">¶</a></h2>
 <p>MRT rendering and deferred shading.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-21-deferred" src="https://github.com/bkaradzic/bgfx/raw/master/examples/21-deferred/screenshot.png" />
 </div>
 </div>
@@ -1020,14 +1044,14 @@ off programatically.</p>
 <div class="section" id="vectordisplay">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/23-vectordisplay">23-vectordisplay</a><a class="headerlink" href="#vectordisplay" title="Permalink to this headline">¶</a></h2>
 <p>Rendering lines as oldschool vectors.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-23-vectordisplay" src="https://github.com/bkaradzic/bgfx/raw/master/examples/23-vectordisplay/screenshot.png" />
 </div>
 </div>
 <div class="section" id="nbody">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/24-nbody">24-nbody</a><a class="headerlink" href="#nbody" title="Permalink to this headline">¶</a></h2>
 <p>N-body simulation with compute shaders using buffers.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-24-nbody" src="https://github.com/bkaradzic/bgfx/raw/master/examples/24-nbody/screenshot.png" />
 </div>
 </div>
@@ -1038,151 +1062,161 @@ off programatically.</p>
 <div class="section" id="occlusion">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/26-occlusion">26-occlusion</a><a class="headerlink" href="#occlusion" title="Permalink to this headline">¶</a></h2>
 <p>Using occlusion query for conditional rendering.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-26-occlusion" src="https://github.com/bkaradzic/bgfx/raw/master/examples/26-occlusion/screenshot.png" />
 </div>
 </div>
 <div class="section" id="terrain">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/27-terrain">27-terrain</a><a class="headerlink" href="#terrain" title="Permalink to this headline">¶</a></h2>
 <p>Terrain painting example.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-27-terrain" src="https://github.com/bkaradzic/bgfx/raw/master/examples/27-terrain/screenshot.png" />
 </div>
 </div>
 <div class="section" id="wireframe">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/28-wireframe">28-wireframe</a><a class="headerlink" href="#wireframe" title="Permalink to this headline">¶</a></h2>
 <p>Drawing wireframe mesh.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-28-wireframe" src="https://github.com/bkaradzic/bgfx/raw/master/examples/28-wireframe/screenshot.png" />
 </div>
 </div>
 <div class="section" id="debugdraw">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/29-debugdraw">29-debugdraw</a><a class="headerlink" href="#debugdraw" title="Permalink to this headline">¶</a></h2>
 <p>Debug draw.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-29-debugdraw" src="https://github.com/bkaradzic/bgfx/raw/master/examples/29-debugdraw/screenshot.png" />
 </div>
 </div>
 <div class="section" id="picking">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/30-picking">30-picking</a><a class="headerlink" href="#picking" title="Permalink to this headline">¶</a></h2>
 <p>Mouse picking via GPU readback.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-30-picking" src="https://github.com/bkaradzic/bgfx/raw/master/examples/30-picking/screenshot.png" />
 </div>
 </div>
 <div class="section" id="rsm">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/31-rsm">31-rsm</a><a class="headerlink" href="#rsm" title="Permalink to this headline">¶</a></h2>
 <p>Global Illumination with Reflective Shadow Map.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-31-rsm" src="https://github.com/bkaradzic/bgfx/raw/master/examples/31-rsm/screenshot.png" />
 </div>
 </div>
 <div class="section" id="particles">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/32-particles">32-particles</a><a class="headerlink" href="#particles" title="Permalink to this headline">¶</a></h2>
 <p>Particles.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-32-particles" src="https://github.com/bkaradzic/bgfx/raw/master/examples/32-particles/screenshot.png" />
 </div>
 </div>
 <div class="section" id="pom">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/33-pom">33-pom</a><a class="headerlink" href="#pom" title="Permalink to this headline">¶</a></h2>
 <p>Parallax occlusion mapping.</p>
-<dl class="docutils">
-<dt>Reference(s):</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="http://apoorvaj.io/exploring-bump-mapping-with-webgl.html">Exploring bump mapping with WebGL</a></li>
+<dl class="simple">
+<dt>Reference(s):</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="http://apoorvaj.io/exploring-bump-mapping-with-webgl.html">Exploring bump mapping with WebGL</a></p></li>
 </ul>
 </dd>
 </dl>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-33-pom" src="https://github.com/bkaradzic/bgfx/raw/master/examples/33-pom/screenshot.png" />
 </div>
 </div>
 <div class="section" id="mvs">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/34-mvs">34-mvs</a><a class="headerlink" href="#mvs" title="Permalink to this headline">¶</a></h2>
 <p>Multiple vertex streams.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-34-mvs" src="https://github.com/bkaradzic/bgfx/raw/master/examples/34-mvs/screenshot.png" />
 </div>
 </div>
 <div class="section" id="dynamic">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/35-dynamic">35-dynamic</a><a class="headerlink" href="#dynamic" title="Permalink to this headline">¶</a></h2>
 <p>Dynamic buffers update.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-35-dynamic" src="https://github.com/bkaradzic/bgfx/raw/master/examples/35-dynamic/screenshot.png" />
 </div>
 </div>
 <div class="section" id="sky">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/36-sky">36-sky</a><a class="headerlink" href="#sky" title="Permalink to this headline">¶</a></h2>
 <p>Perez dynamic sky model.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-36-sky" src="https://github.com/bkaradzic/bgfx/raw/master/examples/36-sky/screenshot.png" />
 </div>
 </div>
 <div class="section" id="gpudrivenrendering">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/37-gpudrivenrendering">37-gpudrivenrendering</a><a class="headerlink" href="#gpudrivenrendering" title="Permalink to this headline">¶</a></h2>
 <p>GPU-Driven Rendering.</p>
-<dl class="docutils">
-<dt>Reference(s):</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="https://interplayoflight.wordpress.com/2017/11/15/experiments-in-gpu-based-occlusion-culling/">Experiments in GPU-based occlusion culling</a>,</li>
-<li><a class="reference external" href="https://interplayoflight.wordpress.com/2018/01/15/experiments-in-gpu-based-occlusion-culling-part-2-multidrawindirect-and-mesh-lodding/">Experiments in GPU-based occlusion culling part 2: MultiDrawIndirect and mesh lodding</a>,</li>
-<li><a class="reference external" href="https://interplayoflight.wordpress.com/2018/03/05/porting-gpu-driven-occlusion-culling-to-bgfx/">Porting GPU driven occlusion culling to bgfx</a>.</li>
+<dl class="simple">
+<dt>Reference(s):</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://interplayoflight.wordpress.com/2017/11/15/experiments-in-gpu-based-occlusion-culling/">Experiments in GPU-based occlusion culling</a>,</p></li>
+<li><p><a class="reference external" href="https://interplayoflight.wordpress.com/2018/01/15/experiments-in-gpu-based-occlusion-culling-part-2-multidrawindirect-and-mesh-lodding/">Experiments in GPU-based occlusion culling part 2: MultiDrawIndirect and mesh lodding</a>,</p></li>
+<li><p><a class="reference external" href="https://interplayoflight.wordpress.com/2018/03/05/porting-gpu-driven-occlusion-culling-to-bgfx/">Porting GPU driven occlusion culling to bgfx</a>.</p></li>
 </ul>
 </dd>
 </dl>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-37-gpudrivenrendering" src="https://github.com/bkaradzic/bgfx/raw/master/examples/37-gpudrivenrendering/screenshot.png" />
 </div>
 </div>
 <div class="section" id="bloom">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/38-bloom">38-bloom</a><a class="headerlink" href="#bloom" title="Permalink to this headline">¶</a></h2>
 <p>Bloom.</p>
-<dl class="docutils">
-<dt>Reference(s):</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare">Next Generation Post Processing in Call of Duty: Advanced Warfare</a>.</li>
+<dl class="simple">
+<dt>Reference(s):</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare">Next Generation Post Processing in Call of Duty: Advanced Warfare</a>.</p></li>
 </ul>
 </dd>
 </dl>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-38-bloom" src="https://github.com/bkaradzic/bgfx/raw/master/examples/38-bloom/screenshot.png" />
 </div>
 </div>
 <div class="section" id="assao">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/39-assao">39-assao</a><a class="headerlink" href="#assao" title="Permalink to this headline">¶</a></h2>
 <p>Adaptive Screen Space Ambient Occlusion.</p>
-<dl class="docutils">
-<dt>Reference(s):</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="https://software.intel.com/en-us/articles/adaptive-screen-space-ambient-occlusion">Adaptive Screen Space Ambient Occlusion</a>.</li>
+<dl class="simple">
+<dt>Reference(s):</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://software.intel.com/en-us/articles/adaptive-screen-space-ambient-occlusion">Adaptive Screen Space Ambient Occlusion</a>.</p></li>
 </ul>
 </dd>
 </dl>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-39-assao" src="https://github.com/bkaradzic/bgfx/raw/master/examples/39-assao/screenshot.png" />
 </div>
 </div>
 <div class="section" id="svt">
 <h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/40-svt">40-svt</a><a class="headerlink" href="#svt" title="Permalink to this headline">¶</a></h2>
 <p>Sparse Virtual Textures.</p>
-<div class="figure">
+<div class="figure align-default">
 <img alt="example-40-svt" src="https://github.com/bkaradzic/bgfx/raw/master/examples/40-svt/screenshot.png" />
+</div>
+</div>
+<div class="section" id="tess">
+<h2><a class="reference external" href="https://github.com/bkaradzic/bgfx/tree/master/examples/41-tess">41-tess</a><a class="headerlink" href="#tess" title="Permalink to this headline">¶</a></h2>
+<p>Adaptive GPU Tessellation with Compute Shaders</p>
+<dl class="simple">
+<dt>Reference(s):</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="http://onrendering.com/data/papers/isubd/isubd.pdf">Adaptive GPU Tessellation with Compute Shaders by Jad Khoury, Jonathan Dupuy, and Christophe Riccio</a>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="figure align-default">
+<img alt="example-41-tess" src="https://github.com/bkaradzic/bgfx/raw/master/examples/41-tess/screenshot.png" />
 </div>
 </div>
 </div>
 
 
            </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="bgfx.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="bgfx.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="build.html" class="btn btn-neutral" title="Building" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="build.html" class="btn btn-neutral float-left" title="Building" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1191,7 +1225,7 @@ off programatically.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2010-2018, Branimir Karadžić.
+        &copy; Copyright 2010-2018, Branimir Karadžić
 
     </p>
   </div> 
@@ -1207,35 +1241,15 @@ off programatically.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'1.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  false
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>

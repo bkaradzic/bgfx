@@ -13,39 +13,39 @@
 
   
   
+  
+  
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="bgfx 1.0 documentation" href="#"/>
-        <link rel="next" title="Overview" href="overview.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Overview" href="overview.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -80,7 +80,10 @@
           
             
             
-                <ul>
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -99,32 +102,52 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">bgfx</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">bgfx</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
-      
-    <li>Documentation</li>
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>Documentation</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -134,10 +157,9 @@
 <h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
 <p>Cross-platform, graphics API agnostic, “Bring Your Own Engine/Framework” style rendering library,
 licensed under permissive BSD-2 clause open source license.</p>
-<dl class="docutils">
-<dt>Source at GitHub:</dt>
-<dd><ul class="first last simple">
-<li><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></li>
+<dl class="simple">
+<dt>Source at GitHub:</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/bkaradzic/bgfx">https://github.com/bkaradzic/bgfx</a></p></li>
 </ul>
 </dd>
 </dl>
@@ -190,7 +212,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li class="toctree-l2"><a class="reference internal" href="build.html#amalgamated-build">Amalgamated Build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#tools">Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="build.html#alternative-build-systems">Alternative build systems</a></li>
-<li class="toctree-l2"><a class="reference internal" href="build.html#minimal-example-without-bgfx-example-harness">Minimal example without bgfx&#8217; example harness</a></li>
+<li class="toctree-l2"><a class="reference internal" href="build.html#minimal-example-without-bgfx-example-harness">Minimal example without bgfx’ example harness</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
@@ -239,6 +261,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#bloom">38-bloom</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#assao">39-assao</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#svt">40-svt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#tess">41-tess</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="bgfx.html">API Reference</a><ul>
@@ -321,12 +344,13 @@ licensed under permissive BSD-2 clause open source license.</p>
 
 
            </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="overview.html" class="btn btn-neutral float-right" title="Overview" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="overview.html" class="btn btn-neutral float-right" title="Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>
@@ -336,7 +360,7 @@ licensed under permissive BSD-2 clause open source license.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2010-2018, Branimir Karadžić.
+        &copy; Copyright 2010-2018, Branimir Karadžić
 
     </p>
   </div> 
@@ -352,35 +376,15 @@ licensed under permissive BSD-2 clause open source license.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'1.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  false
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>
