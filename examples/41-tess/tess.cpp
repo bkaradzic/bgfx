@@ -5,10 +5,10 @@
 
  /*
   * Reference(s):
+  *
   * - Adaptive GPU Tessellation with Compute Shaders by Jad Khoury, Jonathan Dupuy, and Christophe Riccio
-  *  http://onrendering.com/data/papers/isubd/isubd.pdf
-  * - Based on Demo
-  *  https://github.com/jdupuy/opengl-framework/tree/master/demo-isubd-terrain#implicit-subdivision-on-the-gpu
+  *   http://onrendering.com/data/papers/isubd/isubd.pdf
+  *   https://github.com/jdupuy/opengl-framework/tree/master/demo-isubd-terrain#implicit-subdivision-on-the-gpu
   */
 
 #include <bx/allocator.h>
