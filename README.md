@@ -329,6 +329,19 @@ https://github.com/jpcy/xatlas#xatlas - Mesh parameterization library
 
 ![xatlas](https://user-images.githubusercontent.com/3744372/43034066-53a62dee-8d18-11e8-9767-0b38ed3fa2d3.png)
 
+## Heroes of Hammerwatch
+
+https://store.steampowered.com/app/677120/Heroes_of_Hammerwatch/ Heroes of Hammerwatch
+is a rogue-lite action-adventure game set in the same universe as Hammerwatch.
+Encounter endless hordes of enemies, traps, puzzles, secrets and lots of loot,
+as you battle your way through procedurally generated levels to reach the top
+of the Forsaken Spire.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=uTIVDKdNvms" 
+target="_blank"><img src="http://img.youtube.com/vi/uTIVDKdNvms/0.jpg" 
+alt="Heroes of Hammerwatch"
+width="640" height="480" border="0" /></a>
+
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------
 
