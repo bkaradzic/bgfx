@@ -11,57 +11,66 @@
   *  https://github.com/jdupuy/opengl-framework/tree/master/demo-isubd-terrain#implicit-subdivision-on-the-gpu
   */
 
-#include "common.h"
-#include "bgfx_utils.h"
-#include "imgui/imgui.h"
-#include "camera.h"
-#include "bounds.h"
 #include <bx/allocator.h>
 #include <bx/debug.h>
-#include <bx/math.h>
 #include <bx/file.h>
-#include <vector>
+#include <bx/math.h>
 
+#include "bgfx_utils.h"
+#include "bounds.h"
+#include "camera.h"
+#include "common.h"
 #include "constants.h"
+#include "imgui/imgui.h"
 
 namespace
 {
-	enum {
+	enum
+	{
 		PROGRAM_TERRAIN_NORMAL,
 		PROGRAM_TERRAIN,
-		SHADING_COUNT };
 
-	enum {
+		SHADING_COUNT
+	};
+
+	enum
+	{
 		BUFFER_SUBD
 	};
 
-	enum {
-		PROGRAM_SUBD_CS_LOD,    
-		PROGRAM_UPDATE_INDIRECT,  
+	enum
+	{
+		PROGRAM_SUBD_CS_LOD,
+		PROGRAM_UPDATE_INDIRECT,
 		PROGRAM_INIT_INDIRECT,
 		PROGRAM_UPDATE_DRAW,
+
 		PROGRAM_COUNT
 	};
 
-	enum {
+	enum
+	{
 		TERRAIN_DMAP_SAMPLER,
 		TERRAIN_SMAP_SAMPLER,
+
 		SAMPLER_COUNT
 	};
 
-	enum {
+	enum
+	{
 		TEXTURE_DMAP,
 		TEXTURE_SMAP,
+
 		TEXTURE_COUNT
 	};
 
+	constexpr int32_t kNumVec4 = 2;
+
 	struct Uniforms
 	{
-		enum { NumVec4 = 2 };
-
 		void init()
 		{
-			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, NumVec4);
+			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, kNumVec4);
 
 			cull = 1;
 			freeze = 0;
@@ -71,7 +80,7 @@ namespace
 
 		void submit()
 		{
-			bgfx::setUniform(u_params, params, NumVec4);
+			bgfx::setUniform(u_params, params, kNumVec4);
 		}
 
 		void destroy()
@@ -83,11 +92,18 @@ namespace
 		{
 			struct
 			{
-				float dmapFactor; float lodFactor; float cull; float freeze;
-				float gpuSubd; float padding[3];
+				float dmapFactor;
+				float lodFactor;
+				float cull;
+				float freeze;
+
+				float gpuSubd;
+				float padding0;
+				float padding1;
+				float padding2;
 			};
 
-			float params[NumVec4 * 4];
+			float params[kNumVec4 * 4];
 		};
 
 		bgfx::UniformHandle u_params;
@@ -123,7 +139,7 @@ namespace
 			m_primitivePixelLengthTarget = 7.0f;
 			m_fovy = 60.0f;
 			m_pingPong = 0;
-			m_reset_gpu = true;
+			m_restart = true;
 
 			// Enable m_debug text.
 			bgfx::setDebug(m_debug);
@@ -156,9 +172,9 @@ namespace
 			cameraSetPosition({ 0.0f, 0.5f, 0.0f });
 			cameraSetVerticalAngle(0);
 
-			is_wireframe = false;
-			is_frozen = false;
-			is_culled = true;
+			m_wireframe = false;
+			m_freeze = false;
+			m_cull = true;
 
 			loadPrograms();
 			loadBuffers();
@@ -187,19 +203,23 @@ namespace
 			bgfx::destroy(m_instancedGeometryIndices);
 			bgfx::destroy(m_instancedGeometryVertices);
 
-			for (uint32_t i = 0; i < PROGRAM_COUNT; ++i) {
+			for (uint32_t i = 0; i < PROGRAM_COUNT; ++i)
+			{
 				bgfx::destroy(m_programsCompute[i]);
 			}
 
-			for (uint32_t i = 0; i < SHADING_COUNT; ++i) {
+			for (uint32_t i = 0; i < SHADING_COUNT; ++i)
+			{
 				bgfx::destroy(m_programsDraw[i]);
 			}
 
-			for (uint32_t i = 0; i < SAMPLER_COUNT; ++i) {
+			for (uint32_t i = 0; i < SAMPLER_COUNT; ++i)
+			{
 				bgfx::destroy(m_samplers[i]);
 			}
 
-			for (uint32_t i = 0; i < TEXTURE_COUNT; ++i) {
+			for (uint32_t i = 0; i < TEXTURE_COUNT; ++i)
+			{
 				bgfx::destroy(m_textures[i]);
 			}
 
@@ -245,8 +265,8 @@ namespace
 					, 0
 				);
 
-				if (ImGui::Checkbox("Debug wireframe", &is_wireframe)) {
-					if (is_wireframe) {
+				if (ImGui::Checkbox("Debug wireframe", &m_wireframe)) {
+					if (m_wireframe) {
 						bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
 					}
 					else {
@@ -256,8 +276,8 @@ namespace
 
 				ImGui::SameLine();
 
-				if (ImGui::Checkbox("Cull", &is_culled)) {
-					if (is_culled) {
+				if (ImGui::Checkbox("Cull", &m_cull)) {
+					if (m_cull) {
 						m_uniforms.cull = 1.0;
 					}
 					else {
@@ -267,8 +287,8 @@ namespace
 
 				ImGui::SameLine();
 
-				if (ImGui::Checkbox("Freeze subdividing", &is_frozen)) {
-					if (is_frozen) {
+				if (ImGui::Checkbox("Freeze subdividing", &m_freeze)) {
+					if (m_freeze) {
 						m_uniforms.freeze = 1.0;
 					}
 					else {
@@ -282,7 +302,7 @@ namespace
 				int gpuSlider = (int)m_uniforms.gpuSubd;
 
 				if (ImGui::SliderInt("Triangle Patch level", &gpuSlider, 0, 3)) {
-					m_reset_gpu = true;
+					m_restart = true;
 					m_uniforms.gpuSubd = (float)gpuSlider;
 				}
 
@@ -292,15 +312,11 @@ namespace
 
 
 				ImGui::End();
-				
+
 				if (!ImGui::MouseOverArea())
 				{
 					// Update camera.
-					cameraUpdate(deltaTime, m_mouseState);
-
-					if (!!m_mouseState.m_buttons[entry::MouseButton::Left])
-					{
-					}
+					cameraUpdate(deltaTime*0.01f, m_mouseState);
 				}
 
 				bgfx::touch(0);
@@ -326,8 +342,8 @@ namespace
 				m_uniforms.submit();
 
 				// update the subd buffers
-				if (m_reset_gpu) {
-					
+				if (m_restart) {
+
 					m_pingPong = 1;
 
 					bgfx::destroy(m_instancedGeometryVertices);
@@ -349,7 +365,7 @@ namespace
 					bgfx::dispatch(0, m_programsCompute[PROGRAM_INIT_INDIRECT], 1, 1, 1);
 
 
-					m_reset_gpu = false;
+					m_restart = false;
 				}
 
 				else {
@@ -528,12 +544,12 @@ namespace
 			};
 
 			uint32_t indices[] = {
-				0, 
-				1, 
-				3, 
-				2, 
-				3, 
-				1 
+				0,
+				1,
+				3,
+				2,
+				3,
+				1
 			};
 
 			m_geometryDecl.begin().add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float).end();
@@ -653,22 +669,26 @@ namespace
 
 		int64_t m_timeOffset;
 
-		struct {
+		struct DMap
+		{
 			bx::FilePath pathToFile;
 			float scale;
-		} m_dmap;
+		};
 
+		DMap m_dmap;
 
 		int m_computeThreadCount;
 		int m_shading;
 		int m_gpuSubd;
+		int m_pingPong;
+
 		float m_primitivePixelLengthTarget;
 		float m_fovy;
-		int m_pingPong;
-		bool m_reset_gpu;
-		bool is_wireframe;
-		bool is_culled;
-		bool is_frozen;
+
+		bool m_restart;
+		bool m_wireframe;
+		bool m_cull;
+		bool m_freeze;
 	};
 
 } // namespace
