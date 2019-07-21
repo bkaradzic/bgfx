@@ -359,14 +359,14 @@ namespace
 				, 0x303030ff
 				, 1.0f
 				, 0
-			);
+				);
 
 			bgfx::setViewClear(1
 				, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 				, 0x303030ff
 				, 1.0f
 				, 0
-			);
+				);
 
 			// Imgui.
 			imguiCreate();
@@ -440,69 +440,58 @@ namespace
 
 		bool update() override
 		{
-			if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState))
+			if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 			{
 				int64_t now = bx::getHPCounter();
 				static int64_t last = now;
 				const int64_t frameTime = now - last;
 				last = now;
-				const double freq = double(bx::getHPFrequency());
+				const double freq = double(bx::getHPFrequency() );
 				const float deltaTime = float(frameTime / freq);
 
-				imguiBeginFrame(m_mouseState.m_mx
+				imguiBeginFrame(
+					  m_mouseState.m_mx
 					, m_mouseState.m_my
-					, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
-					| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
+					, (m_mouseState.m_buttons[entry::MouseButton::Left]   ? IMGUI_MBUT_LEFT   : 0)
+					| (m_mouseState.m_buttons[entry::MouseButton::Right]  ? IMGUI_MBUT_RIGHT  : 0)
 					| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 					, m_mouseState.m_mz
 					, uint16_t(m_width)
 					, uint16_t(m_height)
-				);
+					);
 
 				showExampleDialog(this);
 
 				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+					  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
 					, ImGuiCond_FirstUseEver
-				);
+					);
 				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 5.0f, m_height / 3.0f)
+					  ImVec2(m_width / 5.0f, m_height / 3.0f)
 					, ImGuiCond_FirstUseEver
-				);
-				ImGui::Begin("Settings"
-					, NULL
-					, 0
-				);
+					);
+				ImGui::Begin("Settings", NULL, 0);
 
-				if (ImGui::Checkbox("Debug wireframe", &m_wireframe)) {
-					if (m_wireframe) {
-						bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
-					}
-					else {
-						bgfx::setDebug(BGFX_DEBUG_NONE);
-					}
+				if (ImGui::Checkbox("Debug wireframe", &m_wireframe) )
+				{
+					bgfx::setDebug(m_wireframe
+						? BGFX_DEBUG_WIREFRAME
+						: BGFX_DEBUG_NONE
+						);
 				}
 
 				ImGui::SameLine();
 
-				if (ImGui::Checkbox("Cull", &m_cull)) {
-					if (m_cull) {
-						m_uniforms.cull = 1.0;
-					}
-					else {
-						m_uniforms.cull = 0.0;
-					}
+				if (ImGui::Checkbox("Cull", &m_cull) )
+				{
+					m_uniforms.cull = m_cull ? 1.0f : 0.0f;
 				}
 
 				ImGui::SameLine();
 
-				if (ImGui::Checkbox("Freeze subdividing", &m_freeze)) {
-					if (m_freeze) {
-						m_uniforms.freeze = 1.0;
-					}
-					else {
-						m_uniforms.freeze = 0.0;
-					}
+				if (ImGui::Checkbox("Freeze subdividing", &m_freeze) )
+				{
+					m_uniforms.freeze = m_freeze ? 1.0f : 0.0f;
 				}
 
 
@@ -510,19 +499,19 @@ namespace
 
 				int gpuSlider = (int)m_uniforms.gpuSubd;
 
-				if (ImGui::SliderInt("Triangle Patch level", &gpuSlider, 0, 3)) {
+				if (ImGui::SliderInt("Triangle Patch level", &gpuSlider, 0, 3) )
+				{
 					m_restart = true;
-					m_uniforms.gpuSubd = (float)gpuSlider;
+					m_uniforms.gpuSubd = float(gpuSlider);
 				}
 
 				ImGui::Combo("Shading", &m_shading, s_shaderOptions, 2);
 
 				ImGui::Text("Some variables require rebuilding the subdivide buffers and causes a stutter.");
 
-
 				ImGui::End();
 
-				if (!ImGui::MouseOverArea())
+				if (!ImGui::MouseOverArea() )
 				{
 					// Update camera.
 					cameraUpdate(deltaTime*0.01f, m_mouseState);
@@ -537,7 +526,7 @@ namespace
 
 				float model[16];
 
-				bx::mtxRotateX(model, bx::toRad(90));
+				bx::mtxRotateX(model, bx::toRad(90) );
 
 				bx::mtxProj(m_projMtx, m_fovy, float(m_width) / float(m_height), 0.0001f, 2000.0f, bgfx::getCaps()->homogeneousDepth);
 
@@ -545,14 +534,14 @@ namespace
 				bgfx::setViewTransform(0, m_viewMtx, m_projMtx);
 
 				// Set view 1
-				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewRect(1, 0, 0, uint16_t(m_width), uint16_t(m_height) );
 				bgfx::setViewTransform(1, m_viewMtx, m_projMtx);
 
 				m_uniforms.submit();
 
 				// update the subd buffers
-				if (m_restart) {
-
+				if (m_restart)
+				{
 					m_pingPong = 1;
 
 					bgfx::destroy(m_instancedGeometryVertices);
@@ -576,8 +565,8 @@ namespace
 
 					m_restart = false;
 				}
-
-				else {
+				else
+				{
 					// update batch
 					bgfx::setBuffer(3, m_dispatchIndirect, bgfx::Access::ReadWrite);
 					bgfx::setBuffer(4, m_bufferCounter, bgfx::Access::ReadWrite);
@@ -683,11 +672,13 @@ namespace
 
 			int mipcnt = dmap->m_numMips;
 
-			const bgfx::Memory* mem = bgfx::alloc(w * h * 2 * sizeof(float));
+			const bgfx::Memory* mem = bgfx::alloc(w * h * 2 * sizeof(float) );
 			float* smap = (float*)mem->data;
 
-			for (int j = 0; j < h; ++j) {
-				for (int i = 0; i < w; ++i) {
+			for (int j = 0; j < h; ++j)
+			{
+				for (int i = 0; i < w; ++i)
+				{
 					int i1 = bx::max(0, i - 1);
 					int i2 = bx::min(w - 1, i + 1);
 					int j1 = bx::max(0, j - 1);
@@ -708,11 +699,16 @@ namespace
 				}
 			}
 
-			m_textures[TEXTURE_SMAP] = bgfx::createTexture2D((uint16_t)w, (uint16_t)h, mipcnt > 1, 1, bgfx::TextureFormat::RG32F,
-				BGFX_TEXTURE_NONE, mem);
-
+			m_textures[TEXTURE_SMAP] = bgfx::createTexture2D(
+				  (uint16_t)w
+				, (uint16_t)h
+				, mipcnt > 1
+				, 1
+				, bgfx::TextureFormat::RG32F
+				, BGFX_TEXTURE_NONE
+				, mem
+				);
 		}
-
 
 		/**
 		 * Load the Displacement Texture
@@ -723,8 +719,15 @@ namespace
 		{
 			dmap = imageLoad(m_dmap.pathToFile.getCPtr(), bgfx::TextureFormat::R16);
 
-			m_textures[TEXTURE_DMAP] = bgfx::createTexture2D((uint16_t)dmap->m_width, (uint16_t)dmap->m_height, false, 1, bgfx::TextureFormat::R16,
-				BGFX_TEXTURE_NONE, bgfx::makeRef(dmap->m_data, dmap->m_size));
+			m_textures[TEXTURE_DMAP] = bgfx::createTexture2D(
+				  (uint16_t)dmap->m_width
+				, (uint16_t)dmap->m_height
+				, false
+				, 1
+				, bgfx::TextureFormat::R16
+				, BGFX_TEXTURE_NONE
+				, bgfx::makeRef(dmap->m_data, dmap->m_size)
+				);
 		}
 
 		/**
@@ -737,43 +740,55 @@ namespace
 		}
 
 		/**
-        * Load the Geometry Buffer
-		*
-		* This procedure loads the scene geometry into an index and
-		* vertex buffer. Here, we only load 2 triangles to define the
-	    * terrain.
-	    **/
+		 * Load the Geometry Buffer
+		 *
+		 * This procedure loads the scene geometry into an index and
+		 * vertex buffer. Here, we only load 2 triangles to define the
+		 * terrain.
+		 **/
 		void loadGeometryBuffers()
 		{
-			float vertices[] = {
+			const float vertices[] =
+			{
 				-1.0f, -1.0f, 0.0f, 1.0f,
 				+1.0f, -1.0f, 0.0f, 1.0f,
 				+1.0f, +1.0f, 0.0f, 1.0f,
-				-1.0f, +1.0f, 0.0f, 1.0f
+				-1.0f, +1.0f, 0.0f, 1.0f,
 			};
 
-			uint32_t indices[] = {
-				0,
-				1,
-				3,
-				2,
-				3,
-				1
-			};
+			const uint32_t indices[] = { 0, 1, 3, 2, 3, 1 };
 
 			m_geometryDecl.begin().add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float).end();
 
-			m_geometryVertices = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(vertices)), m_geometryDecl, BGFX_BUFFER_COMPUTE_READ);
-			m_geometryIndices = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(indices)),  BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32);
+			m_geometryVertices = bgfx::createVertexBuffer(
+				  bgfx::copy(vertices, sizeof(vertices) )
+				, m_geometryDecl
+				, BGFX_BUFFER_COMPUTE_READ
+				);
+			m_geometryIndices = bgfx::createIndexBuffer(
+				  bgfx::copy(indices, sizeof(indices) )
+				, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_INDEX32
+				);
 		}
 
 		void loadSubdivisionBuffers()
 		{
-			const size_t bufferCapacity = 1 << 27;
+			const uint32_t bufferCapacity = 1 << 27;
 
-			m_bufferSubd[BUFFER_SUBD] = bgfx::createDynamicIndexBuffer(bufferCapacity, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-			m_bufferSubd[BUFFER_SUBD + 1] = bgfx::createDynamicIndexBuffer(bufferCapacity, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-			m_bufferCulledSubd = bgfx::createDynamicIndexBuffer(bufferCapacity, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+			m_bufferSubd[BUFFER_SUBD] = bgfx::createDynamicIndexBuffer(
+				  bufferCapacity
+				, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32
+				);
+
+			m_bufferSubd[BUFFER_SUBD + 1] = bgfx::createDynamicIndexBuffer(
+				  bufferCapacity
+				, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32
+				);
+
+			m_bufferCulledSubd = bgfx::createDynamicIndexBuffer(
+				  bufferCapacity
+				, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32
+				);
 		}
 
 		/**
@@ -827,10 +842,20 @@ namespace
 				break;
 			}
 
-			m_instancedGeometryDecl.begin().add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float).end();
+			m_instancedGeometryDecl
+				.begin()
+				.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+				.end();
 
-			m_instancedGeometryVertices = bgfx::createVertexBuffer(bgfx::makeRef(vertices, sizeof(float) * 2 * m_instancedMeshVertexCount), m_instancedGeometryDecl);
-			m_instancedGeometryIndices  = bgfx::createIndexBuffer(bgfx::makeRef(indexes, sizeof(uint32_t) * m_instancedMeshPrimitiveCount * 3), BGFX_BUFFER_INDEX32);
+			m_instancedGeometryVertices = bgfx::createVertexBuffer(
+				  bgfx::makeRef(vertices, sizeof(float) * 2 * m_instancedMeshVertexCount)
+				, m_instancedGeometryDecl
+				);
+
+			m_instancedGeometryIndices  = bgfx::createIndexBuffer(
+				  bgfx::makeRef(indexes, sizeof(uint32_t) * m_instancedMeshPrimitiveCount * 3)
+				, BGFX_BUFFER_INDEX32
+				);
 		}
 
 		Uniforms m_uniforms;
