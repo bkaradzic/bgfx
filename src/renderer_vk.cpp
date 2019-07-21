@@ -1895,7 +1895,9 @@ VK_IMPORT_DEVICE
 			{
 				VkDescriptorPoolSize dps[] =
 				{
-					{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (10 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS) << 10 },
+//					{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (10 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS) << 10 },
+                    { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          (10 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS) << 10 },
+                    { VK_DESCRIPTOR_TYPE_SAMPLER,                (10 * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS) << 10 },
 					{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         10<<10                           },
 //					{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
 				};
@@ -3935,14 +3937,17 @@ VK_DESTROY
 
             const spvc_resource_type resourceTypes[] = {
                 SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
+                SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
                 SPVC_RESOURCE_TYPE_UNIFORM_BUFFER,
             };
             const VkDescriptorType descriptorTypes[] = {
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                VK_DESCRIPTOR_TYPE_SAMPLER,
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             };
             const char* resourceTypeNames[] = {
                 "separate_image",
+                "separate_sampler",
                 "uniform_buffer",
             };
 
@@ -3955,7 +3960,7 @@ VK_DESTROY
                 {
                     auto setIndex = spvc_compiler_get_decoration(compilerGlsl, list[i].id, SpvDecorationDescriptorSet);
                     auto bind = spvc_compiler_get_decoration(compilerGlsl, list[i].id, SpvDecorationBinding);
-                    m_bindings[bidx].stageFlags = shaderStage;
+                    m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
                     m_bindings[bidx].descriptorType = descriptorType;
                     m_bindings[bidx].binding = bind;
                     m_bindings[bidx].pImmutableSamplers = NULL;

@@ -642,7 +642,10 @@ namespace bgfx { namespace spirv
 
 		shader->setEntryPoint("main");
         shader->setAutoMapBindings(true);
-        shader->setShiftBinding(glslang::EResSampler, 16);
+        uint32_t bindingOffset = (stage == EShLanguage::EShLangFragment ? 32 : 0);
+        shader->setShiftBinding(glslang::EResUbo, bindingOffset);
+        shader->setShiftBinding(glslang::EResTexture, bindingOffset);
+        shader->setShiftBinding(glslang::EResSampler, bindingOffset + 16);
 
 		const char* shaderStrings[] = { _code.c_str() };
 		shader->setStrings(
