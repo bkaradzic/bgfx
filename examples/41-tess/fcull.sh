@@ -1,20 +1,7 @@
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// Frustum Culling API
-//
-
 bool frustumCullingTest(mat4 mvp, vec3 bmin, vec3 bmax);
 
-//
-//
-//// end header file /////////////////////////////////////////////////////
-
-
-// *****************************************************************************
-// Frustum Implementation
-
-struct Frustum {
+struct Frustum
+{
 	vec4 planes[6];
 };
 
@@ -23,18 +10,21 @@ struct Frustum {
  *
  * Based on "Fast Extraction of Viewing Frustum Planes from the World-
  * View-Projection Matrix", by Gil Gribb and Klaus Hartmann.
- * This procedure computes the planes of the frustum and normalizes 
+ * This procedure computes the planes of the frustum and normalizes
  * them.
  */
 void loadFrustum(out Frustum f, mat4 mvp)
 {
 	for (int i = 0; i < 3; ++i)
-	for (int j = 0; j < 2; ++j) {
-		f.planes[i*2+j].x = mtxGetElement(mvp, 0, 3) + (j == 0 ? mtxGetElement(mvp, 0, i) : -mtxGetElement(mvp, 0, i));
-		f.planes[i*2+j].y = mtxGetElement(mvp, 1, 3) + (j == 0 ? mtxGetElement(mvp, 1, i) : -mtxGetElement(mvp, 1, i));
-		f.planes[i*2+j].z = mtxGetElement(mvp, 2, 3) + (j == 0 ? mtxGetElement(mvp, 2, i) : -mtxGetElement(mvp, 2, i));
-		f.planes[i*2+j].w = mtxGetElement(mvp, 3, 3) + (j == 0 ? mtxGetElement(mvp, 3, i) : -mtxGetElement(mvp, 3, i));
-		f.planes[i*2+j]*= length(f.planes[i*2+j].xyz);
+	{
+		for (int j = 0; j < 2; ++j)
+		{
+			f.planes[i*2+j].x = mtxGetElement(mvp, 0, 3) + (j == 0 ? mtxGetElement(mvp, 0, i) : -mtxGetElement(mvp, 0, i));
+			f.planes[i*2+j].y = mtxGetElement(mvp, 1, 3) + (j == 0 ? mtxGetElement(mvp, 1, i) : -mtxGetElement(mvp, 1, i));
+			f.planes[i*2+j].z = mtxGetElement(mvp, 2, 3) + (j == 0 ? mtxGetElement(mvp, 2, i) : -mtxGetElement(mvp, 2, i));
+			f.planes[i*2+j].w = mtxGetElement(mvp, 3, 3) + (j == 0 ? mtxGetElement(mvp, 3, i) : -mtxGetElement(mvp, 3, i));
+			f.planes[i*2+j]*= length(f.planes[i*2+j].xyz);
+		}
 	}
 }
 
@@ -66,13 +56,11 @@ bool frustumCullingTest(mat4 mvp, vec3 bmin, vec3 bmax)
 	Frustum f;
 
 	loadFrustum(f, mvp);
-	for (int i = 0; i < 6 && a >= 0.0f; ++i) {
+	for (int i = 0; i < 6 && a >= 0.0f; ++i)
+	{
 		vec3 n = negativeVertex(bmin, bmax, f.planes[i].xyz);
-
 		a = dot(vec4(n, 1.0f), f.planes[i]);
 	}
 
 	return (a >= 0.0);
 }
-
-
