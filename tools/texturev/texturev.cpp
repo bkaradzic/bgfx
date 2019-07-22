@@ -1073,7 +1073,7 @@ struct InterpolatorT
 	{
 		from     = _value;
 		to       = _value;
-		duration = 0.0;
+		duration = 0.0f;
 		offset   = bx::getHPCounter();
 	}
 
@@ -1095,7 +1095,7 @@ struct InterpolatorT
 			const double freq = double(bx::getHPFrequency() );
 			int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
-			float lerp = duration != 0 ? bx::clamp(time, 0.0f, duration) / duration : 0.0f;
+			float lerp = duration != 0.0f ? bx::clamp(time, 0.0f, duration) / duration : 0.0f;
 			return lerpT(from, to, easeT(lerp) );
 		}
 
