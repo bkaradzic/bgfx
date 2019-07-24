@@ -169,6 +169,7 @@
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdClearAttachments);           \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdResolveImage);               \
 			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBuffer);                 \
+			VK_IMPORT_DEVICE_FUNC(false, vkCmdCopyBufferToImage);          \
 			VK_IMPORT_DEVICE_FUNC(false, vkMapMemory);                     \
 			VK_IMPORT_DEVICE_FUNC(false, vkUnmapMemory);                   \
 			VK_IMPORT_DEVICE_FUNC(false, vkFlushMappedMemoryRanges);       \
@@ -203,6 +204,7 @@
 			VK_DESTROY_FUNC(Framebuffer);         \
 			VK_DESTROY_FUNC(Image);               \
 			VK_DESTROY_FUNC(ImageView);           \
+			VK_DESTROY_FUNC(Sampler);             \
 			VK_DESTROY_FUNC(Pipeline);            \
 			VK_DESTROY_FUNC(PipelineCache);       \
 			VK_DESTROY_FUNC(PipelineLayout);      \
@@ -321,9 +323,9 @@ VK_DESTROY
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
 		void reset(VkDescriptorBufferInfo& _gpuAddress);
-		void* allocUbv(VkDescriptorSet descriptorSet, uint32_t _vsize, uint32_t _fsize);
+		void* allocUbv(uint32_t _vsize, uint32_t _fsize);
 
-//		VkDescriptorSet* m_descriptorSet;
+		VkDescriptorSet m_descriptorSet[BGFX_CONFIG_MAX_DRAW_CALLS];
 		VkBuffer m_buffer;
 		VkDeviceMemory m_deviceMem;
 		uint8_t* m_data;
@@ -391,6 +393,7 @@ VK_DESTROY
 			, m_numUniforms(0)
 			, m_numPredefined(0)
 			, m_numBindings(0)
+			, m_numSamplers(0)
 		{
 		}
 
@@ -411,6 +414,15 @@ VK_DESTROY
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
 
+		struct SamplerInfo
+        {
+		    UniformHandle uniformHandle;
+		    char name[32];
+		    uint32_t samplerBinding;
+		    uint32_t imageBinding;
+        };
+		SamplerInfo m_sampler[32];
+		uint16_t m_numSamplers;
 		uint16_t m_numBindings;
 		VkDescriptorSetLayoutBinding m_bindings[32];
 	};
@@ -436,13 +448,37 @@ VK_DESTROY
 		// TODO: rinthel - add pipeline layout here
 		uint32_t m_descriptorSetLayoutHash;
 		VkPipelineLayout m_pipelineLayout;
-		VkDescriptorSet m_descriptorSet;
 	};
 
 	struct TextureVK
 	{
+	    void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
-	};
+		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+
+//        D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
+//        D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
+//        ID3D12Resource* m_ptr;
+//        D3D12_RESOURCE_STATES m_state;
+        void* m_directAccessPtr;
+        uint64_t m_flags;
+        uint32_t m_width;
+        uint32_t m_height;
+        uint32_t m_depth;
+        uint32_t m_numLayers;
+        uint16_t m_samplerIdx;
+        uint8_t m_type;
+        uint8_t m_requestedFormat;
+        uint8_t m_textureFormat;
+        uint8_t m_numMips;
+
+        VkBuffer m_stagingBuffer;
+        VkDeviceMemory m_stagingDeviceMem;
+        VkImage m_textureImage;
+        VkDeviceMemory m_textureDeviceMem;
+        VkImageView m_textureImageView;
+        VkSampler m_textureSampler;
+    };
 
 	struct FrameBufferVK
 	{
