@@ -117,18 +117,6 @@ struct EntryPoint
 	spv::ExecutionModel execution_model;
 };
 
-enum ExtendedDecorations
-{
-	SPIRVCrossDecorationPacked,
-	SPIRVCrossDecorationPackedType,
-	SPIRVCrossDecorationInterfaceMemberIndex,
-	SPIRVCrossDecorationInterfaceOrigID,
-	SPIRVCrossDecorationResourceIndexPrimary,
-	// Used for decorations like resource indices for samplers when part of combined image samplers.
-	// A variable might need to hold two resource indices in this case.
-	SPIRVCrossDecorationResourceIndexSecondary,
-};
-
 class Compiler
 {
 public:
@@ -826,6 +814,7 @@ protected:
 
 	std::unordered_set<uint32_t> forced_temporaries;
 	std::unordered_set<uint32_t> forwarded_temporaries;
+	std::unordered_set<uint32_t> suppressed_usage_tracking;
 	std::unordered_set<uint32_t> hoisted_temporaries;
 
 	Bitset active_input_builtins;
