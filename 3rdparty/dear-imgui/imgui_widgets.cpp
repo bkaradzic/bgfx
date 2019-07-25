@@ -1088,6 +1088,7 @@ bool ImGui::RadioButton(const char* label, bool active)
     return pressed;
 }
 
+// FIXME: This would work nicely if it was a public template, e.g. 'template<T> RadioButton(const char* label, T* v, T v_button)', but I'm not sure how we would expose it..
 bool ImGui::RadioButton(const char* label, int* v, int v_button)
 {
     const bool pressed = RadioButton(label, *v == v_button);
@@ -5504,6 +5505,8 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
         window->DC.LastItemStatusFlags |= ImGuiItemStatusFlags_ToggledSelection;
 
     // Render
+    if (held && (flags & ImGuiSelectableFlags_DrawHoveredWhenHeld))
+        hovered = true;
     if (hovered || selected)
     {
         const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_HeaderActive : hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
@@ -5947,6 +5950,10 @@ void ImGui::EndMainMenuBar()
     End();
 }
 
+// FIXME: Provided a rectangle perhaps e.g. a BeginMenuBarEx() could be used anywhere..
+// Currently the main responsibility of this function being to setup clip-rect + horizontal layout + menu navigation layer.
+// Ideally we also want this to be responsible for claiming space out of the main window scrolling rectangle, in which case ImGuiWindowFlags_MenuBar will become unnecessary.
+// Then later the same system could be used for multiple menu-bars, scrollbars, side-bars.
 bool ImGui::BeginMenuBar()
 {
     ImGuiWindow* window = GetCurrentWindow();
@@ -5956,7 +5963,7 @@ bool ImGui::BeginMenuBar()
         return false;
 
     IM_ASSERT(!window->DC.MenuBarAppending);
-    BeginGroup(); // Backup position on layer 0
+    BeginGroup(); // Backup position on layer 0 // FIXME: Misleading to use a group for that backup/restore
     PushID("##menubar");
 
     // We don't clip with current window clipping rectangle as it is already set to the area below. However we clip with window full rect.
@@ -6285,18 +6292,18 @@ static int IMGUI_CDECL TabItemComparerByVisibleOffset(const void* lhs, const voi
     return (int)(a->Offset - b->Offset);
 }
 
-static ImGuiTabBar* GetTabBarFromTabBarRef(const ImGuiTabBarRef& ref)
+static ImGuiTabBar* GetTabBarFromTabBarRef(const ImGuiPtrOrIndex& ref)
 {
     ImGuiContext& g = *GImGui;
-    return ref.Ptr ? ref.Ptr : g.TabBars.GetByIndex(ref.IndexInMainPool);
+    return ref.Ptr ? (ImGuiTabBar*)ref.Ptr : g.TabBars.GetByIndex(ref.Index);
 }
 
-static ImGuiTabBarRef GetTabBarRefFromTabBar(ImGuiTabBar* tab_bar)
+static ImGuiPtrOrIndex GetTabBarRefFromTabBar(ImGuiTabBar* tab_bar)
 {
     ImGuiContext& g = *GImGui;
     if (g.TabBars.Contains(tab_bar))
-        return ImGuiTabBarRef(g.TabBars.GetIndex(tab_bar));
-    return ImGuiTabBarRef(tab_bar);
+        return ImGuiPtrOrIndex(g.TabBars.GetIndex(tab_bar));
+    return ImGuiPtrOrIndex(tab_bar);
 }
 
 bool    ImGui::BeginTabBar(const char* str_id, ImGuiTabBarFlags flags)
@@ -6651,7 +6658,7 @@ void ImGui::TabBarQueueChangeTabOrder(ImGuiTabBar* tab_bar, const ImGuiTabItem* 
     IM_ASSERT(dir == -1 || dir == +1);
     IM_ASSERT(tab_bar->ReorderRequestTabId == 0);
     tab_bar->ReorderRequestTabId = tab->ID;
-    tab_bar->ReorderRequestDir = dir;
+    tab_bar->ReorderRequestDir = (ImS8)dir;
 }
 
 static ImGuiTabItem* ImGui::TabBarScrollingButtons(ImGuiTabBar* tab_bar)
