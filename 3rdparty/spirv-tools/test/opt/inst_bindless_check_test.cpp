@@ -255,7 +255,7 @@ OpFunctionEnd
           func_pt2_before,
       entry_after + names_annots + new_annots + consts_types_vars +
           new_consts_types_vars + func_pt1 + func_pt2_after + output_func,
-      true, true);
+      true, true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, NoInstrumentConstIndexInbounds) {
@@ -335,7 +335,8 @@ OpFunctionEnd
 )";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
-  SinglePassRunAndCheck<InstBindlessCheckPass>(before, before, true, true);
+  SinglePassRunAndCheck<InstBindlessCheckPass>(before, before, true, true, 7u,
+                                               23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentMultipleInstructions) {
@@ -630,7 +631,7 @@ OpFunctionEnd
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentOpImage) {
@@ -858,7 +859,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentSampledImage) {
@@ -1081,7 +1082,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentImageWrite) {
@@ -1306,7 +1307,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentVertexSimple) {
@@ -1580,7 +1581,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true);
+      true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, MultipleDebugFunctions) {
@@ -1903,7 +1904,8 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func1_before + func2_before,
-      defs_after + func1_after + func2_after + output_func, true, true);
+      defs_after + func1_after + func2_after + output_func, true, true, 7u, 23u,
+      false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, RuntimeArray) {
@@ -2276,18 +2278,19 @@ OpFunctionEnd
 
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(whole_file, whole_file, true,
-                                               true);
+                                               true, 7u, 23u, false, false, 1u);
 }
 
 TEST_F(InstBindlessTest, InstrumentInitCheckOnScalarDescriptor) {
   // This test verifies that the pass will correctly instrument vanilla
   // texture sample on a scalar descriptor with an initialization check if the
-  // SPV_EXT_descriptor_checking extension is enabled. This is the same shader
-  // as NoInstrumentNonBindless, but with the extension hacked on in the SPIR-V.
+  // input_init_enable argument is set to true. This can happen when the
+  // descriptor indexing extension is enabled in the API but the SPIR-V
+  // does not have the extension enabled because it does not contain a
+  // runtime array. This is the same shader as NoInstrumentNonBindless.
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %MainPs "MainPs" %i_vTextureCoords %_entryPointOutput_vColor
@@ -2324,7 +2327,6 @@ OpDecorate %_entryPointOutput_vColor Location 0
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -2395,7 +2397,7 @@ OpDecorate %gl_FragCoord BuiltIn FragCoord
 %uint_6 = OpConstant %uint 6
 %uint_7 = OpConstant %uint 7
 %uint_8 = OpConstant %uint 8
-%uint_40 = OpConstant %uint 40
+%uint_39 = OpConstant %uint 39
 %113 = OpConstantNull %v4float
 )";
 
@@ -2429,7 +2431,7 @@ OpBranchConditional %52 %55 %56
 %59 = OpImageSampleImplicitLod %v4float %58 %20
 OpBranch %54
 %56 = OpLabel
-%112 = OpFunctionCall %void %60 %uint_40 %uint_1 %uint_0 %uint_0
+%112 = OpFunctionCall %void %60 %uint_39 %uint_1 %uint_0 %uint_0
 OpBranch %54
 %54 = OpLabel
 %114 = OpPhi %v4float %59 %55 %113 %56
@@ -4456,7 +4458,7 @@ OpFunctionEnd
           func_pt2_before,
       entry_after + names_annots + new_annots + consts_types_vars +
           new_consts_types_vars + func_pt1 + func_pt2_after + output_func,
-      true, true, 7u, 23u, true, true, 2u);
+      true, true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentMultipleInstructionsV2) {
@@ -4751,7 +4753,7 @@ OpFunctionEnd
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentOpImageV2) {
@@ -4979,7 +4981,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentSampledImageV2) {
@@ -5202,7 +5204,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentImageWriteV2) {
@@ -5427,7 +5429,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, InstrumentVertexSimpleV2) {
@@ -5701,7 +5703,7 @@ OpFunctionEnd
   // SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func_before, defs_after + func_after + output_func, true,
-      true, 7u, 23u, true, true, 2u);
+      true, 7u, 23u, false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, MultipleDebugFunctionsV2) {
@@ -6025,7 +6027,7 @@ OpFunctionEnd
   SinglePassRunAndCheck<InstBindlessCheckPass>(
       defs_before + func1_before + func2_before,
       defs_after + func1_after + func2_after + output_func, true, true, 7u, 23u,
-      true, true, 2u);
+      false, false, 2u);
 }
 
 TEST_F(InstBindlessTest, RuntimeArrayV2) {
@@ -6327,12 +6329,13 @@ OpFunctionEnd
 TEST_F(InstBindlessTest, InstrumentInitCheckOnScalarDescriptorV2) {
   // This test verifies that the pass will correctly instrument vanilla
   // texture sample on a scalar descriptor with an initialization check if the
-  // SPV_EXT_descriptor_checking extension is enabled. This is the same shader
-  // as NoInstrumentNonBindless, but with the extension hacked on in the SPIR-V.
+  // input_init_enable argument is set to true. This can happen when the
+  // descriptor indexing extension is enabled in the API but the SPIR-V
+  // does not have the extension enabled because it does not contain a
+  // runtime array. This is the same shader as NoInstrumentNonBindless.
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %MainPs "MainPs" %i_vTextureCoords %_entryPointOutput_vColor
@@ -6369,7 +6372,6 @@ OpDecorate %_entryPointOutput_vColor Location 0
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpExtension "SPV_EXT_descriptor_indexing"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
@@ -6440,7 +6442,7 @@ OpDecorate %gl_FragCoord BuiltIn FragCoord
 %uint_7 = OpConstant %uint 7
 %uint_8 = OpConstant %uint 8
 %uint_9 = OpConstant %uint 9
-%uint_40 = OpConstant %uint 40
+%uint_39 = OpConstant %uint 39
 %113 = OpConstantNull %v4float
 )";
 
@@ -6474,7 +6476,7 @@ OpBranchConditional %52 %55 %56
 %59 = OpImageSampleImplicitLod %v4float %58 %20
 OpBranch %54
 %56 = OpLabel
-%112 = OpFunctionCall %void %60 %uint_40 %uint_1 %uint_0 %uint_0
+%112 = OpFunctionCall %void %60 %uint_39 %uint_1 %uint_0 %uint_0
 OpBranch %54
 %54 = OpLabel
 %114 = OpPhi %v4float %59 %55 %113 %56

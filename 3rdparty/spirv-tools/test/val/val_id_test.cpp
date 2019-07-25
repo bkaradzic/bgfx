@@ -314,7 +314,7 @@ TEST_F(ValidateIdWithMessage, OpDecorationGroupBad) {
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Result id of OpDecorationGroup can only "
                         "be targeted by OpName, OpGroupDecorate, "
-                        "OpDecorate, and OpGroupMemberDecorate"));
+                        "OpDecorate, OpDecorateId, and OpGroupMemberDecorate"));
 }
 TEST_F(ValidateIdWithMessage, OpGroupDecorateDecorationGroupBad) {
   std::string spirv = R"(

@@ -114,6 +114,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_KHR_no_integer_wrap_dec
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_post_depth_coverage[] = {spvtools::Extension::kSPV_KHR_post_depth_coverage};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_atomic_counter_ops[] = {spvtools::Extension::kSPV_KHR_shader_atomic_counter_ops};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {spvtools::Extension::kSPV_KHR_shader_ballot};
+static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_clock[] = {spvtools::Extension::kSPV_KHR_shader_clock};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_draw_parameters[] = {spvtools::Extension::kSPV_KHR_shader_draw_parameters};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_draw_parametersSPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_KHR_shader_draw_parameters, spvtools::Extension::kSPV_NV_mesh_shader};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_storage_buffer_storage_classSPV_KHR_variable_pointers[] = {spvtools::Extension::kSPV_KHR_storage_buffer_storage_class, spvtools::Extension::kSPV_KHR_variable_pointers};
@@ -781,6 +782,7 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"FragmentMaskAMD", 5010, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_AMD_shader_fragment_mask, {}, 0xffffffffu, 0xffffffffu},
   {"StencilExportEXT", 5013, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_shader_stencil_export, {}, 0xffffffffu, 0xffffffffu},
   {"ImageReadWriteLodAMD", 5015, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_AMD_shader_image_load_store_lod, {}, 0xffffffffu, 0xffffffffu},
+  {"ShaderClockKHR", 5055, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_KHR_shader_clock, {}, 0xffffffffu, 0xffffffffu},
   {"SampleMaskOverrideCoverageNV", 5249, 1, pygen_variable_caps_SampleRateShading, 1, pygen_variable_exts_SPV_NV_sample_mask_override_coverage, {}, 0xffffffffu, 0xffffffffu},
   {"GeometryShaderPassthroughNV", 5251, 1, pygen_variable_caps_Geometry, 1, pygen_variable_exts_SPV_NV_geometry_shader_passthrough, {}, 0xffffffffu, 0xffffffffu},
   {"ShaderViewportIndexLayerEXT", 5254, 1, pygen_variable_caps_MultiViewport, 2, pygen_variable_exts_SPV_EXT_shader_viewport_index_layerSPV_NV_viewport_array2, {}, 0xffffffffu, 0xffffffffu},
