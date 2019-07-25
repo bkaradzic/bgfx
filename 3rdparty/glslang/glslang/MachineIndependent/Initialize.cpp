@@ -8095,7 +8095,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         BuiltInVariable("gl_PositionPerViewNV",         EbvPositionPerViewNV,       symbolTable);
         BuiltInVariable("gl_ViewportMaskPerViewNV",     EbvViewportMaskPerViewNV,   symbolTable);
 
-        if (language != EShLangVertex) {
+        if (language == EShLangVertex || language == EShLangGeometry) {
             symbolTable.setVariableExtensions("gl_in", "gl_SecondaryPositionNV", 1, &E_GL_NV_stereo_view_rendering);
             symbolTable.setVariableExtensions("gl_in", "gl_PositionPerViewNV",   1, &E_GL_NVX_multiview_per_view_attributes);
 
@@ -9769,6 +9769,14 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         BuiltInVariable("gl_in", "gl_BackSecondaryColor",  EbvBackSecondaryColor,  symbolTable);
         BuiltInVariable("gl_in", "gl_TexCoord",            EbvTexCoord,            symbolTable);
         BuiltInVariable("gl_in", "gl_FogFragCoord",        EbvFogFragCoord,        symbolTable);
+
+#ifdef NV_EXTENSIONS
+        symbolTable.setVariableExtensions("gl_in", "gl_SecondaryPositionNV", 1, &E_GL_NV_stereo_view_rendering);
+        symbolTable.setVariableExtensions("gl_in", "gl_PositionPerViewNV",   1, &E_GL_NVX_multiview_per_view_attributes);
+
+        BuiltInVariable("gl_in", "gl_SecondaryPositionNV", EbvSecondaryPositionNV, symbolTable);
+        BuiltInVariable("gl_in", "gl_PositionPerViewNV",   EbvPositionPerViewNV,   symbolTable);
+#endif
 
         // extension requirements
         if (profile == EEsProfile) {

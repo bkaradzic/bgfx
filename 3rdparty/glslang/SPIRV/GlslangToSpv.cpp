@@ -3503,9 +3503,12 @@ spv::Id TGlslangToSpvTraverser::convertGlslangStructToSpvType(const glslang::TTy
                 memberRemapper[glslangMembers][i] = -1;
         } else {
             if (type.getBasicType() == glslang::EbtBlock) {
-                memberRemapper[glslangMembers][i] = i - memberDelta;
-                if (filterMember(glslangMember))
+                if (filterMember(glslangMember)) {
+                    memberDelta++;
+                    memberRemapper[glslangMembers][i] = -1;
                     continue;
+                }
+                memberRemapper[glslangMembers][i] = i - memberDelta;
             }
             // modify just this child's view of the qualifier
             glslang::TQualifier memberQualifier = glslangMember.getQualifier();
