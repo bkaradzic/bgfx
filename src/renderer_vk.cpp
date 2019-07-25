@@ -4128,9 +4128,14 @@ VK_DESTROY
 
             bimg::TextureInfo ti;
             bimg::imageGetSize(
-                &ti, uint16_t(imageContainer.m_width >> startLod), uint16_t(imageContainer.m_height >> startLod),
-                uint16_t(imageContainer.m_depth >> startLod), imageContainer.m_cubeMap, 1 < imageContainer.m_numMips,
-                imageContainer.m_numLayers, imageContainer.m_format
+                &ti,
+				uint16_t(imageContainer.m_width >> startLod),
+				uint16_t(imageContainer.m_height >> startLod),
+                uint16_t(imageContainer.m_depth >> startLod),
+				imageContainer.m_cubeMap,
+				1 < imageContainer.m_numMips,
+                imageContainer.m_numLayers,
+				imageContainer.m_format
             );
             ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips - startLod, ti.numMips);
 
@@ -4268,6 +4273,8 @@ VK_DESTROY
                 totalMemSize += imageInfos[ii].size;
             }
 
+			VkBuffer stagingBuffer = VK_NULL_HANDLE;
+			VkDeviceMemory stagingDeviceMem = VK_NULL_HANDLE;
             if (totalMemSize > 0)
             {
                 // staging buffer creation
@@ -4283,12 +4290,12 @@ VK_DESTROY
                 VK_CHECK( vkCreateBuffer(device
                     , &bci
                     , &s_allocationCb
-                    , &m_stagingBuffer
+                    , &stagingBuffer
                 ) );
 
                 VkMemoryRequirements mr;
                 vkGetBufferMemoryRequirements(device
-                    , m_stagingBuffer
+                    , stagingBuffer
                     , &mr
                 );
 
@@ -4302,19 +4309,19 @@ VK_DESTROY
                 VK_CHECK(vkAllocateMemory(device
                     , &ma
                     , &s_allocationCb
-                    , &m_stagingDeviceMem
+                    , &stagingDeviceMem
                 ) );
 
-                VK_CHECK(vkBindBufferMemory(device, m_stagingBuffer, m_stagingDeviceMem, 0) );
-                VK_CHECK(vkMapMemory(device, m_stagingDeviceMem, 0, ma.allocationSize, 0, (void**)&m_directAccessPtr) );
-                uint8_t* mappedMemory = (uint8_t*)m_directAccessPtr;
-
+                VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingDeviceMem, 0) );
+                VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, ma.allocationSize, 0, (void**)&m_directAccessPtr) );
+				uint8_t* mappedMemory = (uint8_t*)m_directAccessPtr;
                 // copy image to staging buffer
                 for (uint32_t ii = 0; ii < numSrd; ++ii)
                 {
                     bx::memCopy(mappedMemory, imageInfos[ii].data, imageInfos[ii].size);
                     mappedMemory += imageInfos[ii].size;
                 }
+				vkUnmapMemory(device, stagingDeviceMem);
             }
 
             // free temp memory
@@ -4360,10 +4367,14 @@ VK_DESTROY
 
             vkBindImageMemory(device, m_textureImage, m_textureDeviceMem, 0);
 
-            if (totalMemSize > 0)
+            if (stagingBuffer)
             {
-                update(s_renderVK->m_commandPool, 0, 0, Rect(0, 0, m_width, m_height), 0, 1, m_width, _mem);
+                copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer,
+					0, 0, Rect(0, 0, m_width, m_height), 0, 1, m_width);
             }
+
+			vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
+			vkDestroy(stagingBuffer);
 
             // image view creation
             {
@@ -4411,24 +4422,73 @@ VK_DESTROY
 	void TextureVK::destroy()
 	{
         VkDevice device = s_renderVK->m_device;
-        vkUnmapMemory(device, m_stagingDeviceMem);
         vkUnmapMemory(device, m_textureDeviceMem);
-
-        vkFreeMemory(device, m_stagingDeviceMem, &s_allocationCb);
         vkFreeMemory(device, m_textureDeviceMem, &s_allocationCb);
 
         vkDestroy(m_textureSampler);
         vkDestroy(m_textureImageView);
         vkDestroy(m_textureImage);
-	    vkDestroy(m_stagingBuffer);
 	}
 
     void TextureVK::update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
     {
-		// TODO: staging buffer can be initialized in here
-		if (m_stagingBuffer == VK_NULL_HANDLE)
-			return;
         VkDevice device = s_renderVK->m_device;
+
+		VkBuffer stagingBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory stagingDeviceMem = VK_NULL_HANDLE;
+
+		// staging buffer creation
+		VkBufferCreateInfo bci;
+		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bci.pNext = NULL;
+		bci.flags = 0;
+		bci.size = _rect.m_width * _rect.m_height * _depth;
+		bci.queueFamilyIndexCount = 0;
+		bci.pQueueFamilyIndices = NULL;
+		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		VK_CHECK( vkCreateBuffer(device
+			, &bci
+			, &s_allocationCb
+			, &stagingBuffer
+		) );
+
+		VkMemoryRequirements mr;
+		vkGetBufferMemoryRequirements(device
+			, stagingBuffer
+			, &mr
+		);
+
+		VkMemoryAllocateInfo ma;
+		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		ma.pNext = NULL;
+		ma.allocationSize  = mr.size;
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		);
+		VK_CHECK(vkAllocateMemory(device
+			, &ma
+			, &s_allocationCb
+			, &stagingDeviceMem
+		) );
+
+		void* directAccessPtr = NULL;
+		VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingDeviceMem, 0) );
+		VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, ma.allocationSize, 0, (void**)&directAccessPtr) );
+		bx::memCopy(directAccessPtr, _mem->data, _mem->size);
+		vkUnmapMemory(device, stagingDeviceMem);
+
+		copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer,
+			0, 0, Rect(0, 0, m_width, m_height), 0, 1, m_width);
+
+		vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
+		vkDestroy(stagingBuffer);
+    }
+
+	void TextureVK::copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
+		uint8_t side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch)
+	{
+		VkDevice device = s_renderVK->m_device;
         VkCommandBuffer commandBuffer;
         // command begin
         {
@@ -4454,7 +4514,7 @@ VK_DESTROY
         {
             VkImageMemoryBarrier barrier = {};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            barrier.oldLayout = m_currentImageLayout;
             barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -4492,7 +4552,7 @@ VK_DESTROY
             region.imageExtent.height = _rect.m_height;
             region.imageExtent.depth = _depth;
 
-            vkCmdCopyBufferToImage(commandBuffer, m_stagingBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+            vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
         }
 
         // image Layout transition into shader read
@@ -4539,7 +4599,10 @@ VK_DESTROY
 
             vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
         }
-    }
+
+		m_currentImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+
 
 	void FrameBufferVK::destroy()
 	{

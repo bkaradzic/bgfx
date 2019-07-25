@@ -454,16 +454,18 @@ VK_DESTROY
 	struct TextureVK
 	{
 		TextureVK()
-		: m_stagingBuffer(VK_NULL_HANDLE)
-		, m_stagingDeviceMem(VK_NULL_HANDLE)
-		, m_textureImage(VK_NULL_HANDLE)
+		: m_textureImage(VK_NULL_HANDLE)
 		, m_textureDeviceMem(VK_NULL_HANDLE)
 		, m_textureImageView(VK_NULL_HANDLE)
-		, m_textureSampler(VK_NULL_HANDLE) {}
+		, m_textureSampler(VK_NULL_HANDLE)
+		, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED) {}
 
 	    void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
+
+		void copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
+			uint8_t side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch);
 
 //        D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
 //        D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
@@ -481,8 +483,7 @@ VK_DESTROY
         uint8_t m_textureFormat;
         uint8_t m_numMips;
 
-        VkBuffer m_stagingBuffer;
-        VkDeviceMemory m_stagingDeviceMem;
+		VkImageLayout m_currentImageLayout;
         VkImage m_textureImage;
         VkDeviceMemory m_textureDeviceMem;
         VkImageView m_textureImageView;
