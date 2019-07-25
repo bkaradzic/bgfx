@@ -543,11 +543,6 @@ namespace bgfx { namespace spirv
 		}
 	}
 
-//	static void printError(spv_message_level_t, const char*, const spv_position_t&, const char* _message)
-//	{
-//		fprintf(stderr, "%s\n", _message);
-//	}
-
 	static const char* s_attribName[] =
 	{
 		"a_position",
@@ -628,7 +623,7 @@ namespace bgfx { namespace spirv
 		EShLanguage stage = getLang(_options.shaderType);
 		if (EShLangCount == stage)
 		{
-			fprintf(stderr, "Error: Unknown shader type '%c'.\n", _options.shaderType);
+			bx::printf("Error: Unknown shader type '%c'.\n", _options.shaderType);
 			return false;
 		}
 		glslang::TShader* shader = new glslang::TShader(stage);
@@ -687,7 +682,7 @@ namespace bgfx { namespace spirv
 
 				printCode(_code.c_str(), line, start, end, column);
 
-				fprintf(stderr, "%s\n", log);
+				bx::printf("%s\n", log);
 			}
 		}
 		else
@@ -703,7 +698,7 @@ namespace bgfx { namespace spirv
 				const char* log = program->getInfoLog();
 				if (NULL != log)
 				{
-					fprintf(stderr, "%s\n", log);
+					bx::printf("%s\n", log);
 				}
 			}
 			else
@@ -821,10 +816,16 @@ namespace bgfx { namespace spirv
 
 				spvtools::Optimizer opt(SPV_ENV_VULKAN_1_0);
 
-				auto print_msg_to_stderr = [](spv_message_level_t, const char*,
-											  const spv_position_t&, const char* m) {
-					fprintf(stderr, "error:%s\n", m);
+				auto print_msg_to_stderr = [](
+					  spv_message_level_t
+					, const char*
+					, const spv_position_t&
+					, const char* m
+					)
+				{
+					bx::printf("Error: %s\n", m);
 				};
+
 				opt.SetMessageConsumer(print_msg_to_stderr);
 
 				opt.RegisterLegalizationPasses();
