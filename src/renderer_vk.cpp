@@ -495,6 +495,8 @@ VK_IMPORT_DEVICE
 			, _userData
 			, s_debugReportObjectType
 		);
+		if (!bx::strFind(_message, "PointSizeMissing").isEmpty())
+			return VK_FALSE;
 		BX_TRACE("%c%c%c%c%c %19s, %s, %d: %s"
 			, 0 != (_flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT        ) ? 'I' : '-'
 			, 0 != (_flags & VK_DEBUG_REPORT_WARNING_BIT_EXT            ) ? 'W' : '-'
@@ -3451,6 +3453,7 @@ VK_DESTROY
 	{
 		m_maxDescriptors = _maxDescriptors;
 		bx::memSet(m_descriptorSet, 0, sizeof(VkDescriptorSet) * BX_COUNTOF(m_descriptorSet));
+		m_currentDs = 0;
 //		m_descriptorSet  = (VkDescriptorSet*)BX_ALLOC(g_allocator, _maxDescriptors * sizeof(VkDescriptorSet) );
 
 		VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
@@ -4422,6 +4425,9 @@ VK_DESTROY
 
     void TextureVK::update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
     {
+		// TODO: staging buffer can be initialized in here
+		if (m_stagingBuffer == VK_NULL_HANDLE)
+			return;
         VkDevice device = s_renderVK->m_device;
         VkCommandBuffer commandBuffer;
         // command begin
@@ -5302,7 +5308,7 @@ BX_UNUSED(currentSamplerStateIdx);
                             {
                                 if (program.m_fsh->m_bindings[ii].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                                 {
-                                    vsUniformBinding = program.m_fsh->m_bindings[ii].binding;
+                                    fsUniformBinding = program.m_fsh->m_bindings[ii].binding;
                                     break;
                                 }
                             }

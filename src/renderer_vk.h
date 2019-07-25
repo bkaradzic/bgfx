@@ -433,6 +433,7 @@ VK_DESTROY
 			: m_vsh(NULL)
 			, m_fsh(NULL)
 			, m_descriptorSetLayoutHash(0)
+			, m_pipelineLayout(VK_NULL_HANDLE)
 		{
 		}
 
@@ -452,6 +453,14 @@ VK_DESTROY
 
 	struct TextureVK
 	{
+		TextureVK()
+		: m_stagingBuffer(VK_NULL_HANDLE)
+		, m_stagingDeviceMem(VK_NULL_HANDLE)
+		, m_textureImage(VK_NULL_HANDLE)
+		, m_textureDeviceMem(VK_NULL_HANDLE)
+		, m_textureImageView(VK_NULL_HANDLE)
+		, m_textureSampler(VK_NULL_HANDLE) {}
+
 	    void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
