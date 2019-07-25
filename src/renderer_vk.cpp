@@ -3770,7 +3770,11 @@ VK_DESTROY
 
 	void BufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
-		BX_UNUSED(_commandBuffer, _offset, _size, _data, _discard);
+		void* dst;
+		VkDevice device = s_renderVK->m_device;
+		VK_CHECK(vkMapMemory(device, m_deviceMem, _offset, _size, 0, &dst) );
+		bx::memCopy(dst, _data, _size);
+		vkUnmapMemory(device, m_deviceMem);
 	}
 
 	void BufferVK::destroy()
@@ -4631,15 +4635,15 @@ VK_DESTROY
 		if (0 < _render->m_iboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient index buffer", kColorResource);
-//			TransientIndexBuffer* ib = _render->m_transientIb;
-//			m_indexBuffers[ib->handle.idx].update(m_commandList, 0, _render->m_iboffset, ib->data);
+			TransientIndexBuffer* ib = _render->m_transientIb;
+			m_indexBuffers[ib->handle.idx].update(/*m_commandList*/NULL, 0, _render->m_iboffset, ib->data);
 		}
 
 		if (0 < _render->m_vboffset)
 		{
 			BGFX_PROFILER_SCOPE("bgfx/Update transient vertex buffer", kColorResource);
-//			TransientVertexBuffer* vb = _render->m_transientVb;
-//			m_vertexBuffers[vb->handle.idx].update(m_commandList, 0, _render->m_vboffset, vb->data);
+			TransientVertexBuffer* vb = _render->m_transientVb;
+			m_vertexBuffers[vb->handle.idx].update(/*m_commandList*/NULL, 0, _render->m_vboffset, vb->data);
 		}
 
 		_render->sort();
