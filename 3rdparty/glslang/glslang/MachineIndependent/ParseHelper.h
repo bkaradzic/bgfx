@@ -429,7 +429,7 @@ public:
     // Determine loop control from attributes
     void handleLoopAttributes(const TAttributes& attributes, TIntermNode*);
 
-    void resizeMeshViewDimension(const TSourceLoc&, TType&);
+    void checkAndResizeMeshViewDim(const TSourceLoc&, TType&, bool isBlockMember);
 
 protected:
     void nonInitConstCheck(const TSourceLoc&, TString& identifier, TType& type);

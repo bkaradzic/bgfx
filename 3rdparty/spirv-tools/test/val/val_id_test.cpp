@@ -314,7 +314,7 @@ TEST_F(ValidateIdWithMessage, OpDecorationGroupBad) {
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Result id of OpDecorationGroup can only "
                         "be targeted by OpName, OpGroupDecorate, "
-                        "OpDecorate, and OpGroupMemberDecorate"));
+                        "OpDecorate, OpDecorateId, and OpGroupMemberDecorate"));
 }
 TEST_F(ValidateIdWithMessage, OpGroupDecorateDecorationGroupBad) {
   std::string spirv = R"(
@@ -935,6 +935,26 @@ TEST_F(ValidateIdWithMessage, OpTypeStructMemberTypeBad) {
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("OpTypeStruct Member Type <id> '3[%double_0]' is not "
                         "a type."));
+}
+
+TEST_F(ValidateIdWithMessage, OpTypeStructOpaqueTypeBad) {
+  std::string spirv = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main"
+          %1 = OpTypeSampler
+          %2 = OpTypeStruct %1
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+               OpReturn
+               OpFunctionEnd
+)";
+  CompileSuccessfully(spirv.c_str(), SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpTypeStruct must not contain an opaque type"));
 }
 
 TEST_F(ValidateIdWithMessage, OpTypePointerGood) {

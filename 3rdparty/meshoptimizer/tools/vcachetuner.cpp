@@ -1,5 +1,5 @@
 #include "../src/meshoptimizer.h"
-#include "objparser.h"
+#include "fast_obj.h"
 
 #include <algorithm>
 #include <functional>
@@ -64,6 +64,7 @@ struct State
 {
 	float cache[kCacheSizeMax];
 	float live[kValenceMax];
+	float fitness;
 };
 
 struct Mesh
@@ -98,21 +99,17 @@ Mesh gridmesh(unsigned int N)
 
 Mesh objmesh(const char* path)
 {
-	ObjFile file;
-
-	if (!objParseFile(file, path))
+	fastObjMesh* obj = fast_obj_read(path);
+	if (!obj)
 	{
 		printf("Error loading %s: file not found\n", path);
 		return Mesh();
 	}
 
-	if (!objValidate(file))
-	{
-		printf("Error loading %s: invalid file data\n", path);
-		return Mesh();
-	}
+	size_t total_indices = 0;
 
-	size_t total_indices = file.f_size / 3;
+	for (unsigned int i = 0; i < obj->face_count; ++i)
+		total_indices += 3 * (obj->face_vertices[i] - 2);
 
 	struct Vertex
 	{
@@ -123,28 +120,43 @@ Mesh objmesh(const char* path)
 
 	std::vector<Vertex> vertices(total_indices);
 
-	for (size_t i = 0; i < total_indices; ++i)
+	size_t vertex_offset = 0;
+	size_t index_offset = 0;
+
+	for (unsigned int i = 0; i < obj->face_count; ++i)
 	{
-		int vi = file.f[i * 3 + 0];
-		int vti = file.f[i * 3 + 1];
-		int vni = file.f[i * 3 + 2];
+		for (unsigned int j = 0; j < obj->face_vertices[i]; ++j)
+		{
+			fastObjIndex gi = obj->indices[index_offset + j];
 
-		Vertex v =
-		    {
-		        file.v[vi * 3 + 0],
-		        file.v[vi * 3 + 1],
-		        file.v[vi * 3 + 2],
+			Vertex v =
+			    {
+			        obj->positions[gi.p * 3 + 0],
+			        obj->positions[gi.p * 3 + 1],
+			        obj->positions[gi.p * 3 + 2],
+			        obj->normals[gi.n * 3 + 0],
+			        obj->normals[gi.n * 3 + 1],
+			        obj->normals[gi.n * 3 + 2],
+			        obj->texcoords[gi.t * 2 + 0],
+			        obj->texcoords[gi.t * 2 + 1],
+			    };
 
-		        vni >= 0 ? file.vn[vni * 3 + 0] : 0,
-		        vni >= 0 ? file.vn[vni * 3 + 1] : 0,
-		        vni >= 0 ? file.vn[vni * 3 + 2] : 0,
+			// triangulate polygon on the fly; offset-3 is always the first polygon vertex
+			if (j >= 3)
+			{
+				vertices[vertex_offset + 0] = vertices[vertex_offset - 3];
+				vertices[vertex_offset + 1] = vertices[vertex_offset - 1];
+				vertex_offset += 2;
+			}
 
-		        vti >= 0 ? file.vt[vti * 3 + 0] : 0,
-		        vti >= 0 ? file.vt[vti * 3 + 1] : 0,
-		    };
+			vertices[vertex_offset] = v;
+			vertex_offset++;
+		}
 
-		vertices[i] = v;
+		index_offset += obj->face_vertices[i];
 	}
+
+	fast_obj_destroy(obj);
 
 	Mesh result;
 
@@ -193,17 +205,7 @@ float fitness_score(const State& state, const std::vector<Mesh>& meshes)
 	return result / count;
 }
 
-float rndcache()
-{
-	return rand01();
-}
-
-float rndlive()
-{
-	return rand01();
-}
-
-std::vector<State> gen0(size_t count)
+std::vector<State> gen0(size_t count, const std::vector<Mesh>& meshes)
 {
 	std::vector<State> result;
 
@@ -212,10 +214,12 @@ std::vector<State> gen0(size_t count)
 		State state = {};
 
 		for (int j = 0; j < kCacheSizeMax; ++j)
-			state.cache[j] = rndcache();
+			state.cache[j] = rand01();
 
 		for (int j = 0; j < kValenceMax; ++j)
-			state.live[j] = rndlive();
+			state.live[j] = rand01();
+
+		state.fitness = fitness_score(state, meshes);
 
 		result.push_back(state);
 	}
@@ -223,238 +227,70 @@ std::vector<State> gen0(size_t count)
 	return result;
 }
 
-size_t rndindex(const std::vector<float>& prob)
+// https://en.wikipedia.org/wiki/Differential_evolution
+// Good Parameters for Differential Evolution. Magnus Erik Hvass Pedersen, 2010
+std::pair<State, float> genN(std::vector<State>& seed, const std::vector<Mesh>& meshes, float crossover = 0.8803f, float weight = 0.4717f)
 {
-	float r = rand01();
-
-	for (size_t i = 0; i < prob.size(); ++i)
-	{
-		r -= prob[i];
-
-		if (r <= 0)
-			return i;
-	}
-
-	return prob.size() - 1;
-}
-
-State mutate(const State& state)
-{
-	State result = state;
-
-	if (rand01() < 0.7f)
-	{
-		size_t idxcache = std::min(int(rand01() * kCacheSizeMax + 0.5f), int(kCacheSizeMax - 1));
-
-		result.cache[idxcache] = rndcache();
-	}
-
-	if (rand01() < 0.7f)
-	{
-		size_t idxlive = std::min(int(rand01() * kValenceMax + 0.5f), int(kValenceMax - 1));
-
-		result.live[idxlive] = rndlive();
-	}
-
-	if (rand01() < 0.2f)
-	{
-		uint32_t mask = rand32();
-
-		for (size_t i = 0; i < kCacheSizeMax; ++i)
-			if (mask & (1 << i))
-				result.cache[i] *= 0.9f + 0.2f * rand01();
-	}
-
-	if (rand01() < 0.2f)
-	{
-		uint32_t mask = rand32();
-
-		for (size_t i = 0; i < kValenceMax; ++i)
-			if (mask & (1 << i))
-				result.live[i] *= 0.9f + 0.2f * rand01();
-	}
-
-	if (rand01() < 0.05f)
-	{
-		uint32_t mask = rand32();
-
-		for (size_t i = 0; i < kCacheSizeMax; ++i)
-			if (mask & (1 << i))
-				result.cache[i] = rndcache();
-	}
-
-	if (rand01() < 0.05f)
-	{
-		uint32_t mask = rand32();
-
-		for (size_t i = 0; i < kValenceMax; ++i)
-			if (mask & (1 << i))
-				result.live[i] = rndlive();
-	}
-
-	return result;
-}
-
-bool accept(float fitnew, float fitold, float temp)
-{
-	if (fitnew >= fitold)
-		return true;
-
-	if (temp == 0)
-		return false;
-
-	float prob = exp2((fitnew - fitold) / temp);
-
-	return rand01() < prob;
-}
-
-std::pair<State, float> genN_SA(std::vector<State>& seed, const std::vector<Mesh>& meshes, size_t steps)
-{
-	std::vector<State> result;
-	result.reserve(seed.size() * (1 + steps));
-
-	// perform several parallel steps of mutation for each temperature
-	for (size_t i = 0; i < seed.size(); ++i)
-	{
-		result.push_back(seed[i]);
-
-		for (size_t s = 0; s < steps; ++s)
-			result.push_back(mutate(seed[i]));
-	}
-
-	// compute fitness for all temperatures & mutations in parallel
-	std::vector<float> resultfit(result.size());
-
-#pragma omp parallel for
-	for (size_t i = 0; i < result.size(); ++i)
-	{
-		resultfit[i] = fitness_score(result[i], meshes);
-	}
-
-	// perform annealing for each temperature
-	std::vector<float> seedfit(seed.size());
+	std::vector<State> result(seed.size());
 
 	for (size_t i = 0; i < seed.size(); ++i)
 	{
-		size_t offset = i * (1 + steps);
-
-		seedfit[i] = resultfit[offset];
-
-		float temp = (float(i) / float(seed.size() - 1)) / 0.1f;
-
-		for (size_t s = 0; s < steps; ++s)
+		for (;;)
 		{
-			if (accept(resultfit[offset + s + 1], seedfit[i], temp))
+			int a = rand32() % seed.size();
+			int b = rand32() % seed.size();
+			int c = rand32() % seed.size();
+
+			if (a == b || a == c || b == c || a == int(i) || b == int(i) || c == int(i))
+				continue;
+
+			int rc = rand32() % kCacheSizeMax;
+			int rl = rand32() % kValenceMax;
+
+			for (int j = 0; j < kCacheSizeMax; ++j)
 			{
-				seedfit[i] = resultfit[offset + s + 1];
-				seed[i] = result[offset + s + 1];
+				float r = rand01();
+
+				if (r < crossover || j == rc)
+					result[i].cache[j] = std::max(0.f, std::min(1.f, seed[a].cache[j] + weight * (seed[b].cache[j] - seed[c].cache[j])));
+				else
+					result[i].cache[j] = seed[i].cache[j];
 			}
+
+			for (int j = 0; j < kValenceMax; ++j)
+			{
+				float r = rand01();
+
+				if (r < crossover || j == rl)
+					result[i].live[j] = std::max(0.f, std::min(1.f, seed[a].live[j] + weight * (seed[b].live[j] - seed[c].live[j])));
+				else
+					result[i].live[j] = seed[i].live[j];
+			}
+
+			break;
 		}
 	}
 
-	// perform promotion from each temperature to the next one
-	for (size_t i = seed.size() - 1; i > 0; --i)
-	{
-		if (seedfit[i] > seedfit[i - 1])
-		{
-			seedfit[i - 1] = seedfit[i];
-			seed[i - 1] = seed[i];
-		}
-	}
-
-	return std::make_pair(seed[0], seedfit[0]);
-}
-
-std::pair<State, float> genN_GA(std::vector<State>& seed, const std::vector<Mesh>& meshes, float crossover, float mutate)
-{
-	std::vector<State> result;
-	result.reserve(seed.size());
-
-	std::vector<float> seedprob(seed.size());
-
-#pragma omp parallel for
+	#pragma omp parallel for
 	for (size_t i = 0; i < seed.size(); ++i)
 	{
-		seedprob[i] = fitness_score(seed[i], meshes);
+		result[i].fitness = fitness_score(result[i], meshes);
 	}
 
 	State best = {};
 	float bestfit = 0;
-	float probsum = 0;
 
 	for (size_t i = 0; i < seed.size(); ++i)
 	{
-		float score = seedprob[i];
-		probsum += score;
+		if (result[i].fitness > seed[i].fitness)
+			seed[i] = result[i];
 
-		if (score > bestfit)
+		if (seed[i].fitness > bestfit)
 		{
 			best = seed[i];
-			bestfit = score;
+			bestfit = seed[i].fitness;
 		}
 	}
-
-	for (auto& prob : seedprob)
-	{
-		prob /= probsum;
-	}
-
-	std::vector<unsigned int> seedidx;
-	seedidx.reserve(seed.size());
-	for (size_t i = 0; i < seed.size(); ++i)
-		seedidx.push_back(i);
-
-	std::sort(seedidx.begin(), seedidx.end(), [&](size_t l, size_t r) { return seedprob[l] < seedprob[r]; });
-
-	while (result.size() < seed.size() / 4)
-	{
-		size_t idx = seedidx.back();
-		seedidx.pop_back();
-
-		result.push_back(seed[idx]);
-	}
-
-	while (result.size() < seed.size())
-	{
-		State s0 = seed[rndindex(seedprob)];
-		State s1 = seed[rndindex(seedprob)];
-
-		State state = s0;
-
-		// crossover
-		if (rand01() < crossover)
-		{
-			size_t idxcache = std::min(int(rand01() * kCacheSizeMax + 0.5f), 15);
-
-			memcpy(state.cache + idxcache, s1.cache + idxcache, (kCacheSizeMax - idxcache) * sizeof(float));
-		}
-
-		if (rand01() < crossover)
-		{
-			size_t idxlive = std::min(int(rand01() * kValenceMax + 0.5f), 7);
-
-			memcpy(state.live + idxlive, s1.live + idxlive, (kValenceMax - idxlive) * sizeof(float));
-		}
-
-		// mutate
-		if (rand01() < mutate)
-		{
-			size_t idxcache = std::min(int(rand01() * kCacheSizeMax + 0.5f), 15);
-
-			state.cache[idxcache] = rndcache();
-		}
-
-		if (rand01() < mutate)
-		{
-			size_t idxlive = std::min(int(rand01() * kValenceMax + 0.5f), 7);
-
-			state.live[idxlive] = rndlive();
-		}
-
-		result.push_back(state);
-	}
-
-	seed.swap(result);
 
 	return std::make_pair(best, bestfit);
 }
@@ -545,7 +381,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		pop = gen0(annealing ? 32 : 1000);
+		pop = gen0(95, meshes);
 	}
 
 	printf("%d meshes, %.1fM triangles\n", int(meshes.size()), double(total_triangles) / 1e6);
@@ -559,7 +395,7 @@ int main(int argc, char** argv)
 
 	for (;;)
 	{
-		auto best = annealing ? genN_SA(pop, meshes, 31) : genN_GA(pop, meshes, 0.7f, 0.3f);
+		auto best = genN(pop, meshes);
 		gen++;
 
 		compute_atvr(best.first, meshes[0], atvr_0);
@@ -571,7 +407,8 @@ int main(int argc, char** argv)
 		{
 			char buf[128];
 			sprintf(buf, "gcloud logging write vcache-log \"fitness %f; grid %f %f %s %f %f\"", best.second, atvr_0[0], atvr_0[1], argv[argc - 1], atvr_N[0], atvr_N[1]);
-			system(buf);
+			int rc = system(buf);
+			(void)rc;
 		}
 
 		dump_state(best.first);

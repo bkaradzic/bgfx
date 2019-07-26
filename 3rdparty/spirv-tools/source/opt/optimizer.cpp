@@ -186,8 +186,6 @@ Optimizer& Optimizer::RegisterPerformancePasses() {
       .RegisterPass(CreateDeadBranchElimPass())
       .RegisterPass(CreateBlockMergePass())
       .RegisterPass(CreateSimplificationPass());
-  // Currently exposing driver bugs resulting in crashes (#946)
-  // .RegisterPass(CreateCommonUniformElimPass())
 }
 
 Optimizer& Optimizer::RegisterSizePasses() {
@@ -215,8 +213,6 @@ Optimizer& Optimizer::RegisterSizePasses() {
       .RegisterPass(CreateDeadInsertElimPass())
       .RegisterPass(CreateRedundancyEliminationPass())
       .RegisterPass(CreateCFGCleanupPass())
-      // Currently exposing driver bugs resulting in crashes (#946)
-      // .RegisterPass(CreateCommonUniformElimPass())
       .RegisterPass(CreateAggressiveDCEPass());
 }
 
@@ -340,8 +336,6 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateEliminateDeadFunctionsPass());
   } else if (pass_name == "eliminate-local-multi-store") {
     RegisterPass(CreateLocalMultiStoreElimPass());
-  } else if (pass_name == "eliminate-common-uniform") {
-    RegisterPass(CreateCommonUniformElimPass());
   } else if (pass_name == "eliminate-dead-const") {
     RegisterPass(CreateEliminateDeadConstantPass());
   } else if (pass_name == "eliminate-dead-inserts") {
@@ -711,11 +705,6 @@ Optimizer::PassToken CreatePropagateLineInfoPass() {
 Optimizer::PassToken CreateRedundantLineInfoElimPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::ProcessLinesPass>(opt::kLinesEliminateDeadLines));
-}
-
-Optimizer::PassToken CreateCommonUniformElimPass() {
-  return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::CommonUniformElimPass>());
 }
 
 Optimizer::PassToken CreateCompactIdsPass() {

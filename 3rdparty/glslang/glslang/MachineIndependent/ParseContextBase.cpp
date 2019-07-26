@@ -254,11 +254,17 @@ void TParseContextBase::trackLinkage(TSymbol& symbol)
 // Give an error if not.
 void TParseContextBase::checkIndex(const TSourceLoc& loc, const TType& type, int& index)
 {
+    const auto sizeIsSpecializationExpression = [&type]() {
+        return type.containsSpecializationSize() &&
+               type.getArraySizes()->getOuterNode() != nullptr &&
+               type.getArraySizes()->getOuterNode()->getAsSymbolNode() == nullptr; };
+
     if (index < 0) {
         error(loc, "", "[", "index out of range '%d'", index);
         index = 0;
     } else if (type.isArray()) {
-        if (type.isSizedArray() && index >= type.getOuterArraySize()) {
+        if (type.isSizedArray() && !sizeIsSpecializationExpression() &&
+            index >= type.getOuterArraySize()) {
             error(loc, "", "[", "array index out of range '%d'", index);
             index = type.getOuterArraySize() - 1;
         }

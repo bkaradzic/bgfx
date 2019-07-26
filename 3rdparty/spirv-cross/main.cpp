@@ -515,6 +515,7 @@ struct CLIArguments
 	bool msl_argument_buffers = false;
 	bool msl_texture_buffer_native = false;
 	bool msl_multiview = false;
+	bool msl_view_index_from_device_index = false;
 	bool glsl_emit_push_constant_as_ubo = false;
 	bool glsl_emit_ubo_as_plain_uniforms = false;
 	bool emit_line_directives = false;
@@ -594,6 +595,7 @@ static void print_help()
 	                "\t[--msl-texture-buffer-native]\n"
 	                "\t[--msl-discrete-descriptor-set <index>]\n"
 	                "\t[--msl-multiview]\n"
+	                "\t[--msl-view-index-from-device-index]\n"
 	                "\t[--hlsl]\n"
 	                "\t[--reflect]\n"
 	                "\t[--shader-model]\n"
@@ -753,6 +755,7 @@ static string compile_iteration(const CLIArguments &args, std::vector<uint32_t> 
 		msl_opts.argument_buffers = args.msl_argument_buffers;
 		msl_opts.texture_buffer_native = args.msl_texture_buffer_native;
 		msl_opts.multiview = args.msl_multiview;
+		msl_opts.view_index_from_device_index = args.msl_view_index_from_device_index;
 		msl_comp->set_msl_options(msl_opts);
 		for (auto &v : args.msl_discrete_descriptor_sets)
 			msl_comp->add_discrete_descriptor_set(v);
@@ -1073,6 +1076,8 @@ static int main_inner(int argc, char *argv[])
 	        [&args](CLIParser &parser) { args.msl_discrete_descriptor_sets.push_back(parser.next_uint()); });
 	cbs.add("--msl-texture-buffer-native", [&args](CLIParser &) { args.msl_texture_buffer_native = true; });
 	cbs.add("--msl-multiview", [&args](CLIParser &) { args.msl_multiview = true; });
+	cbs.add("--msl-view-index-from-device-index",
+	        [&args](CLIParser &) { args.msl_view_index_from_device_index = true; });
 	cbs.add("--extension", [&args](CLIParser &parser) { args.extensions.push_back(parser.next_string()); });
 	cbs.add("--rename-entry-point", [&args](CLIParser &parser) {
 		auto old_name = parser.next_string();

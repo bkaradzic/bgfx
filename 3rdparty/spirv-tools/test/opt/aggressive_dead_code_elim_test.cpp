@@ -6560,6 +6560,62 @@ OpFunctionEnd
   SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
 }
 
+TEST_F(AggressiveDCETest, LiveDecorateId) {
+  const std::string spirv = R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %1 "main" %2
+OpExecutionMode %1 LocalSize 8 1 1
+OpDecorate %2 DescriptorSet 0
+OpDecorate %2 Binding 0
+OpDecorateId %3 UniformId %uint_2
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%uint_2 = OpConstant %uint 2
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+%2 = OpVariable %_ptr_StorageBuffer_uint StorageBuffer
+%8 = OpTypeFunction %void
+%1 = OpFunction %void None %8
+%9 = OpLabel
+%3 = OpLoad %uint %2
+OpStore %2 %3
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  OptimizerOptions()->preserve_spec_constants_ = true;
+  SinglePassRunAndCheck<AggressiveDCEPass>(spirv, spirv, true);
+}
+
+TEST_F(AggressiveDCETest, LiveDecorateIdOnGroup) {
+  const std::string spirv = R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %1 "main" %2
+OpExecutionMode %1 LocalSize 8 1 1
+OpDecorate %2 DescriptorSet 0
+OpDecorate %2 Binding 0
+OpDecorateId %3 UniformId %uint_2
+%3 = OpDecorationGroup
+OpGroupDecorate %3 %5
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%uint_2 = OpConstant %uint 2
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+%2 = OpVariable %_ptr_StorageBuffer_uint StorageBuffer
+%9 = OpTypeFunction %void
+%1 = OpFunction %void None %9
+%10 = OpLabel
+%5 = OpLoad %uint %2
+OpStore %2 %5
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  OptimizerOptions()->preserve_spec_constants_ = true;
+  SinglePassRunAndCheck<AggressiveDCEPass>(spirv, spirv, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Check that logical addressing required

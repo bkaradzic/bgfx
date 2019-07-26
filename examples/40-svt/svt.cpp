@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Aleš Mlakar. All rights reserved.
+ * Copyright 2018 Ales Mlakar. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -211,7 +211,7 @@ public:
 
 			if ((BGFX_CAPS_TEXTURE_BLIT | BGFX_CAPS_TEXTURE_READ_BACK) != (bgfx::getCaps()->supported & (BGFX_CAPS_TEXTURE_BLIT | BGFX_CAPS_TEXTURE_READ_BACK)))
 			{
-				// When texture read-back or blit is not supported by GPU blink!				
+				// When texture read-back or blit is not supported by GPU blink!
 				bool blink = uint32_t(time*3.0f) & 1;
 				bgfx::dbgTextPrintf(0, 0, blink ? 0x4f : 0x04, " Texture read-back and/or blit not supported by GPU. ");
 

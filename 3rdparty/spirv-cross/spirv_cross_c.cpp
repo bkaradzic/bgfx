@@ -845,7 +845,7 @@ spvc_result spvc_compiler_msl_add_vertex_attribute(spvc_compiler compiler, const
 	attr.msl_stride = va->msl_stride;
 	attr.format = static_cast<MSLVertexFormat>(va->format);
 	attr.builtin = static_cast<spv::BuiltIn>(va->builtin);
-	attr.per_instance = va->per_instance;
+	attr.per_instance = va->per_instance != 0;
 	msl.add_msl_vertex_attribute(attr);
 	return SPVC_SUCCESS;
 #else
@@ -949,12 +949,12 @@ static void spvc_convert_msl_sampler(MSLConstexprSampler &samp, const spvc_msl_c
 	samp.r_address = static_cast<MSLSamplerAddress>(sampler->r_address);
 	samp.lod_clamp_min = sampler->lod_clamp_min;
 	samp.lod_clamp_max = sampler->lod_clamp_max;
-	samp.lod_clamp_enable = sampler->lod_clamp_enable;
+	samp.lod_clamp_enable = sampler->lod_clamp_enable != 0;
 	samp.min_filter = static_cast<MSLSamplerFilter>(sampler->min_filter);
 	samp.mag_filter = static_cast<MSLSamplerFilter>(sampler->mag_filter);
 	samp.mip_filter = static_cast<MSLSamplerMipFilter>(sampler->mip_filter);
-	samp.compare_enable = sampler->compare_enable;
-	samp.anisotropy_enable = sampler->anisotropy_enable;
+	samp.compare_enable = sampler->compare_enable != 0;
+	samp.anisotropy_enable = sampler->anisotropy_enable != 0;
 	samp.max_anisotropy = sampler->max_anisotropy;
 	samp.compare_func = static_cast<MSLSamplerCompareFunc>(sampler->compare_func);
 	samp.coord = static_cast<MSLSamplerCoord>(sampler->coord);

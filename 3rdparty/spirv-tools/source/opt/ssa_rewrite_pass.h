@@ -188,6 +188,9 @@ class SSARewriter {
   // value |val_id|.
   void WriteVariable(uint32_t var_id, BasicBlock* bb, uint32_t val_id) {
     defs_at_block_[bb][var_id] = val_id;
+    if (auto* pc = GetPhiCandidate(val_id)) {
+      pc->AddUser(bb->id());
+    }
   }
 
   // Processes the store operation |inst| in basic block |bb|. This extracts

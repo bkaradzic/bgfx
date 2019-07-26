@@ -1930,6 +1930,63 @@ TEST_F(LocalSSAElimTest, VariablePointerTest2) {
   SinglePassRunAndMatch<LocalMultiStoreElimPass>(text, false);
 }
 
+TEST_F(LocalSSAElimTest, ChainedTrivialPhis) {
+  // Check that the copy object get the undef value implicitly assigned in the
+  // entry block.
+  const std::string text = R"(
+; CHECK: [[undef:%\w+]] = OpUndef %v4float
+; CHECK: OpCopyObject %v4float [[undef]]
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint GLCompute %2 "main"
+               OpExecutionMode %2 LocalSize 1 18 6
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+       %bool = OpTypeBool
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+          %2 = OpFunction %void None %4
+          %9 = OpLabel
+         %10 = OpVariable %_ptr_Function_v4float Function
+               OpBranch %11
+         %11 = OpLabel
+               OpLoopMerge %12 %13 None
+               OpBranch %14
+         %14 = OpLabel
+         %15 = OpUndef %bool
+               OpBranchConditional %15 %16 %12
+         %16 = OpLabel
+         %17 = OpUndef %bool
+               OpSelectionMerge %18 None
+               OpBranchConditional %17 %19 %18
+         %19 = OpLabel
+         %20 = OpUndef %bool
+               OpLoopMerge %21 %22 None
+               OpBranchConditional %20 %23 %21
+         %23 = OpLabel
+         %24 = OpLoad %v4float %10
+         %25 = OpCopyObject %v4float %24
+         %26 = OpUndef %bool
+               OpBranch %22
+         %22 = OpLabel
+               OpBranch %19
+         %21 = OpLabel
+               OpBranch %12
+         %18 = OpLabel
+               OpBranch %13
+         %13 = OpLabel
+               OpBranch %11
+         %12 = OpLabel
+         %27 = OpLoad %v4float %10
+               OpReturn
+               OpFunctionEnd
+  )";
+  SinglePassRunAndMatch<SSARewritePass>(text, false);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    No optimization in the presence of

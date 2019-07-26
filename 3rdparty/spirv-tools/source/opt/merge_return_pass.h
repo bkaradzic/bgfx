@@ -246,36 +246,23 @@ class MergeReturnPass : public MemPass {
   // instruction.
   void CreatePhiNodesForInst(BasicBlock* merge_block, Instruction& inst);
 
-  // Traverse the nodes in |new_merge_nodes_|, and adds the OpPhi instructions
-  // that are needed to make the code correct.  It is assumed that at this point
-  // there are no unreachable blocks in the control flow graph.
+  // Add new phi nodes for any id that no longer dominate all of it uses.  A phi
+  // node is added to a block |bb| for an id if the id is defined between the
+  // original immediate dominator of |bb| and its new immidiate dominator.  It
+  // is assumed that at this point there are no unreachable blocks in the
+  // control flow graph.
   void AddNewPhiNodes();
 
-  // Creates any new phi nodes that are needed in |bb| now that |pred| is no
-  // longer the only block that preceedes |bb|.  |header_id| is the id of the
-  // basic block for the loop or selection construct that merges at |bb|.
-  void AddNewPhiNodes(BasicBlock* bb, BasicBlock* pred, uint32_t header_id);
+  // Creates any new phi nodes that are needed in |bb|.  |AddNewPhiNodes| must
+  // have already been called on the original dominators of |bb|.
+  void AddNewPhiNodes(BasicBlock* bb);
 
-  // Saves |block| to a list of basic block that will require OpPhi nodes to be
-  // added by calling |AddNewPhiNodes|.  It is assumed that |block| used to have
-  // a single predecessor, |single_original_pred|, but now has more.
-  void MarkForNewPhiNodes(BasicBlock* block, BasicBlock* single_original_pred);
-
-  // Return the original single predcessor of |block| if it was flagged as
-  // having a single predecessor.  |nullptr| is returned otherwise.
-  BasicBlock* MarkedSinglePred(BasicBlock* block) {
-    auto it = new_merge_nodes_.find(block);
-    if (it != new_merge_nodes_.end()) {
-      return it->second;
-    } else {
-      return nullptr;
-    }
-  }
+  // Records the terminator of immediate dominator for every basic block in
+  // |function|.
+  void RecordImmediateDominators(Function* function);
 
   // Modifies existing OpPhi instruction in |target| block to account for the
-  // new edge from |new_source|.  The value for that edge will be an Undef. If
-  // |target| only had a single predecessor, then it is marked as needing new
-  // phi nodes.  See |MarkForNewPhiNodes|.
+  // new edge from |new_source|.  The value for that edge will be an Undef.
   //
   // The CFG must not include the edge from |new_source| to |target| yet.
   void UpdatePhiNodes(BasicBlock* new_source, BasicBlock* target);
@@ -301,6 +288,11 @@ class MergeReturnPass : public MemPass {
   // |merge_target| as the merge node.
   void CreateDummyLoop(BasicBlock* merge_target);
 
+  // Returns true if |function| has an unreachable block that is not a continue
+  // target that simply branches back to the header, or a merge block containing
+  // 1 instruction which is OpUnreachable.
+  bool HasNontrivialUnreachableBlocks(Function* function);
+
   // A stack used to keep track of the innermost contain loop and selection
   // constructs.
   std::vector<StructuredControlState> state_;
@@ -324,12 +316,14 @@ class MergeReturnPass : public MemPass {
   // after processing the current function.
   BasicBlock* final_return_block_;
 
-  // This map contains the set of nodes that use to have a single predcessor,
-  // but now have more.  They will need new OpPhi nodes.  For each of the nodes,
-  // it is mapped to it original single predcessor.  It is assumed there are no
-  // values that will need a phi on the new edges.
-  std::unordered_map<BasicBlock*, BasicBlock*> new_merge_nodes_;
-  bool HasNontrivialUnreachableBlocks(Function* function);
+  // This is a map from a node to its original immediate dominator identified by
+  // the terminator if that block.  We use the terminator because the block we
+  // want may change if the block is split.
+  std::unordered_map<BasicBlock*, Instruction*> original_dominator_;
+
+  // A map from a basic block, bb, to the set of basic blocks which represent
+  // the new edges that reach |bb|.
+  std::unordered_map<BasicBlock*, std::set<uint32_t>> new_edges_;
 
   // Contains all return blocks that are merged. This is set is populated while
   // processing structured blocks and used to properly construct OpPhi

@@ -162,9 +162,6 @@ class InstBindlessCheckPass : public InstrumentPass {
   // GenInitCheckCode to every instruction in module.
   Pass::Status ProcessImpl();
 
-  // True if VK_EXT_descriptor_indexing is defined
-  bool ext_descriptor_indexing_defined_;
-
   // Enable instrumentation of runtime array length checking
   bool input_length_enabled_;
 

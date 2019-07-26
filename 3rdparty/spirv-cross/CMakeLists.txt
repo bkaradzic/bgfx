@@ -103,7 +103,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
 		set(spirv-cross-link-flags "${spirv-cross-link-flags} -fsanitize=thread")
 	endif()
 elseif (MSVC)
-	set(spirv-compiler-options ${spirv-compiler-options} /wd4267)
+	set(spirv-compiler-options ${spirv-compiler-options} /wd4267 /wd4996)
 endif()
 
 macro(extract_headers out_abs file_list)
