@@ -1839,15 +1839,7 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				VkCommandBufferBeginInfo cbbi;
-				cbbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-				cbbi.pNext = NULL;
-				cbbi.flags = 0;
-				cbbi.pInheritanceInfo = NULL;
-
-				VkCommandBuffer commandBuffer = m_commandBuffers[0];
-				VK_CHECK(vkBeginCommandBuffer(commandBuffer, &cbbi) );
-
+				VkCommandBuffer commandBuffer = beginNewCommand();
 				VkRenderPassBeginInfo rpbi;
 				rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 				rpbi.pNext = NULL;
@@ -1883,11 +1875,11 @@ VK_IMPORT_DEVICE
 						);
 				}
 
-				VK_CHECK(vkEndCommandBuffer(commandBuffer) );
 				m_backBufferColorIdx = 0;
+				submitCommandAndWait(commandBuffer);
 
-				kick();
-				finishAll();
+//				kick();
+//				finishAll();
 
 				VK_CHECK(vkResetCommandPool(m_device, m_commandPool, 0) );
 			}
@@ -3343,6 +3335,50 @@ VK_IMPORT_DEVICE
 			return 0;
 		}
 
+        VkCommandBuffer beginNewCommand(VkCommandBufferUsageFlagBits commandBufferUsageFlag = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+        {
+            VkCommandBufferAllocateInfo cbai;
+            cbai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            cbai.pNext = NULL;
+            cbai.commandPool = m_commandPool;
+            cbai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            cbai.commandBufferCount = 1;
+
+            VkCommandBuffer commandBuffer;
+            VK_CHECK( vkAllocateCommandBuffers(m_device, &cbai, &commandBuffer) );
+
+            VkCommandBufferBeginInfo cbbi;
+            cbbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            cbbi.pNext = NULL;
+            cbbi.flags = commandBufferUsageFlag;
+            cbbi.pInheritanceInfo = NULL;
+            VK_CHECK(vkBeginCommandBuffer(commandBuffer, &cbbi) );
+
+            return commandBuffer;
+        }
+
+        void submitCommandAndWait(VkCommandBuffer commandBuffer)
+        {
+            vkEndCommandBuffer(commandBuffer);
+
+            VkSubmitInfo submitInfo;
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitInfo.pNext = NULL;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &commandBuffer;
+            submitInfo.waitSemaphoreCount = 0;
+            submitInfo.pWaitSemaphores = NULL;
+            submitInfo.signalSemaphoreCount = 0;
+            submitInfo.pSignalSemaphores = NULL;
+            submitInfo.pWaitDstStageMask = NULL;
+
+            VK_CHECK( vkQueueSubmit(m_queueGraphics, 1, &submitInfo, VK_NULL_HANDLE) );
+            VK_CHECK( vkQueueWaitIdle(m_queueGraphics) );
+
+            vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
+        }
+
+
 #define NUM_SWAPCHAIN_IMAGE 4
 		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
@@ -3812,27 +3848,7 @@ VK_DESTROY
             bx::memCopy(dst, _data, _size);
             vkUnmapMemory(device, stagingMem);
 
-            VkCommandBuffer commandBuffer;
-            // command begin
-            {
-                VkCommandBufferAllocateInfo allocInfo;
-                allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                allocInfo.pNext = NULL;
-                allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                allocInfo.commandPool = s_renderVK->m_commandPool;
-                allocInfo.commandBufferCount = 1;
-
-                vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
-                VkCommandBufferBeginInfo beginInfo;
-                beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                beginInfo.pNext = NULL;
-                beginInfo.pInheritanceInfo = NULL;
-                beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-                VK_CHECK( vkBeginCommandBuffer(commandBuffer, &beginInfo) );
-            }
-
+            VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
             // copy buffer to buffer
             {
                 VkBufferCopy region = {};
@@ -3842,27 +3858,7 @@ VK_DESTROY
 
                 vkCmdCopyBuffer(commandBuffer, stagingBuffer, m_buffer, 1, &region);
             }
-
-            // command end
-            {
-                vkEndCommandBuffer(commandBuffer);
-
-                VkSubmitInfo submitInfo;
-                submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                submitInfo.pNext = NULL;
-                submitInfo.commandBufferCount = 1;
-                submitInfo.pCommandBuffers = &commandBuffer;
-                submitInfo.waitSemaphoreCount = 0;
-                submitInfo.pWaitSemaphores = NULL;
-                submitInfo.signalSemaphoreCount = 0;
-                submitInfo.pSignalSemaphores = NULL;
-                submitInfo.pWaitDstStageMask = NULL;
-
-                VK_CHECK( vkQueueSubmit(s_renderVK->m_queueGraphics, 1, &submitInfo, VK_NULL_HANDLE) );
-                VK_CHECK( vkQueueWaitIdle(s_renderVK->m_queueGraphics) );
-
-                vkFreeCommandBuffers(device, s_renderVK->m_commandPool, 1, &commandBuffer);
-            }
+            s_renderVK->submitCommandAndWait(commandBuffer);
 
             vkFreeMemory(device, stagingMem, allocatorCb);
 		    vkDestroy(stagingBuffer);
@@ -3925,27 +3921,7 @@ VK_DESTROY
         bx::memCopy(dst, _data, _size);
         vkUnmapMemory(device, stagingMem);
 
-        VkCommandBuffer commandBuffer;
-        // command begin
-        {
-            VkCommandBufferAllocateInfo allocInfo;
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.pNext = NULL;
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = s_renderVK->m_commandPool;
-            allocInfo.commandBufferCount = 1;
-
-            vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
-            VkCommandBufferBeginInfo beginInfo;
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.pNext = NULL;
-            beginInfo.pInheritanceInfo = NULL;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-            VK_CHECK( vkBeginCommandBuffer(commandBuffer, &beginInfo) );
-        }
-
+        VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
         // copy buffer to buffer
         {
             VkBufferCopy region = {};
@@ -3955,27 +3931,7 @@ VK_DESTROY
 
             vkCmdCopyBuffer(commandBuffer, stagingBuffer, m_buffer, 1, &region);
         }
-
-        // command end
-        {
-            vkEndCommandBuffer(commandBuffer);
-
-            VkSubmitInfo submitInfo;
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.pNext = NULL;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
-            submitInfo.waitSemaphoreCount = 0;
-            submitInfo.pWaitSemaphores = NULL;
-            submitInfo.signalSemaphoreCount = 0;
-            submitInfo.pSignalSemaphores = NULL;
-            submitInfo.pWaitDstStageMask = NULL;
-
-            VK_CHECK( vkQueueSubmit(s_renderVK->m_queueGraphics, 1, &submitInfo, VK_NULL_HANDLE) );
-            VK_CHECK( vkQueueWaitIdle(s_renderVK->m_queueGraphics) );
-
-            vkFreeCommandBuffers(device, s_renderVK->m_commandPool, 1, &commandBuffer);
-        }
+        s_renderVK->submitCommandAndWait(commandBuffer);
 
         vkFreeMemory(device, stagingMem, allocatorCb);
         vkDestroy(stagingBuffer);
@@ -4697,51 +4653,9 @@ VK_DESTROY
 		uint8_t side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch)
 	{
 		VkDevice device = s_renderVK->m_device;
-        VkCommandBuffer commandBuffer;
-        // command begin
-        {
-            VkCommandBufferAllocateInfo allocInfo;
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.pNext = NULL;
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = commandPool;
-            allocInfo.commandBufferCount = 1;
-
-            vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
-            VkCommandBufferBeginInfo beginInfo;
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.pNext = NULL;
-            beginInfo.pInheritanceInfo = NULL;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-            VK_CHECK( vkBeginCommandBuffer(commandBuffer, &beginInfo) );
-        }
-
+        VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
 	    // image Layout transition into destination optimal
-        {
-            VkImageMemoryBarrier barrier = {};
-            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.oldLayout = m_currentImageLayout;
-            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.image = m_textureImage;
-            barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = 1;
-            barrier.subresourceRange.baseArrayLayer = 0;
-            barrier.subresourceRange.layerCount = 1;
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-            vkCmdPipelineBarrier(commandBuffer,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                0,
-                0, NULL, 0, NULL, 1, &barrier);
-        }
-
+	    setImageMemoryBarrier(commandBuffer, m_textureImage, m_currentImageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	    // copy buffer to image
         {
             VkBufferImageCopy region = {};
@@ -4762,51 +4676,8 @@ VK_DESTROY
 
             vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
         }
-
-        // image Layout transition into shader read
-        {
-            VkImageMemoryBarrier barrier = {};
-            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.image = m_textureImage;
-            barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = 1;
-            barrier.subresourceRange.baseArrayLayer = 0;
-            barrier.subresourceRange.layerCount = 1;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-            vkCmdPipelineBarrier(commandBuffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                0,
-                0, NULL, 0, NULL, 1, &barrier);
-        }
-
-	    // command end
-        {
-            vkEndCommandBuffer(commandBuffer);
-
-            VkSubmitInfo submitInfo;
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.pNext = NULL;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
-            submitInfo.waitSemaphoreCount = 0;
-            submitInfo.pWaitSemaphores = NULL;
-            submitInfo.signalSemaphoreCount = 0;
-            submitInfo.pSignalSemaphores = NULL;
-            submitInfo.pWaitDstStageMask = NULL;
-
-            VK_CHECK( vkQueueSubmit(s_renderVK->m_queueGraphics, 1, &submitInfo, VK_NULL_HANDLE) );
-            VK_CHECK( vkQueueWaitIdle(s_renderVK->m_queueGraphics) );
-
-            vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-        }
+        setImageMemoryBarrier(commandBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	    s_renderVK->submitCommandAndWait(commandBuffer);
 
 		m_currentImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
