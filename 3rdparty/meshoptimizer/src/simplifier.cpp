@@ -19,6 +19,7 @@
 // Michael Garland. Quadric-based polygonal surface simplification. 1999
 // Peter Lindstrom. Out-of-Core Simplification of Large Polygonal Models. 2000
 // Matthias Teschner, Bruno Heidelberger, Matthias Mueller, Danat Pomeranets, Markus Gross. Optimized Spatial Hashing for Collision Detection of Deformable Objects. 2003
+// Peter Van Sandt, Yannis Chronis, Jignesh M. Patel. Efficiently Searching In-Memory Sorted Arrays: Revenge of the Interpolation Search? 2019
 namespace meshopt
 {
 
@@ -1080,6 +1081,14 @@ static size_t filterTriangles(unsigned int* destination, unsigned int* tritable,
 	return result * 3;
 }
 
+static float interpolate(float y, float x0, float y0, float x1, float y1, float x2, float y2)
+{
+	// three point interpolation from "revenge of interpolation search" paper
+	float num = (y1 - y) * (x1 - x2) * (x1 - x0) * (y2 - y0);
+	float den = (y2 - y) * (x1 - x2) * (y0 - y1) + (y0 - y) * (x1 - x0) * (y1 - y2);
+	return x1 + num / den;
+}
+
 } // namespace meshopt
 
 #if TRACE
@@ -1265,38 +1274,25 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 
 	unsigned int* vertex_ids = allocator.allocate<unsigned int>(vertex_count);
 
+	const int kInterpolationPasses = 5;
+
 	// invariant: # of triangles in min_grid <= target_count
 	int min_grid = 0;
 	int max_grid = 1025;
 	size_t min_triangles = 0;
 	size_t max_triangles = index_count / 3;
 
-	const int kInterpolationPasses = 5;
+	// instead of starting in the middle, let's guess as to what the answer might be! triangle count usually grows as a square of grid size...
+	int next_grid_size = int(sqrtf(float(target_cell_count)) + 0.5f);
 
 	for (int pass = 0; pass < 10 + kInterpolationPasses; ++pass)
 	{
 		assert(min_triangles < target_index_count / 3);
 		assert(max_grid - min_grid > 1);
 
-		int grid_size = 0;
-
-		if (pass == 0)
-		{
-			// instead of starting in the middle, let's guess as to what the answer might be! triangle count usually grows as a square of grid size...
-			grid_size = int(sqrtf(float(target_cell_count)) + 0.5f);
-			grid_size = (grid_size <= min_grid) ? min_grid + 1 : (grid_size >= max_grid) ? max_grid - 1 : grid_size;
-		}
-		else if (pass <= kInterpolationPasses)
-		{
-			float k = (float(target_index_count / 3) - float(min_triangles)) / (float(max_triangles) - float(min_triangles));
-			grid_size = int(float(min_grid) * (1 - k) + float(max_grid) * k + 0.5f);
-			grid_size = (grid_size <= min_grid) ? min_grid + 1 : (grid_size >= max_grid) ? max_grid - 1 : grid_size;
-		}
-		else
-		{
-			grid_size = (min_grid + max_grid) / 2;
-			assert(grid_size > min_grid && grid_size < max_grid);
-		}
+		// we clamp the prediction of the grid size to make sure that the search converges
+		int grid_size = next_grid_size;
+		grid_size = (grid_size <= min_grid) ? min_grid + 1 : (grid_size >= max_grid) ? max_grid - 1 : grid_size;
 
 		computeVertexIds(vertex_ids, vertex_positions, vertex_count, grid_size);
 		size_t triangles = countTriangles(vertex_ids, indices, index_count);
@@ -1307,6 +1303,8 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 		       grid_size, int(triangles),
 		       (triangles <= target_index_count / 3) ? "under" : "over");
 #endif
+
+		float tip = interpolate(float(target_index_count / 3), float(min_grid), float(min_triangles), float(grid_size), float(triangles), float(max_grid), float(max_triangles));
 
 		if (triangles <= target_index_count / 3)
 		{
@@ -1321,6 +1319,10 @@ size_t meshopt_simplifySloppy(unsigned int* destination, const unsigned int* ind
 
 		if (triangles == target_index_count / 3 || max_grid - min_grid <= 1)
 			break;
+
+		// we start by using interpolation search - it usually converges faster
+		// however, interpolation search has a worst case of O(N) so we switch to binary search after a few iterations which converges in O(logN)
+		next_grid_size = (pass < kInterpolationPasses) ? int(tip + 0.5f) : (min_grid + max_grid) / 2;
 	}
 
 	if (min_triangles == 0)

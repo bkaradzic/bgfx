@@ -30,29 +30,18 @@
 		<a href="https://github.com/zeux/meshoptimizer" target="_blank" rel="noopener">meshoptimizer</a>
 		</div>
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/105/three.min.js"></script>
 
-		<script src="../js/decoder.js"></script>
-		<script src="../tools/OptMeshLoader.js"></script>
+		<script src="../js/meshopt_decoder.js"></script>
+		<script src="GLTFLoader.js"></script>
 
 		<script>
 			var container;
 
-			var camera, scene, renderer;
+			var camera, scene, renderer, mixer, clock;
 
 			var windowHalfX = window.innerWidth / 2;
 			var windowHalfY = window.innerHeight / 2;
-
-			var timers = {};
-
-			console.time = function(label) {
-				timers[label] = performance.now();
-			};
-
-			console.timeEnd = function(label) {
-				var time = performance.now() - timers[label];
-				document.getElementById('info').append(label + " took " + time.toFixed(2) + " ms");
-			};
 
 			init();
 			animate();
@@ -67,8 +56,9 @@
 				camera.position.z = 3.0;
 
 				scene = new THREE.Scene();
+				scene.background = new THREE.Color(0x300a24);
 
-				var ambientLight = new THREE.AmbientLight(0xcccccc, 0.2);
+				var ambientLight = new THREE.AmbientLight(0xcccccc, 0.3);
 				scene.add(ambientLight);
 
 				var pointLight = new THREE.PointLight(0xffffff, 0.8);
@@ -77,16 +67,27 @@
 				scene.add(camera);
 
 				var onProgress = function (xhr) {};
-				var onError = function () {};
+				var onError = function (e) {
+					console.log(e);
+				};
 
-				new THREE.OptMeshLoader()
-					.setDecoder(MeshoptDecoder)
-					.setMaterials(null) // materials can be fetched using MTLLoader
-					.setPath('./')
-					.load('pirate.optmesh', function (object)
-					{
-						scene.add(object);
-					}, onProgress, onError);
+				var loader = new THREE.GLTFLoader()
+				loader.setMeshoptDecoder(MeshoptDecoder)
+				loader.load('pirate.glb', function (gltf) {
+					var bbox = new THREE.Box3().setFromObject(gltf.scene);
+					var scale = 2 / (bbox.max.y - bbox.min.y);
+
+					gltf.scene.scale.set(scale, scale, scale);
+					gltf.scene.position.set(0, 0, 0);
+
+					scene.add(gltf.scene);
+
+					mixer = new THREE.AnimationMixer(gltf.scene);
+
+					if (gltf.animations.length) {
+						mixer.clipAction(gltf.animations[gltf.animations.length - 1]).play();
+					}
+				}, onProgress, onError);
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio(window.devicePixelRatio);
@@ -94,6 +95,8 @@
 				container.appendChild(renderer.domElement);
 
 				window.addEventListener('resize', onWindowResize, false);
+
+				clock = new THREE.Clock();
 			}
 
 			function onWindowResize()
@@ -109,6 +112,10 @@
 
 			function animate()
 			{
+				if (mixer) {
+					mixer.update(clock.getDelta());
+				}
+
 				requestAnimationFrame(animate);
 				render();
 			}
