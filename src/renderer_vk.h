@@ -322,17 +322,16 @@ VK_DESTROY
 
 		void create(uint32_t _size, uint32_t _maxDescriptors);
 		void destroy();
-		void reset(VkDescriptorBufferInfo& _gpuAddress);
-		void* allocUbv(uint32_t _vsize, uint32_t _fsize);
+		void reset();
 
-		VkDescriptorSet m_descriptorSet[BGFX_CONFIG_MAX_DRAW_CALLS];
+		VkDescriptorSet* m_descriptorSet;
 		VkBuffer m_buffer;
 		VkDeviceMemory m_deviceMem;
 		uint8_t* m_data;
 		uint32_t m_size;
 		uint32_t m_pos;
 		uint32_t m_currentDs;
-//		uint32_t m_maxDescriptors;
+		uint32_t m_maxDescriptors;
 	};
 
 	struct ImageVK
@@ -446,7 +445,6 @@ VK_DESTROY
 		PredefinedUniform m_predefined[PredefinedUniform::Count * 2];
 		uint8_t m_numPredefined;
 
-		// TODO: rinthel - add pipeline layout here
 		uint32_t m_descriptorSetLayoutHash;
 		VkPipelineLayout m_pipelineLayout;
 	};
