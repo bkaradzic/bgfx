@@ -183,6 +183,7 @@ private:
 	bool requires_inverse_4x4 = false;
 	bool requires_scalar_reflect = false;
 	bool requires_scalar_refract = false;
+	bool requires_scalar_faceforward = false;
 	uint64_t required_textureSizeVariants = 0;
 	void require_texture_query_variant(const SPIRType &type);
 

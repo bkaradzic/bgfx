@@ -1073,7 +1073,7 @@ struct InterpolatorT
 	{
 		from     = _value;
 		to       = _value;
-		duration = 0.0;
+		duration = 0.0f;
 		offset   = bx::getHPCounter();
 	}
 
@@ -1095,7 +1095,7 @@ struct InterpolatorT
 			const double freq = double(bx::getHPFrequency() );
 			int64_t now = bx::getHPCounter();
 			float time = (float)(double(now - offset) / freq);
-			float lerp = bx::clamp(time, 0.0f, duration) / duration;
+			float lerp = duration != 0.0f ? bx::clamp(time, 0.0f, duration) / duration : 0.0f;
 			return lerpT(from, to, easeT(lerp) );
 		}
 
@@ -1214,11 +1214,11 @@ void help(const char* _error = NULL)
 {
 	if (NULL != _error)
 	{
-		fprintf(stderr, "Error:\n%s\n\n", _error);
+		bx::printf("Error:\n%s\n\n", _error);
 	}
 
-	fprintf(stderr
-		, "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
+	bx::printf(
+		  "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
 		  "Copyright 2011-2019 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		, BGFX_TEXTUREV_VERSION_MAJOR
@@ -1226,19 +1226,19 @@ void help(const char* _error = NULL)
 		, BGFX_API_VERSION
 		);
 
-	fprintf(stderr
-		, "Usage: texturev <file path>\n"
+	bx::printf(
+		  "Usage: texturev <file path>\n"
 		  "\n"
 		  "Supported input file types:\n"
 		  );
 
 	for (uint32_t ii = 0; ii < BX_COUNTOF(s_supportedExt); ++ii)
 	{
-		fprintf(stderr, "    *.%s\n", s_supportedExt[ii]);
+		bx::printf("    *.%s\n", s_supportedExt[ii]);
 	}
 
-	fprintf(stderr
-		, "\n"
+	bx::printf(
+		  "\n"
 		  "Options:\n"
 		  "  -h, --help               Help.\n"
 		  "  -v, --version            Version information only.\n"
@@ -1254,8 +1254,8 @@ int _main_(int _argc, char** _argv)
 
 	if (cmdLine.hasArg('v', "version") )
 	{
-		fprintf(stderr
-			, "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
+		bx::printf(
+			  "texturev, bgfx texture viewer tool, version %d.%d.%d.\n"
 			, BGFX_TEXTUREV_VERSION_MAJOR
 			, BGFX_TEXTUREV_VERSION_MINOR
 			, BGFX_API_VERSION

@@ -102,6 +102,7 @@ void SSARewriter::ReplacePhiUsersWith(const PhiCandidate& phi_to_remove,
                                       uint32_t repl_id) {
   for (uint32_t user_id : phi_to_remove.users()) {
     PhiCandidate* user_phi = GetPhiCandidate(user_id);
+    BasicBlock* bb = pass_->context()->get_instr_block(user_id);
     if (user_phi) {
       // If the user is a Phi candidate, replace all arguments that refer to
       // |phi_to_remove.result_id()| with |repl_id|.
@@ -110,6 +111,10 @@ void SSARewriter::ReplacePhiUsersWith(const PhiCandidate& phi_to_remove,
           arg = repl_id;
         }
       }
+    } else if (bb->id() == user_id) {
+      // The phi candidate is the definition of the variable at basic block
+      // |bb|.  We must change this to the replacement.
+      WriteVariable(phi_to_remove.var_id(), bb, repl_id);
     } else {
       // For regular loads, traverse the |load_replacement_| table looking for
       // instances of |phi_to_remove|.
@@ -259,6 +264,8 @@ uint32_t SSARewriter::GetReachingDef(uint32_t var_id, BasicBlock* bb) {
     // require a Phi instruction.  This will act as |var_id|'s current
     // definition to break potential cycles.
     PhiCandidate& phi_candidate = CreatePhiCandidate(var_id, bb);
+
+    // Set the value for |bb| to avoid an infinite recursion.
     WriteVariable(var_id, bb, phi_candidate.result_id());
     val_id = AddPhiOperands(&phi_candidate);
   }

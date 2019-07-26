@@ -6,6 +6,7 @@ option(BUILD_TOOLS "Build tools" OFF)
 
 set(SOURCES
     src/meshoptimizer.h
+    src/allocator.cpp
     src/clusterizer.cpp
     src/indexcodec.cpp
     src/indexgenerator.cpp
@@ -30,11 +31,11 @@ else()
 endif()
 
 if(BUILD_DEMO)
-    add_executable(demo demo/main.cpp demo/miniz.cpp demo/tests.cpp tools/objparser.cpp)
+    add_executable(demo demo/main.cpp demo/miniz.cpp demo/tests.cpp tools/meshloader.cpp)
     target_link_libraries(demo meshoptimizer)
 endif()
 
 if(BUILD_TOOLS)
-    add_executable(meshencoder tools/meshencoder.cpp tools/objparser.cpp)
-    target_link_libraries(meshencoder meshoptimizer)
+    add_executable(gltfpack tools/gltfpack.cpp tools/meshloader.cpp)
+    target_link_libraries(gltfpack meshoptimizer)
 endif()

@@ -147,13 +147,6 @@ Options (in lexicographical order):)",
                around known issues with some Vulkan drivers for initialize
                variables.)");
   printf(R"(
-  --eliminate-common-uniform
-               Perform load/load elimination for duplicate uniform values.
-               Converts any constant index access chain uniform loads into
-               its equivalent load and extract. Some loads will be moved
-               to facilitate sharing. Performed only on entry point
-               call tree functions.)");
-  printf(R"(
   --eliminate-dead-branches
                Convert conditional branches with constant condition to the
                indicated unconditional brranch. Delete all resulting dead
@@ -728,16 +721,17 @@ OptStatus ParseFlags(int argc, const char** argv,
                                              max_id_bound);
       } else if (0 == strncmp(cur_arg,
                               "--target-env=", sizeof("--target-env=") - 1)) {
+        target_env_set = true;
         if (vulkan_to_webgpu_set) {
           spvtools::Error(opt_diagnostic, nullptr, {},
-                          "Cannot use both --vulkan-to-webgpu and --target-env "
-                          "at the same time");
+                          "--vulkan-to-webgpu defines the target environment, "
+                          "so --target-env cannot be set at the same time");
           return {OPT_STOP, 1};
         }
         if (webgpu_to_vulkan_set) {
           spvtools::Error(opt_diagnostic, nullptr, {},
-                          "Cannot use both --webgpu-to-vulkan and --target-env "
-                          "at the same time");
+                          "--webgpu-to-vulkan defines the target environment, "
+                          "so --target-env cannot be set at the same time");
           return {OPT_STOP, 1};
         }
         const auto split_flag = spvtools::utils::SplitFlagArgs(cur_arg);
@@ -750,32 +744,36 @@ OptStatus ParseFlags(int argc, const char** argv,
         }
         optimizer->SetTargetEnv(target_env);
       } else if (0 == strcmp(cur_arg, "--vulkan-to-webgpu")) {
+        vulkan_to_webgpu_set = true;
         if (target_env_set) {
           spvtools::Error(opt_diagnostic, nullptr, {},
-                          "Cannot use both --vulkan-to-webgpu and --target-env "
-                          "at the same time");
+                          "--vulkan-to-webgpu defines the target environment, "
+                          "so --target-env cannot be set at the same time");
           return {OPT_STOP, 1};
         }
         if (webgpu_to_vulkan_set) {
           spvtools::Error(opt_diagnostic, nullptr, {},
-                          "Cannot use both --vulkan-to-webgpu and "
-                          "--webgpu-to-vulkan at the same time");
+                          "Cannot use both --webgpu-to-vulkan and "
+                          "--vulkan-to-webgpu at the same time, invoke twice "
+                          "if you are wanting to go to and from");
           return {OPT_STOP, 1};
         }
 
         optimizer->SetTargetEnv(SPV_ENV_WEBGPU_0);
         optimizer->RegisterVulkanToWebGPUPasses();
       } else if (0 == strcmp(cur_arg, "--webgpu-to-vulkan")) {
+        webgpu_to_vulkan_set = true;
         if (target_env_set) {
           spvtools::Error(opt_diagnostic, nullptr, {},
-                          "Cannot use both --webgpu-to-vulkan and --target-env "
-                          "at the same time");
+                          "--webgpu-to-vulkan defines the target environment, "
+                          "so --target-env cannot be set at the same time");
           return {OPT_STOP, 1};
         }
         if (vulkan_to_webgpu_set) {
           spvtools::Error(opt_diagnostic, nullptr, {},
                           "Cannot use both --webgpu-to-vulkan and "
-                          "--vulkan-to-webgpu at the same time");
+                          "--vulkan-to-webgpu at the same time, invoke twice "
+                          "if you are wanting to go to and from");
           return {OPT_STOP, 1};
         }
 

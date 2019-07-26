@@ -545,6 +545,7 @@ INSTANTIATE_TEST_CASE_P(
         "vulkan.vert",
         "vulkan.comp",
         "samplerlessTextureFunctions.frag",
+        "spv.specConstArrayCheck.vert",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -624,6 +625,7 @@ INSTANTIATE_TEST_CASE_P(
     "spv.meshShaderUserDefined.mesh",
     "spv.meshShaderPerViewBuiltins.mesh",
     "spv.meshShaderPerViewUserDefined.mesh",
+    "spv.meshShaderPerView_Errors.mesh",
     "spv.meshShaderSharedMem.mesh",
     "spv.meshShaderTaskMem.mesh",
     "spv.320.meshShaderUserDefined.mesh",

@@ -809,6 +809,7 @@ enum class Capability : unsigned {
     FragmentMaskAMD = 5010,
     StencilExportEXT = 5013,
     ImageReadWriteLodAMD = 5015,
+    ShaderClockKHR = 5055,
     SampleMaskOverrideCoverageNV = 5249,
     GeometryShaderPassthroughNV = 5251,
     ShaderViewportIndexLayerEXT = 5254,
@@ -1219,6 +1220,7 @@ enum class Op : unsigned {
     OpGroupSMaxNonUniformAMD = 5007,
     OpFragmentMaskFetchAMD = 5011,
     OpFragmentFetchAMD = 5012,
+    OpReadClockKHR = 5056,
     OpImageSampleFootprintNV = 5283,
     OpGroupNonUniformPartitionNV = 5296,
     OpWritePackedPrimitiveIndices4x8NV = 5299,
@@ -1751,6 +1753,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case Op::OpGroupSMaxNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case Op::OpFragmentMaskFetchAMD: *hasResult = true; *hasResultType = true; break;
     case Op::OpFragmentFetchAMD: *hasResult = true; *hasResultType = true; break;
+    case Op::OpReadClockKHR: *hasResult = true; *hasResultType = true; break;
     case Op::OpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
     case Op::OpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;

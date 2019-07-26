@@ -415,8 +415,8 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
 
     case EOpEmitStreamVertex:
     case EOpEndStreamPrimitive:
-        // These don't actually fold
-        return 0;
+        // These don't fold
+        return nullptr;
 
     case EOpPackSnorm2x16:
     case EOpPackUnorm2x16:
@@ -491,8 +491,6 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
         break;
     }
 
-    // TODO: 3.0 Functionality: unary constant folding: the rest of the ops have to be fleshed out
-
     case EOpPackSnorm2x16:
     case EOpPackUnorm2x16:
     case EOpPackHalf2x16:
@@ -510,7 +508,7 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
     case EOpDeterminant:
     case EOpMatrixInverse:
     case EOpTranspose:
-        return 0;
+        return nullptr;
 
     default:
         assert(componentWise);
@@ -538,7 +536,7 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             case EbtInt64: newConstArray[i].setI64Const(-unionArray[i].getI64Const()); break;
             case EbtUint64: newConstArray[i].setU64Const(static_cast<unsigned long long>(-static_cast<long long>(unionArray[i].getU64Const())));  break;
             default:
-                return 0;
+                return nullptr;
             }
             break;
         case EOpLogicalNot:
@@ -546,7 +544,7 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             switch (getType().getBasicType()) {
             case EbtBool:  newConstArray[i].setBConst(!unionArray[i].getBConst()); break;
             default:
-                return 0;
+                return nullptr;
             }
             break;
         case EOpBitwiseNot:
@@ -970,7 +968,7 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
         case EOpInt16BitsToFloat16:
         case EOpUint16BitsToFloat16:
         default:
-            return 0;
+            return nullptr;
         }
     }
 
@@ -1201,12 +1199,17 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
                 newConstArray[comp].setBConst(childConstUnions[0][arg0comp] != childConstUnions[1][arg1comp]);
                 break;
             case EOpMix:
-                if (children[2]->getAsTyped()->getBasicType() == EbtBool)
-                    newConstArray[comp].setDConst(childConstUnions[2][arg2comp].getBConst() ? childConstUnions[1][arg1comp].getDConst() :
-                                                                                              childConstUnions[0][arg0comp].getDConst());
-                else
-                    newConstArray[comp].setDConst(childConstUnions[0][arg0comp].getDConst() * (1.0 - childConstUnions[2][arg2comp].getDConst()) +
-                                                  childConstUnions[1][arg1comp].getDConst() *        childConstUnions[2][arg2comp].getDConst());
+                if (!children[0]->getAsTyped()->isFloatingDomain())
+                    return aggrNode;
+                if (children[2]->getAsTyped()->getBasicType() == EbtBool) {
+                    newConstArray[comp].setDConst(childConstUnions[2][arg2comp].getBConst()
+                        ? childConstUnions[1][arg1comp].getDConst()
+                        : childConstUnions[0][arg0comp].getDConst());
+                } else {
+                    newConstArray[comp].setDConst(
+                        childConstUnions[0][arg0comp].getDConst() * (1.0 - childConstUnions[2][arg2comp].getDConst()) +
+                        childConstUnions[1][arg1comp].getDConst() *        childConstUnions[2][arg2comp].getDConst());
+                }
                 break;
             case EOpStep:
                 newConstArray[comp].setDConst(childConstUnions[1][arg1comp].getDConst() < childConstUnions[0][arg0comp].getDConst() ? 0.0 : 1.0);

@@ -47,6 +47,7 @@
 #	define bvec3 bool3
 #	define bvec4 bool4
 
+
 #	if BGFX_SHADER_LANGUAGE_HLSL > 4
 #		define REGISTER(_type, _reg) register(_type[_reg])
 #	else
@@ -569,18 +570,27 @@ uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
 mat4 mtxFromRows(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
 #if BGFX_SHADER_LANGUAGE_GLSL
-    return transpose(mat4(_0, _1, _2, _3) );
+	return transpose(mat4(_0, _1, _2, _3) );
 #else
-    return mat4(_0, _1, _2, _3);
+	return mat4(_0, _1, _2, _3);
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
 
 mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
 {
 #if BGFX_SHADER_LANGUAGE_GLSL
-    return mat4(_0, _1, _2, _3);
+	return mat4(_0, _1, _2, _3);
 #else
-    return transpose(mat4(_0, _1, _2, _3) );
+	return transpose(mat4(_0, _1, _2, _3) );
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+mat3 mtxFromCols(vec3 _0, vec3 _1, vec3 _2)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+	return mat3(_0, _1, _2);
+#else
+	return transpose(mat3(_0, _1, _2) );
 #endif // BGFX_SHADER_LANGUAGE_GLSL
 }
 

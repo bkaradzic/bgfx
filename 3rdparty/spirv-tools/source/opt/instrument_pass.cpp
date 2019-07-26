@@ -264,6 +264,28 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
         GenFragCoordEltDebugOutputCode(
             base_offset_id, uint_frag_coord_inst->result_id(), u, builder);
     } break;
+    case SpvExecutionModelRayGenerationNV:
+    case SpvExecutionModelIntersectionNV:
+    case SpvExecutionModelAnyHitNV:
+    case SpvExecutionModelClosestHitNV:
+    case SpvExecutionModelMissNV:
+    case SpvExecutionModelCallableNV: {
+      // Load and store LaunchIdNV.
+      uint32_t launch_id = GenVarLoad(
+          context()->GetBuiltinInputVarId(SpvBuiltInLaunchIdNV), builder);
+      Instruction* x_launch_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, launch_id, 0);
+      Instruction* y_launch_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, launch_id, 1);
+      Instruction* z_launch_inst = builder->AddIdLiteralOp(
+          GetUintId(), SpvOpCompositeExtract, launch_id, 2);
+      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdX,
+                              x_launch_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdY,
+                              y_launch_inst->result_id(), builder);
+      GenDebugOutputFieldCode(base_offset_id, kInstRayTracingOutLaunchIdZ,
+                              z_launch_inst->result_id(), builder);
+    } break;
     default: { assert(false && "unsupported stage"); } break;
   }
 }
@@ -843,7 +865,12 @@ bool InstrumentPass::InstProcessEntryPointCallTree(InstProcessFunction& pfn) {
       stage != SpvExecutionModelGeometry &&
       stage != SpvExecutionModelGLCompute &&
       stage != SpvExecutionModelTessellationControl &&
-      stage != SpvExecutionModelTessellationEvaluation)
+      stage != SpvExecutionModelTessellationEvaluation &&
+      stage != SpvExecutionModelRayGenerationNV &&
+      stage != SpvExecutionModelIntersectionNV &&
+      stage != SpvExecutionModelAnyHitNV &&
+      stage != SpvExecutionModelClosestHitNV &&
+      stage != SpvExecutionModelMissNV && stage != SpvExecutionModelCallableNV)
     return false;
   // Add together the roots of all entry points
   std::queue<uint32_t> roots;

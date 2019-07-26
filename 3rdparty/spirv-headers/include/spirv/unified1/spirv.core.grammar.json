@@ -3871,6 +3871,18 @@
       "version" : "None"
     },
     {
+      "opname" : "OpReadClockKHR",
+      "opcode" : 5056,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope", "name" : "'Execution'" }
+      ],
+      "capabilities" : [ "ShaderClockKHR" ],
+      "extensions" : [ "SPV_KHR_shader_clock" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpImageSampleFootprintNV",
       "opcode" : 5283,
       "operands" : [
@@ -9167,6 +9179,13 @@
           "value" : 5015,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_AMD_shader_image_load_store_lod" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShaderClockKHR",
+          "value" : 5055,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_shader_clock" ],
           "version" : "None"
         },
         {

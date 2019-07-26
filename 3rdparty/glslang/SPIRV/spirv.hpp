@@ -1753,6 +1753,7 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpGroupSMaxNonUniformAMD: *hasResult = true; *hasResultType = true; break;
     case OpFragmentMaskFetchAMD: *hasResult = true; *hasResultType = true; break;
     case OpFragmentFetchAMD: *hasResult = true; *hasResultType = true; break;
+    case OpReadClockKHR: *hasResult = true; *hasResultType = true; break;
     case OpImageSampleFootprintNV: *hasResult = true; *hasResultType = true; break;
     case OpGroupNonUniformPartitionNV: *hasResult = true; *hasResultType = true; break;
     case OpWritePackedPrimitiveIndices4x8NV: *hasResult = false; *hasResultType = false; break;
@@ -1767,6 +1768,10 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpCooperativeMatrixStoreNV: *hasResult = false; *hasResultType = false; break;
     case OpCooperativeMatrixMulAddNV: *hasResult = true; *hasResultType = true; break;
     case OpCooperativeMatrixLengthNV: *hasResult = true; *hasResultType = true; break;
+    case OpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
+    case OpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
+    case OpDemoteToHelperInvocationEXT: *hasResult = false; *hasResultType = false; break;
+    case OpIsHelperInvocationEXT: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupShuffleINTEL: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupShuffleDownINTEL: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupShuffleUpINTEL: *hasResult = true; *hasResultType = true; break;
@@ -1911,10 +1916,6 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
     case OpSubgroupAvcSicGetPackedSkcLumaCountThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupAvcSicGetPackedSkcLumaSumThresholdINTEL: *hasResult = true; *hasResultType = true; break;
     case OpSubgroupAvcSicGetInterRawSadsINTEL: *hasResult = true; *hasResultType = true; break;
-    case OpBeginInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
-    case OpEndInvocationInterlockEXT: *hasResult = false; *hasResultType = false; break;
-    case OpDemoteToHelperInvocationEXT: *hasResult = false; *hasResultType = false; break;
-    case OpIsHelperInvocationEXT: *hasResult = true; *hasResultType = true; break;
     }
 }
 #endif /* SPV_ENABLE_UTILITY_CODE */

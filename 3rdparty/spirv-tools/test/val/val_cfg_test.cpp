@@ -2623,6 +2623,134 @@ OpFunctionEnd
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
+TEST_F(ValidateCFG, SwitchCaseOrderingBad1) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpName %default "default"
+OpName %other "other"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%undef = OpUndef %int
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpSelectionMerge %merge None
+OpSwitch %undef %default 0 %other 1 %default
+%default = OpLabel
+OpBranch %other
+%other = OpLabel
+OpBranch %merge
+%merge = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Case construct that targets 1[%default] has branches to the "
+                "case construct that targets 2[%other], but does not "
+                "immediately precede it in the OpSwitch's target list"));
+}
+
+TEST_F(ValidateCFG, SwitchCaseOrderingBad2) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpName %default "default"
+OpName %other "other"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%undef = OpUndef %int
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpSelectionMerge %merge None
+OpSwitch %undef %default 0 %default 1 %other
+%other = OpLabel
+OpBranch %default
+%default = OpLabel
+OpBranch %merge
+%merge = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Case construct that targets 2[%other] has branches to the "
+                "case construct that targets 1[%default], but does not "
+                "immediately precede it in the OpSwitch's target list"));
+}
+
+TEST_F(ValidateCFG, SwitchMultipleDefaultWithFallThroughGood) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpName %first "first"
+OpName %second "second"
+OpName %third "third"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%undef = OpUndef %int
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpSelectionMerge %merge None
+OpSwitch %undef %second 0 %first 1 %second 2 %third
+%first = OpLabel
+OpBranch %second
+%second = OpLabel
+OpBranch %third
+%third = OpLabel
+OpBranch %merge
+%merge = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateCFG, SwitchMultipleDefaultWithFallThroughBad) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpName %first "first"
+OpName %second "second"
+OpName %third "third"
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%undef = OpUndef %int
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpSelectionMerge %merge None
+OpSwitch %undef %second 0 %second 1 %first 2 %third
+%first = OpLabel
+OpBranch %second
+%second = OpLabel
+OpBranch %third
+%third = OpLabel
+OpBranch %merge
+%merge = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
+}
+
 TEST_F(ValidateCFG, GoodUnreachableSelection) {
   const std::string text = R"(
 OpCapability Shader
@@ -3573,6 +3701,52 @@ OpFunctionEnd
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("block <ID> 13[%13] exits the loop headed by <ID> "
                         "10[%10], but not via a structured exit"));
+}
+
+TEST_F(ValidateCFG, ContinueFromNestedSelection) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%bool = OpTypeBool
+%undef = OpUndef %bool
+%4 = OpFunction %void None %void_fn
+%5 = OpLabel
+OpBranch %48
+%48 = OpLabel
+OpLoopMerge %47 %50 None
+OpBranch %10
+%10 = OpLabel
+OpLoopMerge %12 %37 None
+OpBranchConditional %undef %11 %12
+%11 = OpLabel
+OpSelectionMerge %31 None
+OpBranchConditional %undef %30 %31
+%30 = OpLabel
+OpSelectionMerge %37 None
+OpBranchConditional %undef %36 %37
+%36 = OpLabel
+OpBranch %37
+%37 = OpLabel
+OpBranch %10
+%31 = OpLabel
+OpBranch %12
+%12 = OpLabel
+OpSelectionMerge %55 None
+OpBranchConditional %undef %47 %55
+%55 = OpLabel
+OpBranch %47
+%50 = OpLabel
+OpBranch %48
+%47 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 /// TODO(umar): Nested CFG constructs

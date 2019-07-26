@@ -14,8 +14,6 @@
 # limitations under the License.
 """Checks names of global exports from a library."""
 
-from __future__ import print_function
-
 import os.path
 import re
 import subprocess

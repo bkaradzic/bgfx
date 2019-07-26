@@ -117,6 +117,11 @@ static const int kInstGeomOutPrimitiveId = kInstCommonOutCnt;
 static const int kInstGeomOutInvocationId = kInstCommonOutCnt + 1;
 static const int kInstGeomOutUnused = kInstCommonOutCnt + 2;
 
+// Ray Tracing Shader Output Record Offsets
+static const int kInstRayTracingOutLaunchIdX = kInstCommonOutCnt;
+static const int kInstRayTracingOutLaunchIdY = kInstCommonOutCnt + 1;
+static const int kInstRayTracingOutLaunchIdZ = kInstCommonOutCnt + 2;
+
 // Size of Common and Stage-specific Members
 static const int kInstStageOutCnt = kInstCommonOutCnt + 2;
 static const int kInst2StageOutCnt = kInstCommonOutCnt + 3;

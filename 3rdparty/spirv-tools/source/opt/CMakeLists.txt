@@ -22,7 +22,6 @@ set(SPIRV_TOOLS_OPT_SOURCES
   cfg.h
   code_sink.h
   combine_access_chains.h
-  common_uniform_elim_pass.h
   compact_ids_pass.h
   composite.h
   const_folding_rules.h
@@ -123,7 +122,6 @@ set(SPIRV_TOOLS_OPT_SOURCES
   cfg.cpp
   code_sink.cpp
   combine_access_chains.cpp
-  common_uniform_elim_pass.cpp
   compact_ids_pass.cpp
   composite.cpp
   const_folding_rules.cpp
