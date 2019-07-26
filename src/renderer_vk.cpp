@@ -2245,8 +2245,8 @@ VK_IMPORT_DEVICE
 
 		void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
 		{
-			BX_UNUSED(_handle, _offset, _size, _mem);
-//			m_indexBuffers[_handle.idx].update(m_commandBuffer, _offset, bx::min<uint32_t>(_size, _mem->size), _mem->data);
+//			BX_UNUSED(_handle, _offset, _size, _mem);
+			m_indexBuffers[_handle.idx].update(/*m_commandBuffer*/NULL, _offset, bx::min<uint32_t>(_size, _mem->size), _mem->data);
 		}
 
 		void destroyDynamicIndexBuffer(IndexBufferHandle _handle) override
@@ -2262,8 +2262,8 @@ VK_IMPORT_DEVICE
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
 		{
-			BX_UNUSED(_handle, _offset, _size, _mem);
-//			m_vertexBuffers[_handle.idx].update(m_commandBuffer, _offset, bx::min<uint32_t>(_size, _mem->size), _mem->data);
+//      BX_UNUSED(_handle, _offset, _size, _mem);
+      m_vertexBuffers[_handle.idx].update(/*m_commandBuffer*/NULL, _offset, bx::min<uint32_t>(_size, _mem->size), _mem->data);
 		}
 
 		void destroyDynamicVertexBuffer(VertexBufferHandle _handle) override
@@ -3451,7 +3451,7 @@ VK_DESTROY
 
 	void ScratchBufferVK::create(uint32_t _size, uint32_t _maxDescriptors)
 	{
-		m_maxDescriptors = _maxDescriptors;
+//		m_maxDescriptors = _maxDescriptors;
 		bx::memSet(m_descriptorSet, 0, sizeof(VkDescriptorSet) * BX_COUNTOF(m_descriptorSet));
 		m_currentDs = 0;
 //		m_descriptorSet  = (VkDescriptorSet*)BX_ALLOC(g_allocator, _maxDescriptors * sizeof(VkDescriptorSet) );
@@ -3500,7 +3500,7 @@ VK_DESTROY
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
 		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			);
 		VK_CHECK(vkAllocateMemory(device
 			, &ma
@@ -3723,8 +3723,9 @@ VK_DESTROY
 		bci.flags = 0;
 		bci.size  = _size;
 		bci.usage = 0
-			| (m_dynamic ? VK_BUFFER_USAGE_TRANSFER_DST_BIT  : 0)
+//			| (m_dynamic ? VK_BUFFER_USAGE_TRANSFER_DST_BIT  : 0)
 			| (_vertex   ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT : VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+			| VK_BUFFER_USAGE_TRANSFER_DST_BIT
 			;
 		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		bci.queueFamilyIndexCount = 0;
@@ -3749,7 +3750,7 @@ VK_DESTROY
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
 		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
-			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
 		VK_CHECK(vkAllocateMemory(device
 			, &ma
@@ -3757,24 +3758,227 @@ VK_DESTROY
 			, &m_deviceMem
 			) );
 
-		if (!m_dynamic)
+        VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
+
+        if (!m_dynamic)
 		{
-			void* dst;
-			VK_CHECK(vkMapMemory(device, m_deviceMem, 0, ma.allocationSize, 0, &dst) );
-			bx::memCopy(dst, _data, _size);
-			vkUnmapMemory(device, m_deviceMem);
+//			void* dst;
+//			VK_CHECK(vkMapMemory(device, m_deviceMem, 0, ma.allocationSize, 0, &dst) );
+//			bx::memCopy(dst, _data, _size);
+//			vkUnmapMemory(device, m_deviceMem);
+
+            // staging buffer
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingMem;
+            VkBufferCreateInfo bci;
+            bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            bci.pNext = NULL;
+            bci.flags = 0;
+            bci.size  = _size;
+            bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            bci.queueFamilyIndexCount = 0;
+            bci.pQueueFamilyIndices   = NULL;
+
+            VK_CHECK(vkCreateBuffer(device
+                , &bci
+                , allocatorCb
+                , &stagingBuffer
+            ) );
+
+            VkMemoryRequirements mr;
+            vkGetBufferMemoryRequirements(device
+                , stagingBuffer
+                , &mr
+            );
+
+            VkMemoryAllocateInfo ma;
+            ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            ma.pNext = NULL;
+            ma.allocationSize  = mr.size;
+            ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+                , VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            );
+            VK_CHECK(vkAllocateMemory(device
+                , &ma
+                , allocatorCb
+                , &stagingMem
+            ) );
+
+            VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingMem, 0) );
+
+            void* dst;
+            VK_CHECK(vkMapMemory(device, stagingMem, 0, ma.allocationSize, 0, &dst) );
+            bx::memCopy(dst, _data, _size);
+            vkUnmapMemory(device, stagingMem);
+
+            VkCommandBuffer commandBuffer;
+            // command begin
+            {
+                VkCommandBufferAllocateInfo allocInfo;
+                allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                allocInfo.pNext = NULL;
+                allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                allocInfo.commandPool = s_renderVK->m_commandPool;
+                allocInfo.commandBufferCount = 1;
+
+                vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+                VkCommandBufferBeginInfo beginInfo;
+                beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                beginInfo.pNext = NULL;
+                beginInfo.pInheritanceInfo = NULL;
+                beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+                VK_CHECK( vkBeginCommandBuffer(commandBuffer, &beginInfo) );
+            }
+
+            // copy buffer to buffer
+            {
+                VkBufferCopy region = {};
+                region.srcOffset = 0;
+                region.dstOffset = 0;
+                region.size = _size;
+
+                vkCmdCopyBuffer(commandBuffer, stagingBuffer, m_buffer, 1, &region);
+            }
+
+            // command end
+            {
+                vkEndCommandBuffer(commandBuffer);
+
+                VkSubmitInfo submitInfo;
+                submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                submitInfo.pNext = NULL;
+                submitInfo.commandBufferCount = 1;
+                submitInfo.pCommandBuffers = &commandBuffer;
+                submitInfo.waitSemaphoreCount = 0;
+                submitInfo.pWaitSemaphores = NULL;
+                submitInfo.signalSemaphoreCount = 0;
+                submitInfo.pSignalSemaphores = NULL;
+                submitInfo.pWaitDstStageMask = NULL;
+
+                VK_CHECK( vkQueueSubmit(s_renderVK->m_queueGraphics, 1, &submitInfo, VK_NULL_HANDLE) );
+                VK_CHECK( vkQueueWaitIdle(s_renderVK->m_queueGraphics) );
+
+                vkFreeCommandBuffers(device, s_renderVK->m_commandPool, 1, &commandBuffer);
+            }
+
+            vkFreeMemory(device, stagingMem, allocatorCb);
+		    vkDestroy(stagingBuffer);
 		}
 
-		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0) );
 	}
 
 	void BufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
-		void* dst;
-		VkDevice device = s_renderVK->m_device;
-		VK_CHECK(vkMapMemory(device, m_deviceMem, _offset, _size, 0, &dst) );
-		bx::memCopy(dst, _data, _size);
-		vkUnmapMemory(device, m_deviceMem);
+//		void* dst;
+//		VkDevice device = s_renderVK->m_device;
+//		VK_CHECK(vkMapMemory(device, m_deviceMem, _offset, _size, 0, &dst) );
+//		bx::memCopy(dst, _data, _size);
+//		vkUnmapMemory(device, m_deviceMem);
+
+        // staging buffer
+        VkAllocationCallbacks* allocatorCb = s_renderVK->m_allocatorCb;
+        VkDevice device = s_renderVK->m_device;
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingMem;
+        VkBufferCreateInfo bci;
+        bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bci.pNext = NULL;
+        bci.flags = 0;
+        bci.size  = _size;
+        bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        bci.queueFamilyIndexCount = 0;
+        bci.pQueueFamilyIndices   = NULL;
+
+        VK_CHECK(vkCreateBuffer(device
+            , &bci
+            , allocatorCb
+            , &stagingBuffer
+        ) );
+
+        VkMemoryRequirements mr;
+        vkGetBufferMemoryRequirements(device
+            , stagingBuffer
+            , &mr
+        );
+
+        VkMemoryAllocateInfo ma;
+        ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        ma.pNext = NULL;
+        ma.allocationSize  = mr.size;
+        ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+            , VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        );
+        VK_CHECK(vkAllocateMemory(device
+            , &ma
+            , allocatorCb
+            , &stagingMem
+        ) );
+
+        VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingMem, 0) );
+
+        void* dst;
+        VK_CHECK(vkMapMemory(device, stagingMem, 0, ma.allocationSize, 0, &dst) );
+        bx::memCopy(dst, _data, _size);
+        vkUnmapMemory(device, stagingMem);
+
+        VkCommandBuffer commandBuffer;
+        // command begin
+        {
+            VkCommandBufferAllocateInfo allocInfo;
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.pNext = NULL;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocInfo.commandPool = s_renderVK->m_commandPool;
+            allocInfo.commandBufferCount = 1;
+
+            vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+            VkCommandBufferBeginInfo beginInfo;
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            beginInfo.pNext = NULL;
+            beginInfo.pInheritanceInfo = NULL;
+            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+            VK_CHECK( vkBeginCommandBuffer(commandBuffer, &beginInfo) );
+        }
+
+        // copy buffer to buffer
+        {
+            VkBufferCopy region = {};
+            region.srcOffset = 0;
+            region.dstOffset = _offset;
+            region.size = _size;
+
+            vkCmdCopyBuffer(commandBuffer, stagingBuffer, m_buffer, 1, &region);
+        }
+
+        // command end
+        {
+            vkEndCommandBuffer(commandBuffer);
+
+            VkSubmitInfo submitInfo;
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitInfo.pNext = NULL;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &commandBuffer;
+            submitInfo.waitSemaphoreCount = 0;
+            submitInfo.pWaitSemaphores = NULL;
+            submitInfo.signalSemaphoreCount = 0;
+            submitInfo.pSignalSemaphores = NULL;
+            submitInfo.pWaitDstStageMask = NULL;
+
+            VK_CHECK( vkQueueSubmit(s_renderVK->m_queueGraphics, 1, &submitInfo, VK_NULL_HANDLE) );
+            VK_CHECK( vkQueueWaitIdle(s_renderVK->m_queueGraphics) );
+
+            vkFreeCommandBuffers(device, s_renderVK->m_commandPool, 1, &commandBuffer);
+        }
+
+        vkFreeMemory(device, stagingMem, allocatorCb);
+        vkDestroy(stagingBuffer);
 	}
 
 	void BufferVK::destroy()
@@ -4446,7 +4650,7 @@ VK_DESTROY
 		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bci.pNext = NULL;
 		bci.flags = 0;
-		bci.size = _rect.m_width * _rect.m_height * _depth;
+		bci.size = _rect.m_width * _rect.m_height * _depth * 4;
 		bci.queueFamilyIndexCount = 0;
 		bci.pQueueFamilyIndices = NULL;
 		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;

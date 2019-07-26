@@ -332,7 +332,7 @@ VK_DESTROY
 		uint32_t m_size;
 		uint32_t m_pos;
 		uint32_t m_currentDs;
-		uint32_t m_maxDescriptors;
+//		uint32_t m_maxDescriptors;
 	};
 
 	struct ImageVK
