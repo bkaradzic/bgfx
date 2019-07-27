@@ -2260,12 +2260,14 @@ namespace bgfx
 		NSAutoreleasePoolScope()
 		{
 			id obj = class_createInstance(objc_getClass("NSAutoreleasePool"), 0);
-			pool = objc_msgSend(obj, sel_getUid("init") );
+			typedef id(*objc_msgSend_init)(void*, SEL);
+			pool = ((objc_msgSend_init)objc_msgSend)(obj, sel_getUid("init") );
 		}
 
 		~NSAutoreleasePoolScope()
 		{
-			objc_msgSend(pool, sel_getUid("release") );
+			typedef void(*objc_msgSend_release)(void*, SEL);
+			((objc_msgSend_release)objc_msgSend)(pool, sel_getUid("release") );
 		}
 
 		id pool;
