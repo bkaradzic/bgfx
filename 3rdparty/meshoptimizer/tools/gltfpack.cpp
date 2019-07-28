@@ -316,13 +316,13 @@ void defaultFree(void*, void* p)
 	free(p);
 }
 
-size_t textureIndex(const std::vector<std::string>& textures, const std::string& name)
+int textureIndex(const std::vector<std::string>& textures, const char* name)
 {
-	std::vector<std::string>::const_iterator it = std::lower_bound(textures.begin(), textures.end(), name);
-	assert(it != textures.end());
-	assert(*it == name);
+	for (size_t i = 0; i < textures.size(); ++i)
+		if (textures[i] == name)
+			return int(i);
 
-	return size_t(it - textures.begin());
+	return -1;
 }
 
 cgltf_data* parseSceneObj(fastObjMesh* obj)
@@ -336,12 +336,9 @@ cgltf_data* parseSceneObj(fastObjMesh* obj)
 	{
 		fastObjMaterial& om = obj->materials[mi];
 
-		if (om.map_Kd.name)
+		if (om.map_Kd.name && textureIndex(textures, om.map_Kd.name) < 0)
 			textures.push_back(om.map_Kd.name);
 	}
-
-	std::sort(textures.begin(), textures.end());
-	textures.erase(std::unique(textures.begin(), textures.end()), textures.end());
 
 	data->images = (cgltf_image*)calloc(textures.size(), sizeof(cgltf_image));
 	data->images_count = textures.size();
@@ -1326,21 +1323,21 @@ const char* shapeType(cgltf_type type)
 	switch (type)
 	{
 	case cgltf_type_scalar:
-		return "\"SCALAR\"";
+		return "SCALAR";
 	case cgltf_type_vec2:
-		return "\"VEC2\"";
+		return "VEC2";
 	case cgltf_type_vec3:
-		return "\"VEC3\"";
+		return "VEC3";
 	case cgltf_type_vec4:
-		return "\"VEC4\"";
+		return "VEC4";
 	case cgltf_type_mat2:
-		return "\"MAT2\"";
+		return "MAT2";
 	case cgltf_type_mat3:
-		return "\"MAT3\"";
+		return "MAT3";
 	case cgltf_type_mat4:
-		return "\"MAT4\"";
+		return "MAT4";
 	default:
-		return "\"\"";
+		return "";
 	}
 }
 
@@ -1372,15 +1369,15 @@ const char* animationPath(cgltf_animation_path_type type)
 	switch (type)
 	{
 	case cgltf_animation_path_type_translation:
-		return "\"translation\"";
+		return "translation";
 	case cgltf_animation_path_type_rotation:
-		return "\"rotation\"";
+		return "rotation";
 	case cgltf_animation_path_type_scale:
-		return "\"scale\"";
+		return "scale";
 	case cgltf_animation_path_type_weights:
-		return "\"weights\"";
+		return "weights";
 	default:
-		return "\"\"";
+		return "";
 	}
 }
 
@@ -1389,13 +1386,13 @@ const char* lightType(cgltf_light_type type)
 	switch (type)
 	{
 	case cgltf_light_type_directional:
-		return "\"directional\"";
+		return "directional";
 	case cgltf_light_type_point:
-		return "\"point\"";
+		return "point";
 	case cgltf_light_type_spot:
-		return "\"spot\"";
+		return "spot";
 	default:
-		return "\"\"";
+		return "";
 	}
 }
 
@@ -1403,7 +1400,16 @@ void writeTextureInfo(std::string& json, const cgltf_data* data, const cgltf_tex
 {
 	assert(view.texture);
 
-	cgltf_texture_transform transform = view.transform;
+	cgltf_texture_transform transform = {};
+
+	if (view.has_transform)
+	{
+		transform = view.transform;
+	}
+	else
+	{
+		transform.scale[0] = transform.scale[1] = 1.f;
+	}
 
 	transform.offset[0] += qp.uv_offset[0];
 	transform.offset[1] += qp.uv_offset[1];
@@ -1694,8 +1700,9 @@ void writeAccessor(std::string& json, size_t view, size_t offset, cgltf_type typ
 	append(json, componentType(component_type));
 	append(json, ",\"count\":");
 	append(json, count);
-	append(json, ",\"type\":");
+	append(json, ",\"type\":\"");
 	append(json, shapeType(type));
+	append(json, "\"");
 
 	if (normalized)
 	{
@@ -2571,9 +2578,9 @@ void writeAnimation(std::string& json, std::vector<BufferView>& views, std::stri
 		append(json_channels, track_offset);
 		append(json_channels, ",\"target\":{\"node\":");
 		append(json_channels, target_node);
-		append(json_channels, ",\"path\":");
+		append(json_channels, ",\"path\":\"");
 		append(json_channels, animationPath(channel.target_path));
-		append(json_channels, "}}");
+		append(json_channels, "\"}}");
 
 		track_offset++;
 	}
@@ -2644,8 +2651,9 @@ void writeLight(std::string& json, const cgltf_light& light)
 	static const float white[3] = {1, 1, 1};
 
 	comma(json);
-	append(json, "{\"type\":");
+	append(json, "{\"type\":\"");
 	append(json, lightType(light.type));
+	append(json, "\"");
 	if (memcmp(light.color, white, sizeof(white)) != 0)
 	{
 		comma(json);
@@ -2682,7 +2690,7 @@ void writeLight(std::string& json, const cgltf_light& light)
 	append(json, "}");
 }
 
-void printStats(const std::vector<BufferView>& views, BufferView::Kind kind)
+void printStats(const std::vector<BufferView>& views, BufferView::Kind kind, const char* name)
 {
 	for (size_t i = 0; i < views.size(); ++i)
 	{
@@ -2712,7 +2720,8 @@ void printStats(const std::vector<BufferView>& views, BufferView::Kind kind)
 
 		size_t count = view.data.size() / view.stride;
 
-		printf("    %s: compressed %d bytes (%.1f bits), raw %d bytes (%d bits)\n",
+		printf("stats: %s %s: compressed %d bytes (%.1f bits), raw %d bytes (%d bits)\n",
+		       name,
 		       variant,
 		       int(view.bytes),
 		       double(view.bytes) / double(count) * 8,
@@ -3228,14 +3237,9 @@ bool process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 	if (settings.verbose > 1)
 	{
-		printf("output: vertex stats:\n");
-		printStats(views, BufferView::Kind_Vertex);
-
-		printf("output: index stats:\n");
-		printStats(views, BufferView::Kind_Index);
-
-		printf("output: keyframe stats:\n");
-		printStats(views, BufferView::Kind_Keyframe);
+		printStats(views, BufferView::Kind_Vertex, "vertex");
+		printStats(views, BufferView::Kind_Index, "index");
+		printStats(views, BufferView::Kind_Keyframe, "keyframe");
 	}
 
 	return true;
