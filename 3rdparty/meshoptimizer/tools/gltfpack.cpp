@@ -237,12 +237,6 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 		{
 			const cgltf_primitive& primitive = mesh.primitives[pi];
 
-			if (!primitive.indices || !primitive.indices->buffer_view)
-			{
-				fprintf(stderr, "Warning: ignoring primitive %d of mesh %d because it has no index data\n", int(pi), mesh_id);
-				continue;
-			}
-
 			if (primitive.type != cgltf_primitive_type_triangles)
 			{
 				fprintf(stderr, "Warning: ignoring primitive %d of mesh %d because type %d is not supported\n", int(pi), mesh_id, primitive.type);
@@ -256,9 +250,21 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 			result.material = primitive.material;
 			result.skin = node.skin;
 
-			result.indices.resize(primitive.indices->count);
-			for (size_t i = 0; i < primitive.indices->count; ++i)
-				result.indices[i] = unsigned(cgltf_accessor_read_index(primitive.indices, i));
+			if (primitive.indices)
+			{
+				result.indices.resize(primitive.indices->count);
+				for (size_t i = 0; i < primitive.indices->count; ++i)
+					result.indices[i] = unsigned(cgltf_accessor_read_index(primitive.indices, i));
+			}
+			else
+			{
+				size_t count = primitive.attributes ? primitive.attributes[0].data->count : 0;
+
+				// note, while we could generate a good index buffer, reindexMesh will take care of this
+				result.indices.resize(count);
+				for (size_t i = 0; i < count; ++i)
+					result.indices[i] = unsigned(i);
+			}
 
 			for (size_t ai = 0; ai < primitive.attributes_count; ++ai)
 			{
@@ -2189,10 +2195,7 @@ void writeEmbeddedImage(std::string& json, std::vector<BufferView>& views, const
 	size_t view = getBufferView(views, BufferView::Kind_Image, -1, 1, false);
 
 	assert(views[view].data.empty());
-	views[view].data.append(data, size);
-
-	// each chunk must be aligned to 4 bytes
-	views[view].data.resize((views[view].data.size() + 3) & ~3);
+	views[view].data.assign(data, size);
 
 	append(json, "\"bufferView\":");
 	append(json, view);
@@ -2730,7 +2733,7 @@ void printStats(const std::vector<BufferView>& views, BufferView::Kind kind, con
 	}
 }
 
-bool process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin)
+void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settings, std::string& json, std::string& bin)
 {
 	if (settings.verbose)
 	{
@@ -3241,13 +3244,20 @@ bool process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		printStats(views, BufferView::Kind_Index, "index");
 		printStats(views, BufferView::Kind_Keyframe, "keyframe");
 	}
-
-	return true;
 }
 
 void writeU32(FILE* out, uint32_t data)
 {
 	fwrite(&data, 4, 1, out);
+}
+
+bool requiresExtension(cgltf_data* data, const char* name)
+{
+	for (size_t i = 0; i < data->extensions_required_count; ++i)
+		if (strcmp(data->extensions_required[i], name) == 0)
+			return true;
+
+	return false;
 }
 
 int gltfpack(const char* input, const char* output, const Settings& settings)
@@ -3264,9 +3274,18 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 		result = (result == cgltf_result_success) ? cgltf_validate(data) : result;
 		result = (result == cgltf_result_success) ? cgltf_load_buffers(&options, data, input) : result;
 
+		const char* error = NULL;
+
 		if (result != cgltf_result_success)
+			error = getError(result);
+		else if (requiresExtension(data, "KHR_draco_mesh_compression"))
+			error = "file requires Draco mesh compression support";
+		else if (requiresExtension(data, "MESHOPT_compression"))
+			error = "file has already been compressed using gltfpack";
+
+		if (error)
 		{
-			fprintf(stderr, "Error loading %s: %s\n", input, getError(result));
+			fprintf(stderr, "Error loading %s: %s\n", input, error);
 			cgltf_free(data);
 			return 2;
 		}
@@ -3296,12 +3315,7 @@ int gltfpack(const char* input, const char* output, const Settings& settings)
 	}
 
 	std::string json, bin;
-	if (!process(data, meshes, settings, json, bin))
-	{
-		fprintf(stderr, "Error processing %s\n", input);
-		cgltf_free(data);
-		return 3;
-	}
+	process(data, meshes, settings, json, bin);
 
 	cgltf_free(data);
 
@@ -3467,7 +3481,10 @@ int main(int argc, char** argv)
 	if (test)
 	{
 		for (int i = test; i < argc; ++i)
+		{
+			printf("%s\n", argv[i]);
 			gltfpack(argv[i], NULL, settings);
+		}
 
 		return 0;
 	}
