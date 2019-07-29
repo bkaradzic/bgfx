@@ -1382,7 +1382,8 @@ VK_IMPORT_DEVICE
                     NSWindow* window = (NSWindow*)(g_platformData.nwh);
                     NSView* contentView = (NSView*)window.contentView;
                     CAMetalLayer* layer = [CAMetalLayer layer];
-                    layer.contentsScale = [window backingScaleFactor];
+                    if (_init.resolution.reset & BGFX_RESET_HIDPI)
+                        layer.contentsScale = [window backingScaleFactor];
                     [contentView setWantsLayer:YES];
                     [contentView setLayer:layer];
 
@@ -1562,6 +1563,7 @@ VK_IMPORT_DEVICE
 				{
 					m_backBufferColorImageView[ii] = VK_NULL_HANDLE;
 					m_backBufferColor[ii]          = VK_NULL_HANDLE;
+                    m_presentDone[ii]              = VK_NULL_HANDLE;
 				}
 
 				VkImageCreateInfo ici;
@@ -2085,6 +2087,7 @@ VK_IMPORT_DEVICE
 			VK_CHECK(vkDeviceWaitIdle(m_device) );
 
 			m_pipelineStateCache.invalidate();
+			m_descriptorSetLayoutCache.invalidate();
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_scratchBuffer); ++ii)
 			{
@@ -4503,13 +4506,15 @@ VK_DESTROY
 
 	void TextureVK::destroy()
 	{
-        VkDevice device = s_renderVK->m_device;
-        vkUnmapMemory(device, m_textureDeviceMem);
-        vkFreeMemory(device, m_textureDeviceMem, &s_allocationCb);
+        if (m_textureImage)
+        {
+            VkDevice device = s_renderVK->m_device;
+            vkFreeMemory(device, m_textureDeviceMem, &s_allocationCb);
 
-        vkDestroy(m_textureSampler);
-        vkDestroy(m_textureImageView);
-        vkDestroy(m_textureImage);
+            vkDestroy(m_textureSampler);
+            vkDestroy(m_textureImageView);
+            vkDestroy(m_textureImage);
+        }
 	}
 
     void TextureVK::update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
