@@ -866,7 +866,9 @@ namespace bgfx { namespace spirv
 							for (auto& sampler_resource : resourcesrefl.separate_samplers)
 							{
 								std::string name = refl.get_name(sampler_resource.id);
-								if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Sampler"))
+								if (name.size() > 7 &&
+									!bx::strFind(name.c_str(), uniform_name.c_str()).isEmpty() &&
+									0 == bx::strCmp(name.c_str() + name.length() - 7, "Sampler"))
 								{
 									sampler_binding_index = refl.get_decoration(sampler_resource.id, spv::Decoration::DecorationBinding);
 									break;

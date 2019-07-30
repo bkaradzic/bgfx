@@ -1132,7 +1132,7 @@ VK_IMPORT_INSTANCE
 
 					for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 					{
-						uint8_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+						uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 						const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(ii) );
 						VkFormat fmt = depth
@@ -4380,10 +4380,11 @@ VK_DESTROY
             BX_FREE(g_allocator, imageInfos);
 
             // create texture and allocate its device memory
+			
             VkImageCreateInfo ici;
             ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
             ici.pNext = NULL;
-            ici.flags = 0;
+            ici.flags = (m_type == VK_IMAGE_VIEW_TYPE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0);
             ici.pQueueFamilyIndices = NULL;
             ici.queueFamilyIndexCount = 0;
             ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -4392,12 +4393,12 @@ VK_DESTROY
             ici.format = s_textureFormat[m_textureFormat].m_fmt;
             ici.samples = VK_SAMPLE_COUNT_1_BIT;
             ici.mipLevels = m_numMips;
-            ici.arrayLayers = m_numLayers;
+            ici.arrayLayers = (m_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : m_numLayers);
             ici.extent.width = m_width;
             ici.extent.height = m_height;
             ici.extent.depth = m_depth;
-            ici.imageType = VK_IMAGE_TYPE_2D;
-            ici.tiling = VK_IMAGE_TILING_LINEAR;
+			ici.imageType = (m_type == VK_IMAGE_VIEW_TYPE_3D ? VK_IMAGE_TYPE_3D : VK_IMAGE_TYPE_2D);
+            ici.tiling = VK_IMAGE_TILING_OPTIMAL;
 
             VK_CHECK( vkCreateImage(device, &ici, &s_allocationCb, &m_textureImage) );
 
@@ -4429,7 +4430,7 @@ VK_DESTROY
                 VkImageViewCreateInfo viewInfo = {};
                 viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
                 viewInfo.image = m_textureImage;
-                viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                viewInfo.viewType = m_type;
                 viewInfo.format = s_textureFormat[m_textureFormat].m_fmt;
                 viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
                 viewInfo.subresourceRange.baseMipLevel = 0;
@@ -4529,7 +4530,7 @@ VK_DESTROY
 		vkUnmapMemory(device, stagingDeviceMem);
 
 		copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer,
-			0, 0, Rect(0, 0, m_width, m_height), 0, 1, m_width);
+			_side, _mip, _rect, _z, _depth, _pitch);
 
 		vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
 		vkDestroy(stagingBuffer);

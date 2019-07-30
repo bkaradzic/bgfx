@@ -475,7 +475,7 @@ VK_DESTROY
         uint32_t m_depth;
         uint32_t m_numLayers;
         uint16_t m_samplerIdx;
-        uint8_t m_type;
+		VkImageViewType m_type;
         uint8_t m_requestedFormat;
         uint8_t m_textureFormat;
         uint8_t m_numMips;
