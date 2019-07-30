@@ -2526,9 +2526,13 @@ namespace bgfx
 		);
 
 	/// Destroy shader. Once a shader program is created with _handle,
-	/// it is safe to destroy that shader.
+	/// it is safe to destroy that shader. However, make sure to first create
+	/// the uniforms corresponding to a shader, before destroying that shader;
+	/// otherwise these uniforms will have undefined behavior.
 	///
 	/// @param[in] _handle Shader handle.
+	///
+	/// @attention Create Uniforms before destroying the associated shader.
 	///
 	/// @attention C99 equivalent is `bgfx_destroy_shader`.
 	///
@@ -3075,7 +3079,9 @@ namespace bgfx
 	///      incremented. This means that the same number of `bgfx::destroyUniform`
 	///      must be called to properly destroy the uniform.
 	///
-	///   2. Predefined uniforms (declared in `bgfx_shader.sh`):
+	///   2. Make sure to obtain uniform handles before destroying the associated shaders.
+	///
+	///   3. Predefined uniforms (declared in `bgfx_shader.sh`):
 	///      - `u_viewRect vec4(x, y, width, height)` - view rectangle for current
 	///        view, in pixels.
 	///      - `u_viewTexel vec4(1.0/width, 1.0/height, undef, undef)` - inverse
