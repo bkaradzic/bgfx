@@ -416,7 +416,6 @@ VK_DESTROY
 		struct SamplerInfo
         {
 		    UniformHandle uniformHandle;
-		    char name[32];
 		    uint32_t samplerBinding;
 		    uint32_t imageBinding;
         };

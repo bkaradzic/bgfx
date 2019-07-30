@@ -591,7 +591,8 @@ namespace bgfx { namespace spirv
 		{
 			const Uniform& un = uniforms[ii];
 
-			size += un.regCount*16;
+			if (un.type != UniformType::Sampler)
+				size = bx::max(size, (uint16_t)(un.regIndex + un.regCount*16));
 
 			uint8_t nameSize = (uint8_t)un.name.size();
 			bx::write(_writer, nameSize);
@@ -637,10 +638,10 @@ namespace bgfx { namespace spirv
 
 		shader->setEntryPoint("main");
         shader->setAutoMapBindings(true);
-        uint32_t bindingOffset = (stage == EShLanguage::EShLangFragment ? 32 : 0);
+        uint32_t bindingOffset = (stage == EShLanguage::EShLangFragment ? 48 : 0);
         shader->setShiftBinding(glslang::EResUbo, bindingOffset);
-        shader->setShiftBinding(glslang::EResTexture, bindingOffset);
-        shader->setShiftBinding(glslang::EResSampler, bindingOffset + 16);
+        shader->setShiftBinding(glslang::EResTexture, bindingOffset + 16);
+        shader->setShiftBinding(glslang::EResSampler, bindingOffset + 32);
 
 		const char* shaderStrings[] = { _code.c_str() };
 		shader->setStrings(
@@ -860,9 +861,21 @@ namespace bgfx { namespace spirv
 							un.name = uniform_name;
 							un.type = UniformType::Sampler;
 
+							uint32_t texture_binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
+							uint32_t sampler_binding_index = 0;
+							for (auto& sampler_resource : resourcesrefl.separate_samplers)
+							{
+								std::string name = refl.get_name(sampler_resource.id);
+								if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Sampler"))
+								{
+									sampler_binding_index = refl.get_decoration(sampler_resource.id, spv::Decoration::DecorationBinding);
+									break;
+								}
+							}
+
 							un.num = 0;			// needed?
-							un.regIndex = 0;	// needed?
-							un.regCount = 0;	// needed?
+							un.regIndex = texture_binding_index;	// for sampled image binding index
+							un.regCount = sampler_binding_index;	// for sampler binding index
 
 							uniforms.push_back(un);
 						}

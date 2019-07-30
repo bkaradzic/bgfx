@@ -7,7 +7,6 @@
 
 #if BGFX_CONFIG_RENDERER_VULKAN
 #	include "renderer_vk.h"
-#   include <spirv-cross/spirv_cross_c.h>
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
@@ -3896,6 +3895,7 @@ VK_DESTROY
 
 		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 
+		uint32_t additionalSize = 0;
 		if (0 < count)
 		{
 			for (uint32_t ii = 0; ii < count; ++ii)
@@ -3930,7 +3930,7 @@ VK_DESTROY
 					m_predefined[m_numPredefined].m_type  = uint8_t(predefined|fragmentBit);
 					m_numPredefined++;
 				}
-				else if (0 == (BGFX_UNIFORM_SAMPLERBIT & type) )
+				else if (UniformType::Sampler != (~BGFX_UNIFORM_MASK & type) )
 				{
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
@@ -3947,16 +3947,19 @@ VK_DESTROY
 
 						if (UniformType::Enum(type&~BGFX_UNIFORM_MASK) == UniformType::Sampler)
                         {
-                            m_sampler[m_numSamplers].uniformHandle = info->m_handle;
-                            bx::strCopy(m_sampler[m_numSamplers].name, 32, name);
-                            m_sampler[m_numSamplers].imageBinding = 0;
-                            m_sampler[m_numSamplers].samplerBinding = 0;
-						    m_numSamplers++;
                         }
 					}
 				}
 				else
 				{
+					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
+					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
+
+					m_sampler[m_numSamplers].uniformHandle = info->m_handle;
+					m_sampler[m_numSamplers].imageBinding = regIndex;	// regIndex is used for texture binding index
+					m_sampler[m_numSamplers].samplerBinding = regCount;	// regCount is used for sampler binding index
+					m_numSamplers++;
+
 					kind = "sampler";
 				}
 
@@ -3988,79 +3991,6 @@ VK_DESTROY
 			, code
 			, shaderSize
 			);
-
-        {
-            spvc_context spvContext = nullptr;
-            spvc_parsed_ir ir = nullptr;
-            spvc_compiler compilerGlsl = nullptr;
-            spvc_resources resources = nullptr;
-
-            spvc_context_create(&spvContext);
-            spvc_context_set_error_callback(spvContext, [](void *userdata, const char *error) {
-                BX_TRACE("spirv cross error: %s", error);
-            }, nullptr);
-            spvc_context_parse_spirv(spvContext, (const SpvId*)m_code->data, shaderSize / 4, &ir);
-            spvc_context_create_compiler(spvContext, SPVC_BACKEND_GLSL, ir, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &compilerGlsl);
-            spvc_compiler_create_shader_resources(compilerGlsl, &resources);
-
-            size_t resourceCount = 0;
-            const spvc_reflected_resource* list = nullptr;
-            uint16_t bidx = 0;
-
-            const spvc_resource_type resourceTypes[] = {
-                SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
-                SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
-                SPVC_RESOURCE_TYPE_UNIFORM_BUFFER,
-            };
-            const VkDescriptorType descriptorTypes[] = {
-                VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                VK_DESCRIPTOR_TYPE_SAMPLER,
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            };
-            const char* resourceTypeNames[] = {
-                "separate_image",
-                "separate_sampler",
-                "uniform_buffer",
-            };
-
-            for (size_t j = 0; j < BX_COUNTOF(resourceTypes); j++)
-            {
-                auto resourceType = resourceTypes[j];
-                auto descriptorType = descriptorTypes[j];
-                spvc_resources_get_resource_list_for_type(resources, resourceType, &list, &resourceCount);
-                for (size_t i = 0; i < resourceCount; i++)
-                {
-                    auto setIndex = spvc_compiler_get_decoration(compilerGlsl, list[i].id, SpvDecorationDescriptorSet);
-                    auto bind = spvc_compiler_get_decoration(compilerGlsl, list[i].id, SpvDecorationBinding);
-                    m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-                    m_bindings[bidx].descriptorType = descriptorType;
-                    m_bindings[bidx].binding = bind;
-                    m_bindings[bidx].pImmutableSamplers = NULL;
-                    m_bindings[bidx].descriptorCount = 1;
-                    BX_TRACE("\t%s: %s - set: %d, binding: %d", resourceTypeNames[j], list[i].name, setIndex, bind);
-
-                    if (resourceType == SPVC_RESOURCE_TYPE_SEPARATE_IMAGE ||
-                        resourceType == SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS)
-                    {
-                        for (size_t k = 0; k < m_numSamplers; k++)
-                        {
-                            if (!bx::strFind(list[i].name, m_sampler[k].name).isEmpty())
-                            {
-                                if (resourceType == SPVC_RESOURCE_TYPE_SEPARATE_IMAGE)
-                                    m_sampler[k].imageBinding = bind;
-                                else
-                                    m_sampler[k].samplerBinding = bind;
-                            }
-                        }
-                    }
-
-                    bidx++;
-                }
-            }
-            m_numBindings = bidx;
-
-            spvc_context_destroy(spvContext);
-        }
 
 		VkShaderModuleCreateInfo smci;
 		smci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -4108,6 +4038,39 @@ VK_DESTROY
 		m_hash = murmur.end();
 
 		bx::read(&reader, m_size);
+
+		// fill binding description with uniform informations
+		{
+			uint32_t bidx = 0;
+			if (m_size > 0)
+			{
+				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
+				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				m_bindings[bidx].binding = fragment ? 48 : 0;
+				m_bindings[bidx].pImmutableSamplers = NULL;
+				m_bindings[bidx].descriptorCount = 1;
+				bidx++;
+			}
+
+			for (uint32_t ii = 0; ii < m_numSamplers; ++ii)
+			{
+				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
+				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				m_bindings[bidx].binding = m_sampler[ii].imageBinding;
+				m_bindings[bidx].pImmutableSamplers = NULL;
+				m_bindings[bidx].descriptorCount = 1;
+				bidx++;
+
+				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
+				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+				m_bindings[bidx].binding = m_sampler[ii].samplerBinding;
+				m_bindings[bidx].pImmutableSamplers = NULL;
+				m_bindings[bidx].descriptorCount = 1;
+				bidx++;
+			}
+
+			m_numBindings = bidx;
+		}
 	}
 
 	void ShaderVK::destroy()
