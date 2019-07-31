@@ -418,7 +418,7 @@ VK_DESTROY
 			uint32_t samplerBinding;
 			uint32_t imageBinding;
 		};
-		SamplerInfo m_sampler[32];
+		SamplerInfo m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint16_t m_numSamplers;
 		uint16_t m_numBindings;
 		VkDescriptorSetLayoutBinding m_bindings[32];

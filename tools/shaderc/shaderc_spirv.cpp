@@ -711,6 +711,7 @@ namespace bgfx { namespace spirv
 			{
 				program->buildReflection();
 
+				std::map<std::string, uint32_t> samplerStageMap;
 				if (_firstPass)
 				{
 					// first time through, we just find unused uniforms and get rid of them
@@ -764,6 +765,75 @@ namespace bgfx { namespace spirv
 
 					// recompile with the unused uniforms converted to statics
 					return compile(_options, _version, output.c_str(), _writer, false);
+				}
+				else
+				{
+					// second time, find sampler state and get its stage index
+					bx::Error err;
+					LineReader reader(_code.c_str());
+					while (err.isOk())
+					{
+						char str[4096];
+						int32_t len = bx::read(&reader, str, BX_COUNTOF(str), &err);
+						if (err.isOk())
+						{
+							std::string strLine(str, len);
+							size_t index = strLine.find("uniform ");
+							if (index != std::string::npos)
+							{
+								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty() ||
+									!bx::findIdentifierMatch(strLine.c_str(), "SamplerComparisonState").isEmpty())
+								{
+									bx::StringView found = bx::findIdentifierMatch(strLine.c_str(), "register");
+									const char* ptr = found.getPtr() + found.getLength();
+									const char* start = NULL;
+									const char* end = NULL;
+									while (*ptr != ')' && ptr < strLine.c_str() + strLine.size())
+									{
+										if (*ptr >= '0' && *ptr <= '9')
+										{
+											if (start == NULL)
+												start = ptr;
+											end = ptr;
+										}
+										ptr++;
+									}
+									BX_CHECK(start != NULL && end != NULL, "SamplerState should have register number");
+
+									bx::StringView numberString(start, end - start + 1);
+									int32_t regNumber = -1;
+									bx::fromString(&regNumber, numberString);
+									BX_CHECK(regNumber >= 0, "register number should be semi-positive integer");
+
+									found = bx::findIdentifierMatch(strLine.c_str(), "SamplerState");
+									if (found.isEmpty())
+										found = bx::findIdentifierMatch(strLine.c_str(), "SamplerComparisonState");
+
+									ptr = found.getPtr() + found.getLength();
+									start = NULL;
+									end = NULL;
+									while (ptr < strLine.c_str() + strLine.size())
+									{
+										if (*ptr != ' ')
+										{
+											if (start == NULL)
+												start = ptr;
+											end = ptr;
+										}
+										else if (start != NULL)
+										{
+											break;
+										}
+										ptr++;
+									}
+									BX_CHECK(start != NULL && end != NULL, "sampler name cannot be found");
+
+									std::string samplerName(start, end - start + 1);
+									samplerStageMap[samplerName] = regNumber;
+								}
+							}
+						}
+					}
 				}
 
 				UniformArray uniforms;
@@ -863,19 +933,20 @@ namespace bgfx { namespace spirv
 
 							uint32_t texture_binding_index = refl.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 							uint32_t sampler_binding_index = 0;
+							std::string  sampler_name;
 							for (auto& sampler_resource : resourcesrefl.separate_samplers)
 							{
-								std::string name = refl.get_name(sampler_resource.id);
-								if (name.size() > 7 &&
-									!bx::strFind(name.c_str(), uniform_name.c_str()).isEmpty() &&
-									0 == bx::strCmp(name.c_str() + name.length() - 7, "Sampler"))
+								sampler_name = refl.get_name(sampler_resource.id);
+								if (sampler_name.size() > 7 &&
+									!bx::strFind(sampler_name.c_str(), uniform_name.c_str()).isEmpty() &&
+									0 == bx::strCmp(sampler_name.c_str() + name.length() - 7, "Sampler"))
 								{
 									sampler_binding_index = refl.get_decoration(sampler_resource.id, spv::Decoration::DecorationBinding);
 									break;
 								}
 							}
 
-							un.num = 0;			// needed?
+							un.num = samplerStageMap[sampler_name];	// want to write stage index
 							un.regIndex = texture_binding_index;	// for sampled image binding index
 							un.regCount = sampler_binding_index;	// for sampler binding index
 

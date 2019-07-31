@@ -1128,6 +1128,7 @@ VK_IMPORT_INSTANCE
 						{ VK_IMAGE_TYPE_3D, VK_IMAGE_USAGE_SAMPLED_BIT,          0,                                   { BGFX_CAPS_FORMAT_TEXTURE_3D,          BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB     } },
 						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,          VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, { BGFX_CAPS_FORMAT_TEXTURE_CUBE,        BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB   } },
 						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER } },
+						{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0,                           { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER } },
 					};
 
 					for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
@@ -3875,7 +3876,7 @@ VK_DESTROY
 
 		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 
-		uint32_t additionalSize = 0;
+		bx::memSet(m_sampler, 0, sizeof(SamplerInfo) * BX_COUNTOF(m_sampler));
 		if (0 < count)
 		{
 			for (uint32_t ii = 0; ii < count; ++ii)
@@ -3931,9 +3932,9 @@ VK_DESTROY
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
-					m_sampler[m_numSamplers].uniformHandle = info->m_handle;
-					m_sampler[m_numSamplers].imageBinding = regIndex;	// regIndex is used for image binding index
-					m_sampler[m_numSamplers].samplerBinding = regCount;	// regCount is used for sampler binding index
+					m_sampler[num].uniformHandle = info->m_handle;
+					m_sampler[num].imageBinding = regIndex;	// regIndex is used for image binding index
+					m_sampler[num].samplerBinding = regCount;	// regCount is used for sampler binding index
 					m_numSamplers++;
 
 					kind = "sampler";
@@ -4028,21 +4029,24 @@ VK_DESTROY
 				bidx++;
 			}
 
-			for (uint32_t ii = 0; ii < m_numSamplers; ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_sampler); ++ii)
 			{
-				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-				m_bindings[bidx].binding = m_sampler[ii].imageBinding;
-				m_bindings[bidx].pImmutableSamplers = NULL;
-				m_bindings[bidx].descriptorCount = 1;
-				bidx++;
+				if (m_sampler[ii].imageBinding > 0 && m_sampler[ii].samplerBinding > 0)
+				{
+					m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
+					m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					m_bindings[bidx].binding = m_sampler[ii].imageBinding;
+					m_bindings[bidx].pImmutableSamplers = NULL;
+					m_bindings[bidx].descriptorCount = 1;
+					bidx++;
 
-				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
-				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-				m_bindings[bidx].binding = m_sampler[ii].samplerBinding;
-				m_bindings[bidx].pImmutableSamplers = NULL;
-				m_bindings[bidx].descriptorCount = 1;
-				bidx++;
+					m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
+					m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+					m_bindings[bidx].binding = m_sampler[ii].samplerBinding;
+					m_bindings[bidx].pImmutableSamplers = NULL;
+					m_bindings[bidx].descriptorCount = 1;
+					bidx++;
+				}
 			}
 
 			m_numBindings = bidx;
@@ -4365,7 +4369,7 @@ VK_DESTROY
 			ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			ici.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-			ici.format = s_textureFormat[m_textureFormat].m_fmt;
+			ici.format = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? s_textureFormat[m_textureFormat].m_fmtDsv : s_textureFormat[m_textureFormat].m_fmt;
 			ici.samples = VK_SAMPLE_COUNT_1_BIT;
 			ici.mipLevels = m_numMips;
 			ici.arrayLayers = (m_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : m_numLayers);
@@ -4406,8 +4410,8 @@ VK_DESTROY
 				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 				viewInfo.image = m_textureImage;
 				viewInfo.viewType = m_type;
-				viewInfo.format = s_textureFormat[m_textureFormat].m_fmt;
-				viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				viewInfo.format = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? s_textureFormat[m_textureFormat].m_fmtDsv : s_textureFormat[m_textureFormat].m_fmt;
+				viewInfo.subresourceRange.aspectMask = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 				viewInfo.subresourceRange.baseMipLevel = 0;
 				viewInfo.subresourceRange.levelCount = 1;
 				viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -5240,6 +5244,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						VkDescriptorImageInfo imageInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 						VkDescriptorBufferInfo bufferInfo[16];
 						VkWriteDescriptorSet wds[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+						bx::memSet(wds, 0, sizeof(VkWriteDescriptorSet) * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
 						uint32_t wdsCount = 0;
 						uint32_t bufferCount = 0;
 						for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
