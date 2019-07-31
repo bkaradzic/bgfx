@@ -1654,24 +1654,24 @@ VK_IMPORT_DEVICE
 					ivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 					ivci.pNext = NULL;
 					ivci.flags = 0;
-					ivci.image = m_backBufferColorImage[ii];
+					ivci.image    = m_backBufferColorImage[ii];
 					ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-					ivci.format = m_sci.imageFormat;
+					ivci.format   = m_sci.imageFormat;
 					ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 					ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 					ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 					ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-					ivci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-					ivci.subresourceRange.baseMipLevel = 0;
-					ivci.subresourceRange.levelCount = 1;
+					ivci.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+					ivci.subresourceRange.baseMipLevel   = 0;
+					ivci.subresourceRange.levelCount     = 1;
 					ivci.subresourceRange.baseArrayLayer = 0;
-					ivci.subresourceRange.layerCount = 1;
+					ivci.subresourceRange.layerCount     = 1;
 
 					result = vkCreateImageView(m_device, &ivci, m_allocatorCb, &m_backBufferColorImageView[ii]);
 
 					if (VK_SUCCESS != result)
 					{
-						BX_TRACE("Init error: vkCreateImageView failed %d: %s.", result, getName(result));
+						BX_TRACE("Init error: vkCreateImageView failed %d: %s.", result, getName(result) );
 						goto error;
 					}
 
@@ -1680,7 +1680,7 @@ VK_IMPORT_DEVICE
 
 					if (VK_SUCCESS != result)
 					{
-						BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result));
+						BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
 						goto error;
 					}
 
