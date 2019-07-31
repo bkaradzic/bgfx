@@ -33,7 +33,6 @@
 #define VK_NO_STDINT_H
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
-#include <spirv-cross/spirv_glsl.hpp>
 #include "renderer.h"
 #include "debug_renderdoc.h"
 
@@ -63,7 +62,7 @@
 			VK_IMPORT_INSTANCE_FUNC(true,  vkGetPhysicalDeviceWin32PresentationSupportKHR);
 
 #define VK_IMPORT_INSTANCE_MACOS \
-            VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK);
+			VK_IMPORT_INSTANCE_FUNC(true,  vkCreateMacOSSurfaceMVK);
 
 #define VK_IMPORT_INSTANCE                                                             \
 			VK_IMPORT_INSTANCE_FUNC(false, vkDestroyInstance);                         \
@@ -249,7 +248,7 @@ VK_DESTROY
 	{
 		enum Enum
 		{
-			CombinedImageSampler,
+//			CombinedImageSampler,
 			VertexUniformBuffer,
 			FragmentUniformBuffer,
 //			StorageBuffer,
@@ -414,11 +413,11 @@ VK_DESTROY
 		uint8_t m_numAttrs;
 
 		struct SamplerInfo
-        {
-		    UniformHandle uniformHandle;
-		    uint32_t samplerBinding;
-		    uint32_t imageBinding;
-        };
+		{
+			UniformHandle uniformHandle;
+			uint32_t samplerBinding;
+			uint32_t imageBinding;
+		};
 		SamplerInfo m_sampler[32];
 		uint16_t m_numSamplers;
 		uint16_t m_numBindings;
@@ -451,41 +450,39 @@ VK_DESTROY
 	struct TextureVK
 	{
 		TextureVK()
-		: m_textureImage(VK_NULL_HANDLE)
-		, m_textureDeviceMem(VK_NULL_HANDLE)
-		, m_textureImageView(VK_NULL_HANDLE)
-		, m_textureSampler(VK_NULL_HANDLE)
-		, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED) {}
+			: m_textureImage(VK_NULL_HANDLE)
+			, m_textureDeviceMem(VK_NULL_HANDLE)
+			, m_textureImageView(VK_NULL_HANDLE)
+			, m_textureSampler(VK_NULL_HANDLE)
+			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+		{
+		}
 
-	    void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
+		void* create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 		void destroy();
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
 		void copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
 			uint8_t side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch);
 
-//        D3D12_SHADER_RESOURCE_VIEW_DESC  m_srvd;
-//        D3D12_UNORDERED_ACCESS_VIEW_DESC m_uavd;
-//        ID3D12Resource* m_ptr;
-//        D3D12_RESOURCE_STATES m_state;
-        void* m_directAccessPtr;
-        uint64_t m_flags;
-        uint32_t m_width;
-        uint32_t m_height;
-        uint32_t m_depth;
-        uint32_t m_numLayers;
-        uint16_t m_samplerIdx;
+		void* m_directAccessPtr;
+		uint64_t m_flags;
+		uint32_t m_width;
+		uint32_t m_height;
+		uint32_t m_depth;
+		uint32_t m_numLayers;
+		uint16_t m_samplerIdx;
 		VkImageViewType m_type;
-        uint8_t m_requestedFormat;
-        uint8_t m_textureFormat;
-        uint8_t m_numMips;
+		uint8_t m_requestedFormat;
+		uint8_t m_textureFormat;
+		uint8_t m_numMips;
 
 		VkImageLayout m_currentImageLayout;
-        VkImage m_textureImage;
-        VkDeviceMemory m_textureDeviceMem;
-        VkImageView m_textureImageView;
-        VkSampler m_textureSampler;
-    };
+		VkImage m_textureImage;
+		VkDeviceMemory m_textureDeviceMem;
+		VkImageView m_textureImageView;
+		VkSampler m_textureSampler;
+	};
 
 	struct FrameBufferVK
 	{
