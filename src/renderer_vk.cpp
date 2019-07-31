@@ -1375,25 +1375,25 @@ VK_IMPORT_DEVICE
 				}
 			}
 #elif BX_PLATFORM_OSX
-            {
-                if (NULL != vkCreateMacOSSurfaceMVK)
-                {
-                    NSWindow* window = (NSWindow*)(g_platformData.nwh);
-                    NSView* contentView = (NSView*)window.contentView;
-                    CAMetalLayer* layer = [CAMetalLayer layer];
-                    if (_init.resolution.reset & BGFX_RESET_HIDPI)
-                        layer.contentsScale = [window backingScaleFactor];
-                    [contentView setWantsLayer:YES];
-                    [contentView setLayer:layer];
+			{
+				if (NULL != vkCreateMacOSSurfaceMVK)
+				{
+					NSWindow* window = (NSWindow*)(g_platformData.nwh);
+					NSView* contentView = (NSView*)window.contentView;
+					CAMetalLayer* layer = [CAMetalLayer layer];
+					if (_init.resolution.reset & BGFX_RESET_HIDPI)
+						layer.contentsScale = [window backingScaleFactor];
+					[contentView setWantsLayer : YES] ;
+					[contentView setLayer : layer] ;
 
-                    VkMacOSSurfaceCreateInfoMVK sci;
-                    sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-                    sci.pNext = NULL;
-                    sci.flags  = 0;
-                    sci.pView = (__bridge void*)layer;
-                    result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
-                }
-            }
+					VkMacOSSurfaceCreateInfoMVK sci;
+					sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+					sci.pNext = NULL;
+					sci.flags = 0;
+					sci.pView = (__bridge void*)layer;
+					result = vkCreateMacOSSurfaceMVK(m_instance, &sci, m_allocatorCb, &m_surface);
+				}
+			}
 #else
 #	error "Figure out KHR surface..."
 #endif // BX_PLATFORM_
