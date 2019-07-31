@@ -111,6 +111,8 @@ bool openFileSelectionDialog(
 			);
 	}
 
+	bx::write(&writer, '\0', &err);
+
 	if (err.isOk() )
 	{
 		bx::ProcessReader pr;

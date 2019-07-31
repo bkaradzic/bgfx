@@ -3010,7 +3010,7 @@ namespace bgfx { namespace d3d9
 									, mip.m_format
 									);
 
-								bx::memCopy(bits, temp, pitch, height, srcpitch, pitch);
+								bx::memCopy(bits, pitch, temp, srcpitch, pitch, height);
 
 								BX_FREE(g_allocator, temp);
 							}
