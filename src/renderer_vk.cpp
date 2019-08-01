@@ -684,7 +684,7 @@ VK_IMPORT_DEVICE
 		}
 	}
 
-	void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImage _image, VkImageLayout _oldLayout, VkImageLayout _newLayout)
+	void setImageMemoryBarrier(VkCommandBuffer _commandBuffer, VkImage _image, VkImageLayout _oldLayout, VkImageLayout _newLayout, uint32_t levelCount, uint32_t layerCount)
 	{
 		BX_CHECK(true
 			&& _newLayout != VK_IMAGE_LAYOUT_UNDEFINED
@@ -794,9 +794,9 @@ VK_IMPORT_DEVICE
 		imb.image = _image;
 		imb.subresourceRange.aspectMask     = aspectMask;
 		imb.subresourceRange.baseMipLevel   = 0;
-		imb.subresourceRange.levelCount     = 1;
+		imb.subresourceRange.levelCount     = levelCount;
 		imb.subresourceRange.baseArrayLayer = 0;
-		imb.subresourceRange.layerCount     = 1;
+		imb.subresourceRange.layerCount     = layerCount;
 		vkCmdPipelineBarrier(_commandBuffer
 			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
 			, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
@@ -924,7 +924,7 @@ VK_IMPORT
 //				"VK_LAYER_LUNARG_parameter_validation",
 //					"VK_LAYER_LUNARG_swapchain",
 //					"VK_LAYER_LUNARG_vktrace",
-//					"VK_LAYER_RENDERDOC_Capture",
+					"VK_LAYER_RENDERDOC_Capture",
 #endif // BGFX_CONFIG_DEBUG
 					/*not used*/ ""
 				};
@@ -1849,7 +1849,7 @@ VK_IMPORT_DEVICE
 					, m_backBufferDepthStencilImage
 					, VK_IMAGE_LAYOUT_UNDEFINED
 					, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-					);
+					, 1, 1);
 
 				for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 				{
@@ -1857,7 +1857,7 @@ VK_IMPORT_DEVICE
 						, m_backBufferColorImage[ii]
 						, VK_IMAGE_LAYOUT_UNDEFINED
 						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-						);
+						, 1, 1);
 
 					rpbi.framebuffer = m_backBufferColor[ii];
 					vkCmdBeginRenderPass(commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
@@ -1867,7 +1867,7 @@ VK_IMPORT_DEVICE
 						, m_backBufferColorImage[ii]
 						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 						, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-						);
+						, 1, 1);
 				}
 
 				m_backBufferColorIdx = 0;
@@ -4175,6 +4175,8 @@ VK_DESTROY
 			m_textureFormat = uint8_t(getViableTextureFormat(imageContainer));
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat));
+			VkImageAspectFlags aspectFlag = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+			VkFormat textureFormat = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? s_textureFormat[m_textureFormat].m_fmtDsv : s_textureFormat[m_textureFormat].m_fmt;
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -4214,10 +4216,16 @@ VK_DESTROY
 			// decode images
 			struct ImageInfo {
 				uint8_t* data;
+				uint32_t width;
+				uint32_t height;
+				uint32_t depth;
 				uint32_t pitch;
 				uint32_t slice;
 				uint32_t size;
+				uint8_t mipLevel;
+				uint8_t layer;
 			};
+
 			ImageInfo* imageInfos = (ImageInfo*)BX_ALLOC(g_allocator, sizeof(ImageInfo) * numSrd);
 			bx::memSet(imageInfos, 0, sizeof(ImageInfo) * numSrd);
 			uint32_t alignment = 256;
@@ -4246,9 +4254,14 @@ VK_DESTROY
 							);
 
 							imageInfos[kk].data = temp;
+							imageInfos[kk].width = mip.m_width;
+							imageInfos[kk].height = mip.m_height;
+							imageInfos[kk].depth = mip.m_depth;
 							imageInfos[kk].pitch = pitch;
 							imageInfos[kk].slice = slice;
 							imageInfos[kk].size = size;
+							imageInfos[kk].mipLevel = lod;
+							imageInfos[kk].layer = side;
 						}
 						else if (compressed)
 						{
@@ -4266,9 +4279,14 @@ VK_DESTROY
 							);
 
 							imageInfos[kk].data = temp;
+							imageInfos[kk].width = mip.m_width;
+							imageInfos[kk].height = mip.m_height;
+							imageInfos[kk].depth = mip.m_depth;
 							imageInfos[kk].pitch = pitch;
 							imageInfos[kk].slice = slice;
 							imageInfos[kk].size = size;
+							imageInfos[kk].mipLevel = lod;
+							imageInfos[kk].layer = side;
 						}
 						else
 						{
@@ -4285,9 +4303,14 @@ VK_DESTROY
 							);
 
 							imageInfos[kk].data = temp;
+							imageInfos[kk].width = mip.m_width;
+							imageInfos[kk].height = mip.m_height;
+							imageInfos[kk].depth = mip.m_depth;
 							imageInfos[kk].pitch = pitch;
 							imageInfos[kk].slice = slice;
 							imageInfos[kk].size = slice;
+							imageInfos[kk].mipLevel = lod;
+							imageInfos[kk].layer = side;
 						}
 					}
 					++kk;
@@ -4295,8 +4318,18 @@ VK_DESTROY
 			}
 
 			uint32_t totalMemSize = 0;
+			VkBufferImageCopy* bufferCopyInfo = (VkBufferImageCopy*)BX_ALLOC(g_allocator, sizeof(VkBufferImageCopy) * numSrd);
 			for (uint32_t ii = 0; ii < numSrd; ++ii)
 			{
+				bufferCopyInfo[ii].bufferOffset = totalMemSize;
+				bufferCopyInfo[ii].bufferImageHeight = 0;
+				bufferCopyInfo[ii].bufferRowLength = 0;
+				bufferCopyInfo[ii].imageOffset = { 0, 0, 0 };
+				bufferCopyInfo[ii].imageExtent = { imageInfos[ii].width, imageInfos[ii].height, imageInfos[ii].depth };
+				bufferCopyInfo[ii].imageSubresource.aspectMask = aspectFlag;
+				bufferCopyInfo[ii].imageSubresource.mipLevel = imageInfos[ii].mipLevel;
+				bufferCopyInfo[ii].imageSubresource.baseArrayLayer = imageInfos[ii].layer;
+				bufferCopyInfo[ii].imageSubresource.layerCount = 1;
 				totalMemSize += imageInfos[ii].size;
 			}
 
@@ -4351,15 +4384,7 @@ VK_DESTROY
 				vkUnmapMemory(device, stagingDeviceMem);
 			}
 
-			// free temp memory
-			for (uint32_t ii = 0; ii < numSrd; ++ii)
-			{
-				BX_FREE(g_allocator, imageInfos[ii].data);
-			}
-			BX_FREE(g_allocator, imageInfos);
-
 			// create texture and allocate its device memory
-
 			VkImageCreateInfo ici;
 			ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			ici.pNext = NULL;
@@ -4397,12 +4422,35 @@ VK_DESTROY
 
 			if (stagingBuffer)
 			{
-				copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer,
-					0, 0, Rect(0, 0, m_width, m_height), 0, 1, m_width);
+				/*VkBufferImageCopy region = {};
+				region.bufferOffset = 0;
+				region.bufferRowLength = 0;
+				region.bufferImageHeight = 0;
+				region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				region.imageSubresource.mipLevel = 0;
+				region.imageSubresource.baseArrayLayer = 0;
+				region.imageSubresource.layerCount = 1;
+
+				region.imageOffset.x = 0;
+				region.imageOffset.y = 0;
+				region.imageOffset.z = 0;
+				region.imageExtent.width = m_width;
+				region.imageExtent.height = m_height;
+				region.imageExtent.depth = 1;
+
+				copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer, 1, &region);*/
+				copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer, numSrd, bufferCopyInfo);
 			}
 
 			vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
 			vkDestroy(stagingBuffer);
+
+			BX_FREE(g_allocator, bufferCopyInfo);
+			for (uint32_t ii = 0; ii < numSrd; ++ii)
+			{
+				BX_FREE(g_allocator, imageInfos[ii].data);
+			}
+			BX_FREE(g_allocator, imageInfos);
 
 			// image view creation
 			{
@@ -4410,12 +4458,12 @@ VK_DESTROY
 				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 				viewInfo.image = m_textureImage;
 				viewInfo.viewType = m_type;
-				viewInfo.format = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? s_textureFormat[m_textureFormat].m_fmtDsv : s_textureFormat[m_textureFormat].m_fmt;
-				viewInfo.subresourceRange.aspectMask = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+				viewInfo.format = textureFormat;
+				viewInfo.subresourceRange.aspectMask = aspectFlag;
 				viewInfo.subresourceRange.baseMipLevel = 0;
-				viewInfo.subresourceRange.levelCount = 1;
+				viewInfo.subresourceRange.levelCount = 1; //m_numMips;
 				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount = 1;
+				viewInfo.subresourceRange.layerCount = 1; //(m_type == VK_IMAGE_VIEW_TYPE_CUBE ? 6 : m_numLayers);
 
 				VK_CHECK(vkCreateImageView(device, &viewInfo, &s_allocationCb, &m_textureImageView));
 			}
@@ -4508,43 +4556,41 @@ VK_DESTROY
 		bx::memCopy(directAccessPtr, _mem->data, _mem->size);
 		vkUnmapMemory(device, stagingDeviceMem);
 
-		copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer,
-			_side, _mip, _rect, _z, _depth, _pitch);
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+
+		region.imageOffset.x = _rect.m_x;
+		region.imageOffset.y = _rect.m_y;
+		region.imageOffset.z = _z;
+		region.imageExtent.width = _rect.m_width;
+		region.imageExtent.height = _rect.m_height;
+		region.imageExtent.depth = _depth;
+
+		copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer, 1, &region);
 
 		vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
 		vkDestroy(stagingBuffer);
 	}
 
 	void TextureVK::copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
-		uint8_t side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch)
+		uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy)
 	{
 		VkDevice device = s_renderVK->m_device;
 		VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
 		// image Layout transition into destination optimal
-		setImageMemoryBarrier(commandBuffer, m_textureImage, m_currentImageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		setImageMemoryBarrier(commandBuffer, m_textureImage, m_currentImageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_numMips, m_numLayers);
+
 		// copy buffer to image
-		{
-			VkBufferImageCopy region = {};
-			region.bufferOffset = 0;
-			region.bufferRowLength = 0;
-			region.bufferImageHeight = 0;
-			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.imageSubresource.mipLevel = 0;
-			region.imageSubresource.baseArrayLayer = 0;
-			region.imageSubresource.layerCount = 1;
+		vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, bufferImageCopyCount, bufferImageCopy);
 
-			region.imageOffset.x = _rect.m_x;
-			region.imageOffset.y = _rect.m_y;
-			region.imageOffset.z = _z;
-			region.imageExtent.width = _rect.m_width;
-			region.imageExtent.height = _rect.m_height;
-			region.imageExtent.depth = _depth;
-
-			vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		}
-		setImageMemoryBarrier(commandBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		setImageMemoryBarrier(commandBuffer, m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_numMips, m_numLayers);
 		s_renderVK->submitCommandAndWait(commandBuffer);
-
 		m_currentImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
@@ -4665,7 +4711,7 @@ VK_DESTROY
 			, m_backBufferColorImage[m_backBufferColorIdx]
 			, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 			, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-			);
+			, 1, 1);
 
 		VkRenderPassBeginInfo rpbi;
 		rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -5701,7 +5747,7 @@ BX_UNUSED(presentMin, presentMax);
 			, m_backBufferColorImage[m_backBufferColorIdx]
 			, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 			, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-			);
+			, 1, 1);
 
 		VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
 

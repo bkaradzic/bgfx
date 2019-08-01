@@ -463,7 +463,7 @@ VK_DESTROY
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
 		void copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
-			uint8_t side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch);
+			uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 
 		void* m_directAccessPtr;
 		uint64_t m_flags;
@@ -486,6 +486,16 @@ VK_DESTROY
 
 	struct FrameBufferVK
 	{
+		FrameBufferVK()
+			: m_depth{ kInvalidHandle }
+			, m_width(0)
+			, m_height(0)
+			, m_denseIdx(kInvalidHandle)
+			, m_num(0)
+			, m_numTh(0)
+		{
+		}
+
 		void destroy();
 
 		TextureHandle m_texture[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
