@@ -347,14 +347,14 @@ width="640" height="480" border="0" /></a>
 Build cross-platform native applications with the power of the Babylon.js
 JavaScript framework.
 
-![Babylon Native](https://github.com/BabylonJS/BabylonNative#babylon-native)
+[Babylon Native](https://github.com/BabylonJS/BabylonNative#babylon-native)
 
 ## Nira
 
 Instantly load and view assets on any device. All you need is a web browser.
 
-![Nira](https://nira.app/)  
-![SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to Multi-Gigabyte Sized 3D Assets on Any Device](https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130)
+[Nira](https://nira.app/)  
+[SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to Multi-Gigabyte Sized 3D Assets on Any Device](https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130)
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Gz9weuemhDA&t=3350" 
 target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg" 
