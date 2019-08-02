@@ -390,8 +390,8 @@ VK_DESTROY
 			, m_hash(0)
 			, m_numUniforms(0)
 			, m_numPredefined(0)
-			, m_numBindings(0)
 			, m_numSamplers(0)
+			, m_numBindings(0)
 		{
 		}
 
@@ -462,8 +462,7 @@ VK_DESTROY
 		void destroy();
 		void update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 
-		void copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
-			uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
+		void copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy);
 
 		void* m_directAccessPtr;
 		uint64_t m_flags;
@@ -477,11 +476,11 @@ VK_DESTROY
 		uint8_t m_textureFormat;
 		uint8_t m_numMips;
 
-		VkImageLayout m_currentImageLayout;
 		VkImage m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
 		VkImageView m_textureImageView;
 		VkSampler m_textureSampler;
+		VkImageLayout m_currentImageLayout;
 	};
 
 	struct FrameBufferVK
