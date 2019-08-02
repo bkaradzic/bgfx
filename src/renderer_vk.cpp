@@ -10,9 +10,9 @@
 
 #if BX_PLATFORM_OSX
 #	import <Cocoa/Cocoa.h>
-#   import <Foundation/Foundation.h>
-#   import <QuartzCore/QuartzCore.h>
-#   import <Metal/Metal.h>
+#	import <Foundation/Foundation.h>
+#	import <QuartzCore/QuartzCore.h>
+#	import <Metal/Metal.h>
 #endif
 
 namespace bgfx { namespace vk
@@ -916,7 +916,7 @@ VK_IMPORT
 //				"VK_LAYER_GOOGLE_threading",
 //				"VK_LAYER_GOOGLE_unique_objects",
 //					"VK_LAYER_LUNARG_device_limits",
-					"VK_LAYER_LUNARG_standard_validation",
+//					"VK_LAYER_LUNARG_standard_validation",
 //					"VK_LAYER_LUNARG_image",
 //					"VK_LAYER_LUNARG_mem_tracker",
 //				"VK_LAYER_LUNARG_core_validation",
@@ -924,7 +924,7 @@ VK_IMPORT
 //				"VK_LAYER_LUNARG_parameter_validation",
 //					"VK_LAYER_LUNARG_swapchain",
 //					"VK_LAYER_LUNARG_vktrace",
-					"VK_LAYER_RENDERDOC_Capture",
+//					"VK_LAYER_RENDERDOC_Capture",
 #endif // BGFX_CONFIG_DEBUG
 					/*not used*/ ""
 				};
@@ -1891,13 +1891,13 @@ VK_IMPORT_DEVICE
 //					{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         BGFX_CONFIG_MAX_TEXTURE_SAMPLERS },
 				};
 
-				VkDescriptorSetLayoutBinding dslb[] =
-				{
-//					{ DslBinding::CombinedImageSampler,  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
-					{ DslBinding::VertexUniformBuffer,   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1,                                VK_SHADER_STAGE_ALL,          NULL },
-					{ DslBinding::FragmentUniformBuffer, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1,                                VK_SHADER_STAGE_FRAGMENT_BIT, NULL },
-//					{ DslBinding::StorageBuffer,         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
-				};
+// 				VkDescriptorSetLayoutBinding dslb[] =
+// 				{
+// //					{ DslBinding::CombinedImageSampler,  VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
+// 					{ DslBinding::VertexUniformBuffer,   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1,                                VK_SHADER_STAGE_ALL,          NULL },
+// 					{ DslBinding::FragmentUniformBuffer, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1,                                VK_SHADER_STAGE_FRAGMENT_BIT, NULL },
+// //					{ DslBinding::StorageBuffer,         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, VK_SHADER_STAGE_ALL,          NULL },
+// 				};
 
 				VkDescriptorPoolCreateInfo dpci;
 				dpci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -3672,7 +3672,6 @@ VK_DESTROY
 			// staging buffer
 			VkBuffer stagingBuffer;
 			VkDeviceMemory stagingMem;
-			VkBufferCreateInfo bci;
 			bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bci.pNext = NULL;
 			bci.flags = 0;
@@ -3688,13 +3687,11 @@ VK_DESTROY
 				, &stagingBuffer
 			));
 
-			VkMemoryRequirements mr;
 			vkGetBufferMemoryRequirements(device
 				, stagingBuffer
 				, &mr
 			);
 
-			VkMemoryAllocateInfo ma;
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			ma.pNext = NULL;
 			ma.allocationSize = mr.size;
@@ -3733,6 +3730,7 @@ VK_DESTROY
 
 	void BufferVK::update(VkCommandBuffer _commandBuffer, uint32_t _offset, uint32_t _size, void* _data, bool _discard)
 	{
+		BX_UNUSED(_commandBuffer, _discard);
 //		void* dst;
 //		VkDevice device = s_renderVK->m_device;
 //		VK_CHECK(vkMapMemory(device, m_deviceMem, _offset, _size, 0, &dst) );
@@ -4018,7 +4016,7 @@ VK_DESTROY
 
 		// fill binding description with uniform informations
 		{
-			uint32_t bidx = 0;
+			uint16_t bidx = 0;
 			if (m_size > 0)
 			{
 				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
@@ -4205,6 +4203,8 @@ VK_DESTROY
 			const bool computeWrite = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
 			const bool blit = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+
+			BX_UNUSED(swizzle, writeOnly, computeWrite, renderTarget, blit);
 
 			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s.",
 				(int)(this - s_renderVK->m_textures), getName((TextureFormat::Enum)m_textureFormat),
@@ -4438,8 +4438,8 @@ VK_DESTROY
 				region.imageExtent.height = m_height;
 				region.imageExtent.depth = 1;
 
-				copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer, 1, &region);*/
-				copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer, numSrd, bufferCopyInfo);
+				copyBufferToTexture(stagingBuffer, 1, &region);*/
+				copyBufferToTexture(stagingBuffer, numSrd, bufferCopyInfo);
 			}
 
 			vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
@@ -4508,8 +4508,9 @@ VK_DESTROY
 		}
 	}
 
-	void TextureVK::update(VkCommandPool commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
+	void TextureVK::update(VkCommandPool _commandPool, uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
+		BX_UNUSED(_commandPool, _side, _mip, _pitch);
 		VkDevice device = s_renderVK->m_device;
 
 		VkBuffer stagingBuffer = VK_NULL_HANDLE;
@@ -4572,16 +4573,14 @@ VK_DESTROY
 		region.imageExtent.height = _rect.m_height;
 		region.imageExtent.depth = _depth;
 
-		copyBufferToTexture(s_renderVK->m_commandPool, stagingBuffer, 1, &region);
+		copyBufferToTexture(stagingBuffer, 1, &region);
 
 		vkFreeMemory(device, stagingDeviceMem, &s_allocationCb);
 		vkDestroy(stagingBuffer);
 	}
 
-	void TextureVK::copyBufferToTexture(VkCommandPool commandPool, VkBuffer stagingBuffer,
-		uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy)
+	void TextureVK::copyBufferToTexture(VkBuffer stagingBuffer, uint32_t bufferImageCopyCount, VkBufferImageCopy* bufferImageCopy)
 	{
-		VkDevice device = s_renderVK->m_device;
 		VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
 		// image Layout transition into destination optimal
 		setImageMemoryBarrier(commandBuffer, m_textureImage, m_currentImageLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_numMips, m_numLayers);
