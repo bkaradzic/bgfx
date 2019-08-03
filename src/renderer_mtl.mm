@@ -838,11 +838,17 @@ namespace bgfx { namespace mtl
 
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
 		{
+			const TextureMtl& texture = m_textures[_handle.idx];
+			
+#if BX_PLATFORM_OSX
+			BlitCommandEncoder bce = s_renderMtl->getBlitCommandEncoder();
+			bce.synchronizeTexture(texture.m_ptr, 0, _mip);
+			endEncoding();
+#endif  // BX_PLATFORM_OSX
+
 			m_cmd.kick(false, true);
 			m_commandBuffer = m_cmd.alloc();
-
-			const TextureMtl& texture = m_textures[_handle.idx];
-
+			
 			BX_CHECK(_mip<texture.m_numMips,"Invalid mip: %d num mips:",_mip,texture.m_numMips);
 
 			uint32_t srcWidth  = bx::uint32_max(1, texture.m_ptr.width()  >> _mip);
