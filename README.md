@@ -267,9 +267,9 @@ target="_blank"><img src="http://img.youtube.com/vi/nY8y_dFolKo/0.jpg"
 alt="WonderWorlds"
 width="640" height="480" border="0" /></a>
 
-## mud
+## two-io / mud
 
-https://hugoam.github.io/mud-io/ - an all-purpose c++ app prototyping library,
+https://hugoam.github.io/two-io/ - an all-purpose c++ app prototyping library,
 focused towards live graphical apps and games.
 
 ![mud](https://raw.githubusercontent.com/hugoam/mud-io/master/media/14_live_gfx.png)
@@ -328,6 +328,38 @@ https://www.neoaxis.com/ - Versatile 3D project development environment.
 https://github.com/jpcy/xatlas#xatlas - Mesh parameterization library 
 
 ![xatlas](https://user-images.githubusercontent.com/3744372/43034066-53a62dee-8d18-11e8-9767-0b38ed3fa2d3.png)
+
+## Heroes of Hammerwatch
+
+https://store.steampowered.com/app/677120/Heroes_of_Hammerwatch/ Heroes of Hammerwatch
+is a rogue-lite action-adventure game set in the same universe as Hammerwatch.
+Encounter endless hordes of enemies, traps, puzzles, secrets and lots of loot,
+as you battle your way through procedurally generated levels to reach the top
+of the Forsaken Spire.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=uTIVDKdNvms" 
+target="_blank"><img src="http://img.youtube.com/vi/uTIVDKdNvms/0.jpg" 
+alt="Heroes of Hammerwatch"
+width="640" height="480" border="0" /></a>
+
+## Babylon Native
+
+Build cross-platform native applications with the power of the Babylon.js
+JavaScript framework.
+
+[Babylon Native](https://github.com/BabylonJS/BabylonNative#babylon-native)
+
+## Nira
+
+Instantly load and view assets on any device. All you need is a web browser.
+
+[Nira](https://nira.app/)  
+[SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to Multi-Gigabyte Sized 3D Assets on Any Device](https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130)
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=Gz9weuemhDA&t=3350" 
+target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg" 
+alt="Heroes of Hammerwatch"
+width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------

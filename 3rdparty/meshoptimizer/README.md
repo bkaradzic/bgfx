@@ -6,15 +6,17 @@ When a GPU renders triangle meshes, various stages of the GPU pipeline have to p
 
 The library provides a C and C++ interface for all algorithms; you can use it from C/C++ or from other languages via FFI (such as P/Invoke). If you want to use this library from Rust, you should use [meshopt crate](https://crates.io/crates/meshopt).
 
+[gltfpack](#gltfpack), which is a tool that can automatically optimize glTF files, is developed and distributed alongside the library.
+
 ## Installing
 
 meshoptimizer is hosted on GitHub; you can download the latest release using git:
 
 ```
-git clone -b v0.11 https://github.com/zeux/meshoptimizer.git
+git clone -b v0.12 https://github.com/zeux/meshoptimizer.git
 ```
 
-Alternatively you can [download the .zip archive from GitHub](https://github.com/zeux/meshoptimizer/archive/v0.11.zip).
+Alternatively you can [download the .zip archive from GitHub](https://github.com/zeux/meshoptimizer/archive/v0.12.zip).
 
 ## Building
 
@@ -146,7 +148,7 @@ Note that vertex encoding assumes that vertex buffer was optimized for vertex fe
 
 Decoding functions are heavily optimized and can directly target write-combined memory; you can expect both decoders to run at 1-3 GB/s on modern desktop CPUs. Compression ratios depend on the data; vertex data compression ratio is typically around 2-4x (compared to already quantized data), index data compression ratio is around 5-6x (compared to raw 16-bit index data). General purpose lossless compressors can further improve on these results.
 
-Due to a very high decoding performance and compatibility with general purpose lossless compressors, the compression is a good fit for the use on the web. To that end, meshoptimizer provides both vertex and index decoders compiled into WebAssembly and wrapped into a module with JavaScript-friendly interface, `js/decoder.js`, that you can use to decode meshes that were encoded offline:
+Due to a very high decoding performance and compatibility with general purpose lossless compressors, the compression is a good fit for the use on the web. To that end, meshoptimizer provides both vertex and index decoders compiled into WebAssembly and wrapped into a module with JavaScript-friendly interface, `js/meshopt_decoder.js`, that you can use to decode meshes that were encoded offline:
 
 ```js
 // ready is a Promise that is resolved when (asynchronous) WebAssembly compilation finishes
@@ -157,7 +159,7 @@ MeshoptDecoder.decodeVertexBuffer(vertexBuffer, vertexCount, vertexSize, vertexD
 MeshoptDecoder.decodeIndexBuffer(indexBuffer, indexCount, indexSize, indexData);
 ```
 
-A THREE.js mesh loader is provided as an example in `tools/OptMeshLoader.js`; it loads meshes encoded using `tools/meshencoder.cpp`. [Usage example](https://zeuxcg.org/meshoptimizer/demo/) is available, with source in `demo/index.html`.
+[Usage example](https://meshoptimizer.org/demo/) is available, with source in `demo/index.html`; this example uses .GLB files encoded using `gltfpack`.
 
 ## Triangle strip conversion
 
@@ -170,10 +172,12 @@ This library provides an algorithm for converting a vertex cache optimized trian
 
 ```c++
 std::vector<unsigned int> strip(meshopt_stripifyBound(index_count));
-size_t strip_size = meshopt_stripify(&strip[0], indices, index_count, vertex_count);
+unsigned int restart_index = ~0u;
+size_t strip_size = meshopt_stripify(&strip[0], indices, index_count, vertex_count, restart_index);
 ```
 
-Typically you should expect triangle strips to have ~50-60% of indices compared to triangle lists (~1.5-1.8 indices per triangle) and have ~5% worse ACMR. Note that triangle strips require restart index support for rendering; using degenerate triangles to connect strips is not supported.
+Typically you should expect triangle strips to have ~50-60% of indices compared to triangle lists (~1.5-1.8 indices per triangle) and have ~5% worse ACMR.
+Note that triangle strips can be stitched with or without restart index support. Using restart indices can result in ~10% smaller index buffers, but on some GPUs restart indices may result in decreased performance.
 
 ## Deinterleaved geometry
 
@@ -208,7 +212,7 @@ This library provides two simplification algorithms that reduce the number of tr
 
 The first simplification algorithm, `meshopt_simplify`, follows the topology of the original mesh in an attempt to preserve attribute seams, borders and overall appearance. For meshes with inconsistent topology or many seams, such as faceted meshes, it can result in simplifier getting "stuck" and not being able to simplify the mesh fully; it's recommended to preprocess the index buffer with `meshopt_generateShadowIndexBuffer` to discard any vertex attributes that aren't critical and can be rebuilt later such as normals.
 
-```
+```c++
 float threshold = 0.2f;
 size_t target_index_count = size_t(index_count * threshold);
 float target_error = 1e-2f;
@@ -221,7 +225,7 @@ Target error is an approximate measure of the deviation from the original mesh u
 
 The second simplification algorithm, `meshopt_simplifySloppy`, doesn't follow the topology of the original mesh. This means that it doesn't preserve attribute seams or borders, but it can collapse internal details that are too small to matter better because it can merge mesh features that are topologically disjoint but spatially close.
 
-```
+```c++
 float threshold = 0.2f;
 size_t target_index_count = size_t(index_count * threshold);
 
@@ -253,11 +257,57 @@ Many algorithms allocate temporary memory to store intermediate results or accel
 meshopt_setAllocator(malloc, free);
 ```
 
-> Note that currently the library expects the allocation function to either throw in case of out-of-memory (in which case the exception will propagate to the caller) or abort, so technically the use of `malloc` above isn't safe.
+> Note that the library expects the allocation function to either throw in case of out-of-memory (in which case the exception will propagate to the caller) or abort, so technically the use of `malloc` above isn't safe. If you want to handle out-of-memory errors without using C++ exceptions, you can use `setjmp`/`longjmp` instead.
 
 Vertex and index decoders (`meshopt_decodeVertexBuffer` and `meshopt_decodeIndexBuffer`) do not allocate memory and work completely within the buffer space provided via arguments.
 
 All functions have bounded stack usage that does not exceed 32 KB for any algorithms.
+
+## gltfpack
+
+meshoptimizer provides many algorithms that can be integrated into a content pipeline or a rendering engine to improve performance. Often integration requires some conscious choices for optimal results - should we optimize for overdraw or not? what should the vertex format be? do we use triangle lists or strips? However, in some cases optimality is not a requirement.
+
+For engines that want a relatively simple way to load meshes, and would like the meshes to perform reasonably well on target hardware and be reasonably fast to load, meshoptimizer provides a command-line tool, `gltfpack`. `gltfpack` can take an `.obj` or `.gltf` file as an input, and produce a `.gltf` or `.glb` file that is optimized for rendering performance and download size.
+
+To build gltfpack on Linux/macOS, you can use make:
+
+```
+make config=release gltfpack
+```
+
+On Windows (and other platforms), you can use CMake:
+
+```
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=ON
+cmake --build . --config Release --target gltfpack
+```
+
+You can then run the resulting command-line binary like this (run it without arguments for a list of options):
+
+```
+gltfpack -i scene.gltf -o scene.glb
+```
+
+gltfpack substantially changes the glTF data by optimizing the meshes for vertex fetch and transform cache, quantizing the geometry to reduce the memory consumption and size, merging meshes to reduce the draw call count, quantizing and resampling animations to reduce animation size and simplify playback, and pruning the node tree by removing or collapsing redundant nodes.
+
+gltfpack can produce two types of output files:
+
+- By default gltfpack outputs regular `.glb`/`.gltf` files that have been optimized for GPU consumption using various cache optimizers and quantization. These files can be loaded by standard GLTF loaders present in frameworks such as [three.js](https://threejs.org/) (r107+) and [Babylon.js](https://www.babylonjs.com/) (4.1+).
+- When using `-c` option, gltfpack outputs compressed `.glb`/`.gltf` files that use meshoptimizer codecs to reduce the download size further. Loading these files requires extending GLTF loaders with custom decompression support; `demo/GLTFLoader.js` contains a custom version of three.js loader that can be used to load them.
+
+> Note: files produced by gltfpack use `MESHOPT_quantized_geometry` and `MESHOPT_compression` pseudo-extensions; both of these have *not* been standardized yet but eventually will be. glTF validator doesn't recognize these extensions and produces a large number of validation errors because of this.
+
+When using compressed files, `js/meshopt_decoder.js` needs to be loaded to provide the WebAssembly decoder module like this:
+
+```js
+<script src="js/meshopt_decoder.js"></script>
+
+...
+
+var loader = new THREE.GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+loader.load('pirate.glb', function (gltf) { scene.add(gltf.scene); });
+```
 
 ## License
 

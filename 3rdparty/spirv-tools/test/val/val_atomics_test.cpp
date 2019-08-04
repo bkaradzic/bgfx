@@ -190,6 +190,9 @@ OpMemoryModel Physical32 OpenCL
 %f32_ptr_uniformconstant = OpTypePointer UniformConstant %f32
 %f32_uc_var = OpVariable %f32_ptr_uniformconstant UniformConstant
 
+%f32_ptr_image = OpTypePointer Image %f32
+%f32_im_var = OpVariable %f32_ptr_image Image
+
 %main = OpFunction %void None %func
 %main_entry = OpLabel
 )";
@@ -288,11 +291,9 @@ OpAtomicStore %f32_var_function %device %relaxed %f32_1
 
   CompileSuccessfully(GenerateShaderCode(body), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicStore: expected Pointer Storage Class to be Uniform, "
-                "Workgroup, CrossWorkgroup, Generic, AtomicCounter, Image or "
-                "StorageBuffer"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicStore: Function storage class forbidden when "
+                        "the Shader capability is declared."));
 }
 
 // TODO(atgoo@github.com): the corresponding check fails Vulkan CTS,
@@ -500,8 +501,7 @@ TEST_F(ValidateAtomics, AtomicLoadWrongScopeType) {
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr("AtomicLoad: expected Memory Scope to be a 32-bit int\n  %40 = "
-                "OpAtomicLoad %float %28 %float_1 %uint_0_1\n"));
+      HasSubstr("AtomicLoad: expected Memory Scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicLoadWrongMemorySemanticsType) {
@@ -641,6 +641,19 @@ OpAtomicStore %f32vec4_var %device %relaxed %f32_1
                 "type"));
 }
 
+TEST_F(ValidateAtomics, AtomicStoreWrongPointerStorageTypeForOpenCL) {
+  const std::string body = R"(
+OpAtomicStore %f32_im_var %device %relaxed %f32_1
+)";
+
+  CompileSuccessfully(GenerateKernelCode(body));
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_OPENCL_1_2));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("AtomicStore: storage class must be Function, Workgroup, "
+                "CrossWorkGroup or Generic in the OpenCL environment."));
+}
+
 TEST_F(ValidateAtomics, AtomicStoreWrongPointerStorageType) {
   const std::string body = R"(
 OpAtomicStore %f32_uc_var %device %relaxed %f32_1
@@ -648,11 +661,9 @@ OpAtomicStore %f32_uc_var %device %relaxed %f32_1
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr("AtomicStore: expected Pointer Storage Class to be Uniform, "
-                "Workgroup, CrossWorkgroup, Generic, AtomicCounter, Image or "
-                "StorageBuffer"));
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("AtomicStore: storage class forbidden by universal "
+                        "validation rules."));
 }
 
 TEST_F(ValidateAtomics, AtomicStoreWrongScopeType) {
@@ -778,9 +789,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "AtomicExchange: expected Memory Scope to be a 32-bit int\n  %40 = "
-          "OpAtomicExchange %float %28 %float_1 %uint_0_1 %float_0\n"));
+      HasSubstr("AtomicExchange: expected Memory Scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongMemorySemanticsType) {
@@ -895,8 +904,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("AtomicCompareExchange: expected Memory Scope to be a 32-bit "
-                "int\n  %40 = OpAtomicCompareExchange %float %28 %float_1 "
-                "%uint_0_1 %uint_0_1 %float_0 %float_0\n"));
+                "int"));
 }
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongMemorySemanticsType1) {
@@ -1077,8 +1085,7 @@ TEST_F(ValidateAtomics, AtomicFlagTestAndSetWrongScopeType) {
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr(
-          "AtomicFlagTestAndSet: expected Memory Scope to be a 32-bit int\n  "
-          "%40 = OpAtomicFlagTestAndSet %bool %30 %ulong_1 %uint_0_1\n"));
+          "AtomicFlagTestAndSet: expected Memory Scope to be a 32-bit int"));
 }
 
 TEST_F(ValidateAtomics, AtomicFlagTestAndSetWrongMemorySemanticsType) {
@@ -1179,8 +1186,7 @@ OpAtomicStore %u32_var %device %relaxed %u32_1
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("AtomicIIncrement: Memory Semantics can have at most "
                         "one of the following bits set: Acquire, Release, "
-                        "AcquireRelease or SequentiallyConsistent\n  %40 = "
-                        "OpAtomicIIncrement %uint %30 %uint_1_0 %uint_6\n"));
+                        "AcquireRelease or SequentiallyConsistent"));
 }
 
 TEST_F(ValidateAtomics, AtomicUniformMemorySemanticsShader) {

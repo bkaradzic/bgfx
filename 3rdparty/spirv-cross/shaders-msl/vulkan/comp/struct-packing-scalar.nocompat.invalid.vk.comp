@@ -43,7 +43,8 @@ struct Content
     S3 m3;
     float m4;
 
-    S4 m3s[8];
+    // glslang seems to miscompile this atm into ArrayStride of 16 even in scalar layout.
+    //S4 m3s[8];
 };
 
 layout(binding = 2, scalar) restrict buffer SSBO2

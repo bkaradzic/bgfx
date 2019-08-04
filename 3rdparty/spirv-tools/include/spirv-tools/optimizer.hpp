@@ -492,20 +492,6 @@ Optimizer::PassToken CreateInsertExtractElimPass();
 // inserts created by that pass.
 Optimizer::PassToken CreateDeadInsertElimPass();
 
-// Creates a pass to consolidate uniform references.
-// For each entry point function in the module, first change all constant index
-// access chain loads into equivalent composite extracts. Then consolidate
-// identical uniform loads into one uniform load. Finally, consolidate
-// identical uniform extracts into one uniform extract. This may require
-// moving a load or extract to a point which dominates all uses.
-//
-// This pass requires a module to have structured control flow ie shader
-// capability. It also requires logical addressing ie Addresses capability
-// is not enabled. It also currently does not support any extensions.
-//
-// This pass currently only optimizes loads with a single index.
-Optimizer::PassToken CreateCommonUniformElimPass();
-
 // Create aggressive dead code elimination pass
 // This pass eliminates unused code from the module. In addition,
 // it detects and eliminates code which may have spurious uses but which do

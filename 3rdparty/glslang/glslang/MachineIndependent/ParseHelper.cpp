@@ -3976,23 +3976,30 @@ bool TParseContext::isRuntimeLength(const TIntermTyped& base) const
 }
 
 #ifdef NV_EXTENSIONS
-// Fix mesh view output array dimension
-void TParseContext::resizeMeshViewDimension(const TSourceLoc& loc, TType& type)
+// Check if mesh perviewNV attributes have a view dimension
+// and resize it to gl_MaxMeshViewCountNV when implicitly sized.
+void TParseContext::checkAndResizeMeshViewDim(const TSourceLoc& loc, TType& type, bool isBlockMember)
 {
     // see if member is a per-view attribute
-    if (type.getQualifier().isPerView()) {
-        // since we don't have the maxMeshViewCountNV set during parsing builtins, we hardcode the value
-        int maxViewCount = parsingBuiltins ? 4 : resources.maxMeshViewCountNV;
+    if (!type.getQualifier().isPerView())
+        return;
 
-        if (! type.isArray()) {
-            error(loc, "requires an view array dimension", "perviewNV", "");
-        }
-        else if (!type.isUnsizedArray() && type.getOuterArraySize() != maxViewCount) {
+    if ((isBlockMember && type.isArray()) || (!isBlockMember && type.isArrayOfArrays())) {
+        // since we don't have the maxMeshViewCountNV set during parsing builtins, we hardcode the value.
+        int maxViewCount = parsingBuiltins ? 4 : resources.maxMeshViewCountNV;
+        // For block members, outermost array dimension is the view dimension.
+        // For non-block members, outermost array dimension is the vertex/primitive dimension
+        // and 2nd outermost is the view dimension.
+        int viewDim = isBlockMember ? 0 : 1;
+        int viewDimSize = type.getArraySizes()->getDimSize(viewDim);
+
+        if (viewDimSize != UnsizedArraySize && viewDimSize != maxViewCount)
             error(loc, "mesh view output array size must be gl_MaxMeshViewCountNV or implicitly sized", "[]", "");
-        }
-        else if (type.isUnsizedArray()) {
-            type.changeOuterArraySize(maxViewCount);
-        }
+        else if (viewDimSize == UnsizedArraySize)
+            type.getArraySizes()->setDimSize(viewDim, maxViewCount);
+    }
+    else {
+        error(loc, "requires a view array dimension", "perviewNV", "");
     }
 }
 #endif
@@ -6427,6 +6434,7 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     transparentOpaqueCheck(loc, type, identifier);
 #ifdef NV_EXTENSIONS
     accStructNVCheck(loc, type, identifier);
+    checkAndResizeMeshViewDim(loc, type, /*isBlockMember*/ false);
 #endif
     if (type.getQualifier().storage == EvqConst && type.containsBasicType(EbtReference)) {
         error(loc, "variables with reference type can't have qualifier 'const'", "qualifier", "");
@@ -7342,7 +7350,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
 #ifdef NV_EXTENSIONS
     if (memberWithPerViewQualifier) {
         for (unsigned int member = 0; member < typeList.size(); ++member) {
-            resizeMeshViewDimension(typeList[member].loc, *typeList[member].type);
+            checkAndResizeMeshViewDim(typeList[member].loc, *typeList[member].type, /*isBlockMember*/ true);
         }
     }
 #endif

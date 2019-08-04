@@ -25,6 +25,28 @@
 #include "source/val/validate_scopes.h"
 #include "source/val/validation_state.h"
 
+namespace {
+
+bool IsStorageClassAllowedByUniversalRules(uint32_t storage_class) {
+  switch (storage_class) {
+    case SpvStorageClassUniform:
+    case SpvStorageClassStorageBuffer:
+    case SpvStorageClassWorkgroup:
+    case SpvStorageClassCrossWorkgroup:
+    case SpvStorageClassGeneric:
+    case SpvStorageClassAtomicCounter:
+    case SpvStorageClassImage:
+    case SpvStorageClassFunction:
+    case SpvStorageClassPhysicalStorageBufferEXT:
+      return true;
+      break;
+    default:
+      return false;
+  }
+}
+
+}  // namespace
+
 namespace spvtools {
 namespace val {
 
@@ -119,32 +141,42 @@ spv_result_t AtomicsPass(ValidationState_t& _, const Instruction* inst) {
                << ": expected Pointer to be of type OpTypePointer";
       }
 
-      switch (storage_class) {
-        case SpvStorageClassUniform:
-        case SpvStorageClassWorkgroup:
-        case SpvStorageClassCrossWorkgroup:
-        case SpvStorageClassGeneric:
-        case SpvStorageClassAtomicCounter:
-        case SpvStorageClassImage:
-        case SpvStorageClassStorageBuffer:
-        case SpvStorageClassPhysicalStorageBufferEXT:
-          break;
-        default:
-          if (spvIsOpenCLEnv(_.context()->target_env)) {
-            if (storage_class != SpvStorageClassFunction) {
-              return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                     << spvOpcodeString(opcode)
-                     << ": expected Pointer Storage Class to be Uniform, "
-                        "Workgroup, CrossWorkgroup, Generic, AtomicCounter, "
-                        "Image, StorageBuffer or Function";
-            }
-          } else {
+      // Validate storage class against universal rules
+      if (!IsStorageClassAllowedByUniversalRules(storage_class)) {
+        return _.diag(SPV_ERROR_INVALID_DATA, inst)
+               << spvOpcodeString(opcode)
+               << ": storage class forbidden by universal validation rules.";
+      }
+
+      // Then Shader rules
+      if (_.HasCapability(SpvCapabilityShader)) {
+        if (storage_class == SpvStorageClassFunction) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << spvOpcodeString(opcode)
+                 << ": Function storage class forbidden when the Shader "
+                    "capability is declared.";
+        }
+      }
+
+      // And finally OpenCL environment rules
+      if (spvIsOpenCLEnv(_.context()->target_env)) {
+        if ((storage_class != SpvStorageClassFunction) &&
+            (storage_class != SpvStorageClassWorkgroup) &&
+            (storage_class != SpvStorageClassCrossWorkgroup) &&
+            (storage_class != SpvStorageClassGeneric)) {
+          return _.diag(SPV_ERROR_INVALID_DATA, inst)
+                 << spvOpcodeString(opcode)
+                 << ": storage class must be Function, Workgroup, "
+                    "CrossWorkGroup or Generic in the OpenCL environment.";
+        }
+
+        if (_.context()->target_env == SPV_ENV_OPENCL_1_2) {
+          if (storage_class == SpvStorageClassGeneric) {
             return _.diag(SPV_ERROR_INVALID_DATA, inst)
-                   << spvOpcodeString(opcode)
-                   << ": expected Pointer Storage Class to be Uniform, "
-                      "Workgroup, CrossWorkgroup, Generic, AtomicCounter, "
-                      "Image or StorageBuffer";
+                   << "Storage class cannot be Generic in OpenCL 1.2 "
+                      "environment";
           }
+        }
       }
 
       if (opcode == SpvOpAtomicFlagTestAndSet ||

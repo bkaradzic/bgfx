@@ -32,6 +32,7 @@ static const SpvCapability pygen_variable_caps_PipeStorage[] = {SpvCapabilityPip
 static const SpvCapability pygen_variable_caps_Pipes[] = {SpvCapabilityPipes};
 static const SpvCapability pygen_variable_caps_RayTracingNV[] = {SpvCapabilityRayTracingNV};
 static const SpvCapability pygen_variable_caps_Shader[] = {SpvCapabilityShader};
+static const SpvCapability pygen_variable_caps_ShaderClockKHR[] = {SpvCapabilityShaderClockKHR};
 static const SpvCapability pygen_variable_caps_SparseResidency[] = {SpvCapabilitySparseResidency};
 static const SpvCapability pygen_variable_caps_SubgroupAvcMotionEstimationINTEL[] = {SpvCapabilitySubgroupAvcMotionEstimationINTEL};
 static const SpvCapability pygen_variable_caps_SubgroupAvcMotionEstimationINTELSubgroupAvcMotionEstimationChromaINTEL[] = {SpvCapabilitySubgroupAvcMotionEstimationINTEL, SpvCapabilitySubgroupAvcMotionEstimationChromaINTEL};
@@ -51,6 +52,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_int
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_decorate_stringSPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_decorate_string, spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_ballot[] = {spvtools::Extension::kSPV_KHR_shader_ballot};
+static const spvtools::Extension pygen_variable_exts_SPV_KHR_shader_clock[] = {spvtools::Extension::kSPV_KHR_shader_clock};
 static const spvtools::Extension pygen_variable_exts_SPV_KHR_subgroup_vote[] = {spvtools::Extension::kSPV_KHR_subgroup_vote};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_cooperative_matrix[] = {spvtools::Extension::kSPV_NV_cooperative_matrix};
 static const spvtools::Extension pygen_variable_exts_SPV_NV_mesh_shader[] = {spvtools::Extension::kSPV_NV_mesh_shader};
@@ -419,6 +421,7 @@ static const spv_opcode_desc_t kOpcodeTableEntries[] = {
   {"GroupSMaxNonUniformAMD", SpvOpGroupSMaxNonUniformAMD, 1, pygen_variable_caps_Groups, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID, SPV_OPERAND_TYPE_GROUP_OPERATION, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_ballot, 0xffffffffu, 0xffffffffu},
   {"FragmentMaskFetchAMD", SpvOpFragmentMaskFetchAMD, 1, pygen_variable_caps_FragmentMaskAMD, 4, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_fragment_mask, 0xffffffffu, 0xffffffffu},
   {"FragmentFetchAMD", SpvOpFragmentFetchAMD, 1, pygen_variable_caps_FragmentMaskAMD, 5, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_AMD_shader_fragment_mask, 0xffffffffu, 0xffffffffu},
+  {"ReadClockKHR", SpvOpReadClockKHR, 1, pygen_variable_caps_ShaderClockKHR, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_SCOPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_KHR_shader_clock, 0xffffffffu, 0xffffffffu},
   {"ImageSampleFootprintNV", SpvOpImageSampleFootprintNV, 1, pygen_variable_caps_ImageFootprintNV, 7, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_OPTIONAL_IMAGE}, 1, 1, 1, pygen_variable_exts_SPV_NV_shader_image_footprint, 0xffffffffu, 0xffffffffu},
   {"GroupNonUniformPartitionNV", SpvOpGroupNonUniformPartitionNV, 1, pygen_variable_caps_GroupNonUniformPartitionedNV, 3, {SPV_OPERAND_TYPE_TYPE_ID, SPV_OPERAND_TYPE_RESULT_ID, SPV_OPERAND_TYPE_ID}, 1, 1, 1, pygen_variable_exts_SPV_NV_shader_subgroup_partitioned, 0xffffffffu, 0xffffffffu},
   {"WritePackedPrimitiveIndices4x8NV", SpvOpWritePackedPrimitiveIndices4x8NV, 1, pygen_variable_caps_MeshShadingNV, 2, {SPV_OPERAND_TYPE_ID, SPV_OPERAND_TYPE_ID}, 0, 0, 1, pygen_variable_exts_SPV_NV_mesh_shader, 0xffffffffu, 0xffffffffu},

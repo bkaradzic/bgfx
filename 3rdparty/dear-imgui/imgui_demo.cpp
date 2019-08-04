@@ -1,4 +1,4 @@
-// dear imgui, v1.72 WIP
+// dear imgui, v1.72b
 // (demo code)
 
 // Message to the person tempted to delete this file when integrating Dear ImGui into their code base:
@@ -539,8 +539,19 @@ static void ShowDemoWindowWidgets()
             static float f1=0.123f, f2=0.0f;
             ImGui::SliderFloat("slider float", &f1, 0.0f, 1.0f, "ratio = %.3f");
             ImGui::SliderFloat("slider float (curve)", &f2, -10.0f, 10.0f, "%.4f", 2.0f);
+
             static float angle = 0.0f;
             ImGui::SliderAngle("slider angle", &angle);
+
+            // Using the format string to display a name instead of an integer.
+            // Here we completely omit '%d' from the format string, so it'll only display a name.
+            // This technique can also be used with DragInt().
+            enum Element { Element_Fire, Element_Earth, Element_Air, Element_Water, Element_COUNT };
+            const char* element_names[Element_COUNT] = { "Fire", "Earth", "Air", "Water" };
+            static int current_element = Element_Fire;
+            const char* current_element_name = (current_element >= 0 && current_element < Element_COUNT) ? element_names[current_element] : "Unknown";
+            ImGui::SliderInt("slider enum", &current_element, 0, Element_COUNT - 1, current_element_name);
+            ImGui::SameLine(); HelpMarker("Using the format string parameter to display a name instead of the underlying integer.");
         }
 
         {
@@ -1112,7 +1123,7 @@ static void ShowDemoWindowWidgets()
         ImGui::Checkbox("With Drag and Drop", &drag_and_drop);
         ImGui::Checkbox("With Options Menu", &options_menu); ImGui::SameLine(); HelpMarker("Right-click on the individual color widget to show options.");
         ImGui::Checkbox("With HDR", &hdr); ImGui::SameLine(); HelpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.");
-        int misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
+        ImGuiColorEditFlags misc_flags = (hdr ? ImGuiColorEditFlags_HDR : 0) | (drag_and_drop ? 0 : ImGuiColorEditFlags_NoDragDrop) | (alpha_half_preview ? ImGuiColorEditFlags_AlphaPreviewHalf : (alpha_preview ? ImGuiColorEditFlags_AlphaPreview : 0)) | (options_menu ? 0 : ImGuiColorEditFlags_NoOptions);
 
         ImGui::Text("Color widget:");
         ImGui::SameLine(); HelpMarker("Click on the colored square to open a color picker.\nCTRL+click on individual component to input value.\n");
@@ -1145,7 +1156,7 @@ static void ShowDemoWindowWidgets()
 
         static ImVec4 backup_color;
         bool open_popup = ImGui::ColorButton("MyColor##3b", color, misc_flags);
-        ImGui::SameLine();
+        ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
         open_popup |= ImGui::Button("Palette");
         if (open_popup)
         {
@@ -1545,28 +1556,22 @@ static void ShowDemoWindowWidgets()
         static bool b = false;
         static float col4f[4] = { 1.0f, 0.5, 0.0f, 1.0f };
         static char str[16] = {};
-        ImGui::RadioButton("Text", &item_type, 0);
-        ImGui::RadioButton("Button", &item_type, 1);
-        ImGui::RadioButton("Checkbox", &item_type, 2);
-        ImGui::RadioButton("SliderFloat", &item_type, 3);
-        ImGui::RadioButton("InputText", &item_type, 4);
-        ImGui::RadioButton("InputFloat3", &item_type, 5);
-        ImGui::RadioButton("ColorEdit4", &item_type, 6);
-        ImGui::RadioButton("MenuItem", &item_type, 7);
-        ImGui::RadioButton("TreeNode (w/ double-click)", &item_type, 8);
-        ImGui::RadioButton("ListBox", &item_type, 9);
-        ImGui::Separator();
+        ImGui::Combo("Item Type", &item_type, "Text\0Button\0Button (w/ repeat)\0Checkbox\0SliderFloat\0InputText\0InputFloat\0InputFloat3\0ColorEdit4\0MenuItem\0TreeNode (w/ double-click)\0ListBox\0");
+        ImGui::SameLine();
+        HelpMarker("Testing how various types of items are interacting with the IsItemXXX functions.");
         bool ret = false;
         if (item_type == 0) { ImGui::Text("ITEM: Text"); }                                              // Testing text items with no identifier/interaction
         if (item_type == 1) { ret = ImGui::Button("ITEM: Button"); }                                    // Testing button
-        if (item_type == 2) { ret = ImGui::Checkbox("ITEM: Checkbox", &b); }                            // Testing checkbox
-        if (item_type == 3) { ret = ImGui::SliderFloat("ITEM: SliderFloat", &col4f[0], 0.0f, 1.0f); }   // Testing basic item
-        if (item_type == 4) { ret = ImGui::InputText("ITEM: InputText", &str[0], IM_ARRAYSIZE(str)); }  // Testing input text (which handles tabbing)
-        if (item_type == 5) { ret = ImGui::InputFloat3("ITEM: InputFloat3", col4f); }                   // Testing multi-component items (IsItemXXX flags are reported merged)
-        if (item_type == 6) { ret = ImGui::ColorEdit4("ITEM: ColorEdit4", col4f); }                     // Testing multi-component items (IsItemXXX flags are reported merged)
-        if (item_type == 7) { ret = ImGui::MenuItem("ITEM: MenuItem"); }                                // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
-        if (item_type == 8) { ret = ImGui::TreeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_NoTreePushOnOpen); } // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-        if (item_type == 9) { const char* items[] = { "Apple", "Banana", "Cherry", "Kiwi" }; static int current = 1; ret = ImGui::ListBox("ITEM: ListBox", &current, items, IM_ARRAYSIZE(items), IM_ARRAYSIZE(items)); }
+        if (item_type == 2) { ImGui::PushButtonRepeat(true);  ret = ImGui::Button("ITEM: Button"); ImGui::PopButtonRepeat(); } // Testing button (with repeater)
+        if (item_type == 3) { ret = ImGui::Checkbox("ITEM: Checkbox", &b); }                            // Testing checkbox
+        if (item_type == 4) { ret = ImGui::SliderFloat("ITEM: SliderFloat", &col4f[0], 0.0f, 1.0f); }   // Testing basic item
+        if (item_type == 5) { ret = ImGui::InputText("ITEM: InputText", &str[0], IM_ARRAYSIZE(str)); }  // Testing input text (which handles tabbing)
+        if (item_type == 6) { ret = ImGui::InputFloat("ITEM: InputFloat", col4f, 1.0f); }               // Testing +/- buttons on scalar input
+        if (item_type == 7) { ret = ImGui::InputFloat3("ITEM: InputFloat3", col4f); }                   // Testing multi-component items (IsItemXXX flags are reported merged)
+        if (item_type == 8) { ret = ImGui::ColorEdit4("ITEM: ColorEdit4", col4f); }                     // Testing multi-component items (IsItemXXX flags are reported merged)
+        if (item_type == 9) { ret = ImGui::MenuItem("ITEM: MenuItem"); }                                // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
+        if (item_type == 10){ ret = ImGui::TreeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_NoTreePushOnOpen); } // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+        if (item_type == 11){ const char* items[] = { "Apple", "Banana", "Cherry", "Kiwi" }; static int current = 1; ret = ImGui::ListBox("ITEM: ListBox", &current, items, IM_ARRAYSIZE(items), IM_ARRAYSIZE(items)); }
         ImGui::BulletText(
             "Return value = %d\n"
             "IsItemFocused() = %d\n"
@@ -1788,9 +1793,9 @@ static void ShowDemoWindowLayout()
         ImGui::Text("SetNextItemWidth/PushItemWidth(-1)");
         ImGui::SameLine(); HelpMarker("Align to right edge");
         ImGui::PushItemWidth(-1);
-        ImGui::DragFloat("float##5a", &f);
-        ImGui::DragFloat("float##5b", &f);
-        ImGui::DragFloat("float##5c", &f);
+        ImGui::DragFloat("##float5a", &f);
+        ImGui::DragFloat("##float5b", &f);
+        ImGui::DragFloat("##float5c", &f);
         ImGui::PopItemWidth();
 
         ImGui::TreePop();
@@ -2059,23 +2064,29 @@ static void ShowDemoWindowLayout()
         // Vertical scroll functions
         HelpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.");
 
-        static bool track = true;
         static int track_item = 50;
+        static bool enable_track = true;
+        static bool enable_extra_decorations = false;
         static float scroll_to_off_px = 0.0f;
         static float scroll_to_pos_px = 200.0f;
-        ImGui::Checkbox("Track", &track);
+
+        ImGui::Checkbox("Decoration", &enable_extra_decorations);
+        ImGui::SameLine();
+        HelpMarker("We expose this for testing because scrolling sometimes had issues with window decoration such as menu-bars.");
+
+        ImGui::Checkbox("Track", &enable_track);
         ImGui::PushItemWidth(100);
-        ImGui::SameLine(140); track |= ImGui::DragInt("##item", &track_item, 0.25f, 0, 99, "Item = %d");
+        ImGui::SameLine(140); enable_track |= ImGui::DragInt("##item", &track_item, 0.25f, 0, 99, "Item = %d");
 
         bool scroll_to_off = ImGui::Button("Scroll Offset");
         ImGui::SameLine(140); scroll_to_off |= ImGui::DragFloat("##off", &scroll_to_off_px, 1.00f, 0, 9999, "+%.0f px");
 
         bool scroll_to_pos = ImGui::Button("Scroll To Pos");
-        ImGui::SameLine(140); scroll_to_pos |= ImGui::DragFloat("##pos", &scroll_to_pos_px, 1.00f, 0, 9999, "X/Y = %.0f px");
-
+        ImGui::SameLine(140); scroll_to_pos |= ImGui::DragFloat("##pos", &scroll_to_pos_px, 1.00f, -10, 9999, "X/Y = %.0f px");
         ImGui::PopItemWidth();
+
         if (scroll_to_off || scroll_to_pos)
-            track = false;
+            enable_track = false;
 
         ImGuiStyle& style = ImGui::GetStyle();
         float child_w = (ImGui::GetContentRegionAvail().x - 4 * style.ItemSpacing.x) / 5;
@@ -2089,14 +2100,20 @@ static void ShowDemoWindowLayout()
             const char* names[] = { "Top", "25%", "Center", "75%", "Bottom" };
             ImGui::TextUnformatted(names[i]);
 
-            ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)i), ImVec2(child_w, 200.0f), true, ImGuiWindowFlags_None);
+            ImGuiWindowFlags child_flags = enable_extra_decorations ? ImGuiWindowFlags_MenuBar : 0;
+            ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)i), ImVec2(child_w, 200.0f), true, child_flags);
+            if (ImGui::BeginMenuBar())
+            {
+                ImGui::TextUnformatted("abc");
+                ImGui::EndMenuBar();
+            }
             if (scroll_to_off)
                 ImGui::SetScrollY(scroll_to_off_px);
             if (scroll_to_pos)
                 ImGui::SetScrollFromPosY(ImGui::GetCursorStartPos().y + scroll_to_pos_px, i * 0.25f);
             for (int item = 0; item < 100; item++)
             {
-                if (track && item == track_item)
+                if (enable_track && item == track_item)
                 {
                     ImGui::TextColored(ImVec4(1,1,0,1), "Item %d", item);
                     ImGui::SetScrollHereY(i * 0.25f); // 0.0f:top, 0.5f:center, 1.0f:bottom
@@ -2121,14 +2138,15 @@ static void ShowDemoWindowLayout()
         for (int i = 0; i < 5; i++)
         {
             float child_height = ImGui::GetTextLineHeight() + style.ScrollbarSize + style.WindowPadding.y * 2.0f;
-            ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)i), ImVec2(-100, child_height), true, ImGuiWindowFlags_HorizontalScrollbar);
+            ImGuiWindowFlags child_flags = ImGuiWindowFlags_HorizontalScrollbar | (enable_extra_decorations ? ImGuiWindowFlags_AlwaysVerticalScrollbar : 0);
+            ImGui::BeginChild(ImGui::GetID((void*)(intptr_t)i), ImVec2(-100, child_height), true, child_flags);
             if (scroll_to_off)
                 ImGui::SetScrollX(scroll_to_off_px);
             if (scroll_to_pos)
                 ImGui::SetScrollFromPosX(ImGui::GetCursorStartPos().x + scroll_to_pos_px, i * 0.25f);
             for (int item = 0; item < 100; item++)
             {
-                if (track && item == track_item)
+                if (enable_track && item == track_item)
                 {
                     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Item %d", item);
                     ImGui::SetScrollHereX(i * 0.25f); // 0.0f:left, 0.5f:center, 1.0f:right
@@ -2596,11 +2614,18 @@ static void ShowDemoWindowColumns()
         // NB: Future columns API should allow automatic horizontal borders.
         static bool h_borders = true;
         static bool v_borders = true;
+        static int columns_count = 4;
+        const int lines_count = 3;
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 8);
+        ImGui::DragInt("##columns_count", &columns_count, 0.1f, 2, 10, "%d columns");
+        if (columns_count < 2)
+            columns_count = 2;
+        ImGui::SameLine();
         ImGui::Checkbox("horizontal", &h_borders);
         ImGui::SameLine();
         ImGui::Checkbox("vertical", &v_borders);
-        ImGui::Columns(4, NULL, v_borders);
-        for (int i = 0; i < 4 * 3; i++)
+        ImGui::Columns(columns_count, NULL, v_borders);
+        for (int i = 0; i < columns_count * lines_count; i++)
         {
             if (h_borders && ImGui::GetColumnIndex() == 0)
                 ImGui::Separator();
@@ -3151,6 +3176,7 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
             ImGui::Text("Alignment");
             ImGui::SliderFloat2("WindowTitleAlign", (float*)&style.WindowTitleAlign, 0.0f, 1.0f, "%.2f");
             ImGui::Combo("WindowMenuButtonPosition", (int*)&style.WindowMenuButtonPosition, "Left\0Right\0");
+            ImGui::Combo("ColorButtonPosition", (int*)&style.ColorButtonPosition, "Left\0Right\0");
             ImGui::SliderFloat2("ButtonTextAlign", (float*)&style.ButtonTextAlign, 0.0f, 1.0f, "%.2f"); ImGui::SameLine(); HelpMarker("Alignment applies when a button is larger than its text content.");
             ImGui::SliderFloat2("SelectableTextAlign", (float*)&style.SelectableTextAlign, 0.0f, 1.0f, "%.2f"); ImGui::SameLine(); HelpMarker("Alignment applies when a selectable is larger than its text content.");
             ImGui::Text("Safe Area Padding"); ImGui::SameLine(); HelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).");
@@ -3294,8 +3320,9 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
                 ImGui::TreePop();
             }
 
+            HelpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.");
             static float window_scale = 1.0f;
-            if (ImGui::DragFloat("this window scale", &window_scale, 0.005f, 0.3f, 2.0f, "%.2f"))   // scale only this window
+            if (ImGui::DragFloat("window scale", &window_scale, 0.005f, 0.3f, 2.0f, "%.2f"))   // scale only this window
                 ImGui::SetWindowFontScale(window_scale);
             ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, 0.3f, 2.0f, "%.2f");      // scale everything
             ImGui::PopItemWidth();
@@ -3446,7 +3473,7 @@ struct ExampleAppConsole
         Commands.push_back("CLEAR");
         Commands.push_back("CLASSIFY");  // "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
         AutoScroll = true;
-        ScrollToBottom = true;
+        ScrollToBottom = false;
         AddLog("Welcome to Dear ImGui!");
     }
     ~ExampleAppConsole()
@@ -3467,7 +3494,6 @@ struct ExampleAppConsole
         for (int i = 0; i < Items.Size; i++)
             free(Items[i]);
         Items.clear();
-        ScrollToBottom = true;
     }
 
     void    AddLog(const char* fmt, ...) IM_FMTARGS(2)
@@ -3480,8 +3506,6 @@ struct ExampleAppConsole
         buf[IM_ARRAYSIZE(buf)-1] = 0;
         va_end(args);
         Items.push_back(Strdup(buf));
-        if (AutoScroll)
-            ScrollToBottom = true;
     }
 
     void    Draw(const char* title, bool* p_open)
@@ -3510,8 +3534,7 @@ struct ExampleAppConsole
         if (ImGui::SmallButton("Add Dummy Text"))  { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display very important message here!"); } ImGui::SameLine();
         if (ImGui::SmallButton("Add Dummy Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
         if (ImGui::SmallButton("Clear")) { ClearLog(); } ImGui::SameLine();
-        bool copy_to_clipboard = ImGui::SmallButton("Copy"); ImGui::SameLine();
-        if (ImGui::SmallButton("Scroll to bottom")) ScrollToBottom = true;
+        bool copy_to_clipboard = ImGui::SmallButton("Copy");
         //static float t = 0.0f; if (ImGui::GetTime() - t > 0.02f) { t = ImGui::GetTime(); AddLog("Spam %f", t); }
 
         ImGui::Separator();
@@ -3519,9 +3542,7 @@ struct ExampleAppConsole
         // Options menu
         if (ImGui::BeginPopup("Options"))
         {
-            if (ImGui::Checkbox("Auto-scroll", &AutoScroll))
-                if (AutoScroll)
-                    ScrollToBottom = true;
+            ImGui::Checkbox("Auto-scroll", &AutoScroll);
             ImGui::EndPopup();
         }
 
@@ -3570,9 +3591,11 @@ struct ExampleAppConsole
         }
         if (copy_to_clipboard)
             ImGui::LogFinish();
-        if (ScrollToBottom)
+
+        if (ScrollToBottom || (AutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()))
             ImGui::SetScrollHereY(1.0f);
         ScrollToBottom = false;
+
         ImGui::PopStyleVar();
         ImGui::EndChild();
         ImGui::Separator();
@@ -3764,13 +3787,11 @@ struct ExampleAppLog
     ImGuiTextBuffer     Buf;
     ImGuiTextFilter     Filter;
     ImVector<int>       LineOffsets;        // Index to lines offset. We maintain this with AddLog() calls, allowing us to have a random access on lines
-    bool                AutoScroll;
-    bool                ScrollToBottom;
+    bool                AutoScroll;     // Keep scrolling if already at the bottom
 
     ExampleAppLog()
     {
         AutoScroll = true;
-        ScrollToBottom = false;
         Clear();
     }
 
@@ -3791,8 +3812,6 @@ struct ExampleAppLog
         for (int new_size = Buf.size(); old_size < new_size; old_size++)
             if (Buf[old_size] == '\n')
                 LineOffsets.push_back(old_size + 1);
-        if (AutoScroll)
-            ScrollToBottom = true;
     }
 
     void    Draw(const char* title, bool* p_open = NULL)
@@ -3806,9 +3825,7 @@ struct ExampleAppLog
         // Options menu
         if (ImGui::BeginPopup("Options"))
         {
-            if (ImGui::Checkbox("Auto-scroll", &AutoScroll))
-                if (AutoScroll)
-                    ScrollToBottom = true;
+            ImGui::Checkbox("Auto-scroll", &AutoScroll);
             ImGui::EndPopup();
         }
 
@@ -3873,9 +3890,9 @@ struct ExampleAppLog
         }
         ImGui::PopStyleVar();
 
-        if (ScrollToBottom)
+        if (AutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             ImGui::SetScrollHereY(1.0f);
-        ScrollToBottom = false;
+
         ImGui::EndChild();
         ImGui::End();
     }

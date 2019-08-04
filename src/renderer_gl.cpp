@@ -6641,6 +6641,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 							if (isValid(compute.m_indirectBuffer) )
 							{
+								barrier |= GL_COMMAND_BARRIER_BIT;
 								const VertexBufferGL& vb = m_vertexBuffers[compute.m_indirectBuffer.idx];
 								if (currentState.m_indirectBuffer.idx != compute.m_indirectBuffer.idx)
 								{

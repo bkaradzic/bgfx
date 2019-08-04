@@ -1,7 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "../src/meshoptimizer.h"
-#include "objparser.h"
+#include "fast_obj.h"
+#include "cgltf.h"
 
 #include <algorithm>
 #include <cmath>
@@ -10,11 +11,6 @@
 #include <vector>
 
 #include <GLFW/glfw3.h>
-
-#ifdef GLTF
-#define CGLTF_IMPLEMENTATION
-#include "cgltf.h"
-#endif
 
 #ifdef _WIN32
 #pragma comment(lib, "opengl32.lib")
@@ -60,40 +56,57 @@ struct Mesh
 
 Mesh parseObj(const char* path)
 {
-	ObjFile file;
-
-	if (!objParseFile(file, path) || !objValidate(file))
+	fastObjMesh* obj = fast_obj_read(path);
+	if (!obj)
 	{
-		printf("Error loading %s\n", path);
+		printf("Error loading %s: file not found\n", path);
 		return Mesh();
 	}
 
-	size_t total_indices = file.f_size / 3;
+	size_t total_indices = 0;
+
+	for (unsigned int i = 0; i < obj->face_count; ++i)
+		total_indices += 3 * (obj->face_vertices[i] - 2);
 
 	std::vector<Vertex> vertices(total_indices);
 
-	for (size_t i = 0; i < total_indices; ++i)
+	size_t vertex_offset = 0;
+	size_t index_offset = 0;
+
+	for (unsigned int i = 0; i < obj->face_count; ++i)
 	{
-		int vi = file.f[i * 3 + 0];
-		int vti = file.f[i * 3 + 1];
-		int vni = file.f[i * 3 + 2];
+		for (unsigned int j = 0; j < obj->face_vertices[i]; ++j)
+		{
+			fastObjIndex gi = obj->indices[index_offset + j];
 
-		Vertex v =
-		    {
-		        file.v[vi * 3 + 0],
-		        file.v[vi * 3 + 1],
-		        file.v[vi * 3 + 2],
+			Vertex v =
+			{
+				obj->positions[gi.p * 3 + 0],
+				obj->positions[gi.p * 3 + 1],
+				obj->positions[gi.p * 3 + 2],
+				obj->normals[gi.n * 3 + 0],
+				obj->normals[gi.n * 3 + 1],
+				obj->normals[gi.n * 3 + 2],
+				obj->texcoords[gi.t * 2 + 0],
+				obj->texcoords[gi.t * 2 + 1],
+			};
 
-		        vni >= 0 ? file.vn[vni * 3 + 0] : 0,
-		        vni >= 0 ? file.vn[vni * 3 + 1] : 0,
-		        vni >= 0 ? file.vn[vni * 3 + 2] : 0,
+			// triangulate polygon on the fly; offset-3 is always the first polygon vertex
+			if (j >= 3)
+			{
+				vertices[vertex_offset + 0] = vertices[vertex_offset - 3];
+				vertices[vertex_offset + 1] = vertices[vertex_offset - 1];
+				vertex_offset += 2;
+			}
 
-		        vti >= 0 ? file.vt[vti * 3 + 0] : 0,
-		        vti >= 0 ? file.vt[vti * 3 + 1] : 0,
-		    };
+			vertices[vertex_offset] = v;
+			vertex_offset++;
+		}
 
-		vertices[i] = v;
+		index_offset += obj->face_vertices[i];
 	}
+
+	fast_obj_destroy(obj);
 
 	Mesh result;
 
@@ -109,7 +122,6 @@ Mesh parseObj(const char* path)
 	return result;
 }
 
-#ifdef GLTF
 cgltf_accessor* getAccessor(const cgltf_attribute* attributes, size_t attribute_count, cgltf_attribute_type type, int index = 0)
 {
 	for (size_t i = 0; i < attribute_count; ++i)
@@ -117,15 +129,6 @@ cgltf_accessor* getAccessor(const cgltf_attribute* attributes, size_t attribute_
 			return attributes[i].data;
 
 	return 0;
-}
-
-template <typename T>
-const T* getComponentPtr(const cgltf_accessor* a)
-{
-	const char* buffer = (char*)a->buffer_view->buffer->data;
-	size_t offset = a->offset + a->buffer_view->offset;
-
-	return reinterpret_cast<const T*>(&buffer[offset]);
 }
 
 Mesh parseGltf(const char* path)
@@ -205,55 +208,43 @@ Mesh parseGltf(const char* path)
 			if (!ai || !ap)
 				continue;
 
-			if (ai->component_type == cgltf_component_type_r_32u)
-			{
-				const unsigned int* ptr = getComponentPtr<unsigned int>(ai);
-
-				for (size_t i = 0; i < ai->count; ++i)
-					result.indices[index_offset + i] = unsigned(vertex_offset + ptr[i]);
-			}
-			else
-			{
-				const unsigned short* ptr = getComponentPtr<unsigned short>(ai);
-
-				for (size_t i = 0; i < ai->count; ++i)
-					result.indices[index_offset + i] = unsigned(vertex_offset + ptr[i]);
-			}
+			for (size_t i = 0; i < ai->count; ++i)
+				result.indices[index_offset + i] = unsigned(vertex_offset + cgltf_accessor_read_index(ai, i));
 
 			{
-				const float* ptr = getComponentPtr<float>(ap);
-
 				for (size_t i = 0; i < ap->count; ++i)
 				{
+					float ptr[3];
+					cgltf_accessor_read_float(ap, i, ptr, 3);
+
 					result.vertices[vertex_offset + i].px = ptr[0] * transform[0] + ptr[1] * transform[4] + ptr[2] * transform[8] + transform[12];
 					result.vertices[vertex_offset + i].py = ptr[0] * transform[1] + ptr[1] * transform[5] + ptr[2] * transform[9] + transform[13];
 					result.vertices[vertex_offset + i].pz = ptr[0] * transform[2] + ptr[1] * transform[6] + ptr[2] * transform[10] + transform[14];
-					ptr += ap->stride / 4;
 				}
 			}
 
 			if (cgltf_accessor* an = getAccessor(primitive.attributes, primitive.attributes_count, cgltf_attribute_type_normal))
 			{
-				const float* ptr = getComponentPtr<float>(an);
-
 				for (size_t i = 0; i < ap->count; ++i)
 				{
+					float ptr[3];
+					cgltf_accessor_read_float(an, i, ptr, 3);
+
 					result.vertices[vertex_offset + i].nx = ptr[0] * transform[0] + ptr[1] * transform[4] + ptr[2] * transform[8];
 					result.vertices[vertex_offset + i].ny = ptr[0] * transform[1] + ptr[1] * transform[5] + ptr[2] * transform[9];
 					result.vertices[vertex_offset + i].nz = ptr[0] * transform[2] + ptr[1] * transform[6] + ptr[2] * transform[10];
-					ptr += an->stride / 4;
 				}
 			}
 
 			if (cgltf_accessor* at = getAccessor(primitive.attributes, primitive.attributes_count, cgltf_attribute_type_texcoord))
 			{
-				const float* ptr = getComponentPtr<float>(at);
-
 				for (size_t i = 0; i < ap->count; ++i)
 				{
+					float ptr[2];
+					cgltf_accessor_read_float(at, i, ptr, 2);
+
 					result.vertices[vertex_offset + i].tx = ptr[0];
 					result.vertices[vertex_offset + i].ty = ptr[1];
-					ptr += at->stride / 4;
 				}
 			}
 
@@ -274,17 +265,14 @@ Mesh parseGltf(const char* path)
 
 	return result;
 }
-#endif
 
 Mesh loadMesh(const char* path)
 {
 	if (strstr(path, ".obj"))
 		return parseObj(path);
 
-#ifdef GLTF
 	if (strstr(path, ".gltf") || strstr(path, ".glb"))
 		return parseGltf(path);
-#endif
 
 	return Mesh();
 }

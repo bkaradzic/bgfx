@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "source/val/validate.h"
-
 #include "source/opcode.h"
 #include "source/spirv_target_env.h"
 #include "source/val/instruction.h"
+#include "source/val/validate.h"
 #include "source/val/validation_state.h"
 
 namespace spvtools {
@@ -287,11 +286,11 @@ spv_result_t ValidateDecorationGroup(ValidationState_t& _,
     auto use = pair.first;
     if (use->opcode() != SpvOpDecorate && use->opcode() != SpvOpGroupDecorate &&
         use->opcode() != SpvOpGroupMemberDecorate &&
-        use->opcode() != SpvOpName) {
+        use->opcode() != SpvOpName && use->opcode() != SpvOpDecorateId) {
       return _.diag(SPV_ERROR_INVALID_ID, inst)
              << "Result id of OpDecorationGroup can only "
              << "be targeted by OpName, OpGroupDecorate, "
-             << "OpDecorate, and OpGroupMemberDecorate";
+             << "OpDecorate, OpDecorateId, and OpGroupMemberDecorate";
     }
   }
   return SPV_SUCCESS;

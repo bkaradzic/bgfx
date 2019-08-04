@@ -26,7 +26,11 @@ namespace bgfx
 #	define BGFX_CHECK_API_THREAD()                                  \
 		BX_CHECK(NULL != s_ctx, "Library is not initialized yet."); \
 		BX_CHECK(BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from main thread.")
-#	define BGFX_CHECK_RENDER_THREAD() BX_CHECK(~BGFX_API_THREAD_MAGIC == s_threadIndex, "Must be called from render thread.")
+#	define BGFX_CHECK_RENDER_THREAD()                        \
+		BX_CHECK( (NULL != s_ctx && s_ctx->m_singleThreaded) \
+			|| ~BGFX_API_THREAD_MAGIC == s_threadIndex       \
+			, "Must be called from render thread."           \
+			)
 #else
 #	define BGFX_CHECK_API_THREAD()
 #	define BGFX_CHECK_RENDER_THREAD()
@@ -2256,12 +2260,14 @@ namespace bgfx
 		NSAutoreleasePoolScope()
 		{
 			id obj = class_createInstance(objc_getClass("NSAutoreleasePool"), 0);
-			pool = objc_msgSend(obj, sel_getUid("init") );
+			typedef id(*objc_msgSend_init)(void*, SEL);
+			pool = ((objc_msgSend_init)objc_msgSend)(obj, sel_getUid("init") );
 		}
 
 		~NSAutoreleasePoolScope()
 		{
-			objc_msgSend(pool, sel_getUid("release") );
+			typedef void(*objc_msgSend_release)(void*, SEL);
+			((objc_msgSend_release)objc_msgSend)(pool, sel_getUid("release") );
 		}
 
 		id pool;

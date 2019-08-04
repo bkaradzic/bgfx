@@ -205,11 +205,13 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('--emit-line-directives')
     if '.multiview.' in shader:
         msl_args.append('--msl-multiview')
+    if '.viewfromdev.' in shader:
+        msl_args.append('--msl-view-index-from-device-index')
 
     subprocess.check_call(msl_args)
 
     if not shader_is_invalid_spirv(msl_path):
-        subprocess.check_call([paths.spirv_val, '--target-env', 'vulkan1.1', spirv_path])
+        subprocess.check_call([paths.spirv_val, '--scalar-block-layout', '--target-env', 'vulkan1.1', spirv_path])
 
     return (spirv_path, msl_path)
 
@@ -245,8 +247,13 @@ def shader_to_win_path(shader):
 
 ignore_fxc = False
 def validate_shader_hlsl(shader, force_no_external_validation, paths):
-    if not '.nonuniformresource' in shader:
-        # glslang HLSL does not support this, so rely on fxc to test it.
+    test_glslang = True
+    if '.nonuniformresource.' in shader:
+        test_glslang = False
+    if '.fxconly.' in shader:
+        test_glslang = False
+
+    if test_glslang:
         subprocess.check_call([paths.glslang, '-e', 'main', '-D', '--target-env', 'vulkan1.1', '-V', shader])
     is_no_fxc = '.nofxc.' in shader
     global ignore_fxc
@@ -305,7 +312,7 @@ def cross_compile_hlsl(shader, spirv, opt, force_no_external_validation, iterati
     subprocess.check_call(hlsl_args)
 
     if not shader_is_invalid_spirv(hlsl_path):
-        subprocess.check_call([paths.spirv_val, '--target-env', 'vulkan1.1', spirv_path])
+        subprocess.check_call([paths.spirv_val, '--scalar-block-layout', '--target-env', 'vulkan1.1', spirv_path])
 
     validate_shader_hlsl(hlsl_path, force_no_external_validation, paths)
     
@@ -359,7 +366,7 @@ def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, fl
         subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])
 
     if not invalid_spirv:
-        subprocess.check_call([paths.spirv_val, '--target-env', 'vulkan1.1', spirv_path])
+        subprocess.check_call([paths.spirv_val, '--scalar-block-layout', '--target-env', 'vulkan1.1', spirv_path])
 
     extra_args = ['--iterations', str(iterations)]
     if eliminate:

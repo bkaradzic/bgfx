@@ -142,9 +142,6 @@ struct MSLConstexprSampler
 	bool anisotropy_enable = false;
 };
 
-// Tracks the type ID and member index of a struct member
-using MSLStructMemberKey = uint64_t;
-
 // Special constant used in a MSLResourceBinding desc_set
 // element to indicate the bindings for the push constants.
 static const uint32_t kPushConstDescSet = ~(0u);
@@ -193,12 +190,14 @@ public:
 		uint32_t buffer_size_buffer_index = 25;
 		uint32_t view_mask_buffer_index = 24;
 		uint32_t shader_input_wg_index = 0;
+		uint32_t device_index = 0;
 		bool enable_point_size_builtin = true;
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
 		bool swizzle_texture_samples = false;
 		bool tess_domain_origin_lower_left = false;
 		bool multiview = false;
+		bool view_index_from_device_index = false;
 
 		// Enable use of MSL 2.0 indirect argument buffers.
 		// MSL 2.0 must also be enabled.
@@ -274,7 +273,7 @@ public:
 	// containing the view mask for the current multiview subpass.
 	bool needs_view_mask_buffer() const
 	{
-		return msl_options.multiview;
+		return msl_options.multiview && !msl_options.view_index_from_device_index;
 	}
 
 	// Provide feedback to calling API to allow it to pass an output
@@ -388,12 +387,6 @@ protected:
 		SPVFuncImplInverse4x4,
 		SPVFuncImplInverse3x3,
 		SPVFuncImplInverse2x2,
-		SPVFuncImplRowMajor2x3,
-		SPVFuncImplRowMajor2x4,
-		SPVFuncImplRowMajor3x2,
-		SPVFuncImplRowMajor3x4,
-		SPVFuncImplRowMajor4x2,
-		SPVFuncImplRowMajor4x3,
 		SPVFuncImplTextureSwizzle,
 		SPVFuncImplSubgroupBallot,
 		SPVFuncImplSubgroupBallotBitExtract,
@@ -403,6 +396,7 @@ protected:
 		SPVFuncImplSubgroupAllEqual,
 		SPVFuncImplReflectScalar,
 		SPVFuncImplRefractScalar,
+		SPVFuncImplFaceForwardScalar,
 		SPVFuncImplArrayCopyMultidimMax = 6
 	};
 
@@ -410,6 +404,8 @@ protected:
 	void emit_instruction(const Instruction &instr) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
 	                  uint32_t count) override;
+	void emit_spv_amd_shader_trinary_minmax_op(uint32_t result_type, uint32_t result_id, uint32_t op,
+	                                           const uint32_t *args, uint32_t count) override;
 	void emit_header() override;
 	void emit_function_prototype(SPIRFunction &func, const Bitset &return_flags) override;
 	void emit_sampled_image_op(uint32_t result_type, uint32_t result_id, uint32_t image_id, uint32_t samp_id) override;
@@ -419,11 +415,11 @@ protected:
 	                             const std::string &qualifier = "");
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index,
 	                        const std::string &qualifier = "", uint32_t base_offset = 0) override;
+	void emit_struct_padding_target(const SPIRType &type) override;
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
 	std::string image_type_glsl(const SPIRType &type, uint32_t id = 0) override;
 	std::string sampler_type(const SPIRType &type);
 	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
-	size_t get_declared_struct_member_size_msl(const SPIRType &struct_type, uint32_t index) const;
 	std::string to_func_call_arg(uint32_t id) override;
 	std::string to_name(uint32_t id, bool allow_alias = true) const override;
 	std::string to_function_name(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
@@ -434,7 +430,9 @@ protected:
 	                             uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
 	                             uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward) override;
 	std::string to_initializer_expression(const SPIRVariable &var) override;
-	std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t packed_type_id) override;
+	std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t physical_type_id,
+	                                   bool is_packed, bool row_major) override;
+
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
 	bool skip_argument(uint32_t id) const override;
 	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain) override;
@@ -445,7 +443,8 @@ protected:
 	bool is_patch_block(const SPIRType &type);
 	bool is_non_native_row_major_matrix(uint32_t id) override;
 	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
-	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, bool is_packed) override;
+	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
+	                                     bool is_packed) override;
 
 	void preprocess_op_codes();
 	void localize_global_variables();
@@ -486,7 +485,7 @@ protected:
 	void emit_specialization_constants_and_structs();
 	void emit_interface_block(uint32_t ib_var_id);
 	bool maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs);
-	void add_convert_row_major_matrix_function(uint32_t cols, uint32_t rows);
+
 	void fix_up_shader_inputs_outputs();
 
 	std::string func_type_decl(SPIRType &type);
@@ -508,14 +507,34 @@ protected:
 	std::string round_fp_tex_coords(std::string tex_coords, bool coord_is_fp);
 	uint32_t get_metal_resource_index(SPIRVariable &var, SPIRType::BaseType basetype);
 	uint32_t get_ordered_member_location(uint32_t type_id, uint32_t index, uint32_t *comp = nullptr);
-	size_t get_declared_struct_member_alignment(const SPIRType &struct_type, uint32_t index) const;
+
+	// MSL packing rules. These compute the effective packing rules as observed by the MSL compiler in the MSL output.
+	// These values can change depending on various extended decorations which control packing rules.
+	// We need to make these rules match up with SPIR-V declared rules.
+	uint32_t get_declared_type_size_msl(const SPIRType &type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_array_stride_msl(const SPIRType &type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_matrix_stride_msl(const SPIRType &type, bool packed, bool row_major) const;
+	uint32_t get_declared_type_alignment_msl(const SPIRType &type, bool packed, bool row_major) const;
+
+	uint32_t get_declared_struct_member_size_msl(const SPIRType &struct_type, uint32_t index) const;
+	uint32_t get_declared_struct_member_array_stride_msl(const SPIRType &struct_type, uint32_t index) const;
+	uint32_t get_declared_struct_member_matrix_stride_msl(const SPIRType &struct_type, uint32_t index) const;
+	uint32_t get_declared_struct_member_alignment_msl(const SPIRType &struct_type, uint32_t index) const;
+
+	const SPIRType &get_physical_member_type(const SPIRType &struct_type, uint32_t index) const;
+
+	uint32_t get_declared_struct_size_msl(const SPIRType &struct_type, bool ignore_alignment = false,
+	                                      bool ignore_padding = false) const;
+
 	std::string to_component_argument(uint32_t id);
-	void align_struct(SPIRType &ib_type);
-	bool is_member_packable(SPIRType &ib_type, uint32_t index, uint32_t base_offset = 0);
-	uint32_t get_member_packed_type(SPIRType &ib_type, uint32_t index);
-	MSLStructMemberKey get_struct_member_key(uint32_t type_id, uint32_t index);
+	void align_struct(SPIRType &ib_type, std::unordered_set<uint32_t> &aligned_structs);
+	void mark_scalar_layout_structs(const SPIRType &ib_type);
+	void mark_struct_members_packed(const SPIRType &type);
+	void ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t index);
+	bool validate_member_packing_rules_msl(const SPIRType &type, uint32_t index) const;
 	std::string get_argument_address_space(const SPIRVariable &argument);
 	std::string get_type_address_space(const SPIRType &type, uint32_t id);
+	const char *to_restrict(uint32_t id, bool space = true);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
 	SPIRType &get_patch_stage_in_struct_type();
@@ -567,7 +586,6 @@ protected:
 	std::unordered_map<uint32_t, MSLVertexAttr> vtx_attrs_by_builtin;
 	std::unordered_set<uint32_t> vtx_attrs_in_use;
 	std::unordered_map<uint32_t, uint32_t> fragment_output_components;
-	std::unordered_map<MSLStructMemberKey, uint32_t> struct_member_padding;
 	std::set<std::string> pragma_lines;
 	std::set<std::string> typedef_lines;
 	SmallVector<uint32_t> vars_needing_early_declaration;
