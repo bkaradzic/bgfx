@@ -3172,11 +3172,6 @@ VK_IMPORT_DEVICE
 			if (true //NULL != m_currentColor
 			&&  BGFX_CLEAR_COLOR & _clear.m_flags)
 			{
-				case UniformType::Sampler:
-				case UniformType::Sampler|BGFX_UNIFORM_FRAGMENTBIT:
-					// do nothing, but VkDescriptorSetImageInfo would be set before drawing
-					break;
-
 				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 				{
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
