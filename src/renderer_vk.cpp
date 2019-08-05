@@ -13,7 +13,7 @@
 #	import <Foundation/Foundation.h>
 #	import <QuartzCore/QuartzCore.h>
 #	import <Metal/Metal.h>
-#endif
+#endif // BX_PLATFORM_OSX
 
 namespace bgfx { namespace vk
 {
@@ -913,15 +913,15 @@ VK_IMPORT
 				const char* enabledLayerNames[] =
 				{
 #if BGFX_CONFIG_DEBUG
-//				"VK_LAYER_GOOGLE_threading",
-//				"VK_LAYER_GOOGLE_unique_objects",
+//					"VK_LAYER_GOOGLE_threading",
+//					"VK_LAYER_GOOGLE_unique_objects",
 //					"VK_LAYER_LUNARG_device_limits",
 //					"VK_LAYER_LUNARG_standard_validation",
 //					"VK_LAYER_LUNARG_image",
 //					"VK_LAYER_LUNARG_mem_tracker",
-//				"VK_LAYER_LUNARG_core_validation",
-//				"VK_LAYER_LUNARG_object_tracker",
-//				"VK_LAYER_LUNARG_parameter_validation",
+//					"VK_LAYER_LUNARG_core_validation",
+//					"VK_LAYER_LUNARG_object_tracker",
+//					"VK_LAYER_LUNARG_parameter_validation",
 //					"VK_LAYER_LUNARG_swapchain",
 //					"VK_LAYER_LUNARG_vktrace",
 //					"VK_LAYER_RENDERDOC_Capture",
@@ -945,7 +945,7 @@ VK_IMPORT
 					&&  extension.m_initialize)
 					{
 						enabledExtension[numEnabledExtensions++] = extension.m_name;
-				BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
+						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
 					}
 				}
 
@@ -1302,9 +1302,9 @@ VK_IMPORT_INSTANCE
 			errorState = ErrorState::DeviceCreated;
 
 			BX_TRACE("Device functions:");
-#define VK_IMPORT_DEVICE_FUNC(_optional, _func) \
+#define VK_IMPORT_DEVICE_FUNC(_optional, _func)                         \
 			_func = (PFN_##_func)vkGetDeviceProcAddr(m_device, #_func); \
-			BX_TRACE("\t%p " #_func, _func); \
+			BX_TRACE("\t%p " #_func, _func);                            \
 			imported &= _optional || NULL != _func
 VK_IMPORT_DEVICE
 #undef VK_IMPORT_DEVICE_FUNC
@@ -1426,12 +1426,16 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				uint32_t width = bx::clamp<uint32_t>(_init.resolution.width,
-					surfaceCapabilities.minImageExtent.width,
-					surfaceCapabilities.maxImageExtent.width);
-				uint32_t height = bx::clamp<uint32_t>(_init.resolution.height,
-					surfaceCapabilities.minImageExtent.height,
-					surfaceCapabilities.maxImageExtent.height);
+				uint32_t width = bx::clamp<uint32_t>(
+					  _init.resolution.width
+					, surfaceCapabilities.minImageExtent.width
+					, surfaceCapabilities.maxImageExtent.width
+					);
+				uint32_t height = bx::clamp<uint32_t>(
+					  _init.resolution.height
+					, surfaceCapabilities.minImageExtent.height
+					, surfaceCapabilities.maxImageExtent.height
+					);
 
 				uint32_t numSurfaceFormats;
 				result = vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &numSurfaceFormats, NULL);
@@ -1447,26 +1451,35 @@ VK_IMPORT_DEVICE
 				vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &numSurfaceFormats, surfaceFormats);
 
 				// find the best match...
-				VkFormat preferredSurfaceFormat[4] = {
+				VkFormat preferredSurfaceFormat[4] =
+				{
 					VK_FORMAT_R8G8B8A8_UNORM,
 					VK_FORMAT_B8G8R8A8_UNORM,
 					VK_FORMAT_R8G8B8A8_SRGB,
 					VK_FORMAT_B8G8R8A8_SRGB,
 				};
+
 				uint32_t surfaceFormatIdx = numSurfaceFormats;
-				for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormat); jj++) {
-					for (uint32_t ii = 0; ii < numSurfaceFormats; ii++) {
+
+				for (uint32_t jj = 0; jj < BX_COUNTOF(preferredSurfaceFormat); jj++)
+				{
+					for (uint32_t ii = 0; ii < numSurfaceFormats; ii++)
+					{
 						BX_TRACE("Supported surface format: %d", surfaceFormats[ii].format);
-						if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format) {
+						if (preferredSurfaceFormat[jj] == surfaceFormats[ii].format)
+						{
 							surfaceFormatIdx = ii;
 							break;
 						}
 					}
-					if (surfaceFormatIdx < numSurfaceFormats) {// found
+
+					if (surfaceFormatIdx < numSurfaceFormats)
+					{ // found
 						BX_TRACE("Preferred surface format found: %d", surfaceFormats[surfaceFormatIdx].format);
 						break;
 					}
 				}
+
 				BX_CHECK(surfaceFormatIdx < numSurfaceFormats, "cannot found preferred surface format from supported surface format");
 
 				uint32_t numPresentModes;
@@ -1485,19 +1498,27 @@ VK_IMPORT_DEVICE
 				uint32_t presentModeIdx = 0;
 
 				m_backBufferDepthStencilFormat =
-//    				VK_FORMAT_D32_SFLOAT_S8_UINT
+//					VK_FORMAT_D32_SFLOAT_S8_UINT
 					VK_FORMAT_D24_UNORM_S8_UINT
 					;
 
 				VkCompositeAlphaFlagBitsKHR compositeAlpha = (VkCompositeAlphaFlagBitsKHR)0;
 				if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
-				    compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+				{
+					compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+				}
 				else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
-				    compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+				{
+					compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+				}
 				else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
-				    compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+				{
+					compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+				}
 				else if (surfaceCapabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
-				    compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+				{
+					compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+				}
 
 				m_sci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 				m_sci.pNext = NULL;
@@ -1691,62 +1712,61 @@ VK_IMPORT_DEVICE
 
 			errorState = ErrorState::SwapchainCreated;
 
-
 			{
 				VkAttachmentDescription ad[2];
-				ad[0].flags = 0;
-				ad[0].format = m_sci.imageFormat;
-				ad[0].samples = VK_SAMPLE_COUNT_1_BIT;
-				ad[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				ad[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				ad[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				ad[0].flags          = 0;
+				ad[0].format         = m_sci.imageFormat;
+				ad[0].samples        = VK_SAMPLE_COUNT_1_BIT;
+				ad[0].loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				ad[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+				ad[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				ad[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				ad[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				ad[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				ad[1].flags = 0;
-				ad[1].format = m_backBufferDepthStencilFormat;
-				ad[1].samples = VK_SAMPLE_COUNT_1_BIT;
-				ad[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				ad[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				ad[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				ad[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+				ad[0].finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				ad[1].flags          = 0;
+				ad[1].format         = m_backBufferDepthStencilFormat;
+				ad[1].samples        = VK_SAMPLE_COUNT_1_BIT;
+				ad[1].loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				ad[1].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+				ad[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 				ad[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				ad[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				ad[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				ad[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+				ad[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 				VkAttachmentReference colorAr[1];
 				colorAr[0].attachment = 0;
-				colorAr[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				colorAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 				VkAttachmentReference resolveAr[1];
 				resolveAr[0].attachment = VK_ATTACHMENT_UNUSED;
-				resolveAr[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				resolveAr[0].layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 				VkAttachmentReference depthAr[1];
 				depthAr[0].attachment = 1;
 				depthAr[0].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 				VkSubpassDescription sd[1];
-				sd[0].flags = 0;
-				sd[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-				sd[0].inputAttachmentCount = 0;
-				sd[0].pInputAttachments = NULL;
-				sd[0].colorAttachmentCount = BX_COUNTOF(colorAr);
-				sd[0].pColorAttachments = colorAr;
-				sd[0].pResolveAttachments = resolveAr;
+				sd[0].flags                   = 0;
+				sd[0].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+				sd[0].inputAttachmentCount    = 0;
+				sd[0].pInputAttachments       = NULL;
+				sd[0].colorAttachmentCount    = BX_COUNTOF(colorAr);
+				sd[0].pColorAttachments       = colorAr;
+				sd[0].pResolveAttachments     = resolveAr;
 				sd[0].pDepthStencilAttachment = depthAr;
 				sd[0].preserveAttachmentCount = 0;
-				sd[0].pPreserveAttachments = NULL;
+				sd[0].pPreserveAttachments    = NULL;
 
 				VkRenderPassCreateInfo rpi;
-				rpi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-				rpi.pNext = NULL;
-				rpi.flags = 0;
+				rpi.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+				rpi.pNext           = NULL;
+				rpi.flags           = 0;
 				rpi.attachmentCount = BX_COUNTOF(ad);
-				rpi.pAttachments = ad;
-				rpi.subpassCount = BX_COUNTOF(sd);
-				rpi.pSubpasses = sd;
+				rpi.pAttachments    = ad;
+				rpi.subpassCount    = BX_COUNTOF(sd);
+				rpi.pSubpasses      = sd;
 				rpi.dependencyCount = 0;
-				rpi.pDependencies = NULL;
+				rpi.pDependencies   = NULL;
 
 				result = vkCreateRenderPass(m_device, &rpi, m_allocatorCb, &m_renderPass);
 
@@ -1772,7 +1792,7 @@ VK_IMPORT_DEVICE
 				fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 				fci.pNext = NULL;
 				fci.flags = 0;
-				fci.renderPass = m_renderPass;
+				fci.renderPass      = m_renderPass;
 				fci.attachmentCount = BX_COUNTOF(attachments);
 				fci.pAttachments    = attachments;
 				fci.width  = m_sci.imageExtent.width;
@@ -1845,29 +1865,38 @@ VK_IMPORT_DEVICE
 				rpbi.clearValueCount = 0;
 				rpbi.pClearValues = NULL;
 
-				setImageMemoryBarrier(commandBuffer
+				setImageMemoryBarrier(
+					  commandBuffer
 					, m_backBufferDepthStencilImage
 					, VK_IMAGE_LAYOUT_UNDEFINED
 					, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-					, 1, 1);
+					, 1
+					, 1
+					);
 
 				for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 				{
-					setImageMemoryBarrier(commandBuffer
+					setImageMemoryBarrier(
+						  commandBuffer
 						, m_backBufferColorImage[ii]
 						, VK_IMAGE_LAYOUT_UNDEFINED
 						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-						, 1, 1);
+						, 1
+						, 1
+						);
 
 					rpbi.framebuffer = m_backBufferColor[ii];
 					vkCmdBeginRenderPass(commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
 					vkCmdEndRenderPass(commandBuffer);
 
-					setImageMemoryBarrier(commandBuffer
+					setImageMemoryBarrier(
+						  commandBuffer
 						, m_backBufferColorImage[ii]
 						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 						, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-						, 1, 1);
+						, 1
+						, 1
+						);
 				}
 
 				m_backBufferColorIdx = 0;
@@ -2662,8 +2691,8 @@ VK_IMPORT_DEVICE
 //			m_rtMsaa = _msaa;
 		}
 
-		void setBlendState(VkPipelineColorBlendStateCreateInfo& _desc, uint64_t _state, uint32_t _rgba = 0)
-		{
+          		void setBlendState(VkPipelineColorBlendStateCreateInfo& _desc, uint64_t _state, uint32_t _rgba = 0)
+          		{
 			VkPipelineColorBlendAttachmentState* bas = const_cast<VkPipelineColorBlendAttachmentState*>(_desc.pAttachments);
 
 			uint8_t writeMask = 0;
@@ -2938,6 +2967,7 @@ VK_IMPORT_DEVICE
 				VK_DYNAMIC_STATE_BLEND_CONSTANTS,
 				VK_DYNAMIC_STATE_STENCIL_REFERENCE,
 			};
+
 			VkPipelineDynamicStateCreateInfo dynamicState;
 			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 			dynamicState.pNext = NULL;
@@ -3095,12 +3125,12 @@ VK_IMPORT_DEVICE
 					data = (const char*)m_uniforms[handle.idx];
 				}
 
-#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type) \
-				case UniformType::_uniform: \
-				case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT: \
-						{ \
+#define CASE_IMPLEMENT_UNIFORM(_uniform, _dxsuffix, _type)                   \
+				case UniformType::_uniform:                                  \
+				case UniformType::_uniform|BGFX_UNIFORM_FRAGMENTBIT:         \
+						{                                                    \
 							setShaderUniform(uint8_t(type), loc, data, num); \
-						} \
+						}                                                    \
 						break;
 
 				switch ( (uint32_t)type)
@@ -3316,7 +3346,6 @@ VK_IMPORT_DEVICE
 			vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
 		}
 
-
 #define NUM_SWAPCHAIN_IMAGE 4
 		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
@@ -3411,14 +3440,14 @@ VK_IMPORT_DEVICE
 		s_renderVK = NULL;
 	}
 
-#define VK_DESTROY_FUNC(_name) \
-			void vkDestroy(Vk##_name& _obj) \
-			{ \
-				if (VK_NULL_HANDLE != _obj) \
-				{ \
+#define VK_DESTROY_FUNC(_name)                                                               \
+			void vkDestroy(Vk##_name& _obj)                                                  \
+			{                                                                                \
+				if (VK_NULL_HANDLE != _obj)                                                  \
+				{                                                                            \
 					vkDestroy##_name(s_renderVK->m_device, _obj, s_renderVK->m_allocatorCb); \
-					_obj = VK_NULL_HANDLE; \
-				} \
+					_obj = VK_NULL_HANDLE;                                                   \
+				}                                                                            \
 			}
 VK_DESTROY
 #undef VK_DESTROY_FUNC
@@ -4092,7 +4121,9 @@ VK_DESTROY
 
 		// create exact pipeline layout
 		VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
-		if (m_vsh->m_numBindings + m_fsh->m_numBindings > 0) {
+
+		if (m_vsh->m_numBindings + m_fsh->m_numBindings > 0)
+		{
 			// generate descriptor set layout hash
 			bx::HashMurmur2A murmur;
 			murmur.begin();
@@ -4101,6 +4132,7 @@ VK_DESTROY
 			m_descriptorSetLayoutHash = murmur.end();
 
 			dsl = s_renderVK->m_descriptorSetLayoutCache.find(m_descriptorSetLayoutHash);
+
 			if (NULL == dsl)
 			{
 				VkDescriptorSetLayoutBinding bindings[64];
@@ -4153,28 +4185,35 @@ VK_DESTROY
 
 			bimg::TextureInfo ti;
 			bimg::imageGetSize(
-				&ti,
-				uint16_t(imageContainer.m_width >> startLod),
-				uint16_t(imageContainer.m_height >> startLod),
-				uint16_t(imageContainer.m_depth >> startLod),
-				imageContainer.m_cubeMap,
-				1 < imageContainer.m_numMips,
-				imageContainer.m_numLayers,
-				imageContainer.m_format
-			);
+				  &ti
+				, uint16_t(imageContainer.m_width >> startLod)
+				, uint16_t(imageContainer.m_height >> startLod)
+				, uint16_t(imageContainer.m_depth >> startLod)
+				, imageContainer.m_cubeMap
+				, 1 < imageContainer.m_numMips
+				, imageContainer.m_numLayers
+				, imageContainer.m_format
+				);
+
 			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips - startLod, ti.numMips);
 
-			m_flags = _flags;
-			m_width = ti.width;
-			m_height = ti.height;
-			m_depth = ti.depth;
+			m_flags     = _flags;
+			m_width     = ti.width;
+			m_height    = ti.height;
+			m_depth     = ti.depth;
 			m_numLayers = ti.numLayers;
 			m_requestedFormat = uint8_t(imageContainer.m_format);
 			m_textureFormat = uint8_t(getViableTextureFormat(imageContainer));
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat));
-			VkImageAspectFlags aspectFlag = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-			VkFormat textureFormat = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? s_textureFormat[m_textureFormat].m_fmtDsv : s_textureFormat[m_textureFormat].m_fmt;
+			VkImageAspectFlags aspectFlag = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat)
+				? VK_IMAGE_ASPECT_DEPTH_BIT
+				: VK_IMAGE_ASPECT_COLOR_BIT
+				;
+			VkFormat textureFormat = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat)
+				? s_textureFormat[m_textureFormat].m_fmtDsv
+				: s_textureFormat[m_textureFormat].m_fmt
+				;
 
 			if (imageContainer.m_cubeMap)
 			{
@@ -4192,7 +4231,6 @@ VK_DESTROY
 			m_numMips = ti.numMips;
 			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
 			const uint32_t numSrd = numSides * ti.numMips;
-			//            D3D12_SUBRESOURCE_DATA* srd = (D3D12_SUBRESOURCE_DATA*)alloca(numSrd * sizeof(D3D12_SUBRESOURCE_DATA));
 
 			uint32_t kk = 0;
 
@@ -4214,7 +4252,8 @@ VK_DESTROY
 			);
 
 			// decode images
-			struct ImageInfo {
+			struct ImageInfo
+			{
 				uint8_t* data;
 				uint32_t width;
 				uint32_t height;
@@ -4526,30 +4565,34 @@ VK_DESTROY
 		bci.pQueueFamilyIndices = NULL;
 		bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		VK_CHECK(vkCreateBuffer(device
+		VK_CHECK(vkCreateBuffer(
+			  device
 			, &bci
 			, &s_allocationCb
 			, &stagingBuffer
-		));
+			));
 
 		VkMemoryRequirements mr;
-		vkGetBufferMemoryRequirements(device
+		vkGetBufferMemoryRequirements(
+			  device
 			, stagingBuffer
 			, &mr
-		);
+			);
 
 		VkMemoryAllocateInfo ma;
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(
+			  mr.memoryTypeBits
 			, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-		);
-		VK_CHECK(vkAllocateMemory(device
+			);
+		VK_CHECK(vkAllocateMemory(
+			  device
 			, &ma
 			, &s_allocationCb
 			, &stagingDeviceMem
-		));
+			));
 
 		void* directAccessPtr = NULL;
 		VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingDeviceMem, 0));
@@ -4689,7 +4732,6 @@ VK_DESTROY
 
 		const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
 		const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
-
 
 		ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
 		scratchBuffer.reset();
@@ -5347,6 +5389,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						{
 							uint32_t vsUniformBinding = 0;
 							uint32_t fsUniformBinding = 0;
+
 							for (uint32_t ii = 0; ii < program.m_vsh->m_numBindings; ++ii)
 							{
 								if (program.m_vsh->m_bindings[ii].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -5355,6 +5398,7 @@ BX_UNUSED(currentSamplerStateIdx);
 									break;
 								}
 							}
+
 							for (uint32_t ii = 0; ii < program.m_fsh->m_numBindings; ++ii)
 							{
 								if (program.m_fsh->m_bindings[ii].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
@@ -5416,7 +5460,8 @@ BX_UNUSED(currentSamplerStateIdx);
 
 
 						vkUpdateDescriptorSets(m_device, wdsCount, wds, 0, NULL);
-						vkCmdBindDescriptorSets(m_commandBuffer
+						vkCmdBindDescriptorSets(
+							  m_commandBuffer
 							, VK_PIPELINE_BIND_POINT_GRAPHICS
 							, program.m_pipelineLayout
 							, 0
@@ -5424,7 +5469,7 @@ BX_UNUSED(currentSamplerStateIdx);
 							, &sb.m_descriptorSet[sb.m_currentDs]
 							, 0
 							, NULL
-						);
+							);
 
 						sb.m_currentDs++;
 					}
