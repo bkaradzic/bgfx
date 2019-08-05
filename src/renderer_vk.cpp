@@ -1759,36 +1759,36 @@ VK_IMPORT_DEVICE
 
 			errorState = ErrorState::RenderPassCreated;
 
-		    // framebuffer creation
-            for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
-            {
-                ::VkImageView attachments[] =
-                    {
-                        m_backBufferColorImageView[ii],
-                        m_backBufferDepthStencilImageView,
-                    };
+			// framebuffer creation
+			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+			{
+				::VkImageView attachments[] =
+				{
+					m_backBufferColorImageView[ii],
+					m_backBufferDepthStencilImageView,
+				};
 
-                VkFramebufferCreateInfo fci;
-                fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-                fci.pNext = NULL;
-                fci.flags = 0;
-                fci.renderPass = m_renderPass;
-                fci.attachmentCount = BX_COUNTOF(attachments);
-                fci.pAttachments    = attachments;
-                fci.width  = m_sci.imageExtent.width;
-                fci.height = m_sci.imageExtent.height;
-                fci.layers = 1;
+				VkFramebufferCreateInfo fci;
+				fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+				fci.pNext = NULL;
+				fci.flags = 0;
+				fci.renderPass = m_renderPass;
+				fci.attachmentCount = BX_COUNTOF(attachments);
+				fci.pAttachments    = attachments;
+				fci.width  = m_sci.imageExtent.width;
+				fci.height = m_sci.imageExtent.height;
+				fci.layers = 1;
 
-                result = vkCreateFramebuffer(m_device, &fci, m_allocatorCb, &m_backBufferColor[ii]);
+				result = vkCreateFramebuffer(m_device, &fci, m_allocatorCb, &m_backBufferColor[ii]);
 
-                if (VK_SUCCESS != result)
-                {
-                    BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
-                    goto error;
-                }
-            }
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
+					goto error;
+				}
+			}
 
-            errorState = ErrorState::FrameBufferCreated;
+			errorState = ErrorState::FrameBufferCreated;
 
 			{
 				VkFenceCreateInfo fci;
@@ -3129,10 +3129,10 @@ VK_IMPORT_DEVICE
 					}
 					break;
 
-                case UniformType::Sampler:
-                case UniformType::Sampler|BGFX_UNIFORM_FRAGMENTBIT:
+				case UniformType::Sampler:
+				case UniformType::Sampler|BGFX_UNIFORM_FRAGMENTBIT:
 					// do nothing, but VkDescriptorSetImageInfo would be set before drawing
-                    break;
+					break;
 //				CASE_IMPLEMENT_UNIFORM(Sampler, I, int);
 				CASE_IMPLEMENT_UNIFORM(Vec4,    F, float);
 				CASE_IMPLEMENT_UNIFORM(Mat4,    F, float);
@@ -3172,6 +3172,11 @@ VK_IMPORT_DEVICE
 			if (true //NULL != m_currentColor
 			&&  BGFX_CLEAR_COLOR & _clear.m_flags)
 			{
+				case UniformType::Sampler:
+				case UniformType::Sampler|BGFX_UNIFORM_FRAGMENTBIT:
+					// do nothing, but VkDescriptorSetImageInfo would be set before drawing
+					break;
+
 				if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
 				{
 					for (uint32_t ii = 0; ii < numMrt; ++ii)
@@ -3216,7 +3221,7 @@ VK_IMPORT_DEVICE
 				++mrt;
 			}
 
- 			vkCmdClearAttachments(m_commandBuffer
+			vkCmdClearAttachments(m_commandBuffer
 				, mrt
 				, attachments
 				, BX_COUNTOF(rect)
@@ -4075,7 +4080,7 @@ VK_DESTROY
 	}
 
 	void ProgramVK::create(const ShaderVK* _vsh, const ShaderVK* _fsh)
-    {
+	{
 		BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
 		bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined * sizeof(PredefinedUniform));
@@ -4131,7 +4136,7 @@ VK_DESTROY
 		plci.pSetLayouts = &dsl;
 
 		VK_CHECK(vkCreatePipelineLayout(s_renderVK->m_device, &plci, s_renderVK->m_allocatorCb, &m_pipelineLayout));
-    }
+	}
 
 	void ProgramVK::destroy()
 	{
@@ -5682,10 +5687,10 @@ BX_UNUSED(presentMin, presentMax);
 //					, m_batch.m_stats.m_numImmediate[BatchD3D12::DrawIndexed]
 //					);
 
- 				if (NULL != m_renderDocDll)
- 				{
- 					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
- 				}
+				if (NULL != m_renderDocDll)
+				{
+					tvm.printf(tvm.m_width-27, 0, 0x4f, " [F11 - RenderDoc capture] ");
+				}
 
 				tvm.printf(10, pos++, 0x8b, "      Indices: %7d ", statsNumIndices);
 //				tvm.printf(10, pos++, 0x8b, " Uniform size: %7d, Max: %7d ", _render->m_uniformEnd, _render->m_uniformMax);
