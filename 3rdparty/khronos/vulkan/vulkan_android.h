@@ -27,21 +27,18 @@ extern "C" {
 */
 
 
+
 #define VK_KHR_android_surface 1
 struct ANativeWindow;
-
 #define VK_KHR_ANDROID_SURFACE_SPEC_VERSION 6
 #define VK_KHR_ANDROID_SURFACE_EXTENSION_NAME "VK_KHR_android_surface"
-
 typedef VkFlags VkAndroidSurfaceCreateFlagsKHR;
-
 typedef struct VkAndroidSurfaceCreateInfoKHR {
     VkStructureType                   sType;
     const void*                       pNext;
     VkAndroidSurfaceCreateFlagsKHR    flags;
     struct ANativeWindow*             window;
 } VkAndroidSurfaceCreateInfoKHR;
-
 
 typedef VkResult (VKAPI_PTR *PFN_vkCreateAndroidSurfaceKHR)(VkInstance instance, const VkAndroidSurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
@@ -53,12 +50,11 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateAndroidSurfaceKHR(
     VkSurfaceKHR*                               pSurface);
 #endif
 
+
 #define VK_ANDROID_external_memory_android_hardware_buffer 1
 struct AHardwareBuffer;
-
 #define VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION 3
 #define VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME "VK_ANDROID_external_memory_android_hardware_buffer"
-
 typedef struct VkAndroidHardwareBufferUsageANDROID {
     VkStructureType    sType;
     void*              pNext;
@@ -102,7 +98,6 @@ typedef struct VkExternalFormatANDROID {
     void*              pNext;
     uint64_t           externalFormat;
 } VkExternalFormatANDROID;
-
 
 typedef VkResult (VKAPI_PTR *PFN_vkGetAndroidHardwareBufferPropertiesANDROID)(VkDevice device, const struct AHardwareBuffer* buffer, VkAndroidHardwareBufferPropertiesANDROID* pProperties);
 typedef VkResult (VKAPI_PTR *PFN_vkGetMemoryAndroidHardwareBufferANDROID)(VkDevice device, const VkMemoryGetAndroidHardwareBufferInfoANDROID* pInfo, struct AHardwareBuffer** pBuffer);
