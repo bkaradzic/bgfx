@@ -2982,89 +2982,52 @@ VK_IMPORT_DEVICE
 
 			VkSampler sampler = m_samplerCache.find(hashKey);
 			if (sampler != VK_NULL_HANDLE)
-				return sampler;
-
-			// set default sampler
-			VkSamplerCreateInfo samplerInfo;
-			samplerInfo.sType        = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			samplerInfo.pNext		 = NULL;
-			samplerInfo.flags        = 0;
-			samplerInfo.magFilter    = VK_FILTER_LINEAR;
-			samplerInfo.minFilter    = VK_FILTER_LINEAR;
-			samplerInfo.mipmapMode   = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-			samplerInfo.mipLodBias   = 0.0f;
-			samplerInfo.anisotropyEnable = VK_FALSE;
-			samplerInfo.maxAnisotropy = 0; // TODO
-			samplerInfo.compareEnable = VK_FALSE;
-			samplerInfo.compareOp    = VK_COMPARE_OP_ALWAYS;
-			samplerInfo.minLod       = 0.0f;
-			samplerInfo.maxLod       = (float)_mipLevels;
-			samplerInfo.borderColor  = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-			samplerInfo.unnormalizedCoordinates = VK_FALSE;
-
-			if (0 == (_samplerFlags & BGFX_SAMPLER_INTERNAL_DEFAULT))
 			{
-				switch (_samplerFlags & BGFX_SAMPLER_MAG_MASK)
-				{
-					case BGFX_SAMPLER_MAG_POINT:       samplerInfo.magFilter = VK_FILTER_NEAREST; break;
-					case BGFX_SAMPLER_MAG_ANISOTROPIC: samplerInfo.anisotropyEnable = VK_TRUE;    break;
-				}
-
-				switch (_samplerFlags & BGFX_SAMPLER_MIN_MASK)
-				{
-					case BGFX_SAMPLER_MIN_POINT:       samplerInfo.minFilter = VK_FILTER_NEAREST; break;
-					case BGFX_SAMPLER_MIN_ANISOTROPIC: samplerInfo.anisotropyEnable = VK_TRUE;    break;
-				}
-
-				switch (_samplerFlags & BGFX_SAMPLER_U_MASK)
-				{
-					case BGFX_SAMPLER_U_MIRROR: samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT; break;
-					case BGFX_SAMPLER_U_CLAMP:  samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;   break;
-					case BGFX_SAMPLER_U_BORDER: samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER; break;
-				}
-
-				switch (_samplerFlags & BGFX_SAMPLER_V_MASK)
-				{
-					case BGFX_SAMPLER_V_MIRROR: samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT; break;
-					case BGFX_SAMPLER_V_CLAMP:  samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;   break;
-					case BGFX_SAMPLER_V_BORDER: samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER; break;
-				}
-
-				switch (_samplerFlags & BGFX_SAMPLER_W_MASK)
-				{
-					case BGFX_SAMPLER_W_MIRROR: samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT; break;
-					case BGFX_SAMPLER_W_CLAMP:  samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;   break;
-					case BGFX_SAMPLER_W_BORDER: samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER; break;
-				}
-
-				if (0 != (_samplerFlags & BGFX_SAMPLER_COMPARE_MASK))
-				{
-					samplerInfo.compareEnable = VK_TRUE;
-					switch (_samplerFlags & BGFX_SAMPLER_COMPARE_MASK)
-					{
-						case BGFX_SAMPLER_COMPARE_LESS:     samplerInfo.compareOp = VK_COMPARE_OP_LESS;             break;
-						case BGFX_SAMPLER_COMPARE_LEQUAL:   samplerInfo.compareOp = VK_COMPARE_OP_LESS_OR_EQUAL;    break;
-						case BGFX_SAMPLER_COMPARE_EQUAL:    samplerInfo.compareOp = VK_COMPARE_OP_EQUAL;            break;
-						case BGFX_SAMPLER_COMPARE_GEQUAL:   samplerInfo.compareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; break;
-						case BGFX_SAMPLER_COMPARE_GREATER:  samplerInfo.compareOp = VK_COMPARE_OP_GREATER;          break;
-						case BGFX_SAMPLER_COMPARE_NOTEQUAL: samplerInfo.compareOp = VK_COMPARE_OP_NOT_EQUAL;        break;
-						case BGFX_SAMPLER_COMPARE_NEVER:    samplerInfo.compareOp = VK_COMPARE_OP_NEVER;            break;
-						case BGFX_SAMPLER_COMPARE_ALWAYS:   samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;           break;
-					}
-				}
-
-				uint32_t borderColor = ((_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
-				if (borderColor > 0)
-				{
-					// TODO: set borderColor properly
-					samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
-				}
+				return sampler;
 			}
 
-			VK_CHECK(vkCreateSampler(m_device, &samplerInfo, m_allocatorCb, &sampler));
+			const uint32_t cmpFunc = (_samplerFlags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
+
+			VkSamplerCreateInfo sci;
+			sci.sType            = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			sci.pNext            = NULL;
+			sci.flags            = 0;
+			sci.magFilter        = VK_FILTER_LINEAR;
+			sci.minFilter        = VK_FILTER_LINEAR;
+			sci.mipmapMode       = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			sci.addressModeU     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT];
+			sci.addressModeV     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT];
+			sci.addressModeW     = s_textureAddress[(_samplerFlags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT];
+			sci.mipLodBias       = 0.0f;
+			sci.anisotropyEnable = VK_FALSE;
+			sci.maxAnisotropy    = 0;
+			sci.compareEnable    = 0 != cmpFunc;
+			sci.compareOp        = s_cmpFunc[cmpFunc];
+			sci.minLod           = 0.0f;
+			sci.maxLod           = (float)_mipLevels;
+			sci.borderColor      = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+			sci.unnormalizedCoordinates = VK_FALSE;
+
+			switch (_samplerFlags & BGFX_SAMPLER_MAG_MASK)
+			{
+				case BGFX_SAMPLER_MAG_POINT:       sci.magFilter = VK_FILTER_NEAREST; break;
+				case BGFX_SAMPLER_MAG_ANISOTROPIC: sci.anisotropyEnable = VK_TRUE;    break;
+			}
+
+			switch (_samplerFlags & BGFX_SAMPLER_MIN_MASK)
+			{
+				case BGFX_SAMPLER_MIN_POINT:       sci.minFilter = VK_FILTER_NEAREST; break;
+				case BGFX_SAMPLER_MIN_ANISOTROPIC: sci.anisotropyEnable = VK_TRUE;    break;
+			}
+
+			uint32_t borderColor = ((_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
+			if (borderColor > 0)
+			{
+				// TODO: set borderColor properly
+				sci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+			}
+
+			VK_CHECK(vkCreateSampler(m_device, &sci, m_allocatorCb, &sampler));
 
 			m_samplerCache.add(hashKey, sampler);
 			return sampler;
