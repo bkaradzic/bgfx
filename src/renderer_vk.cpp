@@ -3673,14 +3673,16 @@ VK_DESTROY
 		bci.queueFamilyIndexCount = 0;
 		bci.pQueueFamilyIndices   = NULL;
 
-		VK_CHECK(vkCreateBuffer(device
+		VK_CHECK(vkCreateBuffer(
+			  device
 			, &bci
 			, allocatorCb
 			, &m_buffer
 			) );
 
 		VkMemoryRequirements mr;
-		vkGetBufferMemoryRequirements(device
+		vkGetBufferMemoryRequirements(
+			  device
 			, m_buffer
 			, &mr
 			);
@@ -3726,8 +3728,14 @@ VK_DESTROY
 	{
 		if (m_currentDs > 0)
 		{
-			vkFreeDescriptorSets(s_renderVK->m_device, s_renderVK->m_descriptorPool, m_currentDs, m_descriptorSet);
+			vkFreeDescriptorSets(
+				  s_renderVK->m_device
+				, s_renderVK->m_descriptorPool
+				, m_currentDs
+				, m_descriptorSet
+				);
 		}
+
 		bx::memSet(m_descriptorSet, 0, sizeof(VkDescriptorSet) * m_maxDescriptors);
 		m_pos = 0;
 		m_currentDs = 0;
@@ -3774,14 +3782,11 @@ VK_DESTROY
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(
+			  mr.memoryTypeBits
 			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
-		result = vkAllocateMemory(device
-			, &ma
-			, allocatorCb
-			, &m_memory
-			);
+		result = vkAllocateMemory(device, &ma, allocatorCb, &m_memory);
 
 		if (VK_SUCCESS != result)
 		{
@@ -3872,23 +3877,17 @@ VK_DESTROY
 			) );
 
 		VkMemoryRequirements mr;
-		vkGetBufferMemoryRequirements(device
-			, m_buffer
-			, &mr
-			);
+		vkGetBufferMemoryRequirements(device, m_buffer, &mr);
 
 		VkMemoryAllocateInfo ma;
 		ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		ma.pNext = NULL;
 		ma.allocationSize  = mr.size;
-		ma.memoryTypeIndex = s_renderVK->selectMemoryType(mr.memoryTypeBits
+		ma.memoryTypeIndex = s_renderVK->selectMemoryType(
+			  mr.memoryTypeBits
 			, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
-		VK_CHECK(vkAllocateMemory(device
-			, &ma
-			, allocatorCb
-			, &m_deviceMem
-			) );
+		VK_CHECK(vkAllocateMemory(device, &ma, allocatorCb, &m_deviceMem) );
 
 		VK_CHECK(vkBindBufferMemory(device, m_buffer, m_deviceMem, 0));
 
@@ -3917,10 +3916,7 @@ VK_DESTROY
 				, &stagingBuffer
 			));
 
-			vkGetBufferMemoryRequirements(device
-				, stagingBuffer
-				, &mr
-			);
+			vkGetBufferMemoryRequirements(device, stagingBuffer, &mr);
 
 			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			ma.pNext = NULL;
@@ -4015,6 +4011,7 @@ VK_DESTROY
 		vkUnmapMemory(device, stagingMem);
 
 		VkCommandBuffer commandBuffer = s_renderVK->beginNewCommand();
+
 		// copy buffer to buffer
 		{
 			VkBufferCopy region;
@@ -4024,6 +4021,7 @@ VK_DESTROY
 
 			vkCmdCopyBuffer(commandBuffer, stagingBuffer, m_buffer, 1, &region);
 		}
+
 		s_renderVK->submitCommandAndWait(commandBuffer);
 
 		vkFreeMemory(device, stagingMem, allocatorCb);
@@ -4105,11 +4103,12 @@ VK_DESTROY
 		uint8_t fragmentBit = fragment ? BGFX_UNIFORM_FRAGMENTBIT : 0;
 
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
-        {
-            m_sampler[ii].uniformHandle = {kInvalidHandle};
-            m_sampler[ii].imageBinding = 0;
-            m_sampler[ii].samplerBinding = 0;
-        }
+		{
+			m_sampler[ii].uniformHandle = {kInvalidHandle};
+			m_sampler[ii].imageBinding = 0;
+			m_sampler[ii].samplerBinding = 0;
+		}
+
 		if (0 < count)
 		{
 			for (uint32_t ii = 0; ii < count; ++ii)
@@ -4196,10 +4195,7 @@ VK_DESTROY
 		bx::skip(&reader, shaderSize+1);
 
 		m_code = alloc(shaderSize);
-		bx::memCopy(m_code->data
-			, code
-			, shaderSize
-			);
+		bx::memCopy(m_code->data, code, shaderSize);
 
 		VkShaderModuleCreateInfo smci;
 		smci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -4312,14 +4308,22 @@ VK_DESTROY
 	{
 		BX_CHECK(NULL != _vsh->m_code, "Vertex shader doesn't exist.");
 		m_vsh = _vsh;
-		bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined * sizeof(PredefinedUniform));
+		bx::memCopy(
+			  &m_predefined[0]
+			, _vsh->m_predefined
+			, _vsh->m_numPredefined * sizeof(PredefinedUniform)
+			);
 		m_numPredefined = _vsh->m_numPredefined;
 
 		if (NULL != _fsh)
 		{
 			BX_CHECK(NULL != _fsh->m_code, "Fragment shader doesn't exist.");
 			m_fsh = _fsh;
-			bx::memCopy(&m_predefined[m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined * sizeof(PredefinedUniform));
+			bx::memCopy(
+				  &m_predefined[m_numPredefined]
+				, _fsh->m_predefined
+				, _fsh->m_numPredefined * sizeof(PredefinedUniform)
+				);
 			m_numPredefined += _fsh->m_numPredefined;
 		}
 
@@ -4341,9 +4345,16 @@ VK_DESTROY
 			if (NULL == dsl)
 			{
 				VkDescriptorSetLayoutBinding bindings[64];
-				bx::memCopy(bindings, m_vsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_vsh->m_numBindings);
-				bx::memCopy(bindings + m_vsh->m_numBindings,
-					m_fsh->m_bindings, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings);
+				bx::memCopy(
+					  bindings
+					, m_vsh->m_bindings
+					, sizeof(VkDescriptorSetLayoutBinding) * m_vsh->m_numBindings
+					);
+				bx::memCopy(
+					  bindings + m_vsh->m_numBindings
+					, m_fsh->m_bindings
+					, sizeof(VkDescriptorSetLayoutBinding) * m_fsh->m_numBindings
+					);
 
 				VkDescriptorSetLayoutCreateInfo dslci;
 				dslci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -4352,7 +4363,12 @@ VK_DESTROY
 				dslci.bindingCount = m_vsh->m_numBindings + m_fsh->m_numBindings;
 				dslci.pBindings = bindings;
 
-				VK_CHECK(vkCreateDescriptorSetLayout(s_renderVK->m_device, &dslci, s_renderVK->m_allocatorCb, &dsl));
+				VK_CHECK(vkCreateDescriptorSetLayout(
+					  s_renderVK->m_device
+					, &dslci
+					, s_renderVK->m_allocatorCb
+					, &dsl
+					));
 
 				s_renderVK->m_descriptorSetLayoutCache.add(m_descriptorSetLayoutHash, dsl);
 			}
@@ -4367,7 +4383,12 @@ VK_DESTROY
 		plci.setLayoutCount = (dsl == VK_NULL_HANDLE ? 0 : 1);
 		plci.pSetLayouts = &dsl;
 
-		VK_CHECK(vkCreatePipelineLayout(s_renderVK->m_device, &plci, s_renderVK->m_allocatorCb, &m_pipelineLayout));
+		VK_CHECK(vkCreatePipelineLayout(
+			  s_renderVK->m_device
+			, &plci
+			, s_renderVK->m_allocatorCb
+			, &m_pipelineLayout
+			));
 	}
 
 	void ProgramVK::destroy()
@@ -4415,9 +4436,13 @@ VK_DESTROY
 				? VK_IMAGE_ASPECT_DEPTH_BIT
 				: VK_IMAGE_ASPECT_COLOR_BIT
 				;
+
 			if (m_textureFormat == TextureFormat::D0S8 || m_textureFormat == TextureFormat::D24S8)
+			{
 				m_vkTextureAspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
-			m_vkTextureFormat = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat)
+			}
+
+			m_vkTextureFormat = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
 				? s_textureFormat[m_textureFormat].m_fmtDsv
 				: s_textureFormat[m_textureFormat].m_fmt
 				;
@@ -4445,19 +4470,26 @@ VK_DESTROY
 			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_textureFormat));
 			const bool swizzle = TextureFormat::BGRA8 == m_textureFormat && 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
 
-			const bool writeOnly = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
+			const bool writeOnly    = 0 != (m_flags & BGFX_TEXTURE_RT_WRITE_ONLY);
 			const bool computeWrite = 0 != (m_flags & BGFX_TEXTURE_COMPUTE_WRITE);
 			const bool renderTarget = 0 != (m_flags & BGFX_TEXTURE_RT_MASK);
-			const bool blit = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
+			const bool blit         = 0 != (m_flags & BGFX_TEXTURE_BLIT_DST);
 
 			BX_UNUSED(swizzle, writeOnly, computeWrite, renderTarget, blit);
 
-			BX_TRACE("Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s.",
-				(int)(this - s_renderVK->m_textures), getName((TextureFormat::Enum)m_textureFormat),
-				getName((TextureFormat::Enum)m_requestedFormat), ti.width, ti.height,
-				imageContainer.m_cubeMap ? "x6" : "", renderTarget ? 'x' : ' ', writeOnly ? 'x' : ' ',
-				computeWrite ? 'x' : ' ', swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
-			);
+			BX_TRACE(
+				  "Texture %3d: %s (requested: %s), %dx%d%s RT[%c], BO[%c], CW[%c]%s."
+				, (int)(this - s_renderVK->m_textures)
+				, getName((TextureFormat::Enum)m_textureFormat)
+				, getName((TextureFormat::Enum)m_requestedFormat)
+				, ti.width
+				, ti.height
+				, imageContainer.m_cubeMap ? "x6" : ""
+				, renderTarget ? 'x' : ' '
+				, writeOnly ? 'x' : ' '
+				, computeWrite ? 'x' : ' '
+				, swizzle ? " (swizzle BGRA8 -> RGBA8)" : ""
+				);
 
 			// decode images
 			struct ImageInfo
@@ -4491,14 +4523,14 @@ VK_DESTROY
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
 							bimg::imageDecodeToBgra8(
-								g_allocator
+								  g_allocator
 								, temp
 								, mip.m_data
 								, mip.m_width
 								, mip.m_height
 								, pitch
 								, mip.m_format
-							);
+								);
 
 							imageInfos[kk].data = temp;
 							imageInfos[kk].width = mip.m_width;
@@ -4517,13 +4549,14 @@ VK_DESTROY
 							const uint32_t size = slice * mip.m_depth;
 
 							uint8_t* temp = (uint8_t*)BX_ALLOC(g_allocator, size);
-							bimg::imageCopy(temp
+							bimg::imageCopy(
+								  temp
 								, mip.m_height / blockInfo.blockHeight
 								, (mip.m_width / blockInfo.blockWidth) * mip.m_blockSize
 								, mip.m_depth
 								, mip.m_data
 								, pitch
-							);
+								);
 
 							imageInfos[kk].data = temp;
 							imageInfos[kk].width = mip.m_width;
@@ -4596,17 +4629,19 @@ VK_DESTROY
 				bci.pQueueFamilyIndices = NULL;
 				bci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				bci.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-				VK_CHECK(vkCreateBuffer(device
+				VK_CHECK(vkCreateBuffer(
+					  device
 					, &bci
 					, &s_allocationCb
 					, &stagingBuffer
-				));
+					));
 
 				VkMemoryRequirements mr;
-				vkGetBufferMemoryRequirements(device
+				vkGetBufferMemoryRequirements(
+					  device
 					, stagingBuffer
 					, &mr
-				);
+					);
 
 				VkMemoryAllocateInfo ma;
 				ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -4637,7 +4672,10 @@ VK_DESTROY
 			VkImageCreateInfo ici;
 			ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			ici.pNext = NULL;
-			ici.flags = (m_type == VK_IMAGE_VIEW_TYPE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0);
+			ici.flags = VK_IMAGE_VIEW_TYPE_CUBE == m_type
+				? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
+				: 0
+				;
 			ici.pQueueFamilyIndices = NULL;
 			ici.queueFamilyIndexCount = 0;
 			ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -4645,20 +4683,26 @@ VK_DESTROY
 			ici.usage = 0
 				| VK_IMAGE_USAGE_TRANSFER_DST_BIT
 				| VK_IMAGE_USAGE_SAMPLED_BIT
-				| (_flags & BGFX_TEXTURE_RT_MASK ?
-					(bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ?
-					VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT :
-					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-					: 0)
+				| (_flags & BGFX_TEXTURE_RT_MASK
+					? (bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat)
+						? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+						: VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+					: 0
+					);
+			ici.format = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
+				? s_textureFormat[m_textureFormat].m_fmtDsv
+				: s_textureFormat[m_textureFormat].m_fmt
 				;
-			ici.format = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat) ? s_textureFormat[m_textureFormat].m_fmtDsv : s_textureFormat[m_textureFormat].m_fmt;
 			ici.samples = VK_SAMPLE_COUNT_1_BIT;
 			ici.mipLevels = m_numMips;
 			ici.arrayLayers = m_numSides;
 			ici.extent.width = m_width;
 			ici.extent.height = m_height;
 			ici.extent.depth = m_depth;
-			ici.imageType = (m_type == VK_IMAGE_VIEW_TYPE_3D ? VK_IMAGE_TYPE_3D : VK_IMAGE_TYPE_2D);
+			ici.imageType = VK_IMAGE_VIEW_TYPE_3D == m_type
+				? VK_IMAGE_TYPE_3D
+				: VK_IMAGE_TYPE_2D
+				;
 			ici.tiling = VK_IMAGE_TILING_OPTIMAL;
 
 			VK_CHECK(vkCreateImage(device, &ici, &s_allocationCb, &m_textureImage));
