@@ -27,12 +27,11 @@ extern "C" {
 */
 
 
+
 #define VK_KHR_xcb_surface 1
 #define VK_KHR_XCB_SURFACE_SPEC_VERSION   6
 #define VK_KHR_XCB_SURFACE_EXTENSION_NAME "VK_KHR_xcb_surface"
-
 typedef VkFlags VkXcbSurfaceCreateFlagsKHR;
-
 typedef struct VkXcbSurfaceCreateInfoKHR {
     VkStructureType               sType;
     const void*                   pNext;
@@ -40,7 +39,6 @@ typedef struct VkXcbSurfaceCreateInfoKHR {
     xcb_connection_t*             connection;
     xcb_window_t                  window;
 } VkXcbSurfaceCreateInfoKHR;
-
 
 typedef VkResult (VKAPI_PTR *PFN_vkCreateXcbSurfaceKHR)(VkInstance instance, const VkXcbSurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 typedef VkBool32 (VKAPI_PTR *PFN_vkGetPhysicalDeviceXcbPresentationSupportKHR)(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, xcb_connection_t* connection, xcb_visualid_t visual_id);
