@@ -321,17 +321,17 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	uint32_t fillVertexDecl(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _decl)
+	void fillVertexDecl(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _decl)
 	{
-		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription*>(_vertexInputState.pVertexBindingDescriptions);
-		VkVertexInputAttributeDescription* inputAttrib  = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions);
+		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
+		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
+		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription*>(_vertexInputState.pVertexBindingDescriptions + numBindings);
+		VkVertexInputAttributeDescription* inputAttrib  = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + numAttribs);
 
 		inputBinding->binding   = 0;
 		inputBinding->stride    = _decl.m_stride;
 		inputBinding->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		_vertexInputState.vertexBindingDescriptionCount = 1;
 
-		uint32_t numAttribs = 0;
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
 			if (UINT16_MAX != _decl.m_attributes[attr])
@@ -360,9 +360,34 @@ VK_IMPORT_DEVICE
 			}
 		}
 
+		_vertexInputState.vertexBindingDescriptionCount   = numBindings + 1;
 		_vertexInputState.vertexAttributeDescriptionCount = numAttribs;
+	}
 
-		return numAttribs;
+	void fillInstanceBinding(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint32_t _numInstanceData)
+	{
+		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
+		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
+		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription*>(_vertexInputState.pVertexBindingDescriptions + numBindings);
+		VkVertexInputAttributeDescription* inputAttrib  = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + numAttribs);
+
+		inputBinding->binding   = numBindings;
+		inputBinding->stride    = _numInstanceData * 16;
+		inputBinding->inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+
+		for (uint32_t inst = 0; inst < _numInstanceData; ++inst)
+		{
+			inputAttrib->location = numAttribs;  // TODO: is this usable for all case? what if the order of i_dataN is swizzled?
+			inputAttrib->binding  = numBindings;
+			inputAttrib->format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+			inputAttrib->offset   = inst * 16;
+
+			++numAttribs;
+			++inputAttrib;
+		}
+
+		_vertexInputState.vertexBindingDescriptionCount   = numBindings + 1;
+		_vertexInputState.vertexAttributeDescriptionCount = numAttribs;
 	}
 
 	static const char* s_allocScopeName[] =
@@ -915,7 +940,7 @@ VK_IMPORT
 //					"VK_LAYER_GOOGLE_threading",
 //					"VK_LAYER_GOOGLE_unique_objects",
 //					"VK_LAYER_LUNARG_device_limits",
-//					"VK_LAYER_LUNARG_standard_validation",
+					"VK_LAYER_LUNARG_standard_validation",
 //					"VK_LAYER_LUNARG_image",
 //					"VK_LAYER_LUNARG_mem_tracker",
 //					"VK_LAYER_LUNARG_core_validation",
@@ -1237,6 +1262,11 @@ VK_IMPORT_INSTANCE
 					BX_TRACE("Init error: Unable to find graphics queue.");
 					goto error;
 				}
+
+				g_caps.supported |= ( 0
+					| BGFX_CAPS_TEXTURE_BLIT
+					| BGFX_CAPS_INSTANCING
+					);
 			}
 
 			{
@@ -2454,12 +2484,168 @@ VK_IMPORT_DEVICE
 
 		void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) override;
 
-		void blitSetup(TextVideoMemBlitter& /*_blitter*/) override
+		void blitSetup(TextVideoMemBlitter& _blitter) override
 		{
+			const uint32_t width  = m_sci.imageExtent.width;
+			const uint32_t height = m_sci.imageExtent.height;
+
+			setFrameBuffer(BGFX_INVALID_HANDLE, false);
+
+			VkViewport vp;
+			vp.x        = 0;
+			vp.y        = 0;
+			vp.width    = (float)width;
+			vp.height   = (float)height;
+			vp.minDepth = 0.0f;
+			vp.maxDepth = 1.0f;
+			vkCmdSetViewport(m_commandBuffer, 0, 1, &vp);
+
+			VkRect2D rc;
+			rc.offset.x      = 0;
+			rc.offset.y      = 0;
+			rc.extent.width  = width;
+			rc.extent.height = height;
+			vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
+
+			const uint64_t state = 0
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
+				| BGFX_STATE_DEPTH_TEST_ALWAYS
+				;
+
+			const VertexDecl* decls[1] = { &m_vertexDecls[_blitter.m_vb->decl.idx] };
+			::VkPipeline pso = getPipeline(state
+				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
+				, _blitter.m_vb->decl.idx
+				, _blitter.m_program
+				, 0
+				);
+			vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pso);
+
+			ProgramVK& program = m_program[_blitter.m_program.idx];
+			float proj[16];
+			bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
+
+			PredefinedUniform& predefined = m_program[_blitter.m_program.idx].m_predefined[0];
+			uint8_t flags = predefined.m_type;
+			setShaderUniform(flags, predefined.m_loc, proj, 4);
+
+			UniformBuffer* vcb = program.m_vsh->m_constantBuffer;
+			if (NULL != vcb)
+			{
+				commit(*vcb);
+			}
+			ScratchBufferVK& scratchBuffer = m_scratchBuffer[m_backBufferColorIdx];
+			VkDescriptorSetLayout dsl = m_descriptorSetLayoutCache.find(program.m_descriptorSetLayoutHash);
+			VkDescriptorSetAllocateInfo dsai;
+			dsai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			dsai.pNext = NULL;
+			dsai.descriptorPool = m_descriptorPool;
+			dsai.descriptorSetCount = 1;
+			dsai.pSetLayouts = &dsl;
+			vkAllocateDescriptorSets(m_device, &dsai, &scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs]);
+
+			const uint32_t align = uint32_t(m_deviceProperties.limits.minUniformBufferOffsetAlignment);
+			TextureVK& texture = m_textures[_blitter.m_texture.idx];
+			uint32_t samplerFlags = (uint32_t)(texture.m_flags & BGFX_SAMPLER_BITS_MASK);
+			VkSampler sampler = getSampler(samplerFlags, 1);
+
+			VkDescriptorBufferInfo bufferInfo;
+			bufferInfo.buffer = scratchBuffer.m_buffer;
+			bufferInfo.offset = scratchBuffer.m_pos;
+			bufferInfo.range	 = bx::strideAlign(program.m_vsh->m_size, align);
+			bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
+
+			VkWriteDescriptorSet wds[3];
+			wds[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			wds[0].pNext = NULL;
+			wds[0].dstSet = scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs];
+			wds[0].dstBinding = program.m_vsh->m_uniformBinding;
+			wds[0].dstArrayElement = 0;
+			wds[0].descriptorCount = 1;
+			wds[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			wds[0].pImageInfo = NULL;
+			wds[0].pBufferInfo = &bufferInfo;
+			wds[0].pTexelBufferView = NULL;
+
+			VkDescriptorImageInfo imageInfo;
+			imageInfo.imageLayout = texture.m_currentImageLayout;
+			imageInfo.imageView = texture.m_textureImageView;
+			imageInfo.sampler = sampler;
+
+			wds[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			wds[1].pNext = NULL;
+			wds[1].dstSet = scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs];
+			wds[1].dstBinding = program.m_fsh->m_sampler[0].imageBinding;
+			wds[1].dstArrayElement = 0;
+			wds[1].descriptorCount = 1;
+			wds[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			wds[1].pImageInfo = &imageInfo;
+			wds[1].pBufferInfo = NULL;
+			wds[1].pTexelBufferView = NULL;
+
+			wds[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			wds[2].pNext = NULL;
+			wds[2].dstSet = scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs];
+			wds[2].dstBinding = program.m_fsh->m_sampler[0].samplerBinding;
+			wds[2].dstArrayElement = 0;
+			wds[2].descriptorCount = 1;
+			wds[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+			wds[2].pImageInfo = &imageInfo;
+			wds[2].pBufferInfo = NULL;
+			wds[2].pTexelBufferView = NULL;
+
+			m_vsChanges = 0;
+			m_fsChanges = 0;
+
+			vkUpdateDescriptorSets(m_device, 3, wds, 0, NULL);
+			vkCmdBindDescriptorSets(
+				m_commandBuffer
+				, VK_PIPELINE_BIND_POINT_GRAPHICS
+				, program.m_pipelineLayout
+				, 0
+				, 1
+				, &scratchBuffer.m_descriptorSet[scratchBuffer.m_currentDs]
+				, 0
+				, NULL
+				);
+
+			scratchBuffer.m_currentDs++;
+
+			VertexBufferVK& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
+			const VertexDecl& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
+			VkDeviceSize offset = 0;
+			vkCmdBindVertexBuffers(m_commandBuffer
+				, 0
+				, 1
+				, &vb.m_buffer
+				, &offset
+				);
+
+			BufferVK& ib = m_indexBuffers[_blitter.m_ib->handle.idx];
+			vkCmdBindIndexBuffer(m_commandBuffer
+				, ib.m_buffer
+				, 0
+				, VK_INDEX_TYPE_UINT16
+				);
 		}
 
-		void blitRender(TextVideoMemBlitter& /*_blitter*/, uint32_t /*_numIndices*/) override
+		void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) override
 		{
+			const uint32_t numVertices = _numIndices*4/6;
+			if (0 < numVertices)
+			{
+				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
+
+				vkCmdDrawIndexed(m_commandBuffer
+					, _numIndices
+					, 1
+					, 0
+					, 0
+					, 0
+					);
+			}
 		}
 
 		void updateResolution(const Resolution& _resolution)
@@ -2840,7 +3026,7 @@ VK_IMPORT_DEVICE
 			_desc.maxDepthBounds = 1.0f;
 		}
 
-		uint32_t setInputLayout(VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _vertexDecl, const ProgramVK& _program, uint8_t _numInstanceData)
+		void setInputLayout(VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _vertexDecl, const ProgramVK& _program, uint8_t _numInstanceData)
 		{
 			_vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 			_vertexInputState.pNext = NULL;
@@ -2857,25 +3043,14 @@ VK_IMPORT_DEVICE
 				decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 			}
 
-			uint32_t num = fillVertexDecl(_program.m_vsh, _vertexInputState, decl);
+			_vertexInputState.vertexBindingDescriptionCount   = 0;
+			_vertexInputState.vertexAttributeDescriptionCount = 0;
 
-//			const D3D12_INPUT_ELEMENT_DESC inst = { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 };
-
-			// VK_VERTEX_INPUT_RATE_INSTANCE
-
-			for (uint32_t ii = 0; ii < _numInstanceData; ++ii)
+			fillVertexDecl(_program.m_vsh, _vertexInputState, decl);
+			if (0 < _numInstanceData)
 			{
-				uint32_t index = 7 - ii; // TEXCOORD7 = i_data0, TEXCOORD6 = i_data1, etc.
-
-				BX_UNUSED(index);
-//				bx::memCopy(curr, &inst, sizeof(D3D12_INPUT_ELEMENT_DESC) );
-//				curr->InputSlot = 1;
-//				curr->SemanticIndex = index;
-//				curr->AlignedByteOffset = ii*16;
+				fillInstanceBinding(_program.m_vsh, _vertexInputState, _numInstanceData);
 			}
-
-			_vertexInputState.vertexAttributeDescriptionCount = num;
-			return num;
 		}
 
 		uint32_t getRenderPassHashkey(uint8_t _num, const Attachment* attachments)
@@ -4212,9 +4387,10 @@ VK_DESTROY
 			uint16_t bidx = 0;
 			if (m_size > 0)
 			{
+				m_uniformBinding = fragment ? 48 : 0;
 				m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
 				m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				m_bindings[bidx].binding = fragment ? 48 : 0;
+				m_bindings[bidx].binding = m_uniformBinding;
 				m_bindings[bidx].pImmutableSamplers = NULL;
 				m_bindings[bidx].descriptorCount = 1;
 				bidx++;
@@ -4644,6 +4820,7 @@ VK_DESTROY
 			ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			ici.usage = 0
+				| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
 				| VK_IMAGE_USAGE_TRANSFER_DST_BIT
 				| VK_IMAGE_USAGE_SAMPLED_BIT
 				| (_flags & BGFX_TEXTURE_RT_MASK
@@ -4891,11 +5068,89 @@ VK_DESTROY
 
 	void RendererContextVK::submitBlit(BlitState& _bs, uint16_t _view)
 	{
+		TextureHandle currentSrc = { kInvalidHandle };
+		TextureHandle currentDst = { kInvalidHandle };
+		VkImageLayout oldSrcLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		VkImageLayout oldDstLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		VkCommandBuffer commandBuffer = beginNewCommand();
 		while (_bs.hasItem(_view) )
 		{
 			const BlitItem& blit = _bs.advance();
-			BX_UNUSED(blit);
+
+			TextureVK& src = m_textures[blit.m_src.idx];
+			TextureVK& dst = m_textures[blit.m_dst.idx];
+
+			if (currentSrc.idx != blit.m_src.idx)
+			{
+				if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+				{
+					m_textures[currentSrc.idx].setImageMemoryBarrier(commandBuffer, oldSrcLayout);
+				}
+				oldSrcLayout = src.m_currentImageLayout;
+				src.setImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+				currentSrc = blit.m_src;
+			}
+
+			if (currentDst.idx != blit.m_dst.idx)
+			{
+				if (oldDstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+				{
+					m_textures[currentDst.idx].setImageMemoryBarrier(commandBuffer, oldDstLayout);
+				}
+				oldDstLayout = dst.m_currentImageLayout;
+				dst.setImageMemoryBarrier(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				currentDst = blit.m_dst;
+			}
+
+			uint32_t srcZ = (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type ? 0 : blit.m_srcZ);
+			uint32_t dstZ = (VK_IMAGE_VIEW_TYPE_CUBE == dst.m_type ? 0 : blit.m_dstZ);
+			uint32_t srcLayer = (VK_IMAGE_VIEW_TYPE_CUBE == src.m_type ? blit.m_srcZ : 0);
+			uint32_t dstLayer = (VK_IMAGE_VIEW_TYPE_CUBE == dst.m_type ? blit.m_dstZ : 0);
+			uint32_t depth = (blit.m_depth == UINT16_MAX ? 1 : blit.m_depth);
+
+			VkImageBlit blitInfo;
+			blitInfo.srcSubresource.aspectMask     = src.m_vkTextureAspect;
+			blitInfo.srcSubresource.mipLevel       = blit.m_srcMip;
+			blitInfo.srcSubresource.baseArrayLayer = srcLayer;
+			blitInfo.srcSubresource.layerCount     = 1;
+			blitInfo.srcOffsets[0].x = blit.m_srcX;
+			blitInfo.srcOffsets[0].y = blit.m_srcY;
+			blitInfo.srcOffsets[0].z = srcZ;
+			blitInfo.srcOffsets[1].x = blit.m_srcX + blit.m_width;
+			blitInfo.srcOffsets[1].y = blit.m_srcY + blit.m_height;
+			blitInfo.srcOffsets[1].z = srcZ + depth;
+			blitInfo.dstSubresource.aspectMask     = dst.m_vkTextureAspect;
+			blitInfo.dstSubresource.mipLevel       = blit.m_dstMip;
+			blitInfo.dstSubresource.baseArrayLayer = dstLayer;
+			blitInfo.dstSubresource.layerCount     = 1;
+			blitInfo.dstOffsets[0].x = blit.m_dstX;
+			blitInfo.dstOffsets[0].y = blit.m_dstY;
+			blitInfo.dstOffsets[0].z = dstZ;
+			blitInfo.dstOffsets[1].x = blit.m_dstX + blit.m_width;
+			blitInfo.dstOffsets[1].y = blit.m_dstY + blit.m_height;
+			blitInfo.dstOffsets[1].z = dstZ + depth;
+			vkCmdBlitImage(
+				  commandBuffer
+				, src.m_textureImage
+				, src.m_currentImageLayout
+				, dst.m_textureImage
+				, dst.m_currentImageLayout
+				, 1
+				, &blitInfo
+				, VK_FILTER_LINEAR
+				);
 		}
+
+		if (oldSrcLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+		{
+			m_textures[currentSrc.idx].setImageMemoryBarrier(commandBuffer, oldSrcLayout);
+		}
+		if (oldDstLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+		{
+			m_textures[currentDst.idx].setImageMemoryBarrier(commandBuffer, oldDstLayout);
+		}
+		submitCommandAndWait(commandBuffer);
 	}
 
 	void RendererContextVK::submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter)
@@ -5646,26 +5901,8 @@ BX_UNUSED(currentSamplerStateIdx);
 
 						if (0 < total)
 						{
-							uint32_t vsUniformBinding = 0;
-							uint32_t fsUniformBinding = 0;
-
-							for (uint32_t ii = 0; ii < program.m_vsh->m_numBindings; ++ii)
-							{
-								if (program.m_vsh->m_bindings[ii].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-								{
-									vsUniformBinding = program.m_vsh->m_bindings[ii].binding;
-									break;
-								}
-							}
-
-							for (uint32_t ii = 0; ii < program.m_fsh->m_numBindings; ++ii)
-							{
-								if (program.m_fsh->m_bindings[ii].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-								{
-									fsUniformBinding = program.m_fsh->m_bindings[ii].binding;
-									break;
-								}
-							}
+							uint32_t vsUniformBinding = program.m_vsh->m_uniformBinding;
+							uint32_t fsUniformBinding = program.m_fsh->m_uniformBinding;
 
 							if (vsize > 0)
 							{
@@ -5750,11 +5987,23 @@ BX_UNUSED(currentSamplerStateIdx);
 
 					VkDeviceSize offset = 0;
 					vkCmdBindVertexBuffers(m_commandBuffer
-						, 0
+						, 0 // TODO: multiple vertex stream
 						, 1
 						, &vb.m_buffer
 						, &offset
 						);
+
+					if (isValid(draw.m_instanceDataBuffer))
+					{
+						VkDeviceSize instanceOffset = draw.m_instanceDataOffset;
+						VertexBufferVK& instanceBuffer = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
+						vkCmdBindVertexBuffers(m_commandBuffer
+							, 1 // TODO: multiple vertex stream
+							, 1
+							, &instanceBuffer.m_buffer
+							, &instanceOffset
+							);
+					}
 
 					if (!isValid(draw.m_indexBuffer) )
 					{
@@ -5772,7 +6021,6 @@ BX_UNUSED(currentSamplerStateIdx);
 					else
 					{
 						BufferVK& ib = m_indexBuffers[draw.m_indexBuffer.idx];
-//						ib.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 						const bool hasIndex16 = 0 == (ib.m_flags & BGFX_BUFFER_INDEX32);
 						const uint32_t indexSize = hasIndex16 ? 2 : 4;
