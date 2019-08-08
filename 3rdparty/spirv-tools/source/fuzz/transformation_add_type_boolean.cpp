@@ -18,15 +18,20 @@
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-using opt::IRContext;
+TransformationAddTypeBoolean::TransformationAddTypeBoolean(
+    const spvtools::fuzz::protobufs::TransformationAddTypeBoolean& message)
+    : message_(message) {}
 
-bool IsApplicable(const protobufs::TransformationAddTypeBoolean& message,
-                  IRContext* context,
-                  const spvtools::fuzz::FactManager& /*unused*/) {
+TransformationAddTypeBoolean::TransformationAddTypeBoolean(uint32_t fresh_id) {
+  message_.set_fresh_id(fresh_id);
+}
+
+bool TransformationAddTypeBoolean::IsApplicable(
+    opt::IRContext* context,
+    const spvtools::fuzz::FactManager& /*unused*/) const {
   // The id must be fresh.
-  if (!fuzzerutil::IsFreshId(context, message.fresh_id())) {
+  if (!fuzzerutil::IsFreshId(context, message_.fresh_id())) {
     return false;
   }
 
@@ -35,24 +40,22 @@ bool IsApplicable(const protobufs::TransformationAddTypeBoolean& message,
   return context->get_type_mgr()->GetId(&bool_type) == 0;
 }
 
-void Apply(const protobufs::TransformationAddTypeBoolean& message,
-           IRContext* context, spvtools::fuzz::FactManager* /*unused*/) {
+void TransformationAddTypeBoolean::Apply(
+    opt::IRContext* context, spvtools::fuzz::FactManager* /*unused*/) const {
   opt::Instruction::OperandList empty_operands;
   context->module()->AddType(MakeUnique<opt::Instruction>(
-      context, SpvOpTypeBool, 0, message.fresh_id(), empty_operands));
-  fuzzerutil::UpdateModuleIdBound(context, message.fresh_id());
+      context, SpvOpTypeBool, 0, message_.fresh_id(), empty_operands));
+  fuzzerutil::UpdateModuleIdBound(context, message_.fresh_id());
   // We have added an instruction to the module, so need to be careful about the
   // validity of existing analyses.
-  context->InvalidateAnalysesExceptFor(IRContext::Analysis::kAnalysisNone);
+  context->InvalidateAnalysesExceptFor(opt::IRContext::Analysis::kAnalysisNone);
 }
 
-protobufs::TransformationAddTypeBoolean MakeTransformationAddTypeBoolean(
-    uint32_t fresh_id) {
-  protobufs::TransformationAddTypeBoolean result;
-  result.set_fresh_id(fresh_id);
+protobufs::Transformation TransformationAddTypeBoolean::ToMessage() const {
+  protobufs::Transformation result;
+  *result.mutable_add_type_boolean() = message_;
   return result;
 }
 
-}  // namespace transformation
 }  // namespace fuzz
 }  // namespace spvtools

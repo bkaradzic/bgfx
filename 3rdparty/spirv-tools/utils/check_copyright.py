@@ -16,7 +16,6 @@
 current directory.  Optionally insert them.  When inserting, replaces
 an MIT or Khronos free use license with Apache 2.
 """
-from __future__ import print_function
 
 import argparse
 import fileinput

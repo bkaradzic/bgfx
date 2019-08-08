@@ -3871,6 +3871,18 @@
       "version" : "None"
     },
     {
+      "opname" : "OpReadClockKHR",
+      "opcode" : 5056,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" },
+        { "kind" : "IdScope", "name" : "'Execution'" }
+      ],
+      "capabilities" : [ "ShaderClockKHR" ],
+      "extensions" : [ "SPV_KHR_shader_clock" ],
+      "version" : "None"
+    },
+    {
       "opname" : "OpImageSampleFootprintNV",
       "opcode" : 5283,
       "operands" : [
@@ -4042,6 +4054,38 @@
       ],
       "capabilities" : [ "CooperativeMatrixNV" ],
       "extensions" : [ "SPV_NV_cooperative_matrix" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpBeginInvocationInterlockEXT",
+      "opcode" : 5364,
+      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
+      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpEndInvocationInterlockEXT",
+      "opcode" : 5365,
+      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
+      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpDemoteToHelperInvocationEXT",
+      "opcode" : 5380,
+      "capabilities" : [ "DemoteToHelperInvocationEXT" ],
+      "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+      "version" : "None"
+    },
+    {
+      "opname" : "OpIsHelperInvocationEXT",
+      "opcode" : 5381,
+      "operands" : [
+        { "kind" : "IdResultType" },
+        { "kind" : "IdResult" }
+      ],
+      "capabilities" : [ "DemoteToHelperInvocationEXT" ],
+      "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
       "version" : "None"
     },
     {
@@ -5771,20 +5815,6 @@
       ],
       "capabilities" : [ "SubgroupAvcMotionEstimationINTEL" ],
       "version" : "None"
-    },
-    {
-      "opname" : "OpBeginInvocationInterlockEXT",
-      "opcode" : 5364,
-      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
-      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
-      "version" : "None"
-    },
-    {
-      "opname" : "OpEndInvocationInterlockEXT",
-      "opcode" : 5365,
-      "capabilities" : [ "FragmentShaderSampleInterlockEXT", "FragmentShaderPixelInterlockEXT", "FragmentShaderShadingRateInterlockEXT" ],
-      "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
-      "version" : "None"
     }
   ],
   "operand_kinds" : [
@@ -5863,7 +5893,8 @@
           "capabilities" : [ "VulkanMemoryModelKHR" ],
           "parameters" : [
             { "kind" : "IdScope" }
-          ]
+          ],
+          "version" : "None"
         },
         {
           "enumerant" : "MakeTexelVisibleKHR",
@@ -5871,17 +5902,20 @@
           "capabilities" : [ "VulkanMemoryModelKHR" ],
           "parameters" : [
             { "kind" : "IdScope" }
-          ]
+          ],
+          "version" : "None"
         },
         {
           "enumerant" : "NonPrivateTexelKHR",
           "value" : "0x0400",
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "VolatileTexelKHR",
           "value" : "0x0800",
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SignExtend",
@@ -6102,17 +6136,26 @@
         {
           "enumerant" : "OutputMemoryKHR",
           "value" : "0x1000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "MakeAvailableKHR",
           "value" : "0x2000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "MakeVisibleKHR",
           "value" : "0x4000",
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "Volatile",
+          "value" : "0x8000",
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -6145,7 +6188,8 @@
           "parameters" : [
             { "kind" : "IdScope" }
           ],
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "MakePointerVisibleKHR",
@@ -6153,12 +6197,14 @@
           "parameters" : [
             { "kind" : "IdScope" }
           ],
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         },
         {
           "enumerant" : "NonPrivatePointerKHR",
           "value" : "0x0020",
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -6249,42 +6295,50 @@
         {
           "enumerant" : "TaskNV",
           "value" : 5267,
-          "capabilities" : [ "MeshShadingNV" ]
+          "capabilities" : [ "MeshShadingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "MeshNV",
           "value" : 5268,
-          "capabilities" : [ "MeshShadingNV" ]
+          "capabilities" : [ "MeshShadingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayGenerationNV",
           "value" : 5313,
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "IntersectionNV",
           "value" : 5314,
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "AnyHitNV",
           "value" : 5315,
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "ClosestHitNV",
           "value" : 5316,
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "MissNV",
           "value" : 5317,
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "CallableNV",
           "value" : 5318,
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         }
       ]
     },
@@ -6310,7 +6364,8 @@
           "enumerant" : "PhysicalStorageBuffer64EXT",
           "value" : 5348,
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ]
+          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
+          "version" : "None"
         }
       ]
     },
@@ -6336,7 +6391,8 @@
         {
           "enumerant" : "VulkanKHR",
           "value" : 3,
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -6793,43 +6849,50 @@
           "enumerant" : "CallableDataNV",
           "value" : 5328,
           "extensions" : [ "SPV_NV_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "IncomingCallableDataNV",
           "value" : 5329,
           "extensions" : [ "SPV_NV_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayPayloadNV",
           "value" : 5338,
           "extensions" : [ "SPV_NV_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "HitAttributeNV",
           "value" : 5339,
           "extensions" : [ "SPV_NV_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "IncomingRayPayloadNV",
           "value" : 5342,
           "extensions" : [ "SPV_NV_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "ShaderRecordBufferNV",
           "value" : 5343,
           "extensions" : [ "SPV_NV_ray_tracing" ],
-          "capabilities" : [ "RayTracingNV" ]
+          "capabilities" : [ "RayTracingNV" ],
+          "version" : "None"
         },
         {
           "enumerant" : "PhysicalStorageBufferEXT",
           "value" : 5349,
           "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ]
+          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
+          "version" : "None"
         }
       ]
     },
@@ -7815,6 +7878,20 @@
           "capabilities" : [ "ShaderNonUniformEXT" ]
         },
         {
+          "enumerant" : "RestrictPointerEXT",
+          "value" : 5355,
+          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "AliasedPointerEXT",
+          "value" : 5356,
+          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "CounterBuffer",
           "value" : 5634,
           "parameters" : [
@@ -7849,17 +7926,12 @@
           "version" : "None"
         },
         {
-          "enumerant" : "RestrictPointerEXT",
-          "value" : 5355,
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "AliasedPointerEXT",
-          "value" : 5356,
-          "capabilities" : [ "PhysicalStorageBufferAddressesEXT" ],
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "enumerant" : "UserTypeGOOGLE",
+          "value" : 5636,
+          "parameters" : [
+            { "kind" : "LiteralString", "name" : "'User Type'" }
+          ],
+          "extensions" : [ "SPV_GOOGLE_user_type" ],
           "version" : "None"
         }
       ]
@@ -8360,109 +8432,127 @@
           "enumerant" : "LaunchIdNV",
           "value" : 5319,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "LaunchSizeNV",
           "value" : 5320,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "WorldRayOriginNV",
           "value" : 5321,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "WorldRayDirectionNV",
           "value" : 5322,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "ObjectRayOriginNV",
           "value" : 5323,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "ObjectRayDirectionNV",
           "value" : 5324,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayTminNV",
           "value" : 5325,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "RayTmaxNV",
           "value" : 5326,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "InstanceCustomIndexNV",
           "value" : 5327,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "ObjectToWorldNV",
           "value" : 5330,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "WorldToObjectNV",
           "value" : 5331,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "HitTNV",
           "value" : 5332,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "HitKindNV",
           "value" : 5333,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "IncomingRayFlagsNV",
           "value" : 5351,
           "capabilities" : [ "RayTracingNV" ],
-          "extensions" : [ "SPV_NV_ray_tracing" ]
+          "extensions" : [ "SPV_NV_ray_tracing" ],
+          "version" : "None"
         },
         {
           "enumerant" : "WarpsPerSMNV",
           "value" : 5374,
           "capabilities" : [ "ShaderSMBuiltinsNV" ],
-          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SMCountNV",
           "value" : 5375,
           "capabilities" : [ "ShaderSMBuiltinsNV" ],
-          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
+          "version" : "None"
         },
         {
           "enumerant" : "WarpIDNV",
           "value" : 5376,
           "capabilities" : [ "ShaderSMBuiltinsNV" ],
-          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
+          "version" : "None"
         },
         {
           "enumerant" : "SMIDNV",
           "value" : 5377,
           "capabilities" : [ "ShaderSMBuiltinsNV" ],
-          "extensions" : [ "SPV_NV_shader_sm_builtins" ]
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
+          "version" : "None"
         }
       ]
     },
@@ -8493,7 +8583,8 @@
         {
           "enumerant" : "QueueFamilyKHR",
           "value" : 5,
-          "capabilities" : [ "VulkanMemoryModelKHR" ]
+          "capabilities" : [ "VulkanMemoryModelKHR" ],
+          "version" : "None"
         }
       ]
     },
@@ -9091,6 +9182,13 @@
           "version" : "None"
         },
         {
+          "enumerant" : "ShaderClockKHR",
+          "value" : 5055,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_KHR_shader_clock" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SampleMaskOverrideCoverageNV",
           "value" : 5249,
           "capabilities" : [ "SampleRateShading" ],
@@ -9151,6 +9249,44 @@
           "value" : 5266,
           "capabilities" : [ "Shader" ],
           "extensions" : [ "SPV_NV_mesh_shader" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ImageFootprintNV",
+          "value" : 5282,
+          "extensions" : [ "SPV_NV_shader_image_footprint" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentBarycentricNV",
+          "value" : 5284,
+          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ComputeDerivativeGroupQuadsNV",
+          "value" : 5288,
+          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentDensityEXT",
+          "value" : 5291,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_invocation_density", "SPV_NV_shading_rate" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShadingRateNV",
+          "value" : 5291,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_shading_rate", "SPV_EXT_fragment_invocation_density" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "GroupNonUniformPartitionedNV",
+          "value" : 5297,
+          "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
           "version" : "None"
         },
         {
@@ -9245,6 +9381,73 @@
           "version" : "None"
         },
         {
+          "enumerant" : "VulkanMemoryModelKHR",
+          "value" : 5345,
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "VulkanMemoryModelDeviceScopeKHR",
+          "value" : 5346,
+          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "PhysicalStorageBufferAddressesEXT",
+          "value" : 5347,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ComputeDerivativeGroupLinearNV",
+          "value" : 5350,
+          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "CooperativeMatrixNV",
+          "value" : 5357,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_cooperative_matrix" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentShaderSampleInterlockEXT",
+          "value" : 5363,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentShaderShadingRateInterlockEXT",
+          "value" : 5372,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "ShaderSMBuiltinsNV",
+          "value" : 5373,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "FragmentShaderPixelInterlockEXT",
+          "value" : 5378,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
+          "version" : "None"
+        },
+        {
+          "enumerant" : "DemoteToHelperInvocationEXT",
+          "value" : 5379,
+          "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_demote_to_helper_invocation" ],
+          "version" : "None"
+        },
+        {
           "enumerant" : "SubgroupShuffleINTEL",
           "value" : 5568,
           "extensions" : [ "SPV_INTEL_subgroups" ],
@@ -9291,104 +9494,6 @@
           "enumerant" : "SubgroupAvcMotionEstimationChromaINTEL",
           "value" : 5698,
           "extensions" : [ "SPV_INTEL_device_side_avc_motion_estimation" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "GroupNonUniformPartitionedNV",
-          "value" : 5297,
-          "extensions" : [ "SPV_NV_shader_subgroup_partitioned" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "VulkanMemoryModelKHR",
-          "value" : 5345,
-          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "VulkanMemoryModelDeviceScopeKHR",
-          "value" : 5346,
-          "extensions" : [ "SPV_KHR_vulkan_memory_model" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "ImageFootprintNV",
-          "value" : 5282,
-          "extensions" : [ "SPV_NV_shader_image_footprint" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "FragmentBarycentricNV",
-          "value" : 5284,
-          "extensions" : [ "SPV_NV_fragment_shader_barycentric" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "ComputeDerivativeGroupQuadsNV",
-          "value" : 5288,
-          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "ComputeDerivativeGroupLinearNV",
-          "value" : 5350,
-          "extensions" : [ "SPV_NV_compute_shader_derivatives" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "FragmentDensityEXT",
-          "value" : 5291,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_EXT_fragment_invocation_density", "SPV_NV_shading_rate" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "ShadingRateNV",
-          "value" : 5291,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_NV_shading_rate", "SPV_EXT_fragment_invocation_density" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "PhysicalStorageBufferAddressesEXT",
-          "value" : 5347,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "CooperativeMatrixNV",
-          "value" : 5357,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_NV_cooperative_matrix" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "FragmentShaderSampleInterlockEXT",
-          "value" : 5363,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "FragmentShaderShadingRateInterlockEXT",
-          "value" : 5372,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "FragmentShaderPixelInterlockEXT",
-          "value" : 5378,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_EXT_fragment_shader_interlock" ],
-          "version" : "None"
-        },
-        {
-          "enumerant" : "ShaderSMBuiltinsNV",
-          "value" : 5373,
-          "capabilities" : [ "Shader" ],
-          "extensions" : [ "SPV_NV_shader_sm_builtins" ],
           "version" : "None"
         }
       ]

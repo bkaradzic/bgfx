@@ -3811,7 +3811,7 @@ OpName %output "output"
 %6 = OpTypeFunction %void
 %float = OpTypeFloat 32
 %_ptr_Private_float = OpTypePointer Private %float
-%initializer = OpVariable %_ptr_Private_float Private
+%initializer = OpConstant %float 0
 %live = OpVariable %_ptr_Private_float Private %initializer
 %_ptr_Output_float = OpTypePointer Output %float
 %output = OpVariable %_ptr_Output_float Output
@@ -6494,6 +6494,126 @@ OpFunctionEnd
 
   SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
   SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
+TEST_F(AggressiveDCETest, PreserveBindings) {
+  const std::string spirv = R"(
+; CHECK: OpDecorate %unusedSampler DescriptorSet 0
+; CHECK: OpDecorate %unusedSampler Binding 0
+OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource GLSL 430
+OpName %main "main"
+OpName %unusedSampler "unusedSampler"
+OpDecorate %unusedSampler DescriptorSet 0
+OpDecorate %unusedSampler Binding 0
+%void = OpTypeVoid
+%5 = OpTypeFunction %void
+%float = OpTypeFloat 32
+%7 = OpTypeImage %float 2D 0 0 0 1 Unknown
+%8 = OpTypeSampledImage %7
+%_ptr_UniformConstant_8 = OpTypePointer UniformConstant %8
+%unusedSampler = OpVariable %_ptr_UniformConstant_8 UniformConstant
+%main = OpFunction %void None %5
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+
+  OptimizerOptions()->preserve_bindings_ = true;
+
+  SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
+TEST_F(AggressiveDCETest, PreserveSpecConstants) {
+  const std::string spirv = R"(
+; CHECK: OpName %specConstant "specConstant"
+; CHECK: %specConstant = OpSpecConstant %int 0
+OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource GLSL 430
+OpName %main "main"
+OpName %specConstant "specConstant"
+OpDecorate %specConstant SpecId 0
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%specConstant = OpSpecConstant %int 0
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+
+  OptimizerOptions()->preserve_spec_constants_ = true;
+
+  SinglePassRunAndMatch<AggressiveDCEPass>(spirv, true);
+}
+
+TEST_F(AggressiveDCETest, LiveDecorateId) {
+  const std::string spirv = R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %1 "main" %2
+OpExecutionMode %1 LocalSize 8 1 1
+OpDecorate %2 DescriptorSet 0
+OpDecorate %2 Binding 0
+OpDecorateId %3 UniformId %uint_2
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%uint_2 = OpConstant %uint 2
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+%2 = OpVariable %_ptr_StorageBuffer_uint StorageBuffer
+%8 = OpTypeFunction %void
+%1 = OpFunction %void None %8
+%9 = OpLabel
+%3 = OpLoad %uint %2
+OpStore %2 %3
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  OptimizerOptions()->preserve_spec_constants_ = true;
+  SinglePassRunAndCheck<AggressiveDCEPass>(spirv, spirv, true);
+}
+
+TEST_F(AggressiveDCETest, LiveDecorateIdOnGroup) {
+  const std::string spirv = R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %1 "main" %2
+OpExecutionMode %1 LocalSize 8 1 1
+OpDecorate %2 DescriptorSet 0
+OpDecorate %2 Binding 0
+OpDecorateId %3 UniformId %uint_2
+%3 = OpDecorationGroup
+OpGroupDecorate %3 %5
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%uint_2 = OpConstant %uint 2
+%_ptr_StorageBuffer_uint = OpTypePointer StorageBuffer %uint
+%2 = OpVariable %_ptr_StorageBuffer_uint StorageBuffer
+%9 = OpTypeFunction %void
+%1 = OpFunction %void None %9
+%10 = OpLabel
+%5 = OpLoad %uint %2
+OpStore %2 %5
+OpReturn
+OpFunctionEnd
+)";
+
+  SetTargetEnv(SPV_ENV_UNIVERSAL_1_4);
+  OptimizerOptions()->preserve_spec_constants_ = true;
+  SinglePassRunAndCheck<AggressiveDCEPass>(spirv, spirv, true);
 }
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:

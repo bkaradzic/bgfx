@@ -57,12 +57,65 @@ message IdUseDescriptor {
 
 }
 
+message UniformBufferElementDescriptor {
+
+  // Represents a data element inside a uniform buffer.  The element is
+  // specified via (a) the result id of a uniform variable in which the element
+  // is contained, and (b) a series of indices that need to be followed to get
+  // to the element (via fields and array/vector indices).
+  //
+  // Example: suppose there is a uniform variable with descriptor set 7 and
+  // binding 9, and that the uniform variable has the following type (using
+  // GLSL-like syntax):
+  //
+  // struct S {
+  //   float f;
+  //   vec3 g;
+  //   int4 h[10];
+  // };
+  //
+  // Then:
+  // - (7, 9, [0]) describes the 'f' field.
+  // - (7, 9, [1,1]) describes the y component of the 'g' field.
+  // - (7, 9, [2,7,3]) describes the w component of element 7 of the 'h' field
+
+  // The descriptor set and binding associated with a uniform variable.
+  uint32 descriptor_set = 1;
+  uint32 binding = 2;
+
+  // An ordered sequence of indices through composite structures in the
+  // uniform buffer.
+  repeated uint32 index = 3;
+
+}
+
 message FactSequence {
   repeated Fact fact = 1;
 }
 
 message Fact {
-  // Currently there are no facts.
+  oneof fact {
+    // Order the fact options by numeric id (rather than alphabetically).
+    FactConstantUniform constant_uniform_fact = 1;
+  }
+}
+
+// Keep fact message types in alphabetical order:
+
+message FactConstantUniform {
+
+  // Records the fact that a uniform buffer element is guaranteed to be equal
+  // to a particular constant value.  spirv-fuzz can use such guarantees to
+  // obfuscate code, e.g. to manufacture an expression that will (due to the
+  // guarantee) evaluate to a particular value at runtime but in a manner that
+  // cannot be predicted at compile-time.
+
+  // An element of a uniform buffer
+  UniformBufferElementDescriptor uniform_buffer_element_descriptor = 1;
+
+  // The words of the associated constant
+  repeated uint32 constant_word = 2;
+
 }
 
 message TransformationSequence {
@@ -82,6 +135,8 @@ message Transformation {
     TransformationAddTypeInt add_type_int = 7;
     TransformationAddDeadBreak add_dead_break = 8;
     TransformationReplaceBooleanConstantWithConstantBinary replace_boolean_constant_with_constant_binary = 9;
+    TransformationAddTypePointer add_type_pointer = 10;
+    TransformationReplaceConstantWithUniform replace_constant_with_uniform = 11;
     // Add additional option using the next available number.
   }
 }
@@ -171,6 +226,22 @@ message TransformationAddTypeInt {
 
 }
 
+message TransformationAddTypePointer {
+
+  // Adds OpTypePointer to the module, with the given storage class and base
+  // type
+
+  // Id to be used for the type
+  uint32 fresh_id = 1;
+
+  // Pointer storage class
+  uint32 storage_class = 2;
+
+  // Id of the base type for the pointer
+  uint32 base_type_id = 3;
+
+}
+
 message TransformationMoveBlockDown {
 
   // A transformation that moves a basic block to be one position lower in
@@ -178,6 +249,24 @@ message TransformationMoveBlockDown {
 
   // The id of the block to move down.
   uint32 block_id = 1;
+}
+
+message TransformationReplaceConstantWithUniform {
+
+  // Replaces a use of a constant id with the the result of a load from an
+  // element of uniform buffer known to hold the same value as the constant
+
+  // A descriptor for the id we would like to replace
+  IdUseDescriptor id_use_descriptor = 1;
+
+  // Uniform descriptor to identify which uniform value to choose
+  UniformBufferElementDescriptor uniform_descriptor = 2;
+
+  // Id that will store the result of an access chain
+  uint32 fresh_id_for_access_chain = 3;
+
+  // Id that will store the result of a load
+  uint32 fresh_id_for_load = 4;
 
 }
 

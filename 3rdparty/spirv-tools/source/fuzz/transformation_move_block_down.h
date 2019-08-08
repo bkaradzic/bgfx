@@ -17,29 +17,37 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |block_id| must be the id of a block b in the given module.
-// - b must not be the first nor last block appearing, in program order,
-//   in a function.
-// - b must not dominate the block that follows it in program order.
-bool IsApplicable(const protobufs::TransformationMoveBlockDown& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationMoveBlockDown : public Transformation {
+ public:
+  explicit TransformationMoveBlockDown(
+      const protobufs::TransformationMoveBlockDown& message);
 
-// The block with id |block_id| is moved down; i.e. the program order
-// between it and the block that follows it is swapped.
-void Apply(const protobufs::TransformationMoveBlockDown& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  explicit TransformationMoveBlockDown(uint32_t id);
 
-// Creates a protobuf message to move down the block with id |id|.
-protobufs::TransformationMoveBlockDown MakeTransformationMoveBlockDown(
-    uint32_t id);
+  // - |message_.block_id| must be the id of a block b in the given module.
+  // - b must not be the first nor last block appearing, in program order,
+  //   in a function.
+  // - b must not dominate the block that follows it in program order.
+  // - b must be reachable.
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // The block with id |message_.block_id| is moved down; i.e. the program order
+  // between it and the block that follows it is swapped.
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationMoveBlockDown message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

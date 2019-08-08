@@ -79,6 +79,15 @@ class ReturnCodeIsZero(SpirvTest):
     return True, ''
 
 
+class ReturnCodeIsNonZero(SpirvTest):
+  """Mixin class for checking that the return code is not zero."""
+
+  def check_return_code_is_nonzero(self, status):
+    if not status.returncode:
+      return False, 'return code is 0'
+    return True, ''
+
+
 class NoOutputOnStdout(SpirvTest):
   """Mixin class for checking that there is no output on stdout."""
 

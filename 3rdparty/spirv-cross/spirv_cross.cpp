@@ -17,6 +17,7 @@
 #include "spirv_cross.hpp"
 #include "GLSL.std.450.h"
 #include "spirv_cfg.hpp"
+#include "spirv_common.hpp"
 #include "spirv_parser.hpp"
 #include <algorithm>
 #include <cstring>
@@ -176,7 +177,7 @@ string Compiler::to_name(uint32_t id, bool allow_alias) const
 		{
 			// If the alias master has been specially packed, we will have emitted a clean variant as well,
 			// so skip the name aliasing here.
-			if (!has_extended_decoration(type.type_alias, SPIRVCrossDecorationPacked))
+			if (!has_extended_decoration(type.type_alias, SPIRVCrossDecorationBufferBlockRepacked))
 				return to_name(type.type_alias);
 		}
 	}
@@ -755,6 +756,8 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<uint32_t> *ac
 {
 	ShaderResources res;
 
+	bool ssbo_instance_name = reflection_ssbo_instance_name_is_significant();
+
 	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
 		auto &type = this->get<SPIRType>(var.basetype);
 
@@ -772,7 +775,7 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<uint32_t> *ac
 			if (has_decoration(type.self, DecorationBlock))
 			{
 				res.stage_inputs.push_back(
-				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self) });
+				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
 			}
 			else
 				res.stage_inputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -788,7 +791,7 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<uint32_t> *ac
 			if (has_decoration(type.self, DecorationBlock))
 			{
 				res.stage_outputs.push_back(
-				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self) });
+				    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
 			}
 			else
 				res.stage_outputs.push_back({ var.self, var.basetype, type.self, get_name(var.self) });
@@ -797,19 +800,19 @@ ShaderResources Compiler::get_shader_resources(const unordered_set<uint32_t> *ac
 		else if (type.storage == StorageClassUniform && has_decoration(type.self, DecorationBlock))
 		{
 			res.uniform_buffers.push_back(
-			    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self) });
+			    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, false) });
 		}
 		// Old way to declare SSBOs.
 		else if (type.storage == StorageClassUniform && has_decoration(type.self, DecorationBufferBlock))
 		{
 			res.storage_buffers.push_back(
-			    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self) });
+			    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, ssbo_instance_name) });
 		}
 		// Modern way to declare SSBOs.
 		else if (type.storage == StorageClassStorageBuffer)
 		{
 			res.storage_buffers.push_back(
-			    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self) });
+			    { var.self, var.basetype, type.self, get_remapped_declared_block_name(var.self, ssbo_instance_name) });
 		}
 		// Push constant blocks
 		else if (type.storage == StorageClassPushConstant)
@@ -1121,28 +1124,8 @@ void Compiler::set_decoration(uint32_t id, Decoration decoration, uint32_t argum
 void Compiler::set_extended_decoration(uint32_t id, ExtendedDecorations decoration, uint32_t value)
 {
 	auto &dec = ir.meta[id].decoration;
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		dec.extended.packed = true;
-		break;
-
-	case SPIRVCrossDecorationPackedType:
-		dec.extended.packed_type = value;
-		break;
-
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		dec.extended.ib_member_index = value;
-		break;
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		dec.extended.ib_orig_id = value;
-		break;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		dec.extended.argument_buffer_id = value;
-		break;
-	}
+	dec.extended.flags.set(decoration);
+	dec.extended.values[decoration] = value;
 }
 
 void Compiler::set_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration,
@@ -1150,28 +1133,21 @@ void Compiler::set_extended_member_decoration(uint32_t type, uint32_t index, Ext
 {
 	ir.meta[type].members.resize(max(ir.meta[type].members.size(), size_t(index) + 1));
 	auto &dec = ir.meta[type].members[index];
+	dec.extended.flags.set(decoration);
+	dec.extended.values[decoration] = value;
+}
 
+static uint32_t get_default_extended_decoration(ExtendedDecorations decoration)
+{
 	switch (decoration)
 	{
-	case SPIRVCrossDecorationPacked:
-		dec.extended.packed = true;
-		break;
-
-	case SPIRVCrossDecorationPackedType:
-		dec.extended.packed_type = value;
-		break;
-
+	case SPIRVCrossDecorationResourceIndexPrimary:
+	case SPIRVCrossDecorationResourceIndexSecondary:
 	case SPIRVCrossDecorationInterfaceMemberIndex:
-		dec.extended.ib_member_index = value;
-		break;
+		return ~(0u);
 
-	case SPIRVCrossDecorationInterfaceOrigID:
-		dec.extended.ib_orig_id = value;
-		break;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		dec.extended.argument_buffer_id = value;
-		break;
+	default:
+		return 0;
 	}
 }
 
@@ -1182,25 +1158,11 @@ uint32_t Compiler::get_extended_decoration(uint32_t id, ExtendedDecorations deco
 		return 0;
 
 	auto &dec = m->decoration;
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		return uint32_t(dec.extended.packed);
 
-	case SPIRVCrossDecorationPackedType:
-		return dec.extended.packed_type;
+	if (!dec.extended.flags.get(decoration))
+		return get_default_extended_decoration(decoration);
 
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		return dec.extended.ib_member_index;
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		return dec.extended.ib_orig_id;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		return dec.extended.argument_buffer_id;
-	}
-
-	return 0;
+	return dec.extended.values[decoration];
 }
 
 uint32_t Compiler::get_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const
@@ -1213,25 +1175,9 @@ uint32_t Compiler::get_extended_member_decoration(uint32_t type, uint32_t index,
 		return 0;
 
 	auto &dec = m->members[index];
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		return uint32_t(dec.extended.packed);
-
-	case SPIRVCrossDecorationPackedType:
-		return dec.extended.packed_type;
-
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		return dec.extended.ib_member_index;
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		return dec.extended.ib_orig_id;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		return dec.extended.argument_buffer_id;
-	}
-
-	return 0;
+	if (!dec.extended.flags.get(decoration))
+		return get_default_extended_decoration(decoration);
+	return dec.extended.values[decoration];
 }
 
 bool Compiler::has_extended_decoration(uint32_t id, ExtendedDecorations decoration) const
@@ -1241,25 +1187,7 @@ bool Compiler::has_extended_decoration(uint32_t id, ExtendedDecorations decorati
 		return false;
 
 	auto &dec = m->decoration;
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		return dec.extended.packed;
-
-	case SPIRVCrossDecorationPackedType:
-		return dec.extended.packed_type != 0;
-
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		return dec.extended.ib_member_index != uint32_t(-1);
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		return dec.extended.ib_orig_id != 0;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		return dec.extended.argument_buffer_id != 0;
-	}
-
-	return false;
+	return dec.extended.flags.get(decoration);
 }
 
 bool Compiler::has_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration) const
@@ -1272,81 +1200,22 @@ bool Compiler::has_extended_member_decoration(uint32_t type, uint32_t index, Ext
 		return false;
 
 	auto &dec = m->members[index];
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		return dec.extended.packed;
-
-	case SPIRVCrossDecorationPackedType:
-		return dec.extended.packed_type != 0;
-
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		return dec.extended.ib_member_index != uint32_t(-1);
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		return dec.extended.ib_orig_id != 0;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		return dec.extended.argument_buffer_id != uint32_t(-1);
-	}
-
-	return false;
+	return dec.extended.flags.get(decoration);
 }
 
 void Compiler::unset_extended_decoration(uint32_t id, ExtendedDecorations decoration)
 {
 	auto &dec = ir.meta[id].decoration;
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		dec.extended.packed = false;
-		break;
-
-	case SPIRVCrossDecorationPackedType:
-		dec.extended.packed_type = 0;
-		break;
-
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		dec.extended.ib_member_index = ~(0u);
-		break;
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		dec.extended.ib_orig_id = 0;
-		break;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		dec.extended.argument_buffer_id = 0;
-		break;
-	}
+	dec.extended.flags.clear(decoration);
+	dec.extended.values[decoration] = 0;
 }
 
 void Compiler::unset_extended_member_decoration(uint32_t type, uint32_t index, ExtendedDecorations decoration)
 {
 	ir.meta[type].members.resize(max(ir.meta[type].members.size(), size_t(index) + 1));
 	auto &dec = ir.meta[type].members[index];
-
-	switch (decoration)
-	{
-	case SPIRVCrossDecorationPacked:
-		dec.extended.packed = false;
-		break;
-
-	case SPIRVCrossDecorationPackedType:
-		dec.extended.packed_type = 0;
-		break;
-
-	case SPIRVCrossDecorationInterfaceMemberIndex:
-		dec.extended.ib_member_index = ~(0u);
-		break;
-
-	case SPIRVCrossDecorationInterfaceOrigID:
-		dec.extended.ib_orig_id = 0;
-		break;
-
-	case SPIRVCrossDecorationArgumentBufferID:
-		dec.extended.argument_buffer_id = 0;
-		break;
-	}
+	dec.extended.flags.clear(decoration);
+	dec.extended.values[decoration] = 0;
 }
 
 StorageClass Compiler::get_storage_class(uint32_t id) const
@@ -1596,6 +1465,11 @@ bool Compiler::execution_is_branchless(const SPIRBlock &from, const SPIRBlock &t
 		else
 			return false;
 	}
+}
+
+bool Compiler::execution_is_direct_branch(const SPIRBlock &from, const SPIRBlock &to) const
+{
+	return from.terminator == SPIRBlock::Direct && from.merge == SPIRBlock::MergeNone && from.next_block == to.self;
 }
 
 SPIRBlock::ContinueBlockType Compiler::continue_block_type(const SPIRBlock &block) const
@@ -3043,6 +2917,7 @@ bool Compiler::AnalyzeVariableScopeAccessHandler::handle(spv::Op op, const uint3
 
 	case OpArrayLength:
 	case OpLine:
+	case OpNoLine:
 		// Uses literals, but cannot be a phi variable or temporary, so ignore.
 		break;
 
@@ -4140,18 +4015,67 @@ const SmallVector<std::string> &Compiler::get_declared_extensions() const
 
 std::string Compiler::get_remapped_declared_block_name(uint32_t id) const
 {
+	return get_remapped_declared_block_name(id, false);
+}
+
+std::string Compiler::get_remapped_declared_block_name(uint32_t id, bool fallback_prefer_instance_name) const
+{
 	auto itr = declared_block_names.find(id);
 	if (itr != end(declared_block_names))
+	{
 		return itr->second;
+	}
 	else
 	{
 		auto &var = get<SPIRVariable>(id);
-		auto &type = get<SPIRType>(var.basetype);
 
-		auto *type_meta = ir.find_meta(type.self);
-		auto *block_name = type_meta ? &type_meta->decoration.alias : nullptr;
-		return (!block_name || block_name->empty()) ? get_block_fallback_name(id) : *block_name;
+		if (fallback_prefer_instance_name)
+		{
+			return to_name(var.self);
+		}
+		else
+		{
+			auto &type = get<SPIRType>(var.basetype);
+			auto *type_meta = ir.find_meta(type.self);
+			auto *block_name = type_meta ? &type_meta->decoration.alias : nullptr;
+			return (!block_name || block_name->empty()) ? get_block_fallback_name(id) : *block_name;
+		}
 	}
+}
+
+bool Compiler::reflection_ssbo_instance_name_is_significant() const
+{
+	if (ir.source.known)
+	{
+		// UAVs from HLSL source tend to be declared in a way where the type is reused
+		// but the instance name is significant, and that's the name we should report.
+		// For GLSL, SSBOs each have their own block type as that's how GLSL is written.
+		return ir.source.hlsl;
+	}
+
+	unordered_set<uint32_t> ssbo_type_ids;
+	bool aliased_ssbo_types = false;
+
+	// If we don't have any OpSource information, we need to perform some shaky heuristics.
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, const SPIRVariable &var) {
+		auto &type = this->get<SPIRType>(var.basetype);
+		if (!type.pointer || var.storage == StorageClassFunction)
+			return;
+
+		bool ssbo = var.storage == StorageClassStorageBuffer ||
+		            (var.storage == StorageClassUniform && has_decoration(type.self, DecorationBufferBlock));
+
+		if (ssbo)
+		{
+			if (ssbo_type_ids.count(type.self))
+				aliased_ssbo_types = true;
+			else
+				ssbo_type_ids.insert(type.self);
+		}
+	});
+
+	// If the block name is aliased, assume we have HLSL-style UAV declarations.
+	return aliased_ssbo_types;
 }
 
 bool Compiler::instruction_to_result_type(uint32_t &result_type, uint32_t &result_id, spv::Op op, const uint32_t *args,
@@ -4181,6 +4105,7 @@ bool Compiler::instruction_to_result_type(uint32_t &result_type, uint32_t &resul
 	case OpGroupCommitReadPipe:
 	case OpGroupCommitWritePipe:
 	case OpLine:
+	case OpNoLine:
 		return false;
 
 	default:

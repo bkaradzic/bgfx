@@ -85,7 +85,11 @@ ERROR: 0:95: 'subgroupPartitionedExclusiveMaxNV' : required extension not reques
 ERROR: 0:96: 'subgroupPartitionedExclusiveAndNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
 ERROR: 0:97: 'subgroupPartitionedExclusiveOrNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
 ERROR: 0:98: 'subgroupPartitionedExclusiveXorNV' : required extension not requested: GL_NV_shader_subgroup_partitioned
-ERROR: 86 compilation errors.  No code generated.
+ERROR: 0:237: 'gl_WarpsPerSMNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:238: 'gl_SMCountNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:239: 'gl_WarpIDNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 0:240: 'gl_SMIDNV' : required extension not requested: GL_NV_shader_sm_builtins
+ERROR: 90 compilation errors.  No code generated.
 
 
 Shader version: 450
@@ -97,6 +101,7 @@ Requested GL_KHR_shader_subgroup_quad
 Requested GL_KHR_shader_subgroup_shuffle
 Requested GL_KHR_shader_subgroup_shuffle_relative
 Requested GL_KHR_shader_subgroup_vote
+Requested GL_NV_shader_sm_builtins
 Requested GL_NV_shader_subgroup_partitioned
 input primitive = isolines
 vertex spacing = none
@@ -605,6 +610,20 @@ ERROR: node is still EOpNull!
 0:231      subgroupPartitionedExclusiveXorNV ( global 4-component vector of uint)
 0:231        'ballot' ( temp 4-component vector of uint)
 0:231        'parti' ( temp 4-component vector of uint)
+0:235  Function Definition: sm_builtins_err( ( global void)
+0:235    Function Parameters: 
+0:237    Sequence
+0:237      'gl_WarpsPerSMNV' ( in uint WarpsPerSMNV)
+0:238      'gl_SMCountNV' ( in uint SMCountNV)
+0:239      'gl_WarpIDNV' ( in uint WarpIDNV)
+0:240      'gl_SMIDNV' ( in uint SMIDNV)
+0:247  Function Definition: sm_builtins( ( global void)
+0:247    Function Parameters: 
+0:249    Sequence
+0:249      'gl_WarpsPerSMNV' ( in uint WarpsPerSMNV)
+0:250      'gl_SMCountNV' ( in uint SMCountNV)
+0:251      'gl_WarpIDNV' ( in uint WarpIDNV)
+0:252      'gl_SMIDNV' ( in uint SMIDNV)
 0:?   Linker Objects
 0:?     'anon@0' (layout( set=0 binding=0 column_major std430) buffer block{layout( column_major std430 offset=0) buffer runtime-sized array of 4-component vector of uint result})
 
@@ -621,6 +640,7 @@ Requested GL_KHR_shader_subgroup_quad
 Requested GL_KHR_shader_subgroup_shuffle
 Requested GL_KHR_shader_subgroup_shuffle_relative
 Requested GL_KHR_shader_subgroup_vote
+Requested GL_NV_shader_sm_builtins
 Requested GL_NV_shader_subgroup_partitioned
 input primitive = isolines
 vertex spacing = equal_spacing

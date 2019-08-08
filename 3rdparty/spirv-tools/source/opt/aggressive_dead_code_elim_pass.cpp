@@ -490,6 +490,28 @@ bool AggressiveDCEPass::AggressiveDCE(Function* func) {
         ProcessLoad(varId);
       }
     }
+
+    // Add OpDecorateId instructions that apply to this instruction to the work
+    // list.  We use the decoration manager to look through the group
+    // decorations to get to the OpDecorate* instructions themselves.
+    auto decorations =
+        get_decoration_mgr()->GetDecorationsFor(liveInst->result_id(), false);
+    for (Instruction* dec : decorations) {
+      // We only care about OpDecorateId instructions because the are the only
+      // decorations that will reference an id that will have to be kept live
+      // because of that use.
+      if (dec->opcode() != SpvOpDecorateId) {
+        continue;
+      }
+      if (dec->GetSingleWordInOperand(1) ==
+          SpvDecorationHlslCounterBufferGOOGLE) {
+        // These decorations should not force the use id to be live.  It will be
+        // removed if either the target or the in operand are dead.
+        continue;
+      }
+      AddToWorklist(dec);
+    }
+
     worklist_.pop();
   }
 
@@ -570,12 +592,27 @@ void AggressiveDCEPass::InitializeModuleScopeLiveInstructions() {
       AddToWorklist(&entry);
     }
   }
-  // Keep workgroup size.
   for (auto& anno : get_module()->annotations()) {
     if (anno.opcode() == SpvOpDecorate) {
+      // Keep workgroup size.
       if (anno.GetSingleWordInOperand(1u) == SpvDecorationBuiltIn &&
           anno.GetSingleWordInOperand(2u) == SpvBuiltInWorkgroupSize) {
         AddToWorklist(&anno);
+      }
+
+      if (context()->preserve_bindings()) {
+        // Keep all bindings.
+        if ((anno.GetSingleWordInOperand(1u) == SpvDecorationDescriptorSet) ||
+            (anno.GetSingleWordInOperand(1u) == SpvDecorationBinding)) {
+          AddToWorklist(&anno);
+        }
+      }
+
+      if (context()->preserve_spec_constants()) {
+        // Keep all specialization constant instructions
+        if (anno.GetSingleWordInOperand(1u) == SpvDecorationSpecId) {
+          AddToWorklist(&anno);
+        }
       }
     }
   }
@@ -603,14 +640,6 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // return unmodified.
   if (!AllExtensionsSupported()) return Status::SuccessWithoutChange;
 
-  // If the decoration manager is kept live then the context will try to keep it
-  // up to date.  ADCE deals with group decorations by changing the operands in
-  // |OpGroupDecorate| instruction directly without informing the decoration
-  // manager.  This can put it in an invalid state which will cause an error
-  // when the context tries to update it.  To avoid this problem invalidate
-  // the decoration manager upfront.
-  context()->InvalidateAnalyses(IRContext::Analysis::kAnalysisDecorations);
-
   // Eliminate Dead functions.
   bool modified = EliminateDeadFunctions();
 
@@ -619,6 +648,17 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // Process all entry point functions.
   ProcessFunction pfn = [this](Function* fp) { return AggressiveDCE(fp); };
   modified |= context()->ProcessEntryPointCallTree(pfn);
+
+  // If the decoration manager is kept live then the context will try to keep it
+  // up to date.  ADCE deals with group decorations by changing the operands in
+  // |OpGroupDecorate| instruction directly without informing the decoration
+  // manager.  This can put it in an invalid state which will cause an error
+  // when the context tries to update it.  To avoid this problem invalidate
+  // the decoration manager upfront.
+  //
+  // We kill it at now because it is used when processing the entry point
+  // functions.
+  context()->InvalidateAnalyses(IRContext::Analysis::kAnalysisDecorations);
 
   // Process module-level instructions. Now that all live instructions have
   // been marked, it is safe to remove dead global values.
@@ -868,6 +908,7 @@ void AggressiveDCEPass::InitExtensions() {
       "SPV_AMD_gpu_shader_half_float_fetch",
       "SPV_GOOGLE_decorate_string",
       "SPV_GOOGLE_hlsl_functionality1",
+      "SPV_GOOGLE_user_type",
       "SPV_NV_shader_subgroup_partitioned",
       "SPV_EXT_descriptor_indexing",
       "SPV_NV_fragment_shader_barycentric",

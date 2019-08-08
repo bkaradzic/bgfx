@@ -624,6 +624,8 @@ enum TOperator {
     EOpBeginInvocationInterlock, // Fragment only
     EOpEndInvocationInterlock, // Fragment only
 
+    EOpIsHelperInvocation,
+
     //
     // Branch
     //
@@ -634,6 +636,7 @@ enum TOperator {
     EOpContinue,
     EOpCase,
     EOpDefault,
+    EOpDemote,          // Fragment only
 
     //
     // Constructors
@@ -651,9 +654,21 @@ enum TOperator {
     EOpConstructBool,
     EOpConstructFloat,
     EOpConstructDouble,
+    // Keep vector and matrix constructors in a consistent relative order for
+    // TParseContext::constructBuiltIn, which converts between 8/16/32 bit
+    // vector constructors
     EOpConstructVec2,
     EOpConstructVec3,
     EOpConstructVec4,
+    EOpConstructMat2x2,
+    EOpConstructMat2x3,
+    EOpConstructMat2x4,
+    EOpConstructMat3x2,
+    EOpConstructMat3x3,
+    EOpConstructMat3x4,
+    EOpConstructMat4x2,
+    EOpConstructMat4x3,
+    EOpConstructMat4x4,
     EOpConstructDVec2,
     EOpConstructDVec3,
     EOpConstructDVec4,
@@ -684,15 +699,6 @@ enum TOperator {
     EOpConstructU64Vec2,
     EOpConstructU64Vec3,
     EOpConstructU64Vec4,
-    EOpConstructMat2x2,
-    EOpConstructMat2x3,
-    EOpConstructMat2x4,
-    EOpConstructMat3x2,
-    EOpConstructMat3x3,
-    EOpConstructMat3x4,
-    EOpConstructMat4x2,
-    EOpConstructMat4x3,
-    EOpConstructMat4x4,
     EOpConstructDMat2x2,
     EOpConstructDMat2x3,
     EOpConstructDMat2x4,
@@ -999,6 +1005,10 @@ enum TOperator {
     EOpWaveGetLaneIndex,                 // Will decompose to gl_SubgroupInvocationID.
     EOpWaveActiveCountBits,              // Will decompose to subgroupBallotBitCount(subgroupBallot()).
     EOpWavePrefixCountBits,              // Will decompose to subgroupBallotInclusiveBitCount(subgroupBallot()).
+
+    // Shader Clock Ops
+    EOpReadClockSubgroupKHR,
+    EOpReadClockDeviceKHR,
 };
 
 class TIntermTraverser;

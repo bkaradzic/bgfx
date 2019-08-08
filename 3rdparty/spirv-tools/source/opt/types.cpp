@@ -102,7 +102,7 @@ std::unique_ptr<Type> Type::Clone() const {
 #define DeclareKindCase(kind)                   \
   case k##kind:                                 \
     type = MakeUnique<kind>(*this->As##kind()); \
-    break;
+    break
     DeclareKindCase(Void);
     DeclareKindCase(Bool);
     DeclareKindCase(Integer);
@@ -146,7 +146,7 @@ bool Type::operator==(const Type& other) const {
   switch (kind_) {
 #define DeclareKindCase(kind) \
   case k##kind:               \
-    return As##kind()->IsSame(&other);
+    return As##kind()->IsSame(&other)
     DeclareKindCase(Void);
     DeclareKindCase(Bool);
     DeclareKindCase(Integer);
@@ -195,7 +195,7 @@ void Type::GetHashWords(std::vector<uint32_t>* words,
 #define DeclareKindCase(type)                   \
   case k##type:                                 \
     As##type()->GetExtraHashWords(words, seen); \
-    break;
+    break
     DeclareKindCase(Void);
     DeclareKindCase(Bool);
     DeclareKindCase(Integer);

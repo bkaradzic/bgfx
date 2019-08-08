@@ -1165,8 +1165,9 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
                             error(arguments->getLoc(), message, "readonly", "");
                         if (argQualifier.writeonly && ! formalQualifier.writeonly)
                             error(arguments->getLoc(), message, "writeonly", "");
-                        if (!builtIn && argQualifier.restrict && ! formalQualifier.restrict)
-                            error(arguments->getLoc(), message, "restrict", "");
+                        // Don't check 'restrict', it is different than the rest:
+                        // "...but only restrict can be taken away from a calling argument, by a formal parameter that
+                        // lacks the restrict qualifier..."
                     }
                     if (!builtIn && argQualifier.layoutFormat != formalQualifier.layoutFormat) {
                         // we have mismatched formats, which should only be allowed if writeonly
@@ -1640,6 +1641,7 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
     const int gl_SemanticsAcquireRelease  = 0x8;
     const int gl_SemanticsMakeAvailable   = 0x2000;
     const int gl_SemanticsMakeVisible     = 0x4000;
+    const int gl_SemanticsVolatile        = 0x8000;
 
     //const int gl_StorageSemanticsNone     = 0x0;
     const int gl_StorageSemanticsBuffer   = 0x40;
@@ -1729,7 +1731,8 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
                                       gl_SemanticsRelease |
                                       gl_SemanticsAcquireRelease |
                                       gl_SemanticsMakeAvailable |
-                                      gl_SemanticsMakeVisible))) {
+                                      gl_SemanticsMakeVisible |
+                                      gl_SemanticsVolatile))) {
         error(loc, "Invalid semantics value", fnCandidate.getName().c_str(), "");
     }
     if (((storageClassSemantics | storageClassSemantics2) & ~(gl_StorageSemanticsBuffer |
@@ -1781,7 +1784,16 @@ void TParseContext::memorySemanticsCheck(const TSourceLoc& loc, const TFunction&
         error(loc, "gl_SemanticsMakeVisible requires gl_SemanticsAcquire or gl_SemanticsAcquireRelease",
               fnCandidate.getName().c_str(), "");
     }
-
+    if ((semantics & gl_SemanticsVolatile) &&
+        (callNode.getOp() == EOpMemoryBarrier || callNode.getOp() == EOpBarrier)) {
+        error(loc, "gl_SemanticsVolatile must not be used with memoryBarrier or controlBarrier",
+              fnCandidate.getName().c_str(), "");
+    }
+    if ((callNode.getOp() == EOpAtomicCompSwap || callNode.getOp() == EOpImageAtomicCompSwap) &&
+        ((semantics ^ semantics2) & gl_SemanticsVolatile)) {
+        error(loc, "semEqual and semUnequal must either both include gl_SemanticsVolatile or neither",
+              fnCandidate.getName().c_str(), "");
+    }
 }
 
 
@@ -3964,23 +3976,30 @@ bool TParseContext::isRuntimeLength(const TIntermTyped& base) const
 }
 
 #ifdef NV_EXTENSIONS
-// Fix mesh view output array dimension
-void TParseContext::resizeMeshViewDimension(const TSourceLoc& loc, TType& type)
+// Check if mesh perviewNV attributes have a view dimension
+// and resize it to gl_MaxMeshViewCountNV when implicitly sized.
+void TParseContext::checkAndResizeMeshViewDim(const TSourceLoc& loc, TType& type, bool isBlockMember)
 {
     // see if member is a per-view attribute
-    if (type.getQualifier().isPerView()) {
-        // since we don't have the maxMeshViewCountNV set during parsing builtins, we hardcode the value
-        int maxViewCount = parsingBuiltins ? 4 : resources.maxMeshViewCountNV;
+    if (!type.getQualifier().isPerView())
+        return;
 
-        if (! type.isArray()) {
-            error(loc, "requires an view array dimension", "perviewNV", "");
-        }
-        else if (!type.isUnsizedArray() && type.getOuterArraySize() != maxViewCount) {
+    if ((isBlockMember && type.isArray()) || (!isBlockMember && type.isArrayOfArrays())) {
+        // since we don't have the maxMeshViewCountNV set during parsing builtins, we hardcode the value.
+        int maxViewCount = parsingBuiltins ? 4 : resources.maxMeshViewCountNV;
+        // For block members, outermost array dimension is the view dimension.
+        // For non-block members, outermost array dimension is the vertex/primitive dimension
+        // and 2nd outermost is the view dimension.
+        int viewDim = isBlockMember ? 0 : 1;
+        int viewDimSize = type.getArraySizes()->getDimSize(viewDim);
+
+        if (viewDimSize != UnsizedArraySize && viewDimSize != maxViewCount)
             error(loc, "mesh view output array size must be gl_MaxMeshViewCountNV or implicitly sized", "[]", "");
-        }
-        else if (type.isUnsizedArray()) {
-            type.changeOuterArraySize(maxViewCount);
-        }
+        else if (viewDimSize == UnsizedArraySize)
+            type.getArraySizes()->setDimSize(viewDim, maxViewCount);
+    }
+    else {
+        error(loc, "requires a view array dimension", "perviewNV", "");
     }
 }
 #endif
@@ -6415,6 +6434,7 @@ TIntermNode* TParseContext::declareVariable(const TSourceLoc& loc, TString& iden
     transparentOpaqueCheck(loc, type, identifier);
 #ifdef NV_EXTENSIONS
     accStructNVCheck(loc, type, identifier);
+    checkAndResizeMeshViewDim(loc, type, /*isBlockMember*/ false);
 #endif
     if (type.getQualifier().storage == EvqConst && type.containsBasicType(EbtReference)) {
         error(loc, "variables with reference type can't have qualifier 'const'", "qualifier", "");
@@ -6936,6 +6956,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructF16Mat4x4:
     case EOpConstructFloat16:
         basicOp = EOpConstructFloat16;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticFloat16Enabled()) {
+            TType tempType(EbtFloat, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructVec2 + op - EOpConstructF16Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtFloat16, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructI8Vec2:
@@ -6943,6 +6973,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructI8Vec4:
     case EOpConstructInt8:
         basicOp = EOpConstructInt8;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt8Enabled()) {
+            TType tempType(EbtInt, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructIVec2 + op - EOpConstructI8Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtInt8, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructU8Vec2:
@@ -6950,6 +6990,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructU8Vec4:
     case EOpConstructUint8:
         basicOp = EOpConstructUint8;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt8Enabled()) {
+            TType tempType(EbtUint, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructUVec2 + op - EOpConstructU8Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtUint8, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructI16Vec2:
@@ -6957,6 +7007,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructI16Vec4:
     case EOpConstructInt16:
         basicOp = EOpConstructInt16;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt16Enabled()) {
+            TType tempType(EbtInt, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructIVec2 + op - EOpConstructI16Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtInt16, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructU16Vec2:
@@ -6964,6 +7024,16 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     case EOpConstructU16Vec4:
     case EOpConstructUint16:
         basicOp = EOpConstructUint16;
+        // 8/16-bit storage extensions don't support constructing composites of 8/16-bit types,
+        // so construct a 32-bit type and convert
+        if (!intermediate.getArithemeticInt16Enabled()) {
+            TType tempType(EbtUint, EvqTemporary, type.getVectorSize());
+            newNode = node;
+            if (tempType != newNode->getType())
+                newNode = intermediate.setAggregateOperator(newNode, (TOperator)(EOpConstructUVec2 + op - EOpConstructU16Vec2), tempType, node->getLoc());
+            newNode = intermediate.addConversion(EbtUint16, newNode);
+            return newNode;
+        }
         break;
 
     case EOpConstructIVec2:
@@ -7280,7 +7350,7 @@ void TParseContext::declareBlock(const TSourceLoc& loc, TTypeList& typeList, con
 #ifdef NV_EXTENSIONS
     if (memberWithPerViewQualifier) {
         for (unsigned int member = 0; member < typeList.size(); ++member) {
-            resizeMeshViewDimension(typeList[member].loc, *typeList[member].type);
+            checkAndResizeMeshViewDim(typeList[member].loc, *typeList[member].type, /*isBlockMember*/ true);
         }
     }
 #endif

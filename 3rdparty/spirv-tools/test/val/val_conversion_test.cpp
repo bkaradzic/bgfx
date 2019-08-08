@@ -18,6 +18,7 @@
 
 #include "gmock/gmock.h"
 #include "test/unit_spirv.h"
+#include "test/val/val_code_generator.h"
 #include "test/val/val_fixtures.h"
 
 namespace spvtools {
@@ -26,6 +27,7 @@ namespace {
 
 using ::testing::HasSubstr;
 using ::testing::Not;
+using ::testing::Values;
 
 using ValidateConversion = spvtest::ValidateBase<bool>;
 
@@ -637,170 +639,6 @@ TEST_F(ValidateConversion, QuantizeToF16WrongInputType) {
       getDiagnosticString(),
       HasSubstr(
           "Expected input type to be equal to Result Type: QuantizeToF16"));
-}
-
-TEST_F(ValidateConversion, ConvertFToS8BitStorage) {
-  const std::string capabilities_and_extensions = R"(
-OpCapability StorageBuffer8BitAccess
-OpExtension "SPV_KHR_8bit_storage"
-OpExtension "SPV_KHR_storage_buffer_storage_class"
-)";
-
-  const std::string decorations = R"(
-OpDecorate %ssbo Block
-OpDecorate %ssbo Binding 0
-OpDecorate %ssbo DescriptorSet 0
-OpMemberDecorate %ssbo 0 Offset 0
-)";
-
-  const std::string types = R"(
-%i8 = OpTypeInt 8 1
-%i8ptr = OpTypePointer StorageBuffer %i8
-%ssbo = OpTypeStruct %i8
-%ssboptr = OpTypePointer StorageBuffer %ssbo
-)";
-
-  const std::string variables = R"(
-%var = OpVariable %ssboptr StorageBuffer
-)";
-
-  const std::string body = R"(
-%val = OpConvertFToS %i8 %f32_2
-%accesschain = OpAccessChain %i8ptr %var %u32_0
-OpStore %accesschain %val
-)";
-
-  CompileSuccessfully(GenerateShaderCode(body, capabilities_and_extensions,
-                                         decorations, types, variables)
-                          .c_str());
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Invalid cast to 8-bit integer from a floating-point: ConvertFToS"));
-}
-
-TEST_F(ValidateConversion, ConvertFToU8BitStorage) {
-  const std::string capabilities_and_extensions = R"(
-OpCapability StorageBuffer8BitAccess
-OpExtension "SPV_KHR_8bit_storage"
-OpExtension "SPV_KHR_storage_buffer_storage_class"
-)";
-
-  const std::string decorations = R"(
-OpDecorate %ssbo Block
-OpDecorate %ssbo Binding 0
-OpDecorate %ssbo DescriptorSet 0
-OpMemberDecorate %ssbo 0 Offset 0
-)";
-
-  const std::string types = R"(
-%u8 = OpTypeInt 8 0
-%u8ptr = OpTypePointer StorageBuffer %u8
-%ssbo = OpTypeStruct %u8
-%ssboptr = OpTypePointer StorageBuffer %ssbo
-)";
-
-  const std::string variables = R"(
-%var = OpVariable %ssboptr StorageBuffer
-)";
-
-  const std::string body = R"(
-%val = OpConvertFToU %u8 %f32_2
-%accesschain = OpAccessChain %u8ptr %var %u32_0
-OpStore %accesschain %val
-)";
-
-  CompileSuccessfully(GenerateShaderCode(body, capabilities_and_extensions,
-                                         decorations, types, variables)
-                          .c_str());
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Invalid cast to 8-bit integer from a floating-point: ConvertFToU"));
-}
-
-TEST_F(ValidateConversion, ConvertSToF8BitStorage) {
-  const std::string capabilities_and_extensions = R"(
-OpCapability StorageBuffer8BitAccess
-OpExtension "SPV_KHR_8bit_storage"
-OpExtension "SPV_KHR_storage_buffer_storage_class"
-)";
-
-  const std::string decorations = R"(
-OpDecorate %ssbo Block
-OpDecorate %ssbo Binding 0
-OpDecorate %ssbo DescriptorSet 0
-OpMemberDecorate %ssbo 0 Offset 0
-)";
-
-  const std::string types = R"(
-%i8 = OpTypeInt 8 1
-%i8ptr = OpTypePointer StorageBuffer %i8
-%ssbo = OpTypeStruct %i8
-%ssboptr = OpTypePointer StorageBuffer %ssbo
-)";
-
-  const std::string variables = R"(
-%var = OpVariable %ssboptr StorageBuffer
-)";
-
-  const std::string body = R"(
-%accesschain = OpAccessChain %i8ptr %var %u32_0
-%load = OpLoad %i8 %accesschain
-%val = OpConvertSToF %f32 %load
-)";
-
-  CompileSuccessfully(GenerateShaderCode(body, capabilities_and_extensions,
-                                         decorations, types, variables)
-                          .c_str());
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Invalid cast to floating-point from an 8-bit integer: ConvertSToF"));
-}
-
-TEST_F(ValidateConversion, ConvertUToF8BitStorage) {
-  const std::string capabilities_and_extensions = R"(
-OpCapability StorageBuffer8BitAccess
-OpExtension "SPV_KHR_8bit_storage"
-OpExtension "SPV_KHR_storage_buffer_storage_class"
-)";
-
-  const std::string decorations = R"(
-OpDecorate %ssbo Block
-OpDecorate %ssbo Binding 0
-OpDecorate %ssbo DescriptorSet 0
-OpMemberDecorate %ssbo 0 Offset 0
-)";
-
-  const std::string types = R"(
-%u8 = OpTypeInt 8 0
-%u8ptr = OpTypePointer StorageBuffer %u8
-%ssbo = OpTypeStruct %u8
-%ssboptr = OpTypePointer StorageBuffer %ssbo
-)";
-
-  const std::string variables = R"(
-%var = OpVariable %ssboptr StorageBuffer
-)";
-
-  const std::string body = R"(
-%accesschain = OpAccessChain %u8ptr %var %u32_0
-%load = OpLoad %u8 %accesschain
-%val = OpConvertUToF %f32 %load
-)";
-
-  CompileSuccessfully(GenerateShaderCode(body, capabilities_and_extensions,
-                                         decorations, types, variables)
-                          .c_str());
-  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Invalid cast to floating-point from an 8-bit integer: ConvertUToF"));
 }
 
 TEST_F(ValidateConversion, ConvertPtrToUSuccess) {
@@ -1579,6 +1417,148 @@ OpFunctionEnd
               HasSubstr("Pointer storage class must be "
                         "PhysicalStorageBufferEXT: ConvertPtrToU"));
 }
+
+using ValidateSmallConversions = spvtest::ValidateBase<std::string>;
+
+CodeGenerator GetSmallConversionsCodeGenerator() {
+  CodeGenerator generator;
+  generator.capabilities_ = R"(
+OpCapability Shader
+OpCapability Linkage
+OpCapability UniformAndStorageBuffer16BitAccess
+OpCapability UniformAndStorageBuffer8BitAccess
+)";
+  generator.extensions_ = R"(
+OpExtension "SPV_KHR_16bit_storage"
+OpExtension "SPV_KHR_8bit_storage"
+)";
+  generator.memory_model_ = "OpMemoryModel Logical GLSL450\n";
+  generator.before_types_ = R"(
+OpDecorate %char_block Block
+OpMemberDecorate %char_block 0 Offset 0
+OpDecorate %short_block Block
+OpMemberDecorate %short_block 0 Offset 0
+OpDecorate %half_block Block
+OpMemberDecorate %half_block 0 Offset 0
+OpDecorate %int_block Block
+OpMemberDecorate %int_block 0 Offset 0
+OpDecorate %float_block Block
+OpMemberDecorate %float_block 0 Offset 0
+)";
+  generator.types_ = R"(
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%int2 = OpTypeVector %int 2
+%float = OpTypeFloat 32
+%float_0 = OpConstant %float 0
+%float2 = OpTypeVector %float 2
+%char = OpTypeInt 8 0
+%char2 = OpTypeVector %char 2
+%short = OpTypeInt 16 0
+%short2 = OpTypeVector %short 2
+%half = OpTypeFloat 16
+%half2 = OpTypeVector %half 2
+%char_block = OpTypeStruct %char2
+%short_block = OpTypeStruct %short2
+%half_block = OpTypeStruct %half2
+%int_block = OpTypeStruct %int2
+%float_block = OpTypeStruct %float2
+%ptr_ssbo_char_block = OpTypePointer StorageBuffer %char_block
+%ptr_ssbo_char2 = OpTypePointer StorageBuffer %char2
+%ptr_ssbo_char = OpTypePointer StorageBuffer %char
+%ptr_ssbo_short_block = OpTypePointer StorageBuffer %short_block
+%ptr_ssbo_short2 = OpTypePointer StorageBuffer %short2
+%ptr_ssbo_short = OpTypePointer StorageBuffer %short
+%ptr_ssbo_half_block = OpTypePointer StorageBuffer %half_block
+%ptr_ssbo_half2 = OpTypePointer StorageBuffer %half2
+%ptr_ssbo_half = OpTypePointer StorageBuffer %half
+%ptr_ssbo_int_block = OpTypePointer StorageBuffer %int_block
+%ptr_ssbo_int2 = OpTypePointer StorageBuffer %int2
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ptr_ssbo_float_block = OpTypePointer StorageBuffer %float_block
+%ptr_ssbo_float2 = OpTypePointer StorageBuffer %float2
+%ptr_ssbo_float = OpTypePointer StorageBuffer %float
+%void_fn = OpTypeFunction %void
+%char_var = OpVariable %ptr_ssbo_char_block StorageBuffer
+%short_var = OpVariable %ptr_ssbo_short_block StorageBuffer
+%half_var = OpVariable %ptr_ssbo_half_block StorageBuffer
+%int_var = OpVariable %ptr_ssbo_int_block StorageBuffer
+%float_var = OpVariable %ptr_ssbo_float_block StorageBuffer
+)";
+  generator.after_types_ = R"(
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%char2_gep = OpAccessChain %ptr_ssbo_char2 %char_var %int_0
+%ld_char2 = OpLoad %char2 %char2_gep
+%char_gep = OpAccessChain %ptr_ssbo_char %char_var %int_0 %int_0
+%ld_char = OpLoad %char %char_gep
+%short2_gep = OpAccessChain %ptr_ssbo_short2 %short_var %int_0
+%ld_short2 = OpLoad %short2 %short2_gep
+%short_gep = OpAccessChain %ptr_ssbo_short %short_var %int_0 %int_0
+%ld_short = OpLoad %short %short_gep
+%half2_gep = OpAccessChain %ptr_ssbo_half2 %half_var %int_0
+%ld_half2 = OpLoad %half2 %half2_gep
+%half_gep = OpAccessChain %ptr_ssbo_half %half_var %int_0 %int_0
+%ld_half = OpLoad %half %half_gep
+%int2_gep = OpAccessChain %ptr_ssbo_int2 %int_var %int_0
+%ld_int2 = OpLoad %int2 %int2_gep
+%int_gep = OpAccessChain %ptr_ssbo_int %int_var %int_0 %int_0
+%ld_int = OpLoad %int %int_gep
+%float2_gep = OpAccessChain %ptr_ssbo_float2 %float_var %int_0
+%ld_float2 = OpLoad %float2 %float2_gep
+%float_gep = OpAccessChain %ptr_ssbo_float %float_var %int_0 %int_0
+%ld_float = OpLoad %float %float_gep
+)";
+  generator.add_at_the_end_ = R"(
+OpReturn
+OpFunctionEnd
+)";
+  return generator;
+}
+
+TEST_P(ValidateSmallConversions, Instruction) {
+  CodeGenerator generator = GetSmallConversionsCodeGenerator();
+  generator.after_types_ += GetParam() + "\n";
+  CompileSuccessfully(generator.Build(), SPV_ENV_UNIVERSAL_1_3);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA,
+            ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "8- or 16-bit types can only be used with width-only conversions"));
+}
+
+INSTANTIATE_TEST_SUITE_P(SmallConversionInstructions, ValidateSmallConversions,
+                         Values("%inst = OpConvertFToU %char %ld_float",
+                                "%inst = OpConvertFToU %char2 %ld_float2",
+                                "%inst = OpConvertFToU %short %ld_float",
+                                "%inst = OpConvertFToU %short2 %ld_float2",
+                                "%inst = OpConvertFToU %int %ld_half",
+                                "%inst = OpConvertFToU %int2 %ld_half2",
+                                "%inst = OpConvertFToS %char %ld_float",
+                                "%inst = OpConvertFToS %char2 %ld_float2",
+                                "%inst = OpConvertFToS %short %ld_float",
+                                "%inst = OpConvertFToS %short2 %ld_float2",
+                                "%inst = OpConvertFToS %int %ld_half",
+                                "%inst = OpConvertFToS %int2 %ld_half2",
+                                "%inst = OpConvertSToF %float %ld_char",
+                                "%inst = OpConvertSToF %float2 %ld_char2",
+                                "%inst = OpConvertSToF %float %ld_short",
+                                "%inst = OpConvertSToF %float2 %ld_short2",
+                                "%inst = OpConvertSToF %half %ld_int",
+                                "%inst = OpConvertSToF %half2 %ld_int2",
+                                "%inst = OpConvertUToF %float %ld_char",
+                                "%inst = OpConvertUToF %float2 %ld_char2",
+                                "%inst = OpConvertUToF %float %ld_short",
+                                "%inst = OpConvertUToF %float2 %ld_short2",
+                                "%inst = OpConvertUToF %half %ld_int",
+                                "%inst = OpConvertUToF %half2 %ld_int2",
+                                "%inst = OpBitcast %half %ld_short",
+                                "%inst = OpBitcast %half2 %ld_short2",
+                                "%inst = OpBitcast %short %ld_half",
+                                "%inst = OpBitcast %short2 %ld_half2"));
 
 }  // namespace
 }  // namespace val

@@ -142,6 +142,7 @@ const char* const E_GL_ARB_shader_stencil_export        = "GL_ARB_shader_stencil
 const char* const E_GL_ARB_post_depth_coverage          = "GL_ARB_post_depth_coverage";
 const char* const E_GL_ARB_shader_viewport_layer_array  = "GL_ARB_shader_viewport_layer_array";
 const char* const E_GL_ARB_fragment_shader_interlock    = "GL_ARB_fragment_shader_interlock";
+const char* const E_GL_ARB_shader_clock                 = "GL_ARB_shader_clock";
 
 const char* const E_GL_KHR_shader_subgroup_basic            = "GL_KHR_shader_subgroup_basic";
 const char* const E_GL_KHR_shader_subgroup_vote             = "GL_KHR_shader_subgroup_vote";
@@ -173,6 +174,8 @@ const char* const E_GL_EXT_scalar_block_layout              = "GL_EXT_scalar_blo
 const char* const E_GL_EXT_fragment_invocation_density      = "GL_EXT_fragment_invocation_density";
 const char* const E_GL_EXT_buffer_reference                 = "GL_EXT_buffer_reference";
 const char* const E_GL_EXT_buffer_reference2                = "GL_EXT_buffer_reference2";
+const char* const E_GL_EXT_demote_to_helper_invocation      = "GL_EXT_demote_to_helper_invocation";
+const char* const E_GL_EXT_shader_realtime_clock            = "GL_EXT_shader_realtime_clock";
 
 // Arrays of extensions for the above viewportEXTs duplications
 
@@ -228,6 +231,7 @@ const int Num_viewportEXTs = sizeof(viewportEXTs) / sizeof(viewportEXTs[0]);
 #endif
 
 const char* const E_GL_NV_cooperative_matrix                    = "GL_NV_cooperative_matrix";
+const char* const E_GL_NV_shader_sm_builtins                    = "GL_NV_shader_sm_builtins";
 
 // AEP
 const char* const E_GL_ANDROID_extension_pack_es31a             = "GL_ANDROID_extension_pack_es31a";

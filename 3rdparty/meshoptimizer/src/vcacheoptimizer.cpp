@@ -15,11 +15,11 @@ const size_t kValenceMax = 8;
 
 static const float kVertexScoreTableCache[1 + kCacheSizeMax] = {
     0.f,
-    0.792f, 0.767f, 0.764f, 0.956f, 0.827f, 0.751f, 0.820f, 0.864f, 0.738f, 0.788f, 0.642f, 0.646f, 0.165f, 0.654f, 0.545f, 0.284f};
+    0.779f, 0.791f, 0.789f, 0.981f, 0.843f, 0.726f, 0.847f, 0.882f, 0.867f, 0.799f, 0.642f, 0.613f, 0.600f, 0.568f, 0.372f, 0.234f};
 
 static const float kVertexScoreTableLive[1 + kValenceMax] = {
     0.f,
-    0.994f, 0.721f, 0.479f, 0.423f, 0.174f, 0.080f, 0.249f, 0.056f};
+    0.995f, 0.713f, 0.450f, 0.404f, 0.059f, 0.005f, 0.147f, 0.006f};
 
 struct TriangleAdjacency
 {

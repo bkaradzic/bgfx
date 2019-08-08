@@ -161,6 +161,12 @@ class DeadBranchElimPass : public MemPass {
   // Returns true if there is a brach to the merge node of the selection
   // construct |switch_header_id| that is inside a nested selection construct.
   bool SwitchHasNestedBreak(uint32_t switch_header_id);
+
+  // Replaces the terminator of |block| with a branch to |live_lab_id|.  The
+  // merge instruction is deleted or moved as needed to maintain structured
+  // control flow.  Assumes that the StructuredCFGAnalysis is valid for the
+  // constructs containing |block|.
+  void SimplifyBranch(BasicBlock* block, uint32_t live_lab_id);
 };
 
 }  // namespace opt

@@ -123,11 +123,11 @@ spv_result_t ValidateExecutionScope(ValidationState_t& _,
   // WebGPU Specific rules
   if (spvIsWebGPUEnv(_.context()->target_env)) {
     // Scope for execution must be limited to Workgroup or Subgroup
-    if (value != SpvScopeWorkgroup && value != SpvScopeSubgroup) {
+    if (value != SpvScopeWorkgroup) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << spvOpcodeString(opcode)
              << ": in WebGPU environment Execution Scope is limited to "
-             << "Workgroup and Subgroup";
+             << "Workgroup";
     }
   }
 
@@ -229,12 +229,12 @@ spv_result_t ValidateMemoryScope(ValidationState_t& _, const Instruction* inst,
 
   // WebGPU specific rules
   if (spvIsWebGPUEnv(_.context()->target_env)) {
-    if (value != SpvScopeWorkgroup && value != SpvScopeSubgroup &&
+    if (value != SpvScopeWorkgroup && value != SpvScopeInvocation &&
         value != SpvScopeQueueFamilyKHR) {
       return _.diag(SPV_ERROR_INVALID_DATA, inst)
              << spvOpcodeString(opcode)
              << ": in WebGPU environment Memory Scope is limited to "
-             << "Workgroup, Subgroup and QueuFamilyKHR";
+             << "Workgroup, Invocation, and QueueFamilyKHR";
     }
   }
 

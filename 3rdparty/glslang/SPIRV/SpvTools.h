@@ -66,7 +66,7 @@ void SpirvToolsDisassemble(std::ostream& out, const std::vector<unsigned int>& s
 
 // Apply the SPIRV-Tools validator to generated SPIR-V.
 void SpirvToolsValidate(const glslang::TIntermediate& intermediate, std::vector<unsigned int>& spirv,
-                        spv::SpvBuildLogger*);
+                        spv::SpvBuildLogger*, bool prelegalization);
 
 // Apply the SPIRV-Tools optimizer to generated SPIR-V, for the purpose of
 // legalizing HLSL SPIR-V.

@@ -678,10 +678,17 @@ uint32_t IRContext::GetBuiltinInputVarId(uint32_t builtin) {
       case SpvBuiltInVertexIndex:
       case SpvBuiltInInstanceIndex:
       case SpvBuiltInPrimitiveId:
-      case SpvBuiltInInvocationId:
-      case SpvBuiltInGlobalInvocationId: {
+      case SpvBuiltInInvocationId: {
         analysis::Integer uint_ty(32, false);
         reg_type = type_mgr->GetRegisteredType(&uint_ty);
+        break;
+      }
+      case SpvBuiltInGlobalInvocationId:
+      case SpvBuiltInLaunchIdNV: {
+        analysis::Integer uint_ty(32, false);
+        analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
+        analysis::Vector v3uint_ty(reg_uint_ty, 3);
+        reg_type = type_mgr->GetRegisteredType(&v3uint_ty);
         break;
       }
       default: {

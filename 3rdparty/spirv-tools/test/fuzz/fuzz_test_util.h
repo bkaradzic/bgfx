@@ -59,6 +59,11 @@ const uint32_t kFuzzAssembleOption =
 const uint32_t kFuzzDisassembleOption =
     SPV_BINARY_TO_TEXT_OPTION_NO_HEADER | SPV_BINARY_TO_TEXT_OPTION_INDENT;
 
+// A silent message consumer.
+const spvtools::MessageConsumer kSilentConsumer =
+    [](spv_message_level_t, const char*, const spv_position_t&,
+       const char*) -> void {};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

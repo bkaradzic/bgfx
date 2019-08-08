@@ -2037,4 +2037,203 @@ OpFunctionEnd
   SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
 }
 
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicLoad) {
+  const std::string text = R"(
+; CHECK-NOT: OpDecorate {{.*}} Volatile
+; CHECK: [[volatile:%[a-zA-Z0-9_]+]] = OpConstant [[int:%[a-zA-Z0-9_]+]] 32768
+; CHECK: OpAtomicLoad [[int]] {{.*}} {{.*}} [[volatile]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %ssbo_var Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%device = OpConstant %int 1
+%relaxed = OpConstant %int 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%ld = OpAtomicLoad %int %ssbo_var %device %relaxed
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicLoadPreviousFlags) {
+  const std::string text = R"(
+; CHECK-NOT: OpDecorate {{.*}} Volatile
+; CHECK: [[volatile:%[a-zA-Z0-9_]+]] = OpConstant [[int:%[a-zA-Z0-9_]+]] 32834
+; CHECK: OpAtomicLoad [[int]] {{.*}} {{.*}} [[volatile]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %ssbo_var Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%device = OpConstant %int 1
+%acquire_ssbo = OpConstant %int 66
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%ld = OpAtomicLoad %int %ssbo_var %device %acquire_ssbo
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicStore) {
+  const std::string text = R"(
+; CHECK-NOT: OpDecorate {{.*}} Volatile
+; CHECK: [[volatile:%[a-zA-Z0-9_]+]] = OpConstant {{.*}} 32768
+; CHECK: OpAtomicStore {{.*}} {{.*}} [[volatile]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %ssbo_var Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%device = OpConstant %int 1
+%relaxed = OpConstant %int 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpAtomicStore %ssbo_var %device %relaxed %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicStorePreviousFlags) {
+  const std::string text = R"(
+; CHECK-NOT: OpDecorate {{.*}} Volatile
+; CHECK: [[volatile:%[a-zA-Z0-9_]+]] = OpConstant {{.*}} 32836
+; CHECK: OpAtomicStore {{.*}} {{.*}} [[volatile]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %ssbo_var Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%device = OpConstant %int 1
+%release_ssbo = OpConstant %int 68
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+OpAtomicStore %ssbo_var %device %release_ssbo %int_0
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicCompareExchange) {
+  const std::string text = R"(
+; CHECK-NOT: OpDecorate {{.*}} Volatile
+; CHECK: [[volatile:%[a-zA-Z0-9_]+]] = OpConstant [[int:%[a-zA-Z0-9_]+]] 32768
+; CHECK: OpAtomicCompareExchange [[int]] {{.*}} {{.*}} [[volatile]] [[volatile]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %ssbo_var Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%device = OpConstant %int 1
+%relaxed = OpConstant %int 0
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%ld = OpAtomicCompareExchange %int %ssbo_var %device %relaxed %relaxed %int_0 %int_1
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicCompareExchangePreviousFlags) {
+  const std::string text = R"(
+; CHECK-NOT: OpDecorate {{.*}} Volatile
+; CHECK: [[volatile_acq_rel:%[a-zA-Z0-9_]+]] = OpConstant [[int:%[a-zA-Z0-9_]+]] 32840
+; CHECK: [[volatile_acq:%[a-zA-Z0-9_]+]] = OpConstant [[int:%[a-zA-Z0-9_]+]] 32834
+; CHECK: OpAtomicCompareExchange [[int]] {{.*}} {{.*}} [[volatile_acq_rel]] [[volatile_acq]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %ssbo_var Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%device = OpConstant %int 1
+%acq_ssbo = OpConstant %int 66
+%acq_rel_ssbo = OpConstant %int 72
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%ssbo_var = OpVariable %ptr_ssbo_int StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%ld = OpAtomicCompareExchange %int %ssbo_var %device %acq_rel_ssbo %acq_ssbo %int_0 %int_1
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
+TEST_F(UpgradeMemoryModelTest, VolatileAtomicLoadMemberDecoration) {
+  const std::string text = R"(
+; CHECK-NOT: OpMemberDecorate {{.*}} {{.*}} Volatile
+; CHECK: [[relaxed:%[a-zA-Z0-9_]+]] = OpConstant {{.*}} 0
+; CHECK: [[volatile:%[a-zA-Z0-9_]+]] = OpConstant [[int:%[a-zA-Z0-9_]+]] 32768
+; CHECK: OpAtomicLoad [[int]] {{.*}} {{.*}} [[relaxed]]
+; CHECK: OpAtomicLoad [[int]] {{.*}} {{.*}} [[volatile]]
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpMemberDecorate %struct 1 Volatile
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%device = OpConstant %int 1
+%relaxed = OpConstant %int 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%ptr_ssbo_int = OpTypePointer StorageBuffer %int
+%struct = OpTypeStruct %int %int
+%ptr_ssbo_struct = OpTypePointer StorageBuffer %struct
+%ssbo_var = OpVariable %ptr_ssbo_struct StorageBuffer
+%void_fn = OpTypeFunction %void
+%func = OpFunction %void None %void_fn
+%entry = OpLabel
+%gep0 = OpAccessChain %ptr_ssbo_int %ssbo_var %int_0
+%ld0 = OpAtomicLoad %int %gep0 %device %relaxed
+%gep1 = OpAccessChain %ptr_ssbo_int %ssbo_var %int_1
+%ld1 = OpAtomicLoad %int %gep1 %device %relaxed
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<opt::UpgradeMemoryModel>(text, true);
+}
+
 }  // namespace

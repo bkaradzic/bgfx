@@ -202,6 +202,83 @@ TEST_F(SimplificationTest, ThroughLoops) {
   SinglePassRunAndMatch<SimplificationPass>(text, false);
 }
 
+TEST_F(SimplificationTest, CopyObjectWithDecorations1) {
+  // Don't simplify OpCopyObject if the result id has a decoration that the
+  // operand does not.
+  const std::string text = R"(OpCapability Shader
+OpCapability ShaderNonUniformEXT
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+OpSource GLSL 430
+OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
+OpSourceExtension "GL_GOOGLE_include_directive"
+OpDecorate %3 NonUniformEXT
+%void = OpTypeVoid
+%5 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%2 = OpFunction %void None %5
+%7 = OpLabel
+%8 = OpUndef %int
+%3 = OpCopyObject %int %8
+%9 = OpIAdd %int %3 %3
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<SimplificationPass>(text, text, false);
+}
+
+TEST_F(SimplificationTest, CopyObjectWithDecorations2) {
+  // Simplify OpCopyObject if the result id is a subset of the decorations of
+  // the operand.
+  const std::string before = R"(OpCapability Shader
+OpCapability ShaderNonUniformEXT
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+OpSource GLSL 430
+OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
+OpSourceExtension "GL_GOOGLE_include_directive"
+OpDecorate %3 NonUniformEXT
+%void = OpTypeVoid
+%5 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%2 = OpFunction %void None %5
+%7 = OpLabel
+%3 = OpUndef %int
+%8 = OpCopyObject %int %3
+%9 = OpIAdd %int %8 %8
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string after = R"(OpCapability Shader
+OpCapability ShaderNonUniformEXT
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %2 "main"
+OpExecutionMode %2 OriginUpperLeft
+OpSource GLSL 430
+OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
+OpSourceExtension "GL_GOOGLE_include_directive"
+OpDecorate %3 NonUniformEXT
+%void = OpTypeVoid
+%5 = OpTypeFunction %void
+%int = OpTypeInt 32 1
+%2 = OpFunction %void None %5
+%7 = OpLabel
+%3 = OpUndef %int
+%9 = OpIAdd %int %3 %3
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<SimplificationPass>(before, after, false);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

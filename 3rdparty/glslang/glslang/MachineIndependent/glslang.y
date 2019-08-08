@@ -128,7 +128,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %token <lex> ATTRIBUTE VARYING
 %token <lex> FLOAT16_T FLOAT FLOAT32_T DOUBLE FLOAT64_T
 %token <lex> CONST BOOL INT UINT INT64_T UINT64_T INT32_T UINT32_T INT16_T UINT16_T INT8_T UINT8_T
-%token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT SUBROUTINE
+%token <lex> BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT SUBROUTINE DEMOTE
 %token <lex> BVEC2 BVEC3 BVEC4
 %token <lex> IVEC2 IVEC3 IVEC4
 %token <lex> UVEC2 UVEC3 UVEC4
@@ -265,7 +265,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 %type <interm.intermNode> declaration external_declaration
 %type <interm.intermNode> for_init_statement compound_statement_no_new_scope
 %type <interm.nodePair> selection_rest_statement for_rest_statement
-%type <interm.intermNode> iteration_statement iteration_statement_nonattributed jump_statement statement_no_new_scope statement_scoped
+%type <interm.intermNode> iteration_statement iteration_statement_nonattributed jump_statement statement_no_new_scope statement_scoped demote_statement
 %type <interm> single_declaration init_declarator_list
 
 %type <interm> parameter_declaration parameter_declarator parameter_type_specifier
@@ -3416,6 +3416,15 @@ simple_statement
     | case_label            { $$ = $1; }
     | iteration_statement   { $$ = $1; }
     | jump_statement        { $$ = $1; }
+    | demote_statement      { $$ = $1; }
+    ;
+
+demote_statement
+    : DEMOTE SEMICOLON {
+        parseContext.requireStage($1.loc, EShLangFragment, "demote");
+        parseContext.requireExtensions($1.loc, 1, &E_GL_EXT_demote_to_helper_invocation, "demote");
+        $$ = parseContext.intermediate.addBranch(EOpDemote, $1.loc);
+    }
     ;
 
 compound_statement

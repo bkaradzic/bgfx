@@ -68,15 +68,10 @@ idl.types = all_types
 local function add_comment(item, comment)
 	-- strip space
 	comment = comment:match "(.-)%s*$"
-	local last = item.comment
-	if last then
-		if type(last) == "string" then
-			item.comment = { last, comment }
-		else
-			table.insert(item.comment, comment)
-		end
+	if item.comment then
+		table.insert(item.comment, comment)
 	else
-		item.comment = comment
+		item.comment = { comment }
 	end
 end
 

@@ -28,8 +28,6 @@
 
 namespace {
 
-using ErrorOrInt = std::pair<std::string, int>;
-
 // Check that the std::system function can actually be used.
 bool CheckExecuteCommand() {
   int res = std::system(nullptr);

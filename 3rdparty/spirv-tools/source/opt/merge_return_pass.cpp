@@ -36,7 +36,13 @@ Pass::Status MergeReturnPass::Process() {
   ProcessFunction pfn = [&failed, is_shader, this](Function* function) {
     std::vector<BasicBlock*> return_blocks = CollectReturnBlocks(function);
     if (return_blocks.size() <= 1) {
-      return false;
+      if (!is_shader || return_blocks.size() == 0) {
+        return false;
+      }
+      if (context()->GetStructuredCFGAnalysis()->ContainingConstruct(
+              return_blocks[0]->id()) == 0) {
+        return false;
+      }
     }
 
     function_ = function;
@@ -75,6 +81,7 @@ bool MergeReturnPass::ProcessStructured(
     return false;
   }
 
+  RecordImmediateDominators(function);
   AddDummyLoopAroundFunction();
 
   std::list<BasicBlock*> order;
@@ -218,6 +225,7 @@ void MergeReturnPass::BranchToBlock(BasicBlock* block, uint32_t target) {
   return_inst->SetOpcode(SpvOpBranch);
   return_inst->ReplaceOperands({{SPV_OPERAND_TYPE_ID, {target}}});
   context()->get_def_use_mgr()->AnalyzeInstDefUse(return_inst);
+  new_edges_[target_block].insert(block->id());
   cfg()->AddEdge(block->id(), target);
 }
 
@@ -229,29 +237,15 @@ void MergeReturnPass::UpdatePhiNodes(BasicBlock* new_source,
     inst->AddOperand({SPV_OPERAND_TYPE_ID, {new_source->id()}});
     context()->UpdateDefUse(inst);
   });
-
-  const auto& target_pred = cfg()->preds(target->id());
-  if (target_pred.size() == 1) {
-    MarkForNewPhiNodes(target, context()->get_instr_block(target_pred[0]));
-  } else {
-    // If the loop contained a break and a return, OpPhi instructions may be
-    // required starting from the dominator of the loop merge.
-    DominatorAnalysis* dom_tree =
-        context()->GetDominatorAnalysis(target->GetParent());
-    auto idom = dom_tree->ImmediateDominator(target);
-    if (idom) {
-      MarkForNewPhiNodes(target, idom);
-    }
-  }
 }
 
 void MergeReturnPass::CreatePhiNodesForInst(BasicBlock* merge_block,
                                             Instruction& inst) {
   DominatorAnalysis* dom_tree =
       context()->GetDominatorAnalysis(merge_block->GetParent());
-  BasicBlock* inst_bb = context()->get_instr_block(&inst);
 
   if (inst.result_id() != 0) {
+    BasicBlock* inst_bb = context()->get_instr_block(&inst);
     std::vector<Instruction*> users_to_update;
     context()->get_def_use_mgr()->ForEachUser(
         &inst,
@@ -289,12 +283,13 @@ void MergeReturnPass::CreatePhiNodesForInst(BasicBlock* merge_block,
         IRContext::kAnalysisDefUse | IRContext::kAnalysisInstrToBlockMapping);
     uint32_t undef_id = Type2Undef(inst.type_id());
     std::vector<uint32_t> phi_operands;
+    const std::set<uint32_t>& new_edges = new_edges_[merge_block];
 
     // Add the OpPhi operands. If the predecessor is a return block use undef,
     // otherwise use |inst|'s id.
     std::vector<uint32_t> preds = cfg()->preds(merge_block->id());
     for (uint32_t pred_id : preds) {
-      if (return_blocks_.count(pred_id)) {
+      if (new_edges.count(pred_id)) {
         phi_operands.push_back(undef_id);
       } else {
         phi_operands.push_back(inst.result_id());
@@ -411,6 +406,8 @@ bool MergeReturnPass::BreakFromConstruct(
   auto old_body_id = TakeNextId();
   BasicBlock* old_body = block->SplitBasicBlock(context(), old_body_id, iter);
   predicated->insert(old_body);
+  cfg()->AddEdges(old_body);
+
   // If a return block is being split, mark the new body block also as a return
   // block.
   if (return_blocks_.count(block->id())) {
@@ -450,13 +447,14 @@ bool MergeReturnPass::BreakFromConstruct(
   builder.AddConditionalBranch(load_id, merge_block->id(), old_body->id(),
                                old_body->id());
 
-  // 3. Update OpPhi instructions in |merge_block|.
-  BasicBlock* merge_original_pred = MarkedSinglePred(merge_block);
-  if (merge_original_pred == nullptr) {
-    UpdatePhiNodes(block, merge_block);
-  } else if (merge_original_pred == block) {
-    MarkForNewPhiNodes(merge_block, old_body);
+  if (!new_edges_[merge_block].insert(block->id()).second) {
+    // It is possible that we already inserted a new edge to the merge block.
+    // If so, that edge now goes from |old_body| to |merge_block|.
+    new_edges_[merge_block].insert(old_body->id());
   }
+
+  // 3. Update OpPhi instructions in |merge_block|.
+  UpdatePhiNodes(block, merge_block);
 
   // 4. Update the CFG.  We do this after updating the OpPhi instructions
   // because |UpdatePhiNodes| assumes the edge from |block| has not been added
@@ -653,26 +651,37 @@ void MergeReturnPass::MergeReturnBlocks(
 }
 
 void MergeReturnPass::AddNewPhiNodes() {
-  DominatorAnalysis* dom_tree = context()->GetDominatorAnalysis(function_);
   std::list<BasicBlock*> order;
   cfg()->ComputeStructuredOrder(function_, &*function_->begin(), &order);
 
   for (BasicBlock* bb : order) {
-    BasicBlock* dominator = dom_tree->ImmediateDominator(bb);
-    if (dominator) {
-      AddNewPhiNodes(bb, new_merge_nodes_[bb], dominator->id());
-    }
+    AddNewPhiNodes(bb);
   }
 }
 
-void MergeReturnPass::AddNewPhiNodes(BasicBlock* bb, BasicBlock* pred,
-                                     uint32_t header_id) {
-  DominatorAnalysis* dom_tree = context()->GetDominatorAnalysis(function_);
-  // Insert as a stopping point.  We do not have to add anything in the block
-  // or above because the header dominates |bb|.
+void MergeReturnPass::AddNewPhiNodes(BasicBlock* bb) {
+  // New phi nodes are needed for any id whose definition used to dominate |bb|,
+  // but no longer dominates |bb|.  These are found by walking the dominator
+  // tree starting at the original immediate dominator of |bb| and ending at its
+  // current dominator.
 
-  BasicBlock* current_bb = pred;
-  while (current_bb != nullptr && current_bb->id() != header_id) {
+  // Because we are walking the updated dominator tree it is important that the
+  // new phi nodes for the original dominators of |bb| have already been added.
+  // Otherwise some ids might be missed.  Consider the case where bb1 dominates
+  // bb2, and bb2 dominates bb3.  Suppose there are changes such that bb1 no
+  // longer dominates bb2 and the same for bb2 and bb3.  This algorithm will not
+  // look at the ids defined in bb1.  However, calling |AddNewPhiNodes(bb2)|
+  // first will add a phi node in bb2 for that value.  Then a call to
+  // |AddNewPhiNodes(bb3)| will process that value by processing the phi in bb2.
+  DominatorAnalysis* dom_tree = context()->GetDominatorAnalysis(function_);
+
+  BasicBlock* dominator = dom_tree->ImmediateDominator(bb);
+  if (dominator == nullptr) {
+    return;
+  }
+
+  BasicBlock* current_bb = context()->get_instr_block(original_dominator_[bb]);
+  while (current_bb != nullptr && current_bb != dominator) {
     for (Instruction& inst : *current_bb) {
       CreatePhiNodesForInst(bb, inst);
     }
@@ -680,9 +689,16 @@ void MergeReturnPass::AddNewPhiNodes(BasicBlock* bb, BasicBlock* pred,
   }
 }
 
-void MergeReturnPass::MarkForNewPhiNodes(BasicBlock* block,
-                                         BasicBlock* single_original_pred) {
-  new_merge_nodes_[block] = single_original_pred;
+void MergeReturnPass::RecordImmediateDominators(Function* function) {
+  DominatorAnalysis* dom_tree = context()->GetDominatorAnalysis(function);
+  for (BasicBlock& bb : *function) {
+    BasicBlock* dominator_bb = dom_tree->ImmediateDominator(&bb);
+    if (dominator_bb && dominator_bb != cfg()->pseudo_entry_block()) {
+      original_dominator_[&bb] = dominator_bb->terminator();
+    } else {
+      original_dominator_[&bb] = nullptr;
+    }
+  }
 }
 
 void MergeReturnPass::InsertAfterElement(BasicBlock* element,

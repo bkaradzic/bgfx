@@ -398,20 +398,9 @@ void InstBindlessCheckPass::GenInitCheckCode(
 void InstBindlessCheckPass::InitializeInstBindlessCheck() {
   // Initialize base class
   InitializeInstrument();
-  // Look for related extensions
-  ext_descriptor_indexing_defined_ = false;
-  for (auto& ei : get_module()->extensions()) {
-    const char* ext_name =
-        reinterpret_cast<const char*>(&ei.GetInOperand(0).words[0]);
-    if (strcmp(ext_name, "SPV_EXT_descriptor_indexing") == 0) {
-      ext_descriptor_indexing_defined_ = true;
-      break;
-    }
-  }
-  // If descriptor indexing extension and runtime array length support enabled,
-  // create variable mappings. Length support is always enabled if descriptor
-  // init check is enabled.
-  if (ext_descriptor_indexing_defined_ && input_length_enabled_)
+  // If runtime array length support enabled, create variable mappings. Length
+  // support is always enabled if descriptor init check is enabled.
+  if (input_length_enabled_)
     for (auto& anno : get_module()->annotations())
       if (anno.opcode() == SpvOpDecorate) {
         if (anno.GetSingleWordInOperand(1u) == SpvDecorationDescriptorSet)
@@ -433,7 +422,7 @@ Pass::Status InstBindlessCheckPass::ProcessImpl() {
                                   new_blocks);
       };
   bool modified = InstProcessEntryPointCallTree(pfn);
-  if (ext_descriptor_indexing_defined_ && input_init_enabled_) {
+  if (input_init_enabled_) {
     // Perform descriptor initialization check on each entry point function in
     // module
     pfn = [this](BasicBlock::iterator ref_inst_itr,

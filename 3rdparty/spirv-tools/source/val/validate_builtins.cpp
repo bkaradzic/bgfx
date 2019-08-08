@@ -211,6 +211,17 @@ class BuiltInsValidator {
   spv_result_t ValidateSMBuiltinsAtDefinition(const Decoration& decoration,
                                               const Instruction& inst);
 
+  // Used for SubgroupEqMask, SubgroupGeMask, SubgroupGtMask, SubgroupLtMask,
+  // SubgroupLeMask.
+  spv_result_t ValidateI32Vec4InputAtDefinition(const Decoration& decoration,
+                                                const Instruction& inst);
+  // Used for SubgroupLocalInvocationId, SubgroupSize.
+  spv_result_t ValidateI32InputAtDefinition(const Decoration& decoration,
+                                            const Instruction& inst);
+  // Used for SubgroupId, NumSubgroups.
+  spv_result_t ValidateComputeI32InputAtDefinition(const Decoration& decoration,
+                                                   const Instruction& inst);
+
   // The following section contains functions which are called when id defined
   // by |referenced_inst| is
   // 1. referenced by |referenced_from_inst|
@@ -330,6 +341,11 @@ class BuiltInsValidator {
 
   // Used for GlobalInvocationId, LocalInvocationId, NumWorkgroups, WorkgroupId.
   spv_result_t ValidateComputeShaderI32Vec3InputAtReference(
+      const Decoration& decoration, const Instruction& built_in_inst,
+      const Instruction& referenced_inst,
+      const Instruction& referenced_from_inst);
+  // Used for SubgroupId and NumSubgroups.
+  spv_result_t ValidateComputeI32InputAtReference(
       const Decoration& decoration, const Instruction& built_in_inst,
       const Instruction& referenced_inst,
       const Instruction& referenced_from_inst);
@@ -2603,6 +2619,171 @@ spv_result_t BuiltInsValidator::ValidateComputeShaderI32Vec3InputAtReference(
   return SPV_SUCCESS;
 }
 
+spv_result_t BuiltInsValidator::ValidateComputeI32InputAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (decoration.struct_member_index() != Decoration::kInvalidMember) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+             << "BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " cannot be used as a member decoration ";
+    }
+    if (spv_result_t error = ValidateI32(
+            decoration, inst,
+            [this, &decoration,
+             &inst](const std::string& message) -> spv_result_t {
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << "According to the "
+                     << spvLogStringForEnv(_.context()->target_env)
+                     << " spec BuiltIn "
+                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                      decoration.params()[0])
+                     << " variable needs to be a 32-bit int "
+                        "vector. "
+                     << message;
+            })) {
+      return error;
+    }
+  }
+
+  // Seed at reference checks with this built-in.
+  return ValidateComputeI32InputAtReference(decoration, inst, inst, inst);
+}
+
+spv_result_t BuiltInsValidator::ValidateComputeI32InputAtReference(
+    const Decoration& decoration, const Instruction& built_in_inst,
+    const Instruction& referenced_inst,
+    const Instruction& referenced_from_inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    const SpvStorageClass storage_class = GetStorageClass(referenced_from_inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassInput) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+             << spvLogStringForEnv(_.context()->target_env)
+             << " spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                 referenced_from_inst)
+             << " " << GetStorageClassDesc(referenced_from_inst);
+    }
+
+    for (const SpvExecutionModel execution_model : execution_models_) {
+      bool has_vulkan_model = execution_model == SpvExecutionModelGLCompute ||
+                              execution_model == SpvExecutionModelTaskNV ||
+                              execution_model == SpvExecutionModelMeshNV;
+      if (spvIsVulkanEnv(_.context()->target_env) && !has_vulkan_model) {
+        return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+               << spvLogStringForEnv(_.context()->target_env)
+               << " spec allows BuiltIn "
+               << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                decoration.params()[0])
+               << " to be used only with GLCompute execution model. "
+               << GetReferenceDesc(decoration, built_in_inst, referenced_inst,
+                                   referenced_from_inst, execution_model);
+      }
+    }
+  }
+
+  if (function_id_ == 0) {
+    // Propagate this rule to all dependant ids in the global scope.
+    id_to_at_reference_checks_[referenced_from_inst.id()].push_back(
+        std::bind(&BuiltInsValidator::ValidateComputeI32InputAtReference, this,
+                  decoration, built_in_inst, referenced_from_inst,
+                  std::placeholders::_1));
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t BuiltInsValidator::ValidateI32InputAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (decoration.struct_member_index() != Decoration::kInvalidMember) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+             << "BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " cannot be used as a member decoration ";
+    }
+    if (spv_result_t error = ValidateI32(
+            decoration, inst,
+            [this, &decoration,
+             &inst](const std::string& message) -> spv_result_t {
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << "According to the "
+                     << spvLogStringForEnv(_.context()->target_env)
+                     << " spec BuiltIn "
+                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                      decoration.params()[0])
+                     << " variable needs to be a 32-bit int. " << message;
+            })) {
+      return error;
+    }
+
+    const SpvStorageClass storage_class = GetStorageClass(inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassInput) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+             << spvLogStringForEnv(_.context()->target_env)
+             << " spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, inst, inst, inst) << " "
+             << GetStorageClassDesc(inst);
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
+spv_result_t BuiltInsValidator::ValidateI32Vec4InputAtDefinition(
+    const Decoration& decoration, const Instruction& inst) {
+  if (spvIsVulkanEnv(_.context()->target_env)) {
+    if (decoration.struct_member_index() != Decoration::kInvalidMember) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+             << "BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " cannot be used as a member decoration ";
+    }
+    if (spv_result_t error = ValidateI32Vec(
+            decoration, inst, 4,
+            [this, &decoration,
+             &inst](const std::string& message) -> spv_result_t {
+              return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+                     << "According to the "
+                     << spvLogStringForEnv(_.context()->target_env)
+                     << " spec BuiltIn "
+                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                      decoration.params()[0])
+                     << " variable needs to be a 4-component 32-bit int "
+                        "vector. "
+                     << message;
+            })) {
+      return error;
+    }
+
+    const SpvStorageClass storage_class = GetStorageClass(inst);
+    if (storage_class != SpvStorageClassMax &&
+        storage_class != SpvStorageClassInput) {
+      return _.diag(SPV_ERROR_INVALID_DATA, &inst)
+             << spvLogStringForEnv(_.context()->target_env)
+             << " spec allows BuiltIn "
+             << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                              decoration.params()[0])
+             << " to be only used for variables with Input storage class. "
+             << GetReferenceDesc(decoration, inst, inst, inst) << " "
+             << GetStorageClassDesc(inst);
+    }
+  }
+
+  return SPV_SUCCESS;
+}
+
 spv_result_t BuiltInsValidator::ValidateWorkgroupSizeAtDefinition(
     const Decoration& decoration, const Instruction& inst) {
   if (spvIsVulkanOrWebGPUEnv(_.context()->target_env)) {
@@ -2788,6 +2969,21 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInSamplePosition: {
       return ValidateSamplePositionAtDefinition(decoration, inst);
     }
+    case SpvBuiltInSubgroupId:
+    case SpvBuiltInNumSubgroups: {
+      return ValidateComputeI32InputAtDefinition(decoration, inst);
+    }
+    case SpvBuiltInSubgroupLocalInvocationId:
+    case SpvBuiltInSubgroupSize: {
+      return ValidateI32InputAtDefinition(decoration, inst);
+    }
+    case SpvBuiltInSubgroupEqMask:
+    case SpvBuiltInSubgroupGeMask:
+    case SpvBuiltInSubgroupGtMask:
+    case SpvBuiltInSubgroupLeMask:
+    case SpvBuiltInSubgroupLtMask: {
+      return ValidateI32Vec4InputAtDefinition(decoration, inst);
+    }
     case SpvBuiltInTessCoord: {
       return ValidateTessCoordAtDefinition(decoration, inst);
     }
@@ -2821,17 +3017,8 @@ spv_result_t BuiltInsValidator::ValidateSingleBuiltInAtDefinition(
     case SpvBuiltInEnqueuedWorkgroupSize:
     case SpvBuiltInGlobalOffset:
     case SpvBuiltInGlobalLinearId:
-    case SpvBuiltInSubgroupSize:
     case SpvBuiltInSubgroupMaxSize:
-    case SpvBuiltInNumSubgroups:
     case SpvBuiltInNumEnqueuedSubgroups:
-    case SpvBuiltInSubgroupId:
-    case SpvBuiltInSubgroupLocalInvocationId:
-    case SpvBuiltInSubgroupEqMaskKHR:
-    case SpvBuiltInSubgroupGeMaskKHR:
-    case SpvBuiltInSubgroupGtMaskKHR:
-    case SpvBuiltInSubgroupLeMaskKHR:
-    case SpvBuiltInSubgroupLtMaskKHR:
     case SpvBuiltInBaseVertex:
     case SpvBuiltInBaseInstance:
     case SpvBuiltInDrawIndex:

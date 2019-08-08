@@ -432,7 +432,7 @@ class NullConstant : public Constant {
   std::unique_ptr<Constant> Copy() const override {
     return std::unique_ptr<Constant>(CopyNullConstant().release());
   }
-  bool IsZero() const override { return true; };
+  bool IsZero() const override { return true; }
 };
 
 // Hash function for Constant instances. Use the structure of the constant as

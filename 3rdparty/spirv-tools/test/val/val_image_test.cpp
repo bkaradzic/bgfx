@@ -35,6 +35,7 @@ std::string GenerateShaderCode(
     const std::string& body,
     const std::string& capabilities_and_extensions = "",
     const std::string& execution_model = "Fragment",
+    const std::string& execution_mode = "",
     const spv_target_env env = SPV_ENV_UNIVERSAL_1_0,
     const std::string& memory_model = "GLSL450") {
   std::ostringstream ss;
@@ -85,6 +86,7 @@ OpCapability ImageBuffer
   if (execution_model == "Fragment") {
     ss << "OpExecutionMode %main OriginUpperLeft\n";
   }
+  ss << execution_mode;
 
   if (env == SPV_ENV_VULKAN_1_0) {
     ss << R"(
@@ -606,7 +608,7 @@ TEST_F(ValidateImage, SampledImageVulkanSuccess) {
 )";
 
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", env), env);
+  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", "", env), env);
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(env));
 }
 
@@ -658,7 +660,7 @@ TEST_F(ValidateImage, SampledImageVulkanUnknownSampled) {
 )";
 
   const spv_target_env env = SPV_ENV_VULKAN_1_0;
-  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", env), env);
+  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", "", env), env);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(env));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Expected Image 'Sampled' parameter to "
@@ -847,7 +849,7 @@ TEST_F(ValidateImage, SampleImplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -967,7 +969,7 @@ TEST_F(ValidateImage, SampleExplicitLodSuccessShader) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -1552,7 +1554,7 @@ TEST_F(ValidateImage, SampleProjExplicitLodSuccess2D) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -1686,7 +1688,7 @@ TEST_F(ValidateImage, SampleProjImplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -1807,7 +1809,7 @@ TEST_F(ValidateImage, SampleDrefImplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -1930,7 +1932,7 @@ TEST_F(ValidateImage, SampleDrefExplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -2054,7 +2056,7 @@ TEST_F(ValidateImage, SampleProjDrefImplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -2177,7 +2179,7 @@ TEST_F(ValidateImage, SampleProjDrefExplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -2280,7 +2282,7 @@ TEST_F(ValidateImage, FetchSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -2439,7 +2441,7 @@ TEST_F(ValidateImage, GatherSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -2695,7 +2697,7 @@ TEST_F(ValidateImage, DrefGatherSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -2790,7 +2792,7 @@ TEST_F(ValidateImage, ReadNeedCapabilityStorageImageReadWithoutFormatVulkan) {
 )";
 
   spv_target_env env = SPV_ENV_VULKAN_1_0;
-  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", env).c_str(),
+  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", "", env).c_str(),
                       env);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(env));
   EXPECT_THAT(getDiagnosticString(),
@@ -3008,7 +3010,7 @@ TEST_F(ValidateImage, WriteNeedCapabilityStorageImageWriteWithoutFormatVulkan) {
 )";
 
   spv_target_env env = SPV_ENV_VULKAN_1_0;
-  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", env).c_str(),
+  CompileSuccessfully(GenerateShaderCode(body, "", "Fragment", "", env).c_str(),
                       env);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(env));
   EXPECT_THAT(
@@ -3710,8 +3712,10 @@ TEST_F(ValidateImage, QueryLodWrongExecutionModel) {
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex").c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("OpImageQueryLod requires Fragment execution model"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "OpImageQueryLod requires Fragment or GLCompute execution model"));
 }
 
 TEST_F(ValidateImage, QueryLodWrongExecutionModelWithFunc) {
@@ -3729,8 +3733,55 @@ OpFunctionEnd
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex").c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "OpImageQueryLod requires Fragment or GLCompute execution model"));
+}
+
+TEST_F(ValidateImage, QueryLodComputeShaderDerivatives) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageQueryLod %f32vec2 %simg %f32vec2_hh
+)";
+
+  const std::string extra = R"(
+OpCapability ComputeDerivativeGroupLinearNV
+OpExtension "SPV_NV_compute_shader_derivatives"
+)";
+  const std::string mode = R"(
+OpExecutionMode %main LocalSize 8 8 1
+OpExecutionMode %main DerivativeGroupLinearNV
+)";
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "GLCompute", mode).c_str());
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateImage, QueryLodComputeShaderDerivativesMissingMode) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageQueryLod %f32vec2 %simg %f32vec2_hh
+)";
+
+  const std::string extra = R"(
+OpCapability ComputeDerivativeGroupLinearNV
+OpExtension "SPV_NV_compute_shader_derivatives"
+)";
+  const std::string mode = R"(
+OpExecutionMode %main LocalSize 8 8 1
+)";
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "GLCompute", mode).c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("OpImageQueryLod requires Fragment execution model"));
+              HasSubstr("OpImageQueryLod requires DerivativeGroupQuadsNV or "
+                        "DerivativeGroupLinearNV execution mode for GLCompute "
+                        "execution model"));
 }
 
 TEST_F(ValidateImage, ImplicitLodWrongExecutionModel) {
@@ -3743,9 +3794,55 @@ TEST_F(ValidateImage, ImplicitLodWrongExecutionModel) {
 
   CompileSuccessfully(GenerateShaderCode(body, "", "Vertex").c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("ImplicitLod instructions require Fragment or "
+                        "GLCompute execution model"));
+}
+
+TEST_F(ValidateImage, ImplicitLodComputeShaderDerivatives) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageSampleImplicitLod %f32vec4 %simg %f32vec2_hh
+)";
+
+  const std::string extra = R"(
+OpCapability ComputeDerivativeGroupLinearNV
+OpExtension "SPV_NV_compute_shader_derivatives"
+)";
+  const std::string mode = R"(
+OpExecutionMode %main LocalSize 8 8 1
+OpExecutionMode %main DerivativeGroupLinearNV
+)";
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "GLCompute", mode).c_str());
+  ASSERT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateImage, ImplicitLodComputeShaderDerivativesMissingMode) {
+  const std::string body = R"(
+%img = OpLoad %type_image_f32_2d_0001 %uniform_image_f32_2d_0001
+%sampler = OpLoad %type_sampler %uniform_sampler
+%simg = OpSampledImage %type_sampled_image_f32_2d_0001 %img %sampler
+%res1 = OpImageSampleImplicitLod %f32vec4 %simg %f32vec2_hh
+)";
+
+  const std::string extra = R"(
+OpCapability ComputeDerivativeGroupLinearNV
+OpExtension "SPV_NV_compute_shader_derivatives"
+)";
+  const std::string mode = R"(
+OpExecutionMode %main LocalSize 8 8 1
+)";
+  CompileSuccessfully(
+      GenerateShaderCode(body, extra, "GLCompute", mode).c_str());
+  ASSERT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr("ImplicitLod instructions require Fragment execution model"));
+      HasSubstr("ImplicitLod instructions require DerivativeGroupQuadsNV or "
+                "DerivativeGroupLinearNV execution mode for GLCompute "
+                "execution model"));
 }
 
 TEST_F(ValidateImage, ReadSubpassDataWrongExecutionModel) {
@@ -3779,7 +3876,7 @@ TEST_F(ValidateImage, SparseSampleImplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -3907,7 +4004,7 @@ TEST_F(ValidateImage, SparseSampleDrefImplicitLodSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4001,7 +4098,7 @@ TEST_F(ValidateImage, SparseFetchSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4218,7 +4315,7 @@ TEST_F(ValidateImage, SparseGatherSuccess) {
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4359,7 +4456,7 @@ OpCapability StorageImageReadWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4376,7 +4473,7 @@ OpCapability StorageImageReadWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4395,7 +4492,7 @@ OpCapability StorageImageReadWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA,
@@ -4417,7 +4514,7 @@ OpCapability StorageImageReadWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA,
@@ -4438,7 +4535,7 @@ OpCapability StorageImageWriteWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4457,7 +4554,7 @@ OpCapability StorageImageReadWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA,
@@ -4478,7 +4575,7 @@ OpCapability StorageImageWriteWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA,
@@ -4499,7 +4596,7 @@ OpCapability StorageImageWriteWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA,
@@ -4522,7 +4619,7 @@ OpCapability VulkanMemoryModelKHR
 OpCapability VulkanMemoryModelDeviceScopeKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4539,7 +4636,7 @@ OpCapability StorageImageReadWithoutFormat
 OpCapability VulkanMemoryModelKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_ERROR_INVALID_DATA,
@@ -4562,7 +4659,7 @@ OpCapability VulkanMemoryModelKHR
 OpCapability VulkanMemoryModelDeviceScopeKHR
 OpExtension "SPV_KHR_vulkan_memory_model"
 )";
-  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment",
+  CompileSuccessfully(GenerateShaderCode(body, extra, "Fragment", "",
                                          SPV_ENV_UNIVERSAL_1_3, "VulkanKHR")
                           .c_str());
   ASSERT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
@@ -4609,7 +4706,7 @@ TEST_F(ValidateImage, SignExtendV13Bad) {
 %res1 = OpImageRead %u32vec4 %img %u32vec2_01 SignExtend
 )";
 
-  EXPECT_THAT(CompileFailure(GenerateShaderCode(body, "", "Fragment",
+  EXPECT_THAT(CompileFailure(GenerateShaderCode(body, "", "Fragment", "",
                                                 SPV_ENV_UNIVERSAL_1_3)),
               HasSubstr("Invalid image operand 'SignExtend'"));
 }
@@ -4620,7 +4717,7 @@ TEST_F(ValidateImage, ZeroExtendV13Bad) {
 %res1 = OpImageRead %u32vec4 %img %u32vec2_01 ZeroExtend
 )";
 
-  EXPECT_THAT(CompileFailure(GenerateShaderCode(body, "", "Fragment",
+  EXPECT_THAT(CompileFailure(GenerateShaderCode(body, "", "Fragment", "",
                                                 SPV_ENV_UNIVERSAL_1_3)),
               HasSubstr("Invalid image operand 'ZeroExtend'"));
 }
@@ -4634,7 +4731,7 @@ TEST_F(ValidateImage, SignExtendScalarUIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4649,7 +4746,7 @@ TEST_F(ValidateImage, SignExtendScalarSIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4663,7 +4760,7 @@ TEST_F(ValidateImage, SignExtendScalarVectorUIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4677,7 +4774,7 @@ TEST_F(ValidateImage, SignExtendVectorSIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4695,7 +4792,7 @@ TEST_F(ValidateImage, ZeroExtendScalarUIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4710,7 +4807,7 @@ TEST_F(ValidateImage, ZeroExtendScalarSIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4724,7 +4821,7 @@ TEST_F(ValidateImage, ZeroExtendScalarVectorUIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));
@@ -4738,7 +4835,7 @@ TEST_F(ValidateImage, ZeroExtendVectorSIntTexelV14Good) {
   const std::string extra = "\nOpCapability StorageImageReadWithoutFormat\n";
 
   CompileSuccessfully(
-      GenerateShaderCode(body, extra, "Fragment", SPV_ENV_UNIVERSAL_1_4),
+      GenerateShaderCode(body, extra, "Fragment", "", SPV_ENV_UNIVERSAL_1_4),
       SPV_ENV_UNIVERSAL_1_4);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(getDiagnosticString(), Eq(""));

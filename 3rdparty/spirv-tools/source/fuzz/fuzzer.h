@@ -33,7 +33,6 @@ class Fuzzer {
     kComplete,
     kFailedToCreateSpirvToolsInterface,
     kInitialBinaryInvalid,
-    kInitialFactsInvalid,
   };
 
   // Constructs a fuzzer from the given target environment.
@@ -59,9 +58,8 @@ class Fuzzer {
   FuzzerResultStatus Run(
       const std::vector<uint32_t>& binary_in,
       const protobufs::FactSequence& initial_facts,
-      std::vector<uint32_t>* binary_out,
-      protobufs::TransformationSequence* transformation_sequence_out,
-      spv_const_fuzzer_options options) const;
+      spv_const_fuzzer_options options, std::vector<uint32_t>* binary_out,
+      protobufs::TransformationSequence* transformation_sequence_out) const;
 
  private:
   struct Impl;                  // Opaque struct for holding internal data.

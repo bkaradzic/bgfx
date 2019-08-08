@@ -208,6 +208,13 @@ spv_result_t MiscPass(ValidationState_t& _, const Instruction* inst);
 spv_result_t ValidateExecutionLimitations(ValidationState_t& _,
                                           const Instruction* inst);
 
+/// Validates restricted  uses of 8- and 16-bit types.
+///
+/// Validates shaders that uses 8- or 16-bit storage capabilities, but not full
+/// capabilities only have appropriate uses of those types.
+spv_result_t ValidateSmallTypeUses(ValidationState_t& _,
+                                   const Instruction* inst);
+
 /// @brief Validate the ID's within a SPIR-V binary
 ///
 /// @param[in] pInstructions array of instructions

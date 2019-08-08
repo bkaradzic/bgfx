@@ -114,12 +114,6 @@ derivative of the original Torque Engine.
 target="_blank"><img src="http://img.youtube.com/vi/p4LTM_QGK34/0.jpg" 
 alt="Torque 6 Material Editor" width="640" height="480" border="0" /></a>
 
-## Lumix Engine
-
-https://github.com/nem0/LumixEngine LumixEngine is a MIT licensed 3D engine.
-The main goal is performance and Unity-like usability.  
-![LumixEngine screenshot](https://cloud.githubusercontent.com/assets/153526/12904252/3fcf130e-cece-11e5-878b-c9fe24c1b11a.png)
-
 ## Kepler Orbits
 
 https://github.com/podgorskiy/KeplerOrbits KeplerOrbits - Tool that calculates
@@ -215,22 +209,6 @@ target="_blank"><img src="http://img.youtube.com/vi/ckbkQsB6RVY/0.jpg"
 alt="Go Rally"
 width="640" height="480" border="0" /></a>
 
-## Fiber2D
-
-https://github.com/s1ddok/Fiber2D#fiber2d - Fiber2D - Cross-platform 2D Game
-Engine in pure Swift  
-![Fiber2D Demo Gif](http://imgur.com/CP6d9kT.gif)
-
-## On the Hunt / Lumix Engine
-
-http://www.indiedb.com/games/on-the-hunt - On the Hunt is an open world hunting
-game in development. It's a combination of FPS and stealth.
-
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=cAsqLbqSDBg" 
-target="_blank"><img src="http://img.youtube.com/vi/cAsqLbqSDBg/0.jpg" 
-alt="Lumix Engine - new features v0.29 & v0.30"
-width="640" height="480" border="0" /></a>
-
 ## vg-renderer
 
 https://github.com/jdryg/vg-renderer#vg-renderer - A vector graphics renderer
@@ -283,9 +261,9 @@ target="_blank"><img src="http://img.youtube.com/vi/nY8y_dFolKo/0.jpg"
 alt="WonderWorlds"
 width="640" height="480" border="0" /></a>
 
-## mud
+## two-io / mud
 
-https://hugoam.github.io/mud-io/ - an all-purpose c++ app prototyping library,
+https://hugoam.github.io/two-io/ - an all-purpose c++ app prototyping library,
 focused towards live graphical apps and games.
 
 ![mud](https://raw.githubusercontent.com/hugoam/mud-io/master/media/14_live_gfx.png)
@@ -344,6 +322,38 @@ https://www.neoaxis.com/ - Versatile 3D project development environment.
 https://github.com/jpcy/xatlas#xatlas - Mesh parameterization library 
 
 ![xatlas](https://user-images.githubusercontent.com/3744372/43034066-53a62dee-8d18-11e8-9767-0b38ed3fa2d3.png)
+
+## Heroes of Hammerwatch
+
+https://store.steampowered.com/app/677120/Heroes_of_Hammerwatch/ Heroes of Hammerwatch
+is a rogue-lite action-adventure game set in the same universe as Hammerwatch.
+Encounter endless hordes of enemies, traps, puzzles, secrets and lots of loot,
+as you battle your way through procedurally generated levels to reach the top
+of the Forsaken Spire.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=uTIVDKdNvms" 
+target="_blank"><img src="http://img.youtube.com/vi/uTIVDKdNvms/0.jpg" 
+alt="Heroes of Hammerwatch"
+width="640" height="480" border="0" /></a>
+
+## Babylon Native
+
+Build cross-platform native applications with the power of the Babylon.js
+JavaScript framework.
+
+[Babylon Native](https://github.com/BabylonJS/BabylonNative#babylon-native)
+
+## Nira
+
+Instantly load and view assets on any device. All you need is a web browser.
+
+[Nira](https://nira.app/)  
+[SIGGRAPH 2019: Project Nira: Instant Interactive Real-Time Access to Multi-Gigabyte Sized 3D Assets on Any Device](https://s2019.siggraph.org/presentation/?sess=sess104&id=real_130#038;id=real_130)
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=Gz9weuemhDA&t=3350" 
+target="_blank"><img src="http://img.youtube.com/vi/Gz9weuemhDA/0.jpg" 
+alt="Heroes of Hammerwatch"
+width="640" height="480" border="0" /></a>
 
 [License (BSD 2-clause)](https://bkaradzic.github.io/bgfx/license.html)
 -----------------------------------------------------------------------

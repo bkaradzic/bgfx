@@ -1791,6 +1791,7 @@ void TShader::setUniformLocationBase(int base)
 void TShader::setHlslIoMapping(bool hlslIoMap)          { intermediate->setHlslIoMapping(hlslIoMap); }
 void TShader::setFlattenUniformArrays(bool flatten)     { intermediate->setFlattenUniformArrays(flatten); }
 void TShader::setNoStorageFormat(bool useUnknownFormat) { intermediate->setNoStorageFormat(useUnknownFormat); }
+void TShader::setNanMinMaxClamp(bool useNonNan)         { intermediate->setNanMinMaxClamp(useNonNan); }
 void TShader::setResourceSetBinding(const std::vector<std::string>& base)   { intermediate->setResourceSetBinding(base); }
 void TShader::setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { intermediate->setTextureSamplerTransformMode(mode); }
 
@@ -1983,7 +1984,7 @@ const char* TProgram::getInfoDebugLog()
 
 bool TProgram::buildReflection(int opts)
 {
-    if (! linked || reflection)
+    if (! linked || reflection != nullptr)
         return false;
 
     int firstStage = EShLangVertex, lastStage = EShLangFragment;
@@ -2013,9 +2014,8 @@ bool TProgram::buildReflection(int opts)
     return true;
 }
 
-unsigned TProgram::getLocalSize(int dim) const                      { return reflection->getLocalSize(dim); }
-int TProgram::getReflectionIndex(const char* name) const            { return reflection->getIndex(name); }
-
+unsigned TProgram::getLocalSize(int dim) const                        { return reflection->getLocalSize(dim); }
+int TProgram::getReflectionIndex(const char* name) const              { return reflection->getIndex(name); }
 int TProgram::getNumUniformVariables() const                          { return reflection->getNumUniforms(); }
 const TObjectReflection& TProgram::getUniform(int index) const        { return reflection->getUniform(index); }
 int TProgram::getNumUniformBlocks() const                             { return reflection->getNumUniformBlocks(); }
@@ -2030,8 +2030,7 @@ int TProgram::getNumBufferBlocks() const                              { return r
 const TObjectReflection& TProgram::getBufferBlock(int index) const    { return reflection->getStorageBufferBlock(index); }
 int TProgram::getNumAtomicCounters() const                            { return reflection->getNumAtomicCounters(); }
 const TObjectReflection& TProgram::getAtomicCounter(int index) const  { return reflection->getAtomicCounter(index); }
-
-void TProgram::dumpReflection()                      { reflection->dump(); }
+void TProgram::dumpReflection() { if (reflection != nullptr) reflection->dump(); }
 
 //
 // I/O mapping implementation.

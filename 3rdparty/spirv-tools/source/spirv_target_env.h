@@ -28,6 +28,9 @@ bool spvIsOpenCLEnv(spv_target_env env);
 // Returns true if |env| is an WEBGPU environment, false otherwise.
 bool spvIsWebGPUEnv(spv_target_env env);
 
+// Returns true if |env| is an OPENGL environment, false otherwise.
+bool spvIsOpenGLEnv(spv_target_env env);
+
 // Returns true if |env| is a VULKAN or WEBGPU environment, false otherwise.
 bool spvIsVulkanOrWebGPUEnv(spv_target_env env);
 
@@ -37,5 +40,13 @@ uint32_t spvVersionForTargetEnv(spv_target_env env);
 // Returns a string to use in logging messages that indicates the class of
 // environment, i.e. "Vulkan", "WebGPU", "OpenCL", etc.
 std::string spvLogStringForEnv(spv_target_env env);
+
+// Returns a formatted list of all SPIR-V target environment names that
+// can be parsed by spvParseTargetEnv.
+// |pad| is the number of space characters that the begining of each line
+//       except the first one will be padded with.
+// |wrap| is the max length of lines the user desires. Word-wrapping will
+//        occur to satisfy this limit.
+std::string spvTargetEnvList(const int pad, const int wrap);
 
 #endif  // SOURCE_SPIRV_TARGET_ENV_H_

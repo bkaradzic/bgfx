@@ -1101,6 +1101,83 @@ OpFunctionEnd
   EXPECT_THAT(SPV_SUCCESS, ValidateInstructions());
 }
 
+TEST_F(ValidateMode, FragmentShaderDemoteVertexBad) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability DemoteToHelperInvocationEXT
+OpExtension "SPV_EXT_demote_to_helper_invocation"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %main "main"
+%bool = OpTypeBool
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpDemoteToHelperInvocationEXT
+%1 = OpIsHelperInvocationEXT %bool
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "OpDemoteToHelperInvocationEXT requires Fragment execution model"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("OpIsHelperInvocationEXT requires Fragment execution model"));
+}
+
+TEST_F(ValidateMode, FragmentShaderDemoteGood) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability DemoteToHelperInvocationEXT
+OpExtension "SPV_EXT_demote_to_helper_invocation"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+%bool = OpTypeBool
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpDemoteToHelperInvocationEXT
+%1 = OpIsHelperInvocationEXT %bool
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateMode, FragmentShaderDemoteBadType) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability DemoteToHelperInvocationEXT
+OpExtension "SPV_EXT_demote_to_helper_invocation"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+%u32 = OpTypeInt 32 0
+%void = OpTypeVoid
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpDemoteToHelperInvocationEXT
+%1 = OpIsHelperInvocationEXT %u32
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_THAT(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("Expected bool scalar type as Result Type"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

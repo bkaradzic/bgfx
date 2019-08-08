@@ -21,6 +21,7 @@
 #include "source/fuzz/fuzzer_context.h"
 #include "source/fuzz/fuzzer_pass_add_dead_breaks.h"
 #include "source/fuzz/fuzzer_pass_add_useful_constructs.h"
+#include "source/fuzz/fuzzer_pass_obfuscate_constants.h"
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
 #include "source/fuzz/fuzzer_pass_split_blocks.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
@@ -54,14 +55,14 @@ void Fuzzer::SetMessageConsumer(MessageConsumer c) {
 Fuzzer::FuzzerResultStatus Fuzzer::Run(
     const std::vector<uint32_t>& binary_in,
     const protobufs::FactSequence& initial_facts,
-    std::vector<uint32_t>* binary_out,
-    protobufs::TransformationSequence* transformation_sequence_out,
-    spv_const_fuzzer_options options) const {
+    spv_const_fuzzer_options options, std::vector<uint32_t>* binary_out,
+    protobufs::TransformationSequence* transformation_sequence_out) const {
   // Check compatibility between the library version being linked with and the
   // header files being used.
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   spvtools::SpirvTools tools(impl_->target_env);
+  tools.SetMessageConsumer(impl_->consumer);
   if (!tools.IsValid()) {
     impl_->consumer(SPV_MSG_ERROR, nullptr, {},
                     "Failed to create SPIRV-Tools interface; stopping.");
@@ -96,9 +97,7 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   FuzzerContext fuzzer_context(&random_generator, minimum_fresh_id);
 
   FactManager fact_manager;
-  if (!fact_manager.AddFacts(initial_facts, ir_context.get())) {
-    return Fuzzer::FuzzerResultStatus::kInitialFactsInvalid;
-  }
+  fact_manager.AddFacts(impl_->consumer, initial_facts, ir_context.get());
 
   // Add some essential ingredients to the module if they are not already
   // present, such as boolean constants.
@@ -113,8 +112,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   FuzzerPassAddDeadBreaks(ir_context.get(), &fact_manager, &fuzzer_context,
                           transformation_sequence_out)
       .Apply();
-
-  // TODO(afd) Various other passes will be added.
+  FuzzerPassObfuscateConstants(ir_context.get(), &fact_manager, &fuzzer_context,
+                               transformation_sequence_out)
+      .Apply();
 
   // Finally, give the blocks in the module a good shake-up.
   FuzzerPassPermuteBlocks(ir_context.get(), &fact_manager, &fuzzer_context,

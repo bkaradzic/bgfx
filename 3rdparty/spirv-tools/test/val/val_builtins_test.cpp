@@ -52,6 +52,8 @@ using ::testing::Values;
 using ::testing::ValuesIn;
 
 using ValidateBuiltIns = spvtest::ValidateBase<bool>;
+using ValidateVulkanSubgroupBuiltIns = spvtest::ValidateBase<
+    std::tuple<const char*, const char*, const char*, const char*, TestResult>>;
 using ValidateVulkanCombineBuiltInExecutionModelDataTypeResult =
     spvtest::ValidateBase<std::tuple<const char*, const char*, const char*,
                                      const char*, TestResult>>;
@@ -3078,6 +3080,226 @@ TEST_F(ValidateBuiltIns, GetUnderlyingTypeNoAssert) {
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("did not find an member index to get underlying data "
                         "type"));
+}
+
+TEST_P(ValidateVulkanSubgroupBuiltIns, InMain) {
+  const char* const built_in = std::get<0>(GetParam());
+  const char* const execution_model = std::get<1>(GetParam());
+  const char* const storage_class = std::get<2>(GetParam());
+  const char* const data_type = std::get<3>(GetParam());
+  const TestResult& test_result = std::get<4>(GetParam());
+
+  CodeGenerator generator = CodeGenerator::GetDefaultShaderCodeGenerator();
+  generator.capabilities_ += R"(
+OpCapability GroupNonUniformBallot
+)";
+
+  generator.before_types_ = "OpDecorate %built_in_var BuiltIn ";
+  generator.before_types_ += built_in;
+  generator.before_types_ += "\n";
+
+  std::ostringstream after_types;
+  after_types << "%built_in_ptr = OpTypePointer " << storage_class << " "
+              << data_type << "\n";
+  after_types << "%built_in_var = OpVariable %built_in_ptr " << storage_class;
+  after_types << "\n";
+  generator.after_types_ = after_types.str();
+
+  EntryPoint entry_point;
+  entry_point.name = "main";
+  entry_point.execution_model = execution_model;
+  if (strncmp(storage_class, "Input", 5) == 0 ||
+      strncmp(storage_class, "Output", 6) == 0) {
+    entry_point.interfaces = "%built_in_var";
+  }
+  entry_point.body =
+      std::string("%ld = OpLoad ") + data_type + " %built_in_var\n";
+
+  std::ostringstream execution_modes;
+  if (0 == std::strcmp(execution_model, "Fragment")) {
+    execution_modes << "OpExecutionMode %" << entry_point.name
+                    << " OriginUpperLeft\n";
+    if (0 == std::strcmp(built_in, "FragDepth")) {
+      execution_modes << "OpExecutionMode %" << entry_point.name
+                      << " DepthReplacing\n";
+    }
+  }
+  if (0 == std::strcmp(execution_model, "Geometry")) {
+    execution_modes << "OpExecutionMode %" << entry_point.name
+                    << " InputPoints\n";
+    execution_modes << "OpExecutionMode %" << entry_point.name
+                    << " OutputPoints\n";
+  }
+  if (0 == std::strcmp(execution_model, "GLCompute")) {
+    execution_modes << "OpExecutionMode %" << entry_point.name
+                    << " LocalSize 1 1 1\n";
+  }
+  entry_point.execution_modes = execution_modes.str();
+
+  generator.entry_points_.push_back(std::move(entry_point));
+
+  CompileSuccessfully(generator.Build(), SPV_ENV_VULKAN_1_1);
+  ASSERT_EQ(test_result.validation_result,
+            ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  if (test_result.error_str) {
+    EXPECT_THAT(getDiagnosticString(), HasSubstr(test_result.error_str));
+  }
+  if (test_result.error_str2) {
+    EXPECT_THAT(getDiagnosticString(), HasSubstr(test_result.error_str2));
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupMaskNotVec4, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupEqMask", "SubgroupGeMask", "SubgroupGtMask",
+                   "SubgroupLeMask", "SubgroupLtMask"),
+            Values("GLCompute"), Values("Input"), Values("%u32vec3"),
+            Values(TestResult(SPV_ERROR_INVALID_DATA,
+                              "needs to be a 4-component 32-bit int vector"))));
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupMaskNotU32, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupEqMask", "SubgroupGeMask", "SubgroupGtMask",
+                   "SubgroupLeMask", "SubgroupLtMask"),
+            Values("GLCompute"), Values("Input"), Values("%f32vec4"),
+            Values(TestResult(SPV_ERROR_INVALID_DATA,
+                              "needs to be a 4-component 32-bit int vector"))));
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupMaskNotInput, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupEqMask", "SubgroupGeMask", "SubgroupGtMask",
+                   "SubgroupLeMask", "SubgroupLtMask"),
+            Values("GLCompute"), Values("Output", "Workgroup", "Private"),
+            Values("%u32vec4"),
+            Values(TestResult(
+                SPV_ERROR_INVALID_DATA,
+                "to be only used for variables with Input storage class"))));
+
+INSTANTIATE_TEST_SUITE_P(SubgroupMaskOk, ValidateVulkanSubgroupBuiltIns,
+                         Combine(Values("SubgroupEqMask", "SubgroupGeMask",
+                                        "SubgroupGtMask", "SubgroupLeMask",
+                                        "SubgroupLtMask"),
+                                 Values("GLCompute"), Values("Input"),
+                                 Values("%u32vec4"),
+                                 Values(TestResult(SPV_SUCCESS, ""))));
+
+TEST_F(ValidateBuiltIns, SubgroupMaskMemberDecorate) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability GroupNonUniformBallot
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %foo "foo"
+OpExecutionMode %foo LocalSize 1 1 1
+OpMemberDecorate %struct 0 BuiltIn SubgroupEqMask
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%struct = OpTypeStruct %int
+%void_fn = OpTypeFunction %void
+%foo = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "BuiltIn SubgroupEqMask cannot be used as a member decoration"));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupInvocationIdAndSizeNotU32, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupLocalInvocationId", "SubgroupSize"),
+            Values("GLCompute"), Values("Input"), Values("%f32"),
+            Values(TestResult(SPV_ERROR_INVALID_DATA,
+                              "needs to be a 32-bit int"))));
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupInvocationIdAndSizeNotInput, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupLocalInvocationId", "SubgroupSize"),
+            Values("GLCompute"), Values("Output", "Workgroup", "Private"),
+            Values("%u32"),
+            Values(TestResult(
+                SPV_ERROR_INVALID_DATA,
+                "to be only used for variables with Input storage class"))));
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupInvocationIdAndSizeOk, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupLocalInvocationId", "SubgroupSize"),
+            Values("GLCompute"), Values("Input"), Values("%u32"),
+            Values(TestResult(SPV_SUCCESS, ""))));
+
+TEST_F(ValidateBuiltIns, SubgroupSizeMemberDecorate) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability GroupNonUniform
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %foo "foo"
+OpExecutionMode %foo LocalSize 1 1 1
+OpMemberDecorate %struct 0 BuiltIn SubgroupSize
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%struct = OpTypeStruct %int
+%void_fn = OpTypeFunction %void
+%foo = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("BuiltIn SubgroupSize cannot be used as a member decoration"));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupNumAndIdNotU32, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupId", "NumSubgroups"), Values("GLCompute"),
+            Values("Input"), Values("%f32"),
+            Values(TestResult(SPV_ERROR_INVALID_DATA,
+                              "needs to be a 32-bit int"))));
+
+INSTANTIATE_TEST_SUITE_P(
+    SubgroupNumAndIdNotInput, ValidateVulkanSubgroupBuiltIns,
+    Combine(Values("SubgroupId", "NumSubgroups"), Values("GLCompute"),
+            Values("Output", "Workgroup", "Private"), Values("%u32"),
+            Values(TestResult(
+                SPV_ERROR_INVALID_DATA,
+                "to be only used for variables with Input storage class"))));
+
+INSTANTIATE_TEST_SUITE_P(SubgroupNumAndIdOk, ValidateVulkanSubgroupBuiltIns,
+                         Combine(Values("SubgroupId", "NumSubgroups"),
+                                 Values("GLCompute"), Values("Input"),
+                                 Values("%u32"),
+                                 Values(TestResult(SPV_SUCCESS, ""))));
+
+TEST_F(ValidateBuiltIns, SubgroupIdMemberDecorate) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability GroupNonUniform
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %foo "foo"
+OpExecutionMode %foo LocalSize 1 1 1
+OpMemberDecorate %struct 0 BuiltIn SubgroupId
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%struct = OpTypeStruct %int
+%void_fn = OpTypeFunction %void
+%foo = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(text, SPV_ENV_VULKAN_1_1);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_1));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("BuiltIn SubgroupId cannot be used as a member decoration"));
 }
 
 }  // namespace

@@ -1098,6 +1098,8 @@ bool TOutputTraverser::visitAggregate(TVisit /* visit */, TIntermAggregate* node
     case EOpCooperativeMatrixStore:  out.debug << "Store cooperative matrix";  break;
     case EOpCooperativeMatrixMulAdd: out.debug << "MulAdd cooperative matrices"; break;
 
+    case EOpIsHelperInvocation: out.debug << "IsHelperInvocation"; break;
+
     default: out.debug.message(EPrefixError, "Bad aggregation op");
     }
 
@@ -1392,6 +1394,7 @@ bool TOutputTraverser::visitBranch(TVisit /* visit*/, TIntermBranch* node)
     case EOpContinue:  out.debug << "Branch: Continue";       break;
     case EOpReturn:    out.debug << "Branch: Return";         break;
     case EOpCase:      out.debug << "case: ";                 break;
+    case EOpDemote:    out.debug << "Demote";                 break;
     case EOpDefault:   out.debug << "default: ";              break;
     default:               out.debug << "Branch: Unknown Branch"; break;
     }

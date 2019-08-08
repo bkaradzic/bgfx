@@ -9,12 +9,15 @@
 #define BGFX_USE_EGL (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
 			|| BX_PLATFORM_ANDROID                        \
 			|| BX_PLATFORM_BSD                            \
-			|| BX_PLATFORM_EMSCRIPTEN                     \
 			|| BX_PLATFORM_LINUX                          \
 			|| BX_PLATFORM_NX                             \
 			|| BX_PLATFORM_RPI                            \
 			|| BX_PLATFORM_STEAMLINK                      \
 			|| BX_PLATFORM_WINDOWS                        \
+			) )
+
+#define BGFX_USE_HTML5 (BGFX_CONFIG_RENDERER_OPENGLES && (0 \
+			|| BX_PLATFORM_EMSCRIPTEN                     \
 			) )
 
 #define BGFX_USE_WGL (BGFX_CONFIG_RENDERER_OPENGL && BX_PLATFORM_WINDOWS)
@@ -123,6 +126,10 @@ typedef uint64_t GLuint64;
 
 #	if BGFX_USE_EGL
 #		include "glcontext_egl.h"
+#	endif // BGFX_USE_EGL
+
+#	if BGFX_USE_HTML5
+#		include "glcontext_html5.h"
 #	endif // BGFX_USE_EGL
 
 #	if BX_PLATFORM_EMSCRIPTEN
@@ -941,6 +948,10 @@ typedef uint64_t GLuint64;
 #ifndef GL_BUFFER
 #	define GL_BUFFER 0x82E0
 #endif // GL_BUFFER
+
+#ifndef GL_COMMAND_BARRIER_BIT
+#	define GL_COMMAND_BARRIER_BIT 0x00000040
+#endif // GL_COMMAND_BARRIER_BIT
 
 // _KHR or _ARB...
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS         0x8242

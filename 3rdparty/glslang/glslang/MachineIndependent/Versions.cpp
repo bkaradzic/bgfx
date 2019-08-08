@@ -188,6 +188,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_post_depth_coverage]          = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
     extensionBehavior[E_GL_ARB_fragment_shader_interlock]    = EBhDisable;
+    extensionBehavior[E_GL_ARB_shader_clock]                 = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -211,6 +212,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_fragment_invocation_density]             = EBhDisable;
     extensionBehavior[E_GL_EXT_buffer_reference]                        = EBhDisable;
     extensionBehavior[E_GL_EXT_buffer_reference2]                       = EBhDisable;
+    extensionBehavior[E_GL_EXT_demote_to_helper_invocation]             = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_16bit_storage]                    = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_8bit_storage]                     = EBhDisable;
@@ -251,6 +253,7 @@ void TParseVersions::initializeExtensionBehavior()
 #endif
 
     extensionBehavior[E_GL_NV_cooperative_matrix]                    = EBhDisable;
+    extensionBehavior[E_GL_NV_shader_sm_builtins]                    = EBhDisable;
 
     // AEP
     extensionBehavior[E_GL_ANDROID_extension_pack_es31a]             = EBhDisable;
@@ -283,6 +286,7 @@ void TParseVersions::initializeExtensionBehavior()
     // EXT extensions
     extensionBehavior[E_GL_EXT_device_group]             = EBhDisable;
     extensionBehavior[E_GL_EXT_multiview]                = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_realtime_clock]    = EBhDisable;
 
     // OVR extensions
     extensionBehavior[E_GL_OVR_multiview]                = EBhDisable;
@@ -393,6 +397,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_fragment_invocation_density 1\n"
             "#define GL_EXT_buffer_reference 1\n"
             "#define GL_EXT_buffer_reference2 1\n"
+            "#define GL_EXT_demote_to_helper_invocation 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"
@@ -405,6 +410,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_KHR_shader_subgroup_quad 1\n"
 
             "#define E_GL_EXT_shader_atomic_int64 1\n"
+            "#define E_GL_EXT_shader_realtime_clock 1\n"
 
 #ifdef AMD_EXTENSIONS
             "#define GL_AMD_shader_ballot 1\n"
@@ -459,6 +465,7 @@ void TParseVersions::getPreamble(std::string& preamble)
         preamble +=
             "#define GL_EXT_device_group 1\n"
             "#define GL_EXT_multiview 1\n"
+            "#define GL_NV_shader_sm_builtins 1\n"
             ;
     }
 

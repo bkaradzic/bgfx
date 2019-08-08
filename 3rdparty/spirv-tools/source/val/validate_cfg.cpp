@@ -493,41 +493,54 @@ spv_result_t StructuredSwitchChecks(ValidationState_t& _, Function* function,
   std::map<uint32_t, uint32_t> num_fall_through_targeted;
   uint32_t default_case_fall_through = 0u;
   uint32_t default_target = switch_inst->GetOperandAs<uint32_t>(1u);
-  std::unordered_set<uint32_t> seen;
+  bool default_appears_multiple_times = false;
+  for (uint32_t i = 3; i < switch_inst->operands().size(); i += 2) {
+    if (default_target == switch_inst->GetOperandAs<uint32_t>(i)) {
+      default_appears_multiple_times = true;
+      break;
+    }
+  }
+  std::unordered_map<uint32_t, uint32_t> seen_to_fall_through;
   for (uint32_t i = 1; i < switch_inst->operands().size(); i += 2) {
     uint32_t target = switch_inst->GetOperandAs<uint32_t>(i);
     if (target == merge->id()) continue;
 
-    if (!seen.insert(target).second) continue;
-
-    const auto target_block = function->GetBlock(target).first;
-    // OpSwitch must dominate all its case constructs.
-    if (header->reachable() && target_block->reachable() &&
-        !header->dominates(*target_block)) {
-      return _.diag(SPV_ERROR_INVALID_CFG, header->label())
-             << "Selection header " << _.getIdName(header->id())
-             << " does not dominate its case construct " << _.getIdName(target);
-    }
-
     uint32_t case_fall_through = 0u;
-    if (auto error = FindCaseFallThrough(_, target_block, &case_fall_through,
-                                         merge, case_targets, function)) {
-      return error;
-    }
-
-    // Track how many time the fall through case has been targeted.
-    if (case_fall_through != 0u) {
-      auto where = num_fall_through_targeted.lower_bound(case_fall_through);
-      if (where == num_fall_through_targeted.end() ||
-          where->first != case_fall_through) {
-        num_fall_through_targeted.insert(where,
-                                         std::make_pair(case_fall_through, 1));
-      } else {
-        where->second++;
+    auto seen_iter = seen_to_fall_through.find(target);
+    if (seen_iter == seen_to_fall_through.end()) {
+      const auto target_block = function->GetBlock(target).first;
+      // OpSwitch must dominate all its case constructs.
+      if (header->reachable() && target_block->reachable() &&
+          !header->dominates(*target_block)) {
+        return _.diag(SPV_ERROR_INVALID_CFG, header->label())
+               << "Selection header " << _.getIdName(header->id())
+               << " does not dominate its case construct "
+               << _.getIdName(target);
       }
+
+      if (auto error = FindCaseFallThrough(_, target_block, &case_fall_through,
+                                           merge, case_targets, function)) {
+        return error;
+      }
+
+      // Track how many time the fall through case has been targeted.
+      if (case_fall_through != 0u) {
+        auto where = num_fall_through_targeted.lower_bound(case_fall_through);
+        if (where == num_fall_through_targeted.end() ||
+            where->first != case_fall_through) {
+          num_fall_through_targeted.insert(
+              where, std::make_pair(case_fall_through, 1));
+        } else {
+          where->second++;
+        }
+      }
+      seen_to_fall_through.insert(std::make_pair(target, case_fall_through));
+    } else {
+      case_fall_through = seen_iter->second;
     }
 
-    if (case_fall_through == default_target) {
+    if (case_fall_through == default_target &&
+        !default_appears_multiple_times) {
       case_fall_through = default_case_fall_through;
     }
     if (case_fall_through != 0u) {

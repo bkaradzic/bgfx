@@ -19,27 +19,36 @@
 
 #include "source/fuzz/fact_manager.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
+#include "source/fuzz/transformation.h"
 #include "source/opt/ir_context.h"
 
 namespace spvtools {
 namespace fuzz {
-namespace transformation {
 
-// - |message.fresh_id| must not be used by the module
-// - |message.type_id| must be the id of a floating-point or integer type
-// - The size of |message.word| must be compatible with the width of this type
-bool IsApplicable(const protobufs::TransformationAddConstantScalar& message,
-                  opt::IRContext* context, const FactManager& fact_manager);
+class TransformationAddConstantScalar : public Transformation {
+ public:
+  explicit TransformationAddConstantScalar(
+      const protobufs::TransformationAddConstantScalar& message);
 
-// Adds a new OpConstant instruction with the given type and words.
-void Apply(const protobufs::TransformationAddConstantScalar& message,
-           opt::IRContext* context, FactManager* fact_manager);
+  TransformationAddConstantScalar(uint32_t fresh_id, uint32_t type_id,
+                                  std::vector<uint32_t> words);
 
-// Helper factory to create a transformation message.
-protobufs::TransformationAddConstantScalar MakeTransformationAddConstantScalar(
-    uint32_t fresh_id, uint32_t type_id, std::vector<uint32_t> words);
+  // - |message_.fresh_id| must not be used by the module
+  // - |message_.type_id| must be the id of a floating-point or integer type
+  // - The size of |message_.word| must be compatible with the width of this
+  //   type
+  bool IsApplicable(opt::IRContext* context,
+                    const FactManager& fact_manager) const override;
 
-}  // namespace transformation
+  // Adds a new OpConstant instruction with the given type and words.
+  void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
+
+  protobufs::Transformation ToMessage() const override;
+
+ private:
+  protobufs::TransformationAddConstantScalar message_;
+};
+
 }  // namespace fuzz
 }  // namespace spvtools
 

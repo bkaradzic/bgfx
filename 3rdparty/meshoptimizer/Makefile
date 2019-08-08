@@ -9,13 +9,13 @@ BUILD=build/$(config)
 LIBRARY_SOURCES=$(wildcard src/*.cpp)
 LIBRARY_OBJECTS=$(LIBRARY_SOURCES:%=$(BUILD)/%.o)
 
-DEMO_SOURCES=$(wildcard demo/*.c demo/*.cpp) tools/objparser.cpp
+DEMO_SOURCES=$(wildcard demo/*.c demo/*.cpp) tools/meshloader.cpp
 DEMO_OBJECTS=$(DEMO_SOURCES:%=$(BUILD)/%.o)
 
-ENCODER_SOURCES=tools/meshencoder.cpp tools/objparser.cpp
-ENCODER_OBJECTS=$(ENCODER_SOURCES:%=$(BUILD)/%.o)
+GLTFPACK_SOURCES=tools/gltfpack.cpp tools/meshloader.cpp
+GLTFPACK_OBJECTS=$(GLTFPACK_SOURCES:%=$(BUILD)/%.o)
 
-OBJECTS=$(LIBRARY_OBJECTS) $(DEMO_OBJECTS) $(ENCODER_OBJECTS)
+OBJECTS=$(LIBRARY_OBJECTS) $(DEMO_OBJECTS) $(GLTFPACK_OBJECTS)
 
 LIBRARY=$(BUILD)/libmeshoptimizer.a
 EXECUTABLE=$(BUILD)/meshoptimizer
@@ -65,15 +65,15 @@ dev: $(EXECUTABLE)
 	$(EXECUTABLE) -d $(files)
 
 format:
-	clang-format -i $(LIBRARY_SOURCES) $(DEMO_SOURCES)
+	clang-format -i $(LIBRARY_SOURCES) $(DEMO_SOURCES) $(GLTFPACK_SOURCES)
 
-meshencoder: $(ENCODER_OBJECTS) $(LIBRARY)
+gltfpack: $(GLTFPACK_OBJECTS) $(LIBRARY)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-js/decoder.js: src/vertexcodec.cpp src/indexcodec.cpp
+js/meshopt_decoder.js: src/vertexcodec.cpp src/indexcodec.cpp
 	@mkdir -p build
-	emcc $(filter %.cpp,$^) -O3 -DNDEBUG -s EXPORTED_FUNCTIONS='["_meshopt_decodeVertexBuffer", "_meshopt_decodeIndexBuffer"]' -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=32768 -s TOTAL_MEMORY=65536 -o build/decoder.wasm
-	sed -i "s#\(var wasm = \)\".*\";#\\1\"$$(cat build/decoder.wasm | base64 -w 0)\";#" $@
+	emcc $(filter %.cpp,$^) -O3 -DNDEBUG -s EXPORTED_FUNCTIONS='["_meshopt_decodeVertexBuffer", "_meshopt_decodeIndexBuffer"]' -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=32768 -s TOTAL_MEMORY=65536 -o build/meshopt_decoder.wasm
+	sed -i "s#\(var wasm = \)\".*\";#\\1\"$$(cat build/meshopt_decoder.wasm | base64 -w 0)\";#" $@
 
 $(EXECUTABLE): $(DEMO_OBJECTS) $(LIBRARY)
 	$(CXX) $^ $(LDFLAGS) -o $@
