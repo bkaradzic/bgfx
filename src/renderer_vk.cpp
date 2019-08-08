@@ -366,6 +366,8 @@ VK_IMPORT_DEVICE
 
 	void fillInstanceBinding(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint32_t _numInstanceData)
 	{
+		BX_UNUSED(_vsh);
+
 		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
 		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
 		VkVertexInputBindingDescription*   inputBinding = const_cast<VkVertexInputBindingDescription*>(_vertexInputState.pVertexBindingDescriptions + numBindings);
@@ -2513,8 +2515,7 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
-			const VertexDecl* decls[1] = { &m_vertexDecls[_blitter.m_vb->decl.idx] };
-			::VkPipeline pso = getPipeline(state
+			VkPipeline pso = getPipeline(state
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, _blitter.m_vb->decl.idx
 				, _blitter.m_program
@@ -2613,7 +2614,6 @@ VK_IMPORT_DEVICE
 			scratchBuffer.m_currentDs++;
 
 			VertexBufferVK& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			const VertexDecl& vertexDecl = m_vertexDecls[_blitter.m_vb->decl.idx];
 			VkDeviceSize offset = 0;
 			vkCmdBindVertexBuffers(m_commandBuffer
 				, 0
