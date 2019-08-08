@@ -1370,7 +1370,8 @@ namespace bgfx
 		/// Set texture stage for draw primitive.
 		///
 		/// @param[in] _stage Texture unit.
-		/// @param[in] _sampler Program sampler.
+		/// @param[in] _sampler Program sampler. If valid, also set the uniform value
+		///   to _stage.
 		/// @param[in] _handle Texture handle.
 		/// @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
 		///   texture sampling settings from the texture.
@@ -3766,7 +3767,8 @@ namespace bgfx
 	/// Set texture stage for draw primitive.
 	///
 	/// @param[in] _stage Texture unit.
-	/// @param[in] _sampler Program sampler.
+	/// @param[in] _sampler Program sampler. If valid, also set the uniform value
+	///   to _stage.
 	/// @param[in] _handle Texture handle.
 	/// @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
 	///   texture sampling settings from the texture.

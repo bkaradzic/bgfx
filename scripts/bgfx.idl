@@ -2304,7 +2304,7 @@ func.Encoder.setInstanceCount
 func.Encoder.setTexture
 	"void"
 	.stage   "uint8_t"        --- Texture unit.
-	.sampler "UniformHandle"  --- Program sampler.
+	.sampler "UniformHandle"  --- Program sampler. If valid, also set the uniform value to stage.
 	.handle  "TextureHandle"  --- Texture handle.
 	.flags   "uint32_t"       --- Texture sampling mode. Default value UINT32_MAX uses
 	 { default = UINT32_MAX } ---   texture sampling settings from the texture.
@@ -2814,7 +2814,7 @@ func.setInstanceCount
 func.setTexture
 	"void"
 	.stage   "uint8_t"        --- Texture unit.
-	.sampler "UniformHandle"  --- Program sampler.
+	.sampler "UniformHandle"  --- Program sampler. If valid, also set the uniform value to stage.
 	.handle  "TextureHandle"  --- Texture handle.
 	.flags   "uint32_t"       --- Texture sampling mode. Default value UINT32_MAX uses
 	 { default = UINT32_MAX } ---   texture sampling settings from the texture.

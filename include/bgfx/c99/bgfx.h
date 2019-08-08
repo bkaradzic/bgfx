@@ -2519,7 +2519,8 @@ BGFX_C_API void bgfx_encoder_set_instance_count(bgfx_encoder_t* _this, uint32_t 
  * Set texture stage for draw primitive.
  *
  * @param[in] _stage Texture unit.
- * @param[in] _sampler Program sampler.
+ * @param[in] _sampler Program sampler. If valid, also set the uniform value
+ *    to _stage.
  * @param[in] _handle Texture handle.
  * @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
  *    texture sampling settings from the texture.
@@ -3036,7 +3037,8 @@ BGFX_C_API void bgfx_set_instance_count(uint32_t _numInstances);
  *
  * @param[in] _stage Texture unit.
  * @param[in] _sampler Program sampler.
- * @param[in] _handle Texture handle.
+ * @param[in] _handle Texture handle. If valid, also set the uniform value
+ *    to _stage.
  * @param[in] _flags Texture sampling mode. Default value UINT32_MAX uses
  *    texture sampling settings from the texture.
  *    - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap
