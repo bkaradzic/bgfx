@@ -58,6 +58,8 @@ struct Mesh
 	cgltf_material* material;
 	cgltf_skin* skin;
 
+	cgltf_primitive_type type;
+
 	std::vector<Stream> streams;
 	std::vector<unsigned int> indices;
 
@@ -237,9 +239,15 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 		{
 			const cgltf_primitive& primitive = mesh.primitives[pi];
 
-			if (primitive.type != cgltf_primitive_type_triangles)
+			if (primitive.type != cgltf_primitive_type_triangles && primitive.type != cgltf_primitive_type_points)
 			{
 				fprintf(stderr, "Warning: ignoring primitive %d of mesh %d because type %d is not supported\n", int(pi), mesh_id, primitive.type);
+				continue;
+			}
+
+			if (primitive.type == cgltf_primitive_type_points && primitive.indices)
+			{
+				fprintf(stderr, "Warning: ignoring primitive %d of mesh %d because indexed points are not supported\n", int(pi), mesh_id);
 				continue;
 			}
 
@@ -250,13 +258,15 @@ void parseMeshesGltf(cgltf_data* data, std::vector<Mesh>& meshes)
 			result.material = primitive.material;
 			result.skin = node.skin;
 
+			result.type = primitive.type;
+
 			if (primitive.indices)
 			{
 				result.indices.resize(primitive.indices->count);
 				for (size_t i = 0; i < primitive.indices->count; ++i)
 					result.indices[i] = unsigned(cgltf_accessor_read_index(primitive.indices, i));
 			}
-			else
+			else if (primitive.type != cgltf_primitive_type_points)
 			{
 				size_t count = primitive.attributes ? primitive.attributes[0].data->count : 0;
 
@@ -431,6 +441,8 @@ void parseMeshesObj(fastObjMesh* obj, cgltf_data* data, std::vector<Mesh>& meshe
 			mesh.material = &data->materials[mi];
 		}
 
+		mesh.type = cgltf_primitive_type_triangles;
+
 		mesh.streams.resize(3);
 		mesh.streams[0].type = cgltf_attribute_type_position;
 		mesh.streams[0].data.resize(vertex_count[mi]);
@@ -601,9 +613,6 @@ void mergeMeshMaterials(cgltf_data* data, std::vector<Mesh>& meshes)
 	{
 		Mesh& mesh = meshes[i];
 
-		if (mesh.indices.empty())
-			continue;
-
 		if (!mesh.material)
 			continue;
 
@@ -653,6 +662,9 @@ bool canMergeMeshes(const Mesh& lhs, const Mesh& rhs, const Settings& settings)
 	if (lhs.skin != rhs.skin)
 		return false;
 
+	if (lhs.type != rhs.type)
+		return false;
+
 	if (lhs.targets != rhs.targets)
 		return false;
 
@@ -662,6 +674,9 @@ bool canMergeMeshes(const Mesh& lhs, const Mesh& rhs, const Settings& settings)
 	for (size_t i = 0; i < lhs.weights.size(); ++i)
 		if (lhs.weights[i] != rhs.weights[i])
 			return false;
+
+	if (lhs.indices.empty() != rhs.indices.empty())
+		return false;
 
 	if (lhs.streams.size() != rhs.streams.size())
 		return false;
@@ -693,25 +708,65 @@ void mergeMeshes(Mesh& target, const Mesh& mesh)
 
 void mergeMeshes(std::vector<Mesh>& meshes, const Settings& settings)
 {
+	size_t write = 0;
+
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
-		Mesh& mesh = meshes[i];
+		if (meshes[i].streams.empty())
+			continue;
 
-		for (size_t j = 0; j < i; ++j)
+		Mesh& target = meshes[write];
+
+		if (i != write)
 		{
-			Mesh& target = meshes[j];
+			Mesh& mesh = meshes[i];
 
-			if (target.indices.size() && canMergeMeshes(mesh, target, settings))
+			// note: this copy is expensive; we could use move in C++11 or swap manually which is a bit painful...
+			target = mesh;
+
+			mesh.streams.clear();
+			mesh.indices.clear();
+		}
+
+		size_t target_vertices = target.streams[0].data.size();
+		size_t target_indices = target.indices.size();
+
+		for (size_t j = i + 1; j < meshes.size(); ++j)
+		{
+			Mesh& mesh = meshes[j];
+
+			if (!mesh.streams.empty() && canMergeMeshes(target, mesh, settings))
+			{
+				target_vertices += mesh.streams[0].data.size();
+				target_indices += mesh.indices.size();
+			}
+		}
+
+		for (size_t j = 0; j < target.streams.size(); ++j)
+			target.streams[j].data.reserve(target_vertices);
+
+		target.indices.reserve(target_indices);
+
+		for (size_t j = i + 1; j < meshes.size(); ++j)
+		{
+			Mesh& mesh = meshes[j];
+
+			if (!mesh.streams.empty() && canMergeMeshes(target, mesh, settings))
 			{
 				mergeMeshes(target, mesh);
 
 				mesh.streams.clear();
 				mesh.indices.clear();
-
-				break;
 			}
 		}
+
+		assert(target.streams[0].data.size() == target_vertices);
+		assert(target.indices.size() == target_indices);
+
+		write++;
 	}
+
+	meshes.resize(write);
 }
 
 void reindexMesh(Mesh& mesh)
@@ -762,6 +817,33 @@ void optimizeMesh(Mesh& mesh)
 
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
 		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], vertex_count, sizeof(Attr), &remap[0]);
+}
+
+void sortPointMesh(Mesh& mesh)
+{
+	size_t positions = 0;
+
+	for (size_t i = 0; i < mesh.streams.size(); ++i)
+		if (mesh.streams[i].type == cgltf_attribute_type_position)
+		{
+			positions = i;
+			break;
+		}
+
+	assert(mesh.streams[positions].type == cgltf_attribute_type_position);
+	assert(mesh.indices.empty());
+
+	size_t total_vertices = mesh.streams[positions].data.size();
+
+	std::vector<unsigned int> remap(total_vertices);
+	meshopt_spatialSortRemap(&remap[0], mesh.streams[positions].data[0].f, total_vertices, sizeof(Attr));
+
+	for (size_t i = 0; i < mesh.streams.size(); ++i)
+	{
+		assert(mesh.streams[i].data.size() == total_vertices);
+
+		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], total_vertices, sizeof(Attr), &remap[0]);
+	}
 }
 
 bool getAttributeBounds(const std::vector<Mesh>& meshes, cgltf_attribute_type type, Attr& min, Attr& max)
@@ -2070,9 +2152,6 @@ void markNeededNodes(cgltf_data* data, std::vector<NodeInfo>& nodes, const std::
 	{
 		const Mesh& mesh = meshes[i];
 
-		if (mesh.indices.empty())
-			continue;
-
 		if (mesh.node)
 		{
 			NodeInfo& ni = nodes[mesh.node - data->nodes];
@@ -2113,9 +2192,6 @@ void markNeededMaterials(cgltf_data* data, std::vector<MaterialInfo>& materials,
 	for (size_t i = 0; i < meshes.size(); ++i)
 	{
 		const Mesh& mesh = meshes[i];
-
-		if (mesh.indices.empty())
-			continue;
 
 		if (mesh.material)
 		{
@@ -2781,11 +2857,20 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 	{
 		Mesh& mesh = meshes[i];
 
-		if (mesh.indices.empty())
-			continue;
+		switch (mesh.type)
+		{
+		case cgltf_primitive_type_points:
+			sortPointMesh(mesh);
+			break;
 
-		reindexMesh(mesh);
-		optimizeMesh(mesh);
+		case cgltf_primitive_type_triangles:
+			reindexMesh(mesh);
+			optimizeMesh(mesh);
+			break;
+
+		default:
+			assert(!"Unknown primitive type");
+		}
 	}
 
 	if (settings.verbose)
@@ -2904,9 +2989,6 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 	{
 		const Mesh& mesh = meshes[i];
 
-		if (mesh.indices.empty())
-			continue;
-
 		comma(json_meshes);
 		append(json_meshes, "{\"primitives\":[");
 
@@ -2914,9 +2996,6 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 		for (; pi < meshes.size(); ++pi)
 		{
 			const Mesh& prim = meshes[pi];
-
-			if (prim.indices.empty())
-				continue;
 
 			if (prim.node != mesh.node || prim.skin != mesh.skin || prim.targets != mesh.targets)
 				break;
@@ -2928,6 +3007,8 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 			append(json_meshes, "{\"attributes\":{");
 			writeMeshAttributes(json_meshes, views, json_accessors, accr_offset, prim, 0, qp, settings);
 			append(json_meshes, "}");
+			append(json_meshes, ",\"mode\":");
+			append(json_meshes, size_t(prim.type));
 
 			if (mesh.targets)
 			{
@@ -2942,10 +3023,14 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 				append(json_meshes, "]");
 			}
 
-			size_t index_accr = writeMeshIndices(views, json_accessors, accr_offset, prim, settings);
+			if (!prim.indices.empty())
+			{
+				size_t index_accr = writeMeshIndices(views, json_accessors, accr_offset, prim, settings);
 
-			append(json_meshes, ",\"indices\":");
-			append(json_meshes, index_accr);
+				append(json_meshes, ",\"indices\":");
+				append(json_meshes, index_accr);
+			}
+
 			if (prim.material)
 			{
 				MaterialInfo& mi = materials[prim.material - data->materials];
@@ -2954,6 +3039,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 				append(json_meshes, ",\"material\":");
 				append(json_meshes, size_t(mi.remap));
 			}
+
 			append(json_meshes, "}");
 		}
 
@@ -3226,12 +3312,7 @@ void process(cgltf_data* data, std::vector<Mesh>& meshes, const Settings& settin
 
 	if (settings.verbose)
 	{
-		size_t primitives = 0;
-
-		for (size_t i = 0; i < meshes.size(); ++i)
-			primitives += !meshes[i].indices.empty();
-
-		printf("output: %d nodes, %d meshes (%d primitives), %d materials\n", int(node_offset), int(mesh_offset), int(primitives), int(material_offset));
+		printf("output: %d nodes, %d meshes (%d primitives), %d materials\n", int(node_offset), int(mesh_offset), int(meshes.size()), int(material_offset));
 		printf("output: JSON %d bytes, buffers %d bytes\n", int(json.size()), int(bin.size()));
 		printf("output: buffers: vertex %d bytes, index %d bytes, skin %d bytes, time %d bytes, keyframe %d bytes, image %d bytes\n",
 		       int(bytes[BufferView::Kind_Vertex]), int(bytes[BufferView::Kind_Index]), int(bytes[BufferView::Kind_Skin]),
