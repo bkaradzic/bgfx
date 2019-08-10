@@ -379,7 +379,7 @@ VK_IMPORT_DEVICE
 
 		for (uint32_t inst = 0; inst < _numInstanceData; ++inst)
 		{
-			inputAttrib->location = numAttribs;  // TODO: is this usable for all case? what if the order of i_dataN is swizzled?
+			inputAttrib->location = numAttribs;
 			inputAttrib->binding  = numBindings;
 			inputAttrib->format   = VK_FORMAT_R32G32B32A32_SFLOAT;
 			inputAttrib->offset   = inst * 16;
@@ -3198,7 +3198,6 @@ VK_IMPORT_DEVICE
 			uint32_t borderColor = ((_samplerFlags & BGFX_SAMPLER_BORDER_COLOR_MASK) >> BGFX_SAMPLER_BORDER_COLOR_SHIFT);
 			if (borderColor > 0)
 			{
-				// TODO: set borderColor properly
 				sci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 			}
 
@@ -5987,7 +5986,7 @@ BX_UNUSED(currentSamplerStateIdx);
 
 					VkDeviceSize offset = 0;
 					vkCmdBindVertexBuffers(m_commandBuffer
-						, 0 // TODO: multiple vertex stream
+						, 0
 						, 1
 						, &vb.m_buffer
 						, &offset
@@ -5998,7 +5997,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						VkDeviceSize instanceOffset = draw.m_instanceDataOffset;
 						VertexBufferVK& instanceBuffer = m_vertexBuffers[draw.m_instanceDataBuffer.idx];
 						vkCmdBindVertexBuffers(m_commandBuffer
-							, 1 // TODO: multiple vertex stream
+							, 1
 							, 1
 							, &instanceBuffer.m_buffer
 							, &instanceOffset
