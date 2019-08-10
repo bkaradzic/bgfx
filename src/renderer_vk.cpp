@@ -392,6 +392,22 @@ VK_IMPORT_DEVICE
 		_vertexInputState.vertexAttributeDescriptionCount = numAttribs;
 	}
 
+	static const char* s_deviceTypeName[] =
+	{
+		"Other",
+		"Integrated GPU",
+		"Discrete GPU",
+		"Virtual GPU",
+		"CPU",
+
+		"Unknown?!"
+	};
+
+	const char* getName(VkPhysicalDeviceType _type)
+	{
+		return s_deviceTypeName[bx::min<int32_t>(_type, BX_COUNTOF(s_deviceTypeName) )];
+	}
+
 	static const char* s_allocScopeName[] =
 	{
 		"vkCommand",
@@ -974,7 +990,6 @@ VK_IMPORT
 						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
 					}
 				}
-
 
 				VkInstanceCreateInfo ici;
 				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -6136,10 +6151,11 @@ BX_UNUSED(presentMin, presentMax);
 					, getRendererName()
 					);
 
-//				const DXGI_ADAPTER_DESC& desc = m_adapterDesc;
-//				char description[BX_COUNTOF(desc.Description)];
-//				wcstombs(description, desc.Description, BX_COUNTOF(desc.Description) );
-//				tvm.printf(0, pos++, 0x8f, " Device: %s", description);
+				const VkPhysicalDeviceProperties& pdp = m_deviceProperties;
+				tvm.printf(0, pos++, 0x8f, " Device: %s (%s)"
+					, pdp.deviceName
+					, getName(pdp.deviceType)
+					);
 //
 //				char dedicatedVideo[16];
 //				bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
