@@ -621,6 +621,11 @@ namespace bgfx { namespace metal
 			);
 
 		shader->setEntryPoint("main");
+		shader->setAutoMapBindings(true);
+		const int textureBindingOffset = 16;
+		shader->setShiftBinding(glslang::EResTexture, textureBindingOffset);
+		shader->setShiftBinding(glslang::EResSampler, textureBindingOffset);
+		shader->setShiftBinding(glslang::EResImage, textureBindingOffset);
 
 		const char* shaderStrings[] = { _code.c_str() };
 		shader->setStrings(
@@ -857,6 +862,10 @@ namespace bgfx { namespace metal
 						}
 
 						spirv_cross::CompilerMSL msl(std::move(spirv));
+						
+						auto executionModel = msl.get_execution_model();
+						spirv_cross::MSLResourceBinding newBinding;
+						newBinding.stage = executionModel;
 
 						spirv_cross::ShaderResources resources = msl.get_shader_resources();
 
@@ -866,13 +875,35 @@ namespace bgfx { namespace metal
 
 						for (auto &resource : resources.uniform_buffers)
 						{
+							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
+							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
+							newBinding.desc_set = set;
+							newBinding.binding = binding;
+							newBinding.msl_buffer = 0;
+							msl.add_msl_resource_binding( newBinding );
+
 							msl.set_name(resource.id, "_mtl_u");
 						}
 
 						for (auto &resource : resources.storage_buffers)
 						{
-							unsigned binding = msl.get_decoration(resource.id, spv::DecorationBinding);
-							msl.set_decoration(resource.id, spv::DecorationBinding, binding + 1);
+							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
+							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
+							newBinding.desc_set = set;
+							newBinding.binding = binding;
+							newBinding.msl_buffer = binding + 1;
+							msl.add_msl_resource_binding( newBinding );
+						}
+
+						for (auto &resource : resources.separate_samplers)
+						{
+							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
+							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
+							newBinding.desc_set = set;
+							newBinding.binding = binding;
+							newBinding.msl_texture = binding - textureBindingOffset;
+							newBinding.msl_sampler = binding - textureBindingOffset;
+							msl.add_msl_resource_binding( newBinding );
 						}
 
 						for (auto &resource : resources.separate_images)
@@ -880,7 +911,31 @@ namespace bgfx { namespace metal
 							std::string name = msl.get_name(resource.id);
 							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
 								msl.set_name(resource.id, name.substr(0, name.length() - 7));
+							
+							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
+							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
+							newBinding.desc_set = set;
+							newBinding.binding = binding;
+							newBinding.msl_texture = binding - textureBindingOffset;
+							newBinding.msl_sampler = binding - textureBindingOffset;
+							msl.add_msl_resource_binding( newBinding );
 						}
+						
+						for (auto &resource : resources.storage_images)
+						{
+							std::string name = msl.get_name(resource.id);
+							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
+								msl.set_name(resource.id, name.substr(0, name.length() - 7));
+							
+							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
+							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
+							newBinding.desc_set = set;
+							newBinding.binding = binding;
+							newBinding.msl_texture = binding - textureBindingOffset;
+							newBinding.msl_sampler = binding - textureBindingOffset;
+							msl.add_msl_resource_binding( newBinding );
+						}
+						
 						std::string source = msl.compile();
 
 						if ('c' == _options.shaderType)
