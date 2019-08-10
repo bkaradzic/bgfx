@@ -46,14 +46,7 @@ void main()
                     _231 = true;
                     break;
                 }
-                else
-                {
-                    uint _204 = _227 + uint(1);
-                    _227 = _204;
-                    continue;
-                }
-                uint _204 = _227 + uint(1);
-                _227 = _204;
+                _227++;
                 continue;
             }
             else

@@ -198,6 +198,7 @@ public:
 		bool tess_domain_origin_lower_left = false;
 		bool multiview = false;
 		bool view_index_from_device_index = false;
+		bool dispatch_base = false;
 
 		// Enable use of MSL 2.0 indirect argument buffers.
 		// MSL 2.0 must also be enabled.
@@ -225,7 +226,7 @@ public:
 			msl_version = make_msl_version(major, minor, patch);
 		}
 
-		bool supports_msl_version(uint32_t major, uint32_t minor = 0, uint32_t patch = 0)
+		bool supports_msl_version(uint32_t major, uint32_t minor = 0, uint32_t patch = 0) const
 		{
 			return msl_version >= make_msl_version(major, minor, patch);
 		}
@@ -274,6 +275,13 @@ public:
 	bool needs_view_mask_buffer() const
 	{
 		return msl_options.multiview && !msl_options.view_index_from_device_index;
+	}
+
+	// Provide feedback to calling API to allow it to pass a buffer
+	// containing the dispatch base workgroup ID.
+	bool needs_dispatch_base_buffer() const
+	{
+		return msl_options.dispatch_base && !msl_options.supports_msl_version(1, 2);
 	}
 
 	// Provide feedback to calling API to allow it to pass an output
@@ -533,7 +541,7 @@ protected:
 	void ensure_member_packing_rules_msl(SPIRType &ib_type, uint32_t index);
 	bool validate_member_packing_rules_msl(const SPIRType &type, uint32_t index) const;
 	std::string get_argument_address_space(const SPIRVariable &argument);
-	std::string get_type_address_space(const SPIRType &type, uint32_t id);
+	std::string get_type_address_space(const SPIRType &type, uint32_t id, bool argument = false);
 	const char *to_restrict(uint32_t id, bool space = true);
 	SPIRType &get_stage_in_struct_type();
 	SPIRType &get_stage_out_struct_type();
@@ -563,6 +571,7 @@ protected:
 	uint32_t builtin_primitive_id_id = 0;
 	uint32_t builtin_subgroup_invocation_id_id = 0;
 	uint32_t builtin_subgroup_size_id = 0;
+	uint32_t builtin_dispatch_base_id = 0;
 	uint32_t swizzle_buffer_id = 0;
 	uint32_t buffer_size_buffer_id = 0;
 	uint32_t view_mask_buffer_id = 0;

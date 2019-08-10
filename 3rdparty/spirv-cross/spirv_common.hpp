@@ -1433,6 +1433,10 @@ enum ExtendedDecorations
 	// Marks a buffer block for using explicit offsets (GLSL/HLSL).
 	SPIRVCrossDecorationExplicitOffset,
 
+	// Apply to a variable in the Input storage class; marks it as holding the base group passed to vkCmdDispatchBase().
+	// In MSL, this is used to adjust the WorkgroupId and GlobalInvocationId variables.
+	SPIRVCrossDecorationBuiltInDispatchBase,
+
 	SPIRVCrossDecorationCount
 };
 

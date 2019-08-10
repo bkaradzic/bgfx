@@ -137,7 +137,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant CB0& _19 [[buffer(0)
     float2 _166 = in.IN_Uv_EdgeDistance1.xy * 1.0;
     bool _173;
     float4 _193;
-    do
+    for (;;)
     {
         _173 = 0.0 == 0.0;
         if (_173)
@@ -153,9 +153,9 @@ fragment main0_out main0(main0_in in [[stage_in]], constant CB0& _19 [[buffer(0)
         }
         _193 = _192;
         break;
-    } while (false);
+    }
     float4 _220;
-    do
+    for (;;)
     {
         if (_173)
         {
@@ -170,7 +170,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant CB0& _19 [[buffer(0)
         }
         _220 = _219;
         break;
-    } while (false);
+    }
     float2 _223 = float2(1.0);
     float2 _224 = (_220.wy * 2.0) - _223;
     float3 _232 = float3(_224, sqrt(fast::clamp(1.0 + dot(-_224, _224), 0.0, 1.0)));
@@ -181,7 +181,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant CB0& _19 [[buffer(0)
     float3 _256 = float3(_255.x, _255.y, _253.z);
     float3 _271 = ((in.IN_Color.xyz * (_193 * 1.0).xyz) * (1.0 + (_256.x * 0.300000011920928955078125))) * (StudsMapTexture.sample(StudsMapSampler, _156.UvStuds).x * 2.0);
     float4 _298;
-    do
+    for (;;)
     {
         if (0.75 == 0.0)
         {
@@ -196,7 +196,7 @@ fragment main0_out main0(main0_in in [[stage_in]], constant CB0& _19 [[buffer(0)
         }
         _298 = _297;
         break;
-    } while (false);
+    }
     float2 _303 = mix(float2(0.800000011920928955078125, 120.0), (_298.xy * float2(2.0, 256.0)) + float2(0.0, 0.00999999977648258209228515625), float2(_165));
     Surface _304 = _125;
     _304.albedo = _271;

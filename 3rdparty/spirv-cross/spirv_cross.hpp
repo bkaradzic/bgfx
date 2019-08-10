@@ -816,6 +816,7 @@ protected:
 	std::unordered_set<uint32_t> forwarded_temporaries;
 	std::unordered_set<uint32_t> suppressed_usage_tracking;
 	std::unordered_set<uint32_t> hoisted_temporaries;
+	std::unordered_set<uint32_t> forced_invariant_temporaries;
 
 	Bitset active_input_builtins;
 	Bitset active_output_builtins;
@@ -971,6 +972,8 @@ protected:
 
 	bool reflection_ssbo_instance_name_is_significant() const;
 	std::string get_remapped_declared_block_name(uint32_t id, bool fallback_prefer_instance_name) const;
+
+	bool flush_phi_required(uint32_t from, uint32_t to) const;
 
 private:
 	// Used only to implement the old deprecated get_entry_point() interface.

@@ -207,6 +207,8 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('--msl-multiview')
     if '.viewfromdev.' in shader:
         msl_args.append('--msl-view-index-from-device-index')
+    if '.dispatchbase.' in shader:
+        msl_args.append('--msl-dispatch-base')
 
     subprocess.check_call(msl_args)
 
@@ -383,6 +385,8 @@ def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, fl
         extra_args += ['--glsl-emit-push-constant-as-ubo']
     if '.line.' in shader:
         extra_args += ['--emit-line-directives']
+    if '.no-samplerless.' in shader:
+        extra_args += ['--vulkan-glsl-disable-ext-samplerless-texture-functions']
 
     spirv_cross_path = paths.spirv_cross
 
