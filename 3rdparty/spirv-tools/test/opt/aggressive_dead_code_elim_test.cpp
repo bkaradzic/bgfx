@@ -6616,6 +6616,152 @@ OpFunctionEnd
   SinglePassRunAndCheck<AggressiveDCEPass>(spirv, spirv, true);
 }
 
+TEST_F(AggressiveDCETest, NoEliminateForwardPointer) {
+  // clang-format off
+  //
+  //  #version 450
+  //  #extension GL_EXT_buffer_reference : enable
+  //
+  //    // forward reference
+  //    layout(buffer_reference) buffer blockType;
+  //
+  //  layout(buffer_reference, std430, buffer_reference_align = 16) buffer blockType {
+  //    int x;
+  //    blockType next;
+  //  };
+  //
+  //  layout(std430) buffer rootBlock {
+  //    blockType root;
+  //  } r;
+  //
+  //  void main()
+  //  {
+  //    blockType b = r.root;
+  //    b = b.next;
+  //    b.x = 531;
+  //  }
+  //
+  // clang-format on
+
+  const std::string predefs1 =
+      R"(OpCapability Shader
+OpCapability PhysicalStorageBufferAddressesEXT
+OpExtension "SPV_EXT_physical_storage_buffer"
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpSource GLSL 450
+OpSourceExtension "GL_EXT_buffer_reference"
+)";
+
+  const std::string names_before =
+      R"(OpName %main "main"
+OpName %blockType "blockType"
+OpMemberName %blockType 0 "x"
+OpMemberName %blockType 1 "next"
+OpName %b "b"
+OpName %rootBlock "rootBlock"
+OpMemberName %rootBlock 0 "root"
+OpName %r "r"
+OpMemberDecorate %blockType 0 Offset 0
+OpMemberDecorate %blockType 1 Offset 8
+OpDecorate %blockType Block
+OpDecorate %b AliasedPointerEXT
+OpMemberDecorate %rootBlock 0 Offset 0
+OpDecorate %rootBlock Block
+OpDecorate %r DescriptorSet 0
+OpDecorate %r Binding 0
+)";
+
+  const std::string names_after =
+      R"(OpName %main "main"
+OpName %blockType "blockType"
+OpMemberName %blockType 0 "x"
+OpMemberName %blockType 1 "next"
+OpName %rootBlock "rootBlock"
+OpMemberName %rootBlock 0 "root"
+OpName %r "r"
+OpMemberDecorate %blockType 0 Offset 0
+OpMemberDecorate %blockType 1 Offset 8
+OpDecorate %blockType Block
+OpMemberDecorate %rootBlock 0 Offset 0
+OpDecorate %rootBlock Block
+OpDecorate %r DescriptorSet 0
+OpDecorate %r Binding 0
+)";
+
+  const std::string predefs2_before =
+      R"(%void = OpTypeVoid
+%3 = OpTypeFunction %void
+OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_blockType PhysicalStorageBufferEXT
+%int = OpTypeInt 32 1
+%blockType = OpTypeStruct %int %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %blockType
+%_ptr_Function__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer Function %_ptr_PhysicalStorageBufferEXT_blockType
+%rootBlock = OpTypeStruct %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_StorageBuffer_rootBlock = OpTypePointer StorageBuffer %rootBlock
+%r = OpVariable %_ptr_StorageBuffer_rootBlock StorageBuffer
+%int_0 = OpConstant %int 0
+%_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer StorageBuffer %_ptr_PhysicalStorageBufferEXT_blockType
+%int_1 = OpConstant %int 1
+%_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %_ptr_PhysicalStorageBufferEXT_blockType
+%int_531 = OpConstant %int 531
+%_ptr_PhysicalStorageBufferEXT_int = OpTypePointer PhysicalStorageBufferEXT %int
+)";
+
+  const std::string predefs2_after =
+      R"(%void = OpTypeVoid
+%8 = OpTypeFunction %void
+OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_blockType PhysicalStorageBufferEXT
+%int = OpTypeInt 32 1
+%blockType = OpTypeStruct %int %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %blockType
+%rootBlock = OpTypeStruct %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_StorageBuffer_rootBlock = OpTypePointer StorageBuffer %rootBlock
+%r = OpVariable %_ptr_StorageBuffer_rootBlock StorageBuffer
+%int_0 = OpConstant %int 0
+%_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer StorageBuffer %_ptr_PhysicalStorageBufferEXT_blockType
+%int_1 = OpConstant %int 1
+%_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %_ptr_PhysicalStorageBufferEXT_blockType
+%int_531 = OpConstant %int 531
+%_ptr_PhysicalStorageBufferEXT_int = OpTypePointer PhysicalStorageBufferEXT %int
+)";
+
+  const std::string func_before =
+      R"(%main = OpFunction %void None %3
+%5 = OpLabel
+%b = OpVariable %_ptr_Function__ptr_PhysicalStorageBufferEXT_blockType Function
+%16 = OpAccessChain %_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType %r %int_0
+%17 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %16
+%21 = OpAccessChain %_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType %17 %int_1
+%22 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %21 Aligned 8
+OpStore %b %22
+%26 = OpAccessChain %_ptr_PhysicalStorageBufferEXT_int %22 %int_0
+OpStore %26 %int_531 Aligned 16
+OpReturn
+OpFunctionEnd
+)";
+
+  const std::string func_after =
+      R"(%main = OpFunction %void None %8
+%19 = OpLabel
+%20 = OpAccessChain %_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType %r %int_0
+%21 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %20
+%22 = OpAccessChain %_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType %21 %int_1
+%23 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %22 Aligned 8
+%24 = OpAccessChain %_ptr_PhysicalStorageBufferEXT_int %23 %int_0
+OpStore %24 %int_531 Aligned 16
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndCheck<AggressiveDCEPass>(
+      predefs1 + names_before + predefs2_before + func_before,
+      predefs1 + names_after + predefs2_after + func_after, true, true);
+}
+
 // TODO(greg-lunarg): Add tests to verify handling of these cases:
 //
 //    Check that logical addressing required

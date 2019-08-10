@@ -11,6 +11,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "source/opt/fold.h"
+
 #include <limits>
 #include <memory>
 #include <string>
@@ -22,7 +24,6 @@
 #include "gtest/gtest.h"
 #include "source/opt/build_module.h"
 #include "source/opt/def_use_manager.h"
-#include "source/opt/fold.h"
 #include "source/opt/ir_context.h"
 #include "source/opt/module.h"
 #include "spirv-tools/libspirv.hpp"
@@ -2980,7 +2981,17 @@ INSTANTIATE_TEST_SUITE_P(CompositeExtractFoldingTest, GeneralInstructionFoldingT
             "%4 = OpCompositeExtract %int %3 0\n" +
             "OpReturn\n" +
             "OpFunctionEnd",
-        4, INT_7_ID)
+        4, INT_7_ID),
+    // Test case 13: https://github.com/KhronosGroup/SPIRV-Tools/issues/2608
+    // Out of bounds access.  Do not fold.
+    InstructionFoldingCase<uint32_t>(
+        Header() + "%main = OpFunction %void None %void_func\n" +
+            "%main_lab = OpLabel\n" +
+            "%2 = OpConstantComposite %v4float %float_1 %float_1 %float_1 %float_1\n" +
+            "%3 = OpCompositeExtract %float %2 4\n" +
+            "OpReturn\n" +
+            "OpFunctionEnd",
+        3, 0)
 ));
 
 INSTANTIATE_TEST_SUITE_P(CompositeConstructFoldingTest, GeneralInstructionFoldingTest,

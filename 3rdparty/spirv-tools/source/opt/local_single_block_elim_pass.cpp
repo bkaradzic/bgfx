@@ -256,6 +256,7 @@ void LocalSingleBlockLoadStoreElimPass::InitExtensions() {
       "SPV_NV_mesh_shader",
       "SPV_NV_ray_tracing",
       "SPV_EXT_fragment_invocation_density",
+      "SPV_EXT_physical_storage_buffer",
   });
 }
 

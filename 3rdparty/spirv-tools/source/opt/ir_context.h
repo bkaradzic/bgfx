@@ -382,6 +382,15 @@ class IRContext {
   // |before| and |after| must be registered definitions in the DefUseManager.
   bool ReplaceAllUsesWith(uint32_t before, uint32_t after);
 
+  // Replace all uses of |before| id with |after| id if those uses
+  // (instruction, operand pair) return true for |predicate|. Returns true if
+  // any replacement happens. This method does not kill the definition of the
+  // |before| id. If |after| is the same as |before|, does nothing and return
+  // false.
+  bool ReplaceAllUsesWithPredicate(
+      uint32_t before, uint32_t after,
+      const std::function<bool(Instruction*, uint32_t)>& predicate);
+
   // Returns true if all of the analyses that are suppose to be valid are
   // actually valid.
   bool IsConsistent();
@@ -546,6 +555,10 @@ class IRContext {
   // |roots| will be empty.
   bool ProcessCallTreeFromRoots(ProcessFunction& pfn,
                                 std::queue<uint32_t>* roots);
+
+  // Emmits a error message to the message consumer indicating the error
+  // described by |message| occurred in |inst|.
+  void EmitErrorMessage(std::string message, Instruction* inst);
 
  private:
   // Builds the def-use manager from scratch, even if it was already valid.

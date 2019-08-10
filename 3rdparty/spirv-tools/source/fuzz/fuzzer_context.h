@@ -44,6 +44,9 @@ class FuzzerContext {
   // Probabilities associated with applying various transformations.
   // Keep them in alphabetical order.
   uint32_t GetChanceOfAddingDeadBreak() { return chance_of_adding_dead_break_; }
+  uint32_t GetChanceOfAddingDeadContinue() {
+    return chance_of_adding_dead_continue_;
+  }
   uint32_t GetChanceOfMovingBlockDown() { return chance_of_moving_block_down_; }
   uint32_t GetChanceOfObfuscatingConstant() {
     return chance_of_obfuscating_constant_;
@@ -66,6 +69,7 @@ class FuzzerContext {
   // Probabilities associated with applying various transformations.
   // Keep them in alphabetical order.
   uint32_t chance_of_adding_dead_break_;
+  uint32_t chance_of_adding_dead_continue_;
   uint32_t chance_of_moving_block_down_;
   uint32_t chance_of_obfuscating_constant_;
   uint32_t chance_of_splitting_block_;

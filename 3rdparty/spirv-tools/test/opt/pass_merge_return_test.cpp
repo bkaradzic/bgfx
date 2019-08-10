@@ -1779,6 +1779,7 @@ TEST_F(MergeReturnPassTest, MergeToMergeBranch) {
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndMatch<MergeReturnPass>(text, true);
 }
+
 TEST_F(MergeReturnPassTest, PhiInSecondMerge) {
   //  Add and use a phi in the second merge block from the return.
   const std::string text =
@@ -1829,6 +1830,50 @@ TEST_F(MergeReturnPassTest, PhiInSecondMerge) {
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndMatch<MergeReturnPass>(text, true);
+}
+
+TEST_F(MergeReturnPassTest, UnreachableMergeAndContinue) {
+  // Make sure that the pass can handle a single block that is both a merge and
+  // a continue.
+  const std::string text =
+      R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %2 "main"
+               OpExecutionMode %2 OriginUpperLeft
+               OpSource ESSL 310
+       %void = OpTypeVoid
+          %4 = OpTypeFunction %void
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+          %2 = OpFunction %void None %4
+          %7 = OpLabel
+               OpBranch %8
+          %8 = OpLabel
+               OpLoopMerge %9 %10 None
+               OpBranch %11
+         %11 = OpLabel
+               OpSelectionMerge %10 None
+               OpBranchConditional %true %12 %13
+         %12 = OpLabel
+               OpReturn
+         %13 = OpLabel
+               OpReturn
+         %10 = OpLabel
+               OpBranch %8
+          %9 = OpLabel
+               OpUnreachable
+               OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  auto result = SinglePassRunAndDisassemble<MergeReturnPass>(text, true, true);
+
+  // Not looking for any particular output.  Other tests do that.
+  // Just want to make sure the check for unreachable blocks does not emit an
+  // error.
+  EXPECT_EQ(Pass::Status::SuccessWithChange, std::get<1>(result));
 }
 
 }  // namespace

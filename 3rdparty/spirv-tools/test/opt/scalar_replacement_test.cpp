@@ -1657,6 +1657,153 @@ OpFunctionEnd
   EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
 }
 
+// Test that replacements for OpAccessChain do not go out of bounds.
+// https://github.com/KhronosGroup/SPIRV-Tools/issues/2609.
+TEST_F(ScalarReplacementTest, OutOfBoundOpAccessChain) {
+  const std::string text = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %_GLF_color
+               OpExecutionMode %main OriginUpperLeft
+               OpSource ESSL 310
+               OpName %main "main"
+               OpName %a "a"
+               OpName %_GLF_color "_GLF_color"
+               OpDecorate %_GLF_color Location 0
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+%_ptr_Function_int = OpTypePointer Function %int
+      %int_1 = OpConstant %int 1
+      %float = OpTypeFloat 32
+       %uint = OpTypeInt 32 0
+     %uint_1 = OpConstant %uint 1
+%_arr_float_uint_1 = OpTypeArray %float %uint_1
+%_ptr_Function__arr_float_uint_1 = OpTypePointer Function %_arr_float_uint_1
+%_ptr_Function_float = OpTypePointer Function %float
+%_ptr_Output_float = OpTypePointer Output %float
+ %_GLF_color = OpVariable %_ptr_Output_float Output
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+          %a = OpVariable %_ptr_Function__arr_float_uint_1 Function
+         %21 = OpAccessChain %_ptr_Function_float %a %int_1
+         %22 = OpLoad %float %21
+               OpStore %_GLF_color %22
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  auto result =
+      SinglePassRunAndDisassemble<ScalarReplacementPass>(text, true, false);
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
+TEST_F(ScalarReplacementTest, CharIndex) {
+  const std::string text = R"(
+; CHECK: [[int:%\w+]] = OpTypeInt 32 0
+; CHECK: [[ptr:%\w+]] = OpTypePointer Function [[int]]
+; CHECK: OpVariable [[ptr]] Function
+OpCapability Shader
+OpCapability Int8
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_1024 = OpConstant %int 1024
+%char = OpTypeInt 8 0
+%char_1 = OpConstant %char 1
+%array = OpTypeArray %int %int_1024
+%ptr_func_array = OpTypePointer Function %array
+%ptr_func_int = OpTypePointer Function %int
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%var = OpVariable %ptr_func_array Function
+%gep = OpAccessChain %ptr_func_int %var %char_1
+OpStore %gep %int_1024
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<ScalarReplacementPass>(text, true, 0);
+}
+
+TEST_F(ScalarReplacementTest, OutOfBoundsOpAccessChainNegative) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Int8
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%int = OpTypeInt 32 0
+%int_1024 = OpConstant %int 1024
+%char = OpTypeInt 8 1
+%char_n1 = OpConstant %char -1
+%array = OpTypeArray %int %int_1024
+%ptr_func_array = OpTypePointer Function %array
+%ptr_func_int = OpTypePointer Function %int
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%var = OpVariable %ptr_func_array Function
+%gep = OpAccessChain %ptr_func_int %var %char_n1
+OpStore %gep %int_1024
+OpReturn
+OpFunctionEnd
+)";
+
+  auto result =
+      SinglePassRunAndDisassemble<ScalarReplacementPass>(text, true, true, 0);
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
+TEST_F(ScalarReplacementTest, RelaxedPrecisionMemberDecoration) {
+  const std::string text = R"(
+; CHECK: OpDecorate {{%\w+}} RelaxedPrecision
+; CHECK: OpDecorate [[new_var:%\w+]] RelaxedPrecision
+; CHECK: [[new_var]] = OpVariable %_ptr_Function_v3float Function
+; CHECK: OpLoad %v3float [[new_var]]
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %1 "Draw2DTexCol_VS" %2 %3
+               OpSource HLSL 600
+               OpDecorate %2 Location 0
+               OpDecorate %3 Location 1
+               OpDecorate %3 RelaxedPrecision
+               OpMemberDecorate %_struct_4 1 RelaxedPrecision
+      %float = OpTypeFloat 32
+        %int = OpTypeInt 32 1
+      %int_1 = OpConstant %int 1
+    %v3float = OpTypeVector %float 3
+%_ptr_Input_v3float = OpTypePointer Input %v3float
+       %void = OpTypeVoid
+         %11 = OpTypeFunction %void
+  %_struct_4 = OpTypeStruct %v3float %v3float
+%_ptr_Function__struct_4 = OpTypePointer Function %_struct_4
+%_ptr_Function_v3float = OpTypePointer Function %v3float
+          %2 = OpVariable %_ptr_Input_v3float Input
+          %3 = OpVariable %_ptr_Input_v3float Input
+          %1 = OpFunction %void None %11
+         %14 = OpLabel
+         %15 = OpVariable %_ptr_Function__struct_4 Function
+         %16 = OpLoad %v3float %2
+         %17 = OpLoad %v3float %3
+         %18 = OpCompositeConstruct %_struct_4 %16 %17
+               OpStore %15 %18
+         %19 = OpAccessChain %_ptr_Function_v3float %15 %int_1
+         %20 = OpLoad %v3float %19
+               OpReturn
+               OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<ScalarReplacementPass>(text, true);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

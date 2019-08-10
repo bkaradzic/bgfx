@@ -820,12 +820,7 @@ bool MergeReturnPass::HasNontrivialUnreachableBlocks(Function* function) {
 
     StructuredCFGAnalysis* struct_cfg_analysis =
         context()->GetStructuredCFGAnalysis();
-    if (struct_cfg_analysis->IsMergeBlock(bb.id())) {
-      // |bb| must be an empty block ending with OpUnreachable.
-      if (bb.begin()->opcode() != SpvOpUnreachable) {
-        return true;
-      }
-    } else if (struct_cfg_analysis->IsContinueBlock(bb.id())) {
+    if (struct_cfg_analysis->IsContinueBlock(bb.id())) {
       // |bb| must be an empty block ending with a branch to the header.
       Instruction* inst = &*bb.begin();
       if (inst->opcode() != SpvOpBranch) {
@@ -834,6 +829,11 @@ bool MergeReturnPass::HasNontrivialUnreachableBlocks(Function* function) {
 
       if (inst->GetSingleWordInOperand(0) !=
           struct_cfg_analysis->ContainingLoop(bb.id())) {
+        return true;
+      }
+    } else if (struct_cfg_analysis->IsMergeBlock(bb.id())) {
+      // |bb| must be an empty block ending with OpUnreachable.
+      if (bb.begin()->opcode() != SpvOpUnreachable) {
         return true;
       }
     } else {

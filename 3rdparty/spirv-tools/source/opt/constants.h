@@ -116,6 +116,14 @@ class Constant {
   // Integer type.
   int64_t GetS64() const;
 
+  // Returns the zero-extended representation of an integer constant. Must
+  // be an integral constant of at most 64 bits.
+  uint64_t GetZeroExtendedValue() const;
+
+  // Returns the sign-extended representation of an integer constant. Must
+  // be an integral constant of at most 64 bits.
+  int64_t GetSignExtendedValue() const;
+
   // Returns true if the constant is a zero or a composite containing 0s.
   virtual bool IsZero() const { return false; }
 
@@ -514,7 +522,7 @@ class ConstantManager {
   // Gets or creates a Constant instance to hold the constant value of the given
   // instruction. It returns a pointer to a Constant instance or nullptr if it
   // could not create the constant.
-  const Constant* GetConstantFromInst(Instruction* inst);
+  const Constant* GetConstantFromInst(const Instruction* inst);
 
   // Gets or creates a constant defining instruction for the given Constant |c|.
   // If |c| had already been defined, it returns a pointer to the existing

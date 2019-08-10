@@ -117,9 +117,12 @@ class ScalarReplacementPass : public Pass {
   // for element of the composite type. Uses of |inst| are updated as
   // appropriate. If the replacement variables are themselves scalarizable, they
   // get added to |worklist| for further processing. If any replacement
-  // variable ends up with no uses it is erased. Returns false if the variable
-  // could not be replaced.
-  bool ReplaceVariable(Instruction* inst, std::queue<Instruction*>* worklist);
+  // variable ends up with no uses it is erased. Returns
+  //  - Status::SuccessWithoutChange if the variable could not be replaced.
+  //  - Status::SuccessWithChange if it made replacements.
+  //  - Status::Failure if it couldn't create replacement variables.
+  Pass::Status ReplaceVariable(Instruction* inst,
+                               std::queue<Instruction*>* worklist);
 
   // Returns the underlying storage type for |inst|.
   //
@@ -154,14 +157,6 @@ class ScalarReplacementPass : public Pass {
   // |replacements|).
   bool CreateReplacementVariables(Instruction* inst,
                                   std::vector<Instruction*>* replacements);
-
-  // Returns the value of an OpConstant of integer type.
-  //
-  // |constant| must use two or fewer words to generate the value.
-  uint64_t GetConstantInteger(const Instruction* constant) const;
-
-  // Returns the integer literal for |op|.
-  uint64_t GetIntegerLiteral(const Operand& op) const;
 
   // Returns the array length for |arrayInst|.
   uint64_t GetArrayLength(const Instruction* arrayInst) const;
@@ -213,7 +208,7 @@ class ScalarReplacementPass : public Pass {
   // Returns a set containing the which components of the result of |inst| are
   // potentially used.  If the return value is |nullptr|, then every components
   // is possibly used.
-  std::unique_ptr<std::unordered_set<uint64_t>> GetUsedComponents(
+  std::unique_ptr<std::unordered_set<int64_t>> GetUsedComponents(
       Instruction* inst);
 
   // Returns an instruction defining a null constant with type |type_id|.  If

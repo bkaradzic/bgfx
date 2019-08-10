@@ -71,8 +71,16 @@ bool SimplificationPass::SimplifyFunction(Function* function) {
               }
             });
             if (inst->opcode() == SpvOpCopyObject) {
-              context()->ReplaceAllUsesWith(inst->result_id(),
-                                            inst->GetSingleWordInOperand(0));
+              context()->ReplaceAllUsesWithPredicate(
+                  inst->result_id(), inst->GetSingleWordInOperand(0),
+                  [](Instruction* user, uint32_t) {
+                    const auto opcode = user->opcode();
+                    if (!spvOpcodeIsDebug(opcode) &&
+                        !spvOpcodeIsDecoration(opcode)) {
+                      return true;
+                    }
+                    return false;
+                  });
               inst_to_kill.insert(inst);
               in_work_list.insert(inst);
             } else if (inst->opcode() == SpvOpNop) {
@@ -107,8 +115,15 @@ bool SimplificationPass::SimplifyFunction(Function* function) {
           });
 
       if (inst->opcode() == SpvOpCopyObject) {
-        context()->ReplaceAllUsesWith(inst->result_id(),
-                                      inst->GetSingleWordInOperand(0));
+        context()->ReplaceAllUsesWithPredicate(
+            inst->result_id(), inst->GetSingleWordInOperand(0),
+            [](Instruction* user, uint32_t) {
+              const auto opcode = user->opcode();
+              if (!spvOpcodeIsDebug(opcode) && !spvOpcodeIsDecoration(opcode)) {
+                return true;
+              }
+              return false;
+            });
         inst_to_kill.insert(inst);
         in_work_list.insert(inst);
       } else if (inst->opcode() == SpvOpNop) {

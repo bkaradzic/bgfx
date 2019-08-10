@@ -25,6 +25,7 @@ add_spvtools_unittest(TARGET opt
        code_sink_test.cpp
        combine_access_chains_test.cpp
        compact_ids_test.cpp
+       constants_test.cpp
        constant_manager_test.cpp
        copy_prop_array_test.cpp
        dead_branch_elim_test.cpp
@@ -33,6 +34,7 @@ add_spvtools_unittest(TARGET opt
        decompose_initialized_variables_test.cpp
        decoration_manager_test.cpp
        def_use_test.cpp
+       desc_sroa_test.cpp
        eliminate_dead_const_test.cpp
        eliminate_dead_functions_test.cpp
        eliminate_dead_member_test.cpp
@@ -44,6 +46,7 @@ add_spvtools_unittest(TARGET opt
        freeze_spec_const_test.cpp
        function_test.cpp
        generate_webgpu_initializers_test.cpp
+       graphics_robust_access_test.cpp
        if_conversion_test.cpp
        inline_opaque_test.cpp
        inline_test.cpp

@@ -243,10 +243,13 @@ void InstrumentPass::GenStageStreamWriteCode(uint32_t stage_idx,
             kInstTessEvalOutPrimitiveId, base_offset_id, builder);
         uint32_t load_id = GenVarLoad(
             context()->GetBuiltinInputVarId(SpvBuiltInTessCoord), builder);
+        Instruction* uvec3_cast_inst =
+            builder->AddUnaryOp(GetVec3UintId(), SpvOpBitcast, load_id);
+        uint32_t uvec3_cast_id = uvec3_cast_inst->result_id();
         Instruction* u_inst = builder->AddIdLiteralOp(
-            GetUintId(), SpvOpCompositeExtract, load_id, 0);
+            GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 0);
         Instruction* v_inst = builder->AddIdLiteralOp(
-            GetUintId(), SpvOpCompositeExtract, load_id, 1);
+            GetUintId(), SpvOpCompositeExtract, uvec3_cast_id, 1);
         GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordU,
                                 u_inst->result_id(), builder);
         GenDebugOutputFieldCode(base_offset_id, kInstTessEvalOutTessCoordV,
@@ -552,16 +555,24 @@ uint32_t InstrumentPass::GetUintId() {
   return uint_id_;
 }
 
+uint32_t InstrumentPass::GetVecUintId(uint32_t len) {
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  analysis::Integer uint_ty(32, false);
+  analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
+  analysis::Vector v_uint_ty(reg_uint_ty, len);
+  analysis::Type* reg_v_uint_ty = type_mgr->GetRegisteredType(&v_uint_ty);
+  uint32_t v_uint_id = type_mgr->GetTypeInstruction(reg_v_uint_ty);
+  return v_uint_id;
+}
+
 uint32_t InstrumentPass::GetVec4UintId() {
-  if (v4uint_id_ == 0) {
-    analysis::TypeManager* type_mgr = context()->get_type_mgr();
-    analysis::Integer uint_ty(32, false);
-    analysis::Type* reg_uint_ty = type_mgr->GetRegisteredType(&uint_ty);
-    analysis::Vector v4uint_ty(reg_uint_ty, 4);
-    analysis::Type* reg_v4uint_ty = type_mgr->GetRegisteredType(&v4uint_ty);
-    v4uint_id_ = type_mgr->GetTypeInstruction(reg_v4uint_ty);
-  }
+  if (v4uint_id_ == 0) v4uint_id_ = GetVecUintId(4u);
   return v4uint_id_;
+}
+
+uint32_t InstrumentPass::GetVec3UintId() {
+  if (v3uint_id_ == 0) v3uint_id_ = GetVecUintId(3u);
+  return v3uint_id_;
 }
 
 uint32_t InstrumentPass::GetBoolId() {
@@ -890,6 +901,7 @@ void InstrumentPass::InitializeInstrument() {
   v4float_id_ = 0;
   uint_id_ = 0;
   v4uint_id_ = 0;
+  v3uint_id_ = 0;
   bool_id_ = 0;
   void_id_ = 0;
   storage_buffer_ext_defined_ = false;

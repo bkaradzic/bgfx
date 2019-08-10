@@ -95,6 +95,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/decompose_initialized_variables_pass.cpp \
 		source/opt/decoration_manager.cpp \
 		source/opt/def_use_manager.cpp \
+		source/opt/desc_sroa.cpp \
 		source/opt/dominator_analysis.cpp \
 		source/opt/dominator_tree.cpp \
 		source/opt/eliminate_dead_constant_pass.cpp \
@@ -110,6 +111,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/freeze_spec_constant_value_pass.cpp \
 		source/opt/function.cpp \
 		source/opt/generate_webgpu_initializers_pass.cpp \
+		source/opt/graphics_robust_access_pass.cpp \
 		source/opt/if_conversion.cpp \
 		source/opt/inline_pass.cpp \
 		source/opt/inline_exhaustive_pass.cpp \

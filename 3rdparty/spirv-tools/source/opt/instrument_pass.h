@@ -248,8 +248,14 @@ class InstrumentPass : public Pass {
   // Return id for v4float type
   uint32_t GetVec4FloatId();
 
+  // Return id for uint vector type of |length|
+  uint32_t GetVecUintId(uint32_t length);
+
   // Return id for v4uint type
   uint32_t GetVec4UintId();
+
+  // Return id for v3uint type
+  uint32_t GetVec3UintId();
 
   // Return id for output function. Define if it doesn't exist with
   // |val_spec_param_cnt| validation-specific uint32 parameters.
@@ -366,8 +372,11 @@ class InstrumentPass : public Pass {
   // id for v4float type
   uint32_t v4float_id_;
 
-  // id for v4float type
+  // id for v4uint type
   uint32_t v4uint_id_;
+
+  // id for v3uint type
+  uint32_t v3uint_id_;
 
   // id for 32-bit unsigned type
   uint32_t uint_id_;
