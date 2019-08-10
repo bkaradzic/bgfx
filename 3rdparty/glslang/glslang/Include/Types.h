@@ -2050,13 +2050,15 @@ public:
         // Add struct/block members
         if (isStruct() && structure) {
             appendStr("{");
+            bool hasHiddenMember = true;
             for (size_t i = 0; i < structure->size(); ++i) {
                 if (! (*structure)[i].type->hiddenMember()) {
+                    if (!hasHiddenMember) 
+                        appendStr(", ");
                     typeString.append((*structure)[i].type->getCompleteString());
                     typeString.append(" ");
                     typeString.append((*structure)[i].type->getFieldName());
-                    if (i < structure->size() - 1)
-                        appendStr(", ");
+                    hasHiddenMember = false;
                 }
             }
             appendStr("}");

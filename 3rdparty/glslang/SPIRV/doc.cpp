@@ -412,7 +412,6 @@ const char* BuiltInString(int builtIn)
 
     case 5264: return "FullyCoveredEXT";
 
-
 #ifdef NV_EXTENSIONS
     case BuiltInTaskCountNV:           return "TaskCountNV";
     case BuiltInPrimitiveCountNV:      return "PrimitiveCountNV";
