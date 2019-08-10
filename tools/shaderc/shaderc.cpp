@@ -2278,9 +2278,13 @@ namespace bgfx
 							code += _comment;
 							code += preprocessor.m_preprocessed;
 
-							if (0 != spirv || 0 != metal)
+							if (0 != metal)
 							{
-								compiled = compileSPIRVShader(_options, metal ? BX_MAKEFOURCC('M', 'T', 'L', 0) : 0, code, _writer);
+								compiled = compileMetalShader(_options, BX_MAKEFOURCC('M', 'T', 'L', 0), code, _writer);
+							}
+							else if (0 != spirv)
+							{
+								compiled = compileSPIRVShader(_options, 0, code, _writer);
 							}
 							else if (0 != pssl)
 							{
