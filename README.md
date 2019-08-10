@@ -78,8 +78,8 @@ Languages:
 [Tools](https://bkaradzic.github.io/bgfx/tools.html)
 ----------------------------------------------------
 
-Who is using it? #madewithbgfx
-------------------------------
+Who is using it? [#madewithbgfx](https://twitter.com/search?q=%23madewithbgfx&f=live)
+-------------------------------------------------------------------------------------
 
 ## Airmech
 
