@@ -3079,10 +3079,10 @@ VK_IMPORT_DEVICE
 			_vertexInputState.vertexBindingDescriptionCount   = 0;
 			_vertexInputState.vertexAttributeDescriptionCount = 0;
 
-			for (uint8_t ii = 0; ii < _numStream; ++ii)
+			for (uint8_t stream = 0; stream < _numStream; ++stream)
 			{
 				VertexDecl decl;
-				bx::memCopy(&decl, _vertexDecl[ii], sizeof(VertexDecl) );
+				bx::memCopy(&decl, _vertexDecl[stream], sizeof(VertexDecl) );
 				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
