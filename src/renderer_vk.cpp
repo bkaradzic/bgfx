@@ -5429,8 +5429,8 @@ BX_UNUSED(currentSamplerStateIdx);
 					VkRect2D rc;
 					rc.offset.x      = viewScissorRect.m_x;
 					rc.offset.y      = viewScissorRect.m_y;
-					rc.extent.width  = viewScissorRect.m_x + viewScissorRect.m_width;
-					rc.extent.height = viewScissorRect.m_y + viewScissorRect.m_height;
+					rc.extent.width  = viewScissorRect.m_width;
+					rc.extent.height = viewScissorRect.m_height;
 					vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
 
 					restoreScissor = false;
@@ -5860,8 +5860,8 @@ BX_UNUSED(currentSamplerStateIdx);
 								VkRect2D rc;
 								rc.offset.x      = viewScissorRect.m_x;
 								rc.offset.y      = viewScissorRect.m_y;
-								rc.extent.width  = viewScissorRect.m_x + viewScissorRect.m_width;
-								rc.extent.height = viewScissorRect.m_y + viewScissorRect.m_height;
+								rc.extent.width  = viewScissorRect.m_width;
+								rc.extent.height = viewScissorRect.m_height;
 								vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
 							}
 						}
@@ -5874,8 +5874,8 @@ BX_UNUSED(currentSamplerStateIdx);
 							VkRect2D rc;
 							rc.offset.x      = scissorRect.m_x;
 							rc.offset.y      = scissorRect.m_y;
-							rc.extent.width  = scissorRect.m_x + scissorRect.m_width;
-							rc.extent.height = scissorRect.m_y + scissorRect.m_height;
+							rc.extent.width  = scissorRect.m_width;
+							rc.extent.height = scissorRect.m_height;
 							vkCmdSetScissor(m_commandBuffer, 0, 1, &rc);
 						}
 					}
