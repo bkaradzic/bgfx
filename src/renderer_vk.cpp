@@ -237,12 +237,15 @@ VK_IMPORT_DEVICE
 		{
 			EXT_debug_utils,
 			EXT_debug_report,
+			EXT_memory_budget,
+			KHR_get_physical_device_properties2,
 
 			Count
 		};
 
 		const char* m_name;
 		uint32_t m_minVersion;
+		bool m_instanceExt;
 		bool m_supported;
 		bool m_initialize;
 	};
@@ -251,12 +254,14 @@ VK_IMPORT_DEVICE
 	//
 	static Extension s_extension[] =
 	{
-		{ "VK_EXT_debug_utils",  1, false, BGFX_CONFIG_DEBUG_OBJECT_NAME },
-		{ "VK_EXT_debug_report", 1, false, BGFX_CONFIG_DEBUG             },
+		{ "VK_EXT_debug_utils",                     1, false, false, BGFX_CONFIG_DEBUG_OBJECT_NAME },
+		{ "VK_EXT_debug_report",                    1, false, false, BGFX_CONFIG_DEBUG             },
+		{ "VK_EXT_memory_budget",                   1, false, false, true                          },
+		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true                          },
 	};
 	BX_STATIC_ASSERT(Extension::Count == BX_COUNTOF(s_extension) );
 
-	void updateExtension(const char* _name, uint32_t _version)
+	void updateExtension(const char* _name, uint32_t _version, bool _instanceExt)
 	{
 		bx::StringView ext(_name);
 
@@ -270,7 +275,8 @@ VK_IMPORT_DEVICE
 				if (       0 == bx::strCmp(ext, extension.m_name)
 				&&  _version >= extension.m_minVersion)
 				{
-					extension.m_supported = true;
+					extension.m_supported   = true;
+					extension.m_instanceExt = _instanceExt;
 					supported = true;
 					break;
 				}
@@ -599,6 +605,7 @@ VK_IMPORT_DEVICE
 					updateExtension(
 						  extensionProperties[extension].extensionName
 						, extensionProperties[extension].specVersion
+						, VK_NULL_HANDLE == _physicalDevice
 						);
 				}
 			}
@@ -984,7 +991,8 @@ VK_IMPORT
 					const Extension& extension = s_extension[ii];
 
 					if (extension.m_supported
-					&&  extension.m_initialize)
+					&&  extension.m_initialize
+					&&  extension.m_instanceExt)
 					{
 						enabledExtension[numEnabledExtensions++] = extension.m_name;
 						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
@@ -1304,12 +1312,25 @@ VK_IMPORT_INSTANCE
 					/*not used*/ ""
 				};
 
-				const char* enabledExtension[] =
+				uint32_t numEnabledExtensions = 1;
+
+				const char* enabledExtension[Extension::Count + 1] =
 				{
 					VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-//					"VK_LUNARG_DEBUG_MARKER",
-					/*not used*/ ""
 				};
+
+				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
+				{
+					const Extension& extension = s_extension[ii];
+
+					if (extension.m_supported
+					&&  extension.m_initialize
+					&& !extension.m_instanceExt)
+					{
+						enabledExtension[numEnabledExtensions++] = extension.m_name;
+						BX_TRACE("%d: %s", numEnabledExtensions, extension.m_name);
+					}
+				}
 
 				float queuePriorities[1] = { 0.0f };
 				VkDeviceQueueCreateInfo dcqi;
@@ -1328,15 +1349,16 @@ VK_IMPORT_INSTANCE
 				dci.pQueueCreateInfos    = &dcqi;
 				dci.enabledLayerCount    = BX_COUNTOF(enabledLayerNames) - 1;
 				dci.ppEnabledLayerNames  = enabledLayerNames;
-				dci.enabledExtensionCount   = BX_COUNTOF(enabledExtension) - 1;
+				dci.enabledExtensionCount   = numEnabledExtensions;
 				dci.ppEnabledExtensionNames = enabledExtension;
 				dci.pEnabledFeatures = NULL;
 
-				result = vkCreateDevice(m_physicalDevice
-							, &dci
-							, m_allocatorCb
-							, &m_device
-							);
+				result = vkCreateDevice(
+					  m_physicalDevice
+					, &dci
+					, m_allocatorCb
+					, &m_device
+					);
 
 				if (VK_SUCCESS != result)
 				{
@@ -6239,47 +6261,39 @@ BX_UNUSED(presentMin, presentMax);
 					, pdp.deviceName
 					, getName(pdp.deviceType)
 					);
-//
-//				char dedicatedVideo[16];
-//				bx::prettify(dedicatedVideo, BX_COUNTOF(dedicatedVideo), desc.DedicatedVideoMemory);
-//
-//				char dedicatedSystem[16];
-//				bx::prettify(dedicatedSystem, BX_COUNTOF(dedicatedSystem), desc.DedicatedSystemMemory);
-//
-//				char sharedSystem[16];
-//				bx::prettify(sharedSystem, BX_COUNTOF(sharedSystem), desc.SharedSystemMemory);
-//
-//				char processMemoryUsed[16];
-//				bx::prettify(processMemoryUsed, BX_COUNTOF(processMemoryUsed), bx::getProcessMemoryUsed() );
-//
-//				tvm.printf(0, pos++, 0x8f, " Memory: %s (video), %s (system), %s (shared), %s (process) "
-//					, dedicatedVideo
-//					, dedicatedSystem
-//					, sharedSystem
-//					, processMemoryUsed
-//					);
 
-//				DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
-//				DX_CHECK(m_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo) );
-//
-//				char budget[16];
-//				bx::prettify(budget, BX_COUNTOF(budget), memInfo.Budget);
-//
-//				char currentUsage[16];
-//				bx::prettify(currentUsage, BX_COUNTOF(currentUsage), memInfo.CurrentUsage);
-//
-//				char availableForReservation[16];
-//				bx::prettify(availableForReservation, BX_COUNTOF(currentUsage), memInfo.AvailableForReservation);
-//
-//				char currentReservation[16];
-//				bx::prettify(currentReservation, BX_COUNTOF(currentReservation), memInfo.CurrentReservation);
-//
-//				tvm.printf(0, pos++, 0x8f, " Budget: %s, Usage: %s, AvailRes: %s, CurrRes: %s "
-//					, budget
-//					, currentUsage
-//					, availableForReservation
-//					, currentReservation
-//					);
+				if (s_extension[Extension::EXT_memory_budget].m_supported)
+				{
+					VkPhysicalDeviceMemoryBudgetPropertiesEXT dmbp;
+					dmbp.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+					dmbp.pNext = NULL;
+
+					VkPhysicalDeviceMemoryProperties2 pdmp2;
+					pdmp2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+					pdmp2.pNext = &dmbp;
+
+					vkGetPhysicalDeviceMemoryProperties2KHR(m_physicalDevice, &pdmp2);
+
+					for (uint32_t ii = 0; ii < VK_MAX_MEMORY_HEAPS; ++ii)
+					{
+						if (dmbp.heapBudget[ii] == 0)
+						{
+							continue;
+						}
+
+						char budget[16];
+						bx::prettify(budget, BX_COUNTOF(budget), dmbp.heapBudget[ii]);
+
+						char usage[16];
+						bx::prettify(usage, BX_COUNTOF(usage), dmbp.heapUsage[ii]);
+
+						tvm.printf(0, pos++, 0x8f, " Memory %d - Budget: %12s, Usage: %12s"
+							, ii
+							, budget
+							, usage
+							);
+					}
+				}
 
 				pos = 10;
 				tvm.printf(10, pos++, 0x8b, "       Frame: % 7.3f, % 7.3f \x1f, % 7.3f \x1e [ms] / % 6.2f FPS "
