@@ -340,26 +340,18 @@ VK_IMPORT_DEVICE
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (UINT16_MAX != _decl.m_attributes[attr] && 0 != _decl.m_attributes[attr])
+			if (UINT16_MAX != _decl.m_attributes[attr])
 			{
 				inputAttrib->location = _vsh->m_attrRemap[attr];
 				inputAttrib->binding  = numBindings;
 
-//				if (0 == _decl.m_attributes[attr])
-//				{
-//					inputAttrib->format = VK_FORMAT_R32G32B32_SFLOAT;
-//					inputAttrib->offset = 0;
-//				}
-//				else
-				{
-					uint8_t num;
-					AttribType::Enum type;
-					bool normalized;
-					bool asInt;
-					_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
-					inputAttrib->format = s_attribType[type][num-1][normalized];
-					inputAttrib->offset = _decl.m_offset[attr];
-				}
+				uint8_t num;
+				AttribType::Enum type;
+				bool normalized;
+				bool asInt;
+				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
+				inputAttrib->format = s_attribType[type][num-1][normalized];
+				inputAttrib->offset = _decl.m_offset[attr];
 
 				++inputAttrib;
 				++numAttribs;
@@ -3101,6 +3093,8 @@ VK_IMPORT_DEVICE
 			_vertexInputState.vertexBindingDescriptionCount   = 0;
 			_vertexInputState.vertexAttributeDescriptionCount = 0;
 
+			uint16_t unsettedAttr[Attrib::Count];
+			bx::memCopy(unsettedAttr, _program.m_vsh->m_attrMask, sizeof(uint16_t) * Attrib::Count);
 			for (uint8_t stream = 0; stream < _numStream; ++stream)
 			{
 				VertexDecl decl;
@@ -3111,10 +3105,28 @@ VK_IMPORT_DEVICE
 				{
 					uint16_t mask = attrMask[ii];
 					uint16_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
+					decl.m_attributes[ii] = attr == 0 || attr == UINT16_MAX ? UINT16_MAX : attr;
+					if (unsettedAttr[ii] && attr != UINT16_MAX)
+					{
+						unsettedAttr[ii] = 0;
+					}
 				}
 
 				fillVertexDecl(_program.m_vsh, _vertexInputState, decl);
+			}
+
+			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
+			{
+				if (0 < unsettedAttr[ii])
+				{
+					uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
+					VkVertexInputAttributeDescription* inputAttrib = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + numAttribs);
+					inputAttrib->location = _program.m_vsh->m_attrRemap[ii];
+					inputAttrib->binding  = 0;
+					inputAttrib->format = VK_FORMAT_R32G32B32_SFLOAT;
+					inputAttrib->offset = 0;
+					_vertexInputState.vertexAttributeDescriptionCount++;
+				}
 			}
 
 			if (0 < _numInstanceData)
@@ -4650,6 +4662,11 @@ VK_DESTROY
 			m_numLayers = ti.numLayers;
 			m_requestedFormat = uint8_t(imageContainer.m_format);
 			m_textureFormat = uint8_t(getViableTextureFormat(imageContainer));
+			m_vkTextureFormat = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
+				? s_textureFormat[m_textureFormat].m_fmtDsv
+				: s_textureFormat[m_textureFormat].m_fmt
+				;
+
 			const bool convert = m_textureFormat != m_requestedFormat;
 			const uint8_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat));
 			m_vkTextureAspect = bimg::isDepth((bimg::TextureFormat::Enum)m_textureFormat)
@@ -4657,15 +4674,13 @@ VK_DESTROY
 				: VK_IMAGE_ASPECT_COLOR_BIT
 				;
 
-			if (m_textureFormat == TextureFormat::D0S8 || m_textureFormat == TextureFormat::D24S8)
+			if (m_vkTextureFormat == VK_FORMAT_S8_UINT
+			||  m_vkTextureFormat == VK_FORMAT_D16_UNORM_S8_UINT
+			||  m_vkTextureFormat == VK_FORMAT_D24_UNORM_S8_UINT
+			||  m_vkTextureFormat == VK_FORMAT_D32_SFLOAT_S8_UINT)
 			{
 				m_vkTextureAspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
 			}
-
-			m_vkTextureFormat = bimg::isDepth(bimg::TextureFormat::Enum(m_textureFormat) )
-				? s_textureFormat[m_textureFormat].m_fmtDsv
-				: s_textureFormat[m_textureFormat].m_fmt
-				;
 
 			if (imageContainer.m_cubeMap)
 			{
