@@ -78,10 +78,10 @@ namespace
 				.end();
 		}
 
-		static bgfx::VertexDecl ms_decl;
+		static bgfx::VertexLayout ms_decl;
 	};
 
-	bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+	bgfx::VertexLayout PosTexCoord0Vertex::ms_decl;
 
 	// Utility function to draw a screen space quad for deferred rendering
 	void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf, bool _originBottomLeft, float _width = 1.0f, float _height = 1.0f)

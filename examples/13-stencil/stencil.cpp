@@ -15,7 +15,7 @@
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _decl, bx::Error* _err = NULL);
 }
 
 namespace
@@ -51,10 +51,10 @@ struct PosNormalTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosNormalTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTexcoordVertex::ms_decl;
 
 static const float s_texcoord = 5.0f;
 static PosNormalTexcoordVertex s_hplaneVertices[] =
@@ -622,7 +622,7 @@ struct Group
 
 struct Mesh
 {
-	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexLayout _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -780,7 +780,7 @@ struct Mesh
 		}
 	}
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_decl;
 	typedef std::vector<Group> GroupArray;
 	GroupArray m_groups;
 };

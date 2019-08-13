@@ -39,10 +39,10 @@ struct PosNormalVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosNormalVertex::ms_decl;
+bgfx::VertexLayout PosNormalVertex::ms_decl;
 
 static PosNormalVertex s_hplaneVertices[] =
 {

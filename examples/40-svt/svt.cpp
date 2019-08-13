@@ -40,10 +40,10 @@ struct PosTexcoordVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTexcoordVertex::ms_decl;
 
 static const float s_planeScale = 50.0f;
 

@@ -906,10 +906,10 @@ struct PosUvwColorVertex
 		m_abgr = _abgr;
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosUvwColorVertex::ms_decl;
+bgfx::VertexLayout PosUvwColorVertex::ms_decl;
 
 static uint32_t addQuad(uint16_t* _indices, uint16_t _idx0, uint16_t _idx1, uint16_t _idx2, uint16_t _idx3)
 {

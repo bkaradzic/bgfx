@@ -199,10 +199,10 @@ struct PosVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosVertex::ms_decl;
+bgfx::VertexLayout PosVertex::ms_decl;
 
 static PosVertex s_cubeVertices[8] =
 {
@@ -528,7 +528,7 @@ public:
 
 			//bounding box for each instance, will be fed to the compute shader to calculate occlusion
 			{
-				bgfx::VertexDecl computeVertexDecl;
+				bgfx::VertexLayout computeVertexDecl;
 				computeVertexDecl.begin()
 					.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
 					.end();
@@ -562,7 +562,7 @@ public:
 
 			//pre and post occlusion culling instance data buffers
 			{
-				bgfx::VertexDecl instanceBufferVertexDecl;
+				bgfx::VertexLayout instanceBufferVertexDecl;
 				instanceBufferVertexDecl.begin()
 					.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
 					.add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)

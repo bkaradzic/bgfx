@@ -26,10 +26,10 @@ struct PosColorVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_decl;
 
 static PosColorVertex s_cubeVertices[8] =
 {

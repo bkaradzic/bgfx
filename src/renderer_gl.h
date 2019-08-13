@@ -1214,7 +1214,7 @@ namespace bgfx { namespace gl
 
 	struct VertexBufferGL
 	{
-		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _declHandle, uint16_t _flags)
 		{
 			m_size = _size;
 			m_decl = _declHandle;
@@ -1258,7 +1258,7 @@ namespace bgfx { namespace gl
 		GLuint m_id;
 		GLenum m_target;
 		uint32_t m_size;
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_decl;
 	};
 
 	struct TextureGL
@@ -1375,7 +1375,7 @@ namespace bgfx { namespace gl
 			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 		}
 
-		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
+		void bindAttributes(const VertexLayout& _vertexDecl, uint32_t _baseVertex = 0);
 
 		void bindAttributesEnd()
 		{

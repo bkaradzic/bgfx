@@ -26,7 +26,7 @@ namespace stl = tinystl;
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _decl, bx::Error* _err = NULL);
 }
 
 namespace
@@ -60,10 +60,10 @@ struct PosNormalTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosNormalTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTexcoordVertex::ms_decl;
 
 static const float s_texcoord = 50.0f;
 static PosNormalTexcoordVertex s_hplaneVertices[] =
@@ -697,7 +697,7 @@ inline float sqLength(const float _a[3], const float _b[3])
 	return xx*xx + yy*yy + zz*zz;
 }
 
-uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexLayout& _decl, const void* _data, uint16_t _num, float _epsilon)
 {
 	const uint32_t hashSize = bx::uint32_nextpow2(_num);
 	const uint32_t hashMask = hashSize-1;
@@ -782,7 +782,7 @@ struct Group
 		Plane m_plane[2];
 	};
 
-	void fillStructures(const bgfx::VertexDecl& _decl)
+	void fillStructures(const bgfx::VertexLayout& _decl)
 	{
 		uint16_t stride = _decl.getStride();
 		m_faces.clear();
@@ -933,7 +933,7 @@ typedef std::vector<Group> GroupArray;
 
 struct Mesh
 {
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexLayout _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -1011,7 +1011,7 @@ struct Mesh
 		m_groups.clear();
 	}
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_decl;
 	GroupArray m_groups;
 };
 
@@ -1023,7 +1023,7 @@ struct Model
 		m_texture.idx = bgfx::kInvalidHandle;
 	}
 
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexLayout _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		m_mesh.load(_vertices, _numVertices, _decl, _indices, _numIndices);
 	}
@@ -1543,7 +1543,7 @@ void shadowVolumeCreate(
 		}
 	}
 
-	bgfx::VertexDecl decl;
+	bgfx::VertexLayout decl;
 	decl.begin()
 		.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 		.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)

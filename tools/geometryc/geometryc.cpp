@@ -150,7 +150,7 @@ void writeCompressedVertices(bx::WriterI* _writer,  const uint8_t* _vertices, ui
 	free(compressedVertices);
 }
 
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _decl, const uint16_t* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord
 	{
@@ -276,7 +276,7 @@ void write(bx::WriterI* _writer, const void* _vertices, uint32_t _numVertices, u
 void write(bx::WriterI* _writer
 		, const uint8_t* _vertices
 		, uint32_t _numVertices
-		, const bgfx::VertexDecl& _decl
+		, const bgfx::VertexLayout& _decl
 		, const uint16_t* _indices
 		, uint32_t _numIndices
 		, bool _compress
@@ -793,7 +793,7 @@ int main(int _argc, const char* _argv[])
 		}
 	}
 
-	bgfx::VertexDecl decl;
+	bgfx::VertexLayout decl;
 	decl.begin();
 	decl.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float);
 
