@@ -138,7 +138,7 @@
 #define IMAGE3D_WR( _name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 #define UIMAGE3D_WR(_name, _format, _reg) IMAGE3D_RW(_name, _format, _reg)
 
-#if BGFX_SHADER_LANGUAGE_METAL
+#if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
 #define BUFFER_RO(_name, _struct, _reg) StructuredBuffer<_struct>   _name : REGISTER(t, _reg)
 #define BUFFER_RW(_name, _struct, _reg) RWStructuredBuffer <_struct> _name : REGISTER(u, _reg)
 #define BUFFER_WR(_name, _struct, _reg) BUFFER_RW(_name, _struct, _reg)

@@ -414,13 +414,20 @@ VK_DESTROY
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
 
-		struct SamplerInfo
+		enum BindType
+		{
+			UNKNOWN,
+			STORAGE,
+			SAMPLER,
+		};
+		struct BindInfo
 		{
 			UniformHandle uniformHandle;
+			BindType type;
+			uint32_t binding;
 			uint32_t samplerBinding;
-			uint32_t imageBinding;
 		};
-		SamplerInfo m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
+		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
 		VkDescriptorSetLayoutBinding m_bindings[32];
@@ -456,6 +463,7 @@ VK_DESTROY
 			, m_textureImage(VK_NULL_HANDLE)
 			, m_textureDeviceMem(VK_NULL_HANDLE)
 			, m_textureImageView(VK_NULL_HANDLE)
+			, m_textureImageStorageView(VK_NULL_HANDLE)
 			, m_currentImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 		{
 		}
@@ -484,6 +492,7 @@ VK_DESTROY
 		VkImage m_textureImage;
 		VkDeviceMemory m_textureDeviceMem;
 		VkImageView m_textureImageView;
+		VkImageView m_textureImageStorageView;
 		VkImageLayout m_currentImageLayout;
 	};
 
