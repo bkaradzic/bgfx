@@ -33,10 +33,10 @@ struct PosTexcoordVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTexcoordVertex::ms_decl;
 
 static PosTexcoordVertex s_cubeVertices[] =
 {

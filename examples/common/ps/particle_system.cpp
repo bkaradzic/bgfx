@@ -45,10 +45,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_decl;
 
 void EmitterUniforms::reset()
 {

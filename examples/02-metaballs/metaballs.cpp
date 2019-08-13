@@ -40,10 +40,10 @@ struct PosNormalColorVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosNormalColorVertex::ms_decl;
+bgfx::VertexLayout PosNormalColorVertex::ms_decl;
 
 struct Grid
 {

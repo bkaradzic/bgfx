@@ -327,7 +327,7 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	void fillVertexDecl(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexDecl& _decl)
+	void fillVertexLayout(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexLayout& _decl)
 	{
 		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
 		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
@@ -2324,18 +2324,18 @@ VK_IMPORT_DEVICE
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) override
+		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _decl) override
 		{
-			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
+			VertexLayout& decl = m_vertexDecls[_handle.idx];
+			bx::memCopy(&decl, &_decl, sizeof(VertexLayout) );
 			dump(decl);
 		}
 
-		void destroyVertexDecl(VertexDeclHandle /*_handle*/) override
+		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexDeclHandle _declHandle, uint16_t _flags) override
+		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _declHandle, uint16_t _flags) override
 		{
 			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
 		}
@@ -2363,7 +2363,7 @@ VK_IMPORT_DEVICE
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
+			VertexLayoutHandle decl = BGFX_INVALID_HANDLE;
 			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
 		}
 
@@ -2571,7 +2571,7 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
-			const VertexDecl* vertexDecl = &m_vertexDecls[_blitter.m_vb->decl.idx];
+			const VertexLayout* vertexDecl = &m_vertexDecls[_blitter.m_vb->decl.idx];
 			VkPipeline pso = getPipeline(state
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
@@ -3084,7 +3084,7 @@ VK_IMPORT_DEVICE
 			_desc.maxDepthBounds = 1.0f;
 		}
 
-		void setInputLayout(VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint8_t _numStream, const VertexDecl** _vertexDecl, const ProgramVK& _program, uint8_t _numInstanceData)
+		void setInputLayout(VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint8_t _numStream, const VertexLayout** _vertexDecl, const ProgramVK& _program, uint8_t _numInstanceData)
 		{
 			_vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 			_vertexInputState.pNext = NULL;
@@ -3097,8 +3097,8 @@ VK_IMPORT_DEVICE
 			bx::memCopy(unsettedAttr, _program.m_vsh->m_attrMask, sizeof(uint16_t) * Attrib::Count);
 			for (uint8_t stream = 0; stream < _numStream; ++stream)
 			{
-				VertexDecl decl;
-				bx::memCopy(&decl, _vertexDecl[stream], sizeof(VertexDecl) );
+				VertexLayout decl;
+				bx::memCopy(&decl, _vertexDecl[stream], sizeof(VertexLayout) );
 				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -3112,7 +3112,7 @@ VK_IMPORT_DEVICE
 					}
 				}
 
-				fillVertexDecl(_program.m_vsh, _vertexInputState, decl);
+				fillVertexLayout(_program.m_vsh, _vertexInputState, decl);
 			}
 
 			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -3302,7 +3302,7 @@ VK_IMPORT_DEVICE
 			return VK_NULL_HANDLE;
 		}
 
-		VkPipeline getPipeline(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexDecl** _vertexDecls, ProgramHandle _program, uint8_t _numInstanceData)
+		VkPipeline getPipeline(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _vertexDecls, ProgramHandle _program, uint8_t _numInstanceData)
 		{
 			ProgramVK& program = m_program[_program.idx];
 
@@ -3324,10 +3324,10 @@ VK_IMPORT_DEVICE
 
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
 
-			VertexDecl decl;
+			VertexLayout decl;
 			if (0 < _numStreams)
 			{
-				bx::memCopy(&decl, _vertexDecls[0], sizeof(VertexDecl) );
+				bx::memCopy(&decl, _vertexDecls[0], sizeof(VertexLayout) );
 				const uint16_t* attrMask = program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -3825,7 +3825,7 @@ VK_IMPORT_DEVICE
 		ShaderVK m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramVK m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureVK m_textures[BGFX_CONFIG_MAX_TEXTURES];
-		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexLayout m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBufferVK m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
@@ -4275,7 +4275,7 @@ VK_DESTROY
 		}
 	}
 
-	void VertexBufferVK::create(uint32_t _size, void* _data, VertexDeclHandle _declHandle, uint16_t _flags)
+	void VertexBufferVK::create(uint32_t _size, void* _data, VertexLayoutHandle _declHandle, uint16_t _flags)
 	{
 		BufferVK::create(_size, _data, _flags, true);
 		m_decl = _declHandle;
@@ -5741,7 +5741,7 @@ BX_UNUSED(currentSamplerStateIdx);
 						|| f3 == (state & f3)
 						;
 
-					const VertexDecl* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					const VertexLayout* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 					uint8_t numStreams = 0;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
@@ -5763,7 +5763,7 @@ BX_UNUSED(currentSamplerStateIdx);
 							const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
 												  ? draw.m_stream[idx].m_decl.idx
 												  : vb.m_decl.idx;
-							const VertexDecl& vertexDecl = m_vertexDecls[decl];
+							const VertexLayout& vertexDecl = m_vertexDecls[decl];
 
 							decls[numStreams] = &vertexDecl;
 						}
@@ -6139,7 +6139,7 @@ BX_UNUSED(currentSamplerStateIdx);
 					if (!isValid(draw.m_indexBuffer) )
 					{
 						const VertexBufferVK& vertexBuffer = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
-						const VertexDecl& vertexDecl = m_vertexDecls[draw.m_stream[0].m_decl.idx];
+						const VertexLayout& vertexDecl = m_vertexDecls[draw.m_stream[0].m_decl.idx];
 
 						const uint32_t numVertices = UINT32_MAX == draw.m_numVertices
 							? vertexBuffer.m_size / vertexDecl.m_stride

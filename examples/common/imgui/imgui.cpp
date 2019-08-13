@@ -391,7 +391,7 @@ struct OcornutImguiContext
 
 	ImGuiContext*       m_imgui;
 	bx::AllocatorI*     m_allocator;
-	bgfx::VertexDecl    m_decl;
+	bgfx::VertexLayout    m_decl;
 	bgfx::ProgramHandle m_program;
 	bgfx::ProgramHandle m_imageProgram;
 	bgfx::TextureHandle m_texture;

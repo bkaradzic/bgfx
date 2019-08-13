@@ -31,10 +31,10 @@ struct PosNormalTangentTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosNormalTangentTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosNormalTangentTexcoordVertex::ms_decl;
 
 static PosNormalTangentTexcoordVertex s_cubeVertices[24] =
 {

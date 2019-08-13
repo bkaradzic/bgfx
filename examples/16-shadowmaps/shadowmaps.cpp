@@ -20,7 +20,7 @@
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _decl, bx::Error* _err = NULL);
 }
 
 namespace
@@ -812,7 +812,7 @@ struct Group
 
 struct Mesh
 {
-	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexLayout _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -977,7 +977,7 @@ struct Mesh
 		}
 	}
 
-	bgfx::VertexDecl m_decl;
+	bgfx::VertexLayout m_decl;
 	typedef std::vector<Group> GroupArray;
 	GroupArray m_groups;
 };
@@ -1001,10 +1001,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_decl;
 
 void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBottomLeft = true, float _width = 1.0f, float _height = 1.0f)
 {
@@ -1344,7 +1344,7 @@ public:
 		s_programs.init();
 
 		// Vertex declarations.
-		bgfx::VertexDecl PosNormalTexcoordDecl;
+		bgfx::VertexLayout PosNormalTexcoordDecl;
 		PosNormalTexcoordDecl.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,    4, bgfx::AttribType::Uint8, true, true)
@@ -3219,7 +3219,7 @@ public:
 	ViewState m_viewState;
 	ClearValues m_clearValues;
 
-	bgfx::VertexDecl m_posDecl;
+	bgfx::VertexLayout m_posDecl;
 
 	bgfx::TextureHandle m_texFigure;
 	bgfx::TextureHandle m_texFlare;

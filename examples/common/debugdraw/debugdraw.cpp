@@ -37,10 +37,10 @@ struct DebugVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl DebugVertex::ms_decl;
+bgfx::VertexLayout DebugVertex::ms_decl;
 
 struct DebugUvVertex
 {
@@ -61,10 +61,10 @@ struct DebugUvVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl DebugUvVertex::ms_decl;
+bgfx::VertexLayout DebugUvVertex::ms_decl;
 
 struct DebugShapeVertex
 {
@@ -82,10 +82,10 @@ struct DebugShapeVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl DebugShapeVertex::ms_decl;
+bgfx::VertexLayout DebugShapeVertex::ms_decl;
 
 struct DebugMeshVertex
 {
@@ -101,10 +101,10 @@ struct DebugMeshVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl DebugMeshVertex::ms_decl;
+bgfx::VertexLayout DebugMeshVertex::ms_decl;
 
 static DebugShapeVertex s_quadVertices[4] =
 {

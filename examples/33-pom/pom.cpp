@@ -32,10 +32,10 @@ struct PosTangentBitangentTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosTangentBitangentTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTangentBitangentTexcoordVertex::ms_decl;
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {

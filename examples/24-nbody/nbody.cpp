@@ -154,7 +154,7 @@ public:
 
 		if (m_computeSupported)
 		{
-			bgfx::VertexDecl quadVertexDecl;
+			bgfx::VertexLayout quadVertexDecl;
 			quadVertexDecl.begin()
 				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
 				.end();
@@ -176,7 +176,7 @@ public:
 			m_particleProgram = loadProgram("vs_particle", "fs_particle");
 
 			// Setup compute buffers
-			bgfx::VertexDecl computeVertexDecl;
+			bgfx::VertexLayout computeVertexDecl;
 			computeVertexDecl.begin()
 				.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
 				.end();

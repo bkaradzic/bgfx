@@ -29,10 +29,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_decl;
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {

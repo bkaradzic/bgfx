@@ -24,10 +24,10 @@ struct PosVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosVertex::ms_decl;
+bgfx::VertexLayout PosVertex::ms_decl;
 
 struct ColorVertex
 {
@@ -41,10 +41,10 @@ struct ColorVertex
 			.end();
 	};
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl ColorVertex::ms_decl;
+bgfx::VertexLayout ColorVertex::ms_decl;
 
 static PosVertex s_cubePosVertices[] =
 {
