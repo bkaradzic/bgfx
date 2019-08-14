@@ -3210,7 +3210,7 @@ VK_IMPORT_DEVICE
 				}
 
 				resolveAr[ii].attachment = VK_ATTACHMENT_UNUSED;
-				resolveAr[ii].layout     = ad[ii].initialLayout;	// TODO: should know hot to set it appropriately
+				resolveAr[ii].layout     = ad[ii].initialLayout;
 			}
 
 			VkSubpassDescription sd[1];
@@ -4376,9 +4376,9 @@ VK_DESTROY
 
 		for (uint32_t ii = 0; ii < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++ii)
 		{
-			m_bindInfo[ii].uniformHandle = {kInvalidHandle};
-			m_bindInfo[ii].type = UNKNOWN;
-			m_bindInfo[ii].binding = 0;
+			m_bindInfo[ii].uniformHandle  = BGFX_INVALID_HANDLE;
+			m_bindInfo[ii].type           = BindType::Count;
+			m_bindInfo[ii].binding        = 0;
 			m_bindInfo[ii].samplerBinding = 0;
 		}
 
@@ -4418,10 +4418,10 @@ VK_DESTROY
 				}
 				else if (UniformType::End == (~BGFX_UNIFORM_MASK & type))
 				{
-					m_bindInfo[num].uniformHandle = {0};
-					m_bindInfo[num].type = STORAGE;
-					m_bindInfo[num].binding = regCount;	// regCount is used for buffer binding index
-					m_bindInfo[num].samplerBinding = regIndex;	// regIndex is used for descriptor type
+					m_bindInfo[num].uniformHandle  = { 0 };
+					m_bindInfo[num].type           = BindType::Storage;
+					m_bindInfo[num].binding        = regCount; // regCount is used for buffer binding index
+					m_bindInfo[num].samplerBinding = regIndex; // regIndex is used for descriptor type
 
 					kind = "storage";
 				}
@@ -4430,10 +4430,10 @@ VK_DESTROY
 					const UniformRegInfo* info = s_renderVK->m_uniformReg.find(name);
 					BX_CHECK(NULL != info, "User defined uniform '%s' is not found, it won't be set.", name);
 
-					m_bindInfo[num].uniformHandle = info->m_handle;
-					m_bindInfo[num].type = SAMPLER;
-					m_bindInfo[num].binding = regIndex;	// regIndex is used for image binding index
-					m_bindInfo[num].samplerBinding = regCount;	// regCount is used for sampler binding index
+					m_bindInfo[num].uniformHandle  = info->m_handle;
+					m_bindInfo[num].type           = BindType::Sampler;
+					m_bindInfo[num].binding        = regIndex; // regIndex is used for image binding index
+					m_bindInfo[num].samplerBinding = regCount; // regCount is used for sampler binding index
 
 					kind = "sampler";
 				}
@@ -4546,7 +4546,7 @@ VK_DESTROY
 			{
 				switch (m_bindInfo[ii].type)
 				{
-					case STORAGE:
+					case BindType::Storage:
 						m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
 						m_bindings[bidx].descriptorType = (VkDescriptorType)m_bindInfo[ii].samplerBinding;
 						m_bindings[bidx].binding = m_bindInfo[ii].binding;
@@ -4555,7 +4555,7 @@ VK_DESTROY
 						bidx++;
 						break;
 
-					case SAMPLER:
+					case BindType::Sampler:
 						m_bindings[bidx].stageFlags = VK_SHADER_STAGE_ALL;
 						m_bindings[bidx].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 						m_bindings[bidx].binding = m_bindInfo[ii].binding;
@@ -4570,7 +4570,7 @@ VK_DESTROY
 						m_bindings[bidx].descriptorCount = 1;
 						bidx++;
 						break;
-						
+
 					default:
 						break;
 				}

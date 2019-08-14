@@ -414,19 +414,25 @@ VK_DESTROY
 		uint8_t m_numPredefined;
 		uint8_t m_numAttrs;
 
-		enum BindType
+		struct BindType
 		{
-			UNKNOWN,
-			STORAGE,
-			SAMPLER,
+			enum Enum
+			{
+				Storage,
+				Sampler,
+
+				Count
+			};
 		};
+
 		struct BindInfo
 		{
 			UniformHandle uniformHandle;
-			BindType type;
+			BindType::Enum type;
 			uint32_t binding;
 			uint32_t samplerBinding;
 		};
+
 		BindInfo m_bindInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 		uint32_t m_uniformBinding;
 		uint16_t m_numBindings;
