@@ -50,16 +50,23 @@ extern "C" void*    __stdcall ShellExecuteA(void* _hwnd, void* _operation, void*
 
 void openUrl(const bx::StringView& _url)
 {
-#if BX_PLATFORM_WINDOWS
-	ShellExecuteA(NULL, NULL, _url, NULL, NULL, false);
-#else
 	char tmp[4096];
-#	if BX_PLATFORM_OSX
-#		define OPEN "open"
-#	else
-#		define OPEN "xdg-open"
-#	endif // BX_PLATFORM_OSX
-	bx::snprintf(tmp, BX_COUNTOF(tmp), OPEN " %.*s", _url.getLength(), _url.getPtr() );
+
+#if BX_PLATFORM_WINDOWS
+#	define OPEN ""
+#elif BX_PLATFORM_OSX
+#	define OPEN "open "
+#else
+#	define OPEN "xdg-open "
+#endif // BX_PLATFORM_OSX
+
+	bx::snprintf(tmp, BX_COUNTOF(tmp), OPEN "%.*s", _url.getLength(), _url.getPtr() );
+
+#undef OPEN
+
+#if BX_PLATFORM_WINDOWS
+	ShellExecuteA(NULL, NULL, tmp, NULL, NULL, false);
+#else
 	system(tmp);
 #endif // BX_PLATFORM_*
 }
