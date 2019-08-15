@@ -6,6 +6,7 @@
 #include "imgui/imgui.h"
 #include "entry/entry.h"
 #include "entry/cmd.h"
+#include "entry/dialog.h"
 #include <bx/string.h>
 #include <bx/timer.h>
 #include <bx/math.h>
@@ -138,6 +139,16 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	ImGui::Begin(temp);
 
 	ImGui::TextWrapped("%s", _app->getDescription() );
+
+	bx::StringView url = _app->getUrl();
+	if (!url.isEmpty() )
+	{
+		if (ImGui::Button("Documentation") )
+		{
+			openUrl(url);
+		}
+	}
+
 	ImGui::Separator();
 
 	if (NULL != _errorText)

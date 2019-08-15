@@ -33,7 +33,6 @@ project ("example-common")
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.cpp"),
 		path.join(BGFX_DIR, "3rdparty/dear-imgui/**.h"),
 		path.join(BGFX_DIR, "examples/common/**.cpp"),
-		path.join(BGFX_DIR, "examples/common/**.cpp"),
 		path.join(BGFX_DIR, "examples/common/**.h"),
 	}
 

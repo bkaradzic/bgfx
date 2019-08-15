@@ -170,8 +170,8 @@ function exampleProjectDefaults()
 	}
 
 	links {
-		"example-common",
 		"example-glue",
+		"example-common",
 		"bgfx",
 		"bimg_decode",
 		"bimg",
