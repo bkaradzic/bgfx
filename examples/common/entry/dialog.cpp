@@ -65,9 +65,11 @@ void openUrl(const bx::StringView& _url)
 #undef OPEN
 
 #if BX_PLATFORM_WINDOWS
-	ShellExecuteA(NULL, NULL, tmp, NULL, NULL, false);
+	void* result = ShellExecuteA(NULL, NULL, tmp, NULL, NULL, false);
+	BX_UNUSED(result);
 #else
-	system(tmp);
+	int32_t result = system(tmp);
+	BX_UNUSED(result);
 #endif // BX_PLATFORM_*
 }
 
