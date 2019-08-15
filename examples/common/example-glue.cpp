@@ -143,9 +143,16 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 	bx::StringView url = _app->getUrl();
 	if (!url.isEmpty() )
 	{
-		if (ImGui::Button("Documentation") )
+		ImGui::SameLine();
+		if (ImGui::SmallButton(ICON_FA_LINK) )
 		{
 			openUrl(url);
+		}
+		else if (ImGui::IsItemHovered() )
+		{
+			char tmp[1024];
+			bx::snprintf(tmp, BX_COUNTOF(tmp), "Documentation: %.*s", url.getLength(), url.getPtr() );
+			ImGui::SetTooltip(tmp);
 		}
 	}
 
