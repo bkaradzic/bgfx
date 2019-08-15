@@ -125,8 +125,8 @@ BX_STATIC_ASSERT(BX_COUNTOF(s_ptState) == BX_COUNTOF(s_ptNames) );
 class ExampleCubes : public entry::AppI
 {
 public:
-	ExampleCubes(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleCubes(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 		, m_pt(0)
 		, m_r(true)
 		, m_g(true)
@@ -362,4 +362,4 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleCubes, "01-cubes", "Rendering simple static mesh.");
+ENTRY_IMPLEMENT_MAIN(ExampleCubes, "01-cubes", "Rendering simple static mesh.", "https://bkaradzic.github.io/bgfx/examples.html#cubes");
