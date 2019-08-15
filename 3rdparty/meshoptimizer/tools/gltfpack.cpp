@@ -1039,7 +1039,7 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 	else if (stream.type == cgltf_attribute_type_normal)
 	{
 		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? 8 : settings.nrm_bits;
+		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1050,21 +1050,41 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 			if (!nrm_unit)
 				rescaleNormal(nx, ny, nz);
 
-			int8_t v[4] = {
-			    int8_t(meshopt_quantizeSnorm(nx, bits)),
-			    int8_t(meshopt_quantizeSnorm(ny, bits)),
-			    int8_t(meshopt_quantizeSnorm(nz, bits)),
-			    0};
-			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+			if (bits > 8)
+			{
+				int16_t v[4] = {
+				    int16_t(meshopt_quantizeSnorm(nx, bits)),
+				    int16_t(meshopt_quantizeSnorm(ny, bits)),
+				    int16_t(meshopt_quantizeSnorm(nz, bits)),
+				    0};
+				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+			}
+			else
+			{
+				int8_t v[4] = {
+				    int8_t(meshopt_quantizeSnorm(nx, bits)),
+				    int8_t(meshopt_quantizeSnorm(ny, bits)),
+				    int8_t(meshopt_quantizeSnorm(nz, bits)),
+				    0};
+				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+			}
 		}
 
-		StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_8, true, 4};
-		return format;
+		if (bits > 8)
+		{
+			StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_16, true, 8};
+			return format;
+		}
+		else
+		{
+			StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_8, true, 4};
+			return format;
+		}
 	}
 	else if (stream.type == cgltf_attribute_type_tangent)
 	{
 		bool nrm_unit = has_targets || settings.nrm_unit;
-		int bits = nrm_unit ? 8 : settings.nrm_bits;
+		int bits = nrm_unit ? (settings.nrm_bits > 8 ? 16 : 8) : settings.nrm_bits;
 
 		for (size_t i = 0; i < stream.data.size(); ++i)
 		{
@@ -1075,22 +1095,36 @@ StreamFormat writeVertexStream(std::string& bin, const Stream& stream, const Qua
 			if (!nrm_unit)
 				rescaleNormal(nx, ny, nz);
 
-			int8_t v[4] = {
-			    int8_t(meshopt_quantizeSnorm(nx, bits)),
-			    int8_t(meshopt_quantizeSnorm(ny, bits)),
-			    int8_t(meshopt_quantizeSnorm(nz, bits)),
-			    int8_t(meshopt_quantizeSnorm(nw, 8))};
-			bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+			if (bits > 8)
+			{
+				int16_t v[4] = {
+				    int16_t(meshopt_quantizeSnorm(nx, bits)),
+				    int16_t(meshopt_quantizeSnorm(ny, bits)),
+				    int16_t(meshopt_quantizeSnorm(nz, bits)),
+				    int16_t(meshopt_quantizeSnorm(nw, 8))};
+				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+			}
+			else
+			{
+				int8_t v[4] = {
+				    int8_t(meshopt_quantizeSnorm(nx, bits)),
+				    int8_t(meshopt_quantizeSnorm(ny, bits)),
+				    int8_t(meshopt_quantizeSnorm(nz, bits)),
+				    int8_t(meshopt_quantizeSnorm(nw, 8))};
+				bin.append(reinterpret_cast<const char*>(v), sizeof(v));
+			}
 		}
 
-		if (stream.target == 0)
+		cgltf_type type = (stream.target == 0) ? cgltf_type_vec4 : cgltf_type_vec3;
+
+		if (bits > 8)
 		{
-			StreamFormat format = {cgltf_type_vec4, cgltf_component_type_r_8, true, 4};
+			StreamFormat format = {type, cgltf_component_type_r_16, true, 8};
 			return format;
 		}
 		else
 		{
-			StreamFormat format = {cgltf_type_vec3, cgltf_component_type_r_8, true, 4};
+			StreamFormat format = {type, cgltf_component_type_r_8, true, 4};
 			return format;
 		}
 	}
@@ -2292,6 +2326,9 @@ void writeMeshAttributes(std::string& json, std::vector<BufferView>& views, std:
 			continue;
 
 		if (stream.type == cgltf_attribute_type_texcoord && (!mesh.material || !usesTextureSet(*mesh.material, stream.index)))
+			continue;
+
+		if (stream.type == cgltf_attribute_type_tangent && (!mesh.material || !mesh.material->normal_texture.texture))
 			continue;
 
 		if ((stream.type == cgltf_attribute_type_joints || stream.type == cgltf_attribute_type_weights) && !mesh.skin)
@@ -3579,7 +3616,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "-o file: output file path, .gltf/.glb\n");
 		fprintf(stderr, "-vp N: use N-bit quantization for positions (default: 14; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vt N: use N-bit quantization for texture corodinates (default: 12; N should be between 1 and 16)\n");
-		fprintf(stderr, "-vn N: use N-bit quantization for normals and tangents (default: 8; N should be between 1 and 8)\n");
+		fprintf(stderr, "-vn N: use N-bit quantization for normals and tangents (default: 8; N should be between 1 and 16)\n");
 		fprintf(stderr, "-vu: use unit-length normal/tangent vectors (default: off)\n");
 		fprintf(stderr, "-af N: resample animations at N Hz (default: 30)\n");
 		fprintf(stderr, "-ac: keep constant animation tracks even if they don't modify the node transform\n");
