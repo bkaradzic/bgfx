@@ -480,8 +480,8 @@ uint32_t triangulate(uint8_t* _result, uint32_t _stride, const float* __restrict
 class ExampleMetaballs : public entry::AppI
 {
 public:
-	ExampleMetaballs(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleMetaballs(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -795,4 +795,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleMetaballs, "02-metaball", "Rendering with transient buffers and embedding shaders.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleMetaballs
+	, "02-metaball"
+	, "Rendering with transient buffers and embedding shaders."
+	, "https://bkaradzic.github.io/bgfx/examples.html#metaballs"
+	);
