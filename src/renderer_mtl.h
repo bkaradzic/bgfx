@@ -847,13 +847,6 @@ namespace bgfx { namespace mtl
 		uint16_t m_numThreads[3];
 	};
 
-	struct SamplerInfo
-	{
-		uint32_t      m_index;
-		UniformHandle m_uniform;
-		bool          m_fragment;
-	};
-
 	struct PipelineStateMtl;
 
 	struct ProgramMtl
@@ -887,7 +880,6 @@ namespace bgfx { namespace mtl
 			, m_vshConstantBufferAlignmentMask(0)
 			, m_fshConstantBufferSize(0)
 			, m_fshConstantBufferAlignmentMask(0)
-			, m_samplerCount(0)
 			, m_numPredefined(0)
 			, m_rps(NULL)
 			, m_cps(NULL)
@@ -895,6 +887,8 @@ namespace bgfx { namespace mtl
 				m_numThreads[0] = 1;
 				m_numThreads[1] = 1;
 				m_numThreads[2] = 1;
+				for(uint32_t i=0; i<BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++i)
+					m_bindingTypes[i] = 0;
 			}
 
 		~PipelineStateMtl()
@@ -923,8 +917,12 @@ namespace bgfx { namespace mtl
 		uint32_t m_fshConstantBufferSize;
 		uint32_t m_fshConstantBufferAlignmentMask;
 
-		SamplerInfo m_samplers[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
-		uint32_t	m_samplerCount;
+		enum
+		{
+			BindToVertexShader   = 1 << 0,
+			BindToFragmentShader = 1 << 1,
+		};
+		uint8_t m_bindingTypes[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 
 		uint16_t 	m_numThreads[3];
 
