@@ -1157,9 +1157,6 @@ VK_IMPORT_INSTANCE
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 				{
-//					VkFormatProperties fp;
-//					vkGetPhysicalDeviceFormatProperties(m_physicalDevice, fmt, &fp);
-
 					struct ImageTest
 					{
 						VkImageType type;
@@ -1559,7 +1556,6 @@ VK_IMPORT_DEVICE
 				numPresentModes = bx::min<uint32_t>(numPresentModes, BX_COUNTOF(presentModes) );
 				vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &numPresentModes, presentModes);
 
-
 				// find the best match...
 				uint32_t presentModeIdx = numPresentModes;
 				VkPresentModeKHR preferredPresentMode[] = {
@@ -1589,9 +1585,9 @@ VK_IMPORT_DEVICE
 					presentModeIdx = 0;
 				}
 
-				m_backBufferDepthStencilFormat =
-//					VK_FORMAT_D32_SFLOAT_S8_UINT
-					VK_FORMAT_D24_UNORM_S8_UINT
+				m_backBufferDepthStencilFormat = 0 != (g_caps.formats[TextureFormat::D24S8] & BGFX_CAPS_FORMAT_TEXTURE_2D)
+					? VK_FORMAT_D24_UNORM_S8_UINT
+					: VK_FORMAT_D32_SFLOAT_S8_UINT
 					;
 
 				VkCompositeAlphaFlagBitsKHR compositeAlpha = (VkCompositeAlphaFlagBitsKHR)0;
