@@ -1853,6 +1853,20 @@ namespace bgfx { namespace mtl
 								}
 							}
 						}
+						else if ( arg.type == MTLArgumentTypeBuffer && arg.index > 0 && NULL != arg.bufferStructType)
+						{
+							const char* name = utf8String(arg.name);
+
+							if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+							{
+								BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index - 1), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
+							}
+							else
+							{
+								ps->m_bindingTypes[arg.index-1] = fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
+								BX_TRACE("buffer %s index:%d", name, uint32_t(arg.index-1) );
+							}
+						}
 						else if (arg.type == MTLArgumentTypeTexture)
 						{
 							const char* name = utf8String(arg.name);
@@ -1861,16 +1875,13 @@ namespace bgfx { namespace mtl
 
 							if (NULL != info)
 							{
-								if (ps->m_samplerCount >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
+								if (arg.index >= BGFX_CONFIG_MAX_TEXTURE_SAMPLERS)
 								{
-									BX_WARN(NULL != info, "Too many samplers in shader(only %d is supported). User defined uniform '%s' won't be set.", BGFX_CONFIG_MAX_TEXTURE_SAMPLERS, name);
+									BX_WARN(false, "Binding index is too large %d max is %d. User defined uniform '%s' won't be set.", int(arg.index), BGFX_CONFIG_MAX_TEXTURE_SAMPLERS - 1, name);
 								}
 								else
 								{
-									ps->m_samplers[ps->m_samplerCount].m_index = uint32_t(arg.index);
-									ps->m_samplers[ps->m_samplerCount].m_uniform = info->m_handle;
-									ps->m_samplers[ps->m_samplerCount].m_fragment = fragmentBit ? 1 : 0;
-									++ps->m_samplerCount;
+									ps->m_bindingTypes[arg.index] = fragmentBit ? PipelineStateMtl::BindToFragmentShader : PipelineStateMtl::BindToVertexShader;
 									BX_TRACE("texture %s %d index:%d", name, info->m_handle, uint32_t(arg.index) );
 								}
 							}
@@ -3696,6 +3707,7 @@ namespace bgfx { namespace mtl
 		uint8_t primIndex = uint8_t(primType>>BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 		const uint32_t maxComputeBindings = g_caps.limits.maxComputeBindings;
+		const uint32_t maxTextureSamplers = g_caps.limits.maxTextureSamplers;
 
 		RenderCommandEncoder rce;
 		PipelineStateMtl* currentPso = NULL;
@@ -4379,28 +4391,46 @@ namespace bgfx { namespace mtl
 
 				if (isValid(currentProgram) )
 				{
-					for (uint32_t sampler = 0, numSamplers = currentPso->m_samplerCount; sampler < numSamplers; ++sampler)
+					uint8_t* bindingTypes = currentPso->m_bindingTypes;
+					for (uint8_t stage = 0; stage < maxTextureSamplers; ++stage)
 					{
-						const SamplerInfo& samplerInfo = currentPso->m_samplers[sampler];
-
-						UniformHandle handle = samplerInfo.m_uniform;
-						int stage = *( (int*)m_uniforms[handle.idx]);
-
 						const Binding& bind = renderBind.m_bind[stage];
 						Binding& current = currentBind.m_bind[stage];
-
 						if (current.m_idx          != bind.m_idx
-						||  current.m_samplerFlags != bind.m_samplerFlags
-						||  programChanged)
+							||  current.m_type         != bind.m_type
+							||  current.m_samplerFlags != bind.m_samplerFlags
+							||  programChanged)
 						{
 							if (kInvalidHandle != bind.m_idx)
 							{
-								TextureMtl& texture = m_textures[bind.m_idx];
-								texture.commit(samplerInfo.m_index
-									, !samplerInfo.m_fragment
-									, samplerInfo.m_fragment
-									, bind.m_samplerFlags
-									);
+								switch (bind.m_type)
+								{
+									case Binding::Texture:
+									{
+										TextureMtl& texture = m_textures[bind.m_idx];
+										texture.commit(stage
+													   , 0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader)
+													   , 0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader)
+													   , bind.m_samplerFlags
+													   );
+									}
+										break;
+
+									case Binding::IndexBuffer:
+									case Binding::VertexBuffer:
+									{
+										const BufferMtl& buffer = Binding::IndexBuffer == bind.m_type
+										? m_indexBuffers[bind.m_idx]
+										: m_vertexBuffers[bind.m_idx]
+										;
+
+										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToVertexShader))
+											rce.setVertexBuffer(buffer.m_ptr, 0, stage + 1);
+										if (0 != (bindingTypes[stage] & PipelineStateMtl::BindToFragmentShader))
+											rce.setFragmentBuffer(buffer.m_ptr, 0, stage + 1);
+									}
+										break;
+								}
 							}
 						}
 
