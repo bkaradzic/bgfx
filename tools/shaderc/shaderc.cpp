@@ -1548,21 +1548,23 @@ namespace bgfx
 							if (0 == bx::strCmp(name, "a_", 2)
 							||  0 == bx::strCmp(name, "i_", 2) )
 							{
-								preprocessor.writef("attribute %s %s %s %s;\n"
-										, var.m_precision.c_str()
-										, var.m_interpolation.c_str()
-										, var.m_type.c_str()
-										, name
-										);
+								preprocessor.writef(
+									  "attribute %s %s %s %s;\n"
+									, var.m_precision.c_str()
+									, var.m_interpolation.c_str()
+									, var.m_type.c_str()
+									, name
+									);
 							}
 							else
 							{
-								preprocessor.writef("%s varying %s %s %s;\n"
-										, var.m_interpolation.c_str()
-										, var.m_precision.c_str()
-										, var.m_type.c_str()
-										, name
-										);
+								preprocessor.writef(
+									  "%s varying %s %s %s;\n"
+									, var.m_interpolation.c_str()
+									, var.m_precision.c_str()
+									, var.m_type.c_str()
+									, name
+									);
 							}
 						}
 					}
