@@ -872,11 +872,11 @@ namespace
 
 		bgfx::IndexBufferHandle m_geometryIndices;
 		bgfx::VertexBufferHandle m_geometryVertices;
-		bgfx::VertexDecl m_geometryDecl;
+		bgfx::VertexLayout m_geometryDecl;
 
 		bgfx::IndexBufferHandle m_instancedGeometryIndices;
 		bgfx::VertexBufferHandle m_instancedGeometryVertices;
-		bgfx::VertexDecl m_instancedGeometryDecl;
+		bgfx::VertexLayout m_instancedGeometryDecl;
 
 		bgfx::IndirectBufferHandle m_dispatchIndirect;
 

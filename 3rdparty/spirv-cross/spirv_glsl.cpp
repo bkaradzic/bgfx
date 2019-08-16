@@ -4654,16 +4654,16 @@ void CompilerGLSL::emit_sampled_image_op(uint32_t result_type, uint32_t result_i
 	{
 		emit_binary_func_op(result_type, result_id, image_id, samp_id,
 		                    type_to_glsl(get<SPIRType>(result_type), result_id).c_str());
-
-		// Make sure to suppress usage tracking and any expression invalidation.
-		// It is illegal to create temporaries of opaque types.
-		forwarded_temporaries.erase(result_id);
 	}
 	else
 	{
 		// Make sure to suppress usage tracking. It is illegal to create temporaries of opaque types.
 		emit_op(result_type, result_id, to_combined_image_sampler(image_id, samp_id), true, true);
 	}
+
+	// Make sure to suppress usage tracking and any expression invalidation.
+	// It is illegal to create temporaries of opaque types.
+	forwarded_temporaries.erase(result_id);
 }
 
 static inline bool image_opcode_is_sample_no_dref(Op op)
@@ -4976,10 +4976,19 @@ std::string CompilerGLSL::convert_separate_image_to_expression(uint32_t id)
 		{
 			if (options.vulkan_semantics)
 			{
-				// Newer glslang supports this extension to deal with texture2D as argument to texture functions.
 				if (dummy_sampler_id)
-					SPIRV_CROSS_THROW("Vulkan GLSL should not have a dummy sampler for combining.");
-				require_extension_internal("GL_EXT_samplerless_texture_functions");
+				{
+					// Don't need to consider Shadow state since the dummy sampler is always non-shadow.
+					auto sampled_type = type;
+					sampled_type.basetype = SPIRType::SampledImage;
+					return join(type_to_glsl(sampled_type), "(", to_expression(id), ", ",
+					            to_expression(dummy_sampler_id), ")");
+				}
+				else
+				{
+					// Newer glslang supports this extension to deal with texture2D as argument to texture functions.
+					require_extension_internal("GL_EXT_samplerless_texture_functions");
+				}
 			}
 			else
 			{
@@ -5277,7 +5286,6 @@ void CompilerGLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 
 	case GLSLstd450ModfStruct:
 	{
-		forced_temporaries.insert(id);
 		auto &type = get<SPIRType>(result_type);
 		emit_uninitialized_temporary_expression(result_type, id);
 		statement(to_expression(id), ".", to_member_name(type, 0), " = ", "modf(", to_expression(args[0]), ", ",
@@ -5417,7 +5425,6 @@ void CompilerGLSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop,
 
 	case GLSLstd450FrexpStruct:
 	{
-		forced_temporaries.insert(id);
 		auto &type = get<SPIRType>(result_type);
 		emit_uninitialized_temporary_expression(result_type, id);
 		statement(to_expression(id), ".", to_member_name(type, 0), " = ", "frexp(", to_expression(args[0]), ", ",
@@ -7544,14 +7551,16 @@ void CompilerGLSL::disallow_forwarding_in_expression_chain(const SPIRExpression 
 	// Allow trivially forwarded expressions like OpLoad or trivial shuffles,
 	// these will be marked as having suppressed usage tracking.
 	// Our only concern is to make sure arithmetic operations are done in similar ways.
-	if (expression_is_forwarded(expr.self) && !expression_suppresses_usage_tracking(expr.self))
+	if (expression_is_forwarded(expr.self) && !expression_suppresses_usage_tracking(expr.self) &&
+	    forced_invariant_temporaries.count(expr.self) == 0)
 	{
 		forced_temporaries.insert(expr.self);
+		forced_invariant_temporaries.insert(expr.self);
 		force_recompile();
-	}
 
-	for (auto &dependent : expr.expression_dependencies)
-		disallow_forwarding_in_expression_chain(get<SPIRExpression>(dependent));
+		for (auto &dependent : expr.expression_dependencies)
+			disallow_forwarding_in_expression_chain(get<SPIRExpression>(dependent));
+	}
 }
 
 void CompilerGLSL::handle_store_to_invariant_variable(uint32_t store_id, uint32_t value_id)
@@ -8525,7 +8534,6 @@ void CompilerGLSL::emit_instruction(const Instruction &instruction)
 		uint32_t result_id = ops[1];
 		uint32_t op0 = ops[2];
 		uint32_t op1 = ops[3];
-		forced_temporaries.insert(result_id);
 		auto &type = get<SPIRType>(result_type);
 		emit_uninitialized_temporary_expression(result_type, result_id);
 		const char *op = opcode == OpUMulExtended ? "umulExtended" : "imulExtended";
@@ -11060,15 +11068,6 @@ void CompilerGLSL::emit_fixup()
 	}
 }
 
-bool CompilerGLSL::flush_phi_required(uint32_t from, uint32_t to)
-{
-	auto &child = get<SPIRBlock>(to);
-	for (auto &phi : child.phi_variables)
-		if (phi.parent == from)
-			return true;
-	return false;
-}
-
 void CompilerGLSL::flush_phi(uint32_t from, uint32_t to)
 {
 	auto &child = get<SPIRBlock>(to);
@@ -11238,9 +11237,16 @@ void CompilerGLSL::branch(uint32_t from, uint32_t to)
 
 void CompilerGLSL::branch(uint32_t from, uint32_t cond, uint32_t true_block, uint32_t false_block)
 {
-	// If we branch directly to a selection merge target, we don't really need a code path.
+	auto &from_block = get<SPIRBlock>(from);
+	uint32_t merge_block = from_block.merge == SPIRBlock::MergeSelection ? from_block.next_block : 0;
+
+	// If we branch directly to a selection merge target, we don't need a code path.
+	// This covers both merge out of if () / else () as well as a break for switch blocks.
 	bool true_sub = !is_conditional(true_block);
 	bool false_sub = !is_conditional(false_block);
+
+	bool true_block_is_selection_merge = true_block == merge_block;
+	bool false_block_is_selection_merge = false_block == merge_block;
 
 	if (true_sub)
 	{
@@ -11250,7 +11256,11 @@ void CompilerGLSL::branch(uint32_t from, uint32_t cond, uint32_t true_block, uin
 		branch(from, true_block);
 		end_scope();
 
-		if (false_sub || is_continue(false_block) || is_break(false_block))
+		// If we merge to continue, we handle that explicitly in emit_block_chain(),
+		// so there is no need to branch to it directly here.
+		// break; is required to handle ladder fallthrough cases, so keep that in for now, even
+		// if we could potentially handle it in emit_block_chain().
+		if (false_sub || (!false_block_is_selection_merge && is_continue(false_block)) || is_break(false_block))
 		{
 			statement("else");
 			begin_scope();
@@ -11265,7 +11275,7 @@ void CompilerGLSL::branch(uint32_t from, uint32_t cond, uint32_t true_block, uin
 			end_scope();
 		}
 	}
-	else if (false_sub && !true_sub)
+	else if (false_sub)
 	{
 		// Only need false path, use negative conditional.
 		emit_block_hints(get<SPIRBlock>(from));
@@ -11274,7 +11284,7 @@ void CompilerGLSL::branch(uint32_t from, uint32_t cond, uint32_t true_block, uin
 		branch(from, false_block);
 		end_scope();
 
-		if (is_continue(true_block) || is_break(true_block))
+		if ((!true_block_is_selection_merge && is_continue(true_block)) || is_break(true_block))
 		{
 			statement("else");
 			begin_scope();

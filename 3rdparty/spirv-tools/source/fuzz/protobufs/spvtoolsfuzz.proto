@@ -57,6 +57,22 @@ message IdUseDescriptor {
 
 }
 
+message DataDescriptor {
+
+  // Represents a data element that can be accessed from an id, by walking the
+  // type hierarchy via a sequence of 0 or more indices.
+  //
+  // Very similar to a UniformBufferElementDescriptor, except that a
+  // DataDescriptor is rooted at the id of a scalar or composite.
+
+  // The object being accessed - a scalar or composite
+  uint32 object = 1;
+
+  // 0 or more indices, used to index into a composite object
+  repeated uint32 index = 2;
+
+}
+
 message UniformBufferElementDescriptor {
 
   // Represents a data element inside a uniform buffer.  The element is
@@ -97,6 +113,7 @@ message Fact {
   oneof fact {
     // Order the fact options by numeric id (rather than alphabetically).
     FactConstantUniform constant_uniform_fact = 1;
+    FactIdSynonym id_synonym_fact = 2;
   }
 }
 
@@ -115,6 +132,22 @@ message FactConstantUniform {
 
   // The words of the associated constant
   repeated uint32 constant_word = 2;
+
+}
+
+message FactIdSynonym {
+
+  // Records the fact that the data held in an id is guaranteed to be equal to
+  // the data held in a data descriptor.  spirv-fuzz can use this to replace
+  // uses of the id with references to the data described by the data
+  // descriptor.
+
+  // An id
+  uint32 id = 1;
+
+  // A data descriptor guaranteed to hold a value identical to that held by the
+  // id
+  DataDescriptor data_descriptor = 2;
 
 }
 
@@ -137,6 +170,8 @@ message Transformation {
     TransformationReplaceBooleanConstantWithConstantBinary replace_boolean_constant_with_constant_binary = 9;
     TransformationAddTypePointer add_type_pointer = 10;
     TransformationReplaceConstantWithUniform replace_constant_with_uniform = 11;
+    TransformationAddDeadContinue add_dead_continue = 12;
+    TransformationCopyObject copy_object = 13;
     // Add additional option using the next available number.
   }
 }
@@ -187,6 +222,25 @@ message TransformationAddDeadBreak {
   // A sequence of ids suitable for extending OpPhi instructions as a result of
   // the new break edge
   repeated uint32 phi_id = 4;
+
+}
+
+message TransformationAddDeadContinue {
+
+  // A transformation that turns a basic block appearing in a loop and that
+  // unconditionally branches to its successor into a block that potentially
+  // branches to the continue target of the loop, but in such a manner that the
+  // continue branch cannot actually be taken.
+
+  // The block to continue from
+  uint32 from_block = 1;
+
+  // Determines whether the continue condition is true or false
+  bool continue_condition_value = 2;
+
+  // A sequence of ids suitable for extending OpPhi instructions as a result of
+  // the new break edge
+  repeated uint32 phi_id = 3;
 
 }
 
@@ -242,6 +296,26 @@ message TransformationAddTypePointer {
 
 }
 
+message TransformationCopyObject {
+
+  // A transformation that introduces an OpCopyObject instruction to make a
+  // copy of an object.
+
+  // Id of the object to be copied
+  uint32 object = 1;
+
+  // The id of an instruction in a block
+  uint32 base_instruction_id = 2;
+
+  // An offset, such that OpCopyObject instruction should be inserted right
+  // before the instruction |offset| instructions after |base_instruction_id|
+  uint32 offset = 3;
+
+  // A fresh id for the copied object
+  uint32 fresh_id = 4;
+
+}
+
 message TransformationMoveBlockDown {
 
   // A transformation that moves a basic block to be one position lower in
@@ -271,6 +345,7 @@ message TransformationReplaceConstantWithUniform {
 }
 
 message TransformationReplaceBooleanConstantWithConstantBinary {
+
   // A transformation to capture replacing a use of a boolean constant with
   // binary operation on two constant values
 
@@ -293,13 +368,14 @@ message TransformationReplaceBooleanConstantWithConstantBinary {
 
 message TransformationSplitBlock {
 
-  // A transformation that splits a basic block into two basic blocks.
+  // A transformation that splits a basic block into two basic blocks
 
-  // The result id of an instruction.
-  uint32 result_id = 1;
+  // The result id of an instruction
+  uint32 base_instruction_id = 1;
 
-  // An offset, such that the block containing |result_id_| should be split
-  // right before the instruction |offset_| instructions after |result_id_|.
+  // An offset, such that the block containing |base_instruction_id| should be
+  // split right before the instruction |offset| instructions after
+  // |base_instruction_id|
   uint32 offset = 2;
 
   // An id that must not yet be used by the module to which this transformation

@@ -116,7 +116,7 @@ CS_BIN = $(addprefix $(BUILD_INTERMEDIATE_DIR)/, $(addsuffix .bin, $(basename $(
 BIN = $(VS_BIN) $(FS_BIN)
 ASM = $(VS_ASM) $(FS_ASM)
 
-ifeq ($(TARGET), $(filter $(TARGET),1 3 4 5 6))
+ifeq ($(TARGET), $(filter $(TARGET),1 3 4 5 6 7))
 BIN += $(CS_BIN)
 ASM += $(CS_ASM)
 endif

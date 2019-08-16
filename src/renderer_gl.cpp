@@ -2686,18 +2686,18 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) override
+		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _decl) override
 		{
-			VertexDecl& decl = m_vertexDecls[_handle.idx];
-			bx::memCopy(&decl, &_decl, sizeof(VertexDecl) );
+			VertexLayout& decl = m_vertexDecls[_handle.idx];
+			bx::memCopy(&decl, &_decl, sizeof(VertexLayout) );
 			dump(decl);
 		}
 
-		void destroyVertexDecl(VertexDeclHandle /*_handle*/) override
+		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexDeclHandle _declHandle, uint16_t _flags) override
+		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _declHandle, uint16_t _flags) override
 		{
 			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
 		}
@@ -2724,7 +2724,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexDeclHandle decl = BGFX_INVALID_HANDLE;
+			VertexLayoutHandle decl = BGFX_INVALID_HANDLE;
 			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
 		}
 
@@ -3794,7 +3794,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				}
 
 				VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
-				VertexDecl& vertexDecl = _clearQuad.m_decl;
+				VertexLayout& vertexDecl = _clearQuad.m_decl;
 
 				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
@@ -3868,7 +3868,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		ShaderGL m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramGL m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureGL m_textures[BGFX_CONFIG_MAX_TEXTURES];
-		VertexDecl m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexLayout m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
@@ -4508,7 +4508,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		m_instanceData[used] = 0xffff;
 	}
 
-	void ProgramGL::bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex)
+	void ProgramGL::bindAttributes(const VertexLayout& _vertexDecl, uint32_t _baseVertex)
 	{
 		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
 		{
@@ -7265,7 +7265,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
 								uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
-								const VertexDecl& vertexDecl = m_vertexDecls[decl];
+								const VertexLayout& vertexDecl = m_vertexDecls[decl];
 
 								numVertices = bx::uint32_min(numVertices, vb.m_size/vertexDecl.m_stride);
 							}

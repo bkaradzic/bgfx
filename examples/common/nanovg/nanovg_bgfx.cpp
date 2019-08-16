@@ -48,7 +48,7 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 
 namespace
 {
-	static bgfx::VertexDecl s_nvgDecl;
+	static bgfx::VertexLayout s_nvgDecl;
 
 	enum GLNVGshaderType
 	{

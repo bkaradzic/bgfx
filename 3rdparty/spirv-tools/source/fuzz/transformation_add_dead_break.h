@@ -34,25 +34,25 @@ class TransformationAddDeadBreak : public Transformation {
                              bool break_condition_value,
                              std::vector<uint32_t> phi_id);
 
-  // - |message.from_block| must be the id of a block a in the given module.
-  // - |message.to_block| must be the id of a block b in the given module.
-  // - if |message.break_condition_value| holds (does not hold) then
+  // - |message_.from_block| must be the id of a block a in the given module.
+  // - |message_.to_block| must be the id of a block b in the given module.
+  // - if |message_.break_condition_value| holds (does not hold) then
   //   OpConstantTrue (OpConstantFalse) must be present in the module
-  // - |message.phi_ids| must be a list of ids that are all available at
-  //   |message.from_block|
+  // - |message_.phi_ids| must be a list of ids that are all available at
+  //   |message_.from_block|
   // - a and b must be in the same function.
   // - b must be a merge block.
   // - a must end with an unconditional branch to some block c.
   // - replacing this branch with a conditional branch to b or c, with
-  //   the boolean constant associated with |message.break_condition_value| as
-  //   the condition, and the ids in |message.phi_ids| used to extend
+  //   the boolean constant associated with |message_.break_condition_value| as
+  //   the condition, and the ids in |message_.phi_ids| used to extend
   //   any OpPhi instructions at b as a result of the edge from a, must
   //   maintain validity of the module.
   bool IsApplicable(opt::IRContext* context,
                     const FactManager& fact_manager) const override;
 
   // Replaces the terminator of a with a conditional branch to b or c.
-  // The boolean constant associated with |message.break_condition_value| is
+  // The boolean constant associated with |message_.break_condition_value| is
   // used as the condition, and the order of b and c is arranged such that
   // control is guaranteed to jump to c.
   void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
@@ -60,21 +60,6 @@ class TransformationAddDeadBreak : public Transformation {
   protobufs::Transformation ToMessage() const override;
 
  private:
-  // Return the block with id |maybe_block_id| if it exists, and nullptr
-  // otherwise.
-  opt::BasicBlock* MaybeFindBlock(opt::IRContext* context,
-                                  uint32_t maybe_block_id) const;
-
-  // Returns true if and only if the phi ids associated with |message_| are
-  // sufficient to allow an edge from |bb_from| to |bb_to| to be added.
-  bool PhiIdsOk(opt::IRContext* context, opt::BasicBlock* bb_from,
-                opt::BasicBlock* bb_to) const;
-
-  // Returns true if and only if |message_.from_block| is in the continue
-  // construct of a loop headed at |maybe_loop_header|.
-  bool FromBlockIsInLoopContinueConstruct(opt::IRContext* context,
-                                          uint32_t maybe_loop_header) const;
-
   // Returns true if and only if adding an edge from |bb_from| to
   // |message_.to_block| respects structured control flow.
   bool AddingBreakRespectsStructuredControlFlow(opt::IRContext* context,

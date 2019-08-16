@@ -436,7 +436,6 @@ protected:
 	void branch_to_continue(uint32_t from, uint32_t to);
 	void branch(uint32_t from, uint32_t cond, uint32_t true_block, uint32_t false_block);
 	void flush_phi(uint32_t from, uint32_t to);
-	bool flush_phi_required(uint32_t from, uint32_t to);
 	void flush_variable_declaration(uint32_t id);
 	void flush_undeclared_variables(SPIRBlock &block);
 	void emit_variable_temporary_copies(const SPIRVariable &var);

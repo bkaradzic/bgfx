@@ -1852,7 +1852,7 @@ const char* TShader::getInfoDebugLog()
     return infoSink->debug.c_str();
 }
 
-TProgram::TProgram() : reflection(0), ioMapper(nullptr), linked(false)
+TProgram::TProgram() : reflection(0), linked(false)
 {
     pool = new TPoolAllocator;
     infoSink = new TInfoSink;
@@ -1864,7 +1864,6 @@ TProgram::TProgram() : reflection(0), ioMapper(nullptr), linked(false)
 
 TProgram::~TProgram()
 {
-    delete ioMapper;
     delete infoSink;
     delete reflection;
 
@@ -2035,21 +2034,24 @@ void TProgram::dumpReflection() { if (reflection != nullptr) reflection->dump();
 //
 // I/O mapping implementation.
 //
-bool TProgram::mapIO(TIoMapResolver* resolver)
+bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
 {
-    if (! linked || ioMapper)
+    if (! linked)
         return false;
-
-    ioMapper = new TIoMapper;
-
+    TIoMapper* ioMapper = nullptr;
+    TIoMapper defaultIOMapper;
+    if (pIoMapper == nullptr)
+        ioMapper = &defaultIOMapper;
+    else
+        ioMapper = pIoMapper;
     for (int s = 0; s < EShLangCount; ++s) {
         if (intermediate[s]) {
-            if (! ioMapper->addStage((EShLanguage)s, *intermediate[s], *infoSink, resolver))
+            if (! ioMapper->addStage((EShLanguage)s, *intermediate[s], *infoSink, pResolver))
                 return false;
         }
     }
 
-    return true;
+    return ioMapper->doMap(pResolver, *infoSink);
 }
 
 } // end namespace glslang

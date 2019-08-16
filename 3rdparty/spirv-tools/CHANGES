@@ -1,7 +1,74 @@
 Revision history for SPIRV-Tools
 
-v2019.4-dev 2019-05-15
- - Start v2019.4-dev
+v2019.5-dev 2019-08-08
+ - Start v2019.5-dev
+
+v2019.4 2019-08-08
+ - General:
+   - Memory model support for SPIR-V 1.4
+   - Add new spirv-fuzz tool
+   - Add option for base branch in check_code_format.sh
+   - Removed MarkV and Stats code. (#2576)
+   - Instrument: Add version 2 of record formats (#2630)
+   - Linker: Better type comparison for OpTypeArray and OpTypeForwardPointer (#2580)
+ - Optimizer
+   - Bindless Validation: Instrument descriptor-based loads and stores (#2583)
+   - Better folding for OpSpecConstantOp (#2585, #2614)
+   - Add in individual flags for Vulkan <-> WebGPU passes (#2615)
+   - Handle nested breaks from switches. (#2624)
+   - Optimizer: Handle array type with OpSpecConstantOp length (#2652)
+   - Perform merge return with single return in loop. (#2714)
+   - Add —preserve-bindings and —preserve-spec-constants (#2693)
+   - Remove Common Uniform Elimination Pass (#2731)
+   - Allow ray tracing shaders in inst bindle check pass. (#2733)
+   - Add pass to inject code for robust-buffer-access semantics (#2771)
+   - Treat access chain indexes as signed in SROA (#2776)
+   - Handle RelaxedPrecision in SROA (#2788)
+   - Add descriptor array scalar replacement (#2742)
+   Fixes:
+   - Handle decorations better in some optimizations (#2716)
+   - Change the order branches are simplified in dead branch elim (#2728)
+   - Fix bug in merge return (#2734)
+   - SSA rewriter: Don't use trivial phis (#2757)
+   - Record correct dominators in merge return (#2760)
+   - Process OpDecorateId in ADCE (#2761)
+   - Fix check for unreachable blocks in merge-return (#2762)
+   - Handle out-of-bounds scalar replacements. (#2767)
+   - Don't move debug or decorations when folding (#2772)
+   - Protect against out-of-bounds references when folding OpCompositeExtract (#2774)
+ - Validator
+   - Validate loop merge (#2579)
+   - Validate construct exits (#2459)
+   - Validate OpenCL memory and addressing model environment rules (#2589)
+   - Validate OpenCL environment rules for OpTypeImage (#2606)
+   - Allow breaks to switch merge from nested construct (#2604)
+   - Validate OpenCL environment rules for OpImageWrite (#2619)
+   - Allow arrays of out per-primitive builtins for mesh shaders (#2617)
+   - Validate OpenCL rules for ImageRead and OpImageSampleExplicitLod (#2643)
+   - Add validation for SPV_EXT_fragment_shader_interlock (#2650)
+   - Add builtin validation for SPV_NV_shader_sm_builtins (#2656)
+   - Add validation for Subgroup builtins (#2637)
+   - Validate variable initializer type (#2668)
+   - Disallow stores to UBOs (#2651)A
+   - Validate Volatile memory semantics bit (#2672)
+   - Basic validation for Component decorations (#2679)
+   - Validate that in OpenGL env block variables have Binding (#2685)
+   - Validate usage of 8- and 16-bit types with only storage capabilities (#2704)
+   - Add validation for SPV_EXT_demote_to_helper_invocation (#2707)
+   - Extra small storage validation (#2732)
+   - For Vulkan, disallow structures containing opaque types (#2546)
+   - Validate storage class OpenCL environment rules for atomics (#2750)
+   - Update OpControlBarriers rules for WebGPU (#2769)
+   - Update OpMemoryBarriers rules for WebGPU (#2775)
+   - Update WebGPU validation rules of OpAtomic*s (#2777)
+   Fixes:
+   - Disallow merge targeting block with OpLoopMerge (#2610)
+   - Update vloadn and vstoren validation to match the OpenCL Extended
+     Instruction Set Specification (#2599)
+   - Update memory scope rules for WebGPU (#2725)
+   - Allow LOD ops in compute shaders with derivative group execution modes (#2752)
+ - Reduce
+   Fixes:
 
 v2019.3 2019-05-14
  - General:

@@ -74,7 +74,7 @@ namespace bgfx
 
 	void trace(const char* _filePath, uint16_t _line, const char* _format, ...);
 
-	inline bool operator==(const VertexDeclHandle& _lhs, const VertexDeclHandle& _rhs) { return _lhs.idx == _rhs.idx; }
+	inline bool operator==(const VertexLayoutHandle& _lhs, const VertexLayoutHandle& _rhs) { return _lhs.idx == _rhs.idx; }
 	inline bool operator==(const UniformHandle& _lhs,    const UniformHandle&    _rhs) { return _lhs.idx == _rhs.idx; }
 }
 
@@ -313,7 +313,7 @@ namespace bgfx
 
 	const char* getTypeName(Handle _handle);
 
-	inline bool isValid(const VertexDecl& _decl)
+	inline bool isValid(const VertexLayout& _decl)
 	{
 		return 0 != _decl.m_stride;
 	}
@@ -543,7 +543,7 @@ namespace bgfx
 	}
 
 	/// Dump vertex declaration into debug output.
-	void dump(const VertexDecl& _decl);
+	void dump(const VertexLayout& _decl);
 
 	struct TextVideoMem
 	{
@@ -657,7 +657,7 @@ namespace bgfx
 		TextureHandle m_texture;
 		TransientVertexBuffer* m_vb;
 		TransientIndexBuffer* m_ib;
-		VertexDecl m_decl;
+		VertexLayout m_decl;
 		ProgramHandle m_program;
 	};
 
@@ -727,7 +727,7 @@ namespace bgfx
 		void shutdown();
 
 		VertexBufferHandle m_vb;
-		VertexDecl m_decl;
+		VertexLayout m_decl;
 		ProgramHandle m_program[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
@@ -779,7 +779,7 @@ namespace bgfx
 		{
 			RendererInit,
 			RendererShutdownBegin,
-			CreateVertexDecl,
+			CreateVertexLayout,
 			CreateIndexBuffer,
 			CreateVertexBuffer,
 			CreateDynamicIndexBuffer,
@@ -798,7 +798,7 @@ namespace bgfx
 			SetName,
 			End,
 			RendererShutdownEnd,
-			DestroyVertexDecl,
+			DestroyVertexLayout,
 			DestroyIndexBuffer,
 			DestroyVertexBuffer,
 			DestroyDynamicIndexBuffer,
@@ -1538,7 +1538,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		uint32_t           m_startVertex;
 		VertexBufferHandle m_handle;
-		VertexDeclHandle   m_decl;
+		VertexLayoutHandle   m_decl;
 	};
 
 	BX_ALIGN_DECL_CACHE_LINE(struct) RenderBind
@@ -1710,7 +1710,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		uint32_t m_startVertex;
 		uint32_t m_numVertices;
 		uint16_t m_stride;
-		VertexDeclHandle m_decl;
+		VertexLayoutHandle m_decl;
 		uint16_t m_flags;
 	};
 
@@ -2024,7 +2024,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			return m_freeIndexBuffer.queue(_handle);
 		}
 
-		bool free(VertexDeclHandle _handle)
+		bool free(VertexLayoutHandle _handle)
 		{
 			return m_freeVertexDecl.queue(_handle);
 		}
@@ -2160,7 +2160,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		};
 
 		FreeHandle<IndexBufferHandle,  BGFX_CONFIG_MAX_INDEX_BUFFERS>  m_freeIndexBuffer;
-		FreeHandle<VertexDeclHandle,   BGFX_CONFIG_MAX_VERTEX_DECLS>   m_freeVertexDecl;
+		FreeHandle<VertexLayoutHandle, BGFX_CONFIG_MAX_VERTEX_DECLS>   m_freeVertexDecl;
 		FreeHandle<VertexBufferHandle, BGFX_CONFIG_MAX_VERTEX_BUFFERS> m_freeVertexBuffer;
 		FreeHandle<ShaderHandle,       BGFX_CONFIG_MAX_SHADERS>        m_freeShader;
 		FreeHandle<ProgramHandle,      BGFX_CONFIG_MAX_PROGRAMS>       m_freeProgram;
@@ -2339,7 +2339,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, VertexBufferHandle _handle
 			, uint32_t _startVertex
 			, uint32_t _numVertices
-			, VertexDeclHandle _declHandle
+			, VertexLayoutHandle _declHandle
 			)
 		{
 			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
@@ -2359,7 +2359,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, const DynamicVertexBuffer& _dvb
 			, uint32_t _startVertex
 			, uint32_t _numVertices
-			, VertexDeclHandle _declHandle
+			, VertexLayoutHandle _declHandle
 			)
 		{
 			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
@@ -2381,7 +2381,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			, const TransientVertexBuffer* _tvb
 			, uint32_t _startVertex
 			, uint32_t _numVertices
-			, VertexDeclHandle _declHandle
+			, VertexLayoutHandle _declHandle
 			)
 		{
 			BX_CHECK(UINT8_MAX != m_draw.m_streamMask, "");
@@ -2541,9 +2541,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		int64_t m_cpuTimeEnd;
 	};
 
-	struct VertexDeclRef
+	struct VertexLayoutRef
 	{
-		VertexDeclRef()
+		VertexLayoutRef()
 		{
 		}
 
@@ -2559,7 +2559,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		{
 			for (uint16_t ii = 0, num = _handleAlloc.getNumHandles(); ii < num; ++ii)
 			{
-				VertexDeclHandle handle = { _handleAlloc.getHandleAt(ii) };
+				VertexLayoutHandle handle = { _handleAlloc.getHandleAt(ii) };
 				m_vertexDeclRef[handle.idx] = 0;
 				m_vertexDeclMap.removeByHandle(handle.idx);
 				_handleAlloc.free(handle.idx);
@@ -2568,19 +2568,19 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			m_vertexDeclMap.reset();
 		}
 
-		VertexDeclHandle find(uint32_t _hash)
+		VertexLayoutHandle find(uint32_t _hash)
 		{
-			VertexDeclHandle handle = { m_vertexDeclMap.find(_hash) };
+			VertexLayoutHandle handle = { m_vertexDeclMap.find(_hash) };
 			return handle;
 		}
 
-		void add(VertexDeclHandle _declHandle, uint32_t _hash)
+		void add(VertexLayoutHandle _declHandle, uint32_t _hash)
 		{
 			m_vertexDeclRef[_declHandle.idx]++;
 			m_vertexDeclMap.insert(_hash, _declHandle.idx);
 		}
 
-		void add(VertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
+		void add(VertexBufferHandle _handle, VertexLayoutHandle _declHandle, uint32_t _hash)
 		{
 			BX_CHECK(m_vertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_vertexBufferRef[_handle.idx] = _declHandle;
@@ -2588,7 +2588,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			m_vertexDeclMap.insert(_hash, _declHandle.idx);
 		}
 
-		void add(DynamicVertexBufferHandle _handle, VertexDeclHandle _declHandle, uint32_t _hash)
+		void add(DynamicVertexBufferHandle _handle, VertexLayoutHandle _declHandle, uint32_t _hash)
 		{
 			BX_CHECK(m_dynamicVertexBufferRef[_handle.idx].idx == kInvalidHandle, "");
 			m_dynamicVertexBufferRef[_handle.idx] = _declHandle;
@@ -2596,7 +2596,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			m_vertexDeclMap.insert(_hash, _declHandle.idx);
 		}
 
-		VertexDeclHandle release(VertexDeclHandle _declHandle)
+		VertexLayoutHandle release(VertexLayoutHandle _declHandle)
 		{
 			if (isValid(_declHandle) )
 			{
@@ -2612,30 +2612,30 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			return BGFX_INVALID_HANDLE;
 		}
 
-		VertexDeclHandle release(VertexBufferHandle _handle)
+		VertexLayoutHandle release(VertexBufferHandle _handle)
 		{
-			VertexDeclHandle declHandle = m_vertexBufferRef[_handle.idx];
+			VertexLayoutHandle declHandle = m_vertexBufferRef[_handle.idx];
 			declHandle = release(declHandle);
 			m_vertexBufferRef[_handle.idx].idx = kInvalidHandle;
 
 			return declHandle;
 		}
 
-		VertexDeclHandle release(DynamicVertexBufferHandle _handle)
+		VertexLayoutHandle release(DynamicVertexBufferHandle _handle)
 		{
-			VertexDeclHandle declHandle = m_dynamicVertexBufferRef[_handle.idx];
+			VertexLayoutHandle declHandle = m_dynamicVertexBufferRef[_handle.idx];
 			declHandle = release(declHandle);
 			m_dynamicVertexBufferRef[_handle.idx].idx = kInvalidHandle;
 
 			return declHandle;
 		}
 
-		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_VERTEX_DECLS*2> VertexDeclMap;
-		VertexDeclMap m_vertexDeclMap;
+		typedef bx::HandleHashMapT<BGFX_CONFIG_MAX_VERTEX_DECLS*2> VertexLayoutMap;
+		VertexLayoutMap m_vertexDeclMap;
 
 		uint16_t m_vertexDeclRef[BGFX_CONFIG_MAX_VERTEX_DECLS];
-		VertexDeclHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
-		VertexDeclHandle m_dynamicVertexBufferRef[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
+		VertexLayoutHandle m_vertexBufferRef[BGFX_CONFIG_MAX_VERTEX_BUFFERS];
+		VertexLayoutHandle m_dynamicVertexBufferRef[BGFX_CONFIG_MAX_DYNAMIC_VERTEX_BUFFERS];
 	};
 
 	// First-fit non-local allocator.
@@ -2772,9 +2772,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 		virtual void flip() = 0;
 		virtual void createIndexBuffer(IndexBufferHandle _handle, const Memory* _mem, uint16_t _flags) = 0;
 		virtual void destroyIndexBuffer(IndexBufferHandle _handle) = 0;
-		virtual void createVertexDecl(VertexDeclHandle _handle, const VertexDecl& _decl) = 0;
-		virtual void destroyVertexDecl(VertexDeclHandle _handle) = 0;
-		virtual void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexDeclHandle _declHandle, uint16_t _flags) = 0;
+		virtual void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _decl) = 0;
+		virtual void destroyVertexLayout(VertexLayoutHandle _handle) = 0;
+		virtual void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _declHandle, uint16_t _flags) = 0;
 		virtual void destroyVertexBuffer(VertexBufferHandle _handle) = 0;
 		virtual void createDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _size, uint16_t _flags) = 0;
 		virtual void updateDynamicIndexBuffer(IndexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) = 0;
@@ -2964,7 +2964,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			stats.numTextures             = m_textureHandle.getNumHandles();
 			stats.numUniforms             = m_uniformHandle.getNumHandles();
 			stats.numVertexBuffers        = m_vertexBufferHandle.getNumHandles();
-			stats.numVertexDecls          = m_vertexDeclHandle.getNumHandles();
+			stats.numVertexLayouts        = m_vertexDeclHandle.getNumHandles();
 
 			stats.textureMemoryUsed = m_textureMemoryUsed;
 			stats.rtMemoryUsed      = m_rtMemoryUsed;
@@ -3026,9 +3026,9 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			cmdbuf.write(_handle);
 		}
 
-		VertexDeclHandle findVertexDecl(const VertexDecl& _decl)
+		VertexLayoutHandle findVertexLayout(const VertexLayout& _decl)
 		{
-			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
+			VertexLayoutHandle declHandle = m_declRef.find(_decl.m_hash);
 
 			if (!isValid(declHandle) )
 			{
@@ -3038,7 +3038,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 					return declHandle;
 				}
 
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexDecl);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexLayout);
 				cmdbuf.write(declHandle);
 				cmdbuf.write(_decl);
 			}
@@ -3046,11 +3046,11 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			return declHandle;
 		}
 
-		BGFX_API_FUNC(VertexDeclHandle createVertexDecl(const VertexDecl& _decl) )
+		BGFX_API_FUNC(VertexLayoutHandle createVertexLayout(const VertexLayout& _decl) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			VertexDeclHandle handle = findVertexDecl(_decl);
+			VertexLayoutHandle handle = findVertexLayout(_decl);
 			if (!isValid(handle) )
 			{
 				BX_TRACE("WARNING: Failed to allocate vertex decl handle (BGFX_CONFIG_MAX_VERTEX_DECLS, max: %d).", BGFX_CONFIG_MAX_VERTEX_DECLS);
@@ -3062,13 +3062,13 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			return handle;
 		}
 
-		BGFX_API_FUNC(void destroyVertexDecl(VertexDeclHandle _handle) )
+		BGFX_API_FUNC(void destroyVertexLayout(VertexLayoutHandle _handle) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 			m_declRef.release(_handle);
 		}
 
-		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags) )
+		BGFX_API_FUNC(VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexLayout& _decl, uint16_t _flags) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3076,7 +3076,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 			if (isValid(handle) )
 			{
-				VertexDeclHandle declHandle = findVertexDecl(_decl);
+				VertexLayoutHandle declHandle = findVertexLayout(_decl);
 				if (!isValid(declHandle) )
 				{
 					BX_TRACE("WARNING: Failed to allocate vertex decl handle (BGFX_CONFIG_MAX_VERTEX_DECLS, max: %d).", BGFX_CONFIG_MAX_VERTEX_DECLS);
@@ -3136,10 +3136,10 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void destroyVertexBufferInternal(VertexBufferHandle _handle)
 		{
-			VertexDeclHandle declHandle = m_declRef.release(_handle);
+			VertexLayoutHandle declHandle = m_declRef.release(_handle);
 			if (isValid(declHandle) )
 			{
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexLayout);
 				cmdbuf.write(declHandle);
 				m_render->free(declHandle);
 			}
@@ -3353,11 +3353,11 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			return ptr;
 		}
 
-		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexDecl& _decl, uint16_t _flags) )
+		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexLayout& _decl, uint16_t _flags) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			VertexDeclHandle declHandle = findVertexDecl(_decl);
+			VertexLayoutHandle declHandle = findVertexLayout(_decl);
 			if (!isValid(declHandle) )
 			{
 				BX_TRACE("WARNING: Failed to allocate vertex decl handle (BGFX_CONFIG_MAX_VERTEX_DECLS, max: %d).", BGFX_CONFIG_MAX_VERTEX_DECLS);
@@ -3421,7 +3421,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			return handle;
 		}
 
-		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags) )
+		BGFX_API_FUNC(DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexLayout& _decl, uint16_t _flags) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -3492,12 +3492,12 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		void destroyDynamicVertexBufferInternal(DynamicVertexBufferHandle _handle)
 		{
-			VertexDeclHandle declHandle = m_declRef.release(_handle);
+			VertexLayoutHandle declHandle = m_declRef.release(_handle);
 			BGFX_CHECK_HANDLE_INVALID_OK("destroyDynamicVertexBufferInternal", m_vertexDeclHandle, declHandle);
 
 			if (isValid(declHandle) )
 			{
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexDecl);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::DestroyVertexLayout);
 				cmdbuf.write(declHandle);
 				m_render->free(declHandle);
 			}
@@ -3587,7 +3587,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			_tib->startIndex = bx::strideAlign(offset, 2)/2;
 		}
 
-		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexDecl* _decl = NULL)
+		TransientVertexBuffer* createTransientVertexBuffer(uint32_t _size, const VertexLayout* _decl = NULL)
 		{
 			TransientVertexBuffer* tvb = NULL;
 
@@ -3597,11 +3597,11 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			if (isValid(handle) )
 			{
 				uint16_t stride = 0;
-				VertexDeclHandle declHandle = BGFX_INVALID_HANDLE;
+				VertexLayoutHandle declHandle = BGFX_INVALID_HANDLE;
 
 				if (NULL != _decl)
 				{
-					declHandle = findVertexDecl(*_decl);
+					declHandle = findVertexLayout(*_decl);
 					m_declRef.add(handle, declHandle, _decl->m_hash);
 
 					stride = _decl->m_stride;
@@ -3637,19 +3637,19 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 			BX_ALIGNED_FREE(g_allocator, _tvb, 16);
 		}
 
-		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl) )
+		BGFX_API_FUNC(void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexLayout& _decl) )
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			VertexDeclHandle declHandle = m_declRef.find(_decl.m_hash);
+			VertexLayoutHandle declHandle = m_declRef.find(_decl.m_hash);
 
 			TransientVertexBuffer& dvb = *m_submit->m_transientVb;
 
 			if (!isValid(declHandle) )
 			{
-				VertexDeclHandle temp = { m_vertexDeclHandle.alloc() };
+				VertexLayoutHandle temp = { m_vertexDeclHandle.alloc() };
 				declHandle = temp;
-				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexDecl);
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateVertexLayout);
 				cmdbuf.write(declHandle);
 				cmdbuf.write(_decl);
 				m_declRef.add(declHandle, _decl.m_hash);
@@ -3836,7 +3836,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 				bx::read(&reader, regCount, &err);
 
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(name);
-				if (PredefinedUniform::Count == predefined)
+				if (PredefinedUniform::Count == predefined && UniformType::End != UniformType::Enum(type))
 				{
 					uniforms[sr.m_num] = createUniform(name, UniformType::Enum(type), regCount);
 					sr.m_num++;
@@ -4949,7 +4949,7 @@ constexpr uint64_t kSortKeyComputeProgramMask  = uint64_t(BGFX_CONFIG_MAX_PROGRA
 
 		TextureRef     m_textureRef[BGFX_CONFIG_MAX_TEXTURES];
 		FrameBufferRef m_frameBufferRef[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		VertexDeclRef  m_declRef;
+		VertexLayoutRef  m_declRef;
 
 		ViewId m_viewRemap[BGFX_CONFIG_MAX_VIEWS];
 		uint32_t m_seq[BGFX_CONFIG_MAX_VIEWS];

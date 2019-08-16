@@ -15,8 +15,8 @@ namespace
 class ExampleHelloWorld : public entry::AppI
 {
 public:
-	ExampleHelloWorld(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleHelloWorld(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -129,4 +129,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleHelloWorld, "00-helloworld", "Initialization and debug text.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleHelloWorld
+	, "00-helloworld"
+	, "Initialization and debug text."
+	, "https://bkaradzic.github.io/bgfx/examples.html#helloworld"
+	);

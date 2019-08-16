@@ -258,7 +258,7 @@ bimg::ImageContainer* imageLoad(const char* _filePath, bgfx::TextureFormat::Enum
 	return bimg::imageParse(entry::getAllocator(), data, size, bimg::TextureFormat::Enum(_dstFormat) );
 }
 
-void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+void calcTangents(void* _vertices, uint16_t _numVertices, bgfx::VertexLayout _decl, const uint16_t* _indices, uint32_t _numIndices)
 {
 	struct PosTexcoord
 	{
@@ -375,7 +375,7 @@ void Group::reset()
 
 namespace bgfx
 {
-	int32_t read(bx::ReaderI* _reader, bgfx::VertexDecl& _decl, bx::Error* _err = NULL);
+	int32_t read(bx::ReaderI* _reader, bgfx::VertexLayout& _decl, bx::Error* _err = NULL);
 }
 
 void Mesh::load(bx::ReaderSeekerI* _reader, bool _ramcopy)

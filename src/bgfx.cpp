@@ -511,11 +511,11 @@ namespace bgfx
 		return handle;
 	}
 
-	void dump(const VertexDecl& _decl)
+	void dump(const VertexLayout& _decl)
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-			BX_TRACE("vertexdecl %08x (%08x), stride %d"
+			BX_TRACE("vertexlayout %08x (%08x), stride %d"
 				, _decl.m_hash
 				, bx::hash<bx::HashMurmur2A>(_decl.m_attributes)
 				, _decl.m_stride
@@ -763,7 +763,9 @@ namespace bgfx
 					uint32_t ch = line->character;
 					uint8_t attr = line->attribute;
 					if (ch > 0xff)
-						ch = 0;	// todo: render unicode code point , ch > 255)
+					{
+						ch = 0;
+					}
 
 					if (0 != (ch|attr)
 					&& (' ' != ch || 0 != (attr&0xf0) ) )
@@ -1574,7 +1576,7 @@ namespace bgfx
 		LIMITS(maxTextures);
 		LIMITS(maxTextureSamplers);
 		LIMITS(maxComputeBindings);
-		LIMITS(maxVertexDecls);
+		LIMITS(maxVertexLayouts);
 		LIMITS(maxVertexStreams);
 		LIMITS(maxIndexBuffers);
 		LIMITS(maxVertexBuffers);
@@ -1916,7 +1918,7 @@ namespace bgfx
 			frame();
 		}
 
-		frame(); // If any VertexDecls needs to be destroyed.
+		frame(); // If any VertexLayouts needs to be destroyed.
 
 		getCommandBuffer(CommandBuffer::RendererShutdownEnd);
 		frame();
@@ -1937,7 +1939,7 @@ namespace bgfx
 		m_dynIndexBufferAllocator.compact();
 
 		BX_CHECK(m_vertexDeclHandle.getNumHandles() == m_declRef.m_vertexDeclMap.getNumElements()
-				, "VertexDeclRef mismatch, num handles %d, handles in hash map %d."
+				, "VertexLayoutRef mismatch, num handles %d, handles in hash map %d."
 				, m_vertexDeclHandle.getNumHandles()
 				, m_declRef.m_vertexDeclMap.getNumElements()
 				);
@@ -2030,7 +2032,7 @@ namespace bgfx
 			CHECK_HANDLE_LEAK        ("DynamicIndexBufferHandle",  m_dynamicIndexBufferHandle                                  );
 			CHECK_HANDLE_LEAK        ("DynamicVertexBufferHandle", m_dynamicVertexBufferHandle                                 );
 			CHECK_HANDLE_LEAK_NAME   ("IndexBufferHandle",         m_indexBufferHandle,        IndexBuffer,    m_indexBuffers  );
-			CHECK_HANDLE_LEAK        ("VertexDeclHandle",          m_vertexDeclHandle                                          );
+			CHECK_HANDLE_LEAK        ("VertexLayoutHandle",        m_vertexDeclHandle                                          );
 			CHECK_HANDLE_LEAK_NAME   ("VertexBufferHandle",        m_vertexBufferHandle,       VertexBuffer,   m_vertexBuffers );
 			CHECK_HANDLE_LEAK_RC_NAME("ShaderHandle",              m_shaderHandle,             ShaderRef,      m_shaderRef     );
 			CHECK_HANDLE_LEAK        ("ProgramHandle",             m_programHandle                                             );
@@ -2718,28 +2720,28 @@ namespace bgfx
 				}
 				break;
 
-			case CommandBuffer::CreateVertexDecl:
+			case CommandBuffer::CreateVertexLayout:
 				{
-					BGFX_PROFILER_SCOPE("CreateVertexDecl", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("CreateVertexLayout", 0xff2040ff);
 
-					VertexDeclHandle handle;
+					VertexLayoutHandle handle;
 					_cmdbuf.read(handle);
 
-					VertexDecl decl;
+					VertexLayout decl;
 					_cmdbuf.read(decl);
 
-					m_renderCtx->createVertexDecl(handle, decl);
+					m_renderCtx->createVertexLayout(handle, decl);
 				}
 				break;
 
-			case CommandBuffer::DestroyVertexDecl:
+			case CommandBuffer::DestroyVertexLayout:
 				{
-					BGFX_PROFILER_SCOPE("DestroyVertexDecl", 0xff2040ff);
+					BGFX_PROFILER_SCOPE("DestroyVertexLayout", 0xff2040ff);
 
-					VertexDeclHandle handle;
+					VertexLayoutHandle handle;
 					_cmdbuf.read(handle);
 
-					m_renderCtx->destroyVertexDecl(handle);
+					m_renderCtx->destroyVertexLayout(handle);
 				}
 				break;
 
@@ -2753,7 +2755,7 @@ namespace bgfx
 					const Memory* mem;
 					_cmdbuf.read(mem);
 
-					VertexDeclHandle declHandle;
+					VertexLayoutHandle declHandle;
 					_cmdbuf.read(declHandle);
 
 					uint16_t flags;
@@ -3373,7 +3375,7 @@ namespace bgfx
 		g_caps.limits.maxTextures             = BGFX_CONFIG_MAX_TEXTURES;
 		g_caps.limits.maxTextureSamplers      = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
 		g_caps.limits.maxComputeBindings      = 0;
-		g_caps.limits.maxVertexDecls          = BGFX_CONFIG_MAX_VERTEX_DECLS;
+		g_caps.limits.maxVertexLayouts          = BGFX_CONFIG_MAX_VERTEX_DECLS;
 		g_caps.limits.maxVertexStreams        = 1;
 		g_caps.limits.maxIndexBuffers         = BGFX_CONFIG_MAX_INDEX_BUFFERS;
 		g_caps.limits.maxVertexBuffers        = BGFX_CONFIG_MAX_VERTEX_BUFFERS;
@@ -3579,7 +3581,7 @@ namespace bgfx
 		, VertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle
+		, VertexLayoutHandle _declHandle
 	)
 	{
 		BGFX_CHECK_HANDLE("setVertexBuffer", s_ctx->m_vertexBufferHandle, _handle);
@@ -3597,7 +3599,7 @@ namespace bgfx
 		, DynamicVertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle
+		, VertexLayoutHandle _declHandle
 		)
 	{
 		BGFX_CHECK_HANDLE("setVertexBuffer", s_ctx->m_dynamicVertexBufferHandle, _handle);
@@ -3616,7 +3618,7 @@ namespace bgfx
 		, const TransientVertexBuffer* _tvb
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle
+		, VertexLayoutHandle _declHandle
 		)
 	{
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
@@ -3935,20 +3937,20 @@ namespace bgfx
 		s_ctx->destroyIndexBuffer(_handle);
 	}
 
-	VertexDeclHandle createVertexDecl(const VertexDecl& _decl)
+	VertexLayoutHandle createVertexLayout(const VertexLayout& _decl)
 	{
-		return s_ctx->createVertexDecl(_decl);
+		return s_ctx->createVertexLayout(_decl);
 	}
 
-	void destroy(VertexDeclHandle _handle)
+	void destroy(VertexLayoutHandle _handle)
 	{
-		s_ctx->destroyVertexDecl(_handle);
+		s_ctx->destroyVertexLayout(_handle);
 	}
 
-	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags)
+	VertexBufferHandle createVertexBuffer(const Memory* _mem, const VertexLayout& _decl, uint16_t _flags)
 	{
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexLayout.");
 		return s_ctx->createVertexBuffer(_mem, _decl, _flags);
 	}
 
@@ -3984,16 +3986,16 @@ namespace bgfx
 		s_ctx->destroyDynamicIndexBuffer(_handle);
 	}
 
-	DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexDecl& _decl, uint16_t _flags)
+	DynamicVertexBufferHandle createDynamicVertexBuffer(uint32_t _num, const VertexLayout& _decl, uint16_t _flags)
 	{
-		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexLayout.");
 		return s_ctx->createDynamicVertexBuffer(_num, _decl, _flags);
 	}
 
-	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexDecl& _decl, uint16_t _flags)
+	DynamicVertexBufferHandle createDynamicVertexBuffer(const Memory* _mem, const VertexLayout& _decl, uint16_t _flags)
 	{
 		BX_CHECK(NULL != _mem, "_mem can't be NULL");
-		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexLayout.");
 		return s_ctx->createDynamicVertexBuffer(_mem, _decl, _flags);
 	}
 
@@ -4014,10 +4016,10 @@ namespace bgfx
 		return s_ctx->getAvailTransientIndexBuffer(_num);
 	}
 
-	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexDecl& _decl)
+	uint32_t getAvailTransientVertexBuffer(uint32_t _num, const VertexLayout& _decl)
 	{
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
-		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexLayout.");
 		return s_ctx->getAvailTransientVertexBuffer(_num, _decl.m_stride);
 	}
 
@@ -4040,11 +4042,11 @@ namespace bgfx
 			);
 	}
 
-	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexDecl& _decl)
+	void allocTransientVertexBuffer(TransientVertexBuffer* _tvb, uint32_t _num, const VertexLayout& _decl)
 	{
 		BX_CHECK(NULL != _tvb, "_tvb can't be NULL");
 		BX_CHECK(0 < _num, "Requesting 0 vertices.");
-		BX_CHECK(isValid(_decl), "Invalid VertexDecl.");
+		BX_CHECK(isValid(_decl), "Invalid VertexLayout.");
 		s_ctx->allocTransientVertexBuffer(_tvb, _num, _decl);
 		BX_CHECK(_num == _tvb->size / _decl.m_stride
 			, "Failed to allocate transient vertex buffer (requested %d, available %d). "
@@ -4054,7 +4056,7 @@ namespace bgfx
 			);
 	}
 
-	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexDecl& _decl, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices)
+	bool allocTransientBuffers(bgfx::TransientVertexBuffer* _tvb, const bgfx::VertexLayout& _decl, uint32_t _numVertices, bgfx::TransientIndexBuffer* _tib, uint32_t _numIndices)
 	{
 		BGFX_MUTEX_SCOPE(s_ctx->m_resourceApiLock);
 
@@ -4831,7 +4833,7 @@ namespace bgfx
 		, VertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle
+		, VertexLayoutHandle _declHandle
 		)
 	{
 		BGFX_CHECK_API_THREAD();
@@ -4848,7 +4850,7 @@ namespace bgfx
 		, DynamicVertexBufferHandle _handle
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle
+		, VertexLayoutHandle _declHandle
 		)
 	{
 		BGFX_CHECK_API_THREAD();
@@ -4865,7 +4867,7 @@ namespace bgfx
 		, const TransientVertexBuffer* _tvb
 		, uint32_t _startVertex
 		, uint32_t _numVertices
-		, VertexDeclHandle _declHandle
+		, VertexLayoutHandle _declHandle
 		)
 	{
 		BGFX_CHECK_API_THREAD();

@@ -29,10 +29,10 @@ struct PosColorTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosColorTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosColorTexCoord0Vertex::ms_decl;
 
 void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x, float _y, float _width, float _height)
 {
@@ -102,8 +102,8 @@ void renderScreenSpaceQuad(uint8_t _view, bgfx::ProgramHandle _program, float _x
 class ExampleRaymarch : public entry::AppI
 {
 public:
-	ExampleRaymarch(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleRaymarch(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -264,4 +264,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleRaymarch, "03-raymarch", "Updating shader uniforms.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleRaymarch
+	, "03-raymarch"
+	, "Updating shader uniforms."
+	, "https://bkaradzic.github.io/bgfx/examples.html#raymarch"
+	);

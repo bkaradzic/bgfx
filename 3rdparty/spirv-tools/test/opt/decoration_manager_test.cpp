@@ -22,6 +22,7 @@
 #include "source/opt/decoration_manager.h"
 #include "source/opt/ir_context.h"
 #include "source/spirv_constant.h"
+#include "source/util/string_utils.h"
 #include "test/unit_spirv.h"
 
 namespace spvtools {
@@ -29,7 +30,7 @@ namespace opt {
 namespace analysis {
 namespace {
 
-using spvtest::MakeVector;
+using utils::MakeVector;
 
 class DecorationManagerTest : public ::testing::Test {
  public:

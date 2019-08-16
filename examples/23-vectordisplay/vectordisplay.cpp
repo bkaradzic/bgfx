@@ -43,7 +43,7 @@ void PosColorUvVertex::init()
 		.end();
 }
 
-bgfx::VertexDecl PosColorUvVertex::ms_decl;
+bgfx::VertexLayout PosColorUvVertex::ms_decl;
 
 inline float normalizef(float _a)
 {

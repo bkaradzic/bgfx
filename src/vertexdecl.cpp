@@ -63,16 +63,16 @@ namespace bgfx
 		s_attribTypeSize[RendererType::Count] = s_attribTypeSize[_type];
 	}
 
-	VertexDecl::VertexDecl()
+	VertexLayout::VertexLayout()
 		: m_stride(0)
 	{
 		// BK - struct need to have ctor to qualify as non-POD data.
 		// Need this to catch programming errors when serializing struct.
 	}
 
-	VertexDecl& VertexDecl::begin(RendererType::Enum _renderer)
+	VertexLayout& VertexLayout::begin(RendererType::Enum _renderer)
 	{
-		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.
+		m_hash = _renderer; // use hash to store renderer type while building VertexLayout.
 		m_stride = 0;
 		bx::memSet(m_attributes, 0xff, sizeof(m_attributes) );
 		bx::memSet(m_offset, 0, sizeof(m_offset) );
@@ -80,7 +80,7 @@ namespace bgfx
 		return *this;
 	}
 
-	void VertexDecl::end()
+	void VertexLayout::end()
 	{
 		bx::HashMurmur2A murmur;
 		murmur.begin();
@@ -90,7 +90,7 @@ namespace bgfx
 		m_hash = murmur.end();
 	}
 
-	VertexDecl& VertexDecl::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
+	VertexLayout& VertexLayout::add(Attrib::Enum _attrib, uint8_t _num, AttribType::Enum _type, bool _normalized, bool _asInt)
 	{
 		const uint16_t encodedNorm = (_normalized&1)<<7;
 		const uint16_t encodedType = (_type&7)<<3;
@@ -104,14 +104,14 @@ namespace bgfx
 		return *this;
 	}
 
-	VertexDecl& VertexDecl::skip(uint8_t _num)
+	VertexLayout& VertexLayout::skip(uint8_t _num)
 	{
 		m_stride += _num;
 
 		return *this;
 	}
 
-	void VertexDecl::decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const
+	void VertexLayout::decode(Attrib::Enum _attrib, uint8_t& _num, AttribType::Enum& _type, bool& _normalized, bool& _asInt) const
 	{
 		uint16_t val = m_attributes[_attrib];
 		_num        = (val&3)+1;
@@ -241,7 +241,7 @@ namespace bgfx
 		return s_attribTypeToId[_attr].id;
 	}
 
-	int32_t write(bx::WriterI* _writer, const VertexDecl& _decl, bx::Error* _err)
+	int32_t write(bx::WriterI* _writer, const VertexLayout& _decl, bx::Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
 
@@ -277,7 +277,7 @@ namespace bgfx
 		return total;
 	}
 
-	int32_t read(bx::ReaderI* _reader, VertexDecl& _decl, bx::Error* _err)
+	int32_t read(bx::ReaderI* _reader, VertexLayout& _decl, bx::Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
 
@@ -337,7 +337,7 @@ namespace bgfx
 		return total;
 	}
 
-	void vertexPack(const float _input[4], bool _inputNormalized, Attrib::Enum _attr, const VertexDecl& _decl, void* _data, uint32_t _index)
+	void vertexPack(const float _input[4], bool _inputNormalized, Attrib::Enum _attr, const VertexLayout& _decl, void* _data, uint32_t _index)
 	{
 		if (!_decl.has(_attr) )
 		{
@@ -493,7 +493,7 @@ namespace bgfx
 		}
 	}
 
-	void vertexUnpack(float _output[4], Attrib::Enum _attr, const VertexDecl& _decl, const void* _data, uint32_t _index)
+	void vertexUnpack(float _output[4], Attrib::Enum _attr, const VertexLayout& _decl, const void* _data, uint32_t _index)
 	{
 		if (!_decl.has(_attr) )
 		{
@@ -619,7 +619,7 @@ namespace bgfx
 		}
 	}
 
-	void vertexConvert(const VertexDecl& _destDecl, void* _destData, const VertexDecl& _srcDecl, const void* _srcData, uint32_t _num)
+	void vertexConvert(const VertexLayout& _destDecl, void* _destData, const VertexLayout& _srcDecl, const void* _srcData, uint32_t _num)
 	{
 		if (_destDecl.m_hash == _srcDecl.m_hash)
 		{
@@ -724,7 +724,7 @@ namespace bgfx
 		return xx*xx + yy*yy + zz*zz;
 	}
 
-	uint16_t weldVerticesRef(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+	uint16_t weldVerticesRef(uint16_t* _output, const VertexLayout& _decl, const void* _data, uint16_t _num, float _epsilon)
 	{
 		// Brute force slow vertex welding...
 		const float epsilonSq = _epsilon*_epsilon;
@@ -765,7 +765,7 @@ namespace bgfx
 		return (uint16_t)numVertices;
 	}
 
-	uint16_t weldVertices(uint16_t* _output, const VertexDecl& _decl, const void* _data, uint16_t _num, float _epsilon)
+	uint16_t weldVertices(uint16_t* _output, const VertexLayout& _decl, const void* _data, uint16_t _num, float _epsilon)
 	{
 		const uint32_t hashSize = bx::uint32_nextpow2(_num);
 		const uint32_t hashMask = hashSize-1;

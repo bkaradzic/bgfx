@@ -188,6 +188,32 @@ class PassTest : public TestT {
         << disassembly;
   }
 
+  // Runs a single pass of class |PassT| on the binary assembled from the
+  // |original| assembly. Check for failure and expect an Effcee matcher
+  // to pass when run on the diagnostic messages. This does *not* involve
+  // pass manager.  Callers are suggested to use SCOPED_TRACE() for better
+  // messages.
+  template <typename PassT, typename... Args>
+  void SinglePassRunAndFail(const std::string& original, Args&&... args) {
+    context_ =
+        std::move(BuildModule(env_, consumer_, original, assemble_options_));
+    EXPECT_NE(nullptr, context()) << "Assembling failed for shader:\n"
+                                  << original << std::endl;
+    std::ostringstream errs;
+    auto error_consumer = [&errs](spv_message_level_t, const char*,
+                                  const spv_position_t&, const char* message) {
+      errs << message << std::endl;
+    };
+    auto pass = MakeUnique<PassT>(std::forward<Args>(args)...);
+    pass->SetMessageConsumer(error_consumer);
+    const auto status = pass->Run(context());
+    EXPECT_EQ(Pass::Status::Failure, status);
+    auto match_result = effcee::Match(errs.str(), original);
+    EXPECT_EQ(effcee::Result::Status::Ok, match_result.status())
+        << match_result.message() << "\nChecking messages:\n"
+        << errs.str();
+  }
+
   // Adds a pass to be run.
   template <typename PassT, typename... Args>
   void AddPass(Args&&... args) {

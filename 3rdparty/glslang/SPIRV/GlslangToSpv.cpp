@@ -210,6 +210,7 @@ protected:
     }
     std::pair<spv::Id, spv::Id> getForcedType(spv::BuiltIn, const glslang::TType&);
     spv::Id translateForcedType(spv::Id object);
+    spv::Id createCompositeConstruct(spv::Id typeId, std::vector<spv::Id> constituents);
 
     glslang::SpvOptions& options;
     spv::Function* shaderEntry;
@@ -2172,6 +2173,39 @@ bool TGlslangToSpvTraverser::visitUnary(glslang::TVisit /* visit */, glslang::TI
     }
 }
 
+// Construct a composite object, recursively copying members if their types don't match
+spv::Id TGlslangToSpvTraverser::createCompositeConstruct(spv::Id resultTypeId, std::vector<spv::Id> constituents)
+{
+    for (int c = 0; c < (int)constituents.size(); ++c) {
+        spv::Id& constituent = constituents[c];
+        spv::Id lType = builder.getContainedTypeId(resultTypeId, c);
+        spv::Id rType = builder.getTypeId(constituent);
+        if (lType != rType) {
+            if (glslangIntermediate->getSpv().spv >= glslang::EShTargetSpv_1_4) {
+                constituent = builder.createUnaryOp(spv::OpCopyLogical, lType, constituent);
+            } else if (builder.isStructType(rType)) {
+                std::vector<spv::Id> rTypeConstituents;
+                int numrTypeConstituents = builder.getNumTypeConstituents(rType);
+                for (int i = 0; i < numrTypeConstituents; ++i) {
+                    rTypeConstituents.push_back(builder.createCompositeExtract(constituent, builder.getContainedTypeId(rType, i), i));
+                }
+                constituents[c] = createCompositeConstruct(lType, rTypeConstituents);
+            } else {
+                assert(builder.isArrayType(rType));
+                std::vector<spv::Id> rTypeConstituents;
+                int numrTypeConstituents = builder.getNumTypeConstituents(rType);
+
+                spv::Id elementRType = builder.getContainedTypeId(rType);
+                for (int i = 0; i < numrTypeConstituents; ++i) {
+                    rTypeConstituents.push_back(builder.createCompositeExtract(constituent, elementRType, i));
+                }
+                constituents[c] = createCompositeConstruct(lType, rTypeConstituents);
+            }
+        }
+    }
+    return builder.createCompositeConstruct(resultTypeId, constituents);
+}
+
 bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TIntermAggregate* node)
 {
     SpecConstantOpModeGuard spec_constant_op_mode_setter(&builder);
@@ -2413,7 +2447,7 @@ bool TGlslangToSpvTraverser::visitAggregate(glslang::TVisit visit, glslang::TInt
             std::vector<spv::Id> constituents;
             for (int c = 0; c < (int)arguments.size(); ++c)
                 constituents.push_back(arguments[c]);
-            constructed = builder.createCompositeConstruct(resultType(), constituents);
+            constructed = createCompositeConstruct(resultType(), constituents);
         } else if (isMatrix)
             constructed = builder.createMatrixConstructor(precision, arguments, resultType());
         else

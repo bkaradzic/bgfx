@@ -55,6 +55,9 @@ ConstantFoldingRule FoldExtractWithConstants() {
       auto cc = c->AsCompositeConstant();
       assert(cc != nullptr);
       auto components = cc->GetComponents();
+      // Protect against invalid IR.  Refuse to fold if the index is out
+      // of bounds.
+      if (element_index >= components.size()) return nullptr;
       c = components[element_index];
     }
     return c;

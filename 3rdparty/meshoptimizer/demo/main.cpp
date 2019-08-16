@@ -771,6 +771,68 @@ void meshlets(const Mesh& mesh)
 	       (endc - startc) * 1000);
 }
 
+void spatialSort(const Mesh& mesh)
+{
+	typedef PackedVertexOct PV;
+
+	std::vector<PV> pv(mesh.vertices.size());
+	packMesh(pv, mesh.vertices);
+
+	double start = timestamp();
+
+	std::vector<unsigned int> remap(mesh.vertices.size());
+	meshopt_spatialSortRemap(&remap[0], &mesh.vertices[0].px, mesh.vertices.size(), sizeof(Vertex));
+
+	double end = timestamp();
+
+	meshopt_remapVertexBuffer(&pv[0], &pv[0], mesh.vertices.size(), sizeof(PV), &remap[0]);
+
+	std::vector<unsigned char> vbuf(meshopt_encodeVertexBufferBound(mesh.vertices.size(), sizeof(PV)));
+	vbuf.resize(meshopt_encodeVertexBuffer(&vbuf[0], vbuf.size(), &pv[0], mesh.vertices.size(), sizeof(PV)));
+
+	size_t csize = compress(vbuf);
+
+	printf("Spatial  : %.1f bits/vertex (post-deflate %.1f bits/vertex); sort %.2f msec\n",
+	       double(vbuf.size() * 8) / double(mesh.vertices.size()),
+	       double(csize * 8) / double(mesh.vertices.size()),
+	       (end - start) * 1000);
+}
+
+void spatialSortTriangles(const Mesh& mesh)
+{
+	typedef PackedVertexOct PV;
+
+	Mesh copy = mesh;
+
+	double start = timestamp();
+
+	meshopt_spatialSortTriangles(&copy.indices[0], &copy.indices[0], mesh.indices.size(), &copy.vertices[0].px, copy.vertices.size(), sizeof(Vertex));
+
+	double end = timestamp();
+
+	meshopt_optimizeVertexCache(&copy.indices[0], &copy.indices[0], copy.indices.size(), copy.vertices.size());
+	meshopt_optimizeVertexFetch(&copy.vertices[0], &copy.indices[0], copy.indices.size(), &copy.vertices[0], copy.vertices.size(), sizeof(Vertex));
+
+	std::vector<PV> pv(mesh.vertices.size());
+	packMesh(pv, copy.vertices);
+
+	std::vector<unsigned char> vbuf(meshopt_encodeVertexBufferBound(mesh.vertices.size(), sizeof(PV)));
+	vbuf.resize(meshopt_encodeVertexBuffer(&vbuf[0], vbuf.size(), &pv[0], mesh.vertices.size(), sizeof(PV)));
+
+	std::vector<unsigned char> ibuf(meshopt_encodeIndexBufferBound(mesh.indices.size(), mesh.vertices.size()));
+	ibuf.resize(meshopt_encodeIndexBuffer(&ibuf[0], ibuf.size(), &copy.indices[0], mesh.indices.size()));
+
+	size_t csizev = compress(vbuf);
+	size_t csizei = compress(ibuf);
+
+	printf("SpatialT : %.1f bits/vertex (post-deflate %.1f bits/vertex); %.1f bits/triangle (post-deflate %.1f bits/triangle); sort %.2f msec\n",
+	       double(vbuf.size() * 8) / double(mesh.vertices.size()),
+	       double(csizev * 8) / double(mesh.vertices.size()),
+	       double(ibuf.size() * 8) / double(mesh.indices.size() / 3),
+	       double(csizei * 8) / double(mesh.indices.size() / 3),
+	       (end - start) * 1000);
+}
+
 bool loadMesh(Mesh& mesh, const char* path)
 {
 	double start = timestamp();
@@ -924,6 +986,9 @@ void process(const char* path)
 	simplifySloppy(mesh);
 	simplifyComplete(mesh);
 
+	spatialSort(mesh);
+	spatialSortTriangles(mesh);
+
 	if (path)
 		processDeinterleaved(path);
 }
@@ -934,9 +999,15 @@ void processDev(const char* path)
 	if (!loadMesh(mesh, path))
 		return;
 
-	simplifySloppy(mesh, 0.5f);
-	simplifySloppy(mesh, 0.1f);
-	simplifySloppy(mesh, 0.01f);
+	Mesh copy = mesh;
+	meshopt_optimizeVertexCache(&copy.indices[0], &copy.indices[0], copy.indices.size(), copy.vertices.size());
+	meshopt_optimizeVertexFetch(&copy.vertices[0], &copy.indices[0], copy.indices.size(), &copy.vertices[0], copy.vertices.size(), sizeof(Vertex));
+
+	encodeIndex(copy);
+	encodeVertex<PackedVertexOct>(copy, "O");
+
+	spatialSort(mesh);
+	spatialSortTriangles(mesh);
 }
 
 int main(int argc, char** argv)

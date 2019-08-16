@@ -17,6 +17,8 @@
 
 #include "gtest/gtest.h"
 
+#include <vector>
+
 #include "source/opt/build_module.h"
 #include "source/opt/ir_context.h"
 #include "spirv-tools/libspirv.h"
@@ -51,6 +53,10 @@ bool IsValid(spv_target_env env, const opt::IRContext* ir);
 // Useful for debugging.
 std::string ToString(spv_target_env env, const opt::IRContext* ir);
 
+// Returns the disassembly of the given binary as a string.
+// Useful for debugging.
+std::string ToString(spv_target_env env, const std::vector<uint32_t>& binary);
+
 // Assembly options for writing fuzzer tests.  It simplifies matters if
 // numeric ids do not change.
 const uint32_t kFuzzAssembleOption =
@@ -63,6 +69,29 @@ const uint32_t kFuzzDisassembleOption =
 const spvtools::MessageConsumer kSilentConsumer =
     [](spv_message_level_t, const char*, const spv_position_t&,
        const char*) -> void {};
+
+const spvtools::MessageConsumer kConsoleMessageConsumer =
+    [](spv_message_level_t level, const char*, const spv_position_t& position,
+       const char* message) -> void {
+  switch (level) {
+    case SPV_MSG_FATAL:
+    case SPV_MSG_INTERNAL_ERROR:
+    case SPV_MSG_ERROR:
+      std::cerr << "error: line " << position.index << ": " << message
+                << std::endl;
+      break;
+    case SPV_MSG_WARNING:
+      std::cout << "warning: line " << position.index << ": " << message
+                << std::endl;
+      break;
+    case SPV_MSG_INFO:
+      std::cout << "info: line " << position.index << ": " << message
+                << std::endl;
+      break;
+    default:
+      break;
+  }
+};
 
 }  // namespace fuzz
 }  // namespace spvtools

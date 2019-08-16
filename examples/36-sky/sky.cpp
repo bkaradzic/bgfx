@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2017 Stanislav Pidhorskyi. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
@@ -310,10 +310,10 @@ namespace
 				.end();
 		}
 
-		static bgfx::VertexDecl ms_decl;
+		static bgfx::VertexLayout ms_decl;
 	};
 
-	bgfx::VertexDecl ScreenPosVertex::ms_decl;
+	bgfx::VertexLayout ScreenPosVertex::ms_decl;
 
 	// Renders a screen-space grid of triangles.
 	// Because of performance reasons, and because sky color is smooth, sky color is computed in vertex shader.

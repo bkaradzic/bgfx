@@ -49,10 +49,10 @@ struct PosVertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosVertex::ms_decl;
+bgfx::VertexLayout PosVertex::ms_decl;
 
 struct PosTexCoord0Vertex
 {
@@ -71,10 +71,10 @@ struct PosTexCoord0Vertex
 			.end();
 	}
 
-	static bgfx::VertexDecl ms_decl;
+	static bgfx::VertexLayout ms_decl;
 };
 
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_decl;
 
 constexpr float cs = 0.29f;
 

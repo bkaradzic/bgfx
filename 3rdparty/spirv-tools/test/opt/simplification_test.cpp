@@ -279,6 +279,52 @@ OpFunctionEnd
   SinglePassRunAndCheck<SimplificationPass>(before, after, false);
 }
 
+TEST_F(SimplificationTest, DontMoveDecorations) {
+  const std::string spirv = R"(
+; CHECK-NOT: RelaxedPrecision
+; CHECK: [[sub:%\w+]] = OpFSub
+; CHECK: OpStore {{.*}} [[sub]]
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+OpDecorate %add RelaxedPrecision
+OpDecorate %block Block
+OpMemberDecorate %block 0 Offset 0
+OpMemberDecorate %block 1 Offset 4
+OpDecorate %in DescriptorSet 0
+OpDecorate %in Binding 0
+OpDecorate %out DescriptorSet 0
+OpDecorate %out Binding 1
+%void = OpTypeVoid
+%float = OpTypeFloat 32
+%void_fn = OpTypeFunction %void
+%block = OpTypeStruct %float %float
+%ptr_ssbo_block = OpTypePointer StorageBuffer %block
+%in = OpVariable %ptr_ssbo_block StorageBuffer
+%out = OpVariable %ptr_ssbo_block StorageBuffer
+%ptr_ssbo_float = OpTypePointer StorageBuffer %float
+%int = OpTypeInt 32 0
+%int_0 = OpConstant %int 0
+%int_1 = OpConstant %int 1
+%float_0 = OpConstant %float 0
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%in_gep_0 = OpAccessChain %ptr_ssbo_float %in %int_0
+%in_gep_1 = OpAccessChain %ptr_ssbo_float %in %int_1
+%load_0 = OpLoad %float %in_gep_0
+%load_1 = OpLoad %float %in_gep_1
+%sub = OpFSub %float %load_0 %load_1
+%add = OpFAdd %float %float_0 %sub
+%out_gep_0 = OpAccessChain %ptr_ssbo_float %out %int_0
+OpStore %out_gep_0 %add
+OpReturn
+OpFunctionEnd
+)";
+
+  SinglePassRunAndMatch<SimplificationPass>(spirv, true);
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

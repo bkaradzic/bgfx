@@ -68,6 +68,9 @@ std::string ToString(const protobufs::Fact& fact) {
 
 }  // namespace
 
+//=======================
+// Constant uniform facts
+
 // The purpose of this struct is to group the fields and data used to represent
 // facts about uniform constants.
 struct FactManager::ConstantUniformFacts {
@@ -330,9 +333,43 @@ bool FactManager::ConstantUniformFacts::AddFact(
   return true;
 }
 
-FactManager::FactManager() {
-  uniform_constant_facts_ = MakeUnique<ConstantUniformFacts>();
+// End of uniform constant facts
+//==============================
+
+//==============================
+// Id synonym facts
+
+// The purpose of this struct is to group the fields and data used to represent
+// facts about id synonyms.
+struct FactManager::IdSynonymFacts {
+  // See method in FactManager which delegates to this method.
+  void AddFact(const protobufs::FactIdSynonym& fact);
+
+  // A record of all the synonyms that are available.
+  std::map<uint32_t, std::vector<protobufs::DataDescriptor>> synonyms;
+
+  // The set of keys to the above map; useful if you just want to know which ids
+  // have synonyms.
+  std::set<uint32_t> ids_with_synonyms;
+};
+
+void FactManager::IdSynonymFacts::AddFact(
+    const protobufs::FactIdSynonym& fact) {
+  if (synonyms.count(fact.id()) == 0) {
+    assert(ids_with_synonyms.count(fact.id()) == 0);
+    ids_with_synonyms.insert(fact.id());
+    synonyms[fact.id()] = std::vector<protobufs::DataDescriptor>();
+  }
+  assert(ids_with_synonyms.count(fact.id()) == 1);
+  synonyms[fact.id()].push_back(fact.data_descriptor());
 }
+
+// End of id synonym facts
+//==============================
+
+FactManager::FactManager()
+    : uniform_constant_facts_(MakeUnique<ConstantUniformFacts>()),
+      id_synonym_facts_(MakeUnique<IdSynonymFacts>()) {}
 
 FactManager::~FactManager() = default;
 
@@ -350,13 +387,17 @@ void FactManager::AddFacts(const MessageConsumer& message_consumer,
 
 bool FactManager::AddFact(const spvtools::fuzz::protobufs::Fact& fact,
                           spvtools::opt::IRContext* context) {
-  assert(fact.fact_case() == protobufs::Fact::kConstantUniformFact &&
-         "Right now this is the only fact.");
-  if (!uniform_constant_facts_->AddFact(fact.constant_uniform_fact(),
-                                        context)) {
-    return false;
+  switch (fact.fact_case()) {
+    case protobufs::Fact::kConstantUniformFact:
+      return uniform_constant_facts_->AddFact(fact.constant_uniform_fact(),
+                                              context);
+    case protobufs::Fact::kIdSynonymFact:
+      id_synonym_facts_->AddFact(fact.id_synonym_fact());
+      return true;
+    default:
+      assert(false && "Unknown fact type.");
+      return false;
   }
-  return true;
 }
 
 std::vector<uint32_t> FactManager::GetConstantsAvailableFromUniformsForType(
@@ -387,6 +428,15 @@ std::vector<uint32_t> FactManager::GetTypesForWhichUniformValuesAreKnown()
 const std::vector<std::pair<protobufs::FactConstantUniform, uint32_t>>&
 FactManager::GetConstantUniformFactsAndTypes() const {
   return uniform_constant_facts_->facts_and_type_ids;
+}
+
+const std::set<uint32_t>& FactManager::GetIdsForWhichSynonymsAreKnown() const {
+  return id_synonym_facts_->ids_with_synonyms;
+}
+
+const std::vector<protobufs::DataDescriptor>& FactManager::GetSynonymsForId(
+    uint32_t id) const {
+  return id_synonym_facts_->synonyms.at(id);
 }
 
 }  // namespace fuzz

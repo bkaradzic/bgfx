@@ -107,8 +107,11 @@ void CompilerMSL::build_implicit_builtins()
 	                                                       active_input_builtins.get(BuiltInSubgroupGtMask));
 	bool need_multiview = get_execution_model() == ExecutionModelVertex && !msl_options.view_index_from_device_index &&
 	                      (msl_options.multiview || active_input_builtins.get(BuiltInViewIndex));
+	bool need_dispatch_base =
+	    msl_options.dispatch_base && get_execution_model() == ExecutionModelGLCompute &&
+	    (active_input_builtins.get(BuiltInWorkgroupId) || active_input_builtins.get(BuiltInGlobalInvocationId));
 	if (need_subpass_input || need_sample_pos || need_subgroup_mask || need_vertex_params || need_tesc_params ||
-	    need_multiview || needs_subgroup_invocation_id)
+	    need_multiview || need_dispatch_base || needs_subgroup_invocation_id)
 	{
 		bool has_frag_coord = false;
 		bool has_sample_id = false;
@@ -121,6 +124,7 @@ void CompilerMSL::build_implicit_builtins()
 		bool has_subgroup_invocation_id = false;
 		bool has_subgroup_size = false;
 		bool has_view_idx = false;
+		uint32_t workgroup_id_type = 0;
 
 		ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
 			if (var.storage != StorageClassInput || !ir.meta[var.self].decoration.builtin)
@@ -208,6 +212,13 @@ void CompilerMSL::build_implicit_builtins()
 					has_view_idx = true;
 				}
 			}
+
+			// The base workgroup needs to have the same type and vector size
+			// as the workgroup or invocation ID, so keep track of the type that
+			// was used.
+			if (need_dispatch_base && workgroup_id_type == 0 &&
+			    (builtin == BuiltInWorkgroupId || builtin == BuiltInGlobalInvocationId))
+				workgroup_id_type = var.basetype;
 		});
 
 		if (!has_frag_coord && need_subpass_input)
@@ -456,6 +467,42 @@ void CompilerMSL::build_implicit_builtins()
 			set_decoration(var_id, DecorationBuiltIn, BuiltInSubgroupSize);
 			builtin_subgroup_size_id = var_id;
 			mark_implicit_builtin(StorageClassInput, BuiltInSubgroupSize, var_id);
+		}
+
+		if (need_dispatch_base)
+		{
+			uint32_t var_id;
+			if (msl_options.supports_msl_version(1, 2))
+			{
+				// If we have MSL 1.2, we can (ab)use the [[grid_origin]] builtin
+				// to convey this information and save a buffer slot.
+				uint32_t offset = ir.increase_bound_by(1);
+				var_id = offset;
+
+				set<SPIRVariable>(var_id, workgroup_id_type, StorageClassInput);
+				set_extended_decoration(var_id, SPIRVCrossDecorationBuiltInDispatchBase);
+				get_entry_point().interface_variables.push_back(var_id);
+			}
+			else
+			{
+				// Otherwise, we need to fall back to a good ol' fashioned buffer.
+				uint32_t offset = ir.increase_bound_by(2);
+				var_id = offset;
+				uint32_t type_id = offset + 1;
+
+				SPIRType var_type = get<SPIRType>(workgroup_id_type);
+				var_type.storage = StorageClassUniform;
+				set<SPIRType>(type_id, var_type);
+
+				set<SPIRVariable>(var_id, type_id, StorageClassUniform);
+				// This should never match anything.
+				set_decoration(var_id, DecorationDescriptorSet, ~(5u));
+				set_decoration(var_id, DecorationBinding, msl_options.indirect_params_buffer_index);
+				set_extended_decoration(var_id, SPIRVCrossDecorationResourceIndexPrimary,
+				                        msl_options.indirect_params_buffer_index);
+			}
+			set_name(var_id, "spvDispatchBase");
+			builtin_dispatch_base_id = var_id;
 		}
 	}
 
@@ -802,6 +849,8 @@ string CompilerMSL::compile()
 		active_interface_variables.insert(view_mask_buffer_id);
 	if (builtin_layer_id)
 		active_interface_variables.insert(builtin_layer_id);
+	if (builtin_dispatch_base_id && !msl_options.supports_msl_version(1, 2))
+		active_interface_variables.insert(builtin_dispatch_base_id);
 
 	// Create structs to hold input, output and uniform variables.
 	// Do output first to ensure out. is declared at top of entry function.
@@ -4600,10 +4649,8 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t result_id = ops[1];
 		uint32_t op0 = ops[2];
 		uint32_t op1 = ops[3];
-		forced_temporaries.insert(result_id);
 		auto &type = get<SPIRType>(result_type);
-		statement(variable_decl(type, to_name(result_id)), ";");
-		set<SPIRExpression>(result_id, to_name(result_id), result_type, true);
+		emit_uninitialized_temporary_expression(result_type, result_id);
 
 		auto &res_type = get<SPIRType>(type.member_types[1]);
 		if (opcode == OpIAddCarry)
@@ -4632,10 +4679,8 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		uint32_t result_id = ops[1];
 		uint32_t op0 = ops[2];
 		uint32_t op1 = ops[3];
-		forced_temporaries.insert(result_id);
 		auto &type = get<SPIRType>(result_type);
-		statement(variable_decl(type, to_name(result_id)), ";");
-		set<SPIRExpression>(result_id, to_name(result_id), result_type, true);
+		emit_uninitialized_temporary_expression(result_type, result_id);
 
 		statement(to_expression(result_id), ".", to_member_name(type, 0), " = ", to_enclosed_expression(op0), " * ",
 		          to_enclosed_expression(op1), ";");
@@ -4917,8 +4962,6 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
                                       uint32_t mem_order_2, bool has_mem_order_2, uint32_t obj, uint32_t op1,
                                       bool op1_is_pointer, bool op1_is_literal, uint32_t op2)
 {
-	forced_temporaries.insert(result_id);
-
 	string exp = string(op) + "(";
 
 	auto &type = get_pointee_type(expression_type(obj));
@@ -4957,12 +5000,11 @@ void CompilerMSL::emit_atomic_func_op(uint32_t result_type, uint32_t result_id, 
 		// the CAS loop, otherwise it will loop infinitely, with the comparison test always failing.
 		// The function updates the comparitor value from the memory value, so the additional
 		// comparison test evaluates the memory value against the expected value.
-		statement(variable_decl(type, to_name(result_id)), ";");
+		emit_uninitialized_temporary_expression(result_type, result_id);
 		statement("do");
 		begin_scope();
 		statement(to_name(result_id), " = ", to_expression(op1), ";");
 		end_scope_decl(join("while (!", exp, " && ", to_name(result_id), " == ", to_enclosed_expression(op1), ")"));
-		set<SPIRExpression>(result_id, to_name(result_id), result_type, true);
 	}
 	else
 	{
@@ -5210,6 +5252,32 @@ void CompilerMSL::emit_glsl_op(uint32_t result_type, uint32_t id, uint32_t eop, 
 		else
 			CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
 		break;
+
+	case GLSLstd450Modf:
+	case GLSLstd450Frexp:
+	{
+		// Special case. If the variable is a scalar access chain, we cannot use it directly. We have to emit a temporary.
+		auto *ptr = maybe_get<SPIRExpression>(args[1]);
+		if (ptr && ptr->access_chain && is_scalar(expression_type(args[1])))
+		{
+			register_call_out_argument(args[1]);
+			forced_temporaries.insert(id);
+
+			// Need to create temporaries and copy over to access chain after.
+			// We cannot directly take the reference of a vector swizzle in MSL, even if it's scalar ...
+			uint32_t &tmp_id = extra_sub_expressions[id];
+			if (!tmp_id)
+				tmp_id = ir.increase_bound_by(1);
+
+			uint32_t tmp_type_id = get_pointee_type_id(ptr->expression_type);
+			emit_uninitialized_temporary_expression(tmp_type_id, tmp_id);
+			emit_binary_func_op(result_type, id, args[0], tmp_id, eop == GLSLstd450Modf ? "modf" : "frexp");
+			statement(to_expression(args[1]), " = ", to_expression(tmp_id), ";");
+		}
+		else
+			CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
+		break;
+	}
 
 	default:
 		CompilerGLSL::emit_glsl_op(result_type, id, eop, args, count);
@@ -6527,80 +6595,15 @@ string CompilerMSL::func_type_decl(SPIRType &type)
 string CompilerMSL::get_argument_address_space(const SPIRVariable &argument)
 {
 	const auto &type = get<SPIRType>(argument.basetype);
-	Bitset flags;
-	if (type.basetype == SPIRType::Struct &&
-	    (has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock)))
-		flags = ir.get_buffer_block_flags(argument);
-	else
-		flags = get_decoration_bitset(argument.self);
-	const char *addr_space = nullptr;
-
-	switch (type.storage)
-	{
-	case StorageClassWorkgroup:
-		addr_space = "threadgroup";
-		break;
-
-	case StorageClassStorageBuffer:
-	{
-		// For arguments from variable pointers, we use the write count deduction, so
-		// we should not assume any constness here. Only for global SSBOs.
-		bool readonly = false;
-		if (has_decoration(type.self, DecorationBlock))
-			readonly = flags.get(DecorationNonWritable);
-
-		addr_space = readonly ? "const device" : "device";
-		break;
-	}
-
-	case StorageClassUniform:
-	case StorageClassUniformConstant:
-	case StorageClassPushConstant:
-		if (type.basetype == SPIRType::Struct)
-		{
-			bool ssbo = has_decoration(type.self, DecorationBufferBlock);
-			if (ssbo)
-			{
-				bool readonly = flags.get(DecorationNonWritable);
-				addr_space = readonly ? "const device" : "device";
-			}
-			else
-				addr_space = "constant";
-			break;
-		}
-		break;
-
-	case StorageClassFunction:
-	case StorageClassGeneric:
-		// No address space for plain values.
-		addr_space = type.pointer ? "thread" : "";
-		break;
-
-	case StorageClassInput:
-		if (get_execution_model() == ExecutionModelTessellationControl && argument.basevariable == stage_in_ptr_var_id)
-			addr_space = "threadgroup";
-		break;
-
-	case StorageClassOutput:
-		if (capture_output_to_buffer)
-			addr_space = "device";
-		break;
-
-	default:
-		break;
-	}
-
-	if (!addr_space)
-		addr_space = "thread";
-
-	return join(flags.get(DecorationVolatile) || flags.get(DecorationCoherent) ? "volatile " : "", addr_space);
+	return get_type_address_space(type, argument.self, true);
 }
 
-string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id)
+string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id, bool argument)
 {
 	// This can be called for variable pointer contexts as well, so be very careful about which method we choose.
 	Bitset flags;
-	if (ir.ids[id].get_type() == TypeVariable && type.basetype == SPIRType::Struct &&
+	auto *var = maybe_get<SPIRVariable>(id);
+	if (var && type.basetype == SPIRType::Struct &&
 	    (has_decoration(type.self, DecorationBlock) || has_decoration(type.self, DecorationBufferBlock)))
 		flags = get_buffer_block_flags(id);
 	else
@@ -6614,8 +6617,16 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id)
 		break;
 
 	case StorageClassStorageBuffer:
-		addr_space = flags.get(DecorationNonWritable) ? "const device" : "device";
+	{
+		// For arguments from variable pointers, we use the write count deduction, so
+		// we should not assume any constness here. Only for global SSBOs.
+		bool readonly = false;
+		if (!var || has_decoration(type.self, DecorationBlock))
+			readonly = flags.get(DecorationNonWritable);
+
+		addr_space = readonly ? "const device" : "device";
 		break;
+	}
 
 	case StorageClassUniform:
 	case StorageClassUniformConstant:
@@ -6628,14 +6639,18 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id)
 			else
 				addr_space = "constant";
 		}
-		else
+		else if (!argument)
 			addr_space = "constant";
 		break;
 
 	case StorageClassFunction:
 	case StorageClassGeneric:
-		// No address space for plain values.
-		addr_space = type.pointer ? "thread" : "";
+		break;
+
+	case StorageClassInput:
+		if (get_execution_model() == ExecutionModelTessellationControl && var &&
+		    var->basevariable == stage_in_ptr_var_id)
+			addr_space = "threadgroup";
 		break;
 
 	case StorageClassOutput:
@@ -6648,7 +6663,8 @@ string CompilerMSL::get_type_address_space(const SPIRType &type, uint32_t id)
 	}
 
 	if (!addr_space)
-		addr_space = "thread";
+		// No address space for plain values.
+		addr_space = type.pointer || (argument && type.basetype == SPIRType::ControlPointArray) ? "thread" : "";
 
 	return join(flags.get(DecorationVolatile) || flags.get(DecorationCoherent) ? "volatile " : "", addr_space);
 }
@@ -6747,6 +6763,19 @@ void CompilerMSL::entry_point_args_builtin(string &ep_args)
 				}
 				ep_args += "]]";
 			}
+		}
+
+		if (var.storage == StorageClassInput &&
+		    has_extended_decoration(var_id, SPIRVCrossDecorationBuiltInDispatchBase))
+		{
+			// This is a special implicit builtin, not corresponding to any SPIR-V builtin,
+			// which holds the base that was passed to vkCmdDispatchBase(). If it's present,
+			// assume we emitted it for a good reason.
+			assert(msl_options.supports_msl_version(1, 2));
+			if (!ep_args.empty())
+				ep_args += ", ";
+
+			ep_args += type_to_glsl(get_variable_data_type(var)) + " " + to_expression(var_id) + " [[grid_origin]]";
 		}
 	});
 
@@ -7023,7 +7052,11 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 		default:
 			if (!ep_args.empty())
 				ep_args += ", ";
-			ep_args += type_to_glsl(type, var_id) + " " + r.name;
+			if (!type.pointer)
+				ep_args += get_type_address_space(get<SPIRType>(var.basetype), var_id) + " " +
+				           type_to_glsl(type, var_id) + "& " + r.name;
+			else
+				ep_args += type_to_glsl(type, var_id) + " " + r.name;
 			ep_args += " [[buffer(" + convert_to_string(r.index) + ")]]";
 			break;
 		}
@@ -7341,6 +7374,35 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 				entry_func.fixup_hooks_in.push_back([=]() {
 					statement("const ", builtin_type_decl(bi_type), " ", to_expression(var_id), " = ",
 					          msl_options.device_index, ";");
+				});
+				break;
+			case BuiltInWorkgroupId:
+				if (!msl_options.dispatch_base || !active_input_builtins.get(BuiltInWorkgroupId))
+					break;
+
+				// The vkCmdDispatchBase() command lets the client set the base value
+				// of WorkgroupId. Metal has no direct equivalent; we must make this
+				// adjustment ourselves.
+				entry_func.fixup_hooks_in.push_back([=]() {
+					statement(to_expression(var_id), " += ", to_dereferenced_expression(builtin_dispatch_base_id), ";");
+				});
+				break;
+			case BuiltInGlobalInvocationId:
+				if (!msl_options.dispatch_base || !active_input_builtins.get(BuiltInGlobalInvocationId))
+					break;
+
+				// GlobalInvocationId is defined as LocalInvocationId + WorkgroupId * WorkgroupSize.
+				// This needs to be adjusted too.
+				entry_func.fixup_hooks_in.push_back([=]() {
+					auto &execution = this->get_entry_point();
+					uint32_t workgroup_size_id = execution.workgroup_size.constant;
+					if (workgroup_size_id)
+						statement(to_expression(var_id), " += ", to_dereferenced_expression(builtin_dispatch_base_id),
+						          " * ", to_expression(workgroup_size_id), ";");
+					else
+						statement(to_expression(var_id), " += ", to_dereferenced_expression(builtin_dispatch_base_id),
+						          " * uint3(", execution.workgroup_size.x, ", ", execution.workgroup_size.y, ", ",
+						          execution.workgroup_size.z, ");");
 				});
 				break;
 			default:

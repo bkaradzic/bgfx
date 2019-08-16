@@ -258,7 +258,7 @@ class Float : public Type {
 
 class Vector : public Type {
  public:
-  Vector(Type* element_type, uint32_t count);
+  Vector(const Type* element_type, uint32_t count);
   Vector(const Vector&) = default;
 
   std::string str() const override;
@@ -280,7 +280,7 @@ class Vector : public Type {
 
 class Matrix : public Type {
  public:
-  Matrix(Type* element_type, uint32_t count);
+  Matrix(const Type* element_type, uint32_t count);
   Matrix(const Matrix&) = default;
 
   std::string str() const override;
@@ -407,7 +407,7 @@ class Array : public Type {
 
 class RuntimeArray : public Type {
  public:
-  RuntimeArray(Type* element_type);
+  RuntimeArray(const Type* element_type);
   RuntimeArray(const RuntimeArray&) = default;
 
   std::string str() const override;

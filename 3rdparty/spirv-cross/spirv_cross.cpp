@@ -1501,6 +1501,12 @@ SPIRBlock::ContinueBlockType Compiler::continue_block_type(const SPIRBlock &bloc
 		const auto *true_block = maybe_get<SPIRBlock>(block.true_block);
 		const auto *merge_block = maybe_get<SPIRBlock>(dominator.merge_block);
 
+		// If we need to flush Phi in this block, we cannot have a DoWhile loop.
+		bool flush_phi_to_false = false_block && flush_phi_required(block.self, block.false_block);
+		bool flush_phi_to_true = true_block && flush_phi_required(block.self, block.true_block);
+		if (flush_phi_to_false || flush_phi_to_true)
+			return SPIRBlock::ComplexLoop;
+
 		bool positive_do_while = block.true_block == dominator.self &&
 		                         (block.false_block == dominator.merge_block ||
 		                          (false_block && merge_block && execution_is_noop(*false_block, *merge_block)));
@@ -3288,10 +3294,11 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 		{
 			builder.add_block(block);
 
-			// If a temporary is used in more than one block, we might have to lift continue block
-			// access up to loop header like we did for variables.
 			if (blocks.size() != 1 && is_continue(block))
 			{
+				// The risk here is that inner loop can dominate the continue block.
+				// Any temporary we access in the continue block must be declared before the loop.
+				// This is moot for complex loops however.
 				auto &loop_header_block = get<SPIRBlock>(ir.continue_block_to_loop_header[block]);
 				assert(loop_header_block.merge == SPIRBlock::MergeLoop);
 
@@ -3299,14 +3306,17 @@ void Compiler::analyze_variable_scope(SPIRFunction &entry, AnalyzeVariableScopeA
 				if (!loop_header_block.complex_continue)
 					builder.add_block(loop_header_block.self);
 			}
-			else if (blocks.size() != 1 && is_single_block_loop(block))
-			{
-				// Awkward case, because the loop header is also the continue block.
-				force_temporary = true;
-			}
 		}
 
 		uint32_t dominating_block = builder.get_dominator();
+
+		if (blocks.size() != 1 && is_single_block_loop(dominating_block))
+		{
+			// Awkward case, because the loop header is also the continue block,
+			// so hoisting to loop header does not help.
+			force_temporary = true;
+		}
+
 		if (dominating_block)
 		{
 			// If we touch a variable in the dominating block, this is the expected setup.
@@ -4245,4 +4255,13 @@ bool Compiler::type_is_array_of_pointers(const SPIRType &type) const
 
 	// If parent type has same pointer depth, we must have an array of pointers.
 	return type.pointer_depth == get<SPIRType>(type.parent_type).pointer_depth;
+}
+
+bool Compiler::flush_phi_required(uint32_t from, uint32_t to) const
+{
+	auto &child = get<SPIRBlock>(to);
+	for (auto &phi : child.phi_variables)
+		if (phi.parent == from)
+			return true;
+	return false;
 }

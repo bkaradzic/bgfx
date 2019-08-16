@@ -79,6 +79,10 @@ bool IsValid(spv_target_env env, const opt::IRContext* ir) {
 std::string ToString(spv_target_env env, const opt::IRContext* ir) {
   std::vector<uint32_t> binary;
   ir->module()->ToBinary(&binary, false);
+  return ToString(env, binary);
+}
+
+std::string ToString(spv_target_env env, const std::vector<uint32_t>& binary) {
   SpirvTools t(env);
   std::string result;
   t.Disassemble(binary, &result, kFuzzDisassembleOption);

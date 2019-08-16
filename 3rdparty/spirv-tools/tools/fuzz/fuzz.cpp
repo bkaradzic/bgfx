@@ -74,12 +74,12 @@ void PrintUsage(const char* program) {
 USAGE: %s [options] <input.spv> -o <output.spv>
 
 The SPIR-V binary is read from <input.spv>, which must have extension .spv.  If
-<input.json> is also present, facts about the SPIR-V binary are read from this
+<input.facts> is also present, facts about the SPIR-V binary are read from this
 file.
 
 The transformed SPIR-V binary is written to <output.spv>.  Human-readable and
-binary representations of the transformations that were applied to obtain this
-binary are written to <output.json> and <output.transformations>, respectively.
+binary representations of the transformations that were applied are written to
+<output.transformations_json> and <output.transformations>, respectively.
 
 NOTE: The fuzzer is a work in progress.
 
@@ -472,7 +472,8 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  std::ofstream transformations_json_file(output_file_prefix + ".json");
+  std::ofstream transformations_json_file(output_file_prefix +
+                                          ".transformations_json");
   transformations_json_file << json_string;
   transformations_json_file.close();
 

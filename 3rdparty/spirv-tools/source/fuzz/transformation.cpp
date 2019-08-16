@@ -20,6 +20,7 @@
 #include "transformation_add_constant_boolean.h"
 #include "transformation_add_constant_scalar.h"
 #include "transformation_add_dead_break.h"
+#include "transformation_add_dead_continue.h"
 #include "transformation_add_type_boolean.h"
 #include "transformation_add_type_float.h"
 #include "transformation_add_type_int.h"
@@ -45,6 +46,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
           message.add_constant_scalar());
     case protobufs::Transformation::TransformationCase::kAddDeadBreak:
       return MakeUnique<TransformationAddDeadBreak>(message.add_dead_break());
+    case protobufs::Transformation::TransformationCase::kAddDeadContinue:
+      return MakeUnique<TransformationAddDeadContinue>(
+          message.add_dead_continue());
     case protobufs::Transformation::TransformationCase::kAddTypeBoolean:
       return MakeUnique<TransformationAddTypeBoolean>(
           message.add_type_boolean());

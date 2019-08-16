@@ -22,6 +22,7 @@
 #include "gmock/gmock.h"
 #include "source/latest_version_glsl_std_450_header.h"
 #include "source/latest_version_opencl_std_header.h"
+#include "source/util/string_utils.h"
 #include "test/test_fixture.h"
 #include "test/unit_spirv.h"
 
@@ -30,7 +31,7 @@ namespace {
 
 using spvtest::Concatenate;
 using spvtest::MakeInstruction;
-using spvtest::MakeVector;
+using utils::MakeVector;
 using spvtest::TextToBinaryTest;
 using ::testing::Combine;
 using ::testing::Eq;
