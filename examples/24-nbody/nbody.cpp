@@ -154,8 +154,8 @@ public:
 
 		if (m_computeSupported)
 		{
-			bgfx::VertexLayout quadVertexDecl;
-			quadVertexDecl.begin()
+			bgfx::VertexLayout quadVertexLayout;
+			quadVertexLayout.begin()
 				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
 				.end();
 
@@ -163,7 +163,7 @@ public:
 			m_vbh = bgfx::createVertexBuffer(
 				// Static data can be passed with bgfx::makeRef
 				bgfx::makeRef(s_quadVertices, sizeof(s_quadVertices) )
-				, quadVertexDecl
+				, quadVertexLayout
 				);
 
 			// Create static index buffer.
@@ -176,15 +176,15 @@ public:
 			m_particleProgram = loadProgram("vs_particle", "fs_particle");
 
 			// Setup compute buffers
-			bgfx::VertexLayout computeVertexDecl;
-			computeVertexDecl.begin()
+			bgfx::VertexLayout computeVertexLayout;
+			computeVertexLayout.begin()
 				.add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
 				.end();
 
-			m_currPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-			m_currPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-			m_prevPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-			m_prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexDecl, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_currPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_currPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_prevPositionBuffer0 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
+			m_prevPositionBuffer1 = bgfx::createDynamicVertexBuffer(1 << 15, computeVertexLayout, BGFX_BUFFER_COMPUTE_READ_WRITE);
 
 			u_params = bgfx::createUniform("u_params", bgfx::UniformType::Vec4, 3);
 

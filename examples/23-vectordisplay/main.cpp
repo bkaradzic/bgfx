@@ -22,17 +22,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 class ExampleVectorDisplay : public entry::AppI
 {

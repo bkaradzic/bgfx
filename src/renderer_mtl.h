@@ -822,9 +822,9 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void create(uint32_t _size, void* _data, VertexLayoutHandle _declHandle, uint16_t _flags);
+		void create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags);
 
-		VertexLayoutHandle m_decl;
+		VertexLayoutHandle m_layoutHandle;
 	};
 
 

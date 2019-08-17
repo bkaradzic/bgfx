@@ -26,17 +26,17 @@ struct PosTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 3, bgfx::AttribType::Float)
 			.end();
 	};
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTexcoordVertex::ms_layout;
 
 static PosTexcoordVertex s_cubeVertices[] =
 {
@@ -239,7 +239,7 @@ public:
 		}
 
 		// Create static vertex buffer.
-		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_decl);
+		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ), PosTexcoordVertex::ms_layout);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );

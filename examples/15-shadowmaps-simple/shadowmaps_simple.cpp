@@ -32,17 +32,17 @@ struct PosNormalVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,   4, bgfx::AttribType::Uint8, true, true)
 			.end();
 	};
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosNormalVertex::ms_decl;
+bgfx::VertexLayout PosNormalVertex::ms_layout;
 
 static PosNormalVertex s_hplaneVertices[] =
 {
@@ -118,7 +118,7 @@ public:
 
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_hplaneVertices, sizeof(s_hplaneVertices) )
-			, PosNormalVertex::ms_decl
+			, PosNormalVertex::ms_layout
 			);
 
 		m_ibh = bgfx::createIndexBuffer(

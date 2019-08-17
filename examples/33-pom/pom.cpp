@@ -23,7 +23,7 @@ struct PosTangentBitangentTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Tangent,   4, bgfx::AttribType::Uint8, true, true)
@@ -32,10 +32,10 @@ struct PosTangentBitangentTexcoordVertex
 			.end();
 	}
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosTangentBitangentTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTangentBitangentTexcoordVertex::ms_layout;
 
 uint32_t packUint32(uint8_t _x, uint8_t _y, uint8_t _z, uint8_t _w)
 {
@@ -149,7 +149,7 @@ public:
 
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) ),
-						 PosTangentBitangentTexcoordVertex::ms_decl);
+						 PosTangentBitangentTexcoordVertex::ms_layout);
 
 		// Create static index buffer.
 		m_ibh = bgfx::createIndexBuffer(bgfx::makeRef(s_cubeIndices, sizeof(s_cubeIndices) ) );
