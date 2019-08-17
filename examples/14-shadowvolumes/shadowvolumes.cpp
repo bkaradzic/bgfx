@@ -978,12 +978,12 @@ struct Mesh
 
 			const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, vertexSize);
 			group.m_vbh = bgfx::createVertexBuffer(mem, m_layout);
-			
+
 			group.m_numIndices = it->m_numIndices;
 			const uint32_t indexSize = 2 * group.m_numIndices;
 			group.m_indices = (uint16_t*)malloc(indexSize);
 			bx::memCopy(group.m_indices, it->m_indices, indexSize);
-			
+
 			mem = bgfx::makeRef(group.m_indices, indexSize);
 			group.m_ibh = bgfx::createIndexBuffer(mem);
 
@@ -991,7 +991,7 @@ struct Mesh
 			group.m_aabb = it->m_aabb;
 			group.m_obb = it->m_obb;
 			group.m_prims = it->m_prims;
-			
+
 			m_groups.push_back(group);
 		}
 		::meshUnload(mesh);
@@ -1760,8 +1760,8 @@ enum Scene
 class ExampleShadowVolumes : public entry::AppI
 {
 public:
-    ExampleShadowVolumes(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleShadowVolumes(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -2835,7 +2835,7 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleShadowVolumes
-    , "14-shadowvolumes"
-    , "Shadow volumes."
-    , "https://bkaradzic.github.io/bgfx/examples.html#shadowvolumes");
+	  ExampleShadowVolumes
+	, "14-shadowvolumes"
+	, "Shadow volumes."
+	, "https://bkaradzic.github.io/bgfx/examples.html#shadowvolumes");

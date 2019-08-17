@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Eric Arneb‰ck. All rights reserved.
+ * Copyright 2018 Eric Arneb√§ck. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -182,8 +182,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleDeferred : public entry::AppI
 {
 public:
-    ExampleDeferred(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleDeferred(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -659,8 +659,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleDeferred
-    , "38-bloom"
-    , "Bloom."
-    , "https://bkaradzic.github.io/bgfx/examples.html#bloom"
-    );
+	  ExampleDeferred
+	, "38-bloom"
+	, "Bloom."
+	, "https://bkaradzic.github.io/bgfx/examples.html#bloom"
+	);

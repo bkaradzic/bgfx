@@ -21,8 +21,8 @@ namespace
 class ExamplePicking : public entry::AppI
 {
 public:
-    ExamplePicking(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExamplePicking(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -443,8 +443,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExamplePicking
-    , "30-picking"
-    , "Mouse picking via GPU texture readback."
-    , "https://bkaradzic.github.io/bgfx/examples.html#picking"
-    );
+	  ExamplePicking
+	, "30-picking"
+	, "Mouse picking via GPU texture readback."
+	, "https://bkaradzic.github.io/bgfx/examples.html#picking"
+	);

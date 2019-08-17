@@ -247,8 +247,8 @@ namespace
 	class ExampleASSAO : public entry::AppI
 	{
 	public:
-        ExampleASSAO(const char* _name, const char* _description, const char* _url)
-            : entry::AppI(_name, _description, _url)
+		ExampleASSAO(const char* _name, const char* _description, const char* _url)
+			: entry::AppI(_name, _description, _url)
 			, m_currFrame(UINT32_MAX)
 			, m_enableSSAO(true)
 			, m_enableTexturing(true)
@@ -1201,10 +1201,10 @@ namespace
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-        ExampleASSAO
-        , "39-assao"
-        , "Adaptive Screen Space Ambient Occlusion."
-        , "https://bkaradzic.github.io/bgfx/examples.html#assao"
-        );
+	  ExampleASSAO
+	, "39-assao"
+	, "Adaptive Screen Space Ambient Occlusion."
+	, "https://bkaradzic.github.io/bgfx/examples.html#assao"
+	);
 
 
