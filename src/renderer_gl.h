@@ -1375,7 +1375,7 @@ namespace bgfx { namespace gl
 			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
 		}
 
-		void bindAttributes(const VertexLayout& layout, uint32_t _baseVertex = 0);
+		void bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex = 0);
 
 		void bindAttributesEnd()
 		{
