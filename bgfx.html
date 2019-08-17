@@ -2025,7 +2025,7 @@ creating windows.</p>
 <h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv4N4bgfx10vertexPackEAL4E_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t">
-<span id="_CPPv3N4bgfx10vertexPackEAL4E_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t"></span><span id="_CPPv2N4bgfx10vertexPackEA4_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t"></span><span id="bgfx::vertexPack__floatCA.b.Attrib::Enum.VertexLayoutCR.voidP.uint32_t"></span><span class="target" id="namespacebgfx_1a3593b1b0c24196253ca88521123c53ba"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">vertexPack</code><span class="sig-paren">(</span><em class="property">const</em> float <em>_input</em>[4], bool <em>_inputNormalized</em>, <a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em>, void *<em>_data</em>, uint32_t <em>_index</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx10vertexPackEAL4E_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx10vertexPackEAL4E_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t"></span><span id="_CPPv2N4bgfx10vertexPackEA4_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t"></span><span id="bgfx::vertexPack__floatCA.b.Attrib::Enum.VertexLayoutCR.voidP.uint32_t"></span><span class="target" id="namespacebgfx_1a45c78405bcdbb9ec0855b51f83922997"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">vertexPack</code><span class="sig-paren">(</span><em class="property">const</em> float <em>_input</em>[4], bool <em>_inputNormalized</em>, <a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, void *<em>_data</em>, uint32_t <em>_index</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx10vertexPackEAL4E_KfbN6Attrib4EnumERK12VertexLayoutPv8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Pack vertex attribute into vertex stream format. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_pack</span></code>. </p>
@@ -2034,7 +2034,7 @@ creating windows.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_input</span></code>: Value to be packed into vertex stream. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_inputNormalized</span></code>: True if input value is already normalized. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_attr</span></code>: Attribute to pack. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex stream layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex stream layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_data</span></code>: Destination vertex stream where data will be packed. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_index</span></code>: Vertex index that will be modified.</p></li>
 </ul>
@@ -2045,7 +2045,7 @@ creating windows.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx12vertexUnpackEAL4E_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t">
-<span id="_CPPv3N4bgfx12vertexUnpackEAL4E_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t"></span><span id="_CPPv2N4bgfx12vertexUnpackEA4_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t"></span><span id="bgfx::vertexUnpack__floatA.Attrib::Enum.VertexLayoutCR.voidCP.uint32_t"></span><span class="target" id="namespacebgfx_1a8c486a123fa354a2b1f4c02643797086"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">vertexUnpack</code><span class="sig-paren">(</span>float <em>_output</em>[4], <a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em>, <em class="property">const</em> void *<em>_data</em>, uint32_t <em>_index</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12vertexUnpackEAL4E_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx12vertexUnpackEAL4E_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t"></span><span id="_CPPv2N4bgfx12vertexUnpackEA4_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t"></span><span id="bgfx::vertexUnpack__floatA.Attrib::Enum.VertexLayoutCR.voidCP.uint32_t"></span><span class="target" id="namespacebgfx_1ad1d9ef5b4925631e82d9f060f41b9091"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">vertexUnpack</code><span class="sig-paren">(</span>float <em>_output</em>[4], <a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, <em class="property">const</em> void *<em>_data</em>, uint32_t <em>_index</em> = 0<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12vertexUnpackEAL4E_fN6Attrib4EnumERK12VertexLayoutPKv8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Unpack vertex attribute from vertex stream format. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_unpack</span></code>. </p>
@@ -2053,7 +2053,7 @@ creating windows.</p>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_output</span></code>: Result of unpacking. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_attr</span></code>: Attribute to unpack. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex stream layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex stream layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_data</span></code>: Source vertex stream from where data will be unpacked. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_index</span></code>: Vertex index that will be unpacked.</p></li>
 </ul>
@@ -2064,15 +2064,15 @@ creating windows.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t">
-<span id="_CPPv3N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t"></span><span id="_CPPv2N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t"></span><span id="bgfx::vertexConvert__VertexLayoutCR.voidP.VertexLayoutCR.voidCP.uint32_t"></span><span class="target" id="namespacebgfx_1a6da743177a0f0e5eb38bc4c9d375e037"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">vertexConvert</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_destDecl</em>, void *<em>_destData</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_srcDecl</em>, <em class="property">const</em> void *<em>_srcData</em>, uint32_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t"></span><span id="_CPPv2N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t"></span><span id="bgfx::vertexConvert__VertexLayoutCR.voidP.VertexLayoutCR.voidCP.uint32_t"></span><span class="target" id="namespacebgfx_1a567e9112ee1919c7d9e2eda3902d2727"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">vertexConvert</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_destLayout</em>, void *<em>_destData</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_srcLayout</em>, <em class="property">const</em> void *<em>_srcData</em>, uint32_t <em>_num</em> = 1<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx13vertexConvertERK12VertexLayoutPvRK12VertexLayoutPKv8uint32_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Converts vertex stream data from one vertex stream format to another. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_convert</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_destDecl</span></code>: Destination vertex stream layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_destLayout</span></code>: Destination vertex stream layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_destData</span></code>: Destination vertex stream. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_srcDecl</span></code>: Source vertex stream layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_srcLayout</span></code>: Source vertex stream layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_srcData</span></code>: Source vertex stream data. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices to convert from source to destination.</p></li>
 </ul>
@@ -2083,7 +2083,7 @@ creating windows.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf">
-<span id="_CPPv3N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf"></span><span id="_CPPv2N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf"></span><span id="bgfx::weldVertices__uint16_tP.VertexLayoutCR.voidCP.uint16_t.float"></span><span class="target" id="namespacebgfx_1a8d552e474fba3dae69b682fa37a4a1aa"></span>uint16_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">weldVertices</code><span class="sig-paren">(</span>uint16_t *<em>_output</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em>, <em class="property">const</em> void *<em>_data</em>, uint16_t <em>_num</em>, float <em>_epsilon</em> = 0.001f<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf"></span><span id="_CPPv2N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf"></span><span id="bgfx::weldVertices__uint16_tP.VertexLayoutCR.voidCP.uint16_t.float"></span><span class="target" id="namespacebgfx_1a420fcb4891cce3c5b1ba8622b6d93e92"></span>uint16_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">weldVertices</code><span class="sig-paren">(</span>uint16_t *<em>_output</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, <em class="property">const</em> void *<em>_data</em>, uint16_t <em>_num</em>, float <em>_epsilon</em> = 0.001f<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12weldVerticesEP8uint16_tRK12VertexLayoutPKv8uint16_tf" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Weld vertices. </p>
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>Number of unique vertices after vertex welding.</p>
@@ -2092,7 +2092,7 @@ creating windows.</p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_output</span></code>: Welded vertices remapping table. The size of buffer must be the same as number of vertices. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex stream layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex stream layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_data</span></code>: Vertex stream. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices in vertex stream. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_epsilon</span></code>: Error tolerance for vertex position comparison. </p></li>
@@ -2995,7 +2995,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">
-<span id="_CPPv3N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::Encoder::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_encoder_1ae5c6ec734d0b5630668912420bb719c2"></span>void <code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::Encoder::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_encoder_1a88d229a9ee484dcf2b1c5f02b6371c59"></span>void <code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_layoutHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_set_vertex_buffer</span></code>. </p>
@@ -3005,7 +3005,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3030,7 +3030,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">
-<span id="_CPPv3N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::Encoder::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_encoder_1acfd2ed22ede5e0af13952034c964c595"></span>void <code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::Encoder::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_encoder_1ac08df8ca1b657e6990963c921d0b1122"></span>void <code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_layoutHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_set_dynamic_vertex_buffer</span></code>. </p>
@@ -3040,7 +3040,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Dynamic vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3065,7 +3065,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle">
-<span id="_CPPv3N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::Encoder::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_encoder_1ae28c7ead3f1c29a2e4bc5f8391063d6a"></span>void <code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::Encoder::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_encoder_1a4f2908eda6f4771a2a06774edb390122"></span>void <code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_layoutHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx7Encoder15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_encoder_set_transient_vertex_buffer</span></code>. </p>
@@ -3075,7 +3075,7 @@ known until the last moment, view ids can be remaped to arbitrary order by calli
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_tvb</span></code>: Transient vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4148,7 +4148,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">
-<span id="_CPPv3N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="namespacebgfx_1a2670ad64fd4fd104213e0b3b66145810"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><br /></dt>
+<span id="_CPPv3N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx15setVertexBufferE7uint8_t18VertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::setVertexBuffer__uint8_t.VertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="namespacebgfx_1aafb3a52cdbe7f27d5677ee9ac8dc5e78"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, VertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_layoutHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><br /></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_set_vertex_buffer</span></code>. </p>
@@ -4158,7 +4158,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4183,7 +4183,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle">
-<span id="_CPPv3N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="namespacebgfx_1ad21bf3caf6e444b169b66923cee79d8b"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><br /></dt>
+<span id="_CPPv3N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx15setVertexBufferE7uint8_t25DynamicVertexBufferHandle8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::setVertexBuffer__uint8_t.DynamicVertexBufferHandle.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="namespacebgfx_1a2c56422c88d052f09ba3144c9e200287"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, DynamicVertexBufferHandle <em>_handle</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_layoutHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><br /></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_set_dynamic_vertex_buffer</span></code>. </p>
@@ -4193,7 +4193,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_handle</span></code>: Dynamic vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4242,8 +4242,8 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="_CPPv4N4bgfx21TransientVertexBuffer4declE">
-<span id="_CPPv3N4bgfx21TransientVertexBuffer4declE"></span><span id="_CPPv2N4bgfx21TransientVertexBuffer4declE"></span><span id="bgfx::TransientVertexBuffer::decl__VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_transient_vertex_buffer_1a2d1629e90f0201c27c5c0183f9fc10bf"></span>VertexLayoutHandle <code class="sig-name descname">decl</code><a class="headerlink" href="#_CPPv4N4bgfx21TransientVertexBuffer4declE" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv4N4bgfx21TransientVertexBuffer12layoutHandleE">
+<span id="_CPPv3N4bgfx21TransientVertexBuffer12layoutHandleE"></span><span id="_CPPv2N4bgfx21TransientVertexBuffer12layoutHandleE"></span><span id="bgfx::TransientVertexBuffer::layoutHandle__VertexLayoutHandle"></span><span class="target" id="structbgfx_1_1_transient_vertex_buffer_1a300fbc41ad9358c59aeb4614773c4a10"></span>VertexLayoutHandle <code class="sig-name descname">layoutHandle</code><a class="headerlink" href="#_CPPv4N4bgfx21TransientVertexBuffer12layoutHandleE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Vertex layout handle. </p>
 </dd></dl>
 
@@ -4268,7 +4268,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle">
-<span id="_CPPv3N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="namespacebgfx_1a498d7f8a5022b81f4d8a4cd2a0d9f203"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_declHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><br /></dt>
+<span id="_CPPv3N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="_CPPv2N4bgfx15setVertexBufferE7uint8_tPK21TransientVertexBuffer8uint32_t8uint32_t18VertexLayoutHandle"></span><span id="bgfx::setVertexBuffer__uint8_t.TransientVertexBufferCP.uint32_t.uint32_t.VertexLayoutHandle"></span><span class="target" id="namespacebgfx_1ab64ad6773a7ee049a59b366b139a7dc3"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">setVertexBuffer</code><span class="sig-paren">(</span>uint8_t <em>_stream</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_startVertex</em>, uint32_t <em>_numVertices</em>, VertexLayoutHandle <em>_layoutHandle</em> = BGFX_INVALID_HANDLE<span class="sig-paren">)</span><br /></dt>
 <dd><p>Set vertex buffer for draw primitive. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_set_transient_vertex_buffer</span></code>. </p>
@@ -4278,7 +4278,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_tvb</span></code>: Transient vertex buffer. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_startVertex</span></code>: First vertex to render. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_numVertices</span></code>: Number of vertices to render. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_declHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layoutHandle</span></code>: <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> handle for aliasing vertex buffer.</p></li>
 </ul>
 </dd>
 </dl>
@@ -5137,7 +5137,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <h3>Vertex Buffers<a class="headerlink" href="#vertex-buffers" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="_CPPv4N4bgfx18createVertexLayoutERK12VertexLayout">
-<span id="_CPPv3N4bgfx18createVertexLayoutERK12VertexLayout"></span><span id="_CPPv2N4bgfx18createVertexLayoutERK12VertexLayout"></span><span id="bgfx::createVertexLayout__VertexLayoutCR"></span><span class="target" id="namespacebgfx_1ae469458d70a80cf069dd7cae89c25e8d"></span>VertexLayoutHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createVertexLayout</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx18createVertexLayoutERK12VertexLayout" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx18createVertexLayoutERK12VertexLayout"></span><span id="_CPPv2N4bgfx18createVertexLayoutERK12VertexLayout"></span><span id="bgfx::createVertexLayout__VertexLayoutCR"></span><span class="target" id="namespacebgfx_1a72d2f7b66a243675ac264ec16aae514e"></span>VertexLayoutHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createVertexLayout</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx18createVertexLayoutERK12VertexLayout" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Create vertex layout. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_create_vertex_layout</span></code>. </p>
@@ -5159,7 +5159,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t">
-<span id="_CPPv3N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="_CPPv2N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="bgfx::createVertexBuffer__MemoryCP.VertexLayoutCR.uint16_t"></span><span class="target" id="namespacebgfx_1a0095447310f8e21dbc949eac7166fdf1"></span>VertexBufferHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createVertexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="_CPPv2N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="bgfx::createVertexBuffer__MemoryCP.VertexLayoutCR.uint16_t"></span><span class="target" id="namespacebgfx_1ae1bcdc7c5de06d95b484e85e5b294859"></span>VertexBufferHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createVertexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx18createVertexBufferEPK6MemoryRK12VertexLayout8uint16_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Create static vertex buffer. </p>
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>Static vertex buffer handle.</p>
@@ -5168,7 +5168,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_mem</span></code>: Vertex buffer data. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Buffer creation flags.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</p></li>
@@ -5204,7 +5204,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayoutE"></span><span id="_CPPv2N4bgfx12VertexLayoutE"></span><span id="bgfx::VertexLayout"></span><span class="target" id="structbgfx_1_1_vertex_layout"></span><em class="property">struct </em><code class="sig-name descname">VertexLayout</code><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayoutE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Vertex layout. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_t</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_t</span></code>. </p>
 </dd>
 </dl>
 </p>
@@ -5215,7 +5215,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayout5beginEN12RendererType4EnumE"></span><span id="_CPPv2N4bgfx12VertexLayout5beginEN12RendererType4EnumE"></span><span id="bgfx::VertexLayout::begin__RendererType::Enum"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a2b2998347928166ddf7b4c3a295b9bd9"></span><a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<code class="sig-name descname">begin</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv4N4bgfx12RendererType4EnumE" title="bgfx::RendererType::Enum">Enum</a> <em>_renderer</em> = <a class="reference internal" href="#_CPPv4N4bgfx12RendererTypeE" title="bgfx::RendererType">RendererType</a>::<a class="reference internal" href="#_CPPv4N4bgfx12RendererType4NoopE" title="bgfx::RendererType::Noop">Noop</a><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout5beginEN12RendererType4EnumE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Start <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a>. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_begin</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_begin</span></code>. </p>
 </dd>
 </dl>
 </p>
@@ -5226,7 +5226,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayout3endEv"></span><span id="_CPPv2N4bgfx12VertexLayout3endEv"></span><span id="bgfx::VertexLayout::end"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a65d865c726182c68165c507316a48772"></span>void <code class="sig-name descname">end</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout3endEv" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>End <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a>. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_end</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_end</span></code>. </p>
 </dd>
 </dl>
 </p>
@@ -5239,7 +5239,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <p><dl class="simple">
 <dt><strong>Remark</strong></dt><dd><p>Must be called between begin/end.</p>
 </dd>
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_add</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_add</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_attrib</span></code>: Attribute semantics. See: <code class="docutils literal notranslate"><a class="reference internal" href="#structbgfx_1_1_attrib"><span class="std std-ref"><span class="pre">bgfx::Attrib</span></span></a></code> </p></li>
@@ -5258,7 +5258,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3N4bgfx12VertexLayout4skipE7uint8_t"></span><span id="_CPPv2N4bgfx12VertexLayout4skipE7uint8_t"></span><span id="bgfx::VertexLayout::skip__uint8_t"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a5b4ce3b9628b22a886508a0548c1e0cb"></span><a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<code class="sig-name descname">skip</code><span class="sig-paren">(</span>uint8_t <em>_num</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx12VertexLayout4skipE7uint8_t" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Skip _num bytes in vertex stream. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_skip</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_skip</span></code>. </p>
 </dd>
 </dl>
 </p>
@@ -5269,7 +5269,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3NK4bgfx12VertexLayout6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb"></span><span id="_CPPv2NK4bgfx12VertexLayout6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb"></span><span id="bgfx::VertexLayout::decode__Attrib::Enum.uint8_tR.AttribType::EnumR.bR.bRC"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a706fb12268b81c666ddcfbbb0a6ecc20"></span>void <code class="sig-name descname">decode</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em>, uint8_t &amp;<em>_num</em>, <a class="reference internal" href="#_CPPv4N4bgfx10AttribTypeE" title="bgfx::AttribType">AttribType</a>::<a class="reference internal" href="#_CPPv4N4bgfx10AttribType4EnumE" title="bgfx::AttribType::Enum">Enum</a> &amp;<em>_type</em>, bool &amp;<em>_normalized</em>, bool &amp;<em>_asInt</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4bgfx12VertexLayout6decodeEN6Attrib4EnumER7uint8_tRN10AttribType4EnumERbRb" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Decode attribute. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_decode</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_decode</span></code>. </p>
 </dd>
 </dl>
 </p>
@@ -5280,7 +5280,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <span id="_CPPv3NK4bgfx12VertexLayout3hasEN6Attrib4EnumE"></span><span id="_CPPv2NK4bgfx12VertexLayout3hasEN6Attrib4EnumE"></span><span id="bgfx::VertexLayout::has__Attrib::EnumC"></span><span class="target" id="structbgfx_1_1_vertex_layout_1a1da9c673f86b51221a30ee3626783c78"></span>bool <code class="sig-name descname">has</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx6AttribE" title="bgfx::Attrib">Attrib</a>::<a class="reference internal" href="#_CPPv4N4bgfx6Attrib4EnumE" title="bgfx::Attrib::Enum">Enum</a> <em>_attrib</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4bgfx12VertexLayout3hasEN6Attrib4EnumE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Returns true if <a class="reference internal" href="#structbgfx_1_1_vertex_layout"><span class="std std-ref">VertexLayout</span></a> contains attribute. </p>
 <p><dl class="simple">
-<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_decl_has</span></code>. </p>
+<dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_vertex_layout_has</span></code>. </p>
 </dd>
 </dl>
 </p>
@@ -5499,7 +5499,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx25createDynamicVertexBufferE8uint32_tRK12VertexLayout8uint16_t">
-<span id="_CPPv3N4bgfx25createDynamicVertexBufferE8uint32_tRK12VertexLayout8uint16_t"></span><span id="_CPPv2N4bgfx25createDynamicVertexBufferE8uint32_tRK12VertexLayout8uint16_t"></span><span id="bgfx::createDynamicVertexBuffer__uint32_t.VertexLayoutCR.uint16_t"></span><span class="target" id="namespacebgfx_1a2f715c98fe4fc2c11f9c13dc45b47839"></span>DynamicVertexBufferHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createDynamicVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><br /></dt>
+<span id="_CPPv3N4bgfx25createDynamicVertexBufferE8uint32_tRK12VertexLayout8uint16_t"></span><span id="_CPPv2N4bgfx25createDynamicVertexBufferE8uint32_tRK12VertexLayout8uint16_t"></span><span id="bgfx::createDynamicVertexBuffer__uint32_t.VertexLayoutCR.uint16_t"></span><span class="target" id="namespacebgfx_1ad5d611f40aaca84733d9ff4543660248"></span>DynamicVertexBufferHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createDynamicVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><br /></dt>
 <dd><p>Create empty dynamic vertex buffer. </p>
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>Dynamic vertex buffer handle.</p>
@@ -5508,7 +5508,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Buffer creation flags.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</p></li>
@@ -5526,7 +5526,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx25createDynamicVertexBufferEPK6MemoryRK12VertexLayout8uint16_t">
-<span id="_CPPv3N4bgfx25createDynamicVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="_CPPv2N4bgfx25createDynamicVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="bgfx::createDynamicVertexBuffer__MemoryCP.VertexLayoutCR.uint16_t"></span><span class="target" id="namespacebgfx_1a39444e804ad688a0596963867dd48f1a"></span>DynamicVertexBufferHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createDynamicVertexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><br /></dt>
+<span id="_CPPv3N4bgfx25createDynamicVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="_CPPv2N4bgfx25createDynamicVertexBufferEPK6MemoryRK12VertexLayout8uint16_t"></span><span id="bgfx::createDynamicVertexBuffer__MemoryCP.VertexLayoutCR.uint16_t"></span><span class="target" id="namespacebgfx_1ae8e6efb0d042222c6d705ed60f4b6627"></span>DynamicVertexBufferHandle <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">createDynamicVertexBuffer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx6MemoryE" title="bgfx::Memory">Memory</a> *<em>_mem</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em>, uint16_t <em>_flags</em> = BGFX_BUFFER_NONE<span class="sig-paren">)</span><br /></dt>
 <dd><p>Create dynamic vertex buffer and initialize it. </p>
 <p><dl class="simple">
 <dt><strong>Return</strong></dt><dd><p>Dynamic vertex buffer handle.</p>
@@ -5535,7 +5535,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_mem</span></code>: Vertex buffer data. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex layout. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex layout. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_flags</span></code>: Buffer creation flags.<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_NONE</span></code> - No flags.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BGFX_BUFFER_COMPUTE_READ</span></code> - Buffer will be read from by compute shader.</p></li>
@@ -5585,14 +5585,14 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout">
-<span id="_CPPv3N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout"></span><span id="_CPPv2N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout"></span><span id="bgfx::getAvailTransientVertexBuffer__uint32_t.VertexLayoutCR"></span><span class="target" id="namespacebgfx_1a4af85eb56f2e28122ede03d4fca2cae5"></span>uint32_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">getAvailTransientVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout"></span><span id="_CPPv2N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout"></span><span id="bgfx::getAvailTransientVertexBuffer__uint32_t.VertexLayoutCR"></span><span class="target" id="namespacebgfx_1ad980aa10915e316db79c16fae09a257c"></span>uint32_t <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">getAvailTransientVertexBuffer</code><span class="sig-paren">(</span>uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx29getAvailTransientVertexBufferE8uint32_tRK12VertexLayout" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Returns number of requested or maximum available vertices. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_get_avail_transient_vertex_buffer</span></code>. </p>
 </dd>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of required vertices. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex layout.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex layout.</p></li>
 </ul>
 </dd>
 </dl>
@@ -5601,7 +5601,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 
 <dl class="function">
 <dt id="_CPPv4N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout">
-<span id="_CPPv3N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout"></span><span id="_CPPv2N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout"></span><span id="bgfx::allocTransientVertexBuffer__TransientVertexBufferP.uint32_t.VertexLayoutCR"></span><span class="target" id="namespacebgfx_1a16c833120c73b41228a77adc90dd1aae"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">allocTransientVertexBuffer</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_decl</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout" title="Permalink to this definition">¶</a><br /></dt>
+<span id="_CPPv3N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout"></span><span id="_CPPv2N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout"></span><span id="bgfx::allocTransientVertexBuffer__TransientVertexBufferP.uint32_t.VertexLayoutCR"></span><span class="target" id="namespacebgfx_1ad8d5d81703ce3064c88e5d7b26ac3794"></span>void <code class="sig-prename descclassname">bgfx<code class="sig-prename descclassname">::</code></code><code class="sig-name descname">allocTransientVertexBuffer</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4bgfx21TransientVertexBufferE" title="bgfx::TransientVertexBuffer">TransientVertexBuffer</a> *<em>_tvb</em>, uint32_t <em>_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv4N4bgfx12VertexLayoutE" title="bgfx::VertexLayout">VertexLayout</a> &amp;<em>_layout</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4bgfx26allocTransientVertexBufferEP21TransientVertexBuffer8uint32_tRK12VertexLayout" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Allocate transient vertex buffer. </p>
 <p><dl class="simple">
 <dt><strong>Attention</strong></dt><dd><p>C99 equivalent is <code class="docutils literal notranslate"><span class="pre">bgfx_alloc_transient_vertex_buffer</span></code>. </p>
@@ -5609,7 +5609,7 @@ otherwise prefer <cite>bgfx::setViewScissor</cite>.</p>
 <dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">[out]</span> <span class="pre">_tvb</span></code>: <a class="reference internal" href="#structbgfx_1_1_transient_vertex_buffer"><span class="std std-ref">TransientVertexBuffer</span></a> structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls. </p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_num</span></code>: Number of vertices to allocate. </p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_decl</span></code>: Vertex layout.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[in]</span> <span class="pre">_layout</span></code>: Vertex layout.</p></li>
 </ul>
 </dd>
 </dl>
