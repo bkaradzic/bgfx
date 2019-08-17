@@ -62,8 +62,8 @@ struct BrushData
 class ExampleTerrain : public entry::AppI
 {
 public:
-    ExampleTerrain(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+ExampleTerrain(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -523,8 +523,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleTerrain
-    , "27-terrain"
-    , "Terrain painting example."
-    , "https://bkaradzic.github.io/bgfx/examples.html#terrain"
-    );
+	  ExampleTerrain
+	, "27-terrain"
+	, "Terrain painting example."
+	, "https://bkaradzic.github.io/bgfx/examples.html#terrain"
+	);

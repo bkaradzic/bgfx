@@ -400,8 +400,8 @@ namespace
 	class ExampleProceduralSky : public entry::AppI
 	{
 	public:
-        ExampleProceduralSky(const char* _name, const char* _description, const char* _url)
-            : entry::AppI(_name, _description, _url)
+		ExampleProceduralSky(const char* _name, const char* _description, const char* _url)
+			: entry::AppI(_name, _description, _url)
 		{
 		}
 
@@ -662,8 +662,8 @@ namespace
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleProceduralSky
-    , "36-sky"
-    , "Perez dynamic sky model."
-    , "https://bkaradzic.github.io/bgfx/examples.html#sky"
-    );
+	  ExampleProceduralSky
+	, "36-sky"
+	, "Perez dynamic sky model."
+	, "https://bkaradzic.github.io/bgfx/examples.html#sky"
+	);

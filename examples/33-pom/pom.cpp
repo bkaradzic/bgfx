@@ -111,8 +111,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExamplePom : public entry::AppI
 {
 public:
-    ExamplePom(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExamplePom(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -386,8 +386,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-        ExamplePom
-        , "33-pom"
-        , "Parallax mapping."
-        , "https://bkaradzic.github.io/bgfx/examples.html#pom"
-        );
+	  ExamplePom
+	, "33-pom"
+	, "Parallax mapping."
+	, "https://bkaradzic.github.io/bgfx/examples.html#pom"
+	);

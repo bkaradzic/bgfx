@@ -1284,8 +1284,8 @@ struct SceneSettings
 class ExampleShadowmaps : public entry::AppI
 {
 public:
-    ExampleShadowmaps(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleShadowmaps(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -2311,17 +2311,17 @@ public:
 						 , 0.0f
 						 , caps->homogeneousDepth
 						 );
-			
+
 			// Update render target size.
 			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
 			if (bLtChanged || m_currentShadowMapSize != shadowMapSize)
 			{
 				m_currentShadowMapSize = shadowMapSize;
 				s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
-				
+
 				{
 					bgfx::destroy(s_rtShadowMap[0]);
-					
+
 					bgfx::TextureHandle fbtextures[] =
 					{
 						bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
@@ -2329,14 +2329,14 @@ public:
 					};
 					s_rtShadowMap[0] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 				}
-				
+
 				if (LightType::DirectionalLight == m_settings.m_lightType)
 				{
 					for (uint8_t ii = 1; ii < ShadowMapRenderTargets::Count; ++ii)
 					{
 						{
 							bgfx::destroy(s_rtShadowMap[ii]);
-							
+
 							bgfx::TextureHandle fbtextures[] =
 							{
 								bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
@@ -2346,7 +2346,7 @@ public:
 						}
 					}
 				}
-				
+
 				bgfx::destroy(s_rtBlur);
 				s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 			}
@@ -3252,8 +3252,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleShadowmaps
-    , "16-shadowmaps"
-    , "Shadow maps example."
-    , "https://bkaradzic.github.io/bgfx/examples.html#shadowmaps"
-    );
+	  ExampleShadowmaps
+	, "16-shadowmaps"
+	, "Shadow maps example."
+	, "https://bkaradzic.github.io/bgfx/examples.html#shadowmaps"
+	);

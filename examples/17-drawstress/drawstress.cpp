@@ -100,8 +100,8 @@ int32_t threadFunc(bx::Thread* _thread, void* _userData);
 class ExampleDrawStress : public entry::AppI
 {
 public:
-    ExampleDrawStress(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleDrawStress(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -460,8 +460,8 @@ int32_t threadFunc(bx::Thread* _thread, void* _userData)
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleDrawStress
-    , "17-drawstress"
-    , "Draw stress, maximizing number of draw calls."
-    , "https://bkaradzic.github.io/bgfx/examples.html#drawstress"
-    );
+	  ExampleDrawStress
+	, "17-drawstress"
+	, "Draw stress, maximizing number of draw calls."
+	, "https://bkaradzic.github.io/bgfx/examples.html#drawstress"
+	);

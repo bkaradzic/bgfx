@@ -105,8 +105,8 @@ static const uint16_t s_cubeTriStrip[] =
 class ExampleMvs : public entry::AppI
 {
 public:
-    ExampleMvs(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleMvs(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -282,8 +282,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-        ExampleMvs
-        , "34-mvs"
-        , "Multiple vertex streams."
-        , "https://bkaradzic.github.io/bgfx/examples.html#mvs"
-        );
+	  ExampleMvs
+	, "34-mvs"
+	, "Multiple vertex streams."
+	, "https://bkaradzic.github.io/bgfx/examples.html#mvs"
+	);

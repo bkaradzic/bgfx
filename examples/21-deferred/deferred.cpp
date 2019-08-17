@@ -193,8 +193,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleDeferred : public entry::AppI
 {
 public:
-    ExampleDeferred(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleDeferred(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -896,8 +896,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleDeferred
-    , "21-deferred"
-    , "MRT rendering and deferred shading."
-    , "https://bkaradzic.github.io/bgfx/examples.html#deferred"
-    );
+	  ExampleDeferred
+	, "21-deferred"
+	, "MRT rendering and deferred shading."
+	, "https://bkaradzic.github.io/bgfx/examples.html#deferred"
+	);

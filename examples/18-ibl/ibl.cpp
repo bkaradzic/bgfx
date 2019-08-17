@@ -398,8 +398,8 @@ struct Settings
 class ExampleIbl : public entry::AppI
 {
 public:
-    ExampleIbl(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleIbl(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -833,8 +833,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-        ExampleIbl
-        , "18-ibl"
-        , "Image-based lighting."
-        , "https://bkaradzic.github.io/bgfx/examples.html#ibl"
-        );
+	  ExampleIbl
+	, "18-ibl"
+	, "Image-based lighting."
+	, "https://bkaradzic.github.io/bgfx/examples.html#ibl"
+	);
