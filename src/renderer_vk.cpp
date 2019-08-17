@@ -3579,16 +3579,15 @@ VK_IMPORT_DEVICE
 			VkDescriptorBufferInfo bufferInfo[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 			VkWriteDescriptorSet wds[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
 			bx::memSet(wds, 0, sizeof(VkWriteDescriptorSet) * BGFX_CONFIG_MAX_TEXTURE_SAMPLERS);
-			uint32_t wdsCount = 0;
+			uint32_t wdsCount    = 0;
 			uint32_t bufferCount = 0;
-			uint32_t imageCount = 0;
+			uint32_t imageCount  = 0;
 
 			for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
 			{
 				const Binding& bind = renderBind.m_bind[stage];
 				if (kInvalidHandle != bind.m_idx)
 				{
-					const Binding& bind = renderBind.m_bind[stage];
 					const ShaderVK::BindInfo* bindInfo = NULL;
 					if (isValid(program.m_vsh->m_bindInfo[stage].uniformHandle))
 					{
@@ -3600,7 +3599,9 @@ VK_IMPORT_DEVICE
 					}
 
 					if (NULL == bindInfo)
+					{
 						continue;
+					}
 
 					if (ShaderVK::BindType::Storage == bindInfo->type)
 					{
@@ -3640,6 +3641,7 @@ VK_IMPORT_DEVICE
 							{
 								texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 							}
+
 							imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
 							imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageStorageView
 								? texture.m_textureImageStorageView
@@ -3667,6 +3669,7 @@ VK_IMPORT_DEVICE
 						{
 							texture.setImageMemoryBarrier(m_commandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 						}
+
 						imageInfo[imageCount].imageLayout = texture.m_currentImageLayout;
 						imageInfo[imageCount].imageView   = VK_NULL_HANDLE != texture.m_textureImageDepthView
 							? texture.m_textureImageDepthView
