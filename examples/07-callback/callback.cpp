@@ -307,8 +307,8 @@ private:
 class ExampleCallback : public entry::AppI
 {
 public:
-    ExampleCallback(const char* _name, const char* _description, const char* _url)
-        : entry::AppI(_name, _description, _url)
+	ExampleCallback(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -499,8 +499,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleCallback
-    , "07-callback"
-    , "Implementing application specific callbacks for taking screen shots, caching OpenGL binary shaders, and video capture."
-    , "https://bkaradzic.github.io/bgfx/examples.html#callback"
-    );
+	  ExampleCallback
+	, "07-callback"
+	, "Implementing application specific callbacks for taking screen shots, caching OpenGL binary shaders, and video capture."
+	, "https://bkaradzic.github.io/bgfx/examples.html#callback"
+	);

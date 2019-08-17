@@ -1225,8 +1225,8 @@ public:
 } // namespace
 
 ENTRY_IMPLEMENT_MAIN(
-    ExampleDebugDraw
-    , "29-debugdraw"
-    , "Debug draw."
-    , "https://bkaradzic.github.io/bgfx/examples.html#debugdraw"
-    );
+	  ExampleDebugDraw
+	, "29-debugdraw"
+	, "Debug draw."
+	, "https://bkaradzic.github.io/bgfx/examples.html#debugdraw"
+	);
