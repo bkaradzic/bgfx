@@ -811,11 +811,11 @@ namespace bgfx
 	///
 	struct TransientVertexBuffer
 	{
-		uint8_t* data;                          //!< Pointer to data.
-		uint32_t size;                          //!< Data size.
-		uint32_t startVertex;                   //!< First vertex.
-		uint16_t stride;                        //!< Vertex stride.
-		VertexBufferHandle handle;              //!< Vertex buffer handle.
+		uint8_t* data;                      //!< Pointer to data.
+		uint32_t size;                      //!< Data size.
+		uint32_t startVertex;               //!< First vertex.
+		uint16_t stride;                    //!< Vertex stride.
+		VertexBufferHandle handle;          //!< Vertex buffer handle.
 		VertexLayoutHandle layoutHandle;    //!< Vertex layout handle.
 	};
 
