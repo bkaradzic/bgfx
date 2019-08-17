@@ -29,10 +29,10 @@ funcptr.ReleaseFn
 
 --- Color RGB/alpha/depth write. When it's not specified write will be disabled.
 flag.StateWrite { bits = 64 , base = 1 }
-	.R 	--- Enable R write.
-	.G 	--- Enable G write.
-	.B 	--- Enable B write.
-	.A 	--- Enable alpha write.
+	.R     --- Enable R write.
+	.G     --- Enable G write.
+	.B     --- Enable B write.
+	.A     --- Enable alpha write.
 	.Z ( 39 )	--- Enable depth write.
 	.Rgb { "R", "G", "B" }	--- Enable RGB write.
 	.Mask { "Rgb", "A", "Z" }	--- Write all channels mask.
@@ -788,12 +788,12 @@ struct.TransientIndexBuffer
 
 --- Transient vertex buffer.
 struct.TransientVertexBuffer
-	.data        	"uint8_t*"           --- Pointer to data.
-	.size        	"uint32_t"           --- Data size.
-	.startVertex 	"uint32_t"           --- First vertex.
-	.stride      	"uint16_t"           --- Vertex stride.
-	.handle      	"VertexBufferHandle" --- Vertex buffer handle.
-	.layoutHandle   "VertexLayoutHandle" --- Vertex layout handle.
+	.data         "uint8_t*"           --- Pointer to data.
+	.size         "uint32_t"           --- Data size.
+	.startVertex  "uint32_t"           --- First vertex.
+	.stride       "uint16_t"           --- Vertex stride.
+	.handle       "VertexBufferHandle" --- Vertex buffer handle.
+	.layoutHandle "VertexLayoutHandle" --- Vertex layout handle.
 
 --- Instance data buffer info.
 struct.InstanceDataBuffer
@@ -892,7 +892,7 @@ struct.Stats
 	.numTextures             "uint16_t"      --- Number of used textures.
 	.numUniforms             "uint16_t"      --- Number of used uniforms.
 	.numVertexBuffers        "uint16_t"      --- Number of used vertex buffers.
-	.numVertexLayouts        "uint16_t"    	 --- Number of used vertex layouts.
+	.numVertexLayouts        "uint16_t"      --- Number of used vertex layouts.
 
 	.textureMemoryUsed       "int64_t"       --- Estimate of texture memory used.
 	.rtMemoryUsed            "int64_t"       --- Estimate of render target memory used.
@@ -1003,43 +1003,43 @@ func.VertexLayout.getSize { const, cpponly }
 --- Pack vertex attribute into vertex stream format.
 func.vertexPack
 	"void"
-	.input           	"const float[4]"     	--- Value to be packed into vertex stream.
-	.inputNormalized 	"bool"               	--- `true` if input value is already normalized.
-	.attr            	"Attrib::Enum"       	--- Attribute to pack.
-	.layout   			"const VertexLayout &" 	--- Vertex stream layout.
-	.data            	"void*"              	--- Destination vertex stream where data will be packed.
-	.index           	"uint32_t"           	--- Vertex index that will be modified.
+	.input           "const float[4]"       --- Value to be packed into vertex stream.
+	.inputNormalized "bool"                 --- `true` if input value is already normalized.
+	.attr            "Attrib::Enum"         --- Attribute to pack.
+	.layout          "const VertexLayout &" --- Vertex stream layout.
+	.data            "void*"                --- Destination vertex stream where data will be packed.
+	.index           "uint32_t"             --- Vertex index that will be modified.
 	 { default = 0 }
 
 --- Unpack vertex attribute from vertex stream format.
 func.vertexUnpack
 	"void"
-	.output 		"float[4]" { out }   	--- Result of unpacking.
-	.attr   		"Attrib::Enum"       	--- Attribute to unpack.
-	.layout   		"const VertexLayout &" 	--- Vertex stream layout.
-	.data   		"const void*"        	--- Source vertex stream from where data will be unpacked.
-	.index  		"uint32_t"           	--- Vertex index that will be unpacked.
+	.output "float[4]" { out }     --- Result of unpacking.
+	.attr   "Attrib::Enum"         --- Attribute to unpack.
+	.layout "const VertexLayout &" --- Vertex stream layout.
+	.data   "const void*"          --- Source vertex stream from where data will be unpacked.
+	.index  "uint32_t"             --- Vertex index that will be unpacked.
 	 { default = 0 }
 
 --- Converts vertex stream data from one vertex stream format to another.
 func.vertexConvert
 	"void"
-	.dstLayout 	"const VertexLayout &" 	--- Destination vertex stream layout.
-	.dstData 	"void*"              	--- Destination vertex stream.
-	.srcLayout 	"const VertexLayout &" 	--- Source vertex stream layout.
-	.srcData 	"const void*"        	--- Source vertex stream data.
-	.num     	"uint32_t"           	--- Number of vertices to convert from source to destination.
+	.dstLayout "const VertexLayout &" --- Destination vertex stream layout.
+	.dstData   "void*"                --- Destination vertex stream.
+	.srcLayout "const VertexLayout &" --- Source vertex stream layout.
+	.srcData   "const void*"          --- Source vertex stream data.
+	.num       "uint32_t"             --- Number of vertices to convert from source to destination.
 	 { default = 1 }
 
 --- Weld vertices.
 func.weldVertices
-	"uint16_t"                    			--- Number of unique vertices after vertex welding.
-	.output  		"uint16_t*"          	--- Welded vertices remapping table. The size of buffer
-	                              			--- must be the same as number of vertices.
-	.layout			"const VertexLayout &" 	--- Vertex stream layout.
-	.data    		"const void*"        	--- Vertex stream.
-	.num     		"uint16_t"           	--- Number of vertices in vertex stream.
-	.epsilon 		"float"              	--- Error tolerance for vertex position comparison.
+	"uint16_t"                     --- Number of unique vertices after vertex welding.
+	.output          "uint16_t*"    --- Welded vertices remapping table. The size of buffer
+	                               --- must be the same as number of vertices.
+	.layout			"const VertexLayout &"     --- Vertex stream layout.
+	.data            "const void*"            --- Vertex stream.
+	.num             "uint16_t"               --- Number of vertices in vertex stream.
+	.epsilon         "float"                  --- Error tolerance for vertex position comparison.
 	 { default = "0.001f" }
 
 --- Convert index buffer for use with different primitive topologies.
@@ -1291,19 +1291,19 @@ func.destroy { cname = "destroy_vertex_layout" }
 
 --- Create static vertex buffer.
 func.createVertexBuffer
-	"VertexBufferHandle"              	--- Static vertex buffer handle.
-	.mem   		"const Memory*"         --- Vertex buffer data.
-	.layout  	"const VertexLayout &"  --- Vertex layout.
-	.flags 		"uint16_t"              --- Buffer creation flags.
-	 { default = "BGFX_BUFFER_NONE" } 	---  - `BGFX_BUFFER_NONE` - No flags.
-	                                  	---  - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
-	                                  	---  - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
-	                                  	---      is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
-	                                  	---  - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
-	                                  	---  - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
-	                                  	---      data is passed. If this flag is not specified, and more data is passed on update, the buffer
-	                                  	---      will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.
-	                                  	---  - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on index buffers.
+	"VertexBufferHandle"                  --- Static vertex buffer handle.
+	.mem           "const Memory*"         --- Vertex buffer data.
+	.layout      "const VertexLayout &"  --- Vertex layout.
+	.flags         "uint16_t"              --- Buffer creation flags.
+	 { default = "BGFX_BUFFER_NONE" }     ---  - `BGFX_BUFFER_NONE` - No flags.
+	                                      ---  - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
+	                                      ---  - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
+	                                      ---      is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
+	                                      ---  - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
+	                                      ---  - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
+	                                      ---      data is passed. If this flag is not specified, and more data is passed on update, the buffer
+	                                      ---      will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.
+	                                      ---  - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on index buffers.
 
 --- Set static vertex buffer debug name.
 func.setName { cname = "set_vertex_buffer_name" }
@@ -1366,39 +1366,39 @@ func.destroy { cname = "destroy_dynamic_index_buffer" }
 
 --- Create empty dynamic vertex buffer.
 func.createDynamicVertexBuffer
-	"DynamicVertexBufferHandle"       		--- Dynamic vertex buffer handle.
-	.num   		"uint32_t"              --- Number of vertices.
-	.layout  	"const VertexLayout&"   --- Vertex layout.
-	.flags 		"uint16_t"              --- Buffer creation flags.
-	 { default = "BGFX_BUFFER_NONE" } 	---   - `BGFX_BUFFER_NONE` - No flags.
-	                                  	---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
-	                                  	---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
-	                                  	---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
-	                                  	---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
-	                                  	---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
-	                                  	---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
-	                                  	---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
-	                                  	---       buffers.
-	                                  	---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
-	                                  	---       index buffers.
+	"DynamicVertexBufferHandle"               --- Dynamic vertex buffer handle.
+	.num           "uint32_t"              --- Number of vertices.
+	.layout      "const VertexLayout&"   --- Vertex layout.
+	.flags         "uint16_t"              --- Buffer creation flags.
+	 { default = "BGFX_BUFFER_NONE" }     ---   - `BGFX_BUFFER_NONE` - No flags.
+	                                      ---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
+	                                      ---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
+	                                      ---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
+	                                      ---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
+	                                      ---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
+	                                      ---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
+	                                      ---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
+	                                      ---       buffers.
+	                                      ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
+	                                      ---       index buffers.
 
 --- Create dynamic vertex buffer and initialize it.
 func.createDynamicVertexBuffer { cname = "create_dynamic_vertex_buffer_mem" }
-	"DynamicVertexBufferHandle"       	--- Dynamic vertex buffer handle.
-	.mem   		"const Memory*"         --- Vertex buffer data.
-	.layout  	"const VertexLayout&"   --- Vertex layout.
-	.flags 		"uint16_t"              --- Buffer creation flags.
-	 { default = "BGFX_BUFFER_NONE" } 	---   - `BGFX_BUFFER_NONE` - No flags.
-	                                  	---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
-	                                  	---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
-	                                  	---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
-	                                  	---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
-	                                  	---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
-	                                  	---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
-	                                  	---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
-	                                  	---       buffers.
-	                                  	---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
-	                                  	---       index buffers.
+	"DynamicVertexBufferHandle"           --- Dynamic vertex buffer handle.
+	.mem           "const Memory*"         --- Vertex buffer data.
+	.layout      "const VertexLayout&"   --- Vertex layout.
+	.flags         "uint16_t"              --- Buffer creation flags.
+	 { default = "BGFX_BUFFER_NONE" }     ---   - `BGFX_BUFFER_NONE` - No flags.
+	                                      ---   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
+	                                      ---   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer
+	                                      ---       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.
+	                                      ---   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.
+	                                      ---   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of
+	                                      ---       data is passed. If this flag is not specified, and more data is passed on update, the buffer
+	                                      ---       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic
+	                                      ---       buffers.
+	                                      ---   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on
+	                                      ---       index buffers.
 
 --- Update dynamic vertex buffer.
 func.update { cname = "update_dynamic_vertex_buffer" }
@@ -1419,9 +1419,9 @@ func.getAvailTransientIndexBuffer
 
 --- Returns number of requested or maximum available vertices.
 func.getAvailTransientVertexBuffer
-	"uint32_t"                  		--- Number of requested or maximum available vertices.
-	.num 		"uint32_t"        		--- Number of required vertices.
-	.layout  	"const VertexLayout &" 	--- Vertex layout.
+	"uint32_t"                     --- Number of requested or maximum available vertices.
+	.num    "uint32_t"             --- Number of required vertices.
+	.layout "const VertexLayout &" --- Vertex layout.
 
 --- Returns number of requested or maximum available instance buffer slots.
 func.getAvailInstanceDataBuffer
@@ -1444,11 +1444,11 @@ func.allocTransientIndexBuffer
 --- Allocate transient vertex buffer.
 func.allocTransientVertexBuffer
 	"void"
-	.tvb  		"TransientVertexBuffer*" { out } 	--- TransientVertexBuffer structure is filled and is valid
-	                                       			--- for the duration of frame, and it can be reused for multiple draw
-	                                       			--- calls.
-	.num  		"uint32_t"                       	--- Number of vertices to allocate.
-	.layout 	"const VertexLayout &"             	--- Vertex layout.
+	.tvb    "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
+	                                         --- for the duration of frame, and it can be reused for multiple draw
+	                                         --- calls.
+	.num    "uint32_t"                       --- Number of vertices to allocate.
+	.layout "const VertexLayout &"           --- Vertex layout.
 
 --- Check for required space and allocate transient vertex and index
 --- buffers. If both space requirements are satisfied function returns
@@ -1459,15 +1459,15 @@ func.allocTransientVertexBuffer
 ---
 func.allocTransientBuffers
 	"bool"
-	.tvb         	"TransientVertexBuffer*" { out } 	--- TransientVertexBuffer structure is filled and is valid
-	                                              		--- for the duration of frame, and it can be reused for multiple draw
-	                                              		--- calls.
-	.layout   		"const VertexLayout &"           	--- Vertex layout.
-	.numVertices 	"uint32_t"                       	--- Number of vertices to allocate.
-	.tib         	"TransientIndexBuffer*" { out }  	--- TransientIndexBuffer structure is filled and is valid
-	                                              		--- for the duration of frame, and it can be reused for multiple draw
-	                                              		--- calls.
-	.numIndices  	"uint32_t"                       	--- Number of indices to allocate.
+	.tvb         "TransientVertexBuffer*" { out } --- TransientVertexBuffer structure is filled and is valid
+	                                              --- for the duration of frame, and it can be reused for multiple draw
+	                                              --- calls.
+	.layout      "const VertexLayout &"           --- Vertex layout.
+	.numVertices "uint32_t"                       --- Number of vertices to allocate.
+	.tib         "TransientIndexBuffer*" { out }  --- TransientIndexBuffer structure is filled and is valid
+	                                              --- for the duration of frame, and it can be reused for multiple draw
+	                                              --- calls.
+	.numIndices  "uint32_t"                       --- Number of indices to allocate.
 
 --- Allocate instance data buffer.
 func.allocInstanceDataBuffer
@@ -2207,11 +2207,11 @@ func.Encoder.setVertexBuffer { cpponly }
 --- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer
 	"void"
-	.stream      	"uint8_t"            	--- Vertex stream.
-	.handle      	"VertexBufferHandle" 	--- Vertex buffer.
-	.startVertex 	"uint32_t"           	--- First vertex to render.
-	.numVertices 	"uint32_t"           	--- Number of vertices to render.
-	.layoutHandle  	"VertexLayoutHandle"   	--- VertexLayout handle for aliasing vertex buffer.
+	.stream       "uint8_t"            --- Vertex stream.
+	.handle       "VertexBufferHandle" --- Vertex buffer.
+	.startVertex  "uint32_t"           --- First vertex to render.
+	.numVertices  "uint32_t"           --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle" --- VertexLayout handle for aliasing vertex buffer.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
@@ -2223,11 +2223,11 @@ func.Encoder.setVertexBuffer { cpponly }
 --- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer { cname = "set_dynamic_vertex_buffer" }
 	"void"
-	.stream      	"uint8_t"                   --- Vertex stream.
-	.handle      	"DynamicVertexBufferHandle" --- Dynamic vertex buffer.
-	.startVertex 	"uint32_t"                  --- First vertex to render.
-	.numVertices 	"uint32_t"                  --- Number of vertices to render.
-	.layoutHandle  	"VertexLayoutHandle"        --- VertexLayout handle for aliasing vertex buffer.
+	.stream       "uint8_t"                   --- Vertex stream.
+	.handle       "DynamicVertexBufferHandle" --- Dynamic vertex buffer.
+	.startVertex  "uint32_t"                  --- First vertex to render.
+	.numVertices  "uint32_t"                  --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"        --- VertexLayout handle for aliasing vertex buffer.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set vertex buffer for draw primitive.
@@ -2239,11 +2239,11 @@ func.Encoder.setVertexBuffer { cpponly }
 --- Set vertex buffer for draw primitive.
 func.Encoder.setVertexBuffer { cname = "set_transient_vertex_buffer" }
 	"void"
-	.stream      	"uint8_t"                      --- Vertex stream.
-	.tvb         	"const TransientVertexBuffer*" --- Transient vertex buffer.
-	.startVertex 	"uint32_t"                     --- First vertex to render.
-	.numVertices 	"uint32_t"                     --- Number of vertices to render.
-	.layoutHandle  	"VertexLayoutHandle"           --- VertexLayout handle for aliasing vertex buffer.
+	.stream       "uint8_t"                      --- Vertex stream.
+	.tvb          "const TransientVertexBuffer*" --- Transient vertex buffer.
+	.startVertex  "uint32_t"                     --- First vertex to render.
+	.numVertices  "uint32_t"                     --- Number of vertices to render.
+	.layoutHandle "VertexLayoutHandle"           --- VertexLayout handle for aliasing vertex buffer.
 	 { default = "BGFX_INVALID_HANDLE" }
 
 --- Set number of vertices for auto generated vertices use in conjuction
