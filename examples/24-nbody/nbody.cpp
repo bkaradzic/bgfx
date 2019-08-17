@@ -113,8 +113,8 @@ const uint32_t kMaxParticleCount      = 32 * 1024;
 class ExampleNbody : public entry::AppI
 {
 public:
-	ExampleNbody(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleNbody(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -458,4 +458,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleNbody, "24-nbody", "N-body simulation with compute shaders using buffers.");
+ENTRY_IMPLEMENT_MAIN(
+        ExampleNbody
+        , "24-nbody"
+        , "N-body simulation with compute shaders using buffers."
+        , "https://bkaradzic.github.io/bgfx/examples.html#nbody"
+        );

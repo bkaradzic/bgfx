@@ -140,8 +140,8 @@ void setOffsets4x4Lum(bgfx::UniformHandle _handle, uint32_t _width, uint32_t _he
 class ExampleHDR : public entry::AppI
 {
 public:
-	ExampleHDR(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleHDR(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -629,4 +629,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleHDR, "09-hdr", "Using multiple views with frame buffers, and view order remapping.");
+ENTRY_IMPLEMENT_MAIN(
+        ExampleHDR
+        , "09-hdr"
+        , "Using multiple views with frame buffers, and view order remapping."
+        , "https://bkaradzic.github.io/bgfx/examples.html#hdr"
+        );

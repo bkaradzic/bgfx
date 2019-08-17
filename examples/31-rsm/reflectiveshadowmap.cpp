@@ -186,8 +186,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, float _texelHalf
 class ExampleRSM : public entry::AppI
 {
 public:
-	ExampleRSM(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleRSM(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 		, m_reading(0)
 		, m_currFrame(UINT32_MAX)
 		, m_cameraSpin(false)
@@ -758,4 +758,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleRSM, "31-rsm", "Global Illumination with Reflective Shadow Map.");
+ENTRY_IMPLEMENT_MAIN(
+        ExampleRSM
+        , "31-rsm"
+        , "Global Illumination with Reflective Shadow Map."
+        , "https://bkaradzic.github.io/bgfx/examples.html#rsm"
+        );

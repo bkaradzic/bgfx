@@ -62,8 +62,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleInstancing : public entry::AppI
 {
 public:
-	ExampleInstancing(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleInstancing(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -261,4 +261,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleInstancing, "05-instancing", "Geometry instancing.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleInstancing
+    , "05-instancing"
+    , "Geometry instancing."
+    , "https://bkaradzic.github.io/bgfx/examples.html#instancing"
+    );

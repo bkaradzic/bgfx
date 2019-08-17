@@ -85,8 +85,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleBump : public entry::AppI
 {
 public:
-	ExampleBump(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleBump(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -370,4 +370,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleBump, "06-bump", "Loading textures.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleBump
+    , "06-bump"
+    , "Loading textures."
+    , "https://bkaradzic.github.io/bgfx/examples.html#bump"
+    );

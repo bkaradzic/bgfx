@@ -145,8 +145,8 @@ static const uint32_t kTexture2dSize = 256;
 class ExampleUpdate : public entry::AppI
 {
 public:
-	ExampleUpdate(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleUpdate(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 		, m_cube(kTextureSide)
 	{
 	}
@@ -723,4 +723,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleUpdate, "08-update", "Updating textures.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleUpdate
+    , "08-update"
+    , "Updating textures."
+    , "https://bkaradzic.github.io/bgfx/examples.html#update"
+    );
