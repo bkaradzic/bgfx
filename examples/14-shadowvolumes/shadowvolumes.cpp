@@ -1760,8 +1760,8 @@ enum Scene
 class ExampleShadowVolumes : public entry::AppI
 {
 public:
-	ExampleShadowVolumes(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleShadowVolumes(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -2834,4 +2834,8 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowVolumes, "14-shadowvolumes", "Shadow volumes.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleShadowVolumes
+    , "14-shadowvolumes"
+    , "Shadow volumes."
+    , "https://bkaradzic.github.io/bgfx/examples.html#shadowvolumes");

@@ -37,8 +37,8 @@ bgfx::VertexLayout PosColorVertex::ms_layout;
 class ExampleVectorDisplay : public entry::AppI
 {
 public:
-	ExampleVectorDisplay(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleVectorDisplay(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -218,4 +218,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleVectorDisplay, "23-vectordisplay", "Rendering lines as oldschool vectors.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleVectorDisplay
+    , "23-vectordisplay"
+    , "Rendering lines as oldschool vectors."
+    , "https://bkaradzic.github.io/bgfx/examples.html#vectordisplay"
+    );

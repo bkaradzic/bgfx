@@ -152,8 +152,8 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 class ExampleOIT : public entry::AppI
 {
 public:
-	ExampleOIT(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleOIT(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -550,4 +550,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleOIT, "19-oit", "Weighted, Blended Order Independent Transparency.");
+ENTRY_IMPLEMENT_MAIN(
+        ExampleOIT
+        , "19-oit"
+        , "Weighted, Blended Order Independent Transparency."
+        , "https://bkaradzic.github.io/bgfx/examples.html#oit"
+        );

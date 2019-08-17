@@ -65,8 +65,8 @@ static const uint16_t s_cubeIndices[36] =
 class ExampleOcclusion : public entry::AppI
 {
 public:
-	ExampleOcclusion(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleOcclusion(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -311,4 +311,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleOcclusion, "26-occlusion", "Using occlusion query for conditional rendering.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleOcclusion
+    , "26-occlusion"
+    , "Using occlusion query for conditional rendering."
+    , "https://bkaradzic.github.io/bgfx/examples.html#occlusion"
+    );

@@ -1284,8 +1284,8 @@ struct SceneSettings
 class ExampleShadowmaps : public entry::AppI
 {
 public:
-	ExampleShadowmaps(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleShadowmaps(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -3251,4 +3251,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleShadowmaps, "16-shadowmaps", "Shadow maps example.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleShadowmaps
+    , "16-shadowmaps"
+    , "Shadow maps example."
+    , "https://bkaradzic.github.io/bgfx/examples.html#shadowmaps"
+    );

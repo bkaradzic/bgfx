@@ -320,8 +320,8 @@ namespace
 	class ExampleTessellation : public entry::AppI
 	{
 	public:
-		ExampleTessellation(const char* _name, const char* _description)
-			: entry::AppI(_name, _description)
+        ExampleTessellation(const char* _name, const char* _description, const char* _url)
+            : entry::AppI(_name, _description, _url)
 		{
 		}
 
@@ -925,4 +925,9 @@ namespace
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleTessellation, "41-tess", "Adaptive Gpu Tessellation.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleTessellation
+    , "41-tess"
+    , "Adaptive Gpu Tessellation."
+    , "https://bkaradzic.github.io/bgfx/examples.html#tess"
+    );

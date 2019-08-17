@@ -83,8 +83,8 @@ static const uint16_t s_cubeTriStrip[] =
 class ExampleDynamic : public entry::AppI
 {
 public:
-	ExampleDynamic(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleDynamic(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -282,4 +282,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleDynamic, "35-dynamic", "Dynamic buffers update.");
+ENTRY_IMPLEMENT_MAIN(
+    ExampleDynamic
+    , "35-dynamic"
+    , "Dynamic buffers update."
+    , "https://bkaradzic.github.io/bgfx/examples.html#dynamic"
+    );

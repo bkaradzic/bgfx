@@ -64,8 +64,8 @@ static const uint16_t s_planeIndices[] =
 class ExampleSVT : public entry::AppI
 {
 public:
-	ExampleSVT(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    ExampleSVT(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -372,4 +372,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleSVT, "40-svt", "Sparse Virtual Textures.");
+ENTRY_IMPLEMENT_MAIN(
+        ExampleSVT
+        , "40-svt"
+        , "Sparse Virtual Textures."
+        , "https://bkaradzic.github.io/bgfx/examples.html#svt"
+        );

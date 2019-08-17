@@ -306,8 +306,8 @@ float rand01()
 class GPUDrivenRendering : public entry::AppI
 {
 public:
-	GPUDrivenRendering(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+    GPUDrivenRendering(const char* _name, const char* _description, const char* _url)
+        : entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1143,4 +1143,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(GPUDrivenRendering, "37-gpudrivenrendering", "GPU-Driven Rendering.");
+ENTRY_IMPLEMENT_MAIN(
+    GPUDrivenRendering
+    , "37-gpudrivenrendering"
+    , "GPU-Driven Rendering."
+    , "https://bkaradzic.github.io/bgfx/examples.html#gpudrivenrendering"
+    );
