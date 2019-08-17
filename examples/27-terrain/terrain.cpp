@@ -27,17 +27,17 @@ struct PosTexCoord0Vertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	}
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosTexCoord0Vertex::ms_decl;
+bgfx::VertexLayout PosTexCoord0Vertex::ms_layout;
 
 struct TerrainData
 {
@@ -241,7 +241,7 @@ public:
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_vertices[0], sizeof(PosTexCoord0Vertex) * m_terrain.m_vertexCount);
-			m_vbh = bgfx::createVertexBuffer(mem, PosTexCoord0Vertex::ms_decl);
+			m_vbh = bgfx::createVertexBuffer(mem, PosTexCoord0Vertex::ms_layout);
 			if (bgfx::isValid(m_ibh) )
 			{
 				bgfx::destroy(m_ibh);
@@ -256,7 +256,7 @@ public:
 
 			if (!bgfx::isValid(m_dvbh) )
 			{
-				m_dvbh = bgfx::createDynamicVertexBuffer(m_terrain.m_vertexCount, PosTexCoord0Vertex::ms_decl);
+				m_dvbh = bgfx::createDynamicVertexBuffer(m_terrain.m_vertexCount, PosTexCoord0Vertex::ms_layout);
 			}
 
 			mem = bgfx::makeRef(&m_terrain.m_vertices[0], sizeof(PosTexCoord0Vertex) * m_terrain.m_vertexCount);
@@ -277,7 +277,7 @@ public:
 				updateTerrainMesh();
 
 				mem = bgfx::makeRef(&m_terrain.m_vertices[0], sizeof(PosTexCoord0Vertex) * m_terrain.m_vertexCount);
-				m_vbh = bgfx::createVertexBuffer(mem, PosTexCoord0Vertex::ms_decl);
+				m_vbh = bgfx::createVertexBuffer(mem, PosTexCoord0Vertex::ms_layout);
 
 				mem = bgfx::makeRef(&m_terrain.m_indices[0], sizeof(uint16_t) * m_terrain.m_indexCount);
 				m_ibh = bgfx::createIndexBuffer(mem);

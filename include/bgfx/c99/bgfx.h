@@ -700,7 +700,7 @@ typedef struct bgfx_transient_vertex_buffer_s
     uint32_t             startVertex;        /** First vertex.                            */
     uint16_t             stride;             /** Vertex stride.                           */
     bgfx_vertex_buffer_handle_t handle;      /** Vertex buffer handle.                    */
-    bgfx_vertex_layout_handle_t decl;        /** Vertex layout handle.                    */
+    bgfx_vertex_layout_handle_t layoutHandle; /** Vertex layout handle.                    */
 
 } bgfx_transient_vertex_buffer_t;
 
@@ -949,43 +949,43 @@ BGFX_C_API void bgfx_vertex_layout_end(bgfx_vertex_layout_t* _this);
  * @param[in] _input Value to be packed into vertex stream.
  * @param[in] _inputNormalized `true` if input value is already normalized.
  * @param[in] _attr Attribute to pack.
- * @param[in] _decl Vertex stream layout.
+ * @param[in] _layout Vertex stream layout.
  * @param[in] _data Destination vertex stream where data will be packed.
  * @param[in] _index Vertex index that will be modified.
  *
  */
-BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _decl, void* _data, uint32_t _index);
+BGFX_C_API void bgfx_vertex_pack(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, void* _data, uint32_t _index);
 
 /**
  * Unpack vertex attribute from vertex stream format.
  *
  * @param[out] _output Result of unpacking.
  * @param[in] _attr Attribute to unpack.
- * @param[in] _decl Vertex stream layout.
+ * @param[in] _layout Vertex stream layout.
  * @param[in] _data Source vertex stream from where data will be unpacked.
  * @param[in] _index Vertex index that will be unpacked.
  *
  */
-BGFX_C_API void bgfx_vertex_unpack(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _decl, const void* _data, uint32_t _index);
+BGFX_C_API void bgfx_vertex_unpack(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _index);
 
 /**
  * Converts vertex stream data from one vertex stream format to another.
  *
- * @param[in] _dstDecl Destination vertex stream layout.
+ * @param[in] _dstLayout Destination vertex stream layout.
  * @param[in] _dstData Destination vertex stream.
- * @param[in] _srcDecl Source vertex stream layout.
+ * @param[in] _srcLayout Source vertex stream layout.
  * @param[in] _srcData Source vertex stream data.
  * @param[in] _num Number of vertices to convert from source to destination.
  *
  */
-BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstDecl, void* _dstData, const bgfx_vertex_layout_t * _srcDecl, const void* _srcData, uint32_t _num);
+BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
 
 /**
  * Weld vertices.
  *
  * @param[in] _output Welded vertices remapping table. The size of buffer
  *  must be the same as number of vertices.
- * @param[in] _decl Vertex stream layout.
+ * @param[in] _layout Vertex stream layout.
  * @param[in] _data Vertex stream.
  * @param[in] _num Number of vertices in vertex stream.
  * @param[in] _epsilon Error tolerance for vertex position comparison.
@@ -993,7 +993,7 @@ BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_layout_t * _dstDecl, void*
  * @returns Number of unique vertices after vertex welding.
  *
  */
-BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_layout_t * _decl, const void* _data, uint16_t _num, float _epsilon);
+BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint16_t _num, float _epsilon);
 
 /**
  * Convert index buffer for use with different primitive topologies.
@@ -1296,24 +1296,24 @@ BGFX_C_API void bgfx_destroy_index_buffer(bgfx_index_buffer_handle_t _handle);
 /**
  * Create vertex layout.
  *
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  *
  */
-BGFX_C_API bgfx_vertex_layout_handle_t bgfx_create_vertex_layout(const bgfx_vertex_layout_t * _decl);
+BGFX_C_API bgfx_vertex_layout_handle_t bgfx_create_vertex_layout(const bgfx_vertex_layout_t * _layout);
 
 /**
  * Destroy vertex layout.
  *
- * @param[in] _handle Vertex layout handle.
+ * @param[in] _layoutHandle Vertex layout handle.
  *
  */
-BGFX_C_API void bgfx_destroy_vertex_decl(bgfx_vertex_layout_handle_t _handle);
+BGFX_C_API void bgfx_destroy_vertex_layout(bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
  * Create static vertex buffer.
  *
  * @param[in] _mem Vertex buffer data.
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  * @param[in] _flags Buffer creation flags.
  *   - `BGFX_BUFFER_NONE` - No flags.
  *   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
@@ -1328,7 +1328,7 @@ BGFX_C_API void bgfx_destroy_vertex_decl(bgfx_vertex_layout_handle_t _handle);
  * @returns Static vertex buffer handle.
  *
  */
-BGFX_C_API bgfx_vertex_buffer_handle_t bgfx_create_vertex_buffer(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t * _decl, uint16_t _flags);
+BGFX_C_API bgfx_vertex_buffer_handle_t bgfx_create_vertex_buffer(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t * _layout, uint16_t _flags);
 
 /**
  * Set static vertex buffer debug name.
@@ -1415,7 +1415,7 @@ BGFX_C_API void bgfx_destroy_dynamic_index_buffer(bgfx_dynamic_index_buffer_hand
  * Create empty dynamic vertex buffer.
  *
  * @param[in] _num Number of vertices.
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  * @param[in] _flags Buffer creation flags.
  *    - `BGFX_BUFFER_NONE` - No flags.
  *    - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
@@ -1432,13 +1432,13 @@ BGFX_C_API void bgfx_destroy_dynamic_index_buffer(bgfx_dynamic_index_buffer_hand
  * @returns Dynamic vertex buffer handle.
  *
  */
-BGFX_C_API bgfx_dynamic_vertex_buffer_handle_t bgfx_create_dynamic_vertex_buffer(uint32_t _num, const bgfx_vertex_layout_t* _decl, uint16_t _flags);
+BGFX_C_API bgfx_dynamic_vertex_buffer_handle_t bgfx_create_dynamic_vertex_buffer(uint32_t _num, const bgfx_vertex_layout_t* _layout, uint16_t _flags);
 
 /**
  * Create dynamic vertex buffer and initialize it.
  *
  * @param[in] _mem Vertex buffer data.
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  * @param[in] _flags Buffer creation flags.
  *    - `BGFX_BUFFER_NONE` - No flags.
  *    - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.
@@ -1455,7 +1455,7 @@ BGFX_C_API bgfx_dynamic_vertex_buffer_handle_t bgfx_create_dynamic_vertex_buffer
  * @returns Dynamic vertex buffer handle.
  *
  */
-BGFX_C_API bgfx_dynamic_vertex_buffer_handle_t bgfx_create_dynamic_vertex_buffer_mem(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t* _decl, uint16_t _flags);
+BGFX_C_API bgfx_dynamic_vertex_buffer_handle_t bgfx_create_dynamic_vertex_buffer_mem(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t* _layout, uint16_t _flags);
 
 /**
  * Update dynamic vertex buffer.
@@ -1489,12 +1489,12 @@ BGFX_C_API uint32_t bgfx_get_avail_transient_index_buffer(uint32_t _num);
  * Returns number of requested or maximum available vertices.
  *
  * @param[in] _num Number of required vertices.
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  *
  * @returns Number of requested or maximum available vertices.
  *
  */
-BGFX_C_API uint32_t bgfx_get_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_layout_t * _decl);
+BGFX_C_API uint32_t bgfx_get_avail_transient_vertex_buffer(uint32_t _num, const bgfx_vertex_layout_t * _layout);
 
 /**
  * Returns number of requested or maximum available instance buffer slots.
@@ -1527,10 +1527,10 @@ BGFX_C_API void bgfx_alloc_transient_index_buffer(bgfx_transient_index_buffer_t*
  *  for the duration of frame, and it can be reused for multiple draw
  *  calls.
  * @param[in] _num Number of vertices to allocate.
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  *
  */
-BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _decl);
+BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _layout);
 
 /**
  * Check for required space and allocate transient vertex and index
@@ -1542,7 +1542,7 @@ BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_
  * @param[out] _tvb TransientVertexBuffer structure is filled and is valid
  *  for the duration of frame, and it can be reused for multiple draw
  *  calls.
- * @param[in] _decl Vertex layout.
+ * @param[in] _layout Vertex layout.
  * @param[in] _numVertices Number of vertices to allocate.
  * @param[out] _tib TransientIndexBuffer structure is filled and is valid
  *  for the duration of frame, and it can be reused for multiple draw
@@ -1550,7 +1550,7 @@ BGFX_C_API void bgfx_alloc_transient_vertex_buffer(bgfx_transient_vertex_buffer_
  * @param[in] _numIndices Number of indices to allocate.
  *
  */
-BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _decl, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices);
+BGFX_C_API bool bgfx_alloc_transient_buffers(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices);
 
 /**
  * Allocate instance data buffer.
@@ -2435,10 +2435,10 @@ BGFX_C_API void bgfx_encoder_set_transient_index_buffer(bgfx_encoder_t* _this, c
  * @param[in] _handle Vertex buffer.
  * @param[in] _startVertex First vertex to render.
  * @param[in] _numVertices Number of vertices to render.
- * @param[in] _declHandle VertexLayout handle for aliasing vertex buffer.
+ * @param[in] _layoutHandle VertexLayout handle for aliasing vertex buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _declHandle);
+BGFX_C_API void bgfx_encoder_set_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
  * Set vertex buffer for draw primitive.
@@ -2447,10 +2447,10 @@ BGFX_C_API void bgfx_encoder_set_vertex_buffer(bgfx_encoder_t* _this, uint8_t _s
  * @param[in] _handle Dynamic vertex buffer.
  * @param[in] _startVertex First vertex to render.
  * @param[in] _numVertices Number of vertices to render.
- * @param[in] _declHandle VertexLayout handle for aliasing vertex buffer.
+ * @param[in] _layoutHandle VertexLayout handle for aliasing vertex buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _declHandle);
+BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
  * Set vertex buffer for draw primitive.
@@ -2459,10 +2459,10 @@ BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_t* _this, ui
  * @param[in] _tvb Transient vertex buffer.
  * @param[in] _startVertex First vertex to render.
  * @param[in] _numVertices Number of vertices to render.
- * @param[in] _declHandle VertexLayout handle for aliasing vertex buffer.
+ * @param[in] _layoutHandle VertexLayout handle for aliasing vertex buffer.
  *
  */
-BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _declHandle);
+BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
 
 /**
  * Set number of vertices for auto generated vertices use in conjuction
@@ -3255,7 +3255,7 @@ typedef enum bgfx_function_id
     BGFX_FUNCTION_ID_SET_INDEX_BUFFER_NAME,
     BGFX_FUNCTION_ID_DESTROY_INDEX_BUFFER,
     BGFX_FUNCTION_ID_CREATE_VERTEX_LAYOUT,
-    BGFX_FUNCTION_ID_DESTROY_VERTEX_DECL,
+    BGFX_FUNCTION_ID_DESTROY_VERTEX_LAYOUT,
     BGFX_FUNCTION_ID_CREATE_VERTEX_BUFFER,
     BGFX_FUNCTION_ID_SET_VERTEX_BUFFER_NAME,
     BGFX_FUNCTION_ID_DESTROY_VERTEX_BUFFER,
@@ -3418,10 +3418,10 @@ struct bgfx_interface_vtbl
     bool (*vertex_layout_has)(const bgfx_vertex_layout_t* _this, bgfx_attrib_t _attrib);
     bgfx_vertex_layout_t* (*vertex_layout_skip)(bgfx_vertex_layout_t* _this, uint8_t _num);
     void (*vertex_layout_end)(bgfx_vertex_layout_t* _this);
-    void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _decl, void* _data, uint32_t _index);
-    void (*vertex_unpack)(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _decl, const void* _data, uint32_t _index);
-    void (*vertex_convert)(const bgfx_vertex_layout_t * _dstDecl, void* _dstData, const bgfx_vertex_layout_t * _srcDecl, const void* _srcData, uint32_t _num);
-    uint16_t (*weld_vertices)(uint16_t* _output, const bgfx_vertex_layout_t * _decl, const void* _data, uint16_t _num, float _epsilon);
+    void (*vertex_pack)(const float _input[4], bool _inputNormalized, bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, void* _data, uint32_t _index);
+    void (*vertex_unpack)(float _output[4], bgfx_attrib_t _attr, const bgfx_vertex_layout_t * _layout, const void* _data, uint32_t _index);
+    void (*vertex_convert)(const bgfx_vertex_layout_t * _dstLayout, void* _dstData, const bgfx_vertex_layout_t * _srcLayout, const void* _srcData, uint32_t _num);
+    uint16_t (*weld_vertices)(uint16_t* _output, const bgfx_vertex_layout_t * _layout, const void* _data, uint16_t _num, float _epsilon);
     uint32_t (*topology_convert)(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32);
     void (*topology_sort_tri_list)(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
     uint8_t (*get_supported_renderers)(uint8_t _max, bgfx_renderer_type_t* _enum);
@@ -3446,25 +3446,25 @@ struct bgfx_interface_vtbl
     bgfx_index_buffer_handle_t (*create_index_buffer)(const bgfx_memory_t* _mem, uint16_t _flags);
     void (*set_index_buffer_name)(bgfx_index_buffer_handle_t _handle, const char* _name, int32_t _len);
     void (*destroy_index_buffer)(bgfx_index_buffer_handle_t _handle);
-    bgfx_vertex_layout_handle_t (*create_vertex_layout)(const bgfx_vertex_layout_t * _decl);
-    void (*destroy_vertex_decl)(bgfx_vertex_layout_handle_t _handle);
-    bgfx_vertex_buffer_handle_t (*create_vertex_buffer)(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t * _decl, uint16_t _flags);
+    bgfx_vertex_layout_handle_t (*create_vertex_layout)(const bgfx_vertex_layout_t * _layout);
+    void (*destroy_vertex_layout)(bgfx_vertex_layout_handle_t _layoutHandle);
+    bgfx_vertex_buffer_handle_t (*create_vertex_buffer)(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t * _layout, uint16_t _flags);
     void (*set_vertex_buffer_name)(bgfx_vertex_buffer_handle_t _handle, const char* _name, int32_t _len);
     void (*destroy_vertex_buffer)(bgfx_vertex_buffer_handle_t _handle);
     bgfx_dynamic_index_buffer_handle_t (*create_dynamic_index_buffer)(uint32_t _num, uint16_t _flags);
     bgfx_dynamic_index_buffer_handle_t (*create_dynamic_index_buffer_mem)(const bgfx_memory_t* _mem, uint16_t _flags);
     void (*update_dynamic_index_buffer)(bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _startIndex, const bgfx_memory_t* _mem);
     void (*destroy_dynamic_index_buffer)(bgfx_dynamic_index_buffer_handle_t _handle);
-    bgfx_dynamic_vertex_buffer_handle_t (*create_dynamic_vertex_buffer)(uint32_t _num, const bgfx_vertex_layout_t* _decl, uint16_t _flags);
-    bgfx_dynamic_vertex_buffer_handle_t (*create_dynamic_vertex_buffer_mem)(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t* _decl, uint16_t _flags);
+    bgfx_dynamic_vertex_buffer_handle_t (*create_dynamic_vertex_buffer)(uint32_t _num, const bgfx_vertex_layout_t* _layout, uint16_t _flags);
+    bgfx_dynamic_vertex_buffer_handle_t (*create_dynamic_vertex_buffer_mem)(const bgfx_memory_t* _mem, const bgfx_vertex_layout_t* _layout, uint16_t _flags);
     void (*update_dynamic_vertex_buffer)(bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, const bgfx_memory_t* _mem);
     void (*destroy_dynamic_vertex_buffer)(bgfx_dynamic_vertex_buffer_handle_t _handle);
     uint32_t (*get_avail_transient_index_buffer)(uint32_t _num);
-    uint32_t (*get_avail_transient_vertex_buffer)(uint32_t _num, const bgfx_vertex_layout_t * _decl);
+    uint32_t (*get_avail_transient_vertex_buffer)(uint32_t _num, const bgfx_vertex_layout_t * _layout);
     uint32_t (*get_avail_instance_data_buffer)(uint32_t _num, uint16_t _stride);
     void (*alloc_transient_index_buffer)(bgfx_transient_index_buffer_t* _tib, uint32_t _num);
-    void (*alloc_transient_vertex_buffer)(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _decl);
-    bool (*alloc_transient_buffers)(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _decl, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices);
+    void (*alloc_transient_vertex_buffer)(bgfx_transient_vertex_buffer_t* _tvb, uint32_t _num, const bgfx_vertex_layout_t * _layout);
+    bool (*alloc_transient_buffers)(bgfx_transient_vertex_buffer_t* _tvb, const bgfx_vertex_layout_t * _layout, uint32_t _numVertices, bgfx_transient_index_buffer_t* _tib, uint32_t _numIndices);
     void (*alloc_instance_data_buffer)(bgfx_instance_data_buffer_t* _idb, uint32_t _num, uint16_t _stride);
     bgfx_indirect_buffer_handle_t (*create_indirect_buffer)(uint32_t _num);
     void (*destroy_indirect_buffer)(bgfx_indirect_buffer_handle_t _handle);
@@ -3530,9 +3530,9 @@ struct bgfx_interface_vtbl
     void (*encoder_set_index_buffer)(bgfx_encoder_t* _this, bgfx_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
     void (*encoder_set_dynamic_index_buffer)(bgfx_encoder_t* _this, bgfx_dynamic_index_buffer_handle_t _handle, uint32_t _firstIndex, uint32_t _numIndices);
     void (*encoder_set_transient_index_buffer)(bgfx_encoder_t* _this, const bgfx_transient_index_buffer_t* _tib, uint32_t _firstIndex, uint32_t _numIndices);
-    void (*encoder_set_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _declHandle);
-    void (*encoder_set_dynamic_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _declHandle);
-    void (*encoder_set_transient_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _declHandle);
+    void (*encoder_set_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
+    void (*encoder_set_dynamic_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
+    void (*encoder_set_transient_vertex_buffer)(bgfx_encoder_t* _this, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
     void (*encoder_set_vertex_count)(bgfx_encoder_t* _this, uint32_t _numVertices);
     void (*encoder_set_instance_data_buffer)(bgfx_encoder_t* _this, const bgfx_instance_data_buffer_t* _idb, uint32_t _start, uint32_t _num);
     void (*encoder_set_instance_data_from_vertex_buffer)(bgfx_encoder_t* _this, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _num);

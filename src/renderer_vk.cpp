@@ -327,7 +327,7 @@ VK_IMPORT_DEVICE
 	};
 	BX_STATIC_ASSERT(AttribType::Count == BX_COUNTOF(s_attribType) );
 
-	void fillVertexLayout(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexLayout& _decl)
+	void fillVertexLayout(const ShaderVK* _vsh, VkPipelineVertexInputStateCreateInfo& _vertexInputState, const VertexLayout& _layout)
 	{
 		uint32_t numBindings = _vertexInputState.vertexBindingDescriptionCount;
 		uint32_t numAttribs  = _vertexInputState.vertexAttributeDescriptionCount;
@@ -335,12 +335,12 @@ VK_IMPORT_DEVICE
 		VkVertexInputAttributeDescription* inputAttrib  = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + numAttribs);
 
 		inputBinding->binding   = numBindings;
-		inputBinding->stride    = _decl.m_stride;
+		inputBinding->stride    = _layout.m_stride;
 		inputBinding->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 		for (uint32_t attr = 0; attr < Attrib::Count; ++attr)
 		{
-			if (UINT16_MAX != _decl.m_attributes[attr])
+			if (UINT16_MAX != _layout.m_attributes[attr])
 			{
 				inputAttrib->location = _vsh->m_attrRemap[attr];
 				inputAttrib->binding  = numBindings;
@@ -349,9 +349,9 @@ VK_IMPORT_DEVICE
 				AttribType::Enum type;
 				bool normalized;
 				bool asInt;
-				_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
+				_layout.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 				inputAttrib->format = s_attribType[type][num-1][normalized];
-				inputAttrib->offset = _decl.m_offset[attr];
+				inputAttrib->offset = _layout.m_offset[attr];
 
 				++inputAttrib;
 				++numAttribs;
@@ -2329,20 +2329,20 @@ VK_IMPORT_DEVICE
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _decl) override
+		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
 		{
-			VertexLayout& decl = m_vertexDecls[_handle.idx];
-			bx::memCopy(&decl, &_decl, sizeof(VertexLayout) );
-			dump(decl);
+			VertexLayout& layout = m_vertexLayouts[_handle.idx];
+			bx::memCopy(&layout, &_layout, sizeof(VertexLayout) );
+			dump(layout);
 		}
 
 		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _declHandle, uint16_t _flags) override
+		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
+			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
@@ -2368,8 +2368,8 @@ VK_IMPORT_DEVICE
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexLayoutHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
+			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
+			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -2576,11 +2576,11 @@ VK_IMPORT_DEVICE
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
-			const VertexLayout* vertexDecl = &m_vertexDecls[_blitter.m_vb->decl.idx];
+			const VertexLayout* layout = &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			VkPipeline pso = getPipeline(state
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
-				, &vertexDecl
+				, &layout
 				, _blitter.m_program
 				, 0
 				);
@@ -2701,7 +2701,7 @@ VK_IMPORT_DEVICE
 			if (0 < numVertices)
 			{
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(m_commandBuffer, 0, _numIndices*2, _blitter.m_ib->data);
-				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data, true);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(m_commandBuffer, 0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data, true);
 
 				vkCmdDrawIndexed(m_commandBuffer
 					, _numIndices
@@ -3091,7 +3091,7 @@ VK_IMPORT_DEVICE
 			_desc.maxDepthBounds = 1.0f;
 		}
 
-		void setInputLayout(VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint8_t _numStream, const VertexLayout** _vertexDecl, const ProgramVK& _program, uint8_t _numInstanceData)
+		void setInputLayout(VkPipelineVertexInputStateCreateInfo& _vertexInputState, uint8_t _numStream, const VertexLayout** _layout, const ProgramVK& _program, uint8_t _numInstanceData)
 		{
 			_vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 			_vertexInputState.pNext = NULL;
@@ -3104,22 +3104,22 @@ VK_IMPORT_DEVICE
 			bx::memCopy(unsettedAttr, _program.m_vsh->m_attrMask, sizeof(uint16_t) * Attrib::Count);
 			for (uint8_t stream = 0; stream < _numStream; ++stream)
 			{
-				VertexLayout decl;
-				bx::memCopy(&decl, _vertexDecl[stream], sizeof(VertexLayout) );
+				VertexLayout layout;
+				bx::memCopy(&layout, _layout[stream], sizeof(VertexLayout) );
 				const uint16_t* attrMask = _program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
 					uint16_t mask = attrMask[ii];
-					uint16_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 || attr == UINT16_MAX ? UINT16_MAX : attr;
+					uint16_t attr = (layout.m_attributes[ii] & mask);
+					layout.m_attributes[ii] = attr == 0 || attr == UINT16_MAX ? UINT16_MAX : attr;
 					if (unsettedAttr[ii] && attr != UINT16_MAX)
 					{
 						unsettedAttr[ii] = 0;
 					}
 				}
 
-				fillVertexLayout(_program.m_vsh, _vertexInputState, decl);
+				fillVertexLayout(_program.m_vsh, _vertexInputState, layout);
 			}
 
 			for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
@@ -3342,7 +3342,7 @@ VK_IMPORT_DEVICE
 			return pipeline;
 		}
 
-		VkPipeline getPipeline(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _vertexDecls, ProgramHandle _program, uint8_t _numInstanceData)
+		VkPipeline getPipeline(uint64_t _state, uint64_t _stencil, uint8_t _numStreams, const VertexLayout** _layouts, ProgramHandle _program, uint8_t _numInstanceData)
 		{
 			ProgramVK& program = m_program[_program.idx];
 
@@ -3364,17 +3364,17 @@ VK_IMPORT_DEVICE
 
 			_stencil &= packStencil(~BGFX_STENCIL_FUNC_REF_MASK, ~BGFX_STENCIL_FUNC_REF_MASK);
 
-			VertexLayout decl;
+			VertexLayout layout;
 			if (0 < _numStreams)
 			{
-				bx::memCopy(&decl, _vertexDecls[0], sizeof(VertexLayout) );
+				bx::memCopy(&layout, _layouts[0], sizeof(VertexLayout) );
 				const uint16_t* attrMask = program.m_vsh->m_attrMask;
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
 					uint16_t mask = attrMask[ii];
-					uint16_t attr = (decl.m_attributes[ii] & mask);
-					decl.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
+					uint16_t attr = (layout.m_attributes[ii] & mask);
+					layout.m_attributes[ii] = attr == 0 ? UINT16_MAX : attr == UINT16_MAX ? 0 : attr;
 				}
 			}
 
@@ -3387,9 +3387,9 @@ VK_IMPORT_DEVICE
 			murmur.add(program.m_fsh->m_hash);
 			for (uint8_t ii = 0; ii < _numStreams; ++ii)
 			{
-				murmur.add(_vertexDecls[ii]->m_hash);
+				murmur.add(_layouts[ii]->m_hash);
 			}
-			murmur.add(decl.m_attributes, sizeof(decl.m_attributes) );
+			murmur.add(layout.m_attributes, sizeof(layout.m_attributes) );
 			murmur.add(m_fbh.idx);
 			murmur.add(_numInstanceData);
 			const uint32_t hash = murmur.end();
@@ -3425,7 +3425,7 @@ VK_IMPORT_DEVICE
 			VkPipelineVertexInputStateCreateInfo vertexInputState;
 			vertexInputState.pVertexBindingDescriptions   = inputBinding;
 			vertexInputState.pVertexAttributeDescriptions = inputAttrib;
-			setInputLayout(vertexInputState, _numStreams, _vertexDecls, program, _numInstanceData);
+			setInputLayout(vertexInputState, _numStreams, _layouts, program, _numInstanceData);
 
 			const VkDynamicState dynamicStates[] =
 			{
@@ -4065,7 +4065,7 @@ VK_IMPORT_DEVICE
 		ShaderVK m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramVK m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureVK m_textures[BGFX_CONFIG_MAX_TEXTURES];
-		VertexLayout m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		FrameBufferVK m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 		Matrix4 m_predefinedUniforms[PredefinedUniform::Count];
@@ -4519,10 +4519,10 @@ VK_DESTROY
 		}
 	}
 
-	void VertexBufferVK::create(uint32_t _size, void* _data, VertexLayoutHandle _declHandle, uint16_t _flags)
+	void VertexBufferVK::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 	{
 		BufferVK::create(_size, _data, _flags, true);
-		m_decl = _declHandle;
+		m_layoutHandle = _layoutHandle;
 	}
 
 	void ShaderVK::create(const Memory* _mem)
@@ -6078,7 +6078,7 @@ VK_DESTROY
 						|| f3 == (state & f3)
 						;
 
-					const VertexLayout* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 					uint8_t numStreams = 0;
 					if (UINT8_MAX != draw.m_streamMask)
 					{
@@ -6091,18 +6091,18 @@ VK_DESTROY
 							streamMask >>= ntz;
 							idx         += ntz;
 
-							currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
-							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
+							currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
+							currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
 
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferVK& vb = m_vertexBuffers[handle];
-							const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
-												  ? draw.m_stream[idx].m_decl.idx
-												  : vb.m_decl.idx;
-							const VertexLayout& vertexDecl = m_vertexDecls[decl];
+							const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
+												  ? draw.m_stream[idx].m_layoutHandle.idx
+												  : vb.m_layoutHandle.idx;
+							const VertexLayout& layout = m_vertexLayouts[decl];
 
-							decls[numStreams] = &vertexDecl;
+							layouts[numStreams] = &layout;
 						}
 					}
 
@@ -6110,7 +6110,7 @@ VK_DESTROY
 						getPipeline(state
 							, draw.m_stencil
 							, numStreams
-							, decls
+							, layouts
 							, key.m_program
 							, uint8_t(draw.m_instanceDataStride/16)
 							);
@@ -6304,10 +6304,10 @@ VK_DESTROY
 					if (!isValid(draw.m_indexBuffer) )
 					{
 						const VertexBufferVK& vertexBuffer = m_vertexBuffers[draw.m_stream[0].m_handle.idx];
-						const VertexLayout& vertexDecl = m_vertexDecls[draw.m_stream[0].m_decl.idx];
+						const VertexLayout& layout = m_vertexLayouts[draw.m_stream[0].m_layoutHandle.idx];
 
 						const uint32_t numVertices = UINT32_MAX == draw.m_numVertices
-							? vertexBuffer.m_size / vertexDecl.m_stride
+							? vertexBuffer.m_size / layout.m_stride
 							: draw.m_numVertices
 							;
 						vkCmdDraw(m_commandBuffer

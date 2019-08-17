@@ -732,20 +732,20 @@ namespace bgfx { namespace mtl
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _decl) override
+		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
 		{
-			VertexLayout& decl = m_vertexDecls[_handle.idx];
-			bx::memCopy(&decl, &_decl, sizeof(VertexLayout) );
-			dump(decl);
+			VertexLayout& layout = m_vertexLayouts[_handle.idx];
+			bx::memCopy(&layout, &_layout, sizeof(VertexLayout) );
+			dump(layout);
 		}
 
 		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _declHandle, uint16_t _flags) override
+		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
+			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
@@ -770,8 +770,8 @@ namespace bgfx { namespace mtl
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexLayoutHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
+			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
+			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -1097,7 +1097,7 @@ namespace bgfx { namespace mtl
 					);
 				m_vertexBuffers[_blitter.m_vb->handle.idx].update(
 					  0
-					, numVertices*_blitter.m_decl.m_stride
+					, numVertices*_blitter.m_layout.m_stride
 					, _blitter.m_vb->data
 					, true
 					);
@@ -1143,7 +1143,7 @@ namespace bgfx { namespace mtl
 														 state
 														 , 0
 														 , fbh
-														 , _blitter.m_vb->decl
+														 , _blitter.m_vb->layoutHandle
 														 , _blitter.m_program
 														 , 0
 														 );
@@ -1512,13 +1512,13 @@ namespace bgfx { namespace mtl
 				numMrt = bx::uint32_max(1, fb.m_num);
 			}
 
-			const VertexLayout* decl = &_clearQuad.m_decl;
+			const VertexLayout* layout = &_clearQuad.m_layout;
 			const PipelineStateMtl* pso = getPipelineState(
 				  state
 				, 0
 				, fbh
 				, 1
-				, &decl
+				, &layout
 				, _clearQuad.m_program[numMrt-1]
 				, 0
 				);
@@ -1905,7 +1905,7 @@ namespace bgfx { namespace mtl
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
 			, uint8_t _numStreams
-			, const VertexLayout** _vertexDecls
+			, const VertexLayout** _layouts
 			, ProgramHandle _program
 			, uint8_t _numInstanceData
 			)
@@ -1947,7 +1947,7 @@ namespace bgfx { namespace mtl
 
 			for (uint8_t ii = 0; ii < _numStreams; ++ii)
 			{
-				murmur.add(_vertexDecls[ii]->m_hash);
+				murmur.add(_layouts[ii]->m_hash);
 			}
 
 			uint32_t hash = murmur.end();
@@ -2082,7 +2082,7 @@ namespace bgfx { namespace mtl
 				uint8_t stream = 0;
 				for (; stream < _numStreams; ++stream)
 				{
-					const VertexLayout& vertexDecl = *_vertexDecls[stream];
+					const VertexLayout& layout = *_layouts[stream];
 					bool streamUsed = false;
 					for (uint32_t ii = 0; Attrib::Count != program.m_used[ii]; ++ii)
 					{
@@ -2095,14 +2095,14 @@ namespace bgfx { namespace mtl
 						AttribType::Enum type;
 						bool normalized;
 						bool asInt;
-						vertexDecl.decode(attr, num, type, normalized, asInt);
+						layout.decode(attr, num, type, normalized, asInt);
 						BX_CHECK(num <= 4, "num must be <= 4");
 
-						if (UINT16_MAX != vertexDecl.m_attributes[attr])
+						if (UINT16_MAX != layout.m_attributes[attr])
 						{
 							vertexDesc.attributes[loc].format      = s_attribType[type][num-1][normalized?1:0];
 							vertexDesc.attributes[loc].bufferIndex = stream+1;
-							vertexDesc.attributes[loc].offset      = vertexDecl.m_offset[attr];
+							vertexDesc.attributes[loc].offset      = layout.m_offset[attr];
 
 							BX_TRACE("attrib: %s format: %d offset: %d", s_attribName[attr], (int)vertexDesc.attributes[loc].format, (int)vertexDesc.attributes[loc].offset);
 
@@ -2111,7 +2111,7 @@ namespace bgfx { namespace mtl
 						}
 					}
 					if (streamUsed) {
-						vertexDesc.layouts[stream+1].stride       = vertexDecl.getStride();
+						vertexDesc.layouts[stream+1].stride       = layout.getStride();
 						vertexDesc.layouts[stream+1].stepFunction = MTLVertexStepFunctionPerVertex;
 					}
 				}
@@ -2166,18 +2166,18 @@ namespace bgfx { namespace mtl
 			  uint64_t _state
 			, uint32_t _rgba
 			, FrameBufferHandle _fbh
-			, VertexLayoutHandle _declHandle
+			, VertexLayoutHandle _layoutHandle
 			, ProgramHandle _program
 			, uint16_t _numInstanceData
 			)
 		{
-			const VertexLayout* decl = &m_vertexDecls[_declHandle.idx];
+			const VertexLayout* layout = &m_vertexLayouts[_layoutHandle.idx];
 			return getPipelineState(
 				  _state
 				, _rgba
 				, _fbh
 				, 1
-				, &decl
+				, &layout
 				, _program
 				, _numInstanceData
 				);
@@ -2311,7 +2311,7 @@ namespace bgfx { namespace mtl
 		TextureMtl      m_textures[BGFX_CONFIG_MAX_TEXTURES];
 		FrameBufferMtl  m_mainFrameBuffer;
 		FrameBufferMtl  m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
-		VertexLayout    m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexLayout    m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		UniformRegistry m_uniformReg;
 		void*           m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
 
@@ -2576,11 +2576,11 @@ namespace bgfx { namespace mtl
 		}
 	}
 
-	void VertexBufferMtl::create(uint32_t _size, void* _data, VertexLayoutHandle _declHandle, uint16_t _flags)
+	void VertexBufferMtl::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 	{
-		m_decl = _declHandle;
-		uint16_t stride = isValid(_declHandle)
-			? s_renderMtl->m_vertexDecls[_declHandle.idx].m_stride
+		m_layoutHandle = _layoutHandle;
+		uint16_t stride = isValid(_layoutHandle)
+			? s_renderMtl->m_vertexLayouts[_layoutHandle.idx].m_stride
 			: 0
 			;
 
@@ -4275,7 +4275,7 @@ namespace bgfx { namespace mtl
 					currentState.m_instanceDataOffset     = draw.m_instanceDataOffset;
 					currentState.m_instanceDataStride     = draw.m_instanceDataStride;
 
-					const VertexLayout* decls[BGFX_CONFIG_MAX_VERTEX_STREAMS];
+					const VertexLayout* layouts[BGFX_CONFIG_MAX_VERTEX_STREAMS];
 
 					uint32_t numVertices = draw.m_numVertices;
 					uint8_t  numStreams  = 0;
@@ -4288,19 +4288,19 @@ namespace bgfx { namespace mtl
 						streamMask >>= ntz;
 						idx         += ntz;
 
-						currentState.m_stream[idx].m_decl        = draw.m_stream[idx].m_decl;
-						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
-						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+						currentState.m_stream[idx].m_layoutHandle   = draw.m_stream[idx].m_layoutHandle;
+						currentState.m_stream[idx].m_handle         = draw.m_stream[idx].m_handle;
+						currentState.m_stream[idx].m_startVertex    = draw.m_stream[idx].m_startVertex;
 
 						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 						const VertexBufferMtl& vb = m_vertexBuffers[handle];
-						const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
-							? draw.m_stream[idx].m_decl.idx
-							: vb.m_decl.idx;
-						const VertexLayout& vertexDecl = m_vertexDecls[decl];
-						const uint32_t stride = vertexDecl.m_stride;
+						const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
+							? draw.m_stream[idx].m_layoutHandle.idx
+							: vb.m_layoutHandle.idx;
+						const VertexLayout& layout = m_vertexLayouts[decl];
+						const uint32_t stride = layout.m_stride;
 
-						decls[numStreams] = &vertexDecl;
+						layouts[numStreams] = &layout;
 
 						numVertices = bx::uint32_min(UINT32_MAX == draw.m_numVertices
 							? vb.m_size/stride
@@ -4329,7 +4329,7 @@ namespace bgfx { namespace mtl
 								, draw.m_rgba
 								, fbh
 								, numStreams
-								, decls
+								, layouts
 								, currentProgram
 								, draw.m_instanceDataStride/16
 								);
@@ -4444,9 +4444,9 @@ namespace bgfx { namespace mtl
 					if (UINT32_MAX == numVertices)
 					{
 						const VertexBufferMtl& vb = m_vertexBuffers[currentState.m_stream[0].m_handle.idx];
-						uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[0].m_decl.idx : vb.m_decl.idx;
-						const VertexLayout& vertexDecl = m_vertexDecls[decl];
-						numVertices = vb.m_size/vertexDecl.m_stride;
+						uint16_t decl = !isValid(vb.m_layoutHandle) ? draw.m_stream[0].m_layoutHandle.idx : vb.m_layoutHandle.idx;
+						const VertexLayout& layout = m_vertexLayouts[decl];
+						numVertices = vb.m_size/layout.m_stride;
 					}
 
 					uint32_t numIndices        = 0;

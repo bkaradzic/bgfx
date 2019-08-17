@@ -304,16 +304,16 @@ namespace
 
 		static void init()
 		{
-			ms_decl
+			ms_layout
 				.begin()
 				.add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
 				.end();
 		}
 
-		static bgfx::VertexLayout ms_decl;
+		static bgfx::VertexLayout ms_layout;
 	};
 
-	bgfx::VertexLayout ScreenPosVertex::ms_decl;
+	bgfx::VertexLayout ScreenPosVertex::ms_layout;
 
 	// Renders a screen-space grid of triangles.
 	// Because of performance reasons, and because sky color is smooth, sky color is computed in vertex shader.
@@ -365,7 +365,7 @@ namespace
 				}
 			}
 
-			m_vbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(ScreenPosVertex) * verticalCount * horizontalCount), ScreenPosVertex::ms_decl);
+			m_vbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(ScreenPosVertex) * verticalCount * horizontalCount), ScreenPosVertex::ms_layout);
 			m_ibh = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(uint16_t) * k));
 
 			BX_FREE(allocator, indices);

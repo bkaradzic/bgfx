@@ -37,17 +37,17 @@ struct PosColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	}
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosColorVertex::ms_decl;
+bgfx::VertexLayout PosColorVertex::ms_layout;
 
 static PosColorVertex s_cubeVertices[8] =
 {
@@ -163,7 +163,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
+			, PosColorVertex::ms_layout
 			);
 
 		// Create static index buffer.

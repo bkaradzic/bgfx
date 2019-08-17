@@ -33,17 +33,17 @@ struct PosTexcoordVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
 			.end();
 	};
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosTexcoordVertex::ms_decl;
+bgfx::VertexLayout PosTexcoordVertex::ms_layout;
 
 static const float s_planeScale = 50.0f;
 
@@ -107,7 +107,7 @@ public:
 		// Create static vertex buffer.
 		m_vbh = bgfx::createVertexBuffer(
 			  bgfx::makeRef(s_vplaneVertices, sizeof(s_vplaneVertices))
-			, PosTexcoordVertex::ms_decl
+			, PosTexcoordVertex::ms_layout
 		);
 
 		m_ibh = bgfx::createIndexBuffer(
