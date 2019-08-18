@@ -2435,7 +2435,7 @@ BGFX_C_API void bgfx_encoder_set_transient_index_buffer(bgfx_encoder_t* _this, c
  * @param[in] _handle Vertex buffer.
  * @param[in] _startVertex First vertex to render.
  * @param[in] _numVertices Number of vertices to render.
- * @param[in] _layoutHandle VertexLayout handle for aliasing vertex buffer.
+ * @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
  *
  */
 BGFX_C_API void bgfx_encoder_set_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
@@ -2447,7 +2447,7 @@ BGFX_C_API void bgfx_encoder_set_vertex_buffer(bgfx_encoder_t* _this, uint8_t _s
  * @param[in] _handle Dynamic vertex buffer.
  * @param[in] _startVertex First vertex to render.
  * @param[in] _numVertices Number of vertices to render.
- * @param[in] _layoutHandle VertexLayout handle for aliasing vertex buffer.
+ * @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
  *
  */
 BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, bgfx_dynamic_vertex_buffer_handle_t _handle, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
@@ -2459,7 +2459,7 @@ BGFX_C_API void bgfx_encoder_set_dynamic_vertex_buffer(bgfx_encoder_t* _this, ui
  * @param[in] _tvb Transient vertex buffer.
  * @param[in] _startVertex First vertex to render.
  * @param[in] _numVertices Number of vertices to render.
- * @param[in] _layoutHandle VertexLayout handle for aliasing vertex buffer.
+ * @param[in] _layoutHandle Vertex layout for aliasing vertex buffer.
  *
  */
 BGFX_C_API void bgfx_encoder_set_transient_vertex_buffer(bgfx_encoder_t* _this, uint8_t _stream, const bgfx_transient_vertex_buffer_t* _tvb, uint32_t _startVertex, uint32_t _numVertices, bgfx_vertex_layout_handle_t _layoutHandle);
