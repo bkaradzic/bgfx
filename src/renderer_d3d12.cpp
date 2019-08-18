@@ -1954,7 +1954,7 @@ namespace bgfx { namespace d3d12
 				| BGFX_STATE_DEPTH_TEST_ALWAYS
 				;
 
-			const VertexLayout* layouts[1] = { &m_vertexLayouts[_blitter.m_vb->layout.idx] };
+			const VertexLayout* layouts[1] = { &m_vertexLayouts[_blitter.m_vb->layoutHandle.idx] };
 			ID3D12PipelineState* pso = getPipelineState(state
 				, packStencil(BGFX_STENCIL_DEFAULT, BGFX_STENCIL_DEFAULT)
 				, 1
@@ -1992,8 +1992,8 @@ namespace bgfx { namespace d3d12
 			scratchBuffer.allocSrv(srvHandle, texture);
 			m_commandList->SetGraphicsRootDescriptorTable(Rdt::SRV, srvHandle);
 
-			VertexBufferD3D12& vb  = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			const VertexLayout& layout = m_vertexLayouts[_blitter.m_vb->layout.idx];
+			VertexBufferD3D12&  vb     = m_vertexBuffers[_blitter.m_vb->handle.idx];
+			const VertexLayout& layout = m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			D3D12_VERTEX_BUFFER_VIEW viewDesc;
 			viewDesc.BufferLocation = vb.m_gpuVA;
 			viewDesc.StrideInBytes  = layout.m_stride;
@@ -3970,8 +3970,8 @@ namespace bgfx { namespace d3d12
 				VertexBufferD3D12& vb = s_renderD3D12->m_vertexBuffers[handle];
 				vb.setState(_commandList, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-				uint16_t decl = !isValid(vb.m_layout) ? stream.m_layout.idx : vb.m_layout.idx;
-				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[decl];
+				const uint16_t layoutIdx = !isValid(vb.m_layoutHandle) ? stream.m_layoutHandle.idx : vb.m_layoutHandle.idx;
+				const VertexLayout& layout = s_renderD3D12->m_vertexLayouts[layoutIdx];
 				uint32_t stride = layout.m_stride;
 
 				D3D12_VERTEX_BUFFER_VIEW& vbv = _vbv[numStreams];
@@ -4445,7 +4445,7 @@ namespace bgfx { namespace d3d12
 	void VertexBufferD3D12::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle, uint16_t _flags)
 	{
 		BufferD3D12::create(_size, _data, _flags, true);
-		m_layout = _layoutHandle;
+		m_layoutHandle = _layoutHandle;
 	}
 
 	void ShaderD3D12::create(const Memory* _mem)
@@ -6268,16 +6268,16 @@ namespace bgfx { namespace d3d12
 							streamMask >>= ntz;
 							idx         += ntz;
 
-							currentState.m_stream[idx].m_layout        = draw.m_stream[idx].m_layout;
-							currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
-							currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+							currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
+							currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
+							currentState.m_stream[idx].m_startVertex  = draw.m_stream[idx].m_startVertex;
 
 							uint16_t handle = draw.m_stream[idx].m_handle.idx;
 							const VertexBufferD3D12& vb = m_vertexBuffers[handle];
-							const uint16_t decl = isValid(draw.m_stream[idx].m_layout)
-								? draw.m_stream[idx].m_layout.idx
-								: vb.m_layout.idx;
-							const VertexLayout& layout = m_vertexLayouts[decl];
+							const uint16_t layoutIdx = isValid(draw.m_stream[idx].m_layoutHandle)
+								? draw.m_stream[idx].m_layoutHandle.idx
+								: vb.m_layoutHandle.idx;
+							const VertexLayout& layout = m_vertexLayouts[layoutIdx];
 
 							layouts[numStreams] = &layout;
 						}

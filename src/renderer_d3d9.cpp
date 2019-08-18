@@ -1373,7 +1373,7 @@ namespace bgfx { namespace d3d9
 			DX_CHECK(device->SetPixelShader(program.m_fsh->m_pixelShader) );
 
 			VertexBufferD3D9& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
-			VertexLayout& layout = m_vertexLayouts[_blitter.m_vb->layout.idx];
+			VertexLayout& layout = m_vertexLayouts[_blitter.m_vb->layoutHandle.idx];
 			DX_CHECK(device->SetStreamSource(0, vb.m_ptr, 0, layout.m_stride) );
 			setInputLayout(layout, 0);
 
@@ -2344,7 +2344,7 @@ namespace bgfx { namespace d3d9
 	void VertexBufferD3D9::create(uint32_t _size, void* _data, VertexLayoutHandle _layoutHandle)
 	{
 		m_size = _size;
-		m_layout = _layoutHandle;
+		m_layoutHandle = _layoutHandle;
 
 		uint32_t usage = D3DUSAGE_WRITEONLY;
 		D3DPOOL pool = s_renderD3D9->m_pool;
@@ -4237,16 +4237,16 @@ namespace bgfx { namespace d3d9
 						streamMask >>= ntz;
 						idx         += ntz;
 
-						currentState.m_stream[idx].m_layout        = draw.m_stream[idx].m_layout;
-						currentState.m_stream[idx].m_handle      = draw.m_stream[idx].m_handle;
-						currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
+						currentState.m_stream[idx].m_layoutHandle = draw.m_stream[idx].m_layoutHandle;
+						currentState.m_stream[idx].m_handle       = draw.m_stream[idx].m_handle;
+						currentState.m_stream[idx].m_startVertex  = draw.m_stream[idx].m_startVertex;
 
 						const uint16_t handle = draw.m_stream[idx].m_handle.idx;
 						const VertexBufferD3D9& vb = m_vertexBuffers[handle];
-						const uint16_t decl = isValid(draw.m_stream[idx].m_layout)
-							? draw.m_stream[idx].m_layout.idx
-							: vb.m_layout.idx;
-						const VertexLayout& layout = m_vertexLayouts[decl];
+						const uint16_t layoutIdx = isValid(draw.m_stream[idx].m_layoutHandle)
+							? draw.m_stream[idx].m_layoutHandle.idx
+							: vb.m_layoutHandle.idx;
+						const VertexLayout& layout = m_vertexLayouts[layoutIdx];
 						const uint32_t stride = layout.m_stride;
 
 						layouts[numStreams] = &layout;
