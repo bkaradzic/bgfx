@@ -1015,6 +1015,8 @@ VK_IMPORT_DEVICE
 					BX_TRACE("Create swapchain error: vkCreateImageView failed %d: %s.", result, getName(result));
 					return result;
 				}
+
+				m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 			}
 
 			m_needToRefreshSwapchain = false;
@@ -1031,6 +1033,7 @@ VK_IMPORT_DEVICE
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 			{
 				vkDestroy(m_backBufferColorImageView[ii]);
+				m_backBufferColorImageLayout[ii] = VK_IMAGE_LAYOUT_UNDEFINED;
 			}
 			vkDestroy(m_swapchain);
 		}
@@ -1078,15 +1081,6 @@ VK_IMPORT_DEVICE
 		void initSwapchainImageLayout()
 		{
 			VkCommandBuffer commandBuffer = beginNewCommand();
-			VkRenderPassBeginInfo rpbi;
-			rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			rpbi.pNext = NULL;
-			rpbi.renderPass = m_renderPass;
-			rpbi.renderArea.offset.x = 0;
-			rpbi.renderArea.offset.y = 0;
-			rpbi.renderArea.extent = m_sci.imageExtent;
-			rpbi.clearValueCount = 0;
-			rpbi.pClearValues = NULL;
 
 			setImageMemoryBarrier(
 				  commandBuffer
@@ -1097,33 +1091,6 @@ VK_IMPORT_DEVICE
 				, 1
 				, 1
 				);
-
-			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
-			{
-				setImageMemoryBarrier(
-					  commandBuffer
-					, m_backBufferColorImage[ii]
-					, VK_IMAGE_ASPECT_COLOR_BIT
-					, VK_IMAGE_LAYOUT_UNDEFINED
-					, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-					, 1
-					, 1
-					);
-
-				rpbi.framebuffer = m_backBufferColor[ii];
-				vkCmdBeginRenderPass(commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-				vkCmdEndRenderPass(commandBuffer);
-
-				setImageMemoryBarrier(
-					  commandBuffer
-					, m_backBufferColorImage[ii]
-					, VK_IMAGE_ASPECT_COLOR_BIT
-					, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-					, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-					, 1
-					, 1
-					);
-			}
 
 			m_backBufferColorIdx = 0;
 			submitCommandAndWait(commandBuffer);
@@ -1420,6 +1387,7 @@ VK_IMPORT_INSTANCE
 				g_caps.limits.maxVertexStreams   = BGFX_CONFIG_MAX_VERTEX_STREAMS;
 
 				vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_deviceFeatures);
+				m_deviceFeatures.robustBufferAccess = VK_FALSE;
 
 				{
 					struct ImageTest
@@ -2339,7 +2307,7 @@ VK_IMPORT_DEVICE
 				pi.pImageIndices  = &m_backBufferColorIdx;
 				pi.pResults       = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
-				if (VK_ERROR_OUT_OF_DATE_KHR == result)
+				if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
 				{
 					m_needToRefreshSwapchain = true;
 				}
@@ -4083,6 +4051,7 @@ VK_IMPORT_DEVICE
 		VkSurfaceKHR     m_surface;
 		VkSwapchainKHR   m_swapchain;
 		uint32_t         m_numSwapchainImages;
+		VkImageLayout    m_backBufferColorImageLayout[NUM_SWAPCHAIN_IMAGE];
 		VkImage          m_backBufferColorImage[NUM_SWAPCHAIN_IMAGE];
 		VkImageView      m_backBufferColorImageView[NUM_SWAPCHAIN_IMAGE];
 		VkFramebuffer    m_backBufferColor[NUM_SWAPCHAIN_IMAGE];
@@ -5764,7 +5733,7 @@ VK_DESTROY
 				, VK_NULL_HANDLE
 				, &m_backBufferColorIdx
 				);
-		if (VK_ERROR_OUT_OF_DATE_KHR == result)
+		if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
 		{
 			m_needToRefreshSwapchain = true;
 			return;
@@ -5799,9 +5768,10 @@ VK_DESTROY
 		setImageMemoryBarrier(m_commandBuffer
 			, m_backBufferColorImage[m_backBufferColorIdx]
 			, VK_IMAGE_ASPECT_COLOR_BIT
-			, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+			, m_backBufferColorImageLayout[m_backBufferColorIdx]
 			, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 			, 1, 1);
+		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkRenderPassBeginInfo rpbi;
 		rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -6661,9 +6631,10 @@ BX_UNUSED(presentMin, presentMax);
 		setImageMemoryBarrier(m_commandBuffer
 			, m_backBufferColorImage[m_backBufferColorIdx]
 			, VK_IMAGE_ASPECT_COLOR_BIT
-			, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			, m_backBufferColorImageLayout[m_backBufferColorIdx]
 			, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 			, 1, 1);
+		m_backBufferColorImageLayout[m_backBufferColorIdx] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		VK_CHECK(vkEndCommandBuffer(m_commandBuffer) );
 
