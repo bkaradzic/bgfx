@@ -535,8 +535,12 @@ VK_IMPORT_DEVICE
 			, _userData
 			, s_debugReportObjectType
 		);
-		if (!bx::strFind(_message, "PointSizeMissing").isEmpty())
+		if (!bx::strFind(_message, "PointSizeMissing").isEmpty()
+		||  !bx::strFind(_message, "SwapchainTooManyImages").isEmpty()
+		||  !bx::strFind(_message, "SwapchainImageNotAcquired").isEmpty())
+		{
 			return VK_FALSE;
+		}
 		BX_TRACE("%c%c%c%c%c %19s, %s, %d: %s"
 			, 0 != (_flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT        ) ? 'I' : '-'
 			, 0 != (_flags & VK_DEBUG_REPORT_WARNING_BIT_EXT            ) ? 'W' : '-'
@@ -865,6 +869,264 @@ VK_IMPORT_DEVICE
 
 		~RendererContextVK()
 		{
+		}
+
+		VkResult createSwapchain()
+		{
+			VkResult result = VK_SUCCESS;
+			result = vkCreateSwapchainKHR(m_device, &m_sci, m_allocatorCb, &m_swapchain);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: vkCreateSwapchainKHR failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, NULL);
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			if (m_numSwapchainImages < m_sci.minImageCount)
+			{
+				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR: numSwapchainImages %d < minImageCount %d."
+					, m_numSwapchainImages
+					, m_sci.minImageCount
+				);
+				return VK_ERROR_INITIALIZATION_FAILED;
+			}
+
+			result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
+			if (VK_SUCCESS != result && VK_INCOMPLETE != result)
+			{
+				BX_TRACE("Create swapchain error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			VkImageCreateInfo ici;
+			ici.sType     = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			ici.pNext     = NULL;
+			ici.flags     = 0;
+			ici.imageType = VK_IMAGE_TYPE_2D;
+			ici.format    = m_backBufferDepthStencilFormat;
+			ici.extent.width  = m_sci.imageExtent.width;
+			ici.extent.height = m_sci.imageExtent.height;
+			ici.extent.depth  = 1;
+			ici.mipLevels     = 1;
+			ici.arrayLayers   = 1;
+			ici.samples       = VK_SAMPLE_COUNT_1_BIT;
+			ici.tiling        = VK_IMAGE_TILING_OPTIMAL;
+			ici.usage = 0
+				| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+				| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+				;
+			ici.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+			ici.queueFamilyIndexCount = 0; //m_sci.queueFamilyIndexCount;
+			ici.pQueueFamilyIndices   = NULL; //m_sci.pQueueFamilyIndices;
+			ici.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
+			result = vkCreateImage(m_device, &ici, m_allocatorCb, &m_backBufferDepthStencilImage);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: vkCreateImage failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			VkMemoryRequirements mr;
+			vkGetImageMemoryRequirements(m_device, m_backBufferDepthStencilImage, &mr);
+
+			VkMemoryAllocateInfo ma;
+			ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			ma.pNext = NULL;
+			ma.allocationSize = mr.size;
+			ma.memoryTypeIndex = selectMemoryType(mr.memoryTypeBits
+				, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+			);
+			result = vkAllocateMemory(m_device
+				, &ma
+				, m_allocatorCb
+				, &m_backBufferDepthStencilMemory
+			);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: vkAllocateMemory failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			result = vkBindImageMemory(m_device, m_backBufferDepthStencilImage, m_backBufferDepthStencilMemory, 0);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: vkBindImageMemory failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			VkImageViewCreateInfo ivci;
+			ivci.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			ivci.pNext    = NULL;
+			ivci.flags    = 0;
+			ivci.image    = m_backBufferDepthStencilImage;
+			ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			ivci.format   = m_backBufferDepthStencilFormat;
+			ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			ivci.subresourceRange.aspectMask = 0
+				| VK_IMAGE_ASPECT_DEPTH_BIT
+				| VK_IMAGE_ASPECT_STENCIL_BIT
+				;
+			ivci.subresourceRange.baseMipLevel   = 0;
+			ivci.subresourceRange.levelCount     = 1;
+			ivci.subresourceRange.baseArrayLayer = 0;
+			ivci.subresourceRange.layerCount     = 1;
+			result = vkCreateImageView(m_device, &ivci, m_allocatorCb, &m_backBufferDepthStencilImageView);
+
+			if (VK_SUCCESS != result)
+			{
+				BX_TRACE("Create swapchain error: vkCreateImageView failed %d: %s.", result, getName(result));
+				return result;
+			}
+
+			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+			{
+				ivci.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				ivci.pNext    = NULL;
+				ivci.flags    = 0;
+				ivci.image    = m_backBufferColorImage[ii];
+				ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+				ivci.format   = m_sci.imageFormat;
+				ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+				ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+				ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+				ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+				ivci.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+				ivci.subresourceRange.baseMipLevel   = 0;
+				ivci.subresourceRange.levelCount     = 1;
+				ivci.subresourceRange.baseArrayLayer = 0;
+				ivci.subresourceRange.layerCount     = 1;
+
+				result = vkCreateImageView(m_device, &ivci, m_allocatorCb, &m_backBufferColorImageView[ii]);
+
+				if (VK_SUCCESS != result)
+				{
+					BX_TRACE("Create swapchain error: vkCreateImageView failed %d: %s.", result, getName(result));
+					return result;
+				}
+			}
+
+			m_needToRefreshSwapchain = false;
+
+			return result;
+		}
+
+		void releaseSwapchain()
+		{
+			VK_CHECK(vkDeviceWaitIdle(m_device) );
+			vkFreeMemory(m_device, m_backBufferDepthStencilMemory, m_allocatorCb);
+			vkDestroy(m_backBufferDepthStencilImageView);
+			vkDestroy(m_backBufferDepthStencilImage);
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
+			{
+				vkDestroy(m_backBufferColorImageView[ii]);
+			}
+			vkDestroy(m_swapchain);
+		}
+
+		VkResult createSwapchainFramebuffer()
+		{
+			VkResult result = VK_SUCCESS;
+			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+			{
+				::VkImageView attachments[] =
+				{
+					m_backBufferColorImageView[ii],
+					m_backBufferDepthStencilImageView,
+				};
+
+				VkFramebufferCreateInfo fci;
+				fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+				fci.pNext = NULL;
+				fci.flags = 0;
+				fci.renderPass = m_renderPass;
+				fci.attachmentCount = BX_COUNTOF(attachments);
+				fci.pAttachments = attachments;
+				fci.width = m_sci.imageExtent.width;
+				fci.height = m_sci.imageExtent.height;
+				fci.layers = 1;
+
+				result = vkCreateFramebuffer(m_device, &fci, m_allocatorCb, &m_backBufferColor[ii]);
+
+				if (VK_SUCCESS != result)
+				{
+					return result;
+				}
+			}
+			return result;
+		}
+
+		void releaseSwapchainFramebuffer()
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
+			{
+				vkDestroy(m_backBufferColor[ii]);
+			}
+		}
+
+		void initSwapchainImageLayout()
+		{
+			VkCommandBuffer commandBuffer = beginNewCommand();
+			VkRenderPassBeginInfo rpbi;
+			rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			rpbi.pNext = NULL;
+			rpbi.renderPass = m_renderPass;
+			rpbi.renderArea.offset.x = 0;
+			rpbi.renderArea.offset.y = 0;
+			rpbi.renderArea.extent = m_sci.imageExtent;
+			rpbi.clearValueCount = 0;
+			rpbi.pClearValues = NULL;
+
+			setImageMemoryBarrier(
+				  commandBuffer
+				, m_backBufferDepthStencilImage
+				, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+				, VK_IMAGE_LAYOUT_UNDEFINED
+				, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+				, 1
+				, 1
+				);
+
+			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+			{
+				setImageMemoryBarrier(
+					  commandBuffer
+					, m_backBufferColorImage[ii]
+					, VK_IMAGE_ASPECT_COLOR_BIT
+					, VK_IMAGE_LAYOUT_UNDEFINED
+					, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+					, 1
+					, 1
+					);
+
+				rpbi.framebuffer = m_backBufferColor[ii];
+				vkCmdBeginRenderPass(commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
+				vkCmdEndRenderPass(commandBuffer);
+
+				setImageMemoryBarrier(
+					  commandBuffer
+					, m_backBufferColorImage[ii]
+					, VK_IMAGE_ASPECT_COLOR_BIT
+					, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+					, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+					, 1
+					, 1
+					);
+			}
+
+			m_backBufferColorIdx = 0;
+			submitCommandAndWait(commandBuffer);
 		}
 
 		bool init(const Init& _init)
@@ -1630,130 +1892,19 @@ VK_IMPORT_DEVICE
 				m_sci.presentMode    = presentModes[presentModeIdx];
 				m_sci.clipped        = VK_TRUE;
 				m_sci.oldSwapchain   = VK_NULL_HANDLE;
-				result = vkCreateSwapchainKHR(m_device, &m_sci, m_allocatorCb, &m_swapchain);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreateSwapchainKHR failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, NULL);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				if (m_numSwapchainImages < m_sci.minImageCount)
-				{
-					BX_TRACE("Init error: vkGetSwapchainImagesKHR: numSwapchainImages %d, minImageCount %d."
-						, m_numSwapchainImages
-						, m_sci.minImageCount
-						);
-					goto error;
-				}
-
-//				numSwapchainImages = m_sci.minImageCount;
-
-				result = vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_numSwapchainImages, &m_backBufferColorImage[0]);
-				if (VK_SUCCESS != result && VK_INCOMPLETE != result)
-				{
-					BX_TRACE("Init error: vkGetSwapchainImagesKHR failed %d: %s.", result, getName(result) );
-					goto error;
-				}
 
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 				{
 					m_backBufferColorImageView[ii] = VK_NULL_HANDLE;
+					m_backBufferColorImage[ii]     = VK_NULL_HANDLE;
 					m_backBufferColor[ii]          = VK_NULL_HANDLE;
 					m_presentDone[ii]              = VK_NULL_HANDLE;
 				}
 
-				VkImageCreateInfo ici;
-				ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-				ici.pNext = NULL;
-				ici.flags = 0;
-				ici.imageType = VK_IMAGE_TYPE_2D;
-				ici.format    = m_backBufferDepthStencilFormat;
-				ici.extent.width  = m_sci.imageExtent.width;
-				ici.extent.height = m_sci.imageExtent.height;
-				ici.extent.depth  = 1;
-				ici.mipLevels   = 1;
-				ici.arrayLayers = 1;
-				ici.samples = VK_SAMPLE_COUNT_1_BIT;
-				ici.tiling  = VK_IMAGE_TILING_OPTIMAL;
-				ici.usage   = 0
-					| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-					| VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-					;
-				ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-				ici.queueFamilyIndexCount = 0; //m_sci.queueFamilyIndexCount;
-				ici.pQueueFamilyIndices   = NULL; //m_sci.pQueueFamilyIndices;
-				ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				result = vkCreateImage(m_device, &ici, m_allocatorCb, &m_backBufferDepthStencilImage);
-
+				result = createSwapchain();
 				if (VK_SUCCESS != result)
 				{
-					BX_TRACE("Init error: vkCreateImage failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				VkMemoryRequirements mr;
-				vkGetImageMemoryRequirements(m_device, m_backBufferDepthStencilImage, &mr);
-
-				VkMemoryAllocateInfo ma;
-				ma.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-				ma.pNext = NULL;
-				ma.allocationSize  = mr.size;
-				ma.memoryTypeIndex = selectMemoryType(mr.memoryTypeBits
-					, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-					);
-				result = vkAllocateMemory(m_device
-					, &ma
-					, m_allocatorCb
-					, &m_backBufferDepthStencilMemory
-					);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkAllocateMemory failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				result = vkBindImageMemory(m_device, m_backBufferDepthStencilImage, m_backBufferDepthStencilMemory, 0);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkBindImageMemory failed %d: %s.", result, getName(result) );
-					goto error;
-				}
-
-				VkImageViewCreateInfo ivci;
-				ivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				ivci.pNext = NULL;
-				ivci.flags = 0;
-				ivci.image    = m_backBufferDepthStencilImage;
-				ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-				ivci.format   = m_backBufferDepthStencilFormat;
-				ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-				ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-				ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-				ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-				ivci.subresourceRange.aspectMask = 0
-					| VK_IMAGE_ASPECT_DEPTH_BIT
-					| VK_IMAGE_ASPECT_STENCIL_BIT
-					;
-				ivci.subresourceRange.baseMipLevel   = 0;
-				ivci.subresourceRange.levelCount     = 1;
-				ivci.subresourceRange.baseArrayLayer = 0;
-				ivci.subresourceRange.layerCount     = 1;
-				result = vkCreateImageView(m_device, &ivci, m_allocatorCb, &m_backBufferDepthStencilImageView);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreateImageView failed %d: %s.", result, getName(result) );
+					BX_TRACE("Init error: creating swapchain and image view failed %d: %s", result, getName(result));
 					goto error;
 				}
 
@@ -1764,40 +1915,12 @@ VK_IMPORT_DEVICE
 
 				for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
 				{
-					ivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					ivci.pNext = NULL;
-					ivci.flags = 0;
-					ivci.image    = m_backBufferColorImage[ii];
-					ivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-					ivci.format   = m_sci.imageFormat;
-					ivci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-					ivci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-					ivci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-					ivci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-					ivci.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-					ivci.subresourceRange.baseMipLevel   = 0;
-					ivci.subresourceRange.levelCount     = 1;
-					ivci.subresourceRange.baseArrayLayer = 0;
-					ivci.subresourceRange.layerCount     = 1;
-
-					result = vkCreateImageView(m_device, &ivci, m_allocatorCb, &m_backBufferColorImageView[ii]);
-
-					if (VK_SUCCESS != result)
-					{
-						BX_TRACE("Init error: vkCreateImageView failed %d: %s.", result, getName(result) );
-						goto error;
-					}
-
-
 					result = vkCreateSemaphore(m_device, &sci, m_allocatorCb, &m_presentDone[ii]);
-
 					if (VK_SUCCESS != result)
 					{
 						BX_TRACE("Init error: vkCreateSemaphore failed %d: %s.", result, getName(result) );
 						goto error;
 					}
-
-					sci.flags = 0;
 				}
 			}
 
@@ -1871,32 +1994,11 @@ VK_IMPORT_DEVICE
 			errorState = ErrorState::RenderPassCreated;
 
 			// framebuffer creation
-			for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
+			result = createSwapchainFramebuffer();
+			if (VK_SUCCESS != result)
 			{
-				::VkImageView attachments[] =
-				{
-					m_backBufferColorImageView[ii],
-					m_backBufferDepthStencilImageView,
-				};
-
-				VkFramebufferCreateInfo fci;
-				fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				fci.pNext = NULL;
-				fci.flags = 0;
-				fci.renderPass      = m_renderPass;
-				fci.attachmentCount = BX_COUNTOF(attachments);
-				fci.pAttachments    = attachments;
-				fci.width  = m_sci.imageExtent.width;
-				fci.height = m_sci.imageExtent.height;
-				fci.layers = 1;
-
-				result = vkCreateFramebuffer(m_device, &fci, m_allocatorCb, &m_backBufferColor[ii]);
-
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result) );
-					goto error;
-				}
+				BX_TRACE("Init error: vkCreateFramebuffer failed %d: %s.", result, getName(result));
+				goto error;
 			}
 
 			errorState = ErrorState::FrameBufferCreated;
@@ -1945,56 +2047,7 @@ VK_IMPORT_DEVICE
 					goto error;
 				}
 
-				VkCommandBuffer commandBuffer = beginNewCommand();
-				VkRenderPassBeginInfo rpbi;
-				rpbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				rpbi.pNext = NULL;
-				rpbi.renderPass  = m_renderPass;
-				rpbi.renderArea.offset.x = 0;
-				rpbi.renderArea.offset.y = 0;
-				rpbi.renderArea.extent = m_sci.imageExtent;
-				rpbi.clearValueCount = 0;
-				rpbi.pClearValues = NULL;
-
-				setImageMemoryBarrier(
-					  commandBuffer
-					, m_backBufferDepthStencilImage
-					, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-					, VK_IMAGE_LAYOUT_UNDEFINED
-					, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-					, 1
-					, 1
-					);
-
-				for (uint32_t ii = 0; ii < m_numSwapchainImages; ++ii)
-				{
-					setImageMemoryBarrier(
-						  commandBuffer
-						, m_backBufferColorImage[ii]
-						, VK_IMAGE_ASPECT_COLOR_BIT
-						, VK_IMAGE_LAYOUT_UNDEFINED
-						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-						, 1
-						, 1
-						);
-
-					rpbi.framebuffer = m_backBufferColor[ii];
-					vkCmdBeginRenderPass(commandBuffer, &rpbi, VK_SUBPASS_CONTENTS_INLINE);
-					vkCmdEndRenderPass(commandBuffer);
-
-					setImageMemoryBarrier(
-						  commandBuffer
-						, m_backBufferColorImage[ii]
-						, VK_IMAGE_ASPECT_COLOR_BIT
-						, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-						, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-						, 1
-						, 1
-						);
-				}
-
-				m_backBufferColorIdx = 0;
-				submitCommandAndWait(commandBuffer);
+				initSwapchainImageLayout();
 
 //				kick();
 //				finishAll();
@@ -2135,13 +2188,7 @@ VK_IMPORT_DEVICE
 				BX_FALLTHROUGH;
 
 			case ErrorState::FrameBufferCreated:
-				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
-				{
-					if (VK_NULL_HANDLE != m_backBufferColor[ii])
-					{
-						vkDestroy(m_backBufferColor[ii]);
-					}
-				}
+				releaseSwapchainFramebuffer();
 				BX_FALLTHROUGH;
 
 			case ErrorState::RenderPassCreated:
@@ -2151,17 +2198,9 @@ VK_IMPORT_DEVICE
 			case ErrorState::SwapchainCreated:
 				for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 				{
-					if (VK_NULL_HANDLE != m_backBufferColorImageView[ii])
-					{
-						vkDestroy(m_backBufferColorImageView[ii]);
-					}
-
-					if (VK_NULL_HANDLE != m_presentDone[ii])
-					{
-						vkDestroy(m_presentDone[ii]);
-					}
+					vkDestroy(m_presentDone[ii]);
 				}
-				vkDestroy(m_swapchain);
+				releaseSwapchain();
 				BX_FALLTHROUGH;
 
 			case ErrorState::SurfaceCreated:
@@ -2247,26 +2286,10 @@ VK_IMPORT_DEVICE
 
 			for (uint32_t ii = 0; ii < BX_COUNTOF(m_backBufferColorImageView); ++ii)
 			{
-				if (VK_NULL_HANDLE != m_backBufferColorImageView[ii])
-				{
-					vkDestroy(m_backBufferColorImageView[ii]);
-				}
-
-				if (VK_NULL_HANDLE != m_backBufferColor[ii])
-				{
-					vkDestroy(m_backBufferColor[ii]);
-				}
-
-				if (VK_NULL_HANDLE != m_presentDone[ii])
-				{
-					vkDestroy(m_presentDone[ii]);
-				}
+				vkDestroy(m_presentDone[ii]);
 			}
-			vkDestroy(m_swapchain);
-
-			vkDestroy(m_backBufferDepthStencilImageView);
-			vkFreeMemory(m_device, m_backBufferDepthStencilMemory, m_allocatorCb);
-			vkDestroy(m_backBufferDepthStencilImage);
+			releaseSwapchainFramebuffer();
+			releaseSwapchain();
 
 			vkDestroySurfaceKHR(m_instance, m_surface, m_allocatorCb);
 
@@ -2315,7 +2338,15 @@ VK_IMPORT_DEVICE
 				pi.pSwapchains    = &m_swapchain;
 				pi.pImageIndices  = &m_backBufferColorIdx;
 				pi.pResults       = NULL;
-				VK_CHECK(vkQueuePresentKHR(m_queueGraphics, &pi) );
+				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
+				if (VK_ERROR_OUT_OF_DATE_KHR == result)
+				{
+					m_needToRefreshSwapchain = true;
+				}
+				else
+				{
+					VK_CHECK(result);
+				}
 			}
 		}
 
@@ -2748,6 +2779,29 @@ VK_IMPORT_DEVICE
 				m_textVideoMem.resize(false, _resolution.width, _resolution.height);
 				m_textVideoMem.clear();
 
+				if (resize || m_needToRefreshSwapchain)
+				{
+					VK_CHECK(vkDeviceWaitIdle(m_device) );
+					releaseSwapchainFramebuffer();
+					releaseSwapchain();
+
+					VkSurfaceCapabilitiesKHR surfaceCapabilities;
+					VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities) );
+
+					m_sci.imageExtent.width  = bx::clamp<uint32_t>(m_resolution.width
+						, surfaceCapabilities.minImageExtent.width
+						, surfaceCapabilities.maxImageExtent.width
+						);
+					m_sci.imageExtent.height = bx::clamp<uint32_t>(m_resolution.height
+						, surfaceCapabilities.minImageExtent.height
+						, surfaceCapabilities.maxImageExtent.height
+						);
+
+					VK_CHECK(createSwapchain() );
+					VK_CHECK(createSwapchainFramebuffer() );
+					initSwapchainImageLayout();
+					BX_TRACE("refreshed swapchain: %d x %d", m_sci.imageExtent.width, m_sci.imageExtent.height);
+				}
 #if 1
 				BX_UNUSED(resize);
 #else
@@ -4034,6 +4088,7 @@ VK_IMPORT_DEVICE
 		VkFramebuffer    m_backBufferColor[NUM_SWAPCHAIN_IMAGE];
 		VkCommandBuffer  m_commandBuffers[NUM_SWAPCHAIN_IMAGE];
 		VkCommandBuffer  m_commandBuffer;
+		bool             m_needToRefreshSwapchain;
 
 		VkFormat         m_backBufferDepthStencilFormat;
 		VkDeviceMemory   m_backBufferDepthStencilMemory;
@@ -5702,13 +5757,22 @@ VK_DESTROY
 		uint32_t statsKeyType[2] = {};
 
 		VkSemaphore renderWait = m_presentDone[m_backBufferColorIdx];
-		VK_CHECK(vkAcquireNextImageKHR(m_device
+		VkResult result = vkAcquireNextImageKHR(m_device
 				, m_swapchain
 				, UINT64_MAX
 				, renderWait
 				, VK_NULL_HANDLE
 				, &m_backBufferColorIdx
-				) );
+				);
+		if (VK_ERROR_OUT_OF_DATE_KHR == result)
+		{
+			m_needToRefreshSwapchain = true;
+			return;
+		}
+		else
+		{
+			VK_CHECK(result);
+		}
 
 //		const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
 //		const uint64_t f1 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_INV_FACTOR, BGFX_STATE_BLEND_INV_FACTOR);
