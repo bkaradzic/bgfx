@@ -32,10 +32,15 @@ namespace ImGui
 				}
 				else if (0 != ImStricmp(item->d_name, ".") )
 				{
+#ifndef __sun
 					if (item->d_type & DT_DIR)
-					{
 						FileList.push_back(ImFileInfo(item->d_name, -1) );
-					}
+#else
+					struct stat st;
+					stat(item->d_name, &st);
+					if (S_ISDIR(st.st_mode))
+						FileList.push_back(ImFileInfo(item->d_name, -1) );
+#endif
 					else
 					{
 						struct stat statbuf;
