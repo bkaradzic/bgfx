@@ -3069,10 +3069,15 @@ namespace bgfx { namespace mtl
 	void SwapChainMtl::resize(FrameBufferMtl &_frameBuffer, uint32_t _width, uint32_t _height, uint32_t _flags)
 	{
 		const int32_t sampleCount = s_msaa[(_flags&BGFX_RESET_MSAA_MASK)>>BGFX_RESET_MSAA_SHIFT];
-
-#if BX_PLATFORM_OSX > 101300
-		m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
-#endif // BX_PLATFORM_OSX > 101300
+		
+#if BX_PLATFORM_OSX
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+		if (@available(macOS 10.13, *))
+		{
+			m_metalLayer.displaySyncEnabled = 0 != (_flags&BGFX_RESET_VSYNC);
+		}
+#endif // __MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#endif // BX_PLATFORM_OSX
 
 		m_metalLayer.drawableSize = CGSizeMake(_width, _height);
 		m_metalLayer.pixelFormat = (_flags & BGFX_RESET_SRGB_BACKBUFFER)
