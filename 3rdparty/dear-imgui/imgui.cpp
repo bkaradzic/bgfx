@@ -176,7 +176,7 @@ CODE
  - When using Dear ImGui, your programming IDE is your friend: follow the declaration of variables, functions and types to find comments about them.
  - Dear ImGui never touches or knows about your GPU state. The only function that knows about GPU is the draw function that you provide.
    Effectively it means you can create widgets at any time in your code, regardless of considerations of being in "update" vs "render"
-   phases of your own application. All rendering informatioe are stored into command-lists that you will retrieve after calling ImGui::Render().
+   phases of your own application. All rendering information are stored into command-lists that you will retrieve after calling ImGui::Render().
  - Refer to the bindings and demo applications in the examples/ folder for instruction on how to setup your code.
  - If you are running over a standard OS with a common graphics API, you should be able to use unmodified imgui_impl_*** files from the examples/ folder.
 
@@ -638,7 +638,7 @@ CODE
     - In the examples/ bindings, for each graphics API binding we decided on a type that is likely to be a good representation for specifying
       an image from the end-user perspective. This is what the _examples_ rendering functions are using:
 
-         OpenGL:     ImTextureID = GLuint                       (see ImGui_ImplGlfwGL3_RenderDrawData() function in imgui_impl_glfw_gl3.cpp)
+         OpenGL:     ImTextureID = GLuint                       (see ImGui_ImplOpenGL3_RenderDrawData() function in imgui_impl_opengl3.cpp)
          DirectX9:   ImTextureID = LPDIRECT3DTEXTURE9           (see ImGui_ImplDX9_RenderDrawData()     function in imgui_impl_dx9.cpp)
          DirectX11:  ImTextureID = ID3D11ShaderResourceView*    (see ImGui_ImplDX11_RenderDrawData()    function in imgui_impl_dx11.cpp)
          DirectX12:  ImTextureID = D3D12_GPU_DESCRIPTOR_HANDLE  (see ImGui_ImplDX12_RenderDrawData()    function in imgui_impl_dx12.cpp)
