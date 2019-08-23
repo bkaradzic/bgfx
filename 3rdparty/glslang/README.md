@@ -155,13 +155,36 @@ changes are quite infrequent. For windows you can get binaries from
 The command to rebuild is:
 
 ```bash
+m4 -P MachineIndependent/glslang.m4 > MachineIndependent/glslang.y
 bison --defines=MachineIndependent/glslang_tab.cpp.h
       -t MachineIndependent/glslang.y
       -o MachineIndependent/glslang_tab.cpp
 ```
 
-The above command is also available in the bash script at
-`glslang/updateGrammar`.
+The above commands are also available in the bash script in `updateGrammar`,
+when executed from the glslang subdirectory of the glslang repository.
+With no arguments it builds the full grammar, and with a "web" argument,
+the web grammar subset (see more about the web subset in the next section).
+
+### WASM for the the Web
+
+Use the steps in [Build Steps](#build-steps), which following notes/exceptions:
+* For building the web subset of core glslang:
+  + `m4` also needs a `-DGLSLANG_WEB` argument, or simply execute `updateGrammar web` from the glslang subdirectory
+  + turn off the CMAKE options for `BUILD_TESTING`, `ENABLE_OPT`, and `INSTALL_GTEST`,
+    while turning on `ENABLE_GLSLANG_WEB`
+* `emsdk` needs to be present in your executable search path, *PATH* for
+  Bash-like enivironments
+  + Instructions located
+    [here](https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install)
+* Do not checkout SPIRV-Tools into `External`
+  + Does not work correctly with emscripten out of the box and we don't want it
+    in the build anyway. *TBD* Have build ignore SPIRV-Tools for web build
+* Wrap call to `cmake` using `emconfigure` with ENABLE_GLSLANG_WEB=ON:
+  + e.g. For Linux, `emconfigure cmake -DCMAKE_BUILD_TYPE=Release
+    -DENABLE_GLSLANG_WEB=ON -DCMAKE_INSTALL_PREFIX="$(pwd)/install" ..`
+* To get a 'true' minimized build, make sure to use `brotli` to compress the .js
+  and .wasm files
 
 Testing
 -------

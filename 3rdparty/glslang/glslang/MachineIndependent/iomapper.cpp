@@ -33,6 +33,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
+#ifndef GLSLANG_WEB
+
 #include "../Include/Common.h"
 #include "../Include/InfoSink.h"
 
@@ -75,7 +77,7 @@ public:
             target = &inputList;
         else if (base->getQualifier().storage == EvqVaryingOut)
             target = &outputList;
-        else if (base->getQualifier().isUniformOrBuffer() && !base->getQualifier().layoutPushConstant)
+        else if (base->getQualifier().isUniformOrBuffer() && !base->getQualifier().isPushConstant())
             target = &uniformList;
         if (target) {
             TVarEntryInfo ent = {base->getId(), base, ! traverseAll};
@@ -355,7 +357,7 @@ struct TSymbolValidater
                 }
                 return;
             }
-        } else if (base->getQualifier().isUniformOrBuffer() && ! base->getQualifier().layoutPushConstant) {
+        } else if (base->getQualifier().isUniformOrBuffer() && ! base->getQualifier().isPushConstant()) {
             // validate uniform type;
             for (int i = 0; i < EShLangCount; i++) {
                 if (i != currentStage && outVarMaps[i] != nullptr) {
@@ -475,7 +477,7 @@ int TDefaultIoResolverBase::resolveUniformLocation(EShLanguage /*stage*/, TVarEn
     }
     // no locations added if already present, a built-in variable, a block, or an opaque
     if (type.getQualifier().hasLocation() || type.isBuiltIn() || type.getBasicType() == EbtBlock ||
-        type.getBasicType() == EbtAtomicUint || (type.containsOpaque() && intermediate.getSpv().openGl == 0)) {
+        type.isAtomic() || (type.containsOpaque() && intermediate.getSpv().openGl == 0)) {
         return ent.newLocation = -1;
     }
     // no locations on blocks of built-in variables
@@ -672,7 +674,7 @@ int TDefaultGlslIoResolver::resolveUniformLocation(EShLanguage /*stage*/, TVarEn
     } else {
         // no locations added if already present, a built-in variable, a block, or an opaque
         if (type.getQualifier().hasLocation() || type.isBuiltIn() || type.getBasicType() == EbtBlock ||
-            type.getBasicType() == EbtAtomicUint || (type.containsOpaque() && intermediate.getSpv().openGl == 0)) {
+            type.isAtomic() || (type.containsOpaque() && intermediate.getSpv().openGl == 0)) {
             return ent.newLocation = -1;
         }
         // no locations on blocks of built-in variables
@@ -943,6 +945,7 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase {
     }
 };
 
+#ifdef ENABLE_HLSL
 /********************************************************************************
 The following IO resolver maps types in HLSL register space, as follows:
 
@@ -1023,6 +1026,7 @@ struct TDefaultHlslIoResolver : public TDefaultIoResolverBase {
         return ent.newBinding = -1;
     }
 };
+#endif
 
 // Map I/O variables to provided offsets, and make bindings for
 // unbound but live variables.
@@ -1044,6 +1048,7 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate& intermediate, TInfoSi
         return false;
     // if no resolver is provided, use the default resolver with the given shifts and auto map settings
     TDefaultIoResolver defaultResolver(intermediate);
+#ifdef ENABLE_HLSL
     TDefaultHlslIoResolver defaultHlslResolver(intermediate);
     if (resolver == nullptr) {
         // TODO: use a passed in IO mapper for this
@@ -1053,6 +1058,10 @@ bool TIoMapper::addStage(EShLanguage stage, TIntermediate& intermediate, TInfoSi
             resolver = &defaultResolver;
     }
     resolver->addStage(stage);
+#else
+    resolver = &defaultResolver;
+#endif
+
     TVarLiveMap inVarMap, outVarMap, uniformVarMap;
     TVarLiveVector inVector, outVector, uniformVector;
     TVarGatherTraverser iter_binding_all(intermediate, true, inVarMap, outVarMap, uniformVarMap);
@@ -1232,3 +1241,5 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
 }
 
 } // end namespace glslang
+
+#endif // GLSLANG_WEB

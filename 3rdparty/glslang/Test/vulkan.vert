@@ -21,8 +21,8 @@ void main()
 }
 
 layout(binding = 0) uniform atomic_uint aui;   // ERROR, no atomics in Vulkan
-layout(shared) uniform ub1n { int a; } ub1i;   // ERROR, no shared
-layout(packed) uniform ub2n { int a; } ub2i;   // ERROR, no packed
+layout(shared, binding = 1) uniform ub1n { int a; } ub1i;   // ERROR, no shared
+layout(packed, binding = 2) uniform ub2n { int a; } ub2i;   // ERROR, no packed
 
 layout(constant_id=222) const int arraySize = 4;
 

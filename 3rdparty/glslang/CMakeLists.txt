@@ -9,6 +9,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
+# Needed for CMAKE_DEPENDENT_OPTION macro
+include(CMakeDependentOption)
+
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 
 set(LIB_TYPE STATIC)
@@ -23,12 +26,13 @@ if(NOT ${SKIP_GLSLANG_INSTALL})
 endif()
 option(ENABLE_SPVREMAPPER "Enables building of SPVRemapper" ON)
 
-option(ENABLE_AMD_EXTENSIONS "Enables support of AMD-specific extensions" ON)
 option(ENABLE_GLSLANG_BINARIES "Builds glslangValidator and spirv-remap" ON)
 
-option(ENABLE_NV_EXTENSIONS "Enables support of Nvidia-specific extensions" ON)
+option(ENABLE_GLSLANG_WEB "Reduces glslang to minumum needed for web use" OFF)
+option(ENABLE_EMSCRIPTEN_SINGLE_FILE "If using emscripten, enables SINGLE_FILE build" OFF)
+option(ENABLE_EMSCRIPTEN_ENVIRONMENT_NODE "If using emscripten, builds to run on Node instead of Web" OFF)
 
-option(ENABLE_HLSL "Enables HLSL input support" ON)
+CMAKE_DEPENDENT_OPTION(ENABLE_HLSL "Enables HLSL input support" ON "NOT ENABLE_GLSLANG_WEB" OFF)
 
 option(ENABLE_OPT "Enables spirv-opt capability if present" ON)
 
@@ -60,17 +64,13 @@ project(glslang)
 # make testing optional
 include(CTest)
 
-if(ENABLE_AMD_EXTENSIONS)
-    add_definitions(-DAMD_EXTENSIONS)
-endif(ENABLE_AMD_EXTENSIONS)
-
-if(ENABLE_NV_EXTENSIONS)
-    add_definitions(-DNV_EXTENSIONS)
-endif(ENABLE_NV_EXTENSIONS)
-
 if(ENABLE_HLSL)
     add_definitions(-DENABLE_HLSL)
 endif(ENABLE_HLSL)
+
+if(ENABLE_GLSLANG_WEB)
+    add_definitions(-DGLSLANG_WEB)
+endif(ENABLE_GLSLANG_WEB)
 
 if(WIN32)
     set(CMAKE_DEBUG_POSTFIX "d")
@@ -97,6 +97,39 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
 elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
     add_compile_options(/GR-) # Disable RTTI
 endif()
+
+if(ENABLE_GLSLANG_WEB)
+    if(EMSCRIPTEN)
+        add_compile_options(-Os -fno-exceptions)
+        add_compile_options("SHELL: -s WASM=1")
+        add_compile_options("SHELL: -s WASM_OBJECT_FILES=0")
+        add_link_options(-Os)
+        add_link_options("SHELL: -s FILESYSTEM=0")
+        add_link_options("SHELL: --llvm-lto 1")
+        add_link_options("SHELL: --closure 1")
+        add_link_options("SHELL: -s ALLOW_MEMORY_GROWTH=1")
+
+        add_link_options("SHELL: -s MODULARIZE=1")
+        if(ENABLE_EMSCRIPTEN_SINGLE_FILE)
+            add_link_options("SHELL: -s SINGLE_FILE=1")
+        endif(ENABLE_EMSCRIPTEN_SINGLE_FILE)
+
+        if(ENABLE_EMSCRIPTEN_ENVIRONMENT_NODE)
+            add_link_options("SHELL: -s ENVIRONMENT=node")
+            add_link_options("SHELL: -s BINARYEN_ASYNC_COMPILATION=0")
+        else()
+            add_link_options("SHELL: -s ENVIRONMENT=web,worker")
+            add_link_options("SHELL: -s EXPORT_ES6=1")
+        endif()
+    else()
+      if(MSVC)
+        add_compile_options(/Os /GR-)
+      else()
+        add_compile_options(-Os -fno-exceptions)
+        add_link_options(-Os)
+      endif()
+    endif(EMSCRIPTEN)
+endif(ENABLE_GLSLANG_WEB)
 
 # Request C++11
 if(${CMAKE_VERSION} VERSION_LESS 3.1)

@@ -33,6 +33,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
+#ifndef GLSLANG_WEB
+
 #ifndef _REFLECTION_INCLUDED
 #define _REFLECTION_INCLUDED
 
@@ -201,3 +203,5 @@ protected:
 } // end namespace glslang
 
 #endif // _REFLECTION_INCLUDED
+
+#endif // GLSLANG_WEB
