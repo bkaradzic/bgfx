@@ -60,6 +60,7 @@ namespace opt {
 // These are used to identify the general validation being done and map to
 // its output buffers.
 static const uint32_t kInstValidationIdBindless = 0;
+static const uint32_t kInstValidationIdBuffAddr = 1;
 
 class InstrumentPass : public Pass {
   using cbb_ptr = const BasicBlock*;
@@ -218,17 +219,29 @@ class InstrumentPass : public Pass {
   uint32_t GetUintId();
 
   // Return id for 32-bit unsigned type
+  uint32_t GetUint64Id();
+
+  // Return id for 32-bit unsigned type
   uint32_t GetBoolId();
 
   // Return id for void type
   uint32_t GetVoidId();
 
   // Return pointer to type for runtime array of uint
-  analysis::Type* GetUintRuntimeArrayType(analysis::DecorationManager* deco_mgr,
-                                          analysis::TypeManager* type_mgr);
+  analysis::Type* GetUintXRuntimeArrayType(uint32_t width,
+                                           analysis::Type** rarr_ty);
+
+  // Return pointer to type for runtime array of uint
+  analysis::Type* GetUintRuntimeArrayType(uint32_t width);
 
   // Return id for buffer uint type
-  uint32_t GetBufferUintPtrId();
+  uint32_t GetOutputBufferPtrId();
+
+  // Return id for buffer uint type
+  uint32_t GetInputBufferTypeId();
+
+  // Return id for buffer uint type
+  uint32_t GetInputBufferPtrId();
 
   // Return binding for output buffer for current validation.
   uint32_t GetOutputBufferBinding();
@@ -354,8 +367,11 @@ class InstrumentPass : public Pass {
   // id for output buffer variable
   uint32_t output_buffer_id_;
 
-  // type id for output buffer element
-  uint32_t buffer_uint_ptr_id_;
+  // ptr type id for output buffer element
+  uint32_t output_buffer_ptr_id_;
+
+  // ptr type id for input buffer element
+  uint32_t input_buffer_ptr_id_;
 
   // id for debug output function
   uint32_t output_func_id_;
@@ -381,6 +397,9 @@ class InstrumentPass : public Pass {
   // id for 32-bit unsigned type
   uint32_t uint_id_;
 
+  // id for 32-bit unsigned type
+  uint32_t uint64_id_;
+
   // id for bool type
   uint32_t bool_id_;
 
@@ -394,7 +413,10 @@ class InstrumentPass : public Pass {
   bool storage_buffer_ext_defined_;
 
   // runtime array of uint type
-  analysis::Type* uint_rarr_ty_;
+  analysis::Type* uint64_rarr_ty_;
+
+  // runtime array of uint type
+  analysis::Type* uint32_rarr_ty_;
 
   // Pre-instrumentation same-block insts
   std::unordered_map<uint32_t, Instruction*> same_block_pre_;

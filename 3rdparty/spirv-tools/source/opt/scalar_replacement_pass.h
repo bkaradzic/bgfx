@@ -143,7 +143,8 @@ class ScalarReplacementPass : public Pass {
   bool CheckStore(const Instruction* inst, uint32_t index) const;
 
   // Creates a variable of type |typeId| from the |index|'th element of
-  // |varInst|. The new variable is added to |replacements|.
+  // |varInst|. The new variable is added to |replacements|.  If the variable
+  // could not be created, then |nullptr| is appended to |replacements|.
   void CreateVariable(uint32_t typeId, Instruction* varInst, uint32_t index,
                       std::vector<Instruction*>* replacements);
 
@@ -187,21 +188,21 @@ class ScalarReplacementPass : public Pass {
   // Generates a load for each replacement variable and then creates a new
   // composite by combining all of the loads.
   //
-  // |load| must be a load.
-  void ReplaceWholeLoad(Instruction* load,
+  // |load| must be a load.  Returns true if successful.
+  bool ReplaceWholeLoad(Instruction* load,
                         const std::vector<Instruction*>& replacements);
 
   // Replaces the store to the entire composite.
   //
   // Generates a composite extract and store for each element in the scalarized
-  // variable from the original store data input.
-  void ReplaceWholeStore(Instruction* store,
+  // variable from the original store data input.  Returns true if successful.
+  bool ReplaceWholeStore(Instruction* store,
                          const std::vector<Instruction*>& replacements);
 
   // Replaces an access chain to the composite variable with either a direct use
   // of the appropriate replacement variable or another access chain with the
-  // replacement variable as the base and one fewer indexes. Returns false if
-  // the chain has an out of bounds access.
+  // replacement variable as the base and one fewer indexes. Returns true if
+  // successful.
   bool ReplaceAccessChain(Instruction* chain,
                           const std::vector<Instruction*>& replacements);
 
@@ -222,10 +223,16 @@ class ScalarReplacementPass : public Pass {
   // Maps type id to OpConstantNull for that type.
   std::unordered_map<uint32_t, uint32_t> type_to_null_;
 
+  // Returns the number of elements in the variable |var_inst|.
+  uint64_t GetMaxLegalIndex(const Instruction* var_inst) const;
+
+  // Returns true if |length| is larger than limit on the size of the variable
+  // that we will be willing to split.
+  bool IsLargerThanSizeLimit(uint64_t length) const;
+
   // Limit on the number of members in an object that will be replaced.
   // 0 means there is no limit.
   uint32_t max_num_elements_;
-  bool IsLargerThanSizeLimit(uint64_t length) const;
   char name_[55];
 };
 

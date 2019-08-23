@@ -23,8 +23,9 @@
 // communicate with shaders instrumented by passes created by:
 //
 //   CreateInstBindlessCheckPass
+//   CreateInstBuffAddrCheckPass
 //
-// More detailed documentation of this routine can be found in optimizer.hpp
+// More detailed documentation of these routines can be found in optimizer.hpp
 
 namespace spvtools {
 
@@ -157,6 +158,12 @@ static const int kInst2BindlessUninitOutDescIndex = kInst2StageOutCnt + 1;
 static const int kInst2BindlessUninitOutUnused = kInst2StageOutCnt + 2;
 static const int kInst2BindlessUninitOutCnt = kInst2StageOutCnt + 3;
 
+// A buffer address unalloc error will output the 64-bit pointer in
+// two 32-bit pieces, lower bits first.
+static const int kInst2BuffAddrUnallocOutDescPtrLo = kInst2StageOutCnt + 1;
+static const int kInst2BuffAddrUnallocOutDescPtrHi = kInst2StageOutCnt + 2;
+static const int kInst2BuffAddrUnallocOutCnt = kInst2StageOutCnt + 3;
+
 // DEPRECATED
 static const int kInstBindlessOutDescIndex = kInstStageOutCnt + 1;
 static const int kInstBindlessOutDescBound = kInstStageOutCnt + 2;
@@ -171,6 +178,7 @@ static const int kInst2MaxOutCnt = kInst2StageOutCnt + 3;
 // These are the possible validation error codes.
 static const int kInstErrorBindlessBounds = 0;
 static const int kInstErrorBindlessUninit = 1;
+static const int kInstErrorBuffAddrUnallocRef = 2;
 
 // Direct Input Buffer Offsets
 //
@@ -187,13 +195,15 @@ static const int kDebugInputDataOffset = 0;
 // These are the bindings for the different buffers which are
 // read or written by the instrumentation passes.
 //
-// This is the output buffer written by InstBindlessCheckPass
-// and possibly other future validations.
+// This is the output buffer written by InstBindlessCheckPass,
+// InstBuffAddrCheckPass, and possibly other future validations.
 static const int kDebugOutputBindingStream = 0;
 
-// The binding for the input buffer read by InstBindlessCheckPass and
-// possibly other future validations.
+// The binding for the input buffer read by InstBindlessCheckPass.
 static const int kDebugInputBindingBindless = 1;
+
+// The binding for the input buffer read by InstBuffAddrCheckPass.
+static const int kDebugInputBindingBuffAddr = 2;
 
 // Bindless Validation Input Buffer Format
 //
@@ -215,6 +225,31 @@ static const int kDebugInputBindlessOffsetReserved = 0;
 // descriptors at (set=s, binding=b) is:
 // Data[ Data[ s + kDebugInputBindlessOffsetLengths ] + b ]
 static const int kDebugInputBindlessOffsetLengths = 1;
+
+// Buffer Device Address Input Buffer Format
+//
+// An input buffer for buffer device address validation consists of a single
+// array of unsigned 64-bit integers we will call Data[]. This array is
+// formatted as follows:
+//
+// At offset kDebugInputBuffAddrPtrOffset is a list of sorted valid buffer
+// addresses. The list is terminated with the address 0xffffffffffffffff.
+// If 0x0 is not a valid buffer address, this address is inserted at the
+// start of the list.
+//
+static const int kDebugInputBuffAddrPtrOffset = 1;
+//
+// At offset kDebugInputBuffAddrLengthOffset in Data[] is a single uint64 which
+// gives an offset to the start of the buffer length data. More
+// specifically, for a buffer whose pointer is located at input buffer offset
+// i, the length is located at:
+//
+// Data[ i - kDebugInputBuffAddrPtrOffset
+//         + Data[ kDebugInputBuffAddrLengthOffset ] ]
+//
+// The length associated with the 0xffffffffffffffff address is zero. If
+// not a valid buffer, the length associated with the 0x0 address is zero.
+static const int kDebugInputBuffAddrLengthOffset = 0;
 
 }  // namespace spvtools
 

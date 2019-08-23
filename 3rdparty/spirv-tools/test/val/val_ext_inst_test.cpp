@@ -5315,10 +5315,10 @@ INSTANTIATE_TEST_SUITE_P(AllFractLike, ValidateOpenCLStdFractLike,
 
 TEST_F(ValidateExtInst, OpenCLStdRemquoSuccess) {
   const std::string body = R"(
-%var_f32 = OpVariable %f32_ptr_function Function
-%var_f32vec2 = OpVariable %f32vec2_ptr_function Function
-%val1 = OpExtInst %f32 %extinst remquo %f32_3 %f32_2 %var_f32
-%val2 = OpExtInst %f32vec2 %extinst remquo %f32vec2_01 %f32vec2_12 %var_f32vec2
+%var_u32 = OpVariable %u32_ptr_function Function
+%var_u32vec2 = OpVariable %u32vec2_ptr_function Function
+%val1 = OpExtInst %f32 %extinst remquo %f32_3 %f32_2 %var_u32
+%val2 = OpExtInst %f32vec2 %extinst remquo %f32vec2_01 %f32vec2_12 %var_u32vec2
 )";
 
   CompileSuccessfully(GenerateKernelCode(body));
@@ -5327,8 +5327,8 @@ TEST_F(ValidateExtInst, OpenCLStdRemquoSuccess) {
 
 TEST_F(ValidateExtInst, OpenCLStdRemquoIntResultType) {
   const std::string body = R"(
-%var_f32 = OpVariable %f32_ptr_function Function
-%val1 = OpExtInst %u32 %extinst remquo %f32_3 %f32_2 %var_f32
+%var_u32 = OpVariable %u32_ptr_function Function
+%val1 = OpExtInst %u32 %extinst remquo %f32_3 %f32_2 %var_u32
 )";
 
   CompileSuccessfully(GenerateKernelCode(body));
@@ -5341,8 +5341,8 @@ TEST_F(ValidateExtInst, OpenCLStdRemquoIntResultType) {
 
 TEST_F(ValidateExtInst, OpenCLStdRemquoXWrongType) {
   const std::string body = R"(
-%var_f32 = OpVariable %f32_ptr_function Function
-%val1 = OpExtInst %f32 %extinst remquo %u32_3 %f32_2 %var_f32
+%var_u32 = OpVariable %f32_ptr_function Function
+%val1 = OpExtInst %f32 %extinst remquo %u32_3 %f32_2 %var_u32
 )";
 
   CompileSuccessfully(GenerateKernelCode(body));
@@ -5355,8 +5355,8 @@ TEST_F(ValidateExtInst, OpenCLStdRemquoXWrongType) {
 
 TEST_F(ValidateExtInst, OpenCLStdRemquoYWrongType) {
   const std::string body = R"(
-%var_f32 = OpVariable %f32_ptr_function Function
-%val1 = OpExtInst %f32 %extinst remquo %f32_3 %u32_2 %var_f32
+%var_u32 = OpVariable %f32_ptr_function Function
+%val1 = OpExtInst %f32 %extinst remquo %f32_3 %u32_2 %var_u32
 )";
 
   CompileSuccessfully(GenerateKernelCode(body));
@@ -5395,17 +5395,44 @@ TEST_F(ValidateExtInst, OpenCLStdRemquoPointerWrongStorageClass) {
 
 TEST_F(ValidateExtInst, OpenCLStdRemquoPointerWrongDataType) {
   const std::string body = R"(
-%var_u32 = OpVariable %u32_ptr_function Function
-%val1 = OpExtInst %f32 %extinst remquo %f32_3 %f32_2 %var_u32
+%var_f32 = OpVariable %f32_ptr_function Function
+%val1 = OpExtInst %f32 %extinst remquo %f32_3 %f32_2 %var_f32
+)";
+
+  CompileSuccessfully(GenerateKernelCode(body));
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpenCL.std remquo: "
+                        "expected data type of the pointer to be a 32-bit int "
+                        "scalar or vector type"));
+}
+
+TEST_F(ValidateExtInst, OpenCLStdRemquoPointerWrongDataTypeWidth) {
+  const std::string body = R"(
+%var_u64 = OpVariable %u64_ptr_function Function
+%val1 = OpExtInst %f32 %extinst remquo %f32_3 %f32_2 %var_u64
+)";
+  CompileSuccessfully(GenerateKernelCode(body));
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpenCL.std remquo: "
+                        "expected data type of the pointer to be a 32-bit int "
+                        "scalar or vector type"));
+}
+
+TEST_F(ValidateExtInst, OpenCLStdRemquoPointerWrongNumberOfComponents) {
+  const std::string body = R"(
+%var_u32vec2 = OpVariable %u32vec2_ptr_function Function
+%val1 = OpExtInst %f32 %extinst remquo %f32_3 %f32_2 %var_u32vec2
 )";
 
   CompileSuccessfully(GenerateKernelCode(body));
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "OpenCL.std remquo: "
-          "expected data type of the pointer to be equal to Result Type"));
+      HasSubstr("OpenCL.std remquo: "
+                "expected data type of the pointer to have the same number "
+                "of components as Result Type"));
 }
 
 TEST_P(ValidateOpenCLStdFrexpLike, Success) {

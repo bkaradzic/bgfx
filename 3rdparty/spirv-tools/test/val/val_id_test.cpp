@@ -1715,7 +1715,7 @@ TEST_F(ValidateIdWithMessage,
   EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("OpSpecConstantComposite Constituent <id> '7[%7]' is "
-                        "not a constant composite or undef."));
+                        "not a constant or undef."));
 }
 
 // Invalid: Composite contains a column that is *not* a vector (it's an array)

@@ -571,10 +571,10 @@ void Pointer::GetExtraHashWords(std::vector<uint32_t>* words,
 
 void Pointer::SetPointeeType(const Type* type) { pointee_type_ = type; }
 
-Function::Function(Type* ret_type, const std::vector<const Type*>& params)
+Function::Function(const Type* ret_type, const std::vector<const Type*>& params)
     : Type(kFunction), return_type_(ret_type), param_types_(params) {}
 
-Function::Function(Type* ret_type, std::vector<const Type*>& params)
+Function::Function(const Type* ret_type, std::vector<const Type*>& params)
     : Type(kFunction), return_type_(ret_type), param_types_(params) {}
 
 bool Function::IsSameImpl(const Type* that, IsSameCache* seen) const {

@@ -465,6 +465,23 @@ class InstructionBuilder {
     return AddInstruction(std::move(new_inst));
   }
 
+  Instruction* AddFunctionCall(uint32_t result_type, uint32_t function,
+                               const std::vector<uint32_t>& parameters) {
+    std::vector<Operand> operands;
+    operands.push_back({SPV_OPERAND_TYPE_ID, {function}});
+    for (uint32_t id : parameters) {
+      operands.push_back({SPV_OPERAND_TYPE_ID, {id}});
+    }
+
+    uint32_t result_id = GetContext()->TakeNextId();
+    if (result_id == 0) {
+      return nullptr;
+    }
+    std::unique_ptr<Instruction> new_inst(new Instruction(
+        GetContext(), SpvOpFunctionCall, result_type, result_id, operands));
+    return AddInstruction(std::move(new_inst));
+  }
+
   // Inserts the new instruction before the insertion point.
   Instruction* AddInstruction(std::unique_ptr<Instruction>&& insn) {
     Instruction* insn_ptr = &*insert_before_.InsertBefore(std::move(insn));
@@ -512,6 +529,10 @@ class InstructionBuilder {
 
   // Returns true if the users requested to update |analysis|.
   inline bool IsAnalysisUpdateRequested(IRContext::Analysis analysis) const {
+    if (!GetContext()->AreAnalysesValid(analysis)) {
+      // Do not try to update something that is not built.
+      return false;
+    }
     return preserved_analyses_ & analysis;
   }
 

@@ -107,8 +107,10 @@ Optimizer& Optimizer::RegisterPass(PassToken&& p) {
 // or enable more copy propagation.
 Optimizer& Optimizer::RegisterLegalizationPasses() {
   return
-      // Remove unreachable block so that merge return works.
-      RegisterPass(CreateDeadBranchElimPass())
+      // Wrap OpKill instructions so all other code can be inlined.
+      RegisterPass(CreateWrapOpKillPass())
+          // Remove unreachable block so that merge return works.
+          .RegisterPass(CreateDeadBranchElimPass())
           // Merge the returns so we can inline.
           .RegisterPass(CreateMergeReturnPass())
           // Make sure uses and definitions are in the same function.
@@ -154,7 +156,8 @@ Optimizer& Optimizer::RegisterLegalizationPasses() {
 }
 
 Optimizer& Optimizer::RegisterPerformancePasses() {
-  return RegisterPass(CreateDeadBranchElimPass())
+  return RegisterPass(CreateWrapOpKillPass())
+      .RegisterPass(CreateDeadBranchElimPass())
       .RegisterPass(CreateMergeReturnPass())
       .RegisterPass(CreateInlineExhaustivePass())
       .RegisterPass(CreateAggressiveDCEPass())
@@ -190,7 +193,8 @@ Optimizer& Optimizer::RegisterPerformancePasses() {
 }
 
 Optimizer& Optimizer::RegisterSizePasses() {
-  return RegisterPass(CreateDeadBranchElimPass())
+  return RegisterPass(CreateWrapOpKillPass())
+      .RegisterPass(CreateDeadBranchElimPass())
       .RegisterPass(CreateMergeReturnPass())
       .RegisterPass(CreateInlineExhaustivePass())
       .RegisterPass(CreateAggressiveDCEPass())
@@ -396,10 +400,19 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "replace-invalid-opcode") {
     RegisterPass(CreateReplaceInvalidOpcodePass());
   } else if (pass_name == "inst-bindless-check") {
+    RegisterPass(CreateInstBindlessCheckPass(7, 23, false, false, 2));
+    RegisterPass(CreateSimplificationPass());
+    RegisterPass(CreateDeadBranchElimPass());
+    RegisterPass(CreateBlockMergePass());
+    RegisterPass(CreateAggressiveDCEPass());
+  } else if (pass_name == "inst-desc-idx-check") {
     RegisterPass(CreateInstBindlessCheckPass(7, 23, true, true, 2));
     RegisterPass(CreateSimplificationPass());
     RegisterPass(CreateDeadBranchElimPass());
     RegisterPass(CreateBlockMergePass());
+    RegisterPass(CreateAggressiveDCEPass());
+  } else if (pass_name == "inst-buff-addr-check") {
+    RegisterPass(CreateInstBuffAddrCheckPass(7, 23, 2));
     RegisterPass(CreateAggressiveDCEPass());
   } else if (pass_name == "simplify-instructions") {
     RegisterPass(CreateSimplificationPass());
@@ -477,6 +490,8 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateDecomposeInitializedVariablesPass());
   } else if (pass_name == "graphics-robust-access") {
     RegisterPass(CreateGraphicsRobustAccessPass());
+  } else if (pass_name == "wrap-opkill") {
+    RegisterPass(CreateWrapOpKillPass());
   } else {
     Errorf(consumer(), nullptr, {},
            "Unknown flag '--%s'. Use --help for a list of valid flags",
@@ -853,6 +868,13 @@ Optimizer::PassToken CreateInstBindlessCheckPass(uint32_t desc_set,
                                              input_init_enable, version));
 }
 
+Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,
+                                                 uint32_t shader_id,
+                                                 uint32_t version) {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::InstBuffAddrCheckPass>(desc_set, shader_id, version));
+}
+
 Optimizer::PassToken CreateCodeSinkingPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::CodeSinkingPass>());
@@ -891,6 +913,10 @@ Optimizer::PassToken CreateGraphicsRobustAccessPass() {
 Optimizer::PassToken CreateDescriptorScalarReplacementPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::DescriptorScalarReplacement>());
+}
+
+Optimizer::PassToken CreateWrapOpKillPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(MakeUnique<opt::WrapOpKill>());
 }
 
 }  // namespace spvtools

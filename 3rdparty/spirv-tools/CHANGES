@@ -18,7 +18,7 @@ v2019.4 2019-08-08
    - Handle nested breaks from switches. (#2624)
    - Optimizer: Handle array type with OpSpecConstantOp length (#2652)
    - Perform merge return with single return in loop. (#2714)
-   - Add —preserve-bindings and —preserve-spec-constants (#2693)
+   - Add --preserve-bindings and --preserve-spec-constants (#2693)
    - Remove Common Uniform Elimination Pass (#2731)
    - Allow ray tracing shaders in inst bindle check pass. (#2733)
    - Add pass to inject code for robust-buffer-access semantics (#2771)
