@@ -2310,19 +2310,16 @@ VK_IMPORT_DEVICE
 				pi.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 				pi.pNext = NULL;
 				pi.waitSemaphoreCount = 0;
-				pi.pWaitSemaphores    = NULL; //&m_presentDone[0];
+				pi.pWaitSemaphores    = NULL;
 				pi.swapchainCount = 1;
 				pi.pSwapchains    = &m_swapchain;
 				pi.pImageIndices  = &m_backBufferColorIdx;
 				pi.pResults       = NULL;
 				VkResult result = vkQueuePresentKHR(m_queueGraphics, &pi);
-				if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
+				if (VK_ERROR_OUT_OF_DATE_KHR == result
+				||  VK_SUBOPTIMAL_KHR        == result)
 				{
 					m_needToRefreshSwapchain = true;
-				}
-				else
-				{
-					VK_CHECK(result);
 				}
 			}
 		}
@@ -5719,7 +5716,7 @@ VK_DESTROY
 		uint8_t primIndex = uint8_t(primType >> BGFX_STATE_PT_SHIFT);
 		PrimInfo prim = s_primInfo[primIndex];
 
-		bool wasCompute = false;
+		bool wasCompute     = false;
 		bool viewHasScissor = false;
 		bool restoreScissor = false;
 		Rect viewScissorRect;
@@ -5735,21 +5732,20 @@ VK_DESTROY
 		uint32_t statsKeyType[2] = {};
 
 		VkSemaphore renderWait = m_presentDone[m_backBufferColorIdx];
-		VkResult result = vkAcquireNextImageKHR(m_device
-				, m_swapchain
-				, UINT64_MAX
-				, renderWait
-				, VK_NULL_HANDLE
-				, &m_backBufferColorIdx
-				);
-		if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
+		VkResult result = vkAcquireNextImageKHR(
+			  m_device
+			, m_swapchain
+			, UINT64_MAX
+			, renderWait
+			, VK_NULL_HANDLE
+			, &m_backBufferColorIdx
+			);
+
+		if (VK_ERROR_OUT_OF_DATE_KHR == result
+		||  VK_SUBOPTIMAL_KHR        == result)
 		{
 			m_needToRefreshSwapchain = true;
 			return;
-		}
-		else
-		{
-			VK_CHECK(result);
 		}
 
 //		const uint64_t f0 = BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_FACTOR, BGFX_STATE_BLEND_FACTOR);
