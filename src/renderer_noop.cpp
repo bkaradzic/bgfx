@@ -100,7 +100,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createVertexLayout(VertexLayoutHandle /*_handle*/, const VertexLayout& /*_decl*/) override
+		void createVertexLayout(VertexLayoutHandle /*_handle*/, const VertexLayout& /*_layout*/) override
 		{
 		}
 
@@ -108,7 +108,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle /*_handle*/, const Memory* /*_mem*/, VertexLayoutHandle /*_declHandle*/, uint16_t /*_flags*/) override
+		void createVertexBuffer(VertexBufferHandle /*_handle*/, const Memory* /*_mem*/, VertexLayoutHandle /*_layoutHandle*/, uint16_t /*_flags*/) override
 		{
 		}
 

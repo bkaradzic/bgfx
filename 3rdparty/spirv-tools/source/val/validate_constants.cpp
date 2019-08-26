@@ -116,15 +116,13 @@ spv_result_t ValidateConstantComposite(ValidationState_t& _,
             inst->GetOperandAs<uint32_t>(constituent_index);
         const auto constituent = _.FindDef(constituent_id);
         if (!constituent ||
-            !(SpvOpConstantComposite == constituent->opcode() ||
-              SpvOpSpecConstantComposite == constituent->opcode() ||
-              SpvOpUndef == constituent->opcode())) {
+            !spvOpcodeIsConstantOrUndef(constituent->opcode())) {
           // The message says "... or undef" because the spec does not say
           // undef is a constant.
           return _.diag(SPV_ERROR_INVALID_ID, inst)
                  << opcode_name << " Constituent <id> '"
                  << _.getIdName(constituent_id)
-                 << "' is not a constant composite or undef.";
+                 << "' is not a constant or undef.";
         }
         const auto vector = _.FindDef(constituent->type_id());
         if (!vector) {

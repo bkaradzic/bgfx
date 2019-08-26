@@ -201,7 +201,11 @@ public:
     bool isMatrixType(Id typeId)       const { return getTypeClass(typeId) == OpTypeMatrix; }
     bool isStructType(Id typeId)       const { return getTypeClass(typeId) == OpTypeStruct; }
     bool isArrayType(Id typeId)        const { return getTypeClass(typeId) == OpTypeArray; }
+#ifdef GLSLANG_WEB
+    bool isCooperativeMatrixType(Id typeId)const { return false; }
+#else
     bool isCooperativeMatrixType(Id typeId)const { return getTypeClass(typeId) == OpTypeCooperativeMatrixNV; }
+#endif
     bool isAggregateType(Id typeId)    const { return isArrayType(typeId) || isStructType(typeId) || isCooperativeMatrixType(typeId); }
     bool isImageType(Id typeId)        const { return getTypeClass(typeId) == OpTypeImage; }
     bool isSamplerType(Id typeId)      const { return getTypeClass(typeId) == OpTypeSampler; }
@@ -557,6 +561,14 @@ public:
 
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
+            CoherentFlags() { clear(); }
+#ifdef GLSLANG_WEB
+            void clear() { }
+            bool isVolatile() const { return false; }
+            CoherentFlags operator |=(const CoherentFlags &other) { return *this; }
+#else
+            bool isVolatile() const { return volatil; }
+
             unsigned coherent : 1;
             unsigned devicecoherent : 1;
             unsigned queuefamilycoherent : 1;
@@ -577,7 +589,6 @@ public:
                 isImage = 0;
             }
 
-            CoherentFlags() { clear(); }
             CoherentFlags operator |=(const CoherentFlags &other) {
                 coherent |= other.coherent;
                 devicecoherent |= other.devicecoherent;
@@ -589,6 +600,7 @@ public:
                 isImage |= other.isImage;
                 return *this;
             }
+#endif
         };
         CoherentFlags coherentFlags;
     };

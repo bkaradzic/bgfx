@@ -22,6 +22,7 @@ Supported rendering backends:
  * OpenGL 3.1+
  * OpenGL ES 2
  * OpenGL ES 3.1
+ * Vulkan
  * WebGL 1.0
  * WebGL 2.0
 

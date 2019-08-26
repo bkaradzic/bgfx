@@ -75,7 +75,9 @@ class PassTest : public TestT {
     const auto status = pass->Run(context());
 
     std::vector<uint32_t> binary;
-    context()->module()->ToBinary(&binary, skip_nop);
+    if (status != Pass::Status::Failure) {
+      context()->module()->ToBinary(&binary, skip_nop);
+    }
     return std::make_tuple(binary, status);
   }
 
@@ -241,15 +243,18 @@ class PassTest : public TestT {
     context()->set_preserve_spec_constants(
         OptimizerOptions()->preserve_spec_constants_);
 
-    manager_->Run(context());
+    auto status = manager_->Run(context());
+    EXPECT_NE(status, Pass::Status::Failure);
 
-    std::vector<uint32_t> binary;
-    context()->module()->ToBinary(&binary, /* skip_nop = */ false);
+    if (status != Pass::Status::Failure) {
+      std::vector<uint32_t> binary;
+      context()->module()->ToBinary(&binary, /* skip_nop = */ false);
 
-    std::string optimized;
-    SpirvTools tools(env_);
-    EXPECT_TRUE(tools.Disassemble(binary, &optimized, disassemble_options_));
-    EXPECT_EQ(expected, optimized);
+      std::string optimized;
+      SpirvTools tools(env_);
+      EXPECT_TRUE(tools.Disassemble(binary, &optimized, disassemble_options_));
+      EXPECT_EQ(expected, optimized);
+    }
   }
 
   void SetAssembleOptions(uint32_t assemble_options) {

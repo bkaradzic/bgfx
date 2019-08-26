@@ -1999,7 +1999,7 @@ public static partial class bgfx
 		public uint startVertex;
 		public ushort stride;
 		public VertexBufferHandle handle;
-		public VertexLayoutHandle decl;
+		public VertexLayoutHandle layoutHandle;
 	}
 	
 	public unsafe struct InstanceDataBuffer
@@ -2219,12 +2219,12 @@ public static partial class bgfx
 	/// <param name="_input">Value to be packed into vertex stream.</param>
 	/// <param name="_inputNormalized">`true` if input value is already normalized.</param>
 	/// <param name="_attr">Attribute to pack.</param>
-	/// <param name="_decl">Vertex stream layout.</param>
+	/// <param name="_layout">Vertex stream layout.</param>
 	/// <param name="_data">Destination vertex stream where data will be packed.</param>
 	/// <param name="_index">Vertex index that will be modified.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_vertex_pack", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void vertex_pack(float _input, bool _inputNormalized, Attrib _attr, VertexLayout* _decl, void* _data, uint _index);
+	public static extern unsafe void vertex_pack(float _input, bool _inputNormalized, Attrib _attr, VertexLayout* _layout, void* _data, uint _index);
 	
 	/// <summary>
 	/// Unpack vertex attribute from vertex stream format.
@@ -2232,38 +2232,38 @@ public static partial class bgfx
 	///
 	/// <param name="_output">Result of unpacking.</param>
 	/// <param name="_attr">Attribute to unpack.</param>
-	/// <param name="_decl">Vertex stream layout.</param>
+	/// <param name="_layout">Vertex stream layout.</param>
 	/// <param name="_data">Source vertex stream from where data will be unpacked.</param>
 	/// <param name="_index">Vertex index that will be unpacked.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_vertex_unpack", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void vertex_unpack(float _output, Attrib _attr, VertexLayout* _decl, void* _data, uint _index);
+	public static extern unsafe void vertex_unpack(float _output, Attrib _attr, VertexLayout* _layout, void* _data, uint _index);
 	
 	/// <summary>
 	/// Converts vertex stream data from one vertex stream format to another.
 	/// </summary>
 	///
-	/// <param name="_dstDecl">Destination vertex stream layout.</param>
+	/// <param name="_dstLayout">Destination vertex stream layout.</param>
 	/// <param name="_dstData">Destination vertex stream.</param>
-	/// <param name="_srcDecl">Source vertex stream layout.</param>
+	/// <param name="_srcLayout">Source vertex stream layout.</param>
 	/// <param name="_srcData">Source vertex stream data.</param>
 	/// <param name="_num">Number of vertices to convert from source to destination.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_vertex_convert", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void vertex_convert(VertexLayout* _dstDecl, void* _dstData, VertexLayout* _srcDecl, void* _srcData, uint _num);
+	public static extern unsafe void vertex_convert(VertexLayout* _dstLayout, void* _dstData, VertexLayout* _srcLayout, void* _srcData, uint _num);
 	
 	/// <summary>
 	/// Weld vertices.
 	/// </summary>
 	///
 	/// <param name="_output">Welded vertices remapping table. The size of buffer must be the same as number of vertices.</param>
-	/// <param name="_decl">Vertex stream layout.</param>
+	/// <param name="_layout">Vertex stream layout.</param>
 	/// <param name="_data">Vertex stream.</param>
 	/// <param name="_num">Number of vertices in vertex stream.</param>
 	/// <param name="_epsilon">Error tolerance for vertex position comparison.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_weld_vertices", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe ushort weld_vertices(ushort* _output, VertexLayout* _decl, void* _data, ushort _num, float _epsilon);
+	public static extern unsafe ushort weld_vertices(ushort* _output, VertexLayout* _layout, void* _data, ushort _num, float _epsilon);
 	
 	/// <summary>
 	/// Convert index buffer for use with different primitive topologies.
@@ -2532,30 +2532,30 @@ public static partial class bgfx
 	/// Create vertex layout.
 	/// </summary>
 	///
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_vertex_layout", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe VertexLayoutHandle create_vertex_layout(VertexLayout* _decl);
+	public static extern unsafe VertexLayoutHandle create_vertex_layout(VertexLayout* _layout);
 	
 	/// <summary>
 	/// Destroy vertex layout.
 	/// </summary>
 	///
-	/// <param name="_handle">Vertex layout handle.</param>
+	/// <param name="_layoutHandle">Vertex layout handle.</param>
 	///
-	[DllImport(DllName, EntryPoint="bgfx_destroy_vertex_decl", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void destroy_vertex_decl(VertexLayoutHandle _handle);
+	[DllImport(DllName, EntryPoint="bgfx_destroy_vertex_layout", CallingConvention = CallingConvention.Cdecl)]
+	public static extern unsafe void destroy_vertex_layout(VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
 	/// Create static vertex buffer.
 	/// </summary>
 	///
 	/// <param name="_mem">Vertex buffer data.</param>
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	/// <param name="_flags">Buffer creation flags.  - `BGFX_BUFFER_NONE` - No flags.  - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.  - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer      is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.  - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.  - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of      data is passed. If this flag is not specified, and more data is passed on update, the buffer      will be trimmed to fit the existing buffer size. This flag has effect only on dynamic buffers.  - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on index buffers.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe VertexBufferHandle create_vertex_buffer(Memory* _mem, VertexLayout* _decl, ushort _flags);
+	public static extern unsafe VertexBufferHandle create_vertex_buffer(Memory* _mem, VertexLayout* _layout, ushort _flags);
 	
 	/// <summary>
 	/// Set static vertex buffer debug name.
@@ -2622,22 +2622,22 @@ public static partial class bgfx
 	/// </summary>
 	///
 	/// <param name="_num">Number of vertices.</param>
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	/// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe DynamicVertexBufferHandle create_dynamic_vertex_buffer(uint _num, VertexLayout* _decl, ushort _flags);
+	public static extern unsafe DynamicVertexBufferHandle create_dynamic_vertex_buffer(uint _num, VertexLayout* _layout, ushort _flags);
 	
 	/// <summary>
 	/// Create dynamic vertex buffer and initialize it.
 	/// </summary>
 	///
 	/// <param name="_mem">Vertex buffer data.</param>
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	/// <param name="_flags">Buffer creation flags.   - `BGFX_BUFFER_NONE` - No flags.   - `BGFX_BUFFER_COMPUTE_READ` - Buffer will be read from by compute shader.   - `BGFX_BUFFER_COMPUTE_WRITE` - Buffer will be written into by compute shader. When buffer       is created with `BGFX_BUFFER_COMPUTE_WRITE` flag it cannot be updated from CPU.   - `BGFX_BUFFER_COMPUTE_READ_WRITE` - Buffer will be used for read/write by compute shader.   - `BGFX_BUFFER_ALLOW_RESIZE` - Buffer will resize on buffer update if a different amount of       data is passed. If this flag is not specified, and more data is passed on update, the buffer       will be trimmed to fit the existing buffer size. This flag has effect only on dynamic       buffers.   - `BGFX_BUFFER_INDEX32` - Buffer is using 32-bit indices. This flag has effect only on       index buffers.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_create_dynamic_vertex_buffer_mem", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe DynamicVertexBufferHandle create_dynamic_vertex_buffer_mem(Memory* _mem, VertexLayout* _decl, ushort _flags);
+	public static extern unsafe DynamicVertexBufferHandle create_dynamic_vertex_buffer_mem(Memory* _mem, VertexLayout* _layout, ushort _flags);
 	
 	/// <summary>
 	/// Update dynamic vertex buffer.
@@ -2673,10 +2673,10 @@ public static partial class bgfx
 	/// </summary>
 	///
 	/// <param name="_num">Number of required vertices.</param>
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_get_avail_transient_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe uint get_avail_transient_vertex_buffer(uint _num, VertexLayout* _decl);
+	public static extern unsafe uint get_avail_transient_vertex_buffer(uint _num, VertexLayout* _layout);
 	
 	/// <summary>
 	/// Returns number of requested or maximum available instance buffer slots.
@@ -2706,10 +2706,10 @@ public static partial class bgfx
 	///
 	/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_num">Number of vertices to allocate.</param>
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_alloc_transient_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void alloc_transient_vertex_buffer(TransientVertexBuffer* _tvb, uint _num, VertexLayout* _decl);
+	public static extern unsafe void alloc_transient_vertex_buffer(TransientVertexBuffer* _tvb, uint _num, VertexLayout* _layout);
 	
 	/// <summary>
 	/// Check for required space and allocate transient vertex and index
@@ -2720,14 +2720,14 @@ public static partial class bgfx
 	/// </summary>
 	///
 	/// <param name="_tvb">TransientVertexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
-	/// <param name="_decl">Vertex layout.</param>
+	/// <param name="_layout">Vertex layout.</param>
 	/// <param name="_numVertices">Number of vertices to allocate.</param>
 	/// <param name="_tib">TransientIndexBuffer structure is filled and is valid for the duration of frame, and it can be reused for multiple draw calls.</param>
 	/// <param name="_numIndices">Number of indices to allocate.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_alloc_transient_buffers", CallingConvention = CallingConvention.Cdecl)]
 	[return: MarshalAs(UnmanagedType.I1)]
-	public static extern unsafe bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _decl, uint _numVertices, TransientIndexBuffer* _tib, uint _numIndices);
+	public static extern unsafe bool alloc_transient_buffers(TransientVertexBuffer* _tvb, VertexLayout* _layout, uint _numVertices, TransientIndexBuffer* _tib, uint _numIndices);
 	
 	/// <summary>
 	/// Allocate instance data buffer.
@@ -3536,10 +3536,10 @@ public static partial class bgfx
 	/// <param name="_handle">Vertex buffer.</param>
 	/// <param name="_startVertex">First vertex to render.</param>
 	/// <param name="_numVertices">Number of vertices to render.</param>
-	/// <param name="_declHandle">VertexLayout handle for aliasing vertex buffer.</param>
+	/// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _declHandle);
+	public static extern unsafe void encoder_set_vertex_buffer(Encoder* _this, byte _stream, VertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
@@ -3549,10 +3549,10 @@ public static partial class bgfx
 	/// <param name="_handle">Dynamic vertex buffer.</param>
 	/// <param name="_startVertex">First vertex to render.</param>
 	/// <param name="_numVertices">Number of vertices to render.</param>
-	/// <param name="_declHandle">VertexLayout handle for aliasing vertex buffer.</param>
+	/// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_dynamic_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_dynamic_vertex_buffer(Encoder* _this, byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _declHandle);
+	public static extern unsafe void encoder_set_dynamic_vertex_buffer(Encoder* _this, byte _stream, DynamicVertexBufferHandle _handle, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
 	/// Set vertex buffer for draw primitive.
@@ -3562,10 +3562,10 @@ public static partial class bgfx
 	/// <param name="_tvb">Transient vertex buffer.</param>
 	/// <param name="_startVertex">First vertex to render.</param>
 	/// <param name="_numVertices">Number of vertices to render.</param>
-	/// <param name="_declHandle">VertexLayout handle for aliasing vertex buffer.</param>
+	/// <param name="_layoutHandle">Vertex layout for aliasing vertex buffer.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_encoder_set_transient_vertex_buffer", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void encoder_set_transient_vertex_buffer(Encoder* _this, byte _stream, TransientVertexBuffer* _tvb, uint _startVertex, uint _numVertices, VertexLayoutHandle _declHandle);
+	public static extern unsafe void encoder_set_transient_vertex_buffer(Encoder* _this, byte _stream, TransientVertexBuffer* _tvb, uint _startVertex, uint _numVertices, VertexLayoutHandle _layoutHandle);
 	
 	/// <summary>
 	/// Set number of vertices for auto generated vertices use in conjuction

@@ -51,12 +51,8 @@ namespace spv {
     #include "GLSL.std.450.h"
     #include "GLSL.ext.KHR.h"
     #include "GLSL.ext.EXT.h"
-#ifdef AMD_EXTENSIONS
     #include "GLSL.ext.AMD.h"
-#endif
-#ifdef NV_EXTENSIONS
     #include "GLSL.ext.NV.h"
-#endif
 }
 
 namespace spv {
@@ -160,7 +156,6 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
         }
         break;
     case OpExtInst:
-#if AMD_EXTENSIONS
         switch (inst.getImmediateOperand(1)) {
         case GLSLstd450Frexp:
         case GLSLstd450FrexpStruct:
@@ -176,7 +171,6 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
         default:
             break;
         }
-#endif
         break;
     default:
         if (basicTypeOp == OpTypeFloat && width == 16)
@@ -222,12 +216,10 @@ void Builder::postProcess(Instruction& inst)
         addCapability(CapabilityImageQuery);
         break;
 
-#ifdef NV_EXTENSIONS
     case OpGroupNonUniformPartitionNV:
         addExtension(E_SPV_NV_shader_subgroup_partitioned);
         addCapability(CapabilityGroupNonUniformPartitionedNV);
         break;
-#endif
 
     case OpLoad:
     case OpStore:

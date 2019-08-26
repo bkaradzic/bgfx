@@ -535,6 +535,8 @@ static_library("spvtools_opt") {
     "source/opt/inline_pass.h",
     "source/opt/inst_bindless_check_pass.cpp",
     "source/opt/inst_bindless_check_pass.h",
+    "source/opt/inst_buff_addr_check_pass.cpp",
+    "source/opt/inst_buff_addr_check_pass.h",
     "source/opt/instruction.cpp",
     "source/opt/instruction.h",
     "source/opt/instruction_list.cpp",
@@ -650,6 +652,8 @@ static_library("spvtools_opt") {
     "source/opt/vector_dce.h",
     "source/opt/workaround1209.cpp",
     "source/opt/workaround1209.h",
+    "source/opt/wrap_opkill.cpp",
+    "source/opt/wrap_opkill.h",
   ]
 
   deps = [

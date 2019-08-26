@@ -57,7 +57,7 @@ class TestValidPassFlags(expect.ValidObjectFile1_4,
   """Tests that spirv-opt accepts all valid optimization flags."""
 
   flags = [
-      '--ccp', '--cfg-cleanup', '--combine-access-chains', '--compact-ids',
+      '--wrap-opkill', '--ccp', '--cfg-cleanup', '--combine-access-chains', '--compact-ids',
       '--convert-local-access-chains', '--copy-propagate-arrays',
       '--eliminate-dead-branches',
       '--eliminate-dead-code-aggressive', '--eliminate-dead-const',
@@ -76,6 +76,7 @@ class TestValidPassFlags(expect.ValidObjectFile1_4,
       '--unify-const'
   ]
   expected_passes = [
+      'wrap-opkill',
       'ccp',
       'cfg-cleanup',
       'combine-access-chains',
@@ -134,6 +135,7 @@ class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_4,
 
   flags = ['-O']
   expected_passes = [
+      'wrap-opkill',
       'eliminate-dead-branches',
       'merge-return',
       'inline-entry-points-exhaustive',
@@ -181,6 +183,7 @@ class TestSizeOptimizationPasses(expect.ValidObjectFile1_4,
 
   flags = ['-Os']
   expected_passes = [
+      'wrap-opkill',
       'eliminate-dead-branches',
       'merge-return',
       'inline-entry-points-exhaustive',
@@ -221,6 +224,7 @@ class TestLegalizationPasses(expect.ValidObjectFile1_4,
 
   flags = ['--legalize-hlsl']
   expected_passes = [
+      'wrap-opkill',
       'eliminate-dead-branches',
       'merge-return',
       'inline-entry-points-exhaustive',

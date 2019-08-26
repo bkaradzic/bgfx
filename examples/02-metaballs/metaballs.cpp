@@ -32,7 +32,7 @@ struct PosNormalColorVertex
 
 	static void init()
 	{
-		ms_decl
+		ms_layout
 			.begin()
 			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Normal,   3, bgfx::AttribType::Float)
@@ -40,10 +40,10 @@ struct PosNormalColorVertex
 			.end();
 	};
 
-	static bgfx::VertexLayout ms_decl;
+	static bgfx::VertexLayout ms_layout;
 };
 
-bgfx::VertexLayout PosNormalColorVertex::ms_decl;
+bgfx::VertexLayout PosNormalColorVertex::ms_layout;
 
 struct Grid
 {
@@ -605,7 +605,7 @@ public:
 			// Allocate 32K vertices in transient vertex buffer.
 			uint32_t maxVertices = (32<<10);
 			bgfx::TransientVertexBuffer tvb;
-			bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_decl);
+			bgfx::allocTransientVertexBuffer(&tvb, maxVertices, PosNormalColorVertex::ms_layout);
 
 			const uint32_t numSpheres = 16;
 			float sphere[numSpheres][4];
@@ -723,7 +723,7 @@ public:
 							&grid[xoffset                ],
 						};
 
-						uint32_t num = triangulate( (uint8_t*)vertex, PosNormalColorVertex::ms_decl.getStride(), rgb, pos, val, 0.5f);
+						uint32_t num = triangulate( (uint8_t*)vertex, PosNormalColorVertex::ms_layout.getStride(), rgb, pos, val, 0.5f);
 						vertex += num;
 						numVertices += num;
 					}

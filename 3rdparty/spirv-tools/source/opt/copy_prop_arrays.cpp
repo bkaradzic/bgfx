@@ -527,6 +527,9 @@ bool CopyPropagateArrays::CanUpdateUses(Instruction* original_ptr_inst,
                                     pointer_type->storage_class());
         uint32_t new_pointer_type_id =
             context()->get_type_mgr()->GetTypeInstruction(&pointerTy);
+        if (new_pointer_type_id == 0) {
+          return false;
+        }
 
         if (new_pointer_type_id != use->type_id()) {
           return CanUpdateUses(use, new_pointer_type_id);
@@ -542,6 +545,9 @@ bool CopyPropagateArrays::CanUpdateUses(Instruction* original_ptr_inst,
         const analysis::Type* new_type =
             type_mgr->GetMemberType(type, access_chain);
         uint32_t new_type_id = type_mgr->GetTypeInstruction(new_type);
+        if (new_type_id == 0) {
+          return false;
+        }
 
         if (new_type_id != use->type_id()) {
           return CanUpdateUses(use, new_type_id);

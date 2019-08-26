@@ -25,6 +25,7 @@
 #include "source/reduce/remove_block_reduction_opportunity_finder.h"
 #include "source/reduce/remove_function_reduction_opportunity_finder.h"
 #include "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h"
+#include "source/reduce/remove_relaxed_precision_decoration_opportunity_finder.h"
 #include "source/reduce/remove_selection_reduction_opportunity_finder.h"
 #include "source/reduce/remove_unreferenced_instruction_reduction_opportunity_finder.h"
 #include "source/reduce/simple_conditional_branch_to_branch_opportunity_finder.h"
@@ -175,6 +176,8 @@ Reducer::ReductionResultStatus Reducer::Run(
 void Reducer::AddDefaultReductionPasses() {
   AddReductionPass(spvtools::MakeUnique<
                    RemoveOpNameInstructionReductionOpportunityFinder>());
+  AddReductionPass(spvtools::MakeUnique<
+                   RemoveRelaxedPrecisionDecorationOpportunityFinder>());
   AddReductionPass(
       spvtools::MakeUnique<OperandToUndefReductionOpportunityFinder>());
   AddReductionPass(

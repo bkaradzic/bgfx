@@ -1385,8 +1385,8 @@ void renderDemo(struct NVGcontext* vg, float mx, float my, float width, float he
 class ExampleNanoVG : public entry::AppI
 {
 public:
-	ExampleNanoVG(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleNanoVG(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -1505,4 +1505,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleNanoVG, "20-nanovg", "NanoVG is small antialiased vector graphics rendering library.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleNanoVG
+	, "20-nanovg"
+	, "NanoVG is small antialiased vector graphics rendering library."
+	, "https://bkaradzic.github.io/bgfx/examples.html#nanovg"
+	);

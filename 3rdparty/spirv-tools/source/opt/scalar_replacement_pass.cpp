@@ -78,36 +78,47 @@ Pass::Status ScalarReplacementPass::ReplaceVariable(
   }
 
   std::vector<Instruction*> dead;
-  if (get_def_use_mgr()->WhileEachUser(
-          inst, [this, &replacements, &dead](Instruction* user) {
-            if (!IsAnnotationInst(user->opcode())) {
-              switch (user->opcode()) {
-                case SpvOpLoad:
-                  ReplaceWholeLoad(user, replacements);
-                  dead.push_back(user);
-                  break;
-                case SpvOpStore:
-                  ReplaceWholeStore(user, replacements);
-                  dead.push_back(user);
-                  break;
-                case SpvOpAccessChain:
-                case SpvOpInBoundsAccessChain:
-                  if (ReplaceAccessChain(user, replacements))
-                    dead.push_back(user);
-                  else
-                    return false;
-                  break;
-                case SpvOpName:
-                case SpvOpMemberName:
-                  break;
-                default:
-                  assert(false && "Unexpected opcode");
-                  break;
+  bool replaced_all_uses = get_def_use_mgr()->WhileEachUser(
+      inst, [this, &replacements, &dead](Instruction* user) {
+        if (!IsAnnotationInst(user->opcode())) {
+          switch (user->opcode()) {
+            case SpvOpLoad:
+              if (ReplaceWholeLoad(user, replacements)) {
+                dead.push_back(user);
+              } else {
+                return false;
               }
-            }
-            return true;
-          }))
+              break;
+            case SpvOpStore:
+              if (ReplaceWholeStore(user, replacements)) {
+                dead.push_back(user);
+              } else {
+                return false;
+              }
+              break;
+            case SpvOpAccessChain:
+            case SpvOpInBoundsAccessChain:
+              if (ReplaceAccessChain(user, replacements))
+                dead.push_back(user);
+              else
+                return false;
+              break;
+            case SpvOpName:
+            case SpvOpMemberName:
+              break;
+            default:
+              assert(false && "Unexpected opcode");
+              break;
+          }
+        }
+        return true;
+      });
+
+  if (replaced_all_uses) {
     dead.push_back(inst);
+  } else {
+    return Status::Failure;
+  }
 
   // If there are no dead instructions to clean up, return with no changes.
   if (dead.empty()) return Status::SuccessWithoutChange;
@@ -133,7 +144,7 @@ Pass::Status ScalarReplacementPass::ReplaceVariable(
   return Status::SuccessWithChange;
 }
 
-void ScalarReplacementPass::ReplaceWholeLoad(
+bool ScalarReplacementPass::ReplaceWholeLoad(
     Instruction* load, const std::vector<Instruction*>& replacements) {
   // Replaces the load of the entire composite with a load from each replacement
   // variable followed by a composite construction.
@@ -150,6 +161,9 @@ void ScalarReplacementPass::ReplaceWholeLoad(
 
     Instruction* type = GetStorageType(var);
     uint32_t loadId = TakeNextId();
+    if (loadId == 0) {
+      return false;
+    }
     std::unique_ptr<Instruction> newLoad(
         new Instruction(context(), SpvOpLoad, type->result_id(), loadId,
                         std::initializer_list<Operand>{
@@ -168,6 +182,9 @@ void ScalarReplacementPass::ReplaceWholeLoad(
 
   // Construct a new composite.
   uint32_t compositeId = TakeNextId();
+  if (compositeId == 0) {
+    return false;
+  }
   where = load;
   std::unique_ptr<Instruction> compositeConstruct(new Instruction(
       context(), SpvOpCompositeConstruct, load->type_id(), compositeId, {}));
@@ -180,9 +197,10 @@ void ScalarReplacementPass::ReplaceWholeLoad(
   get_def_use_mgr()->AnalyzeInstDefUse(&*where);
   context()->set_instr_block(&*where, block);
   context()->ReplaceAllUsesWith(load->result_id(), compositeId);
+  return true;
 }
 
-void ScalarReplacementPass::ReplaceWholeStore(
+bool ScalarReplacementPass::ReplaceWholeStore(
     Instruction* store, const std::vector<Instruction*>& replacements) {
   // Replaces a store to the whole composite with a series of extract and stores
   // to each element.
@@ -199,6 +217,9 @@ void ScalarReplacementPass::ReplaceWholeStore(
 
     Instruction* type = GetStorageType(var);
     uint32_t extractId = TakeNextId();
+    if (extractId == 0) {
+      return false;
+    }
     std::unique_ptr<Instruction> extract(new Instruction(
         context(), SpvOpCompositeExtract, type->result_id(), extractId,
         std::initializer_list<Operand>{
@@ -224,6 +245,7 @@ void ScalarReplacementPass::ReplaceWholeStore(
     get_def_use_mgr()->AnalyzeInstDefUse(&*iter);
     context()->set_instr_block(&*iter, block);
   }
+  return true;
 }
 
 bool ScalarReplacementPass::ReplaceAccessChain(
@@ -247,6 +269,9 @@ bool ScalarReplacementPass::ReplaceAccessChain(
       // Replace input access chain with another access chain.
       BasicBlock::iterator chainIter(chain);
       uint32_t replacementId = TakeNextId();
+      if (replacementId == 0) {
+        return false;
+      }
       std::unique_ptr<Instruction> replacementChain(new Instruction(
           context(), chain->opcode(), chain->type_id(), replacementId,
           std::initializer_list<Operand>{
@@ -329,6 +354,10 @@ void ScalarReplacementPass::TransferAnnotations(
     if (decoration == SpvDecorationInvariant ||
         decoration == SpvDecorationRestrict) {
       for (auto var : *replacements) {
+        if (var == nullptr) {
+          continue;
+        }
+
         std::unique_ptr<Instruction> annotation(
             new Instruction(context(), SpvOpDecorate, 0, 0,
                             std::initializer_list<Operand>{
@@ -350,6 +379,11 @@ void ScalarReplacementPass::CreateVariable(
     std::vector<Instruction*>* replacements) {
   uint32_t ptrId = GetOrCreatePointerType(typeId);
   uint32_t id = TakeNextId();
+
+  if (id == 0) {
+    replacements->push_back(nullptr);
+  }
+
   std::unique_ptr<Instruction> variable(new Instruction(
       context(), SpvOpVariable, ptrId, id,
       std::initializer_list<Operand>{
@@ -671,44 +705,51 @@ bool ScalarReplacementPass::CheckUses(const Instruction* inst) const {
 
 bool ScalarReplacementPass::CheckUses(const Instruction* inst,
                                       VariableStats* stats) const {
+  uint64_t max_legal_index = GetMaxLegalIndex(inst);
+
   bool ok = true;
-  get_def_use_mgr()->ForEachUse(
-      inst, [this, stats, &ok](const Instruction* user, uint32_t index) {
-        // Annotations are check as a group separately.
-        if (!IsAnnotationInst(user->opcode())) {
-          switch (user->opcode()) {
-            case SpvOpAccessChain:
-            case SpvOpInBoundsAccessChain:
-              if (index == 2u && user->NumInOperands() > 1) {
-                uint32_t id = user->GetSingleWordInOperand(1u);
-                const Instruction* opInst = get_def_use_mgr()->GetDef(id);
-                if (!IsCompileTimeConstantInst(opInst->opcode())) {
-                  ok = false;
-                } else {
-                  if (!CheckUsesRelaxed(user)) ok = false;
-                }
-                stats->num_partial_accesses++;
-              } else {
-                ok = false;
-              }
-              break;
-            case SpvOpLoad:
-              if (!CheckLoad(user, index)) ok = false;
-              stats->num_full_accesses++;
-              break;
-            case SpvOpStore:
-              if (!CheckStore(user, index)) ok = false;
-              stats->num_full_accesses++;
-              break;
-            case SpvOpName:
-            case SpvOpMemberName:
-              break;
-            default:
+  get_def_use_mgr()->ForEachUse(inst, [this, max_legal_index, stats, &ok](
+                                          const Instruction* user,
+                                          uint32_t index) {
+    // Annotations are check as a group separately.
+    if (!IsAnnotationInst(user->opcode())) {
+      switch (user->opcode()) {
+        case SpvOpAccessChain:
+        case SpvOpInBoundsAccessChain:
+          if (index == 2u && user->NumInOperands() > 1) {
+            uint32_t id = user->GetSingleWordInOperand(1u);
+            const Instruction* opInst = get_def_use_mgr()->GetDef(id);
+            const auto* constant =
+                context()->get_constant_mgr()->GetConstantFromInst(opInst);
+            if (!constant) {
               ok = false;
-              break;
+            } else if (constant->GetZeroExtendedValue() >= max_legal_index) {
+              ok = false;
+            } else {
+              if (!CheckUsesRelaxed(user)) ok = false;
+            }
+            stats->num_partial_accesses++;
+          } else {
+            ok = false;
           }
-        }
-      });
+          break;
+        case SpvOpLoad:
+          if (!CheckLoad(user, index)) ok = false;
+          stats->num_full_accesses++;
+          break;
+        case SpvOpStore:
+          if (!CheckStore(user, index)) ok = false;
+          stats->num_full_accesses++;
+          break;
+        case SpvOpName:
+        case SpvOpMemberName:
+          break;
+        default:
+          ok = false;
+          break;
+      }
+    }
+  });
 
   return ok;
 }
@@ -836,6 +877,25 @@ Instruction* ScalarReplacementPass::CreateNullConstant(uint32_t type_id) {
     context()->UpdateDefUse(null_inst);
   }
   return null_inst;
+}
+
+uint64_t ScalarReplacementPass::GetMaxLegalIndex(
+    const Instruction* var_inst) const {
+  assert(var_inst->opcode() == SpvOpVariable &&
+         "|var_inst| must be a variable instruction.");
+  Instruction* type = GetStorageType(var_inst);
+  switch (type->opcode()) {
+    case SpvOpTypeStruct:
+      return type->NumInOperands();
+    case SpvOpTypeArray:
+      return GetArrayLength(type);
+    case SpvOpTypeMatrix:
+    case SpvOpTypeVector:
+      return GetNumElements(type);
+    default:
+      return 0;
+  }
+  return 0;
 }
 
 }  // namespace opt

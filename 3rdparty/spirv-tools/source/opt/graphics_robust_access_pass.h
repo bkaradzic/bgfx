@@ -77,10 +77,6 @@ class GraphicsRobustAccessPass : public Pass {
   // type. Ignores any value bits beyond the width of the type.
   Instruction* GetValueForType(uint64_t value, const analysis::Integer* type);
 
-  // Returns the unsigned value for the given constant.  Assumes it's at most
-  // 64 bits wide.
-  uint64_t GetUnsignedValueForConstant(const analysis::Constant* c);
-
   // Converts an integer value to an unsigned wider integer type, using either
   // sign extension or zero extension.  The new instruction is inserted
   // immediately before |before_inst|, and is analyzed for definitions and uses.

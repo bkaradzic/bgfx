@@ -419,6 +419,39 @@ OpFunctionEnd
   SinglePassRunAndMatch<PrivateToLocalPass>(text, true);
 }
 
+TEST_F(PrivateToLocalTest, IdBoundOverflow1) {
+  const std::string text = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginLowerLeft
+               OpSource HLSL 84
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeFloat 32
+          %7 = OpTypeVector %6 4
+          %8 = OpTypeStruct %7
+    %4194302 = OpTypeStruct %8 %8
+          %9 = OpTypeStruct %8 %8
+         %11 = OpTypePointer Private %7
+         %18 = OpTypeStruct %6 %9
+         %12 = OpVariable %11 Private
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+         %13 = OpLoad %7 %12
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result = SinglePassRunToBinary<PrivateToLocalPass>(text, true);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

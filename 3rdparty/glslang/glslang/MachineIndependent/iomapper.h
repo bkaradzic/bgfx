@@ -33,6 +33,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
+#ifndef GLSLANG_WEB
+
 #ifndef _IOMAPPER_INCLUDED
 #define _IOMAPPER_INCLUDED
 
@@ -176,7 +178,7 @@ protected:
 
     // Return true if this is a UAV (unordered access view) type:
     static bool isUavType(const glslang::TType& type) {
-        if (type.getQualifier().readonly)
+        if (type.getQualifier().isReadOnly())
             return false;
         return (type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage()) ||
                 (type.getQualifier().storage == EvqBuffer);
@@ -293,3 +295,5 @@ public:
 } // end namespace glslang
 
 #endif // _IOMAPPER_INCLUDED
+
+#endif //  GLSLANG_WEB

@@ -55,6 +55,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   inline_opaque_pass.h
   inline_pass.h
   inst_bindless_check_pass.h
+  inst_buff_addr_check_pass.h
   instruction.h
   instruction_list.h
   instrument_pass.h
@@ -113,6 +114,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   value_number_table.h
   vector_dce.h
   workaround1209.h
+  wrap_opkill.h
 
   aggressive_dead_code_elim_pass.cpp
   basic_block.cpp
@@ -157,6 +159,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   inline_opaque_pass.cpp
   inline_pass.cpp
   inst_bindless_check_pass.cpp
+  inst_buff_addr_check_pass.cpp
   instruction.cpp
   instruction_list.cpp
   instrument_pass.cpp
@@ -212,6 +215,7 @@ set(SPIRV_TOOLS_OPT_SOURCES
   value_number_table.cpp
   vector_dce.cpp
   workaround1209.cpp
+  wrap_opkill.cpp
 )
 
 if(MSVC)

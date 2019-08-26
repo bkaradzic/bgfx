@@ -2686,20 +2686,20 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			m_indexBuffers[_handle.idx].destroy();
 		}
 
-		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _decl) override
+		void createVertexLayout(VertexLayoutHandle _handle, const VertexLayout& _layout) override
 		{
-			VertexLayout& decl = m_vertexDecls[_handle.idx];
-			bx::memCopy(&decl, &_decl, sizeof(VertexLayout) );
-			dump(decl);
+			VertexLayout& layout = m_vertexLayouts[_handle.idx];
+			bx::memCopy(&layout, &_layout, sizeof(VertexLayout) );
+			dump(layout);
 		}
 
 		void destroyVertexLayout(VertexLayoutHandle /*_handle*/) override
 		{
 		}
 
-		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _declHandle, uint16_t _flags) override
+		void createVertexBuffer(VertexBufferHandle _handle, const Memory* _mem, VertexLayoutHandle _layoutHandle, uint16_t _flags) override
 		{
-			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _declHandle, _flags);
+			m_vertexBuffers[_handle.idx].create(_mem->size, _mem->data, _layoutHandle, _flags);
 		}
 
 		void destroyVertexBuffer(VertexBufferHandle _handle) override
@@ -2724,8 +2724,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) override
 		{
-			VertexLayoutHandle decl = BGFX_INVALID_HANDLE;
-			m_vertexBuffers[_handle.idx].create(_size, NULL, decl, _flags);
+			VertexLayoutHandle layoutHandle = BGFX_INVALID_HANDLE;
+			m_vertexBuffers[_handle.idx].create(_size, NULL, layoutHandle, _flags);
 		}
 
 		void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) override
@@ -3111,7 +3111,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			if (0 < numVertices)
 			{
 				m_indexBuffers[_blitter.m_ib->handle.idx].update(0, _numIndices*2, _blitter.m_ib->data);
-				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_decl.m_stride, _blitter.m_vb->data);
+				m_vertexBuffers[_blitter.m_vb->handle.idx].update(0, numVertices*_blitter.m_layout.m_stride, _blitter.m_vb->data);
 
 				VertexBufferGL& vb = m_vertexBuffers[_blitter.m_vb->handle.idx];
 				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
@@ -3121,7 +3121,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				ProgramGL& program = m_program[_blitter.m_program.idx];
 				program.bindAttributesBegin();
-				program.bindAttributes(_blitter.m_decl, 0);
+				program.bindAttributes(_blitter.m_layout, 0);
 				program.bindAttributesEnd();
 
 				GL_CHECK(glDrawElements(GL_TRIANGLES
@@ -3794,14 +3794,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 				}
 
 				VertexBufferGL& vb = m_vertexBuffers[_clearQuad.m_vb.idx];
-				VertexLayout& vertexDecl = _clearQuad.m_decl;
+				VertexLayout& layout = _clearQuad.m_layout;
 
 				GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
 
 				ProgramGL& program = m_program[_clearQuad.m_program[numMrt-1].idx];
 				GL_CHECK(glUseProgram(program.m_id) );
 				program.bindAttributesBegin();
-				program.bindAttributes(vertexDecl, 0);
+				program.bindAttributes(layout, 0);
 				program.bindAttributesEnd();
 
 				if (m_clearQuadColor.idx == kInvalidHandle)
@@ -3868,7 +3868,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		ShaderGL m_shaders[BGFX_CONFIG_MAX_SHADERS];
 		ProgramGL m_program[BGFX_CONFIG_MAX_PROGRAMS];
 		TextureGL m_textures[BGFX_CONFIG_MAX_TEXTURES];
-		VertexLayout m_vertexDecls[BGFX_CONFIG_MAX_VERTEX_DECLS];
+		VertexLayout m_vertexLayouts[BGFX_CONFIG_MAX_VERTEX_LAYOUTS];
 		FrameBufferGL m_frameBuffers[BGFX_CONFIG_MAX_FRAME_BUFFERS];
 		UniformRegistry m_uniformReg;
 		void* m_uniforms[BGFX_CONFIG_MAX_UNIFORMS];
@@ -4508,7 +4508,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 		m_instanceData[used] = 0xffff;
 	}
 
-	void ProgramGL::bindAttributes(const VertexLayout& _vertexDecl, uint32_t _baseVertex)
+	void ProgramGL::bindAttributes(const VertexLayout& _layout, uint32_t _baseVertex)
 	{
 		for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
 		{
@@ -4519,16 +4519,16 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			AttribType::Enum type;
 			bool normalized;
 			bool asInt;
-			_vertexDecl.decode(attr, num, type, normalized, asInt);
+			_layout.decode(attr, num, type, normalized, asInt);
 
 			if (-1 != loc)
 			{
-				if (UINT16_MAX != _vertexDecl.m_attributes[attr])
+				if (UINT16_MAX != _layout.m_attributes[attr])
 				{
 					GL_CHECK(glEnableVertexAttribArray(loc) );
 					GL_CHECK(glVertexAttribDivisor(loc, 0) );
 
-					uint32_t baseVertex = _baseVertex*_vertexDecl.m_stride + _vertexDecl.m_offset[attr];
+					uint32_t baseVertex = _baseVertex*_layout.m_stride + _layout.m_offset[attr];
 					if ( (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30) ||  BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGLES >= 31) )
 					&& (AttribType::Uint8 == type || AttribType::Int16 == type)
 					&&  !normalized)
@@ -4536,7 +4536,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						GL_CHECK(glVertexAttribIPointer(loc
 							, num
 							, s_attribType[type]
-							, _vertexDecl.m_stride
+							, _layout.m_stride
 							, (void*)(uintptr_t)baseVertex)
 							);
 					}
@@ -4546,7 +4546,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							, num
 							, s_attribType[type]
 							, normalized
-							, _vertexDecl.m_stride
+							, _layout.m_stride
 							, (void*)(uintptr_t)baseVertex)
 							);
 					}
@@ -7230,11 +7230,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 										currentState.m_stream[idx].m_startVertex = draw.m_stream[idx].m_startVertex;
 
 										const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
-										const uint16_t decl = isValid(draw.m_stream[idx].m_decl)
-											? draw.m_stream[idx].m_decl.idx
-											: vb.m_decl.idx;
+										const uint16_t decl = isValid(draw.m_stream[idx].m_layoutHandle)
+											? draw.m_stream[idx].m_layoutHandle.idx
+											: vb.m_layoutHandle.idx;
 										GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vb.m_id) );
-										program.bindAttributes(m_vertexDecls[decl], draw.m_stream[idx].m_startVertex);
+										program.bindAttributes(m_vertexLayouts[decl], draw.m_stream[idx].m_startVertex);
 									}
 								}
 
@@ -7264,10 +7264,10 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								idx         += ntz;
 
 								const VertexBufferGL& vb = m_vertexBuffers[draw.m_stream[idx].m_handle.idx];
-								uint16_t decl = !isValid(vb.m_decl) ? draw.m_stream[idx].m_decl.idx : vb.m_decl.idx;
-								const VertexLayout& vertexDecl = m_vertexDecls[decl];
+								uint16_t decl = !isValid(vb.m_layoutHandle) ? draw.m_stream[idx].m_layoutHandle.idx : vb.m_layoutHandle.idx;
+								const VertexLayout& layout = m_vertexLayouts[decl];
 
-								numVertices = bx::uint32_min(numVertices, vb.m_size/vertexDecl.m_stride);
+								numVertices = bx::uint32_min(numVertices, vb.m_size/layout.m_stride);
 							}
 						}
 

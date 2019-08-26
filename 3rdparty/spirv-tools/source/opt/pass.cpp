@@ -43,7 +43,8 @@ Pass::Status Pass::Run(IRContext* ctx) {
   if (status == Status::SuccessWithChange) {
     ctx->InvalidateAnalysesExceptFor(GetPreservedAnalyses());
   }
-  assert(ctx->IsConsistent());
+  assert((status == Status::Failure || ctx->IsConsistent()) &&
+         "An analysis in the context is out of date.");
   return status;
 }
 

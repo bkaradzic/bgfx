@@ -21,11 +21,9 @@
 namespace spvtools {
 namespace reduce {
 
-using opt::IRContext;
-
 std::vector<std::unique_ptr<ReductionOpportunity>>
 RemoveUnreferencedInstructionReductionOpportunityFinder::
-    GetAvailableOpportunities(IRContext* context) const {
+    GetAvailableOpportunities(opt::IRContext* context) const {
   std::vector<std::unique_ptr<ReductionOpportunity>> result;
 
   for (auto& function : *context->module()) {

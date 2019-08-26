@@ -81,6 +81,7 @@ void main()
                               Name 97  "i"
                               ModuleProcessed  "no-storage-format"
                               ModuleProcessed  "resource-set-binding 3"
+                              ModuleProcessed  "auto-map-bindings"
                               ModuleProcessed  "auto-map-locations"
                               ModuleProcessed  "client opengl100"
                               ModuleProcessed  "target-env spirv1.3"
@@ -99,7 +100,7 @@ void main()
                               Decorate 56 Binding 0
                               Decorate 67(s2d) Location 0
                               Decorate 67(s2d) DescriptorSet 3
-                              Decorate 67(s2d) Binding 0
+                              Decorate 67(s2d) Binding 1
                3:             TypeVoid
                4:             TypeFunction 3
                7:             TypeInt 32 1

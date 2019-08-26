@@ -520,8 +520,8 @@ class Pointer : public Type {
 
 class Function : public Type {
  public:
-  Function(Type* ret_type, const std::vector<const Type*>& params);
-  Function(Type* ret_type, std::vector<const Type*>& params);
+  Function(const Type* ret_type, const std::vector<const Type*>& params);
+  Function(const Type* ret_type, std::vector<const Type*>& params);
   Function(const Function&) = default;
 
   std::string str() const override;

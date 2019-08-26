@@ -229,8 +229,8 @@ struct Emitter
 class ExampleParticles : public entry::AppI
 {
 public:
-	ExampleParticles(const char* _name, const char* _description)
-		: entry::AppI(_name, _description)
+	ExampleParticles(const char* _name, const char* _description, const char* _url)
+		: entry::AppI(_name, _description, _url)
 	{
 	}
 
@@ -452,4 +452,9 @@ public:
 
 } // namespace
 
-ENTRY_IMPLEMENT_MAIN(ExampleParticles, "32-particles", "Particles.");
+ENTRY_IMPLEMENT_MAIN(
+	  ExampleParticles
+	, "32-particles"
+	, "Particles."
+	, "https://bkaradzic.github.io/bgfx/examples.html#particles"
+	);

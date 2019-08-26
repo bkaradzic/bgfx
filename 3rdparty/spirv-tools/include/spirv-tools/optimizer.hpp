@@ -729,6 +729,30 @@ Optimizer::PassToken CreateInstBindlessCheckPass(
     uint32_t desc_set, uint32_t shader_id, bool input_length_enable = false,
     bool input_init_enable = false, uint32_t version = 1);
 
+// Create a pass to instrument physical buffer address checking
+// This pass instruments all physical buffer address references to check that
+// all referenced bytes fall in a valid buffer. If the reference is
+// invalid, a record is written to the debug output buffer (if space allows)
+// and a null value is returned. This pass is designed to support buffer
+// address validation in the Vulkan validation layers.
+//
+// Dead code elimination should be run after this pass as the original,
+// potentially invalid code is not removed and could cause undefined behavior,
+// including crashes. Instruction simplification would likely also be
+// beneficial. It is also generally recommended that this pass (and all
+// instrumentation passes) be run after any legalization and optimization
+// passes. This will give better analysis for the instrumentation and avoid
+// potentially de-optimizing the instrument code, for example, inlining
+// the debug record output function throughout the module.
+//
+// The instrumentation will read and write buffers in debug
+// descriptor set |desc_set|. It will write |shader_id| in each output record
+// to identify the shader module which generated the record.
+// |version| specifies the output buffer record format.
+Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,
+                                                 uint32_t shader_id,
+                                                 uint32_t version = 2);
+
 // Create a pass to upgrade to the VulkanKHR memory model.
 // This pass upgrades the Logical GLSL450 memory model to Logical VulkanKHR.
 // Additionally, it modifies memory, image, atomic and barrier operations to
@@ -794,6 +818,10 @@ Optimizer::PassToken CreateGraphicsRobustAccessPass();
 // accesses to |desc| must be OpAccessChain instructions with a literal index
 // for the first index.
 Optimizer::PassToken CreateDescriptorScalarReplacementPass();
+
+// Create a pass to replace all OpKill instruction with a function call to a
+// function that has a single OpKill.  This allows more code to be inlined.
+Optimizer::PassToken CreateWrapOpKillPass();
 
 }  // namespace spvtools
 

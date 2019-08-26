@@ -204,6 +204,67 @@ TEST_F(DescriptorScalarReplacementTest, ExpandSSBO) {
   SinglePassRunAndMatch<DescriptorScalarReplacement>(text, true);
 }
 
+TEST_F(DescriptorScalarReplacementTest, NameNewVariables) {
+  // Checks that if the original variable has a name, then the new variables
+  // will have a name derived from that name.
+  const std::string text = R"(
+; CHECK: OpName [[var1:%\w+]] "SSBO[0]"
+; CHECK: OpName [[var2:%\w+]] "SSBO[1]"
+; CHECK: OpDecorate [[var1]] DescriptorSet 0
+; CHECK: OpDecorate [[var1]] Binding 0
+; CHECK: OpDecorate [[var2]] DescriptorSet 0
+; CHECK: OpDecorate [[var2]] Binding 1
+; CHECK: OpTypeStruct
+; CHECK: [[struct_type:%\w+]] = OpTypeStruct
+; CHECK: [[ptr_type:%\w+]] = OpTypePointer Uniform [[struct_type]]
+; CHECK: [[var1]] = OpVariable [[ptr_type]] Uniform
+; CHECK: [[var2]] = OpVariable [[ptr_type]] Uniform
+; CHECK: [[ac1:%\w+]] = OpAccessChain %_ptr_Uniform_v4float [[var1]] %uint_0 %uint_0 %uint_0
+; CHECK: OpLoad %v4float [[ac1]]
+; CHECK: [[ac2:%\w+]] = OpAccessChain %_ptr_Uniform_v4float [[var2]] %uint_0 %uint_0 %uint_0
+; CHECK: OpLoad %v4float [[ac2]]
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main"
+               OpExecutionMode %main OriginUpperLeft
+               OpSource HLSL 600
+               OpName %buffers "SSBO"
+               OpDecorate %buffers DescriptorSet 0
+               OpDecorate %buffers Binding 0
+               OpMemberDecorate %S 0 Offset 0
+               OpDecorate %_runtimearr_S ArrayStride 16
+               OpMemberDecorate %type_StructuredBuffer_S 0 Offset 0
+               OpMemberDecorate %type_StructuredBuffer_S 0 NonWritable
+               OpDecorate %type_StructuredBuffer_S BufferBlock
+       %uint = OpTypeInt 32 0
+     %uint_0 = OpConstant %uint 0
+      %uint_1 = OpConstant %uint 1
+     %uint_2 = OpConstant %uint 2
+      %float = OpTypeFloat 32
+    %v4float = OpTypeVector %float 4
+          %S = OpTypeStruct %v4float
+%_runtimearr_S = OpTypeRuntimeArray %S
+%type_StructuredBuffer_S = OpTypeStruct %_runtimearr_S
+%_arr_type_StructuredBuffer_S_uint_2 = OpTypeArray %type_StructuredBuffer_S %uint_2
+%_ptr_Uniform__arr_type_StructuredBuffer_S_uint_2 = OpTypePointer Uniform %_arr_type_StructuredBuffer_S_uint_2
+%_ptr_Uniform_type_StructuredBuffer_S = OpTypePointer Uniform %type_StructuredBuffer_S
+       %void = OpTypeVoid
+         %19 = OpTypeFunction %void
+%_ptr_Uniform_v4float = OpTypePointer Uniform %v4float
+    %buffers = OpVariable %_ptr_Uniform__arr_type_StructuredBuffer_S_uint_2 Uniform
+       %main = OpFunction %void None %19
+         %21 = OpLabel
+         %22 = OpAccessChain %_ptr_Uniform_v4float %buffers %uint_0 %uint_0 %uint_0 %uint_0
+         %23 = OpLoad %v4float %22
+         %24 = OpAccessChain %_ptr_Uniform_type_StructuredBuffer_S %buffers %uint_1
+         %25 = OpAccessChain %_ptr_Uniform_v4float %24 %uint_0 %uint_0 %uint_0
+         %26 = OpLoad %v4float %25
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  SinglePassRunAndMatch<DescriptorScalarReplacement>(text, true);
+}
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

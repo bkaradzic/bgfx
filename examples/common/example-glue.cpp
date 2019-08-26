@@ -368,7 +368,7 @@ void showExampleDialog(entry::AppI* _app, const char* _errorText)
 				resourceBar("  T", "Textures",               stats->numTextures,             caps->limits.maxTextures,             maxWidth, itemHeight);
 				resourceBar("  U", "Uniforms",               stats->numUniforms,             caps->limits.maxUniforms,             maxWidth, itemHeight);
 				resourceBar(" VB", "Vertex buffers",         stats->numVertexBuffers,        caps->limits.maxVertexBuffers,        maxWidth, itemHeight);
-				resourceBar(" VD", "Vertex declarations",    stats->numVertexLayouts,        caps->limits.maxVertexLayouts,        maxWidth, itemHeight);
+				resourceBar(" VL", "Vertex layouts",         stats->numVertexLayouts,        caps->limits.maxVertexLayouts,        maxWidth, itemHeight);
 				ImGui::PopFont();
 			}
 
