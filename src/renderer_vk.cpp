@@ -2619,13 +2619,14 @@ VK_IMPORT_DEVICE
 			uint32_t samplerFlags = (uint32_t)(texture.m_flags & BGFX_SAMPLER_BITS_MASK);
 			VkSampler sampler = getSampler(samplerFlags, 1);
 
+			const uint32_t size = bx::strideAlign(program.m_vsh->m_size, align);
 			uint32_t bufferOffset = scratchBuffer.m_pos;
 			VkDescriptorBufferInfo bufferInfo;
 			bufferInfo.buffer = scratchBuffer.m_buffer;
 			bufferInfo.offset = 0;
-			bufferInfo.range  = bx::strideAlign(program.m_vsh->m_size, align);
+			bufferInfo.range  = size;
 			bx::memCopy(&scratchBuffer.m_data[scratchBuffer.m_pos], m_vsScratch, program.m_vsh->m_size);
-			scratchBuffer.m_pos += bufferInfo.range;
+			scratchBuffer.m_pos += size;
 
 			VkWriteDescriptorSet wds[3];
 			wds[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -5467,7 +5468,7 @@ VK_DESTROY
 		void* directAccessPtr = NULL;
 		VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingDeviceMem, 0));
 		VK_CHECK(vkMapMemory(device, stagingDeviceMem, 0, ma.allocationSize, 0, (void**)&directAccessPtr));
-		bx::memCopy(directAccessPtr, _mem->data, bci.size);
+		bx::memCopy(directAccessPtr, _mem->data, size_t(bci.size));
 		vkUnmapMemory(device, stagingDeviceMem);
 
 		const uint32_t bpp    = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
