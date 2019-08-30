@@ -5145,8 +5145,8 @@ VK_DESTROY
 			VkBufferImageCopy* bufferCopyInfo = (VkBufferImageCopy*)BX_ALLOC(g_allocator, sizeof(VkBufferImageCopy) * numSrd);
 			for (uint32_t ii = 0; ii < numSrd; ++ii)
 			{
-				uint32_t idealWidth  = m_width  >> imageInfos[ii].mipLevel;
-				uint32_t idealHeight = m_height >> imageInfos[ii].mipLevel;
+				uint32_t idealWidth  = bx::max<uint32_t>(1, m_width  >> imageInfos[ii].mipLevel);
+				uint32_t idealHeight = bx::max<uint32_t>(1, m_height >> imageInfos[ii].mipLevel);
 				bufferCopyInfo[ii].bufferOffset      = totalMemSize;
 				bufferCopyInfo[ii].bufferRowLength   = 0; // assume that image data are tightly aligned
 				bufferCopyInfo[ii].bufferImageHeight = 0; // assume that image data are tightly aligned
