@@ -5539,7 +5539,22 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
 						&& !bx::findIdentifierMatch(code, s_ARB_shader_texture_lod).isEmpty()
 						;
-					const bool usesGpuShader4   = !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty();
+
+					const bool usesVertexID = true
+						&& !s_extension[Extension::EXT_gpu_shader4].m_supported
+						&& !bx::findIdentifierMatch(code, "gl_VertexID").isEmpty()
+						;
+
+					const bool usesInstanceID = true
+						&& !s_extension[Extension::EXT_gpu_shader4].m_supported
+						&& !bx::findIdentifierMatch(code, "gl_InstanceID").isEmpty()
+						;
+
+					const bool usesGpuShader4 = true
+						&& s_extension[Extension::EXT_gpu_shader4].m_supported
+						&& !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty()
+						;
+
 					const bool usesGpuShader5   = !bx::findIdentifierMatch(code, s_ARB_gpu_shader5).isEmpty();
 					const bool usesIUsamplers   = !bx::findIdentifierMatch(code, s_uisamplers).isEmpty();
 					const bool usesUint         = !bx::findIdentifierMatch(code, s_uint).isEmpty();
@@ -5554,6 +5569,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						:  usesTextureArray
 						|| usesTexture3D
 						|| usesIUsamplers
+						|| usesVertexID
 						|| usesUint
 						|| usesTexelFetch
 						|| usesGpuShader5
@@ -5578,6 +5594,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								  "#define textureCubeGrad   textureCubeGradARB\n"
 								);
 						}
+					}
+
+					if (usesInstanceID)
+					{
+						bx::write(&writer, "#extension GL_ARB_draw_instanced : enable\n");
 					}
 
 					if (usesGpuShader4)
