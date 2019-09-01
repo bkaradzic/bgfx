@@ -124,6 +124,7 @@ namespace bgfx
 
 	static const char* s_textureArray[] =
 	{
+		"sampler2DArray",
 		"texture2DArray",
 		"texture2DArrayLod",
 		"shadow2DArray",
