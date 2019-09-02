@@ -14,7 +14,6 @@ void main()
         {
             break;
         }
-        continue;
     }
     imageStore(outImageTexture, ivec2(gl_GlobalInvocationID.xy), vec4(float(_30 - 1), float(_30), 1.0, 1.0));
 }

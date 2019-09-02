@@ -21,12 +21,12 @@ struct main0_in
     float4 a_position [[attribute(0)]];
 };
 
-float compare_float(thread const float& a, thread const float& b)
+inline float compare_float(thread const float& a, thread const float& b)
 {
     return float(abs(a - b) < 0.0500000007450580596923828125);
 }
 
-float compare_vec3(thread const float3& a, thread const float3& b)
+inline float compare_vec3(thread const float3& a, thread const float3& b)
 {
     float param = a.x;
     float param_1 = b.x;
@@ -37,7 +37,7 @@ float compare_vec3(thread const float3& a, thread const float3& b)
     return (compare_float(param, param_1) * compare_float(param_2, param_3)) * compare_float(param_4, param_5);
 }
 
-float compare_mat2x3(thread const float2x3& a, thread const float2x3& b)
+inline float compare_mat2x3(thread const float2x3& a, thread const float2x3& b)
 {
     float3 param = a[0];
     float3 param_1 = b[0];

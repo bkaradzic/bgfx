@@ -15,12 +15,12 @@ struct main0_out
     float4 FragColor [[color(0)]];
 };
 
-void foo2(thread Structy& f)
+inline void foo2(thread Structy& f)
 {
     f.c = float4(10.0);
 }
 
-Structy foo()
+inline Structy foo()
 {
     Structy param;
     foo2(param);

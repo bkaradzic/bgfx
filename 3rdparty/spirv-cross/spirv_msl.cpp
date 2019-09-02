@@ -3116,7 +3116,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplMod:
 			statement("// Implementation of the GLSL mod() function, which is slightly different than Metal fmod()");
 			statement("template<typename Tx, typename Ty>");
-			statement("Tx mod(Tx x, Ty y)");
+			statement("inline Tx mod(Tx x, Ty y)");
 			begin_scope();
 			statement("return x - y * floor(x / y);");
 			end_scope();
@@ -3126,7 +3126,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplRadians:
 			statement("// Implementation of the GLSL radians() function");
 			statement("template<typename T>");
-			statement("T radians(T d)");
+			statement("inline T radians(T d)");
 			begin_scope();
 			statement("return d * T(0.01745329251);");
 			end_scope();
@@ -3136,7 +3136,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplDegrees:
 			statement("// Implementation of the GLSL degrees() function");
 			statement("template<typename T>");
-			statement("T degrees(T r)");
+			statement("inline T degrees(T r)");
 			begin_scope();
 			statement("return r * T(57.2957795131);");
 			end_scope();
@@ -3146,7 +3146,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplFindILsb:
 			statement("// Implementation of the GLSL findLSB() function");
 			statement("template<typename T>");
-			statement("T spvFindLSB(T x)");
+			statement("inline T spvFindLSB(T x)");
 			begin_scope();
 			statement("return select(ctz(x), T(-1), x == T(0));");
 			end_scope();
@@ -3156,7 +3156,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplFindUMsb:
 			statement("// Implementation of the unsigned GLSL findMSB() function");
 			statement("template<typename T>");
-			statement("T spvFindUMSB(T x)");
+			statement("inline T spvFindUMSB(T x)");
 			begin_scope();
 			statement("return select(clz(T(0)) - (clz(x) + T(1)), T(-1), x == T(0));");
 			end_scope();
@@ -3166,7 +3166,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplFindSMsb:
 			statement("// Implementation of the signed GLSL findMSB() function");
 			statement("template<typename T>");
-			statement("T spvFindSMSB(T x)");
+			statement("inline T spvFindSMSB(T x)");
 			begin_scope();
 			statement("T v = select(x, T(-1) - x, x < T(0));");
 			statement("return select(clz(T(0)) - (clz(v) + T(1)), T(-1), v == T(0));");
@@ -3177,7 +3177,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplSSign:
 			statement("// Implementation of the GLSL sign() function for integer types");
 			statement("template<typename T, typename E = typename enable_if<is_integral<T>::value>::type>");
-			statement("T sign(T x)");
+			statement("inline T sign(T x)");
 			begin_scope();
 			statement("return select(select(select(x, T(0), x == T(0)), T(1), x > T(0)), T(-1), x < T(0));");
 			end_scope();
@@ -3185,40 +3185,27 @@ void CompilerMSL::emit_custom_functions()
 			break;
 
 		case SPVFuncImplArrayCopy:
-			statement("// Implementation of an array copy function to cover GLSL's ability to copy an array via "
-			          "assignment.");
-			statement("template<typename T, uint N>");
-			statement("void spvArrayCopyFromStack1(thread T (&dst)[N], thread const T (&src)[N])");
-			begin_scope();
-			statement("for (uint i = 0; i < N; dst[i] = src[i], i++);");
-			end_scope();
-			statement("");
-
-			statement("template<typename T, uint N>");
-			statement("void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])");
-			begin_scope();
-			statement("for (uint i = 0; i < N; dst[i] = src[i], i++);");
-			end_scope();
-			statement("");
-			break;
-
 		case SPVFuncImplArrayOfArrayCopy2Dim:
 		case SPVFuncImplArrayOfArrayCopy3Dim:
 		case SPVFuncImplArrayOfArrayCopy4Dim:
 		case SPVFuncImplArrayOfArrayCopy5Dim:
 		case SPVFuncImplArrayOfArrayCopy6Dim:
 		{
+			// Unfortunately we cannot template on the address space, so combinatorial explosion it is.
 			static const char *function_name_tags[] = {
-				"FromStack",
-				"FromConstant",
+				"FromConstantToStack",    "FromConstantToThreadGroup", "FromStackToStack",
+				"FromStackToThreadGroup", "FromThreadGroupToStack",    "FromThreadGroupToThreadGroup",
 			};
 
 			static const char *src_address_space[] = {
-				"thread const",
-				"constant",
+				"constant", "constant", "thread const", "thread const", "threadgroup const", "threadgroup const",
 			};
 
-			for (uint32_t variant = 0; variant < 2; variant++)
+			static const char *dst_address_space[] = {
+				"thread", "threadgroup", "thread", "threadgroup", "thread", "threadgroup",
+			};
+
+			for (uint32_t variant = 0; variant < 6; variant++)
 			{
 				uint32_t dimensions = spv_func - SPVFuncImplArrayCopyMultidimBase;
 				string tmp = "template<typename T";
@@ -3238,17 +3225,23 @@ void CompilerMSL::emit_custom_functions()
 					array_arg += "]";
 				}
 
-				statement("void spvArrayCopy", function_name_tags[variant], dimensions, "(thread T (&dst)", array_arg,
-				          ", ", src_address_space[variant], " T (&src)", array_arg, ")");
+				statement("inline void spvArrayCopy", function_name_tags[variant], dimensions, "(",
+				          dst_address_space[variant], " T (&dst)", array_arg, ", ", src_address_space[variant],
+				          " T (&src)", array_arg, ")");
 
 				begin_scope();
 				statement("for (uint i = 0; i < A; i++)");
 				begin_scope();
-				statement("spvArrayCopy", function_name_tags[variant], dimensions - 1, "(dst[i], src[i]);");
+
+				if (dimensions == 1)
+					statement("dst[i] = src[i];");
+				else
+					statement("spvArrayCopy", function_name_tags[variant], dimensions - 1, "(dst[i], src[i]);");
 				end_scope();
 				end_scope();
 				statement("");
 			}
+
 			break;
 		}
 
@@ -3256,7 +3249,7 @@ void CompilerMSL::emit_custom_functions()
 		{
 			string tex_width_str = convert_to_string(msl_options.texel_buffer_texture_width);
 			statement("// Returns 2D texture coords corresponding to 1D texel buffer coords");
-			statement("uint2 spvTexelBufferCoord(uint tc)");
+			statement("inline uint2 spvTexelBufferCoord(uint tc)");
 			begin_scope();
 			statement(join("return uint2(tc % ", tex_width_str, ", tc / ", tex_width_str, ");"));
 			end_scope();
@@ -3282,7 +3275,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("float4x4 spvInverse4x4(float4x4 m)");
+			statement("inline float4x4 spvInverse4x4(float4x4 m)");
 			begin_scope();
 			statement("float4x4 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3347,7 +3340,7 @@ void CompilerMSL::emit_custom_functions()
 
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("float3x3 spvInverse3x3(float3x3 m)");
+			statement("inline float3x3 spvInverse3x3(float3x3 m)");
 			begin_scope();
 			statement("float3x3 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3377,7 +3370,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplInverse2x2:
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("float2x2 spvInverse2x2(float2x2 m)");
+			statement("inline float2x2 spvInverse2x2(float2x2 m)");
 			begin_scope();
 			statement("float2x2 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -4229,21 +4222,36 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 
 	// Bitfield
 	case OpBitFieldInsert:
-		MSL_QFOP(insert_bits);
+	{
+		emit_bitfield_insert_op(ops[0], ops[1], ops[2], ops[3], ops[4], ops[5], "insert_bits", SPIRType::UInt);
 		break;
+	}
 
 	case OpBitFieldSExtract:
-	case OpBitFieldUExtract:
-		MSL_TFOP(extract_bits);
+	{
+		emit_trinary_func_op_bitextract(ops[0], ops[1], ops[2], ops[3], ops[4], "extract_bits", int_type, int_type,
+		                                SPIRType::UInt, SPIRType::UInt);
 		break;
+	}
+
+	case OpBitFieldUExtract:
+	{
+		emit_trinary_func_op_bitextract(ops[0], ops[1], ops[2], ops[3], ops[4], "extract_bits", uint_type, uint_type,
+		                                SPIRType::UInt, SPIRType::UInt);
+		break;
+	}
 
 	case OpBitReverse:
+		// BitReverse does not have issues with sign since result type must match input type.
 		MSL_UFOP(reverse_bits);
 		break;
 
 	case OpBitCount:
-		MSL_UFOP(popcount);
+	{
+		auto basetype = expression_type(ops[2]).basetype;
+		emit_unary_func_op_cast(ops[0], ops[1], ops[2], "popcount", basetype, basetype);
 		break;
+	}
 
 	case OpFRem:
 		MSL_BFOP(fmod);
@@ -4872,7 +4880,8 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 	flush_all_active_variables();
 }
 
-void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id)
+void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageClass lhs_storage,
+                                  StorageClass rhs_storage)
 {
 	// Assignment from an array initializer is fine.
 	auto &type = expression_type(rhs_id);
@@ -4914,7 +4923,27 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id)
 		force_recompile();
 	}
 
-	const char *tag = is_constant ? "FromConstant" : "FromStack";
+	bool lhs_thread =
+	    lhs_storage == StorageClassFunction || lhs_storage == StorageClassGeneric || lhs_storage == StorageClassPrivate;
+	bool rhs_thread =
+	    rhs_storage == StorageClassFunction || rhs_storage == StorageClassGeneric || rhs_storage == StorageClassPrivate;
+
+	const char *tag = nullptr;
+	if (lhs_thread && is_constant)
+		tag = "FromConstantToStack";
+	else if (lhs_storage == StorageClassWorkgroup && is_constant)
+		tag = "FromConstantToThreadGroup";
+	else if (lhs_thread && rhs_thread)
+		tag = "FromStackToStack";
+	else if (lhs_storage == StorageClassWorkgroup && rhs_thread)
+		tag = "FromStackToThreadGroup";
+	else if (lhs_thread && rhs_storage == StorageClassWorkgroup)
+		tag = "FromThreadGroupToStack";
+	else if (lhs_storage == StorageClassWorkgroup && rhs_storage == StorageClassWorkgroup)
+		tag = "FromThreadGroupToThreadGroup";
+	else
+		SPIRV_CROSS_THROW("Unknown storage class used for copying arrays.");
+
 	statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ");");
 }
 
@@ -4951,7 +4980,8 @@ bool CompilerMSL::maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs)
 	if (p_v_lhs)
 		flush_variable_declaration(p_v_lhs->self);
 
-	emit_array_copy(to_expression(id_lhs), id_rhs);
+	emit_array_copy(to_expression(id_lhs), id_rhs, get_backing_variable_storage(id_lhs),
+	                get_backing_variable_storage(id_rhs));
 	register_write(id_lhs);
 
 	return true;
@@ -5339,9 +5369,10 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		add_function_overload(func);
 
 	local_variable_names = resource_names;
-	string decl;
 
 	processing_entry_point = (func.self == ir.default_entry_point);
+
+	string decl = processing_entry_point ? "" : "inline ";
 
 	auto &type = get<SPIRType>(func.return_type);
 
@@ -5352,7 +5383,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 	else
 	{
 		// We cannot return arrays in MSL, so "return" through an out variable.
-		decl = "void";
+		decl += "void";
 	}
 
 	decl += " ";
@@ -9605,6 +9636,10 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 	case BuiltInSubgroupSize:
 	case BuiltInSubgroupLocalInvocationId:
 	case BuiltInViewIndex:
+	case BuiltInVertexIndex:
+	case BuiltInInstanceIndex:
+	case BuiltInBaseInstance:
+	case BuiltInBaseVertex:
 		expected_type = SPIRType::UInt;
 		break;
 

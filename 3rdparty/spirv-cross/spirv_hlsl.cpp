@@ -4641,8 +4641,11 @@ void CompilerHLSL::emit_instruction(const Instruction &instruction)
 	}
 
 	case OpBitCount:
-		HLSL_UFOP(countbits);
+	{
+		auto basetype = expression_type(ops[2]).basetype;
+		emit_unary_func_op_cast(ops[0], ops[1], ops[2], "countbits", basetype, basetype);
 		break;
+	}
 
 	case OpBitReverse:
 		HLSL_UFOP(reversebits);

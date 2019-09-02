@@ -40,12 +40,12 @@ struct SSBO2
     float4 outputs[1];
 };
 
-float4 overload(thread const S0& s0)
+inline float4 overload(thread const S0& s0)
 {
     return s0.a;
 }
 
-float4 overload(thread const S1& s1)
+inline float4 overload(thread const S1& s1)
 {
     return s1.a;
 }

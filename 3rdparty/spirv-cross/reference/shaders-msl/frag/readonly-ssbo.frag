@@ -15,7 +15,7 @@ struct main0_out
     float4 FragColor [[color(0)]];
 };
 
-float4 read_from_function(const device SSBO& v_13)
+inline float4 read_from_function(const device SSBO& v_13)
 {
     return v_13.v;
 }

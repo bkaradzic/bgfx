@@ -11,7 +11,7 @@ struct main0_out
     float gl_FragDepth [[depth(any)]];
 };
 
-void set_output_depth(thread float& gl_FragDepth)
+inline void set_output_depth(thread float& gl_FragDepth)
 {
     gl_FragDepth = 0.20000000298023223876953125;
 }
