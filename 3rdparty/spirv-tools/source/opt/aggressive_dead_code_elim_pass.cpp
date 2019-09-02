@@ -664,6 +664,9 @@ Pass::Status AggressiveDCEPass::ProcessImpl() {
   // been marked, it is safe to remove dead global values.
   modified |= ProcessGlobalValues();
 
+  // Sanity check.
+  assert(to_kill_.size() == 0 || modified);
+
   // Kill all dead instructions.
   for (auto inst : to_kill_) {
     context()->KillInst(inst);
@@ -846,6 +849,7 @@ bool AggressiveDCEPass::ProcessGlobalValues() {
         if (!IsDead(ptr_ty_inst)) continue;
       }
       to_kill_.push_back(&val);
+      modified = true;
     }
   }
 

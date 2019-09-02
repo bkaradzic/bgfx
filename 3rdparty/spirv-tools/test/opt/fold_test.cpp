@@ -210,6 +210,7 @@ OpName %main "main"
 %float_2049 = OpConstant %float 2049
 %float_n2049 = OpConstant %float -2049
 %float_0p5 = OpConstant %float 0.5
+%float_0p2 = OpConstant %float 0.2
 %float_pi = OpConstant %float 1.5555
 %float_1e16 = OpConstant %float 1e16
 %float_n1e16 = OpConstant %float -1e16
@@ -1465,24 +1466,14 @@ INSTANTIATE_TEST_SUITE_P(FloatConstantFoldingTest, FloatInstructionFoldingTest,
             "OpReturn\n" +
             "OpFunctionEnd",
         2, std::numeric_limits<float>::quiet_NaN()),
-    // Test case 20: QuantizeToF16 inf
+    // Test case 20: FMix 1.0 4.0 0.2
     InstructionFoldingCase<float>(
         Header() + "%main = OpFunction %void None %void_func\n" +
             "%main_lab = OpLabel\n" +
-            "%2 = OpFDiv %float %float_1 %float_0\n" +
-            "%3 = OpQuantizeToF16 %float %3\n" +
+            "%2 = OpExtInst %float %1 FMix %float_1 %float_4 %float_0p2\n" +
             "OpReturn\n" +
             "OpFunctionEnd",
-        2, std::numeric_limits<float>::infinity()),
-    // Test case 21: QuantizeToF16 -inf
-    InstructionFoldingCase<float>(
-        Header() + "%main = OpFunction %void None %void_func\n" +
-            "%main_lab = OpLabel\n" +
-            "%2 = OpFDiv %float %float_n1 %float_0\n" +
-            "%3 = OpQuantizeToF16 %float %3\n" +
-            "OpReturn\n" +
-            "OpFunctionEnd",
-        2, -std::numeric_limits<float>::infinity())
+        2, 1.6f)
 ));
 // clang-format on
 

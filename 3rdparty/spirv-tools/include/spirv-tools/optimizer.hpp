@@ -823,6 +823,11 @@ Optimizer::PassToken CreateDescriptorScalarReplacementPass();
 // function that has a single OpKill.  This allows more code to be inlined.
 Optimizer::PassToken CreateWrapOpKillPass();
 
+// Replaces the extensions VK_AMD_shader_ballot,VK_AMD_gcn_shader, and
+// VK_AMD_shader_trinary_minmax with equivalent code using core instructions and
+// capabilities.
+Optimizer::PassToken CreateAmdExtToKhrPass();
+
 }  // namespace spvtools
 
 #endif  // INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_

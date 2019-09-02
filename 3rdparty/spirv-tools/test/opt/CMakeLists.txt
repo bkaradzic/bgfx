@@ -17,6 +17,7 @@ add_subdirectory(loop_optimizations)
 
 add_spvtools_unittest(TARGET opt
   SRCS aggressive_dead_code_elim_test.cpp
+       amd_ext_to_khr.cpp
        assembly_builder_test.cpp
        block_merge_test.cpp
        ccp_test.cpp

@@ -451,6 +451,8 @@ static_library("spvtools_opt") {
   sources = [
     "source/opt/aggressive_dead_code_elim_pass.cpp",
     "source/opt/aggressive_dead_code_elim_pass.h",
+    "source/opt/amd_ext_to_khr.cpp",
+    "source/opt/amd_ext_to_khr.h",
     "source/opt/basic_block.cpp",
     "source/opt/basic_block.h",
     "source/opt/block_merge_pass.cpp",
@@ -658,6 +660,7 @@ static_library("spvtools_opt") {
 
   deps = [
     ":spvtools",
+    ":spvtools_vendor_tables_spv-amd-shader-ballot",
   ]
   public_deps = [
     ":spvtools_headers",
@@ -729,6 +732,8 @@ static_library("spvtools_reduce") {
     "source/reduce/remove_instruction_reduction_opportunity.h",
     "source/reduce/remove_opname_instruction_reduction_opportunity_finder.cpp",
     "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h",
+    "source/reduce/remove_relaxed_precision_decoration_opportunity_finder.cpp",
+    "source/reduce/remove_relaxed_precision_decoration_opportunity_finder.h",
     "source/reduce/remove_selection_reduction_opportunity.cpp",
     "source/reduce/remove_selection_reduction_opportunity.h",
     "source/reduce/remove_selection_reduction_opportunity_finder.cpp",

@@ -341,7 +341,7 @@ uint32_t InstBuffAddrCheckPass::GenSearchAndTest(Instruction* ref_inst,
         std::initializer_list<Operand>{
             {SPV_OPERAND_TYPE_CAPABILITY, {SpvCapabilityInt64}}}));
     get_def_use_mgr()->AnalyzeInstDefUse(&*cap_int64_inst);
-    get_module()->AddCapability(std::move(cap_int64_inst));
+    context()->AddCapability(std::move(cap_int64_inst));
   }
   // Convert reference pointer to uint64
   uint32_t ref_ptr_id = ref_inst->GetSingleWordInOperand(0);

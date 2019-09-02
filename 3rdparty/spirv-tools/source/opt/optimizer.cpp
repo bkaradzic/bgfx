@@ -14,6 +14,7 @@
 
 #include "spirv-tools/optimizer.hpp"
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -492,6 +493,8 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
     RegisterPass(CreateGraphicsRobustAccessPass());
   } else if (pass_name == "wrap-opkill") {
     RegisterPass(CreateWrapOpKillPass());
+  } else if (pass_name == "amd-ext-to-khr") {
+    RegisterPass(CreateAmdExtToKhrPass());
   } else {
     Errorf(consumer(), nullptr, {},
            "Unknown flag '--%s'. Use --help for a list of valid flags",
@@ -549,26 +552,25 @@ bool Optimizer::Run(const uint32_t* original_binary,
   impl_->pass_manager.SetTargetEnv(impl_->target_env);
   auto status = impl_->pass_manager.Run(context.get());
 
-  bool binary_changed = false;
-  if (status == opt::Pass::Status::SuccessWithChange) {
-    binary_changed = true;
-  } else if (status == opt::Pass::Status::SuccessWithoutChange) {
-    if (optimized_binary->size() != original_binary_size ||
-        (memcmp(optimized_binary->data(), original_binary,
-                original_binary_size) != 0)) {
-      binary_changed = true;
-      Log(consumer(), SPV_MSG_WARNING, nullptr, {},
-          "Binary unexpectedly changed despite optimizer saying there was no "
-          "change");
-    }
+  if (status == opt::Pass::Status::Failure) {
+    return false;
   }
 
-  if (binary_changed) {
-    optimized_binary->clear();
-    context->module()->ToBinary(optimized_binary, /* skip_nop = */ true);
-  }
+  optimized_binary->clear();
+  context->module()->ToBinary(optimized_binary, /* skip_nop = */ true);
 
-  return status != opt::Pass::Status::Failure;
+#ifndef NDEBUG
+  if (status == opt::Pass::Status::SuccessWithoutChange) {
+    auto changed = optimized_binary->size() != original_binary_size ||
+                   memcmp(optimized_binary->data(), original_binary,
+                          original_binary_size) != 0;
+    assert(!changed &&
+           "Binary unexpectedly changed despite optimizer saying there was no "
+           "change");
+  }
+#endif  // !NDEBUG
+
+  return true;
 }
 
 Optimizer& Optimizer::SetPrintAll(std::ostream* out) {
@@ -917,6 +919,11 @@ Optimizer::PassToken CreateDescriptorScalarReplacementPass() {
 
 Optimizer::PassToken CreateWrapOpKillPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(MakeUnique<opt::WrapOpKill>());
+}
+
+Optimizer::PassToken CreateAmdExtToKhrPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::AmdExtensionToKhrPass>());
 }
 
 }  // namespace spvtools

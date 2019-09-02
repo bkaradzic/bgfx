@@ -2200,7 +2200,7 @@ FoldingRule RemoveRedundantOperands() {
 
 }  // namespace
 
-FoldingRules::FoldingRules() {
+void FoldingRules::AddFoldingRules() {
   // Add all folding rules to the list for the opcodes to which they apply.
   // Note that the order in which rules are added to the list matters. If a rule
   // applies to the instruction, the rest of the rules will not be attempted.
@@ -2215,8 +2215,6 @@ FoldingRules::FoldingRules() {
   rules_[SpvOpDot].push_back(DotProductDoingExtract());
 
   rules_[SpvOpEntryPoint].push_back(RemoveRedundantOperands());
-
-  rules_[SpvOpExtInst].push_back(RedundantFMix());
 
   rules_[SpvOpFAdd].push_back(RedundantFAdd());
   rules_[SpvOpFAdd].push_back(MergeAddNegateArithmetic());
@@ -2271,6 +2269,15 @@ FoldingRules::FoldingRules() {
   rules_[SpvOpUDiv].push_back(MergeDivNegateArithmetic());
 
   rules_[SpvOpVectorShuffle].push_back(VectorShuffleFeedingShuffle());
+
+  FeatureManager* feature_manager = context_->get_feature_mgr();
+  // Add rules for GLSLstd450
+  uint32_t ext_inst_glslstd450_id =
+      feature_manager->GetExtInstImportId_GLSLstd450();
+  if (ext_inst_glslstd450_id != 0) {
+    ext_rules_[{ext_inst_glslstd450_id, GLSLstd450FMix}].push_back(
+        RedundantFMix());
+  }
 }
 }  // namespace opt
 }  // namespace spvtools

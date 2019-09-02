@@ -546,7 +546,7 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"PerViewNV", 5272, 1, pygen_variable_caps_MeshShadingNV, 1, pygen_variable_exts_SPV_NV_mesh_shader, {}, 0xffffffffu, 0xffffffffu},
   {"PerTaskNV", 5273, 1, pygen_variable_caps_MeshShadingNV, 1, pygen_variable_exts_SPV_NV_mesh_shader, {}, 0xffffffffu, 0xffffffffu},
   {"PerVertexNV", 5285, 1, pygen_variable_caps_FragmentBarycentricNV, 1, pygen_variable_exts_SPV_NV_fragment_shader_barycentric, {}, 0xffffffffu, 0xffffffffu},
-  {"NonUniformEXT", 5300, 1, pygen_variable_caps_ShaderNonUniformEXT, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
+  {"NonUniformEXT", 5300, 1, pygen_variable_caps_ShaderNonUniformEXT, 0, nullptr, {}, 0xffffffffu, 0xffffffffu},
   {"RestrictPointerEXT", 5355, 1, pygen_variable_caps_PhysicalStorageBufferAddressesEXT, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, 0xffffffffu, 0xffffffffu},
   {"AliasedPointerEXT", 5356, 1, pygen_variable_caps_PhysicalStorageBufferAddressesEXT, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, 0xffffffffu, 0xffffffffu},
   {"CounterBuffer", 5634, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_ID}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},

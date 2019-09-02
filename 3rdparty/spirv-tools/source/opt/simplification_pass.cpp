@@ -49,7 +49,7 @@ bool SimplificationPass::SimplifyFunction(Function* function) {
   cfg()->ForEachBlockInReversePostOrder(
       function->entry().get(),
       [&modified, &process_phis, &work_list, &in_work_list, &inst_to_kill,
-       folder, this](BasicBlock* bb) {
+       &folder, this](BasicBlock* bb) {
         for (Instruction* inst = &*bb->begin(); inst; inst = inst->NextNode()) {
           if (inst->opcode() == SpvOpPhi) {
             process_phis.insert(inst);
