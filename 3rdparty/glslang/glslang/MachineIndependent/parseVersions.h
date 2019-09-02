@@ -161,6 +161,7 @@ public:
     virtual void explicitFloat32Check(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual void explicitFloat64Check(const TSourceLoc&, const char* op, bool builtIn = false);
     virtual void fcoopmatCheck(const TSourceLoc&, const char* op, bool builtIn = false);
+    virtual void intcoopmatCheck(const TSourceLoc&, const char *op, bool builtIn = false);
     bool relaxedErrors()    const { return (messages & EShMsgRelaxedErrors) != 0; }
     bool suppressWarnings() const { return (messages & EShMsgSuppressWarnings) != 0; }
     bool isForwardCompatible() const { return forwardCompatible; }

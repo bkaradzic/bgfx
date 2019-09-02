@@ -325,6 +325,7 @@ INSTANTIATE_TEST_CASE_P(
         "spv.GeometryShaderPassthrough.geom",
         "spv.interpOps.frag",
         "spv.int64.frag",
+        "spv.intcoopmat.comp",
         "spv.intOps.vert",
         "spv.layoutNested.vert",
         "spv.length.frag",

@@ -200,7 +200,7 @@ GLSLANG_WEB_EXCLUDE_ON
 %token <lex> F64MAT4X2 F64MAT4X3 F64MAT4X4
 %token <lex> ATOMIC_UINT
 %token <lex> ACCSTRUCTNV
-%token <lex> FCOOPMATNV
+%token <lex> FCOOPMATNV ICOOPMATNV UCOOPMATNV
 
 // combined image/sampler
 %token <lex> SAMPLER1D SAMPLER1DARRAY SAMPLER1DARRAYSHADOW ISAMPLER1D SAMPLER1DSHADOW
@@ -3181,6 +3181,18 @@ GLSLANG_WEB_EXCLUDE_ON
         parseContext.fcoopmatCheck($1.loc, "fcoopmatNV", parseContext.symbolTable.atBuiltInLevel());
         $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
         $$.basicType = EbtFloat;
+        $$.coopmat = true;
+    }
+    | ICOOPMATNV {
+        parseContext.intcoopmatCheck($1.loc, "icoopmatNV", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtInt;
+        $$.coopmat = true;
+    }
+    | UCOOPMATNV {
+        parseContext.intcoopmatCheck($1.loc, "ucoopmatNV", parseContext.symbolTable.atBuiltInLevel());
+        $$.init($1.loc, parseContext.symbolTable.atGlobalLevel());
+        $$.basicType = EbtUint;
         $$.coopmat = true;
     }
 GLSLANG_WEB_EXCLUDE_OFF

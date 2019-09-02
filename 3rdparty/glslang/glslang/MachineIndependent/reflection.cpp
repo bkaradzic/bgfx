@@ -556,15 +556,18 @@ public:
                 bool blockParent = (base->getType().getBasicType() == EbtBlock && base->getQualifier().storage == EvqBuffer);
 
                 if (strictArraySuffix && blockParent) {
-                    const TTypeList& typeList = *base->getType().getStruct();
+                    TType structDerefType(base->getType(), 0);
+
+                    const TType &structType = base->getType().isArray() ? structDerefType : base->getType();
+                    const TTypeList& typeList = *structType.getStruct();
 
                     TVector<int> memberOffsets;
 
                     memberOffsets.resize(typeList.size());
-                    getOffsets(base->getType(), memberOffsets);
+                    getOffsets(structType, memberOffsets);
 
                     for (int i = 0; i < (int)typeList.size(); ++i) {
-                        TType derefType(base->getType(), i);
+                        TType derefType(structType, i);
                         TString name = baseName;
                         if (name.size() > 0)
                             name.append(".");
@@ -575,7 +578,7 @@ public:
                         if (derefType.isArray() && derefType.isStruct()) {
                             name.append("[0]");
                             blowUpActiveAggregate(TType(derefType, 0), name, derefs, derefs.end(), memberOffsets[i],
-                                                  blockIndex, 0, getArrayStride(base->getType(), derefType),
+                                                  blockIndex, 0, getArrayStride(structType, derefType),
                                                   base->getQualifier().storage, false);
                         } else {
                             blowUpActiveAggregate(derefType, name, derefs, derefs.end(), memberOffsets[i], blockIndex,

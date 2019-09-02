@@ -126,36 +126,36 @@ class TType;
 
 typedef enum {
     EShSourceNone,
-    EShSourceGlsl,
-    EShSourceHlsl,
-} EShSource;                  // if EShLanguage were EShStage, this could be EShLanguage instead
+    EShSourceGlsl,               // GLSL, includes ESSL (OpenGL ES GLSL)
+    EShSourceHlsl,               // HLSL
+} EShSource;                     // if EShLanguage were EShStage, this could be EShLanguage instead
 
 typedef enum {
-    EShClientNone,
+    EShClientNone,               // use when there is no client, e.g. for validation
     EShClientVulkan,
     EShClientOpenGL,
 } EShClient;
 
 typedef enum {
     EShTargetNone,
-    EShTargetSpv,                 // preferred spelling
+    EShTargetSpv,                 // SPIR-V (preferred spelling)
     EshTargetSpv = EShTargetSpv,  // legacy spelling
 } EShTargetLanguage;
 
 typedef enum {
-    EShTargetVulkan_1_0 = (1 << 22),
-    EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),
-    EShTargetOpenGL_450 = 450,
+    EShTargetVulkan_1_0 = (1 << 22),                  // Vulkan 1.0
+    EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),      // Vulkan 1.1
+    EShTargetOpenGL_450 = 450,                        // OpenGL
 } EShTargetClientVersion;
 
 typedef EShTargetClientVersion EshTargetClientVersion;
 
 typedef enum {
-    EShTargetSpv_1_0 = (1 << 16),
-    EShTargetSpv_1_1 = (1 << 16) | (1 << 8),
-    EShTargetSpv_1_2 = (1 << 16) | (2 << 8),
-    EShTargetSpv_1_3 = (1 << 16) | (3 << 8),
-    EShTargetSpv_1_4 = (1 << 16) | (4 << 8),
+    EShTargetSpv_1_0 = (1 << 16),                     // SPIR-V 1.0
+    EShTargetSpv_1_1 = (1 << 16) | (1 << 8),          // SPIR-V 1.1
+    EShTargetSpv_1_2 = (1 << 16) | (2 << 8),          // SPIR-V 1.2
+    EShTargetSpv_1_3 = (1 << 16) | (3 << 8),          // SPIR-V 1.3
+    EShTargetSpv_1_4 = (1 << 16) | (4 << 8),          // SPIR-V 1.4
 } EShTargetLanguageVersion;
 
 struct TInputLanguage {
@@ -444,6 +444,30 @@ public:
     // These must be called so that parsing is done for the right source language and
     // target environment, either indirectly through TranslateEnvironment() based on
     // EShMessages et. al., or directly by the user.
+    //
+    // setEnvInput:    The input source language and stage. If generating code for a
+    //                 specific client, the input client semantics to use and the
+    //                 version of the that client's input semantics to use, otherwise
+    //                 use EShClientNone and version of 0, e.g. for validation mode.
+    //                 Note 'version' does not describe the target environment,
+    //                 just the version of the source dialect to compile under.
+    //
+    //                 See the definitions of TEnvironment, EShSource, EShLanguage,
+    //                 and EShClient for choices and more detail.
+    //
+    // setEnvClient:   The client that will be hosting the execution, and it's version.
+    //                 Note 'version' is not the version of the languages involved, but
+    //                 the version of the client environment.
+    //                 Use EShClientNone and version of 0 if there is no client, e.g.
+    //                 for validation mode.
+    //
+    //                 See EShTargetClientVersion for choices.
+    //
+    // setEnvTarget:   The language to translate to when generating code, and that
+    //                 language's version.
+    //                 Use EShTargetNone and version of 0 if there is no client, e.g.
+    //                 for validation mode.
+    //
     void setEnvInput(EShSource lang, EShLanguage envStage, EShClient client, int version)
     {
         environment.input.languageFamily = lang;
@@ -461,6 +485,7 @@ public:
         environment.target.language = lang;
         environment.target.version = version;
     }
+
 #ifdef ENABLE_HLSL
     void setEnvTargetHlslFunctionality1() { environment.target.hlslFunctionality1 = true; }
     bool getEnvTargetHlslFunctionality1() const { return environment.target.hlslFunctionality1; }

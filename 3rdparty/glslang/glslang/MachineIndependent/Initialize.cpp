@@ -4797,6 +4797,60 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "void coopMatStoreNV(fcoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
 
             "fcoopmatNV coopMatMulAddNV(fcoopmatNV A, fcoopmatNV B, fcoopmatNV C);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out icoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatLoadNV(out ucoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(icoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent int64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent ivec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent ivec4[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint8_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint16_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uint64_t[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uvec2[] buf, uint element, uint stride, bool colMajor);\n"
+            "void coopMatStoreNV(ucoopmatNV m, volatile coherent uvec4[] buf, uint element, uint stride, bool colMajor);\n"
+
+            "icoopmatNV coopMatMulAddNV(icoopmatNV A, icoopmatNV B, icoopmatNV C);\n"
+            "ucoopmatNV coopMatMulAddNV(ucoopmatNV A, ucoopmatNV B, ucoopmatNV C);\n"
             );
     }
 
@@ -8527,9 +8581,12 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupMemoryBarrierShared", 1, &E_GL_KHR_shader_subgroup_basic);
         }
 
-        symbolTable.setFunctionExtensions("coopMatLoadNV",              1, &E_GL_NV_cooperative_matrix);
-        symbolTable.setFunctionExtensions("coopMatStoreNV",             1, &E_GL_NV_cooperative_matrix);
-        symbolTable.setFunctionExtensions("coopMatMulAddNV",            1, &E_GL_NV_cooperative_matrix);
+        {
+            const char *coopExt[2] = { E_GL_NV_cooperative_matrix, E_GL_NV_integer_cooperative_matrix };
+            symbolTable.setFunctionExtensions("coopMatLoadNV",   2, coopExt);
+            symbolTable.setFunctionExtensions("coopMatStoreNV",  2, coopExt);
+            symbolTable.setFunctionExtensions("coopMatMulAddNV", 2, coopExt);
+        }
 
         if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
             symbolTable.setFunctionExtensions("dFdx",                   1, &E_GL_NV_compute_shader_derivatives);

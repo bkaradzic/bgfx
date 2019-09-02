@@ -3485,6 +3485,10 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
         builder.addExtension(spv::E_SPV_NV_cooperative_matrix);
         if (type.getBasicType() == glslang::EbtFloat16)
             builder.addCapability(spv::CapabilityFloat16);
+        if (type.getBasicType() == glslang::EbtUint8 ||
+            type.getBasicType() == glslang::EbtInt8) {
+            builder.addCapability(spv::CapabilityInt8);
+        }
 
         spv::Id scope = makeArraySizeId(*type.getTypeParameters(), 1);
         spv::Id rows = makeArraySizeId(*type.getTypeParameters(), 2);
