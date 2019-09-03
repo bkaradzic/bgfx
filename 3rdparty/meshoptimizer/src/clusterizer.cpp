@@ -190,9 +190,9 @@ meshopt_Bounds meshopt_computeClusterBounds(const unsigned int* indices, size_t 
 	// compute triangle normals and gather triangle corners
 	float normals[256][3];
 	float corners[256][3][3];
-	unsigned int triangles = 0;
+	size_t triangles = 0;
 
-	for (unsigned int i = 0; i < index_count; i += 3)
+	for (size_t i = 0; i < index_count; i += 3)
 	{
 		unsigned int a = indices[i + 0], b = indices[i + 1], c = indices[i + 2];
 		assert(a < vertex_count && b < vertex_count && c < vertex_count);
@@ -251,7 +251,7 @@ meshopt_Bounds meshopt_computeClusterBounds(const unsigned int* indices, size_t 
 	// compute a tight cone around all normals, mindp = cos(angle/2)
 	float mindp = 1.f;
 
-	for (unsigned int i = 0; i < triangles; ++i)
+	for (size_t i = 0; i < triangles; ++i)
 	{
 		float dp = normals[i][0] * axis[0] + normals[i][1] * axis[1] + normals[i][2] * axis[2];
 
@@ -277,7 +277,7 @@ meshopt_Bounds meshopt_computeClusterBounds(const unsigned int* indices, size_t 
 	float maxt = 0;
 
 	// we need to find the point on center-t*axis ray that lies in negative half-space of all triangles
-	for (unsigned int i = 0; i < triangles; ++i)
+	for (size_t i = 0; i < triangles; ++i)
 	{
 		// dot(center-t*axis-corner, trinormal) = 0
 		// dot(center-corner, trinormal) - t * dot(axis, trinormal) = 0
@@ -334,7 +334,7 @@ meshopt_Bounds meshopt_computeMeshletBounds(const meshopt_Meshlet* meshlet, cons
 
 	unsigned int indices[sizeof(meshlet->indices) / sizeof(meshlet->indices[0][0])];
 
-	for (unsigned int i = 0; i < meshlet->triangle_count; ++i)
+	for (size_t i = 0; i < meshlet->triangle_count; ++i)
 	{
 		unsigned int a = meshlet->vertices[meshlet->indices[i][0]];
 		unsigned int b = meshlet->vertices[meshlet->indices[i][1]];
