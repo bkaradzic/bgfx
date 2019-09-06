@@ -53,7 +53,7 @@ void UpgradeMemoryModel::UpgradeMemoryModelInstruction() {
   // 2. Add the OpCapability.
   // 3. Modify the memory model.
   Instruction* memory_model = get_module()->GetMemoryModel();
-  get_module()->AddCapability(MakeUnique<Instruction>(
+  context()->AddCapability(MakeUnique<Instruction>(
       context(), SpvOpCapability, 0, 0,
       std::initializer_list<Operand>{
           {SPV_OPERAND_TYPE_CAPABILITY, {SpvCapabilityVulkanMemoryModelKHR}}}));
@@ -61,7 +61,7 @@ void UpgradeMemoryModel::UpgradeMemoryModelInstruction() {
   std::vector<uint32_t> words(extension.size() / 4 + 1, 0);
   char* dst = reinterpret_cast<char*>(words.data());
   strncpy(dst, extension.c_str(), extension.size());
-  get_module()->AddExtension(
+  context()->AddExtension(
       MakeUnique<Instruction>(context(), SpvOpExtension, 0, 0,
                               std::initializer_list<Operand>{
                                   {SPV_OPERAND_TYPE_LITERAL_STRING, words}}));

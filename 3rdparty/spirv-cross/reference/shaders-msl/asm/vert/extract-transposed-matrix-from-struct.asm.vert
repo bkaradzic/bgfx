@@ -39,7 +39,7 @@ struct main0_in
     float3 PosL [[attribute(0)]];
 };
 
-V2F _VS(thread const float3& PosL, thread const uint& instanceID, const device gInstanceData& gInstanceData_1)
+inline V2F _VS(thread const float3& PosL, thread const uint& instanceID, const device gInstanceData& gInstanceData_1)
 {
     InstanceData instData;
     instData.MATRIX_MVP = transpose(gInstanceData_1._data[instanceID].MATRIX_MVP);

@@ -142,17 +142,17 @@ inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... p
     return t.gather_compare(s, spvForward<Ts>(params)...);
 }
 
-float4 sample_in_func_1(thread const array<texture2d<float>, 4> uSampler0, thread const array<sampler, 4> uSampler0Smplr, constant uint* uSampler0Swzl, thread float2& vUV)
+inline float4 sample_in_func_1(thread const array<texture2d<float>, 4> uSampler0, thread const array<sampler, 4> uSampler0Smplr, constant uint* uSampler0Swzl, thread float2& vUV)
 {
     return spvTextureSwizzle(uSampler0[2].sample(uSampler0Smplr[2], vUV), uSampler0Swzl[2]);
 }
 
-float4 sample_in_func_2(thread float2& vUV, thread texture2d<float> uSampler1, thread const sampler uSampler1Smplr, constant uint& uSampler1Swzl)
+inline float4 sample_in_func_2(thread float2& vUV, thread texture2d<float> uSampler1, thread const sampler uSampler1Smplr, constant uint& uSampler1Swzl)
 {
     return spvTextureSwizzle(uSampler1.sample(uSampler1Smplr, vUV), uSampler1Swzl);
 }
 
-float4 sample_single_in_func(thread const texture2d<float> s, thread const sampler sSmplr, constant uint& sSwzl, thread float2& vUV)
+inline float4 sample_single_in_func(thread const texture2d<float> s, thread const sampler sSmplr, constant uint& sSwzl, thread float2& vUV)
 {
     return spvTextureSwizzle(s.sample(sSmplr, vUV), sSwzl);
 }

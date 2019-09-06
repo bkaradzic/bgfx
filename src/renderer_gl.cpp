@@ -5346,8 +5346,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 		if (0 != m_id)
 		{
-			if (GL_COMPUTE_SHADER != m_type
-			&&  0 != bx::strCmp(code, "#version 430", 12) )
+			if (GL_COMPUTE_SHADER != m_type)
 			{
 				int32_t tempLen = code.getLength() + (4<<10);
 				char* temp = (char*)alloca(tempLen);
@@ -5539,7 +5538,22 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						&& s_extension[Extension::ARB_shader_texture_lod].m_supported
 						&& !bx::findIdentifierMatch(code, s_ARB_shader_texture_lod).isEmpty()
 						;
-					const bool usesGpuShader4   = !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty();
+
+					const bool usesVertexID = true
+						&& !s_extension[Extension::EXT_gpu_shader4].m_supported
+						&& !bx::findIdentifierMatch(code, "gl_VertexID").isEmpty()
+						;
+
+					const bool usesInstanceID = true
+						&& !s_extension[Extension::EXT_gpu_shader4].m_supported
+						&& !bx::findIdentifierMatch(code, "gl_InstanceID").isEmpty()
+						;
+
+					const bool usesGpuShader4 = true
+						&& s_extension[Extension::EXT_gpu_shader4].m_supported
+						&& !bx::findIdentifierMatch(code, s_EXT_gpu_shader4).isEmpty()
+						;
+
 					const bool usesGpuShader5   = !bx::findIdentifierMatch(code, s_ARB_gpu_shader5).isEmpty();
 					const bool usesIUsamplers   = !bx::findIdentifierMatch(code, s_uisamplers).isEmpty();
 					const bool usesUint         = !bx::findIdentifierMatch(code, s_uint).isEmpty();
@@ -5554,6 +5568,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						:  usesTextureArray
 						|| usesTexture3D
 						|| usesIUsamplers
+						|| usesVertexID
 						|| usesUint
 						|| usesTexelFetch
 						|| usesGpuShader5
@@ -5562,12 +5577,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						: 120
 						;
 
-					if (0 != version)
-					{
-						bx::write(&writer, &err, "#version %d\n", version);
-					}
+					version = 0 == bx::strCmp(code, "#version 430", 12) ? 430 : version;
 
-					if (usesTextureLod)
+					bx::write(&writer, &err, "#version %d\n", version);
+
+					if (430 > version && usesTextureLod)
 					{
 						if (m_type == GL_FRAGMENT_SHADER)
 						{
@@ -5578,6 +5592,11 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 								  "#define textureCubeGrad   textureCubeGradARB\n"
 								);
 						}
+					}
+
+					if (usesInstanceID)
+					{
+						bx::write(&writer, "#extension GL_ARB_draw_instanced : enable\n");
 					}
 
 					if (usesGpuShader4)
@@ -5630,14 +5649,17 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 					if (130 <= version)
 					{
-						if (m_type == GL_FRAGMENT_SHADER)
+						if (430 > version)
 						{
-							bx::write(&writer, "#define varying in\n");
-						}
-						else
-						{
-							bx::write(&writer, "#define attribute in\n");
-							bx::write(&writer, "#define varying out\n");
+							if (m_type == GL_FRAGMENT_SHADER)
+							{
+								bx::write(&writer, "#define varying in\n");
+							}
+							else
+							{
+								bx::write(&writer, "#define attribute in\n");
+								bx::write(&writer, "#define varying out\n");
+							}
 						}
 
 						uint32_t fragData = 0;
@@ -5659,7 +5681,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							bx::write(&writer, &err, "out vec4 bgfx_FragData[%d];\n", fragData);
 							bx::write(&writer, "#define gl_FragData bgfx_FragData\n");
 						}
-						else
+						else if (!bx::findIdentifierMatch(code, "gl_FragColor").isEmpty() )
 						{
 							bx::write(&writer, "out vec4 bgfx_FragColor;\n");
 							bx::write(&writer, "#define gl_FragColor bgfx_FragColor\n");
@@ -5696,7 +5718,16 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 							);
 					}
 
-					bx::write(&writer, code);
+					if (version == 430)
+					{
+						int32_t verLen = bx::strLen("#version 430\n");
+						bx::write(&writer, code.getPtr()+verLen, code.getLength()-verLen);
+					}
+					else
+					{
+						bx::write(&writer, code);
+					}
+					
 					bx::write(&writer, '\0');
 				}
 				else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL   >= 31)
@@ -5813,7 +5844,7 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 				code.set(temp);
 			}
-			else if (GL_COMPUTE_SHADER == m_type)
+			else // GL_COMPUTE_SHADER
 			{
 				int32_t codeLen = (int32_t)bx::strLen(code);
 				int32_t tempLen = codeLen + (4<<10);
@@ -5833,7 +5864,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					  "#define textureCubeGrad          textureGrad\n"
 					);
 
-				bx::write(&writer, code.getPtr()+bx::strLen("#version 430"), codeLen);
+				int32_t verLen = bx::strLen("#version 430\n");
+				bx::write(&writer, code.getPtr()+verLen, codeLen-verLen);
 				bx::write(&writer, '\0');
 
 				code = temp;

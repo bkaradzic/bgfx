@@ -33,7 +33,7 @@ inline float spvDet3x3(float a1, float a2, float a3, float b1, float b2, float b
 
 // Returns the inverse of a matrix, by using the algorithm of calculating the classical
 // adjoint and dividing by the determinant. The contents of the matrix are changed.
-float4x4 spvInverse4x4(float4x4 m)
+inline float4x4 spvInverse4x4(float4x4 m)
 {
     float4x4 adj;	// The adjoint matrix (inverse after dividing by determinant)
 
@@ -68,7 +68,7 @@ float4x4 spvInverse4x4(float4x4 m)
 
 // Returns the inverse of a matrix, by using the algorithm of calculating the classical
 // adjoint and dividing by the determinant. The contents of the matrix are changed.
-float3x3 spvInverse3x3(float3x3 m)
+inline float3x3 spvInverse3x3(float3x3 m)
 {
     float3x3 adj;	// The adjoint matrix (inverse after dividing by determinant)
 
@@ -95,7 +95,7 @@ float3x3 spvInverse3x3(float3x3 m)
 
 // Returns the inverse of a matrix, by using the algorithm of calculating the classical
 // adjoint and dividing by the determinant. The contents of the matrix are changed.
-float2x2 spvInverse2x2(float2x2 m)
+inline float2x2 spvInverse2x2(float2x2 m)
 {
     float2x2 adj;	// The adjoint matrix (inverse after dividing by determinant)
 

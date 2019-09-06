@@ -5,7 +5,7 @@
 
 using namespace metal;
 
-void myfunc(threadgroup int (&foo)[1337])
+inline void myfunc(threadgroup int (&foo)[1337])
 {
     foo[0] = 13;
 }

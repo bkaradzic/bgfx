@@ -38,13 +38,13 @@ struct main0_in
     float4 inViewMat_3 [[attribute(8)]];
 };
 
-void write_deeper_in_function(thread float4x4& outTransModel, constant UBO& ubo, thread float4& color, thread float4 (&colors)[3])
+inline void write_deeper_in_function(thread float4x4& outTransModel, constant UBO& ubo, thread float4& color, thread float4 (&colors)[3])
 {
     outTransModel[1].y = ubo.lodBias;
     color = colors[2];
 }
 
-void write_in_function(thread float4x4& outTransModel, constant UBO& ubo, thread float4& color, thread float4 (&colors)[3], thread float3& inNormal)
+inline void write_in_function(thread float4x4& outTransModel, constant UBO& ubo, thread float4& color, thread float4 (&colors)[3], thread float3& inNormal)
 {
     outTransModel[2] = float4(inNormal, 1.0);
     write_deeper_in_function(outTransModel, ubo, color, colors);

@@ -18,30 +18,71 @@ struct main0_in
     float4 vInput1 [[attribute(1)]];
 };
 
-// Implementation of an array copy function to cover GLSL's ability to copy an array via assignment.
-template<typename T, uint N>
-void spvArrayCopyFromStack1(thread T (&dst)[N], thread const T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToStack1(thread T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-template<typename T, uint N>
-void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToThreadGroup1(threadgroup T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-void test(thread float4 (&SPIRV_Cross_return_value)[2])
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToStack1(thread T (&dst)[A], thread const T (&src)[A])
 {
-    spvArrayCopyFromConstant1(SPIRV_Cross_return_value, _20);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-void test2(thread float4 (&SPIRV_Cross_return_value)[2], thread float4& vInput0, thread float4& vInput1)
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToThreadGroup1(threadgroup T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToStack1(thread T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToThreadGroup1(threadgroup T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+inline void test(thread float4 (&SPIRV_Cross_return_value)[2])
+{
+    spvArrayCopyFromConstantToStack1(SPIRV_Cross_return_value, _20);
+}
+
+inline void test2(thread float4 (&SPIRV_Cross_return_value)[2], thread float4& vInput0, thread float4& vInput1)
 {
     float4 foobar[2];
     foobar[0] = vInput0;
     foobar[1] = vInput1;
-    spvArrayCopyFromStack1(SPIRV_Cross_return_value, foobar);
+    spvArrayCopyFromStackToStack1(SPIRV_Cross_return_value, foobar);
 }
 
 vertex main0_out main0(main0_in in [[stage_in]])

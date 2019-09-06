@@ -133,6 +133,8 @@ class Module {
 
   inline uint32_t version() const { return header_.version; }
 
+  inline void set_version(uint32_t v) { header_.version = v; }
+
   // Iterators for capabilities instructions contained in this module.
   inline inst_iterator capability_begin();
   inline inst_iterator capability_end();

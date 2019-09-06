@@ -809,9 +809,62 @@ ConstantFoldingRule FoldFClampFeedingCompare(uint32_t cmp_opcode) {
   };
 }
 
+ConstantFoldingRule FoldFMix() {
+  return [](IRContext* context, Instruction* inst,
+            const std::vector<const analysis::Constant*>& constants)
+             -> const analysis::Constant* {
+    analysis::ConstantManager* const_mgr = context->get_constant_mgr();
+    assert(inst->opcode() == SpvOpExtInst &&
+           "Expecting an extended instruction.");
+    assert(inst->GetSingleWordInOperand(0) ==
+               context->get_feature_mgr()->GetExtInstImportId_GLSLstd450() &&
+           "Expecting a GLSLstd450 extended instruction.");
+    assert(inst->GetSingleWordInOperand(1) == GLSLstd450FMix &&
+           "Expecting and FMix instruction.");
+
+    if (!inst->IsFloatingPointFoldingAllowed()) {
+      return nullptr;
+    }
+
+    // Make sure all FMix operands are constants.
+    for (uint32_t i = 1; i < 4; i++) {
+      if (constants[i] == nullptr) {
+        return nullptr;
+      }
+    }
+
+    const analysis::Constant* one;
+    if (constants[1]->type()->AsFloat()->width() == 32) {
+      one = const_mgr->GetConstant(constants[1]->type(),
+                                   utils::FloatProxy<float>(1.0f).GetWords());
+    } else {
+      one = const_mgr->GetConstant(constants[1]->type(),
+                                   utils::FloatProxy<double>(1.0).GetWords());
+    }
+
+    const analysis::Constant* temp1 =
+        FOLD_FPARITH_OP(-)(constants[1]->type(), one, constants[3], const_mgr);
+    if (temp1 == nullptr) {
+      return nullptr;
+    }
+
+    const analysis::Constant* temp2 = FOLD_FPARITH_OP(*)(
+        constants[1]->type(), constants[1], temp1, const_mgr);
+    if (temp2 == nullptr) {
+      return nullptr;
+    }
+    const analysis::Constant* temp3 = FOLD_FPARITH_OP(*)(
+        constants[2]->type(), constants[2], constants[3], const_mgr);
+    if (temp3 == nullptr) {
+      return nullptr;
+    }
+    return FOLD_FPARITH_OP(+)(temp2->type(), temp2, temp3, const_mgr);
+  };
+}
+
 }  // namespace
 
-ConstantFoldingRules::ConstantFoldingRules() {
+void ConstantFoldingRules::AddFoldingRules() {
   // Add all folding rules to the list for the opcodes to which they apply.
   // Note that the order in which rules are added to the list matters. If a rule
   // applies to the instruction, the rest of the rules will not be attempted.
@@ -877,6 +930,14 @@ ConstantFoldingRules::ConstantFoldingRules() {
 
   rules_[SpvOpFNegate].push_back(FoldFNegate());
   rules_[SpvOpQuantizeToF16].push_back(FoldQuantizeToF16());
+
+  // Add rules for GLSLstd450
+  FeatureManager* feature_manager = context_->get_feature_mgr();
+  uint32_t ext_inst_glslstd450_id =
+      feature_manager->GetExtInstImportId_GLSLstd450();
+  if (ext_inst_glslstd450_id != 0) {
+    ext_rules_[{ext_inst_glslstd450_id, GLSLstd450FMix}].push_back(FoldFMix());
+  }
 }
 }  // namespace opt
 }  // namespace spvtools

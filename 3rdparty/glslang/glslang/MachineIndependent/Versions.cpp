@@ -252,6 +252,7 @@ void TParseVersions::initializeExtensionBehavior()
 
     extensionBehavior[E_GL_NV_cooperative_matrix]                    = EBhDisable;
     extensionBehavior[E_GL_NV_shader_sm_builtins]                    = EBhDisable;
+    extensionBehavior[E_GL_NV_integer_cooperative_matrix]            = EBhDisable;
 
     // AEP
     extensionBehavior[E_GL_ANDROID_extension_pack_es31a]             = EBhDisable;
@@ -436,6 +437,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_NV_shader_texture_footprint 1\n"
             "#define GL_NV_mesh_shader 1\n"
             "#define GL_NV_cooperative_matrix 1\n"
+            "#define GL_NV_integer_cooperative_matrix 1\n"
 
             "#define GL_EXT_shader_explicit_arithmetic_types 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_int8 1\n"
@@ -822,6 +824,8 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
     else if (strcmp(extension, "GL_EXT_buffer_reference2") == 0)
         updateExtensionBehavior(line, "GL_EXT_buffer_reference", behaviorString);
+    else if (strcmp(extension, "GL_NV_integer_cooperative_matrix") == 0)
+        updateExtensionBehavior(line, "GL_NV_cooperative_matrix", behaviorString);
 }
 
 void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBehavior behavior)
@@ -1088,8 +1092,15 @@ void TParseVersions::fcoopmatCheck(const TSourceLoc& loc, const char* op, bool b
         requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
     }
 }
-#endif // GLSLANG_WEB
 
+void TParseVersions::intcoopmatCheck(const TSourceLoc& loc, const char* op, bool builtIn)
+{
+    if (!builtIn) {
+        const char* const extensions[] = {E_GL_NV_integer_cooperative_matrix};
+        requireExtensions(loc, sizeof(extensions)/sizeof(extensions[0]), extensions, op);
+    }
+}
+#endif // GLSLANG_WEB
 // Call for any operation removed because SPIR-V is in use.
 void TParseVersions::spvRemoved(const TSourceLoc& loc, const char* op)
 {

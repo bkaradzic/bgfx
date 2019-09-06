@@ -383,7 +383,6 @@ OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_blockType PhysicalStorageBuf
       R"(OpCapability Shader
 OpCapability PhysicalStorageBufferAddressesEXT
 OpCapability Int64
-OpCapability Int64
 OpExtension "SPV_EXT_physical_storage_buffer"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"

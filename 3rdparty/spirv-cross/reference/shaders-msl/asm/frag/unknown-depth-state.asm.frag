@@ -15,12 +15,12 @@ struct main0_in
     float3 vUV [[user(locn0)]];
 };
 
-float sample_combined(thread float3& vUV, thread depth2d<float> uShadow, thread const sampler uShadowSmplr)
+inline float sample_combined(thread float3& vUV, thread depth2d<float> uShadow, thread const sampler uShadowSmplr)
 {
     return uShadow.sample_compare(uShadowSmplr, vUV.xy, vUV.z);
 }
 
-float sample_separate(thread float3& vUV, thread depth2d<float> uTexture, thread sampler uSampler)
+inline float sample_separate(thread float3& vUV, thread depth2d<float> uTexture, thread sampler uSampler)
 {
     return uTexture.sample_compare(uSampler, vUV.xy, vUV.z);
 }

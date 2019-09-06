@@ -1433,11 +1433,18 @@ public:
                                     }
                                     typeName = NewPoolTString(p.userDef->getTypeName().c_str());
                                 }
-                                if (p.isCoopmat() && p.basicType == EbtFloat &&
-                                    p.typeParameters && p.typeParameters->getNumDims() > 0 &&
-                                    p.typeParameters->getDimSize(0) == 16) {
-                                    basicType = EbtFloat16;
-                                    qualifier.precision = EpqNone;
+                                if (p.isCoopmat() && p.typeParameters && p.typeParameters->getNumDims() > 0) {
+                                    int numBits = p.typeParameters->getDimSize(0);
+                                    if (p.basicType == EbtFloat && numBits == 16) {
+                                        basicType = EbtFloat16;
+                                        qualifier.precision = EpqNone;
+                                    } else if (p.basicType == EbtUint && numBits == 8) {
+                                        basicType = EbtUint8;
+                                        qualifier.precision = EpqNone;
+                                    } else if (p.basicType == EbtInt && numBits == 8) {
+                                        basicType = EbtInt8;
+                                        qualifier.precision = EpqNone;
+                                    }
                                 }
                             }
     // for construction of sampler types
@@ -2301,9 +2308,23 @@ public:
     // an OK function parameter
     bool coopMatParameterOK(const TType& right) const
     {
-        return isCoopMat() && right.isCoopMat() &&
+        return isCoopMat() && right.isCoopMat() && (getBasicType() == right.getBasicType()) &&
                typeParameters == nullptr && right.typeParameters != nullptr;
     }
+
+    bool sameCoopMatBaseType(const TType &right) const {
+        bool rv = coopmat && right.coopmat;
+        if (getBasicType() == EbtFloat || getBasicType() == EbtFloat16)
+            rv = right.getBasicType() == EbtFloat || right.getBasicType() == EbtFloat16;
+        else if (getBasicType() == EbtUint || getBasicType() == EbtUint8)
+            rv = right.getBasicType() == EbtUint || right.getBasicType() == EbtUint8;
+        else if (getBasicType() == EbtInt || getBasicType() == EbtInt8)
+            rv = right.getBasicType() == EbtInt || right.getBasicType() == EbtInt8;
+        else
+            rv = false;
+        return rv;
+    }
+
 
     // See if two types match in all ways (just the actual type, not qualification)
     bool operator==(const TType& right) const

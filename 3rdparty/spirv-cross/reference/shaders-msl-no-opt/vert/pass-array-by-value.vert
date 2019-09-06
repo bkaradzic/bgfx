@@ -18,29 +18,70 @@ struct main0_in
     int Index2 [[attribute(1)]];
 };
 
-// Implementation of an array copy function to cover GLSL's ability to copy an array via assignment.
-template<typename T, uint N>
-void spvArrayCopyFromStack1(thread T (&dst)[N], thread const T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToStack1(thread T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-template<typename T, uint N>
-void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])
+template<typename T, uint A>
+inline void spvArrayCopyFromConstantToThreadGroup1(threadgroup T (&dst)[A], constant T (&src)[A])
 {
-    for (uint i = 0; i < N; dst[i] = src[i], i++);
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
 }
 
-float4 consume_constant_arrays2(thread const float4 (&positions)[4], thread const float4 (&positions2)[4], thread int& Index1, thread int& Index2)
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToStack1(thread T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromStackToThreadGroup1(threadgroup T (&dst)[A], thread const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToStack1(thread T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+template<typename T, uint A>
+inline void spvArrayCopyFromThreadGroupToThreadGroup1(threadgroup T (&dst)[A], threadgroup const T (&src)[A])
+{
+    for (uint i = 0; i < A; i++)
+    {
+        dst[i] = src[i];
+    }
+}
+
+inline float4 consume_constant_arrays2(thread const float4 (&positions)[4], thread const float4 (&positions2)[4], thread int& Index1, thread int& Index2)
 {
     float4 indexable[4];
-    spvArrayCopyFromStack1(indexable, positions);
+    spvArrayCopyFromStackToStack1(indexable, positions);
     float4 indexable_1[4];
-    spvArrayCopyFromStack1(indexable_1, positions2);
+    spvArrayCopyFromStackToStack1(indexable_1, positions2);
     return indexable[Index1] + indexable_1[Index2];
 }
 
-float4 consume_constant_arrays(thread const float4 (&positions)[4], thread const float4 (&positions2)[4], thread int& Index1, thread int& Index2)
+inline float4 consume_constant_arrays(thread const float4 (&positions)[4], thread const float4 (&positions2)[4], thread int& Index1, thread int& Index2)
 {
     return consume_constant_arrays2(positions, positions2, Index1, Index2);
 }

@@ -801,6 +801,15 @@ void reindexMesh(Mesh& mesh)
 	}
 }
 
+const Stream* getPositionStream(const Mesh& mesh)
+{
+	for (size_t i = 0; i < mesh.streams.size(); ++i)
+		if (mesh.streams[i].type == cgltf_attribute_type_position)
+			return &mesh.streams[i];
+
+	return 0;
+}
+
 void optimizeMesh(Mesh& mesh)
 {
 	size_t vertex_count = mesh.streams[0].data.size();
@@ -816,33 +825,31 @@ void optimizeMesh(Mesh& mesh)
 	meshopt_remapIndexBuffer(&mesh.indices[0], &mesh.indices[0], mesh.indices.size(), &remap[0]);
 
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
+	{
+		assert(mesh.streams[i].data.size() == vertex_count);
+
 		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], vertex_count, sizeof(Attr), &remap[0]);
+	}
 }
 
 void sortPointMesh(Mesh& mesh)
 {
-	size_t positions = 0;
+	const Stream* positions = getPositionStream(mesh);
+	if (!positions)
+		return;
 
-	for (size_t i = 0; i < mesh.streams.size(); ++i)
-		if (mesh.streams[i].type == cgltf_attribute_type_position)
-		{
-			positions = i;
-			break;
-		}
-
-	assert(mesh.streams[positions].type == cgltf_attribute_type_position);
 	assert(mesh.indices.empty());
 
-	size_t total_vertices = mesh.streams[positions].data.size();
+	size_t vertex_count = mesh.streams[0].data.size();
 
-	std::vector<unsigned int> remap(total_vertices);
-	meshopt_spatialSortRemap(&remap[0], mesh.streams[positions].data[0].f, total_vertices, sizeof(Attr));
+	std::vector<unsigned int> remap(vertex_count);
+	meshopt_spatialSortRemap(&remap[0], positions->data[0].f, vertex_count, sizeof(Attr));
 
 	for (size_t i = 0; i < mesh.streams.size(); ++i)
 	{
-		assert(mesh.streams[i].data.size() == total_vertices);
+		assert(mesh.streams[i].data.size() == vertex_count);
 
-		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], total_vertices, sizeof(Attr), &remap[0]);
+		meshopt_remapVertexBuffer(&mesh.streams[i].data[0], &mesh.streams[i].data[0], vertex_count, sizeof(Attr), &remap[0]);
 	}
 }
 

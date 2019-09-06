@@ -109,6 +109,11 @@ NOTE: The optimizer is a work in progress.
 Options (in lexicographical order):)",
       program, program);
   printf(R"(
+  --amd-ext-to-khr
+               Replaces the extensions VK_AMD_shader_ballot, VK_AMD_gcn_shader,
+               and VK_AMD_shader_trinary_minmax with equivalant code using core
+               instructions and capabilities.)");
+  printf(R"(
   --ccp
                Apply the conditional constant propagation transform.  This will
                propagate constant values throughout the program, and simplify

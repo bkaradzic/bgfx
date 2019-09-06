@@ -11,7 +11,7 @@ struct main0_out
     float gl_PointSize [[point_size]];
 };
 
-void write_outblock(thread float4& gl_Position, thread float& gl_PointSize)
+inline void write_outblock(thread float4& gl_Position, thread float& gl_PointSize)
 {
     gl_PointSize = 1.0;
     gl_Position = float4(gl_PointSize);

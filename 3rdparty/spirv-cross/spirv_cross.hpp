@@ -605,6 +605,7 @@ protected:
 	bool expression_is_lvalue(uint32_t id) const;
 	bool variable_storage_is_aliased(const SPIRVariable &var);
 	SPIRVariable *maybe_get_backing_variable(uint32_t chain);
+	spv::StorageClass get_backing_variable_storage(uint32_t ptr);
 
 	void register_read(uint32_t expr, uint32_t chain, bool forwarded);
 	void register_write(uint32_t chain);
@@ -657,7 +658,6 @@ protected:
 
 	bool function_is_pure(const SPIRFunction &func);
 	bool block_is_pure(const SPIRBlock &block);
-	bool block_is_outside_flow_control_from_block(const SPIRBlock &from, const SPIRBlock &to);
 
 	bool execution_is_branchless(const SPIRBlock &from, const SPIRBlock &to) const;
 	bool execution_is_direct_branch(const SPIRBlock &from, const SPIRBlock &to) const;
@@ -772,8 +772,8 @@ protected:
 		uint32_t remap_parameter(uint32_t id);
 		void push_remap_parameters(const SPIRFunction &func, const uint32_t *args, uint32_t length);
 		void pop_remap_parameters();
-		void register_combined_image_sampler(SPIRFunction &caller, uint32_t texture_id, uint32_t sampler_id,
-		                                     bool depth);
+		void register_combined_image_sampler(SPIRFunction &caller, uint32_t combined_id, uint32_t texture_id,
+		                                     uint32_t sampler_id, bool depth);
 	};
 
 	struct DummySamplerForCombinedImageHandler : OpcodeHandler
@@ -883,6 +883,8 @@ protected:
 
 	void build_function_control_flow_graphs_and_analyze();
 	std::unordered_map<uint32_t, std::unique_ptr<CFG>> function_cfgs;
+	const CFG &get_cfg_for_current_function() const;
+
 	struct CFGBuilder : OpcodeHandler
 	{
 		CFGBuilder(Compiler &compiler_);

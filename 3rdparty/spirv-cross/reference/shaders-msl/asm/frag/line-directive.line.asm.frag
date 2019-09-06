@@ -16,7 +16,7 @@ struct main0_in
 };
 
 #line 6 "test.frag"
-void func(thread float& FragColor, thread float& vColor)
+inline void func(thread float& FragColor, thread float& vColor)
 {
 #line 8 "test.frag"
     FragColor = 1.0;

@@ -21,36 +21,36 @@ struct main0_in
 
 // Implementation of the GLSL mod() function, which is slightly different than Metal fmod()
 template<typename Tx, typename Ty>
-Tx mod(Tx x, Ty y)
+inline Tx mod(Tx x, Ty y)
 {
     return x - y * floor(x / y);
 }
 
 // Implementation of the GLSL radians() function
 template<typename T>
-T radians(T d)
+inline T radians(T d)
 {
     return d * T(0.01745329251);
 }
 
 // Implementation of the GLSL degrees() function
 template<typename T>
-T degrees(T r)
+inline T degrees(T r)
 {
     return r * T(57.2957795131);
 }
 
-half2x2 test_mat2(thread const half2& a, thread const half2& b, thread const half2& c, thread const half2& d)
+inline half2x2 test_mat2(thread const half2& a, thread const half2& b, thread const half2& c, thread const half2& d)
 {
     return half2x2(half2(a), half2(b)) * half2x2(half2(c), half2(d));
 }
 
-half3x3 test_mat3(thread const half3& a, thread const half3& b, thread const half3& c, thread const half3& d, thread const half3& e, thread const half3& f)
+inline half3x3 test_mat3(thread const half3& a, thread const half3& b, thread const half3& c, thread const half3& d, thread const half3& e, thread const half3& f)
 {
     return half3x3(half3(a), half3(b), half3(c)) * half3x3(half3(d), half3(e), half3(f));
 }
 
-void test_constants()
+inline void test_constants()
 {
     half a = half(1.0);
     half b = half(1.5);
@@ -62,12 +62,12 @@ void test_constants()
     half h = half(9.5367431640625e-07);
 }
 
-half test_result()
+inline half test_result()
 {
     return half(1.0);
 }
 
-void test_conversions()
+inline void test_conversions()
 {
     half one = test_result();
     int a = int(one);
@@ -80,7 +80,7 @@ void test_conversions()
     half d2 = half(d);
 }
 
-void test_builtins(thread half4& v4, thread half3& v3, thread half& v1)
+inline void test_builtins(thread half4& v4, thread half3& v3, thread half& v1)
 {
     half4 res = radians(v4);
     res = degrees(v4);

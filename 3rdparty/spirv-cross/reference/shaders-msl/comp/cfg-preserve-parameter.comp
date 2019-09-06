@@ -5,7 +5,7 @@
 
 using namespace metal;
 
-void out_test_0(thread const int& cond, thread int& i)
+inline void out_test_0(thread const int& cond, thread int& i)
 {
     if (cond == 0)
     {
@@ -17,7 +17,7 @@ void out_test_0(thread const int& cond, thread int& i)
     }
 }
 
-void out_test_1(thread const int& cond, thread int& i)
+inline void out_test_1(thread const int& cond, thread int& i)
 {
     switch (cond)
     {
@@ -34,7 +34,7 @@ void out_test_1(thread const int& cond, thread int& i)
     }
 }
 
-void inout_test_0(thread const int& cond, thread int& i)
+inline void inout_test_0(thread const int& cond, thread int& i)
 {
     if (cond == 0)
     {
@@ -42,7 +42,7 @@ void inout_test_0(thread const int& cond, thread int& i)
     }
 }
 
-void inout_test_1(thread const int& cond, thread int& i)
+inline void inout_test_1(thread const int& cond, thread int& i)
 {
     switch (cond)
     {

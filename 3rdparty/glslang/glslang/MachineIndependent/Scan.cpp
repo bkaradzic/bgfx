@@ -713,6 +713,8 @@ void TScanContext::fillInKeywordMap()
     (*KeywordMap)["taskNV"] =                  PERTASKNV;
 
     (*KeywordMap)["fcoopmatNV"] =              FCOOPMATNV;
+    (*KeywordMap)["icoopmatNV"] =              ICOOPMATNV;
+    (*KeywordMap)["ucoopmatNV"] =              UCOOPMATNV;
 
     ReservedSet = new std::unordered_set<const char*, str_hash, str_eq>;
 
@@ -1596,6 +1598,14 @@ int TScanContext::tokenizeIdentifier()
         afterType = true;
         if (parseContext.symbolTable.atBuiltInLevel() ||
             parseContext.extensionTurnedOn(E_GL_NV_cooperative_matrix))
+            return keyword;
+        return identifierOrType();
+
+    case UCOOPMATNV:
+    case ICOOPMATNV:
+        afterType = true;
+        if (parseContext.symbolTable.atBuiltInLevel() ||
+            parseContext.extensionTurnedOn(E_GL_NV_integer_cooperative_matrix))
             return keyword;
         return identifierOrType();
 
