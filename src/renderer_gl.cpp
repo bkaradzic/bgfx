@@ -6399,6 +6399,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			renderDocTriggerCapture();
 		}
 
+		m_glctx.makeCurrent(NULL);
+
 		BGFX_GL_PROFILER_BEGIN_LITERAL("rendererSubmit", kColorView);
 
 		if (1 < m_numWindows
@@ -6409,8 +6411,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 			GL_CHECK(glDeleteVertexArrays(1, &m_vao) );
 			m_vao = 0;
 		}
-
-		m_glctx.makeCurrent(NULL);
 
 		const GLuint defaultVao = m_vao;
 		if (0 != defaultVao)
@@ -6544,6 +6544,13 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					view = key.m_view;
 					currentProgram = BGFX_INVALID_HANDLE;
 
+					if (item > 1)
+					{
+						profiler.end();
+					}
+
+					BGFX_GL_PROFILER_END();
+
 					if (_render->m_view[view].m_fbh.idx != fbh.idx)
 					{
 						fbh = _render->m_view[view].m_fbh;
@@ -6551,12 +6558,6 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 						resolutionHeight = setFrameBuffer(fbh, resolutionHeight, discardFlags);
 					}
 
-					if (item > 1)
-					{
-						profiler.end();
-					}
-
-					BGFX_GL_PROFILER_END();
 					setViewType(view, "  ");
 					BGFX_GL_PROFILER_BEGIN(view, kColorView);
 
