@@ -12,7 +12,7 @@
 
 #include "topology.h"
 
-#if BX_PLATFORM_OSX
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 #	include <objc/message.h>
 #endif // BX_PLATFORM_OSX
 
@@ -2256,7 +2256,7 @@ namespace bgfx
 		}
 	}
 
-#if BX_PLATFORM_OSX
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 	struct NSAutoreleasePoolScope
 	{
 		NSAutoreleasePoolScope()
@@ -2280,7 +2280,7 @@ namespace bgfx
 	{
 		BGFX_PROFILER_SCOPE("bgfx::renderFrame", 0xff2040ff);
 
-#if BX_PLATFORM_OSX
+#if BX_PLATFORM_OSX || BX_PLATFORM_IOS
 		NSAutoreleasePoolScope pool;
 #endif // BX_PLATFORM_OSX
 
