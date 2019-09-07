@@ -1661,6 +1661,8 @@ public:
     virtual bool isImage()   const { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
     virtual bool isTexture() const { return basicType == EbtSampler && getSampler().isTexture(); }
+    // Check the block-name convention of creating a block without populating it's members:
+    virtual bool isUnusableName() const { return isStruct() && structure == nullptr; }
     virtual bool isParameterized()  const { return typeParameters != nullptr; }
 #ifdef GLSLANG_WEB
     bool isAtomic() const { return false; }

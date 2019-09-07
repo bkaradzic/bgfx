@@ -319,10 +319,15 @@ TIntermTyped* TParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symb
         // If this is a variable or a block, check it and all it contains, but if this
         // is a member of an anonymous block, check the whole block, as the whole block
         // will need to be copied up if it contains an unsized array.
-        if (symbol->getType().containsUnsizedArray() ||
-            (symbol->getAsAnonMember() &&
-             symbol->getAsAnonMember()->getAnonContainer().getType().containsUnsizedArray()))
-            makeEditable(symbol);
+        //
+        // This check is being done before the block-name check further down, so guard
+        // for that too.
+        if (!symbol->getType().isUnusableName()) {
+            if (symbol->getType().containsUnsizedArray() ||
+                (symbol->getAsAnonMember() &&
+                 symbol->getAsAnonMember()->getAnonContainer().getType().containsUnsizedArray()))
+                makeEditable(symbol);
+        }
     }
 #endif
 
@@ -347,8 +352,7 @@ TIntermTyped* TParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symb
         // See if it was a variable.
         variable = symbol ? symbol->getAsVariable() : nullptr;
         if (variable) {
-            if ((variable->getType().getBasicType() == EbtBlock ||
-                 variable->getType().getBasicType() == EbtStruct) && variable->getType().getStruct() == nullptr) {
+            if (variable->getType().isUnusableName()) {
                 error(loc, "cannot be used (maybe an instance name is needed)", string->c_str(), "");
                 variable = nullptr;
             }
