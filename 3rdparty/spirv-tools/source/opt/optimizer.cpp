@@ -415,6 +415,10 @@ bool Optimizer::RegisterPassFromFlag(const std::string& flag) {
   } else if (pass_name == "inst-buff-addr-check") {
     RegisterPass(CreateInstBuffAddrCheckPass(7, 23, 2));
     RegisterPass(CreateAggressiveDCEPass());
+  } else if (pass_name == "convert-relaxed-to-half") {
+    RegisterPass(CreateConvertRelaxedToHalfPass());
+  } else if (pass_name == "relax-float-ops") {
+    RegisterPass(CreateRelaxFloatOpsPass());
   } else if (pass_name == "simplify-instructions") {
     RegisterPass(CreateSimplificationPass());
   } else if (pass_name == "ssa-rewrite") {
@@ -875,6 +879,16 @@ Optimizer::PassToken CreateInstBuffAddrCheckPass(uint32_t desc_set,
                                                  uint32_t version) {
   return MakeUnique<Optimizer::PassToken::Impl>(
       MakeUnique<opt::InstBuffAddrCheckPass>(desc_set, shader_id, version));
+}
+
+Optimizer::PassToken CreateConvertRelaxedToHalfPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::ConvertToHalfPass>());
+}
+
+Optimizer::PassToken CreateRelaxFloatOpsPass() {
+  return MakeUnique<Optimizer::PassToken::Impl>(
+      MakeUnique<opt::RelaxFloatOpsPass>());
 }
 
 Optimizer::PassToken CreateCodeSinkingPass() {

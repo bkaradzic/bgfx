@@ -58,4 +58,4 @@ class FuzzerPass {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FUZZER_PASS_H_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_H_

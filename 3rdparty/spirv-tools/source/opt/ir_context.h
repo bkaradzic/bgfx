@@ -199,6 +199,7 @@ class IRContext {
   inline void AddExtension(const std::string& ext_name);
   inline void AddExtension(std::unique_ptr<Instruction>&& e);
   // Appends an extended instruction set instruction to this module.
+  inline void AddExtInstImport(const std::string& name);
   inline void AddExtInstImport(std::unique_ptr<Instruction>&& e);
   // Set the memory model for this module.
   inline void SetMemoryModel(std::unique_ptr<Instruction>&& m);
@@ -971,9 +972,26 @@ void IRContext::AddExtension(std::unique_ptr<Instruction>&& e) {
   module()->AddExtension(std::move(e));
 }
 
+void IRContext::AddExtInstImport(const std::string& name) {
+  const auto num_chars = name.size();
+  // Compute num words, accommodate the terminating null character.
+  const auto num_words = (num_chars + 1 + 3) / 4;
+  std::vector<uint32_t> ext_words(num_words, 0u);
+  std::memcpy(ext_words.data(), name.data(), num_chars);
+  AddExtInstImport(std::unique_ptr<Instruction>(
+      new Instruction(this, SpvOpExtInstImport, 0u, TakeNextId(),
+                      {{SPV_OPERAND_TYPE_LITERAL_STRING, ext_words}})));
+}
+
 void IRContext::AddExtInstImport(std::unique_ptr<Instruction>&& e) {
   AddCombinatorsForExtension(e.get());
+  if (AreAnalysesValid(kAnalysisDefUse)) {
+    get_def_use_mgr()->AnalyzeInstDefUse(e.get());
+  }
   module()->AddExtInstImport(std::move(e));
+  if (feature_mgr_ != nullptr) {
+    feature_mgr_->AddExtInstImportIds(module());
+  }
 }
 
 void IRContext::SetMemoryModel(std::unique_ptr<Instruction>&& m) {

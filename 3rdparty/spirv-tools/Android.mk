@@ -89,6 +89,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/composite.cpp \
 		source/opt/const_folding_rules.cpp \
 		source/opt/constants.cpp \
+		source/opt/convert_to_half_pass.cpp \
 		source/opt/copy_prop_arrays.cpp \
 		source/opt/dead_branch_elim_pass.cpp \
 		source/opt/dead_insert_elim_pass.cpp \
@@ -153,6 +154,7 @@ SPVTOOLS_OPT_SRC_FILES := \
 		source/opt/reduce_load_size.cpp \
 		source/opt/redundancy_elimination.cpp \
 		source/opt/register_pressure.cpp \
+		source/opt/relax_float_ops_pass.cpp \
 		source/opt/remove_duplicates_pass.cpp \
 		source/opt/replace_invalid_opc.cpp \
 		source/opt/scalar_analysis.cpp \

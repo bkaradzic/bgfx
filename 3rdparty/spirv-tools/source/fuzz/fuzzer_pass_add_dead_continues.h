@@ -36,4 +36,4 @@ class FuzzerPassAddDeadContinues : public FuzzerPass {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FUZZER_PASS_ADD_DEAD_CONTINUES_H_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_ADD_DEAD_CONTINUES_H_

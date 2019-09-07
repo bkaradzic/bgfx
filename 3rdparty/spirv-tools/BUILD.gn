@@ -479,6 +479,8 @@ static_library("spvtools_opt") {
     "source/opt/const_folding_rules.h",
     "source/opt/constants.cpp",
     "source/opt/constants.h",
+    "source/opt/convert_to_half_pass.cpp",
+    "source/opt/convert_to_half_pass.h",
     "source/opt/copy_prop_arrays.cpp",
     "source/opt/copy_prop_arrays.h",
     "source/opt/dead_branch_elim_pass.cpp",
@@ -611,6 +613,8 @@ static_library("spvtools_opt") {
     "source/opt/reflect.h",
     "source/opt/register_pressure.cpp",
     "source/opt/register_pressure.h",
+    "source/opt/relax_float_ops_pass.cpp",
+    "source/opt/relax_float_ops_pass.h",
     "source/opt/remove_duplicates_pass.cpp",
     "source/opt/remove_duplicates_pass.h",
     "source/opt/replace_invalid_opc.cpp",
@@ -766,7 +770,7 @@ static_library("spvtools_reduce") {
 }
 
 group("SPIRV-Tools") {
-  deps = [
+  public_deps = [
     ":spvtools",
     ":spvtools_link",
     ":spvtools_opt",
@@ -846,6 +850,8 @@ if (build_with_chromium) {
       "//testing/gmock",
       "//testing/gtest",
       "//testing/gtest:gtest_main",
+      "//third_party/googletest:gmock",
+      "//third_party/googletest:gtest",
     ]
 
     if (is_clang) {

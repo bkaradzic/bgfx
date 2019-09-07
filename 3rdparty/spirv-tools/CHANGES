@@ -1,7 +1,25 @@
 Revision history for SPIRV-Tools
 
 v2019.5-dev 2019-08-08
- - Start v2019.5-dev
+ - General:
+ - Optimizer
+   - Add descriptor array scalar replacement (#2742)
+   - Add pass to wrap OpKill in a function call (#2790)
+   - Fold FMix during constant folding. (#2818)
+   - Add pass to replace AMD shader ballot extension (#2811)
+   - Add pass to make Float32 operation relax precision (#2808)
+   - Add pass to make relax precision operation Float16 (#2808)
+   Fixes:
+   Instrument: Fix version 2 output record write for tess eval shaders. (#2782)
+   Instrument: Add support for Buffer Device Address extension (#2792)
+   Fix check for changed binary in API call. (#2798)
+ - Validator
+   Fixes:
+   Fix validation of constant matrices (#2794)
+   Update "remquor" validation
+ - Reduce
+   - Remove relaxed precision decorations (#2797)
+   Fixes:
 
 v2019.4 2019-08-08
  - General:

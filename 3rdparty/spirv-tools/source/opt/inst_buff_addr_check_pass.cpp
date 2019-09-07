@@ -108,8 +108,8 @@ void InstBuffAddrCheckPass::GenCheckCode(
   // reference.
   if (new_ref_id != 0) {
     Instruction* phi_inst = builder.AddPhi(
-        ref_type_id, {new_ref_id, valid_blk_id, builder.GetNullId(ref_type_id),
-                      invalid_blk_id});
+        ref_type_id,
+        {new_ref_id, valid_blk_id, GetNullId(ref_type_id), invalid_blk_id});
     context()->ReplaceAllUsesWith(ref_inst->result_id(), phi_inst->result_id());
   }
   new_blocks->push_back(std::move(new_blk_ptr));

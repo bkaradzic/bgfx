@@ -57,15 +57,15 @@ class FeatureManager {
   // Add the extension |ext| to the feature manager.
   void AddExtension(Instruction* ext);
 
+  // Analyzes |module| and records imported external instruction sets.
+  void AddExtInstImportIds(Module* module);
+
  private:
   // Analyzes |module| and records enabled extensions.
   void AddExtensions(Module* module);
 
   // Analyzes |module| and records enabled capabilities.
   void AddCapabilities(Module* module);
-
-  // Analyzes |module| and records imported external instruction sets.
-  void AddExtInstImportIds(Module* module);
 
   // Auxiliary object for querying SPIR-V grammar facts.
   const AssemblyGrammar& grammar_;

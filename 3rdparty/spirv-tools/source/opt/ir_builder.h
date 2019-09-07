@@ -109,13 +109,13 @@ class InstructionBuilder {
     return AddInstruction(std::move(newQuadOp));
   }
 
-  Instruction* AddIdLiteralOp(uint32_t type_id, SpvOp opcode, uint32_t operand1,
-                              uint32_t operand2) {
+  Instruction* AddIdLiteralOp(uint32_t type_id, SpvOp opcode, uint32_t id,
+                              uint32_t uliteral) {
     // TODO(1841): Handle id overflow.
     std::unique_ptr<Instruction> newBinOp(new Instruction(
         GetContext(), opcode, type_id, GetContext()->TakeNextId(),
-        {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {operand1}},
-         {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {operand2}}}));
+        {{spv_operand_type_t::SPV_OPERAND_TYPE_ID, {id}},
+         {spv_operand_type_t::SPV_OPERAND_TYPE_LITERAL_INTEGER, {uliteral}}}));
     return AddInstruction(std::move(newBinOp));
   }
 
@@ -358,16 +358,6 @@ class InstructionBuilder {
     return uint_inst->result_id();
   }
 
-  uint32_t GetNullId(uint32_t type_id) {
-    analysis::TypeManager* type_mgr = GetContext()->get_type_mgr();
-    analysis::ConstantManager* const_mgr = GetContext()->get_constant_mgr();
-    const analysis::Type* type = type_mgr->GetType(type_id);
-    const analysis::Constant* null_const = const_mgr->GetConstant(type, {});
-    Instruction* null_inst =
-        const_mgr->GetDefiningInstruction(null_const, type_id);
-    return null_inst->result_id();
-  }
-
   // Adds either a signed or unsigned 32 bit integer constant to the binary
   // depedning on the |sign|. If |sign| is true then the value is added as a
   // signed constant otherwise as an unsigned constant. If |sign| is false the
@@ -499,6 +489,27 @@ class InstructionBuilder {
 
     std::unique_ptr<Instruction> new_inst(new Instruction(
         GetContext(), SpvOpVectorShuffle, result_type, result_id, operands));
+    return AddInstruction(std::move(new_inst));
+  }
+
+  Instruction* AddNaryExtendedInstruction(
+      uint32_t result_type, uint32_t set, uint32_t instruction,
+      const std::vector<uint32_t>& ext_operands) {
+    std::vector<Operand> operands;
+    operands.push_back({SPV_OPERAND_TYPE_ID, {set}});
+    operands.push_back(
+        {SPV_OPERAND_TYPE_EXTENSION_INSTRUCTION_NUMBER, {instruction}});
+    for (uint32_t id : ext_operands) {
+      operands.push_back({SPV_OPERAND_TYPE_ID, {id}});
+    }
+
+    uint32_t result_id = GetContext()->TakeNextId();
+    if (result_id == 0) {
+      return nullptr;
+    }
+
+    std::unique_ptr<Instruction> new_inst(new Instruction(
+        GetContext(), SpvOpExtInst, result_type, result_id, operands));
     return AddInstruction(std::move(new_inst));
   }
 
