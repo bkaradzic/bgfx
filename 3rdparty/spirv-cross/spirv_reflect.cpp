@@ -285,7 +285,7 @@ void CompilerReflection::emit_type(const SPIRType &type, bool &emitted_open_tag)
 {
 	auto name = type_to_glsl(type);
 
-	if (type.type_alias != 0)
+	if (type.type_alias != TypeID(0))
 		return;
 
 	if (!emitted_open_tag)
@@ -468,7 +468,7 @@ void CompilerReflection::emit_resources(const char *tag, const SmallVector<Resou
 		bool is_block = get_decoration_bitset(type.self).get(DecorationBlock) ||
 		                get_decoration_bitset(type.self).get(DecorationBufferBlock);
 
-		uint32_t fallback_id = !is_push_constant && is_block ? res.base_type_id : res.id;
+		ID fallback_id = !is_push_constant && is_block ? ID(res.base_type_id) : ID(res.id);
 
 		json_stream->begin_json_object();
 

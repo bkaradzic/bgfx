@@ -237,13 +237,13 @@ uint32_t CFG::find_loop_dominator(uint32_t block_id) const
 		for (auto &pred : itr->second)
 		{
 			auto &pred_block = compiler.get<SPIRBlock>(pred);
-			if (pred_block.merge == SPIRBlock::MergeLoop && pred_block.merge_block == block_id)
+			if (pred_block.merge == SPIRBlock::MergeLoop && pred_block.merge_block == ID(block_id))
 			{
 				pred_block_id = pred;
 				ignore_loop_header = true;
 				break;
 			}
-			else if (pred_block.merge == SPIRBlock::MergeSelection && pred_block.next_block == block_id)
+			else if (pred_block.merge == SPIRBlock::MergeSelection && pred_block.next_block == ID(block_id))
 			{
 				pred_block_id = pred;
 				break;
@@ -268,14 +268,14 @@ uint32_t CFG::find_loop_dominator(uint32_t block_id) const
 	return block_id;
 }
 
-bool CFG::node_terminates_control_flow_in_sub_graph(uint32_t from, uint32_t to) const
+bool CFG::node_terminates_control_flow_in_sub_graph(BlockID from, BlockID to) const
 {
 	// Walk backwards, starting from "to" block.
 	// Only follow pred edges if they have a 1:1 relationship, or a merge relationship.
 	// If we cannot find a path to "from", we must assume that to is inside control flow in some way.
 
 	auto &from_block = compiler.get<SPIRBlock>(from);
-	uint32_t ignore_block_id = 0;
+	BlockID ignore_block_id = 0;
 	if (from_block.merge == SPIRBlock::MergeLoop)
 		ignore_block_id = from_block.merge_block;
 
