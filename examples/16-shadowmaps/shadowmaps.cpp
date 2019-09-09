@@ -184,10 +184,12 @@ static bgfx::UniformHandle s_shadowMap[ShadowMapRenderTargets::Count];
 static bgfx::FrameBufferHandle s_rtShadowMap[ShadowMapRenderTargets::Count];
 static bgfx::FrameBufferHandle s_rtBlur;
 
-void mtxBillboard(float* __restrict _result
-				  , const float* __restrict _view
-				  , const float* __restrict _pos
-				  , const float* __restrict _scale)
+void mtxBillboard(
+	  float* _result
+	, const float* _view
+	, const float* _pos
+	, const float* _scale
+	)
 {
 	_result[ 0] = _view[0]  * _scale[0];
 	_result[ 1] = _view[4]  * _scale[0];
@@ -207,7 +209,7 @@ void mtxBillboard(float* __restrict _result
 	_result[15] = 1.0f;
 }
 
-void mtxYawPitchRoll(float* __restrict _result
+void mtxYawPitchRoll(float* _result
 		            , float _yaw
 		            , float _pitch
 		            , float _roll
@@ -1061,12 +1063,13 @@ void screenSpaceQuad(float _textureWidth, float _textureHeight, bool _originBott
 	}
 }
 
-void worldSpaceFrustumCorners(float* _corners24f
+void worldSpaceFrustumCorners(
+	  float* _corners24f
 	, float _near
 	, float _far
 	, float _projWidth
 	, float _projHeight
-	, const float* __restrict _invViewMtx
+	, const float* _invViewMtx
 	)
 {
 	// Define frustum corners in view space.
