@@ -339,7 +339,9 @@ spvtools_pch(SPIRV_SOURCES pch_source)
 add_library(${SPIRV_TOOLS} ${SPIRV_SOURCES})
 spvtools_default_compile_options(${SPIRV_TOOLS})
 target_include_directories(${SPIRV_TOOLS}
-  PUBLIC ${spirv-tools_SOURCE_DIR}/include
+  PUBLIC
+    $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/include>
   PRIVATE ${spirv-tools_BINARY_DIR}
   PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
   )
@@ -350,7 +352,9 @@ add_dependencies( ${SPIRV_TOOLS} core_tables enum_string_mapping extinst_tables 
 add_library(${SPIRV_TOOLS}-shared SHARED ${SPIRV_SOURCES})
 spvtools_default_compile_options(${SPIRV_TOOLS}-shared)
 target_include_directories(${SPIRV_TOOLS}-shared
-  PUBLIC ${spirv-tools_SOURCE_DIR}/include
+  PUBLIC
+    $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/include>
   PRIVATE ${spirv-tools_BINARY_DIR}
   PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
   )
@@ -372,10 +376,11 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 endif()
 
 if(ENABLE_SPIRV_TOOLS_INSTALL)
-  install(TARGETS ${SPIRV_TOOLS} ${SPIRV_TOOLS}-shared
+  install(TARGETS ${SPIRV_TOOLS} ${SPIRV_TOOLS}-shared EXPORT ${SPIRV_TOOLS}Targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  install(EXPORT ${SPIRV_TOOLS}Targets DESTINATION lib/cmake)
 endif(ENABLE_SPIRV_TOOLS_INSTALL)
 
 if(MSVC)

@@ -267,7 +267,8 @@ The `main()` in `StandAlone/StandAlone.cpp` shows examples using both styles.
 ### C++ Class Interface (new, preferred)
 
 This interface is in roughly the last 1/3 of `ShaderLang.h`.  It is in the
-glslang namespace and contains the following.
+glslang namespace and contains the following, here with suggested calls
+for generating SPIR-V:
 
 ```cxx
 const char* GetEsslVersionString();
@@ -290,8 +291,17 @@ class TProgram
     Reflection queries
 ```
 
+For just validating (not generating code), subsitute these calls:
+
+```cxx
+    setEnvInput(EShSourceHlsl or EShSourceGlsl, stage,  EShClientNone, 0);
+    setEnvClient(EShClientNone, 0);
+    setEnvTarget(EShTargetNone, 0);
+```
+
 See `ShaderLang.h` and the usage of it in `StandAlone/StandAlone.cpp` for more
-details.
+details. There is a block comment giving more detail above the calls for
+`setEnvInput, setEnvClient, and setEnvTarget`.
 
 ### C Functional Interface (orignal)
 

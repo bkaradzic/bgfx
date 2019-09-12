@@ -222,7 +222,7 @@ TEST(Optimizer, CanRegisterPassesFromFlags) {
 }
 
 TEST(Optimizer, VulkanToWebGPUSetsCorrectPasses) {
-  Optimizer opt(SPV_ENV_WEBGPU_0);
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
   opt.RegisterVulkanToWebGPUPasses();
   std::vector<const char*> pass_names = opt.GetPassNames();
 
@@ -267,7 +267,7 @@ TEST_P(VulkanToWebGPUPassTest, Ran) {
     tools.Assemble(GetParam().input, &binary);
   }
 
-  Optimizer opt(SPV_ENV_WEBGPU_0);
+  Optimizer opt(SPV_ENV_VULKAN_1_1);
   opt.RegisterVulkanToWebGPUPasses();
 
   std::vector<uint32_t> optimized;
@@ -622,7 +622,7 @@ INSTANTIATE_TEST_SUITE_P(
          "compact-ids"}}));
 
 TEST(Optimizer, WebGPUToVulkanSetsCorrectPasses) {
-  Optimizer opt(SPV_ENV_VULKAN_1_1);
+  Optimizer opt(SPV_ENV_WEBGPU_0);
   opt.RegisterWebGPUToVulkanPasses();
   std::vector<const char*> pass_names = opt.GetPassNames();
 
@@ -659,7 +659,7 @@ TEST_P(WebGPUToVulkanPassTest, Ran) {
     tools.Assemble(GetParam().input, &binary);
   }
 
-  Optimizer opt(SPV_ENV_VULKAN_1_1);
+  Optimizer opt(SPV_ENV_WEBGPU_0);
   opt.RegisterWebGPUToVulkanPasses();
 
   std::vector<uint32_t> optimized;

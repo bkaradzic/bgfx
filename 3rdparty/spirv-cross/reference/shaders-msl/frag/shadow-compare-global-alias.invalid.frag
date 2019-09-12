@@ -15,22 +15,22 @@ struct main0_in
     float3 vUV [[user(locn0)]];
 };
 
-float Samp(thread const float3& uv, thread depth2d<float> uTex, thread sampler uSamp)
+inline float Samp(thread const float3& uv, thread depth2d<float> uTex, thread sampler uSamp)
 {
     return uTex.sample_compare(uSamp, uv.xy, uv.z);
 }
 
-float Samp2(thread const float3& uv, thread depth2d<float> uSampler, thread const sampler uSamplerSmplr, thread float3& vUV)
+inline float Samp2(thread const float3& uv, thread depth2d<float> uSampler, thread const sampler uSamplerSmplr, thread float3& vUV)
 {
     return uSampler.sample_compare(uSamplerSmplr, vUV.xy, vUV.z);
 }
 
-float Samp3(thread const depth2d<float> uT, thread const sampler uS, thread const float3& uv, thread float3& vUV)
+inline float Samp3(thread const depth2d<float> uT, thread const sampler uS, thread const float3& uv, thread float3& vUV)
 {
     return uT.sample_compare(uS, vUV.xy, vUV.z);
 }
 
-float Samp4(thread const depth2d<float> uS, thread const sampler uSSmplr, thread const float3& uv, thread float3& vUV)
+inline float Samp4(thread const depth2d<float> uS, thread const sampler uSSmplr, thread const float3& uv, thread float3& vUV)
 {
     return uS.sample_compare(uSSmplr, vUV.xy, vUV.z);
 }

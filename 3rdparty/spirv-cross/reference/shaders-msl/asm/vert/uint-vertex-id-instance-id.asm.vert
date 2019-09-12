@@ -10,7 +10,7 @@ struct main0_out
     float4 gl_Position [[position]];
 };
 
-float4 _main(thread const uint& vid, thread const uint& iid)
+inline float4 _main(thread const uint& vid, thread const uint& iid)
 {
     return float4(float(vid + iid));
 }

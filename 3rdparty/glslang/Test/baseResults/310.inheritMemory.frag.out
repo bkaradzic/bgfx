@@ -1,14 +1,6 @@
 310.inheritMemory.frag
-ERROR: 0:38: 'readonly' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 0:39: 'readonly' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 0:40: 'readonly' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 0:41: 'readonly' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 0:42: 'readonly' : argument cannot drop memory qualifier when passed to formal parameter 
-ERROR: 5 compilation errors.  No code generated.
-
-
 Shader version: 310
-ERROR: node is still EOpNull!
+0:? Sequence
 0:18  Function Definition: non_ro_fun(f1[10]; ( global void)
 0:18    Function Parameters: 
 0:18      'buff' ( in 10-element array of mediump float)
@@ -120,7 +112,7 @@ Linked fragment stage:
 
 
 Shader version: 310
-ERROR: node is still EOpNull!
+0:? Sequence
 0:18  Function Definition: non_ro_fun(f1[10]; ( global void)
 0:18    Function Parameters: 
 0:18      'buff' ( in 10-element array of mediump float)

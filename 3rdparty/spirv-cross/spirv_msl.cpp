@@ -61,6 +61,12 @@ void CompilerMSL::add_msl_resource_binding(const MSLResourceBinding &binding)
 	resource_bindings[tuple] = { binding, false };
 }
 
+void CompilerMSL::add_dynamic_buffer(uint32_t desc_set, uint32_t binding, uint32_t index)
+{
+	SetBindingPair pair = { desc_set, binding };
+	buffers_requiring_dynamic_offset[pair] = { index, 0 };
+}
+
 void CompilerMSL::add_discrete_descriptor_set(uint32_t desc_set)
 {
 	if (desc_set < kMaxArgumentBuffers)
@@ -87,6 +93,16 @@ uint32_t CompilerMSL::get_automatic_msl_resource_binding(uint32_t id) const
 uint32_t CompilerMSL::get_automatic_msl_resource_binding_secondary(uint32_t id) const
 {
 	return get_extended_decoration(id, SPIRVCrossDecorationResourceIndexSecondary);
+}
+
+uint32_t CompilerMSL::get_automatic_msl_resource_binding_tertiary(uint32_t id) const
+{
+	return get_extended_decoration(id, SPIRVCrossDecorationResourceIndexTertiary);
+}
+
+uint32_t CompilerMSL::get_automatic_msl_resource_binding_quaternary(uint32_t id) const
+{
+	return get_extended_decoration(id, SPIRVCrossDecorationResourceIndexQuaternary);
 }
 
 void CompilerMSL::set_fragment_output_components(uint32_t location, uint32_t components)
@@ -538,6 +554,18 @@ void CompilerMSL::build_implicit_builtins()
 		set_extended_decoration(var_id, SPIRVCrossDecorationResourceIndexPrimary, msl_options.view_mask_buffer_index);
 		view_mask_buffer_id = var_id;
 	}
+
+	if (!buffers_requiring_dynamic_offset.empty())
+	{
+		uint32_t var_id = build_constant_uint_array_pointer();
+		set_name(var_id, "spvDynamicOffsets");
+		// This should never match anything.
+		set_decoration(var_id, DecorationDescriptorSet, ~(5u));
+		set_decoration(var_id, DecorationBinding, msl_options.dynamic_offsets_buffer_index);
+		set_extended_decoration(var_id, SPIRVCrossDecorationResourceIndexPrimary,
+		                        msl_options.dynamic_offsets_buffer_index);
+		dynamic_offsets_buffer_id = var_id;
+	}
 }
 
 void CompilerMSL::mark_implicit_builtin(StorageClass storage, BuiltIn builtin, uint32_t id)
@@ -764,9 +792,82 @@ void CompilerMSL::emit_entry_point_declarations()
 			                    convert_to_string(s.lod_clamp_max, current_locale_radix_character), ")"));
 		}
 
-		statement("constexpr sampler ",
-		          type.basetype == SPIRType::SampledImage ? to_sampler_expression(samp.first) : to_name(samp.first),
-		          "(", merge(args), ");");
+		// If we would emit no arguments, then omit the parentheses entirely. Otherwise,
+		// we'll wind up with a "most vexing parse" situation.
+		if (args.empty())
+			statement("constexpr sampler ",
+			          type.basetype == SPIRType::SampledImage ? to_sampler_expression(samp.first) : to_name(samp.first),
+			          ";");
+		else
+			statement("constexpr sampler ",
+			          type.basetype == SPIRType::SampledImage ? to_sampler_expression(samp.first) : to_name(samp.first),
+			          "(", merge(args), ");");
+	}
+
+	// Emit dynamic buffers here.
+	for (auto &dynamic_buffer : buffers_requiring_dynamic_offset)
+	{
+		if (!dynamic_buffer.second.second)
+		{
+			// Could happen if no buffer was used at requested binding point.
+			continue;
+		}
+
+		const auto &var = get<SPIRVariable>(dynamic_buffer.second.second);
+		uint32_t var_id = var.self;
+		const auto &type = get_variable_data_type(var);
+		string name = to_name(var.self);
+		uint32_t desc_set = get_decoration(var.self, DecorationDescriptorSet);
+		uint32_t arg_id = argument_buffer_ids[desc_set];
+		uint32_t base_index = dynamic_buffer.second.first;
+
+		if (!type.array.empty())
+		{
+			// This is complicated, because we need to support arrays of arrays.
+			// And it's even worse if the outermost dimension is a runtime array, because now
+			// all this complicated goop has to go into the shader itself. (FIXME)
+			if (!type.array[type.array.size() - 1])
+				SPIRV_CROSS_THROW("Runtime arrays with dynamic offsets are not supported yet.");
+			else
+			{
+				statement(get_argument_address_space(var), " ", type_to_glsl(type), "* ", to_restrict(var_id), name,
+				          type_to_array_glsl(type), " =");
+				uint32_t dim = uint32_t(type.array.size());
+				uint32_t j = 0;
+				for (SmallVector<uint32_t> indices(type.array.size());
+				     indices[type.array.size() - 1] < to_array_size_literal(type); j++)
+				{
+					while (dim > 0)
+					{
+						begin_scope();
+						--dim;
+					}
+
+					string arrays;
+					for (uint32_t i = uint32_t(type.array.size()); i; --i)
+						arrays += join("[", indices[i - 1], "]");
+					statement("(", get_argument_address_space(var), " ", type_to_glsl(type), "* ",
+					          to_restrict(var_id, false), ")((", get_argument_address_space(var), " char* ",
+					          to_restrict(var_id, false), ")", to_name(arg_id), ".", ensure_valid_name(name, "m"),
+					          arrays, " + ", to_name(dynamic_offsets_buffer_id), "[", base_index + j, "]),");
+
+					while (++indices[dim] >= to_array_size_literal(type, dim) && dim < type.array.size() - 1)
+					{
+						end_scope(",");
+						indices[dim++] = 0;
+					}
+				}
+				end_scope_decl();
+				statement_no_indent("");
+			}
+		}
+		else
+		{
+			statement(get_argument_address_space(var), " auto& ", to_restrict(var_id), name, " = *(",
+			          get_argument_address_space(var), " ", type_to_glsl(type), "* ", to_restrict(var_id, false), ")((",
+			          get_argument_address_space(var), " char* ", to_restrict(var_id, false), ")", to_name(arg_id), ".",
+			          ensure_valid_name(name, "m"), " + ", to_name(dynamic_offsets_buffer_id), "[", base_index, "]);");
+		}
 	}
 
 	// Emit buffer arrays here.
@@ -777,8 +878,8 @@ void CompilerMSL::emit_entry_point_declarations()
 		string name = to_name(array_id);
 		statement(get_argument_address_space(var), " ", type_to_glsl(type), "* ", to_restrict(array_id), name, "[] =");
 		begin_scope();
-		for (uint32_t i = 0; i < type.array[0]; ++i)
-			statement(name + "_" + convert_to_string(i) + ",");
+		for (uint32_t i = 0; i < to_array_size_literal(type); ++i)
+			statement(name, "_", i, ",");
 		end_scope_decl();
 		statement_no_indent("");
 	}
@@ -835,6 +936,7 @@ string CompilerMSL::compile()
 	update_active_builtins();
 	analyze_image_and_sampler_usage();
 	analyze_sampled_image_usage();
+	analyze_interlocked_resource_usage();
 	preprocess_op_codes();
 	build_implicit_builtins();
 
@@ -847,6 +949,8 @@ string CompilerMSL::compile()
 		active_interface_variables.insert(buffer_size_buffer_id);
 	if (view_mask_buffer_id)
 		active_interface_variables.insert(view_mask_buffer_id);
+	if (dynamic_offsets_buffer_id)
+		active_interface_variables.insert(dynamic_offsets_buffer_id);
 	if (builtin_layer_id)
 		active_interface_variables.insert(builtin_layer_id);
 	if (builtin_dispatch_base_id && !msl_options.supports_msl_version(1, 2))
@@ -1329,7 +1433,7 @@ void CompilerMSL::add_plain_variable_to_interface_block(StorageClass storage, co
 	else if (!strip_array)
 		ir.meta[var.self].decoration.qualified_alias = qual_var_name;
 
-	if (var.storage == StorageClassOutput && var.initializer != 0)
+	if (var.storage == StorageClassOutput && var.initializer != ID(0))
 	{
 		entry_func.fixup_hooks_in.push_back(
 		    [=, &var]() { statement(qual_var_name, " = ", to_expression(var.initializer), ";"); });
@@ -2549,7 +2653,7 @@ void CompilerMSL::mark_scalar_layout_structs(const SPIRType &type)
 void CompilerMSL::align_struct(SPIRType &ib_type, unordered_set<uint32_t> &aligned_structs)
 {
 	// We align structs recursively, so stop any redundant work.
-	uint32_t &ib_type_id = ib_type.self;
+	ID &ib_type_id = ib_type.self;
 	if (aligned_structs.count(ib_type_id))
 		return;
 	aligned_structs.insert(ib_type_id);
@@ -2828,8 +2932,9 @@ void CompilerMSL::emit_store_statement(uint32_t lhs_expression, uint32_t rhs_exp
 		// Special handling when storing to a remapped physical type.
 		// This is mostly to deal with std140 padded matrices or vectors.
 
-		uint32_t physical_type_id =
-		    lhs_remapped_type ? get_extended_decoration(lhs_expression, SPIRVCrossDecorationPhysicalTypeID) : type.self;
+		TypeID physical_type_id = lhs_remapped_type ?
+		                              ID(get_extended_decoration(lhs_expression, SPIRVCrossDecorationPhysicalTypeID)) :
+		                              type.self;
 
 		auto &physical_type = get<SPIRType>(physical_type_id);
 
@@ -3109,6 +3214,39 @@ void CompilerMSL::emit_custom_functions()
 		if (spv_function_implementations.count(static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + i)))
 			spv_function_implementations.insert(static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + i - 1));
 
+	if (spv_function_implementations.count(SPVFuncImplDynamicImageSampler))
+	{
+		// Unfortunately, this one needs a lot of the other functions to compile OK.
+		if (!msl_options.supports_msl_version(2))
+			SPIRV_CROSS_THROW(
+			    "spvDynamicImageSampler requires default-constructible texture objects, which require MSL 2.0.");
+		spv_function_implementations.insert(SPVFuncImplForwardArgs);
+		spv_function_implementations.insert(SPVFuncImplTextureSwizzle);
+		if (msl_options.swizzle_texture_samples)
+			spv_function_implementations.insert(SPVFuncImplGatherSwizzle);
+		for (uint32_t i = SPVFuncImplChromaReconstructNearest2Plane;
+		     i <= SPVFuncImplChromaReconstructLinear420XMidpointYMidpoint3Plane; i++)
+			spv_function_implementations.insert(static_cast<SPVFuncImpl>(i));
+		spv_function_implementations.insert(SPVFuncImplExpandITUFullRange);
+		spv_function_implementations.insert(SPVFuncImplExpandITUNarrowRange);
+		spv_function_implementations.insert(SPVFuncImplConvertYCbCrBT709);
+		spv_function_implementations.insert(SPVFuncImplConvertYCbCrBT601);
+		spv_function_implementations.insert(SPVFuncImplConvertYCbCrBT2020);
+	}
+
+	for (uint32_t i = SPVFuncImplChromaReconstructNearest2Plane;
+	     i <= SPVFuncImplChromaReconstructLinear420XMidpointYMidpoint3Plane; i++)
+		if (spv_function_implementations.count(static_cast<SPVFuncImpl>(i)))
+			spv_function_implementations.insert(SPVFuncImplForwardArgs);
+
+	if (spv_function_implementations.count(SPVFuncImplTextureSwizzle) ||
+	    spv_function_implementations.count(SPVFuncImplGatherSwizzle) ||
+	    spv_function_implementations.count(SPVFuncImplGatherCompareSwizzle))
+	{
+		spv_function_implementations.insert(SPVFuncImplForwardArgs);
+		spv_function_implementations.insert(SPVFuncImplGetSwizzle);
+	}
+
 	for (auto &spv_func : spv_function_implementations)
 	{
 		switch (spv_func)
@@ -3116,7 +3254,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplMod:
 			statement("// Implementation of the GLSL mod() function, which is slightly different than Metal fmod()");
 			statement("template<typename Tx, typename Ty>");
-			statement("Tx mod(Tx x, Ty y)");
+			statement("inline Tx mod(Tx x, Ty y)");
 			begin_scope();
 			statement("return x - y * floor(x / y);");
 			end_scope();
@@ -3126,7 +3264,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplRadians:
 			statement("// Implementation of the GLSL radians() function");
 			statement("template<typename T>");
-			statement("T radians(T d)");
+			statement("inline T radians(T d)");
 			begin_scope();
 			statement("return d * T(0.01745329251);");
 			end_scope();
@@ -3136,7 +3274,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplDegrees:
 			statement("// Implementation of the GLSL degrees() function");
 			statement("template<typename T>");
-			statement("T degrees(T r)");
+			statement("inline T degrees(T r)");
 			begin_scope();
 			statement("return r * T(57.2957795131);");
 			end_scope();
@@ -3146,7 +3284,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplFindILsb:
 			statement("// Implementation of the GLSL findLSB() function");
 			statement("template<typename T>");
-			statement("T spvFindLSB(T x)");
+			statement("inline T spvFindLSB(T x)");
 			begin_scope();
 			statement("return select(ctz(x), T(-1), x == T(0));");
 			end_scope();
@@ -3156,7 +3294,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplFindUMsb:
 			statement("// Implementation of the unsigned GLSL findMSB() function");
 			statement("template<typename T>");
-			statement("T spvFindUMSB(T x)");
+			statement("inline T spvFindUMSB(T x)");
 			begin_scope();
 			statement("return select(clz(T(0)) - (clz(x) + T(1)), T(-1), x == T(0));");
 			end_scope();
@@ -3166,7 +3304,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplFindSMsb:
 			statement("// Implementation of the signed GLSL findMSB() function");
 			statement("template<typename T>");
-			statement("T spvFindSMSB(T x)");
+			statement("inline T spvFindSMSB(T x)");
 			begin_scope();
 			statement("T v = select(x, T(-1) - x, x < T(0));");
 			statement("return select(clz(T(0)) - (clz(v) + T(1)), T(-1), v == T(0));");
@@ -3177,7 +3315,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplSSign:
 			statement("// Implementation of the GLSL sign() function for integer types");
 			statement("template<typename T, typename E = typename enable_if<is_integral<T>::value>::type>");
-			statement("T sign(T x)");
+			statement("inline T sign(T x)");
 			begin_scope();
 			statement("return select(select(select(x, T(0), x == T(0)), T(1), x > T(0)), T(-1), x < T(0));");
 			end_scope();
@@ -3185,40 +3323,27 @@ void CompilerMSL::emit_custom_functions()
 			break;
 
 		case SPVFuncImplArrayCopy:
-			statement("// Implementation of an array copy function to cover GLSL's ability to copy an array via "
-			          "assignment.");
-			statement("template<typename T, uint N>");
-			statement("void spvArrayCopyFromStack1(thread T (&dst)[N], thread const T (&src)[N])");
-			begin_scope();
-			statement("for (uint i = 0; i < N; dst[i] = src[i], i++);");
-			end_scope();
-			statement("");
-
-			statement("template<typename T, uint N>");
-			statement("void spvArrayCopyFromConstant1(thread T (&dst)[N], constant T (&src)[N])");
-			begin_scope();
-			statement("for (uint i = 0; i < N; dst[i] = src[i], i++);");
-			end_scope();
-			statement("");
-			break;
-
 		case SPVFuncImplArrayOfArrayCopy2Dim:
 		case SPVFuncImplArrayOfArrayCopy3Dim:
 		case SPVFuncImplArrayOfArrayCopy4Dim:
 		case SPVFuncImplArrayOfArrayCopy5Dim:
 		case SPVFuncImplArrayOfArrayCopy6Dim:
 		{
+			// Unfortunately we cannot template on the address space, so combinatorial explosion it is.
 			static const char *function_name_tags[] = {
-				"FromStack",
-				"FromConstant",
+				"FromConstantToStack",    "FromConstantToThreadGroup", "FromStackToStack",
+				"FromStackToThreadGroup", "FromThreadGroupToStack",    "FromThreadGroupToThreadGroup",
 			};
 
 			static const char *src_address_space[] = {
-				"thread const",
-				"constant",
+				"constant", "constant", "thread const", "thread const", "threadgroup const", "threadgroup const",
 			};
 
-			for (uint32_t variant = 0; variant < 2; variant++)
+			static const char *dst_address_space[] = {
+				"thread", "threadgroup", "thread", "threadgroup", "thread", "threadgroup",
+			};
+
+			for (uint32_t variant = 0; variant < 6; variant++)
 			{
 				uint32_t dimensions = spv_func - SPVFuncImplArrayCopyMultidimBase;
 				string tmp = "template<typename T";
@@ -3238,17 +3363,23 @@ void CompilerMSL::emit_custom_functions()
 					array_arg += "]";
 				}
 
-				statement("void spvArrayCopy", function_name_tags[variant], dimensions, "(thread T (&dst)", array_arg,
-				          ", ", src_address_space[variant], " T (&src)", array_arg, ")");
+				statement("inline void spvArrayCopy", function_name_tags[variant], dimensions, "(",
+				          dst_address_space[variant], " T (&dst)", array_arg, ", ", src_address_space[variant],
+				          " T (&src)", array_arg, ")");
 
 				begin_scope();
 				statement("for (uint i = 0; i < A; i++)");
 				begin_scope();
-				statement("spvArrayCopy", function_name_tags[variant], dimensions - 1, "(dst[i], src[i]);");
+
+				if (dimensions == 1)
+					statement("dst[i] = src[i];");
+				else
+					statement("spvArrayCopy", function_name_tags[variant], dimensions - 1, "(dst[i], src[i]);");
 				end_scope();
 				end_scope();
 				statement("");
 			}
+
 			break;
 		}
 
@@ -3256,7 +3387,7 @@ void CompilerMSL::emit_custom_functions()
 		{
 			string tex_width_str = convert_to_string(msl_options.texel_buffer_texture_width);
 			statement("// Returns 2D texture coords corresponding to 1D texel buffer coords");
-			statement("uint2 spvTexelBufferCoord(uint tc)");
+			statement("inline uint2 spvTexelBufferCoord(uint tc)");
 			begin_scope();
 			statement(join("return uint2(tc % ", tex_width_str, ", tc / ", tex_width_str, ");"));
 			end_scope();
@@ -3282,7 +3413,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("float4x4 spvInverse4x4(float4x4 m)");
+			statement("inline float4x4 spvInverse4x4(float4x4 m)");
 			begin_scope();
 			statement("float4x4 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3347,7 +3478,7 @@ void CompilerMSL::emit_custom_functions()
 
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("float3x3 spvInverse3x3(float3x3 m)");
+			statement("inline float3x3 spvInverse3x3(float3x3 m)");
 			begin_scope();
 			statement("float3x3 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3377,7 +3508,7 @@ void CompilerMSL::emit_custom_functions()
 		case SPVFuncImplInverse2x2:
 			statement("// Returns the inverse of a matrix, by using the algorithm of calculating the classical");
 			statement("// adjoint and dividing by the determinant. The contents of the matrix are changed.");
-			statement("float2x2 spvInverse2x2(float2x2 m)");
+			statement("inline float2x2 spvInverse2x2(float2x2 m)");
 			begin_scope();
 			statement("float2x2 adj;	// The adjoint matrix (inverse after dividing by determinant)");
 			statement_no_indent("");
@@ -3398,18 +3529,7 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			break;
 
-		case SPVFuncImplTextureSwizzle:
-			statement("enum class spvSwizzle : uint");
-			begin_scope();
-			statement("none = 0,");
-			statement("zero,");
-			statement("one,");
-			statement("red,");
-			statement("green,");
-			statement("blue,");
-			statement("alpha");
-			end_scope_decl();
-			statement("");
+		case SPVFuncImplForwardArgs:
 			statement("template<typename T> struct spvRemoveReference { typedef T type; };");
 			statement("template<typename T> struct spvRemoveReference<thread T&> { typedef T type; };");
 			statement("template<typename T> struct spvRemoveReference<thread T&&> { typedef T type; };");
@@ -3423,6 +3543,20 @@ void CompilerMSL::emit_custom_functions()
 			begin_scope();
 			statement("return static_cast<thread T&&>(x);");
 			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplGetSwizzle:
+			statement("enum class spvSwizzle : uint");
+			begin_scope();
+			statement("none = 0,");
+			statement("zero,");
+			statement("one,");
+			statement("red,");
+			statement("green,");
+			statement("blue,");
+			statement("alpha");
+			end_scope_decl();
 			statement("");
 			statement("template<typename T>");
 			statement("inline T spvGetSwizzle(vec<T, 4> x, T c, spvSwizzle s)");
@@ -3446,6 +3580,9 @@ void CompilerMSL::emit_custom_functions()
 			end_scope();
 			end_scope();
 			statement("");
+			break;
+
+		case SPVFuncImplTextureSwizzle:
 			statement("// Wrapper function that swizzles texture samples and fetches.");
 			statement("template<typename T>");
 			statement("inline vec<T, 4> spvTextureSwizzle(vec<T, 4> x, uint s)");
@@ -3464,11 +3601,14 @@ void CompilerMSL::emit_custom_functions()
 			statement("return spvTextureSwizzle(vec<T, 4>(x, 0, 0, 1), s).x;");
 			end_scope();
 			statement("");
+			break;
+
+		case SPVFuncImplGatherSwizzle:
 			statement("// Wrapper function that swizzles texture gathers.");
-			statement("template<typename T, typename Tex, typename... Ts>");
-			statement(
-			    "inline vec<T, 4> spvGatherSwizzle(sampler s, const thread Tex& t, Ts... params, component c, uint sw) "
-			    "METAL_CONST_ARG(c)");
+			statement("template<typename T, template<typename, access = access::sample, typename = void> class Tex, "
+			          "typename... Ts>");
+			statement("inline vec<T, 4> spvGatherSwizzle(const thread Tex<T>& t, sampler s, "
+			          "uint sw, component c, Ts... params) METAL_CONST_ARG(c)");
 			begin_scope();
 			statement("if (sw)");
 			begin_scope();
@@ -3505,10 +3645,14 @@ void CompilerMSL::emit_custom_functions()
 			end_scope();
 			end_scope();
 			statement("");
+			break;
+
+		case SPVFuncImplGatherCompareSwizzle:
 			statement("// Wrapper function that swizzles depth texture gathers.");
-			statement("template<typename T, typename Tex, typename... Ts>");
-			statement(
-			    "inline vec<T, 4> spvGatherCompareSwizzle(sampler s, const thread Tex& t, Ts... params, uint sw) ");
+			statement("template<typename T, template<typename, access = access::sample, typename = void> class Tex, "
+			          "typename... Ts>");
+			statement("inline vec<T, 4> spvGatherCompareSwizzle(const thread Tex<T>& t, sampler "
+			          "s, uint sw, Ts... params) ");
 			begin_scope();
 			statement("if (sw)");
 			begin_scope();
@@ -3654,6 +3798,704 @@ void CompilerMSL::emit_custom_functions()
 			statement("");
 			break;
 
+		case SPVFuncImplChromaReconstructNearest2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructNearest(texture2d<T> plane0, texture2d<T> plane1, sampler "
+			          "samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("ycbcr.br = plane1.sample(samp, coord, spvForward<LodOptions>(options)...).rg;");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructNearest3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructNearest(texture2d<T> plane0, texture2d<T> plane1, "
+			          "texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("ycbcr.b = plane1.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("ycbcr.r = plane2.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear422CositedEven2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear422CositedEven(texture2d<T> plane0, texture2d<T> "
+			          "plane1, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("if (fract(coord.x * plane1.get_width()) != 0.0)");
+			begin_scope();
+			statement("ycbcr.br = vec<T, 2>(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), 0.5).rg);");
+			end_scope();
+			statement("else");
+			begin_scope();
+			statement("ycbcr.br = plane1.sample(samp, coord, spvForward<LodOptions>(options)...).rg;");
+			end_scope();
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear422CositedEven3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear422CositedEven(texture2d<T> plane0, texture2d<T> "
+			          "plane1, texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("if (fract(coord.x * plane1.get_width()) != 0.0)");
+			begin_scope();
+			statement("ycbcr.b = T(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), 0.5).r);");
+			statement("ycbcr.r = T(mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), 0.5).r);");
+			end_scope();
+			statement("else");
+			begin_scope();
+			statement("ycbcr.b = plane1.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("ycbcr.r = plane2.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			end_scope();
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear422Midpoint2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear422Midpoint(texture2d<T> plane0, texture2d<T> "
+			          "plane1, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("int2 offs = int2(fract(coord.x * plane1.get_width()) != 0.0 ? 1 : -1, 0);");
+			statement("ycbcr.br = vec<T, 2>(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., offs), 0.25).rg);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear422Midpoint3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear422Midpoint(texture2d<T> plane0, texture2d<T> "
+			          "plane1, texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("int2 offs = int2(fract(coord.x * plane1.get_width()) != 0.0 ? 1 : -1, 0);");
+			statement("ycbcr.b = T(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., offs), 0.25).r);");
+			statement("ycbcr.r = T(mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., offs), 0.25).r);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XCositedEvenYCositedEven2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XCositedEvenYCositedEven(texture2d<T> plane0, "
+			          "texture2d<T> plane1, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract(round(coord * float2(plane0.get_width(), plane0.get_height())) * 0.5);");
+			statement("ycbcr.br = vec<T, 2>(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).rg);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XCositedEvenYCositedEven3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XCositedEvenYCositedEven(texture2d<T> plane0, "
+			          "texture2d<T> plane1, texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract(round(coord * float2(plane0.get_width(), plane0.get_height())) * 0.5);");
+			statement("ycbcr.b = T(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("ycbcr.r = T(mix(mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XMidpointYCositedEven2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XMidpointYCositedEven(texture2d<T> plane0, "
+			          "texture2d<T> plane1, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract((round(coord * float2(plane0.get_width(), plane0.get_height())) - float2(0.5, "
+			          "0)) * 0.5);");
+			statement("ycbcr.br = vec<T, 2>(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).rg);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XMidpointYCositedEven3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XMidpointYCositedEven(texture2d<T> plane0, "
+			          "texture2d<T> plane1, texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract((round(coord * float2(plane0.get_width(), plane0.get_height())) - float2(0.5, "
+			          "0)) * 0.5);");
+			statement("ycbcr.b = T(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("ycbcr.r = T(mix(mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XCositedEvenYMidpoint2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XCositedEvenYMidpoint(texture2d<T> plane0, "
+			          "texture2d<T> plane1, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract((round(coord * float2(plane0.get_width(), plane0.get_height())) - float2(0, "
+			          "0.5)) * 0.5);");
+			statement("ycbcr.br = vec<T, 2>(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).rg);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XCositedEvenYMidpoint3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XCositedEvenYMidpoint(texture2d<T> plane0, "
+			          "texture2d<T> plane1, texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract((round(coord * float2(plane0.get_width(), plane0.get_height())) - float2(0, "
+			          "0.5)) * 0.5);");
+			statement("ycbcr.b = T(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("ycbcr.r = T(mix(mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XMidpointYMidpoint2Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XMidpointYMidpoint(texture2d<T> plane0, "
+			          "texture2d<T> plane1, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract((round(coord * float2(plane0.get_width(), plane0.get_height())) - float2(0.5, "
+			          "0.5)) * 0.5);");
+			statement("ycbcr.br = vec<T, 2>(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).rg);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplChromaReconstructLinear420XMidpointYMidpoint3Plane:
+			statement("template<typename T, typename... LodOptions>");
+			statement("inline vec<T, 4> spvChromaReconstructLinear420XMidpointYMidpoint(texture2d<T> plane0, "
+			          "texture2d<T> plane1, texture2d<T> plane2, sampler samp, float2 coord, LodOptions... options)");
+			begin_scope();
+			statement("vec<T, 4> ycbcr = vec<T, 4>(0, 0, 0, 1);");
+			statement("ycbcr.g = plane0.sample(samp, coord, spvForward<LodOptions>(options)...).r;");
+			statement("float2 ab = fract((round(coord * float2(plane0.get_width(), plane0.get_height())) - float2(0.5, "
+			          "0.5)) * 0.5);");
+			statement("ycbcr.b = T(mix(mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane1.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("ycbcr.r = T(mix(mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)...), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 0)), ab.x), "
+			          "mix(plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(0, 1)), "
+			          "plane2.sample(samp, coord, spvForward<LodOptions>(options)..., int2(1, 1)), ab.x), ab.y).r);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplExpandITUFullRange:
+			statement("template<typename T>");
+			statement("inline vec<T, 4> spvExpandITUFullRange(vec<T, 4> ycbcr, int n)");
+			begin_scope();
+			statement("ycbcr.br -= exp2(T(n-1))/(exp2(T(n))-1);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplExpandITUNarrowRange:
+			statement("template<typename T>");
+			statement("inline vec<T, 4> spvExpandITUNarrowRange(vec<T, 4> ycbcr, int n)");
+			begin_scope();
+			statement("ycbcr.g = (ycbcr.g * (exp2(T(n)) - 1) - ldexp(T(16), n - 8))/ldexp(T(219), n - 8);");
+			statement("ycbcr.br = (ycbcr.br * (exp2(T(n)) - 1) - ldexp(T(128), n - 8))/ldexp(T(224), n - 8);");
+			statement("return ycbcr;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplConvertYCbCrBT709:
+			statement("// cf. Khronos Data Format Specification, section 15.1.1");
+			statement("constant float3x3 spvBT709Factors = {{1, 1, 1}, {0, -0.13397432/0.7152, 1.8556}, {1.5748, "
+			          "-0.33480248/0.7152, 0}};");
+			statement("");
+			statement("template<typename T>");
+			statement("inline vec<T, 4> spvConvertYCbCrBT709(vec<T, 4> ycbcr)");
+			begin_scope();
+			statement("vec<T, 4> rgba;");
+			statement("rgba.rgb = vec<T, 3>(spvBT709Factors * ycbcr.gbr);");
+			statement("rgba.a = ycbcr.a;");
+			statement("return rgba;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplConvertYCbCrBT601:
+			statement("// cf. Khronos Data Format Specification, section 15.1.2");
+			statement("constant float3x3 spvBT601Factors = {{1, 1, 1}, {0, -0.202008/0.587, 1.772}, {1.402, "
+			          "-0.419198/0.587, 0}};");
+			statement("");
+			statement("template<typename T>");
+			statement("inline vec<T, 4> spvConvertYCbCrBT601(vec<T, 4> ycbcr)");
+			begin_scope();
+			statement("vec<T, 4> rgba;");
+			statement("rgba.rgb = vec<T, 3>(spvBT601Factors * ycbcr.gbr);");
+			statement("rgba.a = ycbcr.a;");
+			statement("return rgba;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplConvertYCbCrBT2020:
+			statement("// cf. Khronos Data Format Specification, section 15.1.3");
+			statement("constant float3x3 spvBT2020Factors = {{1, 1, 1}, {0, -0.11156702/0.6780, 1.8814}, {1.4746, "
+			          "-0.38737742/0.6780, 0}};");
+			statement("");
+			statement("template<typename T>");
+			statement("inline vec<T, 4> spvConvertYCbCrBT2020(vec<T, 4> ycbcr)");
+			begin_scope();
+			statement("vec<T, 4> rgba;");
+			statement("rgba.rgb = vec<T, 3>(spvBT2020Factors * ycbcr.gbr);");
+			statement("rgba.a = ycbcr.a;");
+			statement("return rgba;");
+			end_scope();
+			statement("");
+			break;
+
+		case SPVFuncImplDynamicImageSampler:
+			statement("enum class spvFormatResolution");
+			begin_scope();
+			statement("_444 = 0,");
+			statement("_422,");
+			statement("_420");
+			end_scope_decl();
+			statement("");
+			statement("enum class spvChromaFilter");
+			begin_scope();
+			statement("nearest = 0,");
+			statement("linear");
+			end_scope_decl();
+			statement("");
+			statement("enum class spvXChromaLocation");
+			begin_scope();
+			statement("cosited_even = 0,");
+			statement("midpoint");
+			end_scope_decl();
+			statement("");
+			statement("enum class spvYChromaLocation");
+			begin_scope();
+			statement("cosited_even = 0,");
+			statement("midpoint");
+			end_scope_decl();
+			statement("");
+			statement("enum class spvYCbCrModelConversion");
+			begin_scope();
+			statement("rgb_identity = 0,");
+			statement("ycbcr_identity,");
+			statement("ycbcr_bt_709,");
+			statement("ycbcr_bt_601,");
+			statement("ycbcr_bt_2020");
+			end_scope_decl();
+			statement("");
+			statement("enum class spvYCbCrRange");
+			begin_scope();
+			statement("itu_full = 0,");
+			statement("itu_narrow");
+			end_scope_decl();
+			statement("");
+			statement("struct spvComponentBits");
+			begin_scope();
+			statement("constexpr explicit spvComponentBits(int v) thread : value(v) {}");
+			statement("uchar value : 6;");
+			end_scope_decl();
+			statement("// A class corresponding to metal::sampler which holds sampler");
+			statement("// Y'CbCr conversion info.");
+			statement("struct spvYCbCrSampler");
+			begin_scope();
+			statement("constexpr spvYCbCrSampler() thread : val(build()) {}");
+			statement("template<typename... Ts>");
+			statement("constexpr spvYCbCrSampler(Ts... t) thread : val(build(t...)) {}");
+			statement("constexpr spvYCbCrSampler(const thread spvYCbCrSampler& s) thread = default;");
+			statement("");
+			statement("spvFormatResolution get_resolution() const thread");
+			begin_scope();
+			statement("return spvFormatResolution((val & resolution_mask) >> resolution_base);");
+			end_scope();
+			statement("spvChromaFilter get_chroma_filter() const thread");
+			begin_scope();
+			statement("return spvChromaFilter((val & chroma_filter_mask) >> chroma_filter_base);");
+			end_scope();
+			statement("spvXChromaLocation get_x_chroma_offset() const thread");
+			begin_scope();
+			statement("return spvXChromaLocation((val & x_chroma_off_mask) >> x_chroma_off_base);");
+			end_scope();
+			statement("spvYChromaLocation get_y_chroma_offset() const thread");
+			begin_scope();
+			statement("return spvYChromaLocation((val & y_chroma_off_mask) >> y_chroma_off_base);");
+			end_scope();
+			statement("spvYCbCrModelConversion get_ycbcr_model() const thread");
+			begin_scope();
+			statement("return spvYCbCrModelConversion((val & ycbcr_model_mask) >> ycbcr_model_base);");
+			end_scope();
+			statement("spvYCbCrRange get_ycbcr_range() const thread");
+			begin_scope();
+			statement("return spvYCbCrRange((val & ycbcr_range_mask) >> ycbcr_range_base);");
+			end_scope();
+			statement("int get_bpc() const thread { return (val & bpc_mask) >> bpc_base; }");
+			statement("");
+			statement("private:");
+			statement("ushort val;");
+			statement("");
+			statement("constexpr static constant ushort resolution_bits = 2;");
+			statement("constexpr static constant ushort chroma_filter_bits = 2;");
+			statement("constexpr static constant ushort x_chroma_off_bit = 1;");
+			statement("constexpr static constant ushort y_chroma_off_bit = 1;");
+			statement("constexpr static constant ushort ycbcr_model_bits = 3;");
+			statement("constexpr static constant ushort ycbcr_range_bit = 1;");
+			statement("constexpr static constant ushort bpc_bits = 6;");
+			statement("");
+			statement("constexpr static constant ushort resolution_base = 0;");
+			statement("constexpr static constant ushort chroma_filter_base = 2;");
+			statement("constexpr static constant ushort x_chroma_off_base = 4;");
+			statement("constexpr static constant ushort y_chroma_off_base = 5;");
+			statement("constexpr static constant ushort ycbcr_model_base = 6;");
+			statement("constexpr static constant ushort ycbcr_range_base = 9;");
+			statement("constexpr static constant ushort bpc_base = 10;");
+			statement("");
+			statement(
+			    "constexpr static constant ushort resolution_mask = ((1 << resolution_bits) - 1) << resolution_base;");
+			statement("constexpr static constant ushort chroma_filter_mask = ((1 << chroma_filter_bits) - 1) << "
+			          "chroma_filter_base;");
+			statement("constexpr static constant ushort x_chroma_off_mask = ((1 << x_chroma_off_bit) - 1) << "
+			          "x_chroma_off_base;");
+			statement("constexpr static constant ushort y_chroma_off_mask = ((1 << y_chroma_off_bit) - 1) << "
+			          "y_chroma_off_base;");
+			statement("constexpr static constant ushort ycbcr_model_mask = ((1 << ycbcr_model_bits) - 1) << "
+			          "ycbcr_model_base;");
+			statement("constexpr static constant ushort ycbcr_range_mask = ((1 << ycbcr_range_bit) - 1) << "
+			          "ycbcr_range_base;");
+			statement("constexpr static constant ushort bpc_mask = ((1 << bpc_bits) - 1) << bpc_base;");
+			statement("");
+			statement("static constexpr ushort build()");
+			begin_scope();
+			statement("return 0;");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvFormatResolution res, Ts... t)");
+			begin_scope();
+			statement("return (ushort(res) << resolution_base) | (build(t...) & ~resolution_mask);");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvChromaFilter filt, Ts... t)");
+			begin_scope();
+			statement("return (ushort(filt) << chroma_filter_base) | (build(t...) & ~chroma_filter_mask);");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvXChromaLocation loc, Ts... t)");
+			begin_scope();
+			statement("return (ushort(loc) << x_chroma_off_base) | (build(t...) & ~x_chroma_off_mask);");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvYChromaLocation loc, Ts... t)");
+			begin_scope();
+			statement("return (ushort(loc) << y_chroma_off_base) | (build(t...) & ~y_chroma_off_mask);");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvYCbCrModelConversion model, Ts... t)");
+			begin_scope();
+			statement("return (ushort(model) << ycbcr_model_base) | (build(t...) & ~ycbcr_model_mask);");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvYCbCrRange range, Ts... t)");
+			begin_scope();
+			statement("return (ushort(range) << ycbcr_range_base) | (build(t...) & ~ycbcr_range_mask);");
+			end_scope();
+			statement("");
+			statement("template<typename... Ts>");
+			statement("static constexpr ushort build(spvComponentBits bpc, Ts... t)");
+			begin_scope();
+			statement("return (ushort(bpc.value) << bpc_base) | (build(t...) & ~bpc_mask);");
+			end_scope();
+			end_scope_decl();
+			statement("");
+			statement("// A class which can hold up to three textures and a sampler, including");
+			statement("// Y'CbCr conversion info, used to pass combined image-samplers");
+			statement("// dynamically to functions.");
+			statement("template<typename T>");
+			statement("struct spvDynamicImageSampler");
+			begin_scope();
+			statement("texture2d<T> plane0;");
+			statement("texture2d<T> plane1;");
+			statement("texture2d<T> plane2;");
+			statement("sampler samp;");
+			statement("spvYCbCrSampler ycbcr_samp;");
+			statement("uint swizzle = 0;");
+			statement("");
+			if (msl_options.swizzle_texture_samples)
+			{
+				statement("constexpr spvDynamicImageSampler(texture2d<T> tex, sampler samp, uint sw) thread :");
+				statement("    plane0(tex), samp(samp), swizzle(sw) {}");
+			}
+			else
+			{
+				statement("constexpr spvDynamicImageSampler(texture2d<T> tex, sampler samp) thread :");
+				statement("    plane0(tex), samp(samp) {}");
+			}
+			statement("constexpr spvDynamicImageSampler(texture2d<T> tex, sampler samp, spvYCbCrSampler ycbcr_samp, "
+			          "uint sw) thread :");
+			statement("    plane0(tex), samp(samp), ycbcr_samp(ycbcr_samp), swizzle(sw) {}");
+			statement("constexpr spvDynamicImageSampler(texture2d<T> plane0, texture2d<T> plane1,");
+			statement("                                 sampler samp, spvYCbCrSampler ycbcr_samp, uint sw) thread :");
+			statement("    plane0(plane0), plane1(plane1), samp(samp), ycbcr_samp(ycbcr_samp), swizzle(sw) {}");
+			statement(
+			    "constexpr spvDynamicImageSampler(texture2d<T> plane0, texture2d<T> plane1, texture2d<T> plane2,");
+			statement("                                 sampler samp, spvYCbCrSampler ycbcr_samp, uint sw) thread :");
+			statement("    plane0(plane0), plane1(plane1), plane2(plane2), samp(samp), ycbcr_samp(ycbcr_samp), "
+			          "swizzle(sw) {}");
+			statement("");
+			// XXX This is really hard to follow... I've left comments to make it a bit easier.
+			statement("template<typename... LodOptions>");
+			statement("vec<T, 4> do_sample(float2 coord, LodOptions... options) const thread");
+			begin_scope();
+			statement("if (!is_null_texture(plane1))");
+			begin_scope();
+			statement("if (ycbcr_samp.get_resolution() == spvFormatResolution::_444 ||");
+			statement("    ycbcr_samp.get_chroma_filter() == spvChromaFilter::nearest)");
+			begin_scope();
+			statement("if (!is_null_texture(plane2))");
+			statement("    return spvChromaReconstructNearest(plane0, plane1, plane2, samp, coord,");
+			statement("                                       spvForward<LodOptions>(options)...);");
+			statement(
+			    "return spvChromaReconstructNearest(plane0, plane1, samp, coord, spvForward<LodOptions>(options)...);");
+			end_scope(); // if (resolution == 422 || chroma_filter == nearest)
+			statement("switch (ycbcr_samp.get_resolution())");
+			begin_scope();
+			statement("case spvFormatResolution::_444: break;");
+			statement("case spvFormatResolution::_422:");
+			begin_scope();
+			statement("switch (ycbcr_samp.get_x_chroma_offset())");
+			begin_scope();
+			statement("case spvXChromaLocation::cosited_even:");
+			statement("    if (!is_null_texture(plane2))");
+			statement("        return spvChromaReconstructLinear422CositedEven(");
+			statement("            plane0, plane1, plane2, samp,");
+			statement("            coord, spvForward<LodOptions>(options)...);");
+			statement("    return spvChromaReconstructLinear422CositedEven(");
+			statement("        plane0, plane1, samp, coord,");
+			statement("        spvForward<LodOptions>(options)...);");
+			statement("case spvXChromaLocation::midpoint:");
+			statement("    if (!is_null_texture(plane2))");
+			statement("        return spvChromaReconstructLinear422Midpoint(");
+			statement("            plane0, plane1, plane2, samp,");
+			statement("            coord, spvForward<LodOptions>(options)...);");
+			statement("    return spvChromaReconstructLinear422Midpoint(");
+			statement("        plane0, plane1, samp, coord,");
+			statement("        spvForward<LodOptions>(options)...);");
+			end_scope(); // switch (x_chroma_offset)
+			end_scope(); // case 422:
+			statement("case spvFormatResolution::_420:");
+			begin_scope();
+			statement("switch (ycbcr_samp.get_x_chroma_offset())");
+			begin_scope();
+			statement("case spvXChromaLocation::cosited_even:");
+			begin_scope();
+			statement("switch (ycbcr_samp.get_y_chroma_offset())");
+			begin_scope();
+			statement("case spvYChromaLocation::cosited_even:");
+			statement("    if (!is_null_texture(plane2))");
+			statement("        return spvChromaReconstructLinear420XCositedEvenYCositedEven(");
+			statement("            plane0, plane1, plane2, samp,");
+			statement("            coord, spvForward<LodOptions>(options)...);");
+			statement("    return spvChromaReconstructLinear420XCositedEvenYCositedEven(");
+			statement("        plane0, plane1, samp, coord,");
+			statement("        spvForward<LodOptions>(options)...);");
+			statement("case spvYChromaLocation::midpoint:");
+			statement("    if (!is_null_texture(plane2))");
+			statement("        return spvChromaReconstructLinear420XCositedEvenYMidpoint(");
+			statement("            plane0, plane1, plane2, samp,");
+			statement("            coord, spvForward<LodOptions>(options)...);");
+			statement("    return spvChromaReconstructLinear420XCositedEvenYMidpoint(");
+			statement("        plane0, plane1, samp, coord,");
+			statement("        spvForward<LodOptions>(options)...);");
+			end_scope(); // switch (y_chroma_offset)
+			end_scope(); // case x::cosited_even:
+			statement("case spvXChromaLocation::midpoint:");
+			begin_scope();
+			statement("switch (ycbcr_samp.get_y_chroma_offset())");
+			begin_scope();
+			statement("case spvYChromaLocation::cosited_even:");
+			statement("    if (!is_null_texture(plane2))");
+			statement("        return spvChromaReconstructLinear420XMidpointYCositedEven(");
+			statement("            plane0, plane1, plane2, samp,");
+			statement("            coord, spvForward<LodOptions>(options)...);");
+			statement("    return spvChromaReconstructLinear420XMidpointYCositedEven(");
+			statement("        plane0, plane1, samp, coord,");
+			statement("        spvForward<LodOptions>(options)...);");
+			statement("case spvYChromaLocation::midpoint:");
+			statement("    if (!is_null_texture(plane2))");
+			statement("        return spvChromaReconstructLinear420XMidpointYMidpoint(");
+			statement("            plane0, plane1, plane2, samp,");
+			statement("            coord, spvForward<LodOptions>(options)...);");
+			statement("    return spvChromaReconstructLinear420XMidpointYMidpoint(");
+			statement("        plane0, plane1, samp, coord,");
+			statement("        spvForward<LodOptions>(options)...);");
+			end_scope(); // switch (y_chroma_offset)
+			end_scope(); // case x::midpoint
+			end_scope(); // switch (x_chroma_offset)
+			end_scope(); // case 420:
+			end_scope(); // switch (resolution)
+			end_scope(); // if (multiplanar)
+			statement("return plane0.sample(samp, coord, spvForward<LodOptions>(options)...);");
+			end_scope(); // do_sample()
+			statement("template <typename... LodOptions>");
+			statement("vec<T, 4> sample(float2 coord, LodOptions... options) const thread");
+			begin_scope();
+			statement(
+			    "vec<T, 4> s = spvTextureSwizzle(do_sample(coord, spvForward<LodOptions>(options)...), swizzle);");
+			statement("if (ycbcr_samp.get_ycbcr_model() == spvYCbCrModelConversion::rgb_identity)");
+			statement("    return s;");
+			statement("");
+			statement("switch (ycbcr_samp.get_ycbcr_range())");
+			begin_scope();
+			statement("case spvYCbCrRange::itu_full:");
+			statement("    s = spvExpandITUFullRange(s, ycbcr_samp.get_bpc());");
+			statement("    break;");
+			statement("case spvYCbCrRange::itu_narrow:");
+			statement("    s = spvExpandITUNarrowRange(s, ycbcr_samp.get_bpc());");
+			statement("    break;");
+			end_scope();
+			statement("");
+			statement("switch (ycbcr_samp.get_ycbcr_model())");
+			begin_scope();
+			statement("case spvYCbCrModelConversion::rgb_identity:"); // Silence Clang warning
+			statement("case spvYCbCrModelConversion::ycbcr_identity:");
+			statement("    return s;");
+			statement("case spvYCbCrModelConversion::ycbcr_bt_709:");
+			statement("    return spvConvertYCbCrBT709(s);");
+			statement("case spvYCbCrModelConversion::ycbcr_bt_601:");
+			statement("    return spvConvertYCbCrBT601(s);");
+			statement("case spvYCbCrModelConversion::ycbcr_bt_2020:");
+			statement("    return spvConvertYCbCrBT2020(s);");
+			end_scope();
+			end_scope();
+			statement("");
+			// Sampler Y'CbCr conversion forbids offsets.
+			statement("vec<T, 4> sample(float2 coord, int2 offset) const thread");
+			begin_scope();
+			if (msl_options.swizzle_texture_samples)
+				statement("return spvTextureSwizzle(plane0.sample(samp, coord, offset), swizzle);");
+			else
+				statement("return plane0.sample(samp, coord, offset);");
+			end_scope();
+			statement("template<typename lod_options>");
+			statement("vec<T, 4> sample(float2 coord, lod_options options, int2 offset) const thread");
+			begin_scope();
+			if (msl_options.swizzle_texture_samples)
+				statement("return spvTextureSwizzle(plane0.sample(samp, coord, options, offset), swizzle);");
+			else
+				statement("return plane0.sample(samp, coord, options, offset);");
+			end_scope();
+			statement("#if __HAVE_MIN_LOD_CLAMP__");
+			statement("vec<T, 4> sample(float2 coord, bias b, min_lod_clamp min_lod, int2 offset) const thread");
+			begin_scope();
+			statement("return plane0.sample(samp, coord, b, min_lod, offset);");
+			end_scope();
+			statement(
+			    "vec<T, 4> sample(float2 coord, gradient2d grad, min_lod_clamp min_lod, int2 offset) const thread");
+			begin_scope();
+			statement("return plane0.sample(samp, coord, grad, min_lod, offset);");
+			end_scope();
+			statement("#endif");
+			statement("");
+			// Y'CbCr conversion forbids all operations but sampling.
+			statement("vec<T, 4> read(uint2 coord, uint lod = 0) const thread");
+			begin_scope();
+			statement("return plane0.read(coord, lod);");
+			end_scope();
+			statement("");
+			statement("vec<T, 4> gather(float2 coord, int2 offset = int2(0), component c = component::x) const thread");
+			begin_scope();
+			if (msl_options.swizzle_texture_samples)
+				statement("return spvGatherSwizzle(plane0, samp, swizzle, c, coord, offset);");
+			else
+				statement("return plane0.gather(samp, coord, offset, c);");
+			end_scope();
+			end_scope_decl();
+			statement("");
+
 		default:
 			break;
 		}
@@ -3714,7 +4556,7 @@ void CompilerMSL::emit_resources()
 void CompilerMSL::emit_specialization_constants_and_structs()
 {
 	SpecializationConstant wg_x, wg_y, wg_z;
-	uint32_t workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
+	ID workgroup_size_id = get_work_group_size_specialization_constants(wg_x, wg_y, wg_z);
 	bool emitted = false;
 
 	unordered_set<uint32_t> declared_structs;
@@ -3808,7 +4650,7 @@ void CompilerMSL::emit_specialization_constants_and_structs()
 			// Output non-builtin interface structs. These include local function structs
 			// and structs nested within uniform and read-write buffers.
 			auto &type = id.get<SPIRType>();
-			uint32_t type_id = type.self;
+			TypeID type_id = type.self;
 
 			bool is_struct = (type.basetype == SPIRType::Struct) && type.array.empty();
 			bool is_block =
@@ -3947,7 +4789,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 						}
 						else if (is_array(mbr_type))
 						{
-							for (uint32_t k = 0; k < mbr_type.array[0]; k++, index++)
+							for (uint32_t k = 0; k < to_array_size_literal(mbr_type, 0); k++, index++)
 							{
 								set<SPIRConstant>(const_mbr_id, type_id, index, false);
 								auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), mbr_type, nullptr,
@@ -3976,7 +4818,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 				else // Must be an array
 				{
 					assert(is_array(*type));
-					for (uint32_t j = 0; j < type->array[0]; j++, index++)
+					for (uint32_t j = 0; j < to_array_size_literal(*type, 0); j++, index++)
 					{
 						set<SPIRConstant>(const_mbr_id, type_id, index, false);
 						auto e = access_chain(ptr, indices.data(), uint32_t(indices.size()), *type, nullptr, true);
@@ -4044,7 +4886,7 @@ bool CompilerMSL::emit_tessellation_access_chain(const uint32_t *ops, uint32_t l
 	// expression so we don't try to dereference it as a variable pointer.
 	// Don't do this if the index is a constant 1, though. We need to drop stores
 	// to that one.
-	auto *m = ir.find_meta(var ? var->self : 0);
+	auto *m = ir.find_meta(var ? var->self : ID(0));
 	if (get_execution_model() == ExecutionModelTessellationControl && var && m &&
 	    m->decoration.builtin_type == BuiltInTessLevelInner && get_entry_point().flags.get(ExecutionModeTriangles))
 	{
@@ -4229,21 +5071,36 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 
 	// Bitfield
 	case OpBitFieldInsert:
-		MSL_QFOP(insert_bits);
+	{
+		emit_bitfield_insert_op(ops[0], ops[1], ops[2], ops[3], ops[4], ops[5], "insert_bits", SPIRType::UInt);
 		break;
+	}
 
 	case OpBitFieldSExtract:
-	case OpBitFieldUExtract:
-		MSL_TFOP(extract_bits);
+	{
+		emit_trinary_func_op_bitextract(ops[0], ops[1], ops[2], ops[3], ops[4], "extract_bits", int_type, int_type,
+		                                SPIRType::UInt, SPIRType::UInt);
 		break;
+	}
+
+	case OpBitFieldUExtract:
+	{
+		emit_trinary_func_op_bitextract(ops[0], ops[1], ops[2], ops[3], ops[4], "extract_bits", uint_type, uint_type,
+		                                SPIRType::UInt, SPIRType::UInt);
+		break;
+	}
 
 	case OpBitReverse:
+		// BitReverse does not have issues with sign since result type must match input type.
 		MSL_UFOP(reverse_bits);
 		break;
 
 	case OpBitCount:
-		MSL_UFOP(popcount);
+	{
+		auto basetype = expression_type(ops[2]).basetype;
+		emit_unary_func_op_cast(ops[0], ops[1], ops[2], "popcount", basetype, basetype);
 		break;
+	}
 
 	case OpFRem:
 		MSL_BFOP(fmod);
@@ -4539,10 +5396,14 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		}
 		else
 		{
-			auto &e = emit_op(result_type, id, to_expression(ops[2]), true, true);
 			auto *var = maybe_get_backing_variable(ops[2]);
+			SPIRExpression *e;
+			if (var && has_extended_decoration(var->self, SPIRVCrossDecorationDynamicImageSampler))
+				e = &emit_op(result_type, id, join(to_expression(ops[2]), ".plane0"), true, true);
+			else
+				e = &emit_op(result_type, id, to_expression(ops[2]), true, true);
 			if (var)
-				e.loaded_from = var->self;
+				e->loaded_from = var->self;
 		}
 		break;
 	}
@@ -4768,6 +5629,12 @@ void CompilerMSL::emit_instruction(const Instruction &instruction)
 		emit_op(ops[0], ops[1], "simd_is_helper_thread()", false);
 		break;
 
+	case OpBeginInvocationInterlockEXT:
+	case OpEndInvocationInterlockEXT:
+		if (!msl_options.supports_msl_version(2, 0))
+			SPIRV_CROSS_THROW("Raster order groups require MSL 2.0.");
+		break; // Nothing to do in the body
+
 	default:
 		CompilerGLSL::emit_instruction(instruction);
 		break;
@@ -4872,7 +5739,8 @@ void CompilerMSL::emit_barrier(uint32_t id_exe_scope, uint32_t id_mem_scope, uin
 	flush_all_active_variables();
 }
 
-void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id)
+void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id, StorageClass lhs_storage,
+                                  StorageClass rhs_storage)
 {
 	// Assignment from an array initializer is fine.
 	auto &type = expression_type(rhs_id);
@@ -4900,21 +5768,32 @@ void CompilerMSL::emit_array_copy(const string &lhs, uint32_t rhs_id)
 		if (type.array.size() > SPVFuncImplArrayCopyMultidimMax)
 			SPIRV_CROSS_THROW("Cannot support this many dimensions for arrays of arrays.");
 		auto func = static_cast<SPVFuncImpl>(SPVFuncImplArrayCopyMultidimBase + type.array.size());
-		if (spv_function_implementations.count(func) == 0)
-		{
-			spv_function_implementations.insert(func);
-			suppress_missing_prototypes = true;
-			force_recompile();
-		}
+		add_spv_func_and_recompile(func);
 	}
-	else if (spv_function_implementations.count(SPVFuncImplArrayCopy) == 0)
-	{
-		spv_function_implementations.insert(SPVFuncImplArrayCopy);
-		suppress_missing_prototypes = true;
-		force_recompile();
-	}
+	else
+		add_spv_func_and_recompile(SPVFuncImplArrayCopy);
 
-	const char *tag = is_constant ? "FromConstant" : "FromStack";
+	bool lhs_thread =
+	    lhs_storage == StorageClassFunction || lhs_storage == StorageClassGeneric || lhs_storage == StorageClassPrivate;
+	bool rhs_thread =
+	    rhs_storage == StorageClassFunction || rhs_storage == StorageClassGeneric || rhs_storage == StorageClassPrivate;
+
+	const char *tag = nullptr;
+	if (lhs_thread && is_constant)
+		tag = "FromConstantToStack";
+	else if (lhs_storage == StorageClassWorkgroup && is_constant)
+		tag = "FromConstantToThreadGroup";
+	else if (lhs_thread && rhs_thread)
+		tag = "FromStackToStack";
+	else if (lhs_storage == StorageClassWorkgroup && rhs_thread)
+		tag = "FromStackToThreadGroup";
+	else if (lhs_thread && rhs_storage == StorageClassWorkgroup)
+		tag = "FromThreadGroupToStack";
+	else if (lhs_storage == StorageClassWorkgroup && rhs_storage == StorageClassWorkgroup)
+		tag = "FromThreadGroupToThreadGroup";
+	else
+		SPIRV_CROSS_THROW("Unknown storage class used for copying arrays.");
+
 	statement("spvArrayCopy", tag, type.array.size(), "(", lhs, ", ", to_expression(rhs_id), ");");
 }
 
@@ -4951,7 +5830,8 @@ bool CompilerMSL::maybe_emit_array_assignment(uint32_t id_lhs, uint32_t id_rhs)
 	if (p_v_lhs)
 		flush_variable_declaration(p_v_lhs->self);
 
-	emit_array_copy(to_expression(id_lhs), id_rhs);
+	emit_array_copy(to_expression(id_lhs), id_rhs, get_backing_variable_storage(id_lhs),
+	                get_backing_variable_storage(id_rhs));
 	register_write(id_lhs);
 
 	return true;
@@ -5339,9 +6219,10 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		add_function_overload(func);
 
 	local_variable_names = resource_names;
-	string decl;
 
-	processing_entry_point = (func.self == ir.default_entry_point);
+	processing_entry_point = func.self == ir.default_entry_point;
+
+	string decl = processing_entry_point ? "" : "inline ";
 
 	auto &type = get<SPIRType>(func.return_type);
 
@@ -5352,7 +6233,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 	else
 	{
 		// We cannot return arrays in MSL, so "return" through an out variable.
-		decl = "void";
+		decl += "void";
 	}
 
 	decl += " ";
@@ -5384,7 +6265,7 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 		for (auto var_id : vars_needing_early_declaration)
 		{
 			auto &ed_var = get<SPIRVariable>(var_id);
-			uint32_t &initializer = ed_var.initializer;
+			ID &initializer = ed_var.initializer;
 			if (!initializer)
 				initializer = ir.increase_bound_by(1);
 
@@ -5413,13 +6294,27 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 
 		decl += argument_decl(arg);
 
-		// Manufacture automatic sampler arg for SampledImage texture
+		bool is_dynamic_img_sampler = has_extended_decoration(arg.id, SPIRVCrossDecorationDynamicImageSampler);
+
 		auto &arg_type = get<SPIRType>(arg.type);
-		if (arg_type.basetype == SPIRType::SampledImage && arg_type.image.dim != DimBuffer)
-			decl += join(", thread const ", sampler_type(arg_type), " ", to_sampler_expression(arg.id));
+		if (arg_type.basetype == SPIRType::SampledImage && !is_dynamic_img_sampler)
+		{
+			// Manufacture automatic plane args for multiplanar texture
+			uint32_t planes = 1;
+			if (auto *constexpr_sampler = find_constexpr_sampler(name_id))
+				if (constexpr_sampler->ycbcr_conversion_enable)
+					planes = constexpr_sampler->planes;
+			for (uint32_t i = 1; i < planes; i++)
+				decl += join(", ", argument_decl(arg), plane_name_suffix, i);
+
+			// Manufacture automatic sampler arg for SampledImage texture
+			if (arg_type.image.dim != DimBuffer)
+				decl += join(", thread const ", sampler_type(arg_type), " ", to_sampler_expression(arg.id));
+		}
 
 		// Manufacture automatic swizzle arg.
-		if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(arg_type))
+		if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(arg_type) &&
+		    !is_dynamic_img_sampler)
 		{
 			bool arg_is_array = !arg_type.array.empty();
 			decl += join(", constant uint", arg_is_array ? "* " : "& ", to_swizzle_expression(arg.id));
@@ -5439,60 +6334,157 @@ void CompilerMSL::emit_function_prototype(SPIRFunction &func, const Bitset &)
 	statement(decl);
 }
 
-// Returns the texture sampling function string for the specified image and sampling characteristics.
-string CompilerMSL::to_function_name(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool, bool,
-                                     bool has_offset, bool, bool has_dref, uint32_t, uint32_t)
+static bool needs_chroma_reconstruction(const MSLConstexprSampler *constexpr_sampler)
 {
+	// For now, only multiplanar images need explicit reconstruction. GBGR and BGRG images
+	// use implicit reconstruction.
+	return constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable && constexpr_sampler->planes > 1;
+}
+
+// Returns the texture sampling function string for the specified image and sampling characteristics.
+string CompilerMSL::to_function_name(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool, bool,
+                                     bool, bool, bool has_dref, uint32_t, uint32_t)
+{
+	const MSLConstexprSampler *constexpr_sampler = nullptr;
+	bool is_dynamic_img_sampler = false;
+	if (auto *var = maybe_get_backing_variable(img))
+	{
+		constexpr_sampler = find_constexpr_sampler(var->basevariable ? var->basevariable : VariableID(var->self));
+		is_dynamic_img_sampler = has_extended_decoration(var->self, SPIRVCrossDecorationDynamicImageSampler);
+	}
+
 	// Special-case gather. We have to alter the component being looked up
 	// in the swizzle case.
-	if (msl_options.swizzle_texture_samples && is_gather)
+	if (msl_options.swizzle_texture_samples && is_gather && !is_dynamic_img_sampler &&
+	    (!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable))
 	{
-		string fname = imgtype.image.depth ? "spvGatherCompareSwizzle" : "spvGatherSwizzle";
-		fname += "<" + type_to_glsl(get<SPIRType>(imgtype.image.type)) + ", metal::" + type_to_glsl(imgtype);
-		// Add the arg types ourselves. Yes, this sucks, but Clang can't
-		// deduce template pack parameters in the middle of an argument list.
-		switch (imgtype.image.dim)
-		{
-		case Dim2D:
-			fname += ", float2";
-			if (imgtype.image.arrayed)
-				fname += ", uint";
-			if (imgtype.image.depth)
-				fname += ", float";
-			if (!imgtype.image.depth || has_offset)
-				fname += ", int2";
-			break;
-		case DimCube:
-			fname += ", float3";
-			if (imgtype.image.arrayed)
-				fname += ", uint";
-			if (imgtype.image.depth)
-				fname += ", float";
-			break;
-		default:
-			SPIRV_CROSS_THROW("Invalid texture dimension for gather op.");
-		}
-		fname += ">";
-		return fname;
+		add_spv_func_and_recompile(imgtype.image.depth ? SPVFuncImplGatherCompareSwizzle : SPVFuncImplGatherSwizzle);
+		return imgtype.image.depth ? "spvGatherCompareSwizzle" : "spvGatherSwizzle";
 	}
 
 	auto *combined = maybe_get<SPIRCombinedImageSampler>(img);
 
 	// Texture reference
-	string fname = to_expression(combined ? combined->image : img) + ".";
-	if (msl_options.swizzle_texture_samples && !is_gather && is_sampled_image_type(imgtype))
-		fname = "spvTextureSwizzle(" + fname;
-
-	// Texture function and sampler
-	if (is_fetch)
-		fname += "read";
-	else if (is_gather)
-		fname += "gather";
+	string fname;
+	if (needs_chroma_reconstruction(constexpr_sampler) && !is_dynamic_img_sampler)
+	{
+		if (constexpr_sampler->planes != 2 && constexpr_sampler->planes != 3)
+			SPIRV_CROSS_THROW("Unhandled number of color image planes!");
+		// 444 images aren't downsampled, so we don't need to do linear filtering.
+		if (constexpr_sampler->resolution == MSL_FORMAT_RESOLUTION_444 ||
+		    constexpr_sampler->chroma_filter == MSL_SAMPLER_FILTER_NEAREST)
+		{
+			if (constexpr_sampler->planes == 2)
+				add_spv_func_and_recompile(SPVFuncImplChromaReconstructNearest2Plane);
+			else
+				add_spv_func_and_recompile(SPVFuncImplChromaReconstructNearest3Plane);
+			fname = "spvChromaReconstructNearest";
+		}
+		else // Linear with a downsampled format
+		{
+			fname = "spvChromaReconstructLinear";
+			switch (constexpr_sampler->resolution)
+			{
+			case MSL_FORMAT_RESOLUTION_444:
+				assert(false);
+				break; // not reached
+			case MSL_FORMAT_RESOLUTION_422:
+				switch (constexpr_sampler->x_chroma_offset)
+				{
+				case MSL_CHROMA_LOCATION_COSITED_EVEN:
+					if (constexpr_sampler->planes == 2)
+						add_spv_func_and_recompile(SPVFuncImplChromaReconstructLinear422CositedEven2Plane);
+					else
+						add_spv_func_and_recompile(SPVFuncImplChromaReconstructLinear422CositedEven3Plane);
+					fname += "422CositedEven";
+					break;
+				case MSL_CHROMA_LOCATION_MIDPOINT:
+					if (constexpr_sampler->planes == 2)
+						add_spv_func_and_recompile(SPVFuncImplChromaReconstructLinear422Midpoint2Plane);
+					else
+						add_spv_func_and_recompile(SPVFuncImplChromaReconstructLinear422Midpoint3Plane);
+					fname += "422Midpoint";
+					break;
+				default:
+					SPIRV_CROSS_THROW("Invalid chroma location.");
+				}
+				break;
+			case MSL_FORMAT_RESOLUTION_420:
+				fname += "420";
+				switch (constexpr_sampler->x_chroma_offset)
+				{
+				case MSL_CHROMA_LOCATION_COSITED_EVEN:
+					switch (constexpr_sampler->y_chroma_offset)
+					{
+					case MSL_CHROMA_LOCATION_COSITED_EVEN:
+						if (constexpr_sampler->planes == 2)
+							add_spv_func_and_recompile(
+							    SPVFuncImplChromaReconstructLinear420XCositedEvenYCositedEven2Plane);
+						else
+							add_spv_func_and_recompile(
+							    SPVFuncImplChromaReconstructLinear420XCositedEvenYCositedEven3Plane);
+						fname += "XCositedEvenYCositedEven";
+						break;
+					case MSL_CHROMA_LOCATION_MIDPOINT:
+						if (constexpr_sampler->planes == 2)
+							add_spv_func_and_recompile(
+							    SPVFuncImplChromaReconstructLinear420XCositedEvenYMidpoint2Plane);
+						else
+							add_spv_func_and_recompile(
+							    SPVFuncImplChromaReconstructLinear420XCositedEvenYMidpoint3Plane);
+						fname += "XCositedEvenYMidpoint";
+						break;
+					default:
+						SPIRV_CROSS_THROW("Invalid Y chroma location.");
+					}
+					break;
+				case MSL_CHROMA_LOCATION_MIDPOINT:
+					switch (constexpr_sampler->y_chroma_offset)
+					{
+					case MSL_CHROMA_LOCATION_COSITED_EVEN:
+						if (constexpr_sampler->planes == 2)
+							add_spv_func_and_recompile(
+							    SPVFuncImplChromaReconstructLinear420XMidpointYCositedEven2Plane);
+						else
+							add_spv_func_and_recompile(
+							    SPVFuncImplChromaReconstructLinear420XMidpointYCositedEven3Plane);
+						fname += "XMidpointYCositedEven";
+						break;
+					case MSL_CHROMA_LOCATION_MIDPOINT:
+						if (constexpr_sampler->planes == 2)
+							add_spv_func_and_recompile(SPVFuncImplChromaReconstructLinear420XMidpointYMidpoint2Plane);
+						else
+							add_spv_func_and_recompile(SPVFuncImplChromaReconstructLinear420XMidpointYMidpoint3Plane);
+						fname += "XMidpointYMidpoint";
+						break;
+					default:
+						SPIRV_CROSS_THROW("Invalid Y chroma location.");
+					}
+					break;
+				default:
+					SPIRV_CROSS_THROW("Invalid X chroma location.");
+				}
+				break;
+			default:
+				SPIRV_CROSS_THROW("Invalid format resolution.");
+			}
+		}
+	}
 	else
-		fname += "sample";
+	{
+		fname = to_expression(combined ? combined->image : img) + ".";
 
-	if (has_dref)
-		fname += "_compare";
+		// Texture function and sampler
+		if (is_fetch)
+			fname += "read";
+		else if (is_gather)
+			fname += "gather";
+		else
+			fname += "sample";
+
+		if (has_dref)
+			fname += "_compare";
+	}
 
 	return fname;
 }
@@ -5513,26 +6505,66 @@ static inline bool sampling_type_needs_f32_conversion(const SPIRType &type)
 }
 
 // Returns the function args for a texture sampling function for the specified image and sampling characteristics.
-string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool is_fetch, bool is_gather, bool is_proj,
-                                     uint32_t coord, uint32_t, uint32_t dref, uint32_t grad_x, uint32_t grad_y,
-                                     uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias, uint32_t comp,
-                                     uint32_t sample, uint32_t minlod, bool *p_forward)
+string CompilerMSL::to_function_args(VariableID img, const SPIRType &imgtype, bool is_fetch, bool is_gather,
+                                     bool is_proj, uint32_t coord, uint32_t, uint32_t dref, uint32_t grad_x,
+                                     uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
+                                     uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward)
 {
-	string farg_str;
-	if (!is_fetch)
-		farg_str += to_sampler_expression(img);
-
-	if (msl_options.swizzle_texture_samples && is_gather)
+	const MSLConstexprSampler *constexpr_sampler = nullptr;
+	bool is_dynamic_img_sampler = false;
+	if (auto *var = maybe_get_backing_variable(img))
 	{
-		if (!farg_str.empty())
-			farg_str += ", ";
+		constexpr_sampler = find_constexpr_sampler(var->basevariable ? var->basevariable : VariableID(var->self));
+		is_dynamic_img_sampler = has_extended_decoration(var->self, SPIRVCrossDecorationDynamicImageSampler);
+	}
 
-		auto *combined = maybe_get<SPIRCombinedImageSampler>(img);
-		farg_str += to_expression(combined ? combined->image : img);
+	string farg_str;
+	bool forward = true;
+
+	if (!is_dynamic_img_sampler)
+	{
+		// Texture reference (for some cases)
+		if (needs_chroma_reconstruction(constexpr_sampler))
+		{
+			// Multiplanar images need two or three textures.
+			farg_str += to_expression(img);
+			for (uint32_t i = 1; i < constexpr_sampler->planes; i++)
+				farg_str += join(", ", to_expression(img), plane_name_suffix, i);
+		}
+		else if ((!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable) &&
+		         msl_options.swizzle_texture_samples && is_gather)
+		{
+			auto *combined = maybe_get<SPIRCombinedImageSampler>(img);
+			farg_str += to_expression(combined ? combined->image : img);
+		}
+
+		// Sampler reference
+		if (!is_fetch)
+		{
+			if (!farg_str.empty())
+				farg_str += ", ";
+			farg_str += to_sampler_expression(img);
+		}
+
+		if ((!constexpr_sampler || !constexpr_sampler->ycbcr_conversion_enable) &&
+		    msl_options.swizzle_texture_samples && is_gather)
+		{
+			// Add the swizzle constant from the swizzle buffer.
+			farg_str += ", " + to_swizzle_expression(img);
+			used_swizzle_buffer = true;
+		}
+
+		// Swizzled gather puts the component before the other args, to allow template
+		// deduction to work.
+		if (comp && msl_options.swizzle_texture_samples)
+		{
+			forward = should_forward(comp);
+			farg_str += ", " + to_component_argument(comp);
+		}
 	}
 
 	// Texture coordinates
-	bool forward = should_forward(coord);
+	forward = forward && should_forward(coord);
 	auto coord_expr = to_enclosed_expression(coord);
 	auto &coord_type = expression_type(coord);
 	bool coord_is_fp = type_is_floating_point(coord_type);
@@ -5851,8 +6883,11 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 		if (imgtype.image.dim == Dim2D && offset_expr.empty())
 			farg_str += ", int2(0)";
 
-		forward = forward && should_forward(comp);
-		farg_str += ", " + to_component_argument(comp);
+		if (!msl_options.swizzle_texture_samples || is_dynamic_img_sampler)
+		{
+			forward = forward && should_forward(comp);
+			farg_str += ", " + to_component_argument(comp);
+		}
 	}
 
 	if (sample)
@@ -5860,15 +6895,6 @@ string CompilerMSL::to_function_args(uint32_t img, const SPIRType &imgtype, bool
 		forward = forward && should_forward(sample);
 		farg_str += ", ";
 		farg_str += to_expression(sample);
-	}
-
-	if (msl_options.swizzle_texture_samples && is_sampled_image_type(imgtype))
-	{
-		// Add the swizzle constant from the swizzle buffer.
-		if (!is_gather)
-			farg_str += ")";
-		farg_str += ", " + to_swizzle_expression(img);
-		used_swizzle_buffer = true;
 	}
 
 	*p_forward = forward;
@@ -5917,11 +6943,215 @@ void CompilerMSL::emit_sampled_image_op(uint32_t result_type, uint32_t result_id
 	set<SPIRCombinedImageSampler>(result_id, result_type, image_id, samp_id);
 }
 
+string CompilerMSL::to_texture_op(const Instruction &i, bool *forward, SmallVector<uint32_t> &inherited_expressions)
+{
+	auto *ops = stream(i);
+	uint32_t result_type_id = ops[0];
+	uint32_t img = ops[2];
+	auto &result_type = get<SPIRType>(result_type_id);
+	auto op = static_cast<Op>(i.op);
+	bool is_gather = (op == OpImageGather || op == OpImageDrefGather);
+
+	// Bypass pointers because we need the real image struct
+	auto &type = expression_type(img);
+	auto &imgtype = get<SPIRType>(type.self);
+
+	const MSLConstexprSampler *constexpr_sampler = nullptr;
+	bool is_dynamic_img_sampler = false;
+	if (auto *var = maybe_get_backing_variable(img))
+	{
+		constexpr_sampler = find_constexpr_sampler(var->basevariable ? var->basevariable : VariableID(var->self));
+		is_dynamic_img_sampler = has_extended_decoration(var->self, SPIRVCrossDecorationDynamicImageSampler);
+	}
+
+	string expr;
+	if (constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable && !is_dynamic_img_sampler)
+	{
+		// If this needs sampler Y'CbCr conversion, we need to do some additional
+		// processing.
+		switch (constexpr_sampler->ycbcr_model)
+		{
+		case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_709:
+			add_spv_func_and_recompile(SPVFuncImplConvertYCbCrBT709);
+			expr += "spvConvertYCbCrBT709(";
+			break;
+		case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_601:
+			add_spv_func_and_recompile(SPVFuncImplConvertYCbCrBT601);
+			expr += "spvConvertYCbCrBT601(";
+			break;
+		case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_2020:
+			add_spv_func_and_recompile(SPVFuncImplConvertYCbCrBT2020);
+			expr += "spvConvertYCbCrBT2020(";
+			break;
+		default:
+			SPIRV_CROSS_THROW("Invalid Y'CbCr model conversion.");
+		}
+
+		if (constexpr_sampler->ycbcr_model != MSL_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY)
+		{
+			switch (constexpr_sampler->ycbcr_range)
+			{
+			case MSL_SAMPLER_YCBCR_RANGE_ITU_FULL:
+				add_spv_func_and_recompile(SPVFuncImplExpandITUFullRange);
+				expr += "spvExpandITUFullRange(";
+				break;
+			case MSL_SAMPLER_YCBCR_RANGE_ITU_NARROW:
+				add_spv_func_and_recompile(SPVFuncImplExpandITUNarrowRange);
+				expr += "spvExpandITUNarrowRange(";
+				break;
+			default:
+				SPIRV_CROSS_THROW("Invalid Y'CbCr range.");
+			}
+		}
+	}
+	else if (msl_options.swizzle_texture_samples && !is_gather && is_sampled_image_type(imgtype) &&
+	         !is_dynamic_img_sampler)
+	{
+		add_spv_func_and_recompile(SPVFuncImplTextureSwizzle);
+		expr += "spvTextureSwizzle(";
+	}
+
+	string inner_expr = CompilerGLSL::to_texture_op(i, forward, inherited_expressions);
+
+	if (constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable && !is_dynamic_img_sampler)
+	{
+		if (!constexpr_sampler->swizzle_is_identity())
+		{
+			static const char swizzle_names[] = "rgba";
+			if (!constexpr_sampler->swizzle_has_one_or_zero())
+			{
+				// If we can, do it inline.
+				expr += inner_expr + ".";
+				for (uint32_t c = 0; c < 4; c++)
+				{
+					switch (constexpr_sampler->swizzle[c])
+					{
+					case MSL_COMPONENT_SWIZZLE_IDENTITY:
+						expr += swizzle_names[c];
+						break;
+					case MSL_COMPONENT_SWIZZLE_R:
+					case MSL_COMPONENT_SWIZZLE_G:
+					case MSL_COMPONENT_SWIZZLE_B:
+					case MSL_COMPONENT_SWIZZLE_A:
+						expr += swizzle_names[constexpr_sampler->swizzle[c] - MSL_COMPONENT_SWIZZLE_R];
+						break;
+					default:
+						SPIRV_CROSS_THROW("Invalid component swizzle.");
+					}
+				}
+			}
+			else
+			{
+				// Otherwise, we need to emit a temporary and swizzle that.
+				uint32_t temp_id = ir.increase_bound_by(1);
+				emit_op(result_type_id, temp_id, inner_expr, false);
+				for (auto &inherit : inherited_expressions)
+					inherit_expression_dependencies(temp_id, inherit);
+				inherited_expressions.clear();
+				inherited_expressions.push_back(temp_id);
+
+				switch (op)
+				{
+				case OpImageSampleDrefImplicitLod:
+				case OpImageSampleImplicitLod:
+				case OpImageSampleProjImplicitLod:
+				case OpImageSampleProjDrefImplicitLod:
+					register_control_dependent_expression(temp_id);
+					break;
+
+				default:
+					break;
+				}
+				expr += type_to_glsl(result_type) + "(";
+				for (uint32_t c = 0; c < 4; c++)
+				{
+					switch (constexpr_sampler->swizzle[c])
+					{
+					case MSL_COMPONENT_SWIZZLE_IDENTITY:
+						expr += to_expression(temp_id) + "." + swizzle_names[c];
+						break;
+					case MSL_COMPONENT_SWIZZLE_ZERO:
+						expr += "0";
+						break;
+					case MSL_COMPONENT_SWIZZLE_ONE:
+						expr += "1";
+						break;
+					case MSL_COMPONENT_SWIZZLE_R:
+					case MSL_COMPONENT_SWIZZLE_G:
+					case MSL_COMPONENT_SWIZZLE_B:
+					case MSL_COMPONENT_SWIZZLE_A:
+						expr += to_expression(temp_id) + "." +
+						        swizzle_names[constexpr_sampler->swizzle[c] - MSL_COMPONENT_SWIZZLE_R];
+						break;
+					default:
+						SPIRV_CROSS_THROW("Invalid component swizzle.");
+					}
+					if (c < 3)
+						expr += ", ";
+				}
+				expr += ")";
+			}
+		}
+		else
+			expr += inner_expr;
+		if (constexpr_sampler->ycbcr_model != MSL_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY)
+		{
+			expr += join(", ", constexpr_sampler->bpc, ")");
+			if (constexpr_sampler->ycbcr_model != MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_IDENTITY)
+				expr += ")";
+		}
+	}
+	else
+	{
+		expr += inner_expr;
+		if (msl_options.swizzle_texture_samples && !is_gather && is_sampled_image_type(imgtype) &&
+		    !is_dynamic_img_sampler)
+		{
+			// Add the swizzle constant from the swizzle buffer.
+			expr += ", " + to_swizzle_expression(img) + ")";
+			used_swizzle_buffer = true;
+		}
+	}
+
+	return expr;
+}
+
+static string create_swizzle(MSLComponentSwizzle swizzle)
+{
+	switch (swizzle)
+	{
+	case MSL_COMPONENT_SWIZZLE_IDENTITY:
+		return "spvSwizzle::none";
+	case MSL_COMPONENT_SWIZZLE_ZERO:
+		return "spvSwizzle::zero";
+	case MSL_COMPONENT_SWIZZLE_ONE:
+		return "spvSwizzle::one";
+	case MSL_COMPONENT_SWIZZLE_R:
+		return "spvSwizzle::red";
+	case MSL_COMPONENT_SWIZZLE_G:
+		return "spvSwizzle::green";
+	case MSL_COMPONENT_SWIZZLE_B:
+		return "spvSwizzle::blue";
+	case MSL_COMPONENT_SWIZZLE_A:
+		return "spvSwizzle::alpha";
+	default:
+		SPIRV_CROSS_THROW("Invalid component swizzle.");
+		return "";
+	}
+}
+
 // Returns a string representation of the ID, usable as a function arg.
 // Manufacture automatic sampler arg for SampledImage texture.
-string CompilerMSL::to_func_call_arg(uint32_t id)
+string CompilerMSL::to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id)
 {
 	string arg_str;
+
+	auto &type = expression_type(id);
+	bool is_dynamic_img_sampler = has_extended_decoration(arg.id, SPIRVCrossDecorationDynamicImageSampler);
+	// If the argument *itself* is a "dynamic" combined-image sampler, then we can just pass that around.
+	bool arg_is_dynamic_img_sampler = has_extended_decoration(id, SPIRVCrossDecorationDynamicImageSampler);
+	if (is_dynamic_img_sampler && !arg_is_dynamic_img_sampler)
+		arg_str = join("spvDynamicImageSampler<", type_to_glsl(get<SPIRType>(type.image.type)), ">(");
 
 	auto *c = maybe_get<SPIRConstant>(id);
 	if (c && !get<SPIRType>(c->constant_type).array.empty())
@@ -5937,7 +7167,7 @@ string CompilerMSL::to_func_call_arg(uint32_t id)
 		// so just create a thread local copy in the current function.
 		arg_str = join("_", id, "_array_copy");
 		auto &constants = current_function->constant_arrays_needed_on_stack;
-		auto itr = find(begin(constants), end(constants), id);
+		auto itr = find(begin(constants), end(constants), ID(id));
 		if (itr == end(constants))
 		{
 			force_recompile();
@@ -5945,34 +7175,106 @@ string CompilerMSL::to_func_call_arg(uint32_t id)
 		}
 	}
 	else
-		arg_str = CompilerGLSL::to_func_call_arg(id);
+		arg_str += CompilerGLSL::to_func_call_arg(arg, id);
 
-	// Manufacture automatic sampler arg if the arg is a SampledImage texture.
-	auto &type = expression_type(id);
-	if (type.basetype == SPIRType::SampledImage && type.image.dim != DimBuffer)
+	if (!arg_is_dynamic_img_sampler)
 	{
 		// Need to check the base variable in case we need to apply a qualified alias.
 		uint32_t var_id = 0;
-		auto *sampler_var = maybe_get<SPIRVariable>(id);
-		if (sampler_var)
-			var_id = sampler_var->basevariable;
+		auto *var = maybe_get<SPIRVariable>(id);
+		if (var)
+			var_id = var->basevariable;
 
-		arg_str += ", " + to_sampler_expression(var_id ? var_id : id);
+		auto *constexpr_sampler = find_constexpr_sampler(var_id ? var_id : id);
+		if (type.basetype == SPIRType::SampledImage)
+		{
+			// Manufacture automatic plane args for multiplanar texture
+			uint32_t planes = 1;
+			if (constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable)
+			{
+				planes = constexpr_sampler->planes;
+				// If this parameter isn't aliasing a global, then we need to use
+				// the special "dynamic image-sampler" class to pass it--and we need
+				// to use it for *every* non-alias parameter, in case a combined
+				// image-sampler with a Y'CbCr conversion is passed. Hopefully, this
+				// pathological case is so rare that it should never be hit in practice.
+				if (!arg.alias_global_variable)
+					add_spv_func_and_recompile(SPVFuncImplDynamicImageSampler);
+			}
+			for (uint32_t i = 1; i < planes; i++)
+				arg_str += join(", ", CompilerGLSL::to_func_call_arg(arg, id), plane_name_suffix, i);
+			// Manufacture automatic sampler arg if the arg is a SampledImage texture.
+			if (type.image.dim != DimBuffer)
+				arg_str += ", " + to_sampler_expression(var_id ? var_id : id);
+
+			// Add sampler Y'CbCr conversion info if we have it
+			if (is_dynamic_img_sampler && constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable)
+			{
+				SmallVector<string> samp_args;
+
+				switch (constexpr_sampler->resolution)
+				{
+				case MSL_FORMAT_RESOLUTION_444:
+					// Default
+					break;
+				case MSL_FORMAT_RESOLUTION_422:
+					samp_args.push_back("spvFormatResolution::_422");
+					break;
+				case MSL_FORMAT_RESOLUTION_420:
+					samp_args.push_back("spvFormatResolution::_420");
+					break;
+				default:
+					SPIRV_CROSS_THROW("Invalid format resolution.");
+				}
+
+				if (constexpr_sampler->chroma_filter != MSL_SAMPLER_FILTER_NEAREST)
+					samp_args.push_back("spvChromaFilter::linear");
+
+				if (constexpr_sampler->x_chroma_offset != MSL_CHROMA_LOCATION_COSITED_EVEN)
+					samp_args.push_back("spvXChromaLocation::midpoint");
+				if (constexpr_sampler->y_chroma_offset != MSL_CHROMA_LOCATION_COSITED_EVEN)
+					samp_args.push_back("spvYChromaLocation::midpoint");
+				switch (constexpr_sampler->ycbcr_model)
+				{
+				case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY:
+					// Default
+					break;
+				case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_IDENTITY:
+					samp_args.push_back("spvYCbCrModelConversion::ycbcr_identity");
+					break;
+				case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_709:
+					samp_args.push_back("spvYCbCrModelConversion::ycbcr_bt_709");
+					break;
+				case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_601:
+					samp_args.push_back("spvYCbCrModelConversion::ycbcr_bt_601");
+					break;
+				case MSL_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_BT_2020:
+					samp_args.push_back("spvYCbCrModelConversion::ycbcr_bt_2020");
+					break;
+				default:
+					SPIRV_CROSS_THROW("Invalid Y'CbCr model conversion.");
+				}
+				if (constexpr_sampler->ycbcr_range != MSL_SAMPLER_YCBCR_RANGE_ITU_FULL)
+					samp_args.push_back("spvYCbCrRange::itu_narrow");
+				samp_args.push_back(join("spvComponentBits(", constexpr_sampler->bpc, ")"));
+				arg_str += join(", spvYCbCrSampler(", merge(samp_args), ")");
+			}
+		}
+
+		if (is_dynamic_img_sampler && constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable)
+			arg_str += join(", (uint(", create_swizzle(constexpr_sampler->swizzle[3]), ") << 24) | (uint(",
+			                create_swizzle(constexpr_sampler->swizzle[2]), ") << 16) | (uint(",
+			                create_swizzle(constexpr_sampler->swizzle[1]), ") << 8) | uint(",
+			                create_swizzle(constexpr_sampler->swizzle[0]), ")");
+		else if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(type))
+			arg_str += ", " + to_swizzle_expression(var_id ? var_id : id);
+
+		if (buffers_requiring_array_length.count(var_id))
+			arg_str += ", " + to_buffer_size_expression(var_id ? var_id : id);
+
+		if (is_dynamic_img_sampler)
+			arg_str += ")";
 	}
-
-	uint32_t var_id = 0;
-	auto *var = maybe_get<SPIRVariable>(id);
-	if (var)
-		var_id = var->basevariable;
-
-	if (msl_options.swizzle_texture_samples && has_sampled_images && is_sampled_image_type(type))
-	{
-		// Need to check the base variable in case we need to apply a qualified alias.
-		arg_str += ", " + to_swizzle_expression(var_id ? var_id : id);
-	}
-
-	if (buffers_requiring_array_length.count(var_id))
-		arg_str += ", " + to_buffer_size_expression(var_id ? var_id : id);
 
 	return arg_str;
 }
@@ -5983,7 +7285,7 @@ string CompilerMSL::to_func_call_arg(uint32_t id)
 string CompilerMSL::to_sampler_expression(uint32_t id)
 {
 	auto *combined = maybe_get<SPIRCombinedImageSampler>(id);
-	auto expr = to_expression(combined ? combined->image : id);
+	auto expr = to_expression(combined ? combined->image : VariableID(id));
 	auto index = expr.find_first_of('[');
 
 	uint32_t samp_id = 0;
@@ -6004,7 +7306,7 @@ string CompilerMSL::to_swizzle_expression(uint32_t id)
 {
 	auto *combined = maybe_get<SPIRCombinedImageSampler>(id);
 
-	auto expr = to_expression(combined ? combined->image : id);
+	auto expr = to_expression(combined ? combined->image : VariableID(id));
 	auto index = expr.find_first_of('[');
 
 	// If an image is part of an argument buffer translate this to a legal identifier.
@@ -6228,8 +7530,15 @@ string CompilerMSL::member_attribute_qualifier(const SPIRType &type, uint32_t in
 	bool is_builtin = is_member_builtin(type, index, &builtin);
 
 	if (has_extended_member_decoration(type.self, index, SPIRVCrossDecorationResourceIndexPrimary))
-		return join(" [[id(",
-		            get_extended_member_decoration(type.self, index, SPIRVCrossDecorationResourceIndexPrimary), ")]]");
+	{
+		string quals = join(
+		    " [[id(", get_extended_member_decoration(type.self, index, SPIRVCrossDecorationResourceIndexPrimary), ")");
+		if (interlocked_resources.count(
+		        get_extended_member_decoration(type.self, index, SPIRVCrossDecorationInterfaceOrigID)))
+			quals += ", raster_order_group(0)";
+		quals += "]]";
+		return quals;
+	}
 
 	// Vertex function inputs
 	if (execution.model == ExecutionModelVertex && type.storage == StorageClassInput)
@@ -6934,19 +8243,24 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 		string name;
 		SPIRType::BaseType basetype;
 		uint32_t index;
+		uint32_t plane;
 	};
 
 	SmallVector<Resource> resources;
 
-	ir.for_each_typed_id<SPIRVariable>([&](uint32_t, SPIRVariable &var) {
+	ir.for_each_typed_id<SPIRVariable>([&](uint32_t var_id, SPIRVariable &var) {
 		if ((var.storage == StorageClassUniform || var.storage == StorageClassUniformConstant ||
 		     var.storage == StorageClassPushConstant || var.storage == StorageClassStorageBuffer) &&
 		    !is_hidden_variable(var))
 		{
 			auto &type = get_variable_data_type(var);
-			uint32_t var_id = var.self;
 
-			if (var.storage != StorageClassPushConstant)
+			// Very specifically, image load-store in argument buffers are disallowed on MSL on iOS.
+			// But we won't know when the argument buffer is encoded whether this image will have
+			// a NonWritable decoration. So just use discrete arguments for all storage images
+			// on iOS.
+			if (!(msl_options.is_ios() && type.basetype == SPIRType::Image && type.image.sampled == 2) &&
+			    var.storage != StorageClassPushConstant)
 			{
 				uint32_t desc_set = get_decoration(var_id, DecorationDescriptorSet);
 				if (descriptor_set_is_argument_buffer(desc_set))
@@ -6967,13 +8281,19 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			if (type.basetype == SPIRType::SampledImage)
 			{
 				add_resource_name(var_id);
-				resources.push_back(
-				    { &var, to_name(var_id), SPIRType::Image, get_metal_resource_index(var, SPIRType::Image) });
+
+				uint32_t plane_count = 1;
+				if (constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable)
+					plane_count = constexpr_sampler->planes;
+
+				for (uint32_t i = 0; i < plane_count; i++)
+					resources.push_back({ &var, to_name(var_id), SPIRType::Image,
+					                      get_metal_resource_index(var, SPIRType::Image, i), i });
 
 				if (type.image.dim != DimBuffer && !constexpr_sampler)
 				{
 					resources.push_back({ &var, to_sampler_expression(var_id), SPIRType::Sampler,
-					                      get_metal_resource_index(var, SPIRType::Sampler) });
+					                      get_metal_resource_index(var, SPIRType::Sampler), 0 });
 				}
 			}
 			else if (!constexpr_sampler)
@@ -6981,7 +8301,7 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 				// constexpr samplers are not declared as resources.
 				add_resource_name(var_id);
 				resources.push_back(
-				    { &var, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype) });
+				    { &var, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype), 0 });
 			}
 		}
 	});
@@ -7024,7 +8344,10 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 						ep_args += ", ";
 					ep_args += get_argument_address_space(var) + " " + type_to_glsl(type) + "* " + to_restrict(var_id) +
 					           r.name + "_" + convert_to_string(i);
-					ep_args += " [[buffer(" + convert_to_string(r.index + i) + ")]]";
+					ep_args += " [[buffer(" + convert_to_string(r.index + i) + ")";
+					if (interlocked_resources.count(var_id))
+						ep_args += ", raster_order_group(0)";
+					ep_args += "]]";
 				}
 			}
 			else
@@ -7033,7 +8356,10 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 					ep_args += ", ";
 				ep_args +=
 				    get_argument_address_space(var) + " " + type_to_glsl(type) + "& " + to_restrict(var_id) + r.name;
-				ep_args += " [[buffer(" + convert_to_string(r.index) + ")]]";
+				ep_args += " [[buffer(" + convert_to_string(r.index) + ")";
+				if (interlocked_resources.count(var_id))
+					ep_args += ", raster_order_group(0)";
+				ep_args += "]]";
 			}
 			break;
 		}
@@ -7047,7 +8373,12 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 			if (!ep_args.empty())
 				ep_args += ", ";
 			ep_args += image_type_glsl(type, var_id) + " " + r.name;
-			ep_args += " [[texture(" + convert_to_string(r.index) + ")]]";
+			if (r.plane > 0)
+				ep_args += join(plane_name_suffix, r.plane);
+			ep_args += " [[texture(" + convert_to_string(r.index) + ")";
+			if (interlocked_resources.count(var_id))
+				ep_args += ", raster_order_group(0)";
+			ep_args += "]]";
 			break;
 		default:
 			if (!ep_args.empty())
@@ -7057,7 +8388,10 @@ void CompilerMSL::entry_point_args_discrete_descriptors(string &ep_args)
 				           type_to_glsl(type, var_id) + "& " + r.name;
 			else
 				ep_args += type_to_glsl(type, var_id) + " " + r.name;
-			ep_args += " [[buffer(" + convert_to_string(r.index) + ")]]";
+			ep_args += " [[buffer(" + convert_to_string(r.index) + ")";
+			if (interlocked_resources.count(var_id))
+				ep_args += ", raster_order_group(0)";
+			ep_args += "]]";
 			break;
 		}
 	}
@@ -7413,7 +8747,7 @@ void CompilerMSL::fix_up_shader_inputs_outputs()
 }
 
 // Returns the Metal index of the resource of the specified type as used by the specified variable.
-uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::BaseType basetype)
+uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::BaseType basetype, uint32_t plane)
 {
 	auto &execution = get_entry_point();
 	auto &var_dec = ir.meta[var.self].decoration;
@@ -7427,6 +8761,10 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	auto resource_decoration = var_type.basetype == SPIRType::SampledImage && basetype == SPIRType::Sampler ?
 	                               SPIRVCrossDecorationResourceIndexSecondary :
 	                               SPIRVCrossDecorationResourceIndexPrimary;
+	if (plane == 1)
+		resource_decoration = SPIRVCrossDecorationResourceIndexTertiary;
+	if (plane == 2)
+		resource_decoration = SPIRVCrossDecorationResourceIndexQuaternary;
 
 	if (itr != end(resource_bindings))
 	{
@@ -7435,8 +8773,8 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 		switch (basetype)
 		{
 		case SPIRType::Image:
-			set_extended_decoration(var.self, resource_decoration, remap.first.msl_texture);
-			return remap.first.msl_texture;
+			set_extended_decoration(var.self, resource_decoration, remap.first.msl_texture + plane);
+			return remap.first.msl_texture + plane;
 		case SPIRType::Sampler:
 			set_extended_decoration(var.self, resource_decoration, remap.first.msl_sampler);
 			return remap.first.msl_sampler;
@@ -7456,7 +8794,7 @@ uint32_t CompilerMSL::get_metal_resource_index(SPIRVariable &var, SPIRType::Base
 	uint32_t binding_stride = 1;
 	auto &type = get<SPIRType>(var.basetype);
 	for (uint32_t i = 0; i < uint32_t(type.array.size()); i++)
-		binding_stride *= type.array_size_literal[i] ? type.array[i] : get<SPIRConstant>(type.array[i]).scalar();
+		binding_stride *= to_array_size_literal(type, i);
 
 	assert(binding_stride != 0);
 
@@ -7529,13 +8867,28 @@ string CompilerMSL::argument_decl(const SPIRFunction::Parameter &arg)
 	if (constref)
 		decl += "const ";
 
+	// If this is a combined image-sampler for a 2D image with floating-point type,
+	// we emitted the 'spvDynamicImageSampler' type, and this is *not* an alias parameter
+	// for a global, then we need to emit a "dynamic" combined image-sampler.
+	// Unfortunately, this is necessary to properly support passing around
+	// combined image-samplers with Y'CbCr conversions on them.
+	bool is_dynamic_img_sampler = !arg.alias_global_variable && type.basetype == SPIRType::SampledImage &&
+	                              type.image.dim == Dim2D && type_is_floating_point(get<SPIRType>(type.image.type)) &&
+	                              spv_function_implementations.count(SPVFuncImplDynamicImageSampler);
+
 	bool builtin = is_builtin_variable(var);
-	if (var.basevariable == stage_in_ptr_var_id || var.basevariable == stage_out_ptr_var_id)
+	if (var.basevariable && (var.basevariable == stage_in_ptr_var_id || var.basevariable == stage_out_ptr_var_id))
 		decl += type_to_glsl(type, arg.id);
 	else if (builtin)
 		decl += builtin_type_decl(static_cast<BuiltIn>(get_decoration(arg.id, DecorationBuiltIn)), arg.id);
 	else if ((storage == StorageClassUniform || storage == StorageClassStorageBuffer) && is_array(type))
 		decl += join(type_to_glsl(type, arg.id), "*");
+	else if (is_dynamic_img_sampler)
+	{
+		decl += join("spvDynamicImageSampler<", type_to_glsl(get<SPIRType>(type.image.type)), ">");
+		// Mark the variable so that we can handle passing it to another function.
+		set_extended_decoration(arg.id, SPIRVCrossDecorationDynamicImageSampler);
+	}
 	else
 		decl += type_to_glsl(type, arg.id);
 
@@ -9214,6 +10567,17 @@ bool CompilerMSL::SampledImageScanner::handle(spv::Op opcode, const uint32_t *ar
 	return true;
 }
 
+// If a needed custom function wasn't added before, add it and force a recompile.
+void CompilerMSL::add_spv_func_and_recompile(SPVFuncImpl spv_func)
+{
+	if (spv_function_implementations.count(spv_func) == 0)
+	{
+		spv_function_implementations.insert(spv_func);
+		suppress_missing_prototypes = true;
+		force_recompile();
+	}
+}
+
 bool CompilerMSL::OpCodePreprocessor::handle(Op opcode, const uint32_t *args, uint32_t length)
 {
 	// Since MSL exists in a single execution scope, function prototype declarations are not
@@ -9391,26 +10755,8 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 		uint32_t tid = result_types[args[opcode == OpImageWrite ? 0 : 2]];
 		if (tid && compiler.get<SPIRType>(tid).image.dim == DimBuffer && !compiler.msl_options.texture_buffer_native)
 			return SPVFuncImplTexelBufferCoords;
-
-		if (opcode == OpImageFetch && compiler.msl_options.swizzle_texture_samples)
-			return SPVFuncImplTextureSwizzle;
-
 		break;
 	}
-
-	case OpImageSampleExplicitLod:
-	case OpImageSampleProjExplicitLod:
-	case OpImageSampleDrefExplicitLod:
-	case OpImageSampleProjDrefExplicitLod:
-	case OpImageSampleImplicitLod:
-	case OpImageSampleProjImplicitLod:
-	case OpImageSampleDrefImplicitLod:
-	case OpImageSampleProjDrefImplicitLod:
-	case OpImageGather:
-	case OpImageDrefGather:
-		if (compiler.msl_options.swizzle_texture_samples)
-			return SPVFuncImplTextureSwizzle;
-		break;
 
 	case OpExtInst:
 	{
@@ -9437,24 +10783,21 @@ CompilerMSL::SPVFuncImpl CompilerMSL::OpCodePreprocessor::get_spv_func_impl(Op o
 				auto &type = compiler.get<SPIRType>(args[0]);
 				if (type.vecsize == 1)
 					return SPVFuncImplReflectScalar;
-				else
-					return SPVFuncImplNone;
+				break;
 			}
 			case GLSLstd450Refract:
 			{
 				auto &type = compiler.get<SPIRType>(args[0]);
 				if (type.vecsize == 1)
 					return SPVFuncImplRefractScalar;
-				else
-					return SPVFuncImplNone;
+				break;
 			}
 			case GLSLstd450FaceForward:
 			{
 				auto &type = compiler.get<SPIRType>(args[0]);
 				if (type.vecsize == 1)
 					return SPVFuncImplFaceForwardScalar;
-				else
-					return SPVFuncImplNone;
+				break;
 			}
 			case GLSLstd450MatrixInverse:
 			{
@@ -9562,7 +10905,7 @@ CompilerMSL::MemberSorter::MemberSorter(SPIRType &t, Meta &m, SortAspect sa)
 	meta.members.resize(max(type.member_types.size(), meta.members.size()));
 }
 
-void CompilerMSL::remap_constexpr_sampler(uint32_t id, const MSLConstexprSampler &sampler)
+void CompilerMSL::remap_constexpr_sampler(VariableID id, const MSLConstexprSampler &sampler)
 {
 	auto &type = get<SPIRType>(get<SPIRVariable>(id).basetype);
 	if (type.basetype != SPIRType::SampledImage && type.basetype != SPIRType::Sampler)
@@ -9605,6 +10948,10 @@ void CompilerMSL::bitcast_from_builtin_load(uint32_t source_id, std::string &exp
 	case BuiltInSubgroupSize:
 	case BuiltInSubgroupLocalInvocationId:
 	case BuiltInViewIndex:
+	case BuiltInVertexIndex:
+	case BuiltInInstanceIndex:
+	case BuiltInBaseInstance:
+	case BuiltInBaseVertex:
 		expected_type = SPIRType::UInt;
 		break;
 
@@ -9718,6 +11065,7 @@ void CompilerMSL::analyze_argument_buffers()
 		string name;
 		SPIRType::BaseType basetype;
 		uint32_t index;
+		uint32_t plane;
 	};
 	SmallVector<Resource> resources_in_set[kMaxArgumentBuffers];
 
@@ -9756,23 +11104,33 @@ void CompilerMSL::analyze_argument_buffers()
 			{
 				add_resource_name(var_id);
 
-				uint32_t image_resource_index = get_metal_resource_index(var, SPIRType::Image);
-				uint32_t sampler_resource_index = get_metal_resource_index(var, SPIRType::Sampler);
+				uint32_t plane_count = 1;
+				if (constexpr_sampler && constexpr_sampler->ycbcr_conversion_enable)
+					plane_count = constexpr_sampler->planes;
 
-				resources_in_set[desc_set].push_back({ &var, to_name(var_id), SPIRType::Image, image_resource_index });
+				for (uint32_t i = 0; i < plane_count; i++)
+				{
+					uint32_t image_resource_index = get_metal_resource_index(var, SPIRType::Image, i);
+					resources_in_set[desc_set].push_back(
+					    { &var, to_name(var_id), SPIRType::Image, image_resource_index, i });
+				}
 
 				if (type.image.dim != DimBuffer && !constexpr_sampler)
 				{
+					uint32_t sampler_resource_index = get_metal_resource_index(var, SPIRType::Sampler);
 					resources_in_set[desc_set].push_back(
-					    { &var, to_sampler_expression(var_id), SPIRType::Sampler, sampler_resource_index });
+					    { &var, to_sampler_expression(var_id), SPIRType::Sampler, sampler_resource_index, 0 });
 				}
 			}
 			else if (!constexpr_sampler)
 			{
 				// constexpr samplers are not declared as resources.
-				add_resource_name(var_id);
-				resources_in_set[desc_set].push_back(
-				    { &var, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype) });
+				if (!msl_options.is_ios() || type.basetype != SPIRType::Image || type.image.sampled != 2)
+				{
+					add_resource_name(var_id);
+					resources_in_set[desc_set].push_back(
+					    { &var, to_name(var_id), type.basetype, get_metal_resource_index(var, type.basetype), 0 });
+				}
 			}
 
 			// Check if this descriptor set needs a swizzle buffer.
@@ -9825,7 +11183,7 @@ void CompilerMSL::analyze_argument_buffers()
 				set_decoration(var_id, DecorationDescriptorSet, desc_set);
 				set_decoration(var_id, DecorationBinding, kSwizzleBufferBinding);
 				resources_in_set[desc_set].push_back(
-				    { &var, to_name(var_id), SPIRType::UInt, get_metal_resource_index(var, SPIRType::UInt) });
+				    { &var, to_name(var_id), SPIRType::UInt, get_metal_resource_index(var, SPIRType::UInt), 0 });
 			}
 
 			if (set_needs_buffer_sizes[desc_set])
@@ -9836,7 +11194,7 @@ void CompilerMSL::analyze_argument_buffers()
 				set_decoration(var_id, DecorationDescriptorSet, desc_set);
 				set_decoration(var_id, DecorationBinding, kBufferSizeBufferBinding);
 				resources_in_set[desc_set].push_back(
-				    { &var, to_name(var_id), SPIRType::UInt, get_metal_resource_index(var, SPIRType::UInt) });
+				    { &var, to_name(var_id), SPIRType::UInt, get_metal_resource_index(var, SPIRType::UInt), 0 });
 			}
 		}
 	}
@@ -9880,6 +11238,8 @@ void CompilerMSL::analyze_argument_buffers()
 			auto &var = *resource.var;
 			auto &type = get_variable_data_type(var);
 			string mbr_name = ensure_valid_name(resource.name, "m");
+			if (resource.plane > 0)
+				mbr_name += join(plane_name_suffix, resource.plane);
 			set_member_name(buffer_type.self, member_index, mbr_name);
 
 			if (resource.basetype == SPIRType::Sampler && type.basetype != SPIRType::Sampler)
@@ -9907,12 +11267,22 @@ void CompilerMSL::analyze_argument_buffers()
 			}
 			else
 			{
+				uint32_t binding = get_decoration(var.self, DecorationBinding);
+				SetBindingPair pair = { desc_set, binding };
+
 				if (resource.basetype == SPIRType::Image || resource.basetype == SPIRType::Sampler ||
 				    resource.basetype == SPIRType::SampledImage)
 				{
 					// Drop pointer information when we emit the resources into a struct.
 					buffer_type.member_types.push_back(get_variable_data_type_id(var));
-					set_qualified_name(var.self, join(to_name(buffer_variable_id), ".", mbr_name));
+					if (resource.plane == 0)
+						set_qualified_name(var.self, join(to_name(buffer_variable_id), ".", mbr_name));
+				}
+				else if (buffers_requiring_dynamic_offset.count(pair))
+				{
+					// Don't set the qualified name here; we'll define a variable holding the corrected buffer address later.
+					buffer_type.member_types.push_back(var.basetype);
+					buffers_requiring_dynamic_offset[pair].second = var.self;
 				}
 				else
 				{
@@ -9937,6 +11307,11 @@ void CompilerMSL::analyze_argument_buffers()
 bool CompilerMSL::SetBindingPair::operator==(const SetBindingPair &other) const
 {
 	return desc_set == other.desc_set && binding == other.binding;
+}
+
+bool CompilerMSL::SetBindingPair::operator<(const SetBindingPair &other) const
+{
+	return desc_set < other.desc_set || (desc_set == other.desc_set && binding < other.binding);
 }
 
 bool CompilerMSL::StageSetBinding::operator==(const StageSetBinding &other) const

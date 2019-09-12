@@ -26,6 +26,7 @@
 #include "source/opt/ir_context.h"
 #include "source/opt/module.h"
 #include "spirv-tools/libspirv.hpp"
+#include "types.h"
 
 namespace spvtools {
 namespace opt {
@@ -107,6 +108,16 @@ class Pass {
 
   // Return type id for |ptrInst|'s pointee
   uint32_t GetPointeeTypeId(const Instruction* ptrInst) const;
+
+  // Return base type of |ty_id| type
+  Instruction* GetBaseType(uint32_t ty_id);
+
+  // Return true if |inst| returns scalar, vector or matrix type with base
+  // float and |width|
+  bool IsFloat(uint32_t ty_id, uint32_t width);
+
+  // Return the id of OpConstantNull of type |type_id|. Create if necessary.
+  uint32_t GetNullId(uint32_t type_id);
 
  protected:
   // Constructs a new pass.

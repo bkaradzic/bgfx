@@ -18,7 +18,7 @@ struct main0_in
     float3 vColor [[user(locn0)]];
 };
 
-void set_globals(thread float (&FragColors)[2], thread float3& vColor, thread float2& FragColor2, thread float3& FragColor3)
+inline void set_globals(thread float (&FragColors)[2], thread float3& vColor, thread float2& FragColor2, thread float3& FragColor3)
 {
     FragColors[0] = vColor.x;
     FragColors[1] = vColor.y;

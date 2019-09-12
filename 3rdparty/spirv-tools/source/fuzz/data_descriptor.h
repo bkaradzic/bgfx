@@ -36,4 +36,4 @@ struct DataDescriptorEquals {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_DATA_DESCRIPTOR_H_
+#endif  // SOURCE_FUZZ_DATA_DESCRIPTOR_H_

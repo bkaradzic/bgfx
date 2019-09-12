@@ -108,8 +108,8 @@ void InstBuffAddrCheckPass::GenCheckCode(
   // reference.
   if (new_ref_id != 0) {
     Instruction* phi_inst = builder.AddPhi(
-        ref_type_id, {new_ref_id, valid_blk_id, builder.GetNullId(ref_type_id),
-                      invalid_blk_id});
+        ref_type_id,
+        {new_ref_id, valid_blk_id, GetNullId(ref_type_id), invalid_blk_id});
     context()->ReplaceAllUsesWith(ref_inst->result_id(), phi_inst->result_id());
   }
   new_blocks->push_back(std::move(new_blk_ptr));
@@ -341,7 +341,7 @@ uint32_t InstBuffAddrCheckPass::GenSearchAndTest(Instruction* ref_inst,
         std::initializer_list<Operand>{
             {SPV_OPERAND_TYPE_CAPABILITY, {SpvCapabilityInt64}}}));
     get_def_use_mgr()->AnalyzeInstDefUse(&*cap_int64_inst);
-    get_module()->AddCapability(std::move(cap_int64_inst));
+    context()->AddCapability(std::move(cap_int64_inst));
   }
   // Convert reference pointer to uint64
   uint32_t ref_ptr_id = ref_inst->GetSingleWordInOperand(0);

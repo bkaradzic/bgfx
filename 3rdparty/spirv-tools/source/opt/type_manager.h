@@ -139,6 +139,61 @@ class TypeManager {
   const Type* GetMemberType(const Type* parent_type,
                             const std::vector<uint32_t>& access_chain);
 
+  Type* GetUIntType() {
+    Integer int_type(32, false);
+    return GetRegisteredType(&int_type);
+  }
+
+  uint32_t GetUIntTypeId() { return GetTypeInstruction(GetUIntType()); }
+
+  Type* GetSIntType() {
+    Integer int_type(32, true);
+    return GetRegisteredType(&int_type);
+  }
+
+  uint32_t GetSIntTypeId() { return GetTypeInstruction(GetSIntType()); }
+
+  Type* GetFloatType() {
+    Float float_type(32);
+    return GetRegisteredType(&float_type);
+  }
+
+  uint32_t GetFloatTypeId() { return GetTypeInstruction(GetFloatType()); }
+
+  Type* GetUIntVectorType(uint32_t size) {
+    Vector vec_type(GetUIntType(), size);
+    return GetRegisteredType(&vec_type);
+  }
+
+  uint32_t GetUIntVectorTypeId(uint32_t size) {
+    return GetTypeInstruction(GetUIntVectorType(size));
+  }
+
+  Type* GetSIntVectorType(uint32_t size) {
+    Vector vec_type(GetSIntType(), size);
+    return GetRegisteredType(&vec_type);
+  }
+
+  uint32_t GetSIntVectorTypeId(uint32_t size) {
+    return GetTypeInstruction(GetSIntVectorType(size));
+  }
+
+  Type* GetFloatVectorType(uint32_t size) {
+    Vector vec_type(GetFloatType(), size);
+    return GetRegisteredType(&vec_type);
+  }
+
+  uint32_t GetFloatVectorTypeId(uint32_t size) {
+    return GetTypeInstruction(GetFloatVectorType(size));
+  }
+
+  Type* GetBoolType() {
+    Bool bool_type;
+    return GetRegisteredType(&bool_type);
+  }
+
+  uint32_t GetBoolTypeId() { return GetTypeInstruction(GetBoolType()); }
+
  private:
   using TypeToIdMap = std::unordered_map<const Type*, uint32_t, HashTypePointer,
                                          CompareTypePointers>;

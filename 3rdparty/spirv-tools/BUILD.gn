@@ -451,6 +451,8 @@ static_library("spvtools_opt") {
   sources = [
     "source/opt/aggressive_dead_code_elim_pass.cpp",
     "source/opt/aggressive_dead_code_elim_pass.h",
+    "source/opt/amd_ext_to_khr.cpp",
+    "source/opt/amd_ext_to_khr.h",
     "source/opt/basic_block.cpp",
     "source/opt/basic_block.h",
     "source/opt/block_merge_pass.cpp",
@@ -477,6 +479,8 @@ static_library("spvtools_opt") {
     "source/opt/const_folding_rules.h",
     "source/opt/constants.cpp",
     "source/opt/constants.h",
+    "source/opt/convert_to_half_pass.cpp",
+    "source/opt/convert_to_half_pass.h",
     "source/opt/copy_prop_arrays.cpp",
     "source/opt/copy_prop_arrays.h",
     "source/opt/dead_branch_elim_pass.cpp",
@@ -609,6 +613,8 @@ static_library("spvtools_opt") {
     "source/opt/reflect.h",
     "source/opt/register_pressure.cpp",
     "source/opt/register_pressure.h",
+    "source/opt/relax_float_ops_pass.cpp",
+    "source/opt/relax_float_ops_pass.h",
     "source/opt/remove_duplicates_pass.cpp",
     "source/opt/remove_duplicates_pass.h",
     "source/opt/replace_invalid_opc.cpp",
@@ -658,6 +664,7 @@ static_library("spvtools_opt") {
 
   deps = [
     ":spvtools",
+    ":spvtools_vendor_tables_spv-amd-shader-ballot",
   ]
   public_deps = [
     ":spvtools_headers",
@@ -729,6 +736,8 @@ static_library("spvtools_reduce") {
     "source/reduce/remove_instruction_reduction_opportunity.h",
     "source/reduce/remove_opname_instruction_reduction_opportunity_finder.cpp",
     "source/reduce/remove_opname_instruction_reduction_opportunity_finder.h",
+    "source/reduce/remove_relaxed_precision_decoration_opportunity_finder.cpp",
+    "source/reduce/remove_relaxed_precision_decoration_opportunity_finder.h",
     "source/reduce/remove_selection_reduction_opportunity.cpp",
     "source/reduce/remove_selection_reduction_opportunity.h",
     "source/reduce/remove_selection_reduction_opportunity_finder.cpp",
@@ -761,7 +770,7 @@ static_library("spvtools_reduce") {
 }
 
 group("SPIRV-Tools") {
-  deps = [
+  public_deps = [
     ":spvtools",
     ":spvtools_link",
     ":spvtools_opt",
@@ -841,6 +850,8 @@ if (build_with_chromium) {
       "//testing/gmock",
       "//testing/gtest",
       "//testing/gtest:gtest_main",
+      "//third_party/googletest:gmock",
+      "//third_party/googletest:gtest",
     ]
 
     if (is_clang) {

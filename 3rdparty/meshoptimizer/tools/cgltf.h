@@ -1,7 +1,7 @@
 /**
  * cgltf - a single-file glTF 2.0 parser written in C99.
  *
- * Version: 1.2
+ * Version: 1.3
  *
  * Website: https://github.com/jkuhlmann/cgltf
  *
@@ -423,7 +423,7 @@ typedef struct cgltf_light {
 	cgltf_float spot_outer_cone_angle;
 } cgltf_light;
 
-typedef struct cgltf_node {
+struct cgltf_node {
 	char* name;
 	cgltf_node* parent;
 	cgltf_node** children;
@@ -443,7 +443,7 @@ typedef struct cgltf_node {
 	cgltf_float scale[3];
 	cgltf_float matrix[16];
 	cgltf_extras extras;
-} cgltf_node;
+};
 
 typedef struct cgltf_scene {
 	char* name;

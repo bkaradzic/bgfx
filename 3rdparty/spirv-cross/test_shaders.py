@@ -209,6 +209,14 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
         msl_args.append('--msl-view-index-from-device-index')
     if '.dispatchbase.' in shader:
         msl_args.append('--msl-dispatch-base')
+    if '.dynamic-buffer.' in shader:
+        # Arbitrary for testing purposes.
+        msl_args.append('--msl-dynamic-buffer')
+        msl_args.append('0')
+        msl_args.append('0')
+        msl_args.append('--msl-dynamic-buffer')
+        msl_args.append('1')
+        msl_args.append('2')
 
     subprocess.check_call(msl_args)
 

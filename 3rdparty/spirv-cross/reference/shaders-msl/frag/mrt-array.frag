@@ -21,17 +21,17 @@ struct main0_in
 
 // Implementation of the GLSL mod() function, which is slightly different than Metal fmod()
 template<typename Tx, typename Ty>
-Tx mod(Tx x, Ty y)
+inline Tx mod(Tx x, Ty y)
 {
     return x - y * floor(x / y);
 }
 
-void write_deeper_in_function(thread float4 (&FragColor)[4], thread float4& vA, thread float4& vB)
+inline void write_deeper_in_function(thread float4 (&FragColor)[4], thread float4& vA, thread float4& vB)
 {
     FragColor[3] = vA * vB;
 }
 
-void write_in_function(thread float4 (&FragColor)[4], thread float4& vA, thread float4& vB)
+inline void write_in_function(thread float4 (&FragColor)[4], thread float4& vA, thread float4& vB)
 {
     FragColor[2] = vA - vB;
     write_deeper_in_function(FragColor, vA, vB);

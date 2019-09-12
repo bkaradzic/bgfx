@@ -54,6 +54,36 @@ uint32_t Pass::GetPointeeTypeId(const Instruction* ptrInst) const {
   return ptrTypeInst->GetSingleWordInOperand(kTypePointerTypeIdInIdx);
 }
 
+Instruction* Pass::GetBaseType(uint32_t ty_id) {
+  Instruction* ty_inst = get_def_use_mgr()->GetDef(ty_id);
+  if (ty_inst->opcode() == SpvOpTypeMatrix) {
+    uint32_t vty_id = ty_inst->GetSingleWordInOperand(0);
+    ty_inst = get_def_use_mgr()->GetDef(vty_id);
+  }
+  if (ty_inst->opcode() == SpvOpTypeVector) {
+    uint32_t cty_id = ty_inst->GetSingleWordInOperand(0);
+    ty_inst = get_def_use_mgr()->GetDef(cty_id);
+  }
+  return ty_inst;
+}
+
+bool Pass::IsFloat(uint32_t ty_id, uint32_t width) {
+  Instruction* ty_inst = GetBaseType(ty_id);
+  if (ty_inst->opcode() != SpvOpTypeFloat) return false;
+  return ty_inst->GetSingleWordInOperand(0) == width;
+}
+
+uint32_t Pass::GetNullId(uint32_t type_id) {
+  if (IsFloat(type_id, 16)) context()->AddCapability(SpvCapabilityFloat16);
+  analysis::TypeManager* type_mgr = context()->get_type_mgr();
+  analysis::ConstantManager* const_mgr = context()->get_constant_mgr();
+  const analysis::Type* type = type_mgr->GetType(type_id);
+  const analysis::Constant* null_const = const_mgr->GetConstant(type, {});
+  Instruction* null_inst =
+      const_mgr->GetDefiningInstruction(null_const, type_id);
+  return null_inst->result_id();
+}
+
 uint32_t Pass::GenerateCopy(Instruction* object_to_copy, uint32_t new_type_id,
                             Instruction* insertion_position) {
   analysis::TypeManager* type_mgr = context()->get_type_mgr();

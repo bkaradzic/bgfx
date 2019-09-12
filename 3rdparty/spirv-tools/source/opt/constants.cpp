@@ -389,6 +389,13 @@ const Constant* ConstantManager::GetConstant(
   return cst ? RegisterConstant(std::move(cst)) : nullptr;
 }
 
+uint32_t ConstantManager::GetFloatConst(float val) {
+  Type* float_type = context()->get_type_mgr()->GetFloatType();
+  utils::FloatProxy<float> v(val);
+  const Constant* c = GetConstant(float_type, v.GetWords());
+  return GetDefiningInstruction(c)->result_id();
+}
+
 std::vector<const analysis::Constant*> Constant::GetVectorComponents(
     analysis::ConstantManager* const_mgr) const {
   std::vector<const analysis::Constant*> components;

@@ -451,15 +451,7 @@ analysis::Type* InstrumentPass::GetUintRuntimeArrayType(uint32_t width) {
 void InstrumentPass::AddStorageBufferExt() {
   if (storage_buffer_ext_defined_) return;
   if (!get_feature_mgr()->HasExtension(kSPV_KHR_storage_buffer_storage_class)) {
-    const std::string ext_name("SPV_KHR_storage_buffer_storage_class");
-    const auto num_chars = ext_name.size();
-    // Compute num words, accommodate the terminating null character.
-    const auto num_words = (num_chars + 1 + 3) / 4;
-    std::vector<uint32_t> ext_words(num_words, 0u);
-    std::memcpy(ext_words.data(), ext_name.data(), num_chars);
-    context()->AddExtension(std::unique_ptr<Instruction>(
-        new Instruction(context(), SpvOpExtension, 0u, 0u,
-                        {{SPV_OPERAND_TYPE_LITERAL_STRING, ext_words}})));
+    context()->AddExtension("SPV_KHR_storage_buffer_storage_class");
   }
   storage_buffer_ext_defined_ = true;
 }

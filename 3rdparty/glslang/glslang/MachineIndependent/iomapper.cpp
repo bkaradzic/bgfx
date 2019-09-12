@@ -1035,7 +1035,9 @@ struct TDefaultHlslIoResolver : public TDefaultIoResolverBase {
 bool TIoMapper::addStage(EShLanguage stage, TIntermediate& intermediate, TInfoSink& infoSink, TIoMapResolver* resolver) {
     bool somethingToDo = ! intermediate.getResourceSetBinding().empty() || intermediate.getAutoMapBindings() ||
                          intermediate.getAutoMapLocations();
-    for (int res = 0; res < EResCount; ++res) {
+    // Restrict the stricter condition to further check 'somethingToDo' only if 'somethingToDo' has not been set, reduce
+    // unnecessary or insignificant for-loop operation after 'somethingToDo' have been true.
+    for (int res = 0; (res < EResCount && !somethingToDo); ++res) {
         somethingToDo = somethingToDo || (intermediate.getShiftBinding(TResourceType(res)) != 0) ||
                         intermediate.hasShiftBindingForSet(TResourceType(res));
     }
@@ -1134,7 +1136,9 @@ bool TGlslIoMapper::addStage(EShLanguage stage, TIntermediate& intermediate, TIn
 
     bool somethingToDo = ! intermediate.getResourceSetBinding().empty() || intermediate.getAutoMapBindings() ||
                          intermediate.getAutoMapLocations();
-    for (int res = 0; res < EResCount; ++res) {
+    // Restrict the stricter condition to further check 'somethingToDo' only if 'somethingToDo' has not been set, reduce
+    // unnecessary or insignificant for-loop operation after 'somethingToDo' have been true.
+    for (int res = 0; (res < EResCount && !somethingToDo); ++res) {
         somethingToDo = somethingToDo || (intermediate.getShiftBinding(TResourceType(res)) != 0) ||
                         intermediate.hasShiftBindingForSet(TResourceType(res));
     }

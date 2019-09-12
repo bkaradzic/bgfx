@@ -88,12 +88,16 @@ public:
 			return;
 		seen_blocks.insert(block);
 
-		op(block);
-		for (auto b : get_succeeding_edges(block))
-			walk_from(seen_blocks, b, op);
+		if (op(block))
+		{
+			for (auto b : get_succeeding_edges(block))
+				walk_from(seen_blocks, b, op);
+		}
 	}
 
 	uint32_t find_loop_dominator(uint32_t block) const;
+
+	bool node_terminates_control_flow_in_sub_graph(BlockID from, BlockID to) const;
 
 private:
 	struct VisitOrder

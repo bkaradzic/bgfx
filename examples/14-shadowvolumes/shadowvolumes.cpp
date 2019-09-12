@@ -133,11 +133,12 @@ void setViewRectMask(uint32_t _viewMask, uint16_t _x, uint16_t _y, uint16_t _wid
 	}
 }
 
-void mtxBillboard(float* __restrict _result
-				  , const float* __restrict _view
-				  , const float* __restrict _pos
-				  , const float* __restrict _scale
-				  )
+void mtxBillboard(
+	  float* _result
+	, const float* _view
+	, const float* _pos
+	, const float* _scale
+	)
 {
 	_result[ 0] = _view[0]  * _scale[0];
 	_result[ 1] = _view[4]  * _scale[0];
@@ -157,10 +158,11 @@ void mtxBillboard(float* __restrict _result
 	_result[15] = 1.0f;
 }
 
-void planeNormal(float* __restrict _result
-	, const float* __restrict _v0
-	, const float* __restrict _v1
-	, const float* __restrict _v2
+void planeNormal(
+	  float* _result
+	, const float* _v0
+	, const float* _v1
+	, const float* _v2
 	)
 {
 	const bx::Vec3 v0    = bx::load<bx::Vec3>(_v0);
@@ -1189,11 +1191,11 @@ struct ShadowVolume
 };
 
 void shadowVolumeLightTransform(
-	  float* __restrict _outLightPos
-	, const float* __restrict _scale
-	, const float* __restrict _rotate
-	, const float* __restrict _translate
-	, const float* __restrict _lightPos // world pos
+	  float* _outLightPos
+	, const float* _scale
+	, const float* _rotate
+	, const float* _translate
+	, const float* _lightPos // world pos
 	)
 {
 	/**
@@ -1593,13 +1595,14 @@ void shadowVolumeCreate(
 	}
 }
 
-void createNearClipVolume(float* __restrict _outPlanes24f
-						, float* __restrict _lightPos
-						, float* __restrict _view
-						, float _fovy
-						, float _aspect
-						, float _near
-						)
+void createNearClipVolume(
+	  float* _outPlanes24f
+	, float* _lightPos
+	, float* _view
+	, float _fovy
+	, float _aspect
+	, float _near
+	)
 {
 	float (*volumePlanes)[4] = (float(*)[4])_outPlanes24f;
 

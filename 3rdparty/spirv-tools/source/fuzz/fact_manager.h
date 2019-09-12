@@ -128,4 +128,4 @@ class FactManager {
 }  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // #define SOURCE_FUZZ_FACT_MANAGER_H_
+#endif  // SOURCE_FUZZ_FACT_MANAGER_H_

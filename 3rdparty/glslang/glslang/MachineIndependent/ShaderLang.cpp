@@ -646,14 +646,9 @@ bool DeduceVersionProfile(TInfoSink& infoSink, EShLanguage stage, bool versionNo
     if (spvVersion.spv != 0) {
         switch (profile) {
         case EEsProfile:
-            if (spvVersion.vulkan > 0 && version < 310) {
+            if (version < 310) {
                 correct = false;
-                infoSink.info.message(EPrefixError, "#version: ES shaders for Vulkan SPIR-V require version 310 or higher");
-                version = 310;
-            }
-            if (spvVersion.openGl >= 100) {
-                correct = false;
-                infoSink.info.message(EPrefixError, "#version: ES shaders for OpenGL SPIR-V are not supported");
+                infoSink.info.message(EPrefixError, "#version: ES shaders for SPIR-V require version 310 or higher");
                 version = 310;
             }
             break;
