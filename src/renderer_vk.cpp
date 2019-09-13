@@ -2145,6 +2145,7 @@ VK_IMPORT_DEVICE
 				bx::snprintf(s_viewName[ii], BGFX_CONFIG_MAX_VIEW_NAME_RESERVED+1, "%3d   ", ii);
 			}
 
+			g_internalData.context = m_device;
 			return true;
 
 		error:
