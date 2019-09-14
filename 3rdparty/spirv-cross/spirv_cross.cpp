@@ -88,6 +88,10 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 
 bool Compiler::block_is_pure(const SPIRBlock &block)
 {
+	// This is a global side effect of the function.
+	if (block.terminator == SPIRBlock::Kill)
+		return false;
+
 	for (auto &i : block.ops)
 	{
 		auto ops = stream(i);
@@ -155,6 +159,10 @@ bool Compiler::block_is_pure(const SPIRBlock &block)
 			return false;
 
 			// OpExtInst is potentially impure depending on extension, but GLSL builtins are at least pure.
+
+		case OpDemoteToHelperInvocationEXT:
+			// This is a global side effect of the function.
+			return false;
 
 		default:
 			break;
