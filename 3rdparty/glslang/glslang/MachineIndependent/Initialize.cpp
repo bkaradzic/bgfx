@@ -152,12 +152,12 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
                                                   { EDesktopProfile, 0, 130, 0, nullptr },
                                                   { EBadProfile } };
     const Versioning* Es300Desktop130 = &Es300Desktop130Version[0];
-    
+
     const Versioning Es310Desktop430Version[] = { { EEsProfile,      0, 310, 0, nullptr },
                                                   { EDesktopProfile, 0, 430, 0, nullptr },
                                                   { EBadProfile } };
     const Versioning* Es310Desktop430 = &Es310Desktop430Version[0];
-    
+
     const Versioning Es310Desktop450Version[] = { { EEsProfile,      0, 310, 0, nullptr },
                                                   { EDesktopProfile, 0, 450, 0, nullptr },
                                                   { EBadProfile } };
@@ -357,7 +357,7 @@ void AddTabledBuiltin(TString& decls, const BuiltInFunction& function)
 }
 
 // See if the tabled versioning information allows the current version.
-bool ValidVersion(const BuiltInFunction& function, int version, EProfile profile, const SpvVersion& spvVersion)
+bool ValidVersion(const BuiltInFunction& function, int version, EProfile profile, const SpvVersion& /* spVersion */)
 {
 #ifdef GLSLANG_WEB
     // all entries in table are valid
@@ -417,8 +417,7 @@ void TBuiltIns::addTabledBuiltins(int version, EProfile profile, const SpvVersio
 }
 
 // Relate all tables of built-ins to the AST operators.
-void TBuiltIns::relateTabledBuiltins(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage stage,
-    TSymbolTable& symbolTable)
+void TBuiltIns::relateTabledBuiltins(int /* version */, EProfile /* profile */, const SpvVersion& /* spvVersion */, EShLanguage /* stage */, TSymbolTable& symbolTable)
 {
     RelateTabledBuiltins(BaseFunctions, symbolTable);
     RelateTabledBuiltins(DerivativeFunctions, symbolTable);
@@ -996,25 +995,25 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "bvec3 notEqual(u64vec3, u64vec3);"
             "bvec4 notEqual(u64vec4, u64vec4);"
 
-            "int   findLSB(int64_t);"
-            "ivec2 findLSB(i64vec2);"
-            "ivec3 findLSB(i64vec3);"
-            "ivec4 findLSB(i64vec4);"
+            "int64_t findLSB(int64_t);"
+            "i64vec2 findLSB(i64vec2);"
+            "i64vec3 findLSB(i64vec3);"
+            "i64vec4 findLSB(i64vec4);"
 
-            "int   findLSB(uint64_t);"
-            "ivec2 findLSB(u64vec2);"
-            "ivec3 findLSB(u64vec3);"
-            "ivec4 findLSB(u64vec4);"
+            "int64_t findLSB(uint64_t);"
+            "i64vec2 findLSB(u64vec2);"
+            "i64vec3 findLSB(u64vec3);"
+            "i64vec4 findLSB(u64vec4);"
 
-            "int   findMSB(int64_t);"
-            "ivec2 findMSB(i64vec2);"
-            "ivec3 findMSB(i64vec3);"
-            "ivec4 findMSB(i64vec4);"
+            "int64_t findMSB(int64_t);"
+            "i64vec2 findMSB(i64vec2);"
+            "i64vec3 findMSB(i64vec3);"
+            "i64vec4 findMSB(i64vec4);"
 
-            "int   findMSB(uint64_t);"
-            "ivec2 findMSB(u64vec2);"
-            "ivec3 findMSB(u64vec3);"
-            "ivec4 findMSB(u64vec4);"
+            "int64_t findMSB(uint64_t);"
+            "i64vec2 findMSB(u64vec2);"
+            "i64vec3 findMSB(u64vec3);"
+            "i64vec4 findMSB(u64vec4);"
 
             "\n"
         );
@@ -3721,7 +3720,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
-    if ((profile != EEsProfile && version >= 450) || 
+    if ((profile != EEsProfile && version >= 450) ||
         (profile == EEsProfile && version >= 320)) {
         commonBuiltins.append(
             "struct gl_TextureFootprint2DNV {"
@@ -5047,7 +5046,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     if ((profile != EEsProfile && version >= 450) || (profile == EEsProfile && version >= 320)) {
         stageBuiltins[EShLangMeshNV].append(
             "void writePackedPrimitiveIndices4x8NV(uint, uint);"
-            "\n");   
+            "\n");
     }
 #endif
 
@@ -5986,7 +5985,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
 
     // GL_ARB_shader_ballot
     if (profile != EEsProfile && version >= 450) {
-        const char* ballotDecls = 
+        const char* ballotDecls =
             "uniform uint gl_SubGroupSizeARB;"
             "in uint     gl_SubGroupInvocationARB;"
             "in uint64_t gl_SubGroupEqMaskARB;"
@@ -5995,7 +5994,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in uint64_t gl_SubGroupLeMaskARB;"
             "in uint64_t gl_SubGroupLtMaskARB;"
             "\n";
-        const char* fragmentBallotDecls = 
+        const char* fragmentBallotDecls =
             "uniform uint gl_SubGroupSizeARB;"
             "flat in uint     gl_SubGroupInvocationARB;"
             "flat in uint64_t gl_SubGroupEqMaskARB;"
@@ -6287,7 +6286,7 @@ void TBuiltIns::add2ndGenerationSamplingImaging(int version, EProfile profile, c
                             continue;
 
                         // Loop over the bTypes
-                        for (int bType = 0; bType < sizeof(bTypes)/sizeof(TBasicType); ++bType) {
+                        for (size_t bType = 0; bType < sizeof(bTypes)/sizeof(TBasicType); ++bType) {
 #ifndef GLSLANG_WEB
                             if (bTypes[bType] == EbtFloat16 && (profile == EEsProfile || version < 450))
                                 continue;
