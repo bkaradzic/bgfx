@@ -34,6 +34,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_dead_breaks.h
         fuzzer_pass_add_dead_continues.h
         fuzzer_pass_add_useful_constructs.h
+        fuzzer_pass_copy_objects.h
         fuzzer_pass_obfuscate_constants.h
         fuzzer_pass_permute_blocks.h
         fuzzer_pass_split_blocks.h
@@ -69,6 +70,7 @@ if(SPIRV_BUILD_FUZZER)
         fuzzer_pass_add_dead_breaks.cpp
         fuzzer_pass_add_dead_continues.cpp
         fuzzer_pass_add_useful_constructs.cpp
+        fuzzer_pass_copy_objects.cpp
         fuzzer_pass_obfuscate_constants.cpp
         fuzzer_pass_permute_blocks.cpp
         fuzzer_pass_split_blocks.cpp

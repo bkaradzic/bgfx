@@ -708,7 +708,7 @@ OpAtomicStore %f32_var %device %relaxed %u32_1
 
 TEST_F(ValidateAtomics, AtomicExchangeShaderSuccess) {
   const std::string body = R"(
-%val1 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val2 = OpAtomicExchange %u32 %u32_var %device %relaxed %u32_0
 )";
 
@@ -720,7 +720,7 @@ TEST_F(ValidateAtomics, AtomicExchangeKernelSuccess) {
   const std::string body = R"(
 OpAtomicStore %f32_var %device %relaxed %f32_1
 %val2 = OpAtomicExchange %f32 %f32_var %device %relaxed %f32_0
-%val3 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val4 = OpAtomicExchange %u32 %u32_var %device %relaxed %u32_0
 )";
 
@@ -743,7 +743,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongResultType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicExchange %f32vec4 %f32vec4_var %device %relaxed %f32vec4_0000
 )";
 
@@ -768,7 +768,7 @@ TEST_F(ValidateAtomics, AtomicExchangeWrongPointerType) {
 
 TEST_F(ValidateAtomics, AtomicExchangeWrongPointerDataType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicExchange %f32 %f32vec4_var %device %relaxed %f32vec4_0000
 )";
 
@@ -822,7 +822,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeShaderSuccess) {
   const std::string body = R"(
-%val1 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val2 = OpAtomicCompareExchange %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
 )";
 
@@ -834,7 +834,7 @@ TEST_F(ValidateAtomics, AtomicCompareExchangeKernelSuccess) {
   const std::string body = R"(
 OpAtomicStore %f32_var %device %relaxed %f32_1
 %val2 = OpAtomicCompareExchange %f32 %f32_var %device %relaxed %relaxed %f32_0 %f32_1
-%val3 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val4 = OpAtomicCompareExchange %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
 )";
 
@@ -857,7 +857,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongResultType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicCompareExchange %f32vec4 %f32vec4_var %device %relaxed %relaxed %f32vec4_0000 %f32vec4_0000
 )";
 
@@ -882,7 +882,7 @@ TEST_F(ValidateAtomics, AtomicCompareExchangeWrongPointerType) {
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWrongPointerDataType) {
   const std::string body = R"(
-%val1 = OpStore %f32vec4_var %f32vec4_0000
+OpStore %f32vec4_var %f32vec4_0000
 %val2 = OpAtomicCompareExchange %f32 %f32vec4_var %device %relaxed %relaxed %f32_0 %f32_1
 )";
 
@@ -975,7 +975,7 @@ OpAtomicStore %f32_var %device %relaxed %f32_1
 
 TEST_F(ValidateAtomics, AtomicCompareExchangeWeakSuccess) {
   const std::string body = R"(
-%val3 = OpAtomicStore %u32_var %device %relaxed %u32_1
+OpAtomicStore %u32_var %device %relaxed %u32_1
 %val4 = OpAtomicCompareExchangeWeak %u32 %u32_var %device %relaxed %relaxed %u32_0 %u32_0
 )";
 

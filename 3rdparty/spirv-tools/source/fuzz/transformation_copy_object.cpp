@@ -46,18 +46,7 @@ bool TransformationCopyObject::IsApplicable(
   if (!object_inst) {
     return false;
   }
-  if (!object_inst->type_id()) {
-    // We can only apply OpCopyObject to instructions that have types.
-    return false;
-  }
-  if (!context->get_decoration_mgr()
-           ->GetDecorationsFor(message_.object(), true)
-           .empty()) {
-    // We do not copy objects that have decorations: if the copy is not
-    // decorated analogously, using the original object vs. its copy may not be
-    // equivalent.
-    // TODO(afd): it would be possible to make the copy but not add an id
-    // synonym.
+  if (!IsCopyable(context, object_inst)) {
     return false;
   }
 
@@ -81,22 +70,11 @@ bool TransformationCopyObject::IsApplicable(
     // The offset was inappropriate.
     return false;
   }
-  if (insert_before->PreviousNode() &&
-      (insert_before->PreviousNode()->opcode() == SpvOpLoopMerge ||
-       insert_before->PreviousNode()->opcode() == SpvOpSelectionMerge)) {
-    // We cannot insert a copy directly after a merge instruction.
+
+  if (!CanInsertCopyBefore(insert_before)) {
     return false;
   }
-  if (insert_before->opcode() == SpvOpVariable) {
-    // We cannot insert a copy directly before a variable; variables in a
-    // function must be contiguous in the entry block.
-    return false;
-  }
-  // We cannot insert a copy directly before OpPhi, because OpPhi instructions
-  // need to be contiguous at the start of a block.
-  if (insert_before->opcode() == SpvOpPhi) {
-    return false;
-  }
+
   // |message_object| must be available at the point where we want to add the
   // copy. It is available if it is at global scope (in which case it has no
   // block), or if it dominates the point of insertion but is different from the
@@ -152,6 +130,44 @@ protobufs::Transformation TransformationCopyObject::ToMessage() const {
   protobufs::Transformation result;
   *result.mutable_copy_object() = message_;
   return result;
+}
+
+bool TransformationCopyObject::IsCopyable(opt::IRContext* ir_context,
+                                          opt::Instruction* inst) {
+  if (!inst->HasResultId()) {
+    // We can only apply OpCopyObject to instructions that generate ids.
+    return false;
+  }
+  if (!inst->type_id()) {
+    // We can only apply OpCopyObject to instructions that have types.
+    return false;
+  }
+  // We do not copy objects that have decorations: if the copy is not
+  // decorated analogously, using the original object vs. its copy may not be
+  // equivalent.
+  // TODO(afd): it would be possible to make the copy but not add an id
+  // synonym.
+  return ir_context->get_decoration_mgr()
+      ->GetDecorationsFor(inst->result_id(), true)
+      .empty();
+}
+
+bool TransformationCopyObject::CanInsertCopyBefore(
+    const opt::BasicBlock::iterator& instruction_in_block) {
+  if (instruction_in_block->PreviousNode() &&
+      (instruction_in_block->PreviousNode()->opcode() == SpvOpLoopMerge ||
+       instruction_in_block->PreviousNode()->opcode() == SpvOpSelectionMerge)) {
+    // We cannot insert a copy directly after a merge instruction.
+    return false;
+  }
+  if (instruction_in_block->opcode() == SpvOpVariable) {
+    // We cannot insert a copy directly before a variable; variables in a
+    // function must be contiguous in the entry block.
+    return false;
+  }
+  // We cannot insert a copy directly before OpPhi, because OpPhi instructions
+  // need to be contiguous at the start of a block.
+  return instruction_in_block->opcode() != SpvOpPhi;
 }
 
 }  // namespace fuzz

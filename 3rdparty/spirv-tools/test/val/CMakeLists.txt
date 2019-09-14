@@ -28,7 +28,6 @@ add_spvtools_unittest(TARGET val_abcde
        val_barriers_test.cpp
        val_bitwise_test.cpp
        val_builtins_test.cpp
-       val_capability_test.cpp
        val_cfg_test.cpp
        val_composites_test.cpp
        val_constants_test.cpp
@@ -40,6 +39,13 @@ add_spvtools_unittest(TARGET val_abcde
        val_extensions_test.cpp
        val_ext_inst_test.cpp
        ${VAL_TEST_COMMON_SRCS}
+  LIBS ${SPIRV_TOOLS}
+  PCH_FILE pch_test_val
+)
+
+add_spvtools_unittest(TARGET val_capability
+  SRCS
+       val_capability_test.cpp
   LIBS ${SPIRV_TOOLS}
   PCH_FILE pch_test_val
 )

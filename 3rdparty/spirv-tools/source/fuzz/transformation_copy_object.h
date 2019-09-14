@@ -28,8 +28,8 @@ class TransformationCopyObject : public Transformation {
   explicit TransformationCopyObject(
       const protobufs::TransformationCopyObject& message);
 
-  TransformationCopyObject(uint32_t fresh_id, uint32_t object,
-                           uint32_t insert_after_id, uint32_t offset);
+  TransformationCopyObject(uint32_t object, uint32_t base_instruction_id,
+                           uint32_t offset, uint32_t fresh_id);
 
   // - |message_.fresh_id| must not be used by the module.
   // - |message_.object| must be a result id that is a legitimate operand for
@@ -57,6 +57,14 @@ class TransformationCopyObject : public Transformation {
   void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
 
   protobufs::Transformation ToMessage() const override;
+
+  // Determines whether it is OK to make a copy of |inst|.
+  static bool IsCopyable(opt::IRContext* ir_context, opt::Instruction* inst);
+
+  // Determines whether it is OK to insert a copy instruction before the given
+  // instruction.
+  static bool CanInsertCopyBefore(
+      const opt::BasicBlock::iterator& instruction_in_block);
 
  private:
   protobufs::TransformationCopyObject message_;

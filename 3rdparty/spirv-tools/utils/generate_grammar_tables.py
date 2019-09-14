@@ -653,6 +653,30 @@ def generate_all_string_enum_mappings(extensions, operand_kinds):
 def precondition_operand_kinds(operand_kinds):
     """For operand kinds that have the same number, make sure they all have the
     same extension list."""
+
+    # Map operand kind and value to list of the union of extensions
+    # for same-valued enumerants.
+    exts = {}
+    for kind_entry in operand_kinds:
+        kind = kind_entry.get('kind')
+        for enum_entry in kind_entry.get('enumerants', []):
+            value = enum_entry.get('value')
+            key = kind + '.' + str(value)
+            if key in exts:
+                exts[key].extend(enum_entry.get('extensions', []))
+            else:
+                exts[key] = enum_entry.get('extensions', [])
+            exts[key] = sorted(set(exts[key]))
+
+    # Now make each entry the same list.
+    for kind_entry in operand_kinds:
+        kind = kind_entry.get('kind')
+        for enum_entry in kind_entry.get('enumerants', []):
+            value = enum_entry.get('value')
+            key = kind + '.' + str(value)
+            if len(exts[key]) > 0:
+                enum_entry['extensions'] = exts[key]
+
     return operand_kinds
 
 

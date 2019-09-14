@@ -98,6 +98,13 @@ bool TransformationAddDeadContinue::IsApplicable(
     return false;
   }
 
+  // Check that adding the continue would not violate the property that a
+  // definition must dominate all of its uses.
+  if (!fuzzerutil::NewEdgeLeavingConstructBodyRespectsUseDefDominance(
+          context, bb_from, context->cfg()->block(continue_block))) {
+    return false;
+  }
+
   // The transformation is good if and only if the given phi ids are sufficient
   // to extend relevant OpPhi instructions in the continue block.
   return fuzzerutil::PhiIdsOkForNewEdge(context, bb_from,

@@ -205,17 +205,24 @@ spv_result_t CheckRequiredCapabilities(ValidationState_t& state,
           operand_desc->capabilities, operand_desc->numCapabilities);
     }
 
-    if (!state.HasAnyOfCapabilities(enabling_capabilities)) {
-      return state.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
-             << "Operand " << which_operand << " of "
-             << spvOpcodeString(inst->opcode())
-             << " requires one of these capabilities: "
-             << ToString(enabling_capabilities, state.grammar());
+    // When encountering an OpCapability instruction, the instruction pass
+    // registers a capability with the module *before* checking capabilities.
+    // So in the case of an OpCapability instruction, don't bother checking
+    // enablement by another capability.
+    if (inst->opcode() != SpvOpCapability) {
+      const bool enabled_by_cap =
+          state.HasAnyOfCapabilities(enabling_capabilities);
+      if (!enabling_capabilities.IsEmpty() && !enabled_by_cap) {
+        return state.diag(SPV_ERROR_INVALID_CAPABILITY, inst)
+               << "Operand " << which_operand << " of "
+               << spvOpcodeString(inst->opcode())
+               << " requires one of these capabilities: "
+               << ToString(enabling_capabilities, state.grammar());
+      }
     }
     return OperandVersionExtensionCheck(state, inst, which_operand,
                                         *operand_desc, word);
   }
-
   return SPV_SUCCESS;
 }
 

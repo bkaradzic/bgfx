@@ -34,7 +34,7 @@ def empty_main_assembly():
 
 
 @inside_spirv_testsuite('SpirvOptBase')
-class TestAssemblyFileAsOnlyParameter(expect.ValidObjectFile1_4):
+class TestAssemblyFileAsOnlyParameter(expect.ValidObjectFile1_5):
   """Tests that spirv-opt accepts a SPIR-V object file."""
 
   shader = placeholder.FileSPIRVShader(empty_main_assembly(), '.spvasm')
@@ -52,7 +52,7 @@ class TestHelpFlag(expect.ReturnCodeIsZero, expect.StdoutMatch):
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestValidPassFlags(expect.ValidObjectFile1_4,
+class TestValidPassFlags(expect.ValidObjectFile1_5,
                          expect.ExecutedListOfPasses):
   """Tests that spirv-opt accepts all valid optimization flags."""
 
@@ -91,7 +91,7 @@ class TestValidPassFlags(expect.ValidObjectFile1_4,
       'eliminate-dead-variables',
       # --eliminate-insert-extract runs the simplify-instructions pass.
       'simplify-instructions',
-      'eliminate-local-multi-store',
+      'ssa-rewrite',
       'eliminate-local-single-block',
       'eliminate-local-single-store',
       'flatten-decorations',
@@ -129,7 +129,7 @@ class TestValidPassFlags(expect.ValidObjectFile1_4,
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_4,
+class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_5,
                                         expect.ExecutedListOfPasses):
   """Tests that spirv-opt schedules all the passes triggered by -O."""
 
@@ -149,7 +149,7 @@ class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_4,
       'eliminate-local-single-block',
       'eliminate-local-single-store',
       'eliminate-dead-code-aggressive',
-      'eliminate-local-multi-store',
+      'ssa-rewrite',
       'eliminate-dead-code-aggressive',
       'ccp',
       'eliminate-dead-code-aggressive',
@@ -177,7 +177,7 @@ class TestPerformanceOptimizationPasses(expect.ValidObjectFile1_4,
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestSizeOptimizationPasses(expect.ValidObjectFile1_4,
+class TestSizeOptimizationPasses(expect.ValidObjectFile1_5,
                                  expect.ExecutedListOfPasses):
   """Tests that spirv-opt schedules all the passes triggered by -Os."""
 
@@ -196,7 +196,7 @@ class TestSizeOptimizationPasses(expect.ValidObjectFile1_4,
       'eliminate-dead-code-aggressive',
       'simplify-instructions',
       'eliminate-dead-inserts',
-      'eliminate-local-multi-store',
+      'ssa-rewrite',
       'eliminate-dead-code-aggressive',
       'ccp',
       'eliminate-dead-code-aggressive',
@@ -217,7 +217,7 @@ class TestSizeOptimizationPasses(expect.ValidObjectFile1_4,
 
 
 @inside_spirv_testsuite('SpirvOptFlags')
-class TestLegalizationPasses(expect.ValidObjectFile1_4,
+class TestLegalizationPasses(expect.ValidObjectFile1_5,
                              expect.ExecutedListOfPasses):
   """Tests that spirv-opt schedules all the passes triggered by --legalize-hlsl.
   """
@@ -238,7 +238,7 @@ class TestLegalizationPasses(expect.ValidObjectFile1_4,
       'eliminate-local-single-block',
       'eliminate-local-single-store',
       'eliminate-dead-code-aggressive',
-      'eliminate-local-multi-store',
+      'ssa-rewrite',
       'eliminate-dead-code-aggressive',
       'ccp',
       'loop-unroll',

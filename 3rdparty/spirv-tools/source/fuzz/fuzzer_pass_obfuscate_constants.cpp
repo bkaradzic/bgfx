@@ -48,14 +48,12 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstantViaConstantPair(
   // a 'greater than' or 'less than' kind of opcode, and then select a
   // random opcode from the resulting subset.
   SpvOp comparison_opcode;
-  if (GetFuzzerContext()->GetRandomGenerator()->RandomBool()) {
-    comparison_opcode = greater_than_opcodes
-        [GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-            static_cast<uint32_t>(greater_than_opcodes.size()))];
+  if (GetFuzzerContext()->ChooseEven()) {
+    comparison_opcode = greater_than_opcodes[GetFuzzerContext()->RandomIndex(
+        greater_than_opcodes)];
   } else {
-    comparison_opcode = less_than_opcodes
-        [GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-            static_cast<uint32_t>(less_than_opcodes.size()))];
+    comparison_opcode =
+        less_than_opcodes[GetFuzzerContext()->RandomIndex(less_than_opcodes)];
   }
 
   // We now need to decide how to order constant_id_1 and constant_id_2 such
@@ -103,8 +101,7 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstantViaConstantPair(
   for (uint32_t index : {0u, 1u}) {
     // We randomly decide, based on the current depth of obfuscation, whether
     // to further obfuscate this operand.
-    if (GetFuzzerContext()->GoDeeperInConstantObfuscation()(
-            depth, GetFuzzerContext()->GetRandomGenerator())) {
+    if (GetFuzzerContext()->GoDeeperInConstantObfuscation(depth)) {
       auto in_operand_use = transformation::MakeIdUseDescriptor(
           binary_operator_instruction->GetSingleWordInOperand(index),
           binary_operator_instruction->opcode(), index,
@@ -252,9 +249,9 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstant(
     // elements with known values.
     return;
   }
-  auto chosen_type_id = available_types_with_uniforms
-      [GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-          static_cast<uint32_t>(available_types_with_uniforms.size()))];
+  auto chosen_type_id =
+      available_types_with_uniforms[GetFuzzerContext()->RandomIndex(
+          available_types_with_uniforms)];
   auto available_constants =
       GetFactManager()->GetConstantsAvailableFromUniformsForType(
           GetIRContext(), chosen_type_id);
@@ -269,15 +266,12 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstant(
 
   // We know we have at least two known-to-be-constant uniforms of the chosen
   // type.  Pick one of them at random.
-  auto constant_index_1 =
-      GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-          static_cast<uint32_t>(available_constants.size()));
+  auto constant_index_1 = GetFuzzerContext()->RandomIndex(available_constants);
   uint32_t constant_index_2;
 
   // Now choose another one distinct from the first one.
   do {
-    constant_index_2 = GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-        static_cast<uint32_t>(available_constants.size()));
+    constant_index_2 = GetFuzzerContext()->RandomIndex(available_constants);
   } while (constant_index_1 == constant_index_2);
 
   auto constant_id_1 = available_constants[constant_index_1];
@@ -321,9 +315,7 @@ void FuzzerPassObfuscateConstants::ObfuscateScalarConstant(
 
   // Choose a random available uniform known to be equal to the constant.
   protobufs::UniformBufferElementDescriptor uniform_descriptor =
-      uniform_descriptors
-          [GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-              static_cast<uint32_t>(uniform_descriptors.size()))];
+      uniform_descriptors[GetFuzzerContext()->RandomIndex(uniform_descriptors)];
   // Create, apply and record a transformation to replace the constant use with
   // the result of a load from the chosen uniform.
   auto transformation = TransformationReplaceConstantWithUniform(
@@ -445,13 +437,12 @@ void FuzzerPassObfuscateConstants::Apply() {
   // Go through the constant uses in a random order by repeatedly pulling out a
   // constant use at a random index.
   while (!constant_uses.empty()) {
-    auto index = GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-        static_cast<uint32_t>(constant_uses.size()));
+    auto index = GetFuzzerContext()->RandomIndex(constant_uses);
     auto constant_use = std::move(constant_uses[index]);
     constant_uses.erase(constant_uses.begin() + index);
     // Decide probabilistically whether to skip or obfuscate this constant use.
-    if (GetFuzzerContext()->GetRandomGenerator()->RandomPercentage() >
-        GetFuzzerContext()->GetChanceOfObfuscatingConstant()) {
+    if (!GetFuzzerContext()->ChoosePercentage(
+            GetFuzzerContext()->GetChanceOfObfuscatingConstant())) {
       continue;
     }
     ObfuscateConstant(0, constant_use);

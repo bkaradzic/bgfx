@@ -144,7 +144,7 @@ OpBranch %end_label
 %false_label = OpLabel
 OpBranch %end_label
 %end_label = OpLabel
-%line = OpLine %string 0 0
+OpLine %string 0 0
 %result = OpPhi %bool %true %true_label %false %false_label
 )";
 
@@ -178,7 +178,7 @@ OpBranch %end_label
 %false_label = OpLabel
 OpBranch %end_label
 %end_label = OpLabel
-%line = OpLine %string 0 0
+OpLine %string 0 0
 %result = OpPhi %bool %true %true_label %false %false_label
 )";
 

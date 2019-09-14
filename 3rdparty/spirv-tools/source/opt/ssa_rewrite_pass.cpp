@@ -274,6 +274,9 @@ uint32_t SSARewriter::GetReachingDef(uint32_t var_id, BasicBlock* bb) {
   // of the CFG, the variable is not defined, so we use undef.
   if (val_id == 0) {
     val_id = pass_->GetUndefVal(var_id);
+    if (val_id == 0) {
+      return 0;
+    }
   }
 
   WriteVariable(var_id, bb, val_id);
@@ -313,12 +316,15 @@ void SSARewriter::ProcessStore(Instruction* inst, BasicBlock* bb) {
   }
 }
 
-void SSARewriter::ProcessLoad(Instruction* inst, BasicBlock* bb) {
+bool SSARewriter::ProcessLoad(Instruction* inst, BasicBlock* bb) {
   uint32_t var_id = 0;
   (void)pass_->GetPtr(inst, &var_id);
   if (pass_->IsTargetVar(var_id)) {
     // Get the immediate reaching definition for |var_id|.
     uint32_t val_id = GetReachingDef(var_id, bb);
+    if (val_id == 0) {
+      return false;
+    }
 
     // Schedule a replacement for the result of this load instruction with
     // |val_id|. After all the rewriting decisions are made, every use of
@@ -337,6 +343,7 @@ void SSARewriter::ProcessLoad(Instruction* inst, BasicBlock* bb) {
               << " (replacement for %" << load_id << " is %" << val_id << ")\n";
 #endif
   }
+  return true;
 }
 
 void SSARewriter::PrintPhiCandidates() const {
@@ -356,7 +363,7 @@ void SSARewriter::PrintReplacementTable() const {
   std::cerr << "\n";
 }
 
-void SSARewriter::GenerateSSAReplacements(BasicBlock* bb) {
+bool SSARewriter::GenerateSSAReplacements(BasicBlock* bb) {
 #if SSA_REWRITE_DEBUGGING_LEVEL > 1
   std::cerr << "Generating SSA replacements for block: " << bb->id() << "\n";
   std::cerr << bb->PrettyPrint(SPV_BINARY_TO_TEXT_OPTION_FRIENDLY_NAMES)
@@ -368,7 +375,9 @@ void SSARewriter::GenerateSSAReplacements(BasicBlock* bb) {
     if (opcode == SpvOpStore || opcode == SpvOpVariable) {
       ProcessStore(&inst, bb);
     } else if (inst.opcode() == SpvOpLoad) {
-      ProcessLoad(&inst, bb);
+      if (!ProcessLoad(&inst, bb)) {
+        return false;
+      }
     }
   }
 
@@ -381,6 +390,7 @@ void SSARewriter::GenerateSSAReplacements(BasicBlock* bb) {
   PrintReplacementTable();
   std::cerr << "\n\n";
 #endif
+  return true;
 }
 
 uint32_t SSARewriter::GetReplacement(std::pair<uint32_t, uint32_t> repl) {
@@ -560,7 +570,7 @@ void SSARewriter::FinalizePhiCandidates() {
   }
 }
 
-bool SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
+Pass::Status SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
 #if SSA_REWRITE_DEBUGGING_LEVEL > 0
   std::cerr << "Function before SSA rewrite:\n"
             << fp->PrettyPrint(0) << "\n\n\n";
@@ -571,9 +581,17 @@ bool SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
 
   // Generate all the SSA replacements and Phi candidates. This will
   // generate incomplete and trivial Phis.
-  pass_->cfg()->ForEachBlockInReversePostOrder(
-      fp->entry().get(),
-      [this](BasicBlock* bb) { GenerateSSAReplacements(bb); });
+  bool succeeded = pass_->cfg()->WhileEachBlockInReversePostOrder(
+      fp->entry().get(), [this](BasicBlock* bb) {
+        if (!GenerateSSAReplacements(bb)) {
+          return false;
+        }
+        return true;
+      });
+
+  if (!succeeded) {
+    return Pass::Status::Failure;
+  }
 
   // Remove trivial Phis and add arguments to incomplete Phis.
   FinalizePhiCandidates();
@@ -586,16 +604,20 @@ bool SSARewriter::RewriteFunctionIntoSSA(Function* fp) {
             << fp->PrettyPrint(0) << "\n";
 #endif
 
-  return modified;
+  return modified ? Pass::Status::SuccessWithChange
+                  : Pass::Status::SuccessWithoutChange;
 }
 
 Pass::Status SSARewritePass::Process() {
-  bool modified = false;
+  Status status = Status::SuccessWithoutChange;
   for (auto& fn : *get_module()) {
-    modified |= SSARewriter(this).RewriteFunctionIntoSSA(&fn);
+    status =
+        CombineStatus(status, SSARewriter(this).RewriteFunctionIntoSSA(&fn));
+    if (status == Status::Failure) {
+      break;
+    }
   }
-  return modified ? Pass::Status::SuccessWithChange
-                  : Pass::Status::SuccessWithoutChange;
+  return status;
 }
 
 }  // namespace opt

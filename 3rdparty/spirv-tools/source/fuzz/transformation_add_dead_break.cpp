@@ -162,9 +162,16 @@ bool TransformationAddDeadBreak::IsApplicable(
     return false;
   }
 
-  // Finally, check that adding the break would respect the rules of structured
+  // Check that adding the break would respect the rules of structured
   // control flow.
-  return AddingBreakRespectsStructuredControlFlow(context, bb_from);
+  if (!AddingBreakRespectsStructuredControlFlow(context, bb_from)) {
+    return false;
+  }
+
+  // Check that adding the break would not violate the property that a
+  // definition must dominate all of its uses.
+  return fuzzerutil::NewEdgeLeavingConstructBodyRespectsUseDefDominance(
+      context, bb_from, bb_to);
 }
 
 void TransformationAddDeadBreak::Apply(opt::IRContext* context,

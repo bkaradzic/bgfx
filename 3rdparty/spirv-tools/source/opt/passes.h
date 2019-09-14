@@ -52,7 +52,6 @@
 #include "source/opt/local_redundancy_elimination.h"
 #include "source/opt/local_single_block_elim_pass.h"
 #include "source/opt/local_single_store_elim_pass.h"
-#include "source/opt/local_ssa_elim_pass.h"
 #include "source/opt/loop_fission.h"
 #include "source/opt/loop_fusion_pass.h"
 #include "source/opt/loop_peeling.h"

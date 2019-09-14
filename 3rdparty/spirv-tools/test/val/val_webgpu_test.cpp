@@ -201,7 +201,7 @@ TEST_F(ValidateWebGPU, NonLogicalAddressingModelBad) {
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("Addressing model must be Logical for WebGPU "
                         "environment.\n  OpMemoryModel Physical32 "
-                        "VulkanKHR\n"));
+                        "Vulkan\n"));
 }
 
 TEST_F(ValidateWebGPU, NonVulkanKHRMemoryModelBad) {

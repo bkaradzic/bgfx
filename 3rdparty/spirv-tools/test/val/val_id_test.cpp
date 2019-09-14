@@ -2317,8 +2317,8 @@ TEST_F(ValidateIdWithMessage, OpLoadGood) {
  %6 = OpFunction %1 None %4
  %7 = OpLabel
  %8 = OpLoad %2 %5
- %9 = OpReturn
-%10 = OpFunctionEnd
+      OpReturn
+      OpFunctionEnd
 )";
   CompileSuccessfully(spirv.c_str());
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());

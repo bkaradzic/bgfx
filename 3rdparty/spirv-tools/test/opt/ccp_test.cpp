@@ -570,10 +570,10 @@ TEST_F(CCPTest, SkipSpecConstantInstrucitons) {
          %10 = OpSpecConstantFalse %bool
        %main = OpFunction %void None %4
          %11 = OpLabel
-         %12 = OpBranchConditional %10 %l1 %l2
-         %l1 = OpLabel
+               OpBranchConditional %10 %L1 %L2
+         %L1 = OpLabel
                OpReturn
-         %l2 = OpLabel
+         %L2 = OpLabel
                OpReturn
                OpFunctionEnd
   )";

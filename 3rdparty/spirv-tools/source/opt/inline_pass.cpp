@@ -720,6 +720,15 @@ bool InlinePass::IsInlinableFunction(Function* func) {
     return false;
   }
 
+  // Do not inline functions with an OpKill because they may be inlined into a
+  // continue construct.
+  bool has_opkill = !func->WhileEachInst(
+      [](Instruction* inst) { return inst->opcode() != SpvOpKill; });
+
+  if (has_opkill) {
+    return false;
+  }
+
   return true;
 }
 

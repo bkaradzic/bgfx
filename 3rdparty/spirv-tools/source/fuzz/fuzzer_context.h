@@ -34,8 +34,22 @@ class FuzzerContext {
 
   ~FuzzerContext();
 
-  // Provides the random generator used to control fuzzing.
-  RandomGenerator* GetRandomGenerator();
+  // Returns a random boolean.
+  bool ChooseEven();
+
+  // Returns true if and only if a randomly-chosen integer in the range [0, 100]
+  // is less than |percentage_chance|.
+  bool ChoosePercentage(uint32_t percentage_chance);
+
+  // Returns a random index into |sequence|, which is expected to have a 'size'
+  // method, and which must be non-empty.  Typically 'HasSizeMethod' will be an
+  // std::vector.
+  template <typename HasSizeMethod>
+  uint32_t RandomIndex(HasSizeMethod sequence) {
+    assert(sequence.size() > 0);
+    return random_generator_->RandomUint32(
+        static_cast<uint32_t>(sequence.size()));
+  }
 
   // Yields an id that is guaranteed not to be used in the module being fuzzed,
   // or to have been issued before.
@@ -47,17 +61,17 @@ class FuzzerContext {
   uint32_t GetChanceOfAddingDeadContinue() {
     return chance_of_adding_dead_continue_;
   }
+  uint32_t GetChanceOfCopyingObject() { return chance_of_copying_object_; }
   uint32_t GetChanceOfMovingBlockDown() { return chance_of_moving_block_down_; }
   uint32_t GetChanceOfObfuscatingConstant() {
     return chance_of_obfuscating_constant_;
   }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
 
-  // Probability distributions to control how deeply to recurse.
+  // Functions to control how deeply to recurse.
   // Keep them in alphabetical order.
-  const std::function<bool(uint32_t, RandomGenerator*)>&
-  GoDeeperInConstantObfuscation() {
-    return go_deeper_in_constant_obfuscation_;
+  bool GoDeeperInConstantObfuscation(uint32_t depth) {
+    return go_deeper_in_constant_obfuscation_(depth, random_generator_);
   }
 
  private:
@@ -70,6 +84,7 @@ class FuzzerContext {
   // Keep them in alphabetical order.
   uint32_t chance_of_adding_dead_break_;
   uint32_t chance_of_adding_dead_continue_;
+  uint32_t chance_of_copying_object_;
   uint32_t chance_of_moving_block_down_;
   uint32_t chance_of_obfuscating_constant_;
   uint32_t chance_of_splitting_block_;

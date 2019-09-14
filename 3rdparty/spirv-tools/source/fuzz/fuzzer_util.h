@@ -74,6 +74,19 @@ bool BlockIsInLoopContinueConstruct(opt::IRContext* context, uint32_t block_id,
 opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
     opt::BasicBlock* block, const opt::Instruction* base_inst, uint32_t offset);
 
+// Block |bb_from| is assumed to be in a structured control flow construct, and
+// block |bb_to| is assumed to be either the merge bock for that construct (in
+// the case of a loop, conditional or switch) or the continue target for that
+// construct (in the case of a loop only).
+//
+// The function determines whether adding an edge from |bb_from| to |bb_to| -
+// i.e. a break or continue for the construct
+// - is legitimate with respect to the SPIR-V rule that a definition must
+// dominate all of its uses.  This is because adding such an edge can change
+// dominance in the control flow graph, potentially making the module invalid.
+bool NewEdgeLeavingConstructBodyRespectsUseDefDominance(
+    opt::IRContext* context, opt::BasicBlock* bb_from, opt::BasicBlock* bb_to);
+
 }  // namespace fuzzerutil
 
 }  // namespace fuzz

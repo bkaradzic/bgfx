@@ -46,9 +46,9 @@ std::string GetGlobalVariableTestString(std::string ptr_str,
   std::vector<const char*> result = {
       // clang-format off
                "OpCapability Shader",
-               "OpCapability VulkanMemoryModelKHR",
+               "OpCapability VulkanMemoryModel",
                "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-               "OpMemoryModel Logical VulkanKHR",
+               "OpMemoryModel Logical Vulkan",
                "OpEntryPoint Vertex %1 \"shader\"",
        "%uint = OpTypeInt 32 0",
                 ptr_str.c_str()};
@@ -132,9 +132,9 @@ std::string GetLocalVariableTestString(std::string ptr_str, std::string var_str,
   std::vector<const char*> result = {
       // clang-format off
                "OpCapability Shader",
-               "OpCapability VulkanMemoryModelKHR",
+               "OpCapability VulkanMemoryModel",
                "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-               "OpMemoryModel Logical VulkanKHR",
+               "OpMemoryModel Logical Vulkan",
                "OpEntryPoint Vertex %1 \"shader\"",
        "%uint = OpTypeInt 32 0",
                 ptr_str.c_str(),
@@ -206,9 +206,9 @@ TEST_F(GenerateWebGPUInitializersTest, AlreadyInitializedUnchanged) {
   std::vector<const char*> spirv = {
       // clang-format off
                        "OpCapability Shader",
-                       "OpCapability VulkanMemoryModelKHR",
+                       "OpCapability VulkanMemoryModel",
                        "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-                       "OpMemoryModel Logical VulkanKHR",
+                       "OpMemoryModel Logical Vulkan",
                        "OpEntryPoint Vertex %1 \"shader\"",
                "%uint = OpTypeInt 32 0",
   "%_ptr_Private_uint = OpTypePointer Private %uint",
@@ -232,9 +232,9 @@ TEST_F(GenerateWebGPUInitializersTest, AmbigiousArrays) {
   std::vector<const char*> input_spirv = {
       // clang-format off
                                    "OpCapability Shader",
-                                   "OpCapability VulkanMemoryModelKHR",
+                                   "OpCapability VulkanMemoryModel",
                                    "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-                                   "OpMemoryModel Logical VulkanKHR",
+                                   "OpMemoryModel Logical Vulkan",
                                    "OpEntryPoint Vertex %1 \"shader\"",
                            "%uint = OpTypeInt 32 0",
                          "%uint_2 = OpConstant %uint 2",
@@ -258,9 +258,9 @@ TEST_F(GenerateWebGPUInitializersTest, AmbigiousArrays) {
   std::vector<const char*> expected_spirv = {
       // clang-format off
                                    "OpCapability Shader",
-                                   "OpCapability VulkanMemoryModelKHR",
+                                   "OpCapability VulkanMemoryModel",
                                    "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-                                   "OpMemoryModel Logical VulkanKHR",
+                                   "OpMemoryModel Logical Vulkan",
                                    "OpEntryPoint Vertex %1 \"shader\"",
                            "%uint = OpTypeInt 32 0",
                          "%uint_2 = OpConstant %uint 2",
@@ -290,9 +290,9 @@ TEST_F(GenerateWebGPUInitializersTest, AmbigiousStructs) {
   std::vector<const char*> input_spirv = {
       // clang-format off
                           "OpCapability Shader",
-                          "OpCapability VulkanMemoryModelKHR",
+                          "OpCapability VulkanMemoryModel",
                           "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-                          "OpMemoryModel Logical VulkanKHR",
+                          "OpMemoryModel Logical Vulkan",
                           "OpEntryPoint Vertex %1 \"shader\"",
                   "%uint = OpTypeInt 32 0",
              "%_struct_3 = OpTypeStruct %uint",
@@ -315,9 +315,9 @@ TEST_F(GenerateWebGPUInitializersTest, AmbigiousStructs) {
   std::vector<const char*> expected_spirv = {
       // clang-format off
                           "OpCapability Shader",
-                          "OpCapability VulkanMemoryModelKHR",
+                          "OpCapability VulkanMemoryModel",
                           "OpExtension \"SPV_KHR_vulkan_memory_model\"",
-                          "OpMemoryModel Logical VulkanKHR",
+                          "OpMemoryModel Logical Vulkan",
                           "OpEntryPoint Vertex %1 \"shader\"",
                   "%uint = OpTypeInt 32 0",
              "%_struct_3 = OpTypeStruct %uint",

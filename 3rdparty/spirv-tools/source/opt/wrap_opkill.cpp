@@ -95,9 +95,14 @@ uint32_t WrapOpKill::GetOpKillFuncId() {
     return 0;
   }
 
+  uint32_t void_type_id = GetVoidTypeId();
+  if (void_type_id == 0) {
+    return 0;
+  }
+
   // Generate the function start instruction
   std::unique_ptr<Instruction> func_start(new Instruction(
-      context(), SpvOpFunction, GetVoidTypeId(), opkill_func_id, {}));
+      context(), SpvOpFunction, void_type_id, opkill_func_id, {}));
   func_start->AddOperand({SPV_OPERAND_TYPE_FUNCTION_CONTROL, {0}});
   func_start->AddOperand({SPV_OPERAND_TYPE_ID, {GetVoidFunctionTypeId()}});
   opkill_function_.reset(new Function(std::move(func_start)));

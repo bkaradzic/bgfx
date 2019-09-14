@@ -69,7 +69,6 @@ set(SPIRV_TOOLS_OPT_SOURCES
   local_redundancy_elimination.h
   local_single_block_elim_pass.h
   local_single_store_elim_pass.h
-  local_ssa_elim_pass.h
   log.h
   loop_dependence.h
   loop_descriptor.h
@@ -176,7 +175,6 @@ set(SPIRV_TOOLS_OPT_SOURCES
   local_redundancy_elimination.cpp
   local_single_block_elim_pass.cpp
   local_single_store_elim_pass.cpp
-  local_ssa_elim_pass.cpp
   loop_dependence.cpp
   loop_dependence_helpers.cpp
   loop_descriptor.cpp
