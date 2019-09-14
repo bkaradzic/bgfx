@@ -346,7 +346,6 @@ namespace bgfx
 
 	const InternalData* getInternalData()
 	{
-		BGFX_CHECK_RENDER_THREAD();
 		return &g_internalData;
 	}
 
