@@ -247,7 +247,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkGetMemoryWin32HandleNV(
 
 
 #define VK_NV_win32_keyed_mutex 1
-#define VK_NV_WIN32_KEYED_MUTEX_SPEC_VERSION 1
+#define VK_NV_WIN32_KEYED_MUTEX_SPEC_VERSION 2
 #define VK_NV_WIN32_KEYED_MUTEX_EXTENSION_NAME "VK_NV_win32_keyed_mutex"
 typedef struct VkWin32KeyedMutexAcquireReleaseInfoNV {
     VkStructureType          sType;
@@ -264,7 +264,7 @@ typedef struct VkWin32KeyedMutexAcquireReleaseInfoNV {
 
 
 #define VK_EXT_full_screen_exclusive 1
-#define VK_EXT_FULL_SCREEN_EXCLUSIVE_SPEC_VERSION 3
+#define VK_EXT_FULL_SCREEN_EXCLUSIVE_SPEC_VERSION 4
 #define VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME "VK_EXT_full_screen_exclusive"
 
 typedef enum VkFullScreenExclusiveEXT {
