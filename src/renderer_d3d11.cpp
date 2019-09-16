@@ -4464,11 +4464,14 @@ namespace bgfx { namespace d3d11
 
 	void TextureD3D11::overrideInternal(uintptr_t _ptr)
 	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+		m_srv->GetDesc(&srvDesc);
+
 		destroy();
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_ptr = (ID3D11Resource*)_ptr;
 
-		s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, NULL, &m_srv);
+		s_renderD3D11->m_device->CreateShaderResourceView(m_ptr, &srvDesc, &m_srv);
 	}
 
 	void TextureD3D11::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
@@ -4879,7 +4882,9 @@ namespace bgfx { namespace d3d11
 							break;
 						}
 
-						DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(texture.m_ptr, NULL, &m_srv[m_num]) );
+						D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+						texture.m_srv->GetDesc(&srvDesc);
+						DX_CHECK(s_renderD3D11->m_device->CreateShaderResourceView(texture.m_ptr, &srvDesc, &m_srv[m_num]));
 						m_num++;
 					}
 					else
