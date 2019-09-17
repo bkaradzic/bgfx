@@ -5933,6 +5933,8 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 
 	void FrameBufferGL::create(uint8_t _num, const Attachment* _attachment)
 	{
+		s_renderGL->m_glctx.makeCurrent(NULL);
+
 		GL_CHECK(glGenFramebuffers(1, &m_fbo[0]) );
 
 		m_denseIdx = UINT16_MAX;
