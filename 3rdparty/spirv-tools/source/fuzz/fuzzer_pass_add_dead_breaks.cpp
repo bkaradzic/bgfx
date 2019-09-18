@@ -51,8 +51,7 @@ void FuzzerPassAddDeadBreaks::Apply() {
         //  merge blocks.  This will lead to interesting opportunities being
         //  missed.
         auto candidate_transformation = TransformationAddDeadBreak(
-            block.id(), merge_block_id,
-            GetFuzzerContext()->GetRandomGenerator()->RandomBool(), {});
+            block.id(), merge_block_id, GetFuzzerContext()->ChooseEven(), {});
         if (candidate_transformation.IsApplicable(GetIRContext(),
                                                   *GetFactManager())) {
           // Only consider a transformation as a candidate if it is applicable.
@@ -77,16 +76,15 @@ void FuzzerPassAddDeadBreaks::Apply() {
   while (!candidate_transformations.empty()) {
     // Choose a random index into the sequence of remaining candidate
     // transformations.
-    auto index = GetFuzzerContext()->GetRandomGenerator()->RandomUint32(
-        static_cast<uint32_t>(candidate_transformations.size()));
+    auto index = GetFuzzerContext()->RandomIndex(candidate_transformations);
     // Remove the transformation at the chosen index from the sequence.
     auto transformation = std::move(candidate_transformations[index]);
     candidate_transformations.erase(candidate_transformations.begin() + index);
     // Probabilistically decide whether to try to apply it vs. ignore it, in the
     // case that it is applicable.
     if (transformation.IsApplicable(GetIRContext(), *GetFactManager()) &&
-        GetFuzzerContext()->GetRandomGenerator()->RandomPercentage() >
-            GetFuzzerContext()->GetChanceOfAddingDeadBreak()) {
+        GetFuzzerContext()->ChoosePercentage(
+            GetFuzzerContext()->GetChanceOfAddingDeadBreak())) {
       transformation.Apply(GetIRContext(), GetFactManager());
       *GetTransformations()->add_transformation() = transformation.ToMessage();
     }

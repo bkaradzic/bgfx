@@ -328,7 +328,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 using OpConstantInvalidTypeTest =
     spvtest::TextToBinaryTestBase<::testing::TestWithParam<std::string>>;
-
 TEST_P(OpConstantInvalidTypeTest, InvalidTypes) {
   const std::string input = "%1 = " + GetParam() +
                             "\n"
@@ -360,8 +359,11 @@ INSTANTIATE_TEST_SUITE_P(
        "OpTypeReserveId",
        "OpTypeQueue",
        "OpTypePipe ReadOnly",
-       "OpTypeForwardPointer %a UniformConstant",
-        // At least one thing that isn't a type at all
+
+       // Skip OpTypeForwardPointer doesn't even produce a result ID.
+       // The assembler errors out if we try to check it in this scenario.
+
+       // Try at least one thing that isn't a type at all
        "OpNot %a %b"
       },
     }));
@@ -470,8 +472,10 @@ INSTANTIATE_TEST_SUITE_P(
        "OpTypeReserveId",
        "OpTypeQueue",
        "OpTypePipe ReadOnly",
-       "OpTypeForwardPointer %a UniformConstant",
-        // At least one thing that isn't a type at all
+
+       // Skip testing OpTypeForwardPointer because it doesn't even produce a result ID.
+
+       // Try at least one thing that isn't a type at all
        "OpNot %a %b"
       },
     }));

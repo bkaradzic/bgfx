@@ -206,7 +206,7 @@ TEST_F(SimplificationTest, CopyObjectWithDecorations1) {
   // Don't simplify OpCopyObject if the result id has a decoration that the
   // operand does not.
   const std::string text = R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
+OpCapability ShaderNonUniform
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %2 "main"
@@ -214,7 +214,7 @@ OpExecutionMode %2 OriginUpperLeft
 OpSource GLSL 430
 OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
 OpSourceExtension "GL_GOOGLE_include_directive"
-OpDecorate %3 NonUniformEXT
+OpDecorate %3 NonUniform
 %void = OpTypeVoid
 %5 = OpTypeFunction %void
 %int = OpTypeInt 32 1
@@ -234,7 +234,7 @@ TEST_F(SimplificationTest, CopyObjectWithDecorations2) {
   // Simplify OpCopyObject if the result id is a subset of the decorations of
   // the operand.
   const std::string before = R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
+OpCapability ShaderNonUniform
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %2 "main"
@@ -242,7 +242,7 @@ OpExecutionMode %2 OriginUpperLeft
 OpSource GLSL 430
 OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
 OpSourceExtension "GL_GOOGLE_include_directive"
-OpDecorate %3 NonUniformEXT
+OpDecorate %3 NonUniform
 %void = OpTypeVoid
 %5 = OpTypeFunction %void
 %int = OpTypeInt 32 1
@@ -256,7 +256,7 @@ OpFunctionEnd
 )";
 
   const std::string after = R"(OpCapability Shader
-OpCapability ShaderNonUniformEXT
+OpCapability ShaderNonUniform
 %1 = OpExtInstImport "GLSL.std.450"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %2 "main"
@@ -264,7 +264,7 @@ OpExecutionMode %2 OriginUpperLeft
 OpSource GLSL 430
 OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
 OpSourceExtension "GL_GOOGLE_include_directive"
-OpDecorate %3 NonUniformEXT
+OpDecorate %3 NonUniform
 %void = OpTypeVoid
 %5 = OpTypeFunction %void
 %int = OpTypeInt 32 1

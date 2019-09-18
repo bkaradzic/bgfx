@@ -57,8 +57,8 @@ void FuzzerPassPermuteBlocks::Apply() {
     // would provide more freedom for A to move.
     for (auto id = block_ids.rbegin(); id != block_ids.rend(); ++id) {
       // Randomly decide whether to ignore the block id.
-      if (GetFuzzerContext()->GetRandomGenerator()->RandomPercentage() >
-          GetFuzzerContext()->GetChanceOfMovingBlockDown()) {
+      if (!GetFuzzerContext()->ChoosePercentage(
+              GetFuzzerContext()->GetChanceOfMovingBlockDown())) {
         continue;
       }
       // Keep pushing the block down, until pushing down fails.

@@ -84,6 +84,7 @@ spv_result_t spvExtInstTableGet(spv_ext_inst_table* pExtInstTable,
     case SPV_ENV_VULKAN_1_1_SPIRV_1_4:
     case SPV_ENV_WEBGPU_0:
     case SPV_ENV_UNIVERSAL_1_4:
+    case SPV_ENV_UNIVERSAL_1_5:
       *pExtInstTable = &kTable_1_0;
       return SPV_SUCCESS;
     default:

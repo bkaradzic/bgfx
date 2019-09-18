@@ -1029,6 +1029,226 @@ TEST(TransformationAddDeadContinueTest, PhiInstructions) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
+TEST(TransformationAddDeadContinueTest, RespectDominanceRules1) {
+  // Checks that a dead continue cannot be added if it would prevent a block
+  // later in the loop from dominating the loop's continue construct, in the
+  // case where said block defines and id that is used in the loop's continue
+  // construct.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %6
+          %6 = OpLabel
+               OpLoopMerge %8 %9 None
+               OpBranch %7
+          %7 = OpLabel
+         %21 = OpCopyObject %10 %11
+               OpBranch %9
+          %9 = OpLabel
+         %20 = OpPhi %10 %21 %7
+               OpBranchConditional %11 %6 %8
+          %8 = OpLabel
+               OpBranch %12
+         %12 = OpLabel
+               OpLoopMerge %14 %15 None
+               OpBranch %13
+         %13 = OpLabel
+               OpBranch %22
+         %22 = OpLabel
+         %23 = OpCopyObject %10 %11
+               OpBranch %25
+         %25 = OpLabel
+               OpBranch %15
+         %15 = OpLabel
+         %26 = OpCopyObject %10 %23
+               OpBranchConditional %11 %12 %14
+         %14 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation is not applicable because the dead continue from the
+  // loop body prevents the definition of %23 later in the loop body from
+  // dominating its use in the loop's continue target.
+  auto bad_transformation = TransformationAddDeadContinue(13, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+
+  auto good_transformation_1 = TransformationAddDeadContinue(7, false, {});
+  ASSERT_TRUE(good_transformation_1.IsApplicable(context.get(), fact_manager));
+  good_transformation_1.Apply(context.get(), &fact_manager);
+
+  auto good_transformation_2 = TransformationAddDeadContinue(22, false, {});
+  ASSERT_TRUE(good_transformation_2.IsApplicable(context.get(), fact_manager));
+  good_transformation_2.Apply(context.get(), &fact_manager);
+
+  // This transformation is OK, because the definition of %21 in the loop body
+  // is only used in an OpPhi in the loop's continue target.
+  auto good_transformation_3 = TransformationAddDeadContinue(6, false, {11});
+  ASSERT_TRUE(good_transformation_3.IsApplicable(context.get(), fact_manager));
+  good_transformation_3.Apply(context.get(), &fact_manager);
+
+  std::string after_transformations = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %6
+          %6 = OpLabel
+               OpLoopMerge %8 %9 None
+               OpBranchConditional %11 %9 %7
+          %7 = OpLabel
+         %21 = OpCopyObject %10 %11
+               OpBranchConditional %11 %9 %9
+          %9 = OpLabel
+         %20 = OpPhi %10 %21 %7 %11 %6
+               OpBranchConditional %11 %6 %8
+          %8 = OpLabel
+               OpBranch %12
+         %12 = OpLabel
+               OpLoopMerge %14 %15 None
+               OpBranch %13
+         %13 = OpLabel
+               OpBranch %22
+         %22 = OpLabel
+         %23 = OpCopyObject %10 %11
+               OpBranchConditional %11 %15 %25
+         %25 = OpLabel
+               OpBranch %15
+         %15 = OpLabel
+         %26 = OpCopyObject %10 %23
+               OpBranchConditional %11 %12 %14
+         %14 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  ASSERT_TRUE(IsEqual(env, after_transformations, context.get()));
+}
+
+TEST(TransformationAddDeadContinueTest, RespectDominanceRules2) {
+  // Checks that a dead continue cannot be added if it would lead to a use after
+  // the loop failing to be dominated by its definition.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %102 None
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %104
+        %104 = OpLabel
+               OpBranch %102
+        %102 = OpLabel
+               OpBranchConditional %11 %100 %101
+        %101 = OpLabel
+        %201 = OpCopyObject %10 %200
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation would shortcut the part of the loop body that defines
+  // an id used after the loop.
+  auto bad_transformation = TransformationAddDeadContinue(100, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, RespectDominanceRules3) {
+  // Checks that a dead continue cannot be added if it would lead to a dominance
+  // problem with an id used in an OpPhi after the loop.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %10 = OpTypeBool
+         %11 = OpConstantFalse %10
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+               OpLoopMerge %101 %102 None
+               OpBranch %103
+        %103 = OpLabel
+        %200 = OpCopyObject %10 %11
+               OpBranch %104
+        %104 = OpLabel
+               OpBranch %102
+        %102 = OpLabel
+               OpBranchConditional %11 %100 %101
+        %101 = OpLabel
+        %201 = OpPhi %10 %200 %102
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation would shortcut the part of the loop body that defines
+  // an id used after the loop.
+  auto bad_transformation = TransformationAddDeadContinue(100, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

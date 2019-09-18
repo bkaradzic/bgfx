@@ -1157,7 +1157,7 @@ OpDecorate %MyCBuffer Binding 0
 OpStore %23 %35
 %36 = OpAccessChain %_ptr_Function_v4float %23 %24
 %37 = OpLoad %v4float %36
-%39 = OpStore %36 %v4const
+      OpStore %36 %v4const
 OpStore %out_var_SV_Target %37
 OpReturn
 OpFunctionEnd

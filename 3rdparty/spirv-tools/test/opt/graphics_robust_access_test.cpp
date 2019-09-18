@@ -90,7 +90,7 @@ OpMemoryModel Physical64 OpenCL
 TEST_F(GraphicsRobustAccessTest,
        FailCantProcessPhysicalStorageBuffer64EXTAddressingModel) {
   const std::string text = R"(
-; CHECK: Addressing model must be Logical.  Found OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+; CHECK: Addressing model must be Logical.  Found OpMemoryModel PhysicalStorageBuffer64 GLSL450
 OpCapability Shader
 OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
 )";

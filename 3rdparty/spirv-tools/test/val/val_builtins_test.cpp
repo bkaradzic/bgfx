@@ -2330,9 +2330,9 @@ OpDecorate %copy BuiltIn WorkgroupSize
 
   CompileSuccessfully(generator.Build(), SPV_ENV_VULKAN_1_0);
   ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_VULKAN_1_0));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Vulkan spec requires BuiltIn WorkgroupSize to be a "
-                        "constant. ID <2> (OpCopyObject) is not a constant"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("BuiltIns can only target variables, structs or constants"));
 }
 
 CodeGenerator GetWorkgroupSizeNotVectorGenerator(spv_target_env env) {
@@ -3300,6 +3300,78 @@ OpFunctionEnd
   EXPECT_THAT(
       getDiagnosticString(),
       HasSubstr("BuiltIn SubgroupId cannot be used as a member decoration"));
+}
+
+TEST_F(ValidateBuiltIns, TargetIsType) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %void BuiltIn Position
+%void = OpTypeVoid
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("BuiltIns can only target variables, structs or constants"));
+}
+
+TEST_F(ValidateBuiltIns, TargetIsVariable) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %wg_var BuiltIn Position
+%int = OpTypeInt 32 0
+%int_wg_ptr = OpTypePointer Workgroup %int
+%wg_var = OpVariable %int_wg_ptr Workgroup
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateBuiltIns, TargetIsStruct) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %struct BuiltIn Position
+%struct = OpTypeStruct
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateBuiltIns, TargetIsConstant) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %int0 BuiltIn Position
+%int = OpTypeInt 32 0
+%int0 = OpConstant %int 0
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
+}
+
+TEST_F(ValidateBuiltIns, TargetIsSpecConstant) {
+  const std::string text = R"(
+OpCapability Shader
+OpCapability Linkage
+OpMemoryModel Logical GLSL450
+OpDecorate %int0 BuiltIn Position
+%int = OpTypeInt 32 0
+%int0 = OpSpecConstant %int 0
+)";
+
+  CompileSuccessfully(text);
+  EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
 }  // namespace

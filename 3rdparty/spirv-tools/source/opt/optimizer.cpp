@@ -715,7 +715,7 @@ Optimizer::PassToken CreateDeadBranchElimPass() {
 
 Optimizer::PassToken CreateLocalMultiStoreElimPass() {
   return MakeUnique<Optimizer::PassToken::Impl>(
-      MakeUnique<opt::LocalMultiStoreElimPass>());
+      MakeUnique<opt::SSARewritePass>());
 }
 
 Optimizer::PassToken CreateAggressiveDCEPass() {

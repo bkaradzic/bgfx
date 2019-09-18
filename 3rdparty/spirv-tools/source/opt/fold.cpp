@@ -646,6 +646,9 @@ Instruction* InstructionFolder::FoldInstructionToConstant(
     if (folded_const != nullptr) {
       Instruction* const_inst =
           const_mgr->GetDefiningInstruction(folded_const, inst->type_id());
+      if (const_inst == nullptr) {
+        return nullptr;
+      }
       assert(const_inst->type_id() == inst->type_id());
       // May be a new instruction that needs to be analysed.
       context_->UpdateDefUse(const_inst);

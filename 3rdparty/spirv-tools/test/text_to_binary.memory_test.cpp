@@ -212,7 +212,7 @@ TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessNontemporalGood) {
 }
 
 TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessAvGood) {
-  std::string spirv = "OpCopyMemory %1 %2 MakePointerAvailableKHR %3\n";
+  std::string spirv = "OpCopyMemory %1 %2 MakePointerAvailable %3\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemory, {1, 2, 8, 3})));
   std::string disassembly =
@@ -221,7 +221,7 @@ TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessAvGood) {
 }
 
 TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessVisGood) {
-  std::string spirv = "OpCopyMemory %1 %2 MakePointerVisibleKHR %3\n";
+  std::string spirv = "OpCopyMemory %1 %2 MakePointerVisible %3\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemory, {1, 2, 16, 3})));
   std::string disassembly =
@@ -230,7 +230,7 @@ TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessVisGood) {
 }
 
 TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessNonPrivateGood) {
-  std::string spirv = "OpCopyMemory %1 %2 NonPrivatePointerKHR\n";
+  std::string spirv = "OpCopyMemory %1 %2 NonPrivatePointer\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemory, {1, 2, 32})));
   std::string disassembly =
@@ -241,8 +241,8 @@ TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessNonPrivateGood) {
 TEST_F(MemoryRoundTripTest, OpCopyMemoryAccessMixedGood) {
   std::string spirv =
       "OpCopyMemory %1 %2 "
-      "Volatile|Aligned|Nontemporal|MakePointerAvailableKHR|"
-      "MakePointerVisibleKHR|NonPrivatePointerKHR 16 %3 %4\n";
+      "Volatile|Aligned|Nontemporal|MakePointerAvailable|"
+      "MakePointerVisible|NonPrivatePointer 16 %3 %4\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemory, {1, 2, 63, 16, 3, 4})));
   std::string disassembly =
@@ -272,8 +272,8 @@ TEST_F(MemoryRoundTripTest, OpCopyMemoryTwoAccessV14Good) {
 TEST_F(MemoryRoundTripTest, OpCopyMemoryTwoAccessMixedV14Good) {
   std::string spirv =
       "OpCopyMemory %1 %2 Volatile|Nontemporal|"
-      "MakePointerVisibleKHR %3 "
-      "Aligned|MakePointerAvailableKHR|NonPrivatePointerKHR 16 %4\n";
+      "MakePointerVisible %3 "
+      "Aligned|MakePointerAvailable|NonPrivatePointer 16 %4\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemory, {1, 2, 21, 3, 42, 16, 4})));
   std::string disassembly =
@@ -341,7 +341,7 @@ TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessNontemporalGood) {
 }
 
 TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessAvGood) {
-  std::string spirv = "OpCopyMemorySized %1 %2 %3 MakePointerAvailableKHR %4\n";
+  std::string spirv = "OpCopyMemorySized %1 %2 %3 MakePointerAvailable %4\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemorySized, {1, 2, 3, 8, 4})));
   std::string disassembly =
@@ -350,7 +350,7 @@ TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessAvGood) {
 }
 
 TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessVisGood) {
-  std::string spirv = "OpCopyMemorySized %1 %2 %3 MakePointerVisibleKHR %4\n";
+  std::string spirv = "OpCopyMemorySized %1 %2 %3 MakePointerVisible %4\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemorySized, {1, 2, 3, 16, 4})));
   std::string disassembly =
@@ -359,7 +359,7 @@ TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessVisGood) {
 }
 
 TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessNonPrivateGood) {
-  std::string spirv = "OpCopyMemorySized %1 %2 %3 NonPrivatePointerKHR\n";
+  std::string spirv = "OpCopyMemorySized %1 %2 %3 NonPrivatePointer\n";
   EXPECT_THAT(CompiledInstructions(spirv),
               Eq(MakeInstruction(SpvOpCopyMemorySized, {1, 2, 3, 32})));
   std::string disassembly =
@@ -370,8 +370,8 @@ TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessNonPrivateGood) {
 TEST_F(MemoryRoundTripTest, OpCopyMemorySizedAccessMixedGood) {
   std::string spirv =
       "OpCopyMemorySized %1 %2 %3 "
-      "Volatile|Aligned|Nontemporal|MakePointerAvailableKHR|"
-      "MakePointerVisibleKHR|NonPrivatePointerKHR 16 %4 %5\n";
+      "Volatile|Aligned|Nontemporal|MakePointerAvailable|"
+      "MakePointerVisible|NonPrivatePointer 16 %4 %5\n";
   EXPECT_THAT(
       CompiledInstructions(spirv),
       Eq(MakeInstruction(SpvOpCopyMemorySized, {1, 2, 3, 63, 16, 4, 5})));
@@ -402,8 +402,8 @@ TEST_F(MemoryRoundTripTest, OpCopyMemorySizedTwoAccessV14Good) {
 TEST_F(MemoryRoundTripTest, OpCopyMemorySizedTwoAccessMixedV14Good) {
   std::string spirv =
       "OpCopyMemorySized %1 %2 %3 Volatile|Nontemporal|"
-      "MakePointerVisibleKHR %4 "
-      "Aligned|MakePointerAvailableKHR|NonPrivatePointerKHR 16 %5\n";
+      "MakePointerVisible %4 "
+      "Aligned|MakePointerAvailable|NonPrivatePointer 16 %5\n";
   EXPECT_THAT(
       CompiledInstructions(spirv),
       Eq(MakeInstruction(SpvOpCopyMemorySized, {1, 2, 3, 21, 4, 42, 16, 5})));

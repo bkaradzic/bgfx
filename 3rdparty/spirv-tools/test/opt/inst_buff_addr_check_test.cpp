@@ -51,10 +51,10 @@ TEST_F(InstBuffAddrTest, InstPhysicalStorageBufferStore) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability PhysicalStorageBufferAddresses
 OpExtension "SPV_EXT_physical_storage_buffer"
 %1 = OpExtInstImport "GLSL.std.450"
-OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
 OpEntryPoint GLCompute %main "main"
 OpExecutionMode %main LocalSize 1 1 1
 OpSource GLSL 450
@@ -78,31 +78,31 @@ OpDecorate %u_info DescriptorSet 0
 OpDecorate %u_info Binding 0
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
-OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_bufStruct PhysicalStorageBufferEXT
+OpTypeForwardPointer %_ptr_PhysicalStorageBuffer_bufStruct PhysicalStorageBuffer
 %uint = OpTypeInt 32 0
-%ufoo = OpTypeStruct %_ptr_PhysicalStorageBufferEXT_bufStruct %uint
+%ufoo = OpTypeStruct %_ptr_PhysicalStorageBuffer_bufStruct %uint
 %int = OpTypeInt 32 1
 %uint_2 = OpConstant %uint 2
 %_arr_int_uint_2 = OpTypeArray %int %uint_2
 %bufStruct = OpTypeStruct %_arr_int_uint_2 %int
-%_ptr_PhysicalStorageBufferEXT_bufStruct = OpTypePointer PhysicalStorageBufferEXT %bufStruct
+%_ptr_PhysicalStorageBuffer_bufStruct = OpTypePointer PhysicalStorageBuffer %bufStruct
 %_ptr_Uniform_ufoo = OpTypePointer Uniform %ufoo
 %u_info = OpVariable %_ptr_Uniform_ufoo Uniform
 %int_0 = OpConstant %int 0
-%_ptr_Uniform__ptr_PhysicalStorageBufferEXT_bufStruct = OpTypePointer Uniform %_ptr_PhysicalStorageBufferEXT_bufStruct
+%_ptr_Uniform__ptr_PhysicalStorageBuffer_bufStruct = OpTypePointer Uniform %_ptr_PhysicalStorageBuffer_bufStruct
 %int_1 = OpConstant %int 1
 %int_3239 = OpConstant %int 3239
-%_ptr_PhysicalStorageBufferEXT_int = OpTypePointer PhysicalStorageBufferEXT %int
+%_ptr_PhysicalStorageBuffer_int = OpTypePointer PhysicalStorageBuffer %int
 )";
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability PhysicalStorageBufferAddresses
 OpCapability Int64
 OpExtension "SPV_EXT_physical_storage_buffer"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
-OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
 OpEntryPoint GLCompute %main "main" %gl_GlobalInvocationID
 OpExecutionMode %main LocalSize 1 1 1
 OpSource GLSL 450
@@ -138,21 +138,21 @@ OpDecorate %79 Binding 0
 OpDecorate %gl_GlobalInvocationID BuiltIn GlobalInvocationId
 %void = OpTypeVoid
 %8 = OpTypeFunction %void
-OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_bufStruct PhysicalStorageBufferEXT
+OpTypeForwardPointer %_ptr_PhysicalStorageBuffer_bufStruct PhysicalStorageBuffer
 %uint = OpTypeInt 32 0
-%ufoo = OpTypeStruct %_ptr_PhysicalStorageBufferEXT_bufStruct %uint
+%ufoo = OpTypeStruct %_ptr_PhysicalStorageBuffer_bufStruct %uint
 %int = OpTypeInt 32 1
 %uint_2 = OpConstant %uint 2
 %_arr_int_uint_2 = OpTypeArray %int %uint_2
 %bufStruct = OpTypeStruct %_arr_int_uint_2 %int
-%_ptr_PhysicalStorageBufferEXT_bufStruct = OpTypePointer PhysicalStorageBufferEXT %bufStruct
+%_ptr_PhysicalStorageBuffer_bufStruct = OpTypePointer PhysicalStorageBuffer %bufStruct
 %_ptr_Uniform_ufoo = OpTypePointer Uniform %ufoo
 %u_info = OpVariable %_ptr_Uniform_ufoo Uniform
 %int_0 = OpConstant %int 0
-%_ptr_Uniform__ptr_PhysicalStorageBufferEXT_bufStruct = OpTypePointer Uniform %_ptr_PhysicalStorageBufferEXT_bufStruct
+%_ptr_Uniform__ptr_PhysicalStorageBuffer_bufStruct = OpTypePointer Uniform %_ptr_PhysicalStorageBuffer_bufStruct
 %int_1 = OpConstant %int 1
 %int_3239 = OpConstant %int 3239
-%_ptr_PhysicalStorageBufferEXT_int = OpTypePointer PhysicalStorageBufferEXT %int
+%_ptr_PhysicalStorageBuffer_int = OpTypePointer PhysicalStorageBuffer %int
 %ulong = OpTypeInt 64 0
 %uint_4 = OpConstant %uint 4
 %bool = OpTypeBool
@@ -188,9 +188,9 @@ OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_bufStruct PhysicalStorageBuf
   const std::string func_before =
       R"(%main = OpFunction %void None %3
 %5 = OpLabel
-%17 = OpAccessChain %_ptr_Uniform__ptr_PhysicalStorageBufferEXT_bufStruct %u_info %int_0
-%18 = OpLoad %_ptr_PhysicalStorageBufferEXT_bufStruct %17
-%22 = OpAccessChain %_ptr_PhysicalStorageBufferEXT_int %18 %int_1
+%17 = OpAccessChain %_ptr_Uniform__ptr_PhysicalStorageBuffer_bufStruct %u_info %int_0
+%18 = OpLoad %_ptr_PhysicalStorageBuffer_bufStruct %17
+%22 = OpAccessChain %_ptr_PhysicalStorageBuffer_int %18 %int_1
 OpStore %22 %int_3239 Aligned 16
 OpReturn
 OpFunctionEnd
@@ -199,9 +199,9 @@ OpFunctionEnd
   const std::string func_after =
       R"(%main = OpFunction %void None %8
 %19 = OpLabel
-%20 = OpAccessChain %_ptr_Uniform__ptr_PhysicalStorageBufferEXT_bufStruct %u_info %int_0
-%21 = OpLoad %_ptr_PhysicalStorageBufferEXT_bufStruct %20
-%22 = OpAccessChain %_ptr_PhysicalStorageBufferEXT_int %21 %int_1
+%20 = OpAccessChain %_ptr_Uniform__ptr_PhysicalStorageBuffer_bufStruct %u_info %int_0
+%21 = OpLoad %_ptr_PhysicalStorageBuffer_bufStruct %20
+%22 = OpAccessChain %_ptr_PhysicalStorageBuffer_int %21 %int_1
 %24 = OpConvertPtrToU %ulong %22
 %61 = OpFunctionCall %bool %26 %24 %uint_4
 OpSelectionMerge %62 None
@@ -339,11 +339,11 @@ TEST_F(InstBuffAddrTest, InstPhysicalStorageBufferLoadAndStore) {
 
   const std::string defs_before =
       R"(OpCapability Shader
-OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability PhysicalStorageBufferAddresses
 OpExtension "SPV_EXT_physical_storage_buffer"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
-OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
 OpEntryPoint GLCompute %main "main"
 OpExecutionMode %main LocalSize 1 1 1
 OpSource GLSL 450
@@ -364,29 +364,29 @@ OpDecorate %r DescriptorSet 0
 OpDecorate %r Binding 0
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
-OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_blockType PhysicalStorageBufferEXT
+OpTypeForwardPointer %_ptr_PhysicalStorageBuffer_blockType PhysicalStorageBuffer
 %int = OpTypeInt 32 1
-%blockType = OpTypeStruct %int %_ptr_PhysicalStorageBufferEXT_blockType
-%_ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %blockType
-%rootBlock = OpTypeStruct %_ptr_PhysicalStorageBufferEXT_blockType
+%blockType = OpTypeStruct %int %_ptr_PhysicalStorageBuffer_blockType
+%_ptr_PhysicalStorageBuffer_blockType = OpTypePointer PhysicalStorageBuffer %blockType
+%rootBlock = OpTypeStruct %_ptr_PhysicalStorageBuffer_blockType
 %_ptr_StorageBuffer_rootBlock = OpTypePointer StorageBuffer %rootBlock
 %r = OpVariable %_ptr_StorageBuffer_rootBlock StorageBuffer
 %int_0 = OpConstant %int 0
-%_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer StorageBuffer %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_StorageBuffer__ptr_PhysicalStorageBuffer_blockType = OpTypePointer StorageBuffer %_ptr_PhysicalStorageBuffer_blockType
 %int_1 = OpConstant %int 1
-%_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_blockType = OpTypePointer PhysicalStorageBuffer %_ptr_PhysicalStorageBuffer_blockType
 %int_531 = OpConstant %int 531
-%_ptr_PhysicalStorageBufferEXT_int = OpTypePointer PhysicalStorageBufferEXT %int
+%_ptr_PhysicalStorageBuffer_int = OpTypePointer PhysicalStorageBuffer %int
 )";
 
   const std::string defs_after =
       R"(OpCapability Shader
-OpCapability PhysicalStorageBufferAddressesEXT
+OpCapability PhysicalStorageBufferAddresses
 OpCapability Int64
 OpExtension "SPV_EXT_physical_storage_buffer"
 OpExtension "SPV_KHR_storage_buffer_storage_class"
 %1 = OpExtInstImport "GLSL.std.450"
-OpMemoryModel PhysicalStorageBuffer64EXT GLSL450
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
 OpEntryPoint GLCompute %main "main" %gl_GlobalInvocationID
 OpExecutionMode %main LocalSize 1 1 1
 OpSource GLSL 450
@@ -419,19 +419,19 @@ OpDecorate %86 Binding 0
 OpDecorate %gl_GlobalInvocationID BuiltIn GlobalInvocationId
 %void = OpTypeVoid
 %3 = OpTypeFunction %void
-OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_blockType PhysicalStorageBufferEXT
+OpTypeForwardPointer %_ptr_PhysicalStorageBuffer_blockType PhysicalStorageBuffer
 %int = OpTypeInt 32 1
-%blockType = OpTypeStruct %int %_ptr_PhysicalStorageBufferEXT_blockType
-%_ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %blockType
-%rootBlock = OpTypeStruct %_ptr_PhysicalStorageBufferEXT_blockType
+%blockType = OpTypeStruct %int %_ptr_PhysicalStorageBuffer_blockType
+%_ptr_PhysicalStorageBuffer_blockType = OpTypePointer PhysicalStorageBuffer %blockType
+%rootBlock = OpTypeStruct %_ptr_PhysicalStorageBuffer_blockType
 %_ptr_StorageBuffer_rootBlock = OpTypePointer StorageBuffer %rootBlock
 %r = OpVariable %_ptr_StorageBuffer_rootBlock StorageBuffer
 %int_0 = OpConstant %int 0
-%_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer StorageBuffer %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_StorageBuffer__ptr_PhysicalStorageBuffer_blockType = OpTypePointer StorageBuffer %_ptr_PhysicalStorageBuffer_blockType
 %int_1 = OpConstant %int 1
-%_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType = OpTypePointer PhysicalStorageBufferEXT %_ptr_PhysicalStorageBufferEXT_blockType
+%_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_blockType = OpTypePointer PhysicalStorageBuffer %_ptr_PhysicalStorageBuffer_blockType
 %int_531 = OpConstant %int 531
-%_ptr_PhysicalStorageBufferEXT_int = OpTypePointer PhysicalStorageBufferEXT %int
+%_ptr_PhysicalStorageBuffer_int = OpTypePointer PhysicalStorageBuffer %int
 %uint = OpTypeInt 32 0
 %uint_2 = OpConstant %uint 2
 %ulong = OpTypeInt 64 0
@@ -464,18 +464,18 @@ OpTypeForwardPointer %_ptr_PhysicalStorageBufferEXT_blockType PhysicalStorageBuf
 %uint_7 = OpConstant %uint 7
 %uint_9 = OpConstant %uint 9
 %uint_44 = OpConstant %uint 44
-%132 = OpConstantNull %_ptr_PhysicalStorageBufferEXT_blockType
+%132 = OpConstantNull %_ptr_PhysicalStorageBuffer_blockType
 %uint_46 = OpConstant %uint 46
 )";
 
   const std::string func_before =
       R"(%main = OpFunction %void None %3
 %5 = OpLabel
-%16 = OpAccessChain %_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType %r %int_0
-%17 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %16
-%21 = OpAccessChain %_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType %17 %int_1
-%22 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %21 Aligned 8
-%26 = OpAccessChain %_ptr_PhysicalStorageBufferEXT_int %22 %int_0
+%16 = OpAccessChain %_ptr_StorageBuffer__ptr_PhysicalStorageBuffer_blockType %r %int_0
+%17 = OpLoad %_ptr_PhysicalStorageBuffer_blockType %16
+%21 = OpAccessChain %_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_blockType %17 %int_1
+%22 = OpLoad %_ptr_PhysicalStorageBuffer_blockType %21 Aligned 8
+%26 = OpAccessChain %_ptr_PhysicalStorageBuffer_int %22 %int_0
 OpStore %26 %int_531 Aligned 16
 OpReturn
 OpFunctionEnd
@@ -484,15 +484,15 @@ OpFunctionEnd
   const std::string func_after =
       R"(%main = OpFunction %void None %3
 %5 = OpLabel
-%16 = OpAccessChain %_ptr_StorageBuffer__ptr_PhysicalStorageBufferEXT_blockType %r %int_0
-%17 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %16
-%21 = OpAccessChain %_ptr_PhysicalStorageBufferEXT__ptr_PhysicalStorageBufferEXT_blockType %17 %int_1
+%16 = OpAccessChain %_ptr_StorageBuffer__ptr_PhysicalStorageBuffer_blockType %r %int_0
+%17 = OpLoad %_ptr_PhysicalStorageBuffer_blockType %16
+%21 = OpAccessChain %_ptr_PhysicalStorageBuffer__ptr_PhysicalStorageBuffer_blockType %17 %int_1
 %30 = OpConvertPtrToU %ulong %21
 %67 = OpFunctionCall %bool %32 %30 %uint_8
 OpSelectionMerge %68 None
 OpBranchConditional %67 %69 %70
 %69 = OpLabel
-%71 = OpLoad %_ptr_PhysicalStorageBufferEXT_blockType %21 Aligned 8
+%71 = OpLoad %_ptr_PhysicalStorageBuffer_blockType %21 Aligned 8
 OpBranch %68
 %70 = OpLabel
 %72 = OpUConvert %uint %30
@@ -501,8 +501,8 @@ OpBranch %68
 %131 = OpFunctionCall %void %76 %uint_44 %uint_2 %72 %75
 OpBranch %68
 %68 = OpLabel
-%133 = OpPhi %_ptr_PhysicalStorageBufferEXT_blockType %71 %69 %132 %70
-%26 = OpAccessChain %_ptr_PhysicalStorageBufferEXT_int %133 %int_0
+%133 = OpPhi %_ptr_PhysicalStorageBuffer_blockType %71 %69 %132 %70
+%26 = OpAccessChain %_ptr_PhysicalStorageBuffer_int %133 %int_0
 %134 = OpConvertPtrToU %ulong %26
 %135 = OpFunctionCall %bool %32 %134 %uint_4
 OpSelectionMerge %136 None

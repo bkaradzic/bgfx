@@ -217,7 +217,7 @@ void DumpShader(spvtools::opt::IRContext* context, const char* filename) {
   DumpShader(binary, filename);
 }
 
-const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_4;
+const auto kDefaultEnvironment = SPV_ENV_UNIVERSAL_1_5;
 
 int main(int argc, const char** argv) {
   const char* in_file = nullptr;

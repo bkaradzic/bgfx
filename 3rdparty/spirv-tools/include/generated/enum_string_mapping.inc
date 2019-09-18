@@ -268,6 +268,10 @@ const char* CapabilityToString(SpvCapability capability) {
       return "GroupNonUniformClustered";
     case SpvCapabilityGroupNonUniformQuad:
       return "GroupNonUniformQuad";
+    case SpvCapabilityShaderLayer:
+      return "ShaderLayer";
+    case SpvCapabilityShaderViewportIndex:
+      return "ShaderViewportIndex";
     case SpvCapabilitySubgroupBallotKHR:
       return "SubgroupBallotKHR";
     case SpvCapabilityDrawParameters:
@@ -348,38 +352,38 @@ const char* CapabilityToString(SpvCapability capability) {
       return "FragmentDensityEXT";
     case SpvCapabilityGroupNonUniformPartitionedNV:
       return "GroupNonUniformPartitionedNV";
-    case SpvCapabilityShaderNonUniformEXT:
-      return "ShaderNonUniformEXT";
-    case SpvCapabilityRuntimeDescriptorArrayEXT:
-      return "RuntimeDescriptorArrayEXT";
-    case SpvCapabilityInputAttachmentArrayDynamicIndexingEXT:
-      return "InputAttachmentArrayDynamicIndexingEXT";
-    case SpvCapabilityUniformTexelBufferArrayDynamicIndexingEXT:
-      return "UniformTexelBufferArrayDynamicIndexingEXT";
-    case SpvCapabilityStorageTexelBufferArrayDynamicIndexingEXT:
-      return "StorageTexelBufferArrayDynamicIndexingEXT";
-    case SpvCapabilityUniformBufferArrayNonUniformIndexingEXT:
-      return "UniformBufferArrayNonUniformIndexingEXT";
-    case SpvCapabilitySampledImageArrayNonUniformIndexingEXT:
-      return "SampledImageArrayNonUniformIndexingEXT";
-    case SpvCapabilityStorageBufferArrayNonUniformIndexingEXT:
-      return "StorageBufferArrayNonUniformIndexingEXT";
-    case SpvCapabilityStorageImageArrayNonUniformIndexingEXT:
-      return "StorageImageArrayNonUniformIndexingEXT";
-    case SpvCapabilityInputAttachmentArrayNonUniformIndexingEXT:
-      return "InputAttachmentArrayNonUniformIndexingEXT";
-    case SpvCapabilityUniformTexelBufferArrayNonUniformIndexingEXT:
-      return "UniformTexelBufferArrayNonUniformIndexingEXT";
-    case SpvCapabilityStorageTexelBufferArrayNonUniformIndexingEXT:
-      return "StorageTexelBufferArrayNonUniformIndexingEXT";
+    case SpvCapabilityShaderNonUniform:
+      return "ShaderNonUniform";
+    case SpvCapabilityRuntimeDescriptorArray:
+      return "RuntimeDescriptorArray";
+    case SpvCapabilityInputAttachmentArrayDynamicIndexing:
+      return "InputAttachmentArrayDynamicIndexing";
+    case SpvCapabilityUniformTexelBufferArrayDynamicIndexing:
+      return "UniformTexelBufferArrayDynamicIndexing";
+    case SpvCapabilityStorageTexelBufferArrayDynamicIndexing:
+      return "StorageTexelBufferArrayDynamicIndexing";
+    case SpvCapabilityUniformBufferArrayNonUniformIndexing:
+      return "UniformBufferArrayNonUniformIndexing";
+    case SpvCapabilitySampledImageArrayNonUniformIndexing:
+      return "SampledImageArrayNonUniformIndexing";
+    case SpvCapabilityStorageBufferArrayNonUniformIndexing:
+      return "StorageBufferArrayNonUniformIndexing";
+    case SpvCapabilityStorageImageArrayNonUniformIndexing:
+      return "StorageImageArrayNonUniformIndexing";
+    case SpvCapabilityInputAttachmentArrayNonUniformIndexing:
+      return "InputAttachmentArrayNonUniformIndexing";
+    case SpvCapabilityUniformTexelBufferArrayNonUniformIndexing:
+      return "UniformTexelBufferArrayNonUniformIndexing";
+    case SpvCapabilityStorageTexelBufferArrayNonUniformIndexing:
+      return "StorageTexelBufferArrayNonUniformIndexing";
     case SpvCapabilityRayTracingNV:
       return "RayTracingNV";
-    case SpvCapabilityVulkanMemoryModelKHR:
-      return "VulkanMemoryModelKHR";
-    case SpvCapabilityVulkanMemoryModelDeviceScopeKHR:
-      return "VulkanMemoryModelDeviceScopeKHR";
-    case SpvCapabilityPhysicalStorageBufferAddressesEXT:
-      return "PhysicalStorageBufferAddressesEXT";
+    case SpvCapabilityVulkanMemoryModel:
+      return "VulkanMemoryModel";
+    case SpvCapabilityVulkanMemoryModelDeviceScope:
+      return "VulkanMemoryModelDeviceScope";
+    case SpvCapabilityPhysicalStorageBufferAddresses:
+      return "PhysicalStorageBufferAddresses";
     case SpvCapabilityComputeDerivativeGroupLinearNV:
       return "ComputeDerivativeGroupLinearNV";
     case SpvCapabilityCooperativeMatrixNV:

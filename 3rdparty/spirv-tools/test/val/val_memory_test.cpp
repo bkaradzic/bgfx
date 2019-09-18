@@ -1492,8 +1492,8 @@ OpFunctionEnd
       getDiagnosticString(),
       HasSubstr(
           "Source memory access must not include MakePointerAvailableKHR\n"
-          "  OpCopyMemory %5 %6 MakePointerAvailableKHR|NonPrivatePointerKHR"
-          " %uint_1 MakePointerAvailableKHR|NonPrivatePointerKHR %uint_1"));
+          "  OpCopyMemory %5 %6 MakePointerAvailable|NonPrivatePointer"
+          " %uint_1 MakePointerAvailable|NonPrivatePointer %uint_1"));
 }
 
 TEST_F(ValidateMemory, VulkanMemoryModelCopyMemoryTwoAccessSecondWithVisBad) {
@@ -1525,10 +1525,9 @@ OpFunctionEnd
             ValidateInstructions(SPV_ENV_UNIVERSAL_1_4));
   EXPECT_THAT(
       getDiagnosticString(),
-      HasSubstr(
-          "Target memory access must not include MakePointerVisibleKHR\n"
-          "  OpCopyMemory %5 %6 MakePointerVisibleKHR|NonPrivatePointerKHR"
-          " %uint_1 MakePointerVisibleKHR|NonPrivatePointerKHR %uint_1"));
+      HasSubstr("Target memory access must not include MakePointerVisibleKHR\n"
+                "  OpCopyMemory %5 %6 MakePointerVisible|NonPrivatePointer"
+                " %uint_1 MakePointerVisible|NonPrivatePointer %uint_1"));
 }
 
 TEST_F(ValidateMemory, VulkanMemoryModelDeviceScopeCopyMemorySizedBad1) {

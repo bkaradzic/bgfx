@@ -4785,7 +4785,8 @@ TEST_F(ValidateDecorations, UniformIdDecorationWithScopeIdV13Bad) {
             ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
   EXPECT_THAT(getDiagnosticString(),
               HasSubstr("requires SPIR-V version 1.4 or later\n"
-                        "  OpDecorateId %int0 UniformId %subgroupscope"));
+                        "  OpDecorateId %int0 UniformId %subgroupscope"))
+      << spirv;
 }
 
 TEST_F(ValidateDecorations, UniformIdDecorationWithScopeIdV13BadTargetV14) {
