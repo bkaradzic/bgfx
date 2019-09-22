@@ -166,25 +166,29 @@ when executed from the glslang subdirectory of the glslang repository.
 With no arguments it builds the full grammar, and with a "web" argument,
 the web grammar subset (see more about the web subset in the next section).
 
-### WASM for the the Web
+### Building to WASM for the Web and Node
 
-Use the steps in [Build Steps](#build-steps), which following notes/exceptions:
+Use the steps in [Build Steps](#build-steps), with the following notes/exceptions:
 * For building the web subset of core glslang:
-  + `m4` also needs a `-DGLSLANG_WEB` argument, or simply execute `updateGrammar web` from the glslang subdirectory
-  + turn off the CMAKE options for `BUILD_TESTING`, `ENABLE_OPT`, and `INSTALL_GTEST`,
-    while turning on `ENABLE_GLSLANG_WEB`
+  + execute `updateGrammar web` from the glslang subdirectory
+    (or if using your own scripts, `m4` needs a `-DGLSLANG_WEB` argument)
+  + set `-DENABLE_HLSL=OFF -DBUILD_TESTING=OFF -DENABLE_OPT=OFF -DINSTALL_GTEST=OFF`
+  + turn on `-DENABLE_GLSLANG_WEB=ON`
+  + optionally, for GLSL compilation error messages, turn on `-DENABLE_GLSLANG_WEB_DEVEL=ON`
 * `emsdk` needs to be present in your executable search path, *PATH* for
   Bash-like enivironments
-  + Instructions located
-    [here](https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install)
-* Do not checkout SPIRV-Tools into `External`
-  + Does not work correctly with emscripten out of the box and we don't want it
-    in the build anyway. *TBD* Have build ignore SPIRV-Tools for web build
-* Wrap call to `cmake` using `emconfigure` with ENABLE_GLSLANG_WEB=ON:
-  + e.g. For Linux, `emconfigure cmake -DCMAKE_BUILD_TYPE=Release
-    -DENABLE_GLSLANG_WEB=ON -DCMAKE_INSTALL_PREFIX="$(pwd)/install" ..`
-* To get a 'true' minimized build, make sure to use `brotli` to compress the .js
+  + [Instructions located
+    here](https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install)
+* Wrap cmake call: `emcmake cmake`
+* To get a fully minimized build, make sure to use `brotli` to compress the .js
   and .wasm files
+
+Example:
+
+```sh
+emcmake cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_GLSLANG_WEB=ON \
+    -DENABLE_HLSL=OFF -DBUILD_TESTING=OFF -DENABLE_OPT=OFF -DINSTALL_GTEST=OFF ..
+```
 
 Testing
 -------

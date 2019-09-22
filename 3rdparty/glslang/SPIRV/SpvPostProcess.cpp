@@ -363,12 +363,12 @@ void Builder::postProcess()
         Instruction* type = groupedTypes[OpTypePointer][t];
         if (type->getImmediateOperand(0) == (unsigned)StorageClassPhysicalStorageBufferEXT) {
             if (containsType(type->getIdOperand(1), OpTypeInt, 8)) {
-                addExtension(spv::E_SPV_KHR_8bit_storage);
+                addIncorporatedExtension(spv::E_SPV_KHR_8bit_storage, spv::Spv_1_5);
                 addCapability(spv::CapabilityStorageBuffer8BitAccess);
             }
             if (containsType(type->getIdOperand(1), OpTypeInt, 16) ||
                 containsType(type->getIdOperand(1), OpTypeFloat, 16)) {
-                addExtension(spv::E_SPV_KHR_16bit_storage);
+                addIncorporatedExtension(spv::E_SPV_KHR_16bit_storage, spv::Spv_1_3);
                 addCapability(spv::CapabilityStorageBuffer16BitAccess);
             }
         }

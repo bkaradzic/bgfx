@@ -35,17 +35,16 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <memory>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-#endif  // __EMSCRIPTEN__
-#include <memory>
+#endif
 
-#include "../SPIRV/GlslangToSpv.h"
-#include "../SPIRV/doc.h"
-#include "./../glslang/Public/ShaderLang.h"
+#include "../../../SPIRV/GlslangToSpv.h"
+#include "../../../glslang/Public/ShaderLang.h"
 
-#ifndef EMSCRIPTEN_KEEPALIVE
+#ifndef __EMSCRIPTEN__
 #define EMSCRIPTEN_KEEPALIVE
 #endif
 

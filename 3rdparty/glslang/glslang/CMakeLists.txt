@@ -6,6 +6,10 @@ else(WIN32)
     message("unknown platform")
 endif(WIN32)
 
+if(EMSCRIPTEN OR ENABLE_GLSLANG_WEB)
+    add_subdirectory(OSDependent/Web)
+endif(EMSCRIPTEN OR ENABLE_GLSLANG_WEB)
+
 set(SOURCES
     MachineIndependent/glslang.m4
     MachineIndependent/glslang.y
@@ -114,16 +118,3 @@ if(ENABLE_GLSLANG_INSTALL)
         install(FILES ${file} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glslang/${dir})
     endforeach()
 endif(ENABLE_GLSLANG_INSTALL)
-
-if(ENABLE_GLSLANG_WEB)
-    add_executable(glslang.js glslang.js.cpp)
-    glslang_set_link_args(glslang.js)
-    target_link_libraries(glslang.js glslang SPIRV)
-    if(EMSCRIPTEN)
-        set_target_properties(glslang.js PROPERTIES
-          OUTPUT_NAME "glslang"
-          SUFFIX ".js"
-          LINK_FLAGS "--bind -s EXPORT_NAME=\"glslangModule\"")
-        em_link_pre_js(glslang.js ${CMAKE_CURRENT_SOURCE_DIR}/glslang.pre.js)
-    endif(EMSCRIPTEN)
-endif(ENABLE_GLSLANG_WEB)

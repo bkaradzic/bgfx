@@ -9,8 +9,8 @@ WARNING: 0:6: '' : all default precisions are highp; use precision statements to
                               Capability Shader
                               Capability StorageUniformBufferBlock16
                               Capability PhysicalStorageBufferAddressesEXT
-                              Extension  "SPV_EXT_physical_storage_buffer"
                               Extension  "SPV_KHR_16bit_storage"
+                              Extension  "SPV_KHR_physical_storage_buffer"
                               Extension  "SPV_KHR_storage_buffer_storage_class"
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel PhysicalStorageBuffer64EXT GLSL450

@@ -5,7 +5,7 @@ spv.bufferhandle14.frag
 
                               Capability Shader
                               Capability PhysicalStorageBufferAddressesEXT
-                              Extension  "SPV_EXT_physical_storage_buffer"
+                              Extension  "SPV_KHR_physical_storage_buffer"
                1:             ExtInstImport  "GLSL.std.450"
                               MemoryModel PhysicalStorageBuffer64EXT GLSL450
                               EntryPoint Fragment 4  "main"

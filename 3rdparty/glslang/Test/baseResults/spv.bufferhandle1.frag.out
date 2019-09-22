@@ -6,7 +6,7 @@ spv.bufferhandle1.frag
                               Capability Shader
                               Capability VulkanMemoryModelKHR
                               Capability PhysicalStorageBufferAddressesEXT
-                              Extension  "SPV_EXT_physical_storage_buffer"
+                              Extension  "SPV_KHR_physical_storage_buffer"
                               Extension  "SPV_KHR_storage_buffer_storage_class"
                               Extension  "SPV_KHR_vulkan_memory_model"
                1:             ExtInstImport  "GLSL.std.450"

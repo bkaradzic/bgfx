@@ -9,8 +9,8 @@ spv.coopmat.comp
                               Capability VulkanMemoryModelKHR
                               Capability PhysicalStorageBufferAddressesEXT
                               Capability CooperativeMatrixNV
-                              Extension  "SPV_EXT_physical_storage_buffer"
                               Extension  "SPV_KHR_16bit_storage"
+                              Extension  "SPV_KHR_physical_storage_buffer"
                               Extension  "SPV_KHR_storage_buffer_storage_class"
                               Extension  "SPV_KHR_vulkan_memory_model"
                               Extension  "SPV_NV_cooperative_matrix"
