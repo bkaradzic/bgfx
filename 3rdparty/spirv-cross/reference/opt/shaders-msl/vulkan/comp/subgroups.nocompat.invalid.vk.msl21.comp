@@ -10,6 +10,8 @@ struct SSBO
     float FragColor;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 inline uint4 spvSubgroupBallot(bool value)
 {
     simd_vote vote = simd_ballot(value);

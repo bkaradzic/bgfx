@@ -21,6 +21,8 @@ struct Composite
     float4 b;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 constant float4 _43[2] = { float4(20.0), float4(40.0) };
 
 template<typename T, uint A>

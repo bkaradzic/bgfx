@@ -12,6 +12,8 @@ struct BUF
     float c;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 constant float _16[2] = { 1.0, 2.0 };
 constant float _19[2] = { 3.0, 4.0 };
 constant float _20[2][2] = { { 1.0, 2.0 }, { 3.0, 4.0 } };

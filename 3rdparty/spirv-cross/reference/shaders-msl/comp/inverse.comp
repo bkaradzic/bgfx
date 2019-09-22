@@ -19,6 +19,8 @@ struct MatrixIn
     float4x4 m4in;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 // Returns the determinant of a 2x2 matrix.
 inline float spvDet2x2(float a1, float a2, float b1, float b2)
 {

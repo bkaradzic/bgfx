@@ -171,7 +171,7 @@ def cross_compile_msl(shader, spirv, opt, iterations, paths):
     if spirv:
         subprocess.check_call(spirv_cmd)
     else:
-        subprocess.check_call([paths.glslang, '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
+        subprocess.check_call([paths.glslang, '--amb' ,'--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
 
     if opt:
         subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])
@@ -264,7 +264,7 @@ def validate_shader_hlsl(shader, force_no_external_validation, paths):
         test_glslang = False
 
     if test_glslang:
-        subprocess.check_call([paths.glslang, '-e', 'main', '-D', '--target-env', 'vulkan1.1', '-V', shader])
+        subprocess.check_call([paths.glslang, '--amb', '-e', 'main', '-D', '--target-env', 'vulkan1.1', '-V', shader])
     is_no_fxc = '.nofxc.' in shader
     global ignore_fxc
     if (not ignore_fxc) and (not force_no_external_validation) and (not is_no_fxc):
@@ -307,7 +307,7 @@ def cross_compile_hlsl(shader, spirv, opt, force_no_external_validation, iterati
     if spirv:
         subprocess.check_call(spirv_cmd)
     else:
-        subprocess.check_call([paths.glslang, '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
+        subprocess.check_call([paths.glslang, '--amb', '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
 
     if opt:
         subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])
@@ -339,7 +339,7 @@ def cross_compile_reflect(shader, spirv, opt, iterations, paths):
     if spirv:
         subprocess.check_call(spirv_cmd)
     else:
-        subprocess.check_call([paths.glslang, '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
+        subprocess.check_call([paths.glslang, '--amb', '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
 
     if opt:
         subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])
@@ -352,7 +352,7 @@ def cross_compile_reflect(shader, spirv, opt, iterations, paths):
 
 def validate_shader(shader, vulkan, paths):
     if vulkan:
-        subprocess.check_call([paths.glslang, '--target-env', 'vulkan1.1', '-V', shader])
+        subprocess.check_call([paths.glslang, '--amb', '--target-env', 'vulkan1.1', '-V', shader])
     else:
         subprocess.check_call([paths.glslang, shader])
 
@@ -370,7 +370,7 @@ def cross_compile(shader, vulkan, spirv, invalid_spirv, eliminate, is_legacy, fl
     if spirv:
         subprocess.check_call(spirv_cmd)
     else:
-        subprocess.check_call([paths.glslang, '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
+        subprocess.check_call([paths.glslang, '--amb', '--target-env', 'vulkan1.1', '-V', '-o', spirv_path, shader])
 
     if opt and (not invalid_spirv):
         subprocess.check_call([paths.spirv_opt, '--skip-validation', '-O', '-o', spirv_path, spirv_path])

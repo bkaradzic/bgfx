@@ -10,6 +10,8 @@ struct BUF
     float c;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 kernel void main0(device BUF& o [[buffer(0)]])
 {
     o.a = 4;

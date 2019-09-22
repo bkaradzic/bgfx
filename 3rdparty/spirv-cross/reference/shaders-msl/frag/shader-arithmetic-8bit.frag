@@ -36,7 +36,7 @@ struct main0_in
 
 inline void packing_int8(device SSBO& ssbo)
 {
-    short i16 = 10;
+    short i16 = short(10);
     int i32 = 20;
     char2 i8_2 = as_type<char2>(i16);
     char4 i8_4 = as_type<char4>(i32);
@@ -50,7 +50,7 @@ inline void packing_int8(device SSBO& ssbo)
 
 inline void packing_uint8(device SSBO& ssbo)
 {
-    ushort u16 = 10u;
+    ushort u16 = ushort(10);
     uint u32 = 20u;
     uchar2 u8_2 = as_type<uchar2>(u16);
     uchar4 u8_4 = as_type<uchar4>(u32);

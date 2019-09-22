@@ -14,8 +14,8 @@ fragment main0_out main0()
 {
     main0_out out = {};
     out.foo = half(1.0);
-    out.bar = 2;
-    out.baz = 3u;
+    out.bar = short(2);
+    out.baz = ushort(3);
     return out;
 }
 

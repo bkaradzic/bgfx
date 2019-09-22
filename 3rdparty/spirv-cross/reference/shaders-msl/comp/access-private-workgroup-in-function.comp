@@ -5,6 +5,8 @@
 
 using namespace metal;
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 inline void set_f(thread int& f)
 {
     f = 40;

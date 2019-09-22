@@ -163,7 +163,7 @@ bool CFG::post_order_visit(uint32_t block_id)
 		{
 			auto &pred = pred_itr->second;
 			auto succ_itr = succeeding_edges.find(block_id);
-			uint32_t num_succeeding_edges = 0;
+			size_t num_succeeding_edges = 0;
 			if (succ_itr != end(succeeding_edges))
 				num_succeeding_edges = succ_itr->second.size();
 

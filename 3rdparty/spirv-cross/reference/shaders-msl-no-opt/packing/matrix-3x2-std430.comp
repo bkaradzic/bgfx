@@ -17,6 +17,8 @@ struct SSBORow
     float2x3 row_major1;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 inline void load_store_to_variable_col_major(device SSBOCol& v_29)
 {
     float3x2 loaded = v_29.col_major0;
