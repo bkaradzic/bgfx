@@ -1249,6 +1249,145 @@ TEST(TransformationAddDeadContinueTest, RespectDominanceRules3) {
   ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
 }
 
+TEST(TransformationAddDeadContinueTest, Miscellaneous1) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main" %586 %623
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpMemberDecorate %34 0 Offset 0
+               OpDecorate %34 Block
+               OpDecorate %36 DescriptorSet 0
+               OpDecorate %36 Binding 0
+               OpDecorate %586 BuiltIn FragCoord
+               OpMemberDecorate %591 0 Offset 0
+               OpDecorate %591 Block
+               OpDecorate %593 DescriptorSet 0
+               OpDecorate %593 Binding 1
+               OpDecorate %623 Location 0
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %9 = OpConstant %6 0
+         %16 = OpConstant %6 2
+         %17 = OpTypeBool
+         %27 = OpTypeFloat 32
+         %28 = OpTypeVector %27 2
+         %29 = OpTypeMatrix %28 2
+         %30 = OpTypePointer Private %29
+         %31 = OpVariable %30 Private
+         %34 = OpTypeStruct %27
+         %35 = OpTypePointer Uniform %34
+         %36 = OpVariable %35 Uniform
+         %37 = OpTypePointer Uniform %27
+         %40 = OpTypePointer Private %27
+         %43 = OpConstant %6 1
+         %62 = OpConstant %6 3
+         %64 = OpTypeVector %27 3
+         %65 = OpTypeMatrix %64 2
+         %66 = OpTypePointer Private %65
+         %67 = OpVariable %66 Private
+         %92 = OpConstant %6 4
+         %94 = OpTypeVector %27 4
+         %95 = OpTypeMatrix %94 2
+         %96 = OpTypePointer Private %95
+         %97 = OpVariable %96 Private
+        %123 = OpTypeMatrix %28 3
+        %124 = OpTypePointer Private %123
+        %125 = OpVariable %124 Private
+        %151 = OpTypeMatrix %64 3
+        %152 = OpTypePointer Private %151
+        %153 = OpVariable %152 Private
+        %179 = OpTypeMatrix %94 3
+        %180 = OpTypePointer Private %179
+        %181 = OpVariable %180 Private
+        %207 = OpTypeMatrix %28 4
+        %208 = OpTypePointer Private %207
+        %209 = OpVariable %208 Private
+        %235 = OpTypeMatrix %64 4
+        %236 = OpTypePointer Private %235
+        %237 = OpVariable %236 Private
+        %263 = OpTypeMatrix %94 4
+        %264 = OpTypePointer Private %263
+        %265 = OpVariable %264 Private
+        %275 = OpTypeInt 32 0
+        %276 = OpConstant %275 9
+        %277 = OpTypeArray %27 %276
+        %278 = OpTypePointer Function %277
+        %280 = OpConstant %27 0
+        %281 = OpTypePointer Function %27
+        %311 = OpConstant %27 16
+        %448 = OpConstant %6 5
+        %482 = OpConstant %6 6
+        %516 = OpConstant %6 7
+        %550 = OpConstant %6 8
+        %585 = OpTypePointer Input %94
+        %586 = OpVariable %585 Input
+        %587 = OpConstant %275 0
+        %588 = OpTypePointer Input %27
+        %591 = OpTypeStruct %28
+        %592 = OpTypePointer Uniform %591
+        %593 = OpVariable %592 Uniform
+        %596 = OpConstant %27 3
+        %601 = OpConstant %275 1
+        %617 = OpConstant %6 9
+        %622 = OpTypePointer Output %94
+        %623 = OpVariable %622 Output
+        %628 = OpConstant %27 1
+        %634 = OpConstantComposite %94 %280 %280 %280 %628
+        %635 = OpUndef %6
+        %636 = OpUndef %17
+        %637 = OpUndef %27
+        %638 = OpUndef %64
+        %639 = OpUndef %94
+        %640 = OpConstantTrue %17
+        %736 = OpConstantFalse %17
+        %642 = OpVariable %37 Uniform
+        %643 = OpVariable %40 Private
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %164
+        %164 = OpLabel
+               OpLoopMerge %166 %167 None
+               OpBranch %165
+        %165 = OpLabel
+               OpBranch %172
+        %172 = OpLabel
+               OpSelectionMerge %174 None
+               OpBranchConditional %640 %174 %174
+        %174 = OpLabel
+        %785 = OpCopyObject %6 %43
+               OpBranch %167
+        %167 = OpLabel
+        %190 = OpIAdd %6 %9 %785
+               OpBranchConditional %640 %164 %166
+        %166 = OpLabel
+               OpBranch %196
+        %196 = OpLabel
+               OpBranch %194
+        %194 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation would shortcut the part of the loop body that defines
+  // an id used in the continue target.
+  auto bad_transformation = TransformationAddDeadContinue(165, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

@@ -2318,9 +2318,14 @@ OpExtension "SPV_EXT_descriptor_indexing"
 OpMemoryModel Logical GLSL450
 OpEntryPoint Fragment %func "func"
 OpExecutionMode %func OriginUpperLeft
+OpDecorate %struct Block
+OpMemberDecorate %struct 0 Offset 0
 %sampler_t = OpTypeSampler
+%uint = OpTypeInt 32 0
 %array_t = OpTypeRuntimeArray %sampler_t
-%array_sb_ptr = OpTypePointer StorageBuffer %array_t
+%struct = OpTypeStruct %uint
+%sb_array_t = OpTypeRuntimeArray %struct
+%array_sb_ptr = OpTypePointer StorageBuffer %sb_array_t
 %2 = OpVariable %array_sb_ptr StorageBuffer
 %array_uc_ptr = OpTypePointer UniformConstant %array_t
 %3 = OpVariable %array_uc_ptr UniformConstant
@@ -4290,6 +4295,95 @@ OpMemberDecorate %block 0 Offset 0
 
   CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_3);
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions(SPV_ENV_UNIVERSAL_1_3));
+}
+
+TEST_F(ValidateMemory, VulkanStorageBufferNotAStruct) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%ptr_ssbo = OpTypePointer StorageBuffer %uint
+%var = OpVariable %ptr_ssbo StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("From Vulkan spec, section 14.5.2:\nVariables identified with "
+                "the StorageBuffer storage class are used to access "
+                "transparent buffer backed resources. Such variables must be "
+                "typed as OpTypeStruct, or an array of this type"));
+}
+
+TEST_F(ValidateMemory, VulkanStorageBufferRuntimeArrayNotAStruct) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability RuntimeDescriptorArrayEXT
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+OpExtension "SPV_EXT_descriptor_indexing"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%array = OpTypeRuntimeArray %uint
+%ptr_ssbo = OpTypePointer StorageBuffer %array
+%var = OpVariable %ptr_ssbo StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("From Vulkan spec, section 14.5.2:\nVariables identified with "
+                "the StorageBuffer storage class are used to access "
+                "transparent buffer backed resources. Such variables must be "
+                "typed as OpTypeStruct, or an array of this type"));
+}
+
+TEST_F(ValidateMemory, VulkanStorageBufferArrayNotAStruct) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpExtension "SPV_KHR_storage_buffer_storage_class"
+OpMemoryModel Logical GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%uint = OpTypeInt 32 0
+%uint_4 = OpConstant %uint 4
+%array = OpTypeArray %uint %uint_4
+%ptr_ssbo = OpTypePointer StorageBuffer %array
+%var = OpVariable %ptr_ssbo StorageBuffer
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_VULKAN_1_0);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_VULKAN_1_0));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("From Vulkan spec, section 14.5.2:\nVariables identified with "
+                "the StorageBuffer storage class are used to access "
+                "transparent buffer backed resources. Such variables must be "
+                "typed as OpTypeStruct, or an array of this type"));
 }
 
 }  // namespace

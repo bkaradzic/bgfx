@@ -37,13 +37,18 @@ namespace spvtools {
 namespace fuzz {
 
 struct Replayer::Impl {
-  explicit Impl(spv_target_env env) : target_env(env) {}
+  explicit Impl(spv_target_env env, bool validate)
+      : target_env(env), validate_during_replay(validate) {}
 
   const spv_target_env target_env;  // Target environment.
   MessageConsumer consumer;         // Message consumer.
+
+  const bool validate_during_replay;  // Controls whether the validator should
+                                      // be run after every replay step.
 };
 
-Replayer::Replayer(spv_target_env env) : impl_(MakeUnique<Impl>(env)) {}
+Replayer::Replayer(spv_target_env env, bool validate_during_replay)
+    : impl_(MakeUnique<Impl>(env, validate_during_replay)) {}
 
 Replayer::~Replayer() = default;
 
@@ -80,6 +85,13 @@ Replayer::ReplayerResultStatus Replayer::Run(
       impl_->target_env, impl_->consumer, binary_in.data(), binary_in.size());
   assert(ir_context);
 
+  // For replay validation, we track the last valid SPIR-V binary that was
+  // observed. Initially this is the input binary.
+  std::vector<uint32_t> last_valid_binary;
+  if (impl_->validate_during_replay) {
+    last_valid_binary = binary_in;
+  }
+
   FactManager fact_manager;
   fact_manager.AddFacts(impl_->consumer, initial_facts, ir_context.get());
 
@@ -93,6 +105,23 @@ Replayer::ReplayerResultStatus Replayer::Run(
       // sequence of transformations that were applied.
       transformation->Apply(ir_context.get(), &fact_manager);
       *transformation_sequence_out->add_transformation() = message;
+
+      if (impl_->validate_during_replay) {
+        std::vector<uint32_t> binary_to_validate;
+        ir_context->module()->ToBinary(&binary_to_validate, false);
+
+        // Check whether the latest transformation led to a valid binary.
+        if (!tools.Validate(&binary_to_validate[0],
+                            binary_to_validate.size())) {
+          impl_->consumer(SPV_MSG_INFO, nullptr, {},
+                          "Binary became invalid during replay (set a "
+                          "breakpoint to inspect); stopping.");
+          return Replayer::ReplayerResultStatus::kReplayValidationFailure;
+        }
+
+        // The binary was valid, so it becomes the latest valid binary.
+        last_valid_binary = std::move(binary_to_validate);
+      }
     }
   }
 

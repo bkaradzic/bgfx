@@ -97,7 +97,7 @@ static const spvtools::Extension pygen_variable_exts_SPV_EXT_descriptor_indexing
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_fully_covered[] = {spvtools::Extension::kSPV_EXT_fragment_fully_covered};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_invocation_densitySPV_NV_shading_rate[] = {spvtools::Extension::kSPV_EXT_fragment_invocation_density, spvtools::Extension::kSPV_NV_shading_rate};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_fragment_shader_interlock[] = {spvtools::Extension::kSPV_EXT_fragment_shader_interlock};
-static const spvtools::Extension pygen_variable_exts_SPV_EXT_physical_storage_buffer[] = {spvtools::Extension::kSPV_EXT_physical_storage_buffer};
+static const spvtools::Extension pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer[] = {spvtools::Extension::kSPV_EXT_physical_storage_buffer, spvtools::Extension::kSPV_KHR_physical_storage_buffer};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_stencil_export[] = {spvtools::Extension::kSPV_EXT_shader_stencil_export};
 static const spvtools::Extension pygen_variable_exts_SPV_EXT_shader_viewport_index_layerSPV_NV_viewport_array2[] = {spvtools::Extension::kSPV_EXT_shader_viewport_index_layer, spvtools::Extension::kSPV_NV_viewport_array2};
 static const spvtools::Extension pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1[] = {spvtools::Extension::kSPV_GOOGLE_hlsl_functionality1};
@@ -267,8 +267,8 @@ static const spv_operand_desc_t pygen_variable_AddressingModelEntries[] = {
   {"Logical", 0, 0, nullptr, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Physical32", 1, 1, pygen_variable_caps_Addresses, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
   {"Physical64", 2, 1, pygen_variable_caps_Addresses, 0, nullptr, {}, SPV_SPIRV_VERSION_WORD(1, 0), 0xffffffffu},
-  {"PhysicalStorageBuffer64", 5348, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"PhysicalStorageBuffer64EXT", 5348, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu}
+  {"PhysicalStorageBuffer64", 5348, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"PhysicalStorageBuffer64EXT", 5348, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_MemoryModelEntries[] = {
@@ -358,8 +358,8 @@ static const spv_operand_desc_t pygen_variable_StorageClassEntries[] = {
   {"HitAttributeNV", 5339, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
   {"IncomingRayPayloadNV", 5342, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
   {"ShaderRecordBufferNV", 5343, 1, pygen_variable_caps_RayTracingNV, 1, pygen_variable_exts_SPV_NV_ray_tracing, {}, 0xffffffffu, 0xffffffffu},
-  {"PhysicalStorageBuffer", 5349, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"PhysicalStorageBufferEXT", 5349, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu}
+  {"PhysicalStorageBuffer", 5349, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"PhysicalStorageBufferEXT", 5349, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu}
 };
 
 static const spv_operand_desc_t pygen_variable_DimEntries[] = {
@@ -561,10 +561,10 @@ static const spv_operand_desc_t pygen_variable_DecorationEntries[] = {
   {"PerVertexNV", 5285, 1, pygen_variable_caps_FragmentBarycentricNV, 1, pygen_variable_exts_SPV_NV_fragment_shader_barycentric, {}, 0xffffffffu, 0xffffffffu},
   {"NonUniform", 5300, 1, pygen_variable_caps_ShaderNonUniform, 1, pygen_variable_exts_SPV_EXT_descriptor_indexing, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"NonUniformEXT", 5300, 1, pygen_variable_caps_ShaderNonUniform, 1, pygen_variable_exts_SPV_EXT_descriptor_indexing, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"RestrictPointer", 5355, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"RestrictPointerEXT", 5355, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"AliasedPointer", 5356, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"AliasedPointerEXT", 5356, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"RestrictPointer", 5355, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"RestrictPointerEXT", 5355, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"AliasedPointer", 5356, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"AliasedPointerEXT", 5356, 1, pygen_variable_caps_PhysicalStorageBufferAddresses, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"CounterBuffer", 5634, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_ID}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
   {"HlslCounterBufferGOOGLE", 5634, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_ID}, 0xffffffffu, 0xffffffffu},
   {"UserSemantic", 5635, 0, nullptr, 1, pygen_variable_exts_SPV_GOOGLE_hlsl_functionality1, {SPV_OPERAND_TYPE_LITERAL_STRING}, SPV_SPIRV_VERSION_WORD(1,4), 0xffffffffu},
@@ -846,8 +846,8 @@ static const spv_operand_desc_t pygen_variable_CapabilityEntries[] = {
   {"VulkanMemoryModelKHR", 5345, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"VulkanMemoryModelDeviceScope", 5346, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"VulkanMemoryModelDeviceScopeKHR", 5346, 0, nullptr, 1, pygen_variable_exts_SPV_KHR_vulkan_memory_model, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"PhysicalStorageBufferAddresses", 5347, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
-  {"PhysicalStorageBufferAddressesEXT", 5347, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"PhysicalStorageBufferAddresses", 5347, 1, pygen_variable_caps_Shader, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
+  {"PhysicalStorageBufferAddressesEXT", 5347, 1, pygen_variable_caps_Shader, 2, pygen_variable_exts_SPV_EXT_physical_storage_bufferSPV_KHR_physical_storage_buffer, {}, SPV_SPIRV_VERSION_WORD(1,5), 0xffffffffu},
   {"ComputeDerivativeGroupLinearNV", 5350, 0, nullptr, 1, pygen_variable_exts_SPV_NV_compute_shader_derivatives, {}, 0xffffffffu, 0xffffffffu},
   {"CooperativeMatrixNV", 5357, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_NV_cooperative_matrix, {}, 0xffffffffu, 0xffffffffu},
   {"FragmentShaderSampleInterlockEXT", 5363, 1, pygen_variable_caps_Shader, 1, pygen_variable_exts_SPV_EXT_fragment_shader_interlock, {}, 0xffffffffu, 0xffffffffu},

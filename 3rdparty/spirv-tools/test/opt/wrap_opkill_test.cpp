@@ -31,7 +31,7 @@ TEST_F(WrapOpKillTest, SingleOpKill) {
 ; CHECK: [[orig_kill]] = OpFunction
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpFunctionCall %void [[new_kill:%\w+]]
-; CHECK-NEXT: OpUnreachable
+; CHECK-NEXT: OpReturn
 ; CHECK: [[new_kill]] = OpFunction
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpKill
@@ -83,10 +83,10 @@ TEST_F(WrapOpKillTest, MultipleOpKillInSameFunc) {
 ; CHECK-NEXT: OpBranchConditional
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpFunctionCall %void [[new_kill:%\w+]]
-; CHECK-NEXT: OpUnreachable
+; CHECK-NEXT: OpReturn
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpFunctionCall %void [[new_kill]]
-; CHECK-NEXT: OpUnreachable
+; CHECK-NEXT: OpReturn
 ; CHECK: [[new_kill]] = OpFunction
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpKill
@@ -143,11 +143,11 @@ TEST_F(WrapOpKillTest, MultipleOpKillInDifferentFunc) {
 ; CHECK: [[orig_kill1]] = OpFunction
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpFunctionCall %void [[new_kill:%\w+]]
-; CHECK-NEXT: OpUnreachable
+; CHECK-NEXT: OpReturn
 ; CHECK: [[orig_kill2]] = OpFunction
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpFunctionCall %void [[new_kill]]
-; CHECK-NEXT: OpUnreachable
+; CHECK-NEXT: OpReturn
 ; CHECK: [[new_kill]] = OpFunction
 ; CHECK-NEXT: OpLabel
 ; CHECK-NEXT: OpKill
@@ -186,6 +186,58 @@ TEST_F(WrapOpKillTest, MultipleOpKillInDifferentFunc) {
                OpFunctionEnd
          %16 = OpFunction %void None %4
          %18 = OpLabel
+               OpKill
+               OpFunctionEnd
+  )";
+
+  SinglePassRunAndMatch<WrapOpKill>(text, true);
+}
+
+TEST_F(WrapOpKillTest, FuncWithReturnValue) {
+  const std::string text = R"(
+; CHECK: OpEntryPoint Fragment [[main:%\w+]]
+; CHECK: [[main]] = OpFunction
+; CHECK: OpFunctionCall %int [[orig_kill:%\w+]]
+; CHECK: [[orig_kill]] = OpFunction
+; CHECK-NEXT: OpLabel
+; CHECK-NEXT: OpFunctionCall %void [[new_kill:%\w+]]
+; CHECK-NEXT: [[undef:%\w+]] = OpUndef %int
+; CHECK-NEXT: OpReturnValue [[undef]]
+; CHECK: [[new_kill]] = OpFunction
+; CHECK-NEXT: OpLabel
+; CHECK-NEXT: OpKill
+; CHECK-NEXT: OpFunctionEnd
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main"
+               OpExecutionMode %main OriginUpperLeft
+               OpSource GLSL 330
+               OpName %main "main"
+       %void = OpTypeVoid
+          %5 = OpTypeFunction %void
+        %int = OpTypeInt 32 1
+  %func_type = OpTypeFunction %int
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+       %main = OpFunction %void None %5
+          %8 = OpLabel
+               OpBranch %9
+          %9 = OpLabel
+               OpLoopMerge %10 %11 None
+               OpBranch %12
+         %12 = OpLabel
+               OpBranchConditional %true %13 %10
+         %13 = OpLabel
+               OpBranch %11
+         %11 = OpLabel
+         %14 = OpFunctionCall %int %kill_
+               OpBranch %9
+         %10 = OpLabel
+               OpReturn
+               OpFunctionEnd
+      %kill_ = OpFunction %int None %func_type
+         %15 = OpLabel
                OpKill
                OpFunctionEnd
   )";

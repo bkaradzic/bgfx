@@ -288,7 +288,10 @@ config("spvtools_internal_config") {
   configs = [ ":spvtools_public_config" ]
 
   if (is_clang) {
-    cflags = [ "-Wno-implicit-fallthrough" ]
+    cflags = [
+      "-Wno-implicit-fallthrough",
+      "-Wno-newline-eof",
+    ]
   }
 }
 

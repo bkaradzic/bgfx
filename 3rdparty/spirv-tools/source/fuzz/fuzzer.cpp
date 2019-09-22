@@ -22,6 +22,7 @@
 #include "source/fuzz/fuzzer_pass_add_dead_breaks.h"
 #include "source/fuzz/fuzzer_pass_add_dead_continues.h"
 #include "source/fuzz/fuzzer_pass_add_useful_constructs.h"
+#include "source/fuzz/fuzzer_pass_apply_id_synonyms.h"
 #include "source/fuzz/fuzzer_pass_copy_objects.h"
 #include "source/fuzz/fuzzer_pass_obfuscate_constants.h"
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
@@ -110,6 +111,9 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
   // Apply some semantics-preserving passes.
   FuzzerPassCopyObjects(ir_context.get(), &fact_manager, &fuzzer_context,
                         transformation_sequence_out)
+      .Apply();
+  FuzzerPassApplyIdSynonyms(ir_context.get(), &fact_manager, &fuzzer_context,
+                            transformation_sequence_out)
       .Apply();
   FuzzerPassSplitBlocks(ir_context.get(), &fact_manager, &fuzzer_context,
                         transformation_sequence_out)

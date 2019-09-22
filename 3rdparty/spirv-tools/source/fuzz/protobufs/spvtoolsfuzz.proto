@@ -172,6 +172,7 @@ message Transformation {
     TransformationReplaceConstantWithUniform replace_constant_with_uniform = 11;
     TransformationAddDeadContinue add_dead_continue = 12;
     TransformationCopyObject copy_object = 13;
+    TransformationReplaceIdWithSynonym replace_id_with_synonym = 14;
     // Add additional option using the next available number.
   }
 }
@@ -325,25 +326,6 @@ message TransformationMoveBlockDown {
   uint32 block_id = 1;
 }
 
-message TransformationReplaceConstantWithUniform {
-
-  // Replaces a use of a constant id with the the result of a load from an
-  // element of uniform buffer known to hold the same value as the constant
-
-  // A descriptor for the id we would like to replace
-  IdUseDescriptor id_use_descriptor = 1;
-
-  // Uniform descriptor to identify which uniform value to choose
-  UniformBufferElementDescriptor uniform_descriptor = 2;
-
-  // Id that will store the result of an access chain
-  uint32 fresh_id_for_access_chain = 3;
-
-  // Id that will store the result of a load
-  uint32 fresh_id_for_load = 4;
-
-}
-
 message TransformationReplaceBooleanConstantWithConstantBinary {
 
   // A transformation to capture replacing a use of a boolean constant with
@@ -364,6 +346,42 @@ message TransformationReplaceBooleanConstantWithConstantBinary {
   // Id that will store the result of the binary operation instruction
   uint32 fresh_id_for_binary_operation = 5;
 
+}
+
+message TransformationReplaceConstantWithUniform {
+
+  // Replaces a use of a constant id with the result of a load from an
+  // element of uniform buffer known to hold the same value as the constant
+
+  // A descriptor for the id we would like to replace
+  IdUseDescriptor id_use_descriptor = 1;
+
+  // Uniform descriptor to identify which uniform value to choose
+  UniformBufferElementDescriptor uniform_descriptor = 2;
+
+  // Id that will store the result of an access chain
+  uint32 fresh_id_for_access_chain = 3;
+
+  // Id that will store the result of a load
+  uint32 fresh_id_for_load = 4;
+
+}
+
+message TransformationReplaceIdWithSynonym {
+
+  // Replaces an id use with something known to be synonymous with that id use,
+  // e.g. because it was obtained via applying OpCopyObject
+
+  // Identifies the id use that is to be replaced
+  IdUseDescriptor id_use_descriptor = 1;
+
+  // Identifies the data with which the id use is expected to be synonymous
+  DataDescriptor data_descriptor = 2;
+
+  // In the case that a temporary is required to express the synonym (e.g. to
+  // obtain an element of a vector, provides a fresh id for the temporary;
+  // should be set to 0 if no temporary is required
+  uint32 fresh_id_for_temporary = 3;
 }
 
 message TransformationSplitBlock {

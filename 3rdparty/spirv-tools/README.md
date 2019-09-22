@@ -26,7 +26,7 @@ headers, and XML registry.
 <img alt="MacOS" src="kokoro/img/macos.png" width="20px" height="20px" hspace="2px"/>[![MacOS Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_macos_clang_release.svg)](https://storage.googleapis.com/spirv-tools/badges/build_link_macos_clang_release.html)
 <img alt="Windows" src="kokoro/img/windows.png" width="20px" height="20px" hspace="2px"/>[![Windows Build Status](https://storage.googleapis.com/spirv-tools/badges/build_status_windows_release.svg)](https://storage.googleapis.com/spirv-tools/badges/build_link_windows_vs2017_release.html)
 
-[More downloads](downloads.md)
+[More downloads](docs/downloads.md)
 
 ## Versioning SPIRV-Tools
 
@@ -59,7 +59,7 @@ version.  An API call reports the software version as a C-style string.
   IDs or types is performed, except to check literal arguments to
   `OpConstant`, `OpSpecConstant`, and `OpSwitch`.
 
-See [`syntax.md`](syntax.md) for the assembly language syntax.
+See [`docs/syntax.md`](docs/syntax.md) for the assembly language syntax.
 
 ### Validator
 
@@ -171,7 +171,7 @@ specific work is tracked via issues and sometimes in one of the
 (To provide feedback on the SPIR-V _specification_, file an issue on the
 [SPIRV-Headers][spirv-headers] GitHub repository.)
 
-See [`projects.md`](projects.md) to see how we use the
+See [`docs/projects.md`](docs/projects.md) to see how we use the
 [GitHub Project
 feature](https://help.github.com/articles/tracking-the-progress-of-your-work-with-projects/)
 to organize planned and in-progress work.

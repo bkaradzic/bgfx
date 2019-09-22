@@ -21,12 +21,12 @@
 #include <utility>
 #include <vector>
 
-#include <source/spirv_optimizer_options.h>
 #include "source/opt/build_module.h"
 #include "source/opt/graphics_robust_access_pass.h"
 #include "source/opt/log.h"
 #include "source/opt/pass_manager.h"
 #include "source/opt/passes.h"
+#include "source/spirv_optimizer_options.h"
 #include "source/util/make_unique.h"
 #include "source/util/string_utils.h"
 

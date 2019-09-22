@@ -66,6 +66,9 @@ class FuzzerContext {
   uint32_t GetChanceOfObfuscatingConstant() {
     return chance_of_obfuscating_constant_;
   }
+  uint32_t GetChanceOfReplacingIdWithSynonym() {
+    return chance_of_replacing_id_with_synonym_;
+  }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
 
   // Functions to control how deeply to recurse.
@@ -87,6 +90,7 @@ class FuzzerContext {
   uint32_t chance_of_copying_object_;
   uint32_t chance_of_moving_block_down_;
   uint32_t chance_of_obfuscating_constant_;
+  uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_splitting_block_;
 
   // Functions to determine with what probability to go deeper when generating

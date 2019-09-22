@@ -29,6 +29,7 @@ const uint32_t kDefaultChanceOfAddingDeadContinue = 20;
 const uint32_t kDefaultChanceOfCopyingObject = 20;
 const uint32_t kDefaultChanceOfMovingBlockDown = 25;
 const uint32_t kDefaultChanceOfObfuscatingConstant = 20;
+const uint32_t kDefaultChanceOfReplacingIdWithSynonym = 20;
 const uint32_t kDefaultChanceOfSplittingBlock = 20;
 
 // Default functions for controlling how deep to go during recursive
@@ -52,6 +53,8 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
       chance_of_copying_object_(kDefaultChanceOfCopyingObject),
       chance_of_moving_block_down_(kDefaultChanceOfMovingBlockDown),
       chance_of_obfuscating_constant_(kDefaultChanceOfObfuscatingConstant),
+      chance_of_replacing_id_with_synonym_(
+          kDefaultChanceOfReplacingIdWithSynonym),
       chance_of_splitting_block_(kDefaultChanceOfSplittingBlock),
       go_deeper_in_constant_obfuscation_(
           kDefaultGoDeeperInConstantObfuscation) {}

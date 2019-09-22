@@ -191,7 +191,6 @@ spv_result_t ValidateTypeRuntimeArray(ValidationState_t& _,
 }
 
 bool ContainsOpaqueType(ValidationState_t& _, const Instruction* str) {
-return false;
   const size_t elem_type_index = 1;
   uint32_t elem_type_id;
   Instruction* elem_type;

@@ -205,6 +205,7 @@ opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
   return nullptr;
 }
 
+// Returns the ids of all successors of |block|
 std::vector<uint32_t> GetSuccessors(opt::BasicBlock* block) {
   std::vector<uint32_t> result;
   switch (block->terminator()->opcode()) {
@@ -226,6 +227,41 @@ std::vector<uint32_t> GetSuccessors(opt::BasicBlock* block) {
   return result;
 }
 
+// The FindBypassedBlocks method and its helpers perform a depth-first search;
+// this struct represents an element of the stack used during depth-first
+// search.
+struct FindBypassedBlocksDfsStackNode {
+  opt::BasicBlock* block;  // The block that is being explored
+  bool handled_merge;  // We visit merge blocks before successors; this field
+                       // tracks whether we have yet processed the merge block
+                       // (if any) associated with the block
+  uint32_t next_successor;  // The next as-yet unexplored successor of this
+                            // block; exploration of a block is complete when
+                            // this field's value reaches the successor count
+};
+
+// Helper method for the depth-first-search routine that collects blocks that a
+// new break or continue control flow graph edge will bypass.
+void HandleSuccessorDuringSearchForBypassedBlocks(
+    opt::BasicBlock* successor, bool new_blocks_will_be_bypassed,
+    std::set<uint32_t>* already_visited,
+    std::set<opt::BasicBlock*>* bypassed_blocks,
+    std::vector<FindBypassedBlocksDfsStackNode>* dfs_stack) {
+  if (already_visited->count(successor->id()) == 0) {
+    // This is a new block; mark it as visited so that we don't regard it as new
+    // in the future, and push it on to the stack for exploration.
+    already_visited->insert(successor->id());
+    dfs_stack->push_back({successor, false, 0});
+    if (new_blocks_will_be_bypassed) {
+      // We are in the region of the control-flow graph consisting of blocks
+      // that the new edge will bypass, so grab this block.
+      bypassed_blocks->insert(successor);
+    }
+  }
+}
+
+// Determines those block that will be bypassed by a break or continue edge from
+// |bb_from| to |bb_to|.
 void FindBypassedBlocks(opt::IRContext* context, opt::BasicBlock* bb_from,
                         opt::BasicBlock* bb_to,
                         std::set<opt::BasicBlock*>* bypassed_blocks) {
@@ -240,51 +276,40 @@ void FindBypassedBlocks(opt::IRContext* context, opt::BasicBlock* bb_from,
   // visited in the sub-search rooted at |bb_from|. (As an optimization, the
   // search terminates as soon as exploration of |bb_from| has completed.)
 
-  // This represents a basic block in a partial state of exploration.  As we
-  // wish to visit merge blocks in advance of regular successors, we track them
-  // separately.
-  struct StackNode {
-    opt::BasicBlock* block;
-    bool handled_merge;
-    std::vector<uint32_t> successors;
-    uint32_t next_successor;
-  };
-
   auto enclosing_function = bb_from->GetParent();
 
   // The set of block ids already visited during search.  We put |bb_to| in
   // there initially so that search automatically backtracks when this block is
   // reached.
-  std::set<uint32_t> visited;
-  visited.insert(bb_to->id());
+  std::set<uint32_t> already_visited;
+  already_visited.insert(bb_to->id());
 
-  // Tracks when we are in the region of blocks that are to be grabbed; we flip
-  // this to 'true' once we reach |bb_from| and have finished searching its
-  // merge block (in the case that it happens to be a header.
-  bool interested = false;
+  // Tracks when we are in the region of blocks that the new edge would bypass;
+  // we flip this to 'true' once we reach |bb_from| and have finished searching
+  // its merge block (in the case that it happens to be a header.
+  bool new_blocks_will_be_bypassed = false;
 
-  std::vector<StackNode> dfs_stack;
+  std::vector<FindBypassedBlocksDfsStackNode> dfs_stack;
   opt::BasicBlock* entry_block = enclosing_function->entry().get();
-  dfs_stack.push_back({entry_block, false, GetSuccessors(entry_block), 0});
+  dfs_stack.push_back({entry_block, false, 0});
   while (!dfs_stack.empty()) {
-    StackNode* node = &dfs_stack.back();
+    auto node_index = dfs_stack.size() - 1;
 
     // First make sure we search the merge block associated ith this block, if
     // there is one.
-    if (!node->handled_merge) {
-      node->handled_merge = true;
-      if (node->block->MergeBlockIdIfAny()) {
-        opt::BasicBlock* merge_block =
-            context->cfg()->block(node->block->MergeBlockIdIfAny());
+    if (!dfs_stack[node_index].handled_merge) {
+      dfs_stack[node_index].handled_merge = true;
+      if (dfs_stack[node_index].block->MergeBlockIdIfAny()) {
+        opt::BasicBlock* merge_block = context->cfg()->block(
+            dfs_stack[node_index].block->MergeBlockIdIfAny());
         // A block can only be the merge block for one header, so this block
         // should only be in |visited| if it is |bb_to|, which we put into
         // |visited| in advance.
-        assert(visited.count(merge_block->id()) == 0 || merge_block == bb_to);
-        if (visited.count(merge_block->id()) == 0) {
-          visited.insert(merge_block->id());
-          dfs_stack.push_back(
-              {merge_block, false, GetSuccessors(merge_block), 0});
-        }
+        assert(already_visited.count(merge_block->id()) == 0 ||
+               merge_block == bb_to);
+        HandleSuccessorDuringSearchForBypassedBlocks(
+            merge_block, new_blocks_will_be_bypassed, &already_visited,
+            bypassed_blocks, &dfs_stack);
       }
       continue;
     }
@@ -292,28 +317,23 @@ void FindBypassedBlocks(opt::IRContext* context, opt::BasicBlock* bb_from,
     // If we find |bb_from|, we are interested in grabbing previously unseen
     // successor blocks (by this point we will have already searched the merge
     // block associated with |bb_from|, if there is one.
-    if (node->block == bb_from) {
-      interested = true;
+    if (dfs_stack[node_index].block == bb_from) {
+      new_blocks_will_be_bypassed = true;
     }
 
     // Consider the next unexplored successor.
-    if (node->next_successor < node->successors.size()) {
-      uint32_t successor_id = node->successors[node->next_successor];
-      if (visited.count(successor_id) == 0) {
-        visited.insert(successor_id);
-        opt::BasicBlock* successor_block = context->cfg()->block(successor_id);
-        if (interested) {
-          // If we're in the region of interest, grab this block.
-          bypassed_blocks->insert(successor_block);
-        }
-        dfs_stack.push_back(
-            {successor_block, false, GetSuccessors(successor_block), 0});
-      }
-      node->next_successor++;
+    auto successors = GetSuccessors(dfs_stack[node_index].block);
+    if (dfs_stack[node_index].next_successor < successors.size()) {
+      HandleSuccessorDuringSearchForBypassedBlocks(
+          context->cfg()->block(
+              successors[dfs_stack[node_index].next_successor]),
+          new_blocks_will_be_bypassed, &already_visited, bypassed_blocks,
+          &dfs_stack);
+      dfs_stack[node_index].next_successor++;
     } else {
       // We have finished exploring |node|.  If it is |bb_from|, we can
       // terminate search -- we have grabbed all the relevant blocks.
-      if (node->block == bb_from) {
+      if (dfs_stack[node_index].block == bb_from) {
         break;
       }
       dfs_stack.pop_back();

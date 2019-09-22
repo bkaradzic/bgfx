@@ -56,6 +56,10 @@ class WrapOpKill : public Pass {
   // function could not be generated.
   uint32_t GetOpKillFuncId();
 
+  // Returns the id of the return type for the function that contains |inst|.
+  // Returns 0 if |inst| is not in a function.
+  uint32_t GetOwningFunctionsReturnType(Instruction* inst);
+
   // The id of the void type.  If its value is 0, then the void type has not
   // been found or created yet.
   uint32_t void_type_id_;

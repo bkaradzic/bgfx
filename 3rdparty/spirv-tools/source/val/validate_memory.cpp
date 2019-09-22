@@ -536,6 +536,19 @@ spv_result_t ValidateVariable(ValidationState_t& _, const Instruction* inst) {
                << "this type";
       }
     }
+
+    if (storage_class == SpvStorageClassStorageBuffer) {
+      if (!IsAllowedTypeOrArrayOfSame(_, pointee, {SpvOpTypeStruct})) {
+        return _.diag(SPV_ERROR_INVALID_ID, inst)
+               << "StorageBuffer OpVariable <id> '" << _.getIdName(inst->id())
+               << "' has illegal type.\n"
+               << "From Vulkan spec, section 14.5.2:\n"
+               << "Variables identified with the StorageBuffer storage class "
+                  "are used to access transparent buffer backed resources. "
+                  "Such variables must be typed as OpTypeStruct, or an array "
+                  "of this type";
+      }
+    }
   }
 
   // WebGPU & Vulkan Appendix A: Check that if contains initializer, then
