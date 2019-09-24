@@ -125,6 +125,17 @@ namespace bgfx { namespace glsl
 						continue;
 					}
 
+					if (0 == bx::strCmp(qualifier, "flat", 4)
+					||  0 == bx::strCmp(qualifier, "smooth", 6)
+					||  0 == bx::strCmp(qualifier, "noperspective", 13)
+					||  0 == bx::strCmp(qualifier, "centroid", 8)
+					   )
+					{
+						// skip interpolation qualifiers
+						parse.set(eol.getPtr() + 1, parse.getTerm() );
+						continue;
+					}
+
 					if (0 == bx::strCmp(parse, "tmpvar", 6) )
 					{
 						// skip temporaries
