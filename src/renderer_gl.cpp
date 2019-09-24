@@ -5660,6 +5660,7 @@ namespace bgfx { namespace gl
 						else
 						{
 							bx::write(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n");
+							bx::write(&writer, "#define textureArray texture\n");
 						}
 					}
 
