@@ -789,6 +789,7 @@ public:
     bool buildReflection(int opts = EShReflectionDefault);
     unsigned getLocalSize(int dim) const;                  // return dim'th local size
     int getReflectionIndex(const char *name) const;
+    int getReflectionPipeIOIndex(const char* name, const bool inOrOut) const;
     int getNumUniformVariables() const;
     const TObjectReflection& getUniform(int index) const;
     int getNumUniformBlocks() const;
@@ -817,6 +818,9 @@ public:
 
     // can be used for glGetUniformIndices()
     int getUniformIndex(const char *name) const        { return getReflectionIndex(name); }
+
+    int getPipeIOIndex(const char *name, const bool inOrOut) const
+                                                       { return getReflectionPipeIOIndex(name, inOrOut); }
 
     // can be used for "name" part of glGetActiveUniform()
     const char *getUniformName(int index) const        { return getUniform(index).name.c_str(); }

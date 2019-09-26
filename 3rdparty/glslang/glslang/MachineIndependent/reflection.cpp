@@ -112,6 +112,10 @@ public:
             TReflection::TMapIndexToReflection &ioItems =
                 input ? reflection.indexToPipeInput : reflection.indexToPipeOutput;
 
+
+            TReflection::TNameToIndex &ioMapper =
+                input ? reflection.pipeInNameToIndex : reflection.pipeOutNameToIndex;
+
             if (reflection.options & EShReflectionUnwrapIOBlocks) {
                 bool anonymous = IsAnonymous(name);
 
@@ -129,12 +133,13 @@ public:
                     blowUpIOAggregate(input, baseName, type);
                 }
             } else {
-                TReflection::TNameToIndex::const_iterator it = reflection.nameToIndex.find(name.c_str());
-                if (it == reflection.nameToIndex.end()) {
-                    reflection.nameToIndex[name.c_str()] = (int)ioItems.size();
+                TReflection::TNameToIndex::const_iterator it = ioMapper.find(name.c_str());
+                if (it == ioMapper.end()) {
+                    // seperate pipe i/o params from uniforms and blocks
+                    // in is only for input in first stage as out is only for last stage. check traverse in call stack.
+                    ioMapper[name.c_str()] = ioItems.size();
                     ioItems.push_back(
                         TObjectReflection(name.c_str(), type, 0, mapToGlType(type), mapToGlArraySize(type), 0));
-
                     EShLanguageMask& stages = ioItems.back().stages;
                     stages = static_cast<EShLanguageMask>(stages | 1 << intermediate.getStage());
                 } else {
