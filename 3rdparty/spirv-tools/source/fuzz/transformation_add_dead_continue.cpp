@@ -83,13 +83,21 @@ bool TransformationAddDeadContinue::IsApplicable(
     return false;
   }
 
+  auto continue_block = context->cfg()->block(loop_header)->ContinueBlockId();
+
+  if (!fuzzerutil::BlockIsReachableInItsFunction(
+          context, context->cfg()->block(continue_block))) {
+    // If the loop's continue block is unreachable, we conservatively do not
+    // allow adding a dead continue, to avoid the compilations that arise due to
+    // the lack of sensible dominance information for unreachable blocks.
+    return false;
+  }
+
   if (fuzzerutil::BlockIsInLoopContinueConstruct(context, message_.from_block(),
                                                  loop_header)) {
     // We cannot jump to the continue target from the continue construct.
     return false;
   }
-
-  auto continue_block = context->cfg()->block(loop_header)->ContinueBlockId();
 
   if (context->GetStructuredCFGAnalysis()->IsMergeBlock(continue_block)) {
     // A branch straight to the continue target that is also a merge block might
@@ -100,7 +108,7 @@ bool TransformationAddDeadContinue::IsApplicable(
 
   // Check that adding the continue would not violate the property that a
   // definition must dominate all of its uses.
-  if (!fuzzerutil::NewEdgeLeavingConstructBodyRespectsUseDefDominance(
+  if (!fuzzerutil::NewEdgeRespectsUseDefDominance(
           context, bb_from, context->cfg()->block(continue_block))) {
     return false;
   }

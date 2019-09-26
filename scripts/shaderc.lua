@@ -108,7 +108,6 @@ project "spirv-opt"
 		path.join(SPIRV_TOOLS, "source/val/validate_composites.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_constants.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_conversion.cpp"),
-		path.join(SPIRV_TOOLS, "source/val/validate_datarules.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_debug.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_decorations.cpp"),
 		path.join(SPIRV_TOOLS, "source/val/validate_derivatives.cpp"),

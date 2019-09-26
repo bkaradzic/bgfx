@@ -19,6 +19,7 @@
 #include "source/fuzz/data_descriptor.h"
 #include "source/fuzz/fuzzer_util.h"
 #include "source/fuzz/id_use_descriptor.h"
+#include "source/opt/types.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -116,15 +117,74 @@ bool TransformationReplaceIdWithSynonym::ReplacingUseWithSynonymIsOk(
 
   if (use_instruction->opcode() == SpvOpAccessChain &&
       use_in_operand_index > 0) {
-    // This is an access chain index.  If the object being accessed has
-    // pointer-to-struct type then we cannot replace the use with a synonym, as
-    // the use needs to be an OpConstant.
+    // This is an access chain index.  If the (sub-)object being accessed by the
+    // given index has struct type then we cannot replace the use with a
+    // synonym, as the use needs to be an OpConstant.
+
+    // Get the top-level composite type that is being accessed.
     auto object_being_accessed = context->get_def_use_mgr()->GetDef(
         use_instruction->GetSingleWordInOperand(0));
     auto pointer_type =
         context->get_type_mgr()->GetType(object_being_accessed->type_id());
     assert(pointer_type->AsPointer());
-    if (pointer_type->AsPointer()->pointee_type()->AsStruct()) {
+    auto composite_type_being_accessed =
+        pointer_type->AsPointer()->pointee_type();
+
+    // Now walk the access chain, tracking the type of each sub-object of the
+    // composite that is traversed, until the index of interest is reached.
+    for (uint32_t index_in_operand = 1; index_in_operand < use_in_operand_index;
+         index_in_operand++) {
+      // For vectors, matrices and arrays, getting the type of the sub-object is
+      // trivial. For the struct case, the sub-object type is field-sensitive,
+      // and depends on the constant index that is used.
+      if (composite_type_being_accessed->AsVector()) {
+        composite_type_being_accessed =
+            composite_type_being_accessed->AsVector()->element_type();
+      } else if (composite_type_being_accessed->AsMatrix()) {
+        composite_type_being_accessed =
+            composite_type_being_accessed->AsMatrix()->element_type();
+      } else if (composite_type_being_accessed->AsArray()) {
+        composite_type_being_accessed =
+            composite_type_being_accessed->AsArray()->element_type();
+      } else {
+        assert(composite_type_being_accessed->AsStruct());
+        auto constant_index_instruction = context->get_def_use_mgr()->GetDef(
+            use_instruction->GetSingleWordInOperand(index_in_operand));
+        assert(constant_index_instruction->opcode() == SpvOpConstant);
+        uint32_t member_index =
+            constant_index_instruction->GetSingleWordInOperand(0);
+        composite_type_being_accessed =
+            composite_type_being_accessed->AsStruct()
+                ->element_types()[member_index];
+      }
+    }
+
+    // We have found the composite type being accessed by the index we are
+    // considering replacing. If it is a struct, then we cannot do the
+    // replacement as struct indices must be constants.
+    if (composite_type_being_accessed->AsStruct()) {
+      return false;
+    }
+  }
+
+  if (use_instruction->opcode() == SpvOpFunctionCall &&
+      use_in_operand_index > 0) {
+    // This is a function call argument.  It is not allowed to have pointer
+    // type.
+
+    // Get the definition of the function being called.
+    auto function = context->get_def_use_mgr()->GetDef(
+        use_instruction->GetSingleWordInOperand(0));
+    // From the function definition, get the function type.
+    auto function_type =
+        context->get_def_use_mgr()->GetDef(function->GetSingleWordInOperand(1));
+    // OpTypeFunction's 0-th input operand is the function return type, and the
+    // function argument types follow. Because the arguments to OpFunctionCall
+    // start from input operand 1, we can use |use_in_operand_index| to get the
+    // type associated with this function argument.
+    auto parameter_type = context->get_type_mgr()->GetType(
+        function_type->GetSingleWordInOperand(use_in_operand_index));
+    if (parameter_type->AsPointer()) {
       return false;
     }
   }

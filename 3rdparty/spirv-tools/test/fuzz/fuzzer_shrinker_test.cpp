@@ -125,7 +125,7 @@ void RunAndCheckShrinker(
     const std::vector<uint32_t>& expected_binary_out,
     uint32_t expected_transformations_out_size, uint32_t step_limit) {
   // Run the shrinker.
-  Shrinker shrinker(target_env, step_limit, true);
+  Shrinker shrinker(target_env, step_limit, false);
   shrinker.SetMessageConsumer(kSilentConsumer);
 
   std::vector<uint32_t> binary_out;

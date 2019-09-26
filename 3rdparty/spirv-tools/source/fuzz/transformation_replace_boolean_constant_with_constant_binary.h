@@ -43,6 +43,12 @@ class TransformationReplaceBooleanConstantWithConstantBinary
   // - |message_.opcode| must be suitable for applying to |message.lhs_id| and
   //   |message_.rhs_id|, and the result must evaluate to the boolean constant
   //   c.
+  // - The boolean constant usage must not be an argument to OpPhi, because in
+  //   this case it is not legal to insert a binary operator instruction right
+  //   before the OpPhi.
+  //   TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2902): consider
+  //    replacing a boolean in an OpPhi by adding a binary operator instruction
+  //    to the parent block for the OpPhi.
   bool IsApplicable(opt::IRContext* context,
                     const FactManager& fact_manager) const override;
 

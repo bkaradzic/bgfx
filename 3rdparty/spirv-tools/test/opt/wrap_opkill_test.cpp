@@ -338,6 +338,46 @@ OpFunctionEnd
   EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
 }
 
+TEST_F(WrapOpKillTest, IdBoundOverflow5) {
+  const std::string text = R"(
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpDecorate %void Location 539091968
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+  %_struct_7 = OpTypeStruct %float %float
+  %_struct_8 = OpTypeStruct %_struct_7
+%_ptr_Function__struct_8 = OpTypePointer Function %_struct_8
+%_ptr_Output_float = OpTypePointer Output %float
+         %18 = OpTypeFunction %_struct_7 %_ptr_Function__struct_8
+          %4 = OpFunction %void Inline|Pure|Const %3
+     %850212 = OpLabel
+         %10 = OpVariable %_ptr_Function__struct_8 Function
+    %1441807 = OpFunctionCall %_struct_7 %32257 %10
+               OpKill
+               OpFunctionEnd
+      %32257 = OpFunction %_struct_7 None %18
+         %28 = OpLabel
+               OpUnreachable
+               OpFunctionEnd
+      %64821 = OpFunction %_struct_7 Inline %18
+    %4194295 = OpLabel
+               OpKill
+               OpFunctionEnd
+  )";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+
+  std::vector<Message> messages = {
+      {SPV_MSG_ERROR, "", 0, 0, "ID overflow. Try running compact-ids."}};
+  SetMessageConsumer(GetTestMessageConsumer(messages));
+  auto result = SinglePassRunToBinary<WrapOpKill>(text, true);
+  EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
 }  // namespace
 }  // namespace opt
 }  // namespace spvtools

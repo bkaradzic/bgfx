@@ -60,13 +60,23 @@ bool WrapOpKill::ReplaceWithFunctionCall(Instruction* inst) {
     return false;
   }
 
+  Instruction* return_inst = nullptr;
   uint32_t return_type_id = GetOwningFunctionsReturnType(inst);
   if (return_type_id != GetVoidTypeId()) {
     Instruction* undef = ir_builder.AddNullaryOp(return_type_id, SpvOpUndef);
-    ir_builder.AddUnaryOp(0, SpvOpReturnValue, undef->result_id());
+    if (undef == nullptr) {
+      return false;
+    }
+    return_inst =
+        ir_builder.AddUnaryOp(0, SpvOpReturnValue, undef->result_id());
   } else {
-    ir_builder.AddNullaryOp(0, SpvOpReturn);
+    return_inst = ir_builder.AddNullaryOp(0, SpvOpReturn);
   }
+
+  if (return_inst == nullptr) {
+    return false;
+  }
+
   context()->KillInst(inst);
   return true;
 }

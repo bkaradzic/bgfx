@@ -41,6 +41,8 @@ class TransformationReplaceIdWithSynonym : public Transformation {
   //   dominated by their definitions.
   // - The id must not be an index into an access chain whose base object has
   //   struct type, as such indices must be constants.
+  // - The id must not be a pointer argument to a function call (because the
+  //   synonym might not be a memory object declaration).
   // - |fresh_id_for_temporary| must be 0.
   // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2855): the
   //  motivation for the temporary is to support the case where an id is

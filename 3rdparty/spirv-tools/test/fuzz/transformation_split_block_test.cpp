@@ -687,12 +687,12 @@ TEST(TransformationSplitBlockTest, SplitOpPhiWithSinglePredecessor) {
          %10 = OpVariable %7 Function
                OpStore %8 %9
          %11 = OpLoad %6 %8
-	       OpBranch %20
-	 %20 = OpLabel
-	 %21 = OpPhi %6 %11 %5
-         OpStore %10 %21
-         OpReturn
-         OpFunctionEnd
+               OpBranch %20
+         %20 = OpLabel
+         %21 = OpPhi %6 %11 %5
+               OpStore %10 %21
+               OpReturn
+               OpFunctionEnd
   )";
 
   const auto env = SPV_ENV_UNIVERSAL_1_3;
@@ -732,14 +732,14 @@ TEST(TransformationSplitBlockTest, SplitOpPhiWithSinglePredecessor) {
          %10 = OpVariable %7 Function
                OpStore %8 %9
          %11 = OpLoad %6 %8
-	       OpBranch %20
-	 %20 = OpLabel
-         OpBranch %100
-  %100 = OpLabel
-	 %21 = OpPhi %6 %11 %20
-         OpStore %10 %21
-         OpReturn
-         OpFunctionEnd
+               OpBranch %20
+         %20 = OpLabel
+               OpBranch %100
+        %100 = OpLabel
+         %21 = OpPhi %6 %11 %20
+               OpStore %10 %21
+               OpReturn
+               OpFunctionEnd
   )";
   ASSERT_TRUE(IsEqual(env, after_split, context.get()));
 }

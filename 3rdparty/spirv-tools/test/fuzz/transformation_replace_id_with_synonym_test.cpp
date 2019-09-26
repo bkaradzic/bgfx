@@ -564,6 +564,613 @@ TEST(TransformationReplaceIdWithSynonymTest, SynonymsOfVariables) {
   ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
 }
 
+TEST(TransformationReplaceIdWithSynonymTest,
+     SynonymOfVariableNoGoodInFunctionCall) {
+  // The following SPIR-V comes from this GLSL, with an object copy added:
+  //
+  // #version 310 es
+  //
+  // precision highp int;
+  //
+  // void foo(int x) { }
+  //
+  // void main() {
+  //   int a;
+  //   a = 2;
+  //   foo(a);
+  // }
+  const std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %10 "foo(i1;"
+               OpName %9 "x"
+               OpName %12 "a"
+               OpName %14 "param"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %8 = OpTypeFunction %2 %7
+         %13 = OpConstant %6 2
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+         %12 = OpVariable %7 Function
+         %14 = OpVariable %7 Function
+               OpStore %12 %13
+         %15 = OpLoad %6 %12
+               OpStore %14 %15
+        %100 = OpCopyObject %7 %14
+         %16 = OpFunctionCall %2 %10 %14
+               OpReturn
+               OpFunctionEnd
+         %10 = OpFunction %2 None %8
+          %9 = OpFunctionParameter %7
+         %11 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  fact_manager.AddFact(MakeFact(14, 100), context.get());
+
+  // Replace %14 with %100 in:
+  // %16 = OpFunctionCall %2 %10 %14
+  auto replacement = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(14, SpvOpFunctionCall, 1, 16, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_FALSE(replacement.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationReplaceIdWithSynonymTest, SynonymsOfAccessChainIndices) {
+  // The following SPIR-V comes from this GLSL, with object copies added:
+  //
+  // #version 310 es
+  //
+  // precision highp float;
+  // precision highp int;
+  //
+  // struct S {
+  //   int[3] a;
+  //   vec4 b;
+  //   bool c;
+  // } d;
+  //
+  // float[20] e;
+  //
+  // struct T {
+  //   float f;
+  //   S g;
+  // } h;
+  //
+  // T[4] i;
+  //
+  // void main() {
+  //   d.a[2] = 10;
+  //   d.b[3] = 11.0;
+  //   d.c = false;
+  //   e[17] = 12.0;
+  //   h.f = 13.0;
+  //   h.g.a[1] = 14;
+  //   h.g.b[0] = 15.0;
+  //   h.g.c = true;
+  //   i[0].f = 16.0;
+  //   i[1].g.a[0] = 17;
+  //   i[2].g.b[1] = 18.0;
+  //   i[3].g.c = true;
+  // }
+  const std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %13 "S"
+               OpMemberName %13 0 "a"
+               OpMemberName %13 1 "b"
+               OpMemberName %13 2 "c"
+               OpName %15 "d"
+               OpName %31 "e"
+               OpName %35 "T"
+               OpMemberName %35 0 "f"
+               OpMemberName %35 1 "g"
+               OpName %37 "h"
+               OpName %50 "i"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypeInt 32 0
+          %8 = OpConstant %7 3
+          %9 = OpTypeArray %6 %8
+         %10 = OpTypeFloat 32
+         %11 = OpTypeVector %10 4
+         %12 = OpTypeBool
+         %13 = OpTypeStruct %9 %11 %12
+         %14 = OpTypePointer Private %13
+         %15 = OpVariable %14 Private
+         %16 = OpConstant %6 0
+         %17 = OpConstant %6 2
+         %18 = OpConstant %6 10
+         %19 = OpTypePointer Private %6
+         %21 = OpConstant %6 1
+         %22 = OpConstant %10 11
+         %23 = OpTypePointer Private %10
+         %25 = OpConstantFalse %12
+         %26 = OpTypePointer Private %12
+         %28 = OpConstant %7 20
+         %29 = OpTypeArray %10 %28
+         %30 = OpTypePointer Private %29
+         %31 = OpVariable %30 Private
+         %32 = OpConstant %6 17
+         %33 = OpConstant %10 12
+         %35 = OpTypeStruct %10 %13
+         %36 = OpTypePointer Private %35
+         %37 = OpVariable %36 Private
+         %38 = OpConstant %10 13
+         %40 = OpConstant %6 14
+         %42 = OpConstant %10 15
+         %43 = OpConstant %7 0
+         %45 = OpConstantTrue %12
+         %47 = OpConstant %7 4
+         %48 = OpTypeArray %35 %47
+         %49 = OpTypePointer Private %48
+         %50 = OpVariable %49 Private
+         %51 = OpConstant %10 16
+         %54 = OpConstant %10 18
+         %55 = OpConstant %7 1
+         %57 = OpConstant %6 3
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+
+         %100 = OpCopyObject %6 %16 ; 0
+         %101 = OpCopyObject %6 %21 ; 1
+         %102 = OpCopyObject %6 %17 ; 2
+         %103 = OpCopyObject %6 %57 ; 3
+         %104 = OpCopyObject %6 %18 ; 10
+         %105 = OpCopyObject %6 %40 ; 14
+         %106 = OpCopyObject %6 %32 ; 17
+         %107 = OpCopyObject %7 %43 ; 0
+         %108 = OpCopyObject %7 %55 ; 1
+         %109 = OpCopyObject %7  %8 ; 3
+         %110 = OpCopyObject %7 %47 ; 4
+         %111 = OpCopyObject %7 %28 ; 20
+         %112 = OpCopyObject %12 %45 ; true
+
+         %20 = OpAccessChain %19 %15 %16 %17
+               OpStore %20 %18
+         %24 = OpAccessChain %23 %15 %21 %8
+               OpStore %24 %22
+         %27 = OpAccessChain %26 %15 %17
+               OpStore %27 %25
+         %34 = OpAccessChain %23 %31 %32
+               OpStore %34 %33
+         %39 = OpAccessChain %23 %37 %16
+               OpStore %39 %38
+         %41 = OpAccessChain %19 %37 %21 %16 %21
+               OpStore %41 %40
+         %44 = OpAccessChain %23 %37 %21 %21 %43
+               OpStore %44 %42
+         %46 = OpAccessChain %26 %37 %21 %17
+               OpStore %46 %45
+         %52 = OpAccessChain %23 %50 %16 %16
+               OpStore %52 %51
+         %53 = OpAccessChain %19 %50 %21 %21 %16 %16
+               OpStore %53 %32
+         %56 = OpAccessChain %23 %50 %17 %21 %21 %55
+               OpStore %56 %54
+         %58 = OpAccessChain %26 %50 %57 %21 %17
+               OpStore %58 %45
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // Add synonym facts corresponding to the OpCopyObject operations that have
+  // been applied to all constants in the module.
+  fact_manager.AddFact(MakeFact(16, 100), context.get());
+  fact_manager.AddFact(MakeFact(21, 101), context.get());
+  fact_manager.AddFact(MakeFact(17, 102), context.get());
+  fact_manager.AddFact(MakeFact(57, 103), context.get());
+  fact_manager.AddFact(MakeFact(18, 104), context.get());
+  fact_manager.AddFact(MakeFact(40, 105), context.get());
+  fact_manager.AddFact(MakeFact(32, 106), context.get());
+  fact_manager.AddFact(MakeFact(43, 107), context.get());
+  fact_manager.AddFact(MakeFact(55, 108), context.get());
+  fact_manager.AddFact(MakeFact(8, 109), context.get());
+  fact_manager.AddFact(MakeFact(47, 110), context.get());
+  fact_manager.AddFact(MakeFact(28, 111), context.get());
+  fact_manager.AddFact(MakeFact(45, 112), context.get());
+
+  // Replacements of the form %16 -> %100
+
+  // %20 = OpAccessChain %19 %15 *%16* %17
+  // Corresponds to d.*a*[2]
+  // The index %16 used for a cannot be replaced
+  auto replacement1 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 1, 20, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_FALSE(replacement1.IsApplicable(context.get(), fact_manager));
+
+  // %39 = OpAccessChain %23 %37 *%16*
+  // Corresponds to h.*f*
+  // The index %16 used for f cannot be replaced
+  auto replacement2 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 1, 39, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_FALSE(replacement2.IsApplicable(context.get(), fact_manager));
+
+  // %41 = OpAccessChain %19 %37 %21 *%16* %21
+  // Corresponds to h.g.*a*[1]
+  // The index %16 used for a cannot be replaced
+  auto replacement3 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 2, 41, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_FALSE(replacement3.IsApplicable(context.get(), fact_manager));
+
+  // %52 = OpAccessChain %23 %50 *%16* %16
+  // Corresponds to i[*0*].f
+  // The index %16 used for 0 *can* be replaced
+  auto replacement4 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 1, 52, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_TRUE(replacement4.IsApplicable(context.get(), fact_manager));
+  replacement4.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // %52 = OpAccessChain %23 %50 %16 *%16*
+  // Corresponds to i[0].*f*
+  // The index %16 used for f cannot be replaced
+  auto replacement5 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 2, 52, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_FALSE(replacement5.IsApplicable(context.get(), fact_manager));
+
+  // %53 = OpAccessChain %19 %50 %21 %21 *%16* %16
+  // Corresponds to i[1].g.*a*[0]
+  // The index %16 used for a cannot be replaced
+  auto replacement6 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 3, 53, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_FALSE(replacement6.IsApplicable(context.get(), fact_manager));
+
+  // %53 = OpAccessChain %19 %50 %21 %21 %16 *%16*
+  // Corresponds to i[1].g.a[*0*]
+  // The index %16 used for 0 *can* be replaced
+  auto replacement7 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(16, SpvOpAccessChain, 4, 53, 0),
+      MakeDataDescriptor(100, {}), 0);
+  ASSERT_TRUE(replacement7.IsApplicable(context.get(), fact_manager));
+  replacement7.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // Replacements of the form %21 -> %101
+
+  // %24 = OpAccessChain %23 %15 *%21* %8
+  // Corresponds to d.*b*[3]
+  // The index %24 used for b cannot be replaced
+  auto replacement8 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 1, 24, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement8.IsApplicable(context.get(), fact_manager));
+
+  // %41 = OpAccessChain %19 %37 *%21* %16 %21
+  // Corresponds to h.*g*.a[1]
+  // The index %24 used for g cannot be replaced
+  auto replacement9 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 1, 41, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement9.IsApplicable(context.get(), fact_manager));
+
+  // %41 = OpAccessChain %19 %37 %21 %16 *%21*
+  // Corresponds to h.g.a[*1*]
+  // The index %24 used for 1 *can* be replaced
+  auto replacement10 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 3, 41, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_TRUE(replacement10.IsApplicable(context.get(), fact_manager));
+  replacement10.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // %44 = OpAccessChain %23 %37 *%21* %21 %43
+  // Corresponds to h.*g*.b[0]
+  // The index %24 used for g cannot be replaced
+  auto replacement11 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 1, 44, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement11.IsApplicable(context.get(), fact_manager));
+
+  // %44 = OpAccessChain %23 %37 %21 *%21* %43
+  // Corresponds to h.g.*b*[0]
+  // The index %24 used for b cannot be replaced
+  auto replacement12 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 2, 44, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement12.IsApplicable(context.get(), fact_manager));
+
+  // %46 = OpAccessChain %26 %37 *%21* %17
+  // Corresponds to h.*g*.c
+  // The index %24 used for g cannot be replaced
+  auto replacement13 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 1, 46, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement13.IsApplicable(context.get(), fact_manager));
+
+  // %53 = OpAccessChain %19 %50 *%21* %21 %16 %16
+  // Corresponds to i[*1*].g.a[0]
+  // The index %24 used for 1 *can* be replaced
+  auto replacement14 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 1, 53, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_TRUE(replacement14.IsApplicable(context.get(), fact_manager));
+  replacement14.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // %53 = OpAccessChain %19 %50 %21 *%21* %16 %16
+  // Corresponds to i[1].*g*.a[0]
+  // The index %24 used for g cannot be replaced
+  auto replacement15 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 2, 53, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement15.IsApplicable(context.get(), fact_manager));
+
+  // %56 = OpAccessChain %23 %50 %17 *%21* %21 %55
+  // Corresponds to i[2].*g*.b[1]
+  // The index %24 used for g cannot be replaced
+  auto replacement16 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 2, 56, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement16.IsApplicable(context.get(), fact_manager));
+
+  // %56 = OpAccessChain %23 %50 %17 %21 *%21* %55
+  // Corresponds to i[2].g.*b*[1]
+  // The index %24 used for b cannot be replaced
+  auto replacement17 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 3, 56, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement17.IsApplicable(context.get(), fact_manager));
+
+  // %58 = OpAccessChain %26 %50 %57 *%21* %17
+  // Corresponds to i[3].*g*.c
+  // The index %24 used for g cannot be replaced
+  auto replacement18 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(21, SpvOpAccessChain, 2, 58, 0),
+      MakeDataDescriptor(101, {}), 0);
+  ASSERT_FALSE(replacement18.IsApplicable(context.get(), fact_manager));
+
+  // Replacements of the form %17 -> %102
+
+  // %20 = OpAccessChain %19 %15 %16 %17
+  // Corresponds to d.a[*2*]
+  // The index %17 used for 2 *can* be replaced
+  auto replacement19 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(17, SpvOpAccessChain, 2, 20, 0),
+      MakeDataDescriptor(102, {}), 0);
+  ASSERT_TRUE(replacement19.IsApplicable(context.get(), fact_manager));
+  replacement19.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // %27 = OpAccessChain %26 %15 %17
+  // Corresponds to d.c
+  // The index %17 used for c cannot be replaced
+  auto replacement20 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(17, SpvOpAccessChain, 1, 27, 0),
+      MakeDataDescriptor(102, {}), 0);
+  ASSERT_FALSE(replacement20.IsApplicable(context.get(), fact_manager));
+
+  // %46 = OpAccessChain %26 %37 %21 %17
+  // Corresponds to h.g.*c*
+  // The index %17 used for c cannot be replaced
+  auto replacement21 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(17, SpvOpAccessChain, 2, 46, 0),
+      MakeDataDescriptor(102, {}), 0);
+  ASSERT_FALSE(replacement21.IsApplicable(context.get(), fact_manager));
+
+  // %56 = OpAccessChain %23 %50 %17 %21 %21 %55
+  // Corresponds to i[*2*].g.b[1]
+  // The index %17 used for 2 *can* be replaced
+  auto replacement22 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(17, SpvOpAccessChain, 1, 56, 0),
+      MakeDataDescriptor(102, {}), 0);
+  ASSERT_TRUE(replacement22.IsApplicable(context.get(), fact_manager));
+  replacement22.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // %58 = OpAccessChain %26 %50 %57 %21 %17
+  // Corresponds to i[3].g.*c*
+  // The index %17 used for c cannot be replaced
+  auto replacement23 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(17, SpvOpAccessChain, 3, 58, 0),
+      MakeDataDescriptor(102, {}), 0);
+  ASSERT_FALSE(replacement23.IsApplicable(context.get(), fact_manager));
+
+  // Replacements of the form %57 -> %103
+
+  // %58 = OpAccessChain %26 %50 *%57* %21 %17
+  // Corresponds to i[*3*].g.c
+  // The index %57 used for 3 *can* be replaced
+  auto replacement24 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(57, SpvOpAccessChain, 1, 58, 0),
+      MakeDataDescriptor(103, {}), 0);
+  ASSERT_TRUE(replacement24.IsApplicable(context.get(), fact_manager));
+  replacement24.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // Replacements of the form %32 -> %106
+
+  // %34 = OpAccessChain %23 %31 *%32*
+  // Corresponds to e[*17*]
+  // The index %32 used for 17 *can* be replaced
+  auto replacement25 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(32, SpvOpAccessChain, 1, 34, 0),
+      MakeDataDescriptor(106, {}), 0);
+  ASSERT_TRUE(replacement25.IsApplicable(context.get(), fact_manager));
+  replacement25.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // Replacements of the form %43 -> %107
+
+  // %44 = OpAccessChain %23 %37 %21 %21 *%43*
+  // Corresponds to h.g.b[*0*]
+  // The index %43 used for 0 *can* be replaced
+  auto replacement26 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(43, SpvOpAccessChain, 3, 44, 0),
+      MakeDataDescriptor(107, {}), 0);
+  ASSERT_TRUE(replacement26.IsApplicable(context.get(), fact_manager));
+  replacement26.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // Replacements of the form %55 -> %108
+
+  // %56 = OpAccessChain %23 %50 %17 %21 %21 *%55*
+  // Corresponds to i[2].g.b[*1*]
+  // The index %55 used for 1 *can* be replaced
+  auto replacement27 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(55, SpvOpAccessChain, 4, 56, 0),
+      MakeDataDescriptor(108, {}), 0);
+  ASSERT_TRUE(replacement27.IsApplicable(context.get(), fact_manager));
+  replacement27.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  // Replacements of the form %8 -> %109
+
+  // %24 = OpAccessChain %23 %15 %21 *%8*
+  // Corresponds to d.b[*3*]
+  // The index %8 used for 3 *can* be replaced
+  auto replacement28 = TransformationReplaceIdWithSynonym(
+      transformation::MakeIdUseDescriptor(8, SpvOpAccessChain, 2, 24, 0),
+      MakeDataDescriptor(109, {}), 0);
+  ASSERT_TRUE(replacement28.IsApplicable(context.get(), fact_manager));
+  replacement28.Apply(context.get(), &fact_manager);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  const std::string after_transformation = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %13 "S"
+               OpMemberName %13 0 "a"
+               OpMemberName %13 1 "b"
+               OpMemberName %13 2 "c"
+               OpName %15 "d"
+               OpName %31 "e"
+               OpName %35 "T"
+               OpMemberName %35 0 "f"
+               OpMemberName %35 1 "g"
+               OpName %37 "h"
+               OpName %50 "i"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypeInt 32 0
+          %8 = OpConstant %7 3
+          %9 = OpTypeArray %6 %8
+         %10 = OpTypeFloat 32
+         %11 = OpTypeVector %10 4
+         %12 = OpTypeBool
+         %13 = OpTypeStruct %9 %11 %12
+         %14 = OpTypePointer Private %13
+         %15 = OpVariable %14 Private
+         %16 = OpConstant %6 0
+         %17 = OpConstant %6 2
+         %18 = OpConstant %6 10
+         %19 = OpTypePointer Private %6
+         %21 = OpConstant %6 1
+         %22 = OpConstant %10 11
+         %23 = OpTypePointer Private %10
+         %25 = OpConstantFalse %12
+         %26 = OpTypePointer Private %12
+         %28 = OpConstant %7 20
+         %29 = OpTypeArray %10 %28
+         %30 = OpTypePointer Private %29
+         %31 = OpVariable %30 Private
+         %32 = OpConstant %6 17
+         %33 = OpConstant %10 12
+         %35 = OpTypeStruct %10 %13
+         %36 = OpTypePointer Private %35
+         %37 = OpVariable %36 Private
+         %38 = OpConstant %10 13
+         %40 = OpConstant %6 14
+         %42 = OpConstant %10 15
+         %43 = OpConstant %7 0
+         %45 = OpConstantTrue %12
+         %47 = OpConstant %7 4
+         %48 = OpTypeArray %35 %47
+         %49 = OpTypePointer Private %48
+         %50 = OpVariable %49 Private
+         %51 = OpConstant %10 16
+         %54 = OpConstant %10 18
+         %55 = OpConstant %7 1
+         %57 = OpConstant %6 3
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+
+         %100 = OpCopyObject %6 %16 ; 0
+         %101 = OpCopyObject %6 %21 ; 1
+         %102 = OpCopyObject %6 %17 ; 2
+         %103 = OpCopyObject %6 %57 ; 3
+         %104 = OpCopyObject %6 %18 ; 10
+         %105 = OpCopyObject %6 %40 ; 14
+         %106 = OpCopyObject %6 %32 ; 17
+         %107 = OpCopyObject %7 %43 ; 0
+         %108 = OpCopyObject %7 %55 ; 1
+         %109 = OpCopyObject %7  %8 ; 3
+         %110 = OpCopyObject %7 %47 ; 4
+         %111 = OpCopyObject %7 %28 ; 20
+         %112 = OpCopyObject %12 %45 ; true
+
+         %20 = OpAccessChain %19 %15 %16 %102
+               OpStore %20 %18
+         %24 = OpAccessChain %23 %15 %21 %109
+               OpStore %24 %22
+         %27 = OpAccessChain %26 %15 %17
+               OpStore %27 %25
+         %34 = OpAccessChain %23 %31 %106
+               OpStore %34 %33
+         %39 = OpAccessChain %23 %37 %16
+               OpStore %39 %38
+         %41 = OpAccessChain %19 %37 %21 %16 %101
+               OpStore %41 %40
+         %44 = OpAccessChain %23 %37 %21 %21 %107
+               OpStore %44 %42
+         %46 = OpAccessChain %26 %37 %21 %17
+               OpStore %46 %45
+         %52 = OpAccessChain %23 %50 %100 %16
+               OpStore %52 %51
+         %53 = OpAccessChain %19 %50 %101 %21 %16 %100
+               OpStore %53 %32
+         %56 = OpAccessChain %23 %50 %102 %21 %21 %108
+               OpStore %56 %54
+         %58 = OpAccessChain %26 %50 %103 %21 %17
+               OpStore %58 %45
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  ASSERT_TRUE(IsEqual(env, after_transformation, context.get()));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

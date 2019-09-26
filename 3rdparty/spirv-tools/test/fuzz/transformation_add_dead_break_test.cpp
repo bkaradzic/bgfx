@@ -2559,6 +2559,55 @@ TEST(TransformationAddDeadBreakTest, RespectDominanceRules8) {
   ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
 }
 
+TEST(TransformationAddDeadBreakTest,
+     BreakWouldDisobeyDominanceBlockOrderingRules) {
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %9 = OpConstantTrue %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %10
+         %10 = OpLabel
+               OpLoopMerge %16 %15 None
+               OpBranch %11
+         %11 = OpLabel
+               OpSelectionMerge %14 None
+               OpBranchConditional %9 %12 %13
+         %14 = OpLabel
+               OpBranch %15
+         %12 = OpLabel
+               OpBranch %16
+         %13 = OpLabel
+               OpBranch %16
+         %15 = OpLabel
+               OpBranch %10
+         %16 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // Bad because 14 comes before 12 in the module, and 14 has no predecessors.
+  // This means that an edge from 12 to 14 will lead to 12 dominating 14, which
+  // is illegal if 12 appears after 14.
+  auto bad_transformation = TransformationAddDeadBreak(12, 14, true, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

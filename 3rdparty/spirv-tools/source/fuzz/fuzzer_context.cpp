@@ -20,17 +20,16 @@ namespace spvtools {
 namespace fuzz {
 
 namespace {
-// Default probabilities for applying various transformations.
-// All values are percentages.
-// Keep them in alphabetical order.
+// Default <minimum, maximum> pairs of probabilities for applying various
+// transformations. All values are percentages. Keep them in alphabetical order.
 
-const uint32_t kDefaultChanceOfAddingDeadBreak = 20;
-const uint32_t kDefaultChanceOfAddingDeadContinue = 20;
-const uint32_t kDefaultChanceOfCopyingObject = 20;
-const uint32_t kDefaultChanceOfMovingBlockDown = 25;
-const uint32_t kDefaultChanceOfObfuscatingConstant = 20;
-const uint32_t kDefaultChanceOfReplacingIdWithSynonym = 20;
-const uint32_t kDefaultChanceOfSplittingBlock = 20;
+const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadBreak = {5, 80};
+const std::pair<uint32_t, uint32_t> kChanceOfAddingDeadContinue = {5, 80};
+const std::pair<uint32_t, uint32_t> kChanceOfCopyingObject = {20, 50};
+const std::pair<uint32_t, uint32_t> kChanceOfMovingBlockDown = {20, 50};
+const std::pair<uint32_t, uint32_t> kChanceOfObfuscatingConstant = {10, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfReplacingIdWithSynonym = {10, 90};
+const std::pair<uint32_t, uint32_t> kChanceOfSplittingBlock = {40, 95};
 
 // Default functions for controlling how deep to go during recursive
 // generation/transformation. Keep them in alphabetical order.
@@ -48,16 +47,21 @@ FuzzerContext::FuzzerContext(RandomGenerator* random_generator,
                              uint32_t min_fresh_id)
     : random_generator_(random_generator),
       next_fresh_id_(min_fresh_id),
-      chance_of_adding_dead_break_(kDefaultChanceOfAddingDeadBreak),
-      chance_of_adding_dead_continue_(kDefaultChanceOfAddingDeadContinue),
-      chance_of_copying_object_(kDefaultChanceOfCopyingObject),
-      chance_of_moving_block_down_(kDefaultChanceOfMovingBlockDown),
-      chance_of_obfuscating_constant_(kDefaultChanceOfObfuscatingConstant),
-      chance_of_replacing_id_with_synonym_(
-          kDefaultChanceOfReplacingIdWithSynonym),
-      chance_of_splitting_block_(kDefaultChanceOfSplittingBlock),
       go_deeper_in_constant_obfuscation_(
-          kDefaultGoDeeperInConstantObfuscation) {}
+          kDefaultGoDeeperInConstantObfuscation) {
+  chance_of_adding_dead_break_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingDeadBreak);
+  chance_of_adding_dead_continue_ =
+      ChooseBetweenMinAndMax(kChanceOfAddingDeadContinue);
+  chance_of_copying_object_ = ChooseBetweenMinAndMax(kChanceOfCopyingObject);
+  chance_of_moving_block_down_ =
+      ChooseBetweenMinAndMax(kChanceOfMovingBlockDown);
+  chance_of_obfuscating_constant_ =
+      ChooseBetweenMinAndMax(kChanceOfObfuscatingConstant);
+  chance_of_replacing_id_with_synonym_ =
+      ChooseBetweenMinAndMax(kChanceOfReplacingIdWithSynonym);
+  chance_of_splitting_block_ = ChooseBetweenMinAndMax(kChanceOfSplittingBlock);
+}
 
 FuzzerContext::~FuzzerContext() = default;
 
@@ -68,6 +72,13 @@ bool FuzzerContext::ChooseEven() { return random_generator_->RandomBool(); }
 bool FuzzerContext::ChoosePercentage(uint32_t percentage_chance) {
   assert(percentage_chance <= 100);
   return random_generator_->RandomPercentage() < percentage_chance;
+}
+
+uint32_t FuzzerContext::ChooseBetweenMinAndMax(
+    const std::pair<uint32_t, uint32_t>& min_max) {
+  assert(min_max.first <= min_max.second);
+  return min_max.first +
+         random_generator_->RandomUint32(min_max.second - min_max.first + 1);
 }
 
 }  // namespace fuzz

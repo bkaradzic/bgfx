@@ -47,6 +47,12 @@ void FuzzerPassApplyIdSynonyms::Apply() {
             return;
           }
 
+          // |use_index| is the absolute index of the operand.  We require
+          // the index of the operand restricted to input operands only, so
+          // we subtract the number of non-input operands from |use_index|.
+          uint32_t use_in_operand_index =
+              use_index - use_inst->NumOperands() + use_inst->NumInOperands();
+
           std::vector<const protobufs::DataDescriptor*> synonyms_to_try;
           for (auto& data_descriptor :
                GetFactManager()->GetSynonymsForId(id_with_known_synonyms)) {
@@ -63,19 +69,14 @@ void FuzzerPassApplyIdSynonyms::Apply() {
 
             if (!TransformationReplaceIdWithSynonym::
                     ReplacingUseWithSynonymIsOk(GetIRContext(), use_inst,
-                                                use_index, *synonym_to_try)) {
+                                                use_in_operand_index,
+                                                *synonym_to_try)) {
               continue;
             }
 
-            // |use_index| is the absolute index of the operand.  We require
-            // the index of the operand restricted to input operands only, so
-            // we subtract the number of non-input operands from |use_index|.
-            uint32_t number_of_non_input_operands =
-                use_inst->NumOperands() - use_inst->NumInOperands();
             TransformationReplaceIdWithSynonym replace_id_transformation(
                 transformation::MakeIdUseDescriptorFromUse(
-                    GetIRContext(), use_inst,
-                    use_index - number_of_non_input_operands),
+                    GetIRContext(), use_inst, use_in_operand_index),
                 *synonym_to_try, 0);
             // The transformation should be applicable by construction.
             assert(replace_id_transformation.IsApplicable(GetIRContext(),

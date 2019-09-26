@@ -36,6 +36,8 @@ class TransformationAddDeadContinue : public Transformation {
 
   // - |message_.from_block| must be the id of a block a in the given module.
   // - a must be contained in a loop with continue target b
+  // - The continue target b must be dominated by the head of the loop in which
+  //   it is contained
   // - b must not be the merge block of a selection construct
   // - if |message_.continue_condition_value| holds (does not hold) then
   //   OpConstantTrue (OpConstantFalse) must be present in the module

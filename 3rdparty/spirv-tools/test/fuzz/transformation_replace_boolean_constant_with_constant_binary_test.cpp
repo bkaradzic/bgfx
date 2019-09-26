@@ -597,6 +597,56 @@ TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest,
   ASSERT_TRUE(IsEqual(env, after, context.get()));
 }
 
+TEST(TransformationReplaceBooleanConstantWithConstantBinaryTest, OpPhi) {
+  // Hand-written SPIR-V to check applicability of the transformation on an
+  // OpPhi argument.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %7 = OpTypePointer Function %6
+          %9 = OpConstantTrue %6
+         %16 = OpConstantFalse %6
+         %10 = OpTypeInt 32 1
+         %11 = OpTypePointer Function %10
+         %13 = OpConstant %10 0
+         %15 = OpConstant %10 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpSelectionMerge %20 None
+               OpBranchConditional %9 %21 %22
+         %21 = OpLabel
+               OpBranch %20
+         %22 = OpLabel
+               OpBranch %20
+         %20 = OpLabel
+         %23 = OpPhi %6 %9 %21 %16 %22
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto replacement = TransformationReplaceBooleanConstantWithConstantBinary(
+      transformation::MakeIdUseDescriptor(9, SpvOpPhi, 0, 23, 0), 13, 15,
+      SpvOpSLessThan, 100);
+
+  ASSERT_FALSE(replacement.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

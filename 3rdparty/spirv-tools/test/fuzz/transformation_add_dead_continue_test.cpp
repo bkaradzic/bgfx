@@ -1388,6 +1388,244 @@ TEST(TransformationAddDeadContinueTest, Miscellaneous1) {
   ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
 }
 
+TEST(TransformationAddDeadContinueTest, Miscellaneous2) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %51 = OpTypeBool
+        %395 = OpConstantTrue %51
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %389
+        %389 = OpLabel
+               OpLoopMerge %388 %391 None
+               OpBranch %339
+        %339 = OpLabel
+               OpSelectionMerge %396 None
+               OpBranchConditional %395 %388 %396
+        %396 = OpLabel
+               OpBranch %1552
+       %1552 = OpLabel
+               OpLoopMerge %1553 %1554 None
+               OpBranch %1556
+       %1556 = OpLabel
+               OpLoopMerge %1557 %1570 None
+               OpBranchConditional %395 %1562 %1557
+       %1562 = OpLabel
+               OpSelectionMerge %1570 None
+               OpBranchConditional %395 %1571 %1570
+       %1571 = OpLabel
+               OpBranch %1557
+       %1570 = OpLabel
+               OpBranch %1556
+       %1557 = OpLabel
+               OpSelectionMerge %1586 None
+               OpBranchConditional %395 %1553 %1586
+       %1586 = OpLabel
+               OpBranch %1553
+       %1554 = OpLabel
+               OpBranch %1552
+       %1553 = OpLabel
+               OpBranch %388
+        %391 = OpLabel
+               OpBranch %389
+        %388 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation would introduce a branch from a continue target to
+  // itself.
+  auto bad_transformation = TransformationAddDeadContinue(1554, true, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous3) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %85 = OpTypeBool
+        %434 = OpConstantFalse %85
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %234
+        %234 = OpLabel
+               OpLoopMerge %235 %236 None
+               OpBranch %259
+        %259 = OpLabel
+               OpLoopMerge %260 %274 None
+               OpBranchConditional %434 %265 %260
+        %265 = OpLabel
+               OpBranch %275
+        %275 = OpLabel
+               OpBranch %260
+        %274 = OpLabel
+               OpBranch %259
+        %260 = OpLabel
+               OpSelectionMerge %298 None
+               OpBranchConditional %434 %299 %300
+        %300 = OpLabel
+               OpBranch %235
+        %298 = OpLabel
+               OpUnreachable
+        %236 = OpLabel
+               OpBranch %234
+        %299 = OpLabel
+               OpBranch %235
+        %235 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(299, false, {});
+
+  // The continue edge would connect %299 to the previously-unreachable %236,
+  // making %299 dominate %236, and breaking the rule that block ordering must
+  // respect dominance.
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous4) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %8 "i"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %9 = OpConstant %6 0
+         %16 = OpConstant %6 100
+         %17 = OpTypeBool
+        %100 = OpConstantFalse %17
+         %21 = OpConstant %6 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+          %8 = OpVariable %7 Function
+               OpStore %8 %9
+               OpBranch %10
+         %13 = OpLabel
+         %20 = OpLoad %6 %8
+         %22 = OpIAdd %6 %20 %21
+               OpStore %8 %22
+               OpBranch %10
+         %10 = OpLabel
+               OpLoopMerge %12 %13 None
+               OpBranch %14
+         %14 = OpLabel
+         %15 = OpLoad %6 %8
+         %18 = OpSLessThan %17 %15 %16
+               OpBranchConditional %18 %11 %12
+         %11 = OpLabel
+               OpBranch %12
+         %12 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(10, false, {});
+
+  // The continue edge would connect %10 to the previously-unreachable %13,
+  // making %10 dominate %13, and breaking the rule that block ordering must
+  // respect dominance.
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous5) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %7 = OpTypePointer Function %6
+          %9 = OpConstantTrue %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %98
+         %98 = OpLabel
+               OpLoopMerge %100 %101 None
+               OpBranch %99
+         %99 = OpLabel
+               OpSelectionMerge %111 None
+               OpBranchConditional %9 %110 %111
+        %110 = OpLabel
+               OpBranch %100
+        %111 = OpLabel
+        %200 = OpCopyObject %6 %9
+               OpBranch %101
+        %101 = OpLabel
+        %201 = OpCopyObject %6 %200
+               OpBranchConditional %9 %98 %100
+        %100 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(110, true, {});
+
+  // The continue edge would lead to the use of %200 in block %101 no longer
+  // being dominated by its definition in block %111.
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

@@ -205,156 +205,71 @@ opt::BasicBlock::iterator GetIteratorForBaseInstructionAndOffset(
   return nullptr;
 }
 
-// Returns the ids of all successors of |block|
-std::vector<uint32_t> GetSuccessors(opt::BasicBlock* block) {
-  std::vector<uint32_t> result;
-  switch (block->terminator()->opcode()) {
-    case SpvOpBranch:
-      result.push_back(block->terminator()->GetSingleWordInOperand(0));
-      break;
-    case SpvOpBranchConditional:
-      result.push_back(block->terminator()->GetSingleWordInOperand(1));
-      result.push_back(block->terminator()->GetSingleWordInOperand(2));
-      break;
-    case SpvOpSwitch:
-      for (uint32_t i = 1; i < block->terminator()->NumInOperands(); i += 2) {
-        result.push_back(block->terminator()->GetSingleWordInOperand(i));
-      }
-      break;
-    default:
-      break;
+bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
+                                    opt::BasicBlock* bb_from,
+                                    opt::BasicBlock* bb_to) {
+  assert(bb_from->terminator()->opcode() == SpvOpBranch);
+
+  // If there is *already* an edge from |bb_from| to |bb_to|, then adding
+  // another edge is fine from a dominance point of view.
+  if (bb_from->terminator()->GetSingleWordInOperand(0) == bb_to->id()) {
+    return true;
   }
-  return result;
-}
 
-// The FindBypassedBlocks method and its helpers perform a depth-first search;
-// this struct represents an element of the stack used during depth-first
-// search.
-struct FindBypassedBlocksDfsStackNode {
-  opt::BasicBlock* block;  // The block that is being explored
-  bool handled_merge;  // We visit merge blocks before successors; this field
-                       // tracks whether we have yet processed the merge block
-                       // (if any) associated with the block
-  uint32_t next_successor;  // The next as-yet unexplored successor of this
-                            // block; exploration of a block is complete when
-                            // this field's value reaches the successor count
-};
-
-// Helper method for the depth-first-search routine that collects blocks that a
-// new break or continue control flow graph edge will bypass.
-void HandleSuccessorDuringSearchForBypassedBlocks(
-    opt::BasicBlock* successor, bool new_blocks_will_be_bypassed,
-    std::set<uint32_t>* already_visited,
-    std::set<opt::BasicBlock*>* bypassed_blocks,
-    std::vector<FindBypassedBlocksDfsStackNode>* dfs_stack) {
-  if (already_visited->count(successor->id()) == 0) {
-    // This is a new block; mark it as visited so that we don't regard it as new
-    // in the future, and push it on to the stack for exploration.
-    already_visited->insert(successor->id());
-    dfs_stack->push_back({successor, false, 0});
-    if (new_blocks_will_be_bypassed) {
-      // We are in the region of the control-flow graph consisting of blocks
-      // that the new edge will bypass, so grab this block.
-      bypassed_blocks->insert(successor);
-    }
-  }
-}
-
-// Determines those block that will be bypassed by a break or continue edge from
-// |bb_from| to |bb_to|.
-void FindBypassedBlocks(opt::IRContext* context, opt::BasicBlock* bb_from,
-                        opt::BasicBlock* bb_to,
-                        std::set<opt::BasicBlock*>* bypassed_blocks) {
-  // This algorithm finds all blocks different from |bb_from| that:
-  // - are in the innermost structured control flow construct containing
-  // |bb_from|
-  // - can be reached from |bb_from| without traversing a back-edge or going
-  // through |bb_to|
+  // Let us assume that the module being manipulated is valid according to the
+  // rules of the SPIR-V language.
   //
-  // This is achieved by doing a depth-first search of the function's CFG,
-  // exploring merge blocks before successors, and grabbing all blocks that are
-  // visited in the sub-search rooted at |bb_from|. (As an optimization, the
-  // search terminates as soon as exploration of |bb_from| has completed.)
+  // Suppose that some block Y is dominated by |bb_to| (which includes the case
+  // where Y = |bb_to|).
+  //
+  // Suppose that Y uses an id i that is defined in some other block X.
+  //
+  // Because the module is valid, X must dominate Y.  We are concerned about
+  // whether an edge from |bb_from| to |bb_to| could *stop* X from dominating
+  // Y.
+  //
+  // Because |bb_to| dominates Y, a new edge from |bb_from| to |bb_to| can
+  // only affect whether X dominates Y if X dominates |bb_to|.
+  //
+  // So let us assume that X does dominate |bb_to|, so that we have:
+  //
+  //   (X defines i) dominates |bb_to| dominates (Y uses i)
+  //
+  // The new edge from |bb_from| to |bb_to| will stop the definition of i in X
+  // from dominating the use of i in Y exactly when the new edge will stop X
+  // from dominating |bb_to|.
+  //
+  // Now, the block X that we are worried about cannot dominate |bb_from|,
+  // because in that case X would still dominate |bb_to| after we add an edge
+  // from |bb_from| to |bb_to|.
+  //
+  // Also, it cannot be that X = |bb_to|, because nothing can stop a block
+  // from dominating itself.
+  //
+  // So we are looking for a block X such that:
+  //
+  // - X strictly dominates |bb_to|
+  // - X does not dominate |bb_from|
+  // - X defines an id i
+  // - i is used in some block Y
+  // - |bb_to| dominates Y
 
-  auto enclosing_function = bb_from->GetParent();
-
-  // The set of block ids already visited during search.  We put |bb_to| in
-  // there initially so that search automatically backtracks when this block is
-  // reached.
-  std::set<uint32_t> already_visited;
-  already_visited.insert(bb_to->id());
-
-  // Tracks when we are in the region of blocks that the new edge would bypass;
-  // we flip this to 'true' once we reach |bb_from| and have finished searching
-  // its merge block (in the case that it happens to be a header.
-  bool new_blocks_will_be_bypassed = false;
-
-  std::vector<FindBypassedBlocksDfsStackNode> dfs_stack;
-  opt::BasicBlock* entry_block = enclosing_function->entry().get();
-  dfs_stack.push_back({entry_block, false, 0});
-  while (!dfs_stack.empty()) {
-    auto node_index = dfs_stack.size() - 1;
-
-    // First make sure we search the merge block associated ith this block, if
-    // there is one.
-    if (!dfs_stack[node_index].handled_merge) {
-      dfs_stack[node_index].handled_merge = true;
-      if (dfs_stack[node_index].block->MergeBlockIdIfAny()) {
-        opt::BasicBlock* merge_block = context->cfg()->block(
-            dfs_stack[node_index].block->MergeBlockIdIfAny());
-        // A block can only be the merge block for one header, so this block
-        // should only be in |visited| if it is |bb_to|, which we put into
-        // |visited| in advance.
-        assert(already_visited.count(merge_block->id()) == 0 ||
-               merge_block == bb_to);
-        HandleSuccessorDuringSearchForBypassedBlocks(
-            merge_block, new_blocks_will_be_bypassed, &already_visited,
-            bypassed_blocks, &dfs_stack);
-      }
-      continue;
-    }
-
-    // If we find |bb_from|, we are interested in grabbing previously unseen
-    // successor blocks (by this point we will have already searched the merge
-    // block associated with |bb_from|, if there is one.
-    if (dfs_stack[node_index].block == bb_from) {
-      new_blocks_will_be_bypassed = true;
-    }
-
-    // Consider the next unexplored successor.
-    auto successors = GetSuccessors(dfs_stack[node_index].block);
-    if (dfs_stack[node_index].next_successor < successors.size()) {
-      HandleSuccessorDuringSearchForBypassedBlocks(
-          context->cfg()->block(
-              successors[dfs_stack[node_index].next_successor]),
-          new_blocks_will_be_bypassed, &already_visited, bypassed_blocks,
-          &dfs_stack);
-      dfs_stack[node_index].next_successor++;
-    } else {
-      // We have finished exploring |node|.  If it is |bb_from|, we can
-      // terminate search -- we have grabbed all the relevant blocks.
-      if (dfs_stack[node_index].block == bb_from) {
-        break;
-      }
-      dfs_stack.pop_back();
-    }
-  }
-}
-
-bool NewEdgeLeavingConstructBodyRespectsUseDefDominance(
-    opt::IRContext* context, opt::BasicBlock* bb_from, opt::BasicBlock* bb_to) {
-  // Find those blocks that the edge from |bb_from| to |bb_to| might bypass.
-  std::set<opt::BasicBlock*> bypassed_blocks;
-  FindBypassedBlocks(context, bb_from, bb_to, &bypassed_blocks);
-
-  // For each bypassed block, check whether it contains a definition that is
-  // used by some non-bypassed block - that would be problematic.
-  for (auto defining_block : bypassed_blocks) {
-    for (auto& inst : *defining_block) {
+  // Walk the dominator tree backwards, starting from the immediate dominator
+  // of |bb_to|.  We can stop when we find a block that also dominates
+  // |bb_from|.
+  auto dominator_analysis = context->GetDominatorAnalysis(bb_from->GetParent());
+  for (auto dominator = dominator_analysis->ImmediateDominator(bb_to);
+       dominator != nullptr &&
+       !dominator_analysis->Dominates(dominator, bb_from);
+       dominator = dominator_analysis->ImmediateDominator(dominator)) {
+    // |dominator| is a candidate for block X in the above description.
+    // We now look through the instructions for a candidate instruction i.
+    for (auto& inst : *dominator) {
+      // Consider all the uses of this instruction.
       if (!context->get_def_use_mgr()->WhileEachUse(
               &inst,
-              [context, &bypassed_blocks](opt::Instruction* user,
-                                          uint32_t operand_index) -> bool {
+              [bb_to, context, dominator_analysis](
+                  opt::Instruction* user, uint32_t operand_index) -> bool {
                 // If this use is in an OpPhi, we need to check that dominance
                 // of the relevant *parent* block is not spoiled.  Otherwise we
                 // need to check that dominance of the block containing the use
@@ -371,19 +286,25 @@ bool NewEdgeLeavingConstructBodyRespectsUseDefDominance(
                   return true;
                 }
 
-                // If the use-block is not in |bypassed_blocks| then we have
-                // found a block in the construct that is reachable from
-                // |from_block|, and which defines an id that is used outside of
-                // the construct.  Adding an edge from |from_block| to
-                // |to_block| would prevent this use being dominated.
-                return bypassed_blocks.find(use_block_or_phi_parent) !=
-                       bypassed_blocks.end();
+                // With reference to the above discussion,
+                // |use_block_or_phi_parent| is a candidate for the block Y.
+                // If |bb_to| dominates this block, the new edge would be
+                // problematic.
+                return !dominator_analysis->Dominates(bb_to,
+                                                      use_block_or_phi_parent);
               })) {
         return false;
       }
     }
   }
   return true;
+}
+
+bool BlockIsReachableInItsFunction(opt::IRContext* context,
+                                   opt::BasicBlock* bb) {
+  auto enclosing_function = bb->GetParent();
+  return context->GetDominatorAnalysis(enclosing_function)
+      ->Dominates(enclosing_function->entry().get(), bb);
 }
 
 }  // namespace fuzzerutil

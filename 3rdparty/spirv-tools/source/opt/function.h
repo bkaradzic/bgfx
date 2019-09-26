@@ -104,19 +104,24 @@ class Function {
     });
   }
 
-  // Runs the given function |f| on each instruction in this function, and
-  // optionally on debug line instructions that might precede them.
+  // Runs the given function |f| on instructions in this function, in order,
+  // and optionally on debug line instructions that might precede them.
   void ForEachInst(const std::function<void(Instruction*)>& f,
                    bool run_on_debug_line_insts = false);
   void ForEachInst(const std::function<void(const Instruction*)>& f,
                    bool run_on_debug_line_insts = false) const;
+  // Runs the given function |f| on instructions in this function, in order,
+  // and optionally on debug line instructions that might precede them.
+  // If |f| returns false, iteration is terminated and this function returns
+  // false.
   bool WhileEachInst(const std::function<bool(Instruction*)>& f,
                      bool run_on_debug_line_insts = false);
   bool WhileEachInst(const std::function<bool(const Instruction*)>& f,
                      bool run_on_debug_line_insts = false) const;
 
   // Runs the given function |f| on each parameter instruction in this function,
-  // and optionally on debug line instructions that might precede them.
+  // in order, and optionally on debug line instructions that might precede
+  // them.
   void ForEachParam(const std::function<void(const Instruction*)>& f,
                     bool run_on_debug_line_insts = false) const;
   void ForEachParam(const std::function<void(Instruction*)>& f,

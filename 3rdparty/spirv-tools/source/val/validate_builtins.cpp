@@ -2504,20 +2504,20 @@ spv_result_t BuiltInsValidator::ValidateLayerOrViewportIndexAtReference(
       switch (execution_model) {
         case SpvExecutionModelGeometry:
         case SpvExecutionModelFragment:
-        case SpvExecutionModelMeshNV: {
+        case SpvExecutionModelMeshNV:
           // Ok.
           break;
-          case SpvExecutionModelVertex:
-          case SpvExecutionModelTessellationEvaluation:
-            if (!_.HasCapability(SpvCapabilityShaderViewportIndexLayerEXT)) {
-              return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
-                     << "Using BuiltIn "
-                     << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
-                                                      decoration.params()[0])
-                     << " in Vertex or Tessellation execution model requires "
-                        "the ShaderViewportIndexLayerEXT capability.";
-            }
-            break;
+        case SpvExecutionModelVertex:
+        case SpvExecutionModelTessellationEvaluation: {
+          if (!_.HasCapability(SpvCapabilityShaderViewportIndexLayerEXT)) {
+            return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)
+                   << "Using BuiltIn "
+                   << _.grammar().lookupOperandName(SPV_OPERAND_TYPE_BUILT_IN,
+                                                    decoration.params()[0])
+                   << " in Vertex or Tessellation execution model requires "
+                      "the ShaderViewportIndexLayerEXT capability.";
+          }
+          break;
         }
         default: {
           return _.diag(SPV_ERROR_INVALID_DATA, &referenced_from_inst)

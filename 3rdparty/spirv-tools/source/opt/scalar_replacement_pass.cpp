@@ -820,7 +820,8 @@ ScalarReplacementPass::GetUsedComponents(Instruction* inst) {
         // Look for extract from the load.
         std::vector<uint32_t> t;
         if (def_use_mgr->WhileEachUser(use, [&t](Instruction* use2) {
-              if (use2->opcode() != SpvOpCompositeExtract) {
+              if (use2->opcode() != SpvOpCompositeExtract ||
+                  use2->NumInOperands() <= 1) {
                 return false;
               }
               t.push_back(use2->GetSingleWordInOperand(1));
