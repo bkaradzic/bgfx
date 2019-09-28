@@ -983,7 +983,13 @@ namespace bgfx { namespace spirv
 				spvtools::ValidatorOptions validatorOptions;
 				validatorOptions.SetBeforeHlslLegalization(true);
 
-				if (!opt.Run(spirv.data(), spirv.size(), &spirv, validatorOptions, false) )
+				if (!opt.Run(
+					  spirv.data()
+					, spirv.size()
+					, &spirv
+					, validatorOptions
+					, false
+					) )
 				{
 					compiled = false;
 				}
