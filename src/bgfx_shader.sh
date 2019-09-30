@@ -375,9 +375,9 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define shadow2DProj(_sampler, _coord) bgfxShadow2DProj(_sampler, _coord)
 
 #		define SAMPLER2DARRAYSHADOW(_name, _reg) \
-			SamplerComparisonState _name ## SamplerComparison : REGISTER(s, _reg); \
-			Texture2DArray _name ## Texture : REGISTER(t, _reg); \
-			BgfxSampler2DArrayShadow _name = { _name ## SamplerComparison, _name ## Texture }
+			uniform SamplerComparisonState _name ## SamplerComparison : REGISTER(s, _reg); \
+			uniform Texture2DArray _name ## Texture : REGISTER(t, _reg); \
+			static BgfxSampler2DArrayShadow _name = { _name ## SamplerComparison, _name ## Texture }
 #		define sampler2DArrayShadow BgfxSampler2DArrayShadow
 #		define shadow2DArray(_sampler, _coord) bgfxShadow2DArray(_sampler, _coord)
 
