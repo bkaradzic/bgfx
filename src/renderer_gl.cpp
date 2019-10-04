@@ -6861,8 +6861,14 @@ BX_TRACE("%d, %d, %d, %s", _array, _srgb, _mipAutogen, getName(_format) );
 					 | BGFX_STATE_MSAA
 					 | BGFX_STATE_LINEAA
 					 | BGFX_STATE_CONSERVATIVE_RASTER
+					 | BGFX_STATE_FRONT_CCW
 					 ) & changedFlags)
 				{
+					if (BGFX_STATE_FRONT_CCW & changedFlags)
+					{
+						GL_CHECK(glFrontFace((BGFX_STATE_FRONT_CCW & newFlags) ? GL_CCW : GL_CW) );
+					}
+
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
 						if (BGFX_STATE_CULL_CCW & newFlags)

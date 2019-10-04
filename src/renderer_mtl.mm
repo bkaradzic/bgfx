@@ -4219,8 +4219,14 @@ namespace bgfx { namespace mtl
 					 | BGFX_STATE_CULL_MASK
 					 | BGFX_STATE_ALPHA_REF_MASK
 					 | BGFX_STATE_PT_MASK
+					 | BGFX_STATE_FRONT_CCW
 					 ) & changedFlags)
 				{
+					if (BGFX_STATE_FRONT_CCW & changedFlags)
+					{
+						rce.setFrontFacing((newFlags&BGFX_STATE_FRONT_CCW) ? counterClockwise : clockwise);
+					}
+
 					if (BGFX_STATE_CULL_MASK & changedFlags)
 					{
 						const uint64_t pt = newFlags&BGFX_STATE_CULL_MASK;
