@@ -729,8 +729,8 @@ namespace bgfx { namespace metal
 							if (index != std::string::npos)
 							{
 								bool found = false;
-								
-								for (int32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
+
+								for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
 								{
 									if (!bx::findIdentifierMatch(strLine.c_str(), s_samplerTypes[ii]).isEmpty())
 									{
@@ -738,7 +738,7 @@ namespace bgfx { namespace metal
 										break;
 									}
 								}
-								
+
 								if (!found)
 								{
 									for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
