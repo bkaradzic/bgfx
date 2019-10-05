@@ -4386,6 +4386,96 @@ OpFunctionEnd
                 "typed as OpTypeStruct, or an array of this type"));
 }
 
+TEST_F(ValidateMemory, PhysicalStorageBufferPtrEqual) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Int64
+OpCapability PhysicalStorageBufferAddresses
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%bool = OpTypeBool
+%long = OpTypeInt 64 0
+%long_0 = OpConstant %long 0
+%ptr_pssbo_long = OpTypePointer PhysicalStorageBuffer %long
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%conv = OpConvertUToPtr %ptr_pssbo_long %long_0
+%eq = OpPtrEqual %bool %conv %conv
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_5);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_5));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Cannot use a pointer in the PhysicalStorageBuffer storage class"));
+}
+
+TEST_F(ValidateMemory, PhysicalStorageBufferPtrNotEqual) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Int64
+OpCapability PhysicalStorageBufferAddresses
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%bool = OpTypeBool
+%long = OpTypeInt 64 0
+%long_0 = OpConstant %long 0
+%ptr_pssbo_long = OpTypePointer PhysicalStorageBuffer %long
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%conv = OpConvertUToPtr %ptr_pssbo_long %long_0
+%neq = OpPtrNotEqual %bool %conv %conv
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_5);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_5));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Cannot use a pointer in the PhysicalStorageBuffer storage class"));
+}
+
+TEST_F(ValidateMemory, PhysicalStorageBufferPtrDiff) {
+  const std::string spirv = R"(
+OpCapability Shader
+OpCapability Int64
+OpCapability PhysicalStorageBufferAddresses
+OpCapability VariablePointers
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
+OpEntryPoint GLCompute %main "main"
+OpExecutionMode %main LocalSize 1 1 1
+%void = OpTypeVoid
+%long = OpTypeInt 64 0
+%long_0 = OpConstant %long 0
+%ptr_pssbo_long = OpTypePointer PhysicalStorageBuffer %long
+%void_fn = OpTypeFunction %void
+%main = OpFunction %void None %void_fn
+%entry = OpLabel
+%conv = OpConvertUToPtr %ptr_pssbo_long %long_0
+%diff = OpPtrDiff %long %conv %conv
+OpReturn
+OpFunctionEnd
+)";
+
+  CompileSuccessfully(spirv, SPV_ENV_UNIVERSAL_1_5);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions(SPV_ENV_UNIVERSAL_1_5));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr(
+          "Cannot use a pointer in the PhysicalStorageBuffer storage class"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

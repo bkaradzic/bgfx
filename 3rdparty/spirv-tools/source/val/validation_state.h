@@ -79,9 +79,6 @@ class ValidationState_t {
     // Permit group oerations Reduce, InclusiveScan, ExclusiveScan
     bool group_ops_reduce_and_scans = false;
 
-    // Disallows the use of OpUndef
-    bool bans_op_undef = false;
-
     // Allow OpTypeInt with 8 bit width?
     bool declare_int8_type = false;
 
@@ -706,6 +703,9 @@ class ValidationState_t {
   // * OpInBoundsPtrAccessChain
   // * OpCopyObject
   const Instruction* TracePointer(const Instruction* inst) const;
+
+  // Validates the storage class for the target environment.
+  bool IsValidStorageClass(SpvStorageClass storage_class) const;
 
  private:
   ValidationState_t(const ValidationState_t&);

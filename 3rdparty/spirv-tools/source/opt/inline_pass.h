@@ -139,6 +139,9 @@ class InlinePass : public Pass {
   // Return true if |func| is a function that can be inlined.
   bool IsInlinableFunction(Function* func);
 
+  // Returns true if |func| contains an OpKill instruction.
+  bool ContainsKill(Function* func) const;
+
   // Update phis in succeeding blocks to point to new last block
   void UpdateSucceedingPhis(
       std::vector<std::unique_ptr<BasicBlock>>& new_blocks);
@@ -164,6 +167,10 @@ class InlinePass : public Pass {
 
   // result id for OpConstantFalse
   uint32_t false_id_;
+
+  // Set of functions that are originally called directly or indirectly from a
+  // continue construct.
+  std::unordered_set<uint32_t> funcs_called_from_continue_;
 };
 
 }  // namespace opt

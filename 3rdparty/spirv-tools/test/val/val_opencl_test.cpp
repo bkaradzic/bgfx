@@ -45,15 +45,18 @@ TEST_F(ValidateOpenCL, NonPhysicalAddressingModelBad) {
 TEST_F(ValidateOpenCL, NonOpenCLMemoryModelBad) {
   std::string spirv = R"(
      OpCapability Kernel
-     OpMemoryModel Physical32 GLSL450
+     OpCapability Addresses
+     OpCapability VulkanMemoryModelKHR
+     OpExtension "SPV_KHR_vulkan_memory_model"
+     OpMemoryModel Physical32 VulkanKHR
 )";
 
   CompileSuccessfully(spirv);
 
   EXPECT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions(SPV_ENV_OPENCL_1_2));
-  EXPECT_THAT(getDiagnosticString(),
-              HasSubstr("Memory model must be OpenCL in the OpenCL environment."
-                        "\n  OpMemoryModel Physical32 GLSL450\n"));
+  EXPECT_THAT(
+      getDiagnosticString(),
+      HasSubstr("Memory model must be OpenCL in the OpenCL environment."));
 }
 
 TEST_F(ValidateOpenCL, NonVoidSampledTypeImageBad) {

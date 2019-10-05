@@ -22,8 +22,11 @@ namespace opt {
 Pass::Status WrapOpKill::Process() {
   bool modified = false;
 
-  for (auto& func : *get_module()) {
-    bool successful = func.WhileEachInst([this, &modified](Instruction* inst) {
+  auto func_to_process =
+      context()->GetStructuredCFGAnalysis()->FindFuncsCalledFromContinue();
+  for (uint32_t func_id : func_to_process) {
+    Function* func = context()->GetFunction(func_id);
+    bool successful = func->WhileEachInst([this, &modified](Instruction* inst) {
       if (inst->opcode() == SpvOpKill) {
         modified = true;
         if (!ReplaceWithFunctionCall(inst)) {

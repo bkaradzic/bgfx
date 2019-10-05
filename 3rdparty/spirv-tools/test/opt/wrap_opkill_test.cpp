@@ -249,15 +249,33 @@ TEST_F(WrapOpKillTest, IdBoundOverflow1) {
   const std::string text = R"(
 OpCapability GeometryStreams
 OpMemoryModel Logical GLSL450
-OpEntryPoint Fragment %4 "main"
-OpExecutionMode %4 OriginUpperLeft
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeFunction %2
-%4 = OpFunction %2 Pure|Const %3
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %2 None %3
+%8 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpLoopMerge %10 %11 None
+OpBranch %12
+%12 = OpLabel
+OpBranchConditional %true %13 %10
+%13 = OpLabel
+OpBranch %11
+%11 = OpLabel
+%14 = OpFunctionCall %void %kill_
+OpBranch %9
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+%kill_ = OpFunction %2 Pure|Const %3
 %4194302 = OpLabel
 OpKill
 OpFunctionEnd
-  )";
+)";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
 
@@ -272,15 +290,33 @@ TEST_F(WrapOpKillTest, IdBoundOverflow2) {
   const std::string text = R"(
 OpCapability GeometryStreams
 OpMemoryModel Logical GLSL450
-OpEntryPoint Fragment %4 "main"
-OpExecutionMode %4 OriginUpperLeft
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeFunction %2
-%4 = OpFunction %2 Pure|Const %3
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %2 None %3
+%8 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpLoopMerge %10 %11 None
+OpBranch %12
+%12 = OpLabel
+OpBranchConditional %true %13 %10
+%13 = OpLabel
+OpBranch %11
+%11 = OpLabel
+%14 = OpFunctionCall %void %kill_
+OpBranch %9
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+%kill_ = OpFunction %2 Pure|Const %3
 %4194301 = OpLabel
 OpKill
 OpFunctionEnd
-  )";
+)";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
 
@@ -295,15 +331,33 @@ TEST_F(WrapOpKillTest, IdBoundOverflow3) {
   const std::string text = R"(
 OpCapability GeometryStreams
 OpMemoryModel Logical GLSL450
-OpEntryPoint Fragment %4 "main"
-OpExecutionMode %4 OriginUpperLeft
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 %2 = OpTypeVoid
 %3 = OpTypeFunction %2
-%4 = OpFunction %2 Pure|Const %3
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %2 None %3
+%8 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpLoopMerge %10 %11 None
+OpBranch %12
+%12 = OpLabel
+OpBranchConditional %true %13 %10
+%13 = OpLabel
+OpBranch %11
+%11 = OpLabel
+%14 = OpFunctionCall %void %kill_
+OpBranch %9
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+%kill_ = OpFunction %2 Pure|Const %3
 %4194300 = OpLabel
 OpKill
 OpFunctionEnd
-  )";
+)";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
 
@@ -318,16 +372,34 @@ TEST_F(WrapOpKillTest, IdBoundOverflow4) {
   const std::string text = R"(
 OpCapability DerivativeControl
 OpMemoryModel Logical GLSL450
-OpEntryPoint Fragment %4 "main"
-OpExecutionMode %4 OriginUpperLeft
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
 OpDecorate %2 Location 539091968
 %2 = OpTypeVoid
 %3 = OpTypeFunction %2
-%4 = OpFunction %2 Inline|Pure|Const %3
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %2 None %3
+%8 = OpLabel
+OpBranch %9
+%9 = OpLabel
+OpLoopMerge %10 %11 None
+OpBranch %12
+%12 = OpLabel
+OpBranchConditional %true %13 %10
+%13 = OpLabel
+OpBranch %11
+%11 = OpLabel
+%14 = OpFunctionCall %void %kill_
+OpBranch %9
+%10 = OpLabel
+OpReturn
+OpFunctionEnd
+%kill_ = OpFunction %2 Inline|Pure|Const %3
 %4194302 = OpLabel
 OpKill
 OpFunctionEnd
-  )";
+)";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
 
@@ -342,32 +414,52 @@ TEST_F(WrapOpKillTest, IdBoundOverflow5) {
   const std::string text = R"(
                OpCapability Shader
                OpMemoryModel Logical GLSL450
-               OpEntryPoint Fragment %4 "main"
-               OpExecutionMode %4 OriginUpperLeft
+               OpEntryPoint Fragment %1 "main"
+               OpExecutionMode %1 OriginUpperLeft
                OpDecorate %void Location 539091968
        %void = OpTypeVoid
           %3 = OpTypeFunction %void
       %float = OpTypeFloat 32
-  %_struct_7 = OpTypeStruct %float %float
-  %_struct_8 = OpTypeStruct %_struct_7
-%_ptr_Function__struct_8 = OpTypePointer Function %_struct_8
+  %_struct_5 = OpTypeStruct %float %float
+  %_struct_6 = OpTypeStruct %_struct_5
+%_ptr_Function__struct_6 = OpTypePointer Function %_struct_6
 %_ptr_Output_float = OpTypePointer Output %float
-         %18 = OpTypeFunction %_struct_7 %_ptr_Function__struct_8
-          %4 = OpFunction %void Inline|Pure|Const %3
-     %850212 = OpLabel
-         %10 = OpVariable %_ptr_Function__struct_8 Function
-    %1441807 = OpFunctionCall %_struct_7 %32257 %10
+          %9 = OpTypeFunction %_struct_5 %_ptr_Function__struct_6
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+          %1 = OpFunction %void None %3
+         %12 = OpLabel
+         %13 = OpVariable %_ptr_Function__struct_6 Function
+               OpBranch %14
+         %14 = OpLabel
+               OpLoopMerge %15 %16 None
+               OpBranch %17
+         %17 = OpLabel
+               OpBranchConditional %true %18 %15
+         %18 = OpLabel
+               OpBranch %16
+         %16 = OpLabel
+         %19 = OpFunctionCall %void %20
+         %21 = OpFunctionCall %_struct_5 %22 %13
+               OpBranch %14
+         %15 = OpLabel
+               OpReturn
+               OpFunctionEnd
+         %20 = OpFunction %void Inline|Pure|Const %3
+         %23 = OpLabel
+         %24 = OpVariable %_ptr_Function__struct_6 Function
+         %25 = OpFunctionCall %_struct_5 %26 %24
                OpKill
                OpFunctionEnd
-      %32257 = OpFunction %_struct_7 None %18
-         %28 = OpLabel
+         %26 = OpFunction %_struct_5 None %9
+         %27 = OpLabel
                OpUnreachable
                OpFunctionEnd
-      %64821 = OpFunction %_struct_7 Inline %18
+         %22 = OpFunction %_struct_5 Inline %9
     %4194295 = OpLabel
                OpKill
                OpFunctionEnd
-  )";
+)";
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
 
@@ -376,6 +468,49 @@ TEST_F(WrapOpKillTest, IdBoundOverflow5) {
   SetMessageConsumer(GetTestMessageConsumer(messages));
   auto result = SinglePassRunToBinary<WrapOpKill>(text, true);
   EXPECT_EQ(Pass::Status::Failure, std::get<1>(result));
+}
+
+TEST_F(WrapOpKillTest, SkipEntryPoint) {
+  const std::string text = R"(
+OpCapability GeometryStreams
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %4 "main"
+OpExecutionMode %4 OriginUpperLeft
+%2 = OpTypeVoid
+%3 = OpTypeFunction %2
+%4 = OpFunction %2 Pure|Const %3
+%5 = OpLabel
+OpKill
+OpFunctionEnd
+)";
+
+  auto result = SinglePassRunToBinary<WrapOpKill>(text, true);
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
+}
+
+TEST_F(WrapOpKillTest, SkipFunctionNotInContinue) {
+  const std::string text = R"(
+OpCapability GeometryStreams
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+%2 = OpTypeVoid
+%3 = OpTypeFunction %2
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %2 None %3
+%6 = OpLabel
+%7 = OpFunctionCall %void %4
+OpReturn
+OpFunctionEnd
+%4 = OpFunction %2 Pure|Const %3
+%5 = OpLabel
+OpKill
+OpFunctionEnd
+)";
+
+  auto result = SinglePassRunToBinary<WrapOpKill>(text, true);
+  EXPECT_EQ(Pass::Status::SuccessWithoutChange, std::get<1>(result));
 }
 
 }  // namespace

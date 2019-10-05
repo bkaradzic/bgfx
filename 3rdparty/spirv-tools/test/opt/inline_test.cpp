@@ -2936,7 +2936,7 @@ OpFunctionEnd
   SinglePassRunAndCheck<InlineExhaustivePass>(test, test, false, true);
 }
 
-TEST_F(InlineTest, DontInlineFuncWithOpKill) {
+TEST_F(InlineTest, DontInlineFuncWithOpKillInContinue) {
   const std::string test =
       R"(OpCapability Shader
 %1 = OpExtInstImport "GLSL.std.450"
@@ -2974,6 +2974,60 @@ OpFunctionEnd
 
   SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
   SinglePassRunAndCheck<InlineExhaustivePass>(test, test, false, true);
+}
+
+TEST_F(InlineTest, InlineFuncWithOpKillNotInContinue) {
+  const std::string before =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource GLSL 330
+OpName %main "main"
+OpName %kill_ "kill("
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %void None %3
+%5 = OpLabel
+%16 = OpFunctionCall %void %kill_
+OpReturn
+OpFunctionEnd
+%kill_ = OpFunction %void None %3
+%7 = OpLabel
+OpKill
+OpFunctionEnd
+)";
+
+  const std::string after =
+      R"(OpCapability Shader
+%1 = OpExtInstImport "GLSL.std.450"
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main"
+OpExecutionMode %main OriginUpperLeft
+OpSource GLSL 330
+OpName %main "main"
+OpName %kill_ "kill("
+%void = OpTypeVoid
+%3 = OpTypeFunction %void
+%bool = OpTypeBool
+%true = OpConstantTrue %bool
+%main = OpFunction %void None %3
+%5 = OpLabel
+OpKill
+%17 = OpLabel
+OpReturn
+OpFunctionEnd
+%kill_ = OpFunction %void None %3
+%7 = OpLabel
+OpKill
+OpFunctionEnd
+)";
+
+  SetAssembleOptions(SPV_TEXT_TO_BINARY_OPTION_PRESERVE_NUMERIC_IDS);
+  SinglePassRunAndCheck<InlineExhaustivePass>(before, after, false, true);
 }
 
 // TODO(greg-lunarg): Add tests to verify handling of these cases:

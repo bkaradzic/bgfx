@@ -342,11 +342,10 @@ TEST_P(ValidateCFG, VariableNotInFirstBlockBad) {
   str += "OpFunctionEnd\n";
 
   CompileSuccessfully(str);
-  ASSERT_EQ(SPV_ERROR_INVALID_CFG, ValidateInstructions());
-  EXPECT_THAT(
-      getDiagnosticString(),
-      HasSubstr(
-          "Variables can only be defined in the first block of a function"));
+  ASSERT_EQ(SPV_ERROR_INVALID_DATA, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("All OpVariable instructions in a function must be the "
+                        "first instructions in the first block"));
 }
 
 TEST_P(ValidateCFG, BlockSelfLoopIsOk) {

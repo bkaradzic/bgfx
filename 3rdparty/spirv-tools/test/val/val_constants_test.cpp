@@ -458,6 +458,26 @@ OpMemoryModel Logical GLSL450
   EXPECT_EQ(SPV_SUCCESS, ValidateInstructions());
 }
 
+TEST_F(ValidateConstant, NullPhysicalStorageBuffer) {
+  std::string spirv = R"(
+OpCapability Shader
+OpCapability PhysicalStorageBufferAddresses
+OpCapability Linkage
+OpExtension "SPV_KHR_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64 GLSL450
+OpName %ptr "ptr"
+%int = OpTypeInt 32 0
+%ptr = OpTypePointer PhysicalStorageBuffer %int
+%null = OpConstantNull %ptr
+)";
+
+  CompileSuccessfully(spirv);
+  EXPECT_EQ(SPV_ERROR_INVALID_ID, ValidateInstructions());
+  EXPECT_THAT(getDiagnosticString(),
+              HasSubstr("OpConstantNull Result Type <id> '1[%ptr]' cannot have "
+                        "a null value"));
+}
+
 }  // namespace
 }  // namespace val
 }  // namespace spvtools

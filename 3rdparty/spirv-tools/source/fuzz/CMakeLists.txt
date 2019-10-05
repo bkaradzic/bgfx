@@ -31,6 +31,7 @@ if(SPIRV_BUILD_FUZZER)
   set(SPIRV_TOOLS_FUZZ_SOURCES
         data_descriptor.h
         fact_manager.h
+        force_render_red.h
         fuzzer.h
         fuzzer_context.h
         fuzzer_pass.h
@@ -62,13 +63,14 @@ if(SPIRV_BUILD_FUZZER)
         transformation_move_block_down.h
         transformation_replace_boolean_constant_with_constant_binary.h
         transformation_replace_constant_with_uniform.h
-          transformation_replace_id_with_synonym.h
+        transformation_replace_id_with_synonym.h
         transformation_split_block.h
         uniform_buffer_element_descriptor.h
         ${CMAKE_CURRENT_BINARY_DIR}/protobufs/spvtoolsfuzz.pb.h
 
         data_descriptor.cpp
         fact_manager.cpp
+        force_render_red.cpp
         fuzzer.cpp
         fuzzer_context.cpp
         fuzzer_pass.cpp

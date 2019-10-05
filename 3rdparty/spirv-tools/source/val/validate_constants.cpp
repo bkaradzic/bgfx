@@ -304,7 +304,6 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
     case SpvOpTypeBool:
     case SpvOpTypeInt:
     case SpvOpTypeFloat:
-    case SpvOpTypePointer:
     case SpvOpTypeEvent:
     case SpvOpTypeDeviceEvent:
     case SpvOpTypeReserveId:
@@ -325,6 +324,11 @@ bool IsTypeNullable(const std::vector<uint32_t>& instruction,
       }
       return true;
     }
+    case SpvOpTypePointer:
+      if (instruction[2] == SpvStorageClassPhysicalStorageBuffer) {
+        return false;
+      }
+      return true;
     default:
       return false;
   }

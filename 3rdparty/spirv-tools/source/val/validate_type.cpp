@@ -106,6 +106,17 @@ spv_result_t ValidateTypeInt(ValidationState_t& _, const Instruction* inst) {
     return _.diag(SPV_ERROR_INVALID_VALUE, inst)
            << "OpTypeInt has invalid signedness:";
   }
+
+  // SPIR-V Spec 2.16.3: Validation Rules for Kernel Capabilities: The
+  // Signedness in OpTypeInt must always be 0.
+  if (SpvOpTypeInt == inst->opcode() && _.HasCapability(SpvCapabilityKernel) &&
+      inst->GetOperandAs<uint32_t>(2) != 0u) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "The Signedness in OpTypeInt "
+              "must always be 0 when Kernel "
+              "capability is used.";
+  }
+
   return SPV_SUCCESS;
 }
 
@@ -445,6 +456,12 @@ spv_result_t ValidateTypePointer(ValidationState_t& _,
       if (sampled == 2) _.RegisterPointerToStorageImage(inst->id());
     }
   }
+
+  if (!_.IsValidStorageClass(storage_class)) {
+    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
+           << "Invalid storage class for target environment";
+  }
+
   return SPV_SUCCESS;
 }
 
