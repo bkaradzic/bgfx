@@ -22,7 +22,7 @@ all:
 	@echo "  TARGET=4 (glsl)"
 	@echo "  TARGET=5 (metal)"
 	@echo "  TARGET=6 (pssl)"
-	@echo "  TARGET=7 (spriv)"
+	@echo "  TARGET=7 (spirv)"
 
 .PHONY: rebuild
 rebuild:
