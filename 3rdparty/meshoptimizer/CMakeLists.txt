@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(meshoptimizer VERSION 0.12)
+project(meshoptimizer VERSION 0.12 LANGUAGES CXX)
 
 option(BUILD_DEMO "Build demo" OFF)
 option(BUILD_TOOLS "Build tools" OFF)

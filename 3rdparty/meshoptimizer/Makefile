@@ -28,7 +28,7 @@ ifeq ($(config),iphone)
 	IPHONESDK=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
 	CFLAGS+=-arch armv7 -arch arm64 -isysroot $(IPHONESDK)
 	CXXFLAGS+=-arch armv7 -arch arm64 -isysroot $(IPHONESDK) -stdlib=libc++
-	LDFLAGS+=-arch armv7 -arch arm64 -L $(IPHONESDK)/usr/lib -mios-version-min=7.0
+	LDFLAGS+=-arch armv7 -arch arm64 -isysroot $(IPHONESDK) -L $(IPHONESDK)/usr/lib -mios-version-min=7.0
 endif
 
 ifeq ($(config),trace)

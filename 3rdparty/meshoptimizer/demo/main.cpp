@@ -411,6 +411,22 @@ void simplifySloppy(const Mesh& mesh, float threshold = 0.2f)
 	       int(mesh.indices.size() / 3), int(lod.indices.size() / 3), (end - start) * 1000);
 }
 
+void simplifyPoints(const Mesh& mesh, float threshold = 0.2f)
+{
+	double start = timestamp();
+
+	size_t target_vertex_count = size_t(mesh.vertices.size() * threshold);
+
+	std::vector<unsigned int> indices(target_vertex_count);
+	indices.resize(meshopt_simplifyPoints(&indices[0], &mesh.vertices[0].px, mesh.vertices.size(), sizeof(Vertex), target_vertex_count));
+
+	double end = timestamp();
+
+	printf("%-9s: %d points => %d points in %.2f msec\n",
+	       "SimplifyP",
+	       int(mesh.vertices.size()), int(indices.size()), (end - start) * 1000);
+}
+
 void simplifyComplete(const Mesh& mesh)
 {
 	static const size_t lod_count = 5;
@@ -985,6 +1001,7 @@ void process(const char* path)
 	simplify(mesh);
 	simplifySloppy(mesh);
 	simplifyComplete(mesh);
+	simplifyPoints(mesh);
 
 	spatialSort(mesh);
 	spatialSortTriangles(mesh);
@@ -999,15 +1016,7 @@ void processDev(const char* path)
 	if (!loadMesh(mesh, path))
 		return;
 
-	Mesh copy = mesh;
-	meshopt_optimizeVertexCache(&copy.indices[0], &copy.indices[0], copy.indices.size(), copy.vertices.size());
-	meshopt_optimizeVertexFetch(&copy.vertices[0], &copy.indices[0], copy.indices.size(), &copy.vertices[0], copy.vertices.size(), sizeof(Vertex));
-
-	encodeIndex(copy);
-	encodeVertex<PackedVertexOct>(copy, "O");
-
-	spatialSort(mesh);
-	spatialSortTriangles(mesh);
+	simplifyPoints(mesh);
 }
 
 int main(int argc, char** argv)

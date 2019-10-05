@@ -373,6 +373,8 @@ typedef struct cgltf_mesh {
 	cgltf_size primitives_count;
 	cgltf_float* weights;
 	cgltf_size weights_count;
+	char** target_names;
+	cgltf_size target_names_count;
 	cgltf_extras extras;
 } cgltf_mesh;
 
@@ -1171,6 +1173,14 @@ cgltf_result cgltf_validate(cgltf_data* data)
 			}
 		}
 
+		if (data->meshes[i].target_names)
+		{
+			if (data->meshes[i].primitives_count && data->meshes[i].primitives[0].targets_count != data->meshes[i].target_names_count)
+			{
+				return cgltf_result_invalid_gltf;
+			}
+		}
+
 		for (cgltf_size j = 0; j < data->meshes[i].primitives_count; ++j)
 		{
 			if (data->meshes[i].primitives[j].targets_count != data->meshes[i].primitives[0].targets_count)
@@ -1321,6 +1331,13 @@ void cgltf_free(cgltf_data* data)
 
 		data->memory_free(data->memory_user_data, data->meshes[i].primitives);
 		data->memory_free(data->memory_user_data, data->meshes[i].weights);
+
+		for (cgltf_size j = 0; j < data->meshes[i].target_names_count; ++j)
+		{
+			data->memory_free(data->memory_user_data, data->meshes[i].target_names[j]);
+		}
+
+		data->memory_free(data->memory_user_data, data->meshes[i].target_names);
 	}
 
 	data->memory_free(data->memory_user_data, data->meshes);
@@ -1441,17 +1458,17 @@ void cgltf_node_transform_local(const cgltf_node* node, cgltf_float* out_matrix)
 		float sz = node->scale[2];
 
 		lm[0] = (1 - 2 * qy*qy - 2 * qz*qz) * sx;
-		lm[1] = (2 * qx*qy + 2 * qz*qw) * sy;
-		lm[2] = (2 * qx*qz - 2 * qy*qw) * sz;
+		lm[1] = (2 * qx*qy + 2 * qz*qw) * sx;
+		lm[2] = (2 * qx*qz - 2 * qy*qw) * sx;
 		lm[3] = 0.f;
 
-		lm[4] = (2 * qx*qy - 2 * qz*qw) * sx;
+		lm[4] = (2 * qx*qy - 2 * qz*qw) * sy;
 		lm[5] = (1 - 2 * qx*qx - 2 * qz*qz) * sy;
-		lm[6] = (2 * qy*qz + 2 * qx*qw) * sz;
+		lm[6] = (2 * qy*qz + 2 * qx*qw) * sy;
 		lm[7] = 0.f;
 
-		lm[8] = (2 * qx*qz + 2 * qy*qw) * sx;
-		lm[9] = (2 * qy*qz - 2 * qx*qw) * sy;
+		lm[8] = (2 * qx*qz + 2 * qy*qw) * sz;
+		lm[9] = (2 * qy*qz - 2 * qx*qw) * sz;
 		lm[10] = (1 - 2 * qx*qx - 2 * qy*qy) * sz;
 		lm[11] = 0.f;
 
@@ -1512,9 +1529,9 @@ static cgltf_size cgltf_component_read_index(const void* in, cgltf_component_typ
 		case cgltf_component_type_r_8:
 			return *((const int8_t*) in);
 		case cgltf_component_type_r_8u:
-		case cgltf_component_type_invalid:
-		default:
 			return *((const uint8_t*) in);
+		default:
+			return 0;
 	}
 }
 
@@ -1529,18 +1546,17 @@ static cgltf_float cgltf_component_read_float(const void* in, cgltf_component_ty
 	{
 		switch (component_type)
 		{
-			case cgltf_component_type_r_32u:
-				return *((const uint32_t*) in) / (float) UINT_MAX;
+			// note: glTF spec doesn't currently define normalized conversions for 32-bit integers
 			case cgltf_component_type_r_16:
-				return *((const int16_t*) in) / (float) SHRT_MAX;
+				return *((const int16_t*) in) / (cgltf_float)32767;
 			case cgltf_component_type_r_16u:
-				return *((const uint16_t*) in) / (float) USHRT_MAX;
+				return *((const uint16_t*) in) / (cgltf_float)65535;
 			case cgltf_component_type_r_8:
-				return *((const int8_t*) in) / (float) SCHAR_MAX;
+				return *((const int8_t*) in) / (cgltf_float)127;
 			case cgltf_component_type_r_8u:
-			case cgltf_component_type_invalid:
+				return *((const uint8_t*) in) / (cgltf_float)255;
 			default:
-				return *((const uint8_t*) in) / (float) CHAR_MAX;
+				return 0;
 		}
 	}
 
@@ -1996,7 +2012,39 @@ static int cgltf_parse_json_mesh(cgltf_options* options, jsmntok_t const* tokens
 		}
 		else if (cgltf_json_strcmp(tokens + i, json_chunk, "extras") == 0)
 		{
-			i = cgltf_parse_json_extras(tokens, i + 1, json_chunk, &out_mesh->extras);
+			++i;
+
+			out_mesh->extras.start_offset = tokens[i].start;
+			out_mesh->extras.end_offset = tokens[i].end;
+
+			if (tokens[i].type == JSMN_OBJECT)
+			{
+				int extras_size = tokens[i].size;
+				++i;
+
+				for (int k = 0; k < extras_size; ++k)
+				{
+					CGLTF_CHECK_KEY(tokens[i]);
+
+					if (cgltf_json_strcmp(tokens+i, json_chunk, "targetNames") == 0)
+					{
+						i = cgltf_parse_json_string_array(options, tokens, i + 1, json_chunk, &out_mesh->target_names, &out_mesh->target_names_count);
+					}
+					else
+					{
+						i = cgltf_skip_json(tokens, i+1);
+					}
+
+					if (i < 0)
+					{
+						return i;
+					}
+				}
+			}
+			else
+			{
+				i = cgltf_skip_json(tokens, i);
+			}
 		}
 		else
 		{
