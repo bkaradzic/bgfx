@@ -613,6 +613,22 @@ namespace bgfx { namespace spirv
 		return bgfx::Attrib::Count;
 	}
 
+	static const char* s_samplerTypes[] =
+	{
+		"BgfxSampler2D",
+		"BgfxISampler2D",
+		"BgfxUSampler2D",
+		"BgfxSampler2DArray",
+		"BgfxSampler2DShadow",
+		"BgfxSampler2DArrayShadow",
+		"BgfxSampler3D",
+		"BgfxISampler3D",
+		"BgfxUSampler3D",
+		"BgfxSamplerCube",
+		"BgfxSamplerCubeShadow",
+		"BgfxSampler2DMS",
+	};
+
 	static uint16_t writeUniformArray(bx::WriterI* _writer, const UniformArray& uniforms, bool isFragmentShader)
 	{
 		uint16_t size = 0;
@@ -767,12 +783,16 @@ namespace bgfx { namespace spirv
 							{
 								bool found = false;
 
-								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty() ||
-									!bx::findIdentifierMatch(strLine.c_str(), "SamplerComparisonState").isEmpty())
+								for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
 								{
-									found = true;
+									if (!bx::findIdentifierMatch(strLine.c_str(), s_samplerTypes[ii]).isEmpty())
+									{
+										found = true;
+										break;
+									}
 								}
-								else
+
+								if (!found)
 								{
 									for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
 									{
@@ -980,7 +1000,16 @@ namespace bgfx { namespace spirv
 
 				opt.RegisterLegalizationPasses();
 
-				if (!opt.Run(spirv.data(), spirv.size(), &spirv) )
+				spvtools::ValidatorOptions validatorOptions;
+				validatorOptions.SetBeforeHlslLegalization(true);
+
+				if (!opt.Run(
+					  spirv.data()
+					, spirv.size()
+					, &spirv
+					, validatorOptions
+					, false
+					) )
 				{
 					compiled = false;
 				}

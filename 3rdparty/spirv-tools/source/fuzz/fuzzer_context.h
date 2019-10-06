@@ -16,6 +16,7 @@
 #define SOURCE_FUZZ_FUZZER_CONTEXT_H_
 
 #include <functional>
+#include <utility>
 
 #include "source/fuzz/random_generator.h"
 #include "source/opt/function.h"
@@ -45,7 +46,7 @@ class FuzzerContext {
   // method, and which must be non-empty.  Typically 'HasSizeMethod' will be an
   // std::vector.
   template <typename HasSizeMethod>
-  uint32_t RandomIndex(HasSizeMethod sequence) {
+  uint32_t RandomIndex(const HasSizeMethod& sequence) {
     assert(sequence.size() > 0);
     return random_generator_->RandomUint32(
         static_cast<uint32_t>(sequence.size()));
@@ -65,6 +66,9 @@ class FuzzerContext {
   uint32_t GetChanceOfMovingBlockDown() { return chance_of_moving_block_down_; }
   uint32_t GetChanceOfObfuscatingConstant() {
     return chance_of_obfuscating_constant_;
+  }
+  uint32_t GetChanceOfReplacingIdWithSynonym() {
+    return chance_of_replacing_id_with_synonym_;
   }
   uint32_t GetChanceOfSplittingBlock() { return chance_of_splitting_block_; }
 
@@ -87,12 +91,17 @@ class FuzzerContext {
   uint32_t chance_of_copying_object_;
   uint32_t chance_of_moving_block_down_;
   uint32_t chance_of_obfuscating_constant_;
+  uint32_t chance_of_replacing_id_with_synonym_;
   uint32_t chance_of_splitting_block_;
 
   // Functions to determine with what probability to go deeper when generating
   // or mutating constructs recursively.
   const std::function<bool(uint32_t, RandomGenerator*)>&
       go_deeper_in_constant_obfuscation_;
+
+  // Requires |min_max.first| <= |min_max.second|, and returns a value in the
+  // range [ |min_max.first|, |min_max.second| ]
+  uint32_t ChooseBetweenMinAndMax(const std::pair<uint32_t, uint32_t>& min_max);
 };
 
 }  // namespace fuzz

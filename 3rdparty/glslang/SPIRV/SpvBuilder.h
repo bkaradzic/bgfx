@@ -67,6 +67,7 @@ typedef enum {
     Spv_1_2 = (1 << 16) | (2 << 8),
     Spv_1_3 = (1 << 16) | (3 << 8),
     Spv_1_4 = (1 << 16) | (4 << 8),
+    Spv_1_5 = (1 << 16) | (5 << 8),
 } SpvVersion;
 
 class Builder {
@@ -105,6 +106,11 @@ public:
     void addModuleProcessed(const std::string& p) { moduleProcesses.push_back(p.c_str()); }
     void setEmitOpLines() { emitOpLines = true; }
     void addExtension(const char* ext) { extensions.insert(ext); }
+    void addIncorporatedExtension(const char* ext, SpvVersion incorporatedVersion)
+    {
+        if (getSpvVersion() < static_cast<unsigned>(incorporatedVersion))
+            addExtension(ext);
+    }
     void addInclude(const std::string& name, const std::string& text)
     {
         spv::Id incId = getStringId(name);

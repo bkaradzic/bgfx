@@ -288,7 +288,10 @@ config("spvtools_internal_config") {
   configs = [ ":spvtools_public_config" ]
 
   if (is_clang) {
-    cflags = [ "-Wno-implicit-fallthrough" ]
+    cflags = [
+      "-Wno-implicit-fallthrough",
+      "-Wno-newline-eof",
+    ]
   }
 }
 
@@ -407,7 +410,6 @@ static_library("spvtools_val") {
     "source/val/validate_composites.cpp",
     "source/val/validate_constants.cpp",
     "source/val/validate_conversion.cpp",
-    "source/val/validate_datarules.cpp",
     "source/val/validate_debug.cpp",
     "source/val/validate_decorations.cpp",
     "source/val/validate_derivatives.cpp",
@@ -874,6 +876,7 @@ source_set("spvtools_util_cli_consumer") {
     "tools/util/cli_consumer.cpp",
     "tools/util/cli_consumer.h",
   ]
+  deps = [ ":spvtools_headers" ]
   configs += [ ":spvtools_internal_config" ]
 }
 

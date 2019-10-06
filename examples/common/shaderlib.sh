@@ -392,4 +392,22 @@ vec2 texture2DBc5(sampler2D _sampler, vec2 _uv)
 #endif
 }
 
+mat3 cofactor( mat4 _m )
+{
+	// Reference:
+	// Cofactor of matrix. Use to transform normals. The code assumes the last column of _m is [0,0,0,1].
+	// https://www.shadertoy.com/view/3s33zj
+	// https://github.com/graphitemaster/normals_revisited
+    return mat3( 
+     _m[1][1]*_m[2][2]-_m[1][2]*_m[2][1],
+     _m[1][2]*_m[2][0]-_m[1][0]*_m[2][2],
+     _m[1][0]*_m[2][1]-_m[1][1]*_m[2][0],
+     _m[0][2]*_m[2][1]-_m[0][1]*_m[2][2],
+	 _m[0][0]*_m[2][2]-_m[0][2]*_m[2][0],
+     _m[0][1]*_m[2][0]-_m[0][0]*_m[2][1],
+     _m[0][1]*_m[1][2]-_m[0][2]*_m[1][1],
+     _m[0][2]*_m[1][0]-_m[0][0]*_m[1][2],
+     _m[0][0]*_m[1][1]-_m[0][1]*_m[1][0] );
+}
+
 #endif // __SHADERLIB_SH__

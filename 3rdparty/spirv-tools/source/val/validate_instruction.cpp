@@ -55,18 +55,6 @@ std::string ToString(const CapabilitySet& capabilities,
   return ss.str();
 }
 
-bool IsValidWebGPUStorageClass(SpvStorageClass storage_class) {
-  return storage_class == SpvStorageClassUniformConstant ||
-         storage_class == SpvStorageClassUniform ||
-         storage_class == SpvStorageClassStorageBuffer ||
-         storage_class == SpvStorageClassInput ||
-         storage_class == SpvStorageClassOutput ||
-         storage_class == SpvStorageClassImage ||
-         storage_class == SpvStorageClassWorkgroup ||
-         storage_class == SpvStorageClassPrivate ||
-         storage_class == SpvStorageClassFunction;
-}
-
 // Returns capabilities that enable an opcode.  An empty result is interpreted
 // as no prohibition of use of the opcode.  If the result is non-empty, then
 // the opcode may only be used if at least one of the capabilities is specified
@@ -243,23 +231,6 @@ spv_result_t ReservedCheck(ValidationState_t& _, const Instruction* inst) {
       return _.diag(SPV_ERROR_INVALID_BINARY, inst)
              << "Invalid Opcode name 'Op" << inst_desc->name << "'";
     }
-    default:
-      break;
-  }
-  return SPV_SUCCESS;
-}
-
-// Returns SPV_ERROR_INVALID_BINARY and emits a diagnostic if the instruction
-// is invalid because of an execution environment constraint.
-spv_result_t EnvironmentCheck(ValidationState_t& _, const Instruction* inst) {
-  const SpvOp opcode = inst->opcode();
-  switch (opcode) {
-    case SpvOpUndef:
-      if (_.features().bans_op_undef) {
-        return _.diag(SPV_ERROR_INVALID_BINARY, inst)
-               << "OpUndef is disallowed";
-      }
-      break;
     default:
       break;
   }
@@ -499,38 +470,6 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst) {
     }
     _.set_addressing_model(inst->GetOperandAs<SpvAddressingModel>(0));
     _.set_memory_model(inst->GetOperandAs<SpvMemoryModel>(1));
-
-    if (_.memory_model() != SpvMemoryModelVulkanKHR &&
-        _.HasCapability(SpvCapabilityVulkanMemoryModelKHR)) {
-      return _.diag(SPV_ERROR_INVALID_DATA, inst)
-             << "VulkanMemoryModelKHR capability must only be specified if "
-                "the "
-                "VulkanKHR memory model is used.";
-    }
-
-    if (spvIsWebGPUEnv(_.context()->target_env)) {
-      if (_.addressing_model() != SpvAddressingModelLogical) {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Addressing model must be Logical for WebGPU environment.";
-      }
-      if (_.memory_model() != SpvMemoryModelVulkanKHR) {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Memory model must be VulkanKHR for WebGPU environment.";
-      }
-    }
-
-    if (spvIsOpenCLEnv(_.context()->target_env)) {
-      if ((_.addressing_model() != SpvAddressingModelPhysical32) &&
-          (_.addressing_model() != SpvAddressingModelPhysical64)) {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Addressing model must be Physical32 or Physical64 "
-               << "in the OpenCL environment.";
-      }
-      if (_.memory_model() != SpvMemoryModelOpenCL) {
-        return _.diag(SPV_ERROR_INVALID_DATA, inst)
-               << "Memory model must be OpenCL in the OpenCL environment.";
-      }
-    }
   } else if (opcode == SpvOpExecutionMode) {
     const uint32_t entry_point = inst->word(1);
     _.RegisterExecutionModeForEntryPoint(entry_point,
@@ -540,61 +479,9 @@ spv_result_t InstructionPass(ValidationState_t& _, const Instruction* inst) {
     if (auto error = LimitCheckNumVars(_, inst->id(), storage_class)) {
       return error;
     }
-
-    if (spvIsWebGPUEnv(_.context()->target_env) &&
-        !IsValidWebGPUStorageClass(storage_class)) {
-      return _.diag(SPV_ERROR_INVALID_BINARY, inst)
-             << "For WebGPU, OpVariable storage class must be one of "
-                "UniformConstant, Uniform, StorageBuffer, Input, Output, "
-                "Image, Workgroup, Private, Function for WebGPU";
-    }
-
-    if (storage_class == SpvStorageClassGeneric)
-      return _.diag(SPV_ERROR_INVALID_BINARY, inst)
-             << "OpVariable storage class cannot be Generic";
-    if (_.current_layout_section() == kLayoutFunctionDefinitions) {
-      if (storage_class != SpvStorageClassFunction) {
-        return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
-               << "Variables must have a function[7] storage class inside"
-                  " of a function";
-      }
-      if (_.current_function().IsFirstBlock(
-              _.current_function().current_block()->id()) == false) {
-        return _.diag(SPV_ERROR_INVALID_CFG, inst)
-               << "Variables can only be defined "
-                  "in the first block of a "
-                  "function";
-      }
-    } else {
-      if (storage_class == SpvStorageClassFunction) {
-        return _.diag(SPV_ERROR_INVALID_LAYOUT, inst)
-               << "Variables can not have a function[7] storage class "
-                  "outside of a function";
-      }
-    }
-  } else if (opcode == SpvOpTypePointer) {
-    const auto storage_class = inst->GetOperandAs<SpvStorageClass>(1);
-    if (spvIsWebGPUEnv(_.context()->target_env) &&
-        !IsValidWebGPUStorageClass(storage_class)) {
-      return _.diag(SPV_ERROR_INVALID_BINARY, inst)
-             << "For WebGPU, OpTypePointer storage class must be one of "
-                "UniformConstant, Uniform, StorageBuffer, Input, Output, "
-                "Image, Workgroup, Private, Function";
-    }
-  }
-
-  // SPIR-V Spec 2.16.3: Validation Rules for Kernel Capabilities: The
-  // Signedness in OpTypeInt must always be 0.
-  if (SpvOpTypeInt == inst->opcode() && _.HasCapability(SpvCapabilityKernel) &&
-      inst->GetOperandAs<uint32_t>(2) != 0u) {
-    return _.diag(SPV_ERROR_INVALID_BINARY, inst)
-           << "The Signedness in OpTypeInt "
-              "must always be 0 when Kernel "
-              "capability is used.";
   }
 
   if (auto error = ReservedCheck(_, inst)) return error;
-  if (auto error = EnvironmentCheck(_, inst)) return error;
   if (auto error = CapabilityCheck(_, inst)) return error;
   if (auto error = LimitCheckIdBound(_, inst)) return error;
   if (auto error = LimitCheckStruct(_, inst)) return error;

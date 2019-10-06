@@ -60,6 +60,7 @@ static bool is_valid_spirv_version(uint32_t version)
 	case 0x10200: // SPIR-V 1.2
 	case 0x10300: // SPIR-V 1.3
 	case 0x10400: // SPIR-V 1.4
+	case 0x10500: // SPIR-V 1.5
 		return true;
 
 	default:

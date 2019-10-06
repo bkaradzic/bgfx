@@ -615,8 +615,12 @@ void ProcessArguments(std::vector<std::unique_ptr<glslang::TWorkItem>>& workItem
                             } else if (strcmp(argv[1], "spirv1.4") == 0) {
                                 TargetLanguage = glslang::EShTargetSpv;
                                 TargetVersion = glslang::EShTargetSpv_1_4;
+                            } else if (strcmp(argv[1], "spirv1.5") == 0) {
+                                TargetLanguage = glslang::EShTargetSpv;
+                                TargetVersion = glslang::EShTargetSpv_1_5;
                             } else
-                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, opengl, spirv1.0, spirv1.1, spirv1.2, or spirv1.3");
+                                Error("--target-env expected one of: vulkan1.0, vulkan1.1, opengl,\n"
+                                      "spirv1.0, spirv1.1, spirv1.2, spirv1.3, spirv1.4, or spirv1.5");
                         }
                         bumpArg();
                     } else if (lowerword == "variable-name" || // synonyms
@@ -1618,7 +1622,7 @@ void usage()
            "  --stdin                           read from stdin instead of from a file;\n"
            "                                    requires providing the shader stage using -S\n"
            "  --target-env {vulkan1.0 | vulkan1.1 | opengl | \n"
-           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3}\n"
+           "                spirv1.0 | spirv1.1 | spirv1.2 | spirv1.3 | spirv1.4 | spirv1.5}\n"
            "                                    set execution environment that emitted code\n"
            "                                    will execute in (versus source language\n"
            "                                    semantics selected by --client) defaults:\n"

@@ -44,7 +44,7 @@
 
 spv = {
     MagicNumber = 0x07230203,
-    Version = 0x00010400,
+    Version = 0x00010500,
     Revision = 1,
     OpCodeMask = 0xffff,
     WordCountShift = 16,

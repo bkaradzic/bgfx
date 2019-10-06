@@ -15,6 +15,7 @@
 #include "source/fuzz/fuzzer.h"
 
 #include <cassert>
+#include <memory>
 #include <sstream>
 
 #include "source/fuzz/fact_manager.h"
@@ -22,6 +23,7 @@
 #include "source/fuzz/fuzzer_pass_add_dead_breaks.h"
 #include "source/fuzz/fuzzer_pass_add_dead_continues.h"
 #include "source/fuzz/fuzzer_pass_add_useful_constructs.h"
+#include "source/fuzz/fuzzer_pass_apply_id_synonyms.h"
 #include "source/fuzz/fuzzer_pass_copy_objects.h"
 #include "source/fuzz/fuzzer_pass_obfuscate_constants.h"
 #include "source/fuzz/fuzzer_pass_permute_blocks.h"
@@ -37,7 +39,24 @@ namespace fuzz {
 
 namespace {
 const uint32_t kIdBoundGap = 100;
+
+const uint32_t kTransformationLimit = 500;
+
+const uint32_t kChanceOfApplyingAnotherPass = 85;
+
+template <typename T>
+void MaybeAddPass(
+    std::vector<std::unique_ptr<FuzzerPass>>* passes,
+    opt::IRContext* ir_context, FactManager* fact_manager,
+    FuzzerContext* fuzzer_context,
+    protobufs::TransformationSequence* transformation_sequence_out) {
+  if (fuzzer_context->ChooseEven()) {
+    passes->push_back(MakeUnique<T>(ir_context, fact_manager, fuzzer_context,
+                                    transformation_sequence_out));
+  }
 }
+
+}  // namespace
 
 struct Fuzzer::Impl {
   explicit Impl(spv_target_env env) : target_env(env) {}
@@ -108,26 +127,40 @@ Fuzzer::FuzzerResultStatus Fuzzer::Run(
       .Apply();
 
   // Apply some semantics-preserving passes.
-  FuzzerPassCopyObjects(ir_context.get(), &fact_manager, &fuzzer_context,
-                        transformation_sequence_out)
-      .Apply();
-  FuzzerPassSplitBlocks(ir_context.get(), &fact_manager, &fuzzer_context,
-                        transformation_sequence_out)
-      .Apply();
-  FuzzerPassAddDeadBreaks(ir_context.get(), &fact_manager, &fuzzer_context,
-                          transformation_sequence_out)
-      .Apply();
-  FuzzerPassAddDeadContinues(ir_context.get(), &fact_manager, &fuzzer_context,
-                             transformation_sequence_out)
-      .Apply();
-  FuzzerPassObfuscateConstants(ir_context.get(), &fact_manager, &fuzzer_context,
-                               transformation_sequence_out)
-      .Apply();
+  std::vector<std::unique_ptr<FuzzerPass>> passes;
+  while (passes.empty()) {
+    MaybeAddPass<FuzzerPassAddDeadBreaks>(&passes, ir_context.get(),
+                                          &fact_manager, &fuzzer_context,
+                                          transformation_sequence_out);
+    MaybeAddPass<FuzzerPassAddDeadContinues>(&passes, ir_context.get(),
+                                             &fact_manager, &fuzzer_context,
+                                             transformation_sequence_out);
+    MaybeAddPass<FuzzerPassApplyIdSynonyms>(&passes, ir_context.get(),
+                                            &fact_manager, &fuzzer_context,
+                                            transformation_sequence_out);
+    MaybeAddPass<FuzzerPassCopyObjects>(&passes, ir_context.get(),
+                                        &fact_manager, &fuzzer_context,
+                                        transformation_sequence_out);
+    MaybeAddPass<FuzzerPassObfuscateConstants>(&passes, ir_context.get(),
+                                               &fact_manager, &fuzzer_context,
+                                               transformation_sequence_out);
+    MaybeAddPass<FuzzerPassPermuteBlocks>(&passes, ir_context.get(),
+                                          &fact_manager, &fuzzer_context,
+                                          transformation_sequence_out);
+    MaybeAddPass<FuzzerPassSplitBlocks>(&passes, ir_context.get(),
+                                        &fact_manager, &fuzzer_context,
+                                        transformation_sequence_out);
+  }
 
-  // Finally, give the blocks in the module a good shake-up.
-  FuzzerPassPermuteBlocks(ir_context.get(), &fact_manager, &fuzzer_context,
-                          transformation_sequence_out)
-      .Apply();
+  bool is_first = true;
+  while (static_cast<uint32_t>(
+             transformation_sequence_out->transformation_size()) <
+             kTransformationLimit &&
+         (is_first ||
+          fuzzer_context.ChoosePercentage(kChanceOfApplyingAnotherPass))) {
+    is_first = false;
+    passes[fuzzer_context.RandomIndex(passes)]->Apply();
+  }
 
   // Encode the module as a binary.
   ir_context->module()->ToBinary(binary_out, false);

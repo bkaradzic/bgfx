@@ -24,6 +24,8 @@ struct ResType
     int _m1;
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 // Implementation of the GLSL radians() function
 template<typename T>
 inline T radians(T d)

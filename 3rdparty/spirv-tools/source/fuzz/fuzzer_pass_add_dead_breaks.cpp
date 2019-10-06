@@ -47,9 +47,9 @@ void FuzzerPassAddDeadBreaks::Apply() {
     // ones that turn out to be no good.
     for (auto& block : function) {
       for (auto merge_block_id : merge_block_ids) {
-        // TODO(afd): right now we completely ignore OpPhi instructions at
-        //  merge blocks.  This will lead to interesting opportunities being
-        //  missed.
+        // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2856): right
+        //  now we completely ignore OpPhi instructions at merge blocks.  This
+        //  will lead to interesting opportunities being missed.
         auto candidate_transformation = TransformationAddDeadBreak(
             block.id(), merge_block_id, GetFuzzerContext()->ChooseEven(), {});
         if (candidate_transformation.IsApplicable(GetIRContext(),

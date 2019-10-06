@@ -60,16 +60,20 @@ protobufs::TransformationSequence RemoveChunk(
 }  // namespace
 
 struct Shrinker::Impl {
-  explicit Impl(spv_target_env env, uint32_t limit)
-      : target_env(env), step_limit(limit) {}
+  explicit Impl(spv_target_env env, uint32_t limit, bool validate)
+      : target_env(env), step_limit(limit), validate_during_replay(validate) {}
 
-  const spv_target_env target_env;  // Target environment.
-  MessageConsumer consumer;         // Message consumer.
-  const uint32_t step_limit;        // Step limit for reductions.
+  const spv_target_env target_env;    // Target environment.
+  MessageConsumer consumer;           // Message consumer.
+  const uint32_t step_limit;          // Step limit for reductions.
+  const bool validate_during_replay;  // Determines whether to check for
+                                      // validity during the replaying of
+                                      // transformations.
 };
 
-Shrinker::Shrinker(spv_target_env env, uint32_t step_limit)
-    : impl_(MakeUnique<Impl>(env, step_limit)) {}
+Shrinker::Shrinker(spv_target_env env, uint32_t step_limit,
+                   bool validate_during_replay)
+    : impl_(MakeUnique<Impl>(env, step_limit, validate_during_replay)) {}
 
 Shrinker::~Shrinker() = default;
 
@@ -109,7 +113,7 @@ Shrinker::ShrinkerResultStatus Shrinker::Run(
   // succeeds, (b) get the binary that results from running these
   // transformations, and (c) get the subsequence of the initial transformations
   // that actually apply (in principle this could be a strict subsequence).
-  if (Replayer(impl_->target_env)
+  if (Replayer(impl_->target_env, impl_->validate_during_replay)
           .Run(binary_in, initial_facts, transformation_sequence_in,
                &current_best_binary, &current_best_transformations) !=
       Replayer::ReplayerResultStatus::kComplete) {
@@ -180,7 +184,7 @@ Shrinker::ShrinkerResultStatus Shrinker::Run(
       // transformations inapplicable.
       std::vector<uint32_t> next_binary;
       protobufs::TransformationSequence next_transformation_sequence;
-      if (Replayer(impl_->target_env)
+      if (Replayer(impl_->target_env, false)
               .Run(binary_in, initial_facts, transformations_with_chunk_removed,
                    &next_binary, &next_transformation_sequence) !=
           Replayer::ReplayerResultStatus::kComplete) {

@@ -93,6 +93,13 @@ const spvtools::MessageConsumer kConsoleMessageConsumer =
   }
 };
 
+// Dumps the SPIRV-V module in |context| to file |filename|. Useful for
+// interactive debugging.
+void DumpShader(opt::IRContext* context, const char* filename);
+
+// Dumps |binary| to file |filename|. Useful for interactive debugging.
+void DumpShader(const std::vector<uint32_t>& binary, const char* filename);
+
 }  // namespace fuzz
 }  // namespace spvtools
 

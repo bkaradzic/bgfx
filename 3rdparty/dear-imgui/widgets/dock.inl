@@ -691,7 +691,7 @@ namespace ImGui
 				ImU32 text_color = GetColorU32(ImGuiCol_Text);
 				ImU32 text_color_disabled = GetColorU32(ImGuiCol_TextDisabled);
 				float line_height = GetTextLineHeightWithSpacing();
-				float tab_base;
+				float tab_base = 0.0f;
 
 				drawTabbarListButton(dock);
 

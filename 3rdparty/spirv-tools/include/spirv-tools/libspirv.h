@@ -612,6 +612,11 @@ SPIRV_TOOLS_EXPORT spv_fuzzer_options spvFuzzerOptionsCreate();
 // Destroys the given fuzzer options object.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsDestroy(spv_fuzzer_options options);
 
+// Enables running the validator after every transformation is applied during
+// a replay.
+SPIRV_TOOLS_EXPORT void spvFuzzerOptionsEnableReplayValidation(
+    spv_fuzzer_options options);
+
 // Sets the seed with which the random number generator used by the fuzzer
 // should be initialized.
 SPIRV_TOOLS_EXPORT void spvFuzzerOptionsSetRandomSeed(

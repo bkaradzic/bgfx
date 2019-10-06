@@ -29,6 +29,7 @@
 #include "transformation_move_block_down.h"
 #include "transformation_replace_boolean_constant_with_constant_binary.h"
 #include "transformation_replace_constant_with_uniform.h"
+#include "transformation_replace_id_with_synonym.h"
 #include "transformation_split_block.h"
 
 namespace spvtools {
@@ -72,6 +73,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
         kReplaceConstantWithUniform:
       return MakeUnique<TransformationReplaceConstantWithUniform>(
           message.replace_constant_with_uniform());
+    case protobufs::Transformation::TransformationCase::kReplaceIdWithSynonym:
+      return MakeUnique<TransformationReplaceIdWithSynonym>(
+          message.replace_id_with_synonym());
     case protobufs::Transformation::TransformationCase::kSplitBlock:
       return MakeUnique<TransformationSplitBlock>(message.split_block());
     case protobufs::Transformation::TRANSFORMATION_NOT_SET:

@@ -1274,6 +1274,12 @@ FoldingRule CompositeConstructFeedingExtract() {
            "Wrong opcode.  Should be OpCompositeExtract.");
     analysis::DefUseManager* def_use_mgr = context->get_def_use_mgr();
     analysis::TypeManager* type_mgr = context->get_type_mgr();
+
+    // If there are no index operands, then this rule cannot do anything.
+    if (inst->NumInOperands() <= 1) {
+      return false;
+    }
+
     uint32_t cid = inst->GetSingleWordInOperand(kExtractCompositeIdInIdx);
     Instruction* cinst = def_use_mgr->GetDef(cid);
 
@@ -1399,6 +1405,20 @@ FoldingRule CompositeExtractFeedingConstruct() {
     inst->SetInOperands({{SPV_OPERAND_TYPE_ID, {original_id}}});
     return true;
   };
+}
+
+// Folds an OpCompositeExtract instruction with no indexes into an OpCopyObject.
+bool ExtractWithNoIndexes(IRContext*, Instruction* inst,
+                          const std::vector<const analysis::Constant*>&) {
+  assert(inst->opcode() == SpvOpCompositeExtract &&
+         "Wrong opcode.  Should be OpCompositeExtract.");
+
+  if (inst->NumInOperands() > 1) {
+    return false;
+  }
+
+  inst->SetOpcode(SpvOpCopyObject);
+  return true;
 }
 
 FoldingRule InsertFeedingExtract() {
@@ -2207,6 +2227,7 @@ void FoldingRules::AddFoldingRules() {
   // Take that into consideration.
   rules_[SpvOpCompositeConstruct].push_back(CompositeExtractFeedingConstruct());
 
+  rules_[SpvOpCompositeExtract].push_back(ExtractWithNoIndexes);
   rules_[SpvOpCompositeExtract].push_back(InsertFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(CompositeConstructFeedingExtract());
   rules_[SpvOpCompositeExtract].push_back(VectorShuffleFeedingExtract());

@@ -3877,15 +3877,6 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 		if (splat)
 		{
 			res += convert_to_string(c.scalar(vector, 0));
-			if (is_legacy())
-			{
-				// Fake unsigned constant literals with signed ones if possible.
-				// Things like array sizes, etc, tend to be unsigned even though they could just as easily be signed.
-				if (c.scalar_i16(vector, 0) < 0)
-					SPIRV_CROSS_THROW("Tried to convert uint literal into int, but this made the literal negative.");
-			}
-			else
-				res += backend.uint16_t_literal_suffix;
 		}
 		else
 		{
@@ -3895,17 +3886,19 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 					res += to_name(c.specialization_constant_id(vector, i));
 				else
 				{
-					res += convert_to_string(c.scalar(vector, i));
-					if (is_legacy())
+					if (*backend.uint16_t_literal_suffix)
 					{
-						// Fake unsigned constant literals with signed ones if possible.
-						// Things like array sizes, etc, tend to be unsigned even though they could just as easily be signed.
-						if (c.scalar_i16(vector, i) < 0)
-							SPIRV_CROSS_THROW(
-							    "Tried to convert uint literal into int, but this made the literal negative.");
+						res += convert_to_string(c.scalar_u16(vector, i));
+						res += backend.uint16_t_literal_suffix;
 					}
 					else
-						res += backend.uint16_t_literal_suffix;
+					{
+						// If backend doesn't have a literal suffix, we need to value cast.
+						res += type_to_glsl(scalar_type);
+						res += "(";
+						res += convert_to_string(c.scalar_u16(vector, i));
+						res += ")";
+					}
 				}
 
 				if (i + 1 < c.vector_size())
@@ -3918,7 +3911,6 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 		if (splat)
 		{
 			res += convert_to_string(c.scalar_i16(vector, 0));
-			res += backend.int16_t_literal_suffix;
 		}
 		else
 		{
@@ -3928,9 +3920,21 @@ string CompilerGLSL::constant_expression_vector(const SPIRConstant &c, uint32_t 
 					res += to_name(c.specialization_constant_id(vector, i));
 				else
 				{
-					res += convert_to_string(c.scalar_i16(vector, i));
-					res += backend.int16_t_literal_suffix;
+					if (*backend.int16_t_literal_suffix)
+					{
+						res += convert_to_string(c.scalar_i16(vector, i));
+						res += backend.int16_t_literal_suffix;
+					}
+					else
+					{
+						// If backend doesn't have a literal suffix, we need to value cast.
+						res += type_to_glsl(scalar_type);
+						res += "(";
+						res += convert_to_string(c.scalar_i16(vector, i));
+						res += ")";
+					}
 				}
+
 				if (i + 1 < c.vector_size())
 					res += ", ";
 			}
@@ -4767,8 +4771,8 @@ string CompilerGLSL::to_combined_image_sampler(VariableID image_id, VariableID s
 		// If any parameter originates from a parameter, we will find it in our argument list.
 		bool global_image = image_itr == end(args);
 		bool global_sampler = sampler_itr == end(args);
-		VariableID iid = global_image ? image_id : VariableID(image_itr - begin(args));
-		VariableID sid = global_sampler ? samp_id : VariableID(sampler_itr - begin(args));
+		VariableID iid = global_image ? image_id : VariableID(uint32_t(image_itr - begin(args)));
+		VariableID sid = global_sampler ? samp_id : VariableID(uint32_t(sampler_itr - begin(args)));
 
 		auto &combined = current_function->combined_parameters;
 		auto itr = find_if(begin(combined), end(combined), [=](const SPIRFunction::CombinedImageSamplerParameter &p) {

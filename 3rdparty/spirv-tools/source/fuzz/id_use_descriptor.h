@@ -35,6 +35,12 @@ protobufs::IdUseDescriptor MakeIdUseDescriptor(
     uint32_t in_operand_index, uint32_t base_instruction_result_id,
     uint32_t num_opcodes_to_ignore);
 
+// Given an id use, represented by the instruction |inst| that uses the id, and
+// the input operand index |in_operand_index| associated with the usage, returns
+// an IdUseDescriptor that represents the use.
+protobufs::IdUseDescriptor MakeIdUseDescriptorFromUse(
+    opt::IRContext* context, opt::Instruction* inst, uint32_t in_operand_index);
+
 }  // namespace transformation
 }  // namespace fuzz
 }  // namespace spvtools

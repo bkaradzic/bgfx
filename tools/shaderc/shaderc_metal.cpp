@@ -564,6 +564,22 @@ namespace bgfx { namespace metal
 		return bgfx::Attrib::Count;
 	}
 
+	static const char* s_samplerTypes[] =
+	{
+		"BgfxSampler2D",
+		"BgfxISampler2D",
+		"BgfxUSampler2D",
+		"BgfxSampler2DArray",
+		"BgfxSampler2DShadow",
+		"BgfxSampler2DArrayShadow",
+		"BgfxSampler3D",
+		"BgfxISampler3D",
+		"BgfxUSampler3D",
+		"BgfxSamplerCube",
+		"BgfxSamplerCubeShadow",
+		"BgfxSampler2DMS",
+	};
+
 	static uint16_t writeUniformArray(bx::WriterI* _writer, const UniformArray& uniforms, bool isFragmentShader)
 	{
 		uint16_t size = 0;
@@ -714,12 +730,16 @@ namespace bgfx { namespace metal
 							{
 								bool found = false;
 
-								if (!bx::findIdentifierMatch(strLine.c_str(), "SamplerState").isEmpty() ||
-									!bx::findIdentifierMatch(strLine.c_str(), "SamplerComparisonState").isEmpty())
+								for (uint32_t ii = 0; ii < BX_COUNTOF(s_samplerTypes); ++ii)
 								{
-									found = true;
+									if (!bx::findIdentifierMatch(strLine.c_str(), s_samplerTypes[ii]).isEmpty())
+									{
+										found = true;
+										break;
+									}
 								}
-								else
+
+								if (!found)
 								{
 									for (int32_t ii = 0, num = program->getNumLiveUniformVariables(); ii < num; ++ii)
 									{
@@ -819,7 +839,17 @@ namespace bgfx { namespace metal
 				opt.SetMessageConsumer(print_msg_to_stderr);
 
 				opt.RegisterLegalizationPasses();
-				if (!opt.Run(spirv.data(), spirv.size(), &spirv))
+
+				spvtools::ValidatorOptions validatorOptions;
+				validatorOptions.SetBeforeHlslLegalization(true);
+
+				if (!opt.Run(
+					  spirv.data()
+					, spirv.size()
+					, &spirv
+					, validatorOptions
+					, false
+					) )
 				{
 					compiled = false;
 				}
@@ -862,7 +892,7 @@ namespace bgfx { namespace metal
 						}
 
 						spirv_cross::CompilerMSL msl(std::move(spirv));
-						
+
 						auto executionModel = msl.get_execution_model();
 						spirv_cross::MSLResourceBinding newBinding;
 						newBinding.stage = executionModel;
@@ -911,7 +941,7 @@ namespace bgfx { namespace metal
 							std::string name = msl.get_name(resource.id);
 							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
 								msl.set_name(resource.id, name.substr(0, name.length() - 7));
-							
+
 							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
 							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
 							newBinding.desc_set = set;
@@ -920,13 +950,13 @@ namespace bgfx { namespace metal
 							newBinding.msl_sampler = binding - textureBindingOffset;
 							msl.add_msl_resource_binding( newBinding );
 						}
-						
+
 						for (auto &resource : resources.storage_images)
 						{
 							std::string name = msl.get_name(resource.id);
 							if (name.size() > 7 && 0 == bx::strCmp(name.c_str() + name.length() - 7, "Texture") )
 								msl.set_name(resource.id, name.substr(0, name.length() - 7));
-							
+
 							unsigned set = msl.get_decoration( resource.id, spv::DecorationDescriptorSet );
 							unsigned binding = msl.get_decoration( resource.id, spv::DecorationBinding );
 							newBinding.desc_set = set;
@@ -935,7 +965,7 @@ namespace bgfx { namespace metal
 							newBinding.msl_sampler = binding - textureBindingOffset;
 							msl.add_msl_resource_binding( newBinding );
 						}
-						
+
 						std::string source = msl.compile();
 
 						if ('c' == _options.shaderType)

@@ -17,8 +17,6 @@ if (${SPIRV_BUILD_FUZZER})
   set(SOURCES
           fuzz_test_util.h
 
-          fuzzer_replayer_test.cpp
-          fuzzer_shrinker_test.cpp
           fact_manager_test.cpp
           fuzz_test_util.cpp
           fuzzer_pass_add_useful_constructs_test.cpp
@@ -34,8 +32,20 @@ if (${SPIRV_BUILD_FUZZER})
           transformation_move_block_down_test.cpp
           transformation_replace_boolean_constant_with_constant_binary_test.cpp
           transformation_replace_constant_with_uniform_test.cpp
+          transformation_replace_id_with_synonym_test.cpp
           transformation_split_block_test.cpp
           uniform_buffer_element_descriptor_test.cpp)
+
+  if (${SPIRV_ENABLE_LONG_FUZZER_TESTS})
+    # These are long-running tests that depend on random seeds.  We do not want
+    # to run them during regular whole-project CI because they may reveal
+    # spirv-fuzz bugs in changes that are totally unrelated to spirv-fuzz,
+    # which would be counfounding.  Instead, they should be run regularly but
+    # separately.
+    set(SOURCES ${SOURCES}
+            fuzzer_replayer_test.cpp
+            fuzzer_shrinker_test.cpp)
+  endif()
 
   add_spvtools_unittest(TARGET fuzz
         SRCS ${SOURCES}

@@ -3221,6 +3221,11 @@ bool HlslGrammar::acceptConstructor(TIntermTyped*& node)
             return false;
         }
 
+        if (arguments == nullptr) {
+            expected("one or more arguments");
+            return false;
+        }
+
         // hook it up
         node = parseContext.handleFunctionCall(arguments->getLoc(), constructorFunction, arguments);
 

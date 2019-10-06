@@ -174,6 +174,7 @@ const char* const E_GL_EXT_scalar_block_layout              = "GL_EXT_scalar_blo
 const char* const E_GL_EXT_fragment_invocation_density      = "GL_EXT_fragment_invocation_density";
 const char* const E_GL_EXT_buffer_reference                 = "GL_EXT_buffer_reference";
 const char* const E_GL_EXT_buffer_reference2                = "GL_EXT_buffer_reference2";
+const char* const E_GL_EXT_buffer_reference_uvec2           = "GL_EXT_buffer_reference_uvec2";
 const char* const E_GL_EXT_demote_to_helper_invocation      = "GL_EXT_demote_to_helper_invocation";
 const char* const E_GL_EXT_shader_realtime_clock            = "GL_EXT_shader_realtime_clock";
 
@@ -257,7 +258,7 @@ const char* const E_GL_OES_tessellation_point_size              = "GL_OES_tessel
 const char* const E_GL_OES_texture_buffer                       = "GL_OES_texture_buffer";
 const char* const E_GL_OES_texture_cube_map_array               = "GL_OES_texture_cube_map_array";
 
-// KHX
+// EXT
 const char* const E_GL_EXT_shader_explicit_arithmetic_types          = "GL_EXT_shader_explicit_arithmetic_types";
 const char* const E_GL_EXT_shader_explicit_arithmetic_types_int8     = "GL_EXT_shader_explicit_arithmetic_types_int8";
 const char* const E_GL_EXT_shader_explicit_arithmetic_types_int16    = "GL_EXT_shader_explicit_arithmetic_types_int16";
@@ -266,6 +267,11 @@ const char* const E_GL_EXT_shader_explicit_arithmetic_types_int64    = "GL_EXT_s
 const char* const E_GL_EXT_shader_explicit_arithmetic_types_float16  = "GL_EXT_shader_explicit_arithmetic_types_float16";
 const char* const E_GL_EXT_shader_explicit_arithmetic_types_float32  = "GL_EXT_shader_explicit_arithmetic_types_float32";
 const char* const E_GL_EXT_shader_explicit_arithmetic_types_float64  = "GL_EXT_shader_explicit_arithmetic_types_float64";
+
+const char* const E_GL_EXT_shader_subgroup_extended_types_int8    = "GL_EXT_shader_subgroup_extended_types_int8";
+const char* const E_GL_EXT_shader_subgroup_extended_types_int16   = "GL_EXT_shader_subgroup_extended_types_int16";
+const char* const E_GL_EXT_shader_subgroup_extended_types_int64   = "GL_EXT_shader_subgroup_extended_types_int64";
+const char* const E_GL_EXT_shader_subgroup_extended_types_float16 = "GL_EXT_shader_subgroup_extended_types_float16";
 
 // Arrays of extensions for the above AEP duplications
 

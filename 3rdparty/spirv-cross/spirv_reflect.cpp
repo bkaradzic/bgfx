@@ -61,6 +61,7 @@ public:
 	void end_json_array();
 	void emit_json_array_value(const std::string &value);
 	void emit_json_array_value(uint32_t value);
+	void emit_json_array_value(bool value);
 
 	std::string str() const
 	{
@@ -155,6 +156,16 @@ void Stream::emit_json_array_value(uint32_t value)
 	if (stack.top().second)
 		statement_inner(",\n");
 	statement_no_return(std::to_string(value));
+	stack.top().second = true;
+}
+
+void Stream::emit_json_array_value(bool value)
+{
+	if (stack.empty() || stack.top().first != Type::Array)
+		SPIRV_CROSS_THROW("Invalid JSON state");
+	if (stack.top().second)
+		statement_inner(",\n");
+	statement_no_return(value ? "true" : "false");
 	stack.top().second = true;
 }
 
@@ -424,6 +435,25 @@ void CompilerReflection::emit_entry_points()
 			json_stream->begin_json_object();
 			json_stream->emit_json_key_value("name", e.name);
 			json_stream->emit_json_key_value("mode", execution_model_to_str(e.execution_model));
+			if (e.execution_model == ExecutionModelGLCompute)
+			{
+				const auto &spv_entry = get_entry_point(e.name, e.execution_model);
+
+				SpecializationConstant spec_x, spec_y, spec_z;
+				get_work_group_size_specialization_constants(spec_x, spec_y, spec_z);
+
+				json_stream->emit_json_key_array("workgroup_size");
+				json_stream->emit_json_array_value(spec_x.id != ID(0) ? spec_x.constant_id : spv_entry.workgroup_size.x);
+				json_stream->emit_json_array_value(spec_y.id != ID(0) ? spec_y.constant_id : spv_entry.workgroup_size.y);
+				json_stream->emit_json_array_value(spec_z.id != ID(0) ? spec_z.constant_id : spv_entry.workgroup_size.z);
+				json_stream->end_json_array();
+
+				json_stream->emit_json_key_array("workgroup_size_is_spec_constant_id");
+				json_stream->emit_json_array_value(spec_x.id != ID(0));
+				json_stream->emit_json_array_value(spec_y.id != ID(0));
+				json_stream->emit_json_array_value(spec_z.id != ID(0));
+				json_stream->end_json_array();
+			}
 			json_stream->end_json_object();
 		}
 		json_stream->end_json_array();

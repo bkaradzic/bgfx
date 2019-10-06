@@ -464,7 +464,7 @@ OpTypeForwardPointer %_ptr_PhysicalStorageBuffer_blockType PhysicalStorageBuffer
 %uint_7 = OpConstant %uint 7
 %uint_9 = OpConstant %uint 9
 %uint_44 = OpConstant %uint 44
-%132 = OpConstantNull %_ptr_PhysicalStorageBuffer_blockType
+%132 = OpConstantNull %ulong
 %uint_46 = OpConstant %uint 46
 )";
 
@@ -499,24 +499,25 @@ OpBranch %68
 %74 = OpShiftRightLogical %ulong %30 %uint_32
 %75 = OpUConvert %uint %74
 %131 = OpFunctionCall %void %76 %uint_44 %uint_2 %72 %75
+%133 = OpConvertUToPtr %_ptr_PhysicalStorageBuffer_blockType %132
 OpBranch %68
 %68 = OpLabel
-%133 = OpPhi %_ptr_PhysicalStorageBuffer_blockType %71 %69 %132 %70
-%26 = OpAccessChain %_ptr_PhysicalStorageBuffer_int %133 %int_0
-%134 = OpConvertPtrToU %ulong %26
-%135 = OpFunctionCall %bool %32 %134 %uint_4
-OpSelectionMerge %136 None
-OpBranchConditional %135 %137 %138
-%137 = OpLabel
-OpStore %26 %int_531 Aligned 16
-OpBranch %136
+%134 = OpPhi %_ptr_PhysicalStorageBuffer_blockType %71 %69 %133 %70
+%26 = OpAccessChain %_ptr_PhysicalStorageBuffer_int %134 %int_0
+%135 = OpConvertPtrToU %ulong %26
+%136 = OpFunctionCall %bool %32 %135 %uint_4
+OpSelectionMerge %137 None
+OpBranchConditional %136 %138 %139
 %138 = OpLabel
-%139 = OpUConvert %uint %134
-%140 = OpShiftRightLogical %ulong %134 %uint_32
-%141 = OpUConvert %uint %140
-%143 = OpFunctionCall %void %76 %uint_46 %uint_2 %139 %141
-OpBranch %136
-%136 = OpLabel
+OpStore %26 %int_531 Aligned 16
+OpBranch %137
+%139 = OpLabel
+%140 = OpUConvert %uint %135
+%141 = OpShiftRightLogical %ulong %135 %uint_32
+%142 = OpUConvert %uint %141
+%144 = OpFunctionCall %void %76 %uint_46 %uint_2 %140 %142
+OpBranch %137
+%137 = OpLabel
 OpReturn
 OpFunctionEnd
 )";

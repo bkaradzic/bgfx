@@ -15,6 +15,8 @@ struct SSBO1
     float4 bs[1];
 };
 
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(1u);
+
 template<typename T, uint A>
 inline void spvArrayCopyFromConstantToStack1(thread T (&dst)[A], constant T (&src)[A])
 {

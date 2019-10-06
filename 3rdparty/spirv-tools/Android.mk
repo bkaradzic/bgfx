@@ -49,7 +49,6 @@ SPVTOOLS_SRC_FILES := \
 		source/val/validate_composites.cpp \
 		source/val/validate_constants.cpp \
 		source/val/validate_conversion.cpp \
-		source/val/validate_datarules.cpp \
 		source/val/validate_debug.cpp \
 		source/val/validate_decorations.cpp \
 		source/val/validate_derivatives.cpp \
@@ -250,6 +249,8 @@ $(LOCAL_PATH)/source/ext_inst.cpp: \
 	$(1)/spv-amd-shader-ballot.insts.inc \
 	$(1)/spv-amd-shader-explicit-vertex-parameter.insts.inc \
 	$(1)/spv-amd-shader-trinary-minmax.insts.inc
+$(LOCAL_PATH)/source/opt/amd_ext_to_khr.cpp: \
+	$(1)/spv-amd-shader-ballot.insts.inc
 endef
 $(eval $(call gen_spvtools_grammar_tables,$(SPVTOOLS_OUT_PATH)))
 

@@ -271,6 +271,9 @@ public:
         localSize[0] = 1;
         localSize[1] = 1;
         localSize[2] = 1;
+        localSizeNotDefault[0] = false;
+        localSizeNotDefault[1] = false;
+        localSizeNotDefault[2] = false;
         localSizeSpecId[0] = TQualifier::layoutNotSet;
         localSizeSpecId[1] = TQualifier::layoutNotSet;
         localSizeSpecId[2] = TQualifier::layoutNotSet;
@@ -307,6 +310,12 @@ public:
             break;
         case EShTargetSpv_1_3:
             processes.addProcess("target-env spirv1.3");
+            break;
+        case EShTargetSpv_1_4:
+            processes.addProcess("target-env spirv1.4");
+            break;
+        case EShTargetSpv_1_5:
+            processes.addProcess("target-env spirv1.5");
             break;
         default:
             processes.addProcess("target-env spirvUnknown");
@@ -648,8 +657,9 @@ public:
 
     bool setLocalSize(int dim, int size)
     {
-        if (localSize[dim] > 1)
+        if (localSizeNotDefault[dim])
             return size == localSize[dim];
+        localSizeNotDefault[dim] = true;
         localSize[dim] = size;
         return true;
     }
@@ -921,6 +931,7 @@ protected:
     TInterlockOrdering interlockOrdering;
     bool pointMode;
     int localSize[3];
+    bool localSizeNotDefault[3];
     int localSizeSpecId[3];
     bool earlyFragmentTests;
     bool postDepthCoverage;

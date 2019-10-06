@@ -54,7 +54,7 @@ void RunFuzzerAndReplayer(const std::string& shader,
     std::vector<uint32_t> replayer_binary_out;
     protobufs::TransformationSequence replayer_transformation_sequence_out;
 
-    Replayer replayer(env);
+    Replayer replayer(env, false);
     replayer.SetMessageConsumer(kSilentConsumer);
     auto replayer_result_status = replayer.Run(
         binary_in, initial_facts, fuzzer_transformation_sequence_out,

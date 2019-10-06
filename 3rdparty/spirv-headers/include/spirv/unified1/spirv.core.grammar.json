@@ -7082,7 +7082,7 @@
         {
           "enumerant" : "PhysicalStorageBuffer64",
           "value" : 5348,
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
           "capabilities" : [ "PhysicalStorageBufferAddresses" ],
           "version" : "1.5"
         },
@@ -7623,7 +7623,7 @@
         {
           "enumerant" : "PhysicalStorageBuffer",
           "value" : 5349,
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
           "capabilities" : [ "PhysicalStorageBufferAddresses" ],
           "version" : "1.5"
         },
@@ -8629,7 +8629,7 @@
           "enumerant" : "RestrictPointer",
           "value" : 5355,
           "capabilities" : [ "PhysicalStorageBufferAddresses" ],
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
           "version" : "1.5"
         },
         {
@@ -8643,7 +8643,7 @@
           "enumerant" : "AliasedPointer",
           "value" : 5356,
           "capabilities" : [ "PhysicalStorageBufferAddresses" ],
-          "extensions" : [ "SPV_EXT_physical_storage_buffer" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
           "version" : "1.5"
         },
         {
@@ -10256,6 +10256,7 @@
           "enumerant" : "PhysicalStorageBufferAddresses",
           "value" : 5347,
           "capabilities" : [ "Shader" ],
+          "extensions" : [ "SPV_EXT_physical_storage_buffer", "SPV_KHR_physical_storage_buffer" ],
           "version" : "1.5"
         },
         {

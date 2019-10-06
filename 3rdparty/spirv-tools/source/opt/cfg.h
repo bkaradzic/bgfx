@@ -60,8 +60,9 @@ class CFG {
 
   // Compute structured block order into |order| for |func| starting at |root|.
   // This order has the property that dominators come before all blocks they
-  // dominate and merge blocks come after all blocks that are in the control
-  // constructs of their header.
+  // dominate, merge blocks come after all blocks that are in the control
+  // constructs of their header, and continue blocks come after all of the
+  // blocks in the body of their loop.
   void ComputeStructuredOrder(Function* func, BasicBlock* root,
                               std::list<BasicBlock*>* order);
 

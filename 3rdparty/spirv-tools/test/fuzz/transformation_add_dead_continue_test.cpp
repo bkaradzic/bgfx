@@ -1249,6 +1249,383 @@ TEST(TransformationAddDeadContinueTest, RespectDominanceRules3) {
   ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
 }
 
+TEST(TransformationAddDeadContinueTest, Miscellaneous1) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main" %586 %623
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpMemberDecorate %34 0 Offset 0
+               OpDecorate %34 Block
+               OpDecorate %36 DescriptorSet 0
+               OpDecorate %36 Binding 0
+               OpDecorate %586 BuiltIn FragCoord
+               OpMemberDecorate %591 0 Offset 0
+               OpDecorate %591 Block
+               OpDecorate %593 DescriptorSet 0
+               OpDecorate %593 Binding 1
+               OpDecorate %623 Location 0
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %9 = OpConstant %6 0
+         %16 = OpConstant %6 2
+         %17 = OpTypeBool
+         %27 = OpTypeFloat 32
+         %28 = OpTypeVector %27 2
+         %29 = OpTypeMatrix %28 2
+         %30 = OpTypePointer Private %29
+         %31 = OpVariable %30 Private
+         %34 = OpTypeStruct %27
+         %35 = OpTypePointer Uniform %34
+         %36 = OpVariable %35 Uniform
+         %37 = OpTypePointer Uniform %27
+         %40 = OpTypePointer Private %27
+         %43 = OpConstant %6 1
+         %62 = OpConstant %6 3
+         %64 = OpTypeVector %27 3
+         %65 = OpTypeMatrix %64 2
+         %66 = OpTypePointer Private %65
+         %67 = OpVariable %66 Private
+         %92 = OpConstant %6 4
+         %94 = OpTypeVector %27 4
+         %95 = OpTypeMatrix %94 2
+         %96 = OpTypePointer Private %95
+         %97 = OpVariable %96 Private
+        %123 = OpTypeMatrix %28 3
+        %124 = OpTypePointer Private %123
+        %125 = OpVariable %124 Private
+        %151 = OpTypeMatrix %64 3
+        %152 = OpTypePointer Private %151
+        %153 = OpVariable %152 Private
+        %179 = OpTypeMatrix %94 3
+        %180 = OpTypePointer Private %179
+        %181 = OpVariable %180 Private
+        %207 = OpTypeMatrix %28 4
+        %208 = OpTypePointer Private %207
+        %209 = OpVariable %208 Private
+        %235 = OpTypeMatrix %64 4
+        %236 = OpTypePointer Private %235
+        %237 = OpVariable %236 Private
+        %263 = OpTypeMatrix %94 4
+        %264 = OpTypePointer Private %263
+        %265 = OpVariable %264 Private
+        %275 = OpTypeInt 32 0
+        %276 = OpConstant %275 9
+        %277 = OpTypeArray %27 %276
+        %278 = OpTypePointer Function %277
+        %280 = OpConstant %27 0
+        %281 = OpTypePointer Function %27
+        %311 = OpConstant %27 16
+        %448 = OpConstant %6 5
+        %482 = OpConstant %6 6
+        %516 = OpConstant %6 7
+        %550 = OpConstant %6 8
+        %585 = OpTypePointer Input %94
+        %586 = OpVariable %585 Input
+        %587 = OpConstant %275 0
+        %588 = OpTypePointer Input %27
+        %591 = OpTypeStruct %28
+        %592 = OpTypePointer Uniform %591
+        %593 = OpVariable %592 Uniform
+        %596 = OpConstant %27 3
+        %601 = OpConstant %275 1
+        %617 = OpConstant %6 9
+        %622 = OpTypePointer Output %94
+        %623 = OpVariable %622 Output
+        %628 = OpConstant %27 1
+        %634 = OpConstantComposite %94 %280 %280 %280 %628
+        %635 = OpUndef %6
+        %636 = OpUndef %17
+        %637 = OpUndef %27
+        %638 = OpUndef %64
+        %639 = OpUndef %94
+        %640 = OpConstantTrue %17
+        %736 = OpConstantFalse %17
+        %642 = OpVariable %37 Uniform
+        %643 = OpVariable %40 Private
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %164
+        %164 = OpLabel
+               OpLoopMerge %166 %167 None
+               OpBranch %165
+        %165 = OpLabel
+               OpBranch %172
+        %172 = OpLabel
+               OpSelectionMerge %174 None
+               OpBranchConditional %640 %174 %174
+        %174 = OpLabel
+        %785 = OpCopyObject %6 %43
+               OpBranch %167
+        %167 = OpLabel
+        %190 = OpIAdd %6 %9 %785
+               OpBranchConditional %640 %164 %166
+        %166 = OpLabel
+               OpBranch %196
+        %196 = OpLabel
+               OpBranch %194
+        %194 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation would shortcut the part of the loop body that defines
+  // an id used in the continue target.
+  auto bad_transformation = TransformationAddDeadContinue(165, false, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous2) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %51 = OpTypeBool
+        %395 = OpConstantTrue %51
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %389
+        %389 = OpLabel
+               OpLoopMerge %388 %391 None
+               OpBranch %339
+        %339 = OpLabel
+               OpSelectionMerge %396 None
+               OpBranchConditional %395 %388 %396
+        %396 = OpLabel
+               OpBranch %1552
+       %1552 = OpLabel
+               OpLoopMerge %1553 %1554 None
+               OpBranch %1556
+       %1556 = OpLabel
+               OpLoopMerge %1557 %1570 None
+               OpBranchConditional %395 %1562 %1557
+       %1562 = OpLabel
+               OpSelectionMerge %1570 None
+               OpBranchConditional %395 %1571 %1570
+       %1571 = OpLabel
+               OpBranch %1557
+       %1570 = OpLabel
+               OpBranch %1556
+       %1557 = OpLabel
+               OpSelectionMerge %1586 None
+               OpBranchConditional %395 %1553 %1586
+       %1586 = OpLabel
+               OpBranch %1553
+       %1554 = OpLabel
+               OpBranch %1552
+       %1553 = OpLabel
+               OpBranch %388
+        %391 = OpLabel
+               OpBranch %389
+        %388 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  // This transformation would introduce a branch from a continue target to
+  // itself.
+  auto bad_transformation = TransformationAddDeadContinue(1554, true, {});
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous3) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+         %85 = OpTypeBool
+        %434 = OpConstantFalse %85
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %234
+        %234 = OpLabel
+               OpLoopMerge %235 %236 None
+               OpBranch %259
+        %259 = OpLabel
+               OpLoopMerge %260 %274 None
+               OpBranchConditional %434 %265 %260
+        %265 = OpLabel
+               OpBranch %275
+        %275 = OpLabel
+               OpBranch %260
+        %274 = OpLabel
+               OpBranch %259
+        %260 = OpLabel
+               OpSelectionMerge %298 None
+               OpBranchConditional %434 %299 %300
+        %300 = OpLabel
+               OpBranch %235
+        %298 = OpLabel
+               OpUnreachable
+        %236 = OpLabel
+               OpBranch %234
+        %299 = OpLabel
+               OpBranch %235
+        %235 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(299, false, {});
+
+  // The continue edge would connect %299 to the previously-unreachable %236,
+  // making %299 dominate %236, and breaking the rule that block ordering must
+  // respect dominance.
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous4) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+               OpName %4 "main"
+               OpName %8 "i"
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeInt 32 1
+          %7 = OpTypePointer Function %6
+          %9 = OpConstant %6 0
+         %16 = OpConstant %6 100
+         %17 = OpTypeBool
+        %100 = OpConstantFalse %17
+         %21 = OpConstant %6 1
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+          %8 = OpVariable %7 Function
+               OpStore %8 %9
+               OpBranch %10
+         %13 = OpLabel
+         %20 = OpLoad %6 %8
+         %22 = OpIAdd %6 %20 %21
+               OpStore %8 %22
+               OpBranch %10
+         %10 = OpLabel
+               OpLoopMerge %12 %13 None
+               OpBranch %14
+         %14 = OpLabel
+         %15 = OpLoad %6 %8
+         %18 = OpSLessThan %17 %15 %16
+               OpBranchConditional %18 %11 %12
+         %11 = OpLabel
+               OpBranch %12
+         %12 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(10, false, {});
+
+  // The continue edge would connect %10 to the previously-unreachable %13,
+  // making %10 dominate %13, and breaking the rule that block ordering must
+  // respect dominance.
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
+TEST(TransformationAddDeadContinueTest, Miscellaneous5) {
+  // A miscellaneous test that exposed a bug in spirv-fuzz.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %7 = OpTypePointer Function %6
+          %9 = OpConstantTrue %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %98
+         %98 = OpLabel
+               OpLoopMerge %100 %101 None
+               OpBranch %99
+         %99 = OpLabel
+               OpSelectionMerge %111 None
+               OpBranchConditional %9 %110 %111
+        %110 = OpLabel
+               OpBranch %100
+        %111 = OpLabel
+        %200 = OpCopyObject %6 %9
+               OpBranch %101
+        %101 = OpLabel
+        %201 = OpCopyObject %6 %200
+               OpBranchConditional %9 %98 %100
+        %100 = OpLabel
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(110, true, {});
+
+  // The continue edge would lead to the use of %200 in block %101 no longer
+  // being dominated by its definition in block %111.
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

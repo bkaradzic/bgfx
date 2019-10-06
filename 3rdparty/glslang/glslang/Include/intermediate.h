@@ -275,6 +275,10 @@ enum TOperator {
     EOpConvUint64ToPtr,
     EOpConvPtrToUint64,
 
+    // uvec2 <-> pointer
+    EOpConvUvec2ToPtr,
+    EOpConvPtrToUvec2,
+
     //
     // binary operations
     //

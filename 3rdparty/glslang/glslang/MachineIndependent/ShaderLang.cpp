@@ -2048,6 +2048,9 @@ bool TProgram::buildReflection(int opts)
 
 unsigned TProgram::getLocalSize(int dim) const                        { return reflection->getLocalSize(dim); }
 int TProgram::getReflectionIndex(const char* name) const              { return reflection->getIndex(name); }
+int TProgram::getReflectionPipeIOIndex(const char* name, const bool inOrOut) const
+                                                                      { return reflection->getPipeIOIndex(name, inOrOut); }
+
 int TProgram::getNumUniformVariables() const                          { return reflection->getNumUniforms(); }
 const TObjectReflection& TProgram::getUniform(int index) const        { return reflection->getUniform(index); }
 int TProgram::getNumUniformBlocks() const                             { return reflection->getNumUniformBlocks(); }

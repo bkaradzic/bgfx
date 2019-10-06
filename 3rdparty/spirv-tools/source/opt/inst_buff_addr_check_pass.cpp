@@ -96,8 +96,22 @@ void InstBuffAddrCheckPass::GenCheckCode(
       uid2offset_[ref_inst->unique_id()], stage_idx,
       {error_id, lo_uptr_inst->result_id(), hi_uptr_inst->result_id()},
       &builder);
-  // Gen zero for invalid  reference
-  uint32_t ref_type_id = ref_inst->type_id();
+  // Gen zero for invalid load. If pointer type, need to convert uint64
+  // zero to pointer; cannot create ConstantNull of pointer type.
+  uint32_t null_id = 0;
+  if (new_ref_id != 0) {
+    uint32_t ref_type_id = ref_inst->type_id();
+    analysis::TypeManager* type_mgr = context()->get_type_mgr();
+    analysis::Type* ref_type = type_mgr->GetType(ref_type_id);
+    if (ref_type->AsPointer() != nullptr) {
+      uint32_t null_u64_id = GetNullId(GetUint64Id());
+      Instruction* null_ptr_inst =
+          builder.AddUnaryOp(ref_type_id, SpvOpConvertUToPtr, null_u64_id);
+      null_id = null_ptr_inst->result_id();
+    } else {
+      null_id = GetNullId(ref_type_id);
+    }
+  }
   (void)builder.AddBranch(merge_blk_id);
   new_blocks->push_back(std::move(new_blk_ptr));
   // Gen merge block
@@ -107,9 +121,9 @@ void InstBuffAddrCheckPass::GenCheckCode(
   // result id of the original reference with that of the Phi. Kill original
   // reference.
   if (new_ref_id != 0) {
-    Instruction* phi_inst = builder.AddPhi(
-        ref_type_id,
-        {new_ref_id, valid_blk_id, GetNullId(ref_type_id), invalid_blk_id});
+    Instruction* phi_inst =
+        builder.AddPhi(ref_inst->type_id(),
+                       {new_ref_id, valid_blk_id, null_id, invalid_blk_id});
     context()->ReplaceAllUsesWith(ref_inst->result_id(), phi_inst->result_id());
   }
   new_blocks->push_back(std::move(new_blk_ptr));
