@@ -4224,7 +4224,7 @@ namespace bgfx { namespace mtl
 				{
 					if (BGFX_STATE_FRONT_CCW & changedFlags)
 					{
-						rce.setFrontFacing((newFlags&BGFX_STATE_FRONT_CCW) ? counterClockwise : clockwise);
+						rce.setFrontFacing((newFlags&BGFX_STATE_FRONT_CCW) ? MTLWindingCounterClockwise : MTLWindingClockwise);
 					}
 
 					if (BGFX_STATE_CULL_MASK & changedFlags)

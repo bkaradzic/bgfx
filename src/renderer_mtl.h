@@ -426,6 +426,11 @@ namespace bgfx { namespace mtl
 			[m_obj setBlendColorRed:_red green:_green blue:_blue alpha:_alpha];
 		}
 
+        void setFrontFacing(MTLWinding _frontFacing)
+        {
+            [m_obj setFrontFacing:_frontFacing];
+        }
+
 		void setCullMode(MTLCullMode _cullMode)
 		{
 			[m_obj setCullMode:_cullMode];
