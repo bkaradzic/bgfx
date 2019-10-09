@@ -49,8 +49,9 @@ Supported compilers:
 Languages:
 
  * [C/C++ API documentation](https://bkaradzic.github.io/bgfx/bgfx.html)
- * [C#/VB/F# language API bindings](https://github.com/MikePopoloski/SharpBgfx)
- * [D language API bindings](https://github.com/DerelictOrg/DerelictBgfx)
+ * [C# language API bindings #1](https://github.com/bkaradzic/bgfx/tree/master/bindings/cs)
+ * [C#/VB/F# language API bindings #2](https://github.com/MikePopoloski/SharpBgfx)
+ * [D language API bindings](https://github.com/GoaLitiuM/bindbc-bgfx)
  * [Go language API bindings](https://github.com/james4k/go-bgfx)
  * [Haskell language API bindings](https://github.com/haskell-game/bgfx)
  * [Lightweight Java Game Library 3 bindings](https://github.com/LWJGL/lwjgl3)
