@@ -69,6 +69,10 @@ newaction {
 		do
 			local csgen = require "bindings-cs"
 			csgen.write(csgen.gen(), "../bindings/cs/bgfx.cs")
+			
+			local dgen = require "bindings-d"
+			dgen.write(dgen.gen_types(), "../bindings/d/types.d")
+			dgen.write(dgen.gen_funcs(), "../bindings/d/funcs.d")
 		end
 
 		os.exit()
