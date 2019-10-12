@@ -14,71 +14,41 @@
 
 #include "source/fuzz/id_use_descriptor.h"
 
+#include "source/fuzz/instruction_descriptor.h"
+
 namespace spvtools {
 namespace fuzz {
 
-opt::Instruction* transformation::FindInstruction(
-    const protobufs::IdUseDescriptor& descriptor,
-    spvtools::opt::IRContext* context) {
-  for (auto& function : *context->module()) {
-    for (auto& block : function) {
-      bool found_base = block.id() == descriptor.base_instruction_result_id();
-      uint32_t num_ignored = 0;
-      for (auto& instruction : block) {
-        if (instruction.HasResultId() &&
-            instruction.result_id() ==
-                descriptor.base_instruction_result_id()) {
-          assert(!found_base &&
-                 "It should not be possible to find the base instruction "
-                 "multiple times.");
-          found_base = true;
-          assert(num_ignored == 0 &&
-                 "The skipped instruction count should only be incremented "
-                 "after the instruction base has been found.");
-        }
-        if (found_base &&
-            instruction.opcode() == descriptor.target_instruction_opcode()) {
-          if (num_ignored == descriptor.num_opcodes_to_ignore()) {
-            if (descriptor.in_operand_index() >= instruction.NumInOperands()) {
-              return nullptr;
-            }
-            auto in_operand =
-                instruction.GetInOperand(descriptor.in_operand_index());
-            if (in_operand.type != SPV_OPERAND_TYPE_ID) {
-              return nullptr;
-            }
-            if (in_operand.words[0] != descriptor.id_of_interest()) {
-              return nullptr;
-            }
-            return &instruction;
-          }
-          num_ignored++;
-        }
-      }
-      if (found_base) {
-        // We found the base instruction, but did not find the target
-        // instruction in the same block.
-        return nullptr;
-      }
-    }
+opt::Instruction* FindInstructionContainingUse(
+    const protobufs::IdUseDescriptor& id_use_descriptor,
+    opt::IRContext* context) {
+  auto result =
+      FindInstruction(id_use_descriptor.enclosing_instruction(), context);
+  if (!result) {
+    return nullptr;
   }
-  return nullptr;
-}
-
-protobufs::IdUseDescriptor transformation::MakeIdUseDescriptor(
-    uint32_t id_of_interest, SpvOp target_instruction_opcode,
-    uint32_t in_operand_index, uint32_t base_instruction_result_id,
-    uint32_t num_opcodes_to_ignore) {
-  protobufs::IdUseDescriptor result;
-  result.set_id_of_interest(id_of_interest);
-  result.set_target_instruction_opcode(target_instruction_opcode);
-  result.set_in_operand_index(in_operand_index);
-  result.set_base_instruction_result_id(base_instruction_result_id);
-  result.set_num_opcodes_to_ignore(num_opcodes_to_ignore);
+  if (id_use_descriptor.in_operand_index() >= result->NumInOperands()) {
+    return nullptr;
+  }
+  if (result->GetSingleWordInOperand(id_use_descriptor.in_operand_index()) !=
+      id_use_descriptor.id_of_interest()) {
+    return nullptr;
+  }
   return result;
 }
 
-protobufs::IdUseDescriptor transformation::MakeIdUseDescriptorFromUse(
+protobufs::IdUseDescriptor MakeIdUseDescriptor(
+    uint32_t id_of_interest,
+    const protobufs::InstructionDescriptor& enclosing_instruction,
+    uint32_t in_operand_index) {
+  protobufs::IdUseDescriptor result;
+  result.set_id_of_interest(id_of_interest);
+  *result.mutable_enclosing_instruction() = enclosing_instruction;
+  result.set_in_operand_index(in_operand_index);
+  return result;
+}
+
+protobufs::IdUseDescriptor MakeIdUseDescriptorFromUse(
     opt::IRContext* context, opt::Instruction* inst,
     uint32_t in_operand_index) {
   auto in_operand = inst->GetInOperand(in_operand_index);
@@ -94,9 +64,11 @@ protobufs::IdUseDescriptor transformation::MakeIdUseDescriptorFromUse(
       num_opcodes_to_ignore = 0;
     }
     if (&inst_in_block == inst) {
-      return MakeIdUseDescriptor(id_of_interest, inst->opcode(),
-                                 in_operand_index, base_instruction_result_id,
-                                 num_opcodes_to_ignore);
+      return MakeIdUseDescriptor(
+          id_of_interest,
+          MakeInstructionDescriptor(base_instruction_result_id, inst->opcode(),
+                                    num_opcodes_to_ignore),
+          in_operand_index);
     }
     if (inst_in_block.opcode() == inst->opcode()) {
       num_opcodes_to_ignore++;

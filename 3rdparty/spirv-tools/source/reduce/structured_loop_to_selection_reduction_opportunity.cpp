@@ -168,23 +168,6 @@ void StructuredLoopToSelectionReductionOpportunity::RedirectEdge(
 }
 
 void StructuredLoopToSelectionReductionOpportunity::
-    AdaptPhiInstructionsForRemovedEdge(uint32_t from_id, BasicBlock* to_block) {
-  to_block->ForEachPhiInst([&from_id](Instruction* phi_inst) {
-    Instruction::OperandList new_in_operands;
-    // Go through the OpPhi's input operands in (variable, parent) pairs.
-    for (uint32_t index = 0; index < phi_inst->NumInOperands(); index += 2) {
-      // Keep all pairs where the parent is not the block from which the edge
-      // is being removed.
-      if (phi_inst->GetInOperand(index + 1).words[0] != from_id) {
-        new_in_operands.push_back(phi_inst->GetInOperand(index));
-        new_in_operands.push_back(phi_inst->GetInOperand(index + 1));
-      }
-    }
-    phi_inst->SetInOperands(std::move(new_in_operands));
-  });
-}
-
-void StructuredLoopToSelectionReductionOpportunity::
     AdaptPhiInstructionsForAddedEdge(uint32_t from_id, BasicBlock* to_block) {
   to_block->ForEachPhiInst([this, &from_id](Instruction* phi_inst) {
     // Add to the phi operand an (undef, from_id) pair to reflect the added

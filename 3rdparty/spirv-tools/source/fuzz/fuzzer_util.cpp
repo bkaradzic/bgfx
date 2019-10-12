@@ -216,6 +216,13 @@ bool NewEdgeRespectsUseDefDominance(opt::IRContext* context,
     return true;
   }
 
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2919): the
+  //  solution below to determining whether a new edge respects dominance
+  //  rules is incomplete.  Test
+  //  TransformationAddDeadContinueTest::DISABLED_Miscellaneous6 exposes the
+  //  problem.  In practice, this limitation does not bite too often, and the
+  //  worst it does is leads to SPIR-V that spirv-val rejects.
+
   // Let us assume that the module being manipulated is valid according to the
   // rules of the SPIR-V language.
   //
@@ -305,6 +312,47 @@ bool BlockIsReachableInItsFunction(opt::IRContext* context,
   auto enclosing_function = bb->GetParent();
   return context->GetDominatorAnalysis(enclosing_function)
       ->Dominates(enclosing_function->entry().get(), bb);
+}
+
+bool CanInsertOpcodeBeforeInstruction(
+    SpvOp opcode, const opt::BasicBlock::iterator& instruction_in_block) {
+  if (instruction_in_block->PreviousNode() &&
+      (instruction_in_block->PreviousNode()->opcode() == SpvOpLoopMerge ||
+       instruction_in_block->PreviousNode()->opcode() == SpvOpSelectionMerge)) {
+    // We cannot insert directly after a merge instruction.
+    return false;
+  }
+  if (opcode != SpvOpVariable &&
+      instruction_in_block->opcode() == SpvOpVariable) {
+    // We cannot insert a non-OpVariable instruction directly before a
+    // variable; variables in a function must be contiguous in the entry block.
+    return false;
+  }
+  // We cannot insert a non-OpPhi instruction directly before an OpPhi, because
+  // OpPhi instructions need to be contiguous at the start of a block.
+  return opcode == SpvOpPhi || instruction_in_block->opcode() != SpvOpPhi;
+}
+
+bool CanMakeSynonymOf(opt::IRContext* ir_context, opt::Instruction* inst) {
+  if (!inst->HasResultId()) {
+    // We can only make a synonym of an instruction that generates an id.
+    return false;
+  }
+  if (!inst->type_id()) {
+    // We can only make a synonym of an instruction that has a type.
+    return false;
+  }
+  // We do not make synonyms of objects that have decorations: if the synonym is
+  // not decorated analogously, using the original object vs. its synonymous
+  // form may not be equivalent.
+  return ir_context->get_decoration_mgr()
+      ->GetDecorationsFor(inst->result_id(), true)
+      .empty();
+}
+
+bool IsCompositeType(const opt::analysis::Type* type) {
+  return type && (type->AsArray() || type->AsMatrix() || type->AsStruct() ||
+                  type->AsVector());
 }
 
 }  // namespace fuzzerutil

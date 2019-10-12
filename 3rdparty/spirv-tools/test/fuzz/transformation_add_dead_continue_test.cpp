@@ -1626,6 +1626,52 @@ TEST(TransformationAddDeadContinueTest, Miscellaneous5) {
   ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
 }
 
+TEST(TransformationAddDeadContinueTest, DISABLED_Miscellaneous6) {
+  // A miscellaneous test that exposing a known bug in spirv-fuzz.
+
+  // TODO(https://github.com/KhronosGroup/SPIRV-Tools/issues/2919): re-enable
+  //  this test as an when the known issue is fixed.
+
+  std::string shader = R"(
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %4 "main"
+               OpExecutionMode %4 OriginUpperLeft
+               OpSource ESSL 310
+          %2 = OpTypeVoid
+          %3 = OpTypeFunction %2
+          %6 = OpTypeBool
+          %9 = OpConstantTrue %6
+          %4 = OpFunction %2 None %3
+          %5 = OpLabel
+               OpBranch %10
+         %10 = OpLabel
+               OpLoopMerge %13 %12 None
+               OpBranchConditional %9 %13 %11
+         %11 = OpLabel
+         %20 = OpCopyObject %6 %9
+               OpBranch %12
+         %12 = OpLabel
+               OpBranchConditional %9 %10 %13
+         %13 = OpLabel
+         %21 = OpCopyObject %6 %20
+               OpReturn
+               OpFunctionEnd
+  )";
+
+  const auto env = SPV_ENV_UNIVERSAL_1_3;
+  const auto consumer = nullptr;
+  const auto context = BuildModule(env, consumer, shader, kFuzzAssembleOption);
+  ASSERT_TRUE(IsValid(env, context.get()));
+
+  FactManager fact_manager;
+
+  auto bad_transformation = TransformationAddDeadContinue(10, true, {});
+
+  ASSERT_FALSE(bad_transformation.IsApplicable(context.get(), fact_manager));
+}
+
 }  // namespace
 }  // namespace fuzz
 }  // namespace spvtools

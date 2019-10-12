@@ -63,9 +63,6 @@ void FuzzerPassApplyIdSynonyms::Apply() {
                 GetFuzzerContext()->RandomIndex(synonyms_to_try);
             auto synonym_to_try = synonyms_to_try[synonym_index];
             synonyms_to_try.erase(synonyms_to_try.begin() + synonym_index);
-            assert(synonym_to_try->index().empty() &&
-                   "Right now we only support id == id synonyms; supporting "
-                   "e.g. id == index-into-vector will come later");
 
             if (!TransformationReplaceIdWithSynonym::
                     ReplacingUseWithSynonymIsOk(GetIRContext(), use_inst,
@@ -74,10 +71,24 @@ void FuzzerPassApplyIdSynonyms::Apply() {
               continue;
             }
 
+            // At present, we generate direct id synonyms (through
+            // OpCopyObject), which require no indices, and id synonyms that
+            // require a single index (through OpCompositeConstruct).
+            assert(synonym_to_try->index_size() <= 1);
+
+            // If an index is required, then we need to extract an element
+            // from a composite (e.g. through OpCompositeExtract), and this
+            // requires a fresh result id.
+            auto fresh_id_for_temporary =
+                synonym_to_try->index().empty()
+                    ? 0
+                    : GetFuzzerContext()->GetFreshId();
+
             TransformationReplaceIdWithSynonym replace_id_transformation(
-                transformation::MakeIdUseDescriptorFromUse(
-                    GetIRContext(), use_inst, use_in_operand_index),
-                *synonym_to_try, 0);
+                MakeIdUseDescriptorFromUse(GetIRContext(), use_inst,
+                                           use_in_operand_index),
+                *synonym_to_try, fresh_id_for_temporary);
+
             // The transformation should be applicable by construction.
             assert(replace_id_transformation.IsApplicable(GetIRContext(),
                                                           *GetFactManager()));

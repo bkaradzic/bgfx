@@ -144,7 +144,8 @@ OpFunctionEnd)";
   EXPECT_THAT(getDiagnosticString(), HasSubstr("vector of two components"));
 }
 
-TEST_F(ValidateMisc, ShaderClockExecutionScope) {
+// #2952: disabled until scope discussion is resolved.
+TEST_F(ValidateMisc, DISABLED_ShaderClockExecutionScope) {
   const std::string spirv = ShaderClockSpriv + R"(
 %3 = OpTypeFunction %void
 %ulong = OpTypeInt 64 0
