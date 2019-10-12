@@ -106,10 +106,19 @@ public:
     void addModuleProcessed(const std::string& p) { moduleProcesses.push_back(p.c_str()); }
     void setEmitOpLines() { emitOpLines = true; }
     void addExtension(const char* ext) { extensions.insert(ext); }
+    void removeExtension(const char* ext)
+    {
+        extensions.erase(ext);
+    }
     void addIncorporatedExtension(const char* ext, SpvVersion incorporatedVersion)
     {
         if (getSpvVersion() < static_cast<unsigned>(incorporatedVersion))
             addExtension(ext);
+    }
+    void promoteIncorporatedExtension(const char* baseExt, const char* promoExt, SpvVersion incorporatedVersion)
+    {
+        removeExtension(baseExt);
+        addIncorporatedExtension(promoExt, incorporatedVersion);
     }
     void addInclude(const std::string& name, const std::string& text)
     {
