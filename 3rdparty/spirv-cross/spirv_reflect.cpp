@@ -443,9 +443,12 @@ void CompilerReflection::emit_entry_points()
 				get_work_group_size_specialization_constants(spec_x, spec_y, spec_z);
 
 				json_stream->emit_json_key_array("workgroup_size");
-				json_stream->emit_json_array_value(spec_x.id != ID(0) ? spec_x.constant_id : spv_entry.workgroup_size.x);
-				json_stream->emit_json_array_value(spec_y.id != ID(0) ? spec_y.constant_id : spv_entry.workgroup_size.y);
-				json_stream->emit_json_array_value(spec_z.id != ID(0) ? spec_z.constant_id : spv_entry.workgroup_size.z);
+				json_stream->emit_json_array_value(spec_x.id != ID(0) ? spec_x.constant_id :
+				                                                        spv_entry.workgroup_size.x);
+				json_stream->emit_json_array_value(spec_y.id != ID(0) ? spec_y.constant_id :
+				                                                        spv_entry.workgroup_size.y);
+				json_stream->emit_json_array_value(spec_z.id != ID(0) ? spec_z.constant_id :
+				                                                        spv_entry.workgroup_size.z);
 				json_stream->end_json_array();
 
 				json_stream->emit_json_key_array("workgroup_size_is_spec_constant_id");
