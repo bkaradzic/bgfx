@@ -15,6 +15,7 @@
 #include "source/fuzz/force_render_red.h"
 
 #include "source/fuzz/fact_manager.h"
+#include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/protobufs/spirvfuzz_protobufs.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/fuzz/uniform_buffer_element_descriptor.h"
@@ -147,9 +148,10 @@ MakeConstantUniformReplacement(opt::IRContext* ir_context,
                                uint32_t greater_than_instruction,
                                uint32_t in_operand_index) {
   return MakeUnique<TransformationReplaceConstantWithUniform>(
-      transformation::MakeIdUseDescriptor(constant_id, SpvOpFOrdGreaterThan,
-                                          in_operand_index,
-                                          greater_than_instruction, 0),
+      MakeIdUseDescriptor(constant_id,
+                          MakeInstructionDescriptor(greater_than_instruction,
+                                                    SpvOpFOrdGreaterThan, 0),
+                          in_operand_index),
       fact_manager.GetUniformDescriptorsForConstant(ir_context, constant_id)[0],
       ir_context->TakeNextId(), ir_context->TakeNextId());
 }

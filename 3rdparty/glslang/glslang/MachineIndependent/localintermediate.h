@@ -786,6 +786,9 @@ public:
     void merge(TInfoSink&, TIntermediate&);
     void finalCheck(TInfoSink&, bool keepUncalled);
 
+    bool buildConvertOp(TBasicType dst, TBasicType src, TOperator& convertOp) const;
+    TIntermTyped* createConversion(TBasicType convertTo, TIntermTyped* node) const;
+
     void addIoAccessed(const TString& name) { ioAccessed.insert(name); }
     bool inIoAccessed(const TString& name) const { return ioAccessed.find(name) != ioAccessed.end(); }
 
@@ -876,7 +879,6 @@ protected:
     bool specConstantPropagates(const TIntermTyped&, const TIntermTyped&);
     void performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root);
     bool isConversionAllowed(TOperator op, TIntermTyped* node) const;
-    TIntermTyped* createConversion(TBasicType convertTo, TIntermTyped* node) const;
     std::tuple<TBasicType, TBasicType> getConversionDestinatonType(TBasicType type0, TBasicType type1, TOperator op) const;
 
     // JohnK: I think this function should go away.

@@ -28,7 +28,8 @@ namespace reduce {
 class RemoveUnreferencedInstructionReductionOpportunityFinder
     : public ReductionOpportunityFinder {
  public:
-  RemoveUnreferencedInstructionReductionOpportunityFinder() = default;
+  explicit RemoveUnreferencedInstructionReductionOpportunityFinder(
+      bool remove_constants_and_undefs);
 
   ~RemoveUnreferencedInstructionReductionOpportunityFinder() override = default;
 
@@ -38,6 +39,7 @@ class RemoveUnreferencedInstructionReductionOpportunityFinder
       opt::IRContext* context) const final;
 
  private:
+  bool remove_constants_and_undefs_;
 };
 
 }  // namespace reduce

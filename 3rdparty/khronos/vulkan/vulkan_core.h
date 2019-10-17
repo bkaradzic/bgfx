@@ -44,7 +44,7 @@ extern "C" {
 #define VK_VERSION_MINOR(version) (((uint32_t)(version) >> 12) & 0x3ff)
 #define VK_VERSION_PATCH(version) ((uint32_t)(version) & 0xfff)
 // Version of this file
-#define VK_HEADER_VERSION 123
+#define VK_HEADER_VERSION 124
 
 
 #define VK_NULL_HANDLE 0
@@ -449,6 +449,7 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT = 1000178001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT = 1000178002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR = 1000180000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR = 1000181000,
     VK_STRUCTURE_TYPE_PIPELINE_COMPILER_CONTROL_CREATE_INFO_AMD = 1000183000,
     VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT = 1000184000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD = 1000185000,
@@ -471,6 +472,12 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV = 1000205002,
     VK_STRUCTURE_TYPE_CHECKPOINT_DATA_NV = 1000206000,
     VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV = 1000206001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR = 1000207000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES_KHR = 1000207001,
+    VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR = 1000207002,
+    VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR = 1000207003,
+    VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO_KHR = 1000207004,
+    VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO_KHR = 1000207005,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS_2_FEATURES_INTEL = 1000209000,
     VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO_INTEL = 1000210000,
     VK_STRUCTURE_TYPE_INITIALIZE_PERFORMANCE_API_INFO_INTEL = 1000210001,
@@ -6238,6 +6245,18 @@ typedef struct VkPhysicalDeviceShaderAtomicInt64FeaturesKHR {
 
 
 
+#define VK_KHR_shader_clock 1
+#define VK_KHR_SHADER_CLOCK_SPEC_VERSION  1
+#define VK_KHR_SHADER_CLOCK_EXTENSION_NAME "VK_KHR_shader_clock"
+typedef struct VkPhysicalDeviceShaderClockFeaturesKHR {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           shaderSubgroupClock;
+    VkBool32           shaderDeviceClock;
+} VkPhysicalDeviceShaderClockFeaturesKHR;
+
+
+
 #define VK_KHR_driver_properties 1
 #define VK_MAX_DRIVER_NAME_SIZE_KHR       256
 #define VK_MAX_DRIVER_INFO_SIZE_KHR       256
@@ -6352,6 +6371,89 @@ typedef struct VkPhysicalDeviceDepthStencilResolvePropertiesKHR {
 #define VK_KHR_swapchain_mutable_format 1
 #define VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_SPEC_VERSION 1
 #define VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME "VK_KHR_swapchain_mutable_format"
+
+
+#define VK_KHR_timeline_semaphore 1
+#define VK_KHR_TIMELINE_SEMAPHORE_SPEC_VERSION 2
+#define VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME "VK_KHR_timeline_semaphore"
+
+typedef enum VkSemaphoreTypeKHR {
+    VK_SEMAPHORE_TYPE_BINARY_KHR = 0,
+    VK_SEMAPHORE_TYPE_TIMELINE_KHR = 1,
+    VK_SEMAPHORE_TYPE_BEGIN_RANGE_KHR = VK_SEMAPHORE_TYPE_BINARY_KHR,
+    VK_SEMAPHORE_TYPE_END_RANGE_KHR = VK_SEMAPHORE_TYPE_TIMELINE_KHR,
+    VK_SEMAPHORE_TYPE_RANGE_SIZE_KHR = (VK_SEMAPHORE_TYPE_TIMELINE_KHR - VK_SEMAPHORE_TYPE_BINARY_KHR + 1),
+    VK_SEMAPHORE_TYPE_MAX_ENUM_KHR = 0x7FFFFFFF
+} VkSemaphoreTypeKHR;
+
+typedef enum VkSemaphoreWaitFlagBitsKHR {
+    VK_SEMAPHORE_WAIT_ANY_BIT_KHR = 0x00000001,
+    VK_SEMAPHORE_WAIT_FLAG_BITS_MAX_ENUM_KHR = 0x7FFFFFFF
+} VkSemaphoreWaitFlagBitsKHR;
+typedef VkFlags VkSemaphoreWaitFlagsKHR;
+typedef struct VkPhysicalDeviceTimelineSemaphoreFeaturesKHR {
+    VkStructureType    sType;
+    void*              pNext;
+    VkBool32           timelineSemaphore;
+} VkPhysicalDeviceTimelineSemaphoreFeaturesKHR;
+
+typedef struct VkPhysicalDeviceTimelineSemaphorePropertiesKHR {
+    VkStructureType    sType;
+    void*              pNext;
+    uint64_t           maxTimelineSemaphoreValueDifference;
+} VkPhysicalDeviceTimelineSemaphorePropertiesKHR;
+
+typedef struct VkSemaphoreTypeCreateInfoKHR {
+    VkStructureType       sType;
+    const void*           pNext;
+    VkSemaphoreTypeKHR    semaphoreType;
+    uint64_t              initialValue;
+} VkSemaphoreTypeCreateInfoKHR;
+
+typedef struct VkTimelineSemaphoreSubmitInfoKHR {
+    VkStructureType    sType;
+    const void*        pNext;
+    uint32_t           waitSemaphoreValueCount;
+    const uint64_t*    pWaitSemaphoreValues;
+    uint32_t           signalSemaphoreValueCount;
+    const uint64_t*    pSignalSemaphoreValues;
+} VkTimelineSemaphoreSubmitInfoKHR;
+
+typedef struct VkSemaphoreWaitInfoKHR {
+    VkStructureType            sType;
+    const void*                pNext;
+    VkSemaphoreWaitFlagsKHR    flags;
+    uint32_t                   semaphoreCount;
+    const VkSemaphore*         pSemaphores;
+    const uint64_t*            pValues;
+} VkSemaphoreWaitInfoKHR;
+
+typedef struct VkSemaphoreSignalInfoKHR {
+    VkStructureType    sType;
+    const void*        pNext;
+    VkSemaphore        semaphore;
+    uint64_t           value;
+} VkSemaphoreSignalInfoKHR;
+
+typedef VkResult (VKAPI_PTR *PFN_vkGetSemaphoreCounterValueKHR)(VkDevice device, VkSemaphore semaphore, uint64_t* pValue);
+typedef VkResult (VKAPI_PTR *PFN_vkWaitSemaphoresKHR)(VkDevice device, const VkSemaphoreWaitInfoKHR* pWaitInfo, uint64_t timeout);
+typedef VkResult (VKAPI_PTR *PFN_vkSignalSemaphoreKHR)(VkDevice device, const VkSemaphoreSignalInfoKHR* pSignalInfo);
+
+#ifndef VK_NO_PROTOTYPES
+VKAPI_ATTR VkResult VKAPI_CALL vkGetSemaphoreCounterValueKHR(
+    VkDevice                                    device,
+    VkSemaphore                                 semaphore,
+    uint64_t*                                   pValue);
+
+VKAPI_ATTR VkResult VKAPI_CALL vkWaitSemaphoresKHR(
+    VkDevice                                    device,
+    const VkSemaphoreWaitInfoKHR*               pWaitInfo,
+    uint64_t                                    timeout);
+
+VKAPI_ATTR VkResult VKAPI_CALL vkSignalSemaphoreKHR(
+    VkDevice                                    device,
+    const VkSemaphoreSignalInfoKHR*             pSignalInfo);
+#endif
 
 
 #define VK_KHR_vulkan_memory_model 1

@@ -161,9 +161,6 @@ static void writeTriangle(void* destination, size_t offset, size_t index_size, u
 		static_cast<unsigned short*>(destination)[offset + 2] = (unsigned short)(c);
 	}
 	else
-#ifdef __EMSCRIPTEN__
-	    if (index_size == 4) // work around Edge (ChakraCore) bug - without this compiler assumes index_size==2
-#endif
 	{
 		static_cast<unsigned int*>(destination)[offset + 0] = a;
 		static_cast<unsigned int*>(destination)[offset + 1] = b;

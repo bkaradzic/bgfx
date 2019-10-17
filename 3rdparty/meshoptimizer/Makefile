@@ -72,7 +72,7 @@ gltfpack: $(GLTFPACK_OBJECTS) $(LIBRARY)
 
 js/meshopt_decoder.js: src/vertexcodec.cpp src/indexcodec.cpp
 	@mkdir -p build
-	emcc $(filter %.cpp,$^) -O3 -DNDEBUG -s EXPORTED_FUNCTIONS='["_meshopt_decodeVertexBuffer", "_meshopt_decodeIndexBuffer"]' -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=65536 -o build/meshopt_decoder.wasm
+	emcc $(filter %.cpp,$^) -O3 -DNDEBUG -s EXPORTED_FUNCTIONS='["_meshopt_decodeVertexBuffer", "_meshopt_decodeIndexBuffer", "_sbrk"]' -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=65536 -o build/meshopt_decoder.wasm
 	sed -i "s#\(var wasm = \)\".*\";#\\1\"$$(cat build/meshopt_decoder.wasm | base64 -w 0)\";#" $@
 
 $(EXECUTABLE): $(DEMO_OBJECTS) $(LIBRARY)

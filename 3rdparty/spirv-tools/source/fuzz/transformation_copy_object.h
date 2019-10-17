@@ -37,14 +37,14 @@ class TransformationCopyObject : public Transformation {
   //   has a result type
   // - |message_.object| must not be the target of any decoration.
   //   TODO(afd): consider copying decorations along with objects.
-  // - |message_.insert_after_id| must be the result id of an instruction
+  // - |message_.base_instruction_id| must be the result id of an instruction
   //   'base' in some block 'blk'.
   // - 'blk' must contain an instruction 'inst' located |message_.offset|
   //   instructions after 'base' (if |message_.offset| = 0 then 'inst' =
   //   'base').
   // - It must be legal to insert an OpCopyObject instruction directly
   //   before 'inst'.
-  // - |message_object| must be available directly before 'inst'.
+  // - |message_.object| must be available directly before 'inst'.
   bool IsApplicable(opt::IRContext* context,
                     const FactManager& fact_manager) const override;
 
@@ -57,14 +57,6 @@ class TransformationCopyObject : public Transformation {
   void Apply(opt::IRContext* context, FactManager* fact_manager) const override;
 
   protobufs::Transformation ToMessage() const override;
-
-  // Determines whether it is OK to make a copy of |inst|.
-  static bool IsCopyable(opt::IRContext* ir_context, opt::Instruction* inst);
-
-  // Determines whether it is OK to insert a copy instruction before the given
-  // instruction.
-  static bool CanInsertCopyBefore(
-      const opt::BasicBlock::iterator& instruction_in_block);
 
  private:
   protobufs::TransformationCopyObject message_;

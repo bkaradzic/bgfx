@@ -16,21 +16,26 @@
 
 #include <cassert>
 
+#include "source/fuzz/transformation_add_constant_boolean.h"
+#include "source/fuzz/transformation_add_constant_scalar.h"
+#include "source/fuzz/transformation_add_dead_break.h"
+#include "source/fuzz/transformation_add_dead_continue.h"
+#include "source/fuzz/transformation_add_no_contraction_decoration.h"
+#include "source/fuzz/transformation_add_type_boolean.h"
+#include "source/fuzz/transformation_add_type_float.h"
+#include "source/fuzz/transformation_add_type_int.h"
+#include "source/fuzz/transformation_add_type_pointer.h"
+#include "source/fuzz/transformation_construct_composite.h"
+#include "source/fuzz/transformation_copy_object.h"
+#include "source/fuzz/transformation_move_block_down.h"
+#include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
+#include "source/fuzz/transformation_replace_constant_with_uniform.h"
+#include "source/fuzz/transformation_replace_id_with_synonym.h"
+#include "source/fuzz/transformation_set_function_control.h"
+#include "source/fuzz/transformation_set_loop_control.h"
+#include "source/fuzz/transformation_set_selection_control.h"
+#include "source/fuzz/transformation_split_block.h"
 #include "source/util/make_unique.h"
-#include "transformation_add_constant_boolean.h"
-#include "transformation_add_constant_scalar.h"
-#include "transformation_add_dead_break.h"
-#include "transformation_add_dead_continue.h"
-#include "transformation_add_type_boolean.h"
-#include "transformation_add_type_float.h"
-#include "transformation_add_type_int.h"
-#include "transformation_add_type_pointer.h"
-#include "transformation_copy_object.h"
-#include "transformation_move_block_down.h"
-#include "transformation_replace_boolean_constant_with_constant_binary.h"
-#include "transformation_replace_constant_with_uniform.h"
-#include "transformation_replace_id_with_synonym.h"
-#include "transformation_split_block.h"
 
 namespace spvtools {
 namespace fuzz {
@@ -51,6 +56,10 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kAddDeadContinue:
       return MakeUnique<TransformationAddDeadContinue>(
           message.add_dead_continue());
+    case protobufs::Transformation::TransformationCase::
+        kAddNoContractionDecoration:
+      return MakeUnique<TransformationAddNoContractionDecoration>(
+          message.add_no_contraction_decoration());
     case protobufs::Transformation::TransformationCase::kAddTypeBoolean:
       return MakeUnique<TransformationAddTypeBoolean>(
           message.add_type_boolean());
@@ -61,6 +70,9 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kAddTypePointer:
       return MakeUnique<TransformationAddTypePointer>(
           message.add_type_pointer());
+    case protobufs::Transformation::TransformationCase::kConstructComposite:
+      return MakeUnique<TransformationConstructComposite>(
+          message.construct_composite());
     case protobufs::Transformation::TransformationCase::kCopyObject:
       return MakeUnique<TransformationCopyObject>(message.copy_object());
     case protobufs::Transformation::TransformationCase::kMoveBlockDown:
@@ -76,6 +88,15 @@ std::unique_ptr<Transformation> Transformation::FromMessage(
     case protobufs::Transformation::TransformationCase::kReplaceIdWithSynonym:
       return MakeUnique<TransformationReplaceIdWithSynonym>(
           message.replace_id_with_synonym());
+    case protobufs::Transformation::TransformationCase::kSetFunctionControl:
+      return MakeUnique<TransformationSetFunctionControl>(
+          message.set_function_control());
+    case protobufs::Transformation::TransformationCase::kSetLoopControl:
+      return MakeUnique<TransformationSetLoopControl>(
+          message.set_loop_control());
+    case protobufs::Transformation::TransformationCase::kSetSelectionControl:
+      return MakeUnique<TransformationSetSelectionControl>(
+          message.set_selection_control());
     case protobufs::Transformation::TransformationCase::kSplitBlock:
       return MakeUnique<TransformationSplitBlock>(message.split_block());
     case protobufs::Transformation::TRANSFORMATION_NOT_SET:

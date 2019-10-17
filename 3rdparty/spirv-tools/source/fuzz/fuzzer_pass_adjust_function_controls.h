@@ -12,25 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SOURCE_REDUCE_REMOVE_RELAXED_PRECISION_OPPORTUNITY_FINDER_H_
-#define SOURCE_REDUCE_REMOVE_RELAXED_PRECISION_OPPORTUNITY_FINDER_H_
+#ifndef SOURCE_FUZZ_FUZZER_PASS_ADJUST_FUNCTION_CONTROLS_
+#define SOURCE_FUZZ_FUZZER_PASS_ADJUST_FUNCTION_CONTROLS_
 
-#include "source/reduce/reduction_opportunity_finder.h"
+#include "source/fuzz/fuzzer_pass.h"
 
 namespace spvtools {
-namespace reduce {
+namespace fuzz {
 
-// A finder for opportunities to remove relaxed precision decorations.
-class RemoveRelaxedPrecisionDecorationOpportunityFinder
-    : public ReductionOpportunityFinder {
+// A pass that adjusts the function controls on OpFunction instructions.
+class FuzzerPassAdjustFunctionControls : public FuzzerPass {
  public:
-  std::vector<std::unique_ptr<ReductionOpportunity>> GetAvailableOpportunities(
-      opt::IRContext* context) const override;
+  FuzzerPassAdjustFunctionControls(
+      opt::IRContext* ir_context, FactManager* fact_manager,
+      FuzzerContext* fuzzer_context,
+      protobufs::TransformationSequence* transformations);
 
-  std::string GetName() const override;
+  ~FuzzerPassAdjustFunctionControls() override;
+
+  void Apply() override;
 };
 
-}  // namespace reduce
+}  // namespace fuzz
 }  // namespace spvtools
 
-#endif  // SOURCE_REDUCE_REMOVE_RELAXED_PRECISION_OPPORTUNITY_FINDER_H_
+#endif  // SOURCE_FUZZ_FUZZER_PASS_ADJUST_FUNCTION_CONTROLS_

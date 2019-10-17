@@ -62,11 +62,6 @@ class StructuredLoopToSelectionReductionOpportunity
   void RedirectEdge(uint32_t source_id, uint32_t original_target_id,
                     uint32_t new_target_id);
 
-  // Removes any components of |to_block|'s phi instructions relating to
-  // |from_id|.
-  void AdaptPhiInstructionsForRemovedEdge(uint32_t from_id,
-                                          opt::BasicBlock* to_block);
-
   // Adds components to |to_block|'s phi instructions to account for a new
   // incoming edge from |from_id|.
   void AdaptPhiInstructionsForAddedEdge(uint32_t from_id,

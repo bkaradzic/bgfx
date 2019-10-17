@@ -42,10 +42,13 @@ spv_result_t ValidateUndef(ValidationState_t& _, const Instruction* inst) {
 
 spv_result_t ValidateShaderClock(ValidationState_t& _,
                                  const Instruction* inst) {
+// #2952: disabled until scope discussion is resolved.
+#if 0
   const uint32_t execution_scope = inst->word(3);
   if (auto error = ValidateExecutionScope(_, inst, execution_scope)) {
     return error;
   }
+#endif
 
   // Result Type must be a 64 - bit unsigned integer type or
   // a vector of two - components of 32 -

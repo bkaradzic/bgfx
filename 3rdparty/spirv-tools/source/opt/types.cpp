@@ -127,6 +127,7 @@ std::unique_ptr<Type> Type::Clone() const {
     DeclareKindCase(PipeStorage);
     DeclareKindCase(NamedBarrier);
     DeclareKindCase(AccelerationStructureNV);
+    DeclareKindCase(CooperativeMatrixNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -171,6 +172,7 @@ bool Type::operator==(const Type& other) const {
     DeclareKindCase(PipeStorage);
     DeclareKindCase(NamedBarrier);
     DeclareKindCase(AccelerationStructureNV);
+    DeclareKindCase(CooperativeMatrixNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -220,6 +222,7 @@ void Type::GetHashWords(std::vector<uint32_t>* words,
     DeclareKindCase(PipeStorage);
     DeclareKindCase(NamedBarrier);
     DeclareKindCase(AccelerationStructureNV);
+    DeclareKindCase(CooperativeMatrixNV);
 #undef DeclareKindCase
     default:
       assert(false && "Unhandled type");
@@ -652,6 +655,44 @@ void ForwardPointer::GetExtraHashWords(
   words->push_back(target_id_);
   words->push_back(storage_class_);
   if (pointer_) pointer_->GetHashWords(words, seen);
+}
+
+CooperativeMatrixNV::CooperativeMatrixNV(const Type* type, const uint32_t scope,
+                                         const uint32_t rows,
+                                         const uint32_t columns)
+    : Type(kCooperativeMatrixNV),
+      component_type_(type),
+      scope_id_(scope),
+      rows_id_(rows),
+      columns_id_(columns) {
+  assert(type != nullptr);
+  assert(scope != 0);
+  assert(rows != 0);
+  assert(columns != 0);
+}
+
+std::string CooperativeMatrixNV::str() const {
+  std::ostringstream oss;
+  oss << "<" << component_type_->str() << ", " << scope_id_ << ", " << rows_id_
+      << ", " << columns_id_ << ">";
+  return oss.str();
+}
+
+void CooperativeMatrixNV::GetExtraHashWords(
+    std::vector<uint32_t>* words, std::unordered_set<const Type*>* pSet) const {
+  component_type_->GetHashWords(words, pSet);
+  words->push_back(scope_id_);
+  words->push_back(rows_id_);
+  words->push_back(columns_id_);
+}
+
+bool CooperativeMatrixNV::IsSameImpl(const Type* that,
+                                     IsSameCache* seen) const {
+  const CooperativeMatrixNV* mt = that->AsCooperativeMatrixNV();
+  if (!mt) return false;
+  return component_type_->IsSameImpl(mt->component_type_, seen) &&
+         scope_id_ == mt->scope_id_ && rows_id_ == mt->rows_id_ &&
+         columns_id_ == mt->columns_id_ && HasSameDecorations(that);
 }
 
 }  // namespace analysis

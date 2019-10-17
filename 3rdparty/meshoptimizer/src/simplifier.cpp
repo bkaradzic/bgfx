@@ -1443,6 +1443,9 @@ size_t meshopt_simplifyPoints(unsigned int* destination, const float* vertex_pos
 
 	size_t target_cell_count = target_vertex_count;
 
+	if (target_cell_count == 0)
+		return 0;
+
 	meshopt_Allocator allocator;
 
 	Vector3* vertex_positions = allocator.allocate<Vector3>(vertex_count);

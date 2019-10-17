@@ -16,6 +16,7 @@
 
 #include <cmath>
 
+#include "source/fuzz/instruction_descriptor.h"
 #include "source/fuzz/transformation_replace_boolean_constant_with_constant_binary.h"
 #include "source/fuzz/transformation_replace_constant_with_uniform.h"
 #include "source/opt/ir_context.h"
@@ -102,10 +103,11 @@ void FuzzerPassObfuscateConstants::ObfuscateBoolConstantViaConstantPair(
     // We randomly decide, based on the current depth of obfuscation, whether
     // to further obfuscate this operand.
     if (GetFuzzerContext()->GoDeeperInConstantObfuscation(depth)) {
-      auto in_operand_use = transformation::MakeIdUseDescriptor(
+      auto in_operand_use = MakeIdUseDescriptor(
           binary_operator_instruction->GetSingleWordInOperand(index),
-          binary_operator_instruction->opcode(), index,
-          binary_operator_instruction->result_id(), 0);
+          MakeInstructionDescriptor(binary_operator_instruction->result_id(),
+                                    binary_operator_instruction->opcode(), 0),
+          index);
       ObfuscateConstant(depth + 1, in_operand_use);
     }
   }
@@ -366,14 +368,17 @@ void FuzzerPassObfuscateConstants::MaybeAddConstantIdUse(
       // it.
       protobufs::IdUseDescriptor id_use_descriptor;
       id_use_descriptor.set_id_of_interest(operand_id);
-      id_use_descriptor.set_target_instruction_opcode(inst.opcode());
+      id_use_descriptor.mutable_enclosing_instruction()
+          ->set_target_instruction_opcode(inst.opcode());
+      id_use_descriptor.mutable_enclosing_instruction()
+          ->set_base_instruction_result_id(base_instruction_result_id);
+      id_use_descriptor.mutable_enclosing_instruction()
+          ->set_num_opcodes_to_ignore(
+              skipped_opcode_count.find(inst.opcode()) ==
+                      skipped_opcode_count.end()
+                  ? 0
+                  : skipped_opcode_count.at(inst.opcode()));
       id_use_descriptor.set_in_operand_index(in_operand_index);
-      id_use_descriptor.set_base_instruction_result_id(
-          base_instruction_result_id);
-      id_use_descriptor.set_num_opcodes_to_ignore(
-          skipped_opcode_count.find(inst.opcode()) == skipped_opcode_count.end()
-              ? 0
-              : skipped_opcode_count.at(inst.opcode()));
       constant_uses->push_back(id_use_descriptor);
     } break;
     default:
